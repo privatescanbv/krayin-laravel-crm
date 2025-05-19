@@ -1,4 +1,18 @@
 services:
+#  krayin-php-apache:
+#    build:
+#      args:
+#        container_project_path: /var/www/html/
+#        uid: 1000 # add your uid here
+#        user: $USER
+#      context: .
+#      dockerfile: ./Dockerfile
+#    image: krayin-php-apache
+#    ports:
+#      - 80:80 # adjust your port here, if you want to change
+#    volumes:
+#      - ./workspace/:/var/www/html/
+
   laravel.test:
     build:
       context: ./vendor/laravel/sail/runtimes/8.2

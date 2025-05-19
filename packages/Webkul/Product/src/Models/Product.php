@@ -26,6 +26,7 @@ class Product extends Model implements ProductContract
         'name',
         'sku',
         'description',
+        'product_group_id',
         'quantity',
         'price',
     ];
@@ -68,5 +69,13 @@ class Product extends Model implements ProductContract
     public function activities()
     {
         return $this->belongsToMany(ActivityProxy::modelClass(), 'product_activities');
+    }
+
+    /**
+     * Get the product group that owns the product.
+     */
+    public function productGroup()
+    {
+        return $this->belongsTo(ProductGroupProxy::modelClass());
     }
 }

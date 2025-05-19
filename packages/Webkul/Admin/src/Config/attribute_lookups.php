@@ -51,4 +51,10 @@ return [
         'name'         => 'Locations',
         'repository'   => 'Webkul\Warehouse\Repositories\LocationRepository',
     ],
+
+    'product_groups' => [
+        'name'         => 'Product Groups',
+        'repository'   => 'Webkul\Product\Repositories\ProductGroupRepository',
+        'label_column' => 'name',
+    ],
 ];

@@ -4,6 +4,7 @@ namespace Webkul\Product\Providers;
 
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
+use Webkul\Product\Repositories\ProductGroupRepository;
 
 class ProductServiceProvider extends ServiceProvider
 {
@@ -19,8 +20,11 @@ class ProductServiceProvider extends ServiceProvider
 
     /**
      * Register services.
-     *
-     * @return void
      */
-    public function register() {}
+    public function register(): void
+    {
+        $this->app->bind(ProductGroupRepository::class, function ($app) {
+            return new ProductGroupRepository($app);
+        });
+    }
 }

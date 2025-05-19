@@ -134,13 +134,24 @@ return [
     ],
 
     /**
+     * Product Groups.
+     */
+    [
+        'key'        => 'productgroups',
+        'name'       => 'admin::app.layouts.product-groups',
+        'route'      => 'admin.productgroups.index',
+        'sort'       => 8,
+        'icon-class' => 'icon-setting',
+    ],
+
+    /**
      * Settings.
      */
     [
         'key'        => 'settings',
         'name'       => 'admin::app.layouts.settings',
         'route'      => 'admin.settings.index',
-        'sort'       => 8,
+        'sort'       => 9,
         'icon-class' => 'icon-setting',
     ], [
         'key'        => 'settings.user',

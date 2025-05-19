@@ -12,6 +12,29 @@ return [
         'route' => 'admin.leads.index',
         'sort'  => 2,
     ], [
+        'key'   => 'quotes',
+        'name'  => 'admin::app.acl.quotes',
+        'route' => 'admin.quotes.index',
+        'sort'  => 3,
+    ], [
+        'key'           => 'products',
+        'name'          => 'Products',
+        'route'         => 'admin.products.index',
+        'sort'          => 4,
+        'icon-class'    => 'products-icon',
+    ], [
+        'key'           => 'productgroups',
+        'name'          => 'Product Groups',
+        'route'         => 'admin.productgroups.index',
+        'sort'          => 5,
+        'icon-class'    => 'products-icon',
+        'parent'        => null,
+    ], [
+        'key'   => 'mail',
+        'name'  => 'admin::app.acl.mail',
+        'route' => 'admin.mail.index',
+        'sort'  => 6,
+    ], [
         'key'   => 'leads.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.leads.create', 'admin.leads.store'],
@@ -32,11 +55,6 @@ return [
         'route' => ['admin.leads.delete', 'admin.leads.mass_delete'],
         'sort'  => 4,
     ], [
-        'key'   => 'quotes',
-        'name'  => 'admin::app.acl.quotes',
-        'route' => 'admin.quotes.index',
-        'sort'  => 3,
-    ], [
         'key'   => 'quotes.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.quotes.create', 'admin.quotes.store'],
@@ -55,11 +73,6 @@ return [
         'key'   => 'quotes.delete',
         'name'  => 'admin::app.acl.delete',
         'route' => ['admin.quotes.delete', 'admin.quotes.mass_delete'],
-        'sort'  => 4,
-    ], [
-        'key'   => 'mail',
-        'name'  => 'admin::app.acl.mail',
-        'route' => 'admin.mail.index',
         'sort'  => 4,
     ], [
         'key'   => 'mail.inbox',
@@ -177,11 +190,6 @@ return [
         'route' => ['admin.contacts.organizations.delete', 'admin.contacts.organizations.mass_delete'],
         'sort'  => 3,
     ], [
-        'key'   => 'products',
-        'name'  => 'admin::app.acl.products',
-        'route' => 'admin.products.index',
-        'sort'  => 7,
-    ], [
         'key'   => 'products.create',
         'name'  => 'admin::app.acl.create',
         'route' => ['admin.products.create', 'admin.products.store'],
@@ -200,6 +208,21 @@ return [
         'key'   => 'products.view',
         'name'  => 'admin::app.acl.view',
         'route' => 'admin.products.view',
+        'sort'  => 3,
+    ], [
+        'key'   => 'productgroups.create',
+        'name'  => 'admin::app.acl.create',
+        'route' => ['admin.productgroups.create', 'admin.productgroups.store'],
+        'sort'  => 1,
+    ], [
+        'key'   => 'productgroups.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.productgroups.edit', 'admin.productgroups.update'],
+        'sort'  => 2,
+    ], [
+        'key'   => 'productgroups.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => ['admin.productgroups.delete', 'admin.productgroups.mass_delete'],
         'sort'  => 3,
     ], [
         'key'   => 'settings',

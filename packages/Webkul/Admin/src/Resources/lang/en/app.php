@@ -701,17 +701,19 @@ return [
         ],
 
         'create' => [
-            'save-btn'  => 'Save Products',
-            'title'     => 'Create Products',
-            'general'   => 'General',
-            'price'     => 'Price',
+            'title'         => 'Create Product',
+            'general'       => 'General',
+            'price'         => 'Price',
+            'product-group' => 'Product Group',
+            'save-btn'      => 'Save Product',
         ],
 
         'edit' => [
-            'title'     => 'Edit Products',
-            'save-btn'  => 'Save Products',
-            'general'   => 'General',
-            'price'     => 'Price',
+            'title'         => 'Edit Product',
+            'general'       => 'General',
+            'price'         => 'Price',
+            'product-group' => 'Product Group',
+            'save-btn'      => 'Save Product',
         ],
 
         'view' => [
@@ -2288,7 +2290,7 @@ return [
         'product'              => 'Product',
         'settings'             => 'Settings',
         'user'                 => 'User',
-        'user-info'            => 'Manage all your users and their permissions in the CRM, what they’re allowed to do.',
+        'user-info'            => 'Manage all your users and their permissions in the CRM, what they\'re allowed to do.',
         'groups'               => 'Groups',
         'groups-info'          => 'Add, edit or delete groups from CRM',
         'roles'                => 'Roles',
@@ -2336,6 +2338,9 @@ return [
         'warehouses-info'      => 'Add, edit or delete warehouses from CRM',
         'data_transfer'        => 'Data Transfer',
         'data_transfer_info'   => 'Manage persons, products and leads data transfer related settings in the CRM',
+        'product-groups'       => 'Product Groups',
+        'products'             => 'Products',
+        'product-groups'       => 'Product Groups',  // Nieuwe taal key
     ],
 
     'user' => [
@@ -2423,5 +2428,34 @@ return [
         'no-records' => 'Nothing to export',
         'xls'        => 'XLS',
         'xlsx'       => 'XLSX',
+    ],
+
+    'productgroups' => [
+        'title' => 'Product Group',
+        'index' => [
+            'title'      => 'Product Groups',
+            'create-btn' => 'Add Product Group',
+            'datagrid' => [
+                'description'       => 'Omschrijving',
+                'delete'            => 'Delete',
+                'edit'              => 'Edit',
+                'id'                => 'ID',
+                'view'              => 'View',
+                'name'              => 'Name',
+                'created_at'        => 'Aangemaakt op',
+            ],
+        ],
+        'create' => [
+            'title'       => 'Create Product Group',
+            'name'        => 'Name',
+            'description' => 'Description',
+            'save-btn'    => 'Save Product Group',
+        ],
+        'edit' => [
+            'title'       => 'Edit Product Group',
+            'name'        => 'Name',
+            'description' => 'Description',
+            'save-btn'    => 'Save Product Group',
+        ],
     ],
 ];

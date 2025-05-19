@@ -20,12 +20,14 @@ class ProductDataGrid extends DataGrid
             ->leftJoin('product_inventories', 'products.id', '=', 'product_inventories.product_id')
             ->leftJoin('product_tags', 'products.id', '=', 'product_tags.product_id')
             ->leftJoin('tags', 'tags.id', '=', 'product_tags.tag_id')
+            ->leftJoin('product_groups', 'products.product_group_id', '=', 'product_groups.id')
             ->select(
                 'products.id',
                 'products.sku',
                 'products.name',
                 'products.price',
                 'tags.name as tag_name',
+                'product_groups.name as group_name'
             )
             ->addSelect(DB::raw('SUM(product_inventories.in_stock) as total_in_stock'))
             ->addSelect(DB::raw('SUM(product_inventories.allocated) as total_allocated'))
@@ -41,6 +43,7 @@ class ProductDataGrid extends DataGrid
         $this->addFilter('total_allocated', DB::raw('SUM('.$tablePrefix.'product_inventories.allocated'));
         $this->addFilter('total_on_hand', DB::raw('SUM('.$tablePrefix.'product_inventories.in_stock - '.$tablePrefix.'product_inventories.allocated'));
         $this->addFilter('tag_name', 'tags.name');
+        $this->addFilter('group_name', 'product_groups.name');
 
         return $queryBuilder;
     }
@@ -115,6 +118,15 @@ class ProductDataGrid extends DataGrid
                     'value' => 'name',
                 ],
             ],
+        ]);
+
+        $this->addColumn([
+            'index'      => 'group_name',
+            'label'      => trans('admin::app.productgroups.title'),
+            'type'       => 'string',
+            'searchable' => true,
+            'sortable'   => true,
+            'filterable' => true,
         ]);
     }
 

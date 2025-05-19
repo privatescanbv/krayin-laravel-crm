@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Products\ActivityController;
 use Webkul\Admin\Http\Controllers\Products\ProductController;
+use Webkul\Admin\Http\Controllers\Products\ProductGroupController;
 use Webkul\Admin\Http\Controllers\Products\TagController;
 
 Route::group(['middleware' => ['user']], function () {
@@ -38,5 +39,15 @@ Route::group(['middleware' => ['user']], function () {
 
             Route::delete('', 'detach')->name('admin.products.tags.detach');
         });
+    });
+
+    Route::controller(ProductGroupController::class)->prefix('productgroups')->group(function () {
+        Route::get('/', 'index')->name('admin.productgroups.index');
+        Route::get('create', 'create')->name('admin.productgroups.create');
+        Route::post('create', 'store')->name('admin.productgroups.store');
+        Route::get('edit/{id}', 'edit')->name('admin.productgroups.edit');
+        Route::get('view/{id}', 'view')->name('admin.productgroups.view');
+        Route::put('edit/{id}', 'update')->name('admin.productgroups.update');
+        Route::delete('{id}', 'destroy')->name('admin.productgroups.delete');
     });
 });

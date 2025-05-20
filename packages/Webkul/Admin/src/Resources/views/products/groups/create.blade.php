@@ -54,6 +54,24 @@
                         :placeholder="trans('admin::app.productgroups.create.description')"
                     />
                 </x-admin::form.control-group>
+
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.productgroups.create.parent')
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.control
+                        type="select"
+                        name="parent_id"
+                        :value="old('parent_id')"
+                        :label="trans('admin::app.productgroups.create.parent')"
+                    >
+                        <option value="">@lang('admin::app.productgroups.create.select-parent')</option>
+                        @foreach ($productGroups as $group)
+                            <option value="{{ $group->id }}">{{ $group->name }}</option>
+                        @endforeach
+                    </x-admin::form.control-group.control>
+                </x-admin::form.control-group>
             </div>
         </div>
     </x-admin::form>

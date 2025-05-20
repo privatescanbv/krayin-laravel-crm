@@ -33,7 +33,9 @@ class ProductGroupController extends Controller
      */
     public function create()
     {
-        return view('admin::products.groups.create');
+        $productGroups = $this->productGroupRepository->all();
+
+        return view('admin::products.groups.create', compact('productGroups'));
     }
 
     /**
@@ -71,8 +73,9 @@ class ProductGroupController extends Controller
     public function edit(int $id): View
     {
         $productGroup = $this->productGroupRepository->findOrFail($id);
+        $productGroups = $this->productGroupRepository->where('id', '!=', $id)->get();
 
-        return view('admin::products.groups.edit', compact('productGroup'));
+        return view('admin::products.groups.edit', compact('productGroup', 'productGroups'));
     }
 
     /**
@@ -83,6 +86,7 @@ class ProductGroupController extends Controller
         $this->validate(request(), [
             'name'        => 'required|string|max:255',
             'description' => 'nullable|string',
+            'parent_id'   => 'nullable|exists:product_groups,id',
         ]);
 
         $productGroup = $this->productGroupRepository->update(request()->all(), $id);

@@ -1,0 +1,22 @@
+== Application
+
+=== Login
+
+[plantuml]
+....
+@startuml
+actor "Gebruiker" as user
+participant "Login Form" as form
+participant "Auth Controller" as auth
+database "Database" as db
+
+user -> form: Vul email/wachtwoord in
+form -> auth: Valideer credentials
+auth -> db: Check gebruiker
+db --> auth: Retourneer gebruiker
+auth -> auth: Start sessie
+auth --> user: Redirect naar overzicht
+@enduml
+....
+[/plantuml]
+

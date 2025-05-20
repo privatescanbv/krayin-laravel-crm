@@ -1,0 +1,54 @@
+== Architectuur en Systeemontwerp
+TODO
+
+== Technologie Stack
+
+=== Backend
+De applicatie is gebouwd met de volgende backend technologieën:
+
+* Laravel Framework (v10.x)
+  ** PHP 8.2
+  ** MySQL 8.0
+  ** Laravel Sail voor development environment
+  ** Laravel Sanctum voor API authenticatie
+
+=== Frontend
+De frontend is gebouwd met:
+
+* Blade templates
+* Tailwind CSS voor styling
+* Alpine.js voor interactiviteit
+* Livewire voor real-time updates
+
+=== Development Tools
+De volgende tools worden gebruikt voor development:
+
+* Git voor versiebeheer
+* PHPUnit voor unit testing
+* Laravel Dusk voor browser testing
+* PHPStan voor static analysis
+* Laravel Pint voor code styling
+
+=== Deployment
+De applicatie wordt gehost op:
+
+* Docker containers
+* Nginx webserver
+* Supervisor voor process management
+* Redis voor caching
+
+=== Dependencies
+Belangrijke dependencies:
+
+* Laravel Excel voor Excel export/import
+* Laravel PDF voor PDF generatie
+* Guzzle voor HTTP requests
+* PHPUnit voor testing
+* Laravel Telescope voor debugging
+
+=== API Integraties
+De applicatie integreert met:
+
+* CRM API voor patiënt- en orderregel data
+* PDF parser voor factuur extractie
+* Mail service voor notificaties

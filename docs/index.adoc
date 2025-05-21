@@ -1,5 +1,5 @@
-= Lento
-Created by Code 14
+= Privatescan CRM
+Created by Privatescan
 :toc: left
 :icons: font
 :source-highlighter: rouge
@@ -29,7 +29,7 @@ Vaak zetten we er ook een flexibele schil naast, die vaak niet aanwezig zijn met
 
 [cols="1,1,1,1"]
 |===
-|Team lento |Rol(len)| e-mailadres |Telefoonnummer
+|Team Privatescan |Rol(len)| e-mailadres |Telefoonnummer
 
 |Mark klaucke
 |Productowner(PO)
@@ -101,6 +101,7 @@ TABLE(User, "user") {
   PRIMARY_KEY(id): bigint
   name: string
   email: string
+  lastname: string
 }
 
 TABLE(ContactPerson, "contact_person") {
@@ -182,9 +183,9 @@ Order "1" --> "1" ContactPerson : "for"
 Order "1" --> "1" User
 Action "1" --> "1" User
 Workflow "1" -- "n" Action
-Workflow "1" -- "n" Order
-Workflow "1" -- "n" Lead
-Workflow "1" -- "n" ContactPerson
+Workflow "0..1" -- "1" Order
+Workflow "0..1" -- "1" Lead
+Workflow "0..1" -- "1" ContactPerson
 
 note right of Pipeline
   Sales funnel with ordered stages.
@@ -196,6 +197,7 @@ end note
 
 note right of Lead
   Potential client optionally linked to a user and contact person.
+  Pipeline stages ("new", "in behandeling", "afgehandeld").
 end note
 
 note right of Order
@@ -216,6 +218,113 @@ end note
 
 @enduml
 ....
+
+
+== Toelichting op het CRM-datamodel en de lifecycle van entiteiten
+
+Het bovenstaande datamodel beschrijft de kernentiteiten binnen de CRM-omgeving en hun onderlinge relaties. Deze toelichting licht toe hoe de entiteiten zich gedragen binnen de klantreis (customer journey) en hoe workflows automatisch reageren op veranderingen.
+
+=== Lead lifecycle
+
+De lead vormt het startpunt van de klantreis. Zodra een nieuwe lead wordt aangemaakt:
+- krijgt deze automatisch de pipeline stage `"new"`,
+- wordt er een bijbehorende workflow gegenereerd,
+- en wordt er een eerste actie toegevoegd aan deze workflow, zoals het koppelen van een contactpersoon.
+
+Gedurende de lifecycle kan de lead door meerdere pipeline stages bewegen, bijvoorbeeld `"contacted"`, `"proposal_sent"`, `"won"` of `"lost"`. Bij elke overgang kan er automatisch een nieuwe actie of notificatie gegenereerd worden.
+
+=== Order lifecycle
+
+Elke lead kan resulteren in maximaal één order. Een order wordt doorgaans pas aangemaakt wanneer een lead in een bepaalde pipeline stage (zoals `"won"`) terechtkomt. De order is dus een natuurlijk vervolg binnen de lead-lifecycle en bevat detailinformatie over producten, bedragen en facturatie.
+
+=== Workflow en acties
+
+De workflow is gekoppeld aan een specifieke pipeline stage. Zodra een entiteit (zoals een lead of order) van status verandert, kunnen er events gegenereerd worden waarop een workflow reageert.
+
+Workflows kunnen automatisch acties aanmaken, zoals:
+- het toewijzen van een taak aan een gebruiker,
+- het verzenden van een e-mail,
+- of het starten van een vervolgproces.
+
+Elke actie is gekoppeld aan een pipeline stage én een workflow, en wordt gebruikt om opvolging binnen het CRM te structureren en automatiseren.
+
+=== Samenvattend
+
+De combinatie van leads, pipeline stages, workflows en acties vormt de basis van het CRM-proces. Door dit op entiteitenniveau vast te leggen én dynamisch te laten reageren op statusveranderingen, ontstaat een flexibel en schaalbaar systeem voor klantopvolging en interne procesautomatisering.
+
+
+=== Customer journey
+
+== Flow: Lead lifecycle & Workflow automatie
+
+[plantuml]
+....
+@startuml
+start
+
+:Nieuwe lead wordt aangemaakt;
+:Pipeline stage = "new";
+:Genereer workflow gekoppeld aan pipeline stage;
+
+:Maak actie "koppel contactpersoon";
+
+if (Contactpersoon gekoppeld?) then (ja)
+  :Pipeline stage = "contacted";
+  :Voeg actie toe "verstuur eerste mail";
+else (nee)
+  :Wacht op input gebruiker;
+endif
+
+:Lead wordt opgevolgd;
+:Pipeline stage = "proposal_sent";
+
+if (Lead gewonnen?) then (ja)
+  :Pipeline stage = "won";
+  :Maak order aan op basis van lead;
+  :Koppel contactpersoon aan order;
+  :Genereer opvolgacties binnen order-workflow;
+else
+  :Pipeline stage = "lost";
+  stop
+endif
+
+stop
+@enduml
+....
+
+
+=== Flow
+
+== Flow: Nieuwe Lead met automatische Workflow & Actie
+
+[plantuml]
+....
+@startuml
+actor "Gebruiker" as User
+participant "Lead Service" as Lead
+participant "Workflow Service" as Workflow
+participant "Action Service" as Action
+database "Database" as DB
+
+== Nieuwe lead aanmaken ==
+
+User -> Lead : maakLead(naam, contactinfo)
+Lead -> DB : sla Lead op (status = new, pipeline_stage = new)
+Lead -> Workflow : genereerWorkflow(lead_id)
+Workflow -> DB : sla Workflow op (gekoppeld aan pipeline_stage new)
+
+== Actie in workflow ==
+
+Workflow -> Action : maakActie("koppel contactpersoon", type = taak)
+Action -> DB : sla Actie op (gekoppeld aan workflow en pipeline_stage new)
+
+note right of Action
+Actie wordt zichtbaar in CRM
+om contactpersoon toe te wijzen.
+end note
+
+....
+@enduml
 
 
 === Audit Trail

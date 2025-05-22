@@ -398,6 +398,13 @@ end note
 
 ....
 
+=== Overzichten
+
+Wat we willen bereiken:
+
+* Vanuit medewerker een overzicht van alle leads & acties die aan hem/haar zijn toegewezen.
+* Vanuit contact persoon eigenaar, een overzicht met alle lopende workflows en acties met hun actuele status. Vooral kunnen controleren of doorlooptijden akkoord zijn of dat er dus moet worden ingegrepen.
+* vanuit workflow eigenaar; een overzicht van alle workflows met acties en statussen.  Vooral kunnen controleren of doorlooptijden akkoord zijn of dat er dus moet worden ingegrepen.
 
 === Audit Trail
 Het systeem houdt bij:

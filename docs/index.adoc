@@ -45,7 +45,7 @@ Vaak zetten we er ook een flexibele schil naast, die vaak niet aanwezig zijn met
 
 *Stakeholders*
 
-[cols="1,1,1,1"]
+[cols="1,1,1"]
 |===
 |Klant |Rol(len)| e-mailadres
 
@@ -64,31 +64,8 @@ Vaak zetten we er ook een flexibele schil naast, die vaak niet aanwezig zijn met
 |===
 
 
-[plantuml]
-....
-@startuml
-actor "Gebruiker" as user
-participant "Parser" as parser
-participant "CRM API" as crm
-database "Database" as db
-
-user -> parser: Upload factuur
-parser -> parser: Extraheer persoonsgegevens
-parser -> crm: Zoek matches
-crm --> parser: Retourneer matches
-parser -> user: Toon matches
-user -> parser: Selecteer match
-parser -> db: Sla match op
-@enduml
-....
-
-Omschrijving wat de scope nu is met een mogelijke roadmap, waar we naar toe willen.
-
 === Database Structuur
 De applicatie gebruikt de volgende hoofdtabellen met hun relaties:
-
-== CRM Data Model (PlantUML)
-
 
 [plantuml]
 ....
@@ -110,12 +87,12 @@ TABLE(ContactPerson, "contact_person") {
   last_name: string
   email: string
   phone: string
+  FOREIGN_KEY(contact_user_id): bigint
 }
 
 TABLE(Pipeline, "pipeline") {
   PRIMARY_KEY(id): bigint
   name: string
-  create_user_id: bigint
 }
 
 TABLE(PipelineStage, "pipeline_stage") {
@@ -154,7 +131,7 @@ TABLE(Workflow, "workflow") {
   description: text
   FOREIGN_KEY(pipeline_stage_id): bigint
   FOREIGN_KEY(workflow_type_id): bigint
-  create_user_id: bigint
+  FOREIGN_KEY(owner_user_id): bigint
 }
 
 TABLE(WorkflowType, "workflow_type") {
@@ -169,11 +146,10 @@ TABLE(Action, "action") {
   type: enum
   FOREIGN_KEY(pipeline_stage_id): bigint
   FOREIGN_KEY(workflow_id): bigint
-  FOREIGN_KEY(user_id): bigint
+  FOREIGN_KEY(assigned_user_id): bigint
   configuration: json
 }
 
-User "1" -- "n" Pipeline
 User "1" -- "n" Lead
 User "1" -- "n" Order
 User "1" -- "n" Workflow
@@ -195,6 +171,7 @@ Workflow "0..1" -- "1" Order
 Workflow "0..1" -- "1" Lead
 Workflow "0..1" -- "1" ContactPerson
 Workflow "1" -- "1" WorkflowType
+ContactPerson "1" -- "1" User
 
 note right of Pipeline
   Sales funnel with ordered stages.
@@ -231,7 +208,12 @@ end note
 
 @enduml
 ....
-== Pipeline stages per entiteit
+== Pipeline stages per entiteit (status)
+
+Requirements:
+
+* Vanuit de entiteit zul je niet zomaar altijd de status kunnen aanpassen (soms mag dit alleen vanuit de workflow)
+* Er kunnen verplichte velden zijn tussen de status overgangen
 
 [plantuml]
 ....

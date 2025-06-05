@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Observers\LeadObserver;
 use Illuminate\Support\ServiceProvider;
+use Webkul\Lead\Models\Lead;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -11,7 +13,7 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         //
     }
@@ -21,8 +23,8 @@ class AppServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function boot()
+    public function boot(): void
     {
-        //
+        Lead::observe(LeadObserver::class);
     }
 }

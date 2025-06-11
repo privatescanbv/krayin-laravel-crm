@@ -319,6 +319,9 @@ Workflows kunnen automatisch acties aanmaken, zoals:
 - het verzenden van een e-mail,
 - of het starten van een vervolgproces.
 
+Note:
+Krayin kent een eigen workflow model, waar mee je condities en acties kunt koppelen. Vergelijkbaar met SugarCRM. Onze voorkeur gaat uit naar n8n, om alles op 1 plek te beheren zouden we ervoor kunnen keizen om workflow van Krayin uit te schakelen.
+
 Elke workflow kent zijn eigen type. Dit is een voor geprogrammeerde work flow met specifieke acties. Zo zullen we er een maken voor Privatescan en een opzetten voor Hernia. Dit maakt het mogelijk om workflows te personaliseren op basis van de afdeling of het type lead.
 
 Elke actie is gekoppeld aan een pipeline stage én een workflow, en wordt gebruikt om opvolging binnen het CRM te structureren en automatiseren.
@@ -363,40 +366,8 @@ else
   stop
 endif
 
-stop
-@enduml
-....
 
-
-== Flow: Nieuwe Lead met automatische Workflow & Actie
-
-[plantuml]
-....
-@startuml
-actor "Gebruiker" as User
-participant "Lead Service" as Lead
-participant "Workflow Service" as Workflow
-participant "Action Service" as Action
-database "Database" as DB
-
-== Nieuwe lead aanmaken ==
-
-User -> Lead : maakLead(naam, contactinfo)
-Lead -> DB : sla Lead op (status = new, pipeline_stage = new)
-Lead -> Workflow : genereerWorkflow(lead_id)
-Workflow -> DB : sla Workflow op (gekoppeld aan pipeline_stage new)
-
-== Actie in workflow ==
-
-Workflow -> Action : maakActie("koppel contactpersoon", type = taak)
-Action -> DB : sla Actie op (gekoppeld aan workflow en pipeline_stage new)
-
-note right of Action
-Actie wordt zichtbaar in CRM
-om contactpersoon toe te wijzen.
-end note
-
-....
+..
 
 === Overzichten
 

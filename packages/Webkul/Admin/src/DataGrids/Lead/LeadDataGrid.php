@@ -208,9 +208,41 @@ class LeadDataGrid extends DataGrid
                 ],
             ],
             'closure'    => function ($row) {
-                $route = route('admin.contacts.persons.view', $row->person_id);
+                if (!is_null($row->person_id)) {
+                    $route = route('admin.contacts.persons.view', $row->person_id);
+                    return "<a class=\"text-brandColor transition-all hover:underline\" href='".$route."'>".$row->person_name.'</a>';
+                }
 
-                return "<a class=\"text-brandColor transition-all hover:underline\" href='".$route."'>".$row->person_name.'</a>';
+                // Get custom attributes for the lead
+                $firstName = DB::table('attribute_values')
+                    ->where('entity_type', 'leads')
+                    ->where('entity_id', $row->id)
+                    ->where('attribute_id', function($query) {
+                        $query->select('id')
+                            ->from('attributes')
+                            ->where('code', 'firstName')
+                            ->where('entity_type', 'leads')
+                            ->first();
+                    })
+                    ->value('text_value');
+
+                $lastname = DB::table('attribute_values')
+                    ->where('entity_type', 'leads')
+                    ->where('entity_id', $row->id)
+                    ->where('attribute_id', function($query) {
+                        $query->select('id')
+                            ->from('attributes')
+                            ->where('code', 'lastname')
+                            ->where('entity_type', 'leads')
+                            ->first();
+                    })
+                    ->value('text_value');
+
+                if ($firstName || $lastname) {
+                    return trim($firstName . ' ' . $lastname);
+                }
+
+                return '--';
             },
         ]);
 

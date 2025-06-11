@@ -86,7 +86,7 @@
                     {!! view_render_event('admin.leads.view.actions.after', ['lead' => $lead]) !!}
                 </div>
             </div>
-            
+
             <!-- Lead Attributes -->
             @include ('admin::leads.view.attributes')
 
@@ -97,7 +97,7 @@
         {!! view_render_event('admin.leads.view.left.after', ['lead' => $lead]) !!}
 
         {!! view_render_event('admin.leads.view.right.before', ['lead' => $lead]) !!}
-        
+
         <!-- Right Panel -->
         <div class="flex w-full flex-col gap-4 rounded-lg">
             <!-- Stages Navigation -->
@@ -137,5 +137,5 @@
         </div>
 
         {!! view_render_event('admin.leads.view.right.after', ['lead' => $lead]) !!}
-    </div>    
+    </div>
 </x-admin::layouts>

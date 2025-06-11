@@ -70,7 +70,7 @@
                         </div>
 
                         {!! view_render_event('admin.leads.index.kanban.content.stage.header.after') !!}
-                       
+
                         {!! view_render_event('admin.leads.index.kanban.content.stage.body.before') !!}
 
                         <!-- Draggable Stage Lead Cards -->
@@ -87,13 +87,13 @@
                             @change="updateStage(stage, $event)"
                         >
                             <template #header>
-                                <div 
+                                <div
                                     class="flex flex-col items-center justify-center"
                                     v-if="! stage.leads.data.length"
                                 >
                                     <img
                                         class="dark:mix-blend-exclusion dark:invert"
-                                        src="{{ vite()->asset('images/empty-placeholders/pipedrive.svg') }}"    
+                                        src="{{ vite()->asset('images/empty-placeholders/pipedrive.svg') }}"
                                     >
 
                                     <div class="flex flex-col items-center gap-4">
@@ -131,19 +131,19 @@
 
                                     <!-- Header -->
                                     <div class="flex items-start justify-between">
-                                        <div class="flex items-center gap-1">
-                                            <x-admin::avatar ::name="element.person.name" />
-                                  
-                                            <div class="flex flex-col gap-0.5">
-                                                <span class="text-xs font-medium">
-                                                    @{{ element.person.name }}
-                                                </span>
+                                       <div class="flex items-center gap-1">
+                                           <x-admin::avatar ::name="element.person ? element.person.name : element.firstname" />
 
-                                                <span class="text-[10px] leading-normal">
-                                                    @{{ element.person.organization?.name }}
-                                                </span>
-                                            </div>
-                                        </div>
+                                           <div class="flex flex-col gap-0.5">
+                                               <span class="text-xs font-medium">
+                                                   @{{ element.person ? element.person.name : element.firstname }}
+                                               </span>
+
+                                               <span class="text-[10px] leading-normal">
+                                                   @{{ element.person?.organization?.name }}
+                                               </span>
+                                           </div>
+                                       </div>
 
                                         <div
                                             class="group relative"
@@ -178,7 +178,7 @@
                                             v-if="element.user"
                                         >
                                             <span class="icon-settings-user text-sm"></span>
-                                            
+
                                             @{{ element.user.name }}
                                         </div>
 

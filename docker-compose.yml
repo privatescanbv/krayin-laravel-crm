@@ -65,15 +65,15 @@ services:
       retries: 3
       timeout: 5s
 
-  krayin-phpmyadmin:
-    image: phpmyadmin:latest
-    restart: always
-    environment:
-      PMA_HOST: krayin-mysql
-      PMA_USER: root
-      PMA_PASSWORD: root
-    ports:
-      - 8080:80 # adjust your port here, if you want to change
+#  krayin-phpmyadmin:
+#    image: phpmyadmin:latest
+#    restart: always
+#    environment:
+#      PMA_HOST: krayin-mysql
+#      PMA_USER: root
+#      PMA_PASSWORD: root
+#    ports:
+#      - 8080:80 # adjust your port here, if you want to change
 
 networks:
   sail:

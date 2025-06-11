@@ -368,40 +368,8 @@ else
   stop
 endif
 
-stop
-@enduml
-....
 
-
-== Flow: Nieuwe Lead met automatische Workflow & Actie
-
-[plantuml]
-....
-@startuml
-actor "Gebruiker" as User
-participant "Lead Service" as Lead
-participant "Workflow Service" as Workflow
-participant "Action Service" as Action
-database "Database" as DB
-
-== Nieuwe lead aanmaken ==
-
-User -> Lead : maakLead(naam, contactinfo)
-Lead -> DB : sla Lead op (status = new, pipeline_stage = new)
-Lead -> Workflow : genereerWorkflow(lead_id)
-Workflow -> DB : sla Workflow op (gekoppeld aan pipeline_stage new)
-
-== Actie in workflow ==
-
-Workflow -> Action : maakActie("koppel contactpersoon", type = taak)
-Action -> DB : sla Actie op (gekoppeld aan workflow en pipeline_stage new)
-
-note right of Action
-Actie wordt zichtbaar in CRM
-om contactpersoon toe te wijzen.
-end note
-
-....
+..
 
 === Overzichten
 

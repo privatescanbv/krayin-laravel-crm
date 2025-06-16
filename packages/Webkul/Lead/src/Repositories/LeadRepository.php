@@ -115,26 +115,26 @@ class LeadRepository extends Repository
         /**
          * If a person is provided, create or update the person and set the `person_id`.
          */
-        if (isset($data['person']) && !empty($data['person'])) {
+        if (isset($data['person']) && ! empty($data['person'])) {
             // Check if there are any non-empty values in the person data
             $hasValidData = false;
-            
-            if (!empty($data['person']['name'])) {
+
+            if (! empty($data['person']['name'])) {
                 $hasValidData = true;
             }
-            
-            if (!empty($data['person']['emails'])) {
+
+            if (! empty($data['person']['emails'])) {
                 foreach ($data['person']['emails'] as $email) {
-                    if (!empty($email['value'])) {
+                    if (! empty($email['value'])) {
                         $hasValidData = true;
                         break;
                     }
                 }
             }
-            
-            if (!empty($data['person']['contact_numbers'])) {
+
+            if (! empty($data['person']['contact_numbers'])) {
                 foreach ($data['person']['contact_numbers'] as $number) {
-                    if (!empty($number['value'])) {
+                    if (! empty($number['value'])) {
                         $hasValidData = true;
                         break;
                     }
@@ -142,7 +142,7 @@ class LeadRepository extends Repository
             }
 
             if ($hasValidData) {
-                if (!empty($data['person']['id'])) {
+                if (! empty($data['person']['id'])) {
                     $person = $this->personRepository->findOrFail($data['person']['id']);
                 } else {
                     $person = $this->personRepository->create(array_merge($data['person'], [

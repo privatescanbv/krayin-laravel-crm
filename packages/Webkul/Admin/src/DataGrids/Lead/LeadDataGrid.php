@@ -208,8 +208,9 @@ class LeadDataGrid extends DataGrid
                 ],
             ],
             'closure'    => function ($row) {
-                if (!is_null($row->person_id)) {
+                if (! is_null($row->person_id)) {
                     $route = route('admin.contacts.persons.view', $row->person_id);
+
                     return "<a class=\"text-brandColor transition-all hover:underline\" href='".$route."'>".$row->person_name.'</a>';
                 }
 
@@ -217,7 +218,7 @@ class LeadDataGrid extends DataGrid
                 $firstName = DB::table('attribute_values')
                     ->where('entity_type', 'leads')
                     ->where('entity_id', $row->id)
-                    ->where('attribute_id', function($query) {
+                    ->where('attribute_id', function ($query) {
                         $query->select('id')
                             ->from('attributes')
                             ->where('code', 'firstName')
@@ -229,7 +230,7 @@ class LeadDataGrid extends DataGrid
                 $lastname = DB::table('attribute_values')
                     ->where('entity_type', 'leads')
                     ->where('entity_id', $row->id)
-                    ->where('attribute_id', function($query) {
+                    ->where('attribute_id', function ($query) {
                         $query->select('id')
                             ->from('attributes')
                             ->where('code', 'lastname')
@@ -239,7 +240,7 @@ class LeadDataGrid extends DataGrid
                     ->value('text_value');
 
                 if ($firstName || $lastname) {
-                    return trim($firstName . ' ' . $lastname);
+                    return trim($firstName.' '.$lastname);
                 }
 
                 return '--';

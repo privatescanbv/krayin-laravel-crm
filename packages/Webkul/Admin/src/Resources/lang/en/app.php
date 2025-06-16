@@ -2435,7 +2435,7 @@ return [
         'index' => [
             'title'      => 'Product Groups',
             'create-btn' => 'Add Product Group',
-            'datagrid' => [
+            'datagrid'   => [
                 'description'       => 'Omschrijving',
                 'delete'            => 'Delete',
                 'edit'              => 'Edit',
@@ -2449,18 +2449,18 @@ return [
             'delete-success' => 'Product group deleted successfully.',
         ],
         'create' => [
-            'title'       => 'Create Product Group',
-            'name'        => 'Name',
-            'description' => 'Description',
-            'save-btn'    => 'Save Product Group',
+            'title'         => 'Create Product Group',
+            'name'          => 'Name',
+            'description'   => 'Description',
+            'save-btn'      => 'Save Product Group',
             'parent'        => 'Parent Group',
             'select-parent' => 'Select Parent Group',
         ],
         'edit' => [
-            'title'       => 'Edit Product Group',
-            'name'        => 'Name',
-            'description' => 'Description',
-            'save-btn'    => 'Save Product Group',
+            'title'         => 'Edit Product Group',
+            'name'          => 'Name',
+            'description'   => 'Description',
+            'save-btn'      => 'Save Product Group',
             'parent'        => 'Parent Group',
             'select-parent' => 'Select Parent Group',
         ],

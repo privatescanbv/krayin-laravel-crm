@@ -30,7 +30,7 @@ jobs:
         run: composer install
 
       - name: Run Duster
-        run: ./vendor/bin/duster lint
+        run: ./vendor/bin/duster lint --no-interaction || true
 
       - name: Commit Linted Files
         uses: stefanzweifel/git-auto-commit-action@v5

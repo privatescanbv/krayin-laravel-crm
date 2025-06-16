@@ -23,14 +23,14 @@ class LeadNoteController extends Controller
     public function store(int $leadId): JsonResponse
     {
         Log::info('Store note lead: '.$leadId);
-        $this->validate(request(), [
+        request()->validate(request(), [
             'comment' => 'required|string',
         ]);
 
         $lead = $this->leadRepository->findOrFail($leadId);
 
         $activity = $this->activityRepository->create([
-            'type' => 'note',
+            'type'    => 'note',
             'comment' => request('comment'),
             'is_done' => 1,
             'user_id' => 1, // TODO: Replace with actual user ID when auth is implemented
@@ -40,7 +40,7 @@ class LeadNoteController extends Controller
 
         return response()->json([
             'message' => 'Note added successfully',
-            'data' => $activity,
+            'data'    => $activity,
         ]);
     }
 }

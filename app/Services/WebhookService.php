@@ -10,9 +10,6 @@ class WebhookService
 {
     /**
      * Send a webhook notification with custom data.
-     *
-     * @param array $data
-     * @return bool
      */
     public function sendWebhook(array $data): bool
     {
@@ -24,19 +21,22 @@ class WebhookService
 
             if ($response->successful()) {
                 Log::info('Webhook sent successfully', $data);
+
                 return true;
             }
 
             Log::error('Webhook failed', [
-                'data' => $data,
+                'data'     => $data,
                 'response' => $response->body(),
             ]);
+
             return false;
         } catch (Exception $e) {
             Log::error('Exception while sending webhook', [
-                'data' => $data,
+                'data'  => $data,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }

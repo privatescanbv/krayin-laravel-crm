@@ -13,13 +13,13 @@ enum LeadPipelineStage: string
 
     public function label(): string
     {
-        return match($this) {
-            self::NEW => 'Nieuwe aanvraag kwalificeren',
+        return match ($this) {
+            self::NEW                  => 'Nieuwe aanvraag kwalificeren',
             self::MODIFY_CUSTOMER_DATA => 'Aanpassen klantgegevens',
-            self::ADVICE => 'Klant adviseren',
-            self::ORDER_SEND => 'wachten op orderbevestiging',
-            self::WON => 'gewonnen',
-            self::LOST => 'verloren',
+            self::ADVICE               => 'Klant adviseren',
+            self::ORDER_SEND           => 'wachten op orderbevestiging',
+            self::WON                  => 'gewonnen',
+            self::LOST                 => 'verloren',
         };
     }
 }

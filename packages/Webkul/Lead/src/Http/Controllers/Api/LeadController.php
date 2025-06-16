@@ -2,16 +2,16 @@
 
 namespace Webkul\Lead\Http\Controllers\Api;
 
-use App\Enums\LeadPipelineStage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Foundation\Validation\ValidatesRequests;
-use Illuminate\Support\Facades\Log;
+use Webkul\Admin\Http\Requests\LeadForm;
 use Webkul\Lead\Repositories\LeadRepository;
-use Webkul\Contact\Repositories\PersonRepository;
-use Webkul\Tag\Repositories\TagRepository;
 use Webkul\User\Models\User;
+use Webkul\Admin\Http\Controllers\Lead\LeadController as AdminLeadController;
+use Webkul\Attribute\Repositories\AttributeRepository;
+use Webkul\Attribute\Repositories\AttributeValueRepository;
 
 class LeadController extends Controller
 {
@@ -22,9 +22,12 @@ class LeadController extends Controller
      */
     public function __construct(
         protected LeadRepository $leadRepository,
-        protected PersonRepository $personRepository,
-        protected TagRepository $tagRepository
-    ) {}
+        protected AdminLeadController $leadService,
+        protected AttributeRepository $attributeRepository,
+        protected AttributeValueRepository $attributeValueRepository
+    ) {
+        request()->request->add(['entity_type' => 'leads']);
+    }
 
     /**
      * Display a listing of the leads.
@@ -41,12 +44,8 @@ class LeadController extends Controller
     /**
      * Store a newly created lead in storage.
      */
-    public function store(Request $request): JsonResponse
+    public function store(LeadForm $request): JsonResponse
     {
-        Log::info('create lead', [
-            'request' => $request->all(),
-        ]);
-
         $this->validate($request, [
             'title' => 'required',
             'first_name' => 'required',
@@ -63,33 +62,25 @@ class LeadController extends Controller
         // Create lead with person_id
         $leadData = array_merge($request->all(), [
             'user_id' => $currentUserId,
-            'entity_type' => 'leads',
-            'lead_pipeline_stage_id' => 1, // Set to first stage
             'status' => 1,
             'lead_type_id' => 1, // Default lead type
         ]);
 
-        $lead = $this->leadRepository->create($leadData);
-
-        // Add tags if provided
-        if ($request->has('tags')) {
-            $tagIds = [];
-            foreach ($request->tags as $tagName) {
-                // Find or create tag
-                $tag = $this->tagRepository->firstOrCreate([
-                    'user_id' => $currentUserId,
-                    'name' => $tagName
-                ]);
-                $tagIds[] = $tag->id;
-            }
-
-            // Sync tags
-            $lead->tags()->sync($tagIds);
+        // Set the data via the request
+        foreach ($leadData as $key => $value) {
+            request()->request->add([$key => $value]);
         }
+
+//        // Create LeadForm instance with required dependencies
+//        $leadForm = new LeadForm(
+//            $this->attributeRepository,
+//            $this->attributeValueRepository
+//        );
+        $lead = $this->leadService->store($request);
 
         return response()->json([
             'message' => 'Lead created successfully.',
-            'data' => $lead->load('tags'),
+            'data' => $lead,
         ], 201);
     }
 
@@ -114,7 +105,18 @@ class LeadController extends Controller
             'title' => 'required',
         ]);
 
-        $lead = $this->leadRepository->update($request->all(), $id);
+        // Set the data via the request
+        foreach ($request->all() as $key => $value) {
+            request()->request->add([$key => $value]);
+        }
+
+        // Create LeadForm instance with required dependencies
+        $leadForm = new LeadForm(
+            $this->attributeRepository,
+            $this->attributeValueRepository
+        );
+
+        $lead = $this->leadService->update($leadForm, $id);
 
         return response()->json([
             'message' => 'Lead updated successfully.',
@@ -131,12 +133,18 @@ class LeadController extends Controller
             'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
         ]);
 
-        $lead = $this->leadRepository->findOrFail($id);
-        
-        $lead = $this->leadRepository->update([
-            'lead_pipeline_stage_id' => $request->lead_pipeline_stage_id,
-            'entity_type' => 'leads'
-        ], $id);
+        // Set the data via the request
+        foreach ($request->all() as $key => $value) {
+            request()->request->add([$key => $value]);
+        }
+
+        // Create LeadForm instance with required dependencies
+        $leadForm = new LeadForm(
+            $this->attributeRepository,
+            $this->attributeValueRepository
+        );
+
+        $lead = $this->leadService->updateStage($id);
 
         return response()->json([
             'message' => 'Lead stage updated successfully.',
@@ -149,7 +157,7 @@ class LeadController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
-        $this->leadRepository->delete($id);
+        $this->leadService->destroy($id);
 
         return response()->json([
             'message' => 'Lead deleted successfully.',

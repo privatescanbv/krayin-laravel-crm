@@ -52,3 +52,14 @@ De applicatie integreert met:
 * CRM API voor patiënt- en orderregel data
 * PDF parser voor factuur extractie
 * Mail service voor notificaties
+
+
+== Local Development Setup
+
+Logs
+
+Local development:
+
+- https://github.com/opcodesio/log-viewer
+- Setup (eenmalig): php artisan log-viewer:publish
+- Daarna logs te bekijken met http://localhost:8000/log-viewer

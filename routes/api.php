@@ -1,7 +1,8 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\LeadNoteController;
 use Illuminate\Support\Facades\Route;
+use Webkul\Lead\Http\Controllers\Api\LeadController;
 
 /*
 |--------------------------------------------------------------------------
@@ -9,13 +10,22 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 |
 | Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "api" middleware group. Make something great!
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
+// Route::middleware('auth:sanctum')->group(function () {
+// Lead routes
+Route::prefix('leads')->group(function () {
+    Route::get('/', [LeadController::class, 'index']);
+    Route::post('/', [LeadController::class, 'store']);
+    Route::get('{id}', [LeadController::class, 'show']);
+    Route::put('{id}', [LeadController::class, 'update']);
+    Route::patch('{id}/stage', [LeadController::class, 'updateStage']);
+    Route::delete('{id}', [LeadController::class, 'destroy']);
 });
 
-Route::post('leads/{leadId}/notes', [App\Http\Controllers\LeadNoteController::class, 'store']);
+// Existing routes
+Route::post('leads/{leadId}/notes', [LeadNoteController::class, 'store']);
+// });

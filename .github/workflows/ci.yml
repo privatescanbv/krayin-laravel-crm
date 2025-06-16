@@ -51,5 +51,5 @@ jobs:
       - name: Running Krayin Installer
         run: php artisan krayin-crm::install --skip-env-check --skip-admin-creation
 
-       - name: Running Pest Test
+      - name: Running Pest Test
         run: vendor/bin/pest --parallel --colors=always

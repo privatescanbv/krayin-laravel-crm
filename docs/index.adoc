@@ -336,33 +336,85 @@ De combinatie van leads, pipeline stages, workflows en acties vormt de basis van
 
 == Flow: Lead lifecycle & Workflow automatie
 
+[plantuml, lead-lifecycle, svg]
+....
+@startuml
+participant tel_website
+actor Medewerker
+participant Workflow
+actor Patiënt
+
+tel_website -> Workflow : Nieuwe lead aanmaken
+Workflow -> Workflow : Afdeling bepalen (op basis van telefoonnummer / website)
+Workflow -> Workflow : Pipeline stage = "nieuwe-aanvraag-kwalificeren"
+Workflow -> Workflow : Genereer workflow (gebaseerd op afdeling)
+
+Workflow -> Workflow : Update pipeline stage naar "klant-data-bijwerken"
+Workflow -> Medewerker : Actie: Koppel contactpersoon
+
+Medewerker -> Workflow : Koppeling uitgevoerd
+Workflow -> Workflow : Pipeline stage = "klant-adviseren"
+Workflow -> Medewerker : Actie: Adviseren
+
+Medewerker -> Workflow : Advies uitgevoerd
+Workflow -> Workflow : Pipeline stage = "klant-adviseren-opvolgen"
+Workflow -> Medewerker : Actie: Adviseren opvolgen
+
+alt Order plaatsen?
+  Medewerker -> Workflow : Order aanmaken
+  Workflow -> Patiënt : Verstuur orderbevestiging (GVL link + infokaarten)
+  Workflow -> Workflow : Pipeline stage = "wachten-op-orderbevestiging"
+else Geen order
+  Workflow -> Workflow : Pipeline stage = "lost"
+end
+
+alt Order bevestigd?
+  Patiënt -> Workflow : Orderbevestiging
+  Workflow -> Workflow : Pipeline stage = "won"
+  Workflow -> Medewerker : Vervolgactie
+else Geen bevestiging
+  Workflow -> Workflow : Pipeline stage = "lost"
+end
+@enduml
+....
+
+
+
 [plantuml]
 ....
 @startuml
 start
 
 :Nieuwe lead wordt aangemaakt;
-:Afdeling lead wordt bepaald op basis van telefoonnummer of website afkomst;
-:Pipeline stage = "new";
-:Genereer workflow gekoppeld aan pipeline stage (kies workflow op basis van lead afdeling;
 
-:Maak actie "koppel contactpersoon";
+partition "workflow" #ADD8E6 {
+    :Afdeling lead wordt bepaald op basis van telefoonnummer of website afkomst;
+    :Pipeline stage = "nieuwe-aanvraag-kwalificeren";
+    :Genereer workflow gekoppeld aan pipeline stage (kies workflow op basis van lead afdeling;
 
-if (Contactpersoon gekoppeld?) then (ja)
-  :Pipeline stage = "contacted";
-  :Voeg actie toe "verstuur eerste mail";
-else (nee)
-  :Wacht op input gebruiker;
+    :[workflow] Update Pipeline stage naar "klant-data-bijwerken";
+    :[workflow] Maak actie "koppel contactpersoon";
+
+    :[workflow (als actie "koppel contactpersoon" gedaan is)] -> Pipeline stage = "klant-adviseren";
+
+    :[workflow] Maak actie "adviseren";
+}
+:[workflow (als actie "adviseren)] -> Pipeline stage = "klant-adviseren-opvolgen";
+:[workflow] Maak actie "adviseren opvolgen";
+
+if (order te plaatsen?) then (ja)
+  :Maak order aan op basis van lead; (actie van maken?);
+  :Verstuur orderbevestiging naar patient (met GVL link en bijbehorende informatie kaarten)  (actie van maken?);
+  :Pipeline stage = "wachten-op-orderbevestiging";
+  :[TODO]Genereer opvolgacties binnen order-workflow;
+else
+  :Pipeline stage = "lost";
+  stop
 endif
 
-:Lead wordt opgevolgd;
-:Pipeline stage = "proposal_sent";
-
-if (Lead gewonnen?) then (ja)
+if (Order bevestigd) then (ja)
   :Pipeline stage = "won";
-  :Maak order aan op basis van lead;
-  :Koppel contactpersoon aan order;
-  :Genereer opvolgacties binnen order-workflow;
+  :[TODO] vervolg in opvolging uitwerken;
 else
   :Pipeline stage = "lost";
   stop

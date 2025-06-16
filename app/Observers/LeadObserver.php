@@ -46,6 +46,23 @@ class LeadObserver
     }
 
     /**
+     * Handle the Lead "created" event.
+     */
+    public function created(Lead $lead): void
+    {
+        Log::info('CREATE lead', [
+            'lead_id' => $lead->id,
+            'stage'   => $lead->stage?->name,
+        ]);
+
+        $this->webhookService->sendWebhook([
+            'entity_id'     => $lead->id,
+            'status'        => $lead->stage->code,
+            'workflow_type' => $lead->workflow_type,
+        ]);
+    }
+
+    /**
      * Handle the Lead "updated" event.
      */
     public function updated(Lead $lead): void
@@ -54,7 +71,7 @@ class LeadObserver
         if ($lead->isDirty('lead_pipeline_stage_id')) {
             $this->webhookService->sendWebhook([
                 'entity_id'     => $lead->id,
-                'status'        => $lead->stage->name,
+                'status'        => $lead->stage->code,
                 'workflow_type' => $lead->workflow_type,
             ]);
         }

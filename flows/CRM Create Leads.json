@@ -1,0 +1,53 @@
+{
+  "name": "CRM - create leads",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/api/leads/",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"first_name\": \"Mark\",\n  \"last_name\": \"Bulthuis\",\n  \"email\": \"mark@example.com\",\n  \"phone\": \"0612345678\",\n  \"company_name\": \"MB Software\",\n  \"lead_source\": \"Website\",\n  \"title\": \"lead tel (n8n)\",\n  \"lead_pipeline_id\":1,\n  \"lead_source_id\": 4,\n  \"lead_pipeline_stage_id\": 1,\n  \"tags\": [\"crm\", \"n8n\"]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        380,
+        -240
+      ],
+      "id": "2f1952a3-b4f7-4ed7-bcd1-34629a9fef36",
+      "name": "Create CRM TEL lead"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/api/leads/",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"first_name\": \"Mark\",\n  \"last_name\": \"Bulthuis\",\n  \"email\": \"mark@example.com\",\n  \"phone\": \"0612345678\",\n  \"company_name\": \"MB Software\",\n  \"lead_source\": \"Website\",\n  \"title\": \"lead WEBSITE (n8n)\",\n  \"lead_pipeline_id\":1,\n  \"lead_source_id\": 3,\n  \"lead_pipeline_stage_id\": 1,\n  \"tags\": [\"crm\", \"n8n\"]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -20,
+        -240
+      ],
+      "id": "6c7b82c3-a7b7-471a-99c9-ccf47b8392a8",
+      "name": "Create CRM WEB FORM lead1"
+    }
+  ],
+  "pinData": {},
+  "connections": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7bcf997e-0787-48f6-b2a2-d15d82ad1590",
+  "meta": {
+    "instanceId": "5b5e3146160ecca6cc9094aa2ac6267a9dc558417651d749bdd4777c74542e76"
+  },
+  "id": "pXqRjDGS0660Gzfc",
+  "tags": []
+}

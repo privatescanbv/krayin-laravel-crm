@@ -379,52 +379,6 @@ end
 ....
 
 
-
-[plantuml]
-....
-@startuml
-start
-
-:Nieuwe lead wordt aangemaakt;
-
-partition "workflow" #ADD8E6 {
-    :Afdeling lead wordt bepaald op basis van telefoonnummer of website afkomst;
-    :Pipeline stage = "nieuwe-aanvraag-kwalificeren";
-    :Genereer workflow gekoppeld aan pipeline stage (kies workflow op basis van lead afdeling;
-
-    :[workflow] Update Pipeline stage naar "klant-data-bijwerken";
-    :[workflow] Maak actie "koppel contactpersoon";
-
-    :[workflow (als actie "koppel contactpersoon" gedaan is)] -> Pipeline stage = "klant-adviseren";
-
-    :[workflow] Maak actie "adviseren";
-}
-:[workflow (als actie "adviseren)] -> Pipeline stage = "klant-adviseren-opvolgen";
-:[workflow] Maak actie "adviseren opvolgen";
-
-if (order te plaatsen?) then (ja)
-  :Maak order aan op basis van lead; (actie van maken?);
-  :Verstuur orderbevestiging naar patient (met GVL link en bijbehorende informatie kaarten)  (actie van maken?);
-  :Pipeline stage = "wachten-op-orderbevestiging";
-  :[TODO]Genereer opvolgacties binnen order-workflow;
-else
-  :Pipeline stage = "lost";
-  stop
-endif
-
-if (Order bevestigd) then (ja)
-  :Pipeline stage = "won";
-  :[TODO] vervolg in opvolging uitwerken;
-else
-  :Pipeline stage = "lost";
-  stop
-endif
-
-stop
-@enduml
-....
-
-
 == Flow: Nieuwe Lead met automatische Workflow & Actie
 
 [plantuml]

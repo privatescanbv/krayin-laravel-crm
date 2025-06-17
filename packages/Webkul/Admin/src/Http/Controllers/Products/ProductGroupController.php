@@ -6,7 +6,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\View\View;
 use Webkul\Admin\DataGrids\Products\ProductGroupDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
-use Webkul\Admin\Http\Resources\ProductGroupResource;
 use Webkul\Product\Repositories\ProductGroupRepository;
 
 class ProductGroupController extends Controller

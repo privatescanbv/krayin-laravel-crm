@@ -71,6 +71,11 @@ class LeadController extends Controller
             request()->request->add([$key => $value]);
         }
 
+//        // Create LeadForm instance with required dependencies
+//        $leadForm = new LeadForm(
+//            $this->attributeRepository,
+//            $this->attributeValueRepository
+//        );
         $lead = $this->leadService->store($request);
 
         return response()->json([

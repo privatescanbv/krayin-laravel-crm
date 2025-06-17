@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\LeadNoteController;
 use Illuminate\Support\Facades\Route;
+use Webkul\Admin\Http\Controllers\Lead\ActivityController;
 use Webkul\Lead\Http\Controllers\Api\LeadController;
 
 /*
@@ -24,6 +25,10 @@ Route::prefix('leads')->group(function () {
     Route::put('{id}', [LeadController::class, 'update']);
     Route::patch('{id}/stage', [LeadController::class, 'updateStage']);
     Route::delete('{id}', [LeadController::class, 'destroy']);
+
+    // Lead activities
+    Route::post('{id}/activities', [ActivityController::class, 'store']);
+    Route::get('{id}/activities', [ActivityController::class, 'index']);
 });
 
 // Existing routes

@@ -379,49 +379,35 @@ end
 ....
 
 
+== Flow: Nieuwe Lead met automatische Workflow & Actie
 
 [plantuml]
 ....
 @startuml
-start
+actor "Gebruiker" as User
+participant "Lead Service" as Lead
+participant "Workflow Service" as Workflow
+participant "Action Service" as Action
+database "Database" as DB
 
-:Nieuwe lead wordt aangemaakt;
+== Nieuwe lead aanmaken ==
 
-partition "workflow" #ADD8E6 {
-    :Afdeling lead wordt bepaald op basis van telefoonnummer of website afkomst;
-    :Pipeline stage = "nieuwe-aanvraag-kwalificeren";
-    :Genereer workflow gekoppeld aan pipeline stage (kies workflow op basis van lead afdeling;
+User -> Lead : maakLead(naam, contactinfo)
+Lead -> DB : sla Lead op (status = new, pipeline_stage = new)
+Lead -> Workflow : genereerWorkflow(lead_id)
+Workflow -> DB : sla Workflow op (gekoppeld aan pipeline_stage new)
 
-    :[workflow] Update Pipeline stage naar "klant-data-bijwerken";
-    :[workflow] Maak actie "koppel contactpersoon";
+== Actie in workflow ==
 
-    :[workflow (als actie "koppel contactpersoon" gedaan is)] -> Pipeline stage = "klant-adviseren";
+Workflow -> Action : maakActie("koppel contactpersoon", type = taak)
+Action -> DB : sla Actie op (gekoppeld aan workflow en pipeline_stage new)
 
-    :[workflow] Maak actie "adviseren";
-}
-:[workflow (als actie "adviseren)] -> Pipeline stage = "klant-adviseren-opvolgen";
-:[workflow] Maak actie "adviseren opvolgen";
+note right of Action
+Actie wordt zichtbaar in CRM
+om contactpersoon toe te wijzen.
+end note
 
-if (order te plaatsen?) then (ja)
-  :Maak order aan op basis van lead; (actie van maken?);
-  :Verstuur orderbevestiging naar patient (met GVL link en bijbehorende informatie kaarten)  (actie van maken?);
-  :Pipeline stage = "wachten-op-orderbevestiging";
-  :[TODO]Genereer opvolgacties binnen order-workflow;
-else
-  :Pipeline stage = "lost";
-  stop
-endif
-
-if (Order bevestigd) then (ja)
-  :Pipeline stage = "won";
-  :[TODO] vervolg in opvolging uitwerken;
-else
-  :Pipeline stage = "lost";
-  stop
-endif
-
-
-..
+....
 
 === Overzichten
 

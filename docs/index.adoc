@@ -336,39 +336,45 @@ De combinatie van leads, pipeline stages, workflows en acties vormt de basis van
 
 == Flow: Lead lifecycle & Workflow automatie
 
-[plantuml]
+[plantuml, lead-lifecycle, svg]
 ....
 @startuml
-start
+participant tel_website
+actor Medewerker
+participant Workflow
+actor Patiënt
 
-:Nieuwe lead wordt aangemaakt;
-:Afdeling lead wordt bepaald op basis van telefoonnummer of website afkomst;
-:Pipeline stage = "new";
-:Genereer workflow gekoppeld aan pipeline stage (kies workflow op basis van lead afdeling;
+tel_website -> Workflow : Nieuwe lead aanmaken
+Workflow -> Workflow : Afdeling bepalen (op basis van telefoonnummer / website)
+Workflow -> Workflow : Pipeline stage = "nieuwe-aanvraag-kwalificeren"
+Workflow -> Workflow : Genereer workflow (gebaseerd op afdeling)
 
-:Maak actie "koppel contactpersoon";
+Workflow -> Workflow : Update pipeline stage naar "klant-data-bijwerken"
+Workflow -> Medewerker : Actie: Koppel contactpersoon
 
-if (Contactpersoon gekoppeld?) then (ja)
-  :Pipeline stage = "contacted";
-  :Voeg actie toe "verstuur eerste mail";
-else (nee)
-  :Wacht op input gebruiker;
-endif
+Medewerker -> Workflow : Koppeling uitgevoerd
+Workflow -> Workflow : Pipeline stage = "klant-adviseren"
+Workflow -> Medewerker : Actie: Adviseren
 
-:Lead wordt opgevolgd;
-:Pipeline stage = "proposal_sent";
+Medewerker -> Workflow : Advies uitgevoerd
+Workflow -> Workflow : Pipeline stage = "klant-adviseren-opvolgen"
+Workflow -> Medewerker : Actie: Adviseren opvolgen
 
-if (Lead gewonnen?) then (ja)
-  :Pipeline stage = "won";
-  :Maak order aan op basis van lead;
-  :Koppel contactpersoon aan order;
-  :Genereer opvolgacties binnen order-workflow;
-else
-  :Pipeline stage = "lost";
-  stop
-endif
+alt Order plaatsen?
+  Medewerker -> Workflow : Order aanmaken
+  Workflow -> Patiënt : Verstuur orderbevestiging (GVL link + infokaarten)
+  Workflow -> Workflow : Pipeline stage = "wachten-op-orderbevestiging"
+else Geen order
+  Workflow -> Workflow : Pipeline stage = "lost"
+end
 
-stop
+alt Order bevestigd?
+  Patiënt -> Workflow : Orderbevestiging
+  Workflow -> Workflow : Pipeline stage = "won"
+  Workflow -> Medewerker : Vervolgactie
+else Geen bevestiging
+  Workflow -> Workflow : Pipeline stage = "lost"
+end
 @enduml
 ....
 

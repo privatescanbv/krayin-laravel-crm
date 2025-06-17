@@ -1,0 +1,498 @@
+{
+  "name": "CRM Workflow Leads",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "0de7745d-64c8-410b-9d23-f98f4b9c3787",
+        "options": {}
+      },
+      "id": "2abeb3dd-f3e2-42be-81fd-515b18ec89f1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        -960,
+        720
+      ],
+      "webhookId": "0de7745d-64c8-410b-9d23-f98f4b9c3787",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "mode": "list",
+          "value": "appjsUaPrbH6ph7cB",
+          "cachedResultUrl": "https://airtable.com/appjsUaPrbH6ph7cB",
+          "cachedResultName": "Lead Information Table"
+        },
+        "table": {
+          "__rl": true,
+          "mode": "list",
+          "value": "tblVXEWTj7dErmNsa",
+          "cachedResultUrl": "https://airtable.com/appjsUaPrbH6ph7cB/tblVXEWTj7dErmNsa",
+          "cachedResultName": "Leads"
+        },
+        "columns": {
+          "value": {
+            "Call Status": "COMPLETED",
+            "Appointment booked": "2025-04-30T13:34:17"
+          },
+          "schema": [
+            {
+              "id": "id",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": true,
+              "required": false,
+              "displayName": "id",
+              "defaultMatch": true
+            },
+            {
+              "id": "ID",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": true,
+              "required": false,
+              "displayName": "ID",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "First Name",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "First Name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Name",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Last Name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Email",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone Number",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Phone Number",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Created Time",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": true,
+              "required": false,
+              "displayName": "Created Time",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Full Name",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": true,
+              "required": false,
+              "displayName": "Full Name",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email Domain",
+              "type": "string",
+              "display": true,
+              "removed": true,
+              "readOnly": true,
+              "required": false,
+              "displayName": "Email Domain",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Primary Language",
+              "type": "string",
+              "display": true,
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Primary Language",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Gender",
+              "type": "options",
+              "display": true,
+              "options": [
+                {
+                  "name": "Male",
+                  "value": "Male"
+                },
+                {
+                  "name": "Female",
+                  "value": "Female"
+                }
+              ],
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Gender",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Call Status",
+              "type": "options",
+              "display": true,
+              "options": [
+                {
+                  "name": "COMPLETED",
+                  "value": "COMPLETED"
+                },
+                {
+                  "name": "NOT_REACHED",
+                  "value": "NOT_REACHED"
+                },
+                {
+                  "name": "ANSWERED",
+                  "value": "ANSWERED"
+                }
+              ],
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Call Status",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Follow-up required",
+              "type": "options",
+              "display": true,
+              "options": [
+                {
+                  "name": "true",
+                  "value": "true"
+                },
+                {
+                  "name": "false",
+                  "value": "false"
+                }
+              ],
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Follow-up required",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Appointment booked",
+              "type": "dateTime",
+              "display": true,
+              "removed": false,
+              "readOnly": false,
+              "required": false,
+              "displayName": "Appointment booked",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": [
+            "id"
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "841f3921-5cb9-47f3-9c4c-a9d11ebc4176",
+      "name": "Update CRM contact with call_status COMPLETED",
+      "type": "n8n-nodes-base.airtable",
+      "position": [
+        20,
+        620
+      ],
+      "typeVersion": 2.1,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "4d9daf3c-31d5-4c7c-b3de-c07c35c7b0df",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.body.status }}",
+                    "rightValue": "=nieuwe-aanvraag-kwalificeren"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "d7cca0af-b19b-4a96-ad06-d190c3da756f",
+                    "operator": {
+                      "name": "filter.operator.equals",
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.body.status }}",
+                    "rightValue": "klant-data-bijwerken'"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "44cd9898-8e1c-4de3-af4e-fa825de1e704",
+                    "leftValue": "={{ $json.body.status }}",
+                    "rightValue": "klant-adviseren",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b51f7598-1156-49da-a455-f89566ec30c9",
+                    "leftValue": "={{ $json.body.status }}",
+                    "rightValue": "klant-adviseren-opvolgen",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "allMatchingOutputs": true
+        }
+      },
+      "id": "83b80e43-d835-4a0b-a3ee-9e9521d7714a",
+      "name": "Route based on call_status",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        -740,
+        720
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "content": "#Example note\n\nonderstaande als backup",
+        "height": 120,
+        "width": 200
+      },
+      "id": "cb082134-a2b1-4afa-84e8-d577abe41518",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        0,
+        260
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/api/leads/1/notes",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "comment",
+              "value": "=Dit is een notitie voor de lead - {{ $json.body.status }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        20,
+        440
+      ],
+      "id": "68180e55-9771-431c-8c46-3f61caa48708",
+      "name": "Add Note to lead"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=http://host.docker.internal:8000/api/leads/{{ $json.body.entity_id }}/stage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"lead_pipeline_stage_id\":2\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -420,
+        520
+      ],
+      "id": "758b1751-2b3f-489b-b3e4-981b0811acbc",
+      "name": "update status lead"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:8000/api/leads/{{ $json.body.entity_id }}/activities",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "meeting"
+            },
+            {
+              "name": "title",
+              "value": "Klant data bijwerken"
+            },
+            {
+              "name": "description",
+              "value": "1. Koppel contact persoon. 2. Werk eventueel NAV gegevens bij"
+            },
+            {
+              "name": "schedule_from",
+              "value": "={{ $now.format('yyyy-MM-dd hh:mm:ss') }}"
+            },
+            {
+              "name": "schedule_to",
+              "value": "={{ $now.plus(7, 'days').format('yyyy-MM-dd hh:mm:ss') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -420,
+        340
+      ],
+      "id": "4a42c9cd-501c-4a9c-9a2b-59887da02cff",
+      "name": "Add task - klant data bijwerken"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Route based on call_status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route based on call_status": {
+      "main": [
+        [
+          {
+            "node": "update status lead",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Add task - klant data bijwerken",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0b4cecbb-fd93-4b22-b22a-65e551bcca19",
+  "meta": {
+    "instanceId": "8d3e22640ea03faebf2e7f52d8406cd7615b83cdb309f1d4e35d0b03b1178db3"
+  },
+  "id": "DJ5nOZqGRB2ECqzt",
+  "tags": []
+}

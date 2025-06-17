@@ -20,15 +20,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Pint
-        run: composer global require laravel/pint
-        env:
-          COMPOSER_HOME: ${{ runner.temp }}/composer
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-versions }}
+          tools: composer
 
-      - name: Run Pint
-        run: ${{ runner.temp }}/composer/vendor/bin/pint
+      - name: Install Dependencies
+        run: composer install
+
+      - name: Run Duster
+        run: ./vendor/bin/duster lint --no-interaction || true
 
       - name: Commit Linted Files
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "chore: applied pint changes"
+          commit_message: "chore: applied duster changes"

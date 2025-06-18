@@ -9,6 +9,8 @@ use Webkul\Lead\Models\LeadProxy;
 use Webkul\Product\Models\ProductProxy;
 use Webkul\User\Models\UserProxy;
 use Webkul\Warehouse\Models\WarehouseProxy;
+use Webkul\User\Models\Group;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Activity extends Model implements ActivityContract
 {
@@ -51,6 +53,7 @@ class Activity extends Model implements ActivityContract
         'schedule_to',
         'is_done',
         'user_id',
+        'group_id',
     ];
 
     /**
@@ -107,5 +110,13 @@ class Activity extends Model implements ActivityContract
     public function warehouses()
     {
         return $this->belongsToMany(WarehouseProxy::modelClass(), 'warehouse_activities');
+    }
+
+    /**
+     * Get the group that is assigned to this activity.
+     */
+    public function group(): BelongsTo
+    {
+        return $this->belongsTo(Group::class);
     }
 }

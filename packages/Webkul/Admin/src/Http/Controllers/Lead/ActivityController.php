@@ -38,6 +38,7 @@ class ActivityController extends Controller
             'comment' => 'required_if:type,note',
             'description' => 'nullable|string',
             'user_id' => 'nullable|exists:users,id',
+            'group_id' => 'nullable|exists:groups,id',
             'schedule_from' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
             'schedule_to' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
             'file' => 'required_if:type,file',

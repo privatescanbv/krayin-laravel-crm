@@ -135,6 +135,24 @@
                                 <x-admin::activities.actions.activity.participants />
                             </x-admin::form.control-group>
 
+                            <!-- Group -->
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    @lang('admin::app.activities.group')
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="select"
+                                    name="group_id"
+                                    :value="old('group_id')"
+                                >
+                                    <option value="">{{ __('admin::app.activities.select-group') }}</option>
+                                    @foreach (app(Webkul\User\Repositories\GroupRepository::class)->all() as $group)
+                                        <option value="{{ $group->id }}">{{ $group->name }}</option>
+                                    @endforeach
+                                </x-admin::form.control-group.control>
+                            </x-admin::form.control-group>
+
                             <!-- Schedule Date -->
                             <div class="flex gap-4">
                                 <!-- Started From -->

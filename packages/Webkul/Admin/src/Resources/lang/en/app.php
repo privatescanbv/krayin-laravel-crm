@@ -1774,6 +1774,13 @@ return [
         'mass-update-success'  => 'Activities updated successfully.',
         'mass-destroy-success' => 'Activities deleted successfully.',
         'mass-delete-failed'   => 'Activities can not be deleted.',
+        'title' => 'Activities',
+        'create-title' => 'Create Activity',
+        'edit-title' => 'Edit Activity',
+        'group' => 'User group',
+        'select-group' => 'Select user group',
+        'delete-success' => 'Activity deleted successfully.',
+        'mass-delete-success' => 'Selected activities deleted successfully.',
     ],
 
     'mail' => [

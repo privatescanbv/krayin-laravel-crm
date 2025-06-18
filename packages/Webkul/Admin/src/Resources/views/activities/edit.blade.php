@@ -128,6 +128,25 @@
                             </div>
                         </v-multi-lookup-component>
                     </x-admin::form.control-group>
+                    <!-- Group -->
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            {{ __('admin::app.activities.group') }}
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="select"
+                            name="group_id"
+                            :value="old('group_id', $activity->group_id)"
+                        >
+                            <option value="">{{ __('admin::app.activities.select-group') }}</option>
+                            @foreach ($groups as $group)
+                                <option value="{{ $group->id }}" {{ $activity->group_id == $group->id ? 'selected' : '' }}>
+                                    {{ $group->name }}
+                                </option>
+                            @endforeach
+                        </x-admin::form.control-group.control>
+                    </x-admin::form.control-group>
 
                     <!-- Lead -->
                     <x-admin::form.control-group class="!mb-0">

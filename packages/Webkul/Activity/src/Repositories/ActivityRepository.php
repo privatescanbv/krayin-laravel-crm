@@ -3,6 +3,7 @@
 namespace Webkul\Activity\Repositories;
 
 use Illuminate\Container\Container;
+use Illuminate\Support\Facades\Log;
 use Webkul\Core\Eloquent\Repository;
 
 class ActivityRepository extends Repository
@@ -135,7 +136,16 @@ class ActivityRepository extends Repository
             ->where(function ($query) {
                 if ($userIds = bouncer()->getAuthorizedUserIds()) {
                     $query->whereIn('activities.user_id', $userIds)
-                        ->orWhereIn('activity_participants.user_id', $userIds);
+                        ->orWhereIn('activity_participants.user_id', $userIds)
+                        ->orWhere(function ($query) use ($userIds) {
+                            $query->whereNotNull('activities.group_id')
+                                ->whereExists(function ($query) use ($userIds) {
+                                    $query->select(\DB::raw(1))
+                                        ->from('user_groups')
+                                        ->whereColumn('user_groups.group_id', 'activities.group_id')
+                                        ->whereIn('user_groups.user_id', $userIds);
+                                });
+                        });
                 }
             })
             ->distinct()

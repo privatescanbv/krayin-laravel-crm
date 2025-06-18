@@ -19,6 +19,7 @@ use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\MassUpdateRequest;
 use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
+use Webkul\User\Repositories\GroupRepository;
 
 class ActivityController extends Controller
 {
@@ -58,7 +59,6 @@ class ActivityController extends Controller
         $endDate = request()->get('endDate')
             ? Carbon::createFromTimeString(request()->get('endDate').' 23:59:59')
             : Carbon::now()->endOfWeek()->format('Y-m-d H:i:s');
-
         $activities = $this->activityRepository->getActivities([$startDate, $endDate])->toArray();
 
         return response()->json([
@@ -131,11 +131,13 @@ class ActivityController extends Controller
     {
         $activity = $this->activityRepository->findOrFail($id);
 
+        $groups = app(GroupRepository::class)->all();
+
         $leadId = old('lead_id') ?? optional($activity->leads()->first())->id;
 
         $lookUpEntityData = $this->attributeRepository->getLookUpEntity('leads', $leadId);
 
-        return view('admin::activities.edit', compact('activity', 'lookUpEntityData'));
+        return view('admin::activities.edit', compact('activity', 'groups', 'lookUpEntityData'));
     }
 
     /**

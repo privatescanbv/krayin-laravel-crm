@@ -153,6 +153,51 @@ class AttributeSeeder extends Seeder
                 'created_at'      => $now,
                 'updated_at'      => $now,
             ],
+            [
+                'code'            => 'first_name',
+                'name'            => 'Voornaam',
+                'type'            => 'text',
+                'entity_type'     => 'leads',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => '11',
+                'is_required'     => '1',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ],
+            [
+                'code'            => 'last_name',
+                'name'            => 'Achternaam',
+                'type'            => 'text',
+                'entity_type'     => 'leads',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => '12',
+                'is_required'     => '1',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ],
+            [
+                'code'            => 'department',
+                'name'            => 'Afdeling',
+                'type'            => 'select',
+                'entity_type'     => 'leads',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => '13',
+                'is_required'     => '0',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ],
 
             /**
              * Persons Attributes
@@ -639,6 +684,22 @@ class AttributeSeeder extends Seeder
                 'is_user_defined' => '0',
                 'created_at'      => $now,
                 'updated_at'      => $now,
+            ],
+        ]);
+
+
+
+        // Add department options
+        DB::table('attribute_options')->insert([
+            [
+                'attribute_id' => DB::table('attributes')->where('code', 'department')->first()->id,
+                'name'         => 'Privatescan',
+                'sort_order'   => 1,
+            ],
+            [
+                'attribute_id' => DB::table('attributes')->where('code', 'department')->first()->id,
+                'name'         => 'Hernia',
+                'sort_order'   => 2,
             ],
         ]);
     }

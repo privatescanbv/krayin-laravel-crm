@@ -25,22 +25,23 @@ class SourceSeeder extends Seeder
         DB::table('lead_sources')->insert([
             [
                 'id'         => 1,
-                'name'       => trans('installer::app.seeders.lead.source.email', [], $defaultLocale),
+                'name'       => 'Tel. (074-2552680)',
                 'created_at' => $now,
                 'updated_at' => $now,
             ], [
+                // hernia
                 'id'         => 2,
-                'name'       => trans('installer::app.seeders.lead.source.web', [], $defaultLocale),
+                'name'       => 'Tel. (074-8200100)',
                 'created_at' => $now,
                 'updated_at' => $now,
             ], [
                 'id'         => 3,
-                'name'       => trans('installer::app.seeders.lead.source.web-form', [], $defaultLocale),
+                'name'       => 'Website: privatescan.nl',
                 'created_at' => $now,
                 'updated_at' => $now,
             ], [
                 'id'         => 4,
-                'name'       => trans('installer::app.seeders.lead.source.phone', [], $defaultLocale),
+                'name'       => 'Website: herniapoli.nl',
                 'created_at' => $now,
                 'updated_at' => $now,
             ], [

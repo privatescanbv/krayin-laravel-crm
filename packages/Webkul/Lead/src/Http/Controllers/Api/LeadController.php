@@ -70,12 +70,6 @@ class LeadController extends Controller
         foreach ($leadData as $key => $value) {
             request()->request->add([$key => $value]);
         }
-
-//        // Create LeadForm instance with required dependencies
-//        $leadForm = new LeadForm(
-//            $this->attributeRepository,
-//            $this->attributeValueRepository
-//        );
         $lead = $this->leadService->store($request);
 
         return response()->json([
@@ -99,24 +93,13 @@ class LeadController extends Controller
     /**
      * Update the specified lead in storage.
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(LeadForm $request, int $id): JsonResponse
     {
-        $this->validate($request, [
-            'title' => 'required',
-        ]);
+//        $this->validate($request, [
+//            'title' => 'required',
+//        ]);
 
-        // Set the data via the request
-        foreach ($request->all() as $key => $value) {
-            request()->request->add([$key => $value]);
-        }
-
-        // Create LeadForm instance with required dependencies
-        $leadForm = new LeadForm(
-            $this->attributeRepository,
-            $this->attributeValueRepository
-        );
-
-        $lead = $this->leadService->update($leadForm, $id);
+        $lead = $this->leadService->update($request, $id);
 
         return response()->json([
             'message' => 'Lead updated successfully.',
@@ -137,12 +120,6 @@ class LeadController extends Controller
         foreach ($request->all() as $key => $value) {
             request()->request->add([$key => $value]);
         }
-
-        // Create LeadForm instance with required dependencies
-        $leadForm = new LeadForm(
-            $this->attributeRepository,
-            $this->attributeValueRepository
-        );
 
         $lead = $this->leadService->updateStage($id);
 

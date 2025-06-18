@@ -13,6 +13,9 @@ use Webkul\EmailTemplate\Repositories\EmailTemplateRepository;
 use Webkul\Lead\Contracts\Lead as ContractsLead;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Tag\Repositories\TagRepository;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
+use Webkul\Attribute\Repositories\AttributeValueRepository;
 
 class Lead extends AbstractEntity
 {
@@ -34,7 +37,8 @@ class Lead extends AbstractEntity
         protected PersonRepository $personRepository,
         protected TagRepository $tagRepository,
         protected WebhookRepository $webhookRepository,
-        protected WebhookService $webhookService
+        protected WebhookService $webhookService,
+        protected AttributeValueRepository $attributeValueRepository
     ) {}
 
     /**
@@ -102,10 +106,12 @@ class Lead extends AbstractEntity
      */
     public function executeActions(mixed $workflow, mixed $lead): void
     {
+        Log::info('Executing workflows ..');
         foreach ($workflow->actions as $action) {
             switch ($action['id']) {
                 case 'update_lead':
-                    $this->leadRepository->update(
+                    Log::warning('workflow start, update_lead');
+                    $lead = $this->leadRepository->update(
                         [
                             'entity_type'        => 'leads',
                             $action['attribute'] => $action['value'],
@@ -113,6 +119,8 @@ class Lead extends AbstractEntity
                         $lead->id,
                         [$action['attribute']]
                     );
+
+                    Event::dispatch('lead.workflows.after', $lead);
 
                     break;
 

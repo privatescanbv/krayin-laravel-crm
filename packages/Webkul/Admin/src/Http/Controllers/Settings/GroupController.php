@@ -2,12 +2,15 @@
 
 namespace Webkul\Admin\Http\Controllers\Settings;
 
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
 use Webkul\Admin\DataGrids\Settings\GroupDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
+use Webkul\Admin\Http\Resources\GroupResource;
+use Webkul\User\Models\Group;
 use Webkul\User\Repositories\GroupRepository;
 
 class GroupController extends Controller
@@ -112,10 +115,24 @@ class GroupController extends Controller
             return new JsonResponse([
                 'message' => trans('admin::app.settings.groups.index.destroy-success'),
             ], 200);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return new JsonResponse([
                 'message' => trans('admin::app.settings.groups.index.delete-failed'),
             ], 400);
+        }
+    }
+
+    public function findByDepartment(string $departmentName)
+    {
+        $group = Group::query()
+            ->where('name', $departmentName)
+            ->first();
+        if ($group) {
+            return new GroupResource($group);
+        } else {
+            return new JsonResponse([
+                'message' => 'Group not found by ' . $departmentName,
+            ], 404);
         }
     }
 }

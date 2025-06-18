@@ -1,0 +1,17 @@
+<?php
+
+namespace App\Enums;
+
+enum WebhookType: string
+{
+    case LEAD_PIPELINE_STAGE_CHANGE = 'lead_pipeline_change';
+    case LEAD_ACTIVITY_IS_DONE = 'lead_activity_is_done';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::LEAD_PIPELINE_STAGE_CHANGE => 'lead pipeline stage change',
+            self::LEAD_ACTIVITY_IS_DONE      => 'Activity is done',
+        };
+    }
+}

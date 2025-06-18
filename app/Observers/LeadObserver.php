@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Enums\LeadPipelineStage;
+use App\Enums\WebhookType;
 use App\Services\WebhookService;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -59,7 +60,8 @@ class LeadObserver
             'entity_id'     => $lead->id,
             'status'        => $lead->stage->code,
             'workflow_type' => $lead->workflow_type,
-        ]);
+        ],
+            WebhookType::LEAD_PIPELINE_STAGE_CHANGE);
     }
 
     /**
@@ -73,7 +75,8 @@ class LeadObserver
                 'entity_id'     => $lead->id,
                 'status'        => $lead->stage->code,
                 'workflow_type' => $lead->workflow_type,
-            ]);
+            ],
+                WebhookType::LEAD_PIPELINE_STAGE_CHANGE);
         }
     }
 }

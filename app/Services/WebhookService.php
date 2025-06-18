@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\WebhookType;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -11,11 +12,14 @@ class WebhookService
     /**
      * Send a webhook notification with custom data.
      */
-    public function sendWebhook(array $data): bool
+    public function sendWebhook(array $data, WebhookType $webhookType): bool
     {
         try {
             Log::info('Send webhook', $data);
-            $response = Http::post(config('webhook.base_url'), array_merge($data, [
+
+            $url = $this->getWebhookUrl($webhookType);
+
+            $response = Http::post($url, array_merge($data, [
                 'timestamp' => now()->toIso8601String(),
             ]));
 
@@ -39,5 +43,18 @@ class WebhookService
 
             return false;
         }
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function getWebhookUrl(WebhookType $webhookType): string
+    {
+        $endpoint = config('webhook.endpoints')[$webhookType->value] ?? null;
+        if (! $endpoint) {
+            throw new Exception("Webhook endpoint not configured for type: {$webhookType->value}");
+        }
+
+        return config('webhook.base_url').$endpoint;
     }
 }

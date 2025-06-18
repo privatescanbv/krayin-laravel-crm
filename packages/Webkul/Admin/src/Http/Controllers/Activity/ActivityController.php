@@ -2,6 +2,8 @@
 
 namespace Webkul\Admin\Http\Controllers\Activity;
 
+use App\Enums\WebhookType;
+use App\Services\WebhookService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Event;
@@ -29,6 +31,7 @@ class ActivityController extends Controller
         protected ActivityRepository $activityRepository,
         protected FileRepository $fileRepository,
         protected AttributeRepository $attributeRepository,
+        protected WebhookService $webhookService,
     ) {}
 
     /**
@@ -159,6 +162,23 @@ class ActivityController extends Controller
             );
         }
 
+        // Send webhook if activity is marked as done
+        if (isset($data['is_done']) && $data['is_done']) {
+            $this->webhookService->sendWebhook([
+                'type' => WebhookType::LEAD_ACTIVITY_IS_DONE->value,
+                'activity' => [
+                    'id' => $activity->id,
+                    'type' => $activity->type,
+                    'title' => $activity->title,
+                    'comment' => $activity->comment,
+                    'schedule_from' => $activity->schedule_from,
+                    'schedule_to' => $activity->schedule_to,
+                    'lead_id' => $activity->leads()->first()?->id,
+                ],
+            ],
+                WebhookType::LEAD_ACTIVITY_IS_DONE);
+        }
+
         Event::dispatch('activity.update.after', $activity);
 
         if (request()->ajax()) {
@@ -186,6 +206,23 @@ class ActivityController extends Controller
             $activity = $this->activityRepository->update([
                 'is_done' => $massUpdateRequest->input('value'),
             ], $activity->id);
+
+            // Send webhook if activity is marked as done
+            if ($massUpdateRequest->input('value')) {
+                $this->webhookService->sendWebhook([
+                    'type' => WebhookType::LEAD_ACTIVITY_IS_DONE->value,
+                    'activity' => [
+                        'id' => $activity->id,
+                        'type' => $activity->type,
+                        'title' => $activity->title,
+                        'comment' => $activity->comment,
+                        'schedule_from' => $activity->schedule_from,
+                        'schedule_to' => $activity->schedule_to,
+                        'lead_id' => $activity->leads()->first()?->id,
+                    ],
+                ],
+                    WebhookType::LEAD_ACTIVITY_IS_DONE);
+            }
 
             Event::dispatch('activity.update.after', $activity);
         }

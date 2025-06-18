@@ -1,5 +1,7 @@
 <?php
 
+use Webklex\PHPIMAP\IMAP;
+
 return [
 
     /*
@@ -110,8 +112,8 @@ return [
     */
     'options' => [
         'delimiter'   => '/',
-        'fetch'       => \Webklex\PHPIMAP\IMAP::FT_PEEK,
-        'sequence'    => \Webklex\PHPIMAP\IMAP::ST_UID,
+        'fetch'       => IMAP::FT_PEEK,
+        'sequence'    => IMAP::ST_UID,
         'fetch_body'  => true,
         'fetch_flags' => true,
         'soft_fail'   => false,

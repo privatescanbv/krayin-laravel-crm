@@ -3,22 +3,6 @@
   "nodes": [
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "0de7745d-64c8-410b-9d23-f98f4b9c3787",
-        "options": {}
-      },
-      "id": "2abeb3dd-f3e2-42be-81fd-515b18ec89f1",
-      "name": "Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "position": [
-        -960,
-        720
-      ],
-      "webhookId": "0de7745d-64c8-410b-9d23-f98f4b9c3787",
-      "typeVersion": 2
-    },
-    {
-      "parameters": {
         "operation": "upsert",
         "base": {
           "__rl": true,
@@ -241,8 +225,8 @@
       "name": "Update CRM contact with call_status COMPLETED",
       "type": "n8n-nodes-base.airtable",
       "position": [
-        20,
-        620
+        520,
+        680
       ],
       "typeVersion": 2.1,
       "disabled": true
@@ -271,7 +255,9 @@
                   }
                 ],
                 "combinator": "and"
-              }
+              },
+              "renameOutput": true,
+              "outputKey": "nieuwe-aanvraag-kwalificeren"
             },
             {
               "conditions": {
@@ -290,11 +276,13 @@
                       "operation": "equals"
                     },
                     "leftValue": "={{ $json.body.status }}",
-                    "rightValue": "klant-data-bijwerken'"
+                    "rightValue": "klant-data-bijwerken"
                   }
                 ],
                 "combinator": "and"
-              }
+              },
+              "renameOutput": true,
+              "outputKey": "klant-data-bijwerken"
             },
             {
               "conditions": {
@@ -317,7 +305,9 @@
                   }
                 ],
                 "combinator": "and"
-              }
+              },
+              "renameOutput": true,
+              "outputKey": "klant-adviseren"
             },
             {
               "conditions": {
@@ -340,7 +330,9 @@
                   }
                 ],
                 "combinator": "and"
-              }
+              },
+              "renameOutput": true,
+              "outputKey": "klant-adviseren-opvolgen"
             }
           ]
         },
@@ -352,8 +344,8 @@
       "name": "Route based on call_status",
       "type": "n8n-nodes-base.switch",
       "position": [
-        -740,
-        720
+        -720,
+        500
       ],
       "typeVersion": 3.2
     },
@@ -367,7 +359,7 @@
       "name": "Sticky Note1",
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        0,
+        520,
         260
       ],
       "typeVersion": 1
@@ -390,7 +382,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        20,
+        520,
         440
       ],
       "id": "68180e55-9771-431c-8c46-3f61caa48708",
@@ -398,26 +390,8 @@
     },
     {
       "parameters": {
-        "method": "PATCH",
-        "url": "=http://host.docker.internal:8000/api/leads/{{ $json.body.entity_id }}/stage",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "{\n  \"lead_pipeline_stage_id\":2\n}\n",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        -420,
-        520
-      ],
-      "id": "758b1751-2b3f-489b-b3e4-981b0811acbc",
-      "name": "update status lead"
-    },
-    {
-      "parameters": {
         "method": "POST",
-        "url": "=http://host.docker.internal:8000/api/leads/{{ $json.body.entity_id }}/activities",
+        "url": "=http://host.docker.internal:8000/api/leads/{{ $json.lead_id }}/activities",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -440,6 +414,10 @@
             {
               "name": "schedule_to",
               "value": "={{ $now.plus(7, 'days').format('yyyy-MM-dd hh:mm:ss') }}"
+            },
+            {
+              "name": "group_id",
+              "value": "={{ $json.group_id }}"
             }
           ]
         },
@@ -448,16 +426,300 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -420,
-        340
+        160,
+        880
       ],
       "id": "4a42c9cd-501c-4a9c-9a2b-59887da02cff",
       "name": "Add task - klant data bijwerken"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=http://host.docker.internal:8000/api/leads/{{ $json.lead_id }}/stage",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "lead_pipeline_stage_id",
+              "value": "={{ $json.newLeadStatusId }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -280,
+        360
+      ],
+      "id": "758b1751-2b3f-489b-b3e4-981b0811acbc",
+      "name": "Update status lead"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "0de7745d-64c8-410b-9d23-f98f4b9c3787",
+        "options": {}
+      },
+      "id": "2abeb3dd-f3e2-42be-81fd-515b18ec89f1",
+      "name": "Webhook - lead status change",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        -1020,
+        600
+      ],
+      "webhookId": "0de7745d-64c8-410b-9d23-f98f4b9c3787",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "4d9daf3c-31d5-4c7c-b3de-c07c35c7b0df",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "leftValue": "={{ $json.body.activity.title }}",
+                    "rightValue": "=Klant data bijwerken"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "klant data bijwerken -> done"
+            }
+          ]
+        },
+        "options": {
+          "allMatchingOutputs": true
+        }
+      },
+      "id": "74ddd2ea-d786-418d-9cec-ad09325bef64",
+      "name": "Route on task title",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        -840,
+        900
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  return {\n    json: {\n      ...item.json,\n      newLeadStatusId: 3,\n      lead_id: item.json.body.activity.lead_id\n    }\n  };\n});\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -600,
+        900
+      ],
+      "id": "78f21426-f460-4184-94da-93b839afd6c2",
+      "name": "newLeadStatusId 3"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "7dd5d03e-3f85-493d-a589-01fb66f7b210",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1020,
+        900
+      ],
+      "id": "4da7c2bb-e58c-425e-98d7-51f4551188c8",
+      "name": "Webhook",
+      "webhookId": "7dd5d03e-3f85-493d-a589-01fb66f7b210"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => {\n  return {\n    json: {\n      ...item.json,\n      newLeadStatusId: 2,\n      lead_id: item.json.body.entity_id,\n      source_code_id: item.json.source_code_id\n    }\n  };\n});\nreturn $input.all();"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        360
+      ],
+      "id": "af47da6a-ceff-4bc4-b8de-c56910c97c91",
+      "name": "department"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "af450eaa-fd20-4007-ba69-1abf085a7c1d",
+              "leftValue": "={{ $json.body.department }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -880,
+        600
+      ],
+      "id": "0717999e-4d4c-40a9-bd1a-7851679e9876",
+      "name": "department not null"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        880
+      ],
+      "id": "c4200c02-c75d-4134-b9e7-3c0966c74d7c",
+      "name": "department1"
+    },
+    {
+      "parameters": {
+        "url": "=http://host.docker.internal:8000/api/groups/byDepartment/{{$json.body.department}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -280,
+        980
+      ],
+      "id": "f8ece683-245c-45da-a3e1-6ed810d92566",
+      "name": "Find group by Department"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -140,
+        880
+      ],
+      "id": "214b14fd-58d2-4019-b277-317ff682b961",
+      "name": "Merge"
     }
   ],
   "pinData": {},
   "connections": {
+    "Route based on call_status": {
+      "main": [
+        [
+          {
+            "node": "department",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Find group by Department",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update status lead": {
+      "main": [
+        []
+      ]
+    },
+    "Webhook - lead status change": {
+      "main": [
+        [
+          {
+            "node": "department not null",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route on task title": {
+      "main": [
+        [
+          {
+            "node": "newLeadStatusId 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "newLeadStatusId 3": {
+      "main": [
+        [
+          {
+            "node": "Update status lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Route on task title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "department": {
+      "main": [
+        [
+          {
+            "node": "Update status lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "department not null": {
       "main": [
         [
           {
@@ -468,14 +730,9 @@
         ]
       ]
     },
-    "Route based on call_status": {
+    "department1": {
       "main": [
         [
-          {
-            "node": "update status lead",
-            "type": "main",
-            "index": 0
-          },
           {
             "node": "Add task - klant data bijwerken",
             "type": "main",
@@ -483,13 +740,35 @@
           }
         ]
       ]
+    },
+    "Find group by Department": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "department1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "0b4cecbb-fd93-4b22-b22a-65e551bcca19",
+  "versionId": "774ae7a6-75b4-4402-8d37-f6f82dac9a51",
   "meta": {
     "instanceId": "8d3e22640ea03faebf2e7f52d8406cd7615b83cdb309f1d4e35d0b03b1178db3"
   },

@@ -262,31 +262,6 @@
             {
               "conditions": {
                 "options": {
-                  "version": 2,
-                  "leftValue": "",
-                  "caseSensitive": true,
-                  "typeValidation": "strict"
-                },
-                "conditions": [
-                  {
-                    "id": "d7cca0af-b19b-4a96-ad06-d190c3da756f",
-                    "operator": {
-                      "name": "filter.operator.equals",
-                      "type": "string",
-                      "operation": "equals"
-                    },
-                    "leftValue": "={{ $json.body.status }}",
-                    "rightValue": "klant-data-bijwerken"
-                  }
-                ],
-                "combinator": "and"
-              },
-              "renameOutput": true,
-              "outputKey": "klant-data-bijwerken"
-            },
-            {
-              "conditions": {
-                "options": {
                   "caseSensitive": true,
                   "leftValue": "",
                   "typeValidation": "strict",
@@ -517,7 +492,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return $input.all().map(item => {\n  return {\n    json: {\n      ...item.json,\n      newLeadStatusId: 3,\n      lead_id: item.json.body.activity.lead_id\n    }\n  };\n});\nreturn $input.all();"
+        "jsCode": "return $input.all().map(item => {\n  return {\n    json: {\n      ...item.json,\n      newLeadStatusId: 2,\n      lead_id: item.json.body.activity.lead_id\n    }\n  };\n});\nreturn $input.all();"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -530,7 +505,7 @@
     },
     {
       "parameters": {
-        "jsCode": "return $input.all().map(item => {\n  return {\n    json: {\n      ...item.json,\n      newLeadStatusId: 2,\n      lead_id: item.json.body.entity_id,\n      source_code_id: item.json.source_code_id\n    }\n  };\n});\nreturn $input.all();"
+        "jsCode": "return $input.all().map(item => {\n  return {\n    json: {\n      ...item.json,\n      newLeadStatusId: 1,\n      lead_id: item.json.body.entity_id,\n      source_code_id: item.json.source_code_id\n    }\n  };\n});\nreturn $input.all();"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -634,6 +609,94 @@
       "id": "4da7c2bb-e58c-425e-98d7-51f4551188c8",
       "name": "Webhook - task done",
       "webhookId": "7dd5d03e-3f85-493d-a589-01fb66f7b210"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://host.docker.internal:8000/api/leads/{{ $json.lead_id }}/activities",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "meeting"
+            },
+            {
+              "name": "title",
+              "value": "Klant bellen voor advies"
+            },
+            {
+              "name": "description",
+              "value": "1. Adviseer de klant en koppel dit terug in het systeem. Zet de taak op down, zodra: 1. .. 2.. "
+            },
+            {
+              "name": "schedule_from",
+              "value": "={{ $now.format('yyyy-MM-dd hh:mm:ss') }}"
+            },
+            {
+              "name": "schedule_to",
+              "value": "={{ $now.plus(7, 'days').format('yyyy-MM-dd hh:mm:ss') }}"
+            },
+            {
+              "name": "group_id",
+              "value": "={{ $json.group_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        340,
+        1200
+      ],
+      "id": "41516c1b-2f53-407a-bf79-140ab60c9097",
+      "name": "Add task - klant data bijwerken1"
+    },
+    {
+      "parameters": {
+        "url": "=http://host.docker.internal:8000/api/groups/byDepartment/{{$json.body.department}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -180,
+        1300
+      ],
+      "id": "9132ae60-1e97-45b1-9913-d1c5e7f8fed5",
+      "name": "Find group by Department1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -40,
+        1200
+      ],
+      "id": "326cb33b-e005-496b-9d8c-76bcfbd19b94",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        140,
+        1200
+      ],
+      "id": "b9341028-9c3c-4027-b3b9-eb18d39452cc",
+      "name": "set lead_id and group_id1"
     }
   ],
   "pinData": {},
@@ -653,6 +716,18 @@
           },
           {
             "node": "Find group by Department",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Find group by Department1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
             "type": "main",
             "index": 0
           }
@@ -762,13 +837,46 @@
           }
         ]
       ]
+    },
+    "Find group by Department1": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "set lead_id and group_id1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set lead_id and group_id1": {
+      "main": [
+        [
+          {
+            "node": "Add task - klant data bijwerken1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "4e16bc6a-39b0-4a30-94c9-1effecf51610",
+  "versionId": "3af27d1c-e9fa-4245-a2e3-032448c6aa93",
   "meta": {
     "instanceId": "8d3e22640ea03faebf2e7f52d8406cd7615b83cdb309f1d4e35d0b03b1178db3"
   },

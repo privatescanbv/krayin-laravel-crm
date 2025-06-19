@@ -34,48 +34,42 @@ class PipelineSeeder extends Seeder
             ],
         ]);
 
+        $stageId = 0;
         DB::table('lead_pipeline_stages')->insert($data = [
             [
-                'id'               => 1,
+                'id'               => ++$stageId,
                 'code'             => 'nieuwe-aanvraag-kwalificeren',
                 'name'             => 'Nieuwe aanvraag kwalificeren',
                 'probability'      => 100,
-                'sort_order'       => 1,
+                'sort_order'       => $stageId,
                 'lead_pipeline_id' => 1,
-            ], [
-                'id'               => 2,
-                'code'             => 'klant-data-bijwerken',
-                'name'             => 'Klant data bijwerken',
-                'probability'      => 100,
-                'sort_order'       => 2,
-                'lead_pipeline_id' => 1,
-            ], [
-                'id'               => 3,
+            ],[
+                'id'               => ++$stageId,
                 'code'             => 'klant-adviseren',
                 'name'             => 'Klant adviseren',
                 'probability'      => 100,
-                'sort_order'       => 3,
+                'sort_order'       => $stageId,
                 'lead_pipeline_id' => 1,
             ], [
-                'id'               => 4,
+                'id'               => ++$stageId,
                 'code'             => 'klant-adviseren-opvolgen',
                 'name'             => 'Klant adviseren opvolgen',
                 'probability'      => 100,
-                'sort_order'       => 4,
+                'sort_order'       => $stageId,
                 'lead_pipeline_id' => 1,
             ], [
-                'id'               => 5,
+                'id'               => ++$stageId,
                 'code'             => 'won',
                 'name'             => trans('installer::app.seeders.lead.pipeline.pipeline-stages.won', [], $defaultLocale),
                 'probability'      => 100,
-                'sort_order'       => 5,
+                'sort_order'       => $stageId,
                 'lead_pipeline_id' => 1,
             ], [
-                'id'               => 6,
+                'id'               => ++$stageId,
                 'code'             => 'lost',
                 'name'             => trans('installer::app.seeders.lead.pipeline.pipeline-stages.lost', [], $defaultLocale),
                 'probability'      => 0,
-                'sort_order'       => 6,
+                'sort_order'       => $stageId,
                 'lead_pipeline_id' => 1,
             ],
         ]);

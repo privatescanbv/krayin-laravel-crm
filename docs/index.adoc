@@ -347,9 +347,7 @@ actor Patiënt
 tel_website -> Workflow : Nieuwe lead aanmaken
 Workflow -> Workflow : Afdeling bepalen (op basis van telefoonnummer / website)
 Workflow -> Workflow : Pipeline stage = "nieuwe-aanvraag-kwalificeren"
-Workflow -> Workflow : Genereer workflow (gebaseerd op afdeling)
 
-Workflow -> Workflow : Update pipeline stage naar "klant-data-bijwerken"
 Workflow -> Medewerker : Actie: Koppel contactpersoon
 
 Medewerker -> Workflow : Koppeling uitgevoerd

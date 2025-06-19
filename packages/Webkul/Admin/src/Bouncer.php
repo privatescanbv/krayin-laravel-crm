@@ -47,6 +47,10 @@ class Bouncer
     {
         $user = auth()->guard('user')->user();
 
+        if (!$user) {
+            return null;
+        }
+
         if ($user->view_permission == 'global') {
             return null;
         }

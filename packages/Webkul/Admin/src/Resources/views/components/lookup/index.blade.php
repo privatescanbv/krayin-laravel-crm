@@ -1,7 +1,7 @@
 <v-lookup {{ $attributes }}></v-lookup>
 
 @pushOnce('scripts')
-    <script 
+    <script
         type="text/x-template"
         id="v-lookup-template"
     >
@@ -17,24 +17,24 @@
                 <!-- Input Container -->
                 <div class="relative flex cursor-pointer items-center justify-between rounded border border-gray-200 p-2 hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:text-gray-300">
                     <!-- Selected Item or Placeholder Text -->
-                    <span 
+                    <span
                         class="overflow-hidden text-ellipsis"
                         :title="selectedItem?.name"
                     >
                         @{{ selectedItem?.name !== "" ? selectedItem?.name : "@lang('admin::app.components.lookup.click-to-add')" }}
                     </span>
-                    
+
                     <!-- Icons Container -->
                     <div class="flex items-center gap-2">
                         <!-- Close Icon -->
-                        <i 
+                        <i
                             v-if="(selectedItem?.name) && ! isSearching"
                             class="icon-cross-large cursor-pointer text-xl text-gray-600"
                             @click="remove"
                         ></i>
-                
+
                         <!-- Arrow Icon -->
-                        <i 
+                        <i
                             class="text-2xl text-gray-600"
                             :class="showPopup ? 'icon-up-arrow' : 'icon-down-arrow'"
                         ></i>
@@ -52,8 +52,8 @@
             />
 
             <!-- Popup Box -->
-            <div 
-                v-if="showPopup" 
+            <div
+                v-if="showPopup"
                 class="absolute top-full z-10 mt-1 flex w-full origin-top transform flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800"
             >
                 <!-- Search Bar -->
@@ -62,28 +62,37 @@
                         type="text"
                         v-model.lazy="searchTerm"
                         v-debounce="500"
-                        class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400" 
+                        class="w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
                         placeholder="@lang('admin::app.components.lookup.search')"
                         ref="searchInput"
                         @keyup="search"
                     />
 
                     <!-- Search Icon (absolute positioned) -->
-                    <span class="absolute flex items-center ltr:right-2 rtl:left-2">                
+                    <span class="absolute flex items-center ltr:right-2 rtl:left-2">
                         <!-- Loader (optional, based on condition) -->
                         <div
                             class="relative"
                             v-if="isSearching"
                         >
-                            <x-admin::spinner />
+                             <x-admin::spinner />
                         </div>
                     </span>
                 </div>
-        
+
                 <!-- Results List -->
                 <ul class="max-h-40 divide-y divide-gray-100 overflow-y-auto">
-                    <li 
-                        v-for="item in filteredResults" 
+                    <!-- Loading State -->
+                    <li
+                        v-if="isSearching && searchTerm.length > 2"
+                        class="px-4 py-2 text-gray-500 flex items-center gap-2"
+                    >
+                        <div class="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-blue-600"></div>
+                        @lang('admin::app.components.lookup.searching')
+                    </li>
+
+                    <li
+                        v-for="item in filteredResults"
                         :key="item.id"
                         class="cursor-pointer px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900"
                         @click="selectItem(item)"
@@ -91,7 +100,7 @@
                         @{{ item.name }}
                     </li>
 
-                    <template v-if="filteredResults.length === 0">
+                    <template v-if="filteredResults.length === 0 && !isSearching">
                         <li class="px-4 py-2 text-gray-500">
                             @lang('admin::app.components.lookup.no-results')
                         </li>
@@ -198,20 +207,20 @@
             computed: {
                 /**
                  * Filter the searchedResults based on the search query.
-                 * 
+                 *
                  * @return {Array}
                  */
                 filteredResults() {
-                    return this.searchedResults.filter(item => 
+                    return this.searchedResults.filter(item =>
                         item.name.toLowerCase().includes(this.searchTerm.toLowerCase())
                     );
                 }
             },
-            
+
             methods: {
                 /**
                  * Toggle the popup.
-                 * 
+                 *
                  * @return {void}
                  */
                 toggle() {
@@ -224,9 +233,9 @@
 
                 /**
                  * Select an item from the list.
-                 * 
+                 *
                  * @param {Object} item
-                 * 
+                 *
                  * @return {void}
                  */
                 selectItem(item) {
@@ -241,7 +250,7 @@
 
                 /**
                  * Initialize the items.
-                 * 
+                 *
                  * @return {void}
                  */
                 search() {
@@ -262,11 +271,11 @@
                     this.cancelToken = this.$axios.CancelToken.source();
 
                     this.$axios.get(this.src, {
-                            params: { 
+                            params: {
                                 ...this.params,
                                 query: this.searchTerm
                             },
-                            cancelToken: this.cancelToken.token, 
+                            cancelToken: this.cancelToken.token,
                         })
                         .then(response => {
                             this.searchedResults = response.data.data;
@@ -283,16 +292,16 @@
 
                 /**
                  * Handle the focus out event.
-                 * 
+                 *
                  * @param {Event} event
-                 * 
+                 *
                  * @return {void}
                  */
                 handleFocusOut(event) {
                     const lookup = this.$refs.lookup;
 
                     if (
-                        lookup && 
+                        lookup &&
                         ! lookup.contains(event.target)
                     ) {
                         this.showPopup = false;
@@ -301,7 +310,7 @@
 
                 /**
                  * Remove the selected item.
-                 * 
+                 *
                  * @return {void}
                  */
                 remove() {

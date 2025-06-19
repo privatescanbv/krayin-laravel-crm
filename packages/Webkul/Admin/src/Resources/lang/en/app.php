@@ -411,6 +411,7 @@ return [
             'no-results'   => 'No Results Found',
             'add-as-new'   => 'Add as New',
             'search'       => 'Search...',
+            'searching'    => 'Searching...',
         ],
 
         'flash-group' => [

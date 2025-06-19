@@ -2,6 +2,7 @@
 
 namespace Webkul\Installer\Database\Seeders\Attribute;
 
+use App\Enums\PersonAttributeKeys;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +12,7 @@ class AttributeSeeder extends Seeder
     /**
      * Seed the application's database.
      *
+     * Note: code needs to be unique over alle entity types!
      * @param  array  $parameters
      * @return void
      */
@@ -22,6 +24,7 @@ class AttributeSeeder extends Seeder
 
         $defaultLocale = $parameters['locale'] ?? config('app.locale');
 
+        $personSortNumber = 0;
         DB::table('attributes')->insert([
             /**
              * Leads Attributes
@@ -203,13 +206,69 @@ class AttributeSeeder extends Seeder
              * Persons Attributes
              */
             [
-                'code'            => 'name',
-                'name'            => trans('installer::app.seeders.attributes.persons.name', [], $defaultLocale),
+                'code'            => PersonAttributeKeys::FIRST_NAME->value,
+                'name'            => 'Voornaam',
                 'type'            => 'text',
                 'entity_type'     => 'persons',
                 'lookup_type'     => null,
                 'validation'      => null,
-                'sort_order'      => '1',
+                'sort_order'      => ++$personSortNumber,
+                'is_required'     => '0',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ], [
+                'code'            => PersonAttributeKeys::NICKNAME->value,
+                'name'            => 'Roepnaam',
+                'type'            => 'text',
+                'entity_type'     => 'persons',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => ++$personSortNumber,
+                'is_required'     => '0',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ], [
+                'code'            => PersonAttributeKeys::INITIALS->value,
+                'name'            => 'Initialen',
+                'type'            => 'text',
+                'entity_type'     => 'persons',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => ++$personSortNumber,
+                'is_required'     => '0',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ],[
+                'code'            => PersonAttributeKeys::LAST_NAME_PREFIX->value,
+                'name'            => 'Tussenvoegsel (achternaam)',
+                'type'            => 'text',
+                'entity_type'     => 'persons',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => ++$personSortNumber,
+                'is_required'     => '0',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ], [
+                'code'            => PersonAttributeKeys::LAST_NAME->value,
+                'name'            => 'Achternaam',
+                'type'            => 'text',
+                'entity_type'     => 'persons',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => ++$personSortNumber,
                 'is_required'     => '1',
                 'is_unique'       => '0',
                 'quick_add'       => '1',
@@ -217,13 +276,153 @@ class AttributeSeeder extends Seeder
                 'created_at'      => $now,
                 'updated_at'      => $now,
             ], [
-                'code'            => 'emails',
+                'code'            => PersonAttributeKeys::MAIDEN_NAME->value,
+                'name'            => 'Meisjesnaam',
+                'type'            => 'text',
+                'entity_type'     => 'persons',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => ++$personSortNumber,
+                'is_required'     => '0',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ], [
+                'code'            => PersonAttributeKeys::MAIDEN_NAME_PREFIX->value,
+                'name'            => 'Tussenvoegsel (meisjesnaam)',
+                'type'            => 'text',
+                'entity_type'     => 'persons',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => ++$personSortNumber,
+                'is_required'     => '0',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ], [
+                'code'            => PersonAttributeKeys::GENDER->value,
+                'name'            => 'Geslacht',
+                'type'            => 'select',
+                'entity_type'     => 'persons',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => ++$personSortNumber,
+                'is_required'     => '0',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ], [
+                'code'            => PersonAttributeKeys::BIRTH_DATE->value,
+                'name'            => 'Geboortedatum',
+                'type'            => 'date',
+                'entity_type'     => 'persons',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => ++$personSortNumber,
+                'is_required'     => '0',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ], [
+                'code'            => PersonAttributeKeys::STREET->value,
+                'name'            => 'Straat',
+                'type'            => 'text',
+                'entity_type'     => 'persons',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => ++$personSortNumber,
+                'is_required'     => '0',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ], [
+                'code'            => PersonAttributeKeys::HOUSE_NUMBER->value,
+                'name'            => 'Huisnummer',
+                'type'            => 'text',
+                'entity_type'     => 'persons',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => ++$personSortNumber,
+                'is_required'     => '0',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ], [
+                'code'            => PersonAttributeKeys::POSTAL_CODE->value,
+                'name'            => 'Postcode',
+                'type'            => 'text',
+                'entity_type'     => 'persons',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => ++$personSortNumber,
+                'is_required'     => '0',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ], [
+                'code'            => PersonAttributeKeys::CITY->value,
+                'name'            => 'Plaats',
+                'type'            => 'text',
+                'entity_type'     => 'persons',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => ++$personSortNumber,
+                'is_required'     => '0',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ], [
+                'code'            => PersonAttributeKeys::PROVINCE->value,
+                'name'            => 'Provincie',
+                'type'            => 'text',
+                'entity_type'     => 'persons',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => ++$personSortNumber,
+                'is_required'     => '0',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ], [
+                'code'            => PersonAttributeKeys::COUNTRY->value,
+                'name'            => 'Land',
+                'type'            => 'text',
+                'entity_type'     => 'persons',
+                'lookup_type'     => null,
+                'validation'      => null,
+                'sort_order'      => ++$personSortNumber,
+                'is_required'     => '0',
+                'is_unique'       => '0',
+                'quick_add'       => '1',
+                'is_user_defined' => '0',
+                'created_at'      => $now,
+                'updated_at'      => $now,
+            ], [
+                'code'            => PersonAttributeKeys::EMAILS->value,
                 'name'            => trans('installer::app.seeders.attributes.persons.emails', [], $defaultLocale),
                 'type'            => 'email',
                 'entity_type'     => 'persons',
                 'lookup_type'     => null,
                 'validation'      => null,
-                'sort_order'      => '2',
+                'sort_order'      => ++$personSortNumber,
                 'is_required'     => '1',
                 'is_unique'       => '1',
                 'quick_add'       => '1',
@@ -231,13 +430,13 @@ class AttributeSeeder extends Seeder
                 'created_at'      => $now,
                 'updated_at'      => $now,
             ], [
-                'code'            => 'contact_numbers',
+                'code'            => PersonAttributeKeys::CONTACT_NUMBERS->value,
                 'name'            => trans('installer::app.seeders.attributes.persons.contact-numbers', [], $defaultLocale),
                 'type'            => 'phone',
                 'entity_type'     => 'persons',
                 'lookup_type'     => null,
                 'validation'      => 'numeric',
-                'sort_order'      => '3',
+                'sort_order'      => ++$personSortNumber,
                 'is_required'     => '0',
                 'is_unique'       => '1',
                 'quick_add'       => '1',
@@ -245,13 +444,13 @@ class AttributeSeeder extends Seeder
                 'created_at'      => $now,
                 'updated_at'      => $now,
             ], [
-                'code'            => 'job_title',
+                'code'            => PersonAttributeKeys::JOB_TITLE->value,
                 'name'            => trans('installer::app.seeders.attributes.persons.job-title', [], $defaultLocale),
                 'type'            => 'text',
                 'entity_type'     => 'persons',
                 'lookup_type'     => null,
                 'validation'      => null,
-                'sort_order'      => '4',
+                'sort_order'      => ++$personSortNumber,
                 'is_required'     => '0',
                 'is_unique'       => '0',
                 'quick_add'       => '1',
@@ -259,13 +458,13 @@ class AttributeSeeder extends Seeder
                 'created_at'      => $now,
                 'updated_at'      => $now,
             ], [
-                'code'            => 'user_id',
+                'code'            => PersonAttributeKeys::USER_ID->value,
                 'name'            => trans('installer::app.seeders.attributes.persons.sales-owner', [], $defaultLocale),
                 'type'            => 'lookup',
                 'entity_type'     => 'persons',
                 'lookup_type'     => 'users',
                 'validation'      => null,
-                'sort_order'      => '5',
+                'sort_order'      => ++$personSortNumber,
                 'is_required'     => '0',
                 'is_unique'       => '0',
                 'quick_add'       => '1',
@@ -273,13 +472,13 @@ class AttributeSeeder extends Seeder
                 'created_at'      => $now,
                 'updated_at'      => $now,
             ], [
-                'code'            => 'organization_id',
+                'code'            => PersonAttributeKeys::ORGANIZATION_ID->value,
                 'name'            => trans('installer::app.seeders.attributes.persons.organization', [], $defaultLocale),
                 'type'            => 'lookup',
                 'entity_type'     => 'persons',
                 'lookup_type'     => 'organizations',
                 'validation'      => null,
-                'sort_order'      => '6',
+                'sort_order'      => ++$personSortNumber,
                 'is_required'     => '0',
                 'is_unique'       => '0',
                 'quick_add'       => '1',
@@ -687,8 +886,6 @@ class AttributeSeeder extends Seeder
             ],
         ]);
 
-
-
         // Add department options
         DB::table('attribute_options')->insert([
             [
@@ -700,6 +897,25 @@ class AttributeSeeder extends Seeder
                 'attribute_id' => DB::table('attributes')->where('code', 'department')->first()->id,
                 'name'         => 'Hernia',
                 'sort_order'   => 2,
+            ],
+        ]);
+
+        // Add gender options
+        DB::table('attribute_options')->insert([
+            [
+                'attribute_id' => DB::table('attributes')->where('code', PersonAttributeKeys::GENDER->value)->first()->id,
+                'name'         => 'Man',
+                'sort_order'   => 1,
+            ],
+            [
+                'attribute_id' => DB::table('attributes')->where('code', PersonAttributeKeys::GENDER->value)->first()->id,
+                'name'         => 'Vrouw',
+                'sort_order'   => 2,
+            ],
+            [
+                'attribute_id' => DB::table('attributes')->where('code', PersonAttributeKeys::GENDER->value)->first()->id,
+                'name'         => 'Anders',
+                'sort_order'   => 3,
             ],
         ]);
     }

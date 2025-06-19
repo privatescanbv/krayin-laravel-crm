@@ -53,10 +53,6 @@
                         'entity_type' => 'persons',
                     ])"
                     :custom-validations="[
-                        'name' => [
-                            'min:2',
-                            'max:100',
-                        ],
                         'job_title' => [
                             'max:100',
                         ],

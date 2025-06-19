@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Observers\AttributeValueObserver;
 use App\Observers\LeadObserver;
 use Illuminate\Support\ServiceProvider;
+use Webkul\Attribute\Models\AttributeValue;
 use Webkul\Lead\Models\Lead;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,5 +24,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Lead::observe(LeadObserver::class);
+        AttributeValue::observe(AttributeValueObserver::class);
     }
 }

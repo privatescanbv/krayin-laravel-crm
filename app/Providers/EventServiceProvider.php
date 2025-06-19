@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Listeners\PersonAttributeUpdated;
 use App\Observers\LeadWorkflowListener;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -21,6 +22,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         'lead.workflows.after' => [
             LeadWorkflowListener::class,
+        ],
+        'Webkul\Attribute\Events\AttributeValueSaved' => [
+            PersonAttributeUpdated::class,
         ],
     ];
 

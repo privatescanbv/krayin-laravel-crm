@@ -124,22 +124,22 @@
                                 {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.before') !!}
 
                                 <a
-                                    class="lead-item flex cursor-pointer flex-col gap-5 rounded-md border border-gray-100 bg-gray-50 p-2 dark:border-gray-400 dark:bg-gray-400"
+                                    class="lead-item flex cursor-pointer flex-col gap-2 rounded-md border border-gray-100 bg-gray-50 p-1.5 dark:border-gray-400 dark:bg-gray-400"
                                     :href="'{{ route('admin.leads.view', 'replaceId') }}'.replace('replaceId', element.id)"
+                                    style="min-height:unset;"
                                 >
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.header.before') !!}
 
                                     <!-- Header -->
                                     <div class="flex items-start justify-between">
                                        <div class="flex items-center gap-1">
-                                           <x-admin::avatar ::name="element.person ? element.person.name : element.firstname" />
+                                           <x-admin::avatar ::name="element.person ? element.person.name : element.firstname" class="w-6 h-6" />
 
                                            <div class="flex flex-col gap-0.5">
-                                               <span class="text-xs font-medium">
+                                               <span class="text-[11px] font-medium">
                                                    @{{ element.person ? element.person.name : element.firstname }}
                                                </span>
-
-                                               <span class="text-[10px] leading-normal">
+                                               <span class="text-[9px] leading-normal">
                                                    @{{ element.person?.organization?.name }}
                                                </span>
                                            </div>
@@ -149,14 +149,12 @@
                                             class="group relative"
                                             v-if="element.rotten_days > 0"
                                         >
-                                            <span class="icon-rotten cursor-default text-xl text-rose-600"></span>
-
+                                            <span class="icon-rotten cursor-default text-lg text-rose-600"></span>
                                             <div class="absolute -top-1 right-7 hidden w-max flex-col items-center group-hover:flex">
-                                                <span class="whitespace-no-wrap relative rounded-md bg-black px-4 py-2 text-xs leading-none text-white shadow-lg">
+                                                <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
                                                     @{{ "@lang('admin::app.leads.index.kanban.rotten-days', ['days' => 'replaceDays'])".replace('replaceDays', element.rotten_days) }}
                                                 </span>
-
-                                                <div class="absolute -right-1 top-2 h-3 w-3 rotate-45 bg-black"></div>
+                                                <div class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                             </div>
                                         </div>
                                     </div>
@@ -166,40 +164,28 @@
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.before') !!}
 
                                     <!-- Lead Title -->
-                                    <p class="text-xs font-medium">
+                                    <p class="text-[12px] font-medium leading-tight mb-0.5">
                                         @{{ element.title }}
                                     </p>
 
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.after') !!}
 
-                                    <div class="flex flex-wrap gap-1">
+                                    <div class="flex flex-wrap gap-0.5">
                                         <div
-                                            class="flex items-center gap-1 rounded-xl bg-gray-200 px-2 py-1 text-xs font-medium dark:bg-gray-800 dark:text-white"
+                                            class="flex items-center gap-0.5 rounded-xl bg-gray-200 px-2 py-0.5 text-[10px] font-medium dark:bg-gray-800 dark:text-white"
                                             v-if="element.user"
                                         >
-                                            <span class="icon-settings-user text-sm"></span>
-
+                                            <span class="icon-settings-user text-xs"></span>
                                             @{{ element.user.name }}
                                         </div>
-
-                                        <div class="rounded-xl bg-gray-200 px-2 py-1 text-xs font-medium dark:bg-gray-800 dark:text-white">
-                                            @{{ element.formatted_lead_value }}
-                                        </div>
-
-                                        <div class="rounded-xl bg-gray-200 px-2 py-1 text-xs font-medium dark:bg-gray-800 dark:text-white">
+                                        <div class="rounded-xl bg-gray-200 px-2 py-0.5 text-[10px] font-medium dark:bg-gray-800 dark:text-white">
                                             @{{ element.source.name }}
                                         </div>
-
-                                        <div class="rounded-xl bg-gray-200 px-2 py-1 text-xs font-medium dark:bg-gray-800 dark:text-white">
-                                            @{{ element.type.name }}
-                                        </div>
-
                                         <!-- Tags -->
                                         <template v-for="tag in element.tags">
                                             {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.tag.before') !!}
-
                                             <div
-                                                class="rounded-xl bg-gray-200 px-2 py-1 text-xs font-medium dark:bg-gray-800"
+                                                class="rounded-xl px-2 py-0.5 text-[10px] font-medium"
                                                 :style="{
                                                     backgroundColor: tag.color,
                                                     color: tagTextColor[tag.color]
@@ -207,7 +193,6 @@
                                             >
                                                 @{{ tag.name }}
                                             </div>
-
                                             {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.tag.after') !!}
                                         </template>
                                     </div>

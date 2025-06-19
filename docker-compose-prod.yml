@@ -1,0 +1,87 @@
+services:
+
+  laravel.test:
+    image: ghcr.io/privatescanbv/krayin-laravel-crm/krayincrm:latest
+    container_name: crm
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    env_file:
+      - .env
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.forms.rule=Host(`${CRM_DOMAIN}`)
+      - traefik.http.routers.forms.entrypoints=https
+      - traefik.http.routers.forms.tls=true
+      - traefik.http.routers.forms.tls.certresolver=myresolver
+      - traefik.http.routers.forms.service=forms-svc
+      - traefik.http.services.forms-svc.loadbalancer.server.port=80
+      # Middleware: expliciete headers doorgeven
+      - traefik.http.middlewares.forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
+      - traefik.http.middlewares.forward-headers.headers.customrequestheaders.X-Forwarded-Host=${CRM_DOMAIN}
+      - traefik.docker.network=mb_traefik
+    networks:
+      - sail
+      - mb_traefik
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: 'mysql/mysql-server:8.0'
+    ports:
+      - '3307:3306'
+    command: --skip-host-cache --skip-name-resolve --socket=/tmp/mysql.sock
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: '${DB_DATABASE}'
+      MYSQL_USER: '${DB_USERNAME}'
+      MYSQL_PASSWORD: '${DB_PASSWORD}'
+      MYSQL_ALLOW_EMPTY_PASSWORD: 1
+    volumes:
+      - 'sail-mysql:/var/lib/mysql'
+      - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
+    networks:
+      - sail
+      - mb_traefik
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - '-p${DB_PASSWORD}'
+      retries: 3
+      timeout: 5s
+
+  #  This n8N will service for production workflows. For data flows, we will set up a separate n8n instance and will run on our data server.
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      DB_TYPE: 'sqlite'
+      N8N_BASIC_AUTH_ACTIVE: 'true'
+      N8N_BASIC_AUTH_USER: 'admin'
+      N8N_BASIC_AUTH_PASSWORD: 'changeme#!233'
+      N8N_HOST: 'n8n.local'
+      N8N_PORT: 5678
+      TZ: 'Europe/Amsterdam'
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+networks:
+  sail:
+    driver: bridge
+  mb_traefik:
+    external: true
+volumes:
+  sail-mysql:
+    driver: local
+  n8n_data:
+    driver: local

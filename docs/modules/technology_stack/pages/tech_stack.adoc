@@ -56,10 +56,17 @@ De applicatie integreert met:
 
 == Local Development Setup
 
-Logs
-
 Local development:
 
+Logs:
 - https://github.com/opcodesio/log-viewer
 - Setup (eenmalig): php artisan log-viewer:publish
-- Daarna logs te bekijken met http://localhost:8000/log-viewer
+- Daarna logs te bekijken met link:http://localhost:8000/log-viewer[http://localhost:8000/log-viewer]
+
+
+
+=== Server installatie:
+Eerste keer docker login uitvoeren:
+echo <token> | docker login ghcr.io -u <username> --password-stdin
+
+Eerste keer een docker netwerk aanmaken

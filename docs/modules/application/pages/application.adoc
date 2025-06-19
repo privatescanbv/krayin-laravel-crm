@@ -1,5 +1,10 @@
 == Application
 
+* crm.privatescan.nl -> 178.251.28.75
+* crm.dev.privatescan.nl -> 178.251.28.76
+* n8ncrm.privatescan.nl -> 178.251.28.75
+* n8ncrm.dev.privatescan.nl -> 178.251.28.76
+
 === Login
 
 [plantuml]

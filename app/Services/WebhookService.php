@@ -15,7 +15,7 @@ class WebhookService
     public function sendWebhook(array $data, WebhookType $webhookType): bool
     {
         try {
-            Log::info('Send webhook', $data);
+            Log::info('Send webhook: '.$webhookType->value, $data);
 
             $url = $this->getWebhookUrl($webhookType);
 

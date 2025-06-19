@@ -426,7 +426,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        160,
+        240,
         880
       ],
       "id": "4a42c9cd-501c-4a9c-9a2b-59887da02cff",
@@ -466,7 +466,7 @@
       "name": "Webhook - lead status change",
       "type": "n8n-nodes-base.webhook",
       "position": [
-        -1020,
+        -1080,
         600
       ],
       "webhookId": "0de7745d-64c8-410b-9d23-f98f4b9c3787",
@@ -530,22 +530,6 @@
     },
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "7dd5d03e-3f85-493d-a589-01fb66f7b210",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [
-        -1020,
-        900
-      ],
-      "id": "4da7c2bb-e58c-425e-98d7-51f4551188c8",
-      "name": "Webhook",
-      "webhookId": "7dd5d03e-3f85-493d-a589-01fb66f7b210"
-    },
-    {
-      "parameters": {
         "jsCode": "return $input.all().map(item => {\n  return {\n    json: {\n      ...item.json,\n      newLeadStatusId: 2,\n      lead_id: item.json.body.entity_id,\n      source_code_id: item.json.source_code_id\n    }\n  };\n});\nreturn $input.all();"
       },
       "type": "n8n-nodes-base.code",
@@ -593,19 +577,6 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id\n    }\n  }\n];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        0,
-        880
-      ],
-      "id": "c4200c02-c75d-4134-b9e7-3c0966c74d7c",
-      "name": "department1"
-    },
-    {
-      "parameters": {
         "url": "=http://host.docker.internal:8000/api/groups/byDepartment/{{$json.body.department}}",
         "sendBody": true,
         "bodyParameters": {
@@ -634,6 +605,35 @@
       ],
       "id": "214b14fd-58d2-4019-b277-317ff682b961",
       "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        40,
+        880
+      ],
+      "id": "c4200c02-c75d-4134-b9e7-3c0966c74d7c",
+      "name": "set lead_id and group_id"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "7dd5d03e-3f85-493d-a589-01fb66f7b210",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1080,
+        900
+      ],
+      "id": "4da7c2bb-e58c-425e-98d7-51f4551188c8",
+      "name": "Webhook - task done",
+      "webhookId": "7dd5d03e-3f85-493d-a589-01fb66f7b210"
     }
   ],
   "pinData": {},
@@ -697,17 +697,6 @@
         ]
       ]
     },
-    "Webhook": {
-      "main": [
-        [
-          {
-            "node": "Route on task title",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "department": {
       "main": [
         [
@@ -730,17 +719,6 @@
         ]
       ]
     },
-    "department1": {
-      "main": [
-        [
-          {
-            "node": "Add task - klant data bijwerken",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Find group by Department": {
       "main": [
         [
@@ -756,7 +734,29 @@
       "main": [
         [
           {
-            "node": "department1",
+            "node": "set lead_id and group_id",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set lead_id and group_id": {
+      "main": [
+        [
+          {
+            "node": "Add task - klant data bijwerken",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - task done": {
+      "main": [
+        [
+          {
+            "node": "Route on task title",
             "type": "main",
             "index": 0
           }
@@ -768,7 +768,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "774ae7a6-75b4-4402-8d37-f6f82dac9a51",
+  "versionId": "4e16bc6a-39b0-4a30-94c9-1effecf51610",
   "meta": {
     "instanceId": "8d3e22640ea03faebf2e7f52d8406cd7615b83cdb309f1d4e35d0b03b1178db3"
   },

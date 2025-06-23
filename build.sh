@@ -8,6 +8,9 @@ GITHUB_REGISTRY="ghcr.io"
 TAG="latest"
 
 npm install && npm run build
+cd packages/Webkul/Admin || exit
+npm install && npm run build
+cd ../../..
 
 # Bouw de Docker image met een specifieke Dockerfile
 docker build --platform linux/amd64 -t $IMAGE_NAME -f ./docker/php/Dockerfile .

@@ -1741,6 +1741,7 @@ return [
                 'call'          => 'Call',
                 'meeting'       => 'Meeting',
                 'lunch'         => 'Lunch',
+                'group'         => 'Group',
             ],
         ],
 

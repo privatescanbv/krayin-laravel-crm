@@ -52,7 +52,24 @@
                     </div>
 
                     {!! view_render_event('admin.activities.index.toggle_view.before') !!}
+                    <div class="flex">
+                        <!-- Group Filter Buttons -->
+                        <button
+                            class="ml-2 rounded-md px-3 py-2 text-sm font-medium transition-all"
+                            :class="{'bg-blue-500 text-white': activeGroupFilter === '2', 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600': activeGroupFilter !== '2'}"
+                            @click="filterByGroup('2')"
+                        >
+                            Hernia
+                        </button>
 
+                        <button
+                            class="ml-2 rounded-md px-3 py-2 text-sm font-medium transition-all"
+                            :class="{'bg-blue-500 text-white': activeGroupFilter === '1', 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600': activeGroupFilter !== '1'}"
+                            @click="filterByGroup('1')"
+                        >
+                            Privatescan
+                        </button>
+                    </div>
                     <div class="flex">
                         <i
                             class="icon-list cursor-pointer rounded-md p-2 text-2xl"
@@ -96,7 +113,7 @@
                                     <div class="row grid grid-cols-[.3fr_.1fr_.3fr_.5fr] grid-rows-1 items-center gap-x-2.5 border-b px-4 py-2.5 dark:border-gray-800 max-lg:hidden">
                                         <div
                                             class="flex select-none items-center gap-2.5"
-                                            v-for="(columnGroup, index) in [['id', 'title', 'created_by_id'], ['is_done'], ['comment', 'lead_title', 'type'], ['schedule_from', 'schedule_to', 'created_at']]"
+                                            v-for="(columnGroup, index) in [['id', 'title', 'created_by_id'], ['is_done'], ['comment', 'lead_title', 'type', 'group'], ['schedule_from', 'schedule_to']]"
                                         >
                                             <label
                                                 class="flex w-max cursor-pointer select-none items-center gap-1"
@@ -294,22 +311,21 @@
                                                 <p class="text-gray-600 dark:text-gray-300">
                                                     @{{ record.type ?? 'N/A'}}
                                                 </p>
+
+                                                <p class="text-gray-600 dark:text-gray-300" v-html="record.group"></p>
+
                                             </div>
                                         </div>
 
                                         <div class="flex items-start justify-between gap-x-4">
                                             <div class="flex flex-col gap-1.5">
                                                 <p class="text-gray-600 dark:text-gray-300">
-                                                    @{{ record.schedule_from ?? 'N/A' }}
+                                                    @{{ record.schedule_from ?? 'N/A' }} - @{{ record.schedule_to }}
                                                 </p>
 
-                                                <p class="text-gray-600 dark:text-gray-300">
-                                                    @{{ record.schedule_to }}
-                                                </p>
-
-                                                <p class="text-gray-600 dark:text-gray-300">
-                                                    @{{ record.created_at }}
-                                                </p>
+{{--                                                <p class="text-gray-600 dark:text-gray-300">--}}
+{{--                                                    @{{ record.created_at }}--}}
+{{--                                                </p>--}}
                                             </div>
 
                                             <div class="flex items-center gap-1.5">
@@ -458,6 +474,7 @@
                 data() {
                     return {
                         viewType: '{{ request('view-type') }}' || 'table',
+                        activeGroupFilter: null,
                     };
                 },
 
@@ -476,6 +493,43 @@
                         currentUrl.searchParams.set('view-type', type);
 
                         window.history.pushState({}, '', currentUrl);
+                    },
+
+                    /**
+                     * Filter by group.
+                     *
+                     * @param {String} groupName
+                     * @return {void}
+                     */
+                    filterByGroup(groupName) {
+                        // Get the datagrid reference
+                        const datagrid = this.$refs.datagrid;
+
+                        if (!datagrid) {
+                            return;
+                        }
+
+                        // Toggle the active group filter
+                        if (this.activeGroupFilter === groupName) {
+                            this.activeGroupFilter = null;
+                        } else {
+                            this.activeGroupFilter = groupName;
+                        }
+
+                        // Apply the filters using the correct method
+                        if (this.activeGroupFilter) {
+                            datagrid.filter({
+                                columns: [{
+                                    index: 'group',
+                                    value: this.activeGroupFilter
+                                }]
+                            });
+                        } else {
+                            // Remove the filter
+                            datagrid.filter({
+                                columns: []
+                            });
+                        }
                     },
                 },
             });

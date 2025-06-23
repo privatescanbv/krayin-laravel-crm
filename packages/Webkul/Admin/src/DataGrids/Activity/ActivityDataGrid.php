@@ -8,6 +8,7 @@ use Webkul\Admin\Traits\ProvideDropdownOptions;
 use Webkul\DataGrid\DataGrid;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\User\Repositories\UserRepository;
+use Webkul\User\Repositories\GroupRepository;
 
 class ActivityDataGrid extends DataGrid
 {
@@ -27,11 +28,13 @@ class ActivityDataGrid extends DataGrid
                 'leads.lead_pipeline_id',
                 'users.id as created_by_id',
                 'users.name as created_by',
+                'groups.name as group_name',
             )
             ->leftJoin('activity_participants', 'activities.id', '=', 'activity_participants.activity_id')
             ->leftJoin('lead_activities', 'activities.id', '=', 'lead_activities.activity_id')
             ->leftJoin('leads', 'lead_activities.lead_id', '=', 'leads.id')
             ->leftJoin('users', 'activities.user_id', '=', 'users.id')
+            ->leftJoin('groups', 'activities.group_id', '=', 'groups.id')
             ->whereIn('type', ['call', 'meeting', 'lunch'])
             ->where(function ($query) {
                 if ($userIds = bouncer()->getAuthorizedUserIds()) {
@@ -47,7 +50,7 @@ class ActivityDataGrid extends DataGrid
                                 });
                         });
                 }
-            })->groupBy('activities.id', 'leads.id', 'users.id');
+            })->groupBy('activities.id', 'leads.id', 'users.id', 'groups.id');
 
         $this->addFilter('id', 'activities.id');
         $this->addFilter('title', 'activities.title');
@@ -56,6 +59,7 @@ class ActivityDataGrid extends DataGrid
         $this->addFilter('created_by_id', 'users.name');
         $this->addFilter('created_at', 'activities.created_at');
         $this->addFilter('lead_title', 'leads.title');
+        $this->addFilter('group', 'activities.group_id');
 
         return $queryBuilder;
     }
@@ -115,6 +119,27 @@ class ActivityDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
+            'index'              => 'group',
+            'label'              => trans('admin::app.activities.index.datagrid.group'),
+            'type'               => 'string',
+            'searchable'         => false,
+            'sortable'           => true,
+            'filterable'         => true,
+            'filterable_type'    => 'searchable_dropdown',
+            'filterable_options' => [
+                'repository' => GroupRepository::class,
+                'column'     => [
+                    'label' => 'name',
+                    'value' => 'id',
+                ],
+            ],
+            'closure' => function ($row) {
+                $row->group = $row->group_name ?? 'N/A';
+                return $row->group;
+            },
+        ]);
+
+        $this->addColumn([
             'index'   => 'comment',
             'label'   => trans('admin::app.activities.index.datagrid.comment'),
             'type'    => 'string',
@@ -163,7 +188,7 @@ class ActivityDataGrid extends DataGrid
             'sortable'   => true,
             'searchable' => true,
             'filterable' => true,
-            'closure'    => fn ($row) => core()->formatDate($row->schedule_from),
+            'closure'    => fn ($row) => core()->formatDate($row->schedule_from, 'd M Y'),
         ]);
 
         $this->addColumn([
@@ -173,7 +198,7 @@ class ActivityDataGrid extends DataGrid
             'sortable'   => true,
             'searchable' => true,
             'filterable' => true,
-            'closure'    => fn ($row) => core()->formatDate($row->schedule_to),
+            'closure'    => fn ($row) => core()->formatDate($row->schedule_to, 'd M Y'),
         ]);
 
         $this->addColumn([
@@ -183,7 +208,7 @@ class ActivityDataGrid extends DataGrid
             'sortable'   => true,
             'searchable' => true,
             'filterable' => true,
-            'closure'    => fn ($row) => core()->formatDate($row->created_at),
+            'closure'    => fn ($row) => core()->formatDate($row->created_at, 'd M Y'),
         ]);
     }
 

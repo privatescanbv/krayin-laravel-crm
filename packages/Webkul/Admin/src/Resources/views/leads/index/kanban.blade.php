@@ -55,9 +55,6 @@
 
                             <!-- Stage Total Leads and Amount -->
                             <div class="flex items-center justify-between gap-2">
-                                <span class="text-xs font-medium dark:text-white">
-                                    @{{ $admin.formatPrice(stage.lead_value) }}
-                                </span>
 
                                 <!-- Progress Bar -->
                                 <div class="h-1 w-36 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
@@ -246,13 +243,7 @@
 
             computed: {
                 totalStagesAmount() {
-                    let totalAmount = 0;
-
-                    for (let [key, stage] of Object.entries(this.stageLeads)) {
-                        totalAmount += parseFloat(stage.lead_value);
-                    }
-
-                    return totalAmount;
+                    return 0;
                 }
             },
 
@@ -425,14 +416,14 @@
                     }
 
                     if (event.removed) {
-                        stage.lead_value = parseFloat(stage.lead_value) - parseFloat(event.removed.element.lead_value);
+                        stage.lead_value = 0;
 
                         this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage.sort_order].leads.meta.total - 1;
 
                         return;
                     }
 
-                    stage.lead_value = parseFloat(stage.lead_value) + parseFloat(event.added.element.lead_value);
+                    stage.lead_value = 0;
 
                     this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage.sort_order].leads.meta.total + 1;
 

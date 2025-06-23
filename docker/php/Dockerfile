@@ -81,6 +81,9 @@ COPY  .docker/php/fpm-cloud.conf /usr/local/etc/php-fpm.d/zz-lento-fpm.conf
 COPY  .docker/php/php.ini /usr/local/etc/php/conf.d/docker-php-config.ini
 COPY  .docker/nginx/templates/default.cloud.conf /etc/nginx/sites-enabled/default
 COPY  .docker/nginx/nginx.conf /etc/nginx/nginx.conf
+# These files are not used within the container, but copied in the server
+COPY .docker/mysql/init-n8n.sql /docker/mysql/
+COPY docker-compose-prod.yml /docker/docker-compose.yml
 
 RUN #chmod 750 /usr/share/nginx/html/* \
     && chown -R www-data:www-data /usr/share/nginx/html /var/log /run /etc/nginx

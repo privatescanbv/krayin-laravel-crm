@@ -131,14 +131,6 @@
                                             </p>
                                         </div>
                                     </div>
-
-                                    <!-- Right Information -->
-                                    <div class="grid place-content-center gap-1 text-right">
-                                        <!-- Formatted Price -->
-                                        <p class="font-semibold text-gray-600 dark:text-gray-300">
-                                            @{{ $admin.formatPrice(lead.lead_value) }}
-                                        </p>
-                                    </div>
                                 </a>
                             </template>
                         </div>

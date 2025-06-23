@@ -66,7 +66,13 @@ Logs:
 
 
 === Server installatie:
+
+1. Github docker login
 Eerste keer docker login uitvoeren:
 echo <token> | docker login ghcr.io -u <username> --password-stdin
 
 Eerste keer een docker netwerk aanmaken
+
+2. Firewall
+- Poort 80 dient open te staan voor traefik (aanmaken van self-signed certificaten)
+- Poort 443 dient open te staan privatescan saas

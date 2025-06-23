@@ -8,14 +8,14 @@
         id="v-mobile-mega-search-template"
     >
         <div>
-            <i 
+            <i
                 class="icon-search flex items-center text-2xl"
                 @click="toggleSearchInput"
                 v-show="!isSearchVisible"
             ></i>
-        
-            <div 
-                v-show="isSearchVisible" 
+
+            <div
+                v-show="isSearchVisible"
                 class="absolute left-1/2 top-3 z-[10002] flex w-full max-w-full -translate-x-1/2 items-center px-2"
             >
                 <i class="icon-search absolute top-2 flex items-center text-2xl ltr:left-4 rtl:right-4"></i>
@@ -135,14 +135,6 @@
                                                     @{{ lead.description }}
                                                 </p>
                                             </div>
-                                        </div>
-
-                                        <!-- Right Information -->
-                                        <div class="grid place-content-center gap-1 text-right">
-                                            <!-- Formatted Price -->
-                                            <p class="font-semibold text-gray-600 dark:text-gray-300">
-                                                @{{ $admin.formatPrice(lead.lead_value) }}
-                                            </p>
                                         </div>
                                     </a>
                                 </template>
@@ -418,7 +410,7 @@
                 toggleSearchInput() {
                     this.isSearchVisible = ! this.isSearchVisible;
                     this.isDropdownOpen = false;
-                    
+
                     if (this.isSearchVisible) {
                         this.$nextTick(() => {
                             if (this.$refs.searchInput) {
@@ -429,7 +421,7 @@
                         this.searchTerm = '';
                     }
                 },
-                
+
                 search(endpoint) {
                     if (this.searchTerm.length <= 1) {
                         this.searchedResults[this.activeTab] = [];
@@ -453,10 +445,10 @@
                         .finally(() => this.isLoading = false);
                 },
 
-                handleFocusOut(e) {   
+                handleFocusOut(e) {
                     if (! this.$el.contains(e.target) || e.target.classList.contains('icon-cross-large')) {
                         this.isDropdownOpen = false;
-                        
+
                         if (! this.isDropdownOpen) {
                             this.isSearchVisible = false;
                             this.searchTerm = '';

@@ -93,7 +93,6 @@ class MagicAI
             'description'         => $finalData->description ?? null,
             'lead_source_id'      => 1,
             'lead_type_id'        => 1,
-            'lead_value'          => $finalData->lead_value ?? 0,
             'person'              => [
                 'name'            => $finalData->person->name ?? 'Unknown',
                 'emails'          => [

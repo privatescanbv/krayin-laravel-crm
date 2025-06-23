@@ -366,7 +366,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=http://host.docker.internal:8000/api/leads/{{ $json.lead_id }}/activities",
+        "url": "=http://crm/api/leads/{{ $json.lead_id }}/activities",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -410,7 +410,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "=http://host.docker.internal:8000/api/leads/{{ $json.lead_id }}/stage",
+        "url": "=http://crm/api/leads/{{ $json.lead_id }}/stage",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -552,7 +552,7 @@
     },
     {
       "parameters": {
-        "url": "=http://host.docker.internal:8000/api/groups/byDepartment/{{$json.body.department}}",
+        "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -613,7 +613,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=http://host.docker.internal:8000/api/leads/{{ $json.lead_id }}/activities",
+        "url": "=http://crm/api/leads/{{ $json.lead_id }}/activities",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -656,7 +656,7 @@
     },
     {
       "parameters": {
-        "url": "=http://host.docker.internal:8000/api/groups/byDepartment/{{$json.body.department}}",
+        "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -876,7 +876,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "3af27d1c-e9fa-4245-a2e3-032448c6aa93",
+  "versionId": "3e81ea0e-bcd5-4c06-b8d4-8593298bcd74",
   "meta": {
     "instanceId": "8d3e22640ea03faebf2e7f52d8406cd7615b83cdb309f1d4e35d0b03b1178db3"
   },

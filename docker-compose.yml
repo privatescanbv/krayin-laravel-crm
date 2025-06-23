@@ -13,7 +13,7 @@ services:
 #    volumes:
 #      - ./workspace/:/var/www/html/
 
-  laravel.test:
+  crm:
     build:
       context: ./vendor/laravel/sail/runtimes/8.2
       dockerfile: Dockerfile
@@ -106,6 +106,9 @@ services:
       - N8N_HOST=n8n.local
       - N8N_PORT=5678
       - TZ=Europe/Amsterdam
+    networks:
+      - sail
+      - mb_traefik
     volumes:
       - n8n_data:/home/node/.n8n
 

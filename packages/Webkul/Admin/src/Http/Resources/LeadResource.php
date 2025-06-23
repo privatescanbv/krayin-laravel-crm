@@ -17,8 +17,6 @@ class LeadResource extends JsonResource
         return [
             'id'                   => $this->id,
             'title'                => $this->title,
-            'lead_value'           => $this->lead_value,
-            'formatted_lead_value' => core()->formatBasePrice($this->lead_value),
             'status'               => $this->status,
             'expected_close_date'  => $this->expected_close_date,
             'rotten_days'          => $this->rotten_days,

@@ -53,7 +53,6 @@ class LeadDataGrid extends DataGrid
                 'leads.id',
                 'leads.title',
                 'leads.status',
-                'leads.lead_value',
                 'leads.expected_close_date',
                 'lead_sources.name as lead_source_name',
                 'lead_types.name as lead_type_name',
@@ -160,7 +159,6 @@ class LeadDataGrid extends DataGrid
             'sortable'   => true,
             'searchable' => false,
             'filterable' => true,
-            'closure'    => fn ($row) => core()->formatBasePrice($row->lead_value, 2),
         ]);
 
         $this->addColumn([

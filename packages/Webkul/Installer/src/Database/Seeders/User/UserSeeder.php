@@ -50,9 +50,18 @@ class UserSeeder extends Seeder
         // Define users with their group assignments
         $users = [
             [
-                'name'            => 'Example Admin',
-                'email'           => 'admin@example.com',
-                'password'        => 'admin123',
+                'name'            => 'Mark Bulthuis',
+                'email'           => 'mark.bulthuis@privatescan.nl',
+                'password'        => '8AAZ5jc%e&AF',
+                'status'          => 1,
+                'role_id'         => 1,
+                'view_permission' => 'global',
+                'group_id'        => null, // Admin has no specific group
+            ],
+            [
+                'name'            => 'Mark Klaucke',
+                'email'           => 'mark.klaucke@privatescan.nl',
+                'password'        => '8AAZ5jc%e&Ad',
                 'status'          => 1,
                 'role_id'         => 1,
                 'view_permission' => 'global',
@@ -61,7 +70,7 @@ class UserSeeder extends Seeder
             [
                 'name'            => 'Linda',
                 'email'           => 'linda@privatescan.nl',
-                'password'        => 'admin123',
+                'password'        => '8AAZ5jc%e&3d',
                 'status'          => 1,
                 'role_id'         => 1,
                 'view_permission' => 'global',
@@ -70,7 +79,7 @@ class UserSeeder extends Seeder
             [
                 'name'            => 'Petra',
                 'email'           => 'petra@privatescan.nl',
-                'password'        => 'admin123',
+                'password'        => '8BBZ5jc%e&Ad',
                 'status'          => 1,
                 'role_id'         => 1,
                 'view_permission' => 'global',
@@ -79,7 +88,7 @@ class UserSeeder extends Seeder
             [
                 'name'            => 'Wout',
                 'email'           => 'wout@privatescan.nl',
-                'password'        => 'admin123',
+                'password'        => '8EEZ5jc%e&Ad',
                 'status'          => 1,
                 'role_id'         => 1,
                 'view_permission' => 'global',
@@ -88,7 +97,7 @@ class UserSeeder extends Seeder
             [
                 'name'            => 'Lars',
                 'email'           => 'lars@privatescan.nl',
-                'password'        => 'admin123',
+                'password'        => '8A4Z5jc%d3Ad',
                 'status'          => 1,
                 'role_id'         => 1,
                 'view_permission' => 'global',

@@ -110,7 +110,7 @@ class LeadController extends Controller
                 $query->whereIn('leads.user_id', $userIds);
             }
 
-            $stage->lead_value = (clone $query)->sum('lead_value');
+            $stage->lead_value = 0;
 
             $data[$stage->sort_order] = (new StageResource($stage))->jsonSerialize();
 

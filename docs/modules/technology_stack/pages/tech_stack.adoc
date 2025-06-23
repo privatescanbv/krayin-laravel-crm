@@ -63,6 +63,11 @@ Logs:
 - Setup (eenmalig): php artisan log-viewer:publish
 - Daarna logs te bekijken met link:http://localhost:8000/log-viewer[http://localhost:8000/log-viewer]
 
+=== Import Sugar contacts into Persons
+
+sail artisan import:persons-from-sugarcrm --limit=100 --dry-run
+of alles importeren:
+sail artisan import:persons-from-sugarcrm --limit=10000
 
 
 === Server installatie:

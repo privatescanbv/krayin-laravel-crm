@@ -289,6 +289,9 @@ state "Actie" as Actie {
   actie_pending --> actie_progress : "bezig"
   actie_progress --> actie_finished : "afgerond"
 }
+note right of Actie
+    Model Activity met eigen type hiervoor gebruiken?
+  end note
 @enduml
 ....
 
@@ -305,6 +308,8 @@ De lead vormt het startpunt van de klantreis. Zodra een nieuwe lead wordt aangem
 - en wordt er een eerste actie toegevoegd aan deze workflow, zoals het koppelen van een contactpersoon.
 
 Gedurende de lifecycle kan de lead door meerdere pipeline stages bewegen, bijvoorbeeld `"contacted"`, `"proposal_sent"`, `"won"` of `"lost"`. Bij elke overgang kan er automatisch een nieuwe actie of notificatie gegenereerd worden.
+Lead left in front office process / sales. Na bestellen, zal het een gewonnen lead zijn en zijn lifeclycle eindigen.
+Lead kan in dit gehele proces verloren gaan, bijvoorbeeld als er geen reactie komt van de klant of als de lead niet meer relevant is.
 
 === Order lifecycle
 
@@ -321,7 +326,8 @@ Workflows kunnen automatisch acties aanmaken, zoals:
 
 [NOTE]
 ====
-Krayin kent een eigen workflow model, waarmee je condities en acties kunt koppelen. Vergelijkbaar met SugarCRM. Onze voorkeur gaat uit naar n8n, om alles op één plek te beheren. We zouden er daarom voor kunnen kiezen om de workflow van Krayin uit te schakelen.
+Krayin kent een eigen workflow model, waarmee je condities en acties kunt koppelen. Vergelijkbaar met SugarCRM. We gebruiken dit minimaal. b.v. afdeling wordt gepaald in deze workflow. Denk hierbij aan een veld x krijgt een waarde op basis van andere velden van dezelfde entiteite of een andere entiteit. Overige beleggen we in N8N.
+Verwar deze workflow niet met onze Workflow entiteit.
 ====
 
 Elke workflow kent zijn eigen type. Dit is een voor geprogrammeerde work flow met specifieke acties. Zo zullen we er een maken voor Privatescan en een opzetten voor Hernia. Dit maakt het mogelijk om workflows te personaliseren op basis van de afdeling of het type lead.

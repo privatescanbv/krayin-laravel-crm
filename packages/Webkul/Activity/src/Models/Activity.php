@@ -7,6 +7,7 @@ use Webkul\Activity\Contracts\Activity as ActivityContract;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\Lead\Models\LeadProxy;
 use Webkul\Product\Models\ProductProxy;
+use Webkul\User\Models\Group;
 use Webkul\User\Models\GroupProxy;
 use Webkul\User\Models\UserProxy;
 use Webkul\Warehouse\Models\WarehouseProxy;
@@ -117,6 +118,6 @@ class Activity extends Model implements ActivityContract
      */
     public function group(): BelongsTo
     {
-        return $this->belongsTo(GroupProxy::class);
+        return $this->belongsTo(Group::class, 'group_id');
     }
 }

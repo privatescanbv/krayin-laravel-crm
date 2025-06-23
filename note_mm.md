@@ -13,7 +13,13 @@ TODO
 * taal nl niet aanwezig
 
 notes:
-- lead aanmaken, contact persoon is verplicht. Willen wij niet.
 - Contact zou je meerdere leads willen kunnen koppelen, maar dat is niet mogelijk.
 - Pas logo aan in configuratie
 - Voeg taal NL toe
+
+vragen:
+- Bij een lead kun je producten koppelen. Willen we dit behouden? Voordeel als iemand anders de producten gaat inplannen b.v. Verwacht het niet voor private scan? dezelfde persoon. Indien ja -> producten bij leads eruit slopen.
+
+gemaakte keuzes:
+- CRM workflow gebruiken om velden te zetten op basis van andere velden (zie afdeling). De rest in n8n. Nadeel: soms complexer, je zit met volgorde etc in n8n.
+- pipeline leads: Ik stel voor om er een voor hernia en private scan te maken, ondanks dat ze dezelfde statussen hebben.

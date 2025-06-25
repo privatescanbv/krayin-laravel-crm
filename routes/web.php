@@ -16,16 +16,3 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
-
-// Asciidoc routes
-Route::prefix('docs')->group(function () {
-    Route::get('{path?}', function ($path = 'index.html') {
-        $fullPath = base_path("docs/html/{$path}");
-
-        if (! File::exists($fullPath)) {
-            abort(404);
-        }
-
-        return response()->file($fullPath);
-    })->where('path', '.*');
-});

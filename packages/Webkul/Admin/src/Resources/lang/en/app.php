@@ -1286,6 +1286,7 @@ return [
                     'name'        => 'Name',
                     'no'          => 'No',
                     'rotten-days' => 'Rotten Days',
+                    'type'        => 'Type',
                     'yes'         => 'Yes',
                 ],
             ],
@@ -1294,6 +1295,7 @@ return [
                 'title'                => 'Create Pipeline',
                 'save-btn'             => 'Save Pipeline',
                 'name'                 => 'Name',
+                'type'                 => 'Type',
                 'rotten-days'          => 'Rotten Days',
                 'mark-as-default'      => 'Mark as Default',
                 'general'              => 'General',
@@ -1315,6 +1317,7 @@ return [
                 'title'                => 'Edit Pipeline',
                 'save-btn'             => 'Save Pipeline',
                 'name'                 => 'Name',
+                'type'                 => 'Type',
                 'rotten-days'          => 'Rotten Days',
                 'mark-as-default'      => 'Mark as Default',
                 'general'              => 'General',
@@ -2350,6 +2353,7 @@ return [
         'product-groups'       => 'Product Groups',
         'products'             => 'Products',
         'product-groups'       => 'Product Groups',  // Nieuwe taal key
+        'workflow-leads' => 'Workflow Leads',
     ],
 
     'user' => [

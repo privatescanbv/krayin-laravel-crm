@@ -37,4 +37,9 @@ Route::prefix('leads')->group(function () {
 // Existing routes
 
 Route::get('groups/byDepartment/{departmentName}', [GroupController::class, 'findByDepartment']);
+
+// Workflow Leads API
+Route::prefix('workflow-leads')->group(function () {
+    Route::post('/', [\App\Http\Controllers\Api\WorkflowLeadController::class, 'store']);
+});
 // });

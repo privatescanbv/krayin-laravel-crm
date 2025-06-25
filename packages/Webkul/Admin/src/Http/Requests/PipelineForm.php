@@ -37,6 +37,7 @@ class PipelineForm extends FormRequest
         if (request('id')) {
             return [
                 'name'          => 'required',
+                'type'          => 'required|in:lead,workflow',
                 'stages.*.name' => 'unique_key',
                 'stages.*.code' => 'unique_key',
             ];
@@ -44,6 +45,7 @@ class PipelineForm extends FormRequest
 
         return [
             'name'          => 'required',
+            'type'          => 'required|in:lead,workflow',
             'rotten_days'   => 'required',
             'stages.*.name' => 'unique_key',
             'stages.*.code' => 'unique_key',

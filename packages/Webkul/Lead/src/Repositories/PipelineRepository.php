@@ -2,9 +2,12 @@
 
 namespace Webkul\Lead\Repositories;
 
+use App\Enums\PipelineType;
 use Illuminate\Container\Container;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Webkul\Core\Eloquent\Repository;
+use Webkul\Lead\Contracts\Pipeline;
 
 class PipelineRepository extends Repository
 {
@@ -27,18 +30,49 @@ class PipelineRepository extends Repository
      */
     public function model()
     {
-        return 'Webkul\Lead\Contracts\Pipeline';
+        return \Webkul\Lead\Models\Pipeline::class;
+    }
+
+    /**
+     * Get all lead pipelines.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getLeadPipelines()
+    {
+        return $this->model->leadPipelines()->get();
+    }
+
+    /**
+     * Get all workflow pipelines.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getWorkflowPipelines()
+    {
+        return $this->model->workflowPipelines()->get();
+    }
+
+    /**
+     * Get pipelines by type.
+     *
+     * @param  \App\Enums\PipelineType  $type
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getPipelinesByType(PipelineType $type)
+    {
+        return $this->model->where('type', $type)->get();
     }
 
     /**
      * Create pipeline.
      *
-     * @return \Webkul\Lead\Contracts\Pipeline
+     * @return Pipeline
      */
     public function create(array $data)
     {
         if ($data['is_default'] ?? false) {
-            $this->model->query()->update(['is_default' => 0]);
+            $this->model->query()->where('type', $data['type'] ?? PipelineType::LEAD)->update(['is_default' => 0]);
         }
 
         $pipeline = $this->model->create($data);
@@ -57,14 +91,14 @@ class PipelineRepository extends Repository
      *
      * @param  int  $id
      * @param  string  $attribute
-     * @return \Webkul\Lead\Contracts\Pipeline
+     * @return Pipeline
      */
     public function update(array $data, $id, $attribute = 'id')
     {
         $pipeline = $this->find($id);
 
         if ($data['is_default'] ?? false) {
-            $this->model->query()->where('id', '<>', $id)->update(['is_default' => 0]);
+            $this->model->query()->where('id', '<>', $id)->where('type', $data['type'] ?? $pipeline->type)->update(['is_default' => 0]);
         }
 
         $pipeline->update($data);
@@ -99,14 +133,31 @@ class PipelineRepository extends Repository
     /**
      * Return the default pipeline.
      *
-     * @return \Webkul\Lead\Contracts\Pipeline
+     * @return Pipeline
      */
     public function getDefaultPipeline()
     {
         $pipeline = $this->findOneByField('is_default', 1);
 
         if (! $pipeline) {
-            $pipeline = $this->first();
+            $pipeline = $this->model->leadPipelines()->first();
+        }
+
+        return $pipeline;
+    }
+
+    /**
+     * Return the default pipeline by type.
+     *
+     * @param  \App\Enums\PipelineType  $type
+     * @return \Webkul\Lead\Contracts\Pipeline
+     */
+    public function getDefaultPipelineByType(PipelineType $type)
+    {
+        $pipeline = $this->model->where('is_default', 1)->where('type', $type->value)->first();
+
+        if (! $pipeline) {
+            $pipeline = $this->model->where('type', $type)->first();
         }
 
         return $pipeline;

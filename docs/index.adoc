@@ -347,37 +347,39 @@ De combinatie van leads, pipeline stages, workflows en acties vormt de basis van
 @startuml
 participant tel_website
 actor Medewerker
+participant Lead
 participant Workflow
 actor Patiënt
 
-tel_website -> Workflow : Nieuwe lead aanmaken
-Workflow -> Workflow : Afdeling bepalen (op basis van telefoonnummer / website)
-Workflow -> Workflow : Pipeline stage = "nieuwe-aanvraag-kwalificeren"
+tel_website -> Lead : Nieuwe lead aanmaken
+Lead -> Lead : Afdeling bepalen (op basis van telefoonnummer / website)
+Lead -> Lead : Pipeline stage = "nieuwe-aanvraag-kwalificeren"
 
 Workflow -> Medewerker : Actie: Koppel contactpersoon
 
-Medewerker -> Workflow : Koppeling uitgevoerd
-Workflow -> Workflow : Pipeline stage = "klant-adviseren"
-Workflow -> Medewerker : Actie: Adviseren
+Medewerker -> Lead : Koppeling uitgevoerd
+Lead -> Lead : Pipeline stage = "klant-adviseren"
+Lead -> Medewerker : Actie: Adviseren
 
-Medewerker -> Workflow : Advies uitgevoerd
-Workflow -> Workflow : Pipeline stage = "klant-adviseren-opvolgen"
-Workflow -> Medewerker : Actie: Adviseren opvolgen
+Medewerker -> Lead : Advies uitgevoerd
+Lead -> Lead : Pipeline stage = "klant-adviseren-opvolgen"
+Lead -> Medewerker : Actie: Adviseren opvolgen
 
 alt Order plaatsen?
-  Medewerker -> Workflow : Order aanmaken
-  Workflow -> Patiënt : Verstuur orderbevestiging (GVL link + infokaarten)
-  Workflow -> Workflow : Pipeline stage = "wachten-op-orderbevestiging"
+  Medewerker -> Lead : Order aanmaken
+  Lead -> Patiënt : Verstuur orderbevestiging (GVL link + infokaarten)
+  Lead -> Lead : Pipeline stage = "wachten-op-orderbevestiging"
 else Geen order
-  Workflow -> Workflow : Pipeline stage = "lost"
+  Lead -> Lead : Pipeline stage = "lost"
 end
 
 alt Order bevestigd?
-  Patiënt -> Workflow : Orderbevestiging
-  Workflow -> Workflow : Pipeline stage = "won"
-  Workflow -> Medewerker : Vervolgactie
+  Patiënt -> Lead : Orderbevestiging
+  Lead -> Lead : Pipeline stage = "won"
+  Lead -> Workflow : Pipeline stage = "Bestelling geplaatst"
+  Lead -> Medewerker : Vervolgactie
 else Geen bevestiging
-  Workflow -> Workflow : Pipeline stage = "lost"
+  Lead -> Lead : Pipeline stage = "lost"
 end
 @enduml
 ....

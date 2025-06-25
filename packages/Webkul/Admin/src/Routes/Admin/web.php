@@ -41,6 +41,11 @@ require 'activities-routes.php';
 require 'quote-routes.php';
 
 /**
+ * Workflow routes.
+ */
+require 'workflow-routes.php';
+
+/**
  * Configuration routes.
  */
 require 'configuration-routes.php';

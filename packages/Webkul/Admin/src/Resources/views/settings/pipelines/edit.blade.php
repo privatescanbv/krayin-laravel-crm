@@ -94,6 +94,31 @@
 
                 {!! view_render_event('admin.settings.pipelines.edit.form.rotten_days.after', ['pipeline' => $pipeline]) !!}
 
+                {!! view_render_event('admin.settings.pipelines.edit.form.type.before', ['pipeline' => $pipeline]) !!}
+
+                <!-- Pipeline Type -->
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label class="required">
+                        @lang('admin::app.settings.pipelines.edit.type')
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.control
+                        type="select"
+                        name="type"
+                        id="type"
+                        rules="required"
+                        :label="trans('admin::app.settings.pipelines.edit.type')"
+                        value="{{ old('type', $pipeline->type?->value ?? 'lead') }}"
+                    >
+                        <option value="lead" {{ (old('type', $pipeline->type?->value ?? 'lead') == 'lead') ? 'selected' : '' }}>Lead</option>
+                        <option value="workflow" {{ (old('type', $pipeline->type?->value ?? 'lead') == 'workflow') ? 'selected' : '' }}>Workflow</option>
+                    </x-admin::form.control-group.control>
+
+                    <x-admin::form.control-group.error control-name="type" />
+                </x-admin::form.control-group>
+
+                {!! view_render_event('admin.settings.pipelines.edit.form.type.after', ['pipeline' => $pipeline]) !!}
+
                 {!! view_render_event('admin.settings.pipelines.edit.form.is_default.before', ['pipeline' => $pipeline]) !!}
 
                 <!-- Pipeline Default Switcher -->

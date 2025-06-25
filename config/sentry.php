@@ -6,10 +6,10 @@ return [
 
     // Laravel log channels to capture (optional)
     'breadcrumbs' => [
-        'logs' => true,
-        'sql_queries' => true,
+        'logs'         => true,
+        'sql_queries'  => true,
         'sql_bindings' => true,
-        'queue_info' => true,
+        'queue_info'   => true,
     ],
 
     // Set this to false if you don't want to report Laravel logs as Sentry events

@@ -477,3 +477,27 @@ Breadcrumbs::for('dashboard.account.edit', function (BreadcrumbTrail $trail, $us
     $trail->parent('dashboard');
     $trail->push(trans('admin::app.account.edit.title'), route('admin.user.account.edit', $user->id));
 });
+
+// Dashboard > Workflow Leads
+Breadcrumbs::for('workflow-leads', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Workflow Leads', route('admin.workflow-leads.index'));
+});
+
+// Dashboard > Workflow Leads > Create
+Breadcrumbs::for('workflow-leads.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('workflow-leads');
+    $trail->push('Create Workflow Lead', route('admin.workflow-leads.create'));
+});
+
+// Dashboard > Workflow Leads > Edit
+Breadcrumbs::for('workflow-leads.edit', function (BreadcrumbTrail $trail, $entity) {
+    $trail->parent('workflow-leads');
+    $trail->push('Edit Workflow Lead', route('admin.workflow-leads.edit', $entity->id));
+});
+
+// Dashboard > Workflow Leads > View
+Breadcrumbs::for('workflow-leads.view', function (BreadcrumbTrail $trail, $entity) {
+    $trail->parent('workflow-leads');
+    $trail->push('#'.$entity->id, route('admin.workflow-leads.view', $entity->id));
+});

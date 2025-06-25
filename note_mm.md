@@ -23,3 +23,9 @@ vragen:
 gemaakte keuzes:
 - CRM workflow gebruiken om velden te zetten op basis van andere velden (zie afdeling). De rest in n8n. Nadeel: soms complexer, je zit met volgorde etc in n8n.
 - pipeline leads: Ik stel voor om er een voor hernia en private scan te maken, ondanks dat ze dezelfde statussen hebben.
+
+
+windows
+
+chmod -R 775 storage bootstrap/cache
+docker compose up

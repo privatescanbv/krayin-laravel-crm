@@ -17,11 +17,13 @@ class PipelineDataGrid extends DataGrid
             ->addSelect(
                 'lead_pipelines.id',
                 'lead_pipelines.name',
+                'lead_pipelines.type',
                 'lead_pipelines.rotten_days',
                 'lead_pipelines.is_default',
             );
 
         $this->addFilter('id', 'lead_pipelines.id');
+        $this->addFilter('type', 'lead_pipelines.type');
 
         return $queryBuilder;
     }
@@ -45,6 +47,16 @@ class PipelineDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'type',
+            'label'      => trans('admin::app.settings.pipelines.index.datagrid.type'),
+            'type'       => 'string',
+            'searchable' => true,
+            'filterable' => true,
+            'sortable'   => true,
+            'closure'    => fn ($value) => ucfirst($value->type),
         ]);
 
         $this->addColumn([

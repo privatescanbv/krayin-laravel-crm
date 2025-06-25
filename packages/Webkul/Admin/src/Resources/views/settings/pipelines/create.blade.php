@@ -90,6 +90,31 @@
 
                 {!! view_render_event('admin.settings.pipelines.create.form.rotten_days.after') !!}
 
+                {!! view_render_event('admin.settings.pipelines.create.form.type.before') !!}
+
+                <!-- Type -->
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label class="required">
+                        @lang('admin::app.settings.pipelines.create.type')
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.control
+                        type="select"
+                        name="type"
+                        id="type"
+                        rules="required"
+                        :label="trans('admin::app.settings.pipelines.create.type')"
+                        value="{{ old('type', 'lead') }}"
+                    >
+                        <option value="lead">Lead</option>
+                        <option value="workflow">Workflow</option>
+                    </x-admin::form.control-group.control>
+
+                    <x-admin::form.control-group.error control-name="type" />
+                </x-admin::form.control-group>
+
+                {!! view_render_event('admin.settings.pipelines.create.form.type.after') !!}
+
                 {!! view_render_event('admin.settings.pipelines.create.form.is_default.before') !!}
 
                 <!-- Mark as Default -->

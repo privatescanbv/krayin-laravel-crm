@@ -17,11 +17,10 @@ services:
     build:
       context: ./vendor/laravel/sail/runtimes/8.2
       dockerfile: Dockerfile
-      #      context: .
-      #      dockerfile: ./docker/Dockerfile
       args:
         WWWGROUP: '${WWWGROUP}'
     image: sail-8.2/app
+    container_name: crm
     stdin_open: true
     tty: true
     extra_hosts:

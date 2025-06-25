@@ -118,16 +118,33 @@ class AttributeValueObserver
             $leadPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
             $leadPipelineStageId = PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value;
         }
-        Log::info('Updating lead pipeline and stage based on department', [
-            'lead_id'                => $lead->id,
-            'department'             => $department,
-            'lead_pipeline_id'       => $leadPipelineId,
-            'lead_pipeline_stage_id' => $leadPipelineStageId,
+
+        Log::info('AttributeValueObserver: Checking if update is needed', [
+            'lead_id'                    => $lead->id,
+            'department'                 => $department,
+            'current_pipeline_id'        => $lead->lead_pipeline_id,
+            'current_pipeline_stage_id'  => $lead->lead_pipeline_stage_id,
+            'expected_pipeline_id'       => $leadPipelineId,
+            'expected_pipeline_stage_id' => $leadPipelineStageId,
+            'pipeline_needs_update'      => $lead->lead_pipeline_id !== $leadPipelineId,
+            'stage_needs_update'         => $lead->lead_pipeline_stage_id !== $leadPipelineStageId,
         ]);
-        if ($leadPipelineId !== $lead->lead_pipeline_id) {
+
+        if ($leadPipelineId != $lead->lead_pipeline_id) {
+            Log::info('AttributeValueObserver: Updating lead pipeline and stage based on department', [
+                'lead_id'                => $lead->id,
+                'department'             => $department,
+                'lead_pipeline_id'       => $leadPipelineId,
+                'lead_pipeline_stage_id' => $leadPipelineStageId,
+            ]);
             $lead->update([
                 'lead_pipeline_id'       => $leadPipelineId,
                 'lead_pipeline_stage_id' => $leadPipelineStageId,
+            ]);
+        } else {
+            Log::info('AttributeValueObserver: No update needed - pipeline already correct', [
+                'lead_id'    => $lead->id,
+                'department' => $department,
             ]);
         }
     }

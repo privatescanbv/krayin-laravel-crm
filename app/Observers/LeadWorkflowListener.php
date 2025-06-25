@@ -4,8 +4,6 @@ namespace App\Observers;
 
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
-use App\Enums\WebhookType;
-use App\Services\WebhookService;
 use Illuminate\Support\Facades\Log;
 use Webkul\Attribute\Models\Attribute;
 use Webkul\Attribute\Models\AttributeValue;
@@ -13,15 +11,35 @@ use Webkul\Lead\Models\Lead;
 
 class LeadWorkflowListener
 {
-    public function __construct(
-        protected WebhookService $webhookService
-    ) {}
-
     /**
      * Handle the event.
      */
     public function handle(Lead $lead): void
     {
+        // Refresh the lead to get the latest data from database
+        $lead->refresh();
+
+        logger()->info('LeadWorkflowListener triggered', [
+            'lead_id'           => $lead->id,
+            'stage'             => $lead->stage?->name,
+            'pipeline_id'       => $lead->lead_pipeline_id,
+            'pipeline_stage_id' => $lead->lead_pipeline_stage_id,
+        ]);
+
+        // Check if the pipeline was recently updated (within last 5 seconds)
+        // This prevents double updates when AttributeValueObserver has already updated the pipeline
+        $recentlyUpdated = $lead->updated_at && $lead->updated_at->diffInSeconds(now()) < 5;
+
+        if ($recentlyUpdated) {
+            Log::info('LeadWorkflowListener: Skipping update - lead was recently updated', [
+                'lead_id'     => $lead->id,
+                'updated_at'  => $lead->updated_at,
+                'seconds_ago' => $lead->updated_at->diffInSeconds(now()),
+            ]);
+
+            return;
+        }
+
         // Eager load the source relation
         $lead->load('source');
 
@@ -29,15 +47,11 @@ class LeadWorkflowListener
         if (! empty($departmentValue)) {
             // Update lead pipeline and stage based on department
             $this->leadDepartmentUpdated($lead, $departmentValue);
+        } else {
+            Log::info('LeadWorkflowListener: No department value found, skipping update', [
+                'lead_id' => $lead->id,
+            ]);
         }
-        $this->webhookService->sendWebhook([
-            'entity_id'      => $lead->id,
-            'status'         => $lead->stage->code,
-            'source_code'    => $lead->source?->name,
-            'source_code_id' => $lead->source?->id,
-            'department'     => $departmentValue,
-        ],
-            WebhookType::LEAD_PIPELINE_STAGE_CHANGE);
     }
 
     private function getDepartmentValue(Lead $lead): ?string
@@ -63,15 +77,38 @@ class LeadWorkflowListener
             $leadPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
             $leadPipelineStageId = PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value;
         }
-        Log::info('Updating lead pipeline and stage based on department', [
-            'lead_id'                => $lead->id,
-            'department'             => $department,
-            'lead_pipeline_id'       => $leadPipelineId,
-            'lead_pipeline_stage_id' => $leadPipelineStageId,
+
+        Log::info('LeadWorkflowListener: Checking if update is needed', [
+            'lead_id'                    => $lead->id,
+            'department'                 => $department,
+            'current_pipeline_id'        => $lead->lead_pipeline_id,
+            'current_pipeline_stage_id'  => $lead->lead_pipeline_stage_id,
+            'expected_pipeline_id'       => $leadPipelineId,
+            'expected_pipeline_stage_id' => $leadPipelineStageId,
+            'pipeline_needs_update'      => $lead->lead_pipeline_id !== $leadPipelineId,
+            'stage_needs_update'         => $lead->lead_pipeline_stage_id !== $leadPipelineStageId,
         ]);
-        $lead->update([
-            'lead_pipeline_id'       => $leadPipelineId,
-            'lead_pipeline_stage_id' => $leadPipelineStageId,
-        ]);
+
+        if ($lead->lead_pipeline_stage_id !== $leadPipelineStageId || $lead->lead_pipeline_id !== $leadPipelineId) {
+            // Only update if the pipeline or stage is actually different
+            Log::info('LeadWorkflowListener: Updating lead pipeline and stage based on department', [
+                'lead_id'                    => $lead->id,
+                'department'                 => $department,
+                'lead_pipeline_id'           => $lead->lead_pipeline_id,
+                'lead_pipeline_stage_id'     => $lead->lead_pipeline_stage_id,
+                'new_lead_pipeline_id'       => $leadPipelineId,
+                'new_lead_pipeline_stage_id' => $leadPipelineStageId,
+            ]);
+
+            $lead->update([
+                'lead_pipeline_id'       => $leadPipelineId,
+                'lead_pipeline_stage_id' => $leadPipelineStageId,
+            ]);
+        } else {
+            Log::info('LeadWorkflowListener: No update needed - pipeline and stage already correct', [
+                'lead_id'    => $lead->id,
+                'department' => $department,
+            ]);
+        }
     }
 }

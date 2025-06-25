@@ -29,12 +29,6 @@ class LeadObserver
      */
     public function updating(Lead $lead): void
     {
-        Log::info('UPDATE lead', [
-            'lead_id'   => $lead->id,
-            'old_stage' => $lead->getOriginal('lead_pipeline_stage_id'),
-            'new_stage' => $lead->lead_pipeline_stage_id,
-        ]);
-
         // Check if the stage has changed
         if ($lead->isDirty('lead_pipeline_stage_id')) {
             $newStageCode = $lead->stage?->code;
@@ -62,7 +56,9 @@ class LeadObserver
             'stage'   => $lead->stage?->name,
         ]);
 
-        $this->sendWebhook($lead);
+        if ($lead->wasChanged('lead_pipeline_stage_id')) {
+            $this->sendWebhook($lead, 'LeadObserver@created');
+        }
     }
 
     /**
@@ -70,13 +66,23 @@ class LeadObserver
      */
     public function updated(Lead $lead): void
     {
-        // Send webhook if stage has changed or department has changed
-        if ($lead->isDirty('lead_pipeline_stage_id')) {
-            $this->sendWebhook($lead);
+        // Send webhook if stage has changed and the stage is actually different
+        if ($lead->wasChanged('lead_pipeline_stage_id') && $lead->stage) {
+
+            logger()->info('lead update', [
+                'lead_id'            => $lead->id,
+                'original'           => $lead->getOriginal('lead_pipeline_stage_id'),
+                'new'                => $lead->lead_pipeline_stage_id,
+                'wasChanged'         => $lead->wasChanged('lead_pipeline_stage_id'),
+                'changed_attributes' => $lead->getChanges(),
+                'dirty_attributes'   => $lead->getDirty(),
+            ]);
+            // 'stack_trace' => (new \Exception())->getTraceAsString(),
+            $this->sendWebhook($lead, 'LeadObserver@updated');
         }
     }
 
-    private function sendWebhook(Lead $lead): void
+    private function sendWebhook(Lead $lead, string $caller): void
     {
         // Eager load the source relation
         $lead->load('source');
@@ -90,7 +96,8 @@ class LeadObserver
             'source_code_id' => $lead->source?->id,
             'department'     => $departmentValue,
         ],
-            WebhookType::LEAD_PIPELINE_STAGE_CHANGE);
+            WebhookType::LEAD_PIPELINE_STAGE_CHANGE,
+            $caller);
     }
 
     private function getDepartmentValue(Lead $lead): ?string

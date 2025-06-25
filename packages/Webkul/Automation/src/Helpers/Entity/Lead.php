@@ -111,16 +111,36 @@ class Lead extends AbstractEntity
             switch ($action['id']) {
                 case 'update_lead':
                     Log::warning('workflow start, update_lead');
-                    $lead = $this->leadRepository->update(
-                        [
-                            'entity_type'        => 'leads',
-                            $action['attribute'] => $action['value'],
-                        ],
-                        $lead->id,
-                        [$action['attribute']]
-                    );
+                    
+                    // Check if the value is actually different from current value
+                    $currentValue = $lead->{$action['attribute']};
+                    $newValue = $action['value'];
+                    
+                    if ($currentValue != $newValue) {
+                        Log::info('Updating lead attribute', [
+                            'lead_id' => $lead->id,
+                            'attribute' => $action['attribute'],
+                            'old_value' => $currentValue,
+                            'new_value' => $newValue,
+                        ]);
+                        
+                        $lead = $this->leadRepository->update(
+                            [
+                                'entity_type'        => 'leads',
+                                $action['attribute'] => $action['value'],
+                            ],
+                            $lead->id,
+                            [$action['attribute']]
+                        );
 
-                    Event::dispatch('lead.workflows.after', $lead);
+                        Event::dispatch('lead.workflows.after', $lead);
+                    } else {
+                        Log::info('Skipping lead update - no change detected', [
+                            'lead_id' => $lead->id,
+                            'attribute' => $action['attribute'],
+                            'value' => $newValue,
+                        ]);
+                    }
 
                     break;
 

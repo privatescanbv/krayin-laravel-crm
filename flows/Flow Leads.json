@@ -248,7 +248,7 @@
                     "id": "4d9daf3c-31d5-4c7c-b3de-c07c35c7b0df",
                     "operator": {
                       "type": "string",
-                      "operation": "equals"
+                      "operation": "contains"
                     },
                     "leftValue": "={{ $json.body.status }}",
                     "rightValue": "=nieuwe-aanvraag-kwalificeren"
@@ -274,8 +274,7 @@
                     "rightValue": "klant-adviseren",
                     "operator": {
                       "type": "string",
-                      "operation": "equals",
-                      "name": "filter.operator.equals"
+                      "operation": "contains"
                     }
                   }
                 ],
@@ -299,8 +298,7 @@
                     "rightValue": "klant-adviseren-opvolgen",
                     "operator": {
                       "type": "string",
-                      "operation": "equals",
-                      "name": "filter.operator.equals"
+                      "operation": "contains"
                     }
                   }
                 ],
@@ -324,8 +322,7 @@
                     "rightValue": "won",
                     "operator": {
                       "type": "string",
-                      "operation": "equals",
-                      "name": "filter.operator.equals"
+                      "operation": "contains"
                     }
                   }
                 ],
@@ -973,7 +970,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "107068b9-0afd-4c8a-9779-d25609b726bf",
+  "versionId": "ef4d8bdb-44c0-4f1b-b182-7da944409752",
   "meta": {
     "instanceId": "8d3e22640ea03faebf2e7f52d8406cd7615b83cdb309f1d4e35d0b03b1178db3"
   },

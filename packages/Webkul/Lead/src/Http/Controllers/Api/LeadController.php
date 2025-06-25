@@ -99,10 +99,6 @@ class LeadController extends Controller
      */
     public function update(LeadForm $request, int $id): JsonResponse
     {
-//        $this->validate($request, [
-//            'title' => 'required',
-//        ]);
-
         $lead = $this->leadService->update($request, $id);
 
         return response()->json([

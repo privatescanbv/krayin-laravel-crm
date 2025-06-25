@@ -26,6 +26,6 @@ gemaakte keuzes:
 
 
 windows
-
+~
 chmod -R 775 storage bootstrap/cache
 docker compose up

@@ -12,10 +12,10 @@ class WebhookService
     /**
      * Send a webhook notification with custom data.
      */
-    public function sendWebhook(array $data, WebhookType $webhookType): bool
+    public function sendWebhook(array $data, WebhookType $webhookType, string $caller = 'unknown'): bool
     {
         try {
-            Log::info('Send webhook: '.$webhookType->value, $data);
+            Log::info('Send webhook: '.$webhookType->value.'; from: '.$caller, $data);
 
             $url = $this->getWebhookUrl($webhookType);
 

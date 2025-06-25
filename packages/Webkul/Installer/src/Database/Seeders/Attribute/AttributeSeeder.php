@@ -2,6 +2,7 @@
 
 namespace Webkul\Installer\Database\Seeders\Attribute;
 
+use App\Enums\LeadAttributeKeys;
 use App\Enums\PersonAttributeKeys;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
@@ -173,7 +174,7 @@ class AttributeSeeder extends Seeder
                 'updated_at'      => $now,
             ],
             [
-                'code'            => 'department',
+                'code'            => LeadAttributeKeys::DEPARTMENT->value,
                 'name'            => 'Afdeling',
                 'type'            => 'select',
                 'entity_type'     => 'leads',

@@ -2,7 +2,7 @@
 
 namespace App\Observers;
 
-use App\Enums\LeadPipelineStage;
+use App\Enums\LeadPipelineStageDefaults;
 use App\Enums\WebhookType;
 use App\Services\WebhookService;
 use Illuminate\Support\Facades\Log;
@@ -40,7 +40,7 @@ class LeadObserver
             $newStageCode = $lead->stage?->code;
 
             // If changing to 'klant_adviseren' stage
-            if ($newStageCode === LeadPipelineStage::ADVICE->value) {
+            if ($newStageCode === LeadPipelineStageDefaults::ADVICE->value) {
                 // Check if person_id is set
                 if (! $lead->person_id) {
                     Log::warning('Cannot update lead: missing person_id for advice stage', [

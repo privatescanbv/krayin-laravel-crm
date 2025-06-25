@@ -2,11 +2,16 @@
 
 namespace App\Observers;
 
+use App\Enums\LeadAttributeKeys;
 use App\Enums\PersonAttributeKeys;
+use App\Enums\PipelineDefaultKeys;
+use App\Enums\PipelineStageDefaultKeys;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Webkul\Attribute\Models\AttributeOption;
 use Webkul\Attribute\Models\AttributeValue;
 use Webkul\Contact\Models\Person;
+use Webkul\Lead\Models\Lead;
 
 class AttributeValueObserver
 {
@@ -19,12 +24,7 @@ class AttributeValueObserver
     {
         $attribute = $attributeValue->attribute;
 
-        if ($attribute->entity_type === 'persons') {
-            if (in_array($attribute->code, $this->personAttributeKeysPartOfFullName)) {
-                $person = Person::find($attributeValue->entity_id);
-                $this->updateNameField($person);
-            }
-        }
+        $this->handleAttributeChanged($attribute, $attributeValue);
     }
 
     /**
@@ -39,13 +39,7 @@ class AttributeValueObserver
             'entity_id'       => $attributeValue->entity_id,
             'entity_type'     => $attributeValue->entity_type,
         ]);
-        if ($attribute->entity_type === 'persons') {
-
-            if (in_array($attribute->code, $this->personAttributeKeysPartOfFullName)) {
-                $person = Person::find($attributeValue->entity_id);
-                $this->updateNameField($person);
-            }
-        }
+        $this->handleAttributeChanged($attribute, $attributeValue);
     }
 
     /**
@@ -113,6 +107,46 @@ class AttributeValueObserver
             $person->update(['name' => $fullName]);
         } else {
             $person->update(['name' => '-']);
+        }
+    }
+
+    private function leadDepartmentUpdated(Lead $lead, string $department): void
+    {
+        $leadPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
+        $leadPipelineStageId = PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_PRIVATESCAN_ID->value;
+        if ($department === 'Hernia') {
+            $leadPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
+            $leadPipelineStageId = PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value;
+        }
+        Log::info('Updating lead pipeline and stage based on department', [
+            'lead_id'                => $lead->id,
+            'department'             => $department,
+            'lead_pipeline_id'       => $leadPipelineId,
+            'lead_pipeline_stage_id' => $leadPipelineStageId,
+        ]);
+        if ($leadPipelineId !== $lead->lead_pipeline_id) {
+            $lead->update([
+                'lead_pipeline_id'       => $leadPipelineId,
+                'lead_pipeline_stage_id' => $leadPipelineStageId,
+            ]);
+        }
+    }
+
+    private function handleAttributeChanged(mixed $attribute, AttributeValue $attributeValue): void
+    {
+        if ($attribute->entity_type === 'persons') {
+
+            if (in_array($attribute->code, $this->personAttributeKeysPartOfFullName)) {
+                $person = Person::find($attributeValue->entity_id);
+                $this->updateNameField($person);
+            }
+        } elseif ($attribute->entity_type === 'leads') {
+            if ($attribute->code === LeadAttributeKeys::DEPARTMENT->value) {
+                $lead = Lead::find($attributeValue->entity_id);
+                if (! empty($attributeValue->integer_value)) {
+                    $this->leadDepartmentUpdated($lead, AttributeOption::find($attributeValue->integer_value)->name);
+                }
+            }
         }
     }
 }

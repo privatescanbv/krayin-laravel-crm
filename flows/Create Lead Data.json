@@ -1,5 +1,5 @@
 {
-  "name": "CRM Create Leads",
+  "name": "create lead data",
   "nodes": [
     {
       "parameters": {
@@ -16,7 +16,7 @@
         0,
         0
       ],
-      "id": "6659bc9c-bb80-427f-86ed-6460aa6dc4df",
+      "id": "61a356d2-88c1-469a-8f90-0021a6dd2089",
       "name": "Create Lead Tel privatescan"
     },
     {
@@ -25,7 +25,7 @@
         "url": "http://crm/api/leads/",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\n  \"first_name\": \"Mark\",\n  \"last_name\": \"Bulthuis\",\n  \"email\": \"mark@example.com\",\n  \"phone\": \"0612345678\",\n  \"company_name\": \"MB Software\",\n  \"lead_source\": \"Website\",\n  \"title\": \"lead tel (hernia)\",\n  \"lead_pipeline_id\":1,\n  \"lead_source_id\": 2,\n  \"lead_pipeline_stage_id\": 1,\n  \"tags\": [\"crm\", \"n8n\"]\n}\n",
+        "jsonBody": "{\n  \"first_name\": \"Mark\",\n  \"last_name\": \"Bulthuis\",\n  \"email\": \"mark@example.com\",\n  \"phone\": \"0612345678\",\n  \"company_name\": \"MB Software\",\n  \"lead_source\": \"Website\",\n  \"title\": \"lead tel (hernia)\",\n  \"lead_source_id\": 2,\n  \"tags\": [\"crm\", \"n8n\"]\n}\n",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -34,7 +34,7 @@
         400,
         0
       ],
-      "id": "acd26aef-19ea-4bd8-9c10-0ca7a6af961a",
+      "id": "49baffa4-08d7-4b42-b27a-e33c650b7baf",
       "name": "Create Lead Tel Hernia"
     }
   ],
@@ -44,10 +44,10 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "43187ba9-abf1-46d4-99ec-1ce85f05224f",
+  "versionId": "74548cb1-d603-4203-b689-66bc28287906",
   "meta": {
-    "instanceId": "8d3e22640ea03faebf2e7f52d8406cd7615b83cdb309f1d4e35d0b03b1178db3"
+    "instanceId": "04a589aba7becd1dde047957b525fc8163605bfcbd5c7304b882c2d0f7b90473"
   },
-  "id": "XwAPYsT8Y4SITrJH",
+  "id": "lMKYlS9U06v6rUKm",
   "tags": []
 }

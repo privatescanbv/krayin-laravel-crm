@@ -1,0 +1,10 @@
+<?php
+
+namespace App\Enums;
+
+enum PipelineStageDefaultKeys: int
+{
+    case PIPELINE_FIRST_STAGE_PRIVATESCAN_ID = 1;
+    case PIPELINE_FIRST_STAGE_HERNIA_ID = 6;
+
+}

@@ -3,6 +3,7 @@
 namespace Webkul\Lead\Models;
 
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
@@ -13,10 +14,11 @@ use Webkul\Lead\Contracts\Lead as LeadContract;
 use Webkul\Quote\Models\QuoteProxy;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
+use Database\Factories\LeadFactory;
 
 class Lead extends Model implements LeadContract
 {
-    use CustomAttribute, LogsActivity;
+    use CustomAttribute, LogsActivity, HasFactory;
 
     protected $casts = [
         'closed_at'           => 'datetime',
@@ -52,6 +54,16 @@ class Lead extends Model implements LeadContract
         'lead_pipeline_id',
         'lead_pipeline_stage_id',
     ];
+
+    /**
+     * Create a new factory instance for the model.
+     *
+     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     */
+    protected static function newFactory()
+    {
+        return LeadFactory::new();
+    }
 
     /**
      * Get the user that owns the lead.

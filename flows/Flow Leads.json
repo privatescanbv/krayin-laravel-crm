@@ -1,5 +1,5 @@
 {
-  "name": "leads",
+  "name": "flow leads",
   "nodes": [
     {
       "parameters": {
@@ -225,7 +225,7 @@
       "name": "Update CRM contact with call_status COMPLETED",
       "type": "n8n-nodes-base.airtable",
       "position": [
-        0,
+        680,
         420
       ],
       "typeVersion": 2.1,
@@ -344,8 +344,8 @@
       "name": "Route based on call_status",
       "type": "n8n-nodes-base.switch",
       "position": [
-        -1240,
-        240
+        -1160,
+        360
       ],
       "typeVersion": 3.2
     },
@@ -359,7 +359,7 @@
       "name": "Sticky Note1",
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        0,
+        680,
         0
       ],
       "typeVersion": 1
@@ -382,79 +382,11 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        0,
+        680,
         180
       ],
       "id": "80cb3db1-db13-4f48-ad56-813dfb3382e2",
       "name": "Add Note to lead"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "=http://crm/api/leads/{{ $json.lead_id }}/activities",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "type",
-              "value": "meeting"
-            },
-            {
-              "name": "title",
-              "value": "Klant data bijwerken"
-            },
-            {
-              "name": "description",
-              "value": "1. Koppel contact persoon. 2. Werk eventueel NAV gegevens bij"
-            },
-            {
-              "name": "schedule_from",
-              "value": "={{ $now.format('yyyy-MM-dd hh:mm:ss') }}"
-            },
-            {
-              "name": "schedule_to",
-              "value": "={{ $now.plus(7, 'days').format('yyyy-MM-dd hh:mm:ss') }}"
-            },
-            {
-              "name": "group_id",
-              "value": "={{ $json.group_id }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        -280,
-        620
-      ],
-      "id": "b46acaf5-3de8-4f3a-b93e-4b39871796db",
-      "name": "Add task - klant data bijwerken"
-    },
-    {
-      "parameters": {
-        "method": "PATCH",
-        "url": "=http://crm/api/leads/{{ $json.lead_id }}/stage",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "lead_pipeline_stage_id",
-              "value": "={{ $json.newLeadStatusId }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        -800,
-        100
-      ],
-      "id": "eb9f2b0a-3470-4960-b14d-2978b72c6d02",
-      "name": "Update status lead"
     },
     {
       "parameters": {
@@ -467,7 +399,7 @@
       "type": "n8n-nodes-base.webhook",
       "position": [
         -1600,
-        340
+        380
       ],
       "webhookId": "0de7745d-64c8-410b-9d23-f98f4b9c3787",
       "typeVersion": 2
@@ -499,6 +431,31 @@
               },
               "renameOutput": true,
               "outputKey": "klant data bijwerken -> done"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "5a9b5194-5107-4098-9e71-0826d54dacbb",
+                    "leftValue": "={{ $json.body.activity.title }}",
+                    "rightValue": "=Klant bellen voor advies",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Klant bellen voor advies -> done"
             }
           ]
         },
@@ -510,36 +467,23 @@
       "name": "Route on task title",
       "type": "n8n-nodes-base.switch",
       "position": [
-        -1360,
-        640
+        -1340,
+        1520
       ],
       "typeVersion": 3.2
     },
     {
       "parameters": {
-        "jsCode": "return $input.all().map(item => {\n  return {\n    json: {\n      ...item.json,\n      newLeadStatusId: 2,\n      lead_id: item.json.body.activity.lead_id\n    }\n  };\n});\nreturn $input.all();"
+        "jsCode": "return $input.all().map(item => {\n  return {\n    json: {\n      ...item.json,\n      lead_id: item.json.body.activity.lead_id\n    }\n  };\n});\nreturn $input.all();"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         -1120,
-        640
+        1520
       ],
       "id": "369456cf-9ed5-4b6a-a90b-1900cbbafc65",
       "name": "newLeadStatusId 3"
-    },
-    {
-      "parameters": {
-        "jsCode": "return $input.all().map(item => {\n  return {\n    json: {\n      ...item.json,\n      newLeadStatusId: 1,\n      lead_id: item.json.body.entity_id,\n      source_code_id: item.json.source_code_id\n    }\n  };\n});\nreturn $input.all();"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -1000,
-        100
-      ],
-      "id": "c56eafcf-e2bc-4589-8f91-fe33e43333a1",
-      "name": "department"
     },
     {
       "parameters": {
@@ -569,8 +513,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -1400,
-        340
+        -1380,
+        380
       ],
       "id": "6b1b2d4f-3de3-401b-8df3-963b578a51a7",
       "name": "department not null"
@@ -589,8 +533,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -800,
-        720
+        -940,
+        920
       ],
       "id": "14c38c3f-1817-4092-be36-cc012fe81338",
       "name": "Find group by Department"
@@ -600,24 +544,11 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -660,
-        620
+        -720,
+        860
       ],
       "id": "e832727e-d89d-46d1-bfe9-a0022a82d673",
       "name": "Merge"
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id\n    }\n  }\n];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -480,
-        620
-      ],
-      "id": "cce5b155-8ebf-472d-a5b8-66d07cf896de",
-      "name": "set lead_id and group_id"
     },
     {
       "parameters": {
@@ -628,8 +559,8 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -1600,
-        640
+        -1560,
+        1520
       ],
       "id": "3f0e2f84-286c-4ffd-9f8c-3cbcf99e7868",
       "name": "Webhook - task done",
@@ -649,8 +580,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -700,
-        1040
+        -940,
+        1220
       ],
       "id": "a5a0bce0-970b-4809-b293-b58fb78dcce4",
       "name": "Find group by Department1"
@@ -660,68 +591,24 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -560,
-        940
+        -720,
+        1160
       ],
       "id": "ee98abae-dc24-46e5-b457-e22a34f23401",
       "name": "Merge1"
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id\n    }\n  }\n];"
+        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Klant bellen voor advies',\n      task_description: '1. Adviseer de klant en koppel dit terug in het systeem. Zet de taak op down, zodra: 1. .. 2.. '\n    }\n  }\n];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -380,
-        940
+        -500,
+        1160
       ],
       "id": "7e77abd1-1ee3-447f-b3e1-a011eb7571cd",
       "name": "set lead_id and group_id1"
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "=http://crm/api/leads/{{ $json.lead_id }}/activities",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "type",
-              "value": "meeting"
-            },
-            {
-              "name": "title",
-              "value": "Klant bellen voor advies"
-            },
-            {
-              "name": "description",
-              "value": "1. Adviseer de klant en koppel dit terug in het systeem. Zet de taak op down, zodra: 1. .. 2.. "
-            },
-            {
-              "name": "schedule_from",
-              "value": "={{ $now.format('yyyy-MM-dd hh:mm:ss') }}"
-            },
-            {
-              "name": "schedule_to",
-              "value": "={{ $now.plus(7, 'days').format('yyyy-MM-dd hh:mm:ss') }}"
-            },
-            {
-              "name": "group_id",
-              "value": "={{ $json.group_id }}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        -180,
-        940
-      ],
-      "id": "8d3fb447-6c77-42c9-b7f0-d5c70b68a599",
-      "name": "Add task - klant bellen"
     },
     {
       "parameters": {
@@ -732,7 +619,7 @@
           "parameters": [
             {
               "name": "lead_id",
-              "value": "{{ $json.lead_id}}"
+              "value": "={{ $json.lead_id}}"
             }
           ]
         },
@@ -741,8 +628,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -700,
-        280
+        -720,
+        300
       ],
       "id": "5250819e-084d-4b7c-baf1-d6c213f9dba5",
       "name": "Add lead workflow"
@@ -754,11 +641,111 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -840,
-        280
+        -940,
+        300
       ],
       "id": "c41d6564-0a97-423b-a86c-689e35bb7bab",
       "name": "lead_id"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Klant data bijwerken',\n      task_description: '1. Koppel contact persoon. 2. Werk eventueel NAV gegevens bij'\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -500,
+        860
+      ],
+      "id": "cce5b155-8ebf-472d-a5b8-66d07cf896de",
+      "name": "set lead_id and group_id"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "NPfjupzlLSnFXidF",
+          "mode": "list",
+          "cachedResultName": "create task"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -280,
+        860
+      ],
+      "id": "8254a228-73a5-4ca0-ac6e-03f0bfe914d1",
+      "name": "Create task"
+    },
+    {
+      "parameters": {
+        "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -940,
+        620
+      ],
+      "id": "5ebda185-ea79-47e1-8b2d-312f64025cfe",
+      "name": "Find group by Department2"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -720,
+        560
+      ],
+      "id": "d3982129-3a94-493b-986e-161904e9b34d",
+      "name": "Merge2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Order verzenden',\n      task_description: '1. Samenstellen order; 2. Samenstellen mail in de juist taal met de bijlages (GVL, kaarten). 3. versturen '\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -500,
+        560
+      ],
+      "id": "a62e9a22-002a-4d25-b011-9dc7e79b419c",
+      "name": "set lead_id and group_id2"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=http://crm/api/leads/{{ $json.lead_id }}/next_stage",
+        "sendBody": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -900,
+        1520
+      ],
+      "id": "55a6f085-b94f-4ebf-b72f-4e9f3cd4cf32",
+      "name": "put lead into next stage"
     }
   ],
   "pinData": {},
@@ -766,11 +753,6 @@
     "Route based on call_status": {
       "main": [
         [
-          {
-            "node": "department",
-            "type": "main",
-            "index": 0
-          },
           {
             "node": "Merge",
             "type": "main",
@@ -800,6 +782,16 @@
             "node": "lead_id",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "Find group by Department2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -823,6 +815,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "newLeadStatusId 3",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -830,18 +829,7 @@
       "main": [
         [
           {
-            "node": "Update status lead",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "department": {
-      "main": [
-        [
-          {
-            "node": "Update status lead",
+            "node": "put lead into next stage",
             "type": "main",
             "index": 0
           }
@@ -875,17 +863,6 @@
         [
           {
             "node": "set lead_id and group_id",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "set lead_id and group_id": {
-      "main": [
-        [
-          {
-            "node": "Add task - klant data bijwerken",
             "type": "main",
             "index": 0
           }
@@ -929,7 +906,7 @@
       "main": [
         [
           {
-            "node": "Add task - klant bellen",
+            "node": "Create task",
             "type": "main",
             "index": 0
           }
@@ -946,15 +923,59 @@
           }
         ]
       ]
+    },
+    "set lead_id and group_id": {
+      "main": [
+        [
+          {
+            "node": "Create task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find group by Department2": {
+      "main": [
+        [
+          {
+            "node": "Merge2",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge2": {
+      "main": [
+        [
+          {
+            "node": "set lead_id and group_id2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set lead_id and group_id2": {
+      "main": [
+        [
+          {
+            "node": "Create task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "5e3b6ae1-f83d-42eb-ade0-c36efe3e5518",
+  "versionId": "107068b9-0afd-4c8a-9779-d25609b726bf",
   "meta": {
-    "instanceId": "04a589aba7becd1dde047957b525fc8163605bfcbd5c7304b882c2d0f7b90473"
+    "instanceId": "8d3e22640ea03faebf2e7f52d8406cd7615b83cdb309f1d4e35d0b03b1178db3"
   },
   "id": "o3XLElkWyy0rFiDw",
   "tags": []

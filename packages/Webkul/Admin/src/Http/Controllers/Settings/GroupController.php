@@ -122,6 +122,9 @@ class GroupController extends Controller
         }
     }
 
+    /**
+     * Relations group < - > department is based on the same name.
+     */
     public function findByDepartment(string $departmentName)
     {
         $group = Group::query()

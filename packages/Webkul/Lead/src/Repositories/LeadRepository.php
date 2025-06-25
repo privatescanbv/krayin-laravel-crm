@@ -194,15 +194,26 @@ class LeadRepository extends Repository
          * For example, in the lead Kanban section, when switching stages, only the stage will be updated.
          */
         if (isset($data['person'])) {
-            if (! empty($data['person']['id'])) {
-                $person = $this->personRepository->findOrFail($data['person']['id']);
-            } else {
-                $person = $this->personRepository->create(array_merge($data['person'], [
-                    'entity_type' => 'persons',
-                ]));
-            }
+            $personData = $data['person'];
+            $values = [];
+            array_walk_recursive($personData, function ($v, $k) use (&$values) {
+                if ($k !== 'label') {
+                    $values[] = $v;
+                }
+            });
+            $personContainsData = !empty(array_filter($values));
+            $data['person'] = $personData;
+            if ($personContainsData) {
+                if (!empty($data['person']['id'])) {
+                    $person = $this->personRepository->findOrFail($data['person']['id']);
+                } else {
+                    $person = $this->personRepository->create(array_merge($data['person'], [
+                        'entity_type' => 'persons',
+                    ]));
+                }
 
-            $data['person_id'] = $person->id;
+                $data['person_id'] = $person->id;
+            }
         }
 
         if (isset($data['lead_pipeline_stage_id'])) {

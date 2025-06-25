@@ -1,0 +1,101 @@
+{
+  "name": "create task",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://crm/api/leads/{{ $json.lead_id }}/activities",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "meeting"
+            },
+            {
+              "name": "title",
+              "value": "={{ $json.task_title }}"
+            },
+            {
+              "name": "description",
+              "value": "={{ $json.task_description }}"
+            },
+            {
+              "name": "schedule_from",
+              "value": "={{ $now.format('yyyy-MM-dd hh:mm:ss') }}"
+            },
+            {
+              "name": "schedule_to",
+              "value": "={{ $now.plus(7, 'days').format('yyyy-MM-dd hh:mm:ss') }}"
+            },
+            {
+              "name": "group_id",
+              "value": "={{ $json.group_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -100,
+        -120
+      ],
+      "id": "5d18699a-7641-462c-95c5-26b8d9209686",
+      "name": "Add task - klant bellen"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "task_title"
+            },
+            {
+              "name": "task_description"
+            },
+            {
+              "name": "lead_id"
+            },
+            {
+              "name": "group_id"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -840,
+        -280
+      ],
+      "id": "6c9cf789-27f4-415e-a317-d73770bcd051",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Add task - klant bellen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "648fb637-2122-44f3-876c-7e13e0bde4e6",
+  "meta": {
+    "instanceId": "04a589aba7becd1dde047957b525fc8163605bfcbd5c7304b882c2d0f7b90473"
+  },
+  "id": "NPfjupzlLSnFXidF",
+  "tags": []
+}

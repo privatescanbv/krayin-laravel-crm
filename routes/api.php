@@ -25,6 +25,7 @@ Route::prefix('leads')->group(function () {
     Route::get('{id}', [LeadController::class, 'show']);
     Route::put('{id}', [LeadController::class, 'update']);
     Route::patch('{id}/stage', [LeadController::class, 'updateStage']);
+    Route::patch('{id}/next_stage', [LeadController::class, 'nextStage']);
     Route::delete('{id}', [LeadController::class, 'destroy']);
     // notes
     Route::post('{leadId}/notes', [LeadNoteController::class, 'store']);

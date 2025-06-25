@@ -7,10 +7,12 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\HasApiTokens;
 use Webkul\User\Contracts\User as UserContract;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Database\Factories\WebkulUserFactory;
 
 class User extends Authenticatable implements UserContract
 {
-    use HasApiTokens, Notifiable;
+    use HasApiTokens, Notifiable, HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -99,5 +101,15 @@ class User extends Authenticatable implements UserContract
         }
 
         return in_array($permission, $this->role->permissions);
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     *
+     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     */
+    protected static function newFactory()
+    {
+        return WebkulUserFactory::new();
     }
 }

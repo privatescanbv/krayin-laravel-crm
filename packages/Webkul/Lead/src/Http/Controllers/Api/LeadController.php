@@ -7,11 +7,16 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Webkul\Admin\Http\Requests\LeadForm;
+use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Pipeline;
+use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Repositories\LeadRepository;
+use Webkul\Lead\Repositories\PipelineRepository;
 use Webkul\User\Models\User;
 use Webkul\Admin\Http\Controllers\Lead\LeadController as AdminLeadController;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
+use Illuminate\Support\Facades\DB;
 
 class LeadController extends Controller
 {
@@ -21,11 +26,12 @@ class LeadController extends Controller
      * Create a new controller instance.
      */
     public function __construct(
-        protected LeadRepository $leadRepository,
-        protected AdminLeadController $leadService,
-        protected AttributeRepository $attributeRepository,
+        protected LeadRepository           $leadRepository,
+        protected AdminLeadController      $leadService,
+        protected AttributeRepository      $attributeRepository,
         protected AttributeValueRepository $attributeValueRepository
-    ) {
+    )
+    {
         request()->request->add(['entity_type' => 'leads']);
     }
 
@@ -51,8 +57,6 @@ class LeadController extends Controller
             'first_name' => 'required',
             'last_name' => 'required',
             'email' => 'required|email',
-            'lead_pipeline_id' => 'required',
-            'lead_pipeline_stage_id' => 'required',
             'lead_source_id' => 'required:numeric',
         ]);
 
@@ -110,18 +114,12 @@ class LeadController extends Controller
     /**
      * Update the pipeline stage of a lead.
      */
-    public function updateStage(Request $request, int $id): JsonResponse
+    public function updateStage(Request $request, int $leadId): JsonResponse
     {
         $this->validate($request, [
             'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
         ]);
-
-        // Set the data via the request
-        foreach ($request->all() as $key => $value) {
-            request()->request->add([$key => $value]);
-        }
-
-        $lead = $this->leadService->updateStage($id);
+        $lead = $this->leadService->updateStageId($leadId, request()->input('lead_pipeline_stage_id'));
 
         return response()->json([
             'message' => 'Lead stage updated successfully.',
@@ -138,6 +136,42 @@ class LeadController extends Controller
 
         return response()->json([
             'message' => 'Lead deleted successfully.',
+        ]);
+    }
+
+    public function nextStage(string $id)
+    {
+        $lead = Lead::findOrFail($id);
+
+        // Get current stage directly from lead_pipeline_stages table
+        $currentStage = DB::table('lead_pipeline_stages')
+            ->where('id', $lead->lead_pipeline_stage_id)
+            ->first();
+
+        if (!$currentStage) {
+            return response()->json([
+                'message' => 'Current stage not found.',
+            ], 404);
+        }
+
+        // Find next stage in the same pipeline
+        $nextStage = DB::table('lead_pipeline_stages')
+            ->where('lead_pipeline_id', $lead->lead_pipeline_id)
+            ->where('sort_order', '>', $currentStage->sort_order)
+            ->orderBy('sort_order', 'asc')
+            ->first();
+
+        if (is_null($nextStage)) {
+            return response()->json([
+                'message' => 'No next stage found for this lead.',
+            ], 404);
+        }
+
+        $lead = $this->leadService->updateStageId($id, $nextStage->id);
+
+        return response()->json([
+            'message' => 'Lead stage updated successfully.',
+            'data' => $lead,
         ]);
     }
 }

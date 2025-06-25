@@ -2,10 +2,15 @@
 
 namespace Webkul\Installer\Database\Seeders\Lead;
 
+use App\Enums\LeadPipelineStageDefaults;
+use App\Enums\PipelineDefaultKeys;
+use App\Enums\PipelineStageDefaultKeys;
 use App\Enums\PipelineType;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Webkul\Lead\Models\Stage;
 
 class PipelineSeeder extends Seeder
 {
@@ -14,6 +19,7 @@ class PipelineSeeder extends Seeder
      *
      * @param array $parameters
      * @return void
+     * @throws Exception
      */
     public function run($parameters = [])
     {
@@ -25,8 +31,8 @@ class PipelineSeeder extends Seeder
 
         $defaultLocale = $parameters['locale'] ?? config('app.locale');
 
-        $privateSanPipelineId = 1;
-        $herniaPipelineId = 2;
+        $privateSanPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
+        $herniaPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
         $privateScanWorkflowPipelineId = 3;
         $herniaWorkflowPipelineId = 4;
         DB::table('lead_pipelines')->insert([
@@ -172,5 +178,11 @@ class PipelineSeeder extends Seeder
                 'lead_pipeline_id' => $herniaWorkflowPipelineId,
             ],
         ]);
+
+        // validate
+        $firstStageHerniaLeadPipeline = Stage::where('code', 'nieuwe-aanvraag-kwalificeren-hernia')->firstOrFail()->id;
+        if( PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value != $firstStageHerniaLeadPipeline) {
+            throw new Exception('Pipeline stage is niet geldig voor hernia: '.$firstStageHerniaLeadPipeline);
+        }
     }
 }

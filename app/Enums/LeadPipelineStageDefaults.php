@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum LeadPipelineStage: string
+enum LeadPipelineStageDefaults: string
 {
     case NEW = 'nieuwe-aanvraag-kwalificeren';
     case MODIFY_CUSTOMER_DATA = 'klant-data-bijwerken';

@@ -272,6 +272,10 @@
     "file": "assets/icomoon-BbY1GX-d.woff",
     "src": "src/Resources/assets/fonts/icomoon.woff"
   },
+  "src/Resources/assets/images/Privatescan Logo Verticaal RGB.svg": {
+    "file": "assets/Privatescan Logo Verticaal RGB-ChYtbyCN.svg",
+    "src": "src/Resources/assets/images/Privatescan Logo Verticaal RGB.svg"
+  },
   "src/Resources/assets/images/corner-clip.svg": {
     "file": "assets/corner-clip-CRLTKrCT.svg",
     "src": "src/Resources/assets/images/corner-clip.svg"
@@ -281,8 +285,8 @@
     "src": "src/Resources/assets/images/dark-corner-clip.svg"
   },
   "src/Resources/assets/images/dark-logo.svg": {
-    "file": "assets/dark-logo-Dnw3cpYj.svg",
-    "src": "src/Resources/assets/images/dark-logo.svg"
+    "file": "assets/logo-C42U0Lt3.svg",
+    "src": "src/Resources/assets/images/logo.svg"
   },
   "src/Resources/assets/images/empty-placeholders/activities.svg": {
     "file": "assets/activities-DpB2XKqX.svg",
@@ -352,17 +356,25 @@
     "file": "assets/favicon-CjOHOI4a.ico",
     "src": "src/Resources/assets/images/favicon.ico"
   },
+  "src/Resources/assets/images/logo-pc-title.svg": {
+    "file": "assets/logo-C42U0Lt3.svg",
+    "src": "src/Resources/assets/images/logo.svg"
+  },
+  "src/Resources/assets/images/logo-pc-zonder-tekst.svg": {
+    "file": "assets/mobile-dark-logo-BcaQ1cNh.svg",
+    "src": "src/Resources/assets/images/mobile-dark-logo.svg"
+  },
   "src/Resources/assets/images/logo.svg": {
-    "file": "assets/logo-Bjh7YAuF.svg",
+    "file": "assets/logo-C42U0Lt3.svg",
     "src": "src/Resources/assets/images/logo.svg"
   },
   "src/Resources/assets/images/mobile-dark-logo.svg": {
-    "file": "assets/mobile-dark-logo-COPgCide.svg",
+    "file": "assets/mobile-dark-logo-BcaQ1cNh.svg",
     "src": "src/Resources/assets/images/mobile-dark-logo.svg"
   },
   "src/Resources/assets/images/mobile-light-logo.svg": {
-    "file": "assets/mobile-light-logo-CjoobCkl.svg",
-    "src": "src/Resources/assets/images/mobile-light-logo.svg"
+    "file": "assets/mobile-dark-logo-BcaQ1cNh.svg",
+    "src": "src/Resources/assets/images/mobile-dark-logo.svg"
   },
   "src/Resources/assets/js/app.js": {
     "file": "assets/app-CCEaDZSX.js",

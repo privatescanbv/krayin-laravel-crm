@@ -39,12 +39,21 @@
     }
   ],
   "pinData": {},
-  "connections": {},
+  "connections": {
+    "Create Lead Tel Hernia": {
+      "main": [
+        []
+      ]
+    }
+  },
   "active": false,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "b8PHf3zTNTQZsSzB",
+    "timezone": "Europe/Paris"
   },
-  "versionId": "74548cb1-d603-4203-b689-66bc28287906",
+  "versionId": "59a29bc6-07ba-4a2f-b0cd-dfa0227a21a9",
   "meta": {
     "instanceId": "04a589aba7becd1dde047957b525fc8163605bfcbd5c7304b882c2d0f7b90473"
   },

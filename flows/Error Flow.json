@@ -1,0 +1,61 @@
+{
+  "name": "error flow",
+  "nodes": [
+    {
+      "parameters": {
+        "requestMethod": "POST",
+        "url": "https://8d84ea4ae4f88e04e4b6cb70e5c9b1b0@o4509564203106304.ingest.de.sentry.io/api/4509564205596752/store/",
+        "jsonParameters": true,
+        "options": {},
+        "bodyParametersJson": "{\n  \"message\": \"{{$json.error.message}}\",\n  \"platform\": \"javascript\",\n  \"timestamp\": \"{{$now}}\",\n  \"level\": \"error\",\n  \"exception\": {\n    \"values\": [\n      {\n        \"type\": \"n8nError\",\n        \"value\": \"{{$json.error.message}}\",\n        \"stacktrace\": {\n          \"frames\": [\n            {\n              \"filename\": \"{{$json.workflow.name}}\",\n              \"function\": \"{{$json.node.name}}\"\n            }\n          ]\n        }\n      }\n    ]\n  }\n}",
+        "headerParametersJson": "[\n  {\n    \"name\": \"Content-Type\",\n    \"value\": \"application/json\"\n  }\n]",
+        "queryParametersJson": "[]"
+      },
+      "name": "Send to Sentry",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [
+        880,
+        40
+      ],
+      "id": "521dd93a-6e66-4f52-b3b7-8ab55c52095d"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        660,
+        20
+      ],
+      "id": "b5e59da5-ca48-47f9-8b5e-615e5eb1018d",
+      "name": "Error Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Send to Sentry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Paris",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "238aafaf-a2af-4ecb-8d9d-33de83605049",
+  "meta": {
+    "instanceId": "04a589aba7becd1dde047957b525fc8163605bfcbd5c7304b882c2d0f7b90473"
+  },
+  "id": "b8PHf3zTNTQZsSzB",
+  "tags": []
+}

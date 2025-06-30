@@ -227,8 +227,8 @@
                                         @lang('admin::app.activities.edit.meeting')
                                     </option>
 
-                                    <option value="lunch">
-                                        @lang('admin::app.activities.edit.lunch')
+                                    <option value="task">
+                                        @lang('admin::app.activities.edit.task')
                                     </option>
                                 </x-admin::form.control-group.control>
 

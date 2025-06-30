@@ -210,13 +210,8 @@ trait ProvideDropdownOptions
                 'disabled' => false,
                 'selected' => false,
             ], [
-                'label'    => trans('admin::app.common.select-meeting'),
-                'value'    => 'meeting',
-                'disabled' => false,
-                'selected' => false,
-            ], [
-                'label'    => trans('admin::app.common.select-lunch'),
-                'value'    => 'lunch',
+                'label'    => trans('admin::app.common.select-task'),
+                'value'    => 'task',
                 'disabled' => false,
                 'selected' => false,
             ],

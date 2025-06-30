@@ -263,7 +263,7 @@
                                                 <template v-if="activity.type != 'email'">
                                                     @if (bouncer()->hasPermission('activities.edit'))
                                                         <x-admin::dropdown.menu.item
-                                                            v-if="! activity.is_done && ['call', 'meeting', 'lunch'].includes(activity.type)"
+                                                            v-if="! activity.is_done && ['call', 'meeting', 'task'].includes(activity.type)"
                                                             @click="markAsDone(activity)"
                                                         >
                                                             <div class="flex items-center gap-2">
@@ -273,7 +273,7 @@
                                                             </div>
                                                         </x-admin::dropdown.menu.item>
 
-                                                        <x-admin::dropdown.menu.item v-if="['call', 'meeting', 'lunch'].includes(activity.type)">
+                                                        <x-admin::dropdown.menu.item v-if="['call', 'meeting', 'task'].includes(activity.type)">
                                                             <a
                                                                 class="flex items-center gap-2"
                                                                 :href="'{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity.id)"
@@ -415,11 +415,8 @@
                             name: 'call',
                             label: "{{ trans('admin::app.components.activities.index.calls') }}",
                         }, {
-                            name: 'meeting',
-                            label: "{{ trans('admin::app.components.activities.index.meetings') }}",
-                        }, {
-                            name: 'lunch',
-                            label: "{{ trans('admin::app.components.activities.index.lunches') }}",
+                            name: 'task',
+                            label: "{{ trans('admin::app.components.activities.index.internal-task') }}",
                         }, {
                             name: 'file',
                             label: "{{ trans('admin::app.components.activities.index.files') }}",
@@ -454,7 +451,7 @@
                         note: 'icon-note bg-orange-200 text-orange-800 dark:!text-orange-800',
                         call: 'icon-call bg-cyan-200 text-cyan-800 dark:!text-cyan-800',
                         meeting: 'icon-activity bg-blue-200 text-blue-800 dark:!text-blue-800',
-                        lunch: 'icon-activity bg-blue-200 text-blue-800 dark:!text-blue-800',
+                        task: 'icon-activity bg-blue-200 text-blue-800 dark:!text-blue-800',
                         file: 'icon-file bg-green-200 text-green-900 dark:!text-green-900',
                         system: 'icon-system-generate bg-yellow-200 text-yellow-900 dark:!text-yellow-900',
                         default: 'icon-activity bg-blue-200 text-blue-800 dark:!text-blue-800',
@@ -491,10 +488,10 @@
                             description: "{{ trans('admin::app.components.activities.index.empty-placeholders.meetings.description') }}",
                         },
 
-                        lunch: {
+                        task: {
                             image: "{{ vite()->asset('images/empty-placeholders/lunches.svg') }}",
-                            title: "{{ trans('admin::app.components.activities.index.empty-placeholders.lunches.title') }}",
-                            description: "{{ trans('admin::app.components.activities.index.empty-placeholders.lunches.description') }}",
+                            title: "{{ trans('admin::app.components.activities.index.empty-placeholders.tasks.title') }}",
+                            description: "{{ trans('admin::app.components.activities.index.empty-placeholders.tasks.description') }}",
                         },
 
                         file: {

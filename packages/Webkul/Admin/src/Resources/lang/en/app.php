@@ -172,6 +172,7 @@ return [
                 'lunches'      => 'Lunches',
                 'mark-as-done' => 'Mark as Done',
                 'meetings'     => 'Meetings',
+                'internal-task'     => 'Internal Task',
                 'notes'        => 'Notes',
                 'participants' => 'Participants',
                 'planned'      => 'Planned',
@@ -206,6 +207,10 @@ return [
                     'meetings' => [
                         'title'       => 'No Meetings Found',
                         'description' => 'No meetings found for this. You can add meetings by clicking on the Activity button on the left panel and selecting the Meeting type.',
+                    ],
+                    'tasks' => [
+                        'title'       => 'No Tasks Found',
+                        'description' => 'No Tasks found for this. You can add internal task by clicking on the Activity button on the left panel and selecting the Task type.',
                     ],
 
                     'lunches' => [
@@ -571,6 +576,7 @@ return [
                         'all'          => 'All',
                         'calls'        => 'Calls',
                         'meetings'     => 'Meetings',
+                        'tasks'     => 'Tasks',
                         'lunches'      => 'Lunches',
                         'files'        => 'Files',
                         'quotes'       => 'Quotes',
@@ -624,6 +630,7 @@ return [
                             'location'      => 'Location',
                             'call'          => 'Call',
                             'meeting'       => 'Meeting',
+                            'tasks'       => 'Tasks',
                             'lunch'         => 'Lunch',
                             'save-btn'      => 'Save Activity',
                         ],
@@ -1743,6 +1750,7 @@ return [
                 'update'        => 'Update',
                 'call'          => 'Call',
                 'meeting'       => 'Meeting',
+                'task'       => 'Task',
                 'lunch'         => 'Lunch',
                 'group'         => 'Group',
             ],
@@ -1755,6 +1763,7 @@ return [
             'type'            => 'Activity Type',
             'call'            => 'Call',
             'meeting'         => 'Meeting',
+            'task'         => 'Task',
             'lunch'           => 'Lunch',
             'schedule_to'     => 'Schedule To',
             'schedule_from'   => 'Schedule From',

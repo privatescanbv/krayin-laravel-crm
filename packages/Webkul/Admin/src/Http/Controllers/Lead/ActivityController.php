@@ -114,6 +114,7 @@ class ActivityController extends Controller
                 'schedule_from' => null,
                 'schedule_to' => null,
                 'user' => $user,
+                'group' => null,
                 'participants' => [],
                 'location' => null,
                 'additional' => [

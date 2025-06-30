@@ -66,8 +66,8 @@ class Activity extends AbstractEntity
                         'id'   => 'meeting',
                         'name' => 'Meeting',
                     ], (object) [
-                        'id'   => 'lunch',
-                        'name' => 'Lunch',
+                        'id'   => 'task',
+                        'name' => 'task',
                     ], (object) [
                         'id'   => 'file',
                         'name' => 'File',

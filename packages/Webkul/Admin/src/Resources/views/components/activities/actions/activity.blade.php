@@ -100,7 +100,7 @@
                                 <x-admin::form.control-group.label class="required">
                                     @lang('admin::app.components.activities.actions.activity.title-control')
                                 </x-admin::form.control-group.label>
-                                
+
                                 <x-admin::form.control-group.control
                                     type="text"
                                     name="title"
@@ -116,7 +116,7 @@
                                 <x-admin::form.control-group.label>
                                     @lang('admin::app.components.activities.actions.activity.description')
                                 </x-admin::form.control-group.label>
-                                
+
                                 <x-admin::form.control-group.control
                                     type="textarea"
                                     name="comment"
@@ -160,7 +160,7 @@
                                     <x-admin::form.control-group.label class="required">
                                         @lang('admin::app.components.activities.actions.activity.schedule-from')
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <x-admin::form.control-group.control
                                         type="datetime"
                                         name="schedule_from"
@@ -170,13 +170,13 @@
 
                                     <x-admin::form.control-group.error control-name="schedule_from" />
                                 </x-admin::form.control-group>
-                                
+
                                 <!-- Started To -->
                                 <x-admin::form.control-group class="w-full">
                                     <x-admin::form.control-group.label class="required">
                                         @lang('admin::app.components.activities.actions.activity.schedule-to')
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <x-admin::form.control-group.control
                                         type="datetime"
                                         name="schedule_to"
@@ -193,7 +193,7 @@
                                 <x-admin::form.control-group.label>
                                     @lang('admin::app.components.activities.actions.activity.location')
                                 </x-admin::form.control-group.label>
-                                
+
                                 <x-admin::form.control-group.control
                                     type="text"
                                     name="location"
@@ -246,7 +246,7 @@
             data: function () {
                 return {
                     isStoring: false,
-                    
+
                     selectedType: {
                         label: "{{ trans('admin::app.components.activities.actions.activity.call') }}",
                         value: 'call'
@@ -257,11 +257,8 @@
                             label: "{{ trans('admin::app.components.activities.actions.activity.call') }}",
                             value: 'call'
                         }, {
-                            label: "{{ trans('admin::app.components.activities.actions.activity.meeting') }}",
-                            value: 'meeting'
-                        }, {
-                            label: "{{ trans('admin::app.components.activities.actions.activity.lunch') }}",
-                            value: 'lunch'
+                            label: "{{ trans('admin::app.components.activities.actions.activity.internal-task') }}",
+                            value: 'task'
                         },
                     ]
                 }

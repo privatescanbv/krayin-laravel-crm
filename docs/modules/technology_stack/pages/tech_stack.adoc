@@ -70,16 +70,12 @@ Logs:
 
 Of in PHPStorm
 
-=== Import Sugar contacts into Persons
+== Commands
 
-sail artisan import:persons-from-sugarcrm --limit=100 --dry-run
-of alles importeren:
-sail artisan import:persons-from-sugarcrm --limit=10000
+include::cmd_import_sugarcrm_contacts.md[]
 
-== create dummy date
 
-==== leads
-sail artisan leads:create 100
+include::cmd_create_leads.md[]
 
 === Server installatie:
 

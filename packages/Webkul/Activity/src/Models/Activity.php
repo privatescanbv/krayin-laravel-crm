@@ -116,8 +116,8 @@ class Activity extends Model implements ActivityContract
     /**
      * Get the group that is assigned to this activity.
      */
-    public function group(): BelongsTo
+    public function group()
     {
-        return $this->belongsTo(Group::class, 'group_id');
+        return $this->belongsTo(GroupProxy::modelClass(), 'group_id');
     }
 }

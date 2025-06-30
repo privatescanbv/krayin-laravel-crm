@@ -124,16 +124,16 @@ class Lead extends AbstractEntity
                             'new_value' => $newValue,
                         ]);
                         
-                        $lead = $this->leadRepository->update(
-                            [
-                                'entity_type'        => 'leads',
-                                $action['attribute'] => $action['value'],
-                            ],
-                            $lead->id,
-                            [$action['attribute']]
-                        );
+                    $lead = $this->leadRepository->update(
+                        [
+                            'entity_type'        => 'leads',
+                            $action['attribute'] => $action['value'],
+                        ],
+                        $lead->id,
+                        [$action['attribute']]
+                    );
 
-                        Event::dispatch('lead.workflows.after', $lead);
+                    Event::dispatch('lead.workflows.after', $lead);
                     } else {
                         Log::info('Skipping lead update - no change detected', [
                             'lead_id' => $lead->id,

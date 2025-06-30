@@ -93,6 +93,8 @@ TABLE(ContactPerson, "contact_person") {
 TABLE(Pipeline, "pipeline") {
   PRIMARY_KEY(id): bigint
   name: string
+  is_default: boolean
+  type: enum // (e.g., "hernia", "privatescan")
 }
 
 TABLE(PipelineStage, "pipeline_stage") {
@@ -130,15 +132,9 @@ TABLE(Workflow, "workflow") {
   name: string
   description: text
   FOREIGN_KEY(pipeline_stage_id): bigint
-  FOREIGN_KEY(workflow_type_id): bigint
   FOREIGN_KEY(owner_user_id): bigint
 }
 
-TABLE(WorkflowType, "workflow_type") {
-  PRIMARY_KEY(id): bigint
-  name: string
-  description: text
-}
 
 TABLE(Action, "action") {
   PRIMARY_KEY(id): bigint
@@ -170,7 +166,6 @@ Workflow "1" -- "n" Action
 Workflow "0..1" -- "1" Order
 Workflow "0..1" -- "1" Lead
 Workflow "0..1" -- "1" ContactPerson
-Workflow "1" -- "1" WorkflowType
 ContactPerson "1" -- "1" User
 
 note right of Pipeline
@@ -192,10 +187,6 @@ end note
 
 note right of Workflow
   Automation flow attached to a pipeline stage.
-end note
-
-note right of WorkflowType
-  types (e.g., "Privatescan", "Hernia").
 end note
 
 note right of Action

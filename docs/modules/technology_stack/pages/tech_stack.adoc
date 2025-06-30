@@ -76,6 +76,10 @@ sail artisan import:persons-from-sugarcrm --limit=100 --dry-run
 of alles importeren:
 sail artisan import:persons-from-sugarcrm --limit=10000
 
+== create dummy date
+
+==== leads
+sail artisan leads:create 100
 
 === Server installatie:
 

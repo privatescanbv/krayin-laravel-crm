@@ -1,6 +1,6 @@
 <x-admin::layouts>
     <x-slot:title>
-        Workflow Leads (Backoffice)
+        Backoffice
     </x-slot>
 
     <!-- Header -->

@@ -2351,7 +2351,7 @@ return [
         'product-groups'       => 'Product Groups',
         'products'             => 'Products',
         'product-groups'       => 'Product Groups',  // Nieuwe taal key
-        'workflow-leads' => 'Workflow Leads',
+        'workflow-leads'       => 'Backoffice',
     ],
 
     'user' => [

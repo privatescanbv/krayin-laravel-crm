@@ -1,433 +1,144 @@
-= Privatescan CRM
-Created by Privatescan
-:toc: left
+= Mijn Document
+:toc: macro
+:doctype: article
 :icons: font
-:source-highlighter: rouge
-:sectnums:
 
-== Introduction
-
-De PrivateScan Factuur Verwerking Tool is ontwikkeld om het proces van factuurverwerking te automatiseren en te versnellen. Het primaire doel is om de status van orderregels in het CRM systeem bij te werken op basis van ingescande facturen.
-
-De tool biedt de volgende voordelen:
-* Automatisering van handmatige processen
-* Vermindering van menselijke fouten
-* Versnelling van factuurverwerking
-* Consistente status updates in het CRM systeem
-
-== Opdrachtomschrijving / Businessdoelstellingen
-
-TODO: Beschrijf hier de specifieke business doelstellingen en opdrachtomschrijving.
-
-== Doelgroep
-Deze tool is specifiek ontwikkeld voor medewerkers van PrivateScan die verantwoordelijk zijn voor het verwerken van facturen en het bijwerken van CRM status.
-
-== Wie werkt er aan dit project?
-
-Vast team samenstelling bestaat uit het onderstaande schema.
-Vaak zetten we er ook een flexibele schil naast, die vaak niet aanwezig zijn met gezamenlijke sessies.
-
-[cols="1,1,1,1"]
-|===
-|Team Privatescan |Rol(len)| e-mailadres |Telefoonnummer
-
-|Mark klaucke
-|Productowner(PO)
-|link:mailto:mark.klaucke@digi4you.nl[mark]
-|
-
-|Mark Bulthuis
-|Architect
-|mark.bulthuis@mbsoftware.nl
-|0611251149
-
-|===
-
-*Stakeholders*
-
-[cols="1,1,1"]
-|===
-|Klant |Rol(len)| e-mailadres
-
-|Frank Hefti
-|Eigenaar Privatescan B.V.
-|link:mailto:frank@privatescan.nl[frank@privatescan.eu]
-
-|Petra Nijhof
-| x
-|petra@privatescan.nl
-
-|Linda Meijer
-| x
-|linda@privatescan.nl
-
-|===
-
-
-=== Database Structuur
-De applicatie gebruikt de volgende hoofdtabellen met hun relaties:
-
-[plantuml]
-....
-@startuml
-!define TABLE(name,desc) class name as "desc" << (T,#FFAAAA) >>
-!define PRIMARY_KEY(x) <b>x</b>
-!define FOREIGN_KEY(x) <i>x</i>
-
-TABLE(User, "user") {
-  PRIMARY_KEY(id): bigint
-  name: string
-  email: string
-  lastname: string
+++++
+<style>
+body {
+  font-family: 'Open Sans', sans-serif;
+  margin: 0;
 }
 
-TABLE(ContactPerson, "contact_person") {
-  PRIMARY_KEY(id): bigint
-  first_name: string
-  last_name: string
-  email: string
-  phone: string
-  FOREIGN_KEY(contact_user_id): bigint
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  background-color: #002b56; /* Privatescan donkerblauw */
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  gap: 40px;
 }
 
-TABLE(Pipeline, "pipeline") {
-  PRIMARY_KEY(id): bigint
-  name: string
-  is_default: boolean
-  type: enum // (e.g., "hernia", "privatescan")
+.logo {
+  height: 50px;
+  width: auto;
 }
 
-TABLE(PipelineStage, "pipeline_stage") {
-  PRIMARY_KEY(id): bigint
-  FOREIGN_KEY(pipeline_id): bigint
-  name: string
-  sort_order: int
+.dynamic-menu {
+  display: flex;
+  gap: 20px;
 }
 
-TABLE(Lead, "lead") {
-  PRIMARY_KEY(id): bigint
-  name: string
-  email: string
-  phone: string
-  FOREIGN_KEY(pipeline_stage_id): bigint
-  FOREIGN_KEY(user_id): bigint
-  FOREIGN_KEY(contact_person_id): bigint
-  create_user_id: bigint
-  department: string
+.dynamic-menu .dropdown {
+  position: relative;
 }
 
-TABLE(Order, "order") {
-  PRIMARY_KEY(id): bigint
-  FOREIGN_KEY(lead_id): bigint
-  FOREIGN_KEY(pipeline_stage_id): bigint
-  FOREIGN_KEY(user_id): bigint
-  FOREIGN_KEY(contact_person_id): bigint
-  total_amount: decimal
-  status: enum
-  create_user_id: bigint
+.dynamic-menu .dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: #002b56;
+  min-width: 180px;
+  z-index: 1001;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-TABLE(Workflow, "workflow") {
-  PRIMARY_KEY(id): bigint
-  name: string
-  description: text
-  FOREIGN_KEY(pipeline_stage_id): bigint
-  FOREIGN_KEY(owner_user_id): bigint
+.dynamic-menu .dropdown-content a {
+  display: block;
+  padding: 10px 16px;
+  color: white;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-
-TABLE(Action, "action") {
-  PRIMARY_KEY(id): bigint
-  name: string
-  type: enum
-  FOREIGN_KEY(pipeline_stage_id): bigint
-  FOREIGN_KEY(workflow_id): bigint
-  FOREIGN_KEY(assigned_user_id): bigint
-  configuration: json
+.dynamic-menu .dropdown:hover .dropdown-content {
+  display: block;
 }
 
-User "1" -- "n" Lead
-User "1" -- "n" Order
-User "1" -- "n" Workflow
-User "1" -- "n" Action
-
-Pipeline "1" -- "n" PipelineStage
-PipelineStage "1" -- "n" Lead
-PipelineStage "1" -- "n" Order
-PipelineStage "1" -- "n" Workflow
-PipelineStage "1" -- "n" Action
-
-Lead "1" -- "1" Order
-Lead "0..1" --> "1" ContactPerson : "assigned to"
-Order "1" --> "1" ContactPerson : "for"
-Order "1" --> "1" User
-Action "1" --> "1" User
-Workflow "1" -- "n" Action
-Workflow "0..1" -- "1" Order
-Workflow "0..1" -- "1" Lead
-Workflow "0..1" -- "1" ContactPerson
-ContactPerson "1" -- "1" User
-
-note right of Pipeline
-  Sales funnel with ordered stages.
-end note
-
-note right of PipelineStage
-  Step in the pipeline (e.g., "New", "Qualified", "Closed").
-end note
-
-note right of Lead
-  Potential client optionally linked to a user and contact person.
-  Pipeline stages ("new", "in behandeling", "afgehandeld").
-end note
-
-note right of Order
-  Closed deal, linked to a lead, user, and contact person.
-end note
-
-note right of Workflow
-  Automation flow attached to a pipeline stage.
-end note
-
-note right of Action
-  Task or automated step in a workflow, optionally assigned to a user.
-end note
-
-note right of ContactPerson
-  External contact involved in leads or orders, not a user in the system.
-end note
-
-@enduml
-....
-== Pipeline stages per entiteit (status)
-
-Requirements:
-
-* Vanuit de entiteit zul je niet zomaar altijd de status kunnen aanpassen (soms mag dit alleen vanuit de workflow)
-* Er kunnen verplichte velden zijn tussen de status overgangen
-
-[plantuml]
-....
-@startuml
-left to right direction
-skinparam state {
-  BackgroundColor #FDF6E3
-  BorderColor Black
-  FontSize 11
+.dynamic-menu a {
+  color: white;
+  padding: 12px 16px;
+  text-decoration: none;
+  font-weight: 500;
+  display: inline-block;
 }
 
-' -- LEAD --
-state "Lead" as Lead {
-  [*] --> lead_new : "nieuw"
-  state lead_new as "nieuw"
-  state lead_progress as "in behandeling"
-  state lead_stop as "geen resultaat"
-  state lead_option as "optie"
-  state lead_nearwin as "near win"
-  state lead_win as "win"
-  state lead_lose as "lose"
-
-  lead_new --> lead_progress
-  lead_new --> lead_stop
-  lead_progress --> lead_option
-  lead_option --> lead_nearwin
-  lead_nearwin --> lead_win
-  lead_nearwin --> lead_lose
+.dynamic-menu a:hover {
+  background-color: #d83a29;
 }
 
-' -- ORDER --
-state "Order" as Order {
-  [*] --> order_new : "nieuw"
-  state order_new as "nieuw"
-  state order_send as "verzonden"
-  state order_confirmed as "akkoord"
-  state order_cancelled as "niet akkoord"
-  state order_payed as "betaald"
-  state order_not_payed as "niet betaald"
-  state order_afgerond as "afgerond"
-
-  order_new --> order_send
-  order_send --> order_confirmed
-  order_send --> order_cancelled
-  order_confirmed --> order_payed
-  order_confirmed --> order_not_payed
-  order_payed --> order_afgerond
+#content {
+  padding-top: 90px;
+  padding-left: 40px;
+  padding-right: 40px;
 }
+</style>
+++++
 
-' -- WORKFLOW --
-state "Workflow (TODO voeg alle statussen toe per workflow type)" as Workflow {
-  [*] --> wf_new : "nieuwe aanvraag"
-  state wf_new as "nieuwe aanvraag"
-  state wf_in_progress as "adviseren"
-  state wf_advised_prepared as "geadviseerd, opvolgen"
-  state wf_advised_create_order as "geadviseerd, order bevestigen"
-  state wf_order_confirmed_patient as "order bevestigd, wachten op akkoord kliniek"
-  state wf_closed as "afgerond"
+++++
+<div class="navbar">
+  <img src="logo.svg" alt="Privatescan logo" class="logo" />
+  <div class="dynamic-menu"></div>
+</div>
+++++
 
-  wf_new --> wf_in_progress
-  wf_new --> wf_closed
-  wf_in_progress --> wf_advised_prepared
-  wf_in_progress --> wf_closed
-  wf_advised_prepared --> wf_advised_create_order
-  wf_advised_create_order --> wf_order_confirmed_patient
-  wf_advised_create_order --> wf_closed
+include::content.adoc[]
 
-}
+++++
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  setTimeout(() => {
+    const menuContainer = document.querySelector(".dynamic-menu");
+    const headers = [...document.querySelectorAll("h2, h3")]; // Let op: aangepast naar h2 en h3
 
-' -- ACTIE --
-state "Actie" as Actie {
-  [*] --> actie_pending : "in afwachting"
-  actie_pending --> actie_progress : "bezig"
-  actie_progress --> actie_finished : "afgerond"
-}
-note right of Actie
-    Model Activity met eigen type hiervoor gebruiken?
-  end note
-@enduml
-....
+    if (!menuContainer || headers.length === 0) {
+      console.warn("Menu container or headers not found.");
+      return;
+    }
 
+    let currentDropdown = null;
 
-== Toelichting op het CRM-datamodel en de lifecycle van entiteiten
+    headers.forEach(header => {
+      if (header.tagName === "H2") {
+        console.info('-', header.textContent);
+    } else {
+      console.info('--', header.textContent);
+    }
+      if (!header.id) log.error('header has no id', header);
 
-Het bovenstaande datamodel beschrijft de kernentiteiten binnen de CRM-omgeving en hun onderlinge relaties. Deze toelichting licht toe hoe de entiteiten zich gedragen binnen de klantreis (customer journey) en hoe workflows automatisch reageren op veranderingen.
+      if (header.tagName === "H2") {
+        // nieuwe hoofdsectie
+        currentDropdown = document.createElement("div");
+        currentDropdown.className = "dropdown";
 
-=== Lead lifecycle
+        const mainLink = document.createElement("a");
+        mainLink.href = `#${header.id}`;
+        mainLink.textContent = `${header.textContent} ▾`;
 
-De lead vormt het startpunt van de klantreis. Zodra een nieuwe lead wordt aangemaakt:
-- krijgt deze automatisch de pipeline stage `"new"`,
-- wordt er een bijbehorende workflow gegenereerd,
-- en wordt er een eerste actie toegevoegd aan deze workflow, zoals het koppelen van een contactpersoon.
+        const dropdownContent = document.createElement("div");
+        dropdownContent.className = "dropdown-content";
 
-Gedurende de lifecycle kan de lead door meerdere pipeline stages bewegen, bijvoorbeeld `"contacted"`, `"proposal_sent"`, `"won"` of `"lost"`. Bij elke overgang kan er automatisch een nieuwe actie of notificatie gegenereerd worden.
-Lead left in front office process / sales. Na bestellen, zal het een gewonnen lead zijn en zijn lifeclycle eindigen.
-Lead kan in dit gehele proces verloren gaan, bijvoorbeeld als er geen reactie komt van de klant of als de lead niet meer relevant is.
+        currentDropdown.appendChild(mainLink);
+        currentDropdown.appendChild(dropdownContent);
+        menuContainer.appendChild(currentDropdown);
+      }
 
-=== Order lifecycle
-
-Elke lead kan resulteren in maximaal één order. Een order wordt doorgaans pas aangemaakt wanneer een lead in een bepaalde pipeline stage (zoals `"won"`) terechtkomt. De order is dus een natuurlijk vervolg binnen de lead-lifecycle en bevat detailinformatie over producten, bedragen en facturatie.
-
-=== Workflow en acties
-
-De workflow is gekoppeld aan een specifieke pipeline stage. Zodra een entiteit (zoals een lead of order) van status verandert, kunnen er events gegenereerd worden waarop een workflow reageert.
-
-Workflows kunnen automatisch acties aanmaken, zoals:
-- het toewijzen van een taak aan een gebruiker,
-- het verzenden van een e-mail,
-- of het starten van een vervolgproces.
-
-[NOTE]
-====
-Krayin kent een eigen workflow model, waarmee je condities en acties kunt koppelen. Vergelijkbaar met SugarCRM. We gebruiken dit minimaal. b.v. afdeling wordt gepaald in deze workflow. Denk hierbij aan een veld x krijgt een waarde op basis van andere velden van dezelfde entiteite of een andere entiteit. Overige beleggen we in N8N.
-Verwar deze workflow niet met onze Workflow entiteit.
-====
-
-Elke workflow kent zijn eigen type. Dit is een voor geprogrammeerde work flow met specifieke acties. Zo zullen we er een maken voor Privatescan en een opzetten voor Hernia. Dit maakt het mogelijk om workflows te personaliseren op basis van de afdeling of het type lead.
-
-Elke actie is gekoppeld aan een pipeline stage én een workflow, en wordt gebruikt om opvolging binnen het CRM te structureren en automatiseren.
-
-=== Samenvattend
-
-De combinatie van leads, pipeline stages, workflows en acties vormt de basis van het CRM-proces. Door dit op entiteitenniveau vast te leggen én dynamisch te laten reageren op statusveranderingen, ontstaat een flexibel en schaalbaar systeem voor klantopvolging en interne procesautomatisering.
-
-
-
-== Flow: Lead lifecycle & Workflow automatie
-
-[plantuml, lead-lifecycle, svg]
-....
-@startuml
-participant tel_website
-actor Medewerker
-participant Lead
-participant Workflow
-actor Patiënt
-
-tel_website -> Lead : Nieuwe lead aanmaken
-Lead -> Lead : Afdeling bepalen (op basis van telefoonnummer / website)
-Lead -> Lead : Pipeline stage = "nieuwe-aanvraag-kwalificeren"
-
-Workflow -> Medewerker : Actie: Koppel contactpersoon
-
-Medewerker -> Lead : Koppeling uitgevoerd
-Lead -> Lead : Pipeline stage = "klant-adviseren"
-Lead -> Medewerker : Actie: Adviseren
-
-Medewerker -> Lead : Advies uitgevoerd
-Lead -> Lead : Pipeline stage = "klant-adviseren-opvolgen"
-Lead -> Medewerker : Actie: Adviseren opvolgen
-
-alt Order plaatsen?
-  Medewerker -> Lead : Order aanmaken
-  Lead -> Patiënt : Verstuur orderbevestiging (GVL link + infokaarten)
-  Lead -> Lead : Pipeline stage = "wachten-op-orderbevestiging"
-else Geen order
-  Lead -> Lead : Pipeline stage = "lost"
-end
-
-alt Order bevestigd?
-  Patiënt -> Lead : Orderbevestiging
-  Lead -> Lead : Pipeline stage = "won"
-  Lead -> Workflow : Pipeline stage = "Bestelling geplaatst"
-  Lead -> Medewerker : Vervolgactie
-else Geen bevestiging
-  Lead -> Lead : Pipeline stage = "lost"
-end
-@enduml
-....
-
-
-== Flow: Nieuwe Lead met automatische Workflow & Actie
-
-[plantuml]
-....
-@startuml
-actor "Gebruiker" as User
-participant "Lead Service" as Lead
-participant "Workflow Service" as Workflow
-participant "Action Service" as Action
-database "Database" as DB
-
-== Nieuwe lead aanmaken ==
-
-User -> Lead : maakLead(naam, contactinfo)
-Lead -> DB : sla Lead op (status = new, pipeline_stage = new)
-Lead -> Workflow : genereerWorkflow(lead_id)
-Workflow -> DB : sla Workflow op (gekoppeld aan pipeline_stage new)
-
-== Actie in workflow ==
-
-Workflow -> Action : maakActie("koppel contactpersoon", type = taak)
-Action -> DB : sla Actie op (gekoppeld aan workflow en pipeline_stage new)
-
-note right of Action
-Actie wordt zichtbaar in CRM
-om contactpersoon toe te wijzen.
-end note
-
-....
-
-=== Overzichten
-
-Wat we willen bereiken:
-
-* Vanuit medewerker een overzicht van alle leads & acties die aan hem/haar zijn toegewezen.
-* Vanuit contact persoon eigenaar, een overzicht met alle lopende workflows en acties met hun actuele status. Vooral kunnen controleren of doorlooptijden akkoord zijn of dat er dus moet worden ingegrepen.
-* vanuit workflow eigenaar; een overzicht van alle workflows met acties en statussen.  Vooral kunnen controleren of doorlooptijden akkoord zijn of dat er dus moet worden ingegrepen.
-
-=== Audit Trail
-Het systeem houdt bij:
-* Wie een record heeft aangemaakt (`create_user_id`)
-* Wie een record het laatst heeft gewijzigd (`modified_user_id`)
-
-== Gebruikersinterface
-TODO
-
-include::modules/application/pages/application.adoc[]
-
-include::modules/technology_stack/pages/tech_stack.adoc[]
-
-include::modules/continuous_delivery/pages/cd.adoc[]
-
-include::modules/support/pages/support.adoc[]
-
-include::modules/project/pages/project.adoc[]
+      if (header.tagName === "H3" && currentDropdown) {
+        const subLink = document.createElement("a");
+        subLink.href = `#${header.id}`;
+        subLink.textContent = header.textContent;
+        currentDropdown.querySelector(".dropdown-content").appendChild(subLink);
+      }
+    });
+  }, 100);
+});
+</script>
+++++

@@ -1,11 +1,18 @@
-== Application
+=== Application environments
 
 * newcrm.privatescan.nl -> 178.251.28.75
 * newcrm.dev.privatescan.nl -> 178.251.28.76
 * n8ncrm.privatescan.nl -> 178.251.28.75
 * n8ncrm.dev.privatescan.nl -> 178.251.28.76
 
-=== Login
+
+=== Manual
+
+==== Create lead
+
+TODO...
+
+==== Login
 
 [plantuml]
 ....

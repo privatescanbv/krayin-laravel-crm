@@ -9,4 +9,6 @@ asciidoctor \
   -a imagesdir=./resources \
   index.adoc && \
 cp  ./modules/domain/pages/*.png ./html/resources | true &&
-cp  ./modules/domain/pages/*.pdf ./html | true
+cp  ./modules/domain/pages/*.pdf ./html | true &&
+cp  ./*.svg ./html | true &&
+cp  ./mb.css ./html/ | true

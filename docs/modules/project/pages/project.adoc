@@ -1,382 +1,62 @@
-== Afspraken
 
-== Database Ontwerp
+=== Introduction
 
-[plantuml]
-....
-@startuml
+De PrivateScan Factuur Verwerking Tool is ontwikkeld om het proces van factuurverwerking te automatiseren en te versnellen. Het primaire doel is om de status van orderregels in het CRM systeem bij te werken op basis van ingescande facturen.
 
-!define table(x) class x << (T,#FFAAAA) >>
-!define primary_key(x) <u>x</u>
-!define foreign_key(x) #x#
+De tool biedt de volgende voordelen:
+* Automatisering van handmatige processen
+* Vermindering van menselijke fouten
+* Versnelling van factuurverwerking
+* Consistente status updates in het CRM systeem
 
-skinparam class {
-    BackgroundColor White
-    ArrowColor Black
-    BorderColor Black
-}
+=== Opdrachtomschrijving / Businessdoelstellingen
 
-table(Employee) {
-    primary_key(id): bigint
-    first_name: string
-    last_name: string
-    email: string
-    phone: string
-    department: string
-    position: string
-    status: enum
-    notes: text
-    created_at: timestamp
-    updated_at: timestamp
-}
+TODO: Beschrijf hier de specifieke business doelstellingen en opdrachtomschrijving.
 
-table(Task) {
-    primary_key(id): bigint
-    title: string
-    description: text
-    foreign_key(assigned_to): bigint
-    foreign_key(created_by): bigint
-    priority: enum
-    status: enum
-    due_date: date
-    completed_at: timestamp
-    notes: text
-    created_at: timestamp
-    updated_at: timestamp
-}
+=== Doelgroep
+Deze tool is specifiek ontwikkeld voor medewerkers van PrivateScan die verantwoordelijk zijn voor het verwerken van facturen en het bijwerken van CRM status.
 
-table(Lead) {
-    primary_key(id): bigint
-    company_name: string
-    foreign_key(contact_person_id): bigint
-    email: string
-    phone: string
-    address: string
-    city: string
-    postal_code: string
-    country: string
-    status: enum
-    source: string
-    notes: text
-    created_at: timestamp
-    updated_at: timestamp
-}
+=== Wie werkt er aan dit project?
 
-table(ContactPerson) {
-    primary_key(id): bigint
-    first_name: string
-    last_name: string
-    email: string
-    phone: string
-    mobile: string
-    position: string
-    department: string
-    is_primary: boolean
-    notes: text
-    created_at: timestamp
-    updated_at: timestamp
-}
+Vast team samenstelling bestaat uit het onderstaande schema.
+Vaak zetten we er ook een flexibele schil naast, die vaak niet aanwezig zijn met gezamenlijke sessies.
 
-table(Offer) {
-    primary_key(id): bigint
-    foreign_key(lead_id): bigint
-    offer_number: string
-    valid_until: date
-    status: enum
-    total_amount: decimal
-    vat_amount: decimal
-    notes: text
-    created_at: timestamp
-    updated_at: timestamp
-}
-
-table(Order) {
-    primary_key(id): bigint
-    foreign_key(offer_id): bigint
-    order_number: string
-    order_date: date
-    delivery_date: date
-    status: enum
-    total_amount: decimal
-    vat_amount: decimal
-    shipping_address: text
-    billing_address: text
-    payment_status: enum
-    notes: text
-    created_at: timestamp
-    updated_at: timestamp
-}
-
-table(Product) {
-    primary_key(id): bigint
-    foreign_key(supplier_id): bigint
-    sku: string
-    name: string
-    description: text
-    price: decimal
-    vat_rate: decimal
-    stock: integer
-    min_stock: integer
-    category: string
-    status: enum
-    is_resource: boolean
-    capacity_per_day: integer
-    duration_minutes: integer
-    created_at: timestamp
-    updated_at: timestamp
-}
-
-table(ResourceBooking) {
-    primary_key(id): bigint
-    foreign_key(product_id): bigint
-    foreign_key(order_item_id): bigint
-    start_time: timestamp
-    end_time: timestamp
-    status: enum
-    notes: text
-    created_at: timestamp
-    updated_at: timestamp
-}
-
-table(Supplier) {
-    primary_key(id): bigint
-    company_name: string
-    contact_person: string
-    email: string
-    phone: string
-    address: string
-    city: string
-    postal_code: string
-    country: string
-    vat_number: string
-    payment_terms: string
-    status: enum
-    notes: text
-    created_at: timestamp
-    updated_at: timestamp
-}
-
-table(OrderItem) {
-    primary_key(id): bigint
-    foreign_key(order_id): bigint
-    foreign_key(product_id): bigint
-    quantity: integer
-    unit_price: decimal
-    vat_rate: decimal
-    total_price: decimal
-    scheduled_start: timestamp
-    scheduled_end: timestamp
-    created_at: timestamp
-    updated_at: timestamp
-}
-
-Lead "1" -- "0..*" Offer
-Offer "1" -- "0..1" Order
-Order "1" -- "0..*" OrderItem
-OrderItem "0..*" -- "1" Product
-Supplier "1" -- "0..*" Product
-Lead "1" -- "0..*" ContactPerson
-Employee "1" -- "0..*" Task
-Task "0..*" -- "1" Employee
-Product "1" -- "0..*" ResourceBooking
-OrderItem "1" -- "0..*" ResourceBooking
-
-@enduml
-....
-
-=== ContactPerson
-[cols="1,1,2"]
+[cols="1,1,1,1"]
 |===
-|Veld |Type |Beschrijving
-|id |bigint |Unieke identifier
-|first_name |string |Voornaam
-|last_name |string |Achternaam
-|email |string |E-mailadres
-|phone |string |Telefoonnummer
-|mobile |string |Mobiel nummer
-|position |string |Functie
-|department |string |Afdeling
-|is_primary |boolean |Is primaire contactpersoon
-|notes |text |Notities
-|created_at |timestamp |Aanmaakdatum
-|updated_at |timestamp |Laatste update
+|Team Privatescan |Rol(len)| e-mailadres |Telefoonnummer
+
+|Mark klaucke
+|Productowner(PO)
+|link:mailto:mark.klaucke@digi4you.nl[mark]
+|
+
+|Mark Bulthuis
+|Architect
+|mark.bulthuis@mbsoftware.nl
+|0611251149
+
 |===
 
-=== Leads
-[cols="1,1,2"]
+*Stakeholders*
+
+[cols="1,1,1"]
 |===
-|Veld |Type |Beschrijving
-|id |bigint |Unieke identifier
-|company_name |string |Bedrijfsnaam
-|contact_person |string |Contactpersoon
-|email |string |E-mailadres
-|phone |string |Telefoonnummer
-|address |string |Adres
-|city |string |Stad
-|postal_code |string |Postcode
-|country |string |Land
-|status |enum |Status (new, contacted, qualified, unqualified)
-|source |string |Herkomst van de lead
-|notes |text |Notities
-|created_at |timestamp |Aanmaakdatum
-|updated_at |timestamp |Laatste update
+|Klant |Rol(len)| e-mailadres
+
+|Frank Hefti
+|Eigenaar Privatescan B.V.
+|link:mailto:frank@privatescan.nl[frank@privatescan.eu]
+
+|Petra Nijhof
+| x
+|petra@privatescan.nl
+
+|Linda Meijer
+| x
+|linda@privatescan.nl
+
 |===
 
-=== Offers
-[cols="1,1,2"]
-|===
-|Veld |Type |Beschrijving
-|id |bigint |Unieke identifier
-|lead_id |bigint |Referentie naar lead
-|offer_number |string |Offertenummer
-|valid_until |date |Geldig tot
-|status |enum |Status (draft, sent, accepted, rejected)
-|total_amount |decimal |Totaalbedrag
-|vat_amount |decimal |BTW bedrag
-|notes |text |Notities
-|created_at |timestamp |Aanmaakdatum
-|updated_at |timestamp |Laatste update
-|===
+=== Afspraken
 
-=== Orders
-[cols="1,1,2"]
-|===
-|Veld |Type |Beschrijving
-|id |bigint |Unieke identifier
-|offer_id |bigint |Referentie naar offerte
-|order_number |string |Ordernummer
-|order_date |date |Orderdatum
-|delivery_date |date |Leveringsdatum
-|status |enum |Status (pending, processing, shipped, delivered, cancelled)
-|total_amount |decimal |Totaalbedrag
-|vat_amount |decimal |BTW bedrag
-|shipping_address |text |Afleveradres
-|billing_address |text |Factuuradres
-|payment_status |enum |Betalingsstatus (pending, paid, overdue)
-|notes |text |Notities
-|created_at |timestamp |Aanmaakdatum
-|updated_at |timestamp |Laatste update
-|===
-
-=== Products
-[cols="1,1,2"]
-|===
-|Veld |Type |Beschrijving
-|id |bigint |Unieke identifier
-|supplier_id |bigint |Referentie naar leverancier
-|sku |string |Stock Keeping Unit
-|name |string |Productnaam
-|description |text |Productbeschrijving
-|price |decimal |Prijs
-|vat_rate |decimal |BTW percentage
-|stock |integer |Voorraad
-|min_stock |integer |Minimum voorraad
-|category |string |Categorie
-|status |enum |Status (active, inactive, discontinued)
-|is_resource |boolean |Is dit een boekbare resource (bijv. MRI scanner)
-|capacity_per_day |integer |Aantal beschikbare slots per dag
-|duration_minutes |integer |Duur van een booking in minuten
-|created_at |timestamp |Aanmaakdatum
-|updated_at |timestamp |Laatste update
-|===
-
-=== Suppliers (Leveranciers)
-[cols="1,1,2"]
-|===
-|Veld |Type |Beschrijving
-|id |bigint |Unieke identifier
-|company_name |string |Bedrijfsnaam
-|contact_person |string |Contactpersoon
-|email |string |E-mailadres
-|phone |string |Telefoonnummer
-|address |string |Adres
-|city |string |Stad
-|postal_code |string |Postcode
-|country |string |Land
-|vat_number |string |BTW nummer
-|payment_terms |string |Betalingsvoorwaarden
-|status |enum |Status (active, inactive)
-|notes |text |Notities
-|created_at |timestamp |Aanmaakdatum
-|updated_at |timestamp |Laatste update
-|===
-
-=== Relaties
-[cols="1,2"]
-|===
-|Relatie |Beschrijving
-|Lead -> Offer |Een lead kan meerdere offertes hebben
-|Offer -> Order |Een offerte kan één order hebben
-|Order -> Product |Een order kan meerdere producten bevatten (via order_items)
-|Supplier -> Product |Een leverancier kan meerdere producten hebben
-|===
-
-=== Order Items (Koppeltabel)
-[cols="1,1,2"]
-|===
-|Veld |Type |Beschrijving
-|id |bigint |Unieke identifier
-|order_id |bigint |Referentie naar order
-|product_id |bigint |Referentie naar product
-|quantity |integer |Aantal
-|unit_price |decimal |Stukprijs
-|vat_rate |decimal |BTW percentage
-|total_price |decimal |Totaalprijs
-|scheduled_start |timestamp |Geplande starttijd
-|scheduled_end |timestamp |Geplande eindtijd
-|created_at |timestamp |Aanmaakdatum
-|updated_at |timestamp |Laatste update
-|===
-
-=== Employee (Medewerker)
-[cols="1,1,2"]
-|===
-|Veld |Type |Beschrijving
-|id |bigint |Unieke identifier
-|first_name |string |Voornaam
-|last_name |string |Achternaam
-|email |string |E-mailadres
-|phone |string |Telefoonnummer
-|department |string |Afdeling
-|position |string |Functie
-|status |enum |Status (active, inactive)
-|notes |text |Notities
-|created_at |timestamp |Aanmaakdatum
-|updated_at |timestamp |Laatste update
-|===
-
-=== Task (Taak)
-[cols="1,1,2"]
-|===
-|Veld |Type |Beschrijving
-|id |bigint |Unieke identifier
-|title |string |Titel van de taak
-|description |text |Beschrijving
-|assigned_to |bigint |Toegewezen aan medewerker
-|created_by |bigint |Aangemaakt door medewerker
-|priority |enum |Prioriteit (low, medium, high, urgent)
-|status |enum |Status (todo, in_progress, review, done)
-|due_date |date |Vervaldatum
-|completed_at |timestamp |Afgerond op
-|notes |text |Notities
-|created_at |timestamp |Aanmaakdatum
-|updated_at |timestamp |Laatste update
-|===
-
-=== ResourceBooking
-[cols="1,1,2"]
-|===
-|Veld |Type |Beschrijving
-|id |bigint |Unieke identifier
-|product_id |bigint |Referentie naar resource (product)
-|order_item_id |bigint |Referentie naar order item
-|start_time |timestamp |Starttijd van de booking
-|end_time |timestamp |Eindtijd van de booking
-|status |enum |Status (scheduled, in_progress, completed, cancelled)
-|notes |text |Notities
-|created_at |timestamp |Aanmaakdatum
-|updated_at |timestamp |Laatste update
-|===
-
-== Glossarium
-
+=== Glossarium

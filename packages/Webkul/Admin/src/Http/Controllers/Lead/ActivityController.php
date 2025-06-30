@@ -34,7 +34,7 @@ class ActivityController extends Controller
     public function store(Request $request, int $id)
     {
         $this->validate($request, [
-            'type' => 'required',
+            'type' => 'required|in:task,meeting,call',
             'comment' => 'required_if:type,note',
             'description' => 'nullable|string',
             'user_id' => 'nullable|exists:users,id',

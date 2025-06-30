@@ -1,4 +1,3 @@
-[[release]]
-== Release flow
+=== Release flow
 
 TODO

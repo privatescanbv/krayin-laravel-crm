@@ -1,0 +1,88 @@
+
+=== Flow: Lead lifecycle & Workflow automatie
+
+[plantuml, lead-lifecycle, svg]
+....
+@startuml
+participant tel_website
+actor Medewerker
+participant Lead
+participant Workflow
+actor Patiënt
+
+tel_website -> Lead : Nieuwe lead aanmaken
+Lead -> Lead : Afdeling bepalen (op basis van telefoonnummer / website)
+Lead -> Lead : Pipeline stage = "nieuwe-aanvraag-kwalificeren"
+
+Workflow -> Medewerker : Actie: Koppel contactpersoon
+
+Medewerker -> Lead : Koppeling uitgevoerd
+Lead -> Lead : Pipeline stage = "klant-adviseren"
+Lead -> Medewerker : Actie: Adviseren
+
+Medewerker -> Lead : Advies uitgevoerd
+Lead -> Lead : Pipeline stage = "klant-adviseren-opvolgen"
+Lead -> Medewerker : Actie: Adviseren opvolgen
+
+alt Order plaatsen?
+  Medewerker -> Lead : Order aanmaken
+  Lead -> Patiënt : Verstuur orderbevestiging (GVL link + infokaarten)
+  Lead -> Lead : Pipeline stage = "wachten-op-orderbevestiging"
+else Geen order
+  Lead -> Lead : Pipeline stage = "lost"
+end
+
+alt Order bevestigd?
+  Patiënt -> Lead : Orderbevestiging
+  Lead -> Lead : Pipeline stage = "won"
+  Lead -> Workflow : Pipeline stage = "Bestelling geplaatst"
+  Lead -> Medewerker : Vervolgactie
+else Geen bevestiging
+  Lead -> Lead : Pipeline stage = "lost"
+end
+@enduml
+....
+
+
+=== Flow: Nieuwe Lead met automatische Workflow & Actie
+
+[plantuml]
+....
+@startuml
+actor "Gebruiker" as User
+participant "Lead Service" as Lead
+participant "Workflow Service" as Workflow
+participant "Action Service" as Action
+database "Database" as DB
+
+== Nieuwe lead aanmaken ==
+
+User -> Lead : maakLead(naam, contactinfo)
+Lead -> DB : sla Lead op (status = new, pipeline_stage = new)
+Lead -> Workflow : genereerWorkflow(lead_id)
+Workflow -> DB : sla Workflow op (gekoppeld aan pipeline_stage new)
+
+== Actie in workflow ==
+
+Workflow -> Action : maakActie("koppel contactpersoon", type = taak)
+Action -> DB : sla Actie op (gekoppeld aan workflow en pipeline_stage new)
+
+note right of Action
+Actie wordt zichtbaar in CRM
+om contactpersoon toe te wijzen.
+end note
+
+....
+
+==== Overzichten
+
+Wat we willen bereiken:
+
+* Vanuit medewerker een overzicht van alle leads & acties die aan hem/haar zijn toegewezen.
+* Vanuit contact persoon eigenaar, een overzicht met alle lopende workflows en acties met hun actuele status. Vooral kunnen controleren of doorlooptijden akkoord zijn of dat er dus moet worden ingegrepen.
+* vanuit workflow eigenaar; een overzicht van alle workflows met acties en statussen.  Vooral kunnen controleren of doorlooptijden akkoord zijn of dat er dus moet worden ingegrepen.
+
+=== Audit Trail
+Het systeem houdt bij:
+* Wie een record heeft aangemaakt (`create_user_id`)
+* Wie een record het laatst heeft gewijzigd (`modified_user_id`)

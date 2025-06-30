@@ -1,0 +1,35 @@
+
+=== Local Development Setup
+
+Local development:
+
+Logs:
+- https://github.com/opcodesio/log-viewer
+- Setup (eenmalig): php artisan log-viewer:publish
+- Daarna logs te bekijken met link:http://localhost:8000/log-viewer[http://localhost:8000/log-viewer]
+
+=== Feature testen uitvoeren
+
+- sail artisan migrate:fresh --database=mysql_testing
+- sail artisan test
+
+Of in PHPStorm
+
+=== Commands
+
+include::cmd_import_sugarcrm_contacts.md[]
+
+
+include::cmd_create_leads.md[]
+
+=== Server installatie
+
+1. Github docker login
+Eerste keer docker login uitvoeren:
+echo <token> | docker login ghcr.io -u <username> --password-stdin
+
+Eerste keer een docker netwerk aanmaken
+
+2. Firewall
+- Poort 80 dient open te staan voor traefik (aanmaken van self-signed certificaten)
+- Poort 443 dient open te staan privatescan saas

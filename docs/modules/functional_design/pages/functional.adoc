@@ -1,0 +1,264 @@
+=== Database Structuur
+De applicatie gebruikt de volgende hoofdtabellen met hun relaties:
+
+[plantuml]
+....
+@startuml
+!define TABLE(name,desc) class name as "desc" << (T,#FFAAAA) >>
+!define PRIMARY_KEY(x) <b>x</b>
+!define FOREIGN_KEY(x) <i>x</i>
+
+TABLE(User, "user") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  email: string
+  lastname: string
+}
+
+TABLE(ContactPerson, "contact_person") {
+  PRIMARY_KEY(id): bigint
+  first_name: string
+  last_name: string
+  email: string
+  phone: string
+  FOREIGN_KEY(contact_user_id): bigint
+}
+
+TABLE(Pipeline, "pipeline") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  is_default: boolean
+  type: enum // (e.g., "hernia", "privatescan")
+}
+
+TABLE(PipelineStage, "pipeline_stage") {
+  PRIMARY_KEY(id): bigint
+  FOREIGN_KEY(pipeline_id): bigint
+  name: string
+  sort_order: int
+}
+
+TABLE(Lead, "lead") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  email: string
+  phone: string
+  FOREIGN_KEY(pipeline_stage_id): bigint
+  FOREIGN_KEY(user_id): bigint
+  FOREIGN_KEY(contact_person_id): bigint
+  create_user_id: bigint
+  department: string
+}
+
+TABLE(Order, "order") {
+  PRIMARY_KEY(id): bigint
+  FOREIGN_KEY(lead_id): bigint
+  FOREIGN_KEY(pipeline_stage_id): bigint
+  FOREIGN_KEY(user_id): bigint
+  FOREIGN_KEY(contact_person_id): bigint
+  total_amount: decimal
+  status: enum
+  create_user_id: bigint
+}
+
+TABLE(Workflow, "workflow") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  description: text
+  FOREIGN_KEY(pipeline_stage_id): bigint
+  FOREIGN_KEY(owner_user_id): bigint
+}
+
+
+TABLE(Action, "action") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  type: enum
+  FOREIGN_KEY(pipeline_stage_id): bigint
+  FOREIGN_KEY(workflow_id): bigint
+  FOREIGN_KEY(assigned_user_id): bigint
+  configuration: json
+}
+
+User "1" -- "n" Lead
+User "1" -- "n" Order
+User "1" -- "n" Workflow
+User "1" -- "n" Action
+
+Pipeline "1" -- "n" PipelineStage
+PipelineStage "1" -- "n" Lead
+PipelineStage "1" -- "n" Order
+PipelineStage "1" -- "n" Workflow
+PipelineStage "1" -- "n" Action
+
+Lead "1" -- "1" Order
+Lead "0..1" --> "1" ContactPerson : "assigned to"
+Order "1" --> "1" ContactPerson : "for"
+Order "1" --> "1" User
+Action "1" --> "1" User
+Workflow "1" -- "n" Action
+Workflow "0..1" -- "1" Order
+Workflow "0..1" -- "1" Lead
+Workflow "0..1" -- "1" ContactPerson
+ContactPerson "1" -- "1" User
+
+note right of Pipeline
+  Sales funnel with ordered stages.
+end note
+
+note right of PipelineStage
+  Step in the pipeline (e.g., "New", "Qualified", "Closed").
+end note
+
+note right of Lead
+  Potential client optionally linked to a user and contact person.
+  Pipeline stages ("new", "in behandeling", "afgehandeld").
+end note
+
+note right of Order
+  Closed deal, linked to a lead, user, and contact person.
+end note
+
+note right of Workflow
+  Automation flow attached to a pipeline stage.
+end note
+
+note right of Action
+  Task or automated step in a workflow, optionally assigned to a user.
+end note
+
+note right of ContactPerson
+  External contact involved in leads or orders, not a user in the system.
+end note
+
+@enduml
+....
+=== Pipeline stages per entiteit (status)
+
+Requirements:
+
+* Vanuit de entiteit zul je niet zomaar altijd de status kunnen aanpassen (soms mag dit alleen vanuit de workflow)
+* Er kunnen verplichte velden zijn tussen de status overgangen
+
+[plantuml]
+....
+@startuml
+left to right direction
+skinparam state {
+  BackgroundColor #FDF6E3
+  BorderColor Black
+  FontSize 11
+}
+
+' -- LEAD --
+state "Lead" as Lead {
+  [*] --> lead_new : "nieuw"
+  state lead_new as "nieuw"
+  state lead_progress as "in behandeling"
+  state lead_stop as "geen resultaat"
+  state lead_option as "optie"
+  state lead_nearwin as "near win"
+  state lead_win as "win"
+  state lead_lose as "lose"
+
+  lead_new --> lead_progress
+  lead_new --> lead_stop
+  lead_progress --> lead_option
+  lead_option --> lead_nearwin
+  lead_nearwin --> lead_win
+  lead_nearwin --> lead_lose
+}
+
+' -- ORDER --
+state "Order" as Order {
+  [*] --> order_new : "nieuw"
+  state order_new as "nieuw"
+  state order_send as "verzonden"
+  state order_confirmed as "akkoord"
+  state order_cancelled as "niet akkoord"
+  state order_payed as "betaald"
+  state order_not_payed as "niet betaald"
+  state order_afgerond as "afgerond"
+
+  order_new --> order_send
+  order_send --> order_confirmed
+  order_send --> order_cancelled
+  order_confirmed --> order_payed
+  order_confirmed --> order_not_payed
+  order_payed --> order_afgerond
+}
+
+' -- WORKFLOW --
+state "Workflow (TODO voeg alle statussen toe per workflow type)" as Workflow {
+  [*] --> wf_new : "nieuwe aanvraag"
+  state wf_new as "nieuwe aanvraag"
+  state wf_in_progress as "adviseren"
+  state wf_advised_prepared as "geadviseerd, opvolgen"
+  state wf_advised_create_order as "geadviseerd, order bevestigen"
+  state wf_order_confirmed_patient as "order bevestigd, wachten op akkoord kliniek"
+  state wf_closed as "afgerond"
+
+  wf_new --> wf_in_progress
+  wf_new --> wf_closed
+  wf_in_progress --> wf_advised_prepared
+  wf_in_progress --> wf_closed
+  wf_advised_prepared --> wf_advised_create_order
+  wf_advised_create_order --> wf_order_confirmed_patient
+  wf_advised_create_order --> wf_closed
+
+}
+
+' -- ACTIE --
+state "Actie" as Actie {
+  [*] --> actie_pending : "in afwachting"
+  actie_pending --> actie_progress : "bezig"
+  actie_progress --> actie_finished : "afgerond"
+}
+note right of Actie
+    Model Activity met eigen type hiervoor gebruiken?
+  end note
+@enduml
+....
+
+
+==== Toelichting op het CRM-datamodel en de lifecycle van entiteiten
+
+Het bovenstaande datamodel beschrijft de kernentiteiten binnen de CRM-omgeving en hun onderlinge relaties. Deze toelichting licht toe hoe de entiteiten zich gedragen binnen de klantreis (customer journey) en hoe workflows automatisch reageren op veranderingen.
+
+=== Lead lifecycle
+
+De lead vormt het startpunt van de klantreis. Zodra een nieuwe lead wordt aangemaakt:
+- krijgt deze automatisch de pipeline stage `"new"`,
+- wordt er een bijbehorende workflow gegenereerd,
+- en wordt er een eerste actie toegevoegd aan deze workflow, zoals het koppelen van een contactpersoon.
+
+Gedurende de lifecycle kan de lead door meerdere pipeline stages bewegen, bijvoorbeeld `"contacted"`, `"proposal_sent"`, `"won"` of `"lost"`. Bij elke overgang kan er automatisch een nieuwe actie of notificatie gegenereerd worden.
+Lead left in front office process / sales. Na bestellen, zal het een gewonnen lead zijn en zijn lifeclycle eindigen.
+Lead kan in dit gehele proces verloren gaan, bijvoorbeeld als er geen reactie komt van de klant of als de lead niet meer relevant is.
+
+=== Order lifecycle
+
+Elke lead kan resulteren in maximaal één order. Een order wordt doorgaans pas aangemaakt wanneer een lead in een bepaalde pipeline stage (zoals `"won"`) terechtkomt. De order is dus een natuurlijk vervolg binnen de lead-lifecycle en bevat detailinformatie over producten, bedragen en facturatie.
+
+=== Workflow en acties
+
+De workflow is gekoppeld aan een specifieke pipeline stage. Zodra een entiteit (zoals een lead of order) van status verandert, kunnen er events gegenereerd worden waarop een workflow reageert.
+
+Workflows kunnen automatisch acties aanmaken, zoals:
+- het toewijzen van een taak aan een gebruiker,
+- het verzenden van een e-mail,
+- of het starten van een vervolgproces.
+
+[NOTE]
+====
+Krayin kent een eigen workflow model, waarmee je condities en acties kunt koppelen. Vergelijkbaar met SugarCRM. We gebruiken dit minimaal. b.v. afdeling wordt gepaald in deze workflow. Denk hierbij aan een veld x krijgt een waarde op basis van andere velden van dezelfde entiteite of een andere entiteit. Overige beleggen we in N8N.
+Verwar deze workflow niet met onze Workflow entiteit.
+====
+
+Elke workflow kent zijn eigen type. Dit is een voor geprogrammeerde work flow met specifieke acties. Zo zullen we er een maken voor Privatescan en een opzetten voor Hernia. Dit maakt het mogelijk om workflows te personaliseren op basis van de afdeling of het type lead.
+
+Elke actie is gekoppeld aan een pipeline stage én een workflow, en wordt gebruikt om opvolging binnen het CRM te structureren en automatiseren.
+
+=== Samenvattend
+
+De combinatie van leads, pipeline stages, workflows en acties vormt de basis van het CRM-proces. Door dit op entiteitenniveau vast te leggen én dynamisch te laten reageren op statusveranderingen, ontstaat een flexibel en schaalbaar systeem voor klantopvolging en interne procesautomatisering.

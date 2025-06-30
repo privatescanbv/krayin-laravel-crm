@@ -1,9 +1,11 @@
-== Architectuur en Systeemontwerp
+=== Architectuur en Systeemontwerp
 TODO
 
-== Technologie Stack
+include::db_structure.adoc[]
 
-=== Backend
+=== Technologie Stack
+
+==== Backend
 De applicatie is gebouwd met de volgende backend technologieën:
 
 * Laravel Framework (v10.x)
@@ -12,7 +14,7 @@ De applicatie is gebouwd met de volgende backend technologieën:
   ** Laravel Sail voor development environment
   ** Laravel Sanctum voor API authenticatie
 
-=== Frontend
+==== Frontend
 De frontend is gebouwd met:
 
 * Blade templates
@@ -20,7 +22,7 @@ De frontend is gebouwd met:
 * Alpine.js voor interactiviteit
 * Livewire voor real-time updates
 
-=== Development Tools
+==== Development Tools
 De volgende tools worden gebruikt voor development:
 
 * Git voor versiebeheer
@@ -29,7 +31,7 @@ De volgende tools worden gebruikt voor development:
 * PHPStan voor static analysis
 * Laravel Pint voor code styling
 
-=== Deployment
+==== Deployment
 De applicatie wordt gehost op:
 
 * Docker containers
@@ -37,7 +39,7 @@ De applicatie wordt gehost op:
 * Supervisor voor process management
 * Redis voor caching
 
-=== Dependencies
+==== Dependencies
 Belangrijke dependencies:
 
 * Laravel Excel voor Excel export/import
@@ -52,39 +54,3 @@ De applicatie integreert met:
 * CRM API voor patiënt- en orderregel data
 * PDF parser voor factuur extractie
 * Mail service voor notificaties
-
-
-== Local Development Setup
-
-Local development:
-
-Logs:
-- https://github.com/opcodesio/log-viewer
-- Setup (eenmalig): php artisan log-viewer:publish
-- Daarna logs te bekijken met link:http://localhost:8000/log-viewer[http://localhost:8000/log-viewer]
-
-=== Feature testen uitvoeren
-
-- sail artisan migrate:fresh --database=mysql_testing
-- sail artisan test
-
-Of in PHPStorm
-
-== Commands
-
-include::cmd_import_sugarcrm_contacts.md[]
-
-
-include::cmd_create_leads.md[]
-
-=== Server installatie:
-
-1. Github docker login
-Eerste keer docker login uitvoeren:
-echo <token> | docker login ghcr.io -u <username> --password-stdin
-
-Eerste keer een docker netwerk aanmaken
-
-2. Firewall
-- Poort 80 dient open te staan voor traefik (aanmaken van self-signed certificaten)
-- Poort 443 dient open te staan privatescan saas

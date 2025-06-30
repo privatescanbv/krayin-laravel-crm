@@ -1,0 +1,40 @@
+[[intro]]
+
+= Privatescan CRM
+Created by Privatescan
+:toc: left
+:icons: font
+:source-highlighter: rouge
+:sectnums:
+
+== Project
+
+include::modules/project/pages/project.adoc[]
+
+== Functioneel ontwerp
+
+include::modules/functional_design/pages/functional.adoc[]
+
+== Flows
+
+include::modules/flows/pages/flows.adoc[]
+
+== Gebruikersinterface
+
+include::modules/application/pages/application.adoc[]
+
+== Technisch ontwerp
+
+include::modules/technology_stack/pages/tech_stack.adoc[]
+
+== Development
+include::modules/technology_stack/pages/dev.adoc[]
+
+include::modules/continuous_delivery/pages/cd.adoc[]
+
+include::modules/continuous_delivery/pages/release.adoc[]
+
+
+== Beheer & Support
+include::modules/support/pages/support.adoc[]
+

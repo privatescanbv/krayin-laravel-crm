@@ -1,0 +1,32 @@
+# Base image met NodeJS
+FROM node:20-slim
+
+# Werkomgeving in de container
+WORKDIR /app
+
+RUN apt-get update \
+ && apt-get install -y \
+    netcat-openbsd \
+    curl \
+    jq \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+
+# Installeren van n8n CLI
+RUN npm install -g n8n \
+  && npm cache clean --force \
+  && rm -rf /root/.npm /root/.config /usr/local/share/.cache
+
+# Kopieer alle flows en script naar de container
+COPY flows /app/flows
+COPY .docker/update-flows-n8n.sh /app/import-flows.sh
+COPY .docker/wait-for-n8n.sh /app/wait-for-n8n.sh
+
+# Maak script uitvoerbaar
+RUN chmod +x /app/import-flows.sh
+RUN chmod +x /app/wait-for-n8n.sh
+
+# Standaard commando (kan worden overschreven)
+ENTRYPOINT ["/app/wait-for-n8n.sh", "/app/import-flows.sh", "./flows"]
+#ENTRYPOINT ["n8n", "import:workflow", "--help"]
+

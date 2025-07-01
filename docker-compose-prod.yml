@@ -32,6 +32,7 @@ services:
 
   mysql:
     image: 'mysql/mysql-server:8.0'
+    container_name: mysql
     ports:
       - '3307:3306'
     command: --skip-host-cache --skip-name-resolve --socket=/tmp/mysql.sock
@@ -64,7 +65,7 @@ services:
     env_file:
       - .env
     environment:
-      DB_TYPE: 'mysql'
+      DB_TYPE: 'mysqldb'
       N8N_BASIC_AUTH_ACTIVE: 'false'
 #      N8N_BASIC_AUTH_USER: 'admin'
 #      N8N_BASIC_AUTH_PASSWORD: "V!*q3&hD8Lsq8yL3RdAY"
@@ -72,6 +73,7 @@ services:
       N8N_HOST: 'n8n.local'
       N8N_PORT: 5678
       TZ: 'Europe/Amsterdam'
+      N8N_ENCRYPTION_KEY: 'FUC16A-23(<d!io'
     labels:
       - traefik.enable=true
       - traefik.http.routers.n8n.rule=Host(`n8ncrm.dev.privatescan.nl`)
@@ -85,6 +87,25 @@ services:
       - mb_traefik
     volumes:
       - n8n_data:/home/node/.n8n
+
+  n8n-sync:
+    image: ghcr.io/privatescanbv/krayin-laravel-crm/crmsyncn8n:latest
+    container_name: n8n-sync
+    env_file:
+      - .env
+    environment:
+      N8N_RUNNERS_ENABLED: 'true'
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: 'true'
+      DB_TYPE: 'mysqldb'
+      N8N_HOST: 'n8n'
+      N8N_PORT: '5678'
+      N8N_API_URL: 'http://n8n:5678/api/v1/workflows'
+    depends_on:
+      - crm
+      - n8n
+      - mysql
+    networks:
+      - sail
 
   traefik:
     image: traefik:v2.11

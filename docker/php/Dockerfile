@@ -5,6 +5,7 @@ COPY ./ ./
 # clean up
 RUN rm -rf tests
 RUN rm -rf .git
+RUN rm -rf flows
 
 FROM docker.io/php:8.2.12-fpm-bullseye
 

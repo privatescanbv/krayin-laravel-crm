@@ -1,17 +1,14 @@
 #!/bin/bash
 
 # Stel de variabelen in
-IMAGE_NAME="krayincrm"
+IMAGE_NAME="crmsyncn8n"
 GITHUB_USERNAME="privatescanbv"
 REPO_NAME="krayin-laravel-crm"
 GITHUB_REGISTRY="ghcr.io"
 TAG="latest"
 
-./build.sh
-./doc.sh
-
 # Bouw de Docker image met een specifieke Dockerfile
-docker build --platform linux/amd64 -t $IMAGE_NAME -f ./docker/php/Dockerfile .
+docker build --platform linux/amd64 -t $IMAGE_NAME -f ./docker/php/Dockerfile.syncflows .
 
 # Tag de Docker image voor GitHub Container Registry
 docker tag $IMAGE_NAME $GITHUB_REGISTRY/$GITHUB_USERNAME/$REPO_NAME/$IMAGE_NAME:$TAG

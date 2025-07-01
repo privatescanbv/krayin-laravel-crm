@@ -103,6 +103,7 @@ RUN echo "* * * * * /usr/local/bin/php /usr/share/nginx/html/artisan schedule:ru
 RUN chmod 0644 /etc/cron.d/laravel-cron
 
 COPY .docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+#COPY .docker/update-flows-n8n.sh /usr/local/bin/update-flows-n8n.sh
 
 COPY .docker/execute-folder-scripts.sh ./execute-folder-scripts.sh
 RUN chmod 0755 ./execute-folder-scripts.sh

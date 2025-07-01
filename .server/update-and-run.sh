@@ -1,0 +1,24 @@
+#!/bin/bash
+# This script runs on the DEV and PROD machines to update the Krayin CRM Docker image and run it.
+docker pull ghcr.io/privatescanbv/krayin-laravel-crm/krayincrm:latest
+
+docker-compose down
+
+# Maak tijdelijke container van de image om init-bestand te kopiëren
+docker create --name temp-crm ghcr.io/privatescanbv/krayin-laravel-crm/krayincrm:latest
+
+# Zorg dat doelmap bestaat
+mkdir -p ./docker/mysql
+rm docker-compose.yml
+
+# Kopieer init-bestand uit container (pas pad aan als nodig)
+docker cp temp-crm:/docker/mysql/init-n8n.sql ./docker/mysql/init-n8n.sql
+docker cp temp-crm:/docker/docker-compose.yml ./docker-compose.yml
+
+
+
+# Verwijder tijdelijke container
+docker rm temp-crm
+
+#docker-compose down && docker-compose up -d --force-recreate
+docker-compose up -d

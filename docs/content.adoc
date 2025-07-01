@@ -1,12 +1,3 @@
-[[intro]]
-
-= Privatescan CRM
-Created by Privatescan
-:toc: left
-:icons: font
-:source-highlighter: rouge
-:sectnums:
-
 == Project
 
 include::modules/project/pages/project.adoc[]

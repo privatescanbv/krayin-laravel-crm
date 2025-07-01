@@ -1,20 +1,32 @@
+PrivateScan CRM
 
 === Introduction
 
-De PrivateScan Factuur Verwerking Tool is ontwikkeld om het proces van factuurverwerking te automatiseren en te versnellen. Het primaire doel is om de status van orderregels in het CRM systeem bij te werken op basis van ingescande facturen.
+De PrivateScan CRM is ontwikkeld als vervanging van het verouderde SugarCRM-systeem. Door de technische beperkingen en het gebrek aan ontwikkelmogelijkheden in het oude systeem was verdere doorontwikkeling niet meer haalbaar.
 
-De tool biedt de volgende voordelen:
-* Automatisering van handmatige processen
-* Vermindering van menselijke fouten
-* Versnelling van factuurverwerking
-* Consistente status updates in het CRM systeem
+Er is daarom bewust gekozen om het nieuwe systeem volledig vanaf de basis op te bouwen. Daarbij zijn waardevolle onderdelen uit SugarCRM hergebruikt waar zinvol, maar is tegelijkertijd gekozen voor een frisse, toekomstbestendige opzet waarmee we weer jaren vooruit kunnen.
+
 
 === Opdrachtomschrijving / Businessdoelstellingen
 
-TODO: Beschrijf hier de specifieke business doelstellingen en opdrachtomschrijving.
+Opdracht komt voort uit advies rapport, zie onze share op de Citrix omgeving;: file:///P:/Healthcare%20Solution/Resultaten%20deelopdrachten/Deelopdracht%202/Adviesdocument%20CRM%20keuze.pdf
 
 === Doelgroep
-Deze tool is specifiek ontwikkeld voor medewerkers van PrivateScan die verantwoordelijk zijn voor het verwerken van facturen en het bijwerken van CRM status.
+De primaire doelgroep bestaat uit medewerkers van Privatescan die betrokken zijn bij het klantcontact, de planning van medische onderzoeken en de administratieve afhandeling. Denk hierbij aan:
+
+* Frontoffice medewerkers – verantwoordelijk voor intake, communicatie met patiënten, en het plannen van afspraken.
+
+* Backoffice personeel – belast met orderverwerking, facturatie en nazorg.
+
+* Medisch coördinatoren – die overzicht houden over dossiers, specialisten en kliniekplanning. (geen toegang tot CRM), zal een los portaal krijgen)
+
+* Patienten - los patient portaal (geen toegang tot CRM)
+
+* Management – dat behoefte heeft aan inzicht in lopende aanvragen, doorlooptijden en conversiepercentages.
+
+De gebruikers zijn overwegend niet technisch en verwachten een intuïtieve interface waarin ze snel overzicht krijgen over hun verantwoordelijkheden. Efficiëntie, foutpreventie en goede logging zijn van groot belang, mede vanwege het medische en privacygevoelige karakter van de dienstverlening.
+
+
 
 === Wie werkt er aan dit project?
 
@@ -55,6 +67,9 @@ Vaak zetten we er ook een flexibele schil naast, die vaak niet aanwezig zijn met
 | x
 |linda@privatescan.nl
 
+|Wout Lansink
+| Hoofd afdeling Hernia
+|wout@privatescan.nl
 |===
 
 === Afspraken

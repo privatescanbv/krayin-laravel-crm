@@ -1,7 +1,8 @@
-= Mijn Document
+= Privatescan CRM
 :toc: macro
 :doctype: article
 :icons: font
+:source-highlighter: rouge
 
 ++++
 <style>
@@ -80,12 +81,19 @@ body {
   padding-left: 40px;
   padding-right: 40px;
 }
+
+h2, h3 {
+  scroll-margin-top: 90px;
+}
+#header {
+    visibility: hidden;
+}
 </style>
 ++++
 
 ++++
 <div class="navbar">
-  <img src="logo.svg" alt="Privatescan logo" class="logo" />
+  <img src="/admin/docs/resources/logo.svg" alt="Privatescan logo" class="logo" />
   <div class="dynamic-menu"></div>
 </div>
 ++++

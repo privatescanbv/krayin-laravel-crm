@@ -259,6 +259,85 @@ Elke workflow kent zijn eigen type. Dit is een voor geprogrammeerde work flow me
 
 Elke actie is gekoppeld aan een pipeline stage én een workflow, en wordt gebruikt om opvolging binnen het CRM te structureren en automatiseren.
 
-=== Samenvattend
+==== Samenvattend
 
 De combinatie van leads, pipeline stages, workflows en acties vormt de basis van het CRM-proces. Door dit op entiteitenniveau vast te leggen én dynamisch te laten reageren op statusveranderingen, ontstaat een flexibel en schaalbaar systeem voor klantopvolging en interne procesautomatisering.
+
+
+=== Email en Notificaties
+
+Voorlopig gaan we alleen e-mail ondersteunen als communicatie kanaal.
+Alle e-mailcommunicatie met patiënten zal via het CRM verlopen. Medewerkers dienen e-mails niet via Outlook te versturen, omdat deze dan **niet zichtbaar zullen zijn binnen het CRM-systeem**. Dit kunnen we technisch niet afdwingen, maar het is belangrijk dat men zich hiervan bewust is.
+
+Voor andere e-mailtypes, zoals communicatie met klinieken en artsen, hanteren we een hybride aanpak:
+
+- *Voorkeur*: via CRM
+- *Uitzondering*: losse ad-hoc vragen, die via Outlook worden beantwoord
+
+Wanneer communicatie via Outlook plaatsvindt, kan men het CRM alsnog informeren door te e-mailen met een *CC naar een CRM-specifiek e-mailadres*. Het systeem verwerkt deze CC-mail dan als een nieuwe actie. Inhoudelijk geeft de actie de inhoud van de mail weer met als opdracht om deze te verwerke, niet exact hoe. Indien het niet nodig is, kan de medewerker de actie sluiten.
+
+==== Vereisten voor e-mailfunctionaliteit binnen CRM
+
+- De e-mail wordt verstuurd met:
+* De juiste *huisstijl* en *handtekening* (selecteerbaar: _Hernia_ of _Privatescan_)
+* Ondersteuning voor *bijlagen*
+* Verstuurd in de *taal van de patiënt* (automatisch bepaald op basis van lead-info)
+* Gebruikmakend van een *template*, die onderhoudbaar is door Privatescan zelf
+* Mogelijkheid tot *her-verzenden* van een e-mail (bijv. bij fout e-mailadres)
+- *Technische vereiste*: Bijlagen kunnen zwaar zijn qua opslag. Daarom wordt gebruik gemaakt van een schaalbaar opslagmechanisme, zoals een *MinIO bucket*.
+
+==== Voorbeeld: Flow van een ordermail
+
+Zodra een lead de status **"order opzetten"** bereikt, zal er automatisch een actie gegenereerd worden in het CRM om een ordermail te versturen.
+
+De CRM genereert dan een e-mail met de volgende inhoud:
+
+- *Link naar het GVL-formulier*, uniek per patiënt
+- *Bijlage(n)*: relevante kaarten of documentatie
+- *Tekst*: gegenereerd vanuit een template en vertaald naar de taal van de patiënt
+- *Onderwerpregel* bevat altijd de `Lead ID` → dit zorgt voor traceerbaarheid
+- *Inhoud bevat*: een beveiligde link om de order digitaal te ondertekenen
+
+Na succesvolle digitale ondertekening door de patiënt:
+
+- Wordt automatisch een actie gestart in de backoffice-workflow
+- De order komt in een volgende verwerkingsstatus terecht (bijv. "Bevestigd")
+
+
+=== Aanmeldingen voor families en bedrijven
+
+Naast losse personen dient men zich ook te kunnen aanmelden als *familie* of *bedrijf*.
+In dat geval gelden er enkele aanvullende afspraken en vereisten:
+
+==== Behandeling per persoon
+
+Ook bij een gezamenlijke aanmelding worden de betrokken personen *individueel verwerkt* in het CRM:
+
+- Elke persoon ontvangt een *eigen ordermail* met GVL-formulier.
+- Elke persoon moet *individueel akkoord geven* op zijn/haar behandeling.
+- Een persoon ziet **alleen zijn/haar eigen orderinformatie**, niet die van andere familieleden of collega’s.
+
+==== Opslag als organisatie
+
+In zowel familie- als bedrijfsaanmeldingen wordt de groep geregistreerd als een `organization` in het CRM.
+
+- De *lead* wordt gekoppeld aan een `contactpersoon` of `organisatie`.
+- Dit stelt ons in staat om:
+* Gezamenlijke gegevens (zoals adres, telefoon, e-mailadres) vast te leggen
+* Één centrale factuur te sturen aan de organisatie
+
+==== Procesverloop
+
+Het reguliere behandelproces blijft voor alle personen ongewijzigd:
+
+- Elke persoon doorloopt de *standaard CRM-flow*.
+- In het CRM zijn deze personen zichtbaar onder de tijdlijn van de *contactpersoon* van de organisatie.
+
+==== Afwijking bij facturatie
+
+Het enige verschil in het proces bevindt zich bij de facturatie:
+
+- De factuur wordt niet naar de individuele persoon gestuurd
+- In plaats daarvan wordt de factuur gestuurd naar de *organisatiegegevens* of *centrale contactpersoon*
+
+Dit maakt het mogelijk om *één gezamenlijke factuur* te versturen, terwijl de behandelingen apart geregistreerd blijven.

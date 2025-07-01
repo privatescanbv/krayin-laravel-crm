@@ -10,7 +10,7 @@
           "parameters": [
             {
               "name": "type",
-              "value": "meeting"
+              "value": "={{ $json.task_type || 'task' }}"
             },
             {
               "name": "title",
@@ -60,6 +60,9 @@
             },
             {
               "name": "group_id"
+            },
+            {
+              "name": "task_type"
             }
           ]
         }
@@ -72,6 +75,20 @@
       ],
       "id": "6c9cf789-27f4-415e-a317-d73770bcd051",
       "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "content": "Deze flow maakt een taak aan, gekoppeld aan meegeven lead.\n\n## Parameters\n* task_title (*)\n* task_description (*)\n* task_type (call;meeting;task, default: task)",
+        "height": 320
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        -440
+      ],
+      "id": "4bdd7faa-f74b-4719-b4f5-f5cc06e7dd11",
+      "name": "Sticky Note"
     }
   ],
   "pinData": {},
@@ -95,7 +112,7 @@
     "errorWorkflow": "b8PHf3zTNTQZsSzB",
     "timezone": "Europe/Paris"
   },
-  "versionId": "834471b2-b8c0-400d-a77d-36e07645d9de",
+  "versionId": "ed2077f2-34a6-4a01-adca-d6ae5a546185",
   "meta": {
     "instanceId": "04a589aba7becd1dde047957b525fc8163605bfcbd5c7304b882c2d0f7b90473"
   },

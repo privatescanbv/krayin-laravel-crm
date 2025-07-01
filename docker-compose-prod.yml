@@ -27,8 +27,8 @@ services:
       - sail
       - mb_traefik
     depends_on:
-      mysql:
-        condition: service_healthy
+      - mysql
+      - n8n
 
   mysql:
     image: 'mysql/mysql-server:8.0'
@@ -65,8 +65,10 @@ services:
       - .env
     environment:
       DB_TYPE: 'mysql'
-      N8N_BASIC_AUTH_ACTIVE: 'true'
-      N8N_BASIC_AUTH_USER: 'admin'
+      N8N_BASIC_AUTH_ACTIVE: 'false'
+#      N8N_BASIC_AUTH_USER: 'admin'
+#      N8N_BASIC_AUTH_PASSWORD: "V!*q3&hD8Lsq8yL3RdAY"
+      N8N_API_KEY: "awRfSc%3Q*fgMm!UJL9F"
       N8N_HOST: 'n8n.local'
       N8N_PORT: 5678
       TZ: 'Europe/Amsterdam'

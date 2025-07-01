@@ -15,7 +15,7 @@ Route::group(['middleware' => ['user']], function () {
     Route::put('workflow-leads/edit/{id}', [WorkflowLeadController::class, 'update'])->name('admin.workflow-leads.update');
     Route::get('workflow-leads/view/{id}', [WorkflowLeadController::class, 'view'])->name('admin.workflow-leads.view');
     Route::delete('workflow-leads/{id}', [WorkflowLeadController::class, 'delete'])->name('admin.workflow-leads.delete');
-    
+
     // Temporary debug route
     Route::get('workflow-leads/debug/{id}', [WorkflowLeadController::class, 'debug'])->name('admin.workflow-leads.debug');
 });
@@ -24,6 +24,7 @@ Route::group(['middleware' => ['user']], function () {
  * Documentation routes.
  */
 Route::group(['middleware' => ['user']], function () {
+//    Route::get('docs/{path?}', function ($path = 'index.html') {
     Route::get('docs/{path?}', function ($path = 'index.html') {
         $fullPath = base_path("docs/html/{$path}");
 
@@ -33,4 +34,4 @@ Route::group(['middleware' => ['user']], function () {
 
         return response()->file($fullPath);
     })->where('path', '.*')->name('admin.docs.index');
-}); 
+});

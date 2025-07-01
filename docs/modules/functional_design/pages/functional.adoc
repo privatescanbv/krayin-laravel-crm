@@ -266,25 +266,63 @@ De combinatie van leads, pipeline stages, workflows en acties vormt de basis van
 
 === Email en Notificaties
 
-Voorlopig gaan we alleen e-mail ondersteunen als communicatie kanaal.
-Alle e-mailcommunicatie met patiënten zal via het CRM verlopen. Medewerkers dienen e-mails niet via Outlook te versturen, omdat deze dan **niet zichtbaar zullen zijn binnen het CRM-systeem**. Dit kunnen we technisch niet afdwingen, maar het is belangrijk dat men zich hiervan bewust is.
+Alle communicatie met patiënten zal voortaan uitsluitend via het CRM verlopen. Hierdoor ontstaat een volledig en doorzoekbaar overzicht per patiënt, en kunnen we beter voldoen aan onze kwaliteits- en privacyrichtlijnen.
 
-Voor andere e-mailtypes, zoals communicatie met klinieken en artsen, hanteren we een hybride aanpak:
+Medewerkers dienen *geen e-mails met patiënten meer te versturen via Outlook*. E-mails die buiten het CRM worden verstuurd, zijn niet zichtbaar in het systeem en kunnen daardoor niet worden meegenomen in het dossier of in workflow-automatisering. Dit kan technisch niet worden afgedwongen, maar het is van belang dat medewerkers dit actief naleven.
 
-- *Voorkeur*: via CRM
-- *Uitzondering*: losse ad-hoc vragen, die via Outlook worden beantwoord
+==== Randvoorwaarden voor e-mail via het CRM
 
-Wanneer communicatie via Outlook plaatsvindt, kan men het CRM alsnog informeren door te e-mailen met een *CC naar een CRM-specifiek e-mailadres*. Het systeem verwerkt deze CC-mail dan als een nieuwe actie. Inhoudelijk geeft de actie de inhoud van de mail weer met als opdracht om deze te verwerke, niet exact hoe. Indien het niet nodig is, kan de medewerker de actie sluiten.
+Om e-mail via het CRM een volwaardig alternatief te maken voor Outlook, worden de volgende eisen gesteld:
 
-==== Vereisten voor e-mailfunctionaliteit binnen CRM
+* *Gebruiksvriendelijkheid*
+** Overzichtelijke interface (bijv. inbox/outbox per lead/contactpersoon)
+** Ondersteuning voor standaard opmaakopties (vet, cursief, lijsten, etc.)
+** Makkelijk zoeken en terugvinden van eerdere communicatie
+** Snel kunnen schakelen tussen standaard templates en vrije tekst
 
-- De e-mail wordt verstuurd met:
-* De juiste *huisstijl* en *handtekening* (selecteerbaar: _Hernia_ of _Privatescan_)
-* Ondersteuning voor *bijlagen*
-* Verstuurd in de *taal van de patiënt* (automatisch bepaald op basis van lead-info)
-* Gebruikmakend van een *template*, die onderhoudbaar is door Privatescan zelf
-* Mogelijkheid tot *her-verzenden* van een e-mail (bijv. bij fout e-mailadres)
-- *Technische vereiste*: Bijlagen kunnen zwaar zijn qua opslag. Daarom wordt gebruik gemaakt van een schaalbaar opslagmechanisme, zoals een *MinIO bucket*.
+* *Leverbetrouwbaarheid*
+** E-mails dienen goed afgeleverd te worden en zo min mogelijk in de spam terecht te komen
+** Hiervoor wordt gebruik gemaakt van een betrouwbare e-mailprovider (bijv. Postmark, SMTP met DKIM/SPF)
+** Monitoring van bounce rates en optioneel waarschuwingen bij afleverproblemen
+
+* *Taal en huisstijl*
+** E-mails worden automatisch opgesteld in de taal van de patiënt (NL, EN, etc.)
+** Elke e-mail wordt verstuurd in de juiste huisstijl (bijv. PrivateScan of Hernia) inclusief e-mailhandtekening
+
+* *Bijlagen*
+** Ondersteuning voor het toevoegen van documenten (PDF, GVL, kaarten, etc.)
+** Bijlagen worden schaalbaar en veilig opgeslagen, bijv. in een MinIO bucket
+
+* *Herbruikbaarheid*
+** Een verzonden e-mail moet opnieuw verstuurd kunnen worden naar een aangepast adres (bijv. bij fout e-mailadres patiënt)
+
+==== Hybride communicatie: met klinieken en artsen
+
+Voor communicatie met klinieken of externe zorgverleners hanteren we een hybride aanpak:
+
+* *Voorkeur*: via het CRM
+* *Uitzondering*: ad-hoc of informele communicatie, die via Outlook verloopt
+
+In deze gevallen kan alsnog een *CC naar een speciaal CRM-adres* worden gestuurd. Het systeem herkent deze mail en maakt hier automatisch een actie van in de tijdlijn. Deze actie toont de inhoud van de mail en kan handmatig worden verwerkt of afgesloten.
+
+==== Privacy & beveiliging
+
+Vanuit de AVG hanteren we het uitgangspunt dat *er geen medische gegevens in e-mails worden opgenomen*. In plaats daarvan worden medische documenten of inhoud uitsluitend ter inzage aangeboden via een beveiligde link naar het patiëntenportaal.
+
+Voordelen van deze aanpak:
+
+* De inhoud van de e-mail blijft AVG-proof en laag-risico
+* Het portaal is afgeschermd en vereist inloggen door de patiënt
+* We behouden flexibiliteit in e-mailverkeer en kunnen eenvoudiger afleverbaarheid (deliverability) garanderen
+
+Richtlijnen:
+
+* Vermeld in de e-mail alleen een korte toelichting en verwijs naar de beveiligde link
+* Stuur geen PDF’s, rapportages of andere medische bijlagen direct mee in de e-mail. (Algemene, publieke informatie is prima. Zolang het maar geen verwijzing staat naar een natuurlijke persoon.)
+* De link verwijst naar een afgeschermde omgeving binnen het patiëntenportaal
+* De patiënt moet inloggen om toegang te krijgen tot de inhoud
+* Log alle interactie met het portaal, inclusief wanneer documenten zijn geopend of ondertekend
+
 
 ==== Voorbeeld: Flow van een ordermail
 

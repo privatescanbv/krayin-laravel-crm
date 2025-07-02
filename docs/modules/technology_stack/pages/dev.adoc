@@ -24,12 +24,26 @@ include::cmd_create_leads.md[]
 
 === Server installatie
 
-1. Github docker login
+==== Github docker login
 Eerste keer docker login uitvoeren:
 echo <token> | docker login ghcr.io -u <username> --password-stdin
 
 Eerste keer een docker netwerk aanmaken
 
-2. Firewall
+==== Firewall
 - Poort 80 dient open te staan voor traefik (aanmaken van self-signed certificaten)
 - Poort 443 dient open te staan privatescan saas
+
+==== Synchronisatie n8n workflows
+
+De eerste keer dien je een gebruiker te registeren.
+1. Zet project id in .env file (N8N_PROJECT_ID). Je kunt deze vinden in mysql met select * from project;
+2. Maak een API key aan bij je gebruiker en plaats deze in .env file (N8N_API_KEY).
+
+
+===== Troubleshooting
+ *Synchroniseren forceren*
+Verwijderen alle bestaande workflows voordat je opnieuw gaat synchroniseren. Je kunt dit doen met een mysql connectie:
+mysql -u <DB_MYSQLDB_USER> -p'<DB_MYSQLDB_PASSWORD>' -h 127.0.0.1 -P 3307 <DB_MYSQLDB_DATABASE>
+delete from workflow_entity;
+delete from shared_workflow;

@@ -1,3 +1,19 @@
+### create  lead
+POST http://localhost:8000/api/leads
+Content-Type: application/json
+
+{
+    "first_name": "Bart",
+    "last_name": "Bulthuis",
+    "email": "bart@example.com",
+    "phone": "0612345678",
+    "company_name": "Woonkamp B.V.",
+    "lead_source": "Website",
+    "title": "lead tel (hernia)",
+    "lead_source_id": 2,
+    "tags": ["crm", "n8n"]
+}
+
 ### create workflow lead
 POST http://localhost:8000/api/workflow-leads
 Content-Type: application/json
@@ -6,3 +22,11 @@ Content-Type: application/json
     "lead_id": 164
 }
 
+### find activities by lead
+GET http://localhost:8000/api/leads/238/activities
+Content-Type: application/json
+
+
+### get lead by id
+GET http://localhost:8000/api/leads/238
+Content-Type: application/json

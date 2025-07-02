@@ -156,6 +156,15 @@ class LeadController extends Controller
      */
     public function store(LeadForm $request): RedirectResponse
     {
+        [$lead, $leadPipelineId] =  $this->storeLead($request);
+
+        session()->flash('success', trans('admin::app.leads.create-success'));
+
+        return redirect()->route('admin.leads.index', $leadPipelineId);
+    }
+
+    public function storeLead(LeadForm $request): array
+    {
         Event::dispatch('lead.create.before');
 
         $data = $request->all();
@@ -184,9 +193,7 @@ class LeadController extends Controller
 
         Event::dispatch('lead.create.after', $lead);
 
-        session()->flash('success', trans('admin::app.leads.create-success'));
-
-        return redirect()->route('admin.leads.index', $data['lead_pipeline_id']);
+       return [$lead, $data['lead_pipeline_id']];
     }
 
     /**

@@ -74,11 +74,11 @@ class LeadController extends Controller
         foreach ($leadData as $key => $value) {
             request()->request->add([$key => $value]);
         }
-        $lead = $this->leadService->store($request);
+        [$lead, $leadPipelineId] = $this->leadService->storeLead($request);
 
         return response()->json([
             'message' => 'Lead created successfully.',
-            'data' => $lead,
+            'data' => ['id' => $lead->id],
         ], 201);
     }
 

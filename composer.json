@@ -30,7 +30,9 @@
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.6",
         "barryvdh/laravel-ide-helper": "^3.1",
+        "behat/behat": "^3.22",
         "fakerphp/faker": "^1.9.1",
+        "friends-of-behat/mink-extension": "^2.7",
         "krayin/krayin-package-generator": "dev-master",
         "laravel/pint": "^1.16",
         "laravel/sail": "^1.0.1",

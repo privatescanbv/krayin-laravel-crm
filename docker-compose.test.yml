@@ -1,17 +1,17 @@
 services:
-#  krayin-php-apache:
-#    build:
-#      args:
-#        container_project_path: /var/www/html/
-#        uid: 1000 # add your uid here
-#        user: $USER
-#      context: .
-#      dockerfile: ./Dockerfile
-#    image: krayin-php-apache
-#    ports:
-#      - 80:80 # adjust your port here, if you want to change
-#    volumes:
-#      - ./workspace/:/var/www/html/
+  #  krayin-php-apache:
+  #    build:
+  #      args:
+  #        container_project_path: /var/www/html/
+  #        uid: 1000 # add your uid here
+  #        user: $USER
+  #      context: .
+  #      dockerfile: ./Dockerfile
+  #    image: krayin-php-apache
+  #    ports:
+  #      - 80:80 # adjust your port here, if you want to change
+  #    volumes:
+  #      - ./workspace/:/var/www/html/
 
   crm:
     build:
@@ -110,20 +110,17 @@ services:
       - mb_traefik
     volumes:
       - n8n_data:/home/node/.n8n
-
-# enable this for local cucumber testing
-#  test:
-#    build:
-#      context: .
-#      dockerfile: ./docker/php/Dockerfile.test
-#    volumes:
-#      - .:/app
-#    networks:
-#      - sail
-#    depends_on:
-#      - crm
-#      - n8n
-#    command: ./vendor/bin/behat --format=pretty
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    container_name: test-runner
+    volumes:
+      - .:/app
+    depends_on:
+      - crm
+      - n8n
+    command: ./vendor/bin/behat --format=pretty
 
 networks:
   sail:
@@ -136,5 +133,11 @@ volumes:
   n8n_data:
     driver: local
 
-#  sail-redis:
-#    driver: local
+  #  sail-redis:
+  #    driver: local
+
+
+
+
+
+

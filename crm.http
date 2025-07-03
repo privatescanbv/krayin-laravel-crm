@@ -30,3 +30,12 @@ Content-Type: application/json
 ### get lead by id
 GET http://localhost:8000/api/leads/238
 Content-Type: application/json
+
+### zoek contact persons
+GET http://localhost:8000/admin/contacts/persons/search
+Content-Type: application/json
+
+{
+    "first_name": "John"
+}
+

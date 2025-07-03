@@ -144,7 +144,7 @@ class AttributeSeeder extends Seeder
                 'updated_at'      => $now,
             ],
             [
-                'code'            => 'first_name',
+                'code'            => LeadAttributeKeys::FIRSTNAME->value,
                 'name'            => 'Voornaam',
                 'type'            => 'text',
                 'entity_type'     => 'leads',
@@ -159,7 +159,7 @@ class AttributeSeeder extends Seeder
                 'updated_at'      => $now,
             ],
             [
-                'code'            => 'last_name',
+                'code'            =>  LeadAttributeKeys::LASTNAME->value,
                 'name'            => 'Achternaam',
                 'type'            => 'text',
                 'entity_type'     => 'leads',

@@ -229,7 +229,9 @@ class LeadRepository extends Repository
         if (empty($data['expected_close_date'])) {
             $data['expected_close_date'] = null;
         }
-
+        if (empty($data['person_id'])) {
+            unset($data['person_id']);
+        }
         $lead = parent::update($data, $id);
 
         /**

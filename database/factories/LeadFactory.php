@@ -5,7 +5,6 @@ namespace Database\Factories;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Source;
 use Webkul\Lead\Models\Type;
@@ -31,7 +30,7 @@ class LeadFactory extends Factory
     public function definition()
     {
         // Get or create required related models
-        $person = Person::first() ?? Person::factory()->create();
+        //        $person = Person::first() ?? Person::factory()->create();
         $user = User::first() ?? WebkulUserFactory::new()->create();
         $source = Source::first() ?? Source::create(['name' => 'Website']);
         $type = Type::first() ?? Type::create(['name' => 'New Lead']);
@@ -47,7 +46,7 @@ class LeadFactory extends Factory
             'expected_close_date'    => $this->faker->optional()->dateTimeBetween('now', '+3 months'),
             'closed_at'              => $this->faker->optional()->dateTimeBetween('-1 month', 'now'),
             'user_id'                => $user->id,
-            'person_id'              => $person->id,
+            'person_id'              => $person->id ?? null,
             'lead_source_id'         => $source->id,
             'lead_type_id'           => $type->id,
             'lead_pipeline_id'       => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value,

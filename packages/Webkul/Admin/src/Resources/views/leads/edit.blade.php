@@ -7,15 +7,15 @@
     {!! view_render_event('admin.leads.edit.form_controls.before', ['lead' => $lead]) !!}
 
     <!-- Edit Lead Form -->
-    <x-admin::form         
+    <x-admin::form
         :action="route('admin.leads.update', $lead->id)"
         method="PUT"
     >
         <div class="flex flex-col gap-4">
             <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
-                    <x-admin::breadcrumbs 
-                        name="leads.edit" 
+                    <x-admin::breadcrumbs
+                        name="leads.edit"
                         :entity="$lead"
                     />
 
@@ -57,7 +57,7 @@
     {!! view_render_event('admin.leads.edit.form_controls.after', ['lead' => $lead]) !!}
 
     @pushOnce('scripts')
-        <script 
+        <script
             type="text/x-template"
             id="v-lead-edit-template"
         >
@@ -87,8 +87,8 @@
                     {!! view_render_event('admin.leads.edit.lead_details.before', ['lead' => $lead]) !!}
 
                     <!-- Details section -->
-                    <div 
-                        class="flex flex-col gap-4" 
+                    <div
+                        class="flex flex-col gap-4"
                         id="lead-details"
                     >
                         <div class="flex flex-col gap-1">
@@ -138,7 +138,7 @@
                                         :entity="$lead"
                                     />
                                 </div>
-                                    
+
                                 <div class="w-full">
                                     <x-admin::attributes
                                         :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
@@ -166,8 +166,8 @@
                     {!! view_render_event('admin.leads.edit.contact_person.before', ['lead' => $lead]) !!}
 
                     <!-- Contact Person -->
-                    <div 
-                        class="flex flex-col gap-4" 
+                    <div
+                        class="flex flex-col gap-4"
                         id="contact-person"
                     >
                         <div class="flex flex-col gap-1">
@@ -175,14 +175,18 @@
                                 @lang('admin::app.leads.edit.contact-person')
                             </p>
 
-                            <p class="text-gray-600 dark:text-white">
-                                @lang('admin::app.leads.edit.contact-info')
-                            </p>
+{{--                            <p class="text-gray-600 dark:text-white">--}}
+{{--                                @lang('admin::app.leads.edit.contact-info')--}}
+{{--                            </p>--}}
                         </div>
 
                         <div class="w-1/2 max-md:w-full">
                             <!-- Contact Person Component -->
-                            @include('admin::leads.common.contact')
+                            @include('admin::leads.common.contactmatcher')
+                        </div>
+                        <div class="w-1/2 max-md:w-full">
+                            <!-- Contact Person Component -->
+                            @include('admin::leads.common.contactorganisation')
                         </div>
                     </div>
 
@@ -191,29 +195,29 @@
                     {!! view_render_event('admin.leads.edit.contact_person.products.before', ['lead' => $lead]) !!}
 
                     <!-- Product Section -->
-                    <div 
-                        class="flex flex-col gap-4" 
-                        id="products"
-                    >
-                        <div class="flex flex-col gap-1">
-                            <p class="text-base font-semibold dark:text-white">
-                                @lang('admin::app.leads.edit.products')
-                            </p>
+{{--                    <div--}}
+{{--                        class="flex flex-col gap-4"--}}
+{{--                        id="products"--}}
+{{--                    >--}}
+{{--                        <div class="flex flex-col gap-1">--}}
+{{--                            <p class="text-base font-semibold dark:text-white">--}}
+{{--                                @lang('admin::app.leads.edit.products')--}}
+{{--                            </p>--}}
 
-                            <p class="text-gray-600 dark:text-white">
-                                @lang('admin::app.leads.edit.products-info')
-                            </p>
-                        </div>
+{{--                            <p class="text-gray-600 dark:text-white">--}}
+{{--                                @lang('admin::app.leads.edit.products-info')--}}
+{{--                            </p>--}}
+{{--                        </div>--}}
 
-                        <div>
-                            <!-- Product Component -->
-                            @include('admin::leads.common.products')
-                        </div>
-                    </div>
+{{--                        <div>--}}
+{{--                            <!-- Product Component -->--}}
+{{--                            @include('admin::leads.common.products')--}}
+{{--                        </div>--}}
+{{--                    </div>--}}
 
                     {!! view_render_event('admin.leads.edit.contact_person.products.after', ['lead' => $lead]) !!}
                 </div>
-                
+
                 {!! view_render_event('admin.leads.form_controls.after') !!}
             </div>
         </script>
@@ -225,17 +229,17 @@
                 data() {
                     return {
                         activeTab: 'lead-details',
-                        
-                        lead:  @json($lead),  
 
-                        person:  @json($lead->person),  
+                        lead:  @json($lead),
 
-                        products: @json($lead->products),
+                        person:  @json($lead->person),
+
+                        {{--products: @json($lead->products),--}}
 
                         tabs: [
                             { id: 'lead-details', label: '@lang('admin::app.leads.edit.details')' },
                             { id: 'contact-person', label: '@lang('admin::app.leads.edit.contact-person')' },
-                            { id: 'products', label: '@lang('admin::app.leads.edit.products')' }
+                            {{--{ id: 'products', label: '@lang('admin::app.leads.edit.products')' }--}}
                         ],
                     };
                 },
@@ -243,9 +247,9 @@
                 methods: {
                     /**
                      * Scroll to the section.
-                     * 
+                     *
                      * @param {String} tabId
-                     * 
+                     *
                      * @returns {void}
                      */
                     scrollToSection(tabId) {
@@ -266,5 +270,5 @@
                 scroll-behavior: smooth;
             }
         </style>
-    @endPushOnce    
+    @endPushOnce
 </x-admin::layouts>

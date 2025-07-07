@@ -47,6 +47,39 @@
 
             <input type="hidden" id="lead_pipeline_stage_id" name="lead_pipeline_stage_id" value="{{ $lead->lead_pipeline_stage_id }}" />
 
+            <div class="mb-0.5">
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label class="required">
+                        @lang('admin::app.leads.edit.title')
+                    </x-admin::form.control-group.label>
+                    <x-admin::form.control-group.control
+                        type="text"
+                        name="title"
+                        value="{{ old('title', $lead->title) }}"
+                        rules="required"
+                        :label="trans('admin::app.leads.edit.title')"
+                        :placeholder="trans('admin::app.leads.edit.title')"
+                    />
+                    <x-admin::form.control-group.error control-name="title" />
+                </x-admin::form.control-group>
+            </div>
+            <div class="mb-0.5">
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.leads.edit.description')
+                    </x-admin::form.control-group.label>
+                    <x-admin::form.control-group.control
+                        type="textarea"
+                        name="description"
+                        value="{{ old('description', $lead->description) }}"
+                        :label="trans('admin::app.leads.edit.description')"
+                        :placeholder="trans('admin::app.leads.edit.description')"
+                        class="min-h-[80px]"
+                    />
+                    <x-admin::form.control-group.error control-name="description" />
+                </x-admin::form.control-group>
+            </div>
+
             <!-- Lead Edit Component -->
             <v-lead-edit :lead="{{ json_encode($lead) }}">
                 <x-admin::shimmer.leads.datagrid />

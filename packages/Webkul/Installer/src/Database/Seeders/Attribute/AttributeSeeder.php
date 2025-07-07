@@ -7,6 +7,7 @@ use App\Enums\PersonAttributeKeys;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Webkul\Attribute\Models\Attribute;
 
 class AttributeSeeder extends Seeder
 {
@@ -19,7 +20,12 @@ class AttributeSeeder extends Seeder
      */
     public function run($parameters = [])
     {
-        if (DB::table('attributes')->count() > 0) {
+        $numberOfRecords = DB::table('attributes')->count();
+        // Check if attributes already exist to prevent duplicate key errors
+        if ($numberOfRecords > 0 && $numberOfRecords <= 12) {
+            // 12 is strange, but I can't find we is adding them
+            DB::table('attributes')->delete();
+        } elseif (DB::table('attributes')->count() > 12) {
             return;
         }
         $now = Carbon::now();
@@ -40,20 +46,6 @@ class AttributeSeeder extends Seeder
                 'validation' => null,
                 'sort_order' => '1',
                 'is_required' => '1',
-                'is_unique' => '0',
-                'quick_add' => '1',
-                'is_user_defined' => '0',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ], [
-                'code' => 'description',
-                'name' => trans('installer::app.seeders.attributes.leads.description', [], $defaultLocale),
-                'type' => 'textarea',
-                'entity_type' => 'leads',
-                'lookup_type' => null,
-                'validation' => null,
-                'sort_order' => '2',
-                'is_required' => '0',
                 'is_unique' => '0',
                 'quick_add' => '1',
                 'is_user_defined' => '0',

@@ -125,18 +125,19 @@ class LeadObserver
      */
     private function logFixedFieldsActivity(Lead $lead): void
     {
-        $fixedFields = ['first_name', 'last_name', 'maiden_name'];
+        $fixedFields = ['first_name', 'last_name', 'maiden_name', 'description'];
         $fieldLabels = [
-            'first_name' => 'Voornaam',
-            'last_name' => 'Achternaam',
+            'first_name'  => 'Voornaam',
+            'last_name'   => 'Achternaam',
             'maiden_name' => 'Meisjesnaam',
+            'description' => 'omschrijving',
         ];
 
         foreach ($fixedFields as $field) {
             if ($lead->wasChanged($field)) {
                 $oldValue = $lead->getOriginal($field);
                 $newValue = $lead->$field;
-                
+
                 // Skip if both values are empty/null
                 if (empty($oldValue) && empty($newValue)) {
                     continue;
@@ -145,12 +146,12 @@ class LeadObserver
                 $fieldLabel = $fieldLabels[$field];
 
                 $activity = $this->activityRepository->create([
-                    'type' => 'system',
-                    'title' => "$fieldLabel gewijzigd",
-                    'is_done' => 1,
+                    'type'       => 'system',
+                    'title'      => "$fieldLabel gewijzigd",
+                    'is_done'    => 1,
                     'additional' => json_encode([
                         'attribute' => $fieldLabel,
-                        'new' => [
+                        'new'       => [
                             'value' => $newValue ?: '-',
                             'label' => $newValue ?: '-',
                         ],

@@ -2003,6 +2003,7 @@ return [
 
         'create' => [
             'title'          => 'Create Lead',
+            'description'          => 'Description',
             'save-btn'       => 'Save',
             'details'        => 'Details',
             'details-info'   => 'Put The Basic Information of the Lead',
@@ -2014,6 +2015,7 @@ return [
 
         'edit' => [
             'title'          => 'Edit Lead',
+            'description'          => 'Description',
             'save-btn'       => 'Save',
             'details'        => 'Details',
             'details-info'   => 'Put The Basic Information of the Lead',

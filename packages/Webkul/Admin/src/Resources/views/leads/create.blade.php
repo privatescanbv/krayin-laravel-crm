@@ -51,6 +51,23 @@
             <v-lead-create>
                 <x-admin::shimmer.leads.datagrid />
             </v-lead-create>
+
+            <div class="mb-2">
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.leads.create.description')
+                    </x-admin::form.control-group.label>
+                    <x-admin::form.control-group.control
+                        type="textarea"
+                        name="description"
+                        value="{{ old('description') }}"
+                        :label="trans('admin::app.leads.create.description')"
+                        :placeholder="trans('admin::app.leads.create.description')"
+                        class="min-h-[80px]"
+                    />
+                    <x-admin::form.control-group.error control-name="description" />
+                </x-admin::form.control-group>
+            </div>
         </div>
     </x-admin::form>
 
@@ -111,19 +128,38 @@
                             {!! view_render_event('admin.leads.create.details.attributes.before') !!}
 
                             <!-- Lead Details Title and Description -->
-                            <x-admin::attributes
-                                :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                    ['code', 'NOTIN', ['lead_value', 'lead_type_id', 'lead_source_id', 'expected_close_date', 'user_id', 'lead_pipeline_id', 'lead_pipeline_stage_id']],
-                                    'entity_type' => 'leads',
-                                    'quick_add'   => 1
-                                ])"
-                                :custom-validations="[
-                                    'expected_close_date' => [
-                                        'date_format:yyyy-MM-dd',
-                                        'after:' .  \Carbon\Carbon::yesterday()->format('Y-m-d')
-                                    ],
-                                ]"
-                            />
+                            <div class="mb-4">
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label class="required">
+                                        @lang('admin::app.leads.create.title')
+                                    </x-admin::form.control-group.label>
+                                    <x-admin::form.control-group.control
+                                        type="text"
+                                        name="title"
+                                        value="{{ old('title') }}"
+                                        rules="required"
+                                        :label="trans('admin::app.leads.create.title')"
+                                        :placeholder="trans('admin::app.leads.create.title')"
+                                    />
+                                    <x-admin::form.control-group.error control-name="title" />
+                                </x-admin::form.control-group>
+                            </div>
+                            <div class="mb-2">
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label>
+                                        @lang('admin::app.leads.create.description')
+                                    </x-admin::form.control-group.label>
+                                    <x-admin::form.control-group.control
+                                        type="textarea"
+                                        name="description"
+                                        value="{{ old('description') }}"
+                                        :label="trans('admin::app.leads.create.description')"
+                                        :placeholder="trans('admin::app.leads.create.description')"
+                                        class="min-h-[80px]"
+                                    />
+                                    <x-admin::form.control-group.error control-name="description" />
+                                </x-admin::form.control-group>
+                            </div>
 
                             <!-- Lead Details Other input fields -->
                             <div class="flex gap-4 max-sm:flex-wrap">

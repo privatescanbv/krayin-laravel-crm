@@ -41,34 +41,34 @@ class PersonObserver
     private function logFixedFieldsActivity(Person $person): void
     {
         $fixedFields = [
-            'first_name', 
-            'last_name', 
+            'first_name',
+            'last_name',
             'lastname_prefix',
-            'maiden_name', 
+            'maiden_name',
             'maiden_name_prefix',
             'initials',
             'salutation',
             'job_title',
-            'date_of_birth'
+            'date_of_birth',
         ];
-        
+
         $fieldLabels = [
-            'first_name' => 'Voornaam',
-            'last_name' => 'Achternaam',
-            'lastname_prefix' => 'Tussenvoegsel',
-            'maiden_name' => 'Meisjesnaam',
+            'first_name'         => 'Voornaam',
+            'last_name'          => 'Achternaam',
+            'lastname_prefix'    => 'Tussenvoegsel',
+            'maiden_name'        => 'Meisjesnaam',
             'maiden_name_prefix' => 'Meisjesnaam tussenvoegsel',
-            'initials' => 'Initialen',
-            'salutation' => 'Aanhef',
-            'job_title' => 'Functie',
-            'date_of_birth' => 'Geboortedatum',
+            'initials'           => 'Initialen',
+            'salutation'         => 'Aanhef',
+            'job_title'          => 'Functie',
+            'date_of_birth'      => 'Geboortedatum',
         ];
 
         foreach ($fixedFields as $field) {
             if ($person->wasChanged($field)) {
                 $oldValue = $person->getOriginal($field);
                 $newValue = $person->$field;
-                
+
                 // Skip if both values are empty/null
                 if (empty($oldValue) && empty($newValue)) {
                     continue;
@@ -86,12 +86,12 @@ class PersonObserver
                 }
 
                 $activity = $this->activityRepository->create([
-                    'type' => 'system',
-                    'title' => "$fieldLabel gewijzigd",
-                    'is_done' => 1,
+                    'type'       => 'system',
+                    'title'      => "$fieldLabel gewijzigd",
+                    'is_done'    => 1,
                     'additional' => json_encode([
                         'attribute' => $fieldLabel,
-                        'new' => [
+                        'new'       => [
                             'value' => $newValue,
                             'label' => $newValue,
                         ],
@@ -107,4 +107,4 @@ class PersonObserver
             }
         }
     }
-} 
+}

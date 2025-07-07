@@ -11,7 +11,7 @@
                         <a
                             href="{{ route('admin.contacts.persons.edit', $lead->person->id) }}"
                             class="icon-edit rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
-                            target="_blank"
+                            title="Wijzig persoon"
                         ></a>
                     @endif
                 </div>
@@ -30,32 +30,25 @@
                     <div class="flex flex-col gap-1">
                         {!! view_render_event('admin.leads.view.person.name.before', ['lead' => $lead]) !!}
 
-                        <a
-                            href="{{ route('admin.contacts.persons.view', $lead->person->id) }}"
-                            class="font-semibold text-brandColor"
-                            target="_blank"
-                        >
-                            {{ $lead->person->name }}
-                        </a>
-
-                        {!! view_render_event('admin.leads.view.person.name.after', ['lead' => $lead]) !!}
-
-                        {!! view_render_event('admin.leads.view.person.job_title.before', ['lead' => $lead]) !!}
-
-                        @if ($lead->person->job_title)
-                            <span class="dark:text-white">
-                                @if ($lead->person->organization)
-                                    @lang('admin::app.leads.view.persons.job-title', [
-                                        'job_title'    => $lead->person->job_title,
-                                        'organization' => $lead->person->organization->name
-                                    ])
-                                @else
-                                    {{ $lead->person->job_title }}
-                                @endif
-                            </span>
+                        @if (bouncer()->hasPermission('contacts.persons.edit'))
+                            <a
+                                href="{{ route('admin.contacts.persons.edit', $lead->person->id) }}"
+                                class="font-semibold text-brandColor hover:underline"
+                                title="Wijzig persoon"
+                            >
+                                {{ $lead->person->name }}
+                            </a>
+                        @else
+                            <a
+                                href="{{ route('admin.contacts.persons.view', $lead->person->id) }}"
+                                class="font-semibold text-brandColor"
+                                target="_blank"
+                            >
+                                {{ $lead->person->name }}
+                            </a>
                         @endif
 
-                        {!! view_render_event('admin.leads.view.person.job_title.after', ['lead' => $lead]) !!}
+                        {!! view_render_event('admin.leads.view.person.name.after', ['lead' => $lead]) !!}
 
                         {!! view_render_event('admin.leads.view.person.email.before', ['lead' => $lead]) !!}
 

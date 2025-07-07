@@ -39,6 +39,7 @@ class Person extends Model implements PersonContract
     protected $casts = [
         'emails'          => 'array',
         'contact_numbers' => 'array',
+        'date_of_birth'   => 'date',
     ];
 
     /**
@@ -47,13 +48,20 @@ class Person extends Model implements PersonContract
      * @var array
      */
     protected $fillable = [
-        'name',
         'emails',
         'contact_numbers',
         'job_title',
         'user_id',
         'organization_id',
         'unique_id',
+        'salutation',
+        'first_name',
+        'last_name',
+        'lastname_prefix',
+        'maiden_name',
+        'maiden_name_prefix',
+        'initials',
+        'date_of_birth',
     ];
 
     /**
@@ -106,5 +114,29 @@ class Person extends Model implements PersonContract
     protected static function newFactory()
     {
         return PersonFactory::new();
+    }
+
+    /**
+     * Get the full name attribute.
+     *
+     * @return string
+     */
+    public function getNameAttribute($value)
+    {
+        $parts = [];
+        
+        if ($this->first_name) {
+            $parts[] = trim($this->first_name);
+        }
+        
+        if ($this->lastname_prefix) {
+            $parts[] = trim($this->lastname_prefix);
+        }
+        
+        if ($this->last_name) {
+            $parts[] = trim($this->last_name);
+        }
+        
+        return implode(' ', array_filter($parts));
     }
 }

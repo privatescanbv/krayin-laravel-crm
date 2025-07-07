@@ -5,7 +5,7 @@
     </x-slot>
 
     {!! view_render_event('admin.persons.create.form.before') !!}
-    
+
     <!--Create Page Form -->
     <x-admin::form
         :action="route('admin.contacts.persons.store')"
@@ -43,7 +43,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <!-- Form fields -->
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 {!! view_render_event('admin.persons.create.form_controls.before') !!}
@@ -58,8 +58,19 @@
                         ],
                     ]"
                 />
-                
+
                 {!! view_render_event('admin.persons.create.form_controls.after') !!}
+            </div>
+
+            <!-- Personal Fields Section -->
+            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <div class="mb-4">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                        Persoonsgegevens
+                    </h3>
+                </div>
+
+                @include('admin::leads.common.personal-fields', ['entity' => null])
             </div>
 
             <!-- Address Section -->

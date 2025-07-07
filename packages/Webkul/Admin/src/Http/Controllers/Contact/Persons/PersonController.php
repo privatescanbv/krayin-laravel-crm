@@ -2,12 +2,11 @@
 
 namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
-use App\Enums\LeadAttributeKeys;
-use App\Enums\PersonAttributeKeys;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\DataGrids\Contact\PersonDataGrid;
@@ -15,7 +14,6 @@ use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Resources\PersonResource;
-use Webkul\Attribute\Models\AttributeValue;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
@@ -62,10 +60,17 @@ class PersonController extends Controller
      */
     public function store(AttributeForm $request): RedirectResponse|JsonResponse
     {
+        $request->validate([
+            'first_name' => ['required', 'string'],
+            'last_name' => ['required', 'string'],
+        ]);
         Event::dispatch('contacts.person.create.before');
 
         $data = $request->all();
         $data['entity_type'] = 'persons';
+
+        // Debug logging
+        Log::info('Person create request data:', $data);
 
         $person = $this->personRepository->create($data);
 
@@ -106,7 +111,7 @@ class PersonController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(AttributeForm $request, int $id): RedirectResponse|JsonResponse
+    public function update(PersonForm $request, int $id): RedirectResponse|JsonResponse
     {
         Event::dispatch('contacts.person.update.before', $id);
 
@@ -152,56 +157,20 @@ class PersonController extends Controller
      */
     public function searchByLead(Lead $lead): JsonResource
     {
-        $attributeId = $this->attributeRepository->getAttributeByCode(LeadAttributeKeys::FIRSTNAME->value)->id;
-        $leadFirstName = AttributeValue::where('entity_type', 'leads')
-            ->select('text_value')
-            ->where('entity_id', $lead->id)
-            ->where('attribute_id', $attributeId)
-            ->first()?->text_value;
-        $attributeId = $this->attributeRepository->getAttributeByCode(LeadAttributeKeys::LASTNAME->value)->id;
-        $leadLastName = AttributeValue::where('entity_type', 'leads')
-            ->select('text_value')
-            ->where('entity_id', $lead->id)
-            ->where('attribute_id', $attributeId)
-            ->first()?->text_value;
-
         // Query persons met een join op attribute_values
         $query = Person::query()
-            ->select('persons.*')
-            ->join('attribute_values as av_first', function ($join) {
-                $join->on('persons.id', '=', 'av_first.entity_id')
-                    ->where('av_first.entity_type', 'persons')
-                    ->where('av_first.attribute_id', function ($query) {
-                        $query->select('id')
-                            ->from('attributes')
-                            ->where('code', PersonAttributeKeys::FIRST_NAME->value)
-                            ->where('entity_type', 'persons')
-                            ->limit(1);
-                    });
-            })
-            ->join('attribute_values as av_last', function ($join) {
-                $join->on('persons.id', '=', 'av_last.entity_id')
-                    ->where('av_last.entity_type', 'persons')
-                    ->where('av_last.attribute_id', function ($query) {
-                        $query->select('id')
-                            ->from('attributes')
-                            ->where('code', PersonAttributeKeys::LAST_NAME->value)
-                            ->where('entity_type', 'persons')
-                            ->limit(1);
-                    });
-            });
+            ->select('persons.*');
 // Filter op de lead-waarden (exact match, je kunt ook LIKE gebruiken voor fuzzy)
-        if (!empty($leadFirstName)) {
-            $query->where('av_first.text_value', $leadFirstName);
+        if (!empty($lead->first_name)) {
+            $query->where('first_name', $lead->first_name);
         }
-        if (!empty($leadLastName)) {
-            $query->where('av_last.text_value', $leadLastName);
+        if (!empty($lead->last_name)) {
+            $query->where('last_name', $lead->last_name);
         }
-        $sql = $query->toRawSql();
+        Log::info($query->toRawSql());
 
         // Uniek maken
         $persons = $query->distinct()->get();
-
 
         return PersonResource::collection($persons);
     }

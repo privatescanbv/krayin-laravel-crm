@@ -201,9 +201,8 @@
                         // Prepare person data from lead
                         const personData = {
                             entity_type: 'persons',
-                            name: hasName ? `${this.lead.first_name || ''} ${this.lead.last_name || ''}`.trim() : 'Onbekende contact',
-                            person_first_name: this.lead.first_name || '',
-                            person_last_name: this.lead.last_name || '',
+                            first_name: this.lead.first_name || '',
+                            last_name: this.lead.last_name || '',
                             emails: hasEmail ? [{ value: this.lead.email, label: 'Work' }] : [{ value: `${this.lead.first_name || ''}`.trim() + '-reply@example.com', label: 'Work' }],
                             contact_numbers: this.lead.phone ? [{ value: this.lead.phone, label: 'Work' }] : [{ value: '067433444', label: 'Work' }],
                         };

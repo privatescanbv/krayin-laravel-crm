@@ -110,12 +110,12 @@ class Lead extends AbstractEntity
         foreach ($workflow->actions as $action) {
             switch ($action['id']) {
                 case 'update_lead':
-                    Log::warning('workflow start, update_lead');
-                    
+                    Log::info('workflow start, update_lead');
+
                     // Check if the value is actually different from current value
                     $currentValue = $lead->{$action['attribute']};
                     $newValue = $action['value'];
-                    
+
                     if ($currentValue != $newValue) {
                         Log::info('Updating lead attribute', [
                             'lead_id' => $lead->id,
@@ -123,7 +123,7 @@ class Lead extends AbstractEntity
                             'old_value' => $currentValue,
                             'new_value' => $newValue,
                         ]);
-                        
+
                     $lead = $this->leadRepository->update(
                         [
                             'entity_type'        => 'leads',
@@ -231,6 +231,13 @@ class Lead extends AbstractEntity
                         report($e);
                     }
 
+                    break;
+                default:
+                    Log::warning('Unknown action type encountered in workflow', [
+                        'action_id' => $action['id'],
+                        'workflow_id' => $workflow->id,
+                        'lead_id' => $lead->id,
+                    ]);
                     break;
             }
         }

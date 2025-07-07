@@ -16,7 +16,9 @@ class TypeSeeder extends Seeder
      */
     public function run($parameters = [])
     {
-        DB::table('lead_types')->delete();
+        if (DB::table('lead_types')->count() > 0) {
+            return;
+        }
 
         $now = Carbon::now();
 

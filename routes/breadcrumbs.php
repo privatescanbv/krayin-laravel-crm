@@ -107,7 +107,7 @@ Breadcrumbs::for('contacts.persons.edit', function (BreadcrumbTrail $trail, $per
 // Dashboard > Contacts > Persons > View
 Breadcrumbs::for('contacts.persons.view', function (BreadcrumbTrail $trail, $person) {
     $trail->parent('contacts.persons');
-    $trail->push('#'.$person->id, route('admin.contacts.persons.index'));
+    $trail->push('#'.$person->id, route('admin.contacts.persons.view', $person->id));
 });
 
 // Dashboard > Contacts > Organizations

@@ -21,18 +21,22 @@
                     'code'        => 'organization_id'
                 ]);
 
-                $organizationAttribute->code = 'person[' . $organizationAttribute->code . ']';
+                if ($organizationAttribute) {
+                    $organizationAttribute->code = 'person[' . $organizationAttribute->code . ']';
+                }
             @endphp
 
             <x-admin::attributes.edit.lookup />
 
-            <v-lookup-component
-                :key="person.organization?.id"
-                :attribute='@json($organizationAttribute)'
-                :value="person.organization"
-                :is-disabled="person?.id ? true : false"
-                can-add-new="true"
-            ></v-lookup-component>
+            @if($organizationAttribute)
+                <v-lookup-component
+                    :key="person.organization?.id"
+                    :attribute='@json($organizationAttribute)'
+                    :value="person.organization"
+                    :is-disabled="person?.id ? true : false"
+                    can-add-new="true"
+                ></v-lookup-component>
+            @endif
         </x-admin::form.control-group>
     </script>
 

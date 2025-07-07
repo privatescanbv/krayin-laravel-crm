@@ -191,6 +191,27 @@
 
                     {!! view_render_event('admin.leads.create.contact_person.after') !!}
 
+                    {!! view_render_event('admin.leads.create.personal_fields.before') !!}
+
+                    <!-- Personal Fields Section -->
+                    <div
+                        class="flex flex-col gap-4"
+                        id="personal-fields"
+                    >
+                        <div class="flex flex-col gap-1">
+                            <p class="text-base font-semibold dark:text-white">
+                                Persoons gegevens
+                            </p>
+                        </div>
+
+                        <div class="w-1/2 max-md:w-full">
+                            <!-- Personal Fields Component -->
+                            @include('admin::leads.common.personal-fields', ['entity' => null])
+                        </div>
+                    </div>
+
+                    {!! view_render_event('admin.leads.create.personal_fields.after') !!}
+
                     {!! view_render_event('admin.leads.create.address.before') !!}
 
                     <!-- Address Section -->
@@ -243,6 +264,7 @@
                         tabs: [
                             { id: 'lead-details', label: '@lang('admin::app.leads.create.details')' },
                             { id: 'contact-person', label: '@lang('admin::app.leads.create.contact-person')' },
+                            { id: 'personal-fields', label: 'Persoonsgegevens' },
                             { id: 'address', label: 'Adres' },
                             { id: 'products', label: '@lang('admin::app.leads.create.products')' }
                         ],

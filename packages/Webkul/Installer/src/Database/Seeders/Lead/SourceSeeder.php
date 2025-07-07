@@ -16,7 +16,9 @@ class SourceSeeder extends Seeder
      */
     public function run($parameters = [])
     {
-        DB::table('lead_sources')->delete();
+        if (DB::table('lead_sources')->count() > 0) {
+            return;
+        }
 
         $now = Carbon::now();
 

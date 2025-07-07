@@ -1,12 +1,8 @@
 <?php
 
-use App\Enums\LeadAttributeKeys;
-use App\Enums\PersonAttributeKeys;
-use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Webkul\Admin\Http\Controllers\Contact\Persons\PersonController;
-use Webkul\Attribute\Models\AttributeValue;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Models\Person;
@@ -28,8 +24,13 @@ beforeEach(function () {
 });
 
 // Voeg deze helper toe:
-function createLeadWithAttributes(AttributeValueRepository $attributeValueRepository, array $attributes = [])
-{
+function createLeadWithAttributes(
+    AttributeValueRepository $attributeValueRepository,
+    string $firstName = 'John',
+    string $lastName = 'Doe',
+    array $attributes = []
+
+) {
     $pipeline = Pipeline::first();
     $stage = Stage::first();
 
@@ -39,6 +40,8 @@ function createLeadWithAttributes(AttributeValueRepository $attributeValueReposi
 
     $lead = Lead::factory()->create([
         'title'                  => 'Test Lead',
+        'first_name'             => $firstName,
+        'last_name'              => $lastName,
         'lead_pipeline_id'       => $pipeline->id,
         'lead_pipeline_stage_id' => $stage->id,
     ]);
@@ -50,10 +53,17 @@ function createLeadWithAttributes(AttributeValueRepository $attributeValueReposi
     return $lead;
 }
 
-function createPersonWithAttributes(AttributeValueRepository $attributeValueRepository, array $emails, array $attributes = [])
-{
+function createPersonWithAttributes(
+    AttributeValueRepository $attributeValueRepository,
+    string $firstName,
+    string $lastName,
+    array $emails,
+    array $attributes = []
+) {
     $person = Person::factory()->create([
-        'emails' => $emails,
+        'emails'     => $emails,
+        'first_name' => $firstName,
+        'last_name'  => $lastName,
     ]);
     $attributeValueRepository->save(array_merge($attributes, [
         'entity_id'   => $person->id,
@@ -66,9 +76,9 @@ function createPersonWithAttributes(AttributeValueRepository $attributeValueRepo
 test('returns empty collection when no persons exist', function () {
     $lead = createLeadWithAttributes(
         $this->attributeValueRepository,
+        'John',
+        'Doe',
         [
-            LeadAttributeKeys::FIRSTNAME->value => 'John',
-            LeadAttributeKeys::LASTNAME->value  => 'Doe',
             'email'                             => 'john@example.com',
             'phone'                             => '0612345678',
         ]);
@@ -87,57 +97,30 @@ test('finds exact first name match', function () {
 
     $lead = createLeadWithAttributes(
         $this->attributeValueRepository,
+        'John',
+        'Smith',
         [
-            LeadAttributeKeys::FIRSTNAME->value => 'John',
-            LeadAttributeKeys::LASTNAME->value  => 'Smith',
             'email'                             => 'john@example.com',
             'phone'                             => '0612345678',
         ]);
 
-    $attributeId = $this->attributeRepository->getAttributeByCode(LeadAttributeKeys::FIRSTNAME->value)->id;
-    $leadFirstName = AttributeValue::query()
-        ->select('text_value')
-        ->where('entity_type', 'leads')
-        ->where('entity_id', $lead->id)
-        ->where('attribute_id', $attributeId)
-        ->first();
-    $this->assertNotNull($leadFirstName);
+    $this->assertNotNull($lead->first_name);
 
     // Create a person with exact first name match
     $matchingPerson = createPersonWithAttributes($this->attributeValueRepository,
+        'John',
+        'Smith',
         [['value' => 'john.smith@example.com', 'label' => 'work']],
         [
-            PersonAttributeKeys::FIRST_NAME->value => 'John',
-            PersonAttributeKeys::LAST_NAME->value  => 'Smith',
             'contact_numbers'                      => [['value' => '0687654321', 'label' => 'mobile']],
         ]);
 
-    // Check if the person attribute exists, if not create it
-    $personFirstNameAttribute = $this->attributeRepository->getAttributeByCode(PersonAttributeKeys::FIRST_NAME->value);
-    if (! $personFirstNameAttribute) {
-        $personFirstNameAttribute = $this->attributeRepository->create([
-            'code'        => PersonAttributeKeys::FIRST_NAME->value,
-            'name'        => 'First Name',
-            'type'        => 'text',
-            'entity_type' => 'persons',
-        ]);
-    }
-
-    $attributeId = $personFirstNameAttribute->id;
-    $personFirstName = AttributeValue::query()
-        ->select('text_value')
-        ->where('entity_type', 'persons')
-        ->where('entity_id', $matchingPerson->id)
-        ->where('attribute_id', $attributeId)
-        ->first();
-    $this->assertNotNull($personFirstName);
-
     // Create a person with different first name
     $nonMatchingPerson = createPersonWithAttributes($this->attributeValueRepository,
+        'John',
+        'Doe',
         [['value' => 'jane@example.com', 'label' => 'work']],
         [
-            PersonAttributeKeys::FIRST_NAME->value => 'John',
-            PersonAttributeKeys::LAST_NAME->value  => 'Doe',
             'contact_numbers'                      => [['value' => '0612345678', 'label' => 'mobile']],
         ]);
 

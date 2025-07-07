@@ -15,16 +15,16 @@ const usedSlugs = new Set();
  */
 function generateName() {
     const adjectives = [
-        "Cool", "Smart", "Fast", "Sleek", "Innovative", "Shiny", "Bold", 
-        "Elegant", "Epic", "Mystic", "Brilliant", "Luminous", "Radiant", 
-        "Majestic", "Vivid", "Glowing", "Dynamic", "Fearless", "Silent", 
+        "Cool", "Smart", "Fast", "Sleek", "Innovative", "Shiny", "Bold",
+        "Elegant", "Epic", "Mystic", "Brilliant", "Luminous", "Radiant",
+        "Majestic", "Vivid", "Glowing", "Dynamic", "Fearless", "Silent",
         "Electric", "Golden", "Blazing", "Timeless", "Noble", "Eternal"
       ];
-      
+
       const nouns = [
-        "Star", "Vision", "Echo", "Spark", "Horizon", "Nova", "Shadow", 
-        "Wave", "Pulse", "Vortex", "Zenith", "Element", "Flare", "Comet", 
-        "Galaxy", "Ember", "Crystal", "Sky", "Stone", "Blaze", "Eclipse", 
+        "Star", "Vision", "Echo", "Spark", "Horizon", "Nova", "Shadow",
+        "Wave", "Pulse", "Vortex", "Zenith", "Element", "Flare", "Comet",
+        "Galaxy", "Ember", "Crystal", "Sky", "Stone", "Blaze", "Eclipse",
         "Storm", "Orbit", "Phantom", "Mirage"
       ];
 
@@ -383,14 +383,14 @@ async function createOrganization(page) {
     await page.getByRole('textbox', { name: 'City' }).fill('Delhi');
     await page.getByRole('textbox', { name: 'Postcode' }).fill('123456');
 
-    /** 
+    /**
      * Click to add extra details
      */
     await page.locator('div').filter({ hasText: /^Click to add$/ }).nth(2).click();
     await page.getByRole('textbox', { name: 'Search...' }).fill('exampl');
     await page.getByRole('listitem').filter({ hasText: 'Example' }).click();
 
-    /** 
+    /**
      * Click on "Save Organization"
      */
     await page.getByRole('button', { name: 'Save Organization' }).click();
@@ -426,7 +426,6 @@ async function createPerson(page) {
     await page.getByRole('textbox', { name: 'Name *' }).fill(Name);
     await page.getByRole('textbox', { name: 'Emails *' }).fill(email);
     await page.getByRole('textbox', { name: 'Contact Numbers' }).fill(phone);
-    await page.getByRole('textbox', { name: 'Job Title' }).fill(Job);
 
     // Select an organization
     await page.locator('.relative > div > .relative').first().click();
@@ -445,7 +444,7 @@ function getRandomDateTime() {
     const hours = String(Math.floor(Math.random() * 24)).padStart(2, '0');
     const minutes = String(Math.floor(Math.random() * 60)).padStart(2, '0');
     const seconds = String(Math.floor(Math.random() * 60)).padStart(2, '0');
-  
+
     return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
   }
 

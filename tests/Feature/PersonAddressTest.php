@@ -15,11 +15,11 @@ test('test_address_is_saved_when_creating_person', function () {
     $user = User::factory()->create();
 
     $personData = [
-        'name'            => 'Test Person',
-        'emails'          => [['value' => 'test1@example.com', 'label' => 'Work']],
-        'contact_numbers' => [['value' => '111111111', 'label' => 'Mobile']],
-        'entity_type'     => 'persons',
-        'address'         => [
+        'first_name'            => 'Test Person',
+        'emails'                => [['value' => 'test1@example.com', 'label' => 'Work']],
+        'contact_numbers'       => [['value' => '111111111', 'label' => 'Mobile']],
+        'entity_type'           => 'persons',
+        'address'               => [
             'street'              => 'Hoofdstraat',
             'house_number'        => '123',
             'house_number_suffix' => 'A',
@@ -36,8 +36,8 @@ test('test_address_is_saved_when_creating_person', function () {
 
     // Assert
     $this->assertDatabaseHas('persons', [
-        'id'   => $person->id,
-        'name' => 'Test Person',
+        'id'         => $person->id,
+        'first_name' => 'Test Person',
     ]);
 
     $this->assertDatabaseHas('addresses', [
@@ -63,11 +63,11 @@ test('test_address_is_updated_when_updating_person', function () {
     $personRepository = app(PersonRepository::class);
 
     $personData = [
-        'name'            => 'Test Person',
-        'emails'          => [['value' => 'test2@example.com', 'label' => 'Work']],
-        'contact_numbers' => [['value' => '222222222', 'label' => 'Mobile']],
-        'entity_type'     => 'persons',
-        'address'         => [
+        'first_name'            => 'Test Person',
+        'emails'                => [['value' => 'test2@example.com', 'label' => 'Work']],
+        'contact_numbers'       => [['value' => '222222222', 'label' => 'Mobile']],
+        'entity_type'           => 'persons',
+        'address'               => [
             'street'       => 'Oude Straat',
             'house_number' => '456',
             'postal_code'  => '5678 CD',
@@ -79,11 +79,11 @@ test('test_address_is_updated_when_updating_person', function () {
     $person = $personRepository->create($personData);
 
     $updateData = [
-        'name'            => 'Updated Person',
-        'emails'          => [['value' => 'updated2@example.com', 'label' => 'Work']],
-        'contact_numbers' => [['value' => '333333333', 'label' => 'Mobile']],
-        'entity_type'     => 'persons',
-        'address'         => [
+        'first_name'            => 'Updated Person',
+        'emails'                => [['value' => 'updated2@example.com', 'label' => 'Work']],
+        'contact_numbers'       => [['value' => '333333333', 'label' => 'Mobile']],
+        'entity_type'           => 'persons',
+        'address'               => [
             'street'              => 'Nieuwe Straat',
             'house_number'        => '789',
             'house_number_suffix' => 'B',
@@ -99,8 +99,8 @@ test('test_address_is_updated_when_updating_person', function () {
 
     // Assert
     $this->assertDatabaseHas('persons', [
-        'id'   => $person->id,
-        'name' => 'Updated Person',
+        'id'         => $person->id,
+        'first_name' => 'Updated Person',
     ]);
 
     $this->assertDatabaseHas('addresses', [

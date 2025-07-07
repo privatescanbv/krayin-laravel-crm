@@ -11,12 +11,20 @@
         <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <!-- Person Information -->
             <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
-                <!-- Breadcrumbs -->
+                <!-- Breadcrumbs and Edit Button -->
                 <div class="flex items-center justify-between">
                     <x-admin::breadcrumbs
                         name="contacts.persons.view"
                         :entity="$person"
                     />
+
+                    @if (bouncer()->hasPermission('contacts.persons.edit'))
+                        <a
+                            href="{{ route('admin.contacts.persons.edit', $person->id) }}"
+                            class="icon-edit rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                            title="Wijzig persoon"
+                        ></a>
+                    @endif
                 </div>
 
                 {!! view_render_event('admin.contact.persons.view.tags.before', ['person' => $person]) !!}

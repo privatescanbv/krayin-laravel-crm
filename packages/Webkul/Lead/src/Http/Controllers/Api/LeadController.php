@@ -2,6 +2,7 @@
 
 namespace Webkul\Lead\Http\Controllers\Api;
 
+use App\Enums\PipelineDefaultKeys;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
@@ -74,6 +75,9 @@ class LeadController extends Controller
         foreach ($leadData as $key => $value) {
             request()->request->add([$key => $value]);
         }
+        //we need pipeline changes, to trigger n8n. Lead should never be left on this pipeline stage.
+        $request['lead_pipeline_stage_id'] = PipelineDefaultKeys::PIPELINE_TECHNICAL_STAGE_ID->value;
+        $request['lead_pipeline_id'] = PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value;
         [$lead, $leadPipelineId] = $this->leadService->storeLead($request);
 
         return response()->json([

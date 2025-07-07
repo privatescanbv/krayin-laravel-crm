@@ -6,13 +6,13 @@ Dit commando maakt het mogelijk om snel persons aan te maken via de API voor het
 
 ```bash
 # Maak 10 persons aan (standaard)
-php artisan import:persons-from-sugarcrm
+sail artisan import:persons-from-sugarcrm
 
 # Import 100 persons
-php artisan import:persons-from-sugarcrm --limit=100
+sail artisan import:persons-from-sugarcrm --limit=100
 
 # Import alle persons
-php artisan import:persons-from-sugarcrm --limit=10000
+sail artisan import:persons-from-sugarcrm --limit=10000
 
 ```
 

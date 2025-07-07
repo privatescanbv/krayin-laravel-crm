@@ -24,6 +24,7 @@ class Lead extends Model implements LeadContract
     protected $casts = [
         'closed_at'           => 'datetime',
         'expected_close_date' => 'date',
+        'date_of_birth'       => 'date',
     ];
 
     /**
@@ -54,6 +55,14 @@ class Lead extends Model implements LeadContract
         'lead_type_id',
         'lead_pipeline_id',
         'lead_pipeline_stage_id',
+        'salutation',
+        'first_name',
+        'last_name',
+        'lastname_prefix',
+        'maiden_name',
+        'maiden_name_prefix',
+        'initials',
+        'date_of_birth',
     ];
 
     /**

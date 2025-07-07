@@ -17,8 +17,8 @@
                 <div class="flex flex-col gap-2">
                     {!! view_render_event('admin.persons.edit.breadcrumbs.before') !!}
 
-                    <x-admin::breadcrumbs 
-                        name="contacts.persons.edit" 
+                    <x-admin::breadcrumbs
+                        name="contacts.persons.edit"
                         :entity="$person"
                     />
 
@@ -60,8 +60,23 @@
                     ]"
                     :entity="$person"
                 />
-                
+
                 {!! view_render_event('admin.contacts.persons.edit.form_controls.after') !!}
+            </div>
+
+            <!-- Personal Fields Section -->
+            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                {!! view_render_event('admin.contacts.persons.edit.personal_fields.before') !!}
+
+                <div class="mb-4">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                        Persoonsgegevens
+                    </h3>
+                </div>
+
+                @include('admin::leads.common.personal-fields', ['entity' => $person])
+
+                {!! view_render_event('admin.contacts.persons.edit.personal_fields.after') !!}
             </div>
 
             <!-- Address Section -->

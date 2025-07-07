@@ -153,6 +153,11 @@ class ImportPersonsFromSugarCRM extends Command
                 $person = Person::create([
                     'emails'          => [['label' => 'work', 'value' => $record->email ?? '']],
                     'contact_numbers' => [['label' => 'work', 'value' => $record->phone_work ?? '']],
+                    'initials'        => $record->voorletters_c ?? '',
+                    'first_name'      => $record->first_name ?? '',
+                    'last_name'       => $record->last_name ?? '',
+                    'lastname_prefix' => $record->tussenvoegsel_c ?? '',
+                    'maiden_name'     => $record->meisjesnaam_c ?? '',
                     'created_at'      => $record->date_entered ?? now(),
                     'updated_at'      => $record->date_modified ?? now(),
                 ]);
@@ -160,13 +165,8 @@ class ImportPersonsFromSugarCRM extends Command
                     'entity_type' => 'persons',
                     'entity_id'   => $person->id,
                     // Use PersonAttributeKeys enum values for all person attributes:
-                    PersonAttributeKeys::FIRST_NAME->value       => $record->first_name ?? '',
-                    PersonAttributeKeys::LAST_NAME->value        => $record->last_name ?? '',
-                    PersonAttributeKeys::NICKNAME->value         => $record->roepnaam_c ?? '',
-                    PersonAttributeKeys::LAST_NAME_PREFIX->value => '', // Mapping indien beschikbaar
-                    PersonAttributeKeys::MAIDEN_NAME->value      => $record->meisjesnaam_c ?? '',
-                    PersonAttributeKeys::GENDER->value           => $record->gender_c ?? '',
-                    PersonAttributeKeys::INITIALS->value         => $record->voorletters_c ?? '',
+                    //                    PersonAttributeKeys::NICKNAME->value         => $record->roepnaam_c ?? '',
+                    //                    PersonAttributeKeys::GENDER->value           => $record->gender_c ?? '',
                 ]);
                 $imported++;
                 $bar->advance();

@@ -15,7 +15,6 @@ enum PersonAttributeKeys: string
     case BIRTH_DATE = 'person_birth_date';
     case EMAILS = 'emails';
     case CONTACT_NUMBERS = 'person_contact_numbers';
-    case JOB_TITLE = 'person_job_title';
     case USER_ID = 'user_id';
     case ORGANIZATION_ID = 'organization_id';
 
@@ -33,7 +32,6 @@ enum PersonAttributeKeys: string
             self::BIRTH_DATE         => 'Birth Date',
             self::EMAILS             => 'Emails',
             self::CONTACT_NUMBERS    => 'Contact Numbers',
-            self::JOB_TITLE          => 'Job Title',
             self::USER_ID            => 'User ID',
             self::ORGANIZATION_ID    => 'Organization ID',
         };

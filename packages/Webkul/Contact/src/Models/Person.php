@@ -62,6 +62,7 @@ class Person extends Model implements PersonContract
         'maiden_name_prefix',
         'initials',
         'date_of_birth',
+        'gender',
     ];
 
     /**

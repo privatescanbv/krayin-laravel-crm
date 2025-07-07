@@ -156,6 +156,27 @@
 
         <x-admin::form.control-group.error control-name="date_of_birth"/>
     </x-admin::form.control-group>
+
+    <!-- Gender -->
+    <x-admin::form.control-group>
+        <x-admin::form.control-group.label>
+            Geslacht
+        </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.control
+            type="select"
+            name="gender"
+            :value="$entity->gender ?? ''"
+            :label="trans('Geslacht')"
+        >
+            <option value="">Selecteer geslacht</option>
+            <option value="Man" {{ ($entity->gender ?? '') == 'Man' ? 'selected' : '' }}>Man</option>
+            <option value="Vrouw" {{ ($entity->gender ?? '') == 'Vrouw' ? 'selected' : '' }}>Vrouw</option>
+            <option value="Anders" {{ ($entity->gender ?? '') == 'Anders' ? 'selected' : '' }}>Anders</option>
+        </x-admin::form.control-group.control>
+
+        <x-admin::form.control-group.error control-name="gender"/>
+    </x-admin::form.control-group>
 </div>
 
 {!! view_render_event('admin.leads.create.personal_fields.form_controls.after') !!}

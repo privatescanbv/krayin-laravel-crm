@@ -624,24 +624,5 @@ class AttributeSeeder extends Seeder
                 'sort_order' => 2,
             ],
         ]);
-
-//        // Add gender options
-//        DB::table('attribute_options')->insert([
-//            [
-//                'attribute_id' => DB::table('attributes')->where('code', PersonAttributeKeys::GENDER->value)->first()->id,
-//                'name' => 'Man',
-//                'sort_order' => 1,
-//            ],
-//            [
-//                'attribute_id' => DB::table('attributes')->where('code', PersonAttributeKeys::GENDER->value)->first()->id,
-//                'name' => 'Vrouw',
-//                'sort_order' => 2,
-//            ],
-//            [
-//                'attribute_id' => DB::table('attributes')->where('code', PersonAttributeKeys::GENDER->value)->first()->id,
-//                'name' => 'Anders',
-//                'sort_order' => 3,
-//            ],
-//        ]);
     }
 }

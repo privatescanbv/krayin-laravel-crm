@@ -63,6 +63,7 @@ class Lead extends Model implements LeadContract
         'maiden_name_prefix',
         'initials',
         'date_of_birth',
+        'gender',
     ];
 
     /**

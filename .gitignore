@@ -36,3 +36,5 @@ node_modules/
 /playwright/.cache/
 docs/?
 docs/html
+
+/rainloop_data

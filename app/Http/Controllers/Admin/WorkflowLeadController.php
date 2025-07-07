@@ -150,7 +150,7 @@ class WorkflowLeadController extends Controller
 
         $workflowLead = WorkflowLead::findOrFail($id);
 
-        \Log::info('WorkflowLead found: ', [
+        Log::info('WorkflowLead found: ', [
             'id'          => $workflowLead->id,
             'name'        => $workflowLead->name,
             'description' => $workflowLead->description,

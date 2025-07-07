@@ -64,7 +64,10 @@ class PersonController extends Controller
     {
         Event::dispatch('contacts.person.create.before');
 
-        $person = $this->personRepository->create($request->all());
+        $data = $request->all();
+        $data['entity_type'] = 'persons';
+
+        $person = $this->personRepository->create($data);
 
         Event::dispatch('contacts.person.create.after', $person);
 
@@ -107,7 +110,10 @@ class PersonController extends Controller
     {
         Event::dispatch('contacts.person.update.before', $id);
 
-        $person = $this->personRepository->update($request->all(), $id);
+        $data = $request->all();
+        $data['entity_type'] = 'persons';
+
+        $person = $this->personRepository->update($data, $id);
 
         Event::dispatch('contacts.person.update.after', $person);
 
@@ -229,7 +235,7 @@ class PersonController extends Controller
      */
     public function massDestroy(MassDestroyRequest $massDestroyRequest): JsonResponse
     {
-        $persons = $this->personRepository->findWhereIn('id', $massDestroyRequest->input('indices'));
+        $persons = $this->personRepository->findWhereIn('id', $massDestroyRequest->get('indices'));
 
         foreach ($persons as $person) {
             Event::dispatch('contact.person.delete.before', $person);

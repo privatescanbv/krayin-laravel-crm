@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Models\Address;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Repositories\PersonRepository;
@@ -176,6 +177,18 @@ class LeadRepository extends Repository
             }
         }
 
+        // Handle address data for new leads
+        if (isset($data['address']) && !empty($data['address'])) {
+            $addressData = $data['address'];
+            $hasAddressData = !empty(array_filter($addressData));
+            
+            if ($hasAddressData) {
+                Address::create(array_merge($addressData, [
+                    'lead_id' => $lead->id,
+                ]));
+            }
+        }
+
         return $lead;
     }
 
@@ -232,6 +245,28 @@ class LeadRepository extends Repository
         if (empty($data['person_id'])) {
             unset($data['person_id']);
         }
+        
+        // Handle address data
+        if (isset($data['address']) && !empty($data['address'])) {
+            $addressData = $data['address'];
+            $hasAddressData = !empty(array_filter($addressData));
+            
+            if ($hasAddressData) {
+                // Check if lead already has an address
+                $existingAddress = Address::where('lead_id', $id)->first();
+                
+                if ($existingAddress) {
+                    // Update existing address
+                    $existingAddress->update($addressData);
+                } else {
+                    // Create new address
+                    Address::create(array_merge($addressData, [
+                        'lead_id' => $id,
+                    ]));
+                }
+            }
+        }
+        
         $lead = parent::update($data, $id);
 
         /**

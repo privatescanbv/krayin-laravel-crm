@@ -15,6 +15,7 @@ use Webkul\Quote\Models\QuoteProxy;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
 use Database\Factories\LeadFactory;
+use App\Models\Address;
 
 class Lead extends Model implements LeadContract
 {
@@ -151,6 +152,14 @@ class Lead extends Model implements LeadContract
     public function tags()
     {
         return $this->belongsToMany(TagProxy::modelClass(), 'lead_tags');
+    }
+
+    /**
+     * Get the address that belongs to the lead.
+     */
+    public function address()
+    {
+        return $this->hasOne(Address::class);
     }
 
     /**

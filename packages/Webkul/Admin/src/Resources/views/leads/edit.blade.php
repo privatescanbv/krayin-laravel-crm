@@ -192,6 +192,21 @@
 
                     {!! view_render_event('admin.leads.edit.contact_person.after', ['lead' => $lead]) !!}
 
+                    {!! view_render_event('admin.leads.edit.address.before', ['lead' => $lead]) !!}
+
+                    <!-- Address Section -->
+                    <div
+                        class="flex flex-col gap-4"
+                        id="address"
+                    >
+                        <div class="w-1/2 max-md:w-full">
+                            <!-- Address Component -->
+                            @include('admin::leads.common.address')
+                        </div>
+                    </div>
+
+                    {!! view_render_event('admin.leads.edit.address.after', ['lead' => $lead]) !!}
+
                     {!! view_render_event('admin.leads.edit.contact_person.products.before', ['lead' => $lead]) !!}
 
                     <!-- Product Section -->
@@ -239,6 +254,7 @@
                         tabs: [
                             { id: 'lead-details', label: '@lang('admin::app.leads.edit.details')' },
                             { id: 'contact-person', label: '@lang('admin::app.leads.edit.contact-person')' },
+                            { id: 'address', label: 'Adres' },
                             {{--{ id: 'products', label: '@lang('admin::app.leads.edit.products')' }--}}
                         ],
                     };

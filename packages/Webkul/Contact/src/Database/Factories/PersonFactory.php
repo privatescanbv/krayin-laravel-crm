@@ -2,6 +2,7 @@
 
 namespace Webkul\Contact\Database\Factories;
 
+use App\Models\Address;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\Contact\Models\Person;
 
@@ -26,5 +27,15 @@ class PersonFactory extends Factory
             'emails'          => [$this->faker->unique()->safeEmail()],
             'contact_numbers' => [$this->faker->randomNumber(9)],
         ];
+    }
+
+    /**
+     * Indicate that the person should have an address.
+     */
+    public function withAddress(): static
+    {
+        return $this->afterCreating(function (Person $person) {
+            Address::factory()->forPerson($person)->create();
+        });
     }
 }

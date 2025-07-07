@@ -174,7 +174,7 @@
             data() {
                 return {
                     available: {
-                        columns: @json($columns),
+                        columns: {{ Js::from($columns) }},
                     },
 
                     applied: {
@@ -183,7 +183,7 @@
                         }
                     },
 
-                    stages: @json($stages),
+                    stages: {{ Js::from($stages) }},
 
                     stageLeads: {},
 
@@ -281,4 +281,3 @@
         });
     </script>
 @endPushOnce
- 

@@ -2,6 +2,7 @@
 
 namespace Webkul\Contact\Repositories;
 
+use App\Models\Address;
 use Illuminate\Container\Container;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
@@ -73,6 +74,18 @@ class PersonRepository extends Repository
             'entity_id' => $person->id,
         ]));
 
+        // Handle address data for new persons
+        if (isset($data['address']) && !empty($data['address'])) {
+            $addressData = $data['address'];
+            $hasAddressData = !empty(array_filter($addressData));
+            
+            if ($hasAddressData) {
+                Address::create(array_merge($addressData, [
+                    'person_id' => $person->id,
+                ]));
+            }
+        }
+
         return $person;
     }
 
@@ -121,6 +134,27 @@ class PersonRepository extends Repository
         $this->attributeValueRepository->save(array_merge($data, [
             'entity_id' => $person->id,
         ]));
+
+        // Handle address data
+        if (isset($data['address']) && !empty($data['address'])) {
+            $addressData = $data['address'];
+            $hasAddressData = !empty(array_filter($addressData));
+            
+            if ($hasAddressData) {
+                // Check if person already has an address
+                $existingAddress = Address::where('person_id', $id)->first();
+                
+                if ($existingAddress) {
+                    // Update existing address
+                    $existingAddress->update($addressData);
+                } else {
+                    // Create new address
+                    Address::create(array_merge($addressData, [
+                        'person_id' => $id,
+                    ]));
+                }
+            }
+        }
 
         return $person;
     }

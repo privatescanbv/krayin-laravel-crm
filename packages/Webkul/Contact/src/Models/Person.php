@@ -11,6 +11,7 @@ use Webkul\Contact\Contracts\Person as PersonContract;
 use Webkul\Contact\Database\Factories\PersonFactory;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
+use App\Models\Address;
 
 class Person extends Model implements PersonContract
 {
@@ -87,6 +88,14 @@ class Person extends Model implements PersonContract
     public function tags()
     {
         return $this->belongsToMany(TagProxy::modelClass(), 'person_tags');
+    }
+
+    /**
+     * Get the address that belongs to the person.
+     */
+    public function address()
+    {
+        return $this->hasOne(Address::class);
     }
 
     /**

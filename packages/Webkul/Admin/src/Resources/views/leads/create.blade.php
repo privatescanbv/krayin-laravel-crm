@@ -39,11 +39,11 @@
             </div>
 
             @if (request('stage_id'))
-                <input 
-                    type="hidden" 
-                    id="lead_pipeline_stage_id" 
-                    name="lead_pipeline_stage_id" 
-                    value="{{ request('stage_id') }}" 
+                <input
+                    type="hidden"
+                    id="lead_pipeline_stage_id"
+                    name="lead_pipeline_stage_id"
+                    value="{{ request('stage_id') }}"
                 />
             @endif
 
@@ -57,13 +57,13 @@
     {!! view_render_event('admin.leads.create.form.after') !!}
 
     @pushOnce('scripts')
-        <script 
+        <script
             type="text/x-template"
             id="v-lead-create-template"
         >
             <div class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                 {!! view_render_event('admin.leads.edit.form_controls.before') !!}
-                
+
                 <div class="flex w-full gap-2 border-b border-gray-200 dark:border-gray-800">
                     <!-- Tabs -->
                     <template
@@ -93,8 +93,8 @@
                     {!! view_render_event('admin.leads.create.details.before') !!}
 
                     <!-- Details section -->
-                    <div 
-                        class="flex flex-col gap-4" 
+                    <div
+                        class="flex flex-col gap-4"
                         id="lead-details"
                     >
                         <div class="flex flex-col gap-1">
@@ -142,7 +142,7 @@
                                         ]"
                                     />
                                 </div>
-                                    
+
                                 <div class="w-full">
                                     <x-admin::attributes
                                         :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
@@ -169,8 +169,8 @@
                     {!! view_render_event('admin.leads.create.contact_person.before') !!}
 
                     <!-- Contact Person -->
-                    <div 
-                        class="flex flex-col gap-4" 
+                    <div
+                        class="flex flex-col gap-4"
                         id="contact-person"
                     >
                         <div class="flex flex-col gap-1">
@@ -191,9 +191,24 @@
 
                     {!! view_render_event('admin.leads.create.contact_person.after') !!}
 
+                    {!! view_render_event('admin.leads.create.address.before') !!}
+
+                    <!-- Address Section -->
+                    <div
+                        class="flex flex-col gap-4"
+                        id="address"
+                    >
+                        <div class="w-1/2 max-md:w-full">
+                            <!-- Address Component -->
+                            @include('admin::leads.common.address')
+                        </div>
+                    </div>
+
+                    {!! view_render_event('admin.leads.create.address.after') !!}
+
                     <!-- Product Section -->
-                    <div 
-                        class="flex flex-col gap-4" 
+                    <div
+                        class="flex flex-col gap-4"
                         id="products"
                     >
                         <div class="flex flex-col gap-1">
@@ -212,7 +227,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 {!! view_render_event('admin.leads.form_controls.after') !!}
             </div>
         </script>
@@ -228,6 +243,7 @@
                         tabs: [
                             { id: 'lead-details', label: '@lang('admin::app.leads.create.details')' },
                             { id: 'contact-person', label: '@lang('admin::app.leads.create.contact-person')' },
+                            { id: 'address', label: 'Adres' },
                             { id: 'products', label: '@lang('admin::app.leads.create.products')' }
                         ],
                     };
@@ -236,9 +252,9 @@
                 methods: {
                     /**
                      * Scroll to the section.
-                     * 
+                     *
                      * @param {String} tabId
-                     * 
+                     *
                      * @returns {void}
                      */
                     scrollToSection(tabId) {
@@ -259,5 +275,5 @@
                 scroll-behavior: smooth;
             }
         </style>
-    @endPushOnce    
+    @endPushOnce
 </x-admin::layouts>

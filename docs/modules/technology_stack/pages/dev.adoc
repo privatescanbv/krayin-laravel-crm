@@ -3,6 +3,10 @@
 
 Local development:
 
+Database:
+- sail artisan migrate (eerste keer, en met wijzigingen in migraties)
+- sail artisan db:seed (eerste keer, en met wijzigingen in seeders. Letop: overschrijft bestaande data!)
+
 Logs:
 - https://github.com/opcodesio/log-viewer
 - Setup (eenmalig): php artisan log-viewer:publish

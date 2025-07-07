@@ -646,11 +646,13 @@ return [
             'create' => [
                 'title'    => 'Create Person',
                 'save-btn' => 'Save Person',
+                'address'  => 'Address',
             ],
 
             'edit' => [
                 'title'    => 'Edit Person',
                 'save-btn' => 'Save Person',
+                'address'  => 'Address',
             ],
         ],
 

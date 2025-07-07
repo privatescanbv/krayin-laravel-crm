@@ -1,0 +1,114 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use InvalidArgumentException;
+use Webkul\Contact\Models\Person;
+use Webkul\Lead\Models\Lead;
+
+class Address extends Model
+{
+    use HasFactory;
+
+    /**
+     * The validation rules.
+     *
+     * @var array
+     */
+    public static $rules = [
+        'lead_id'             => 'required_without:person_id|nullable|exists:leads,id',
+        'person_id'           => 'required_without:lead_id|nullable|exists:persons,id',
+        'street'              => 'nullable|string|max:255',
+        'house_number'        => 'nullable|string|max:50',
+        'postal_code'         => 'nullable|string|max:20',
+        'house_number_suffix' => 'nullable|string|max:10',
+        'state'               => 'nullable|string|max:255',
+        'city'                => 'nullable|string|max:255',
+        'country'             => 'nullable|string|max:255',
+    ];
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'lead_id',
+        'person_id',
+        'street',
+        'house_number',
+        'postal_code',
+        'house_number_suffix',
+        'state',
+        'city',
+        'country',
+    ];
+
+    /**
+     * Boot the model.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($address) {
+            // Ensure either lead_id or person_id is set
+            if (empty($address->lead_id) && empty($address->person_id)) {
+                throw new InvalidArgumentException('Either lead_id or person_id must be provided');
+            }
+
+            // Ensure not both are set
+            if (! empty($address->lead_id) && ! empty($address->person_id)) {
+                throw new InvalidArgumentException('Cannot set both lead_id and person_id');
+            }
+        });
+    }
+
+    /**
+     * Get the lead that owns the address.
+     */
+    public function lead()
+    {
+        return $this->belongsTo(Lead::class);
+    }
+
+    /**
+     * Get the person that owns the address.
+     */
+    public function person()
+    {
+        return $this->belongsTo(Person::class);
+    }
+
+    /**
+     * Get the full address as a formatted string.
+     */
+    public function getFullAddressAttribute()
+    {
+        $parts = [];
+
+        if ($this->street && $this->house_number) {
+            $houseNumber = $this->house_number;
+            if ($this->house_number_suffix) {
+                $houseNumber .= ' '.$this->house_number_suffix;
+            }
+            $parts[] = $this->street.' '.$houseNumber;
+        }
+
+        if ($this->postal_code && $this->city) {
+            $cityPart = $this->postal_code.' '.$this->city;
+            if ($this->state) {
+                $cityPart .= ', '.$this->state;
+            }
+            $parts[] = $cityPart;
+        }
+
+        if ($this->country) {
+            $parts[] = $this->country;
+        }
+
+        return implode(', ', $parts);
+    }
+}

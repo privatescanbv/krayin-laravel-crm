@@ -3,6 +3,7 @@
 namespace App\DataGrids;
 
 use App\Models\WorkflowLead;
+use Illuminate\Support\Facades\Log;
 use Webkul\DataGrid\DataGrid;
 
 class WorkflowLeadDataGrid extends DataGrid
@@ -22,8 +23,8 @@ class WorkflowLeadDataGrid extends DataGrid
         }
 
         // Debug: Log de query
-        \Log::info('WorkflowLeadDataGrid Query: '.$queryBuilder->toSql());
-        \Log::info('WorkflowLeadDataGrid Bindings: '.json_encode($queryBuilder->getBindings()));
+        Log::info('WorkflowLeadDataGrid Query: '.$queryBuilder->toSql());
+        Log::info('WorkflowLeadDataGrid Bindings: '.json_encode($queryBuilder->getBindings()));
 
         $this->addFilter('id', 'id');
         $this->addFilter('name', 'name');

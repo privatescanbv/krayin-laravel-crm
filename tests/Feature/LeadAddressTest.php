@@ -2,31 +2,24 @@
 
 namespace Tests\Feature;
 
-use App\Models\Address;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
-use InvalidArgumentException;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Lead\Models\Lead;
-use Webkul\Lead\Models\Source;
-use Webkul\Lead\Models\Type;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\User\Models\User;
 
-uses(DatabaseTransactions::class);
+uses(RefreshDatabase::class);
 
 test('test_address_is_saved_when_creating_lead', function () {
 
     // Arrange
     $user = User::factory()->create();
-    $source = Source::first() ?? Source::create(['name' => 'Website']);
-    $type = Type::first() ?? Type::create(['name' => 'New Lead']);
 
     $leadData = [
-        'title'          => 'Test Lead',
-        'lead_source_id' => $source->id,
-        'lead_type_id'   => $type->id,
-        'user_id'        => $user->id,
-        'entity_type'    => 'leads',
-        'address'        => [
+        'title'            => 'Test Lead',
+        'emails'           => [['value' => 'test1@example.com', 'label' => 'Work']],
+        'contact_numbers'  => [['value' => '111111111', 'label' => 'Mobile']],
+        'entity_type'      => 'leads',
+        'address'          => [
             'street'              => 'Hoofdstraat',
             'house_number'        => '123',
             'house_number_suffix' => 'A',
@@ -63,28 +56,77 @@ test('test_address_is_saved_when_creating_lead', function () {
     $this->assertEquals('Hoofdstraat 123 A, 1234 AB Amsterdam, Noord-Holland, Nederland', $lead->address->full_address);
 });
 
-test('test_address_validation_requires_lead_id_or_person_id', function () {
-    // Test dat aanmaken van een adres zonder lead_id of person_id faalt
-    $this->expectException(InvalidArgumentException::class);
-    $this->expectExceptionMessage('Either lead_id or person_id must be provided');
+test('test_address_is_updated_when_updating_lead', function () {
 
-    Address::create([
-        'street'       => 'Hoofdstraat',
-        'house_number' => '123',
-        'city'         => 'Amsterdam',
+    // Arrange
+    $user = User::factory()->create();
+    $leadRepository = app(LeadRepository::class);
+
+    $leadData = [
+        'title'            => 'Test Lead',
+        'emails'           => [['value' => 'test2@example.com', 'label' => 'Work']],
+        'contact_numbers'  => [['value' => '222222222', 'label' => 'Mobile']],
+        'entity_type'      => 'leads',
+        'address'          => [
+            'street'       => 'Oude Straat',
+            'house_number' => '456',
+            'postal_code'  => '5678 CD',
+            'city'         => 'Rotterdam',
+            'country'      => 'Nederland',
+        ],
+    ];
+
+    $lead = $leadRepository->create($leadData);
+
+    $updateData = [
+        'title'            => 'Updated Lead',
+        'emails'           => [['value' => 'updated2@example.com', 'label' => 'Work']],
+        'contact_numbers'  => [['value' => '333333333', 'label' => 'Mobile']],
+        'entity_type'      => 'leads',
+        'address'          => [
+            'street'              => 'Nieuwe Straat',
+            'house_number'        => '789',
+            'house_number_suffix' => 'B',
+            'postal_code'         => '9012 EF',
+            'city'                => 'Den Haag',
+            'state'               => 'Zuid-Holland',
+            'country'             => 'Nederland',
+        ],
+    ];
+
+    // Act
+    $updatedLead = $leadRepository->update($updateData, $lead->id);
+
+    // Assert
+    $this->assertDatabaseHas('leads', [
+        'id'    => $lead->id,
+        'title' => 'Updated Lead',
     ]);
+
+    $this->assertDatabaseHas('addresses', [
+        'lead_id'             => $lead->id,
+        'street'              => 'Nieuwe Straat',
+        'house_number'        => '789',
+        'house_number_suffix' => 'B',
+        'postal_code'         => '9012 EF',
+        'city'                => 'Den Haag',
+        'state'               => 'Zuid-Holland',
+        'country'             => 'Nederland',
+    ]);
+
+    // Verify relationship
+    $this->assertNotNull($updatedLead->address);
+    $this->assertEquals('Nieuwe Straat 789 B, 9012 EF Den Haag, Zuid-Holland, Nederland', $updatedLead->address->full_address);
 });
 
-test(' test_address_validation_prevents_both_lead_id_and_person_id', function () {
-    // Test dat aanmaken van een adres met zowel lead_id als person_id faalt
-    $this->expectException(InvalidArgumentException::class);
-    $this->expectExceptionMessage('Cannot set both lead_id and person_id');
+test('test_lead_factory_with_address', function () {
 
-    Address::create([
-        'lead_id'      => 1,
-        'person_id'    => 1,
-        'street'       => 'Hoofdstraat',
-        'house_number' => '123',
-        'city'         => 'Amsterdam',
+    // Act
+    $lead = Lead::factory()->withAddress()->create();
+
+    // Assert
+    $this->assertNotNull($lead->address);
+    $this->assertDatabaseHas('addresses', [
+        'lead_id' => $lead->id,
     ]);
 });

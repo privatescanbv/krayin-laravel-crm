@@ -2,8 +2,8 @@
 
 use App\Enums\LeadAttributeKeys;
 use App\Enums\PersonAttributeKeys;
-use App\Enums\PipelineDefaultKeys;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Exception;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Webkul\Admin\Http\Controllers\Contact\Persons\PersonController;
 use Webkul\Attribute\Models\AttributeValue;
@@ -12,9 +12,11 @@ use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Pipeline;
+use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Repositories\LeadRepository;
 
-uses(DatabaseTransactions::class);
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->personRepository = app(PersonRepository::class);
@@ -28,10 +30,17 @@ beforeEach(function () {
 // Voeg deze helper toe:
 function createLeadWithAttributes(AttributeValueRepository $attributeValueRepository, array $attributes = [])
 {
+    $pipeline = Pipeline::first();
+    $stage = Stage::first();
+
+    if (! $pipeline || ! $stage) {
+        throw new Exception('Pipeline or Stage not found. Make sure they are created in beforeEach.');
+    }
+
     $lead = Lead::factory()->create([
         'title'                  => 'Test Lead',
-        'lead_pipeline_id'       => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value,
-        'lead_pipeline_stage_id' => 1,
+        'lead_pipeline_id'       => $pipeline->id,
+        'lead_pipeline_stage_id' => $stage->id,
     ]);
     $attributeValueRepository->save(array_merge($attributes, [
         'entity_id'   => $lead->id,
@@ -103,7 +112,18 @@ test('finds exact first name match', function () {
             'contact_numbers'                      => [['value' => '0687654321', 'label' => 'mobile']],
         ]);
 
-    $attributeId = $this->attributeRepository->getAttributeByCode(PersonAttributeKeys::FIRST_NAME->value)->id;
+    // Check if the person attribute exists, if not create it
+    $personFirstNameAttribute = $this->attributeRepository->getAttributeByCode(PersonAttributeKeys::FIRST_NAME->value);
+    if (! $personFirstNameAttribute) {
+        $personFirstNameAttribute = $this->attributeRepository->create([
+            'code'        => PersonAttributeKeys::FIRST_NAME->value,
+            'name'        => 'First Name',
+            'type'        => 'text',
+            'entity_type' => 'persons',
+        ]);
+    }
+
+    $attributeId = $personFirstNameAttribute->id;
     $personFirstName = AttributeValue::query()
         ->select('text_value')
         ->where('entity_type', 'persons')

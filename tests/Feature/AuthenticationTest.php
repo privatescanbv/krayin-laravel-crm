@@ -1,12 +1,41 @@
 <?php
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Webkul\User\Models\Role;
+use Webkul\User\Models\User;
+
+uses(RefreshDatabase::class);
+
+beforeEach(function () {
+
+    $this->adminUserEmail = 'admin_authtest@example.com';
+    if (! User::query()->where('email', $this->adminUserEmail)->exists()) {
+
+        $role = Role::factory()->create([
+            'name'            => 'Admin',
+            'description'     => 'Administrator role',
+            'permission_type' => 'all',
+            'permissions'     => null,
+        ]);
+
+        // Zorg dat er een default admin user bestaat voor elke test
+        User::factory()->create([
+            'email'           => $this->adminUserEmail,
+            'name'            => 'Admin',
+            'status'          => 1,
+            'role_id'         => $role->id,
+            'view_permission' => 'global',
+        ]);
+    }
+});
+
 it('can see the admin login page', function () {
     test()->get(route('admin.session.create'))
         ->assertOK();
 });
 
 it('can see the dashboard page after login', function () {
-    $admin = getDefaultAdmin();
+    $admin = User::where('email', $this->adminUserEmail)->first();
 
     test()->actingAs($admin)
         ->get(route('admin.dashboard.index'))
@@ -16,7 +45,7 @@ it('can see the dashboard page after login', function () {
 });
 
 it('can logout from the admin panel', function () {
-    $admin = getDefaultAdmin();
+    $admin = User::where('email', $this->adminUserEmail)->first();
 
     test()->actingAs($admin)
         ->delete(route('admin.session.destroy'), [

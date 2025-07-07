@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\User\Models\User;
 
-uses(DatabaseTransactions::class);
+uses(RefreshDatabase::class);
 
 test('test_address_is_saved_when_creating_person', function () {
 

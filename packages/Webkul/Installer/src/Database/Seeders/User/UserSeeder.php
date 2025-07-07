@@ -4,8 +4,8 @@ namespace Webkul\Installer\Database\Seeders\User;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Webkul\User\Models\Group;
+use Webkul\User\Models\User;
 
 class UserSeeder extends Seeder
 {
@@ -110,23 +110,32 @@ class UserSeeder extends Seeder
             $groupId = $userData['group_id'];
             unset($userData['group_id']); // Remove group_id from user data
 
-            $userId = DB::table('users')->insertGetId([
-                'name'            => $userData['name'],
-                'email'           => $userData['email'],
-                'password'        => bcrypt($userData['password']),
-                'created_at'      => date('Y-m-d H:i:s'),
-                'updated_at'      => date('Y-m-d H:i:s'),
-                'status'          => $userData['status'],
-                'role_id'         => $userData['role_id'],
-                'view_permission' => $userData['view_permission'],
-            ]);
+            // Use updateOrCreate to prevent duplicate key errors during parallel testing
+            $user = User::updateOrCreate(
+                ['email' => $userData['email']],
+                [
+                    'name'            => $userData['name'],
+                    'password'        => bcrypt($userData['password']),
+                    'created_at'      => date('Y-m-d H:i:s'),
+                    'updated_at'      => date('Y-m-d H:i:s'),
+                    'status'          => $userData['status'],
+                    'role_id'         => $userData['role_id'],
+                    'view_permission' => $userData['view_permission'],
+                ]
+            );
 
             // Assign user to group if specified
             if ($groupId) {
-                DB::table('user_groups')->insert([
-                    'user_id'  => $userId,
-                    'group_id' => $groupId,
-                ]);
+                DB::table('user_groups')->updateOrInsert(
+                    [
+                        'user_id'  => $user->id,
+                        'group_id' => $groupId,
+                    ],
+                    [
+                        'user_id'  => $user->id,
+                        'group_id' => $groupId,
+                    ]
+                );
             }
         }
     }

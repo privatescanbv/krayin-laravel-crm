@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
+use App\Models\Address;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Source;
@@ -52,6 +53,16 @@ class LeadFactory extends Factory
             'lead_pipeline_id'       => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value,
             'lead_pipeline_stage_id' => PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_PRIVATESCAN_ID->value,
         ];
+    }
+
+    /**
+     * Indicate that the lead should have an address.
+     */
+    public function withAddress(): static
+    {
+        return $this->afterCreating(function (Lead $lead) {
+            Address::factory()->forLead($lead)->create();
+        });
     }
 
     /**

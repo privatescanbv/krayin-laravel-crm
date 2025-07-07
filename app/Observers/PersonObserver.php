@@ -1,0 +1,110 @@
+<?php
+
+namespace App\Observers;
+
+use Illuminate\Support\Facades\Log;
+use Webkul\Activity\Repositories\ActivityRepository;
+use Webkul\Contact\Models\Person;
+
+class PersonObserver
+{
+    /**
+     * Create a new observer instance.
+     */
+    public function __construct(
+        protected ActivityRepository $activityRepository
+    ) {}
+
+    /**
+     * Handle the Person "created" event.
+     */
+    public function created(Person $person): void
+    {
+        Log::info('CREATE person', [
+            'person_id' => $person->id,
+            'name'      => $person->name,
+        ]);
+    }
+
+    /**
+     * Handle the Person "updated" event.
+     */
+    public function updated(Person $person): void
+    {
+        // Log activities for fixed fields
+        $this->logFixedFieldsActivity($person);
+    }
+
+    /**
+     * Log activities for fixed fields (first_name, last_name, maiden_name, etc.)
+     */
+    private function logFixedFieldsActivity(Person $person): void
+    {
+        $fixedFields = [
+            'first_name', 
+            'last_name', 
+            'lastname_prefix',
+            'maiden_name', 
+            'maiden_name_prefix',
+            'initials',
+            'salutation',
+            'job_title',
+            'date_of_birth'
+        ];
+        
+        $fieldLabels = [
+            'first_name' => 'Voornaam',
+            'last_name' => 'Achternaam',
+            'lastname_prefix' => 'Tussenvoegsel',
+            'maiden_name' => 'Meisjesnaam',
+            'maiden_name_prefix' => 'Meisjesnaam tussenvoegsel',
+            'initials' => 'Initialen',
+            'salutation' => 'Aanhef',
+            'job_title' => 'Functie',
+            'date_of_birth' => 'Geboortedatum',
+        ];
+
+        foreach ($fixedFields as $field) {
+            if ($person->wasChanged($field)) {
+                $oldValue = $person->getOriginal($field);
+                $newValue = $person->$field;
+                
+                // Skip if both values are empty/null
+                if (empty($oldValue) && empty($newValue)) {
+                    continue;
+                }
+
+                $fieldLabel = $fieldLabels[$field];
+
+                // Format date values for display
+                if ($field === 'date_of_birth') {
+                    $oldValue = $oldValue ? $oldValue->format('d-m-Y') : '-';
+                    $newValue = $newValue ? $newValue->format('d-m-Y') : '-';
+                } else {
+                    $oldValue = $oldValue ?: '-';
+                    $newValue = $newValue ?: '-';
+                }
+
+                $activity = $this->activityRepository->create([
+                    'type' => 'system',
+                    'title' => "$fieldLabel gewijzigd",
+                    'is_done' => 1,
+                    'additional' => json_encode([
+                        'attribute' => $fieldLabel,
+                        'new' => [
+                            'value' => $newValue,
+                            'label' => $newValue,
+                        ],
+                        'old' => [
+                            'value' => $oldValue,
+                            'label' => $oldValue,
+                        ],
+                    ]),
+                    'user_id' => auth()->id() ?? 1,
+                ]);
+
+                $person->activities()->attach($activity->id);
+            }
+        }
+    }
+} 

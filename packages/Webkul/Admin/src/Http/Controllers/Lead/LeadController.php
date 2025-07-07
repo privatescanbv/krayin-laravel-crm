@@ -160,7 +160,7 @@ class LeadController extends Controller
 
         session()->flash('success', trans('admin::app.leads.create-success'));
 
-        return redirect()->route('admin.leads.index', $leadPipelineId);
+        return redirect()->route('admin.leads.index', ['pipeline_id' => $leadPipelineId]);
     }
 
     public function storeLead(LeadForm $request): array
@@ -168,6 +168,11 @@ class LeadController extends Controller
         Event::dispatch('lead.create.before');
 
         $data = $request->all();
+
+        // Handle empty date fields
+        if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
+            $data['date_of_birth'] = null;
+        }
 
         $data['status'] = 1;
 
@@ -234,6 +239,11 @@ class LeadController extends Controller
 
         $data = $request->all();
 
+        // Handle empty date fields
+        if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
+            $data['date_of_birth'] = null;
+        }
+
         if (isset($data['lead_pipeline_stage_id'])) {
             $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
 
@@ -263,7 +273,7 @@ class LeadController extends Controller
         if (request()->has('closed_at')) {
             return redirect()->back();
         } else {
-            return redirect()->route('admin.leads.index', $data['lead_pipeline_id']);
+            return redirect()->route('admin.leads.index', ['pipeline_id' => $data['lead_pipeline_id']]);
         }
     }
 

@@ -150,7 +150,7 @@
         <x-admin::form.control-group.control
             type="date"
             name="date_of_birth"
-            :value="$entity->date_of_birth ?? ''"
+            :value="$entity->date_of_birth ? $entity->date_of_birth->format('Y-m-d') : ''"
             :label="trans('Geboortedatum')"
         />
 

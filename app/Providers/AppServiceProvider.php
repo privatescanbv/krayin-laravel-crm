@@ -4,8 +4,10 @@ namespace App\Providers;
 
 use App\Observers\AttributeValueObserver;
 use App\Observers\LeadObserver;
+use App\Observers\PersonObserver;
 use Illuminate\Support\ServiceProvider;
 use Webkul\Attribute\Models\AttributeValue;
+use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Lead::observe(LeadObserver::class);
+        Person::observe(PersonObserver::class);
         AttributeValue::observe(AttributeValueObserver::class);
     }
 }

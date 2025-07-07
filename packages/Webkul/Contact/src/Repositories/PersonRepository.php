@@ -209,7 +209,14 @@ class PersonRepository extends Repository
         if (isset($data['contact_numbers'])) {
             $data['contact_numbers'] = collect($data['contact_numbers'])->filter(fn ($number) => ! is_null($number['value']))->toArray();
 
-            $data['unique_id'] .= '|'.$data['contact_numbers'][0]['value'];
+            if (!empty($data['contact_numbers'])) {
+                $data['unique_id'] .= '|'.$data['contact_numbers'][0]['value'];
+            }
+        }
+
+        // If unique_id is empty after generation, set it to null to avoid duplicate key errors
+        if (empty($data['unique_id'])) {
+            $data['unique_id'] = null;
         }
 
         return $data;

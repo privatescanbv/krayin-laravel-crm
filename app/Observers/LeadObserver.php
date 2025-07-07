@@ -7,6 +7,7 @@ use App\Enums\WebhookType;
 use App\Services\WebhookService;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Attribute\Models\Attribute;
 use Webkul\Attribute\Models\AttributeValue;
 use Webkul\Lead\Models\Lead;
@@ -21,7 +22,8 @@ class LeadObserver
      * Create a new observer instance.
      */
     public function __construct(
-        protected WebhookService $webhookService
+        protected WebhookService $webhookService,
+        protected ActivityRepository $activityRepository
     ) {}
 
     /**
@@ -80,6 +82,9 @@ class LeadObserver
             // 'stack_trace' => (new \Exception())->getTraceAsString(),
             $this->sendWebhook($lead, 'LeadObserver@updated');
         }
+
+        // Log activities for fixed fields
+        $this->logFixedFieldsActivity($lead);
     }
 
     private function sendWebhook(Lead $lead, string $caller): void
@@ -113,5 +118,52 @@ class LeadObserver
             ->where('attribute_values.attribute_id', $departmentAttribute->id)
             ->join('attribute_options', 'attribute_values.integer_value', '=', 'attribute_options.id')
             ->first()?->name;
+    }
+
+    /**
+     * Log activities for fixed fields (first_name, last_name, maiden_name)
+     */
+    private function logFixedFieldsActivity(Lead $lead): void
+    {
+        $fixedFields = ['first_name', 'last_name', 'maiden_name'];
+        $fieldLabels = [
+            'first_name' => 'Voornaam',
+            'last_name' => 'Achternaam',
+            'maiden_name' => 'Meisjesnaam',
+        ];
+
+        foreach ($fixedFields as $field) {
+            if ($lead->wasChanged($field)) {
+                $oldValue = $lead->getOriginal($field);
+                $newValue = $lead->$field;
+                
+                // Skip if both values are empty/null
+                if (empty($oldValue) && empty($newValue)) {
+                    continue;
+                }
+
+                $fieldLabel = $fieldLabels[$field];
+
+                $activity = $this->activityRepository->create([
+                    'type' => 'system',
+                    'title' => "$fieldLabel gewijzigd",
+                    'is_done' => 1,
+                    'additional' => json_encode([
+                        'attribute' => $fieldLabel,
+                        'new' => [
+                            'value' => $newValue ?: '-',
+                            'label' => $newValue ?: '-',
+                        ],
+                        'old' => [
+                            'value' => $oldValue ?: '-',
+                            'label' => $oldValue ?: '-',
+                        ],
+                    ]),
+                    'user_id' => auth()->id() ?? 1,
+                ]);
+
+                $lead->activities()->attach($activity->id);
+            }
+        }
     }
 }

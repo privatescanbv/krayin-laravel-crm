@@ -69,6 +69,16 @@ class PersonController extends Controller
         $data = $request->all();
         $data['entity_type'] = 'persons';
 
+        // Handle empty date fields
+        if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
+            $data['date_of_birth'] = null;
+        }
+
+        // Handle empty unique_id field - convert empty string to null to avoid duplicate key errors
+        if (isset($data['unique_id']) && empty($data['unique_id'])) {
+            $data['unique_id'] = null;
+        }
+
         // Debug logging
         Log::info('Person create request data:', $data);
 
@@ -111,12 +121,32 @@ class PersonController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(PersonForm $request, int $id): RedirectResponse|JsonResponse
+    public function update(AttributeForm $request, int $id): RedirectResponse|JsonResponse
     {
+        $request->validate([
+            'first_name' => ['required', 'string'],
+            'last_name' => ['required', 'string'],
+        ]);
         Event::dispatch('contacts.person.update.before', $id);
 
         $data = $request->all();
         $data['entity_type'] = 'persons';
+
+        // Debug: Log the incoming data
+        Log::info('Person update request data:', $data);
+
+        // Handle empty date fields
+        if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
+            $data['date_of_birth'] = null;
+        }
+
+        // Handle empty unique_id field - convert empty string to null to avoid duplicate key errors
+        if (isset($data['unique_id']) && empty($data['unique_id'])) {
+            $data['unique_id'] = null;
+        }
+
+        // Debug: Log the processed data
+        Log::info('Person update processed data:', $data);
 
         $person = $this->personRepository->update($data, $id);
 

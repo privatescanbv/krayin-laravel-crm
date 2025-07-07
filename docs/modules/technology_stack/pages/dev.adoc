@@ -47,3 +47,16 @@ Verwijderen alle bestaande workflows voordat je opnieuw gaat synchroniseren. Je 
 mysql -u <DB_MYSQLDB_USER> -p'<DB_MYSQLDB_PASSWORD>' -h 127.0.0.1 -P 3307 <DB_MYSQLDB_DATABASE>
 delete from workflow_entity;
 delete from shared_workflow;
+
+
+
+=== Mail server lokaal opzetten
+
+zie mailserver in docker-compose.yml.
+
+1. User aanmaken in de mailserver:
+   - docker run --rm -v "$(pwd)/docker/config":/tmp/docker-mailserver \
+mailserver/docker-mailserver setup email add user1@test.local test1234
+2. rainbow config aanpassen (na opstarten):
+    - http://localhost:8888/?admin
+

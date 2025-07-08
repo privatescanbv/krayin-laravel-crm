@@ -25,7 +25,17 @@ gemaakte keuzes:
 - pipeline leads: Ik stel voor om er een voor hernia en private scan te maken, ondanks dat ze dezelfde statussen hebben.
 
 
-windows
-~
-chmod -R 775 storage bootstrap/cache
-docker compose up
+Windows notes:
+- start WSL op
+- ga naar /mnt/c/Users/markk/workspace/krayin-laravel-crm
+- start laravel: ./vendor/bin/sail up -d
+- migraties uitvoeren: ./vendor/bin/sail artisan migrate
+- seed uitvoeren (niet altijd, kan ook data kapot maken): ./vendor/bin/sail artisan db:seed
+
+eenmalig
+- sail artisan vendor:publish --tag=log-viewer-assets --force
+- 
+- windows
+  ~
+  chmod -R 775 storage bootstrap/cache
+  docker compose up

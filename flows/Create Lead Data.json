@@ -7,7 +7,7 @@
         "url": "http://crm/api/leads/",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\n  \"first_name\": \"Mark\",\n  \"last_name\": \"Bulthuis\",\n  \"email\": \"mark@example.com\",\n  \"phone\": \"0612345678\",\n  \"company_name\": \"MB Software\",\n  \"title\": \"lead tel (privatescan)\",\n  \"lead_pipeline_id\":1,\n  \"lead_source_id\": 1,\n  \"lead_pipeline_stage_id\": 1,\n  \"tags\": [\"crm\", \"n8n\"]\n}\n",
+        "jsonBody": "{\n  \"first_name\": \"Mark\",\n  \"last_name\": \"Bulthuis\",\n  \"email\": \"mark@example.com\",\n  \"phone\": \"0612345678\",\n  \"company_name\": \"MB Software\",\n  \"title\": \"lead tel (privatescan)\",\n  \"lead_source_id\": 1,\n  \"tags\": [\"crm\", \"n8n\"]\n}\n",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
@@ -53,7 +53,7 @@
     "errorWorkflow": "b8PHf3zTNTQZsSzB",
     "timezone": "Europe/Paris"
   },
-  "versionId": "59a29bc6-07ba-4a2f-b0cd-dfa0227a21a9",
+  "versionId": "2cc590d9-c1a1-4a70-9969-935577957fd0",
   "meta": {
     "instanceId": "04a589aba7becd1dde047957b525fc8163605bfcbd5c7304b882c2d0f7b90473"
   },

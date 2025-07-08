@@ -14,16 +14,23 @@ return new class extends Migration
     public function up()
     {
         Schema::table('leads', function (Blueprint $table) {
-            $table->integer('user_id')->unsigned()->nullable()->change();
-            $table->integer('person_id')->unsigned()->nullable()->change();
-            $table->integer('lead_source_id')->unsigned()->nullable()->change();
-            $table->integer('lead_type_id')->unsigned()->nullable()->change();
-
+            // Eerst alle foreign keys verwijderen
             $table->dropForeign(['user_id']);
             $table->dropForeign(['person_id']);
             $table->dropForeign(['lead_source_id']);
             $table->dropForeign(['lead_type_id']);
+        });
 
+        Schema::table('leads', function (Blueprint $table) {
+            // Dan de kolommen wijzigen
+            $table->integer('user_id')->unsigned()->nullable()->change();
+            $table->integer('person_id')->unsigned()->nullable()->change();
+            $table->integer('lead_source_id')->unsigned()->nullable()->change();
+            $table->integer('lead_type_id')->unsigned()->nullable()->change();
+        });
+
+        Schema::table('leads', function (Blueprint $table) {
+            // Tenslotte de foreign keys opnieuw toevoegen
             $table->foreign('user_id')
                 ->references('id')->on('users')
                 ->onDelete('set null');
@@ -50,16 +57,23 @@ return new class extends Migration
     public function down()
     {
         Schema::table('leads', function (Blueprint $table) {
+            // Eerst alle foreign keys verwijderen
             $table->dropForeign(['user_id']);
             $table->dropForeign(['person_id']);
             $table->dropForeign(['lead_source_id']);
             $table->dropForeign(['lead_type_id']);
+        });
 
+        Schema::table('leads', function (Blueprint $table) {
+            // Dan de kolommen wijzigen
             $table->integer('user_id')->unsigned()->nullable()->change();
             $table->integer('person_id')->unsigned()->nullable(false)->change();
             $table->integer('lead_source_id')->unsigned()->nullable(false)->change();
             $table->integer('lead_type_id')->unsigned()->nullable(false)->change();
+        });
 
+        Schema::table('leads', function (Blueprint $table) {
+            // Tenslotte de foreign keys opnieuw toevoegen
             $table->foreign('user_id')
                 ->references('id')->on('users')
                 ->onDelete('cascade');

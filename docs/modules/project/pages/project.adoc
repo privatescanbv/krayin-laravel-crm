@@ -72,6 +72,40 @@ Vaak zetten we er ook een flexibele schil naast, die vaak niet aanwezig zijn met
 |wout@privatescan.nl
 |===
 
-=== Afspraken
+=== Milestones en acceptatie criteria
+
+==== LEAD
+
+[ ] *Lead en contactpersoon entiteiten zijn compleet gedefinieerd*
+
+* Alle relevante velden zijn aanwezig conform datamodel
+* Validatie op verplichte velden is correct geïmplementeerd
+* Contactpersoon is te koppelen of aan te maken vanuit de lead
+
+[ ] *Workflow voor lead-proces is ingericht tot en met orderbevestiging*
+
+* Workflow bevat alle benodigde statussen: van binnenkomst tot orderbevestiging
+* Activiteiten worden automatisch of handmatig aangemaakt op relevante momenten
+
+[ ] *Ontwerp van CRM-schermen is definitief (template opbouw / look en feel)*
+
+* Alle schermen voor leadbeheer, contactpersonen, en anamnese zijn visueel en functioneel uitgewerkt
+* Navigatie, veldopbouw en acties zijn afgestemd met stakeholders
+* Ontwerp is goedgekeurd en als referentie vastgelegd voor ontwikkeling
+
+[ ] *Test * Migratie van bestaande leads en contactpersonen is uitgevoerd*
+
+* Filters bepalen voor over te nemen records (volgens vastgestelde filters)
+* Gegevens zijn gemapt naar het nieuwe datamodel zonder dataverlies
+* Resultaten zijn steekproefsgewijs gecontroleerd
+
+[ ] *Anamnese wordt automatisch aangemaakt bij elke nieuwe lead*
+
+* Nieuwe leads krijgen een nieuw anamnese-record op moment van conversie / koppeling met contactpersoon
+* Anamnese is via het CRM-interface bewerkbaar
+* Anamnese hoeft inhoudelijk nog niet compleet te zijn
+* Anamnese moet in te zien zijn via lead en contactpersoon
+
+==== LEAD ORDER
 
 === Glossarium

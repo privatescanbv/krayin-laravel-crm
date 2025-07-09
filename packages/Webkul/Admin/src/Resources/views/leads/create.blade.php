@@ -1,3 +1,4 @@
+@php use App\Models\Department;use Webkul\Lead\Models\Channel;use Webkul\Lead\Models\Source; @endphp
 <x-admin::layouts>
     <x-slot:title>
         @lang('admin::app.leads.create.title')
@@ -8,9 +9,10 @@
     <!-- Create Lead Form -->
     <x-admin::form :action="route('admin.leads.store')">
         <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div
+                class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
-                    <x-admin::breadcrumbs name="leads.create" />
+                    <x-admin::breadcrumbs name="leads.create"/>
 
                     <div class="text-xl font-bold dark:text-white">
                         @lang('admin::app.leads.create.title')
@@ -49,25 +51,9 @@
 
             <!-- Lead Create Component -->
             <v-lead-create>
-                <x-admin::shimmer.leads.datagrid />
+                <x-admin::shimmer.leads.datagrid/>
             </v-lead-create>
 
-            <div class="mb-2">
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        @lang('admin::app.leads.create.description')
-                    </x-admin::form.control-group.label>
-                    <x-admin::form.control-group.control
-                        type="textarea"
-                        name="description"
-                        value="{{ old('description') }}"
-                        :label="trans('admin::app.leads.create.description')"
-                        :placeholder="trans('admin::app.leads.create.description')"
-                        class="min-h-[80px]"
-                    />
-                    <x-admin::form.control-group.error control-name="description" />
-                </x-admin::form.control-group>
-            </div>
         </div>
     </x-admin::form>
 
@@ -78,7 +64,8 @@
             type="text/x-template"
             id="v-lead-create-template"
         >
-            <div class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+            <div
+                class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                 {!! view_render_event('admin.leads.edit.form_controls.before') !!}
 
                 <div class="flex w-full gap-2 border-b border-gray-200 dark:border-gray-800">
@@ -141,7 +128,7 @@
                                         :label="trans('admin::app.leads.create.title')"
                                         :placeholder="trans('admin::app.leads.create.title')"
                                     />
-                                    <x-admin::form.control-group.error control-name="title" />
+                                    <x-admin::form.control-group.error control-name="title"/>
                                 </x-admin::form.control-group>
                             </div>
                             <div class="mb-2">
@@ -157,9 +144,86 @@
                                         :placeholder="trans('admin::app.leads.create.description')"
                                         class="min-h-[80px]"
                                     />
-                                    <x-admin::form.control-group.error control-name="description" />
+                                    <x-admin::form.control-group.error control-name="description"/>
                                 </x-admin::form.control-group>
                             </div>
+
+
+                            <!-- LEAD CHANNEL DROPDOWN -->
+                            <div class="mb-0.5">
+                                @php
+                                    $channelOptions = Channel::query()->pluck('name', 'id')->toArray();
+                                    $sourceOptions = Source::query()->pluck('name', 'id')->toArray();
+                                    $departmentOptions = Department::query()->pluck('name', 'id')->toArray();
+                                @endphp
+                                    <!-- KANAAL EN BRON NAAST ELKAAR -->
+                                <div class="flex gap-4 mb-0.5">
+                                    <div class="flex-1">
+                                        <x-admin::form.control-group>
+                                            <x-admin::form.control-group.label>
+                                                Kanaal
+                                            </x-admin::form.control-group.label>
+                                            <x-admin::form.control-group.control
+                                                type="select"
+                                                name="lead_channel_id"
+                                                value="{{ old('lead_channel_id', $lead->lead_channel_id ?? '') }}"
+                                                :label="'Kanaal'"
+                                            >
+                                                <option value="">-- Kies kanaal --</option>
+                                                @foreach ($channelOptions as $id => $name)
+                                                    <option
+                                                        value="{{ $id }}" {{ (old('lead_channel_id', $lead->lead_channel_id ?? '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                                                @endforeach
+                                            </x-admin::form.control-group.control>
+                                            <x-admin::form.control-group.error control-name="lead_channel_id"/>
+                                        </x-admin::form.control-group>
+                                    </div>
+                                    <div class="flex-1">
+                                        <x-admin::form.control-group>
+                                            <x-admin::form.control-group.label>
+                                                Bron
+                                            </x-admin::form.control-group.label>
+                                            <x-admin::form.control-group.control
+                                                type="select"
+                                                name="lead_source_id"
+                                                value="{{ old('lead_source_id', $lead->lead_source_id ?? '') }}"
+                                                :label="'Bron'"
+                                            >
+                                                <option value="">-- Kies bron --</option>
+                                                @foreach ($sourceOptions as $id => $name)
+                                                    <option
+                                                        value="{{ $id }}" {{ (old('lead_source_id', $lead->lead_source_id ?? '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                                                @endforeach
+                                            </x-admin::form.control-group.control>
+                                            <x-admin::form.control-group.error control-name="lead_source_id"/>
+                                        </x-admin::form.control-group>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- DEPARTMENT DROPDOWN -->
+                            <div class="mb-0.5">
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label class="required">
+                                        Afdeling
+                                    </x-admin::form.control-group.label>
+                                    <x-admin::form.control-group.control
+                                        type="select"
+                                        name="department_id"
+                                        value="{{ old('department_id', $lead->department_id ?? '') }}"
+                                        rules="required"
+                                        :label="'Afdeling'"
+                                    >
+                                        <option value="">-- Kies afdeling --</option>
+                                        @foreach ($departmentOptions as $id => $name)
+                                            <option
+                                                value="{{ $id }}" {{ (old('department_id', $lead->department_id ?? '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                                        @endforeach
+                                    </x-admin::form.control-group.control>
+                                    <x-admin::form.control-group.error control-name="department_id"/>
+                                </x-admin::form.control-group>
+                            </div>
+
 
                             <!-- Lead Details Other input fields -->
                             <div class="flex gap-4 max-sm:flex-wrap">
@@ -256,33 +320,12 @@
                         id="address"
                     >
                         <div class="w-1/2 max-md:w-full">
-                            <!-- Address Component -->
-                            @include('admin::leads.common.address')
+                            @include('admin::components.address', ['entity' => null])
                         </div>
                     </div>
 
                     {!! view_render_event('admin.leads.create.address.after') !!}
 
-                    <!-- Product Section -->
-                    <div
-                        class="flex flex-col gap-4"
-                        id="products"
-                    >
-                        <div class="flex flex-col gap-1">
-                            <p class="text-base font-semibold dark:text-white">
-                                @lang('admin::app.leads.create.products')
-                            </p>
-
-                            <p class="text-gray-600 dark:text-white">
-                                @lang('admin::app.leads.create.products-info')
-                            </p>
-                        </div>
-
-                        <div>
-                            <!-- Product Component -->
-                            @include('admin::leads.common.products')
-                        </div>
-                    </div>
                 </div>
 
                 {!! view_render_event('admin.leads.form_controls.after') !!}
@@ -298,11 +341,11 @@
                         activeTab: 'lead-details',
 
                         tabs: [
-                            { id: 'lead-details', label: '@lang('admin::app.leads.create.details')' },
-                            { id: 'contact-person', label: '@lang('admin::app.leads.create.contact-person')' },
-                            { id: 'personal-fields', label: 'Persoonsgegevens' },
-                            { id: 'address', label: 'Adres' },
-                            { id: 'products', label: '@lang('admin::app.leads.create.products')' }
+                            {id: 'lead-details', label: '@lang('admin::app.leads.create.details')'},
+                            {id: 'contact-person', label: '@lang('admin::app.leads.create.contact-person')'},
+                            {id: 'personal-fields', label: 'Persoonsgegevens'},
+                            {id: 'address', label: 'Adres'},
+                            {id: 'products', label: '@lang('admin::app.leads.create.products')'}
                         ],
                     };
                 },
@@ -319,7 +362,7 @@
                         const section = document.getElementById(tabId);
 
                         if (section) {
-                            section.scrollIntoView({ behavior: 'smooth' });
+                            section.scrollIntoView({behavior: 'smooth'});
                         }
                     },
                 },

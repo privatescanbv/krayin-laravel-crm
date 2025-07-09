@@ -3,14 +3,15 @@
 namespace App\Observers;
 
 use App\Enums\LeadPipelineStageDefaults;
+use App\Enums\PipelineDefaultKeys;
+use App\Enums\PipelineStageDefaultKeys;
 use App\Enums\WebhookType;
 use App\Services\WebhookService;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Webkul\Activity\Repositories\ActivityRepository;
-use Webkul\Attribute\Models\Attribute;
-use Webkul\Attribute\Models\AttributeValue;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Repositories\LeadRepository;
 
 /**
  * Because some attributes of leads will be set by CRM workflows, we created @LeadWorkflowListener.
@@ -23,7 +24,8 @@ class LeadObserver
      */
     public function __construct(
         protected WebhookService $webhookService,
-        protected ActivityRepository $activityRepository
+        protected ActivityRepository $activityRepository,
+        private LeadRepository $leadRepository,
     ) {}
 
     /**
@@ -57,10 +59,8 @@ class LeadObserver
             'lead_id' => $lead->id,
             'stage'   => $lead->stage?->name,
         ]);
-
-        if ($lead->wasChanged('lead_pipeline_stage_id')) {
-            $this->sendWebhook($lead, 'LeadObserver@created');
-        }
+        $this->updatePipelineState($lead);
+        $this->sendWebhook($lead, 'LeadObserver@created');
     }
 
     /**
@@ -68,6 +68,7 @@ class LeadObserver
      */
     public function updated(Lead $lead): void
     {
+        $this->updatePipelineState($lead);
         // Send webhook if stage has changed and the stage is actually different
         if ($lead->wasChanged('lead_pipeline_stage_id') && $lead->stage) {
 
@@ -85,6 +86,26 @@ class LeadObserver
 
         // Log activities for fixed fields
         $this->logFixedFieldsActivity($lead);
+    }
+
+    private function updatePipelineState(Lead $lead): void
+    {
+        if (is_null($lead->department)) {
+            return;
+        }
+        $leadPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
+        $leadPipelineStageId = PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_PRIVATESCAN_ID->value;
+        if ($lead->department->name == 'Hernia') {
+            $leadPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
+            $leadPipelineStageId = PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value;
+        }
+        if ($lead->lead_pipeline_id != $leadPipelineId) {
+            $lead = $this->leadRepository->findOrFail($lead->id);
+            $lead->update([
+                'lead_pipeline_id'       => $leadPipelineId,
+                'lead_pipeline_stage_id' => $leadPipelineStageId,
+            ]);
+        }
     }
 
     private function sendWebhook(Lead $lead, string $caller): void
@@ -107,17 +128,7 @@ class LeadObserver
 
     private function getDepartmentValue(Lead $lead): ?string
     {
-        // Get department attribute ID
-        $departmentAttribute = Attribute::where('code', 'department')
-            ->where('entity_type', 'leads')
-            ->firstOrFail();
-
-        return AttributeValue::query()
-            ->select(['attribute_options.name'])
-            ->where('attribute_values.entity_id', $lead->id)
-            ->where('attribute_values.attribute_id', $departmentAttribute->id)
-            ->join('attribute_options', 'attribute_values.integer_value', '=', 'attribute_options.id')
-            ->first()?->name;
+        return $lead->department?->name;
     }
 
     /**

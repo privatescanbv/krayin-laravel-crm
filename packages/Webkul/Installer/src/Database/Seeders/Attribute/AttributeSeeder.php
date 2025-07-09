@@ -37,35 +37,7 @@ class AttributeSeeder extends Seeder
             /**
              * Leads Attributes
              */
-            [
-                'code' => 'title',
-                'name' => trans('installer::app.seeders.attributes.leads.title', [], $defaultLocale),
-                'type' => 'text',
-                'entity_type' => 'leads',
-                'lookup_type' => null,
-                'validation' => null,
-                'sort_order' => '1',
-                'is_required' => '1',
-                'is_unique' => '0',
-                'quick_add' => '1',
-                'is_user_defined' => '0',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ], [
-                'code' => 'lead_source_id',
-                'name' => trans('installer::app.seeders.attributes.leads.source', [], $defaultLocale),
-                'type' => 'select',
-                'entity_type' => 'leads',
-                'lookup_type' => 'lead_sources',
-                'validation' => null,
-                'sort_order' => '4',
-                'is_required' => '1',
-                'is_unique' => '0',
-                'quick_add' => '1',
-                'is_user_defined' => '0',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ], [
+           [
                 'code' => 'lead_type_id',
                 'name' => trans('installer::app.seeders.attributes.leads.type', [], $defaultLocale),
                 'type' => 'select',
@@ -130,21 +102,6 @@ class AttributeSeeder extends Seeder
                 'validation' => null,
                 'sort_order' => '10',
                 'is_required' => '1',
-                'is_unique' => '0',
-                'quick_add' => '1',
-                'is_user_defined' => '0',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-            [
-                'code' => LeadAttributeKeys::DEPARTMENT->value,
-                'name' => 'Afdeling',
-                'type' => 'select',
-                'entity_type' => 'leads',
-                'lookup_type' => null,
-                'validation' => null,
-                'sort_order' => '13',
-                'is_required' => '0',
                 'is_unique' => '0',
                 'quick_add' => '1',
                 'is_user_defined' => '0',
@@ -611,18 +568,5 @@ class AttributeSeeder extends Seeder
             ],
         ]);
 
-        // Add department options
-        DB::table('attribute_options')->insert([
-            [
-                'attribute_id' => DB::table('attributes')->where('code', 'department')->first()->id,
-                'name' => 'Privatescan',
-                'sort_order' => 1,
-            ],
-            [
-                'attribute_id' => DB::table('attributes')->where('code', 'department')->first()->id,
-                'name' => 'Hernia',
-                'sort_order' => 2,
-            ],
-        ]);
     }
 }

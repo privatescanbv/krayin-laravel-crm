@@ -1,3 +1,4 @@
+@php use Carbon\Carbon;use Webkul\Lead\Models\Channel;use Webkul\Lead\Models\Source;use App\Models\Department; @endphp
 <x-admin::layouts>
     <!-- Page Title -->
     <x-slot:title>
@@ -12,7 +13,8 @@
         method="PUT"
     >
         <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div
+                class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
                     <x-admin::breadcrumbs
                         name="leads.edit"
@@ -45,44 +47,14 @@
                 </div>
             </div>
 
-            <input type="hidden" id="lead_pipeline_stage_id" name="lead_pipeline_stage_id" value="{{ $lead->lead_pipeline_stage_id }}" />
+            <input type="hidden" id="lead_pipeline_stage_id" name="lead_pipeline_stage_id"
+                   value="{{ $lead->lead_pipeline_stage_id }}"/>
 
-            <div class="mb-0.5">
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.leads.edit.title')
-                    </x-admin::form.control-group.label>
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="title"
-                        value="{{ old('title', $lead->title) }}"
-                        rules="required"
-                        :label="trans('admin::app.leads.edit.title')"
-                        :placeholder="trans('admin::app.leads.edit.title')"
-                    />
-                    <x-admin::form.control-group.error control-name="title" />
-                </x-admin::form.control-group>
-            </div>
-            <div class="mb-0.5">
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        @lang('admin::app.leads.edit.description')
-                    </x-admin::form.control-group.label>
-                    <x-admin::form.control-group.control
-                        type="textarea"
-                        name="description"
-                        value="{{ old('description', $lead->description) }}"
-                        :label="trans('admin::app.leads.edit.description')"
-                        :placeholder="trans('admin::app.leads.edit.description')"
-                        class="min-h-[80px]"
-                    />
-                    <x-admin::form.control-group.error control-name="description" />
-                </x-admin::form.control-group>
-            </div>
+
 
             <!-- Lead Edit Component -->
             <v-lead-edit :lead="{{ json_encode($lead) }}">
-                <x-admin::shimmer.leads.datagrid />
+                <x-admin::shimmer.leads.datagrid/>
             </v-lead-edit>
         </div>
     </x-admin::form>
@@ -94,7 +66,8 @@
             type="text/x-template"
             id="v-lead-edit-template"
         >
-            <div class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+            <div
+                class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                 <div class="flex gap-2 border-b border-gray-200 dark:border-gray-800">
                     <!-- Tabs -->
                     <template v-for="tab in tabs" :key="tab.id">
@@ -136,22 +109,128 @@
 
                         <div class="w-1/2 max-md:w-full">
                             {!! view_render_event('admin.leads.edit.lead_details.attributes.before', ['lead' => $lead]) !!}
-
                             <!-- Lead Details Title and Description -->
+                            <div class="mb-0.5">
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label class="required">
+                                        @lang('installer::app.seeders.attributes.leads.title')
+                                    </x-admin::form.control-group.label>
+                                    <x-admin::form.control-group.control
+                                        type="text"
+                                        name="title"
+                                        value="{{ old('title', $lead->title) }}"
+                                        rules="required"
+                                        :label="trans('admin::app.leads.edit.title')"
+                                        :placeholder="trans('admin::app.leads.edit.title')"
+                                    />
+                                    <x-admin::form.control-group.error control-name="title"/>
+                                </x-admin::form.control-group>
+                            </div>
+                            <div class="mb-0.5">
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label>
+                                        @lang('admin::app.leads.edit.description')
+                                    </x-admin::form.control-group.label>
+                                    <x-admin::form.control-group.control
+                                        type="textarea"
+                                        name="description"
+                                        value="{{ old('description', $lead->description) }}"
+                                        :label="trans('admin::app.leads.edit.description')"
+                                        :placeholder="trans('admin::app.leads.edit.description')"
+                                        class="min-h-[80px]"
+                                    />
+                                    <x-admin::form.control-group.error control-name="description"/>
+                                </x-admin::form.control-group>
+                            </div>
+
+                            <!-- afdeling and other custom fields -->
                             <x-admin::attributes
                                 :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                    ['code', 'NOTIN', ['lead_value', 'lead_type_id', 'lead_source_id', 'expected_close_date', 'user_id', 'lead_pipeline_id', 'lead_pipeline_stage_id']],
+                                    ['code', 'NOTIN', ['lead_value', 'lead_type_id', 'lead_source_id', 'expected_close_date', 'user_id', 'lead_pipeline_id', 'lead_pipeline_stage_id', 'lead_channel_id']],
                                     'entity_type' => 'leads',
                                     'quick_add'   => 1
                                 ])"
                                 :custom-validations="[
                                     'expected_close_date' => [
                                         'date_format:yyyy-MM-dd',
-                                        'after:' .  \Carbon\Carbon::yesterday()->format('Y-m-d')
+                                        'after:' .  Carbon::yesterday()->format('Y-m-d')
                                     ],
                                 ]"
                                 :entity="$lead"
                             />
+
+
+                            <!-- LEAD CHANNEL DROPDOWN -->
+                            <div class="mb-0.5">
+                                @php
+                                    $channelOptions = Channel::query()->pluck('name', 'id')->toArray();
+                                    $sourceOptions = Source::query()->pluck('name', 'id')->toArray();
+                                    $departmentOptions = Department::query()->pluck('name', 'id')->toArray();
+                                @endphp
+                                <!-- KANAAL EN BRON NAAST ELKAAR -->
+                                <div class="flex gap-4 mb-0.5">
+                                    <div class="flex-1">
+                                        <x-admin::form.control-group>
+                                            <x-admin::form.control-group.label>
+                                                Kanaal
+                                            </x-admin::form.control-group.label>
+                                            <x-admin::form.control-group.control
+                                                type="select"
+                                                name="lead_channel_id"
+                                                value="{{ old('lead_channel_id', $lead->lead_channel_id ?? '') }}"
+                                                :label="'Kanaal'"
+                                            >
+                                                <option value="">-- Kies kanaal --</option>
+                                                @foreach ($channelOptions as $id => $name)
+                                                    <option value="{{ $id }}" {{ (old('lead_channel_id', $lead->lead_channel_id ?? '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                                                @endforeach
+                                            </x-admin::form.control-group.control>
+                                            <x-admin::form.control-group.error control-name="lead_channel_id"/>
+                                        </x-admin::form.control-group>
+                                    </div>
+                                    <div class="flex-1">
+                                        <x-admin::form.control-group>
+                                            <x-admin::form.control-group.label>
+                                                Bron
+                                            </x-admin::form.control-group.label>
+                                            <x-admin::form.control-group.control
+                                                type="select"
+                                                name="lead_source_id"
+                                                value="{{ old('lead_source_id', $lead->lead_source_id ?? '') }}"
+                                                :label="'Bron'"
+                                            >
+                                                <option value="">-- Kies bron --</option>
+                                                @foreach ($sourceOptions as $id => $name)
+                                                    <option value="{{ $id }}" {{ (old('lead_source_id', $lead->lead_source_id ?? '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                                                @endforeach
+                                            </x-admin::form.control-group.control>
+                                            <x-admin::form.control-group.error control-name="lead_source_id"/>
+                                        </x-admin::form.control-group>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- DEPARTMENT DROPDOWN -->
+                            <div class="mb-0.5">
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label  class="required">
+                                        Afdeling
+                                    </x-admin::form.control-group.label>
+                                    <x-admin::form.control-group.control
+                                        type="select"
+                                        name="department_id"
+                                        value="{{ old('department_id', $lead->department_id ?? '') }}"
+                                        rules="required"
+                                        :label="'Afdeling'"
+                                    >
+                                        <option value="">-- Kies afdeling --</option>
+                                        @foreach ($departmentOptions as $id => $name)
+                                            <option value="{{ $id }}" {{ (old('department_id', $lead->department_id ?? '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                                        @endforeach
+                                    </x-admin::form.control-group.control>
+                                    <x-admin::form.control-group.error control-name="department_id"/>
+                                </x-admin::form.control-group>
+                            </div>
 
                             <!-- Lead Details Other input fields -->
                             <div class="flex gap-4 max-sm:flex-wrap">
@@ -165,7 +244,7 @@
                                         :custom-validations="[
                                             'expected_close_date' => [
                                                 'date_format:yyyy-MM-dd',
-                                                'after:' .  \Carbon\Carbon::yesterday()->format('Y-m-d')
+                                                'after:' .  Carbon::yesterday()->format('Y-m-d')
                                             ],
                                         ]"
                                         :entity="$lead"
@@ -182,11 +261,11 @@
                                         :custom-validations="[
                                             'expected_close_date' => [
                                                 'date_format:yyyy-MM-dd',
-                                                'after:' .  \Carbon\Carbon::yesterday()->format('Y-m-d')
+                                                'after:' .  Carbon::yesterday()->format('Y-m-d')
                                             ],
                                         ]"
                                         :entity="$lead"
-                                        />
+                                    />
                                 </div>
                             </div>
 
@@ -208,9 +287,9 @@
                                 @lang('admin::app.leads.edit.contact-person')
                             </p>
 
-{{--                            <p class="text-gray-600 dark:text-white">--}}
-{{--                                @lang('admin::app.leads.edit.contact-info')--}}
-{{--                            </p>--}}
+                            {{--                            <p class="text-gray-600 dark:text-white">--}}
+                            {{--                                @lang('admin::app.leads.edit.contact-info')--}}
+                            {{--                            </p>--}}
                         </div>
 
                         <div class="w-1/2 max-md:w-full">
@@ -281,10 +360,10 @@
                         {{--products: @json($lead->products),--}}
 
                         tabs: [
-                            { id: 'lead-details', label: '@lang('admin::app.leads.edit.details')' },
-                            { id: 'contact-person', label: '@lang('admin::app.leads.edit.contact-person')' },
-                            { id: 'personal-fields', label: 'Persoonsgegevens' },
-                            { id: 'address', label: 'Adres' },
+                            {id: 'lead-details', label: '@lang('admin::app.leads.edit.details')'},
+                            {id: 'contact-person', label: '@lang('admin::app.leads.edit.contact-person')'},
+                            {id: 'personal-fields', label: 'Persoonsgegevens'},
+                            {id: 'address', label: 'Adres'},
                             {{--{ id: 'products', label: '@lang('admin::app.leads.edit.products')' }--}}
                         ],
                     };
@@ -302,7 +381,7 @@
                         const section = document.getElementById(tabId);
 
                         if (section) {
-                            section.scrollIntoView({ behavior: 'smooth' });
+                            section.scrollIntoView({behavior: 'smooth'});
                         }
                     },
                 },

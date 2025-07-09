@@ -64,6 +64,8 @@ class Lead extends Model implements LeadContract
         'initials',
         'date_of_birth',
         'gender',
+        'lead_channel_id',
+        'department_id',
     ];
 
     /**
@@ -170,6 +172,22 @@ class Lead extends Model implements LeadContract
     public function address()
     {
         return $this->hasOne(Address::class);
+    }
+
+    /**
+     * Get the channel that owns the lead.
+     */
+    public function channel()
+    {
+        return $this->belongsTo(\Webkul\Lead\Models\Channel::class, 'lead_channel_id');
+    }
+
+    /**
+     * Get the department that owns the lead.
+     */
+    public function department()
+    {
+        return $this->belongsTo(\App\Models\Department::class, 'department_id');
     }
 
     /**

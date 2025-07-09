@@ -2,7 +2,6 @@
 
 namespace Webkul\Installer\Database\Seeders\Lead;
 
-use App\Enums\LeadPipelineStageDefaults;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Enums\PipelineType;
@@ -11,7 +10,6 @@ use Exception;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Webkul\Lead\Models\Stage;
-use Webkul\Lead\Models\Pipeline;
 
 class PipelineSeeder extends Seeder
 {
@@ -24,30 +22,6 @@ class PipelineSeeder extends Seeder
      */
     public function run($parameters = [])
     {
-//        // Check if the first pipeline already exists with correct name
-//        $existingPipeline = Pipeline::find(PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value);
-//        if ($existingPipeline && $existingPipeline->name === 'Privatescan') {
-//            // Also check if the first stage exists
-//            $existingStage = Stage::find(1);
-//            if ($existingStage && $existingStage->code === 'nieuwe-aanvraag-kwalificeren') {
-//                return; // Pipeline and stages already exist, skip seeding
-//            }
-//        }
-//    {
-
-        if (Pipeline::query()->count() > 0) {
-            // If pipelines already exist, skip seeding
-            return;
-        }
-        // Use transaction to prevent race conditions during parallel testing
-//            $existingPipeline = Pipeline::find(PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value);
-//            if ($existingPipeline) {
-//                return;
-//            }
-        if (Pipeline::query()->count() > 0 || DB::table('lead_pipeline_stages')->count() > 0) {
-            // If pipelines already exist, skip seeding
-            return;
-        }
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         DB::table('lead_pipeline_stages')->truncate();
         DB::table('lead_pipelines')->truncate();

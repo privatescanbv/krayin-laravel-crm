@@ -19,6 +19,7 @@ test('test_address_is_saved_when_creating_lead', function () {
         'emails'           => [['value' => 'test1@example.com', 'label' => 'Work']],
         'contact_numbers'  => [['value' => '111111111', 'label' => 'Mobile']],
         'entity_type'      => 'leads',
+        'department_id'    => 1,
         'address'          => [
             'street'              => 'Hoofdstraat',
             'house_number'        => '123',
@@ -36,8 +37,9 @@ test('test_address_is_saved_when_creating_lead', function () {
 
     // Assert
     $this->assertDatabaseHas('leads', [
-        'id'    => $lead->id,
-        'title' => 'Test Lead',
+        'id'            => $lead->id,
+        'title'         => 'Test Lead',
+        'department_id' => 1,
     ]);
 
     $this->assertDatabaseHas('addresses', [

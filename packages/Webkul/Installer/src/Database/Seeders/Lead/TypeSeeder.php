@@ -6,6 +6,9 @@ use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Lead Type
+ */
 class TypeSeeder extends Seeder
 {
     /**
@@ -16,26 +19,29 @@ class TypeSeeder extends Seeder
      */
     public function run($parameters = [])
     {
-        if (DB::table('lead_types')->count() > 0) {
-            return;
-        }
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::table('lead_types')->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         $now = Carbon::now();
 
-        $defaultLocale = $parameters['locale'] ?? config('app.locale');
+        $types = [
+            'Preventie',
+            'Gericht',
+            'Operatie',
+            'Overig',
+        ];
 
-        DB::table('lead_types')->insert([
-            [
-                'id'         => 1,
-                'name'       => trans('installer::app.seeders.lead.type.new-business', [], $defaultLocale),
+        $rows = [];
+        foreach ($types as $i => $name) {
+            $rows[] = [
+                'id'         => $i + 1,
+                'name'       => $name,
                 'created_at' => $now,
                 'updated_at' => $now,
-            ], [
-                'id'         => 2,
-                'name'       => trans('installer::app.seeders.lead.type.existing-business', [], $defaultLocale),
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-        ]);
+            ];
+        }
+
+        DB::table('lead_types')->insert($rows);
     }
 }

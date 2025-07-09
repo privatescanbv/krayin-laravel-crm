@@ -16,42 +16,59 @@ class SourceSeeder extends Seeder
      */
     public function run($parameters = [])
     {
-        if (DB::table('lead_sources')->count() > 0) {
-            return;
-        }
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::table('lead_sources')->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         $now = Carbon::now();
 
-        $defaultLocale = $parameters['locale'] ?? config('app.locale');
+        $sources = [
+            ['bodyscannl', 'bodyscan.nl'],
+            ['privatescannl', 'privatescan.nl'],
+            ['mriscannl', 'mri-scan.nl'],
+            ['ccsvionlinenl', 'ccsvi-online.nl'],
+            ['ccsvionlinecom', 'ccsvi-online.com'],
+            ['googleorganisch', 'Google zoeken'],
+            ['adwords', 'Adwords'],
+            ['kranttelegraaf', 'Krant Telegraaf'],
+            ['krantspits', 'Krant Spits'],
+            ['krantregionaal', 'Krant regionaal'],
+            ['krantoverigedagbladen', 'Krant overige dagbladen'],
+            ['krantredactioneel', 'Krant redactioneel'],
+            ['magazinedito', 'Magazine Dito'],
+            ['magazinehumo', 'Magazine Humo Belgie'],
+            ['dokterdokternl', 'dokterdokter.nl'],
+            ['vrouwnl', 'vrouw.nl'],
+            ['ditomagazinenl', 'dito-magazine.nl'],
+            ['groupdealnl', 'groupdeal.nl'],
+            ['marktplaatsnl', 'Marktplaats'],
+            ['zorgplanet', 'Zorgplanet.nl'],
+            ['linkpartner', 'Linkpartner'],
+            ['youtube', 'Youtube'],
+            ['linkedin', 'LinkedIn'],
+            ['twitter', 'Twitter'],
+            ['facebook', 'Facebook'],
+            ['rtlbusinessclass', 'RTL Business Class'],
+            ['nieuwsbrief', 'Nieuwsbrief'],
+            ['Existing Customer', 'Bestaande klant'],
+            ['zakenrelatie', 'Zakenrelatie'],
+            ['mondtotmond', 'Vrienden, familie, kennissen'],
+            ['collega', 'Collega'],
+            ['Other', 'Anders'],
+            ['Wegenerwebshop', 'Wegener webshop'],
+            ['Herniapoli.nl', 'Herniapoli.nl'],
+        ];
 
-        DB::table('lead_sources')->insert([
-            [
-                'id'         => 1,
-                'name'       => 'Tel. (074-2552680)',
+        $rows = [];
+        foreach ($sources as $i => [$key, $label]) {
+            $rows[] = [
+                'id'         => $i + 1,
+                'name'       => $label,
                 'created_at' => $now,
                 'updated_at' => $now,
-            ], [
-                // hernia
-                'id'         => 2,
-                'name'       => 'Tel. (074-8200100)',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ], [
-                'id'         => 3,
-                'name'       => 'Website: privatescan.nl',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ], [
-                'id'         => 4,
-                'name'       => 'Website: herniapoli.nl',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ], [
-                'id'         => 5,
-                'name'       => trans('installer::app.seeders.lead.source.direct', [], $defaultLocale),
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-        ]);
+            ];
+        }
+
+        DB::table('lead_sources')->insert($rows);
     }
 }

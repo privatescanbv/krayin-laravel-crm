@@ -13,7 +13,6 @@ enum PersonAttributeKeys: string
     case MAIDEN_NAME = 'person_maiden_name';
     case MAIDEN_NAME_PREFIX = 'person_maiden_name_prefix';
     case BIRTH_DATE = 'person_birth_date';
-    case CONTACT_NUMBERS = 'person_contact_numbers';
     case USER_ID = 'user_id';
     case ORGANIZATION_ID = 'organization_id';
 
@@ -29,7 +28,6 @@ enum PersonAttributeKeys: string
             self::MAIDEN_NAME        => 'Maiden Name',
             self::MAIDEN_NAME_PREFIX => 'Maiden Name Prefix',
             self::BIRTH_DATE         => 'Birth Date',
-            self::CONTACT_NUMBERS    => 'Contact Numbers',
             self::USER_ID            => 'User ID',
             self::ORGANIZATION_ID    => 'Organization ID',
         };

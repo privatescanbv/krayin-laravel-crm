@@ -90,6 +90,17 @@
                 @include('admin::components.emails', ['name' => 'emails', 'value' => $person->emails ?? []])
             </div>
 
+            <!-- Phones Section -->
+            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <div class="mb-4">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                        Telefoonnummers
+                    </h3>
+                </div>
+
+                @include('admin::components.phones', ['name' => 'phones', 'value' => $person->phones ?? []])
+            </div>
+
             {!! view_render_event('admin.contacts.persons.edit.address.before', ['lead' => $person]) !!}
 
             <!-- Address Section -->

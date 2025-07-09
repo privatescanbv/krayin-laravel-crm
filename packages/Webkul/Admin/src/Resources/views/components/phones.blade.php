@@ -1,0 +1,214 @@
+{!! view_render_event('admin.phones.before') !!}
+
+<div class="flex flex-col gap-4">
+
+    <v-phones-component
+        :name="'phones'"
+        :value='@json($value ?? [])'
+    ></v-phones-component>
+</div>
+
+{!! view_render_event('admin.phones.after') !!}
+
+@pushOnce('scripts')
+    @verbatim
+        <script type="text/x-template" id="v-phones-component-template">
+            <div>
+                <div class="space-y-3">
+                    <div
+                        v-for="(phone, index) in phones"
+                        :key="index"
+                        class="flex items-center space-x-2"
+                    >
+                        <input
+                            type="tel"
+                            :name="name + '[' + index + '][value]'"
+                            v-model="phone.value"
+                            class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            placeholder="Enter phone number"
+                        />
+
+                        <select
+                            :name="name + '[' + index + '][label]'"
+                            v-model="phone.label"
+                            class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                        >
+                            <option value="work">Work</option>
+                            <option value="home">Home</option>
+                            <option value="mobile">Mobile</option>
+                            <option value="other">Other</option>
+                        </select>
+
+                        <div class="flex items-center space-x-2">
+                            <input
+                                type="checkbox"
+                                :name="name + '[' + index + '][is_default]'"
+                                :id="'phone_default_' + index"
+                                :checked="phone.is_default === true || phone.is_default === 'on'"
+                                @change="handleDefaultChange(index, $event)"
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                            />
+                            <label :for="'phone_default_' + index" class="text-sm text-gray-700 dark:text-gray-300">
+                                Default
+                            </label>
+                        </div>
+
+                        <button
+                            type="button"
+                            @click="removePhone(index)"
+                            class="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                        >
+                            <span class="sr-only">Remove Phone</span>
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    @click="addPhone"
+                    class="mt-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
+                >
+                    <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Add Phone
+                </button>
+            </div>
+        </script>
+
+        <script type="module">
+            app.component('v-phones-component', {
+                template: '#v-phones-component-template',
+
+                props: {
+                    name: {
+                        type: String,
+                        required: true
+                    },
+                    value: {
+                        type: Array,
+                        default: () => []
+                    }
+                },
+
+                data() {
+                    return {
+                        phones: this.processPhones(this.value)
+                    }
+                },
+
+                mounted() {
+                    this.ensureDefaultPhone();
+                },
+
+                watch: {
+                    phones: {
+                        handler(newPhones) {
+                            this.$emit('input', newPhones);
+                        },
+                        deep: true
+                    }
+                },
+
+                methods: {
+                    processPhones(phones) {
+                        // Ensure phones is an array
+                        if (!Array.isArray(phones)) {
+                            phones = [];
+                        }
+                        
+                        // Filter out empty values and process the phones
+                        let validPhones = phones
+                            .filter(phone => phone && phone.value && phone.value.trim() !== '')
+                            .map(phone => ({
+                                ...phone,
+                                is_default: phone.is_default === true || phone.is_default === 'on' || phone.is_default === '1'
+                            }));
+
+                        // If no valid phones, return a default empty phone
+                        if (validPhones.length === 0) {
+                            return [{ value: '', label: 'work', is_default: true }];
+                        }
+
+                        return validPhones;
+                    },
+
+                    addPhone() {
+                        this.phones.push({ value: '', label: 'work', is_default: false });
+                    },
+
+                    removePhone(index) {
+                        if (this.phones.length > 1) {
+                            const wasDefault = this.phones[index].is_default === true || this.phones[index].is_default === 'on';
+                            this.phones.splice(index, 1);
+
+                            // If we removed the default phone, make the first one default
+                            if (wasDefault && this.phones.length > 0) {
+                                this.phones[0].is_default = true;
+                            }
+                        }
+                    },
+
+                    handleDefaultChange(index, event) {
+                        const isChecked = event.target.checked;
+
+                        // Uncheck all other checkboxes
+                        this.phones.forEach((phone, i) => {
+                            if (i !== index) {
+                                phone.is_default = false;
+                            }
+                        });
+
+                        // Set the current phone's default status
+                        this.phones[index].is_default = isChecked;
+
+                        // If no phone is checked, make the first one default
+                        if (!isChecked && this.phones.length > 0) {
+                            this.phones[0].is_default = true;
+                        }
+                    },
+
+                    ensureDefaultPhone() {
+                        // If no phone is marked as default, make the first one default
+                        const hasDefault = this.phones.some(phone =>
+                            phone.is_default === true || phone.is_default === 'on' || phone.is_default === '1'
+                        );
+                        if (!hasDefault && this.phones.length > 0) {
+                            this.phones[0].is_default = true;
+                        }
+                    }
+                }
+            });
+        </script>
+    @endverbatim
+@endPushOnce
+
+@php
+    $phones = $value ?? [];
+    
+    // Ensure $phones is an array
+    if (!is_array($phones)) {
+        $phones = [];
+    }
+    
+    // Filter out empty phone numbers
+    $phones = array_filter($phones, function($phone) {
+        return isset($phone['value']) && !empty(trim($phone['value']));
+    });
+    
+    // If no valid phones, create a default empty phone
+    if (empty($phones)) {
+        $phones = [['value' => '', 'label' => 'work', 'is_default' => true]];
+    }
+
+    // Normaliseer is_default naar boolean
+    foreach ($phones as &$phone) {
+        if (isset($phone['is_default'])) {
+            $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
+        }
+    }
+    unset($phone);
+@endphp 

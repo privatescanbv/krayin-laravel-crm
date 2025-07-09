@@ -26,6 +26,7 @@ class Lead extends Model implements LeadContract
         'expected_close_date' => 'date',
         'date_of_birth'       => 'date',
         'emails'              => 'array',
+        'phones'              => 'array',
     ];
 
     /**
@@ -46,6 +47,7 @@ class Lead extends Model implements LeadContract
         'title',
         'description',
         'emails',
+        'phones',
         'lead_value',
         'status',
         'lost_reason',
@@ -232,5 +234,25 @@ class Lead extends Model implements LeadContract
 
         // If no default is found, return the first email's value
         return $this->emails[0]['value'] ?? null;
+    }
+
+    /**
+     * Find the default phone number from the phones array
+     */
+    public function findDefaultPhone(): ?string
+    {
+        if (empty($this->phones)) {
+            return null;
+        }
+
+        // First, try to find a phone marked as default
+        foreach ($this->phones as $phone) {
+            if (isset($phone['is_default']) && ($phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1')) {
+                return $phone['value'] ?? null;
+            }
+        }
+
+        // If no default is found, return the first phone's value
+        return $this->phones[0]['value'] ?? null;
     }
 }

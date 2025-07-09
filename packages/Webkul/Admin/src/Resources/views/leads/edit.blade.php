@@ -318,6 +318,26 @@
 
                     {!! view_render_event('admin.leads.edit.emails.after', ['lead' => $lead]) !!}
 
+                    {!! view_render_event('admin.leads.edit.phones.before', ['lead' => $lead]) !!}
+
+                    <!-- Phones Section -->
+                    <div
+                        class="flex flex-col gap-4"
+                        id="phones"
+                    >
+                        <div class="flex flex-col gap-1">
+                            <p class="text-base font-semibold dark:text-white">
+                                Telefoonnummers
+                            </p>
+                        </div>
+
+                        <div class="w-1/2 max-md:w-full">
+                            @include('admin::components.phones', ['name' => 'phones', 'value' => $lead->phones ?? []])
+                        </div>
+                    </div>
+
+                    {!! view_render_event('admin.leads.edit.phones.after', ['lead' => $lead]) !!}
+
                     {!! view_render_event('admin.leads.edit.contact_person.before', ['lead' => $lead]) !!}
 
                     <!-- Contact Person -->
@@ -405,6 +425,7 @@
                         tabs: [
                             {id: 'lead-details', label: '@lang('admin::app.leads.edit.details')'},
                             {id: 'emails', label: '@lang('admin::app.leads.common.emails.title')'},
+                            {id: 'phones', label: 'Telefoonnummers'},
                             {id: 'contact-person', label: '@lang('admin::app.leads.edit.contact-person')'},
                             {id: 'personal-fields', label: 'Persoonsgegevens'},
                             {id: 'address', label: 'Adres'},

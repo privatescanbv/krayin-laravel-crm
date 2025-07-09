@@ -38,6 +38,7 @@ class Person extends Model implements PersonContract
      */
     protected $casts = [
         'emails'          => 'array',
+        'phones'          => 'array',
         'contact_numbers' => 'array',
         'date_of_birth'   => 'date',
     ];
@@ -49,6 +50,7 @@ class Person extends Model implements PersonContract
      */
     protected $fillable = [
         'emails',
+        'phones',
         'contact_numbers',
         'job_title',
         'user_id',
@@ -125,19 +127,19 @@ class Person extends Model implements PersonContract
     public function getNameAttribute($value)
     {
         $parts = [];
-        
+
         if ($this->first_name) {
             $parts[] = trim($this->first_name);
         }
-        
+
         if ($this->lastname_prefix) {
             $parts[] = trim($this->lastname_prefix);
         }
-        
+
         if ($this->last_name) {
             $parts[] = trim($this->last_name);
         }
-        
+
         return implode(' ', array_filter($parts));
     }
 
@@ -159,5 +161,25 @@ class Person extends Model implements PersonContract
 
         // If no default is found, return the first email's value
         return $this->emails[0]['value'] ?? null;
+    }
+
+    /**
+     * Find the default phone number from the phones array
+     */
+    public function findDefaultPhone(): ?string
+    {
+        if (empty($this->phones)) {
+            return null;
+        }
+
+        // First, try to find a phone marked as default
+        foreach ($this->phones as $phone) {
+            if (isset($phone['is_default']) && ($phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1')) {
+                return $phone['value'] ?? null;
+            }
+        }
+
+        // If no default is found, return the first phone's value
+        return $this->phones[0]['value'] ?? null;
     }
 }

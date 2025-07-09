@@ -98,20 +98,6 @@ class AttributeSeeder extends Seeder
              * Persons Attributes
              */
              [
-                'code' => PersonAttributeKeys::CONTACT_NUMBERS->value,
-                'name' => trans('installer::app.seeders.attributes.persons.contact-numbers', [], $defaultLocale),
-                'type' => 'phone',
-                'entity_type' => 'persons',
-                'lookup_type' => null,
-                'validation' => 'numeric',
-                'sort_order' => ++$personSortNumber,
-                'is_required' => '0',
-                'is_unique' => '1',
-                'quick_add' => '1',
-                'is_user_defined' => '0',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ], [
                 'code' => PersonAttributeKeys::USER_ID->value,
                 'name' => trans('installer::app.seeders.attributes.persons.sales-owner', [], $defaultLocale),
                 'type' => 'lookup',

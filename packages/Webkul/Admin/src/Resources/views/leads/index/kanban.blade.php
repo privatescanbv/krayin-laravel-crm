@@ -130,11 +130,11 @@
                                     <!-- Header -->
                                     <div class="flex items-start justify-between">
                                        <div class="flex items-center gap-1">
-                                           <x-admin::avatar ::name="element.person ? element.person.name : element.firstname" class="w-6 h-6" />
+                                           <x-admin::avatar ::name="element.person ? element.person.name : element.first_name" class="w-6 h-6" />
 
                                            <div class="flex flex-col gap-0.5">
                                                <span class="text-[11px] font-medium">
-                                                   @{{ element.person ? element.person.name : element.firstname }}
+                                                   @{{ element.person ? element.person.name : element.first_name }}
                                                </span>
                                                <span class="text-[9px] leading-normal">
                                                    @{{ element.person?.organization?.name }}

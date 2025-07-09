@@ -84,6 +84,17 @@
                 @include('admin::components.emails', ['name' => 'emails', 'value' => []])
             </div>
 
+            <!-- Phones Section -->
+            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <div class="mb-4">
+                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">
+                        Telefoonnummers
+                    </h3>
+                </div>
+
+                @include('admin::components.phones', ['name' => 'phones', 'value' => []])
+            </div>
+
             <!-- Address Section -->
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div class="mb-4">

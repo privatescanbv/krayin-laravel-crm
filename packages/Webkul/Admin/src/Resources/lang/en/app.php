@@ -2422,6 +2422,18 @@ return [
     'validations' => [
         'message' => [
             'decimal' => 'The :attribute must be a decimal.',
+            'email-single-at' => 'The :attribute must contain exactly one @ symbol.',
+            'email-local-part' => 'The :attribute local part is invalid or too long (max 64 characters).',
+            'email-domain-part' => 'The :attribute domain part is invalid or too long (max 255 characters).',
+            'email-local-invalid-chars' => 'The :attribute local part contains invalid characters.',
+            'email-domain-invalid-chars' => 'The :attribute domain part contains invalid characters.',
+            'email-local-dot-position' => 'The :attribute local part cannot start or end with a dot.',
+            'email-local-consecutive-dots' => 'The :attribute local part cannot contain consecutive dots.',
+            'email-domain-no-tld' => 'The :attribute domain must contain a top-level domain.',
+            'email-domain-invalid-start-end' => 'The :attribute domain cannot start or end with a dot or hyphen.',
+            'email-domain-consecutive-dots' => 'The :attribute domain cannot contain consecutive dots.',
+            'email-tld-too-short' => 'The :attribute top-level domain must be at least 2 characters long.',
+            'email-invalid-format' => 'The :attribute must be a valid email address.',
         ],
     ],
 

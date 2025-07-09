@@ -238,6 +238,8 @@ class LeadDataGrid extends DataGrid
                     ->value('text_value');
 
                 if ($firstName || $lastname) {
+                    $firstName = $firstName ?? '';
+                    $lastname = $lastname ?? '';
                     return trim($firstName.' '.$lastname);
                 }
 

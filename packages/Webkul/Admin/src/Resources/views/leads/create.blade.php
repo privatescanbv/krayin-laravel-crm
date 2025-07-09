@@ -151,6 +151,9 @@
                             <!-- EMAILS COMPONENT -->
                             @include('admin::components.emails', ['name' => 'emails', 'value' => []])
 
+                            <!-- PHONES COMPONENT -->
+                            @include('admin::components.phones', ['name' => 'phones', 'value' => []])
+
                             <!-- LEAD CHANNEL DROPDOWN -->
                             <div class="mb-0.5">
                                 @php

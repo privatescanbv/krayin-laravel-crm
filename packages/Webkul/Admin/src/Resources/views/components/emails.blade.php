@@ -1,15 +1,11 @@
 {!! view_render_event('admin.emails.before') !!}
 
 <div class="flex flex-col gap-4">
-{{--    <div class="flex flex-col gap-1">--}}
-{{--        <p class="text-base font-semibold dark:text-white">--}}
-{{--            @lang('admin::app.leads.common.emails.title')--}}
-{{--        </p>--}}
-{{--    </div>--}}
 
     <v-emails-component
         :name="'emails'"
         :value='@json($value ?? [])'
+        :errors='@json($errors->getMessages() ?? [])'
     ></v-emails-component>
 </div>
 
@@ -25,13 +21,18 @@
                         :key="index"
                         class="flex items-center space-x-2"
                     >
-                        <input
-                            type="email"
-                            :name="name + '[' + index + '][value]'"
-                            v-model="email.value"
-                            class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            placeholder="Enter email address"
-                        />
+                        <div class="flex-1">
+                            <input
+                                type="email"
+                                :name="name + '[' + index + '][value]'"
+                                v-model="email.value"
+                                :class="getInputClass(index)"
+                                placeholder="Enter email address"
+                            />
+                            <div v-if="getEmailError(index)" class="mt-1 text-sm text-red-600">
+                                {{ getEmailError(index) }}
+                            </div>
+                        </div>
 
                         <select
                             :name="name + '[' + index + '][label]'"
@@ -95,6 +96,10 @@
                     value: {
                         type: Array,
                         default: () => []
+                    },
+                    errors: {
+                        type: Object,
+                        default: () => ({})
                     }
                 },
 
@@ -119,15 +124,25 @@
 
                 methods: {
                     processEmails(emails) {
-                        if (emails.length === 0) {
+                        // Ensure emails is an array
+                        if (!Array.isArray(emails)) {
+                            emails = [];
+                        }
+                        
+                        // Filter out empty values and process the emails
+                        let validEmails = emails
+                            .filter(email => email && email.value && email.value.trim() !== '')
+                            .map(email => ({
+                                ...email,
+                                is_default: email.is_default === true || email.is_default === 'on' || email.is_default === '1'
+                            }));
+
+                        // If no valid emails, return a default empty email
+                        if (validEmails.length === 0) {
                             return [{ value: '', label: 'work', is_default: true }];
                         }
 
-                        // Convert "on" to true and ensure boolean values
-                        return emails.map(email => ({
-                            ...email,
-                            is_default: email.is_default === true || email.is_default === 'on' || email.is_default === '1'
-                        }));
+                        return validEmails;
                     },
 
                     addEmail() {
@@ -138,7 +153,7 @@
                         if (this.emails.length > 1) {
                             const wasDefault = this.emails[index].is_default === true || this.emails[index].is_default === 'on';
                             this.emails.splice(index, 1);
-                            
+
                             // If we removed the default email, make the first one default
                             if (wasDefault && this.emails.length > 0) {
                                 this.emails[0].is_default = true;
@@ -148,17 +163,17 @@
 
                     handleDefaultChange(index, event) {
                         const isChecked = event.target.checked;
-                        
+
                         // Uncheck all other checkboxes
                         this.emails.forEach((email, i) => {
                             if (i !== index) {
                                 email.is_default = false;
                             }
                         });
-                        
+
                         // Set the current email's default status
                         this.emails[index].is_default = isChecked;
-                        
+
                         // If no email is checked, make the first one default
                         if (!isChecked && this.emails.length > 0) {
                             this.emails[0].is_default = true;
@@ -167,12 +182,28 @@
 
                     ensureDefaultEmail() {
                         // If no email is marked as default, make the first one default
-                        const hasDefault = this.emails.some(email => 
+                        const hasDefault = this.emails.some(email =>
                             email.is_default === true || email.is_default === 'on' || email.is_default === '1'
                         );
                         if (!hasDefault && this.emails.length > 0) {
                             this.emails[0].is_default = true;
                         }
+                    },
+
+                    getInputClass(index) {
+                        const baseClass = 'w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 dark:bg-gray-700 dark:text-white';
+                        const hasError = this.getEmailError(index);
+                        
+                        if (hasError) {
+                            return baseClass + ' border-red-300 focus:border-red-500 focus:ring-red-500 dark:border-red-600';
+                        } else {
+                            return baseClass + ' border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600';
+                        }
+                    },
+
+                    getEmailError(index) {
+                        const errorKey = this.name + '.' + index + '.value';
+                        return this.errors[errorKey] ? this.errors[errorKey][0] : null;
                     }
                 }
             });
@@ -182,8 +213,28 @@
 
 @php
     $emails = $value ?? [];
+    
+    // Ensure $emails is an array
+    if (!is_array($emails)) {
+        $emails = [];
+    }
+    
+    // Filter out empty email addresses
+    $emails = array_filter($emails, function($email) {
+        return isset($email['value']) && !empty(trim($email['value']));
+    });
+    
+    // If no valid emails, create a default empty email
     if (empty($emails)) {
         $emails = [['value' => '', 'label' => 'work', 'is_default' => true]];
     }
+
+    // Normaliseer is_default naar boolean
+    foreach ($emails as &$email) {
+        if (isset($email['is_default'])) {
+            $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
+        }
+    }
+    unset($email);
 @endphp
 

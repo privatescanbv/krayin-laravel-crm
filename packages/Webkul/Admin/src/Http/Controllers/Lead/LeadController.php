@@ -174,6 +174,25 @@ class LeadController extends Controller
             $data['date_of_birth'] = null;
         }
 
+        // Normaliseer is_default naar boolean voor phones
+        if (isset($data['phones']) && is_array($data['phones'])) {
+            $data['phones'] = array_map(function($phone) {
+                if (isset($phone['is_default'])) {
+                    $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
+                }
+                return $phone;
+            }, $data['phones']);
+        }
+        // Normaliseer is_default naar boolean voor emails
+        if (isset($data['emails']) && is_array($data['emails'])) {
+            $data['emails'] = array_map(function($email) {
+                if (isset($email['is_default'])) {
+                    $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
+                }
+                return $email;
+            }, $data['emails']);
+        }
+
         $data['status'] = 1;
 
         if (isset($data['lead_pipeline_stage_id'])) {
@@ -242,6 +261,25 @@ class LeadController extends Controller
         // Handle empty date fields
         if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
             $data['date_of_birth'] = null;
+        }
+
+        // Normaliseer is_default naar boolean voor phones
+        if (isset($data['phones']) && is_array($data['phones'])) {
+            $data['phones'] = array_map(function($phone) {
+                if (isset($phone['is_default'])) {
+                    $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
+                }
+                return $phone;
+            }, $data['phones']);
+        }
+        // Normaliseer is_default naar boolean voor emails
+        if (isset($data['emails']) && is_array($data['emails'])) {
+            $data['emails'] = array_map(function($email) {
+                if (isset($email['is_default'])) {
+                    $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
+                }
+                return $email;
+            }, $data['emails']);
         }
 
         if (isset($data['lead_pipeline_stage_id'])) {

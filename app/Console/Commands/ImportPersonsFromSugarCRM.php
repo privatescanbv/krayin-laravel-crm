@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Enums\PersonAttributeKeys;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;

@@ -54,3 +54,5 @@ require 'configuration-routes.php';
  * Rest routes.
  */
 require 'rest-routes.php';
+
+require 'address-routes.php';

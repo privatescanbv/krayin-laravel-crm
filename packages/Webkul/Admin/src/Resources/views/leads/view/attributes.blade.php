@@ -10,7 +10,6 @@
                     <a
                         href="{{ route('admin.leads.edit', $lead->id) }}"
                         class="icon-edit rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
-                        target="_blank"
                     ></a>
                 @endif
             </div>

@@ -4,6 +4,9 @@ namespace Webkul\Contact\Repositories;
 
 use App\Models\Address;
 use Illuminate\Container\Container;
+use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
+use Validator;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Contracts\Person;
@@ -73,15 +76,27 @@ class PersonRepository extends Repository
             'entity_id' => $person->id,
         ]));
 
-        // Handle address data for new persons
+                // Handle address data for new persons
         if (isset($data['address']) && !empty($data['address'])) {
             $addressData = $data['address'];
-            $hasAddressData = !empty(array_filter($addressData));
-            
+            // Check if there's any meaningful address data (not just empty strings)
+            $hasAddressData = !empty(array_filter($addressData, function($value) {
+                return !empty(trim($value));
+            }));
+
             if ($hasAddressData) {
-                Address::create(array_merge($addressData, [
+                // Add person_id to address data for validation
+                $addressDataWithPersonId = array_merge($addressData, [
                     'person_id' => $person->id,
-                ]));
+                ]);
+                
+                // Validate address data
+                $validator = Validator::make($addressDataWithPersonId, Address::$rules);
+                if ($validator->fails()) {
+                    throw new InvalidArgumentException('Address validation failed: ' . $validator->errors()->first());
+                }
+                
+                Address::create($addressDataWithPersonId);
             }
         }
 
@@ -137,20 +152,45 @@ class PersonRepository extends Repository
         // Handle address data
         if (isset($data['address']) && !empty($data['address'])) {
             $addressData = $data['address'];
-            $hasAddressData = !empty(array_filter($addressData));
+            // Check if there's any meaningful address data (not just empty strings)
+            $filledAddressData = array_filter($addressData, function($value) {
+                return !empty(trim($value));
+            });
+            $hasAddressData = !empty($filledAddressData);
             
+            Log::info('Address filtering debug:', [
+                'original_data' => $addressData,
+                'filled_data' => $filledAddressData,
+                'has_address_data' => $hasAddressData,
+            ]);
+            Log::info('Updating address ', [
+                'address' => $addressData,
+                'city_value' => $addressData['city'] ?? 'NOT_SET',
+                'city_isset' => isset($addressData['city']),
+                'city_empty' => empty($addressData['city'] ?? ''),
+                'city_trimmed' => trim($addressData['city'] ?? ''),
+            ]);
             if ($hasAddressData) {
+                // Add person_id to address data for validation
+                $addressDataWithPersonId = array_merge($addressData, [
+                    'person_id' => $id,
+                ]);
+                
+                // Validate address data
+                $validator = Validator::make($addressDataWithPersonId, Address::$rules);
+                if ($validator->fails()) {
+                    throw new InvalidArgumentException('Address validation failed: ' . $validator->errors()->first());
+                }
+                
                 // Check if person already has an address
                 $existingAddress = Address::where('person_id', $id)->first();
-                
+
                 if ($existingAddress) {
-                    // Update existing address
-                    $existingAddress->update($addressData);
+                    // Update existing address - only update filled fields
+                    $existingAddress->update($filledAddressData);
                 } else {
-                    // Create new address
-                    Address::create(array_merge($addressData, [
-                        'person_id' => $id,
-                    ]));
+                    // Create new address - use all data (including empty fields)
+                    Address::create($addressDataWithPersonId);
                 }
             }
         }

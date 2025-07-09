@@ -30,4 +30,9 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'postcodeapi' => [
+        'url'   => 'https://sandbox.postcodeapi.nu/v3/lookup/',
+        'token' => env('POSTCODEAPI_TOKEN'),
+    ],
+
 ];

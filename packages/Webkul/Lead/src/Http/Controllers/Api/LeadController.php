@@ -91,7 +91,7 @@ class LeadController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $lead = $this->leadRepository->findOrFail($id);
+        $lead = $this->leadRepository->with('address')->findOrFail($id);
 
         return response()->json([
             'data' => $lead,

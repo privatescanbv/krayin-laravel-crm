@@ -47,7 +47,7 @@
                 <!-- Title -->
                 <h3 class="text-lg font-bold dark:text-white">
                     {{ $lead->title }}
-                </h1>
+                </h3>
 
                 {!! view_render_event('admin.leads.view.title.after', ['lead' => $lead]) !!}
 

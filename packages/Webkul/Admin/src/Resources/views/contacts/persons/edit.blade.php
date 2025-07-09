@@ -87,7 +87,7 @@
                     </h3>
                 </div>
 
-                @include('admin::components.emails', ['name' => 'emails', 'value' => $person->emails ?? []])
+                @include('admin::components.emails', ['name' => 'emails', 'value' => old('emails', $person->emails ?? [])])
             </div>
 
             <!-- Phones Section -->
@@ -98,7 +98,7 @@
                     </h3>
                 </div>
 
-                @include('admin::components.phones', ['name' => 'phones', 'value' => $person->phones ?? []])
+                @include('admin::components.phones', ['name' => 'phones', 'value' => old('phones', $person->phones ?? [])])
             </div>
 
             {!! view_render_event('admin.contacts.persons.edit.address.before', ['lead' => $person]) !!}

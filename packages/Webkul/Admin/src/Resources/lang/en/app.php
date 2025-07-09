@@ -2434,6 +2434,12 @@ return [
             'email-domain-consecutive-dots' => 'The :attribute domain cannot contain consecutive dots.',
             'email-tld-too-short' => 'The :attribute top-level domain must be at least 2 characters long.',
             'email-invalid-format' => 'The :attribute must be a valid email address.',
+            'phone-must-start-with-plus' => 'The :attribute must start with a + symbol.',
+            'phone-only-digits-after-plus' => 'The :attribute must contain only digits after the + symbol.',
+            'phone-too-short' => 'The :attribute must be at least 8 digits long (including country code).',
+            'phone-too-long' => 'The :attribute must not exceed 15 digits (including country code).',
+            'phone-invalid-format' => 'The :attribute must be in a valid international phone number format.',
+            'phone-invalid-country-code' => 'The :attribute country code cannot start with 0.',
         ],
     ],
 

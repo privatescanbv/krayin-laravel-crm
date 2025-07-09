@@ -81,7 +81,7 @@
                     </h3>
                 </div>
 
-                @include('admin::components.emails', ['name' => 'emails', 'value' => []])
+                @include('admin::components.emails', ['name' => 'emails', 'value' => old('emails', [])])
             </div>
 
             <!-- Phones Section -->
@@ -92,7 +92,7 @@
                     </h3>
                 </div>
 
-                @include('admin::components.phones', ['name' => 'phones', 'value' => []])
+                @include('admin::components.phones', ['name' => 'phones', 'value' => old('phones', [])])
             </div>
 
             <!-- Address Section -->

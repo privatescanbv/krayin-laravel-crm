@@ -5,6 +5,7 @@
     <v-phones-component
         :name="'phones'"
         :value='@json($value ?? [])'
+        :errors='@json($errors->getMessages() ?? [])'
     ></v-phones-component>
 </div>
 
@@ -20,13 +21,18 @@
                         :key="index"
                         class="flex items-center space-x-2"
                     >
-                        <input
-                            type="tel"
-                            :name="name + '[' + index + '][value]'"
-                            v-model="phone.value"
-                            class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                            placeholder="Enter phone number"
-                        />
+                        <div class="flex-1">
+                            <input
+                                type="tel"
+                                :name="name + '[' + index + '][value]'"
+                                v-model="phone.value"
+                                :class="getInputClass(index)"
+                                placeholder="Enter phone number"
+                            />
+                            <div v-if="getPhoneError(index)" class="mt-1 text-sm text-red-600">
+                                {{ getPhoneError(index) }}
+                            </div>
+                        </div>
 
                         <select
                             :name="name + '[' + index + '][label]'"
@@ -91,6 +97,10 @@
                     value: {
                         type: Array,
                         default: () => []
+                    },
+                    errors: {
+                        type: Object,
+                        default: () => ({})
                     }
                 },
 
@@ -179,6 +189,22 @@
                         if (!hasDefault && this.phones.length > 0) {
                             this.phones[0].is_default = true;
                         }
+                    },
+
+                    getInputClass(index) {
+                        const baseClass = 'w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 dark:bg-gray-700 dark:text-white';
+                        const hasError = this.getPhoneError(index);
+                        
+                        if (hasError) {
+                            return baseClass + ' border-red-300 focus:border-red-500 focus:ring-red-500 dark:border-red-600';
+                        } else {
+                            return baseClass + ' border-gray-300 focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600';
+                        }
+                    },
+
+                    getPhoneError(index) {
+                        const errorKey = this.name + '.' + index + '.value';
+                        return this.errors[errorKey] ? this.errors[errorKey][0] : null;
                     }
                 }
             });

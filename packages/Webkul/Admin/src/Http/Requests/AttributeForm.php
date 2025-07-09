@@ -6,6 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Core\Contracts\Validations\Decimal;
+use Webkul\Core\Contracts\Validations\EmailValidator;
+use Webkul\Core\Contracts\Validations\PhoneValidator;
 
 class AttributeForm extends FormRequest
 {
@@ -72,13 +74,13 @@ class AttributeForm extends FormRequest
             } elseif ($attribute->type == 'email') {
                 $validations = [
                     $attribute->code              => [$attribute->is_required ? 'required' : 'nullable'],
-                    $attribute->code.'.*.value'   => [$attribute->is_required ? 'required' : 'nullable', 'email'],
+                    $attribute->code.'.*.value'   => [$attribute->is_required ? 'required' : 'nullable', new EmailValidator()],
                     $attribute->code.'.*.label'   => $attribute->is_required ? 'required' : 'nullable',
                 ];
             } elseif ($attribute->type == 'phone') {
                 $validations = [
                     $attribute->code              => [$attribute->is_required ? 'required' : 'nullable'],
-                    $attribute->code.'.*.value'   => [$attribute->is_required ? 'required' : 'nullable'],
+                    $attribute->code.'.*.value'   => [$attribute->is_required ? 'required' : 'nullable', new PhoneValidator()],
                     $attribute->code.'.*.label'   => $attribute->is_required ? 'required' : 'nullable',
                 ];
             } else {

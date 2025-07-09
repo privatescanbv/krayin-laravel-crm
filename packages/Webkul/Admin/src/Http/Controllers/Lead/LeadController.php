@@ -19,6 +19,8 @@ use Webkul\Admin\Http\Resources\LeadResource;
 use Webkul\Admin\Http\Resources\StageResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Repositories\PersonRepository;
+use Webkul\Core\Contracts\Validations\EmailValidator;
+use Webkul\Core\Contracts\Validations\PhoneValidator;
 use Webkul\Lead\Helpers\MagicAI;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Lead\Repositories\PipelineRepository;
@@ -156,6 +158,16 @@ class LeadController extends Controller
      */
     public function store(LeadForm $request): RedirectResponse
     {
+        $request->validate([
+            'first_name' => ['required', 'string'],
+            'last_name' => ['required', 'string'],
+            'emails' => ['nullable', 'array'],
+            'emails.*.value' => ['nullable', new EmailValidator()],
+            'emails.*.label' => ['nullable', 'string'],
+            'phones' => ['nullable', 'array'],
+            'phones.*.value' => ['nullable', new PhoneValidator()],
+            'phones.*.label' => ['nullable', 'string'],
+        ]);
         [$lead, $leadPipelineId] =  $this->storeLead($request);
 
         session()->flash('success', trans('admin::app.leads.create-success'));
@@ -254,6 +266,16 @@ class LeadController extends Controller
      */
     public function update(LeadForm $request, int $id): RedirectResponse|JsonResponse
     {
+        $request->validate([
+            'first_name' => ['required', 'string'],
+            'last_name' => ['required', 'string'],
+            'emails' => ['nullable', 'array'],
+            'emails.*.value' => ['nullable', new EmailValidator()],
+            'emails.*.label' => ['nullable', 'string'],
+            'phones' => ['nullable', 'array'],
+            'phones.*.value' => ['nullable', new PhoneValidator()],
+            'phones.*.label' => ['nullable', 'string'],
+        ]);
         Event::dispatch('lead.update.before', $id);
 
         $data = $request->all();

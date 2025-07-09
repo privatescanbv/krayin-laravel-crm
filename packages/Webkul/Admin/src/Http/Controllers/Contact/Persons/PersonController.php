@@ -17,7 +17,9 @@ use Webkul\Admin\Http\Resources\PersonResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
+
 use Webkul\Core\Contracts\Validations\EmailValidator;
+use Webkul\Core\Contracts\Validations\PhoneValidator;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
 
@@ -67,6 +69,9 @@ class PersonController extends Controller
             'emails' => ['nullable', 'array'],
             'emails.*.value' => ['nullable', new EmailValidator()],
             'emails.*.label' => ['nullable', 'string'],
+            'phones' => ['nullable', 'array'],
+            'phones.*.value' => ['nullable', new PhoneValidator()],
+            'phones.*.label' => ['nullable', 'string'],
         ]);
         Event::dispatch('contacts.person.create.before');
 
@@ -181,6 +186,9 @@ class PersonController extends Controller
             'emails' => ['nullable', 'array'],
             'emails.*.value' => ['nullable', new EmailValidator()],
             'emails.*.label' => ['nullable', 'string'],
+            'phones' => ['nullable', 'array'],
+            'phones.*.value' => ['nullable', new PhoneValidator()],
+            'phones.*.label' => ['nullable', 'string'],
         ]);
         Event::dispatch('contacts.person.update.before', $id);
 

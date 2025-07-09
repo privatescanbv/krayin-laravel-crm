@@ -2033,6 +2033,17 @@ return [
                 'organization'   => 'Organization',
             ],
 
+            'emails' => [
+                'title'       => 'Email Addresses',
+                'label'       => 'Email Addresses',
+                'placeholder' => 'Enter email address',
+                'work'        => 'Work',
+                'home'        => 'Home',
+                'other'       => 'Other',
+                'add'         => 'Add Email',
+                'remove'      => 'Remove Email',
+            ],
+
             'products' => [
                 'product-name' => 'Product Name',
                 'quantity'     => 'Quantity',

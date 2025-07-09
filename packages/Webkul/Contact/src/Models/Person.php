@@ -140,4 +140,24 @@ class Person extends Model implements PersonContract
         
         return implode(' ', array_filter($parts));
     }
+
+    /**
+     * Find the default email address from the emails array
+     */
+    public function findDefaultEmail(): ?string
+    {
+        if (empty($this->emails)) {
+            return null;
+        }
+
+        // First, try to find an email marked as default
+        foreach ($this->emails as $email) {
+            if (isset($email['is_default']) && ($email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1')) {
+                return $email['value'] ?? null;
+            }
+        }
+
+        // If no default is found, return the first email's value
+        return $this->emails[0]['value'] ?? null;
+    }
 }

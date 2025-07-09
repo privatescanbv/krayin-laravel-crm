@@ -25,6 +25,7 @@ class Lead extends Model implements LeadContract
         'closed_at'           => 'datetime',
         'expected_close_date' => 'date',
         'date_of_birth'       => 'date',
+        'emails'              => 'array',
     ];
 
     /**
@@ -44,6 +45,7 @@ class Lead extends Model implements LeadContract
     protected $fillable = [
         'title',
         'description',
+        'emails',
         'lead_value',
         'status',
         'lost_reason',
@@ -210,5 +212,25 @@ class Lead extends Model implements LeadContract
         $rottenDate = $this->created_at->addDays($this->pipeline->rotten_days);
 
         return $rottenDate->diffInDays(Carbon::now(), false);
+    }
+
+    /**
+     * Find the default email address from the emails array
+     */
+    public function findDefaultEmail(): ?string
+    {
+        if (empty($this->emails)) {
+            return null;
+        }
+
+        // First, try to find an email marked as default
+        foreach ($this->emails as $email) {
+            if (isset($email['is_default']) && ($email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1')) {
+                return $email['value'] ?? null;
+            }
+        }
+
+        // If no default is found, return the first email's value
+        return $this->emails[0]['value'] ?? null;
     }
 }

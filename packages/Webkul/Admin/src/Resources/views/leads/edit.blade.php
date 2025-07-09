@@ -295,7 +295,28 @@
                         </div>
                     </div>
 
+
                     {!! view_render_event('admin.leads.edit.lead_details.after', ['lead' => $lead]) !!}
+
+                    {!! view_render_event('admin.leads.edit.emails.before', ['lead' => $lead]) !!}
+
+                    <!-- Emails Section -->
+                    <div
+                        class="flex flex-col gap-4"
+                        id="emails"
+                    >
+                        <div class="flex flex-col gap-1">
+                            <p class="text-base font-semibold dark:text-white">
+                                @lang('admin::app.leads.common.emails.title')
+                            </p>
+                        </div>
+
+                        <div class="w-1/2 max-md:w-full">
+                            @include('admin::components.emails', ['name' => 'emails', 'value' => $lead->emails ?? []])
+                        </div>
+                    </div>
+
+                    {!! view_render_event('admin.leads.edit.emails.after', ['lead' => $lead]) !!}
 
                     {!! view_render_event('admin.leads.edit.contact_person.before', ['lead' => $lead]) !!}
 
@@ -383,6 +404,7 @@
 
                         tabs: [
                             {id: 'lead-details', label: '@lang('admin::app.leads.edit.details')'},
+                            {id: 'emails', label: '@lang('admin::app.leads.common.emails.title')'},
                             {id: 'contact-person', label: '@lang('admin::app.leads.edit.contact-person')'},
                             {id: 'personal-fields', label: 'Persoonsgegevens'},
                             {id: 'address', label: 'Adres'},

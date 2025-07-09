@@ -69,6 +69,11 @@ class PersonController extends Controller
         $data = $request->all();
         $data['entity_type'] = 'persons';
 
+        // Filter out entity field if present
+        if (isset($data['entity'])) {
+            unset($data['entity']);
+        }
+
         // Handle empty date fields
         if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
             $data['date_of_birth'] = null;
@@ -131,6 +136,11 @@ class PersonController extends Controller
 
         $data = $request->all();
         $data['entity_type'] = 'persons';
+
+        // Filter out entity field if present
+        if (isset($data['entity'])) {
+            unset($data['entity']);
+        }
 
         // Debug: Log the incoming data
         Log::info('Person update request data:', $data);

@@ -131,7 +131,7 @@
                                     <x-admin::form.control-group.error control-name="title"/>
                                 </x-admin::form.control-group>
                             </div>
-                            <div class="mb-2">
+                            <div class="mb-0.5">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label>
                                         @lang('admin::app.leads.create.description')
@@ -148,6 +148,8 @@
                                 </x-admin::form.control-group>
                             </div>
 
+                            <!-- EMAILS COMPONENT -->
+                            @include('admin::components.emails', ['name' => 'emails', 'value' => []])
 
                             <!-- LEAD CHANNEL DROPDOWN -->
                             <div class="mb-0.5">

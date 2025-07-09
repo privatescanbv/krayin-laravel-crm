@@ -69,12 +69,12 @@ class LeadController extends Controller
         $currentUserId = User::query()->first()?->id;
 
         try {
-            $departmentId = Department::query()->first()?->id;
-        if (Type::query()->where('id', $request['lead_type_id'])->firstOrFail()->name == 'Operatie') {
-            $departmentId = Department::query()->where('name', 'Hernia')->firstOrFail()->id;
-        }
+            $departmentId = Department::findPrivateScanId();
+            if (Type::query()->where('id', $request['lead_type_id'])->firstOrFail()->name == 'Operatie') {
+                $departmentId = Department::findHerniaId();
+            }
         } catch (ModelNotFoundException $e) {
-            Log::error('Could not find departments by name Hernia ',[
+            Log::error('Could not find departments by name Hernia ', [
                 'error' => $e->getMessage(),
             ]);
             return response()->json([

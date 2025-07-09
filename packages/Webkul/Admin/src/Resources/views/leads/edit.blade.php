@@ -1,4 +1,4 @@
-@php use Carbon\Carbon;use Webkul\Lead\Models\Channel;use Webkul\Lead\Models\Source;use App\Models\Department; @endphp
+@php use Carbon\Carbon;use Webkul\Lead\Models\Channel;use Webkul\Lead\Models\Source;use Webkul\Lead\Models\Type;use App\Models\Department; @endphp
 <x-admin::layouts>
     <!-- Page Title -->
     <x-slot:title>
@@ -166,6 +166,7 @@
                                     $channelOptions = Channel::query()->pluck('name', 'id')->toArray();
                                     $sourceOptions = Source::query()->pluck('name', 'id')->toArray();
                                     $departmentOptions = Department::query()->pluck('name', 'id')->toArray();
+                                    $typeOptions = Type::query()->pluck('name', 'id')->toArray();
                                 @endphp
                                 <!-- KANAAL EN BRON NAAST ELKAAR -->
                                 <div class="flex gap-4 mb-0.5">
@@ -210,26 +211,47 @@
                                 </div>
                             </div>
 
-                            <!-- DEPARTMENT DROPDOWN -->
-                            <div class="mb-0.5">
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label  class="required">
-                                        Afdeling
-                                    </x-admin::form.control-group.label>
-                                    <x-admin::form.control-group.control
-                                        type="select"
-                                        name="department_id"
-                                        value="{{ old('department_id', $lead->department_id ?? '') }}"
-                                        rules="required"
-                                        :label="'Afdeling'"
-                                    >
-                                        <option value="">-- Kies afdeling --</option>
-                                        @foreach ($departmentOptions as $id => $name)
-                                            <option value="{{ $id }}" {{ (old('department_id', $lead->department_id ?? '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
-                                        @endforeach
-                                    </x-admin::form.control-group.control>
-                                    <x-admin::form.control-group.error control-name="department_id"/>
-                                </x-admin::form.control-group>
+                            <!-- DEPARTMENT EN TYPE NAAST ELKAAR -->
+                            <div class="flex gap-4 mb-0.5">
+                                <div class="flex-1">
+                                    <x-admin::form.control-group>
+                                        <x-admin::form.control-group.label  class="required">
+                                            Afdeling
+                                        </x-admin::form.control-group.label>
+                                        <x-admin::form.control-group.control
+                                            type="select"
+                                            name="department_id"
+                                            value="{{ old('department_id', $lead->department_id ?? '') }}"
+                                            rules="required"
+                                            :label="'Afdeling'"
+                                        >
+                                            <option value="">-- Kies afdeling --</option>
+                                            @foreach ($departmentOptions as $id => $name)
+                                                <option value="{{ $id }}" {{ (old('department_id', $lead->department_id ?? '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                                            @endforeach
+                                        </x-admin::form.control-group.control>
+                                        <x-admin::form.control-group.error control-name="department_id"/>
+                                    </x-admin::form.control-group>
+                                </div>
+                                <div class="flex-1">
+                                    <x-admin::form.control-group>
+                                        <x-admin::form.control-group.label>
+                                            Type
+                                        </x-admin::form.control-group.label>
+                                        <x-admin::form.control-group.control
+                                            type="select"
+                                            name="lead_type_id"
+                                            value="{{ old('lead_type_id', $lead->lead_type_id ?? '') }}"
+                                            :label="'Type'"
+                                        >
+                                            <option value="">-- Kies type --</option>
+                                            @foreach ($typeOptions as $id => $name)
+                                                <option value="{{ $id }}" {{ (old('lead_type_id', $lead->lead_type_id ?? '') == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                                            @endforeach
+                                        </x-admin::form.control-group.control>
+                                        <x-admin::form.control-group.error control-name="lead_type_id"/>
+                                    </x-admin::form.control-group>
+                                </div>
                             </div>
 
                             <!-- Lead Details Other input fields -->

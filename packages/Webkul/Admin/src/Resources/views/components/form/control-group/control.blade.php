@@ -131,7 +131,7 @@
     @case('date')
         <v-field
             v-slot="{ field, errors }"
-            {{ $attributes->only(['name', ':name', 'value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['rules' => 'regex:^\d{4}-\d{2}-\d{2}$']) }}
+            {{ $attributes->only(['name', ':name', 'value', ':value', 'v-model', 'rules', ':rules', 'label', ':label']) }}
             name="{{ $name }}"
         >
             <x-admin::flat-picker.date>
@@ -141,6 +141,7 @@
                     :class="[errors.length ? 'border !border-red-600 hover:border-red-600' : '']"
                     {{ $attributes->except(['value', ':value', 'v-model', 'rules', ':rules', 'label', ':label'])->merge(['class' => 'w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400']) }}
                     autocomplete="off"
+                    placeholder="dd-mm-yyyy"
                 />
             </x-admin::flat-picker.date>
         </v-field>

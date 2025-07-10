@@ -21,6 +21,7 @@ use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Core\Contracts\Validations\EmailValidator;
 use Webkul\Core\Contracts\Validations\PhoneValidator;
+use App\Validators\DateValidator;
 use Webkul\Lead\Helpers\MagicAI;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Lead\Repositories\PipelineRepository;
@@ -167,6 +168,7 @@ class LeadController extends Controller
             'phones' => ['nullable', 'array'],
             'phones.*.value' => ['nullable', new PhoneValidator()],
             'phones.*.label' => ['nullable', 'string'],
+            'date_of_birth' => ['nullable', new DateValidator()],
             'organization_id' => ['nullable', 'exists:organizations,id', function ($attribute, $value, $fail) use ($request) {
                 if ($value && !$request->input('person_id')) {
                     $fail('Een organisatie kan alleen gekoppeld worden als er ook een contactpersoon is gekoppeld.');
@@ -280,6 +282,7 @@ class LeadController extends Controller
             'phones' => ['nullable', 'array'],
             'phones.*.value' => ['nullable', new PhoneValidator()],
             'phones.*.label' => ['nullable', 'string'],
+            'date_of_birth' => ['nullable', new DateValidator()],
             'organization_id' => ['nullable', 'exists:organizations,id', function ($attribute, $value, $fail) use ($request) {
                 if ($value && !$request->input('person_id')) {
                     $fail('Een organisatie kan alleen gekoppeld worden als er ook een contactpersoon is gekoppeld.');

@@ -56,8 +56,8 @@
                         disable: this.disable ?? [],
                         minDate: this.minDate ?? '',
                         maxDate: this.maxDate ?? '',
-                        altFormat: "Y-m-d",
-                        dateFormat: "Y-m-d",
+                        altFormat: "d-m-Y",
+                        dateFormat: "d-m-Y",
                         weekNumbers: true,
 
                         onChange: function(selectedDates, dateStr, instance) {

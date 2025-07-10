@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
+use DateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -20,6 +21,7 @@ use Webkul\Contact\Repositories\PersonRepository;
 
 use Webkul\Core\Contracts\Validations\EmailValidator;
 use Webkul\Core\Contracts\Validations\PhoneValidator;
+use App\Validators\DateValidator;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
 
@@ -72,6 +74,7 @@ class PersonController extends Controller
             'phones' => ['nullable', 'array'],
             'phones.*.value' => ['nullable', new PhoneValidator()],
             'phones.*.label' => ['nullable', 'string'],
+            'date_of_birth' => ['nullable', new DateValidator()],
         ]);
         Event::dispatch('contacts.person.create.before');
 
@@ -189,6 +192,7 @@ class PersonController extends Controller
             'phones' => ['nullable', 'array'],
             'phones.*.value' => ['nullable', new PhoneValidator()],
             'phones.*.label' => ['nullable', 'string'],
+            'date_of_birth' => ['nullable', new DateValidator()],
         ]);
         Event::dispatch('contacts.person.update.before', $id);
 

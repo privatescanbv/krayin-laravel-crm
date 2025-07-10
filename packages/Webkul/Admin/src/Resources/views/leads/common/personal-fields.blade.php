@@ -102,41 +102,40 @@
     </div>
 
 
-    <!-- Maiden Name Row -->
+    <!-- Married Name Row -->
     <div class="flex gap-4">
-        <!-- Maiden Name Prefix -->
+        <!-- Married Name Prefix -->
         <x-admin::form.control-group class="w-25">
             <x-admin::form.control-group.label>
-                Meisjesnaam tussenvoegsel
+                Tussenvoegsel
             </x-admin::form.control-group.label>
 
             <x-admin::form.control-group.control
                 type="text"
-                name="maiden_name_prefix"
-                :value="$entity->maiden_name_prefix ?? ''"
-                :label="trans('Meisjesnaam tussenvoegsel')"
+                name="married_name_prefix"
+                :value="$entity->married_name_prefix ?? ''"
+                :label="trans('Married name prefix')"
                 placeholder="van, de, den, etc."
                 class="w-24"
             />
 
-            <x-admin::form.control-group.error control-name="maiden_name_prefix"/>
+            <x-admin::form.control-group.error control-name="married_name_prefix"/>
         </x-admin::form.control-group>
 
-        <!-- Maiden Name -->
+        <!-- Married Name -->
         <x-admin::form.control-group class="flex-1">
             <x-admin::form.control-group.label>
-                Meisjesnaam
+                Aangetrouwde naam
             </x-admin::form.control-group.label>
 
             <x-admin::form.control-group.control
                 type="text"
-                name="maiden_name"
-                :value="$entity->maiden_name ?? ''"
-                :label="trans('Meisjesnaam')"
-                placeholder="Meisjesnaam"
+                name="married_name"
+                :value="$entity->married_name ?? ''"
+                :label="trans('Married name')"
             />
 
-            <x-admin::form.control-group.error control-name="maiden_name"/>
+            <x-admin::form.control-group.error control-name="married_name"/>
         </x-admin::form.control-group>
     </div>
 

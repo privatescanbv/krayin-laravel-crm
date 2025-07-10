@@ -167,6 +167,11 @@ class LeadController extends Controller
             'phones' => ['nullable', 'array'],
             'phones.*.value' => ['nullable', new PhoneValidator()],
             'phones.*.label' => ['nullable', 'string'],
+            'organization_id' => ['nullable', 'exists:organizations,id', function ($attribute, $value, $fail) use ($request) {
+                if ($value && !$request->input('person_id')) {
+                    $fail('Een organisatie kan alleen gekoppeld worden als er ook een contactpersoon is gekoppeld.');
+                }
+            }],
         ]);
         [$lead, $leadPipelineId] =  $this->storeLead($request);
 
@@ -275,6 +280,11 @@ class LeadController extends Controller
             'phones' => ['nullable', 'array'],
             'phones.*.value' => ['nullable', new PhoneValidator()],
             'phones.*.label' => ['nullable', 'string'],
+            'organization_id' => ['nullable', 'exists:organizations,id', function ($attribute, $value, $fail) use ($request) {
+                if ($value && !$request->input('person_id')) {
+                    $fail('Een organisatie kan alleen gekoppeld worden als er ook een contactpersoon is gekoppeld.');
+                }
+            }],
         ]);
         Event::dispatch('lead.update.before', $id);
 

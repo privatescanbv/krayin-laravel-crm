@@ -1,10 +1,16 @@
 {!! view_render_event('admin.leads.create.contactmatcher.before') !!}
 
-<v-contact-matcher
-    :lead='@json($lead ?? new stdClass())'
-    :person='@json($lead->person ?? new stdClass())'
-></v-contact-matcher>
-
+<div class="panel bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+    <div class="panel-header mb-3">
+        <h3 class="text-lg font-semibold text-blue-800">Contactpersoon Koppelen</h3>
+        <p class="text-sm text-blue-600">Zoek en koppel een bestaande contactpersoon of maak een nieuwe aan</p>
+    </div>
+    
+    <v-contact-matcher
+        :lead='@json($lead ?? new stdClass())'
+        :person='@json($lead->person ?? new stdClass())'
+    ></v-contact-matcher>
+</div>
 
 {!! view_render_event('admin.leads.create.contactmatcher.after') !!}
 

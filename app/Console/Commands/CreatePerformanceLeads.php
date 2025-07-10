@@ -34,12 +34,12 @@ class CreatePerformanceLeads extends Command
      */
     public function handle()
     {
-        $count = (int)$this->argument('count');
+        $count = (int) $this->argument('count');
         $department = $this->option('department');
         $sourceId = $this->option('source');
         $typeId = $this->option('type');
         $userId = $this->option('user');
-        $delay = (int)$this->option('delay');
+        $delay = (int) $this->option('delay');
         $dryRun = $this->option('dry-run');
 
         if ($dryRun) {
@@ -47,7 +47,7 @@ class CreatePerformanceLeads extends Command
         }
 
         $this->info("Creating {$count} leads...");
-        if (!$dryRun && $delay > 0) {
+        if (! $dryRun && $delay > 0) {
             $this->info("Delay between requests: {$delay}ms");
         }
 
@@ -64,7 +64,7 @@ class CreatePerformanceLeads extends Command
                 'leadData' => $leadData,
             ]);
             if ($dryRun) {
-                $this->line('Would create lead: ' . json_encode($leadData, JSON_UNESCAPED_UNICODE));
+                $this->line('Would create lead: '.json_encode($leadData, JSON_UNESCAPED_UNICODE));
                 $successCount++;
             } else {
                 try {
@@ -74,18 +74,18 @@ class CreatePerformanceLeads extends Command
                         $successCount++;
                     } else {
                         $errorCount++;
-                        $errors[] = "HTTP {$response->status()}: " . $response->body();
+                        $errors[] = "HTTP {$response->status()}: ".$response->body();
                     }
                 } catch (\Exception $e) {
                     $errorCount++;
-                    $errors[] = 'Exception: ' . $e->getMessage();
+                    $errors[] = 'Exception: '.$e->getMessage();
                 }
             }
 
             $progressBar->advance();
 
             // Add delay between requests (except for the last one)
-            if (!$dryRun && $delay > 0 && $i < $count - 1) {
+            if (! $dryRun && $delay > 0 && $i < $count - 1) {
                 usleep($delay * 1000); // Convert milliseconds to microseconds
             }
         }
@@ -104,7 +104,7 @@ class CreatePerformanceLeads extends Command
                 $this->error("- {$error}");
             }
             if (count($errors) > 5) {
-                $this->error('... and ' . (count($errors) - 5) . ' more errors');
+                $this->error('... and '.(count($errors) - 5).' more errors');
             }
         }
 
@@ -115,20 +115,20 @@ class CreatePerformanceLeads extends Command
     {
         $firstName = $this->generateRandomName();
         $lastName = $this->generateRandomName();
-        $email = strtolower($firstName . '.' . $lastName . '@example.com');
+        $email = strtolower($firstName.'.'.$lastName.'@example.com');
 
         // Generate unique email to avoid conflicts
-        $email = str_replace('@example.com', '.' . time() . rand(1000, 9999) . '@example.com', $email);
+        $email = str_replace('@example.com', '.'.time().rand(1000, 9999).'@example.com', $email);
 
         $data = [
-            'title' => "Test Lead - {$firstName} {$lastName}",
-            'first_name' => $firstName,
-            'last_name' => $lastName,
-            'email' => $email,
-            'lead_source_id' => $sourceId ?? 1, // Default source
+            'title'           => "Test Lead - {$firstName} {$lastName}",
+            'first_name'      => $firstName,
+            'last_name'       => $lastName,
+            'email'           => $email,
+            'lead_source_id'  => $sourceId ?? 1, // Default source
             'lead_channel_id' => 1,
-            'lead_type_id' => 1, // privatescan (3 = zal afdeling hernia worden)
-            'user_id' => $userId ?? 1, // Default user
+            'lead_type_id'    => 1, // privatescan (3 = zal afdeling hernia worden)
+            'user_id'         => $userId ?? 1, // Default user
         ];
 
         // Add department if specified
@@ -150,13 +150,13 @@ class CreatePerformanceLeads extends Command
             'Test', 'Demo', 'Sample', 'Data', 'Lead', 'Customer', 'Client', 'User', 'Person', 'Contact',
         ];
 
-        return $names[array_rand($names)] . '_' . Str::random(4);
+        return $names[array_rand($names)].'_'.Str::random(4);
     }
 
     private function getDepartmentId(string $department): ?int
     {
         $departments = [
-            'hernia' => 29, // Hernia department ID
+            'hernia'      => 29, // Hernia department ID
             'privatescan' => 30, // Privatescan department ID
         ];
 

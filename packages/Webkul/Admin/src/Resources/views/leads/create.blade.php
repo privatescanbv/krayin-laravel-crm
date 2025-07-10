@@ -288,6 +288,24 @@
                                 </div>
                             </div>
 
+                            <!-- Remark field -->
+                            <div class="mb-0.5">
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label>
+                                        Opmerking
+                                    </x-admin::form.control-group.label>
+                                    <x-admin::form.control-group.control
+                                        type="textarea"
+                                        name="remark"
+                                        value="{{ old('remark') }}"
+                                        :label="trans('Opmerking')"
+                                        :placeholder="trans('Voeg een opmerking toe...')"
+                                        class="min-h-[80px]"
+                                    />
+                                    <x-admin::form.control-group.error control-name="remark"/>
+                                </x-admin::form.control-group>
+                            </div>
+
                             {!! view_render_event('admin.leads.create.details.attributes.after') !!}
                         </div>
                     </div>

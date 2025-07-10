@@ -70,6 +70,7 @@ class Lead extends Model implements LeadContract
         'gender',
         'lead_channel_id',
         'department_id',
+        'remark',
     ];
 
     /**

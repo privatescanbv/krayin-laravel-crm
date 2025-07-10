@@ -7,6 +7,7 @@ use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Enums\WebhookType;
 use App\Services\WebhookService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Webkul\Activity\Repositories\ActivityRepository;
@@ -57,8 +58,7 @@ class LeadObserver
     {
         // Set created_by if not already set
         if (is_null($lead->created_by) && auth()->check()) {
-            $lead->created_by = auth()->id();
-            $lead->saveQuietly();
+            DB::table('leads')->where('id', $lead->id)->update(['created_by' => auth()->id()]);
         }
 
         Log::info('CREATE lead', [
@@ -76,8 +76,7 @@ class LeadObserver
     {
         // Set updated_by if authenticated user exists
         if (auth()->check()) {
-            $lead->updated_by = auth()->id();
-            $lead->saveQuietly();
+            DB::table('leads')->where('id', $lead->id)->update(['updated_by' => auth()->id()]);
         }
 
         $this->updatePipelineState($lead);

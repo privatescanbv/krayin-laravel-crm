@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use DB;
 use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Contact\Models\Person;
@@ -22,8 +23,7 @@ class PersonObserver
     {
         // Set created_by if not already set
         if (is_null($person->created_by) && auth()->check()) {
-            $person->created_by = auth()->id();
-            $person->saveQuietly();
+            DB::table('persons')->where('id', $person->id)->update(['created_by' => auth()->id()]);
         }
         Log::info('CREATE person', [
             'person_id' => $person->id,
@@ -38,8 +38,7 @@ class PersonObserver
     {
         // Set updated_by if authenticated user exists
         if (auth()->check()) {
-            $person->updated_by = auth()->id();
-            $person->saveQuietly();
+            DB::table('persons')->where('id', $person->id)->update(['updated_by' => auth()->id()]);
         }
         // Log activities for fixed fields
         $this->logFixedFieldsActivity($person);

@@ -18,6 +18,8 @@
                 <option value="">Selecteer aanhef</option>
                 <option value="Dhr." {{ ($entity->salutation ?? '') == 'Dhr.' ? 'selected' : '' }}>Dhr.</option>
                 <option value="Mevr." {{ ($entity->salutation ?? '') == 'Mevr.' ? 'selected' : '' }}>Mevr.</option>
+                <option value="Dr." {{ ($entity->salutation ?? '') == 'Dr.' ? 'selected' : '' }}>Dr.</option>
+                <option value="Prof." {{ ($entity->salutation ?? '') == 'Prof.' ? 'selected' : '' }}>Prof.</option>
             </x-admin::form.control-group.control>
 
             <x-admin::form.control-group.error control-name="salutation"/>

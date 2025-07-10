@@ -6,13 +6,13 @@ Dit commando maakt het mogelijk om snel leads aan te maken via de API voor het v
 
 ```bash
 # Maak 10 leads aan (standaard)
-php artisan leads:create
+sail artisan leads:create
 
 # Maak 100 leads aan
-php artisan leads:create 100
+sail artisan leads:create 100
 
 # Maak 1000 leads aan
-php artisan leads:create 1000
+sail artisan leads:create 1000
 ```
 
 **Parameters**
@@ -33,37 +33,37 @@ php artisan leads:create 1000
 **Basis Data Population**
 ```bash
 # Maak 50 leads aan
-php artisan leads:create 50
+sail artisan leads:create 50
 ```
 
 **Test met Department**
 ```bash
 # Maak 100 Hernia leads aan
-php artisan leads:create 100 --department=hernia
+sail artisan leads:create 100 --department=hernia
 
 # Maak 100 Privatescan leads aan
-php artisan leads:create 100 --department=privatescan
+sail artisan leads:create 100 --department=privatescan
 ```
 
 **Rate Limiting**
 ```bash
 # Maak 100 leads aan met 200ms vertraging (langzamer)
-php artisan leads:create 100 --delay=200
+sail artisan leads:create 100 --delay=200
 
 # Maak 100 leads aan met 50ms vertraging (sneller)
-php artisan leads:create 100 --delay=50
+sail artisan leads:create 100 --delay=50
 ```
 
 **Dry Run (Test zonder aanmaken)**
 ```bash
 # Toon wat er zou worden aangemaakt zonder daadwerkelijk aan te maken
-php artisan leads:create 10 --dry-run
+sail artisan leads:create 10 --dry-run
 ```
 
 **Volledige Configuratie**
 ```bash
 # Maak 200 leads aan met alle opties
-php artisan leads:create 200 \
+sail artisan leads:create 200 \
     --department=hernia \
     --source=2 \
     --type=1 \

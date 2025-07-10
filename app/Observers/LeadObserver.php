@@ -55,6 +55,12 @@ class LeadObserver
      */
     public function created(Lead $lead): void
     {
+        // Set created_by if not already set
+        if (is_null($lead->created_by) && auth()->check()) {
+            $lead->created_by = auth()->id();
+            $lead->saveQuietly();
+        }
+
         Log::info('CREATE lead', [
             'lead_id' => $lead->id,
             'stage'   => $lead->stage?->name,
@@ -68,6 +74,12 @@ class LeadObserver
      */
     public function updated(Lead $lead): void
     {
+        // Set updated_by if authenticated user exists
+        if (auth()->check()) {
+            $lead->updated_by = auth()->id();
+            $lead->saveQuietly();
+        }
+
         $this->updatePipelineState($lead);
         // Send webhook if stage has changed and the stage is actually different
         if ($lead->wasChanged('lead_pipeline_stage_id') && $lead->stage) {

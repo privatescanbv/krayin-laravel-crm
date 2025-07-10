@@ -71,6 +71,8 @@ class Lead extends Model implements LeadContract
         'lead_channel_id',
         'department_id',
         'remark',
+        'created_by',
+        'updated_by',
     ];
 
     /**
@@ -89,6 +91,22 @@ class Lead extends Model implements LeadContract
     public function user()
     {
         return $this->belongsTo(UserProxy::modelClass());
+    }
+
+    /**
+     * Get the user who created the lead.
+     */
+    public function createdBy()
+    {
+        return $this->belongsTo(UserProxy::modelClass(), 'created_by');
+    }
+
+    /**
+     * Get the user who last updated the lead.
+     */
+    public function updatedBy()
+    {
+        return $this->belongsTo(UserProxy::modelClass(), 'updated_by');
     }
 
     /**

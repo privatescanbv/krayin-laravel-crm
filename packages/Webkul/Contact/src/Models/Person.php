@@ -65,6 +65,8 @@ class Person extends Model implements PersonContract
         'initials',
         'date_of_birth',
         'gender',
+        'created_by',
+        'updated_by',
     ];
 
     /**
@@ -73,6 +75,22 @@ class Person extends Model implements PersonContract
     public function user()
     {
         return $this->belongsTo(UserProxy::modelClass());
+    }
+
+    /**
+     * Get the user who created the person.
+     */
+    public function createdBy()
+    {
+        return $this->belongsTo(UserProxy::modelClass(), 'created_by');
+    }
+
+    /**
+     * Get the user who last updated the person.
+     */
+    public function updatedBy()
+    {
+        return $this->belongsTo(UserProxy::modelClass(), 'updated_by');
     }
 
     /**

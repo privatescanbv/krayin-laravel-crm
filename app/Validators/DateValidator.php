@@ -21,7 +21,7 @@ class DateValidator implements Rule
         }
 
         // Check if the value matches the d-m-Y format
-        if (!preg_match('/^(0?[1-9]|[12]\d|3[01])-(0?[1-9]|1[0-2])-\d{4}$/', $value)) {
+        if (! preg_match('/^(0?[1-9]|[12]\d|3[01])-(0?[1-9]|1[0-2])-\d{4}$/', $value)) {
             return false;
         }
 
@@ -33,8 +33,6 @@ class DateValidator implements Rule
 
     /**
      * Get the validation error message.
-     *
-     * @return string
      */
     public function message(): string
     {

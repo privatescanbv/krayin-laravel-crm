@@ -20,6 +20,11 @@ class PersonObserver
      */
     public function created(Person $person): void
     {
+        // Set created_by if not already set
+        if (is_null($person->created_by) && auth()->check()) {
+            $person->created_by = auth()->id();
+            $person->saveQuietly();
+        }
         Log::info('CREATE person', [
             'person_id' => $person->id,
             'name'      => $person->name,
@@ -31,6 +36,11 @@ class PersonObserver
      */
     public function updated(Person $person): void
     {
+        // Set updated_by if authenticated user exists
+        if (auth()->check()) {
+            $person->updated_by = auth()->id();
+            $person->saveQuietly();
+        }
         // Log activities for fixed fields
         $this->logFixedFieldsActivity($person);
     }

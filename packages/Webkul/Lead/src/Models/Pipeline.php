@@ -72,7 +72,7 @@ class Pipeline extends Model implements PipelineContract
      */
     public function scopeWorkflowPipelines($query)
     {
-        return $query->where('type', PipelineType::WORKFLOW);
+        return $query->where('type', PipelineType::BACKOFFICE);
     }
 
     public static function newFactory()

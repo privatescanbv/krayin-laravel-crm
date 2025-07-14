@@ -17,7 +17,7 @@ class WorkflowLeadController extends Controller
         if ($request->has('pipeline_id')) {
             $pipeline = app('Webkul\Lead\Repositories\PipelineRepository')->find($request->pipeline_id);
         } else {
-            $pipeline = app('Webkul\Lead\Repositories\PipelineRepository')->getDefaultPipelineByType(PipelineType::WORKFLOW);
+            $pipeline = app('Webkul\Lead\Repositories\PipelineRepository')->getDefaultPipelineByType(PipelineType::BACKOFFICE);
         }
 
         $stages = $pipeline->stages->map(function ($stage) {
@@ -59,7 +59,7 @@ class WorkflowLeadController extends Controller
         if ($request->filled('pipeline_id')) {
             $pipeline = $pipelineRepository->find($request->pipeline_id);
         } else {
-            $pipeline = $pipelineRepository->getDefaultPipelineByType(PipelineType::WORKFLOW);
+            $pipeline = $pipelineRepository->getDefaultPipelineByType(PipelineType::BACKOFFICE);
         }
 
         if (! $pipeline) {

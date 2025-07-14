@@ -39,7 +39,7 @@ class PipelineFactory extends Factory
     public function workflow(): static
     {
         return $this->state(fn (array $attributes) => [
-            'type' => PipelineType::WORKFLOW,
+            'type' => PipelineType::BACKOFFICE,
         ]);
     }
 

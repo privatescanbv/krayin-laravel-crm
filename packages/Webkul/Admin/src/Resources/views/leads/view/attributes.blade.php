@@ -56,6 +56,19 @@
                 </form>
             </x-admin::form>
 
+            <div class="text-xs text-gray-500 mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1">
+                <div class="flex items-center gap-1">
+                    <span class="inline-block w-24">@lang('Aangemaakt'):</span>
+                    <span class="font-mono tabular-nums w-32">{{ $lead->created_at ? $lead->created_at->format('d-m-Y H:i') : '-' }}</span>
+                    <span class="text-gray-400 truncate">{{ $lead->createdBy?->name ?? '' }}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span class="inline-block w-24">@lang('Gewijzigd'):</span>
+                    <span class="font-mono tabular-nums w-32">{{ $lead->updated_at ? $lead->updated_at->format('d-m-Y H:i') : '-' }}</span>
+                    <span class="text-gray-400 truncate">{{ $lead->updatedBy?->name ? ' ' . $lead->updatedBy->name : '' }}</span>
+                </div>
+            </div>
+
             {!! view_render_event('admin.leads.view.attributes.form_controls.after', ['lead' => $lead]) !!}
         </x-slot>
     </x-admin::accordion>

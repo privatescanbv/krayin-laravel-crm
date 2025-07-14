@@ -5,7 +5,8 @@ namespace App\Enums;
 enum PipelineType: string
 {
     case LEAD = 'lead';
-    case WORKFLOW = 'workflow';
+    // TODO rename to backoffice
+    case BACKOFFICE = 'workflow';
 
     /**
      * Get all enum values as array.
@@ -32,7 +33,7 @@ enum PipelineType: string
     {
         return match ($this) {
             self::LEAD     => 'Lead',
-            self::WORKFLOW => 'Workflow',
+            self::BACKOFFICE => 'Workflow',
         };
     }
 }

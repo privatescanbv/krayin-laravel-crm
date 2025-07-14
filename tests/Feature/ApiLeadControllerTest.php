@@ -13,10 +13,10 @@ beforeEach(function () {
 test('getDefaultPipelineByType returns default workflow pipeline when exists', function () {
 
     $this->assertEquals(3, $this->pipelineRepository->getLeadPipelines()->count());
-    $result = $this->pipelineRepository->getDefaultPipelineByType(PipelineType::WORKFLOW);
+    $result = $this->pipelineRepository->getDefaultPipelineByType(PipelineType::BACKOFFICE);
 
     expect($result)->not->toBeNull()
         ->and($result->name)->toBe('Privatescan')
-        ->and($result->type)->toBe(PipelineType::WORKFLOW)
+        ->and($result->type)->toBe(PipelineType::BACKOFFICE)
         ->and($result->is_default)->toBe(1);
 });

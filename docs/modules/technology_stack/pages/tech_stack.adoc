@@ -1,8 +1,6 @@
 === Architectuur en Systeemontwerp
 TODO
 
-include::db_structure.adoc[]
-
 === Technologie Stack
 
 ==== Backend

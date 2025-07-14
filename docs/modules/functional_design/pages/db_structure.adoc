@@ -1,7 +1,137 @@
-=== Database Structuur
+De applicatie gebruikt de volgende hoofdtabellen met hun relaties:
 
-include::db_structure.adoc[]
+[plantuml]
+....
+@startuml
+!define TABLE(name,desc) class name as "desc" << (T,#FFAAAA) >>
+!define PRIMARY_KEY(x) <b>x</b>
+!define FOREIGN_KEY(x) <i>x</i>
 
+TABLE(User, "user") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  email: string
+  lastname: string
+}
+
+TABLE(ContactPerson, "person") {
+  PRIMARY_KEY(id): bigint
+  first_name: string
+  last_name: string
+  email: string
+  phone: string
+  FOREIGN_KEY(contact_user_id): bigint
+}
+
+TABLE(Pipeline, "pipeline") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  is_default: boolean
+  type: enum // (e.g., "hernia", "privatescan")
+}
+
+TABLE(PipelineStage, "pipeline_stage") {
+  PRIMARY_KEY(id): bigint
+  FOREIGN_KEY(pipeline_id): bigint
+  name: string
+  sort_order: int
+}
+
+TABLE(Lead, "lead") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  email: string
+  phone: string
+  FOREIGN_KEY(pipeline_stage_id): bigint
+  FOREIGN_KEY(user_id): bigint
+  FOREIGN_KEY(contact_person_id): bigint
+  create_user_id: bigint
+  department: string
+}
+
+TABLE(Order, "order") {
+  PRIMARY_KEY(id): bigint
+  FOREIGN_KEY(lead_id): bigint
+  FOREIGN_KEY(pipeline_stage_id): bigint
+  FOREIGN_KEY(user_id): bigint
+  FOREIGN_KEY(contact_person_id): bigint
+  total_amount: decimal
+  status: enum
+  create_user_id: bigint
+}
+
+TABLE(Workflow, "workflow") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  description: text
+  FOREIGN_KEY(pipeline_stage_id): bigint
+  FOREIGN_KEY(owner_user_id): bigint
+}
+
+
+TABLE(Action, "action") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  type: enum
+  FOREIGN_KEY(pipeline_stage_id): bigint
+  FOREIGN_KEY(workflow_id): bigint
+  FOREIGN_KEY(assigned_user_id): bigint
+  configuration: json
+}
+
+User "1" -- "n" Lead
+User "1" -- "n" Order
+User "1" -- "n" Workflow
+User "1" -- "n" Action
+
+Pipeline "1" -- "n" PipelineStage
+PipelineStage "1" -- "n" Lead
+PipelineStage "1" -- "n" Order
+PipelineStage "1" -- "n" Workflow
+PipelineStage "1" -- "n" Action
+
+Lead "1" -- "1" Order
+Lead "0..1" --> "1" ContactPerson : "assigned to"
+Order "1" --> "1" ContactPerson : "for"
+Order "1" --> "1" User
+Action "1" --> "1" User
+Workflow "1" -- "n" Action
+Workflow "0..1" -- "1" Order
+Workflow "0..1" -- "1" Lead
+Workflow "0..1" -- "1" ContactPerson
+ContactPerson "1" -- "1" User
+
+note right of Pipeline
+  Sales funnel with ordered stages.
+end note
+
+note right of PipelineStage
+  Step in the pipeline (e.g., "New", "Qualified", "Closed").
+end note
+
+note right of Lead
+  Potential client optionally linked to a user and contact person.
+  Pipeline stages ("new", "in behandeling", "afgehandeld").
+end note
+
+note right of Order
+  Closed deal, linked to a lead, user, and contact person.
+end note
+
+note right of Workflow
+  Automation flow attached to a pipeline stage.
+end note
+
+note right of Action
+  Task or automated step in a workflow, optionally assigned to a user.
+end note
+
+note right of ContactPerson
+  External contact involved in leads or orders, not a user in the system.
+end note
+
+@enduml
+....
 === Pipeline stages per entiteit (status)
 
 Requirements:

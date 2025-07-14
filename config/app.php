@@ -95,7 +95,7 @@ return [
     |
      */
 
-    'locale' => env('APP_LOCALE', 'en'),
+    'locale' => 'nl',
 
     /*
     |--------------------------------------------------------------------------
@@ -112,6 +112,7 @@ return [
         'en'    => 'English',
         'es'    => 'Español',
         'fa'    => 'Persian',
+        'nl'    => 'Nederlands',
         'pt_BR' => 'Portuguese',
         'tr'    => 'Türkçe',
         'vi'    => 'Vietnamese',

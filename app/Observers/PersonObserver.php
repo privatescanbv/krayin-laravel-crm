@@ -2,7 +2,7 @@
 
 namespace App\Observers;
 
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Contact\Models\Person;

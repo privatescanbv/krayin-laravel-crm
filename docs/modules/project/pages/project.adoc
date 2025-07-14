@@ -47,6 +47,11 @@ Vaak zetten we er ook een flexibele schil naast, die vaak niet aanwezig zijn met
 |mark.bulthuis@mbsoftware.nl
 |0611251149
 
+|Mark Pinksteren
+|UX designer
+|link:mailto:mark@markyourmedia.nl[mark.bulthuis@mbsoftware.nl]
+|?
+
 |===
 
 *Stakeholders*

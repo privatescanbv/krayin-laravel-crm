@@ -192,6 +192,36 @@ Richtlijnen:
 * De patiënt moet inloggen om toegang te krijgen tot de inhoud
 * Log alle interactie met het portaal, inclusief wanneer documenten zijn geopend of ondertekend
 
+=== Rollen & rechten
+Gebruikers worden gekoppeld aan rollen. Elke rol bepaalt welke acties (CRUD) toegestaan zijn op specifieke entiteiten zoals leads, producten of activiteiten. De rechtenstructuur sluit aan op de beschikbare routes in het systeem (zoals /leads, /products, etc.).
+
+Per rol kun je instellen of iemand:
+
+* mag bekijken (read),
+* mag aanmaken (create),
+* mag wijzigen (update),
+* of mag verwijderen (delete).
+
+Deze rechten worden centraal beheerd via het ACL-systeem (Access Control List) in de admin-interface.
+Hierdoor houd je controle over wat elke gebruiker wél of niet mag doen binnen het CRM.
+
+image:role.png[create role]
+
+==== User groups
+
+De standaard rolverdeling in Krayin is niet altijd voldoende voor fijnmazige toegangscontrole. Zo willen we bijvoorbeeld instellen dat medewerkers van de afdeling Hernia geen toegang hebben tot gegevens van Privatescan, en andersom. Tegelijkertijd zijn er ook gebruikers die juist toegang moeten hebben tot beide afdelingen.
+
+Om dit mogelijk te maken, hebben we een groepsstructuur geïntroduceerd. Gebruikers worden toegewezen aan een groep, zoals Hernia of Privatescan. Op SQL-niveau filteren we vervolgens welke gegevens per groep zichtbaar zijn.
+
+Deze afscherming geldt bijvoorbeeld voor entiteiten als:
+
+* Leads
+* Backoffice-taken
+* Activities
+
+Op deze manier combineren we rolgebaseerde toegang (rechten op functies) met groepsgebaseerde toegang (rechten op data).
+
+
 
 ==== Voorbeeld: Flow van een ordermail
 

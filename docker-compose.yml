@@ -96,7 +96,7 @@ services:
       - sail
       - mb_traefik
     volumes:
-      - n8n_data:/home/node/.n8n
+      - ./data/n8n_data:/home/node/.n8n
 
   mailserver:
     image: mailserver/docker-mailserver:latest
@@ -153,10 +153,9 @@ networks:
     driver: bridge
   mb_traefik:
     external: true
+
 volumes:
   sail-mysql:
-    driver: local
-  n8n_data:
     driver: local
 
 #  sail-redis:

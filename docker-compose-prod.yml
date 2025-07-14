@@ -135,6 +135,7 @@ networks:
     driver: bridge
   mb_traefik:
     external: true
+
 volumes:
   sail-mysql:
     driver: local

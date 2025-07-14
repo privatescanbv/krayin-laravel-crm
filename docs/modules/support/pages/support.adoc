@@ -1,3 +1,38 @@
-=== Support
+=== Calamiteitenplan
 
-TODO
+Het calamiteitenplan beschrijft wie in geval van nood bereikbaar is, op welke manier, en waarvoor zij verantwoordelijk zijn. Dit biedt duidelijkheid en handelingssnelheid bij technische of operationele incidenten.
+
+**Contactpersonen bij calamiteiten**
+
+==== IceHosting – Christian Bolster
+
+E: info@icehosting.nl
+T. +31 (0)53 700 9750
+IceHosting B.V.
+Josinkstraat 28
+7547AB Enschede
+
+Verantwoordelijk voor de hosting van twee cruciale services. Bereikbaar bij uitval van infrastructuur.
+
+==== CODE 14 – Backup software-expertise
+Indien zowel Mark K. als ondergetekende langdurig en plotseling wegvallen, kan contact worden opgenomen met:
+Harm-Jan, CTO van CODE 14 in Rijssen.
+Backup-expert met kennis van de softwarearchitectuur. Zij zijn ervaren met een Laravel stack, die hier is opgezet.
+
+==== Steentjes
+Speelt nog een tijdelijke rol in de hosting van de huidige SugarCRM Suite.
+Contactgegevens zijn intern bekend. Alleen van toepassing zolang dit systeem nog operationeel is.
+
+
+=== Afspraken
+
+* **Backups & herstelprocedures**
+Mogelijk bij IceHosting, nog geen definitieve afspraken over gemaakt.
+Dient te gebeuren, voordat wij live gaan
+
+* **Monitoring & foutdetectie**
+Voor monitoring en foutanalyse zetten we Sentry in. Hiermee kunnen we technische issues vroegtijdig signaleren en gericht oplossen.
+
+* **Versiebeheer & Continuous Integration**
+Git en CI zijn ondergebracht in GitHub. Dit biedt overzichtelijke versiecontrole, pull requests, en geautomatiseerde tests bij elke wijziging.
+

@@ -1,5 +1,46 @@
 === Architectuur en Systeemontwerp
-TODO
+[plantuml, crm-architectuur, svg]
+....
+@startuml
+skinparam linetype ortho
+
+cloud "Privatescan Kantoor\n(Vast IP)" as Office
+
+rectangle "AWS Cloud" {
+  rectangle "S3 Bucket" as S3
+}
+
+frame "IceHosting Server\n(On-Premise)" {
+  rectangle "Firewall\n(IP-whitelist + poorten 22/80/443)" as Firewall
+
+  package "Docker Compose Netwerk" {
+
+    rectangle "CRM (Laravel stack)" as CRM
+    rectangle "n8n Workflow Tool" as N8N
+    rectangle "Redis Queue" as Redis
+    rectangle "CRM Database (MySQL)" as CRMDB
+    rectangle "n8n Database (MySQL)" as N8NDB
+    rectangle "Mail Server" as Mail
+
+    CRM --> Redis
+    CRM --> CRMDB
+    CRM --> Mail
+    CRM --> S3
+
+    N8N --> Redis
+    N8N --> N8NDB
+  }
+}
+
+Office --> Firewall : Inkomend\n(22, 80, 443)
+Firewall --> CRM
+Firewall --> N8N
+Firewall --> Internet : Uitgaand verkeer
+
+@enduml
+....
+
+
 
 === Technologie Stack
 

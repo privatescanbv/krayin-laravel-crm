@@ -166,6 +166,13 @@
                                         @{{ element.title }}
                                     </p>
 
+                                    <!-- Open Activities Badge -->
+                                    <span v-if="element.open_activities_count > 0"
+                                          class="inline-block bg-yellow-100 text-yellow-800 text-[10px] font-semibold px-2 py-0.5 rounded-full mb-1">
+                                        @{{ element.open_activities_count }} openstaande taak
+                                        <span v-if="element.open_activities_count > 1">en</span>
+                                    </span>
+
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.after') !!}
 
                                     <div class="flex flex-wrap gap-0.5">

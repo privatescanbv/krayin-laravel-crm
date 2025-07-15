@@ -30,6 +30,7 @@ class LeadResource extends JsonResource
             'pipeline'             => new PipelineResource($this->pipeline),
             'stage'                => new StageResource($this->stage),
             'tags'                 => TagResource::collection($this->tags),
+            'open_activities_count'=> $this->open_activities_count,
         ];
     }
 }

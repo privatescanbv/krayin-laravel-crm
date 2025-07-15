@@ -27,7 +27,7 @@
                                 :name="name + '[' + index + '][value]'"
                                 v-model="email.value"
                                 :class="getInputClass(index)"
-                                placeholder="Enter email address"
+                                placeholder="Voer email-adres in"
                             />
                             <div v-if="getEmailError(index)" class="mt-1 text-sm text-red-600">
                                 {{ getEmailError(index) }}
@@ -79,7 +79,7 @@
                     <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                     </svg>
-                    Add Email
+                    Voeg e-mailadres toe
                 </button>
             </div>
         </script>
@@ -128,7 +128,7 @@
                         if (!Array.isArray(emails)) {
                             emails = [];
                         }
-                        
+
                         // Filter out empty values and process the emails
                         let validEmails = emails
                             .filter(email => email && email.value && email.value.trim() !== '')
@@ -193,7 +193,7 @@
                     getInputClass(index) {
                         const baseClass = 'w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 dark:bg-gray-700 dark:text-white';
                         const hasError = this.getEmailError(index);
-                        
+
                         if (hasError) {
                             return baseClass + ' border-red-300 focus:border-red-500 focus:ring-red-500 dark:border-red-600';
                         } else {
@@ -213,17 +213,17 @@
 
 @php
     $emails = $value ?? [];
-    
+
     // Ensure $emails is an array
     if (!is_array($emails)) {
         $emails = [];
     }
-    
+
     // Filter out empty email addresses
     $emails = array_filter($emails, function($email) {
         return isset($email['value']) && !empty(trim($email['value']));
     });
-    
+
     // If no valid emails, create a default empty email
     if (empty($emails)) {
         $emails = [['value' => '', 'label' => 'work', 'is_default' => true]];

@@ -161,14 +161,7 @@ TABLE(Activity, "activity") {
 
 TABLE(Anamnesis, "anamnesis") {
   PRIMARY_KEY(id): bigint
-  title: string
-  type: string
-  location: string
-  comment: text
-  additional: json
-  schedule_from: datetime
-  schedule_to: datetime
-  is_done: boolean
+  comment_clinic: text
   FOREIGN_KEY(user_id): bigint
   FOREIGN_KEY(lead_id): bigint
 }
@@ -208,34 +201,36 @@ Anamnesis "1" -- "1" Lead
 Anamnesis "0..1" -- "1" User
 
 note right of Pipeline
-  Sales funnel with ordered stages for lead.
-  Initial records:
-  - type lead; Hernia, Private scan
-  - type backoffice; Hernia, Private scan
-  Each pipeline has it's own stages.
+  Verkoopfunnel met geordende fasen voor lead.
+  Initiële records:
+  - type lead; Hernia, Privatescan
+  - type backoffice; Hernia, Privatescan
+  Elke pipeline heeft zijn eigen fasen.
 end note
 
 note right of Lead
-  Potential client optionally linked to a user and contact person.
-  Pipeline stages ("new", "in behandeling", "afgehandeld").
+  Potentiële klant, optioneel gekoppeld aan een gebruiker en contactpersoon.
+  Pipeline\-fasen ("nieuw", "in behandeling", "afgehandeld").
 end note
 
 note right of Order
-  Closed deal, linked to a lead, user, and contact person.
+  Afgesloten deal, gekoppeld aan een lead, gebruiker en contactpersoon.
 end note
 
 note right of Backoffice
-  Automation flow attached to a pipeline stage.
+ Automatiseringsflow gekoppeld aan een pipeline\-fase.
 end note
 
 note right of Activity
-  Call | Task or automated step in a Backoffice, optionally assigned to a user.
+  Telefoongesprek \| Taak of geautomatiseerde stap in een Backoffice, optioneel toegewezen aan een gebruiker.
 end note
 
 note right of ContactPerson
-  External contact involved in leads or orders, not a user in the system.
+  Externe contactpersoon betrokken bij leads of orders, geen gebruiker in het systeem.
 end note
 
+note right of Anamnesis
+  Medische geschiedenis gerelateerd aan een lead, gekoppeld aan een gebruiker. (anamnese)
 note as N1
   TODO:
   - kliniek

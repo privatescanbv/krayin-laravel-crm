@@ -29,6 +29,14 @@ services:
     depends_on:
       - mysql
       - n8n
+    healthcheck:
+      test: [
+        "CMD-SHELL",
+        'curl -f -H "X-N8N-API-KEY: $N8N_API_KEY" http://n8n:5678/webhook/health-check'
+      ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
   mysql:
     image: 'mysql/mysql-server:8.0'
@@ -69,7 +77,7 @@ services:
       N8N_BASIC_AUTH_ACTIVE: 'false'
 #      N8N_BASIC_AUTH_USER: 'admin'
 #      N8N_BASIC_AUTH_PASSWORD: "V!*q3&hD8Lsq8yL3RdAY"
-      N8N_API_KEY: "awRfSc%3Q*fgMm!UJL9F"
+      N8N_API_KEY: '${N8N_API_KEY}'
       N8N_HOST: 'n8n.local'
       N8N_PORT: 5678
       TZ: 'Europe/Amsterdam'
@@ -108,6 +116,30 @@ services:
       - mysql
     networks:
       - sail
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: '${DB_PASSWORD}'
+      UPLOAD_LIMIT: 300M
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.pma.rule=Host(`phpmyadmin.dev.privatescan.nl`)
+      - traefik.http.routers.pma.entrypoints=https
+      - traefik.http.routers.pma.tls=true
+      - traefik.http.routers.pma.tls.certresolver=myresolver
+      - traefik.http.services.pma.loadbalancer.server.port=80
+      - traefik.docker.network=mb_traefik
+    networks:
+      - sail
+      - mb_traefik
+    depends_on:
+      - mysql
 
   traefik:
     image: traefik:v2.11

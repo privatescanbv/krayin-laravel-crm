@@ -273,4 +273,9 @@ class Lead extends Model implements LeadContract
         // If no default is found, return the first phone's value
         return $this->phones[0]['value'] ?? null;
     }
+
+    public function getOpenActivitiesCountAttribute():int
+    {
+        return $this->activities()->where('is_done', 0)->count();
+    }
 }

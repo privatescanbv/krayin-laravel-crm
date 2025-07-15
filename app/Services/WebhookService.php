@@ -14,31 +14,45 @@ class WebhookService
      */
     public function sendWebhook(array $data, WebhookType $webhookType, string $caller = 'unknown'): bool
     {
+        $url = '';
+        $body = '';
+        $hasN8nApiKey = false;
         try {
             Log::info('Send webhook: '.$webhookType->value.'; from: '.$caller, $data);
-
+            $hasN8nApiKey = ! empty(config('webhook.n8n_api_key'));
             $url = $this->getWebhookUrl($webhookType);
 
-            $response = Http::post($url, array_merge($data, [
+            $body = array_merge($data, [
                 'timestamp' => now()->toIso8601String(),
-            ]));
+            ]);
+            $request = Http::asJson();
 
-            if ($response->successful()) {
-                Log::info('Webhook sent successfully', $data);
+            if ($hasN8nApiKey) {
+                $request = $request->withHeaders([
+                    'X-N8N-API-KEY' => config('webhook.n8n_api_key'),
+                ]);
+            }
+            $response = $request->post($url, $body);
 
-                return true;
+            if (! $response->successful()) {
+                Log::error('Webhook failed', [
+                    'has_n8n_api_key' => $hasN8nApiKey,
+                    'headers'         => ['X-N8N-API-KEY' => config('webhook.n8n_api_key')],
+                    'data'            => $data,
+                    'response'        => $response->body(),
+                ]);
+
+                return false;
             }
 
-            Log::error('Webhook failed', [
-                'data'     => $data,
-                'response' => $response->body(),
-            ]);
-
-            return false;
+            return true;
         } catch (Exception $e) {
             Log::error('Exception while sending webhook', [
-                'data'  => $data,
-                'error' => $e->getMessage(),
+                'has_n8n_api_key' => $hasN8nApiKey,
+                'headers'         => ['X-N8N-API-KEY' => config('webhook.n8n_api_key')],
+                'url'             => $url,
+                'body'            => $body,
+                'error'           => $e->getMessage(),
             ]);
 
             return false;

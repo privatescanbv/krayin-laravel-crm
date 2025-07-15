@@ -238,6 +238,30 @@
             {
               "conditions": {
                 "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b51f7598-1156-49da-a455-f89566ec30c9",
+                    "leftValue": "={{ $json.body.status }}",
+                    "rightValue": "klant-adviseren-opvolgen",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "klant-adviseren-opvolgen"
+            },
+            {
+              "conditions": {
+                "options": {
                   "version": 2,
                   "leftValue": "",
                   "caseSensitive": true,
@@ -269,19 +293,20 @@
                 },
                 "conditions": [
                   {
-                    "id": "44cd9898-8e1c-4de3-af4e-fa825de1e704",
+                    "id": "7dafe14b-ff6d-4e11-8fa9-77e6878fdd59",
                     "leftValue": "={{ $json.body.status }}",
-                    "rightValue": "klant-adviseren",
+                    "rightValue": "klant-adviseren-zonder-mri-hernia",
                     "operator": {
                       "type": "string",
-                      "operation": "contains"
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
                     }
                   }
                 ],
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "klant-adviseren"
+              "outputKey": "zonder-MRI"
             },
             {
               "conditions": {
@@ -293,9 +318,34 @@
                 },
                 "conditions": [
                   {
-                    "id": "b51f7598-1156-49da-a455-f89566ec30c9",
+                    "id": "02ac07b0-ba78-46fe-8196-a10553ea11ea",
                     "leftValue": "={{ $json.body.status }}",
-                    "rightValue": "klant-adviseren-opvolgen",
+                    "rightValue": "klant-adviseren-met-mri-hernia",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "met-MRI"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "44cd9898-8e1c-4de3-af4e-fa825de1e704",
+                    "leftValue": "={{ $json.body.status }}",
+                    "rightValue": "klant-adviseren-start",
                     "operator": {
                       "type": "string",
                       "operation": "contains"
@@ -305,7 +355,7 @@
                 "combinator": "and"
               },
               "renameOutput": true,
-              "outputKey": "klant-adviseren-opvolgen"
+              "outputKey": "klant-adviseren"
             },
             {
               "conditions": {
@@ -625,8 +675,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1340,
-        380
+        -1900,
+        940
       ],
       "id": "0ae96eea-1712-422d-8f26-9495e201dddb",
       "name": "Add lead workflow"
@@ -638,8 +688,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1560,
-        380
+        -2120,
+        940
       ],
       "id": "368c0314-c60a-4f8a-97fc-beb3201e0bae",
       "name": "lead_id"
@@ -745,7 +795,7 @@
       "typeVersion": 4.2,
       "position": [
         -1560,
-        700
+        720
       ],
       "id": "dda058c9-288f-47e4-a4e8-1801c84b3574",
       "name": "Find group by Department2"
@@ -755,8 +805,8 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -1340,
-        640
+        -1400,
+        720
       ],
       "id": "d2e448ec-de7d-445b-b48d-705c81d992d6",
       "name": "Merge2"
@@ -768,8 +818,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1120,
-        640
+        -1140,
+        720
       ],
       "id": "f32055a5-327d-4921-b5b2-3e6dea6c8a5c",
       "name": "set lead_id and group_id2"
@@ -794,12 +844,206 @@
       ],
       "id": "e24a9cb7-9077-4075-961f-289b1b4fa630",
       "name": "put lead into next stage"
+    },
+    {
+      "parameters": {
+        "content": "## Task done\nZodra er een taak van een lead is afgevinkt, dan wordt de lead in de volgende status gezet.",
+        "height": 120,
+        "width": 360
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2220,
+        1760
+      ],
+      "id": "e3c5cd5b-9434-4239-9e55-6bd33812cddd",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Lead Status change\n- maak taak aan op basis van nieuwe status\n- Maak backoffice status aan bij lead status won",
+        "height": 120,
+        "width": 340
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2240,
+        640
+      ],
+      "id": "d50b0615-35ce-41db-8a08-c8db848bf9f7",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "**Order verzenden**",
+        "height": 80,
+        "width": 180
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1120,
+        660
+      ],
+      "id": "48aeaa36-23e7-4f06-949f-43e713b74325",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "**Klant data bijwerken**",
+        "height": 80,
+        "width": 180
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1080,
+        880
+      ],
+      "id": "ddd8e401-e541-428f-8f80-61c46910f2c9",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "**Klant bellen voor advies**",
+        "height": 80,
+        "width": 180
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1100,
+        1180
+      ],
+      "id": "e5741c30-675c-411f-9790-6c0651cc3814",
+      "name": "Sticky Note5"
+    },
+    {
+      "parameters": {
+        "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1480,
+        520
+      ],
+      "id": "dd5d2b3e-4abf-4e5c-a784-75847813da2e",
+      "name": "Find group by Department3"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1320,
+        520
+      ],
+      "id": "aad7a928-a157-4fff-89aa-d1847a64fa1b",
+      "name": "Merge3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'MRI aanleveren',\n      task_description: '1. Samenstellen order; 2. Samenstellen mail in de juist taal met de bijlages (GVL, kaarten). 3. versturen '\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1060,
+        520
+      ],
+      "id": "d66a1ad5-da70-4eb0-b4c5-811dc3fa26fb",
+      "name": "set lead_id and group_id3"
+    },
+    {
+      "parameters": {
+        "content": "**MRI aanleveren**",
+        "height": 80,
+        "width": 180
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1040,
+        460
+      ],
+      "id": "cce03068-29d6-4bb2-a7b2-b2020aa370df",
+      "name": "Sticky Note6"
+    },
+    {
+      "parameters": {
+        "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1500,
+        320
+      ],
+      "id": "1f6c6e2e-d53a-4d33-b77f-d07f765eda78",
+      "name": "Find group by Department4"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1340,
+        320
+      ],
+      "id": "f1f8fd2e-9c66-47e3-abca-e93f3834d3e1",
+      "name": "Merge4"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Klant adviseren met MRI beelden',\n      task_description: '1. Samenstellen order; 2. Samenstellen mail in de juist taal met de bijlages (GVL, kaarten). 3. versturen '\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1080,
+        320
+      ],
+      "id": "8c66755c-a80f-4cbd-9322-0f81af5c065a",
+      "name": "set lead_id and group_id4"
+    },
+    {
+      "parameters": {
+        "content": "**Adviseren opvolgen met MRI beelden**",
+        "height": 80,
+        "width": 180
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1060,
+        260
+      ],
+      "id": "97c47013-2ba3-496f-b5b3-5ad872d5244c",
+      "name": "Sticky Note7"
     }
   ],
   "pinData": {},
   "connections": {
     "Route based on call_status": {
       "main": [
+        [],
         [
           {
             "node": "Merge",
@@ -808,6 +1052,30 @@
           },
           {
             "node": "Find group by Department",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Find group by Department3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Find group by Department4",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge4",
             "type": "main",
             "index": 0
           }
@@ -824,7 +1092,6 @@
             "index": 0
           }
         ],
-        [],
         [
           {
             "node": "lead_id",
@@ -1015,13 +1282,79 @@
           }
         ]
       ]
+    },
+    "Find group by Department3": {
+      "main": [
+        [
+          {
+            "node": "Merge3",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge3": {
+      "main": [
+        [
+          {
+            "node": "set lead_id and group_id3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set lead_id and group_id3": {
+      "main": [
+        [
+          {
+            "node": "Create task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find group by Department4": {
+      "main": [
+        [
+          {
+            "node": "Merge4",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge4": {
+      "main": [
+        [
+          {
+            "node": "set lead_id and group_id4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set lead_id and group_id4": {
+      "main": [
+        [
+          {
+            "node": "Create task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "b99f2ce6-2992-47f0-9aa8-f717adb5c2ca",
+  "versionId": "42b9ecb4-eac6-449a-9125-2dee938b4053",
   "meta": {
     "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },

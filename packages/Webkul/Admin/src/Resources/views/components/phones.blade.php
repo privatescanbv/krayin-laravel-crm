@@ -27,7 +27,7 @@
                                 :name="name + '[' + index + '][value]'"
                                 v-model="phone.value"
                                 :class="getInputClass(index)"
-                                placeholder="Enter phone number"
+                                placeholder="Voer telefoonnummer in"
                             />
                             <div v-if="getPhoneError(index)" class="mt-1 text-sm text-red-600">
                                 {{ getPhoneError(index) }}
@@ -80,7 +80,7 @@
                     <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                     </svg>
-                    Add Phone
+                    Voeg telefoonnummer toe
                 </button>
             </div>
         </script>
@@ -129,7 +129,7 @@
                         if (!Array.isArray(phones)) {
                             phones = [];
                         }
-                        
+
                         // Filter out empty values and process the phones
                         let validPhones = phones
                             .filter(phone => phone && phone.value && phone.value.trim() !== '')
@@ -194,7 +194,7 @@
                     getInputClass(index) {
                         const baseClass = 'w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 dark:bg-gray-700 dark:text-white';
                         const hasError = this.getPhoneError(index);
-                        
+
                         if (hasError) {
                             return baseClass + ' border-red-300 focus:border-red-500 focus:ring-red-500 dark:border-red-600';
                         } else {
@@ -214,17 +214,17 @@
 
 @php
     $phones = $value ?? [];
-    
+
     // Ensure $phones is an array
     if (!is_array($phones)) {
         $phones = [];
     }
-    
+
     // Filter out empty phone numbers
     $phones = array_filter($phones, function($phone) {
         return isset($phone['value']) && !empty(trim($phone['value']));
     });
-    
+
     // If no valid phones, create a default empty phone
     if (empty($phones)) {
         $phones = [['value' => '', 'label' => 'work', 'is_default' => true]];
@@ -237,4 +237,4 @@
         }
     }
     unset($phone);
-@endphp 
+@endphp

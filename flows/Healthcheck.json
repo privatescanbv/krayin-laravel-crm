@@ -1,0 +1,32 @@
+{
+    "name": "Healthcheck Webhook",
+    "nodes": [
+        {
+            "parameters": {
+                "path": "health-check",
+                "httpMethod": "GET",
+                "responseMode": "onReceived",
+                "options": {
+                    "responseCode": 200,
+                    "responseData": {
+                        "responseBody": "n8n bereikbaar"
+                    }
+                }
+            },
+            "id": "983484b1-c5a0-44fd-a000-c60baa11f236",
+            "name": "Webhook",
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [640, 240],
+            "webhookId": "207f8013-26f4-44d4-ac9f-5a9753b7e117"
+        }
+    ],
+    "connections": {},
+    "active": true,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "versionId": "09882bc1-a753-47a9-b82b-c356b3343f7c",
+    "id": "ZB6P6iRMcDtxSPs9",
+    "tags": []
+}

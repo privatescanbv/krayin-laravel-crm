@@ -32,7 +32,7 @@ enum PipelineType: string
     public function label(): string
     {
         return match ($this) {
-            self::LEAD     => 'Lead',
+            self::LEAD       => 'Lead',
             self::BACKOFFICE => 'Workflow',
         };
     }

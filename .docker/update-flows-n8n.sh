@@ -51,32 +51,3 @@ for file in "$FLOW_DIR"/*.json; do
   fi
 
 done
-
-
-#
-#echo "📥 Workflows importeren per bestand..."
-#
-#for file in "$FLOW_DIR"/*.json; do
-#  if [[ ! -f "$file" ]]; then
-#    echo "⚠️  Geen JSON-bestanden gevonden in $FLOW_DIR"
-#    continue
-#  fi
-#
-#  echo "➡️  Importeren: $file"
-#  n8n import:workflow --input="$file"
-#
-#  if [[ $? -eq 0 ]]; then
-#    echo "✅ Succesvol geïmporteerd: $(basename "$file")"
-#  else
-#    echo "❌ Fout bij import: $(basename "$file")"
-#  fi
-#
-#  # Extract ID from imported file
-#  WORKFLOW_ID=$(jq -r '.id' "$file")
-#  if [[ "$WORKFLOW_ID" != "null" && "$WORKFLOW_ID" != "" ]]; then
-#    echo "🚀 Activeren: $WORKFLOW_ID"
-#    n8n activate:workflow --id="$WORKFLOW_ID"
-#  else
-#    echo "⚠️ Geen ID gevonden voor $file, activatie overgeslagen."
-#  fi
-#done

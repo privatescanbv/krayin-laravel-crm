@@ -1,5 +1,5 @@
 {
-  "name": "flow leads",
+  "name": "Flow Leads",
   "nodes": [
     {
       "parameters": {
@@ -221,12 +221,12 @@
         },
         "options": {}
       },
-      "id": "8da8d98d-a901-4198-ac33-e0697cc9dff6",
+      "id": "3cbbf530-5174-4546-8dc3-b75fd50d4d08",
       "name": "Update CRM contact with call_status COMPLETED",
       "type": "n8n-nodes-base.airtable",
       "position": [
-        680,
-        420
+        60,
+        500
       ],
       "typeVersion": 2.1,
       "disabled": true
@@ -337,12 +337,12 @@
           "allMatchingOutputs": true
         }
       },
-      "id": "80e3531a-30cf-4fe0-8d7e-2708e729a87d",
+      "id": "80d9159e-0b33-45bb-96f4-8ccd1aa6210b",
       "name": "Route based on call_status",
       "type": "n8n-nodes-base.switch",
       "position": [
-        -1160,
-        360
+        -1780,
+        440
       ],
       "typeVersion": 3.2
     },
@@ -352,12 +352,12 @@
         "height": 120,
         "width": 200
       },
-      "id": "b3c60c9c-a8d1-4f4c-86c2-d33a3bf643af",
+      "id": "2a2fad8a-00d6-4e0b-a74e-bac294bee2aa",
       "name": "Sticky Note1",
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        680,
-        0
+        60,
+        80
       ],
       "typeVersion": 1
     },
@@ -379,10 +379,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        680,
-        180
+        60,
+        260
       ],
-      "id": "80cb3db1-db13-4f48-ad56-813dfb3382e2",
+      "id": "a36bcd06-3418-46cc-8cd5-e12a602bbd82",
       "name": "Add Note to lead"
     },
     {
@@ -391,12 +391,12 @@
         "path": "0de7745d-64c8-410b-9d23-f98f4b9c3787",
         "options": {}
       },
-      "id": "94d662f9-78fe-449d-90ac-a48e3b02f5d6",
+      "id": "407966f7-1f8f-47d6-bb54-68f7ca05d000",
       "name": "Webhook - lead status change",
       "type": "n8n-nodes-base.webhook",
       "position": [
-        -1600,
-        380
+        -2220,
+        460
       ],
       "webhookId": "0de7745d-64c8-410b-9d23-f98f4b9c3787",
       "typeVersion": 2
@@ -460,12 +460,12 @@
           "allMatchingOutputs": true
         }
       },
-      "id": "71aade6c-1ebe-479d-8bcf-ea8595561b7d",
+      "id": "1a52bbe0-88a8-4bc9-bc3a-b2c049e67560",
       "name": "Route on task title",
       "type": "n8n-nodes-base.switch",
       "position": [
-        -1340,
-        1520
+        -1960,
+        1600
       ],
       "typeVersion": 3.2
     },
@@ -476,10 +476,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1120,
-        1520
+        -1740,
+        1600
       ],
-      "id": "369456cf-9ed5-4b6a-a90b-1900cbbafc65",
+      "id": "f6445880-6d9a-43ad-8089-88533b11a6c3",
       "name": "newLeadStatusId 3"
     },
     {
@@ -510,10 +510,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        -1380,
-        380
+        -2000,
+        460
       ],
-      "id": "6b1b2d4f-3de3-401b-8df3-963b578a51a7",
+      "id": "010a9935-4969-42e0-bebe-a2f3ffcd59fb",
       "name": "department not null"
     },
     {
@@ -530,10 +530,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -940,
-        920
+        -1560,
+        1000
       ],
-      "id": "14c38c3f-1817-4092-be36-cc012fe81338",
+      "id": "13a140e2-e8cb-4447-b059-4ccabe54ab5c",
       "name": "Find group by Department"
     },
     {
@@ -541,10 +541,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -720,
-        860
+        -1340,
+        940
       ],
-      "id": "e832727e-d89d-46d1-bfe9-a0022a82d673",
+      "id": "756fddc2-8ff2-47b3-8133-2f7f945e9669",
       "name": "Merge"
     },
     {
@@ -556,10 +556,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -1560,
-        1520
+        -2180,
+        1600
       ],
-      "id": "3f0e2f84-286c-4ffd-9f8c-3cbcf99e7868",
+      "id": "b6eb007a-6ee6-41ea-8a46-5aff7a27affb",
       "name": "Webhook - task done",
       "webhookId": "7dd5d03e-3f85-493d-a589-01fb66f7b210"
     },
@@ -577,10 +577,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -940,
-        1220
+        -1560,
+        1300
       ],
-      "id": "a5a0bce0-970b-4809-b293-b58fb78dcce4",
+      "id": "4af4828a-6e16-4ce3-9c87-ab79d35193d7",
       "name": "Find group by Department1"
     },
     {
@@ -588,10 +588,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -720,
-        1160
+        -1340,
+        1240
       ],
-      "id": "ee98abae-dc24-46e5-b457-e22a34f23401",
+      "id": "2c9efa34-1e46-4659-8798-713e42077e00",
       "name": "Merge1"
     },
     {
@@ -601,10 +601,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -500,
-        1160
+        -1120,
+        1240
       ],
-      "id": "7e77abd1-1ee3-447f-b3e1-a011eb7571cd",
+      "id": "6d05462a-e513-4005-9fec-29810509b3bf",
       "name": "set lead_id and group_id1"
     },
     {
@@ -625,10 +625,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -720,
-        300
+        -1340,
+        380
       ],
-      "id": "5250819e-084d-4b7c-baf1-d6c213f9dba5",
+      "id": "0ae96eea-1712-422d-8f26-9495e201dddb",
       "name": "Add lead workflow"
     },
     {
@@ -638,10 +638,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -940,
-        300
+        -1560,
+        380
       ],
-      "id": "c41d6564-0a97-423b-a86c-689e35bb7bab",
+      "id": "368c0314-c60a-4f8a-97fc-beb3201e0bae",
       "name": "lead_id"
     },
     {
@@ -651,19 +651,19 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -500,
-        860
+        -1120,
+        940
       ],
-      "id": "cce5b155-8ebf-472d-a5b8-66d07cf896de",
+      "id": "4fde4b6f-2d01-4b29-beae-1318008e1d08",
       "name": "set lead_id and group_id"
     },
     {
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "NPfjupzlLSnFXidF",
+          "value": "FoL6phxyuOVrAwz5",
           "mode": "list",
-          "cachedResultName": "create task"
+          "cachedResultName": "Create Task"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
@@ -677,8 +677,7 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             },
             {
               "id": "task_description",
@@ -687,8 +686,7 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             },
             {
               "id": "lead_id",
@@ -697,8 +695,7 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             },
             {
               "id": "group_id",
@@ -707,18 +704,16 @@
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             },
             {
-              "id": "activity_type",
-              "displayName": "activity_type",
+              "id": "task_type",
+              "displayName": "task_type",
               "required": false,
               "defaultMatch": false,
               "display": true,
               "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
+              "type": "string"
             }
           ],
           "attemptToConvertTypes": false,
@@ -729,10 +724,10 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        -280,
-        860
+        -900,
+        940
       ],
-      "id": "8254a228-73a5-4ca0-ac6e-03f0bfe914d1",
+      "id": "57eab30a-c3fa-4e7f-8d11-aa6d091bb1d1",
       "name": "Create task"
     },
     {
@@ -749,10 +744,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -940,
-        620
+        -1560,
+        700
       ],
-      "id": "5ebda185-ea79-47e1-8b2d-312f64025cfe",
+      "id": "dda058c9-288f-47e4-a4e8-1801c84b3574",
       "name": "Find group by Department2"
     },
     {
@@ -760,10 +755,10 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -720,
-        560
+        -1340,
+        640
       ],
-      "id": "d3982129-3a94-493b-986e-161904e9b34d",
+      "id": "d2e448ec-de7d-445b-b48d-705c81d992d6",
       "name": "Merge2"
     },
     {
@@ -773,10 +768,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -500,
-        560
+        -1120,
+        640
       ],
-      "id": "a62e9a22-002a-4d25-b011-9dc7e79b419c",
+      "id": "f32055a5-327d-4921-b5b2-3e6dea6c8a5c",
       "name": "set lead_id and group_id2"
     },
     {
@@ -794,10 +789,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -900,
-        1520
+        -1520,
+        1600
       ],
-      "id": "55a6f085-b94f-4ebf-b72f-4e9f3cd4cf32",
+      "id": "e24a9cb7-9077-4075-961f-289b1b4fa630",
       "name": "put lead into next stage"
     }
   ],
@@ -1024,15 +1019,12 @@
   },
   "active": true,
   "settings": {
-    "executionOrder": "v1",
-    "callerPolicy": "workflowsFromSameOwner",
-    "errorWorkflow": "b8PHf3zTNTQZsSzB",
-    "timezone": "Europe/Paris"
+    "executionOrder": "v1"
   },
-  "versionId": "4a129d6e-e8cb-4bf5-8782-07672e5d6f97",
+  "versionId": "b99f2ce6-2992-47f0-9aa8-f717adb5c2ca",
   "meta": {
-    "instanceId": "04a589aba7becd1dde047957b525fc8163605bfcbd5c7304b882c2d0f7b90473"
+    "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },
-  "id": "o3XLElkWyy0rFiDw",
+  "id": "ozPyPwYmzB3nWofB",
   "tags": []
 }

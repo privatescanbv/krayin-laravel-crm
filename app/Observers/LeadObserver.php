@@ -112,6 +112,7 @@ class LeadObserver
         }
         if ($lead->lead_pipeline_id != $leadPipelineId) {
             $lead = $this->leadRepository->findOrFail($lead->id);
+            logger()::info('lead pipeline updated');
             $lead->update([
                 'lead_pipeline_id'       => $leadPipelineId,
                 'lead_pipeline_stage_id' => $leadPipelineStageId,

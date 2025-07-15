@@ -145,7 +145,6 @@ TABLE(Backoffice, "backoffice") {
   FOREIGN_KEY(owner_user_id): bigint
 }
 
-
 TABLE(Activity, "activity") {
   PRIMARY_KEY(id): bigint
   title: string
@@ -158,6 +157,20 @@ TABLE(Activity, "activity") {
   is_done: boolean
   FOREIGN_KEY(user_id): bigint
   FOREIGN_KEY(group_id): bigint
+}
+
+TABLE(Anamnesis, "anamnesis") {
+  PRIMARY_KEY(id): bigint
+  title: string
+  type: string
+  location: string
+  comment: text
+  additional: json
+  schedule_from: datetime
+  schedule_to: datetime
+  is_done: boolean
+  FOREIGN_KEY(user_id): bigint
+  FOREIGN_KEY(lead_id): bigint
 }
 
 User "1" -- "n" Lead
@@ -190,6 +203,9 @@ Address "0..1" -- "1" ContactPerson
 Product "n" -- "0.1" ProductGroup
 OrderItem "n" -- "1" Order
 OrderItem "1" -- "1" Product
+
+Anamnesis "1" -- "1" Lead
+Anamnesis "0..1" -- "1" User
 
 note right of Pipeline
   Sales funnel with ordered stages for lead.

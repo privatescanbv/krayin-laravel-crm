@@ -19,23 +19,21 @@ skinparam state {
   FontSize 11
 }
 
-' -- LEAD --
+' -- LEAD (hernia & privatescan --
 state "Lead" as Lead {
   [*] --> lead_new : "nieuw"
-  state lead_new as "nieuw"
-  state lead_progress as "in behandeling"
-  state lead_stop as "geen resultaat"
-  state lead_option as "optie"
-  state lead_nearwin as "near win"
+  state lead_new as "no-pipeline (Technische status, zou altijd een lege lijst moeten zijn)"
+  state lead_progress as "Klant adviseren"
+  state lead_progress_after as "Klant adviseren opvolgen"
   state lead_win as "win"
   state lead_lose as "lose"
 
   lead_new --> lead_progress
-  lead_new --> lead_stop
-  lead_progress --> lead_option
-  lead_option --> lead_nearwin
-  lead_nearwin --> lead_win
-  lead_nearwin --> lead_lose
+  lead_new --> lead_lose
+  lead_progress --> lead_progress_after
+  lead_progress --> lead_lose
+  lead_progress_after --> lead_win
+  lead_progress_after --> lead_lose
 }
 
 ' -- ORDER --
@@ -58,22 +56,21 @@ state "Order" as Order {
 }
 
 ' -- WORKFLOW --
-state "Workflow (TODO voeg alle statussen toe per workflow type)" as Workflow {
-  [*] --> wf_new : "nieuwe aanvraag"
-  state wf_new as "nieuwe aanvraag"
-  state wf_in_progress as "adviseren"
-  state wf_advised_prepared as "geadviseerd, opvolgen"
-  state wf_advised_create_order as "geadviseerd, order bevestigen"
-  state wf_order_confirmed_patient as "order bevestigd, wachten op akkoord kliniek"
+state "Backoffice" as Backoffice {
+  [*] --> wf_new : "Lead gewonnen"
+  state wf_new as "Bestelling voorbereiden"
+  state wf_order_send as "Order verstuurd, wachten op akkoord patiënt"
+  state wf_order_confirmed_patient_wait_payment as "Order Akkoord, wachten op betaling"
+  state wf_order_confirmed_patient_and_payed as "order bevestigd, wachten op akkoord kliniek"
   state wf_closed as "afgerond"
 
-  wf_new --> wf_in_progress
+  wf_new --> wf_order_send
   wf_new --> wf_closed
-  wf_in_progress --> wf_advised_prepared
-  wf_in_progress --> wf_closed
-  wf_advised_prepared --> wf_advised_create_order
-  wf_advised_create_order --> wf_order_confirmed_patient
-  wf_advised_create_order --> wf_closed
+  wf_order_send --> wf_order_confirmed_patient_wait_payment
+  wf_order_send --> wf_closed
+  wf_order_confirmed_patient_wait_payment --> wf_order_confirmed_patient_and_payed
+  wf_order_confirmed_patient_wait_payment --> wf_closed
+  wf_order_confirmed_patient_and_payed --> wf_closed
 
 }
 
@@ -85,7 +82,10 @@ state "Actie" as Actie {
 }
 note right of Actie
     Model Activity met eigen type hiervoor gebruiken?
-  end note
+end note
+note right of Lead
+    Technisch een los bord voor Hernia en Privatescan, maar nu dezelfde statussen.
+end note
 @enduml
 ....
 
@@ -97,17 +97,25 @@ Het bovenstaande datamodel beschrijft de kernentiteiten binnen de CRM-omgeving e
 === Lead lifecycle
 
 De lead vormt het startpunt van de klantreis. Zodra een nieuwe lead wordt aangemaakt:
-- krijgt deze automatisch de pipeline stage `"new"`,
-- wordt er een bijbehorende workflow gegenereerd,
-- en wordt er een eerste actie toegevoegd aan deze workflow, zoals het koppelen van een contactpersoon.
 
-Gedurende de lifecycle kan de lead door meerdere pipeline stages bewegen, bijvoorbeeld `"contacted"`, `"proposal_sent"`, `"won"` of `"lost"`. Bij elke overgang kan er automatisch een nieuwe actie of notificatie gegenereerd worden.
+* krijgt deze automatisch de pipeline stage `"no-pipeline"` toegewezen
+* Afdeling wordt bepaald op basis van de lead type ('Operatie' wordt nu Hernia en de rest Privatescan).
+* Op basis van Afdeling wordt er een nieuwe pipeline stage bepaald (zie LeadObserver), daarmee komt de lead op het bord van Hernia of Privatescan te staan.
+* en wordt er een eerste actie toegevoegd aan deze workflow, klant data bijwerken.
+
+Gedurende de lifecycle kan de lead door meerdere pipeline stages bewegen, bijvoorbeeld `"Nieuwe aanvraag kwalificeren"`, `"Klant adviseren"`, `"Klant adviseren opvolgen"`, `"won"` of `"lost"`. Bij elke overgang kan er automatisch een nieuwe actie of notificatie gegenereerd worden.
 Lead left in front office process / sales. Na bestellen, zal het een gewonnen lead zijn en zijn lifeclycle eindigen.
 Lead kan in dit gehele proces verloren gaan, bijvoorbeeld als er geen reactie komt van de klant of als de lead niet meer relevant is.
 
-=== Order lifecycle
+Bij een won eindigd de lead lifecycle en  start de backoffice workflow
 
-Elke lead kan resulteren in maximaal één order. Een order wordt doorgaans pas aangemaakt wanneer een lead in een bepaalde pipeline stage (zoals `"won"`) terechtkomt. De order is dus een natuurlijk vervolg binnen de lead-lifecycle en bevat detailinformatie over producten, bedragen en facturatie.
+=== Backoffice lifecycle
+
+Elke lead kan resulteren in maximaal één backoffice workflow. Daarmee start de medewerker met het opstellen van een order en het versturen van de order bevestiging.
+
+Deze workflow eindigd, zodra er geen actief meer liggen voor de patient. Bij Hernia zal deze nog wat langer duren met nazorg dan bij Hernia.
+
+Ook hier heeft elke afdeling hun eigen bord met hun eigen statussen. (net als bij Leads)
 
 === Workflow en acties
 
@@ -130,7 +138,7 @@ Elke actie is gekoppeld aan een pipeline stage én een workflow, en wordt gebrui
 
 ==== Samenvattend
 
-De combinatie van leads, pipeline stages, workflows en acties vormt de basis van het CRM-proces. Door dit op entiteitenniveau vast te leggen én dynamisch te laten reageren op statusveranderingen, ontstaat een flexibel en schaalbaar systeem voor klantopvolging en interne procesautomatisering.
+De combinatie van leads, pipeline stages, backoffice en acties vormt de basis van het CRM-proces. Door dit op entiteitenniveau vast te leggen én dynamisch te laten reageren op statusveranderingen, ontstaat een flexibel en schaalbaar systeem voor klantopvolging en interne procesautomatisering.
 
 
 === Email en Notificaties

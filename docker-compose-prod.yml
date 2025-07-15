@@ -87,6 +87,8 @@ services:
       - mb_traefik
     volumes:
       - n8n_data:/home/node/.n8n
+    depends_on:
+      - mysql
 
   n8n-sync:
     image: ghcr.io/privatescanbv/krayin-laravel-crm/crmsyncn8n:latest

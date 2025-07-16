@@ -133,6 +133,8 @@ services:
       - traefik.http.routers.pma.entrypoints=https
       - traefik.http.routers.pma.tls=true
       - traefik.http.routers.pma.tls.certresolver=myresolver
+      - traefik.http.routers.pma.middlewares=pma-auth
+      - traefik.http.middlewares.pma-auth.basicauth.users=admin:$$2y$$05$$13501WAPEwnZGYkGbsZ.duBZGb.C9wQYQiAqeIZM8SyAqTuAVd7Xe
       - traefik.http.services.pma.loadbalancer.server.port=80
       - traefik.docker.network=mb_traefik
     networks:

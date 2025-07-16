@@ -64,6 +64,7 @@ class EmailController extends BaseEmailController
             'schedule_from' => null,
             'schedule_to'   => null,
             'user'          => auth()->guard('user')->user(),
+            'user_id'       => auth()->guard('user')->id(), // toegevoegd voor resource
             'group'         => null,
             'participants'  => [],
             'location'      => null,

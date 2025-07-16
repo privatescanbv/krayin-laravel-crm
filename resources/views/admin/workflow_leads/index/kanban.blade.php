@@ -26,7 +26,7 @@
                 <!-- Toolbar -->
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
-                        <h2 class="text-lg font-semibold dark:text-white">Workflow Leads (Backoffice)</h2>
+                        <h2 class="text-lg font-semibold dark:text-white">Backoffice</h2>
                     </div>
                 </div>
 

@@ -546,6 +546,7 @@ return [
                 'title' => ':name',
                 'about-person' => 'Over persoon',
                 'about-organization' => 'Over organisatie',
+                'linked-leads' => 'Gekoppelde leads',
                 'activities' => [
                     'index' => [
                         'all' => 'Alles',
@@ -1716,6 +1717,8 @@ return [
             'persons' => 'Personen',
             'no-result-found' => 'Geen resultaten gevonden.',
             'users' => 'Gebruikers',
+            'is_done' => 'Voltooid',
+            'is_done-label' => '',
         ],
 
         'updated' => ':attribute bijgewerkt',
@@ -1892,8 +1895,8 @@ return [
 
            'kanban' => [
                'rotten-days' => 'Lead is al :days dagen verlopen',
-               'empty-list' => 'Je leads-lijst is leeg',
-               'empty-list-description' => 'Maak een lead aan om je doelen te organiseren.',
+               'empty-list' => '',
+               'empty-list-description' => 'Je leads-lijst is leeg',
                'create-lead-btn' => 'Lead aanmaken',
 
                'columns' => [

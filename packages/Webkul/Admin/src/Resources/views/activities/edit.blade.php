@@ -168,6 +168,24 @@
                         </v-lookup-component>
                     </x-admin::form.control-group>
 
+                    <!-- is_done Checkbox -->
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            @lang('admin::app.activities.edit.is_done')
+                        </x-admin::form.control-group.label>
+                        <input
+                            type="checkbox"
+                            name="is_done"
+                            id="is_done"
+                            value="1"
+                            {{ old('is_done', $activity->is_done) ? 'checked' : '' }}
+                            class="rounded border-gray-300 text-brandColor shadow-sm focus:border-brandColor focus:ring focus:ring-brandColor focus:ring-opacity-50"
+                        />
+                        <label for="is_done" class="ml-2 text-sm text-gray-700 dark:text-gray-200">
+                            @lang('admin::app.activities.edit.is_done-label')
+                        </label>
+                    </x-admin::form.control-group>
+
                     {!! view_render_event('admin.activities.edit.form_controls.after') !!}
                 </div>
 

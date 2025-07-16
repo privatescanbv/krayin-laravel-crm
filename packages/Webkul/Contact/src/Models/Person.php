@@ -9,6 +9,7 @@ use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
 use Webkul\Contact\Contracts\Person as PersonContract;
 use Webkul\Contact\Database\Factories\PersonFactory;
+use Webkul\Lead\Models\LeadProxy;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
 use App\Models\Address;
@@ -109,6 +110,14 @@ class Person extends Model implements PersonContract
     public function activities()
     {
         return $this->belongsToMany(ActivityProxy::modelClass(), 'person_activities');
+    }
+
+    /**
+     * Get all leads gekoppeld aan deze persoon.
+     */
+    public function leads()
+    {
+        return $this->hasMany(LeadProxy::modelClass(), 'person_id');
     }
 
     /**

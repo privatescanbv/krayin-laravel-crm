@@ -152,7 +152,7 @@ class LeadObserver
         $fieldLabels = [
             'first_name'  => 'Voornaam',
             'last_name'   => 'Achternaam',
-            'maiden_name' => 'Meisjesnaam',
+            'maiden_name' => 'Aangetrouwde naam',
             'description' => 'omschrijving',
         ];
 

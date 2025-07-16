@@ -17,7 +17,7 @@ return new class extends Migration
             [
                 'id'              => '7',
                 'code'            => 'expected_close_date',
-                'name'            => 'Expected Close Date',
+                'name'            => 'Verwachte sluitingsdatum',
                 'type'            => 'date',
                 'entity_type'     => 'leads',
                 'lookup_type'     => null,

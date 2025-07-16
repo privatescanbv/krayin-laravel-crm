@@ -29,7 +29,7 @@
                     <div class="mt-1 text-gray-900 dark:text-gray-100">{{ $lead->last_name ?? '-' }}</div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">@lang('Meisjesnaam')</label>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-200">@lang('Aangetrouwde naam')</label>
                     <div class="mt-1 text-gray-900 dark:text-gray-100">{{ $lead->maiden_name ?? '-' }}</div>
                 </div>
             </div>

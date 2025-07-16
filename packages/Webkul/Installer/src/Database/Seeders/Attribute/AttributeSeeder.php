@@ -39,7 +39,7 @@ class AttributeSeeder extends Seeder
              */
            [
                 'code' => 'user_id',
-                'name' => trans('installer::app.seeders.attributes.leads.sales-owner', [], $defaultLocale),
+                'name' => 'Verkoop Eigenaar',
                 'type' => 'select',
                 'entity_type' => 'leads',
                 'lookup_type' => 'users',
@@ -53,7 +53,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'expected_close_date',
-                'name' => trans('installer::app.seeders.attributes.leads.expected-close-date', [], $defaultLocale),
+                'name' => 'Verwachte sluitingsdatum',
                 'type' => 'date',
                 'entity_type' => 'leads',
                 'lookup_type' => null,
@@ -99,7 +99,7 @@ class AttributeSeeder extends Seeder
              */
              [
                 'code' => PersonAttributeKeys::USER_ID->value,
-                'name' => trans('installer::app.seeders.attributes.persons.sales-owner', [], $defaultLocale),
+                'name' => 'Contactpersoon',
                 'type' => 'lookup',
                 'entity_type' => 'persons',
                 'lookup_type' => 'users',
@@ -113,7 +113,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => PersonAttributeKeys::ORGANIZATION_ID->value,
-                'name' => trans('installer::app.seeders.attributes.persons.organization', [], $defaultLocale),
+                'name' => 'Organisatie',
                 'type' => 'lookup',
                 'entity_type' => 'persons',
                 'lookup_type' => 'organizations',
@@ -132,7 +132,7 @@ class AttributeSeeder extends Seeder
              */
             [
                 'code' => 'name',
-                'name' => trans('installer::app.seeders.attributes.organizations.name', [], $defaultLocale),
+                'name' => 'Naam',
                 'type' => 'text',
                 'entity_type' => 'organizations',
                 'lookup_type' => null,
@@ -146,7 +146,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'address',
-                'name' => trans('installer::app.seeders.attributes.organizations.address', [], $defaultLocale),
+                'name' => 'Adres',
                 'type' => 'address',
                 'entity_type' => 'organizations',
                 'lookup_type' => null,
@@ -160,7 +160,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'user_id',
-                'name' => trans('installer::app.seeders.attributes.organizations.sales-owner', [], $defaultLocale),
+                'name' => 'Contactpersoon',
                 'type' => 'lookup',
                 'entity_type' => 'organizations',
                 'lookup_type' => 'users',
@@ -179,7 +179,7 @@ class AttributeSeeder extends Seeder
              */
             [
                 'code' => 'name',
-                'name' => trans('installer::app.seeders.attributes.products.name', [], $defaultLocale),
+                'name' => 'Naam',
                 'type' => 'text',
                 'entity_type' => 'products',
                 'lookup_type' => null,
@@ -193,7 +193,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'description',
-                'name' => trans('installer::app.seeders.attributes.products.description', [], $defaultLocale),
+                'name' => 'Omschrijving',
                 'type' => 'textarea',
                 'entity_type' => 'products',
                 'lookup_type' => null,
@@ -221,7 +221,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'quantity',
-                'name' => trans('installer::app.seeders.attributes.products.quantity', [], $defaultLocale),
+                'name' => 'Aantal',
                 'type' => 'text',
                 'entity_type' => 'products',
                 'lookup_type' => null,
@@ -235,7 +235,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'price',
-                'name' => trans('installer::app.seeders.attributes.products.price', [], $defaultLocale),
+                'name' => 'Prijs',
                 'type' => 'price',
                 'entity_type' => 'products',
                 'lookup_type' => null,
@@ -254,7 +254,7 @@ class AttributeSeeder extends Seeder
              */
             [
                 'code' => 'user_id',
-                'name' => trans('installer::app.seeders.attributes.quotes.sales-owner', [], $defaultLocale),
+                'name' => 'Verkoop Eigenaar',
                 'type' => 'select',
                 'entity_type' => 'quotes',
                 'lookup_type' => 'users',
@@ -268,7 +268,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'subject',
-                'name' => trans('installer::app.seeders.attributes.quotes.subject', [], $defaultLocale),
+                'name' => 'Onderwerp',
                 'type' => 'text',
                 'entity_type' => 'quotes',
                 'lookup_type' => null,
@@ -282,7 +282,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'description',
-                'name' => trans('installer::app.seeders.attributes.quotes.description', [], $defaultLocale),
+                'name' => 'Omschrijving',
                 'type' => 'textarea',
                 'entity_type' => 'quotes',
                 'lookup_type' => null,
@@ -296,7 +296,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'billing_address',
-                'name' => trans('installer::app.seeders.attributes.quotes.billing-address', [], $defaultLocale),
+                'name' => 'Facturatie Adres',
                 'type' => 'address',
                 'entity_type' => 'quotes',
                 'lookup_type' => null,
@@ -310,7 +310,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'shipping_address',
-                'name' => trans('installer::app.seeders.attributes.quotes.shipping-address', [], $defaultLocale),
+                'name' => 'Verzend Adres',
                 'type' => 'address',
                 'entity_type' => 'quotes',
                 'lookup_type' => null,
@@ -324,7 +324,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'discount_percent',
-                'name' => trans('installer::app.seeders.attributes.quotes.discount-percent', [], $defaultLocale),
+                'name' => 'Korting Percentage',
                 'type' => 'text',
                 'entity_type' => 'quotes',
                 'lookup_type' => null,
@@ -338,7 +338,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'discount_amount',
-                'name' => trans('installer::app.seeders.attributes.quotes.discount-amount', [], $defaultLocale),
+                'name' => 'Korting Bedrag',
                 'type' => 'price',
                 'entity_type' => 'quotes',
                 'lookup_type' => null,
@@ -352,7 +352,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'tax_amount',
-                'name' => trans('installer::app.seeders.attributes.quotes.tax-amount', [], $defaultLocale),
+                'name' => 'BTW Bedrag',
                 'type' => 'price',
                 'entity_type' => 'quotes',
                 'lookup_type' => null,
@@ -366,7 +366,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'adjustment_amount',
-                'name' => trans('installer::app.seeders.attributes.quotes.adjustment-amount', [], $defaultLocale),
+                'name' =>' Aanpassing Bedrag',
                 'type' => 'price',
                 'entity_type' => 'quotes',
                 'lookup_type' => null,
@@ -380,7 +380,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'sub_total',
-                'name' => trans('installer::app.seeders.attributes.quotes.sub-total', [], $defaultLocale),
+                'name' => 'Sub Totaal',
                 'type' => 'price',
                 'entity_type' => 'quotes',
                 'lookup_type' => null,
@@ -394,7 +394,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'grand_total',
-                'name' => trans('installer::app.seeders.attributes.quotes.grand-total', [], $defaultLocale),
+                'name' => 'Totaal',
                 'type' => 'price',
                 'entity_type' => 'quotes',
                 'lookup_type' => null,
@@ -408,7 +408,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'expired_at',
-                'name' => trans('installer::app.seeders.attributes.quotes.expired-at', [], $defaultLocale),
+                'name' => 'Vervaldatum',
                 'type' => 'date',
                 'entity_type' => 'quotes',
                 'lookup_type' => null,
@@ -422,7 +422,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'person_id',
-                'name' => trans('installer::app.seeders.attributes.quotes.person', [], $defaultLocale),
+                'name' => 'Persoon',
                 'type' => 'lookup',
                 'entity_type' => 'quotes',
                 'lookup_type' => 'persons',
@@ -441,7 +441,7 @@ class AttributeSeeder extends Seeder
              */
             [
                 'code' => 'name',
-                'name' => trans('installer::app.seeders.attributes.warehouses.name'),
+                'name' => 'Naam',
                 'type' => 'text',
                 'entity_type' => 'warehouses',
                 'lookup_type' => null,
@@ -455,7 +455,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'description',
-                'name' => trans('installer::app.seeders.attributes.warehouses.description'),
+                'name' => 'Omschrijving',
                 'type' => 'textarea',
                 'entity_type' => 'warehouses',
                 'lookup_type' => null,
@@ -469,7 +469,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'contact_name',
-                'name' => trans('installer::app.seeders.attributes.warehouses.contact-name'),
+                'name' => 'Contact Naam',
                 'type' => 'text',
                 'entity_type' => 'warehouses',
                 'lookup_type' => null,
@@ -483,7 +483,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'contact_emails',
-                'name' => trans('installer::app.seeders.attributes.warehouses.contact-emails'),
+                'name' => 'Contact E-mails',
                 'type' => 'email',
                 'entity_type' => 'warehouses',
                 'lookup_type' => null,
@@ -497,7 +497,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'contact_numbers',
-                'name' => trans('installer::app.seeders.attributes.warehouses.contact-numbers'),
+                'name' => 'Contact Telefoonnummers',
                 'type' => 'phone',
                 'entity_type' => 'warehouses',
                 'lookup_type' => null,
@@ -511,7 +511,7 @@ class AttributeSeeder extends Seeder
                 'updated_at' => $now,
             ], [
                 'code' => 'contact_address',
-                'name' => trans('installer::app.seeders.attributes.warehouses.contact-address'),
+                'name' => 'Contact Adres',
                 'type' => 'address',
                 'entity_type' => 'warehouses',
                 'lookup_type' => null,

@@ -38,7 +38,7 @@
 
                 {!! view_render_event('admin.contact.persons.view.tags.after', ['person' => $person]) !!}
 
-                
+
                 <!-- Title -->
                 <div class="mb-4 flex flex-col gap-0.5">
                     {!! view_render_event('admin.contact.persons.view.title.before', ['person' => $person]) !!}
@@ -53,7 +53,7 @@
 
                     {!! view_render_event('admin.contact.persons.view.title.after', ['person' => $person]) !!}
                 </div>
-                
+
                 <!-- Activity Actions -->
                 <div class="flex flex-wrap gap-2">
                     {!! view_render_event('admin.contact.persons.view.actions.before', ['person' => $person]) !!}
@@ -96,13 +96,13 @@
         {!! view_render_event('admin.contact.persons.view.left.after', ['person' => $person]) !!}
 
         <!-- Right Panel -->
-        <div class="flex w-full flex-col gap-4 rounded-lg">
-            {!! view_render_event('admin.contact.persons.view.right.before', ['person' => $person]) !!}
-
-            <!-- Stages Navigation -->
-            <x-admin::activities :endpoint="route('admin.contacts.persons.activities.index', $person->id)" />
-
-            {!! view_render_event('admin.contact.persons.view.right.after', ['person' => $person]) !!}
+        <div class="flex w-full flex-row gap-4 rounded-lg">
+            <div class="flex-1">
+                <x-admin::activities :endpoint="route('admin.contacts.persons.activities.index', $person->id)" />
+            </div>
+            <div class="flex-1">
+                <x-admin::leads :leads="$person->leads" />
+            </div>
         </div>
     </div>
 </x-admin::layouts>

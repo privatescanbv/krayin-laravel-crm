@@ -95,92 +95,29 @@
                                             class="flex flex-col gap-1"
                                             v-if="activity.title"
                                         >
-                                            <p class="flex flex-wrap items-center gap-1 font-medium dark:text-white">
+                                            <a
+                                                class="flex flex-wrap items-center gap-1 font-medium dark:text-white hover:underline cursor-pointer"
+                                                :href="'{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity.id)"
+                                            >
                                                 @{{ activity.title }}
 
                                                 <span v-if="activity.is_done === 1" class="ml-2 inline-block bg-green-100 text-green-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">Afgerond</span>
                                                 <span v-else class="ml-2 inline-block bg-yellow-100 text-yellow-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">Open</span>
+                                            </a>
 
-                                                <template v-if="activity.type == 'system' && activity.additional">
-                                                    <p class="flex items-center gap-1">
-                                                        <span>:</span>
+                                            <template v-if="activity.type == 'system' && activity.additional">
+                                                <p class="flex items-center gap-1">
+                                                    <span>:</span>
 
-                                                        <span class="break-words">
-                                                            @{{ (activity.additional.old.label ? String(activity.additional.old.label).replaceAll('<br>', ' ') : "@lang('admin::app.components.activities.index.empty')") }}
-                                                        </span>
-
-                                                        <span class="icon-stats-up rotate-90 text-xl"></span>
-
-                                                        <span class="break-words">
-                                                            @{{ (activity.additional.new.label ? String(activity.additional.new.label).replaceAll('<br>', ' ') : "@lang('admin::app.components.activities.index.empty')") }}
-                                                        </span>
-                                                    </p>
-                                                </template>
-                                            </p>
-
-                                            <template v-if="activity.type == 'email'">
-                                                <p class="dark:text-white">
-                                                    @lang('admin::app.components.activities.index.from'):
-
-                                                    @{{ activity.additional.from }}
-                                                </p>
-
-                                                <p class="dark:text-white">
-                                                    @lang('admin::app.components.activities.index.to'):
-
-                                                    @{{ activity.additional.to.join(', ') }}
-                                                </p>
-
-                                                <p
-                                                    v-if="activity.additional.cc"
-                                                    class="dark:text-white"
-                                                >
-                                                    @lang('admin::app.components.activities.index.cc'):
-
-                                                    @{{ activity.additional.cc.join(', ') }}
-                                                </p>
-
-                                                <p
-                                                    v-if="activity.additional.bcc"
-                                                    class="dark:text-white"
-                                                >
-                                                    @lang('admin::app.components.activities.index.bcc'):
-
-                                                    @{{ activity.additional.bcc.join(', ') }}
-                                                </p>
-                                            </template>
-
-                                            <template v-else>
-                                                <!-- Activity Schedule -->
-                                                <p
-                                                    v-if="activity.schedule_from && activity.schedule_from"
-                                                    class="dark:text-white"
-                                                >
-                                                    @lang('admin::app.components.activities.index.scheduled-on'):
-
-                                                    @{{ $admin.formatDate(activity.schedule_from, 'd MMM yyyy, h:mm A', timezone) + ' - ' + $admin.formatDate(activity.schedule_to, 'd MMM yyyy, h:mm A', timezone) }}
-                                                </p>
-
-                                                <!-- Activity Participants -->
-                                                <p
-                                                    v-if="activity.participants?.length"
-                                                    class="dark:text-white"
-                                                >
-                                                    @lang('admin::app.components.activities.index.participants'):
-
-                                                    <span class="after:content-[',_'] last:after:content-['']" v-for="(participant, index) in activity.participants">
-                                                        @{{ participant.user?.name ?? participant.person.name }}
+                                                    <span class="break-words">
+                                                        @{{ (activity.additional.old.label ? String(activity.additional.old.label).replaceAll('<br>', ' ') : "@lang('admin::app.components.activities.index.empty')") }}
                                                     </span>
-                                                </p>
 
-                                                <!-- Activity Location -->
-                                                <p
-                                                    v-if="activity.location"
-                                                    class="dark:text-white"
-                                                >
-                                                    @lang('admin::app.components.activities.index.location'):
+                                                    <span class="icon-stats-up rotate-90 text-xl"></span>
 
-                                                    @{{ activity.location }}
+                                                    <span class="break-words">
+                                                        @{{ (activity.additional.new.label ? String(activity.additional.new.label).replaceAll('<br>', ' ') : "@lang('admin::app.components.activities.index.empty')") }}
+                                                    </span>
                                                 </p>
                                             </template>
                                         </div>

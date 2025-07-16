@@ -26,7 +26,7 @@ class ActivityDataGrid extends DataGrid
                 'leads.id as lead_id',
                 'leads.title as lead_title',
                 'leads.lead_pipeline_id',
-                'users.id as created_by_id',
+                'users.id as assigned_user_id',
                 'users.name as created_by',
                 'groups.name as group_name',
             )
@@ -54,9 +54,10 @@ class ActivityDataGrid extends DataGrid
 
         $this->addFilter('id', 'activities.id');
         $this->addFilter('title', 'activities.title');
+        $this->addFilter('is_done', 'activities.is_done');
         $this->addFilter('schedule_from', 'activities.schedule_from');
         $this->addFilter('created_by', 'users.name');
-        $this->addFilter('created_by_id', 'users.name');
+        $this->addFilter('assigned_user_id', 'users.name');
         $this->addFilter('created_at', 'activities.created_at');
         $this->addFilter('lead_title', 'leads.title');
         $this->addFilter('group', 'activities.group_id');
@@ -79,12 +80,28 @@ class ActivityDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'            => 'is_done',
-            'label'            => trans('admin::app.activities.index.datagrid.is_done'),
-            'type'             => 'string',
+            'index' => 'is_done',
+            'label' => trans('admin::app.activities.index.datagrid.is_done'),
+            'type' => 'string',
             'dropdown_options' => $this->getBooleanDropdownOptions('yes_no'),
-            'searchable'       => false,
-            'closure'          => fn ($row) => view('admin::activities.datagrid.is-done', compact('row'))->render(),
+            'searchable' => false,
+            'filterable' => true,
+            'filterable_type'  => 'dropdown', // <-- gewone dropdown, niet searchable
+            'filterable_options' => [
+                [
+                    'label' => 'Alles',
+                    'value' => '',
+                ],
+                [
+                    'label' => 'Afgerond',
+                    'value' => '1',
+                ],
+                [
+                    'label' => 'Open',
+                    'value' => '0',
+                ],
+            ],
+            'closure' => fn($row) => view('admin::activities.datagrid.is-done', compact('row'))->render(),
         ]);
 
         $this->addColumn([
@@ -97,8 +114,8 @@ class ActivityDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'              => 'created_by_id',
-            'label'              => trans('admin::app.activities.index.datagrid.created_by'),
+            'index'              => 'assigned_user_id',
+            'label'              => trans('admin::app.activities.index.datagrid.assigned_to'),
             'type'               => 'string',
             'searchable'         => false,
             'sortable'           => true,
@@ -112,7 +129,7 @@ class ActivityDataGrid extends DataGrid
                 ],
             ],
             'closure'    => function ($row) {
-                $route = urldecode(route('admin.settings.users.index', ['id[eq]' => $row->created_by_id]));
+                $route = urldecode(route('admin.settings.users.index', ['id[eq]' => $row->assigned_user_id]));
 
                 return "<a class='text-brandColor hover:underline' href='".$route."'>".$row->created_by.'</a>';
             },

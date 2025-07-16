@@ -113,7 +113,7 @@
                                     <div class="row grid grid-cols-[.3fr_.1fr_.3fr_.5fr] grid-rows-1 items-center gap-x-2.5 border-b px-4 py-2.5 dark:border-gray-800 max-lg:hidden">
                                         <div
                                             class="flex select-none items-center gap-2.5"
-                                            v-for="(columnGroup, index) in [['id', 'title', 'created_by_id'], ['is_done'], ['comment', 'lead_title', 'type', 'group'], ['schedule_from', 'schedule_to']]"
+                                            v-for="(columnGroup, index) in [['title', 'assigned_user_id'], ['is_done'], ['comment', 'lead_title', 'type'], ['schedule_from', 'schedule_to']]"
                                         >
                                             <label
                                                 class="flex w-max cursor-pointer select-none items-center gap-1"
@@ -271,18 +271,15 @@
                                             ></label>
 
                                             <div class="flex flex-col gap-1.5">
-                                                <p class="text-gray-600 dark:text-gray-300">
-                                                    @{{ record.id }}
-                                                </p>
+{{--                                                <p class="text-gray-600 dark:text-gray-300">--}}
+{{--                                                    @{{ record.id }}--}}
+{{--                                                </p>--}}
 
                                                 <p class="text-gray-600 dark:text-gray-300">
                                                     @{{ record.title }}
                                                 </p>
-
-                                                <p
-                                                    class="text-gray-600 dark:text-gray-300"
-                                                    v-html="record.created_by_id"
-                                                >
+                                                <p class="text-gray-600 dark:text-gray-300"
+                                                    v-html="record.assigned_user_id">
                                                 </p>
                                             </div>
                                         </div>
@@ -302,7 +299,6 @@
                                         <div class="flex gap-1.5">
                                             <div class="flex flex-col gap-1.5">
                                                 <p class="text-gray-600 dark:text-gray-300">
-                                                    {{-- @{{ record.comment }} --}}
                                                     @{{ record.comment && record.comment.length > 180 ? record.comment.slice(0, 180) + '...' : record.comment }}
                                                 </p>
 
@@ -312,7 +308,7 @@
                                                     @{{ record.type ?? 'N/A'}}
                                                 </p>
 
-                                                <p class="text-gray-600 dark:text-gray-300" v-html="record.group"></p>
+{{--                                                <p class="text-gray-600 dark:text-gray-300" v-html="record.group"></p>--}}
 
                                             </div>
                                         </div>
@@ -326,6 +322,7 @@
 {{--                                                <p class="text-gray-600 dark:text-gray-300">--}}
 {{--                                                    @{{ record.created_at }}--}}
 {{--                                                </p>--}}
+
                                             </div>
 
                                             <div class="flex items-center gap-1.5">
@@ -341,6 +338,14 @@
                                                         @click="performAction(action)"
                                                     ></span>
                                                 </p>
+                                                <button
+                                                    v-if="!record.user_id"
+                                                    class="ml-2 px-2 py-1 rounded bg-blue-500 text-white text-xs hover:bg-blue-600"
+                                                    @click="assignToMe(record)"
+                                                >
+                                                    Aan mij toekennen
+                                                </button>
+                                                <span v-else class="ml-2 text-xs text-green-700"></span>
                                             </div>
                                         </div>
                                     </div>
@@ -474,10 +479,27 @@
                 data() {
                     return {
                         viewType: '{{ request('view-type') }}' || 'table',
-                        activeGroupFilter: null,
+                        activeGroupFilter: '1', // Standaard op 'Privatescan'
+                        defaultFiltersApplied: false,
+                        appliedIsDoneFilter: '',
                     };
                 },
-
+                mounted() {
+                    // Standaard filter: alleen niet-afgeronde activiteiten
+                    if (!this.defaultFiltersApplied) {
+                        this.$nextTick(() => {
+                            if (this.$refs.datagrid) {
+                                this.$refs.datagrid.filter({
+                                    columns: [
+                                        { index: 'is_done', value: [0] },
+                                        { index: 'group', value: this.activeGroupFilter }
+                                    ]
+                                });
+                                this.defaultFiltersApplied = true;
+                            }
+                        });
+                    }
+                },
                 methods: {
                     /**
                      * Toggle view type.
@@ -519,7 +541,8 @@
                         // Apply the filters using the correct method
                         if (this.activeGroupFilter) {
                             datagrid.filter({
-                                columns: [{
+                                columns: [
+                                    { index: 'is_done', value: [0] },{
                                     index: 'group',
                                     value: this.activeGroupFilter
                                 }]
@@ -530,6 +553,30 @@
                                 columns: []
                             });
                         }
+                    },
+                    onIsDoneFilterChange(event) {
+                        const value = event.target.value;
+                        this.appliedIsDoneFilter = value;
+                        if (this.$refs.datagrid) {
+                            this.$refs.datagrid.filter({
+                                columns: value === '' ? [] : [
+                                    { index: 'is_done', value: [parseInt(value)] }
+                                ]
+                            });
+                        }
+                    },
+                    assignToMe(record) {
+                        if (!record.id) return;
+                        this.$axios.put(`/admin/activities/edit/${record.id}`, {
+                            user_id: {{ auth()->guard('user')->id() ?? 'null' }}
+                        })
+                        .then(response => {
+                            record.user_id = response.data.data.user_id;
+                            record.user = response.data.data.user;
+                        })
+                        .catch(error => {
+                            this.$emitter.emit('add-flash', { type: 'error', message: 'Kon niet toekennen: ' + (error.response?.data?.message || error.message) });
+                        });
                     },
                 },
             });

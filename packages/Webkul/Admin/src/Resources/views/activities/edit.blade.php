@@ -109,7 +109,7 @@
                         </x-admin::form.control-group.label>
 
                         <!-- Participants Multi lookup Vue Component -->
-                        <v-multi-lookup-component>
+                        <v-multi-lookup-component :only-users="true">
                             <div
                                 class="relative rounded border border-gray-200 px-2 py-1 hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:hover:border-gray-400 dark:focus:border-gray-400"
                                 role="button"
@@ -273,7 +273,7 @@
                 <div class="relative rounded border border-gray-200 px-2 py-1 hover:border-gray-400 focus:border-gray-400 dark:border-gray-800" role="button">
                     <ul class="flex flex-wrap items-center gap-1">
                         <!-- Added Participants -->
-                        <template v-for="userType in ['users', 'persons']">
+                        <template v-for="userType in ['users']">
                             <template v-if="! addedParticipants[userType].length">
                                 <input
                                     type="hidden"
@@ -316,7 +316,7 @@
 
                     <!-- Search and Spinner Icon -->
                     <div>
-                        <template v-if="! isSearching.users && ! isSearching.persons">
+                        <template v-if="! isSearching.users">
                             <span
                                 class="absolute top-1.5 text-2xl ltr:right-1.5 rtl:left-1.5"
                                 :class="[searchTerm.length >= 2 ? 'icon-up-arrow' : 'icon-down-arrow']"
@@ -338,7 +338,7 @@
                         <!-- Users and Person Searched Participants -->
                         <li
                             class="flex flex-col gap-2"
-                            v-for="userType in ['users', 'persons']"
+                            v-for="userType in ['users']"
                         >
                             <h3 class="text-sm font-bold text-gray-600 dark:text-gray-400">
                                 <template v-if="userType === 'users'">
@@ -378,32 +378,31 @@
             app.component('v-multi-lookup-component', {
                 template: '#v-multi-lookup-component-template',
 
+                props: {
+                    onlyUsers: {
+                        type: Boolean,
+                        default: false,
+                    },
+                },
+
                 data() {
                     return {
                         isSearching: {
                             users: false,
-
-                            persons: false,
                         },
 
                         searchTerm: '',
 
                         addedParticipants: {
                             users: [],
-
-                            persons: [],
                         },
 
                         searchedParticipants: {
                             users: [],
-
-                            persons: [],
                         },
 
                         searchEnpoints: {
                             users: "{{ route('admin.settings.users.search') }}",
-
-                            persons: "{{ route('admin.contacts.persons.search') }}",
                         },
                     };
                 },
@@ -411,8 +410,7 @@
                 watch: {
                     searchTerm(newVal, oldVal) {
                         this.search('users');
-
-                        this.search('persons');
+                        // Alleen users zoeken
                     },
                 },
 
@@ -420,58 +418,51 @@
                     @json($activity->participants).forEach(participant => {
                         if (participant.user) {
                             this.addedParticipants.users.push(participant.user);
-                        } else if (participant.person) {
-                            this.addedParticipants.persons.push(participant.person);
                         }
                     });
                 },
 
                 methods: {
                     search(userType) {
+                        if (userType !== 'users') return;
                         if (this.searchTerm.length <= 1) {
-                            this.searchedParticipants[userType] = [];
-
-                            this.isSearching[userType] = false;
-
+                            this.searchedParticipants.users = [];
+                            this.isSearching.users = false;
                             return;
                         }
 
-                        this.isSearching[userType] = true;
+                        this.isSearching.users = true;
 
-                        this.$axios.get(this.searchEnpoints[userType], {
+                        this.$axios.get(this.searchEnpoints.users, {
                                 params: {
                                     search: 'name:' + this.searchTerm,
                                     searchFields: 'name:like',
                                 }
                             })
                             .then ((response) => {
-                                this.addedParticipants[userType].forEach(addedParticipant =>
+                                this.addedParticipants.users.forEach(addedParticipant =>
                                     response.data.data = response.data.data.filter(participant => participant.id !== addedParticipant.id)
                                 );
 
-                                this.searchedParticipants[userType] = response.data.data;
+                                this.searchedParticipants.users = response.data.data;
 
-                                this.isSearching[userType] = false;
+                                this.isSearching.users = false;
                             })
                             .catch (function (error) {
-                                this.isSearching[userType] = false;
+                                this.isSearching.users = false;
                             });
                     },
 
                     add(userType, participant) {
-                        this.addedParticipants[userType].push(participant);
-
+                        if (userType !== 'users') return;
+                        this.addedParticipants.users.push(participant);
                         this.searchTerm = '';
-
-                        this.searchedParticipants = {
-                            users: [],
-
-                            persons: [],
-                        };
+                        this.searchedParticipants = { users: [] };
                     },
 
                     remove(userType, participant) {
-                        this.addedParticipants[userType] = this.addedParticipants[userType].filter(addedParticipant =>
+                        if (userType !== 'users') return;
+                        this.addedParticipants.users = this.addedParticipants.users.filter(addedParticipant =>
                             addedParticipant.id !== participant.id
                         );
                     },

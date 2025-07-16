@@ -1755,6 +1755,7 @@ return [
                 'task'       => 'Task',
                 'lunch'         => 'Lunch',
                 'group'         => 'Group',
+                'assigned_to'  => 'Assigned To',
             ],
         ],
 

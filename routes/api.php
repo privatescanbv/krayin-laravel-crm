@@ -32,7 +32,7 @@ Route::prefix('leads')->group(function () {
     Route::post('{leadId}/notes', [LeadNoteController::class, 'store']);
 
     // Lead activities
-    Route::post('{id}/activities', [ActivityController::class, 'store']);
+    Route::post('{id}/activities', [ActivityController::class, 'store'])->name('admin.leads.activities.store');
     Route::get('{id}/activities', [ActivityController::class, 'index']);
 });
 

@@ -107,7 +107,6 @@ class ActivityController extends Controller
 
         $activity = $this->activityRepository->create(array_merge(request()->all(), [
             'is_done' => request('type') == 'note' ? 1 : 0,
-            'user_id' => auth()->guard('user')->user()->id,
         ]));
 
         Event::dispatch('activity.create.after', $activity);
@@ -148,7 +147,6 @@ class ActivityController extends Controller
         Event::dispatch('activity.update.before', $id);
 
         $data = request()->all();
-
         $activity = $this->activityRepository->update($data, $id);
 
         /**

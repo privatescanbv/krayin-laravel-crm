@@ -43,25 +43,12 @@ class ActivityController extends Controller
             'schedule_to' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
             'file' => 'required_if:type,file',
         ]);
-
+        $request['comment'] = $request->description;
         $lead = $this->leadRepository->findOrFail($id);
-
-        $userId = $request->user_id;
-        if (is_null($userId)) {
-            // Get the first user as fallback for API requests
-            $user = auth()->guard('user')->user() ?? User::query()->first();
-
-            if (!$user) {
-                return response()->json([
-                    'message' => 'No user found',
-                ], 500);
-            }
-            $userId = $user->id;
-        }
 
         $activity = $this->activityRepository->create(array_merge($request->all(), [
             'is_done' => $request->type == 'note' ? 1 : 0,
-            'user_id' => $userId,
+            'user_id' => $request->user_id,
         ]));
 
         $lead->activities()->attach($activity->id);

@@ -25,8 +25,20 @@ class Email extends Mailable
      */
     public function build()
     {
-        $this->from($this->email->from)
-            ->to($this->email->reply_to)
+        $from = $this->email->from;
+        $name = auth()->guard('user')->user()->name ?? 'Privatescan medewerker';
+
+        // Als from een array is (oude situatie)
+        if (is_array($from)) {
+            $email = array_key_first($from);
+            $name = $from[$email] ?? $name;
+            $this->from($email, $name);
+        } else {
+            // from is string (nieuwe situatie)
+            $this->from($from, $name);
+        }
+
+        $this->to($this->email->reply_to)
             ->replyTo($this->email->parent_id ? $this->email->parent->unique_id : $this->email->unique_id)
             ->cc($this->email->cc ?? [])
             ->bcc($this->email->bcc ?? [])

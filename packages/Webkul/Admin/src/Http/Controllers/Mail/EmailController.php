@@ -111,6 +111,11 @@ class EmailController extends Controller
 
         $email = $this->emailRepository->create(request()->all());
 
+        $currentUserName = auth()->guard('user')->user()->name ?? 'Privatescan medewerker';
+//        $currentUserNameemail['from'] = [$email['from'] => $currentUserName];
+        logger()->info('Email created', [
+            'email' => $email,
+        ]);
         if (! request('is_draft')) {
             try {
                 Mail::send(new Email($email));

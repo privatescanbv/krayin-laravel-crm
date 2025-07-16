@@ -60,8 +60,17 @@ delete from shared_workflow;
 zie mailserver in docker-compose.yml.
 
 1. User aanmaken in de mailserver:
-   - docker run --rm -v "$(pwd)/docker/config":/tmp/docker-mailserver \
-mailserver/docker-mailserver setup email add user1@test.local test1234
+   * docker run --rm -v "$(pwd)/docker/config":/tmp/docker-mailserver \
+      mailserver/docker-mailserver setup email add user1@test.local test1234
+   * docker run --rm -v "$(pwd)/docker/config":/tmp/docker-mailserver \
+      mailserver/docker-mailserver setup email add privatescan@test.local test1234
 2. rainbow config aanpassen (na opstarten):
-    - http://localhost:8888/?admin
+    * http://localhost:8888/?admin
 
+image::rainbow_config.png[]
+
+3 CRM mail binnen halen is (voor nu) handmatig te doen. Door dit commmando te draaien:
+
+----
+sail artisan inbound-emails:process
+----

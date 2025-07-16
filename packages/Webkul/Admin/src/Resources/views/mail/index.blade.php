@@ -674,22 +674,19 @@
                     },
         
                     editModal(row) {
-                        if(row.title == 'View') {
+                        // Als het geen draft is, ga naar de view-pagina
+                        if (!row.is_draft) {
                             window.location.href = row.url;
-        
                             return;
                         }
-        
+
+                        // Alleen voor drafts: open compose-modal
                         this.$axios.get(row.url)
                             .then(response => {
-                                this.draft = response.data.data;
-        
+                                this.draft = response.data;
                                 this.$refs.toggleComposeModal.toggle();
-        
                                 this.showCC = this.draft.cc.length > 0;
-        
                                 this.showBCC = this.draft.bcc.length > 0;
-        
                             })
                             .catch(error => {});
                     },

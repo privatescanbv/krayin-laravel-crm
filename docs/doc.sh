@@ -10,6 +10,7 @@ asciidoctor \
   -a imagesoutdir=html/resources \
   index.adoc && \
 cp  ./modules/functional_design/pages/*.png ./html/resources | true &&
+cp ./modules/technology_stack/pages/*.png ./html/resources | true &&
 cp  ./*.svg ./html/resources | true &&
 cp  ./mb.css ./html/ | true
 

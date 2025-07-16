@@ -114,6 +114,7 @@ services:
       - ./docker/config/:/tmp/docker-mailserver/
     ports:
       - "1025:25"     # SMTP inkomend (van Laravel)
+      - "587:587"     # SMTP met AUTH (voor RainLoop)
       - "993:993"     # IMAPS voor Webklex of mailclient
     restart: always
     cap_add:

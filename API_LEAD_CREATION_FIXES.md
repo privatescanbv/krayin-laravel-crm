@@ -22,7 +22,7 @@ Lead creation via API was failing with internal server error when anamnesis auto
 ## Fixes Applied
 
 ### 1. Database Migration
-**File:** `database/migrations/2025_01_17_000000_make_anamnesis_created_by_nullable.php`
+**File:** `database/migrations/2025_07_17_220000_make_anamnesis_created_by_nullable.php`
 - Created migration to make `created_by` field nullable
 - This allows setting it to null instead of forcing a UUID
 
@@ -58,7 +58,7 @@ try {
         'id' => \Illuminate\Support\Str::uuid(),
         'lead_id' => $lead->id,
         'name' => 'Anamnesis voor ' . $lead->title,
-        'created_by' => null, // Set to null to avoid UUID issues
+        'created_by' => \Illuminate\Support\Str::uuid(), // Generate UUID for created_by since it's required
         'user_id' => $currentUserId,
         'created_at' => now(),
         'updated_at' => now(),
@@ -96,6 +96,8 @@ Run the migration to make the `created_by` field nullable:
 ```bash
 php artisan migrate
 ```
+
+**Note**: If migration cannot be run immediately, the code now generates UUIDs for the `created_by` field as a fallback solution.
 
 ## Error Monitoring
 - Added comprehensive error logging for anamnesis creation failures

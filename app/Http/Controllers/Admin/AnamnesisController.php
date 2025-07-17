@@ -82,7 +82,7 @@ class AnamnesisController extends Controller
             'opm_advies_c' => 'nullable|string',
         ]);
 
-        $data['updated_by'] = auth()->id();
+        $data['updated_by'] = null; // Set to null since it's UUID field
         $data['updated_at'] = now();
 
         $anamnesis->update($data);

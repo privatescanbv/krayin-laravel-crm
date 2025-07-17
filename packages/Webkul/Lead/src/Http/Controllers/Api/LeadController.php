@@ -89,6 +89,18 @@ class LeadController extends Controller
             'department_id' => $departmentId
         ]);
 
+        // Convert single email to emails array format expected by the admin controller
+        if (isset($leadData['email']) && !isset($leadData['emails'])) {
+            $leadData['emails'] = [
+                [
+                    'value' => $leadData['email'],
+                    'label' => 'work',
+                    'is_default' => true
+                ]
+            ];
+            unset($leadData['email']);
+        }
+
         // Set the data via the request
         foreach ($leadData as $key => $value) {
             request()->request->add([$key => $value]);

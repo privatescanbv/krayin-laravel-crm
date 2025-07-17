@@ -190,15 +190,26 @@ class LeadRepository extends Repository
         }
 
         // Always create an anamnesis for new leads
-        \App\Models\Anamnesis::create([
-            'id' => \Illuminate\Support\Str::uuid(),
-            'lead_id' => $lead->id,
-            'name' => 'Anamnesis voor ' . $lead->title,
-            'created_by' => auth()->id(),
-            'user_id' => auth()->id(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $currentUserId = auth()->id() ?? $lead->user_id ?? 1;
+        
+        try {
+            \App\Models\Anamnesis::create([
+                'id' => \Illuminate\Support\Str::uuid(),
+                'lead_id' => $lead->id,
+                'name' => 'Anamnesis voor ' . $lead->title,
+                'created_by' => null, // Set to null for now to avoid UUID issues
+                'user_id' => $currentUserId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            // Log the error but don't fail the lead creation
+            \Illuminate\Support\Facades\Log::error('Failed to create anamnesis for lead: ' . $e->getMessage(), [
+                'lead_id' => $lead->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
 
         return $lead;
     }

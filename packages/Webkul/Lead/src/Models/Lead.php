@@ -278,4 +278,12 @@ class Lead extends Model implements LeadContract
     {
         return $this->activities()->where('is_done', 0)->count();
     }
+
+    /**
+     * Get the anamnesis that belongs to the lead.
+     */
+    public function anamnesis()
+    {
+        return $this->hasOne(\App\Models\Anamnesis::class, 'lead_id');
+    }
 }

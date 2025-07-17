@@ -90,6 +90,9 @@
             <!-- Lead Attributes -->
             @include ('admin::leads.view.attributes')
 
+            <!-- Anamnesis Information -->
+            @include ('admin::leads.view.anamnesis')
+
             <!-- Contact Person -->
             @include ('admin::leads.view.person')
         </div>

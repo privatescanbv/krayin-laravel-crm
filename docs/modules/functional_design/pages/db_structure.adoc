@@ -161,7 +161,55 @@ TABLE(Activity, "activity") {
 
 TABLE(Anamnesis, "anamnesis") {
   PRIMARY_KEY(id): bigint
+  name: varchar(255)
+  date_entered: datetime
+  date_modified: datetime
+  modified_user_id: char(36)
+  created_by: char(36)
+  description: text
+  deleted: tinyint(1)
+  team_id: char(36)
+  team_set_id: char(36)
+  assigned_user_id: char(36)
   comment_clinic: text
+  lengte: int(255)
+  gewicht: int(255)
+  metalen: tinyint(1)
+  opm_metalen_c: text
+  medicijnen: tinyint(1)
+  opm_medicijnen_c: text
+  glaucoom: tinyint(1)
+  opm_glaucoom_c: text
+  claustrofobie: tinyint(1)
+  dormicum: tinyint(1)
+  hart_operatie_c: tinyint(1)
+  opm_hart_operatie_c: text
+  implantaat_c: tinyint(1)
+  opm_implantaat_c: text
+  operaties_c: tinyint(1)
+  opm_operaties_c: text
+  opmerking: varchar(255)
+  hart_erfelijk: tinyint(1)
+  opm_erf_hart_c: text
+  vaat_erfelijk: tinyint(1)
+  opm_erf_vaat_c: text
+  tumoren_erfelijk: tinyint(1)
+  opm_erf_tumor_c: text
+  allergie_c: tinyint(1)
+  opm_allergie_c: text
+  rugklachten: tinyint(1)
+  opm_rugklachten_c: text
+  heart_problems: tinyint(1)
+  opm_hartklachten_c: text
+  smoking: tinyint(1)
+  opm_roken_c: text
+  diabetes: tinyint(1)
+  opm_diabetes_c: text
+  spijsverteringsklachten: tinyint(1)
+  opm_spijsvertering_c: text
+  risico_hartinfarct: text // MultiSelect
+  actief: tinyint(1)
+  opm_advies_c: text
   FOREIGN_KEY(user_id): bigint
   FOREIGN_KEY(lead_id): bigint
 }

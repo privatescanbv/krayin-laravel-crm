@@ -6,6 +6,7 @@ use Webkul\Admin\Http\Controllers\Lead\EmailController;
 use Webkul\Admin\Http\Controllers\Lead\LeadController;
 use Webkul\Admin\Http\Controllers\Lead\QuoteController;
 use Webkul\Admin\Http\Controllers\Lead\TagController;
+use App\Http\Controllers\Admin\AnamnesisController;
 
 Route::controller(LeadController::class)->prefix('leads')->group(function () {
     Route::get('', 'index')->name('admin.leads.index');
@@ -61,4 +62,9 @@ Route::controller(LeadController::class)->prefix('leads')->group(function () {
     Route::controller(QuoteController::class)->prefix('{id}/quotes')->group(function () {
         Route::delete('{quote_id?}', 'delete')->name('admin.leads.quotes.delete');
     });
+});
+
+Route::controller(AnamnesisController::class)->prefix('anamnesis')->group(function () {
+    Route::get('edit/{id}', 'edit')->name('admin.anamnesis.edit');
+    Route::put('edit/{id}', 'update')->name('admin.anamnesis.update');
 });

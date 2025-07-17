@@ -27,13 +27,14 @@ test('API lead creation successfully creates a lead with anamnesis', function ()
     $type = Type::first();
     $channel = Channel::first();
     
+    $uniqueId = uniqid();
     $leadData = [
         'first_name' => 'John',
-        'last_name' => 'Doe',
-        'email' => 'john.doe@example.com',
+        'last_name' => 'Doe' . $uniqueId,
+        'email' => 'john.doe.' . $uniqueId . '@example.com',
         'phone' => '0612345678',
         'company_name' => 'Test Company',
-        'title' => 'Test Lead via API',
+        'title' => 'Test Lead via API ' . $uniqueId,
         'lead_source_id' => $source->id,
         'lead_channel_id' => $channel->id,
         'lead_type_id' => $type->id,
@@ -58,22 +59,22 @@ test('API lead creation successfully creates a lead with anamnesis', function ()
     // Assert: Check lead was created in database
     $this->assertDatabaseHas('leads', [
         'id' => $leadId,
-        'title' => 'Test Lead via API',
+        'title' => 'Test Lead via API ' . $uniqueId,
         'first_name' => 'John',
-        'last_name' => 'Doe',
+        'last_name' => 'Doe' . $uniqueId,
         'status' => 1,
     ]);
 
     // Assert: Check emails were stored correctly
     $lead = Lead::find($leadId);
     expect($lead->emails)->toBeArray()
-        ->and($lead->emails[0]['value'])->toBe('john.doe@example.com')
+        ->and($lead->emails[0]['value'])->toBe('john.doe.' . $uniqueId . '@example.com')
         ->and($lead->emails[0]['is_default'])->toBe(true);
 
     // Assert: Check anamnesis was automatically created
     $this->assertDatabaseHas('anamnesis', [
         'lead_id' => $leadId,
-        'name' => 'Anamnesis voor Test Lead via API',
+        'name' => 'Anamnesis voor Test Lead via API ' . $uniqueId,
         'user_id' => $lead->user_id,
     ]);
 
@@ -96,11 +97,12 @@ test('API lead creation handles missing optional fields gracefully', function ()
     $type = Type::first();
     $channel = Channel::first();
     
+    $uniqueId = uniqid();
     $leadData = [
         'first_name' => 'Jane',
-        'last_name' => 'Smith',
-        'email' => 'jane.smith@example.com',
-        'title' => 'Minimal Lead',
+        'last_name' => 'Smith' . $uniqueId,
+        'email' => 'jane.smith.' . $uniqueId . '@example.com',
+        'title' => 'Minimal Lead ' . $uniqueId,
         'lead_source_id' => $source->id,
         'lead_channel_id' => $channel->id,
         'lead_type_id' => $type->id,
@@ -116,14 +118,19 @@ test('API lead creation handles missing optional fields gracefully', function ()
     // Assert: Anamnesis should still be created
     $this->assertDatabaseHas('anamnesis', [
         'lead_id' => $leadId,
-        'name' => 'Anamnesis voor Minimal Lead',
+        'name' => 'Anamnesis voor Minimal Lead ' . $uniqueId,
     ]);
 });
 
 test('API lead creation fails gracefully with invalid data', function () {
-    // Arrange: Invalid data (missing required fields)
+    // Arrange: Count existing leads before the test
+    $initialLeadCount = \Webkul\Lead\Models\Lead::count();
+    $initialAnamnesisCount = \App\Models\Anamnesis::count();
+    
+    // Use unique data to avoid conflicts
+    $uniqueId = uniqid();
     $leadData = [
-        'first_name' => 'John',
+        'first_name' => 'InvalidTest' . $uniqueId,
         // Missing last_name, email, and other required fields
     ];
 
@@ -132,30 +139,45 @@ test('API lead creation fails gracefully with invalid data', function () {
 
     // Assert: Should fail validation
     $response->assertStatus(422); // Unprocessable Entity
-
-    // Assert: No lead or anamnesis should be created
-    $this->assertDatabaseMissing('leads', [
-        'first_name' => 'John',
-    ]);
     
-    $this->assertDatabaseMissing('anamnesis', [
-        'name' => 'Anamnesis voor ',
+    // Assert: Response should contain validation errors
+    $response->assertJsonValidationErrors([
+        'title',
+        'last_name', 
+        'email',
+        'lead_source_id',
+        'lead_channel_id',
+        'lead_type_id'
+    ]);
+
+    // Assert: No new leads should be created
+    $finalLeadCount = \Webkul\Lead\Models\Lead::count();
+    expect($finalLeadCount)->toBe($initialLeadCount);
+    
+    // Assert: No new anamnesis should be created
+    $finalAnamnesisCount = \App\Models\Anamnesis::count();
+    expect($finalAnamnesisCount)->toBe($initialAnamnesisCount);
+    
+    // Assert: No lead with this specific name should exist
+    $this->assertDatabaseMissing('leads', [
+        'first_name' => 'InvalidTest' . $uniqueId,
     ]);
 });
 
 test('anamnesis creation failure does not prevent lead creation', function () {
-    // This test simulates a scenario where anamnesis creation might fail
-    // but the lead should still be created due to the try-catch block
+    // This test verifies that the try-catch block works correctly
+    // In normal circumstances, anamnesis should be created successfully
     
     $source = Source::first();
     $type = Type::first();
     $channel = Channel::first();
     
+    $uniqueId = uniqid();
     $leadData = [
-        'first_name' => 'Test',
-        'last_name' => 'User',
-        'email' => 'test@example.com',
-        'title' => 'Test Lead with Potential Anamnesis Issue',
+        'first_name' => 'ErrorTest',
+        'last_name' => 'User' . $uniqueId,
+        'email' => 'errortest' . $uniqueId . '@example.com',
+        'title' => 'Test Lead Error Handling ' . $uniqueId,
         'lead_source_id' => $source->id,
         'lead_channel_id' => $channel->id,
         'lead_type_id' => $type->id,
@@ -171,12 +193,13 @@ test('anamnesis creation failure does not prevent lead creation', function () {
     // Assert: Lead should exist
     $this->assertDatabaseHas('leads', [
         'id' => $leadId,
-        'title' => 'Test Lead with Potential Anamnesis Issue',
+        'title' => 'Test Lead Error Handling ' . $uniqueId,
     ]);
 
     // Assert: Anamnesis should normally be created (unless there's an actual error)
     $anamnesis = Anamnesis::where('lead_id', $leadId)->first();
-    expect($anamnesis)->not->toBeNull();
+    expect($anamnesis)->not->toBeNull()
+        ->and($anamnesis->name)->toBe('Anamnesis voor Test Lead Error Handling ' . $uniqueId);
 });
 
 test('API lead creation with different lead types works correctly', function () {
@@ -216,11 +239,12 @@ test('anamnesis has correct UUID format and relationships', function () {
     $type = Type::first();
     $channel = Channel::first();
     
+    $uniqueId = uniqid();
     $leadData = [
         'first_name' => 'UUID',
-        'last_name' => 'Test',
-        'email' => 'uuid@example.com',
-        'title' => 'UUID Format Test',
+        'last_name' => 'Test' . $uniqueId,
+        'email' => 'uuid.' . $uniqueId . '@example.com',
+        'title' => 'UUID Format Test ' . $uniqueId,
         'lead_source_id' => $source->id,
         'lead_channel_id' => $channel->id,
         'lead_type_id' => $type->id,
@@ -253,11 +277,12 @@ test('API response includes correct lead data structure', function () {
     $type = Type::first();
     $channel = Channel::first();
     
+    $uniqueId = uniqid();
     $leadData = [
         'first_name' => 'Response',
-        'last_name' => 'Test',
-        'email' => 'response@example.com',
-        'title' => 'Response Structure Test',
+        'last_name' => 'Test' . $uniqueId,
+        'email' => 'response.' . $uniqueId . '@example.com',
+        'title' => 'Response Structure Test ' . $uniqueId,
         'lead_source_id' => $source->id,
         'lead_channel_id' => $channel->id,
         'lead_type_id' => $type->id,

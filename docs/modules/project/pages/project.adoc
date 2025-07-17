@@ -87,10 +87,21 @@ Vaak zetten we er ook een flexibele schil naast, die vaak niet aanwezig zijn met
 * Validatie op verplichte velden is correct geïmplementeerd
 * Contactpersoon is te koppelen of aan te maken vanuit de lead
 
-[ ] *Workflow voor lead-proces is ingericht tot en met orderbevestiging*
+[ ] *Workflow voor lead-proces is ingericht tot en orderbevestiging*
 
 * Workflow bevat alle benodigde statussen: van binnenkomst tot orderbevestiging
 * Activiteiten worden automatisch of handmatig aangemaakt op relevante momenten
+* De volgende use cases / workflows dienen te werken:
+** *Full body scan, acceptatiecriteria:*
+*** Lead komt binnen op het bord van Privatescan.
+** *Diagnoseformulier wordt ingevuld op hernia.nl, persoon heeft al MRI-beelden:*
+*** Lead komt binnen op het bord Hernia.
+*** Medewerker dient de lead zelf te slepen naar 'Adviseren met MRI beelden' (na koppelen contactpersoon).
+** *Diagnoseformulier wordt ingevuld op hernia.nl en daarna vult de persoon een aanvraagformulier in voor MRI-scan:*
+*** Eerste lead komt binnen op Hernia board.
+*** Tweede lead komt binnen op Privatescan board.
+*** Ondanks dat deze flow los binnenkomt, dient men dit eenvoudig te kunnen zien via de contactpersoon.
+*** Hernia kan moeten wachten op de MRI-beelden. In het systeem moet dit eenvoudig te zien zijn en Hernia dient tijdig de flow op te kunnen pakken nadat de MRI-beelden zijn aangeleverd.
 
 [ ] *Ontwerp van CRM-schermen is definitief (template opbouw / look en feel)*
 

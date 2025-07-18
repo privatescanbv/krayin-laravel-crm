@@ -170,14 +170,14 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="metalen" value="1" 
-                                                   {{ $anamnesis->metalen === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->metalen == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('metalen', this.checked)"
                                                    class="mr-2 {{ $errors->has('metalen') ? 'border-red-500' : '' }}">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="metalen" value="0" 
-                                                   {{ $anamnesis->metalen === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->metalen == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('metalen', false)"
                                                    class="mr-2 {{ $errors->has('metalen') ? 'border-red-500' : '' }}">
                                             Nee
@@ -189,7 +189,7 @@
                                     @enderror
                                 </x-admin::form.control-group>
                                 
-                                <div id="metalen_comment" class="mt-2" style="display: {{ $anamnesis->metalen === 1 ? 'block' : 'none' }}">
+                                <div id="metalen_comment" class="mt-2" style="display: {{ $anamnesis->metalen == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="opm_metalen_c"
@@ -209,14 +209,14 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="medicijnen" value="1" 
-                                                   {{ $anamnesis->medicijnen === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->medicijnen == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('medicijnen', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="medicijnen" value="0" 
-                                                   {{ $anamnesis->medicijnen === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->medicijnen == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('medicijnen', false)"
                                                    class="mr-2">
                                             Nee
@@ -224,7 +224,7 @@
                                     </div>
                                 </x-admin::form.control-group>
                                 
-                                <div id="medicijnen_comment" class="mt-2" style="display: {{ $anamnesis->medicijnen === 1 ? 'block' : 'none' }}">
+                                <div id="medicijnen_comment" class="mt-2" style="display: {{ $anamnesis->medicijnen == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="opm_medicijnen_c"
@@ -244,14 +244,14 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="glaucoom" value="1" 
-                                                   {{ $anamnesis->glaucoom === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->glaucoom == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('glaucoom', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="glaucoom" value="0" 
-                                                   {{ $anamnesis->glaucoom === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->glaucoom == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('glaucoom', false)"
                                                    class="mr-2">
                                             Nee
@@ -259,7 +259,7 @@
                                     </div>
                                 </x-admin::form.control-group>
                                 
-                                <div id="glaucoom_comment" class="mt-2" style="display: {{ $anamnesis->glaucoom === 1 ? 'block' : 'none' }}">
+                                <div id="glaucoom_comment" class="mt-2" style="display: {{ $anamnesis->glaucoom == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="opm_glaucoom_c"
@@ -279,13 +279,13 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="claustrofobie" value="1" 
-                                                   {{ $anamnesis->claustrofobie === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->claustrofobie == 1 ? 'checked' : '' }}
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="claustrofobie" value="0" 
-                                                   {{ $anamnesis->claustrofobie === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->claustrofobie == 0 ? 'checked' : '' }}
                                                    class="mr-2">
                                             Nee
                                         </label>
@@ -303,13 +303,13 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="dormicum" value="1" 
-                                                   {{ $anamnesis->dormicum === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->dormicum == 1 ? 'checked' : '' }}
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="dormicum" value="0" 
-                                                   {{ $anamnesis->dormicum === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->dormicum == 0 ? 'checked' : '' }}
                                                    class="mr-2">
                                             Nee
                                         </label>
@@ -337,14 +337,14 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="hart_operatie_c" value="1" 
-                                                   {{ $anamnesis->hart_operatie_c === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->hart_operatie_c == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('hart_operatie_c', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="hart_operatie_c" value="0" 
-                                                   {{ $anamnesis->hart_operatie_c === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->hart_operatie_c == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('hart_operatie_c', false)"
                                                    class="mr-2">
                                             Nee
@@ -352,7 +352,7 @@
                                     </div>
                                 </x-admin::form.control-group>
                                 
-                                <div id="hart_operatie_c_comment" class="mt-2" style="display: {{ $anamnesis->hart_operatie_c === 1 ? 'block' : 'none' }}">
+                                <div id="hart_operatie_c_comment" class="mt-2" style="display: {{ $anamnesis->hart_operatie_c == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="opm_hart_operatie_c"
@@ -372,14 +372,14 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="implantaat_c" value="1" 
-                                                   {{ $anamnesis->implantaat_c === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->implantaat_c == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('implantaat_c', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="implantaat_c" value="0" 
-                                                   {{ $anamnesis->implantaat_c === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->implantaat_c == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('implantaat_c', false)"
                                                    class="mr-2">
                                             Nee
@@ -387,7 +387,7 @@
                                     </div>
                                 </x-admin::form.control-group>
                                 
-                                <div id="implantaat_c_comment" class="mt-2" style="display: {{ $anamnesis->implantaat_c === 1 ? 'block' : 'none' }}">
+                                <div id="implantaat_c_comment" class="mt-2" style="display: {{ $anamnesis->implantaat_c == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="opm_implantaat_c"
@@ -407,14 +407,14 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="operaties_c" value="1" 
-                                                   {{ $anamnesis->operaties_c === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->operaties_c == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('operaties_c', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="operaties_c" value="0" 
-                                                   {{ $anamnesis->operaties_c === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->operaties_c == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('operaties_c', false)"
                                                    class="mr-2">
                                             Nee
@@ -422,7 +422,7 @@
                                     </div>
                                 </x-admin::form.control-group>
                                 
-                                <div id="operaties_c_comment" class="mt-2" style="display: {{ $anamnesis->operaties_c === 1 ? 'block' : 'none' }}">
+                                <div id="operaties_c_comment" class="mt-2" style="display: {{ $anamnesis->operaties_c == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="opm_operaties_c"
@@ -449,14 +449,14 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="hart_erfelijk" value="1" 
-                                                   {{ $anamnesis->hart_erfelijk === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->hart_erfelijk == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('hart_erfelijk', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="hart_erfelijk" value="0" 
-                                                   {{ $anamnesis->hart_erfelijk === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->hart_erfelijk == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('hart_erfelijk', false)"
                                                    class="mr-2">
                                             Nee
@@ -464,7 +464,7 @@
                                     </div>
                                 </x-admin::form.control-group>
                                 
-                                <div id="hart_erfelijk_comment" class="mt-2" style="display: {{ $anamnesis->hart_erfelijk === 1 ? 'block' : 'none' }}">
+                                <div id="hart_erfelijk_comment" class="mt-2" style="display: {{ $anamnesis->hart_erfelijk == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="opm_erf_hart_c"
@@ -484,14 +484,14 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="vaat_erfelijk" value="1" 
-                                                   {{ $anamnesis->vaat_erfelijk === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->vaat_erfelijk == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('vaat_erfelijk', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="vaat_erfelijk" value="0" 
-                                                   {{ $anamnesis->vaat_erfelijk === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->vaat_erfelijk == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('vaat_erfelijk', false)"
                                                    class="mr-2">
                                             Nee
@@ -499,7 +499,7 @@
                                     </div>
                                 </x-admin::form.control-group>
                                 
-                                <div id="vaat_erfelijk_comment" class="mt-2" style="display: {{ $anamnesis->vaat_erfelijk === 1 ? 'block' : 'none' }}">
+                                <div id="vaat_erfelijk_comment" class="mt-2" style="display: {{ $anamnesis->vaat_erfelijk == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="opm_erf_vaat_c"
@@ -519,14 +519,14 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="tumoren_erfelijk" value="1" 
-                                                   {{ $anamnesis->tumoren_erfelijk === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->tumoren_erfelijk == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('tumoren_erfelijk', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="tumoren_erfelijk" value="0" 
-                                                   {{ $anamnesis->tumoren_erfelijk === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->tumoren_erfelijk == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('tumoren_erfelijk', false)"
                                                    class="mr-2">
                                             Nee
@@ -534,7 +534,7 @@
                                     </div>
                                 </x-admin::form.control-group>
                                 
-                                <div id="tumoren_erfelijk_comment" class="mt-2" style="display: {{ $anamnesis->tumoren_erfelijk === 1 ? 'block' : 'none' }}">
+                                <div id="tumoren_erfelijk_comment" class="mt-2" style="display: {{ $anamnesis->tumoren_erfelijk == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="opm_erf_tumor_c"
@@ -561,14 +561,14 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="smoking" value="1" 
-                                                   {{ $anamnesis->smoking === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->smoking == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('smoking', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="smoking" value="0" 
-                                                   {{ $anamnesis->smoking === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->smoking == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('smoking', false)"
                                                    class="mr-2">
                                             Nee
@@ -576,7 +576,7 @@
                                     </div>
                                 </x-admin::form.control-group>
                                 
-                                <div id="smoking_comment" class="mt-2" style="display: {{ $anamnesis->smoking === 1 ? 'block' : 'none' }}">
+                                <div id="smoking_comment" class="mt-2" style="display: {{ $anamnesis->smoking == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="opm_roken_c"
@@ -596,14 +596,14 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="diabetes" value="1" 
-                                                   {{ $anamnesis->diabetes === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->diabetes == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('diabetes', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="diabetes" value="0" 
-                                                   {{ $anamnesis->diabetes === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->diabetes == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('diabetes', false)"
                                                    class="mr-2">
                                             Nee
@@ -611,7 +611,7 @@
                                     </div>
                                 </x-admin::form.control-group>
                                 
-                                <div id="diabetes_comment" class="mt-2" style="display: {{ $anamnesis->diabetes === 1 ? 'block' : 'none' }}">
+                                <div id="diabetes_comment" class="mt-2" style="display: {{ $anamnesis->diabetes == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="opm_diabetes_c"
@@ -631,13 +631,13 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="actief" value="1" 
-                                                   {{ $anamnesis->actief === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->actief == 1 ? 'checked' : '' }}
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="actief" value="0" 
-                                                   {{ $anamnesis->actief === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->actief == 0 ? 'checked' : '' }}
                                                    class="mr-2">
                                             Nee
                                         </label>
@@ -655,14 +655,14 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="spijsverteringsklachten" value="1" 
-                                                   {{ $anamnesis->spijsverteringsklachten === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->spijsverteringsklachten == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('spijsverteringsklachten', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="spijsverteringsklachten" value="0" 
-                                                   {{ $anamnesis->spijsverteringsklachten === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->spijsverteringsklachten == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('spijsverteringsklachten', false)"
                                                    class="mr-2">
                                             Nee
@@ -670,7 +670,7 @@
                                     </div>
                                 </x-admin::form.control-group>
                                 
-                                <div id="spijsverteringsklachten_comment" class="mt-2" style="display: {{ $anamnesis->spijsverteringsklachten === 1 ? 'block' : 'none' }}">
+                                <div id="spijsverteringsklachten_comment" class="mt-2" style="display: {{ $anamnesis->spijsverteringsklachten == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="opm_spijsvertering_c"
@@ -690,14 +690,14 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="allergie_c" value="1" 
-                                                   {{ $anamnesis->allergie_c === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->allergie_c == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('allergie_c', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="allergie_c" value="0" 
-                                                   {{ $anamnesis->allergie_c === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->allergie_c == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('allergie_c', false)"
                                                    class="mr-2">
                                             Nee
@@ -705,7 +705,7 @@
                                     </div>
                                 </x-admin::form.control-group>
                                 
-                                <div id="allergie_c_comment" class="mt-2" style="display: {{ $anamnesis->allergie_c === 1 ? 'block' : 'none' }}">
+                                <div id="allergie_c_comment" class="mt-2" style="display: {{ $anamnesis->allergie_c == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="opm_allergie_c"
@@ -725,14 +725,14 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="rugklachten" value="1" 
-                                                   {{ $anamnesis->rugklachten === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->rugklachten == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('rugklachten', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="rugklachten" value="0" 
-                                                   {{ $anamnesis->rugklachten === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->rugklachten == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('rugklachten', false)"
                                                    class="mr-2">
                                             Nee
@@ -740,7 +740,7 @@
                                     </div>
                                 </x-admin::form.control-group>
                                 
-                                <div id="rugklachten_comment" class="mt-2" style="display: {{ $anamnesis->rugklachten === 1 ? 'block' : 'none' }}">
+                                <div id="rugklachten_comment" class="mt-2" style="display: {{ $anamnesis->rugklachten == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="opm_rugklachten_c"
@@ -760,14 +760,14 @@
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
                                             <input type="radio" name="heart_problems" value="1" 
-                                                   {{ $anamnesis->heart_problems === 1 ? 'checked' : '' }}
+                                                   {{ $anamnesis->heart_problems == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('heart_problems', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="heart_problems" value="0" 
-                                                   {{ $anamnesis->heart_problems === 0 ? 'checked' : '' }}
+                                                   {{ $anamnesis->heart_problems == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('heart_problems', false)"
                                                    class="mr-2">
                                             Nee
@@ -775,7 +775,7 @@
                                     </div>
                                 </x-admin::form.control-group>
                                 
-                                <div id="heart_problems_comment" class="mt-2" style="display: {{ $anamnesis->heart_problems === 1 ? 'block' : 'none' }}">
+                                <div id="heart_problems_comment" class="mt-2" style="display: {{ $anamnesis->heart_problems == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
                                         name="opm_hartklachten_c"

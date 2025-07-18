@@ -80,9 +80,28 @@ class AnamnesisController extends Controller
             'risico_hartinfarct' => 'nullable|string',
             'actief' => 'required|in:0,1',
             'opm_advies_c' => 'nullable|string',
+        ], [
+            'metalen.required' => 'Selecteer een antwoord voor Metalen.',
+            'medicijnen.required' => 'Selecteer een antwoord voor Medicijnen.',
+            'glaucoom.required' => 'Selecteer een antwoord voor Glaucoom.',
+            'claustrofobie.required' => 'Selecteer een antwoord voor Claustrofobie.',
+            'dormicum.required' => 'Selecteer een antwoord voor Dormicum.',
+            'hart_operatie_c.required' => 'Selecteer een antwoord voor Hart operatie.',
+            'implantaat_c.required' => 'Selecteer een antwoord voor Implantaat.',
+            'operaties_c.required' => 'Selecteer een antwoord voor Operaties.',
+            'hart_erfelijk.required' => 'Selecteer een antwoord voor Hart erfelijk.',
+            'vaat_erfelijk.required' => 'Selecteer een antwoord voor Vaat erfelijk.',
+            'tumoren_erfelijk.required' => 'Selecteer een antwoord voor Tumoren erfelijk.',
+            'allergie_c.required' => 'Selecteer een antwoord voor Allergie.',
+            'rugklachten.required' => 'Selecteer een antwoord voor Rugklachten.',
+            'heart_problems.required' => 'Selecteer een antwoord voor Hartproblemen.',
+            'smoking.required' => 'Selecteer een antwoord voor Roken.',
+            'diabetes.required' => 'Selecteer een antwoord voor Diabetes.',
+            'spijsverteringsklachten.required' => 'Selecteer een antwoord voor Spijsverteringsklachten.',
+            'actief.required' => 'Selecteer een antwoord voor Actief.',
         ]);
 
-        $data['updated_by'] = \Illuminate\Support\Str::uuid(); // Generate UUID for updated_by field
+        $data['updated_by'] = null; // Set to null since it's now nullable
         $data['updated_at'] = now();
 
         $anamnesis->update($data);

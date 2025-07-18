@@ -37,6 +37,31 @@
                 </div>
             </div>
 
+            <!-- Validation Errors -->
+            @if ($errors->any())
+                <div class="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800 dark:text-red-200">
+                                Er zijn validatiefouten opgetreden
+                            </h3>
+                            <div class="mt-2 text-sm text-red-700 dark:text-red-300">
+                                <ul class="list-disc pl-5 space-y-1">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <!-- Form Content -->
             <div class="flex gap-4 max-lg:flex-wrap">
                 <!-- Left Panel -->
@@ -147,17 +172,21 @@
                                             <input type="radio" name="metalen" value="1" 
                                                    {{ $anamnesis->metalen === 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('metalen', this.checked)"
-                                                   class="mr-2">
+                                                   class="mr-2 {{ $errors->has('metalen') ? 'border-red-500' : '' }}">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
                                             <input type="radio" name="metalen" value="0" 
                                                    {{ $anamnesis->metalen === 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('metalen', false)"
-                                                   class="mr-2">
+                                                   class="mr-2 {{ $errors->has('metalen') ? 'border-red-500' : '' }}">
                                             Nee
                                         </label>
                                     </div>
+                                    
+                                    @error('metalen')
+                                        <p class="mt-1 text-xs italic text-red-600">{{ $message }}</p>
+                                    @enderror
                                 </x-admin::form.control-group>
                                 
                                 <div id="metalen_comment" class="mt-2" style="display: {{ $anamnesis->metalen === 1 ? 'block' : 'none' }}">

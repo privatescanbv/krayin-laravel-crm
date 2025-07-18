@@ -17,7 +17,7 @@ return new class extends Migration
             $table->dateTime('created_at');
             $table->dateTime('updated_at')->nullable();
             $table->char('updated_by', 36)->nullable();
-            $table->char('created_by', 36);
+            $table->char('created_by', 36)->nullable();
             $table->text('description')->nullable();
             $table->tinyInteger('deleted')->default(0);
             $table->char('team_id', 36)->nullable();

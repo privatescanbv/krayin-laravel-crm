@@ -197,7 +197,7 @@ class LeadRepository extends Repository
                 'id' => \Illuminate\Support\Str::uuid(),
                 'lead_id' => $lead->id,
                 'name' => 'Anamnesis voor ' . $lead->title,
-                'created_by' => \Illuminate\Support\Str::uuid(), // Generate a UUID for created_by since it's required
+                'created_by' => null, // Set to null since it's now nullable
                 'user_id' => $currentUserId,
                 'created_at' => now(),
                 'updated_at' => now(),

@@ -24,6 +24,11 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
         protected EmailRepository $emailRepository,
         protected AttachmentRepository $attachmentRepository
     ) {
+        // Skip IMAP connection during testing or when database is not available
+        if (app()->environment('testing') || !$this->isDatabaseAvailable()) {
+            return;
+        }
+
         $this->client = Client::make($this->getDefaultConfigs());
 
         $this->client->connect();
@@ -38,7 +43,9 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
      */
     public function __destruct()
     {
-        $this->client->disconnect();
+        if ($this->client) {
+            $this->client->disconnect();
+        }
     }
 
     /**
@@ -46,6 +53,10 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
      */
     public function processMessagesFromAllFolders()
     {
+        if (!$this->client) {
+            return; // Skip processing if client is not initialized (e.g., during testing)
+        }
+
         try {
             $rootFolders = $this->client->getFolders();
 
@@ -224,5 +235,20 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
         $defaultConfig['password'] = core()->getConfigData('email.imap.account.password') ?: $defaultConfig['password'];
 
         return $defaultConfig;
+    }
+
+    /**
+     * Check if the database is available and has the required tables.
+     *
+     * @return bool
+     */
+    protected function isDatabaseAvailable(): bool
+    {
+        try {
+            // Check if the core_config table exists
+            return \Schema::hasTable('core_config');
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 }

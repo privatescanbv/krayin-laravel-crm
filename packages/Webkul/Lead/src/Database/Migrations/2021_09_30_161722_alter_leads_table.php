@@ -27,7 +27,10 @@ return new class extends Migration
             ]);
 
         Schema::table('leads', function (Blueprint $table) use ($tablePrefix) {
-            $table->dropForeign($tablePrefix.'leads_lead_stage_id_foreign');
+            // SQLite doesn't support dropping foreign keys, so skip this for SQLite
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->dropForeign($tablePrefix.'leads_lead_stage_id_foreign');
+            }
             $table->dropColumn('lead_stage_id');
         });
     }
@@ -40,7 +43,10 @@ return new class extends Migration
     public function down()
     {
         Schema::table('leads', function (Blueprint $table) {
-            $table->dropForeign(DB::getTablePrefix().'leads_lead_pipeline_stage_id_foreign');
+            // SQLite doesn't support dropping foreign keys, so skip this for SQLite
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->dropForeign(DB::getTablePrefix().'leads_lead_pipeline_stage_id_foreign');
+            }
             $table->dropColumn('lead_pipeline_stage_id');
 
             $table->integer('lead_stage_id')->unsigned();

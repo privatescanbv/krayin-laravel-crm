@@ -1,9 +1,9 @@
 @php
     if (! empty($value)) {
         if ($value instanceof \Carbon\Carbon) {
-            $value = $value->format('Y-m-d');
+            $value = $value->format('d-m-Y');
         } elseif (is_string($value)) {
-            $value = \Carbon\Carbon::parse($value)->format('Y-m-d');
+            $value = \Carbon\Carbon::parse($value)->format('d-m-Y');
         }
     }
 @endphp
@@ -13,6 +13,6 @@
     :id="$attribute->code"
     :name="$attribute->code"
     :value="$value"
-    :rules="$validations.'|regex:^\d{4}-\d{2}-\d{2}$'"
+    :rules="$validations.'|regex:^\d{2}-\d{2}-\d{4}$'"
     :label="$attribute->name"
 />

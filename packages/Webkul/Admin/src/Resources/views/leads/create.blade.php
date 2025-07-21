@@ -264,7 +264,7 @@
                                         ])"
                                         :custom-validations="[
                                             'expected_close_date' => [
-                                                'date_format:yyyy-MM-dd',
+                                                'date_format:d-m-Y',
                                                 'after:' .  \Carbon\Carbon::yesterday()->format('Y-m-d')
                                             ],
                                         ]"
@@ -280,7 +280,7 @@
                                         ])"
                                         :custom-validations="[
                                             'expected_close_date' => [
-                                                'date_format:yyyy-MM-dd',
+                                                'date_format:d-m-Y',
                                                 'after:' .  \Carbon\Carbon::yesterday()->format('Y-m-d')
                                             ],
                                         ]"

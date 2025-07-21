@@ -104,7 +104,7 @@
                                 :custom-validations="[
                                     'expired_at' => [
                                         'required',
-                                        'date_format:yyyy-MM-dd',
+                                        'date_format:d-m-Y',
                                         'after:' .  \Carbon\Carbon::yesterday()->format('Y-m-d')
                                     ],
                                 ]"
@@ -119,7 +119,7 @@
                                 :custom-validations="[
                                     'expired_at' => [
                                         'required',
-                                        'date_format:yyyy-MM-dd',
+                                        'date_format:d-m-Y',
                                         'after:' .  \Carbon\Carbon::yesterday()->format('Y-m-d')
                                     ],
                                 ]"
@@ -135,7 +135,7 @@
                                     :custom-validations="[
                                         'expired_at' => [
                                             'required',
-                                            'date_format:yyyy-MM-dd',
+                                            'date_format:d-m-Y',
                                             'after:' .  \Carbon\Carbon::yesterday()->format('Y-m-d')
                                         ],
                                     ]"
@@ -152,7 +152,7 @@
                                     :custom-validations="[
                                         'expired_at' => [
                                             'required',
-                                            'date_format:yyyy-MM-dd',
+                                            'date_format:d-m-Y',
                                             'after:' .  \Carbon\Carbon::yesterday()->format('Y-m-d')
                                         ],
                                     ]"
@@ -191,7 +191,7 @@
                                 :custom-validations="[
                                     'expired_at' => [
                                         'required',
-                                        'date_format:yyyy-MM-dd',
+                                        'date_format:d-m-Y',
                                         'after:' .  \Carbon\Carbon::yesterday()->format('Y-m-d')
                                     ],
                                 ]"

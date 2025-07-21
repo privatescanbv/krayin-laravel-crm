@@ -22,10 +22,14 @@ class PipelineSeeder extends Seeder
      */
     public function run($parameters = [])
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        }
         DB::table('lead_pipeline_stages')->truncate();
         DB::table('lead_pipelines')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        if (DB::getDriverName() !== 'sqlite') {
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        }
         $now = Carbon::now();
         $defaultLocale = $parameters['locale'] ?? config('app.locale');
 

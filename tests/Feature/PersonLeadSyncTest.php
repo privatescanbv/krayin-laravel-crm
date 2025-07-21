@@ -1,10 +1,12 @@
 <?php
 
+use Database\Seeders\LeadChannelSeeder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
+use Webkul\Installer\Database\Seeders\Lead\PipelineSeeder;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\User\Models\User;
@@ -12,6 +14,8 @@ use Webkul\User\Models\User;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    $this->artisan('db:seed', ['--class' => PipelineSeeder::class]);
+
     $this->personRepository = app(PersonRepository::class);
     $this->leadRepository = app(LeadRepository::class);
 

@@ -5,6 +5,7 @@ namespace Webkul\Lead\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
@@ -308,5 +309,44 @@ class Lead extends Model implements LeadContract
     public function anamnesis()
     {
         return $this->hasOne(\App\Models\Anamnesis::class, 'lead_id');
+    }
+
+    /**
+     * Check if this lead has potential duplicates.
+     */
+    public function hasPotentialDuplicates(): bool
+    {
+        try {
+            return app('Webkul\Lead\Repositories\LeadRepository')->hasPotentialDuplicates($this);
+        } catch (\Exception $e) {
+            Log::error('Error checking for potential duplicates: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Get potential duplicate leads.
+     */
+    public function getPotentialDuplicates()
+    {
+        try {
+            return app('Webkul\Lead\Repositories\LeadRepository')->findPotentialDuplicates($this);
+        } catch (\Exception $e) {
+            Log::error('Error getting potential duplicates: ' . $e->getMessage());
+            return collect();
+        }
+    }
+
+    /**
+     * Get the count of potential duplicates.
+     */
+    public function getPotentialDuplicatesCount(): int
+    {
+        try {
+            return $this->getPotentialDuplicates()->count();
+        } catch (\Exception $e) {
+            Log::error('Error counting potential duplicates: ' . $e->getMessage());
+            return 0;
+        }
     }
 }

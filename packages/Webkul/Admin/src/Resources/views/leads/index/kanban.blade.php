@@ -155,6 +155,20 @@
                                                 <div class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                             </div>
                                         </div>
+
+                                        <!-- Duplicate Indicator -->
+                                        <div
+                                            class="group relative"
+                                            v-if="element.has_duplicates"
+                                        >
+                                            <span class="icon-warning cursor-default text-lg text-orange-600"></span>
+                                            <div class="absolute -top-1 right-7 hidden w-max flex-col items-center group-hover:flex">
+                                                <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                    Mogelijke duplicate gevonden (@{{ element.duplicates_count }} gelijkenissen)
+                                                </span>
+                                                <div class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.header.after') !!}

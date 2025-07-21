@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Log;
 
 class LeadResource extends JsonResource
 {
@@ -31,8 +32,50 @@ class LeadResource extends JsonResource
             'stage'                => new StageResource($this->stage),
             'tags'                 => TagResource::collection($this->tags),
             'open_activities_count'=> $this->open_activities_count,
+            'has_duplicates'       => $this->getSafeDuplicateStatus(),
+            'duplicates_count'     => $this->getSafeDuplicateCount(),
+            'first_name'           => $this->first_name,
+            'last_name'            => $this->last_name,
+            'emails'               => is_array($this->emails) ? $this->emails : [],
+            'phones'               => is_array($this->phones) ? $this->phones : [],
             'unread_emails_count'  => $this->unread_emails_count,
             'days_until_due_date'  => $this->days_until_due_date,
         ];
+    }
+
+    /**
+     * Safely get duplicate status without causing errors.
+     */
+    private function getSafeDuplicateStatus(): bool
+    {
+        try {
+            // Only check for duplicates if the lead has basic required data
+            if (!$this->id || !$this->title) {
+                return false;
+            }
+
+            return $this->hasPotentialDuplicates();
+        } catch (\Exception $e) {
+            Log::warning('Error checking duplicate status in LeadResource: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Safely get duplicate count without causing errors.
+     */
+    private function getSafeDuplicateCount(): int
+    {
+        try {
+            // Only check for duplicates if the lead has basic required data
+            if (!$this->id || !$this->title) {
+                return 0;
+            }
+
+            return $this->getPotentialDuplicatesCount();
+        } catch (\Exception $e) {
+            Log::warning('Error getting duplicate count in LeadResource: ' . $e->getMessage());
+            return 0;
+        }
     }
 }

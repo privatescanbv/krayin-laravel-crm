@@ -51,6 +51,26 @@
 
                 {!! view_render_event('admin.leads.view.title.after', ['lead' => $lead]) !!}
 
+                <!-- Duplicate Detection -->
+                @if($lead->hasPotentialDuplicates())
+                    <div class="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="icon-warning text-orange-600"></span>
+                                <span class="text-sm font-medium text-orange-800 dark:text-orange-200">
+                                    Potential duplicate found ({{ $lead->getPotentialDuplicatesCount() }} similar lead{{ $lead->getPotentialDuplicatesCount() > 1 ? 's' : '' }})
+                                </span>
+                            </div>
+                            <a 
+                                href="{{ route('admin.leads.duplicates.index', $lead->id) }}" 
+                                class="rounded bg-orange-600 px-3 py-1 text-xs text-white hover:bg-orange-700"
+                            >
+                                Merge Duplicates
+                            </a>
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Activity Actions -->
                 <div class="flex flex-wrap gap-2">
                     {!! view_render_event('admin.leads.view.actions.before', ['lead' => $lead]) !!}

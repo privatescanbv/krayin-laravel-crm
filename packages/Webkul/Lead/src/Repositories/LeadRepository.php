@@ -3,8 +3,10 @@
 namespace Webkul\Lead\Repositories;
 
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Models\Address;
 use Webkul\Attribute\Repositories\AttributeRepository;
@@ -12,6 +14,7 @@ use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Lead\Contracts\Lead;
+use Webkul\Lead\Models\Lead as LeadModel;
 
 class LeadRepository extends Repository
 {
@@ -181,7 +184,7 @@ class LeadRepository extends Repository
         if (isset($data['address']) && !empty($data['address'])) {
             $addressData = $data['address'];
             $hasAddressData = !empty(array_filter($addressData));
-            
+
             if ($hasAddressData) {
                 Address::create(array_merge($addressData, [
                     'lead_id' => $lead->id,
@@ -191,7 +194,7 @@ class LeadRepository extends Repository
 
         // Always create an anamnesis for new leads
         $currentUserId = auth()->id() ?? $lead->user_id ?? 1;
-        
+
         try {
             \App\Models\Anamnesis::create([
                 'id' => \Illuminate\Support\Str::uuid(),
@@ -202,9 +205,9 @@ class LeadRepository extends Repository
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Log the error but don't fail the lead creation
-            \Illuminate\Support\Facades\Log::error('Failed to create anamnesis for lead: ' . $e->getMessage(), [
+            Log::error('Failed to create anamnesis for lead: ' . $e->getMessage(), [
                 'lead_id' => $lead->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -267,16 +270,16 @@ class LeadRepository extends Repository
         if (empty($data['person_id'])) {
             unset($data['person_id']);
         }
-        
+
         // Handle address data
         if (isset($data['address']) && !empty($data['address'])) {
             $addressData = $data['address'];
             $hasAddressData = !empty(array_filter($addressData));
-            
+
             if ($hasAddressData) {
                 // Check if lead already has an address
                 $existingAddress = Address::where('lead_id', $id)->first();
-                
+
                 if ($existingAddress) {
                     // Update existing address
                     $existingAddress->update($addressData);
@@ -288,7 +291,7 @@ class LeadRepository extends Repository
                 }
             }
         }
-        
+
         $lead = parent::update($data, $id);
 
         /**
@@ -347,5 +350,238 @@ class LeadRepository extends Repository
         }
 
         return $lead;
+    }
+
+    /**
+     * Find potential duplicate leads based on email, phone, and name similarity.
+     *
+     * @param  \Webkul\Lead\Contracts\Lead  $lead
+     * @return \Illuminate\Support\Collection
+     */
+    public function findPotentialDuplicates($lead)
+    {
+        $duplicates = collect();
+
+        try {
+            // Check for email duplicates
+            $emails = $lead->emails;
+
+            // Handle case where emails might be a string or null
+            if (is_string($emails)) {
+                $emails = json_decode($emails, true) ?: [];
+            }
+
+            if (is_array($emails) && !empty($emails)) {
+                foreach ($emails as $email) {
+                    if (is_array($email) && !empty($email['value'])) {
+                        try {
+                            $emailDuplicates = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
+                                ->where('id', '!=', $lead->id)
+                                ->whereJsonContains('emails', [['value' => $email['value']]])
+                                ->get();
+
+                            $duplicates = $duplicates->merge($emailDuplicates);
+                        } catch (Exception $e) {
+                            Log::warning('Error searching for email duplicates: ' . $e->getMessage());
+                        }
+                    }
+                }
+            }
+
+            // Check for phone duplicates
+            $phones = $lead->phones;
+
+            // Handle case where phones might be a string or null
+            if (is_string($phones)) {
+                $phones = json_decode($phones, true) ?: [];
+            }
+
+            if (is_array($phones) && !empty($phones)) {
+                foreach ($phones as $phone) {
+                    if (is_array($phone) && !empty($phone['value'])) {
+                        try {
+                            $phoneDuplicates = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
+                                ->where('id', '!=', $lead->id)
+                                ->whereJsonContains('phones', [['value' => $phone['value']]])
+                                ->get();
+
+                            $duplicates = $duplicates->merge($phoneDuplicates);
+                        } catch (Exception $e) {
+                            Log::warning('Error searching for phone duplicates: ' . $e->getMessage());
+                        }
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            Log::error('Error in email/phone duplicate detection: ' . $e->getMessage());
+        }
+
+        // Check for name similarity (first + last name)
+        if (!empty($lead->first_name) && !empty($lead->last_name)) {
+            try {
+                $nameDuplicates = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
+                    ->where('id', '!=', $lead->id)
+                    ->where('first_name', 'LIKE', '%' . $lead->first_name . '%')
+                    ->where('last_name', 'LIKE', '%' . $lead->last_name . '%')
+                    ->get();
+
+                $duplicates = $duplicates->merge($nameDuplicates);
+            } catch (Exception $e) {
+                Log::warning('Error searching for name duplicates: ' . $e->getMessage());
+            }
+        }
+
+        // Remove duplicates from the collection and return unique leads
+        return $duplicates->unique('id');
+    }
+
+    /**
+     * Check if a lead has potential duplicates.
+     *
+     * @param  \Webkul\Lead\Contracts\Lead  $lead
+     * @return bool
+     */
+    public function hasPotentialDuplicates($lead)
+    {
+        return $this->findPotentialDuplicates($lead)->isNotEmpty();
+    }
+
+    /**
+     * Debug method to check lead data structure.
+     *
+     * @param  \Webkul\Lead\Contracts\Lead  $lead
+     * @return array
+     */
+    public function debugLeadData($lead)
+    {
+        return [
+            'id' => $lead->id,
+            'title' => $lead->title,
+            'emails_type' => gettype($lead->emails),
+            'emails_value' => $lead->emails,
+            'phones_type' => gettype($lead->phones),
+            'phones_value' => $lead->phones,
+            'first_name' => $lead->first_name,
+            'last_name' => $lead->last_name,
+        ];
+    }
+
+    /**
+     * Merge leads - keep the primary lead and archive others.
+     *
+     * @param  int  $primaryLeadId
+     * @param  array  $duplicateLeadIds
+     * @param  array  $fieldMappings
+     * @return \Webkul\Lead\Contracts\Lead
+     */
+    public function mergeLeads($primaryLeadId, $duplicateLeadIds, $fieldMappings = [])
+    {
+        $primaryLead = $this->findOrFail($primaryLeadId);
+        $duplicateLeads = $this->findWhereIn('id', $duplicateLeadIds);
+
+        // Start transaction
+        DB::beginTransaction();
+
+        try {
+            // Apply field mappings to primary lead
+            if (!empty($fieldMappings)) {
+                $updateData = [];
+
+                foreach ($fieldMappings as $field => $sourceLeadId) {
+                    if ($sourceLeadId != $primaryLeadId) {
+                        $sourceLead = $duplicateLeads->firstWhere('id', $sourceLeadId);
+                        if ($sourceLead && !empty($sourceLead->$field)) {
+                            $updateData[$field] = $sourceLead->$field;
+                        }
+                    }
+                }
+
+                if (!empty($updateData)) {
+                    $primaryLead->update($updateData);
+                }
+            }
+
+            // Transfer activities from duplicate leads to primary lead
+            foreach ($duplicateLeads as $duplicateLead) {
+                try {
+                    // Add system activity for removed duplicate lead
+                    $this->addSystemActivity($primaryLead, $duplicateLead);
+                } catch (Exception $e) {
+                    Log::warning('Error adding system activity for duplicate removal: ' . $e->getMessage());
+                }
+                try {
+                    // Transfer emails (hasMany relationship)
+                    $duplicateLead->emails()->update(['lead_id' => $primaryLeadId]);
+                } catch (Exception $e) {
+                    Log::warning('Error transferring emails during merge: ' . $e->getMessage());
+                }
+
+                try {
+                    // Add a note about the merge
+                    $this->addMergeNote($primaryLead, $duplicateLead);
+                } catch (Exception $e) {
+                    Log::warning('Error adding merge note: ' . $e->getMessage());
+                }
+
+                // Archive the duplicate lead (soft delete or mark as archived)
+                $duplicateLead->delete();
+            }
+
+            DB::commit();
+
+            return $primaryLead->fresh();
+
+        } catch (Exception $e) {
+            DB::rollback();
+            throw $e;
+        }
+    }
+    private function addSystemActivity($primaryLead, $duplicateLead): void
+    {
+        // Create a system activity for audit purposes
+        $activityData = [
+            'title' => 'System: Duplicate Lead Removed',
+            'comment' => "Removed duplicate lead \"{$duplicateLead->title}\" (ID: {$duplicateLead->id}) during merge operation.",
+            'type' => 'system',
+            'is_done' => 1,
+            'user_id' => auth()->id() ?? 1,
+        ];
+
+        $activity = app('Webkul\Activity\Repositories\ActivityRepository')->create($activityData);
+
+        // Attach the activity to the primary lead for audit trail
+        $primaryLead->activities()->attach($activity->id);
+
+        Log::info('System activity created for duplicate removal', [
+            'primary_lead_id' => $primaryLead->id,
+            'removed_duplicate_id' => $duplicateLead->id,
+            'removed_duplicate_title' => $duplicateLead->title,
+            'activity_id' => $activity->id,
+            'created_by' => auth()->id() ?? 1,
+        ]);
+    }
+
+    /**
+     * Add a note about the lead merge.
+     *
+     * @param  \Webkul\Lead\Contracts\Lead  $primaryLead
+     * @param  \Webkul\Lead\Contracts\Lead  $duplicateLead
+     * @return void
+     */
+    private function addMergeNote($primaryLead, $duplicateLead)
+    {
+        // Create an activity note about the merge
+        $activityData = [
+            'title' => 'Lead Merged',
+            'comment' => "Lead #{$duplicateLead->id} ({$duplicateLead->title}) was merged into this lead.",
+            'type' => 'note',
+            'is_done' => 1,
+            'user_id' => auth()->id() ?? 1,
+        ];
+
+        $activity = app('Webkul\Activity\Repositories\ActivityRepository')->create($activityData);
+
+        // Attach the activity to the primary lead
+        $primaryLead->activities()->attach($activity->id);
     }
 }

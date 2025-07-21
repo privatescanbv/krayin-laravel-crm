@@ -385,7 +385,7 @@ test('manual search returns match scores when lead_id provided', function () {
     $response = $this->withHeaders([
         'X-Requested-With' => 'XMLHttpRequest',
     ])->get('/admin/contacts/persons/search?' . http_build_query([
-            'query' => 'John',
+            'query'   => 'John',
             'lead_id' => $lead->id,
         ]));
 

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Lead\ActivityController;
+use Webkul\Admin\Http\Controllers\Lead\DuplicateController;
 use Webkul\Admin\Http\Controllers\Lead\EmailController;
 use Webkul\Admin\Http\Controllers\Lead\LeadController;
 use Webkul\Admin\Http\Controllers\Lead\QuoteController;
@@ -61,6 +62,19 @@ Route::controller(LeadController::class)->prefix('leads')->group(function () {
 
     Route::controller(QuoteController::class)->prefix('{id}/quotes')->group(function () {
         Route::delete('{quote_id?}', 'delete')->name('admin.leads.quotes.delete');
+    });
+
+    // Duplicate management routes
+    Route::controller(DuplicateController::class)->prefix('{id}/duplicates')->group(function () {
+        Route::get('', 'index')->name('admin.leads.duplicates.index');
+        
+        Route::get('check', 'checkDuplicates')->name('admin.leads.duplicates.check');
+        
+        Route::get('get', 'getDuplicates')->name('admin.leads.duplicates.get');
+        
+        Route::post('merge', 'merge')->name('admin.leads.duplicates.merge');
+        
+        Route::get('debug', 'debug')->name('admin.leads.duplicates.debug');
     });
 });
 

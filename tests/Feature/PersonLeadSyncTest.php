@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Lead\Models\Lead;
@@ -20,6 +21,24 @@ beforeEach(function () {
     // Ensure we have pipeline and stage
     $this->pipelineId = 1;
     $this->stageId = 1;
+    
+    // Create pipeline and stage records if they don't exist
+    \DB::table('lead_pipelines')->insertOrIgnore([
+        'id' => 1,
+        'name' => 'Test Pipeline',
+        'is_default' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+    
+    \DB::table('lead_pipeline_stages')->insertOrIgnore([
+        'id' => 1,
+        'name' => 'Test Stage',
+        'lead_pipeline_id' => 1,
+        'sort_order' => 1,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
 });
 
 test('can access edit with lead page', function () {

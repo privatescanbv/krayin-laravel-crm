@@ -19,10 +19,6 @@ beforeEach(function () {
     $this->personRepository = app(PersonRepository::class);
     $this->leadRepository = app(LeadRepository::class);
 
-    // Create a test user and authenticate
-    $this->user = User::factory()->create();
-    $this->actingAs($this->user, 'user');
-
     // Ensure we have pipeline and stage
     $this->pipelineId = 1;
     $this->stageId = 1;
@@ -33,28 +29,24 @@ beforeEach(function () {
     if (! DB::table('lead_pipeline_stages')->where('id', 1)->first()) {
         throw new ModelNotFoundException('lead_pipelines not found');
     }
+
+    // Create a test user - authentication will be done per test
+    $this->user = User::factory()->create();
 });
 
-// Helper method to ensure authentication before HTTP requests
-function authenticatedRequest($method, $uri, $data = []) {
-    // Re-authenticate before each request to prevent 302 redirects
+// Helper to authenticate before each HTTP request - CALL THIS IN EVERY TEST
+function authenticate() {
     test()->actingAs(test()->user, 'user');
-
-    return match($method) {
-        'GET' => test()->get($uri),
-        'POST' => test()->post($uri, $data),
-        'PUT' => test()->put($uri, $data),
-        'PATCH' => test()->patch($uri, $data),
-        'DELETE' => test()->delete($uri),
-        default => throw new InvalidArgumentException("Unsupported HTTP method: $method")
-    };
 }
 
 test('can access edit with lead page', function () {
+    authenticate(); // Ensure authentication
+
     $person = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
         'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
+        'user_id' => $this->user->id,
     ]);
 
     $lead = Lead::factory()->create([
@@ -63,6 +55,7 @@ test('can access edit with lead page', function () {
         'emails'                 => [['value' => 'john.smith@example.com', 'label' => 'Work']],
         'lead_pipeline_id'       => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
+        'user_id' => $this->user->id,
     ]);
 
     $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
@@ -77,7 +70,8 @@ test('can access edit with lead page', function () {
 });
 
 test('shows field differences between person and lead', function () {
-    $person = Person::factory()->create([
+    authenticate(); // Ensure authentication
+$person = Person::factory()->create([
         'first_name'    => 'John',
         'last_name'     => 'Doe',
         'emails'        => [['value' => 'john@example.com', 'label' => 'Work']],
@@ -94,7 +88,7 @@ test('shows field differences between person and lead', function () {
         'date_of_birth'          => '1985-05-15', // Different birth date
         'lead_pipeline_id'       => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
-    ]);
+        'user_id' => $this->user->id,]);
 
     $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
         'personId' => $person->id,
@@ -113,12 +107,13 @@ test('shows field differences between person and lead', function () {
 });
 
 test('can update person with lead data', function () {
-    $person = Person::factory()->create([
+    authenticate(); // Ensure authentication
+$person = Person::factory()->create([
         'first_name'    => 'John',
         'last_name'     => 'Doe',
         'emails'        => [['value' => 'john@example.com', 'label' => 'Work']],
         'date_of_birth' => '1990-01-01',
-    ]);
+        'user_id' => $this->user->id,]);
 
     $lead = Lead::factory()->create([
         'first_name'             => 'John',
@@ -127,7 +122,7 @@ test('can update person with lead data', function () {
         'date_of_birth'          => '1985-05-15',
         'lead_pipeline_id'       => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
-    ]);
+        'user_id' => $this->user->id,]);
 
     $response = $this->withHeaders([
         'Accept'           => 'application/json',
@@ -164,17 +159,18 @@ test('can update person with lead data', function () {
 });
 
 test('can update lead data during sync', function () {
-    $person = Person::factory()->create([
+    authenticate(); // Ensure authentication
+$person = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
-    ]);
+        'user_id' => $this->user->id,]);
 
     $lead = Lead::factory()->create([
         'first_name'             => 'John',
         'last_name'              => 'Smith',
         'lead_pipeline_id'       => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
-    ]);
+        'user_id' => $this->user->id,]);
 
     $response = $this->withHeaders([
         'Accept'           => 'application/json',
@@ -203,12 +199,13 @@ test('can update lead data during sync', function () {
 });
 
 test('handles array fields correctly during sync', function () {
-    $person = Person::factory()->create([
+    authenticate(); // Ensure authentication
+$person = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
         'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
         'phones'     => [['value' => '123456789', 'label' => 'Mobile']],
-    ]);
+        'user_id' => $this->user->id,]);
 
     $lead = Lead::factory()->create([
         'first_name'             => 'John',
@@ -217,7 +214,7 @@ test('handles array fields correctly during sync', function () {
         'phones'                 => [['value' => '987654321', 'label' => 'Mobile']],
         'lead_pipeline_id'       => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
-    ]);
+        'user_id' => $this->user->id,]);
 
     $response = $this->withHeaders([
         'Accept'           => 'application/json',
@@ -252,7 +249,8 @@ test('handles array fields correctly during sync', function () {
 });
 
 test('returns validation error for invalid data', function () {
-    // Re-authenticate to prevent 302 redirect
+    authenticate(); // Ensure authentication
+// Re-authenticate to prevent 302 redirect
     $this->actingAs($this->user, 'user');
 
     $person = Person::factory()->create([
@@ -274,12 +272,13 @@ test('returns validation error for invalid data', function () {
 });
 
 test('shows no differences message when records are identical', function () {
-    $person = Person::factory()->create([
+    authenticate(); // Ensure authentication
+$person = Person::factory()->create([
         'first_name'    => 'John',
         'last_name'     => 'Doe',
         'emails'        => [['value' => 'john@example.com', 'label' => 'Work']],
         'date_of_birth' => '1990-01-01',
-    ]);
+        'user_id' => $this->user->id,]);
 
     $lead = Lead::factory()->create([
         'first_name'             => 'John',
@@ -288,7 +287,7 @@ test('shows no differences message when records are identical', function () {
         'date_of_birth'          => '1990-01-01',
         'lead_pipeline_id'       => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
-    ]);
+        'user_id' => $this->user->id,]);
 
     $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
         'personId' => $person->id,
@@ -300,7 +299,8 @@ test('shows no differences message when records are identical', function () {
 });
 
 test('handles edge case with malformed birth dates', function () {
-    // Re-authenticate to prevent 302 redirect
+    authenticate(); // Ensure authentication
+// Re-authenticate to prevent 302 redirect
     $this->actingAs($this->user, 'user');
 
     // Create person with potentially malformed date
@@ -339,7 +339,8 @@ test('handles edge case with malformed birth dates', function () {
 });
 
 test('handles date comparison with valid vs invalid dates', function () {
-    // Re-authenticate to prevent 302 redirect
+    authenticate(); // Ensure authentication
+// Re-authenticate to prevent 302 redirect
     $this->actingAs($this->user, 'user');
 
     $person = Person::factory()->create([
@@ -371,7 +372,8 @@ test('handles date comparison with valid vs invalid dates', function () {
 });
 
 test('validates required route parameters', function () {
-    // Test with missing person ID
+    authenticate(); // Ensure authentication
+// Test with missing person ID
     $response = $this->get('/admin/contacts/persons/edit-with-lead//1');
     $response->assertStatus(404);
 
@@ -381,11 +383,12 @@ test('validates required route parameters', function () {
 });
 
 test('handles empty form submission gracefully', function () {
-    $person = Person::factory()->create();
+    authenticate(); // Ensure authentication
+$person = Person::factory()->create();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
-    ]);
+        'user_id' => $this->user->id,]);
 
     $response = $this->withHeaders([
         'Accept'           => 'application/json',
@@ -403,7 +406,8 @@ test('handles empty form submission gracefully', function () {
 });
 
 test('manual search returns match scores when lead_id provided', function () {
-    $person = Person::factory()->create([
+    authenticate(); // Ensure authentication
+$person = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
         'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
@@ -416,9 +420,12 @@ test('manual search returns match scores when lead_id provided', function () {
         'emails'                 => [['value' => 'john@example.com', 'label' => 'Work']], // Same email
         'lead_pipeline_id'       => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
-    ]);
+        'user_id' => $this->user->id,]);
 
     // Test manual search with lead_id parameter
+    // Re-authenticate before AJAX request
+    $this->actingAs($this->user, 'user');
+
     $response = $this->withHeaders([
         'X-Requested-With' => 'XMLHttpRequest',
     ])->get('/admin/contacts/persons/search?'.http_build_query([
@@ -438,7 +445,8 @@ test('manual search returns match scores when lead_id provided', function () {
 });
 
 test('manual search without lead_id returns regular results', function () {
-    $person = Person::factory()->create([
+    authenticate(); // Ensure authentication
+$person = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
         'user_id' => $this->user->id,

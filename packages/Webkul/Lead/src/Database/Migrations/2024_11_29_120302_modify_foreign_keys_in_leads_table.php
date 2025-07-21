@@ -13,13 +13,16 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('leads', function (Blueprint $table) {
-            // Eerst alle foreign keys verwijderen
-            $table->dropForeign(['user_id']);
-            $table->dropForeign(['person_id']);
-            $table->dropForeign(['lead_source_id']);
-            $table->dropForeign(['lead_type_id']);
-        });
+        // SQLite doesn't support dropping foreign keys
+        if (DB::getDriverName() !== 'sqlite') {
+            Schema::table('leads', function (Blueprint $table) {
+                // Eerst alle foreign keys verwijderen
+                $table->dropForeign(['user_id']);
+                $table->dropForeign(['person_id']);
+                $table->dropForeign(['lead_source_id']);
+                $table->dropForeign(['lead_type_id']);
+            });
+        }
 
         Schema::table('leads', function (Blueprint $table) {
             // Dan de kolommen wijzigen
@@ -56,13 +59,16 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('leads', function (Blueprint $table) {
-            // Eerst alle foreign keys verwijderen
-            $table->dropForeign(['user_id']);
-            $table->dropForeign(['person_id']);
-            $table->dropForeign(['lead_source_id']);
-            $table->dropForeign(['lead_type_id']);
-        });
+        // SQLite doesn't support dropping foreign keys
+        if (DB::getDriverName() !== 'sqlite') {
+            Schema::table('leads', function (Blueprint $table) {
+                // Eerst alle foreign keys verwijderen
+                $table->dropForeign(['user_id']);
+                $table->dropForeign(['person_id']);
+                $table->dropForeign(['lead_source_id']);
+                $table->dropForeign(['lead_type_id']);
+            });
+        }
 
         Schema::table('leads', function (Blueprint $table) {
             // Dan de kolommen wijzigen

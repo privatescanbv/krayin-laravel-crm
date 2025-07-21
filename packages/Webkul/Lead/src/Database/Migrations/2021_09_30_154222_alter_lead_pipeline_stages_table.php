@@ -39,7 +39,9 @@ return new class extends Migration
         Schema::table('lead_pipeline_stages', function (Blueprint $table) use ($tablePrefix) {
             // SQLite doesn't support dropping foreign keys, so skip this for SQLite
             if (DB::getDriverName() !== 'sqlite') {
+                if (DB::getDriverName() !== 'sqlite') {
                 $table->dropForeign($tablePrefix.'lead_pipeline_stages_lead_stage_id_foreign');
+            }
             }
             $table->dropColumn('lead_stage_id');
 

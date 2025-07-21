@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -12,7 +13,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('persons', function (Blueprint $table) {
-            $table->dropForeign(['organization_id']);
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->dropForeign(['organization_id']);
+            }
 
             $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('set null');
         });
@@ -24,7 +27,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('persons', function (Blueprint $table) {
-            $table->dropForeign(['organization_id']);
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->dropForeign(['organization_id']);
+            }
 
             $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('cascade');
         });

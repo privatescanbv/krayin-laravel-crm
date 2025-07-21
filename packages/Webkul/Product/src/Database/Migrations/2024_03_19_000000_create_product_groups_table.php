@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -24,7 +25,9 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->dropForeign(['product_group_id']);
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->dropForeign(['product_group_id']);
+            }
             $table->dropColumn('product_group_id');
         });
 

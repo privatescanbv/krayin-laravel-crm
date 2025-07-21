@@ -358,9 +358,15 @@ class Import
     {
         $summary = $this->importBatchRepository
             ->select(
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."created"\'))) AS created'),
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."updated"\'))) AS updated'),
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."deleted"\'))) AS deleted'),
+                DB::getDriverName() === 'sqlite' 
+                    ? DB::raw('SUM(CAST(json_extract(summary, \'$."created"\') AS INTEGER)) AS created')
+                    : DB::raw('SUM(json_unquote(json_extract(summary, \'$."created"\'))) AS created'),
+                DB::getDriverName() === 'sqlite' 
+                    ? DB::raw('SUM(CAST(json_extract(summary, \'$."updated"\') AS INTEGER)) AS updated')
+                    : DB::raw('SUM(json_unquote(json_extract(summary, \'$."updated"\'))) AS updated'),
+                DB::getDriverName() === 'sqlite' 
+                    ? DB::raw('SUM(CAST(json_extract(summary, \'$."deleted"\') AS INTEGER)) AS deleted')
+                    : DB::raw('SUM(json_unquote(json_extract(summary, \'$."deleted"\'))) AS deleted'),
             )
             ->where('import_id', $this->import->id)
             ->groupBy('import_id')
@@ -393,9 +399,15 @@ class Import
 
         $summary = $this->importBatchRepository
             ->select(
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."created"\'))) AS created'),
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."updated"\'))) AS updated'),
-                DB::raw('SUM(json_unquote(json_extract(summary, \'$."deleted"\'))) AS deleted'),
+                DB::getDriverName() === 'sqlite' 
+                    ? DB::raw('SUM(CAST(json_extract(summary, \'$."created"\') AS INTEGER)) AS created')
+                    : DB::raw('SUM(json_unquote(json_extract(summary, \'$."created"\'))) AS created'),
+                DB::getDriverName() === 'sqlite' 
+                    ? DB::raw('SUM(CAST(json_extract(summary, \'$."updated"\') AS INTEGER)) AS updated')
+                    : DB::raw('SUM(json_unquote(json_extract(summary, \'$."updated"\'))) AS updated'),
+                DB::getDriverName() === 'sqlite' 
+                    ? DB::raw('SUM(CAST(json_extract(summary, \'$."deleted"\') AS INTEGER)) AS deleted')
+                    : DB::raw('SUM(json_unquote(json_extract(summary, \'$."deleted"\'))) AS deleted'),
             )
             ->where('import_id', $this->import->id)
             ->where('state', $state)

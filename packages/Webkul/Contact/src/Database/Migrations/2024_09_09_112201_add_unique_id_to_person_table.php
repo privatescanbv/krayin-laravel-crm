@@ -18,15 +18,28 @@ return new class extends Migration
 
         $tableName = DB::getTablePrefix().'persons';
 
-        DB::statement("
-            UPDATE {$tableName}
-            SET unique_id = CONCAT(
-                user_id, '|', 
-                organization_id, '|', 
-                JSON_UNQUOTE(JSON_EXTRACT(emails, '$[0].value')), '|',
-                JSON_UNQUOTE(JSON_EXTRACT(contact_numbers, '$[0].value'))
-            )
-        ");
+        if (DB::getDriverName() === 'sqlite') {
+            // SQLite doesn't support JSON_UNQUOTE, use simpler approach
+            DB::statement("
+                UPDATE {$tableName}
+                SET unique_id = user_id || '|' || organization_id || '|' || 
+                    COALESCE(substr(emails, instr(emails, '\"value\":\"') + 9, 
+                        instr(substr(emails, instr(emails, '\"value\":\"') + 9), '\"') - 1), '') || '|' ||
+                    COALESCE(substr(contact_numbers, instr(contact_numbers, '\"value\":\"') + 9, 
+                        instr(substr(contact_numbers, instr(contact_numbers, '\"value\":\"') + 9), '\"') - 1), '')
+            ");
+        } else {
+            // MySQL/PostgreSQL with JSON functions
+            DB::statement("
+                UPDATE {$tableName}
+                SET unique_id = CONCAT(
+                    user_id, '|', 
+                    organization_id, '|', 
+                    JSON_UNQUOTE(JSON_EXTRACT(emails, '$[0].value')), '|',
+                    JSON_UNQUOTE(JSON_EXTRACT(contact_numbers, '$[0].value'))
+                )
+            ");
+        }
     }
 
     /**

@@ -20,8 +20,11 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        // Use testing database for all tests
-        config(['database.default' => 'mysql_testing']);
+        // Set locale to English for consistent test messages
+        app()->setLocale('en');
+
+        // Use the database connection specified in phpunit.xml (usually SQLite)
+        // Don't override if already set by phpunit.xml
         // Try to run migrations and seeders, but don't fail if they don't exist
         try {
             $this->artisan('migrate', ['--force' => true]);

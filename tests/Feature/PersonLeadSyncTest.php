@@ -17,14 +17,25 @@ beforeEach(function () {
     $this->personRepository = app(PersonRepository::class);
     $this->leadRepository = app(LeadRepository::class);
 
-    // Create a test user and authenticate
+    // Create a test user
     $this->user = User::factory()->create();
+
+    // Set up authentication and session persistence
     $this->actingAs($this->user, 'user');
+
+    // Force session to persist user authentication
+    session(['_auth_user_' . $this->user->getAuthIdentifier() => $this->user->id]);
+    session(['_auth_guard_user' => $this->user->id]);
 });
 
-// Helper to ensure authentication and required data
-function authenticate() {
+
+
+// Helper to get required pipeline/stage data and ensure authentication
+function getPipelineData() {
+    // Force re-authentication before every HTTP request
     test()->actingAs(test()->user, 'user');
+session(['_auth_user_' . test()->user->getAuthIdentifier() => test()->user->id]);
+    session(['_auth_guard_user' => test()->user->id]);
 
     // Create pipeline and stage if not exists
     $pipeline = \Webkul\Lead\Models\Pipeline::firstOrCreate([
@@ -44,7 +55,7 @@ function authenticate() {
 }
 
 test('can access edit with lead page', function () {
-    $data = $data = authenticate(); // Ensure authentication and get pipeline data and get pipeline data
+    $data = $data = getPipelineData(); // Get pipeline data (auth is mocked) and get pipeline data
     $person = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
@@ -73,7 +84,7 @@ test('can access edit with lead page', function () {
 });
 
 test('shows field differences between person and lead', function () {
-    $data = authenticate(); // Ensure authentication and get pipeline data
+    $data = getPipelineData(); // Get pipeline data (auth is mocked)
 $person = Person::factory()->create([
         'first_name'    => 'John',
         'last_name'     => 'Doe',
@@ -110,7 +121,7 @@ $person = Person::factory()->create([
 });
 
 test('can update person with lead data', function () {
-    $data = authenticate(); // Ensure authentication and get pipeline data
+    $data = getPipelineData(); // Get pipeline data (auth is mocked)
 $person = Person::factory()->create([
         'first_name'    => 'John',
         'last_name'     => 'Doe',
@@ -162,7 +173,7 @@ $person = Person::factory()->create([
 });
 
 test('can update lead data during sync', function () {
-    $data = authenticate(); // Ensure authentication and get pipeline data
+    $data = getPipelineData(); // Get pipeline data (auth is mocked)
 $person = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
@@ -202,7 +213,7 @@ $person = Person::factory()->create([
 });
 
 test('handles array fields correctly during sync', function () {
-    $data = authenticate(); // Ensure authentication and get pipeline data
+    $data = getPipelineData(); // Get pipeline data (auth is mocked)
 $person = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
@@ -252,7 +263,7 @@ $person = Person::factory()->create([
 });
 
 test('returns validation error for invalid data', function () {
-    $data = authenticate(); // Ensure authentication and get pipeline data
+    $data = getPipelineData(); // Get pipeline data (auth is mocked)
 // Re-authenticate to prevent 302 redirect
     $this->actingAs($this->user, 'user');
 
@@ -275,7 +286,7 @@ test('returns validation error for invalid data', function () {
 });
 
 test('shows no differences message when records are identical', function () {
-    $data = authenticate(); // Ensure authentication and get pipeline data
+    $data = getPipelineData(); // Get pipeline data (auth is mocked)
 $person = Person::factory()->create([
         'first_name'    => 'John',
         'last_name'     => 'Doe',
@@ -302,7 +313,7 @@ $person = Person::factory()->create([
 });
 
 test('handles edge case with malformed birth dates', function () {
-    $data = authenticate(); // Ensure authentication and get pipeline data
+    $data = getPipelineData(); // Get pipeline data (auth is mocked)
 // Re-authenticate to prevent 302 redirect
     $this->actingAs($this->user, 'user');
 
@@ -342,7 +353,7 @@ test('handles edge case with malformed birth dates', function () {
 });
 
 test('handles date comparison with valid vs invalid dates', function () {
-    $data = authenticate(); // Ensure authentication and get pipeline data
+    $data = getPipelineData(); // Get pipeline data (auth is mocked)
 // Re-authenticate to prevent 302 redirect
     $this->actingAs($this->user, 'user');
 
@@ -375,7 +386,7 @@ test('handles date comparison with valid vs invalid dates', function () {
 });
 
 test('validates required route parameters', function () {
-    $data = authenticate(); // Ensure authentication and get pipeline data
+    $data = getPipelineData(); // Get pipeline data (auth is mocked)
 // Test with missing person ID
     $response = $this->get('/admin/contacts/persons/edit-with-lead//1');
     $response->assertStatus(404);
@@ -386,7 +397,7 @@ test('validates required route parameters', function () {
 });
 
 test('handles empty form submission gracefully', function () {
-    $data = authenticate(); // Ensure authentication and get pipeline data
+    $data = getPipelineData(); // Get pipeline data (auth is mocked)
 $person = Person::factory()->create();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
@@ -409,7 +420,7 @@ $person = Person::factory()->create();
 });
 
 test('manual search returns match scores when lead_id provided', function () {
-    $data = authenticate(); // Ensure authentication and get pipeline data
+    $data = getPipelineData(); // Get pipeline data (auth is mocked)
 $person = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
@@ -448,7 +459,7 @@ $person = Person::factory()->create([
 });
 
 test('manual search without lead_id returns regular results', function () {
-    $data = authenticate(); // Ensure authentication and get pipeline data
+    $data = getPipelineData(); // Get pipeline data (auth is mocked)
 $person = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',

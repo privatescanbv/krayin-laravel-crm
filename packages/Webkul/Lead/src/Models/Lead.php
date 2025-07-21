@@ -280,6 +280,29 @@ class Lead extends Model implements LeadContract
     }
 
     /**
+     * Get the count of unread emails for this lead.
+     */
+    public function getUnreadEmailsCountAttribute(): int
+    {
+        return $this->emails()->where('is_read', 0)->count();
+    }
+
+    /**
+     * Get the remaining days until due date (expected_close_date).
+     */
+    public function getDaysUntilDueDateAttribute(): ?int
+    {
+        if (!$this->expected_close_date) {
+            return null;
+        }
+
+        $today = Carbon::today();
+        $dueDate = Carbon::parse($this->expected_close_date);
+        
+        return $today->diffInDays($dueDate, false);
+    }
+
+    /**
      * Get the anamnesis that belongs to the lead.
      */
     public function anamnesis()

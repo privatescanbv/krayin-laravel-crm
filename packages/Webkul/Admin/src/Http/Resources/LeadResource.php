@@ -31,6 +31,8 @@ class LeadResource extends JsonResource
             'stage'                => new StageResource($this->stage),
             'tags'                 => TagResource::collection($this->tags),
             'open_activities_count'=> $this->open_activities_count,
+            'unread_emails_count'  => $this->unread_emails_count,
+            'days_until_due_date'  => $this->days_until_due_date,
         ];
     }
 }

@@ -166,13 +166,6 @@
                                         @{{ element.title }}
                                     </p>
 
-                                    <!-- Open Activities Badge -->
-                                    <span v-if="element.open_activities_count > 0"
-                                          class="inline-block bg-yellow-100 text-yellow-800 text-[10px] font-semibold px-2 py-0.5 rounded-full mb-1">
-                                        @{{ element.open_activities_count }} openstaande taak
-                                        <span v-if="element.open_activities_count > 1">en</span>
-                                    </span>
-
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.after') !!}
 
                                     <div class="flex flex-wrap gap-0.5">
@@ -200,6 +193,51 @@
                                             </div>
                                             {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.tag.after') !!}
                                         </template>
+                                    </div>
+
+                                    <!-- Card Footer -->
+                                    <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                                        <div class="flex items-center gap-3">
+                                            <!-- Open Activities Count -->
+                                            <div class="flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
+                                                <span class="icon-activity text-xs"></span>
+                                                <span>@{{ element.open_activities_count || 0 }}</span>
+                                            </div>
+
+                                            <!-- Unread Emails Count -->
+                                            <div class="flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
+                                                <span class="icon-mail text-xs"></span>
+                                                <span>@{{ element.unread_emails_count || 0 }}</span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Days Until Due Date -->
+                                        <div class="text-[10px] text-gray-600 dark:text-gray-400">
+                                            <span 
+                                                v-if="element.days_until_due_date === null"
+                                                class="text-gray-500"
+                                            >
+                                                -
+                                            </span>
+                                            <span 
+                                                v-else-if="element.days_until_due_date > 0"
+                                                class="text-green-600"
+                                            >
+                                                @{{ element.days_until_due_date }}d
+                                            </span>
+                                            <span 
+                                                v-else-if="element.days_until_due_date === 0"
+                                                class="text-orange-600 font-medium"
+                                            >
+                                                @lang('admin::app.common.filters.date-range.today')
+                                            </span>
+                                            <span 
+                                                v-else
+                                                class="text-red-600 font-medium"
+                                            >
+                                                @{{ Math.abs(element.days_until_due_date) }}d over
+                                            </span>
+                                        </div>
                                     </div>
                                 </a>
 

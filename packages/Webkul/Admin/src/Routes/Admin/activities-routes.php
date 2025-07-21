@@ -7,6 +7,8 @@ Route::controller(ActivityController::class)->prefix('activities')->group(functi
     Route::get('', 'index')->name('admin.activities.index');
 
     Route::get('get', 'get')->name('admin.activities.get');
+    
+    Route::get('views', 'getViews')->name('admin.activities.views');
 
     Route::post('create', 'store')->name('admin.activities.store');
 

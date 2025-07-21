@@ -13,6 +13,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Activity\Repositories\FileRepository;
+use Webkul\Activity\Services\ViewService;
 use Webkul\Admin\DataGrids\Activity\ActivityDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
@@ -33,6 +34,7 @@ class ActivityController extends Controller
         protected FileRepository $fileRepository,
         protected AttributeRepository $attributeRepository,
         protected WebhookService $webhookService,
+        protected ?ViewService $viewService = null,
     ) {}
 
     /**
@@ -40,7 +42,15 @@ class ActivityController extends Controller
      */
     public function index(): View
     {
-        return view('admin::activities.index');
+        $views = [];
+        $currentView = 'for_me';
+        
+        if ($this->viewService) {
+            $views = $this->viewService->getAvailableViews();
+            $currentView = request()->get('view', $this->viewService->getDefaultView()['key']);
+        }
+        
+        return view('admin::activities.index', compact('views', 'currentView'));
     }
 
     /**
@@ -59,10 +69,24 @@ class ActivityController extends Controller
         $endDate = request()->get('endDate')
             ? Carbon::createFromTimeString(request()->get('endDate').' 23:59:59')
             : Carbon::now()->endOfWeek()->format('Y-m-d H:i:s');
-        $activities = $this->activityRepository->getActivities([$startDate, $endDate])->toArray();
+        
+        $view = request()->get('view');
+        $activities = $this->activityRepository->getActivities([$startDate, $endDate], $view)->toArray();
 
         return response()->json([
             'activities' => $activities,
+        ]);
+    }
+
+    /**
+     * Get available views.
+     */
+    public function getViews(): JsonResponse
+    {
+        $views = $this->viewService->getAvailableViews();
+        
+        return response()->json([
+            'views' => $views,
         ]);
     }
 

@@ -9,7 +9,7 @@
             <br><small>Naamvelden: voornaam, achternaam, achternaam voorvoegsel, getrouwde naam, getrouwde naam voorvoegsel, initialen</small>
         </div>
     </div>
-    
+
     <v-contact-matcher
         :lead='@json($lead ?? new stdClass())'
         :person='@json($lead->person ?? new stdClass())'
@@ -111,7 +111,7 @@
                                     {{ person.match_score_percentage }}% match
                                 </div>
                                 <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                    <div 
+                                    <div
                                         class="h-full rounded-full transition-all duration-300"
                                         :class="getScoreColorClass(person.match_score_percentage)"
                                         :style="{ width: person.match_score_percentage + '%' }"
@@ -132,7 +132,7 @@
                             {{ selectedPerson.match_score_percentage }}% match
                         </span>
                         <div class="w-12 h-1.5 bg-blue-200 rounded-full overflow-hidden">
-                            <div 
+                            <div
                                 class="h-full rounded-full"
                                 :class="getScoreColorClass(selectedPerson.match_score_percentage)"
                                 :style="{ width: selectedPerson.match_score_percentage + '%' }"

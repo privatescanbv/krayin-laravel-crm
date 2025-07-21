@@ -2,14 +2,17 @@
 
 namespace Webkul\Contact\Models;
 
+use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Attribute\Traits\CustomAttribute;
 use Webkul\Contact\Contracts\Organization as OrganizationContract;
+use Webkul\Contact\Database\Factories\OrganizationFactory;
 use Webkul\User\Models\UserProxy;
 
 class Organization extends Model implements OrganizationContract
 {
-    use CustomAttribute;
+    use CustomAttribute, hasFactory;
 
     protected $casts = [
         'address' => 'array',
@@ -42,5 +45,15 @@ class Organization extends Model implements OrganizationContract
     public function user()
     {
         return $this->belongsTo(UserProxy::modelClass());
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     *
+     * @return Factory
+     */
+    protected static function newFactory()
+    {
+        return OrganizationFactory::new();
     }
 }

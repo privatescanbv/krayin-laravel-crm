@@ -98,7 +98,7 @@ class PersonController extends Controller
 
         // Filter out empty phone numbers
         if (isset($data['phones']) && is_array($data['phones'])) {
-            $data['phones'] = array_filter($data['phones'], function($phone) {
+            $data['phones'] = array_filter($data['phones'], function ($phone) {
                 return isset($phone['value']) && !empty(trim($phone['value']));
             });
 
@@ -110,7 +110,7 @@ class PersonController extends Controller
 
         // Filter out empty email addresses
         if (isset($data['emails']) && is_array($data['emails'])) {
-            $data['emails'] = array_filter($data['emails'], function($email) {
+            $data['emails'] = array_filter($data['emails'], function ($email) {
                 return isset($email['value']) && !empty(trim($email['value']));
             });
 
@@ -122,7 +122,7 @@ class PersonController extends Controller
 
         // Normaliseer is_default naar boolean voor phones
         if (isset($data['phones']) && is_array($data['phones'])) {
-            $data['phones'] = array_map(function($phone) {
+            $data['phones'] = array_map(function ($phone) {
                 if (isset($phone['is_default'])) {
                     $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
                 }
@@ -131,7 +131,7 @@ class PersonController extends Controller
         }
         // Normaliseer is_default naar boolean voor emails
         if (isset($data['emails']) && is_array($data['emails'])) {
-            $data['emails'] = array_map(function($email) {
+            $data['emails'] = array_map(function ($email) {
                 if (isset($email['is_default'])) {
                     $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
                 }
@@ -219,7 +219,7 @@ class PersonController extends Controller
 
         // Filter out empty phone numbers
         if (isset($data['phones']) && is_array($data['phones'])) {
-            $data['phones'] = array_filter($data['phones'], function($phone) {
+            $data['phones'] = array_filter($data['phones'], function ($phone) {
                 return isset($phone['value']) && !empty(trim($phone['value']));
             });
 
@@ -231,7 +231,7 @@ class PersonController extends Controller
 
         // Filter out empty email addresses
         if (isset($data['emails']) && is_array($data['emails'])) {
-            $data['emails'] = array_filter($data['emails'], function($email) {
+            $data['emails'] = array_filter($data['emails'], function ($email) {
                 return isset($email['value']) && !empty(trim($email['value']));
             });
 
@@ -243,7 +243,7 @@ class PersonController extends Controller
 
         // Normaliseer is_default naar boolean voor phones
         if (isset($data['phones']) && is_array($data['phones'])) {
-            $data['phones'] = array_map(function($phone) {
+            $data['phones'] = array_map(function ($phone) {
                 if (isset($phone['is_default'])) {
                     $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
                 }
@@ -252,7 +252,7 @@ class PersonController extends Controller
         }
         // Normaliseer is_default naar boolean voor emails
         if (isset($data['emails']) && is_array($data['emails'])) {
-            $data['emails'] = array_map(function($email) {
+            $data['emails'] = array_map(function ($email) {
                 if (isset($email['is_default'])) {
                     $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
                 }
@@ -302,37 +302,39 @@ class PersonController extends Controller
      */
     public function searchByLead(Lead $lead): JsonResource
     {
-        $persons = Person::all();
-        $scoredResults = [];
+        $persons = Person::query()
+            ->where('first_name', 'like', '%' . $lead->first_name . '%')
+            ->where(function ($query) use ($lead) {
+                $query->where('last_name', 'like', '%' . $lead->last_name . '%')
+                    ->orWhere('married_name', 'like', '%' . $lead->married_name . '%');
+            })
+            ->limit(30)
+            ->get();
 
-        foreach ($persons as $person) {
-            $score = $this->calculateMatchScore($lead, $person);
-            
-            if ($score > 0) {
-                $personData = $person->toArray();
-                $personData['match_score'] = $score;
-                $personData['match_score_percentage'] = round($score, 1);
-                $scoredResults[] = $personData;
-            }
-        }
+        $personsWithScores = collect($persons)
+            ->map(function ($person) use ($lead) {
+                $score = $this->calculateMatchScore($lead, $person);
 
-        // Sort by score descending
-        usort($scoredResults, function ($a, $b) {
-            return $b['match_score'] <=> $a['match_score'];
-        });
-
-        // Convert back to collection and limit results
-        $limitedResults = array_slice($scoredResults, 0, 10);
-        
-        // Create Person objects with additional score data
-        $personsWithScores = collect($limitedResults)->map(function ($personData) {
-            $person = new Person($personData);
-            $person->id = $personData['id'];
-            $person->match_score = $personData['match_score'];
-            $person->match_score_percentage = $personData['match_score_percentage'];
-            $person->exists = true; // Mark as existing model
-            return $person;
-        });
+                if ($score > 0) {
+                    $person->match_score = $score;
+                    $person->match_score_percentage = round($score, 1);;
+                    return [$person->id => $person];
+                }
+                return null;
+            })
+            ->sortByDesc(function ($item) {
+                // $item is an array: [id => $person]
+                // Get the person object from the array value
+                if (is_array($item)) {
+                    $person = reset($item);
+                    return $person->match_score ?? 0;
+                }
+                return 0;
+            })
+            ->flatMap(function ($item) {
+                return $item;
+            })// Limit to top 10 results
+            ->all();
 
         return PersonResource::collection($personsWithScores);
     }
@@ -347,17 +349,17 @@ class PersonController extends Controller
 
         // Calculate name field matches
         $nameScore = $this->calculateNameMatchScore($lead, $person);
-        
+
         // Email matching (25% weight - highest since emails are usually unique)
         $emailScore = $this->calculateEmailMatchScore($lead, $person);
-        $score += $emailScore * 0.25 * 100;
+        $score += $emailScore * 0.05 * 100;
 
         // Phone number matching (20% weight)
         $phoneScore = $this->calculatePhoneMatchScore($lead, $person);
-        $score += $phoneScore * 0.20 * 100;
+        $score += $phoneScore * 0.05 * 100;
 
         // Add name score (55% total weight)
-        $score += $nameScore * 0.55 * 100;
+        $score += $nameScore * 0.9 * 100;
 
         return min($score, $maxScore);
     }
@@ -369,7 +371,7 @@ class PersonController extends Controller
     {
         $nameFields = [
             'first_name',
-            'last_name', 
+            'last_name',
             'lastname_prefix',
             'married_name',
             'married_name_prefix',
@@ -393,22 +395,21 @@ class PersonController extends Controller
 
             if (!empty($leadValue) || !empty($personValue)) {
                 $totalPossibleMatches++;
-                
+
                 if (in_array($field, $importantNameFields)) {
                     $importantPossibleMatches++;
                 }
 
                 if (!empty($leadValue) && !empty($personValue)) {
                     $isMatch = false;
-                    
+
                     // Exact match
                     if (strtolower(trim($leadValue)) === strtolower(trim($personValue))) {
                         $isMatch = true;
-                    }
-                    // Partial match for names (not for initials)
-                    elseif ($field !== 'initials' && 
-                            (stripos($personValue, $leadValue) !== false || 
-                             stripos($leadValue, $personValue) !== false)) {
+                    } // Partial match for names (not for initials)
+                    elseif ($field !== 'initials' &&
+                        (stripos($personValue, $leadValue) !== false ||
+                            stripos($leadValue, $personValue) !== false)) {
                         $isMatch = true;
                     }
 
@@ -428,13 +429,13 @@ class PersonController extends Controller
         }
 
         $totalMatchRatio = $totalMatches / $totalPossibleMatches;
-        
+
         // 100% match on all name fields = 95% score
         if ($totalMatchRatio === 1.0) {
             return 0.95;
         }
 
-        // 100% match on important name fields = 80% score  
+        // 100% match on important name fields = 80% score
         if ($importantPossibleMatches > 0 && $importantMatches === $importantPossibleMatches) {
             return 0.80;
         }
@@ -570,12 +571,12 @@ class PersonController extends Controller
     {
         // Remove all non-numeric characters
         $normalized = preg_replace('/[^0-9]/', '', $phone);
-        
+
         // Handle Dutch phone numbers - convert +31 to 0
         if (str_starts_with($normalized, '31') && strlen($normalized) >= 10) {
             $normalized = '0' . substr($normalized, 2);
         }
-        
+
         return $normalized;
     }
 

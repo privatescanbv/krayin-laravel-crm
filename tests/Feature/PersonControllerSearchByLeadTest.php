@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Webkul\Admin\Http\Controllers\Contact\Persons\PersonController;
+use Webkul\Admin\Http\Resources\PersonResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Models\Person;
@@ -359,51 +360,61 @@ test('returns results with match scores and sorts by score', function () {
     // Create a lead with all fields directly on the model
     $pipeline = Pipeline::first();
     $stage = Stage::first();
-    
+
     $lead = Lead::factory()->create([
-        'title' => 'Test Lead',
-        'first_name' => 'John',
-        'last_name' => 'Smith',
-        'married_name' => 'Johnson',
-        'emails' => [['value' => 'john.smith@example.com', 'label' => 'work']],
-        'phones' => [['value' => '0612345678', 'label' => 'mobile']],
-        'lead_pipeline_id' => $pipeline->id,
+        'title'                  => 'Test Lead',
+        'first_name'             => 'John',
+        'last_name'              => 'Smith',
+        'married_name'           => 'Johnson',
+        'emails'                 => [['value' => 'john.smith@example.com', 'label' => 'work']],
+        'phones'                 => [['value' => '0612345678', 'label' => 'mobile']],
+        'lead_pipeline_id'       => $pipeline->id,
         'lead_pipeline_stage_id' => $stage->id,
     ]);
 
     // Create person with high match score (exact name and email and phone match)
     $highMatchPerson = Person::factory()->create([
-        'first_name' => 'John',
-        'last_name' => 'Smith',
-        'married_name' => 'Johnson',
-        'emails' => [['value' => 'john.smith@example.com', 'label' => 'work']],
+        'first_name'      => 'John',
+        'last_name'       => 'Smith',
+        'married_name'    => 'Johnson',
+        'emails'          => [['value' => 'john.smith@example.com', 'label' => 'work']],
         'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
     ]);
 
     // Create person with medium match score (some name fields missing, different email/phone)
     $mediumMatchPerson = Person::factory()->create([
         'first_name' => 'John',
-        'last_name' => 'Smith',
+        'last_name'  => 'Smith',
         // No married_name - this should result in lower score than highMatchPerson
-        'emails' => [['value' => 'different@example.com', 'label' => 'work']],
+        'emails'          => [['value' => 'different@example.com', 'label' => 'work']],
         'contact_numbers' => [['value' => '0687654321', 'label' => 'mobile']],
     ]);
 
     // Create person with low match score (first name only)
     $lowMatchPerson = Person::factory()->create([
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'emails' => [['value' => 'john.doe@example.com', 'label' => 'work']],
+        'first_name'      => 'John',
+        'last_name'       => 'Doe',
+        'emails'          => [['value' => 'john.doe@example.com', 'label' => 'work']],
         'contact_numbers' => [['value' => '0698765432', 'label' => 'mobile']],
     ]);
+
+    $onlyNameMatch = Person::factory()
+        ->withOrganisation('Familie Smith')
+        ->create([
+            'first_name'    => 'John',
+            'last_name'     => 'Smith',
+            'date_of_birth' => '1990-01-01',
+        ]);
 
     // Call the method
     $result = $this->controller->searchByLead($lead);
 
     // Assert results are returned with scores
     expect($result)->toBeInstanceOf(JsonResource::class);
-    
+
     $collection = $result->collection;
+
+    // expect no result for John Doe
     expect($collection)->toHaveCount(3);
 
     // Assert all results have match scores
@@ -422,5 +433,9 @@ test('returns results with match scores and sorts by score', function () {
     // Use a small delta to handle floating point precision issues
     $firstScore = round($collection->first()->match_score, 2);
     $secondScore = round($collection->get(1)->match_score, 2);
+    $x = $collection->filter(fn (PersonResource $p) => $p->organization?->name == 'Familie Smith');
+    $this->assertTrue(! empty($x));
+    $onlyNameMatch = round($x->first()->match_score, 2);
     expect($firstScore)->toBeGreaterThan($secondScore);
+    $this->assertEquals($onlyNameMatch, 72);
 });

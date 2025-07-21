@@ -27,19 +27,6 @@ Leads zijn potentiële klanten die interesse hebben getoond in je producten of d
 * Postcode en plaats
 * Land
 
-===== API Lead Aanmaak
-
-Voor automatische lead aanmaak via externe systemen:
-
-[source,bash]
-----
-# Test lead aanmaak via API
-sail artisan create:leads --count=10
-
-# Maak leads aan met specifieke data
-sail artisan create:leads --count=5 --source="Website" --value=1000
-----
-
 ==== Lead Bewerken
 
 ===== Basis Informatie Wijzigen
@@ -74,7 +61,7 @@ Het systeem toont automatisch mogelijke matches met bestaande contactpersonen:
 
 . **Match Percentage**: Toont hoe goed de lead overeenkomt
 . **Contact Details**: Naam, email en telefoon van gevonden contacten
-. **Snelle Acties**: 
+. **Snelle Acties**:
   * 👁️ Bekijk contactdetails
   * 🔄 Synchroniseer gegevens
 

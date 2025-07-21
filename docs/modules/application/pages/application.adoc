@@ -20,10 +20,6 @@ include::contact-matcher.adoc[]
 
 include::anamnesis-form.adoc[]
 
-==== SugarCRM Import
-
-include::sugarcrm-import.adoc[]
-
 ==== Login
 
 [plantuml]

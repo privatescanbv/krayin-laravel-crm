@@ -124,8 +124,8 @@ test('API lead creation handles missing optional fields gracefully', function ()
 
 test('API lead creation fails gracefully with invalid data', function () {
     // Arrange: Count existing leads before the test
-    $initialLeadCount = \Webkul\Lead\Models\Lead::count();
-    $initialAnamnesisCount = \App\Models\Anamnesis::count();
+    $initialLeadCount = Lead::count();
+    $initialAnamnesisCount = Anamnesis::count();
 
     // Use unique data to avoid conflicts
     $uniqueId = uniqid();
@@ -151,11 +151,11 @@ test('API lead creation fails gracefully with invalid data', function () {
     ]);
 
     // Assert: No new leads should be created
-    $finalLeadCount = \Webkul\Lead\Models\Lead::count();
+    $finalLeadCount = Lead::count();
     expect($finalLeadCount)->toBe($initialLeadCount);
 
     // Assert: No new anamnesis should be created
-    $finalAnamnesisCount = \App\Models\Anamnesis::count();
+    $finalAnamnesisCount = Anamnesis::count();
     expect($finalAnamnesisCount)->toBe($initialAnamnesisCount);
 
     // Assert: No lead with this specific name should exist
@@ -266,10 +266,10 @@ test('anamnesis has correct UUID format and relationships', function () {
 
     // Check timestamps
     expect($anamnesis->created_at)->not->toBeNull()
-        ->and($anamnesis->updated_at)->not->toBeNull();
+        ->and($anamnesis->updated_at)->not->toBeNull()
+        ->and($anamnesis->user_id)->toBeInt();
 
     // Check user_id is numeric
-    expect($anamnesis->user_id)->toBeInt();
 });
 
 test('API response includes correct lead data structure', function () {

@@ -2,7 +2,6 @@
 
 namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
-use DateTime;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -640,7 +639,7 @@ class PersonController extends Controller
     /**
      * Update person with selected lead data.
      */
-    public function updateWithLead(int $personId, int $leadId): JsonResponse
+    public function updateWithLead(int $personId, int $leadId): RedirectResponse
     {
         $person = $this->personRepository->findOrFail($personId);
         $lead = app(LeadRepository::class)->findOrFail($leadId);
@@ -691,10 +690,7 @@ class PersonController extends Controller
                 }
             }
 
-            return response()->json([
-                'message' => 'Person en lead succesvol bijgewerkt.',
-                'redirect_url' => route('admin.contacts.persons.view', $person->id)
-            ]);
+return redirect()->route('admin.contacts.persons.view', $person->id);
 
         } catch (\Exception $e) {
             return response()->json([
@@ -797,7 +793,7 @@ class PersonController extends Controller
                 if (in_array($date, ['0000-00-00', '0000-00-00 00:00:00']) || strpos($date, '-0001') === 0) {
                     return null;
                 }
-                
+
                 $carbonDate = \Carbon\Carbon::parse($date);
                 if ($carbonDate->year <= 0 || $carbonDate->year > 2100) {
                     return null;

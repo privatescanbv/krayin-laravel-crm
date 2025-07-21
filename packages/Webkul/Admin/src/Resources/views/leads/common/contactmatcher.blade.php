@@ -9,7 +9,7 @@
                 <strong>Matching criteria:</strong>
                 <div class="relative inline-block group">
                     <span class="cursor-help underline decoration-dotted hover:text-blue-700">
-                        Naamvelden (90%), E-mailadressen (5%), Telefoonnummers (5%) ℹ️
+                        ℹ️
                     </span>
                     <!-- Custom tooltip -->
                     <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
@@ -85,7 +85,7 @@
                                     <span class="text-xs text-gray-500">Match:</span>
                                     <div class="flex items-center gap-1">
                                         <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                            <div 
+                                            <div
                                                 class="h-full rounded-full transition-all duration-300"
                                                 :class="{
                                                     'bg-red-500': currentPersonMatchScore < 50,
@@ -425,10 +425,10 @@
                     try {
                         const response = await axios.get('/admin/contacts/persons/searchByLead/' + this.lead.id);
                         const suggestions = response.data.data || [];
-                        
+
                         // Find the current person in the suggestions to get their match score
                         const currentPersonWithScore = suggestions.find(person => person.id === this.currentPerson.id);
-                        
+
                         if (currentPersonWithScore && currentPersonWithScore.match_score_percentage) {
                             this.currentPersonMatchScore = currentPersonWithScore.match_score_percentage;
                         }

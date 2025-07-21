@@ -27,7 +27,7 @@ class AnamnesisController extends Controller
     {
         $anamnesis = Anamnesis::with('lead')->findOrFail($id);
 
-        return view('admin::anamnesis.edit', compact('anamnesis'));
+        return view('admin::anamnesis.edit', ['anamnesis' => $anamnesis]);
     }
 
     /**

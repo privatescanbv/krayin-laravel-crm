@@ -22,10 +22,10 @@ Of in PHPStorm
 
 === Commands
 
-include::cmd_import_sugarcrm_contacts.md[]
+include::cmd/cmd-import-sugarcrm-contacts.adoc[]
 
 
-include::cmd_create_leads.md[]
+include::cmd/cmd-create-leads.adoc[]
 
 === Server installatie
 

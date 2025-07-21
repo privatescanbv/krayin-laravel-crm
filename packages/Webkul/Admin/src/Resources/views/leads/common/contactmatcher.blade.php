@@ -30,13 +30,63 @@
                             {{ currentPerson ? 'Huidige contactpersoon:' : 'Geen contactpersoon gekoppeld' }}
                         </span>
                         <div v-if="currentPerson" class="text-sm text-gray-600">
-                            <a :href="'/admin/contacts/persons/view/' + currentPerson.id"
-                               class="text-blue-600 hover:text-blue-800 underline"
-                               target="_blank">
-                                {{ currentPerson.name }}
-                            </a>
-                            <span v-if="currentPerson.email"> ({{ currentPerson.email }})</span>
-                            <span v-if="currentPerson.phone"> - {{ currentPerson.phone }}</span>
+                            <div class="flex items-center gap-2">
+                                <a :href="'/admin/contacts/persons/view/' + currentPerson.id"
+                                   class="text-blue-600 hover:text-blue-800 underline"
+                                   target="_blank">
+                                    {{ currentPerson.name }}
+                                </a>
+                                <!-- View icon -->
+                                <a :href="'/admin/contacts/persons/view/' + currentPerson.id"
+                                   class="text-blue-600 hover:text-blue-800"
+                                   target="_blank"
+                                   title="Bekijk contactpersoon"
+                                   @click.stop>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </a>
+                                <!-- Sync icon -->
+                                <a :href="'/admin/contacts/persons/edit-with-lead/' + currentPerson.id + '/' + lead.id"
+                                   class="text-green-600 hover:text-green-800"
+                                   target="_blank"
+                                   title="Synchroniseer gegevens"
+                                   @click.stop>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                </a>
+                            </div>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span v-if="currentPerson.email">{{ currentPerson.email }}</span>
+                                <span v-if="currentPerson.phone">{{ currentPerson.phone }}</span>
+                                <!-- Match score indicator -->
+                                <div v-if="currentPersonMatchScore !== null" class="flex items-center gap-1">
+                                    <span class="text-xs text-gray-500">Match:</span>
+                                    <div class="flex items-center gap-1">
+                                        <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                            <div 
+                                                class="h-full rounded-full transition-all duration-300"
+                                                :class="{
+                                                    'bg-red-500': currentPersonMatchScore < 50,
+                                                    'bg-yellow-500': currentPersonMatchScore >= 50 && currentPersonMatchScore < 80,
+                                                    'bg-green-500': currentPersonMatchScore >= 80
+                                                }"
+                                                :style="{ width: currentPersonMatchScore + '%' }"
+                                            ></div>
+                                        </div>
+                                        <span class="text-xs font-medium"
+                                              :class="{
+                                                  'text-red-600': currentPersonMatchScore < 50,
+                                                  'text-yellow-600': currentPersonMatchScore >= 50 && currentPersonMatchScore < 80,
+                                                  'text-green-600': currentPersonMatchScore >= 80
+                                              }">
+                                            {{ Math.round(currentPersonMatchScore) }}%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div v-if="!currentPerson && lead" class="text-sm text-gray-600 mt-1">
                             <span v-if="lead.first_name || lead.last_name">
@@ -194,6 +244,7 @@
                     suggestions: [],
                     selectedPerson: null,
                     currentPerson: this.person && this.person.id ? this.person : null,
+                    currentPersonMatchScore: null,
                     searchTimeout: null,
                     isCreatingPerson: false,
                 };
@@ -202,6 +253,8 @@
             mounted() {
                 if (!this.currentPerson) {
                     this.autoSearchFromLead();
+                } else {
+                    this.calculateCurrentPersonMatchScore();
                 }
             },
 
@@ -342,6 +395,26 @@
                         });
                     } finally {
                         this.isCreatingPerson = false;
+                    }
+                },
+
+                async calculateCurrentPersonMatchScore() {
+                    if (!this.currentPerson || !this.lead) {
+                        return;
+                    }
+
+                    try {
+                        const response = await axios.get('/admin/contacts/persons/searchByLead/' + this.lead.id);
+                        const suggestions = response.data.data || [];
+                        
+                        // Find the current person in the suggestions to get their match score
+                        const currentPersonWithScore = suggestions.find(person => person.id === this.currentPerson.id);
+                        
+                        if (currentPersonWithScore && currentPersonWithScore.match_score_percentage) {
+                            this.currentPersonMatchScore = currentPersonWithScore.match_score_percentage;
+                        }
+                    } catch (error) {
+                        console.warn('Kon match score niet berekenen:', error);
                     }
                 },
 

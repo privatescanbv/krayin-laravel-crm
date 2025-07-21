@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -689,12 +690,16 @@ class PersonController extends Controller
                     $person->update($updateData);
                 }
             }
+            return redirect()->route('admin.contacts.persons.view', $person->id);
 
-return redirect()->route('admin.contacts.persons.view', $person->id);
-
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
+            logger()->error('Could not sync person with lead ' . $e->getMessage(), [
+                'person_id' => $personId,
+                'lead_id' => $leadId,
+                'data' => $data
+            ]);;
             return response()->json([
-                'message' => 'Er is een fout opgetreden: ' . $e->getMessage()
+                'message' => 'Could not sync person with lead ' . $e->getMessage()
             ], 500);
         }
     }

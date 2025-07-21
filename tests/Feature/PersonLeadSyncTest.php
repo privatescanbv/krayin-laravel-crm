@@ -144,11 +144,7 @@ test('can update person with lead data', function () {
         ],
     ]);
 
-    $response->assertStatus(200);
-    $response->assertJson([
-        'message'      => 'Person en lead succesvol bijgewerkt.',
-        'redirect_url' => route('admin.contacts.persons.view', $person->id),
-    ]);
+    $response->assertStatus(302);
 
     // Verify person was updated
     $person->refresh();
@@ -184,7 +180,7 @@ test('can update lead data during sync', function () {
         ],
     ]);
 
-    $response->assertStatus(200);
+    $response->assertStatus(302);
 
     // Verify both were updated
     $person->refresh();
@@ -225,7 +221,7 @@ test('handles array fields correctly during sync', function () {
         ],
     ]);
 
-    $response->assertStatus(200);
+    $response->assertStatus(302);
 
     // Verify arrays were updated correctly
     $person->refresh();
@@ -364,8 +360,5 @@ test('handles empty form submission gracefully', function () {
         'leadId'   => $lead->id,
     ]), []);
 
-    $response->assertStatus(200);
-    $response->assertJson([
-        'message' => 'Person en lead succesvol bijgewerkt.',
-    ]);
+    $response->assertStatus(302);
 });

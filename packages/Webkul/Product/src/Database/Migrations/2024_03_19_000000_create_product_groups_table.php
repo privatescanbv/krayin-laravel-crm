@@ -24,7 +24,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->dropForeign(['product_group_id']);
+            if (DB::getDriverName() !== 'sqlite') { $table->dropForeign(['product_group_id']);
             $table->dropColumn('product_group_id');
         });
 

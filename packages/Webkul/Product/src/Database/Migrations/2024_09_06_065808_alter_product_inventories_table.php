@@ -12,9 +12,12 @@ return new class extends Migration
         // SQLite doesn't support dropping foreign keys, so skip this for SQLite
         if (DB::getDriverName() !== 'sqlite') {
             Schema::table('product_inventories', function (Blueprint $table) {
-                $table->dropForeign(['warehouse_location_id']);
+                // SQLite doesn't support dropping foreign keys, so skip this for SQLite
+            if (DB::getDriverName() !== 'sqlite') {
+                if (DB::getDriverName() !== 'sqlite') { $table->dropForeign(['warehouse_location_id']);
                 $table->foreign('warehouse_location_id')->references('id')->on('warehouse_locations')->onDelete('cascade');
-            });
+            }
+        });
         }
     }
 
@@ -23,9 +26,12 @@ return new class extends Migration
         // SQLite doesn't support dropping foreign keys, so skip this for SQLite
         if (DB::getDriverName() !== 'sqlite') {
             Schema::table('product_inventories', function (Blueprint $table) {
-                $table->dropForeign(['warehouse_location_id']);
+                // SQLite doesn't support dropping foreign keys, so skip this for SQLite
+            if (DB::getDriverName() !== 'sqlite') {
+                if (DB::getDriverName() !== 'sqlite') { $table->dropForeign(['warehouse_location_id']);
                 $table->foreign('warehouse_location_id')->references('id')->on('warehouse_locations')->onDelete('set null');
-            });
+            }
+        });
         }
     }
 };

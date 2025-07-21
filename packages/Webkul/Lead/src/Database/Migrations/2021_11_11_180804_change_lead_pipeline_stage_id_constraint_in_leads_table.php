@@ -17,7 +17,7 @@ return new class extends Migration
         Schema::table('leads', function (Blueprint $table) {
             // SQLite doesn't support dropping foreign keys, so skip this for SQLite
             if (DB::getDriverName() !== 'sqlite') {
-                $table->dropForeign(['lead_pipeline_stage_id']);
+                if (DB::getDriverName() !== 'sqlite') { $table->dropForeign(['lead_pipeline_stage_id']);
                 $table->foreign('lead_pipeline_stage_id')->references('id')->on('lead_pipeline_stages')->onDelete('set null');
             }
         });
@@ -33,7 +33,7 @@ return new class extends Migration
         Schema::table('leads', function (Blueprint $table) {
             // SQLite doesn't support dropping foreign keys, so skip this for SQLite
             if (DB::getDriverName() !== 'sqlite') {
-                $table->dropForeign(['lead_pipeline_stage_id']);
+                if (DB::getDriverName() !== 'sqlite') { $table->dropForeign(['lead_pipeline_stage_id']);
                 $table->foreign('lead_pipeline_stage_id')->references('id')->on('lead_pipeline_stages')->onDelete('cascade');
             }
         });

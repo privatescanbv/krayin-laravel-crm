@@ -2,7 +2,7 @@
 
 use Database\Seeders\LeadChannelSeeder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
@@ -11,7 +11,7 @@ use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\User\Models\User;
 
-uses(DatabaseTransactions::class);
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     $this->personRepository = app(PersonRepository::class);
@@ -20,23 +20,16 @@ beforeEach(function () {
     // Create a test user
     $this->user = User::factory()->create();
 
-    // Set up authentication and session persistence
+    // Use a simple approach: set the user directly in the auth guard
     $this->actingAs($this->user, 'user');
-
-    // Force session to persist user authentication
-    session(['_auth_user_' . $this->user->getAuthIdentifier() => $this->user->id]);
-    session(['_auth_guard_user' => $this->user->id]);
 });
 
 
 
 // Helper to get required pipeline/stage data and ensure authentication
 function getPipelineData() {
-    // Force re-authentication before every HTTP request
+    // Re-authenticate to prevent race conditions
     test()->actingAs(test()->user, 'user');
-session(['_auth_user_' . test()->user->getAuthIdentifier() => test()->user->id]);
-    session(['_auth_guard_user' => test()->user->id]);
-
     // Create pipeline and stage if not exists
     $pipeline = \Webkul\Lead\Models\Pipeline::firstOrCreate([
         'name' => 'Test Pipeline',
@@ -54,8 +47,19 @@ session(['_auth_user_' . test()->user->getAuthIdentifier() => test()->user->id])
     return ['pipelineId' => $pipeline->id, 'stageId' => $stage->id];
 }
 
+// Custom HTTP request wrapper that ensures authentication
+function authenticatedGet($uri, $headers = []) {
+    test()->actingAs(test()->user, 'user');
+    return test()->get($uri, $headers);
+}
+
+function authenticatedPost($uri, $data = [], $headers = []) {
+    test()->actingAs(test()->user, 'user');
+    return test()->post($uri, $data, $headers);
+}
+
 test('can access edit with lead page', function () {
-    $data = $data = getPipelineData(); // Get pipeline data (auth is mocked) and get pipeline data
+    $data = getPipelineData(); // Get pipeline data and ensure authentication
     $person = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
@@ -72,7 +76,7 @@ test('can access edit with lead page', function () {
         'user_id' => $this->user->id,
     ]);
 
-    $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
+    $response = authenticatedGet(route('admin.contacts.persons.edit_with_lead', [
         'personId' => $person->id,
         'leadId'   => $lead->id,
     ]));
@@ -104,7 +108,7 @@ $person = Person::factory()->create([
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id' => $this->user->id,]);
 
-    $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
+    $response = authenticatedGet(route('admin.contacts.persons.edit_with_lead', [
         'personId' => $person->id,
         'leadId'   => $lead->id,
     ]));
@@ -138,7 +142,7 @@ $person = Person::factory()->create([
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id' => $this->user->id,]);
 
-    $response = $this->withHeaders([
+    test()->actingAs(test()->user, 'user'); $response = test()->withHeaders([
         'Accept'           => 'application/json',
         'Content-Type'     => 'application/json',
         'X-Requested-With' => 'XMLHttpRequest',
@@ -186,7 +190,7 @@ $person = Person::factory()->create([
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id' => $this->user->id,]);
 
-    $response = $this->withHeaders([
+    test()->actingAs(test()->user, 'user'); $response = test()->withHeaders([
         'Accept'           => 'application/json',
         'Content-Type'     => 'application/json',
         'X-Requested-With' => 'XMLHttpRequest',
@@ -230,7 +234,7 @@ $person = Person::factory()->create([
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id' => $this->user->id,]);
 
-    $response = $this->withHeaders([
+    test()->actingAs(test()->user, 'user'); $response = test()->withHeaders([
         'Accept'           => 'application/json',
         'Content-Type'     => 'application/json',
         'X-Requested-With' => 'XMLHttpRequest',
@@ -277,7 +281,7 @@ test('returns validation error for invalid data', function () {
     ]);
 
     // Test with invalid person ID
-    $response = $this->post(route('admin.contacts.persons.update_with_lead', [
+    $response = authenticatedPost(route('admin.contacts.persons.update_with_lead', [
         'personId' => 99999,
         'leadId'   => $lead->id,
     ]), []);
@@ -303,7 +307,7 @@ $person = Person::factory()->create([
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id' => $this->user->id,]);
 
-    $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
+    $response = authenticatedGet(route('admin.contacts.persons.edit_with_lead', [
         'personId' => $person->id,
         'leadId'   => $lead->id,
     ]));
@@ -339,7 +343,7 @@ test('handles edge case with malformed birth dates', function () {
     // Refresh person to get the malformed date
     $person = $person->fresh();
 
-    $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
+    $response = authenticatedGet(route('admin.contacts.persons.edit_with_lead', [
         'personId' => $person->id,
         'leadId'   => $lead->id,
     ]));
@@ -373,7 +377,7 @@ test('handles date comparison with valid vs invalid dates', function () {
         'user_id' => $this->user->id,
     ]);
 
-    $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
+    $response = authenticatedGet(route('admin.contacts.persons.edit_with_lead', [
         'personId' => $person->id,
         'leadId'   => $lead->id,
     ]));
@@ -388,11 +392,11 @@ test('handles date comparison with valid vs invalid dates', function () {
 test('validates required route parameters', function () {
     $data = getPipelineData(); // Get pipeline data (auth is mocked)
 // Test with missing person ID
-    $response = $this->get('/admin/contacts/persons/edit-with-lead//1');
+    $response = authenticatedGet('/admin/contacts/persons/edit-with-lead//1');
     $response->assertStatus(404);
 
     // Test with missing lead ID
-    $response = $this->get('/admin/contacts/persons/edit-with-lead/1/');
+    $response = authenticatedGet('/admin/contacts/persons/edit-with-lead/1/');
     $response->assertStatus(404);
 });
 
@@ -404,7 +408,7 @@ $person = Person::factory()->create();
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id' => $this->user->id,]);
 
-    $response = $this->withHeaders([
+    test()->actingAs(test()->user, 'user'); $response = test()->withHeaders([
         'Accept'           => 'application/json',
         'Content-Type'     => 'application/json',
         'X-Requested-With' => 'XMLHttpRequest',
@@ -440,7 +444,7 @@ $person = Person::factory()->create([
     // Re-authenticate before AJAX request
     $this->actingAs($this->user, 'user');
 
-    $response = $this->withHeaders([
+    test()->actingAs(test()->user, 'user'); $response = test()->withHeaders([
         'X-Requested-With' => 'XMLHttpRequest',
     ])->get('/admin/contacts/persons/search?'.http_build_query([
         'query'   => 'John',
@@ -467,7 +471,7 @@ $person = Person::factory()->create([
     ]);
 
     // Test manual search without lead_id parameter
-    $response = $this->withHeaders([
+    test()->actingAs(test()->user, 'user'); $response = test()->withHeaders([
         'X-Requested-With' => 'XMLHttpRequest',
     ])->get('/admin/contacts/persons/search?'.http_build_query([
         'query' => 'John',

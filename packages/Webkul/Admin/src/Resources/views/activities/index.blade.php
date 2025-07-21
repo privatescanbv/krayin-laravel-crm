@@ -8,9 +8,10 @@
     <!-- Activities Datagrid -->
     <v-activities>
         <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div
+                class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
-                    <x-admin::breadcrumbs name="activities" />
+                    <x-admin::breadcrumbs name="activities"/>
 
                     <div class="text-xl font-bold dark:text-white">
                         @lang('admin::app.activities.index.title')
@@ -42,9 +43,10 @@
             id="v-activities-template"
         >
             <div class="flex flex-col gap-4">
-                <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+                <div
+                    class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                     <div class="flex flex-col gap-2">
-                        <x-admin::breadcrumbs name="activities" />
+                        <x-admin::breadcrumbs name="activities"/>
 
                         <div class="text-xl font-bold dark:text-white">
                             @lang('admin::app.activities.index.title')
@@ -52,23 +54,16 @@
                     </div>
 
                     {!! view_render_event('admin.activities.index.toggle_view.before') !!}
-                    <div class="flex">
-                        <!-- Group Filter Buttons -->
-                        <button
-                            class="ml-2 rounded-md px-3 py-2 text-sm font-medium transition-all"
-                            :class="{'bg-blue-500 text-white': activeGroupFilter === '2', 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600': activeGroupFilter !== '2'}"
-                            @click="filterByGroup('2')"
-                        >
-                            Hernia
-                        </button>
-
-                        <button
-                            class="ml-2 rounded-md px-3 py-2 text-sm font-medium transition-all"
-                            :class="{'bg-blue-500 text-white': activeGroupFilter === '1', 'bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600': activeGroupFilter !== '1'}"
-                            @click="filterByGroup('1')"
-                        >
-                            Privatescan
-                        </button>
+                    <div class="flex items-center gap-4">
+                        <!-- Views Dropdown - Vue.js Compatible -->
+                        <div v-show="hasViews" class="relative">
+                            <select class="rounded-md border bg-white px-3 py-2 text-sm" @change="onViewChange"
+                                    :value="currentView">
+                                <option v-for="(viewData, viewKey) in availableViews" :key="viewKey" :value="viewKey">
+                                    @{{ viewData.label || viewKey }}
+                                </option>
+                            </select>
+                        </div>
                     </div>
                     <div class="flex">
                         <i
@@ -106,14 +101,15 @@
                                 performAction
                             }">
                                 <template v-if="isLoading">
-                                    <x-admin::shimmer.datagrid.table.head :isMultiRow="true" />
+                                    <x-admin::shimmer.datagrid.table.head :isMultiRow="true"/>
                                 </template>
 
                                 <template v-else>
-                                    <div class="row grid grid-cols-[.3fr_.1fr_.3fr_.5fr] grid-rows-1 items-center gap-x-2.5 border-b px-4 py-2.5 dark:border-gray-800 max-lg:hidden">
+                                    <div
+                                        class="row grid grid-cols-[.3fr_.1fr_.3fr_.5fr] grid-rows-1 items-center gap-x-2.5 border-b px-4 py-2.5 dark:border-gray-800 max-lg:hidden">
                                         <div
                                             class="flex select-none items-center gap-2.5"
-                                            v-for="(columnGroup, index) in [['title', 'assigned_user_id'], ['is_done'], ['comment', 'lead_title', 'type'], ['schedule_from', 'schedule_to']]"
+                                            v-for="(columnGroup, index) in [['title', 'assigned_user_id'], ['is_done'], ['comment', 'lead_title', 'type'], ['created_at', 'days_until_deadline']]"
                                         >
                                             <label
                                                 class="flex w-max cursor-pointer select-none items-center gap-1"
@@ -168,7 +164,8 @@
                                     </div>
 
                                     <!-- Mobile Sort/Filter Header -->
-                                    <div class="hidden border-b bg-gray-50 px-4 py-3 text-black dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 max-lg:block">
+                                    <div
+                                        class="hidden border-b bg-gray-50 px-4 py-3 text-black dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 max-lg:block">
                                         <div class="flex items-center justify-between">
                                             <!-- Mass Actions for Mobile -->
                                             <div v-if="available.massActions.length">
@@ -199,7 +196,8 @@
 
                                             <!-- Mobile Sort Dropdown -->
                                             <div v-if="available.columns.some(column => column.sortable)">
-                                                <x-admin::dropdown position="bottom-{{ in_array(app()->getLocale(), ['fa', 'ar']) ? 'left' : 'right' }}">
+                                                <x-admin::dropdown
+                                                    position="bottom-{{ in_array(app()->getLocale(), ['fa', 'ar']) ? 'left' : 'right' }}">
                                                     <x-slot:toggle>
                                                         <div class="flex items-center gap-1">
                                                             <button
@@ -213,23 +211,23 @@
                                                                 <span class="icon-down-arrow text-2xl"></span>
                                                             </button>
                                                         </div>
-                                                    </x-slot>
+                                                        </x-slot>
 
-                                                    <x-slot:menu>
-                                                        <x-admin::dropdown.menu.item
-                                                            v-for="column in available.columns.filter(column => column.sortable && column.visibility)"
-                                                            @click="sort(column)"
-                                                        >
-                                                            <div class="flex items-center gap-2">
-                                                                <span v-html="column.label"></span>
-                                                                <i
-                                                                    class="align-text-bottom text-base text-gray-600 dark:text-gray-300"
-                                                                    :class="[applied.sort.order === 'asc' ? 'icon-stats-down': 'icon-stats-up']"
-                                                                    v-if="column.index == applied.sort.column"
-                                                                ></i>
-                                                            </div>
-                                                        </x-admin::dropdown.menu.item>
-                                                    </x-slot>
+                                                        <x-slot:menu>
+                                                            <x-admin::dropdown.menu.item
+                                                                v-for="column in available.columns.filter(column => column.sortable && column.visibility)"
+                                                                @click="sort(column)"
+                                                            >
+                                                                <div class="flex items-center gap-2">
+                                                                    <span v-html="column.label"></span>
+                                                                    <i
+                                                                        class="align-text-bottom text-base text-gray-600 dark:text-gray-300"
+                                                                        :class="[applied.sort.order === 'asc' ? 'icon-stats-down': 'icon-stats-up']"
+                                                                        v-if="column.index == applied.sort.column"
+                                                                    ></i>
+                                                                </div>
+                                                            </x-admin::dropdown.menu.item>
+                                                            </x-slot>
                                                 </x-admin::dropdown>
                                             </div>
                                         </div>
@@ -246,7 +244,7 @@
                                 performAction
                             }">
                                 <template v-if="isLoading">
-                                    <x-admin::shimmer.datagrid.table.body :isMultiRow="true" />
+                                    <x-admin::shimmer.datagrid.table.body :isMultiRow="true"/>
                                 </template>
 
                                 <template v-else>
@@ -271,15 +269,15 @@
                                             ></label>
 
                                             <div class="flex flex-col gap-1.5">
-{{--                                                <p class="text-gray-600 dark:text-gray-300">--}}
-{{--                                                    @{{ record.id }}--}}
-{{--                                                </p>--}}
+                                                {{--                                                <p class="text-gray-600 dark:text-gray-300">--}}
+                                                {{--                                                    @{{ record.id }}--}}
+                                                {{--                                                </p>--}}
 
                                                 <p class="text-gray-600 dark:text-gray-300">
                                                     @{{ record.title }}
                                                 </p>
                                                 <p class="text-gray-600 dark:text-gray-300"
-                                                    v-html="record.assigned_user_id">
+                                                   v-html="record.assigned_user_id">
                                                 </p>
                                             </div>
                                         </div>
@@ -299,7 +297,8 @@
                                         <div class="flex gap-1.5">
                                             <div class="flex flex-col gap-1.5">
                                                 <p class="text-gray-600 dark:text-gray-300">
-                                                    @{{ record.comment && record.comment.length > 180 ? record.comment.slice(0, 180) + '...' : record.comment }}
+                                                    @{{ record.comment && record.comment.length > 180 ?
+                                                    record.comment.slice(0, 180) + '...' : record.comment }}
                                                 </p>
 
                                                 <p v-html="record.lead_title"></p>
@@ -308,7 +307,7 @@
                                                     @{{ record.type ?? 'N/A'}}
                                                 </p>
 
-{{--                                                <p class="text-gray-600 dark:text-gray-300" v-html="record.group"></p>--}}
+                                                {{--                                                <p class="text-gray-600 dark:text-gray-300" v-html="record.group"></p>--}}
 
                                             </div>
                                         </div>
@@ -316,12 +315,12 @@
                                         <div class="flex items-start justify-between gap-x-4">
                                             <div class="flex flex-col gap-1.5">
                                                 <p class="text-gray-600 dark:text-gray-300">
-                                                    @{{ record.schedule_from ?? 'N/A' }} - @{{ record.schedule_to }}
+                                                    @{{ record.created_at }}
                                                 </p>
 
-{{--                                                <p class="text-gray-600 dark:text-gray-300">--}}
-{{--                                                    @{{ record.created_at }}--}}
-{{--                                                </p>--}}
+                                                <p class="text-gray-600 dark:text-gray-300"
+                                                   v-html="record.days_until_deadline">
+                                                </p>
 
                                             </div>
 
@@ -359,7 +358,8 @@
                                             <!-- Mass Actions for Mobile Cards -->
                                             <div class="flex w-full items-center justify-between gap-2">
                                                 <p v-if="available.massActions.length">
-                                                    <label :for="`mass_action_select_record_${record[available.meta.primary_column]}`">
+                                                    <label
+                                                        :for="`mass_action_select_record_${record[available.meta.primary_column]}`">
                                                         <input
                                                             type="checkbox"
                                                             :name="`mass_action_select_record_${record[available.meta.primary_column]}`"
@@ -369,7 +369,8 @@
                                                             v-model="applied.massActions.indices"
                                                         >
 
-                                                        <span class="icon-checkbox-outline peer-checked:icon-checkbox-select cursor-pointer rounded-md text-2xl text-gray-500 peer-checked:text-brandColor">
+                                                        <span
+                                                            class="icon-checkbox-outline peer-checked:icon-checkbox-select cursor-pointer rounded-md text-2xl text-gray-500 peer-checked:text-brandColor">
                                                         </span>
                                                     </label>
                                                 </p>
@@ -395,8 +396,10 @@
                                         <div class="grid gap-2">
                                             <template v-for="column in available.columns">
                                                 <div class="flex flex-wrap items-baseline gap-x-2">
-                                                    <span class="text-slate-600 dark:text-gray-300" v-html="column.label + ':'"></span>
-                                                    <span class="break-words font-medium text-slate-900 dark:text-white" v-html="record[column.index]"></span>
+                                                    <span class="text-slate-600 dark:text-gray-300"
+                                                          v-html="column.label + ':'"></span>
+                                                    <span class="break-words font-medium text-slate-900 dark:text-white"
+                                                          v-html="record[column.index]"></span>
                                                 </div>
                                             </template>
                                         </div>
@@ -450,10 +453,10 @@
                         class="vuecal__event-content"
                         v-tooltip="{
                             content: `
-                                <div class='mb-1 font-semibold text-white'>${event.title}</div>
-                                <div class='mb-1 text-xs text-gray-300'>${formatTime(event.start)} - ${formatTime(event.end)}</div>
-                                ${event.description ? `<div class='text-xs text-gray-200'>${event.description}</div>` : ''
-                            }`,
+                                <div class='mb-1 font-semibold text-white'>\${event.title}</div>
+                                <div class='mb-1 text-xs text-gray-300'>\${formatTime(event.start)} - \${formatTime(event.end)}</div>
+                                \${event.description ? \`<div class='text-xs text-gray-200'>\${event.description}</div>\` : ''}
+                            `,
                             html: true,
                             placement: 'top',
                             trigger: 'hover',
@@ -479,26 +482,37 @@
                 data() {
                     return {
                         viewType: '{{ request('view-type') }}' || 'table',
-                        activeGroupFilter: '1', // Standaard op 'Privatescan'
+                        currentView: 'for_me',
+                        availableViews: {},
                         defaultFiltersApplied: false,
-                        appliedIsDoneFilter: '',
                     };
                 },
-                mounted() {
-                    // Standaard filter: alleen niet-afgeronde activiteiten
-                    if (!this.defaultFiltersApplied) {
-                        this.$nextTick(() => {
-                            if (this.$refs.datagrid) {
-                                this.$refs.datagrid.filter({
-                                    columns: [
-                                        { index: 'is_done', value: [0] },
-                                        { index: 'group', value: this.activeGroupFilter }
-                                    ]
-                                });
-                                this.defaultFiltersApplied = true;
-                            }
-                        });
+
+                created() {
+                    this.availableViews = {!! json_encode($views ?? []) !!};
+
+
+                    const persistedView = sessionStorage.getItem('selected_activity_view');
+                    const urlView = {!! json_encode($currentView ?? 'for_me') !!};
+
+                    if (persistedView && this.availableViews[persistedView]&& urlView !== persistedView) {
+
+                        // Redirect to persisted view
+                        let currentUrl = new URL(window.location);
+                        currentUrl.searchParams.set('view', persistedView);
+                        window.location.href = currentUrl.toString();
+                    } else {
+                        this.currentView = urlView;
                     }
+                },
+                computed: {
+                    hasViews() {
+                        return this.availableViews && Object.keys(this.availableViews).length > 0;
+                    }
+                },
+
+                mounted() {
+                    // Temporarily simplified
                 },
                 methods: {
                     /**
@@ -511,72 +525,34 @@
                         this.viewType = type;
 
                         let currentUrl = new URL(window.location);
-
                         currentUrl.searchParams.set('view-type', type);
-
                         window.history.pushState({}, '', currentUrl);
                     },
 
-                    /**
-                     * Filter by group.
-                     *
-                     * @param {String} groupName
-                     * @return {void}
-                     */
-                    filterByGroup(groupName) {
-                        // Get the datagrid reference
-                        const datagrid = this.$refs.datagrid;
+                    onViewChange(event) {
+                        const selectedView = event.target.value;
+                        sessionStorage.setItem('selected_activity_view', selectedView);
 
-                        if (!datagrid) {
-                            return;
-                        }
 
-                        // Toggle the active group filter
-                        if (this.activeGroupFilter === groupName) {
-                            this.activeGroupFilter = null;
-                        } else {
-                            this.activeGroupFilter = groupName;
-                        }
-
-                        // Apply the filters using the correct method
-                        if (this.activeGroupFilter) {
-                            datagrid.filter({
-                                columns: [
-                                    { index: 'is_done', value: [0] },{
-                                    index: 'group',
-                                    value: this.activeGroupFilter
-                                }]
-                            });
-                        } else {
-                            // Remove the filter
-                            datagrid.filter({
-                                columns: []
-                            });
-                        }
-                    },
-                    onIsDoneFilterChange(event) {
-                        const value = event.target.value;
-                        this.appliedIsDoneFilter = value;
-                        if (this.$refs.datagrid) {
-                            this.$refs.datagrid.filter({
-                                columns: value === '' ? [] : [
-                                    { index: 'is_done', value: [parseInt(value)] }
-                                ]
-                            });
-                        }
+                        let currentUrl = new URL(window.location);
+                        currentUrl.searchParams.set('view', selectedView);
+                        window.location.href = currentUrl.toString();
                     },
                     assignToMe(record) {
                         if (!record.id) return;
                         this.$axios.put(`/admin/activities/edit/${record.id}`, {
                             user_id: {{ auth()->guard('user')->id() ?? 'null' }}
                         })
-                        .then(response => {
-                            record.user_id = response.data.data.user_id;
-                            record.user = response.data.data.user;
-                        })
-                        .catch(error => {
-                            this.$emitter.emit('add-flash', { type: 'error', message: 'Kon niet toekennen: ' + (error.response?.data?.message || error.message) });
-                        });
+                            .then(response => {
+                                record.user_id = response.data.data.user_id;
+                                record.user = response.data.data.user;
+                            })
+                            .catch(error => {
+                                this.$emitter.emit('add-flash', {
+                                    type: 'error',
+                                    message: 'Kon niet toekennen: ' + (error.response?.data?.message || error.message)
+                                });
+                            });
                     },
                 },
             });
@@ -600,6 +576,23 @@
                      * @return {void}
                      */
                     this.$emitter.on('change-theme', (theme) => this.theme = theme);
+
+                    /**
+                     * Listen for calendar refresh event.
+                     *
+                     * @return {void}
+                     */
+                    this.$emitter.on('refresh-calendar-view', () => {
+                        // Trigger a calendar refresh by calling getActivities with current date range
+                        const now = new Date();
+                        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay()));
+                        const endOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+
+                        this.getActivities({
+                            startDate: startOfWeek,
+                            endDate: endOfWeek
+                        });
+                    });
                 },
 
                 methods: {
@@ -613,7 +606,10 @@
                     getActivities({startDate, endDate}) {
                         this.$root.pageLoaded = false;
 
-                        this.$axios.get("{{ route('admin.activities.get', ['view_type' => 'calendar']) }}" + `&startDate=${new Date(startDate).toLocaleDateString("en-US")}&endDate=${new Date(endDate).toLocaleDateString("en-US")}`)
+                        // Get current view from parent component
+                        const currentView = this.$parent.currentView || 'for_me';
+
+                        this.$axios.get("{{ route('admin.activities.get', ['view_type' => 'calendar']) }}" + `&startDate=${new Date(startDate).toLocaleDateString("en-US")}&endDate=${new Date(endDate).toLocaleDateString("en-US")}&view=${currentView}`)
                             .then(response => {
                                 this.events = this.processEvents(response.data.activities);
                             })
@@ -631,7 +627,7 @@
                     processEvents(events) {
                         return events.map(event => {
                             if (
-                                ! event.background
+                                !event.background
                                 || event.background === "#fff"
                                 || event.background === "#ffffff"
                             ) {
@@ -675,7 +671,7 @@
                      * @return {string}
                      */
                     formatTime(date) {
-                        if (! date) {
+                        if (!date) {
                             return '';
                         }
 
@@ -716,16 +712,17 @@
              * @param {Event} {target}
              * @return {void}
              */
-            const updateStatus = ({ target }, url) => {
+            const updateStatus = ({target}, url) => {
                 axios
                     .post(url, {
                         _method: 'put',
                         is_done: target.checked,
                     })
                     .then(response => {
-                        window.emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                        window.emitter.emit('add-flash', {type: 'success', message: response.data.message});
                     })
-                    .catch(error => {});
+                    .catch(error => {
+                    });
             };
         </script>
     @endPushOnce

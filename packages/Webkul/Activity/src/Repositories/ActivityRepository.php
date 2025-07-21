@@ -4,6 +4,7 @@ namespace Webkul\Activity\Repositories;
 
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
+use Webkul\Activity\Services\ViewService;
 use Webkul\Core\Eloquent\Repository;
 
 class ActivityRepository extends Repository
@@ -116,11 +117,12 @@ class ActivityRepository extends Repository
 
     /**
      * @param  string  $dateRange
+     * @param  string|null  $view
      * @return mixed
      */
-    public function getActivities($dateRange)
+    public function getActivities($dateRange, $view = null)
     {
-        return $this->select(
+        $query = $this->select(
             'activities.id',
             'activities.created_at',
             'activities.title',
@@ -131,6 +133,7 @@ class ActivityRepository extends Repository
             ->addSelect(DB::raw('IF(activities.is_done, "done", "") as class'))
             ->leftJoin('activity_participants', 'activities.id', '=', 'activity_participants.activity_id')
             ->leftJoin('users', 'activities.user_id', '=', 'users.id')
+            ->leftJoin('groups', 'activities.group_id', '=', 'groups.id')
             ->whereIn('type', ['call', 'task', 'lunch'])
             ->whereBetween('activities.schedule_from', $dateRange)
             ->where(function ($query) {
@@ -143,9 +146,15 @@ class ActivityRepository extends Repository
                             });
                         });
                 }
-            })
-            ->distinct()
-            ->get();
+            });
+
+        // Apply view filters if specified
+        if ($view) {
+            $viewService = app(ViewService::class);
+            $query = $viewService->applyViewFilters($query, $view);
+        }
+
+        return $query->distinct()->get();
     }
 
     /**

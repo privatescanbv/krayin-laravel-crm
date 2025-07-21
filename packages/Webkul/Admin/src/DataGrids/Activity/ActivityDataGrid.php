@@ -4,6 +4,7 @@ namespace Webkul\Admin\DataGrids\Activity;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use Webkul\Activity\Services\ViewService;
 use Webkul\Admin\Traits\ProvideDropdownOptions;
 use Webkul\DataGrid\DataGrid;
 use Webkul\Lead\Repositories\LeadRepository;
@@ -29,6 +30,7 @@ class ActivityDataGrid extends DataGrid
                 'users.id as assigned_user_id',
                 'users.name as created_by',
                 'groups.name as group_name',
+                DB::raw('DATEDIFF(activities.schedule_to, CURDATE()) as days_until_deadline')
             )
             ->leftJoin('activity_participants', 'activities.id', '=', 'activity_participants.activity_id')
             ->leftJoin('lead_activities', 'activities.id', '=', 'lead_activities.activity_id')
@@ -52,13 +54,28 @@ class ActivityDataGrid extends DataGrid
                 }
             })->groupBy('activities.id', 'leads.id', 'users.id', 'groups.id');
 
+        // Apply view filters if specified
+        if ($view = request()->get('view')) {
+            $viewService = app(ViewService::class);
+            $queryBuilder = $viewService->applyViewFilters($queryBuilder, $view);
+        }
+
+        // Default sorting: urgent tasks first, then newest
+        if (!request()->has('sort')) {
+            $queryBuilder->orderByRaw('
+                CASE WHEN days_until_deadline IS NULL THEN 1 ELSE 0 END,
+                days_until_deadline ASC, 
+                activities.created_at DESC
+            ');
+        }
+
         $this->addFilter('id', 'activities.id');
         $this->addFilter('title', 'activities.title');
         $this->addFilter('is_done', 'activities.is_done');
-        $this->addFilter('schedule_from', 'activities.schedule_from');
         $this->addFilter('created_by', 'users.name');
         $this->addFilter('assigned_user_id', 'users.name');
         $this->addFilter('created_at', 'activities.created_at');
+        $this->addFilter('days_until_deadline', 'days_until_deadline');
         $this->addFilter('lead_title', 'leads.title');
         $this->addFilter('group', 'activities.group_id');
 
@@ -199,26 +216,6 @@ class ActivityDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'schedule_from',
-            'label'      => trans('admin::app.activities.index.datagrid.schedule_from'),
-            'type'       => 'date',
-            'sortable'   => true,
-            'searchable' => true,
-            'filterable' => true,
-            'closure'    => fn ($row) => core()->formatDate($row->schedule_from, 'd M Y'),
-        ]);
-
-        $this->addColumn([
-            'index'      => 'schedule_to',
-            'label'      => trans('admin::app.activities.index.datagrid.schedule_to'),
-            'type'       => 'date',
-            'sortable'   => true,
-            'searchable' => true,
-            'filterable' => true,
-            'closure'    => fn ($row) => core()->formatDate($row->schedule_to, 'd M Y'),
-        ]);
-
-        $this->addColumn([
             'index'      => 'created_at',
             'label'      => trans('admin::app.activities.index.datagrid.created_at'),
             'type'       => 'date',
@@ -226,6 +223,29 @@ class ActivityDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'closure'    => fn ($row) => core()->formatDate($row->created_at, 'd M Y'),
+        ]);
+
+        $this->addColumn([
+            'index'      => 'days_until_deadline',
+            'label'      => 'Dagen tot deadline',
+            'type'       => 'integer',
+            'sortable'   => true,
+            'searchable' => false,
+            'filterable' => true,
+            'closure'    => function ($row) {
+                $days = $row->days_until_deadline;
+                if ($days === null) {
+                    return 'N/A';
+                } elseif ($days < 0) {
+                    return '<span class="text-red-600 font-semibold">' . abs($days) . ' dagen over tijd</span>';
+                } elseif ($days == 0) {
+                    return '<span class="text-orange-600 font-semibold">Vandaag</span>';
+                } elseif ($days <= 3) {
+                    return '<span class="text-yellow-600 font-semibold">' . $days . ' dagen</span>';
+                } else {
+                    return '<span class="text-green-600">' . $days . ' dagen</span>';
+                }
+            },
         ]);
     }
 

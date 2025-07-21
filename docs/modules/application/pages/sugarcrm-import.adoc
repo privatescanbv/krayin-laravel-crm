@@ -1,0 +1,114 @@
+=== SugarCRM Import
+
+Deze functie importeert contactpersonen uit een SugarCRM database naar Krayin CRM.
+
+==== Configuratie
+
+===== Database Connectie
+
+Voeg de volgende variabelen toe aan je `.env` bestand:
+
+[source,env]
+----
+# SugarCRM Database Connectie
+SUGARCRM_DB_HOST=127.0.0.1
+SUGARCRM_DB_PORT=3306
+SUGARCRM_DB_DATABASE=sugarcrm
+SUGARCRM_DB_USERNAME=your_username
+SUGARCRM_DB_PASSWORD=your_password
+SUGARCRM_DB_PREFIX=
+----
+
+===== SugarCRM Tabel Structuur
+
+De import functie verwacht de volgende kolommen in de SugarCRM `contacts` tabel:
+
+* `id` - Unieke ID
+* `first_name` - Voornaam
+* `last_name` - Achternaam
+* `email1` - Primaire email
+* `email2` - Secundaire email (optioneel)
+* `phone_work` - Werk telefoon
+* `phone_mobile` - Mobiele telefoon
+* `date_entered` - Aanmaakdatum
+* `date_modified` - Wijzigingsdatum
+
+==== Gebruik
+
+===== Basis Import
+
+[source,bash]
+----
+# Import 10 contactpersonen (standaard)
+sail artisan import:persons-from-sugarcrm
+
+# Import specifiek aantal contactpersonen
+sail artisan import:persons-from-sugarcrm --limit=100
+
+# Import alle contactpersonen
+sail artisan import:persons-from-sugarcrm --limit=10000
+----
+
+===== Parameters
+
+[cols="1,3"]
+|===
+|Parameter |Beschrijving
+
+|`--limit`
+|Aantal contactpersonen om te importeren (standaard: 10)
+
+|`--dry-run`
+|Test de import zonder daadwerkelijk data op te slaan
+
+|`--force`
+|Overschrijf bestaande contactpersonen met hetzelfde email adres
+|===
+
+===== Voorbeeld Output
+
+[source,text]
+----
+Starting SugarCRM contacts import...
+✓ Connected to SugarCRM database
+✓ Found 1,250 contacts in SugarCRM
+✓ Importing 100 contacts...
+✓ Created 95 new persons
+✓ Skipped 5 duplicates
+Import completed successfully!
+----
+
+==== Belangrijke Opmerkingen
+
+* **Duplicaten**: Contactpersonen met hetzelfde email adres worden overgeslagen tenzij `--force` wordt gebruikt
+* **Data Mapping**: SugarCRM velden worden automatisch gekoppeld aan Krayin velden
+* **Prestaties**: Voor grote imports (>1000 records) wordt batch processing gebruikt
+* **Rollback**: Er is geen automatische rollback functie - maak een backup voor grote imports
+
+==== Troubleshooting
+
+===== Veelvoorkomende Problemen
+
+**Database Connectie Fout**
+[source,text]
+----
+SQLSTATE[HY000] [2002] Connection refused
+----
+
+*Oplossing*: Controleer of de SugarCRM database toegankelijk is en de credentials correct zijn.
+
+**Geen Data Gevonden**
+[source,text]
+----
+No contacts found in SugarCRM database
+----
+
+*Oplossing*: Controleer of de `contacts` tabel bestaat en data bevat.
+
+**Memory Limit Overschreden**
+[source,text]
+----
+Fatal error: Allowed memory size exhausted
+----
+
+*Oplossing*: Gebruik een kleinere `--limit` waarde of verhoog het PHP memory limit.

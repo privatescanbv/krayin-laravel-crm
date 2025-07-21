@@ -1,0 +1,120 @@
+=== Anamnesis Formulier
+
+Het anamnesis formulier wordt automatisch aangemaakt bij elke nieuwe lead en bevat belangrijke medische en persoonlijke informatie.
+
+==== Toegang tot Anamnesis
+
+===== Vanuit Lead
+
+. Open een lead in de lead overzichtspagina
+. Klik op de "Anamnesis" tab of link
+. Het anamnesis formulier opent zich in een nieuw venster
+
+===== Direct Bewerken
+
+. Ga naar het anamnesis overzicht
+. Selecteer de gewenste anamnesis
+. Klik op "Bewerken" om het formulier te openen
+
+==== Formulier Gebruik
+
+===== Medische Vragen
+
+Het formulier bevat verschillende medische vragen met **Ja/Nee** keuzes:
+
+* **Metalen**: Aanwezigheid van metalen in het lichaam
+* **Medicijnen**: Gebruik van medicatie
+* **Glaucoom**: Oogdruk problemen
+* **Zwangerschap**: Zwangerschapsstatus
+* **Pacemaker**: Aanwezigheid van pacemaker
+* **Epilepsie**: Epilepsie geschiedenis
+
+===== Invullen van Vragen
+
+. **Selecteer een antwoord**: Kies "Ja" of "Nee" voor elke vraag
+. **Toelichting**: Bij "Ja" verschijnt automatisch een tekstveld voor extra informatie
+. **Verplichte velden**: Alle medische vragen moeten beantwoord worden
+
+[NOTE]
+====
+Toelichtingsvelden verschijnen alleen wanneer "Ja" wordt geselecteerd. Dit houdt het formulier overzichtelijk.
+====
+
+===== Persoonlijke Gegevens
+
+**Basis Informatie**
+* Naam van de anamnesis
+* Beschrijving
+* Kliniek opmerkingen
+
+**Fysieke Gegevens**
+* Lengte (in cm)
+* Gewicht (in kg)
+
+==== Opslaan en Validatie
+
+===== Formulier Opslaan
+
+. Vul alle verplichte velden in
+. Klik op "Opslaan" onderaan het formulier
+. Het systeem controleert of alle vragen beantwoord zijn
+. Bij succes krijg je een bevestiging
+
+===== Validatie Regels
+
+* **Alle medische vragen**: Moeten beantwoord worden (Ja of Nee)
+* **Lengte en Gewicht**: Moeten numerieke waarden zijn
+* **Toelichtingen**: Optioneel, maar aanbevolen bij "Ja" antwoorden
+
+===== Foutmeldingen
+
+Als er velden ontbreken, toont het systeem:
+
+[source,text]
+----
+❌ De volgende velden zijn verplicht:
+   • Metalen (Ja/Nee keuze vereist)
+   • Medicijnen (Ja/Nee keuze vereist)
+----
+
+==== Tips voor Gebruik
+
+===== Efficiënt Invullen
+
+. **Begin bovenaan**: Werk systematisch van boven naar beneden
+. **Gebruik Tab-toets**: Navigeer snel tussen velden
+. **Sla regelmatig op**: Voorkom gegevensverlies bij lange formulieren
+
+===== Kwaliteit van Gegevens
+
+. **Wees specifiek**: Gebruik toelichtingsvelden voor belangrijke details
+. **Controleer invoer**: Dubbelcheck medische informatie voor accuratesse
+. **Update regelmatig**: Houd anamnesis gegevens actueel
+
+===== Veelvoorkomende Situaties
+
+**Onbekende Informatie**
+Als informatie onbekend is, selecteer "Nee" en vermeld dit in de toelichting.
+
+**Meerdere Medicijnen**
+Bij "Ja" voor medicijnen, lijst alle medicijnen op in de toelichting met dosering.
+
+**Tijdelijke Situaties**
+Voor tijdelijke situaties (zoals zwangerschap), update de anamnesis wanneer de situatie verandert.
+
+==== Troubleshooting
+
+===== Formulier Laadt Niet
+
+**Probleem**: Anamnesis formulier opent niet
+**Oplossing**: Controleer of pop-up blocker uitgeschakeld is
+
+===== Gegevens Verdwijnen
+
+**Probleem**: Ingevulde gegevens zijn weg na vernieuwen
+**Oplossing**: Sla regelmatig op tijdens het invullen
+
+===== Kan Niet Opslaan
+
+**Probleem**: "Opslaan" knop werkt niet
+**Oplossing**: Controleer of alle verplichte velden ingevuld zijn

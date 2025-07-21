@@ -1,0 +1,193 @@
+=== Lead Beheer
+
+Leads zijn potentiële klanten die interesse hebben getoond in je producten of diensten. Het systeem biedt uitgebreide functionaliteit voor lead beheer.
+
+==== Lead Aanmaken
+
+===== Handmatige Aanmaak
+
+. Ga naar **Leads** in het hoofdmenu
+. Klik op **Nieuwe Lead**
+. Vul de volgende basis informatie in:
+  * **Titel**: Beschrijvende naam voor de lead
+  * **Waarde**: Geschatte waarde van de lead
+  * **Verwachte sluitingsdatum**: Wanneer verwacht je de deal te sluiten
+  * **Bron**: Hoe kwam de lead binnen (website, telefoon, etc.)
+
+===== Contactinformatie
+
+**Persoonlijke Gegevens**
+* Voornaam en achternaam
+* E-mailadres
+* Telefoonnummer
+* Geboortedatum (optioneel)
+
+**Adresgegevens**
+* Straat en huisnummer
+* Postcode en plaats
+* Land
+
+===== API Lead Aanmaak
+
+Voor automatische lead aanmaak via externe systemen:
+
+[source,bash]
+----
+# Test lead aanmaak via API
+sail artisan create:leads --count=10
+
+# Maak leads aan met specifieke data
+sail artisan create:leads --count=5 --source="Website" --value=1000
+----
+
+==== Lead Bewerken
+
+===== Basis Informatie Wijzigen
+
+. Open de lead vanuit het lead overzicht
+. Klik op **Bewerken** (potlood icoon)
+. Wijzig de gewenste velden
+. Klik **Opslaan** om wijzigingen te bewaren
+
+===== Status Wijzigen
+
+**Pipeline Stages**
+* **Nieuw**: Pas binnenkomende leads
+* **Gekwalificeerd**: Lead is gevalideerd
+* **Voorstel**: Offerte is verstuurd
+* **Onderhandeling**: Prijs/voorwaarden bespreken
+* **Gewonnen**: Deal is gesloten
+* **Verloren**: Lead is niet doorgegaan
+
+**Status Wijzigen**
+. Open de lead
+. Klik op de huidige status
+. Selecteer de nieuwe status uit de dropdown
+. Voeg eventueel een notitie toe
+. Bevestig de wijziging
+
+==== Contactpersoon Koppelen
+
+===== Automatische Suggesties
+
+Het systeem toont automatisch mogelijke matches met bestaande contactpersonen:
+
+. **Match Percentage**: Toont hoe goed de lead overeenkomt
+. **Contact Details**: Naam, email en telefoon van gevonden contacten
+. **Snelle Acties**: 
+  * 👁️ Bekijk contactdetails
+  * 🔄 Synchroniseer gegevens
+
+===== Handmatig Zoeken
+
+. Typ in het zoekveld naar naam, email of telefoon
+. Selecteer de juiste contactpersoon uit de resultaten
+. Klik **Koppelen** om de verbinding te maken
+
+===== Nieuwe Contactpersoon
+
+Als er geen match wordt gevonden:
+
+. Klik **Contact Aanmaken**
+. De lead gegevens worden automatisch overgenomen
+. Vul eventuele ontbrekende informatie aan
+. Sla de nieuwe contactpersoon op
+
+==== Activiteiten
+
+===== Activiteit Toevoegen
+
+. Open de lead
+. Ga naar het **Activiteiten** tabblad
+. Klik **Nieuwe Activiteit**
+. Kies het type activiteit:
+  * **Telefoongesprek**
+  * **E-mail**
+  * **Vergadering**
+  * **Taak**
+  * **Notitie**
+
+===== Activiteit Plannen
+
+. Selecteer **Datum en Tijd**
+. Voeg **Deelnemers** toe
+. Schrijf een **Beschrijving**
+. Stel eventueel een **Herinnering** in
+. Klik **Opslaan**
+
+===== Follow-up Activiteiten
+
+Voor systematische opvolging:
+
+. Plan vervolgactiviteiten direct na een gesprek
+. Gebruik **Terugkerende taken** voor regelmatige check-ins
+. Stel **Herinneringen** in voor belangrijke deadlines
+
+==== Lead Conversie
+
+===== Van Lead naar Klant
+
+Wanneer een lead succesvol wordt:
+
+. Wijzig status naar **Gewonnen**
+. Maak een **Quote** aan voor de finale offerte
+. Converteer naar **Klant** in het systeem
+. Plan **Onboarding activiteiten**
+
+===== Quote Genereren
+
+. Open de gewonnen lead
+. Klik **Quote Aanmaken**
+. Voeg producten/diensten toe
+. Stel prijzen en voorwaarden in
+. Verstuur de quote naar de klant
+
+==== Rapportage
+
+===== Lead Overzicht
+
+**Dashboard Widgets**
+* Totaal aantal leads
+* Leads per status
+* Conversie percentage
+* Gemiddelde deal waarde
+
+**Filters en Zoeken**
+* Filter op status, bron, of eigenaar
+* Zoek op naam, email, of bedrijf
+* Sorteer op datum, waarde, of prioriteit
+
+===== Performance Tracking
+
+**Belangrijke Metrics**
+* **Conversie Ratio**: Percentage gewonnen leads
+* **Gemiddelde Deal Grootte**: Waarde per gewonnen lead
+* **Sales Cycle**: Tijd van lead tot klant
+* **Lead Bron Effectiviteit**: Welke bronnen leveren de beste leads
+
+==== Tips voor Effectief Lead Beheer
+
+===== Beste Practices
+
+. **Snelle Opvolging**: Reageer binnen 24 uur op nieuwe leads
+. **Regelmatige Updates**: Houd lead status actueel
+. **Gedetailleerde Notities**: Documenteer alle interacties
+. **Pipeline Hygiene**: Verwijder oude/irrelevante leads
+
+===== Workflow Optimalisatie
+
+. **Automatiseer Routinetaken**: Gebruik API voor lead import
+. **Standaardiseer Processen**: Gebruik consistente status updates
+. **Team Samenwerking**: Deel leads tussen team leden
+. **Data Kwaliteit**: Houd contactinformatie up-to-date
+
+===== Veelvoorkomende Valkuilen
+
+**Te Lange Follow-up Tijd**
+Leads worden koud als je te lang wacht met opvolging.
+
+**Onvolledige Informatie**
+Zorg voor complete contactgegevens en lead details.
+
+**Geen Duidelijke Next Steps**
+Plan altijd een vervolgactiviteit na elke interactie.

@@ -294,6 +294,38 @@ class PersonController extends Controller
                 ->all();
         }
 
+        // Check if we need to calculate match scores against a lead
+        $leadId = request()->get('lead_id');
+        if ($leadId) {
+            try {
+                $lead = app(LeadRepository::class)->findOrFail($leadId);
+                
+                // Calculate match scores for each person
+                $personsWithScores = $persons->map(function ($person) use ($lead) {
+                    $score = $this->calculateMatchScore($lead, $person);
+                    $person->match_score = $score;
+                    $person->match_score_percentage = round($score, 1);
+                    return $person;
+                });
+
+                // Sort by match score (highest first) and only return persons with score > 0
+                $personsWithScores = $personsWithScores
+                    ->filter(function ($person) {
+                        return $person->match_score > 0;
+                    })
+                    ->sortByDesc('match_score')
+                    ->values();
+
+                return PersonResource::collection($personsWithScores);
+            } catch (\Exception $e) {
+                // If lead not found or error in scoring, return regular results
+                logger()->warning('Could not calculate match scores for search', [
+                    'lead_id' => $leadId,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
         return PersonResource::collection($persons);
     }
 

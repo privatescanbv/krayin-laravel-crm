@@ -372,3 +372,57 @@ test('handles empty form submission gracefully', function () {
         'message' => 'Person en lead succesvol bijgewerkt.',
     ]);
 });
+
+test('manual search returns match scores when lead_id provided', function () {
+    $person = Person::factory()->create([
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'emails' => [['value' => 'john@example.com', 'label' => 'Work']],
+    ]);
+    
+    $lead = Lead::factory()->create([
+        'first_name' => 'John',
+        'last_name' => 'Smith', // Different last name for partial match
+        'emails' => [['value' => 'john@example.com', 'label' => 'Work']], // Same email
+        'lead_pipeline_id' => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
+    ]);
+
+    // Test manual search with lead_id parameter
+    $response = $this->get('/admin/contacts/persons/search?' . http_build_query([
+        'query' => 'John',
+        'lead_id' => $lead->id,
+    ]));
+
+    $response->assertStatus(200);
+    
+    $data = $response->json('data');
+    expect($data)->not->toBeEmpty();
+    
+    // Find our test person in the results
+    $testPerson = collect($data)->firstWhere('id', $person->id);
+    expect($testPerson)->not->toBeNull();
+    expect($testPerson['match_score_percentage'])->toBeGreaterThan(0);
+});
+
+test('manual search without lead_id returns regular results', function () {
+    $person = Person::factory()->create([
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+    ]);
+
+    // Test manual search without lead_id parameter
+    $response = $this->get('/admin/contacts/persons/search?' . http_build_query([
+        'query' => 'John',
+    ]));
+
+    $response->assertStatus(200);
+    
+    $data = $response->json('data');
+    expect($data)->not->toBeEmpty();
+    
+    // Results should not have match scores
+    $testPerson = collect($data)->firstWhere('id', $person->id);
+    expect($testPerson)->not->toBeNull();
+    expect($testPerson)->not->toHaveKey('match_score_percentage');
+});

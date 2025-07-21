@@ -317,15 +317,18 @@
                 },
 
                 async fetchSuggestions(query) {
-                    console.log(query);
                     try {
+                        const params = { query };
+                        
+                        // Add lead_id for match score calculation if available
+                        if (this.lead && this.lead.id) {
+                            params.lead_id = this.lead.id;
+                        }
+
                         const response = await axios.get('/admin/contacts/persons/search', {
-                            params: { query }
+                            params: params
                         });
 
-                        // const response = await axios.get('/admin/contacts/persons/search', {
-                        //     params: { 'search':query,'searchFields' : 'first_name:like;last_name:like;email:like', 'limit': 10 }
-                        // });
                         this.suggestions = response.data.data || [];
                     } catch (e) {
                         console.warn('Zoekopdracht mislukt:', e);

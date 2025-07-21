@@ -376,12 +376,8 @@ class LeadRepository extends Repository
                     if (is_array($email) && !empty($email['value'])) {
                         try {
                             // Use different JSON query approaches for different databases
-                            $query = LeadModel::where('id', '!=', $lead->id);
-
-                            // Only add relationships if not in testing environment
-                            if (!app()->environment('testing')) {
-                                $query->with(['person', 'stage', 'pipeline', 'user']);
-                            }
+                            $query = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
+                                ->where('id', '!=', $lead->id);
                             if (DB::getDriverName() === 'sqlite') {
                                 // SQLite: Use LIKE for JSON searching
                                 $query->where('emails', 'LIKE', '%"' . $email['value'] . '"%');
@@ -413,12 +409,8 @@ class LeadRepository extends Repository
                     if (is_array($phone) && !empty($phone['value'])) {
                         try {
                             // Use different JSON query approaches for different databases
-                            $query = LeadModel::where('id', '!=', $lead->id);
-
-                            // Only add relationships if not in testing environment
-                            if (!app()->environment('testing')) {
-                                $query->with(['person', 'stage', 'pipeline', 'user']);
-                            }
+                            $query = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
+                                ->where('id', '!=', $lead->id);
                             if (DB::getDriverName() === 'sqlite') {
                                 // SQLite: Use JSON_EXTRACT or LIKE for JSON searching
                                 $query->where('phones', 'LIKE', '%"' . $phone['value'] . '"%');
@@ -443,14 +435,8 @@ class LeadRepository extends Repository
         // Check for name similarity (first + last name)
         if (!empty($lead->first_name) && !empty($lead->last_name)) {
             try {
-                $nameDuplicates = LeadModel::where('id', '!=', $lead->id);
-
-                // Only add relationships if not in testing environment
-                if (!app()->environment('testing')) {
-                    $nameDuplicates->with(['person', 'stage', 'pipeline', 'user']);
-                }
-
-                $nameDuplicates = $nameDuplicates
+                $nameDuplicates = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
+                    ->where('id', '!=', $lead->id)
                     ->where(function($query) use ($lead) {
                         // Exact match for full name
                         $query->where(function($subQuery) use ($lead) {

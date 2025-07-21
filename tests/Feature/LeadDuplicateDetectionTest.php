@@ -15,12 +15,16 @@ beforeEach(function () {
     config(['database.connections.sqlite.database' => ':memory:']);
     config(['database.default' => 'sqlite']);
 
-    // Create only the essential tables we need for duplicate detection
+    // Create all tables needed for duplicate detection with relationships
     Schema::dropIfExists('leads');
+    Schema::dropIfExists('lead_pipeline_stages');
+    Schema::dropIfExists('lead_pipelines');
     Schema::dropIfExists('lead_types');
     Schema::dropIfExists('lead_sources');
+    Schema::dropIfExists('persons');
     Schema::dropIfExists('users');
 Schema::dropIfExists('roles');
+Schema::dropIfExists('attributes');
 
     Schema::create('roles', function ($table) {
         $table->increments('id');
@@ -54,6 +58,37 @@ Schema::dropIfExists('roles');
         $table->timestamps();
     });
 
+    Schema::create('persons', function ($table) {
+        $table->increments('id');
+        $table->string('name');
+        $table->timestamps();
+    });
+
+    Schema::create('lead_pipelines', function ($table) {
+        $table->increments('id');
+        $table->string('name');
+        $table->timestamps();
+    });
+
+    Schema::create('lead_pipeline_stages', function ($table) {
+        $table->increments('id');
+        $table->string('name');
+        $table->string('code')->nullable();
+        $table->integer('lead_pipeline_id')->unsigned();
+        $table->timestamps();
+    });
+
+    Schema::create('attributes', function ($table) {
+        $table->increments('id');
+        $table->string('code');
+        $table->string('name');
+        $table->string('entity_type');
+        $table->string('type');
+        $table->boolean('is_required')->default(false);
+        $table->boolean('is_unique')->default(false);
+        $table->timestamps();
+    });
+
     Schema::create('leads', function ($table) {
         $table->increments('id');
         $table->string('title');
@@ -75,6 +110,13 @@ Schema::dropIfExists('roles');
         $table->integer('lead_pipeline_stage_id')->unsigned()->nullable();
         $table->timestamps();
     });
+
+    // Create basic data that relationships expect
+    DB::table('roles')->insert(['id' => 1, 'name' => 'Admin', 'permission_type' => 'all', 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('lead_sources')->insert(['id' => 1, 'name' => 'Website', 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('lead_types')->insert(['id' => 1, 'name' => 'New Business', 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('lead_pipelines')->insert(['id' => 1, 'name' => 'Default Pipeline', 'created_at' => now(), 'updated_at' => now()]);
+    DB::table('lead_pipeline_stages')->insert(['id' => 1, 'name' => 'New', 'code' => 'new', 'lead_pipeline_id' => 1, 'created_at' => now(), 'updated_at' => now()]);
 
     // Disable observers during testing to avoid database dependency issues
     \Webkul\Lead\Models\Lead::unsetEventDispatcher();

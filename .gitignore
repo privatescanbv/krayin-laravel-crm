@@ -4,6 +4,7 @@
 .cache
 .php_cs.cache
 .phpunit.result.cache
+.phpunit.cache
 .vscode
 .vagrant
 *.hot

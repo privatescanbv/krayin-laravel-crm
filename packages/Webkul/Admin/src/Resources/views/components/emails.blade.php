@@ -39,9 +39,9 @@
                             v-model="email.label"
                             class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                         >
-                            <option value="work">Work</option>
-                            <option value="home">Home</option>
-                            <option value="other">Other</option>
+                            <option value="work">Werk</option>
+                            <option value="home">Thuis</option>
+                            <option value="other">Anders</option>
                         </select>
 
                         <div class="flex items-center space-x-2">

@@ -36,36 +36,6 @@
             <x-admin::form.control-group.error control-name="person[id]" />
         </x-admin::form.control-group>
 
-        <!-- Person Email -->
-        <x-admin::form.control-group>
-            <x-admin::form.control-group.label>
-                @lang('admin::app.leads.common.contact.email')
-            </x-admin::form.control-group.label>
-
-            <x-admin::attributes.edit.email />
-
-            <v-email-component
-                :attribute="{'id': person?.id, 'code': 'person[emails]', 'name': 'Email'}"
-                :value="person.emails"
-                :is-disabled="person?.id ? true : false"
-            ></v-email-component>
-        </x-admin::form.control-group>
-
-        <!-- Person Contact Numbers -->
-        <x-admin::form.control-group>
-            <x-admin::form.control-group.label>
-                @lang('admin::app.leads.common.contact.contact-number')
-            </x-admin::form.control-group.label>
-
-            <x-admin::attributes.edit.phone />
-
-            <v-phone-component
-                :attribute="{'id': person?.id, 'code': 'person[contact_numbers]', 'name': 'Contact Numbers'}"
-                :value="person.contact_numbers"
-                :is-disabled="person?.id ? true : false"
-            ></v-phone-component>
-        </x-admin::form.control-group>
-
         <!-- Person Organization -->
         <x-admin::form.control-group>
             <x-admin::form.control-group.label>

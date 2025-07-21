@@ -21,7 +21,7 @@ beforeEach(function () {
 
     // Create a test user and authenticate
     $this->user = User::factory()->create();
-    $this->actingAs($this->user);
+    $this->actingAs($this->user, 'user');
 
     // Ensure we have pipeline and stage
     $this->pipelineId = 1;
@@ -68,6 +68,7 @@ test('shows field differences between person and lead', function () {
         'emails'        => [['value' => 'john@example.com', 'label' => 'Work']],
         'phones'        => [['value' => '123456789', 'label' => 'Mobile']],
         'date_of_birth' => '1990-01-01',
+        'user_id' => $this->user->id,
     ]);
 
     $lead = Lead::factory()->create([
@@ -375,6 +376,7 @@ test('manual search returns match scores when lead_id provided', function () {
         'first_name' => 'John',
         'last_name'  => 'Doe',
         'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
+        'user_id' => $this->user->id,
     ]);
 
     $lead = Lead::factory()->create([
@@ -408,6 +410,7 @@ test('manual search without lead_id returns regular results', function () {
     $person = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
+        'user_id' => $this->user->id,
     ]);
 
     // Test manual search without lead_id parameter

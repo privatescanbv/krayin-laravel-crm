@@ -735,8 +735,8 @@ class PersonController extends Controller
 
             // Handle date fields
             if ($field === 'date_of_birth') {
-                $personValue = $personValue ? $personValue->format('Y-m-d') : null;
-                $leadValue = $leadValue ? $leadValue->format('Y-m-d') : null;
+                $personValue = $this->formatDateForComparison($personValue);
+                $leadValue = $this->formatDateForComparison($leadValue);
             }
 
             // Compare values
@@ -770,6 +770,46 @@ class PersonController extends Controller
         }
 
         return (string) $value;
+    }
+
+    /**
+     * Format date for comparison, handling invalid dates.
+     */
+    private function formatDateForComparison($date): ?string
+    {
+        if (empty($date)) {
+            return null;
+        }
+
+        try {
+            // Check if it's a valid Carbon instance
+            if ($date instanceof \Carbon\Carbon) {
+                // Check for invalid dates (like -0001-11-30 or 0000-00-00)
+                if ($date->year <= 0 || $date->year > 2100) {
+                    return null;
+                }
+                return $date->format('Y-m-d');
+            }
+
+            // If it's a string, try to parse it
+            if (is_string($date)) {
+                // Skip obviously invalid dates
+                if (in_array($date, ['0000-00-00', '0000-00-00 00:00:00']) || strpos($date, '-0001') === 0) {
+                    return null;
+                }
+                
+                $carbonDate = \Carbon\Carbon::parse($date);
+                if ($carbonDate->year <= 0 || $carbonDate->year > 2100) {
+                    return null;
+                }
+                return $carbonDate->format('Y-m-d');
+            }
+        } catch (\Exception $e) {
+            // If parsing fails, treat as null
+            return null;
+        }
+
+        return null;
     }
 
     /**

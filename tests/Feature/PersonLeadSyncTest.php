@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Webkul\Contact\Models\Person;
@@ -21,44 +22,33 @@ beforeEach(function () {
     // Ensure we have pipeline and stage
     $this->pipelineId = 1;
     $this->stageId = 1;
-    
-    // Create pipeline and stage records if they don't exist
-    \DB::table('lead_pipelines')->insertOrIgnore([
-        'id' => 1,
-        'name' => 'Test Pipeline',
-        'is_default' => 1,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
-    
-    \DB::table('lead_pipeline_stages')->insertOrIgnore([
-        'id' => 1,
-        'name' => 'Test Stage',
-        'lead_pipeline_id' => 1,
-        'sort_order' => 1,
-        'created_at' => now(),
-        'updated_at' => now(),
-    ]);
+
+    if (!DB::table('lead_pipelines')->where('id', 1)->first()) {
+        throw new ModelNotFoundException('lead_pipelines not found');
+    }
+    if (!DB::table('lead_pipeline_stages')->where('id', 1)->first()) {
+        throw new ModelNotFoundException('lead_pipelines not found');
+    }
 });
 
 test('can access edit with lead page', function () {
     $person = Person::factory()->create([
         'first_name' => 'John',
-        'last_name'  => 'Doe',
-        'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
+        'last_name' => 'Doe',
+        'emails' => [['value' => 'john@example.com', 'label' => 'Work']],
     ]);
 
     $lead = Lead::factory()->create([
-        'first_name'             => 'John',
-        'last_name'              => 'Smith',
-        'emails'                 => [['value' => 'john.smith@example.com', 'label' => 'Work']],
-        'lead_pipeline_id'       => $this->pipelineId,
+        'first_name' => 'John',
+        'last_name' => 'Smith',
+        'emails' => [['value' => 'john.smith@example.com', 'label' => 'Work']],
+        'lead_pipeline_id' => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
     ]);
 
     $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
         'personId' => $person->id,
-        'leadId'   => $lead->id,
+        'leadId' => $lead->id,
     ]));
 
     $response->assertStatus(200);
@@ -69,26 +59,26 @@ test('can access edit with lead page', function () {
 
 test('shows field differences between person and lead', function () {
     $person = Person::factory()->create([
-        'first_name'    => 'John',
-        'last_name'     => 'Doe',
-        'emails'        => [['value' => 'john@example.com', 'label' => 'Work']],
-        'phones'        => [['value' => '123456789', 'label' => 'Mobile']],
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'emails' => [['value' => 'john@example.com', 'label' => 'Work']],
+        'phones' => [['value' => '123456789', 'label' => 'Mobile']],
         'date_of_birth' => '1990-01-01',
     ]);
 
     $lead = Lead::factory()->create([
-        'first_name'             => 'John',
-        'last_name'              => 'Smith', // Different last name
-        'emails'                 => [['value' => 'john.smith@example.com', 'label' => 'Work']], // Different email
-        'phones'                 => [['value' => '123456789', 'label' => 'Mobile']], // Same phone
-        'date_of_birth'          => '1985-05-15', // Different birth date
-        'lead_pipeline_id'       => $this->pipelineId,
+        'first_name' => 'John',
+        'last_name' => 'Smith', // Different last name
+        'emails' => [['value' => 'john.smith@example.com', 'label' => 'Work']], // Different email
+        'phones' => [['value' => '123456789', 'label' => 'Mobile']], // Same phone
+        'date_of_birth' => '1985-05-15', // Different birth date
+        'lead_pipeline_id' => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
     ]);
 
     $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
         'personId' => $person->id,
-        'leadId'   => $lead->id,
+        'leadId' => $lead->id,
     ]));
 
     $response->assertStatus(200);
@@ -104,18 +94,18 @@ test('shows field differences between person and lead', function () {
 
 test('can update person with lead data', function () {
     $person = Person::factory()->create([
-        'first_name'    => 'John',
-        'last_name'     => 'Doe',
-        'emails'        => [['value' => 'john@example.com', 'label' => 'Work']],
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'emails' => [['value' => 'john@example.com', 'label' => 'Work']],
         'date_of_birth' => '1990-01-01',
     ]);
 
     $lead = Lead::factory()->create([
-        'first_name'             => 'John',
-        'last_name'              => 'Smith',
-        'emails'                 => [['value' => 'john.smith@example.com', 'label' => 'Work']],
-        'date_of_birth'          => '1985-05-15',
-        'lead_pipeline_id'       => $this->pipelineId,
+        'first_name' => 'John',
+        'last_name' => 'Smith',
+        'emails' => [['value' => 'john.smith@example.com', 'label' => 'Work']],
+        'date_of_birth' => '1985-05-15',
+        'lead_pipeline_id' => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
     ]);
 
@@ -125,22 +115,22 @@ test('can update person with lead data', function () {
         'X-Requested-With' => 'XMLHttpRequest',
     ])->postJson(route('admin.contacts.persons.update_with_lead', [
         'personId' => $person->id,
-        'leadId'   => $lead->id,
+        'leadId' => $lead->id,
     ]), [
         'person_updates' => [
-            'last_name'     => '1', // Update last name
+            'last_name' => '1', // Update last name
             'date_of_birth' => '1', // Update birth date
         ],
         'lead_updates' => [
-            'last_name'     => 'Smith',
-            'emails'        => 'john.smith@example.com',
+            'last_name' => 'Smith',
+            'emails' => 'john.smith@example.com',
             'date_of_birth' => '1985-05-15',
         ],
     ]);
 
     $response->assertStatus(200);
     $response->assertJson([
-        'message'      => 'Person en lead succesvol bijgewerkt.',
+        'message' => 'Person en lead succesvol bijgewerkt.',
         'redirect_url' => route('admin.contacts.persons.view', $person->id),
     ]);
 
@@ -156,13 +146,13 @@ test('can update person with lead data', function () {
 test('can update lead data during sync', function () {
     $person = Person::factory()->create([
         'first_name' => 'John',
-        'last_name'  => 'Doe',
+        'last_name' => 'Doe',
     ]);
 
     $lead = Lead::factory()->create([
-        'first_name'             => 'John',
-        'last_name'              => 'Smith',
-        'lead_pipeline_id'       => $this->pipelineId,
+        'first_name' => 'John',
+        'last_name' => 'Smith',
+        'lead_pipeline_id' => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
     ]);
 
@@ -172,7 +162,7 @@ test('can update lead data during sync', function () {
         'X-Requested-With' => 'XMLHttpRequest',
     ])->postJson(route('admin.contacts.persons.update_with_lead', [
         'personId' => $person->id,
-        'leadId'   => $lead->id,
+        'leadId' => $lead->id,
     ]), [
         'person_updates' => [
             'last_name' => '1', // Update person with modified lead value
@@ -195,17 +185,17 @@ test('can update lead data during sync', function () {
 test('handles array fields correctly during sync', function () {
     $person = Person::factory()->create([
         'first_name' => 'John',
-        'last_name'  => 'Doe',
-        'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
-        'phones'     => [['value' => '123456789', 'label' => 'Mobile']],
+        'last_name' => 'Doe',
+        'emails' => [['value' => 'john@example.com', 'label' => 'Work']],
+        'phones' => [['value' => '123456789', 'label' => 'Mobile']],
     ]);
 
     $lead = Lead::factory()->create([
-        'first_name'             => 'John',
-        'last_name'              => 'Doe',
-        'emails'                 => [['value' => 'john.smith@example.com', 'label' => 'Work']],
-        'phones'                 => [['value' => '987654321', 'label' => 'Mobile']],
-        'lead_pipeline_id'       => $this->pipelineId,
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'emails' => [['value' => 'john.smith@example.com', 'label' => 'Work']],
+        'phones' => [['value' => '987654321', 'label' => 'Mobile']],
+        'lead_pipeline_id' => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
     ]);
 
@@ -215,7 +205,7 @@ test('handles array fields correctly during sync', function () {
         'X-Requested-With' => 'XMLHttpRequest',
     ])->postJson(route('admin.contacts.persons.update_with_lead', [
         'personId' => $person->id,
-        'leadId'   => $lead->id,
+        'leadId' => $lead->id,
     ]), [
         'person_updates' => [
             'emails' => '1',
@@ -244,14 +234,14 @@ test('handles array fields correctly during sync', function () {
 test('returns validation error for invalid data', function () {
     $person = Person::factory()->create();
     $lead = Lead::factory()->create([
-        'lead_pipeline_id'       => $this->pipelineId,
+        'lead_pipeline_id' => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
     ]);
 
     // Test with invalid person ID
     $response = $this->post(route('admin.contacts.persons.update_with_lead', [
         'personId' => 99999,
-        'leadId'   => $lead->id,
+        'leadId' => $lead->id,
     ]), []);
 
     $response->assertStatus(404);
@@ -259,24 +249,24 @@ test('returns validation error for invalid data', function () {
 
 test('shows no differences message when records are identical', function () {
     $person = Person::factory()->create([
-        'first_name'    => 'John',
-        'last_name'     => 'Doe',
-        'emails'        => [['value' => 'john@example.com', 'label' => 'Work']],
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'emails' => [['value' => 'john@example.com', 'label' => 'Work']],
         'date_of_birth' => '1990-01-01',
     ]);
 
     $lead = Lead::factory()->create([
-        'first_name'             => 'John',
-        'last_name'              => 'Doe',
-        'emails'                 => [['value' => 'john@example.com', 'label' => 'Work']],
-        'date_of_birth'          => '1990-01-01',
-        'lead_pipeline_id'       => $this->pipelineId,
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'emails' => [['value' => 'john@example.com', 'label' => 'Work']],
+        'date_of_birth' => '1990-01-01',
+        'lead_pipeline_id' => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
     ]);
 
     $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
         'personId' => $person->id,
-        'leadId'   => $lead->id,
+        'leadId' => $lead->id,
     ]));
 
     $response->assertStatus(200);
@@ -287,17 +277,17 @@ test('handles edge case with malformed birth dates', function () {
     // Create person with potentially malformed date
     $person = Person::factory()->create([
         'first_name' => 'John',
-        'last_name'  => 'Doe',
+        'last_name' => 'Doe',
     ]);
 
     // Manually set a malformed date in the database
     DB::table('persons')->where('id', $person->id)->update(['date_of_birth' => '0000-00-00']);
 
     $lead = Lead::factory()->create([
-        'first_name'             => 'John',
-        'last_name'              => 'Doe',
-        'date_of_birth'          => null,
-        'lead_pipeline_id'       => $this->pipelineId,
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'date_of_birth' => null,
+        'lead_pipeline_id' => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
     ]);
 
@@ -306,7 +296,7 @@ test('handles edge case with malformed birth dates', function () {
 
     $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
         'personId' => $person->id,
-        'leadId'   => $lead->id,
+        'leadId' => $lead->id,
     ]));
 
     $response->assertStatus(200);
@@ -319,22 +309,22 @@ test('handles edge case with malformed birth dates', function () {
 
 test('handles date comparison with valid vs invalid dates', function () {
     $person = Person::factory()->create([
-        'first_name'    => 'John',
-        'last_name'     => 'Doe',
+        'first_name' => 'John',
+        'last_name' => 'Doe',
         'date_of_birth' => '1990-01-01', // Valid date
     ]);
 
     $lead = Lead::factory()->create([
-        'first_name'             => 'John',
-        'last_name'              => 'Doe',
-        'date_of_birth'          => null, // No date
-        'lead_pipeline_id'       => $this->pipelineId,
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'date_of_birth' => null, // No date
+        'lead_pipeline_id' => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
     ]);
 
     $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
         'personId' => $person->id,
-        'leadId'   => $lead->id,
+        'leadId' => $lead->id,
     ]));
 
     $response->assertStatus(200);
@@ -357,7 +347,7 @@ test('validates required route parameters', function () {
 test('handles empty form submission gracefully', function () {
     $person = Person::factory()->create();
     $lead = Lead::factory()->create([
-        'lead_pipeline_id'       => $this->pipelineId,
+        'lead_pipeline_id' => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
     ]);
 
@@ -367,7 +357,7 @@ test('handles empty form submission gracefully', function () {
         'X-Requested-With' => 'XMLHttpRequest',
     ])->postJson(route('admin.contacts.persons.update_with_lead', [
         'personId' => $person->id,
-        'leadId'   => $lead->id,
+        'leadId' => $lead->id,
     ]), []);
 
     $response->assertStatus(200);
@@ -379,25 +369,25 @@ test('handles empty form submission gracefully', function () {
 test('manual search returns match scores when lead_id provided', function () {
     $person = Person::factory()->create([
         'first_name' => 'John',
-        'last_name'  => 'Doe',
-        'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
+        'last_name' => 'Doe',
+        'emails' => [['value' => 'john@example.com', 'label' => 'Work']],
     ]);
 
     $lead = Lead::factory()->create([
-        'first_name'             => 'John',
-        'last_name'              => 'Smith', // Different last name for partial match
-        'emails'                 => [['value' => 'john@example.com', 'label' => 'Work']], // Same email
-        'lead_pipeline_id'       => $this->pipelineId,
+        'first_name' => 'John',
+        'last_name' => 'Smith', // Different last name for partial match
+        'emails' => [['value' => 'john@example.com', 'label' => 'Work']], // Same email
+        'lead_pipeline_id' => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
     ]);
 
     // Test manual search with lead_id parameter
     $response = $this->withHeaders([
         'X-Requested-With' => 'XMLHttpRequest',
-    ])->get('/admin/contacts/persons/search?'.http_build_query([
-        'query' => 'John',
-        'lead_id' => $lead->id,
-    ]));
+    ])->get('/admin/contacts/persons/search?' . http_build_query([
+            'query' => 'John',
+            'lead_id' => $lead->id,
+        ]));
 
     $response->assertStatus(200);
 
@@ -420,14 +410,14 @@ test('manual search without lead_id returns regular results', function () {
     $response = $this->withHeaders([
         'X-Requested-With' => 'XMLHttpRequest',
     ])->get('/admin/contacts/persons/search?' . http_build_query([
-        'query' => 'John',
-    ]));
+            'query' => 'John',
+        ]));
 
     $response->assertStatus(200);
-    
+
     $data = $response->json('data');
     expect($data)->not->toBeEmpty();
-    
+
     // Results should not have match scores
     $testPerson = collect($data)->firstWhere('id', $person->id);
     expect($testPerson)->not->toBeNull();

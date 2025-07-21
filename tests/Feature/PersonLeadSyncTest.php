@@ -100,7 +100,11 @@ test('can update person with lead data', function () {
         'lead_pipeline_stage_id' => $this->stageId,
     ]);
 
-    $response = $this->postJson(route('admin.contacts.persons.update_with_lead', [
+    $response = $this->withHeaders([
+        'Accept' => 'application/json',
+        'Content-Type' => 'application/json',
+        'X-Requested-With' => 'XMLHttpRequest',
+    ])->postJson(route('admin.contacts.persons.update_with_lead', [
         'personId' => $person->id,
         'leadId'   => $lead->id,
     ]), [
@@ -143,7 +147,11 @@ test('can update lead data during sync', function () {
         'lead_pipeline_stage_id' => $this->stageId,
     ]);
 
-    $response = $this->postJson(route('admin.contacts.persons.update_with_lead', [
+    $response = $this->withHeaders([
+        'Accept' => 'application/json',
+        'Content-Type' => 'application/json',
+        'X-Requested-With' => 'XMLHttpRequest',
+    ])->postJson(route('admin.contacts.persons.update_with_lead', [
         'personId' => $person->id,
         'leadId'   => $lead->id,
     ]), [
@@ -182,7 +190,11 @@ test('handles array fields correctly during sync', function () {
         'lead_pipeline_stage_id' => $this->stageId,
     ]);
 
-    $response = $this->postJson(route('admin.contacts.persons.update_with_lead', [
+    $response = $this->withHeaders([
+        'Accept' => 'application/json',
+        'Content-Type' => 'application/json',
+        'X-Requested-With' => 'XMLHttpRequest',
+    ])->postJson(route('admin.contacts.persons.update_with_lead', [
         'personId' => $person->id,
         'leadId'   => $lead->id,
     ]), [
@@ -330,7 +342,11 @@ test('handles empty form submission gracefully', function () {
         'lead_pipeline_stage_id' => $this->stageId,
     ]);
 
-    $response = $this->postJson(route('admin.contacts.persons.update_with_lead', [
+    $response = $this->withHeaders([
+        'Accept' => 'application/json',
+        'Content-Type' => 'application/json',
+        'X-Requested-With' => 'XMLHttpRequest',
+    ])->postJson(route('admin.contacts.persons.update_with_lead', [
         'personId' => $person->id,
         'leadId'   => $lead->id,
     ]), []);

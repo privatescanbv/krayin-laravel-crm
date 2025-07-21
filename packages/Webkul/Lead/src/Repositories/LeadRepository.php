@@ -377,12 +377,12 @@ class LeadRepository extends Repository
                         try {
                             // Use different JSON query approaches for different databases
                             $query = LeadModel::where('id', '!=', $lead->id);
-                            
+
                             // Only add relationships if not in testing environment
                             if (!app()->environment('testing')) {
                                 $query->with(['person', 'stage', 'pipeline', 'user']);
                             }
-                            
+
                             if (DB::getDriverName() === 'sqlite') {
                                 // SQLite: Use LIKE for JSON searching
                                 $query->where('emails', 'LIKE', '%"' . $email['value'] . '"%');
@@ -390,7 +390,7 @@ class LeadRepository extends Repository
                                 // MySQL/PostgreSQL: Use whereJsonContains
                                 $query->whereJsonContains('emails', [['value' => $email['value']]]);
                             }
-                            
+
                             $emailDuplicates = $query->get();
 
                             $duplicates = $duplicates->merge($emailDuplicates);
@@ -415,12 +415,12 @@ class LeadRepository extends Repository
                         try {
                             // Use different JSON query approaches for different databases
                             $query = LeadModel::where('id', '!=', $lead->id);
-                            
+
                             // Only add relationships if not in testing environment
                             if (!app()->environment('testing')) {
                                 $query->with(['person', 'stage', 'pipeline', 'user']);
                             }
-                            
+
                             if (DB::getDriverName() === 'sqlite') {
                                 // SQLite: Use JSON_EXTRACT or LIKE for JSON searching
                                 $query->where('phones', 'LIKE', '%"' . $phone['value'] . '"%');
@@ -428,7 +428,7 @@ class LeadRepository extends Repository
                                 // MySQL/PostgreSQL: Use whereJsonContains
                                 $query->whereJsonContains('phones', [['value' => $phone['value']]]);
                             }
-                            
+
                             $phoneDuplicates = $query->get();
 
                             $duplicates = $duplicates->merge($phoneDuplicates);
@@ -446,14 +446,17 @@ class LeadRepository extends Repository
         if (!empty($lead->first_name) && !empty($lead->last_name)) {
             try {
                 $nameDuplicates = LeadModel::where('id', '!=', $lead->id);
-                
+
                 // Only add relationships if not in testing environment
                 if (!app()->environment('testing')) {
                     $nameDuplicates->with(['person', 'stage', 'pipeline', 'user']);
                 }
-                
+
                 $nameDuplicates = $nameDuplicates
                     ->where(function($query) use ($lead) {
+                        // Exact match for full name
+                        $query->where(function($subQuery) use ($lead) {
+                            $subQuery->where(function($query) use ($lead) {
                         // Exact match for full name
                         $query->where(function($subQuery) use ($lead) {
                             $subQuery->where('first_name', $lead->first_name)
@@ -500,7 +503,7 @@ class LeadRepository extends Repository
     private function getNameVariations($name)
     {
         $variations = [$name];
-        
+
         // Common nickname variations
         $nicknameMap = [
             'John' => ['Johnny', 'Jon', 'Jack'],
@@ -533,11 +536,11 @@ class LeadRepository extends Repository
             'Betty' => ['Elizabeth', 'Liz', 'Beth'],
             'Lizzy' => ['Elizabeth', 'Liz'],
         ];
-        
+
         if (isset($nicknameMap[$name])) {
             $variations = array_merge($variations, $nicknameMap[$name]);
         }
-        
+
         return array_unique($variations);
     }
 

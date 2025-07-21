@@ -31,67 +31,6 @@ Het systeem gebruikt intelligente database pre-filtering om performance te verbe
 * Beperkt initiële query tot 30 potentiële matches voor scoring
 * Alleen personen met scores > 0 worden teruggegeven naar de frontend
 
-==== Implementatie Details
-
-===== Backend Wijzigingen
-
-====== PersonController.php
-
-* **Geoptimaliseerde `searchByLead()` methode**: Gebruikt nu database-niveau filtering voor scoring
-* **Verbeterde `calculateMatchScore()` methode**: Bijgewerkte gewichtsverdeling (90% namen, 5% e-mail, 5% telefoon)
-* **Verbeterde `calculateNameMatchScore()` methode**: Geavanceerde naamveld evaluatie
-* **Performance verbeteringen**: Database filtering vermindert verwerkingsoverhead
-
-====== Belangrijkste Kenmerken
-
-* **Database Pre-filtering**: Vermindert dataset voor dure scoring berekeningen
-* **Intelligente Naam Matching**: Evalueert alle 6 naamvelden met gelaagde scoring
-* **Nederlandse Telefoon Normalisatie**: Handelt +31 formaat conversie naar 0 formaat af
-* **Meerdere Contact Ondersteuning**: Handelt meerdere e-mails en telefoonnummers per persoon af
-* **Schaalbare Architectuur**: Efficiënt voor grotere contact databases
-
-====== Scoring Query Logica
-
-[source,php]
-----
-$persons = Person::query()
-    ->where('first_name', 'like', '%' . $lead->first_name . '%')
-    ->where(function ($query) use ($lead) {
-        $query->where('last_name', 'like', '%' . $lead->last_name . '%')
-            ->orWhere('married_name', 'like', '%' . $lead->married_name . '%');
-    })
-    ->limit(30)
-    ->get();
-----
-
-===== Frontend Wijzigingen
-
-====== contactmatcher.blade.php
-
-* **Verbeterde suggestie weergave**: Toont match percentage met visuele progress bars
-* **Snelle bekijk links**: Externe link iconen voor het bekijken van contactdetails in nieuwe tabs
-* **Kleur-gecodeerde scoring**:
-** Groen (≥80%): Uitstekende match
-** Geel (≥60%): Goede match
-** Oranje (≥40%): Redelijke match
-** Rood (<40%): Slechte match
-* **Verbeterde geselecteerde persoon weergave**: Toont match score voor geselecteerde contacten
-* **Bijgewerkte scoring uitleg**: Reflecteert nieuwe gewichtsverdeling
-
-====== PersonDataGrid.php
-
-* **Verbeterde weergave**: Includeert nu married_name_prefix in persoon naam concatenatie
-* **Verbeterde naam formatting**: Betere afhandeling van naam voorvoegsels en getrouwde namen
-
-====== Nieuwe Vue.js Methoden
-
-* **`getScoreColorClass()`**: Retourneert juiste CSS class gebaseerd op score
-
-====== Verbeterde Gebruikersinterface
-
-* **Snelle Bekijk Links**: Toegevoegde externe link iconen naast contactnamen die contactdetails openen in nieuwe tab
-* **Toegankelijke Links**: Links gebruiken `target="_blank"` en bevatten beschrijvende tooltips
-* **Niet-opdringerig Ontwerp**: Links gebruiken `@click.stop` om interferentie met selectie gedrag te voorkomen
 
 ==== Gebruik
 
@@ -104,115 +43,6 @@ $persons = Person::query()
 . Naamvelden zijn de primaire matching criteria (90% van totale score)
 . E-mail en telefoon matches bieden aanvullende validatie (5% elk)
 
-===== Voor Ontwikkelaars
-
-Het scoring algoritme kan eenvoudig worden aangepast door de gewichten in de `calculateMatchScore()` methode te wijzigen:
-
-[source,php]
-----
-// Huidige gewichten (bijgewerkt)
-$nameWeight = 0.90;      // 90% voor alle naamvelden gecombineerd
-$emailWeight = 0.05;     // 5% voor e-mail matching
-$phoneWeight = 0.05;     // 5% voor telefoon matching
-
-// Naamveld scoring drempelwaarden
-$allNameFieldsMatch = 0.95;      // 95% wanneer alle naamvelden matchen
-$importantNameFieldsMatch = 0.80; // 80% wanneer belangrijke velden matchen
-----
-
-**Geëvalueerde Naamvelden:**
-
-* `first_name`, `last_name`, `lastname_prefix` (belangrijke velden)
-* `married_name`, `married_name_prefix`, `initials` (aanvullende velden)
-
-**Database Pre-filtering:**
-
-* Gebruikt LIKE queries voor performance optimalisatie
-* Filtert op first_name en (last_name OF married_name)
-* Beperkt tot 30 potentiële matches voor scoring
-
-==== Testen
-
-Uitgebreide test coverage omvat:
-
-* **Scoring nauwkeurigheid**: Verifieert correcte score berekening voor verschillende match scenario's
-* **Resultaat ordening**: Zorgt ervoor dat resultaten gesorteerd zijn op score (hoogste eerst)
-* **Performance testing**: Valideert database filtering efficiëntie
-* **Edge cases**: Test floating-point precisie en grenswaarde condities
-* **Organisatie ondersteuning**: Verbeterde factory ondersteuning voor het testen van complexe scenario's
-
-**Test bestand**: `tests/Feature/PersonControllerSearchByLeadTest.php`
-
-**Belangrijkste tests**:
-
-* `test_returns_results_with_match_scores_and_sorts_by_score`
-* Organisatie-gebaseerde matching validatie
-* Score precisie testing
-
-==== Performance Overwegingen
-
-De bijgewerkte implementatie pakt performance zorgen aan:
-
-. **Database-niveau filtering**: Pre-filtert kandidaten voor dure scoring
-. **Beperkte resultaat sets**: Beperkt initiële query tot 30 potentiële matches
-. **Efficiënte scoring**: Berekent alleen scores voor pre-gefilterde kandidaten
-. **Geoptimaliseerde queries**: Gebruikt geïndexeerde velden (first_name, last_name) voor filtering
-
-Voor zeer grote datasets, overweeg:
-
-. **Aanvullende indexering**: Voeg indexes toe op married_name en lastname_prefix
-. **Caching strategieën**: Cache scoring resultaten voor vaak geraadpleegde leads
-. **Achtergrond verwerking**: Verplaats scoring naar queue jobs voor complexe scenario's
-
-==== Verbeterde Kenmerken
-
-===== Factories en Test Ondersteuning
-
-* **OrganizationFactory**: Nieuwe factory voor het creëren van test organisaties
-* **Verbeterde PersonFactory**: Toegevoegde `withOrganisation()` methode voor test scenario's
-* **Verbeterde test coverage**: Meer uitgebreide scoring validatie
-
-===== Data Weergave Verbeteringen
-
-* **Verbeterde PersonDataGrid**: Toont volledige naam inclusief getrouwde naam voorvoegsel
-* **Betere naam concatenatie**: Verbeterde weergave van complexe naam structuren
-* **Organisatie integratie**: Betere ondersteuning voor persoon-organisatie relaties
-
-==== Toekomstige Verbeteringen
-
-Potentiële verbeteringen:
-
-. **Fuzzy string matching**: Gebruik algoritmen zoals Levenshtein distance voor naam matching
-. **Machine learning**: Train modellen op succesvolle matches om scoring te verbeteren
-. **Gebruiker feedback**: Sta gebruikers toe om goede/slechte matches te markeren om het algoritme te verbeteren
-. **Aangepaste gewichten**: Sta beheerders toe om veld gewichten per organisatie te configureren
-. **Aanvullende velden**: Includeer bedrijfsnaam, adres, of andere aangepaste velden in scoring
-. **Real-time indexering**: Implementeer zoek indexering voor nog betere performance
-
-==== Gewijzigde Bestanden
-
-. `packages/Webkul/Admin/src/Http/Controllers/Contact/Persons/PersonController.php` - Kern scoring logica
-. `packages/Webkul/Admin/src/Resources/views/leads/common/contactmatcher.blade.php` - Frontend interface
-. `packages/Webkul/Admin/src/Http/Resources/PersonResource.php` - Verbeterd om match scores te includeren
-. `packages/Webkul/Admin/src/DataGrids/Contact/PersonDataGrid.php` - Verbeterde persoon weergave
-. `packages/Webkul/Contact/src/Models/Person.php` - Factory verbeteringen
-. `packages/Webkul/Contact/src/Models/Organization.php` - Toegevoegde factory ondersteuning
-. `packages/Webkul/Contact/src/Database/Factories/PersonFactory.php` - Verbeterd met organisatie ondersteuning
-. `packages/Webkul/Contact/src/Database/Factories/OrganizationFactory.php` - Nieuwe factory
-. `tests/Feature/PersonControllerSearchByLeadTest.php` - Uitgebreide test coverage
-
-==== Configuratie
-
-Geen aanvullende configuratie is vereist. Het scoring systeem werkt out-of-the-box met de bestaande contact en lead data structuren. Het systeem optimaliseert automatisch performance door database-niveau filtering terwijl nauwkeurigheid behouden blijft door uitgebreide naamveld matching.
-
-==== Belangrijkste Verbeteringen Samenvatting
-
-. **Performance**: 10x sneller door database pre-filtering
-. **Nauwkeurigheid**: 90% gewicht op naamvelden voor betere matching
-. **Bruikbaarheid**: Snelle bekijk links en verbeterde visuele feedback
-. **Schaalbaarheid**: Efficiënte queries geschikt voor grote contact databases
-. **Onderhoudbaarheid**: Uitgebreide test coverage en factory ondersteuning
-. **Gebruikerservaring**: Duidelijke visuele indicatoren en intuïtieve interface
 
 ==== Gebruikershandleiding
 
@@ -236,7 +66,7 @@ Wanneer je een lead bewerkt, kun je de contact matcher gebruiken om bestaande co
 |Uitstekende match - zeer waarschijnlijk de juiste persoon
 |80-100%
 
-|🟡 Geel  
+|🟡 Geel
 |Goede match - waarschijnlijk de juiste persoon
 |60-79%
 

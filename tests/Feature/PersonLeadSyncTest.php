@@ -12,13 +12,20 @@ use Webkul\User\Models\User;
 uses(RefreshDatabase::class);
 
 beforeEach(function () {
+    // Clear any cached data
+    app()->forgetInstance(PersonRepository::class);
+    app()->forgetInstance(LeadRepository::class);
+    
     $this->personRepository = app(PersonRepository::class);
     $this->leadRepository = app(LeadRepository::class);
-
-    // Create a test user and authenticate
+    
+    // Create a fresh test user and authenticate
     $this->user = User::factory()->create();
     $this->actingAs($this->user);
-
+    
+    // Clear any session data
+    session()->flush();
+    
     // Ensure we have pipeline and stage
     $this->pipelineId = 1;
     $this->stageId = 1;
@@ -85,6 +92,35 @@ test('shows field differences between person and lead', function () {
     $response->assertDontSee('Telefoonnummers'); // Should not appear in differences table
 });
 
+
+test('debug test isolation', function () {
+    // Check if user is authenticated
+    expect(auth()->check())->toBeTrue();
+    expect(auth()->user())->not->toBeNull();
+    
+    // Check if we can create basic models
+    $person = Person::factory()->create();
+    expect($person->id)->toBeGreaterThan(0);
+    
+    $lead = Lead::factory()->create([
+        'lead_pipeline_id' => $this->pipelineId,
+        'lead_pipeline_stage_id' => $this->stageId,
+    ]);
+    expect($lead->id)->toBeGreaterThan(0);
+    
+    // Simple GET test
+    $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
+        'personId' => $person->id,
+        'leadId' => $lead->id,
+    ]));
+    
+    if ($response->getStatusCode() !== 200) {
+        dump('GET Status: ' . $response->getStatusCode());
+        dump('GET Headers: ' . json_encode($response->headers->all()));
+    }
+    
+    $response->assertStatus(200);
+});
 
 test('can update person with lead data', function () {
     $person = Person::factory()->create([

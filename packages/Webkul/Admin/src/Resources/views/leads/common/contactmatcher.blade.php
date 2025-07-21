@@ -87,7 +87,18 @@
                 >
                     <div class="flex items-center justify-between">
                         <div class="flex-1">
-                            <div class="font-medium">{{ person.name }}</div>
+                            <div class="flex items-center">
+                                <div class="font-medium">{{ person.name }}</div>
+                                <a :href="'/admin/contacts/persons/view/' + person.id"
+                                   target="_blank"
+                                   class="ml-2 text-blue-600 hover:text-blue-800 text-xs"
+                                   title="Bekijk contactpersoon details"
+                                   @click.stop>
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                    </svg>
+                                </a>
+                            </div>
                             <div class="text-sm text-gray-600">
                                 <span v-if="person.email">{{ person.email }}</span>
                                 <span v-if="person.phone && person.email"> • </span>
@@ -130,7 +141,17 @@
                     </div>
                 </div>
                 <div class="text-sm">
-                    <div class="font-medium text-blue-900">{{ selectedPerson.name }}</div>
+                    <div class="flex items-center">
+                        <div class="font-medium text-blue-900">{{ selectedPerson.name }}</div>
+                        <a :href="'/admin/contacts/persons/view/' + selectedPerson.id"
+                           target="_blank"
+                           class="ml-2 text-blue-600 hover:text-blue-800 text-xs"
+                           title="Bekijk contactpersoon details">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                            </svg>
+                        </a>
+                    </div>
                     <div class="text-blue-700 mt-1">
                         <span v-if="selectedPerson.email">Email: {{ selectedPerson.email }}</span>
                         <span v-if="selectedPerson.phone && selectedPerson.email"><br></span>

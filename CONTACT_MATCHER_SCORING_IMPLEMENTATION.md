@@ -55,13 +55,19 @@ The contact matcher functionality has been extended to include percentage-based 
 #### New Vue.js Methods:
 - **`getScoreColorClass()`**: Returns appropriate CSS class based on score
 
+#### Enhanced User Interface:
+- **Quick View Links**: Added external link icons next to contact names that open contact details in new tab
+- **Accessible Links**: Links use `target="_blank"` and include descriptive tooltips
+- **Non-intrusive Design**: Links use `@click.stop` to prevent interference with selection behavior
+
 ## Usage
 
 ### For Users:
 1. When searching for contacts from a lead, the system automatically shows match percentages
 2. Results are sorted by relevance (highest match first)
 3. Visual indicators help identify the quality of matches
-4. Hover over suggestions to see detailed match information
+4. Click the external link icon next to any contact name to view full contact details in a new tab
+5. Hover over suggestions to see detailed match information and tooltips
 
 ### For Developers:
 The scoring algorithm can be easily adjusted by modifying the weights in the `calculateMatchScore()` method:

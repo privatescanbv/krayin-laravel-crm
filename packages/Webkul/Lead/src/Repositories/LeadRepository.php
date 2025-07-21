@@ -382,7 +382,6 @@ class LeadRepository extends Repository
                             if (!app()->environment('testing')) {
                                 $query->with(['person', 'stage', 'pipeline', 'user']);
                             }
-
                             if (DB::getDriverName() === 'sqlite') {
                                 // SQLite: Use LIKE for JSON searching
                                 $query->where('emails', 'LIKE', '%"' . $email['value'] . '"%');
@@ -420,7 +419,6 @@ class LeadRepository extends Repository
                             if (!app()->environment('testing')) {
                                 $query->with(['person', 'stage', 'pipeline', 'user']);
                             }
-
                             if (DB::getDriverName() === 'sqlite') {
                                 // SQLite: Use JSON_EXTRACT or LIKE for JSON searching
                                 $query->where('phones', 'LIKE', '%"' . $phone['value'] . '"%');

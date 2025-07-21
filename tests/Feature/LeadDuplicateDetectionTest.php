@@ -2,11 +2,15 @@
 
 namespace Tests\Feature;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
 
 beforeEach(function () {
+    // Set environment to testing so LeadRepository skips relationships
+    app()['env'] = 'testing';
+
     // Create a fresh in-memory SQLite database for each test
     config(['database.connections.sqlite.database' => ':memory:']);
     config(['database.default' => 'sqlite']);
@@ -16,6 +20,16 @@ beforeEach(function () {
     Schema::dropIfExists('lead_types');
     Schema::dropIfExists('lead_sources');
     Schema::dropIfExists('users');
+Schema::dropIfExists('roles');
+
+    Schema::create('roles', function ($table) {
+        $table->increments('id');
+        $table->string('name');
+        $table->text('description')->nullable();
+        $table->string('permission_type')->default('custom');
+        $table->json('permissions')->nullable();
+        $table->timestamps();
+    });
 
     Schema::create('users', function ($table) {
         $table->increments('id');

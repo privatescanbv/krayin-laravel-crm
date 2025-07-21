@@ -135,7 +135,10 @@ Implemented comprehensive name field matching with sophisticated scoring logic:
    - 100% match on important fields (first_name, last_name, lastname_prefix) = 80% score
    - Partial matches scaled proportionally
 3. **Updated Weight Distribution**: Name fields now account for 55% of total score
-4. **Test Fixes**: Updated failing tests to reflect new scoring behavior
+4. **Test Fixes**: 
+   - Updated failing tests to reflect new scoring behavior
+   - Fixed floating-point precision issues in score comparisons
+   - Improved test data setup to use direct model creation for more reliable scoring
 
 ## Configuration
 

@@ -356,17 +356,20 @@ test('finds exact first name match', function () {
 // });
 
 test('returns results with match scores and sorts by score', function () {
-    // Create a lead with multiple attributes
-    $lead = createLeadWithAttributes(
-        $this->attributeValueRepository,
-        'John',
-        'Smith',
-        [
-            'email' => 'john.smith@example.com',
-            'phone' => '0612345678',
-            'married_name' => 'Johnson',
-        ]
-    );
+    // Create a lead with all fields directly on the model
+    $pipeline = Pipeline::first();
+    $stage = Stage::first();
+    
+    $lead = Lead::factory()->create([
+        'title' => 'Test Lead',
+        'first_name' => 'John',
+        'last_name' => 'Smith',
+        'married_name' => 'Johnson',
+        'emails' => [['value' => 'john.smith@example.com', 'label' => 'work']],
+        'phones' => [['value' => '0612345678', 'label' => 'mobile']],
+        'lead_pipeline_id' => $pipeline->id,
+        'lead_pipeline_stage_id' => $stage->id,
+    ]);
 
     // Create person with high match score (exact name and email and phone match)
     $highMatchPerson = Person::factory()->create([
@@ -377,10 +380,11 @@ test('returns results with match scores and sorts by score', function () {
         'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
     ]);
 
-    // Create person with medium match score (name match but different email/phone)
+    // Create person with medium match score (some name fields missing, different email/phone)
     $mediumMatchPerson = Person::factory()->create([
         'first_name' => 'John',
         'last_name' => 'Smith',
+        // No married_name - this should result in lower score than highMatchPerson
         'emails' => [['value' => 'different@example.com', 'label' => 'work']],
         'contact_numbers' => [['value' => '0687654321', 'label' => 'mobile']],
     ]);
@@ -415,5 +419,8 @@ test('returns results with match scores and sorts by score', function () {
 
     // Assert the high match person has the highest score
     expect($collection->first()->id)->toBe($highMatchPerson->id);
-    expect($collection->first()->match_score)->toBeGreaterThan($collection->get(1)->match_score);
+    // Use a small delta to handle floating point precision issues
+    $firstScore = round($collection->first()->match_score, 2);
+    $secondScore = round($collection->get(1)->match_score, 2);
+    expect($firstScore)->toBeGreaterThan($secondScore);
 });

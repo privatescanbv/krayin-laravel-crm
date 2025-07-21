@@ -190,26 +190,31 @@
                                 'X-Requested-With': 'XMLHttpRequest',
                             }
                         })
-                        .then(response => response.json())
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
                         .then(data => {
                             if (data.message) {
-                                // Show success message
+                                // Show success message briefly
                                 alert(data.message);
+                            }
 
-                                // Redirect if URL provided
-                                if (data.redirect_url) {
-                                    setTimeout(() => {
-                                        window.location.href = data.redirect_url;
-                                    }, 1000);
-                                }
+                            // Redirect immediately if URL provided
+                            if (data.redirect_url) {
+                                window.location.href = data.redirect_url;
+                            } else {
+                                // Fallback: redirect to person view
+                                window.location.href = "{{ route('admin.contacts.persons.view', $person->id) }}";
                             }
                         })
                         .catch(error => {
                             console.error('Error:', error);
-                            alert('Er is een fout opgetreden bij het opslaan.');
-                        })
-                        .finally(() => {
-                            // Restore button state
+                            alert('Er is een fout opgetreden bij het opslaan: ' + error.message);
+                            
+                            // Restore button state on error
                             submitBtn.disabled = false;
                             submitBtn.innerHTML = originalText;
                         });

@@ -2,6 +2,7 @@
 
 namespace Webkul\Lead\Repositories;
 
+use App\Models\Anamnesis;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Container\Container;
@@ -44,13 +45,14 @@ class LeadRepository extends Repository
      * @return void
      */
     public function __construct(
-        protected StageRepository $stageRepository,
-        protected PersonRepository $personRepository,
-        protected ProductRepository $productRepository,
-        protected AttributeRepository $attributeRepository,
+        protected StageRepository          $stageRepository,
+        protected PersonRepository         $personRepository,
+        protected ProductRepository        $productRepository,
+        protected AttributeRepository      $attributeRepository,
         protected AttributeValueRepository $attributeValueRepository,
-        Container $container
-    ) {
+        Container                          $container
+    )
+    {
         parent::__construct($container);
     }
 
@@ -67,10 +69,10 @@ class LeadRepository extends Repository
     /**
      * Get leads query.
      *
-     * @param  int  $pipelineId
-     * @param  int  $pipelineStageId
-     * @param  string  $term
-     * @param  string  $createdAtRange
+     * @param int $pipelineId
+     * @param int $pipelineStageId
+     * @param string $term
+     * @param string $createdAtRange
      * @return mixed
      */
     public function getLeadsQuery($pipelineId, $pipelineStageId, $term, $createdAtRange)
@@ -91,7 +93,7 @@ class LeadRepository extends Repository
                 'lead_pipeline_stages.name as status',
                 'lead_pipeline_stages.id as lead_pipeline_stage_id'
             )
-                ->addSelect(DB::raw('DATEDIFF('.DB::getTablePrefix().'leads.created_at + INTERVAL lead_pipelines.rotten_days DAY, now()) as rotten_days'))
+                ->addSelect(DB::raw('DATEDIFF(' . DB::getTablePrefix() . 'leads.created_at + INTERVAL lead_pipelines.rotten_days DAY, now()) as rotten_days'))
                 ->leftJoin('persons', 'leads.person_id', '=', 'persons.id')
                 ->leftJoin('lead_pipelines', 'leads.lead_pipeline_id', '=', 'lead_pipelines.id')
                 ->leftJoin('lead_pipeline_stages', 'leads.lead_pipeline_stage_id', '=', 'lead_pipeline_stages.id')
@@ -119,26 +121,26 @@ class LeadRepository extends Repository
         /**
          * If a person is provided, create or update the person and set the `person_id`.
          */
-        if (isset($data['person']) && ! empty($data['person'])) {
+        if (isset($data['person']) && !empty($data['person'])) {
             // Check if there are any non-empty values in the person data
             $hasValidData = false;
 
-            if (! empty($data['person']['name'])) {
+            if (!empty($data['person']['name'])) {
                 $hasValidData = true;
             }
 
-            if (! empty($data['person']['emails'])) {
+            if (!empty($data['person']['emails'])) {
                 foreach ($data['person']['emails'] as $email) {
-                    if (! empty($email['value'])) {
+                    if (!empty($email['value'])) {
                         $hasValidData = true;
                         break;
                     }
                 }
             }
 
-            if (! empty($data['person']['contact_numbers'])) {
+            if (!empty($data['person']['contact_numbers'])) {
                 foreach ($data['person']['contact_numbers'] as $number) {
-                    if (! empty($number['value'])) {
+                    if (!empty($number['value'])) {
                         $hasValidData = true;
                         break;
                     }
@@ -146,7 +148,7 @@ class LeadRepository extends Repository
             }
 
             if ($hasValidData) {
-                if (! empty($data['person']['id'])) {
+                if (!empty($data['person']['id'])) {
                     $person = $this->personRepository->findOrFail($data['person']['id']);
                 } else {
                     $person = $this->personRepository->create(array_merge($data['person'], [
@@ -163,7 +165,7 @@ class LeadRepository extends Repository
         }
 
         $lead = parent::create(array_merge([
-            'lead_pipeline_id'       => 1,
+            'lead_pipeline_id' => 1,
             'lead_pipeline_stage_id' => 1,
         ], $data));
 
@@ -175,7 +177,7 @@ class LeadRepository extends Repository
             foreach ($data['products'] as $product) {
                 $this->productRepository->create(array_merge($product, [
                     'lead_id' => $lead->id,
-                    'amount'  => $product['price'] * $product['quantity'],
+                    'amount' => $product['price'] * $product['quantity'],
                 ]));
             }
         }
@@ -196,8 +198,8 @@ class LeadRepository extends Repository
         $currentUserId = auth()->id() ?? $lead->user_id ?? 1;
 
         try {
-            \App\Models\Anamnesis::create([
-                'id' => \Illuminate\Support\Str::uuid(),
+            Anamnesis::create([
+                'id' => Str::uuid(),
                 'lead_id' => $lead->id,
                 'name' => 'Anamnesis voor ' . $lead->title,
                 'created_by' => null, // Set to null since it's now nullable
@@ -220,8 +222,8 @@ class LeadRepository extends Repository
     /**
      * Update.
      *
-     * @param  int  $id
-     * @param  array|\Illuminate\Database\Eloquent\Collection  $attributes
+     * @param int $id
+     * @param array|\Illuminate\Database\Eloquent\Collection $attributes
      * @return \Webkul\Lead\Contracts\Lead
      */
     public function update(array $data, $id, $attributes = [])
@@ -299,7 +301,7 @@ class LeadRepository extends Repository
          * A collection of attributes may also be provided, which will be treated as valid,
          * regardless of whether it is empty or not.
          */
-        if (! empty($attributes)) {
+        if (!empty($attributes)) {
             /**
              * If attributes are provided as an array, then fetch the attributes from the database;
              * otherwise, use the provided collection of attributes.
@@ -355,7 +357,7 @@ class LeadRepository extends Repository
     /**
      * Find potential duplicate leads based on email, phone, and name similarity.
      *
-     * @param  \Webkul\Lead\Contracts\Lead  $lead
+     * @param \Webkul\Lead\Contracts\Lead $lead
      * @return \Illuminate\Support\Collection
      */
     public function findPotentialDuplicates($lead)
@@ -376,13 +378,8 @@ class LeadRepository extends Repository
                     if (is_array($email) && !empty($email['value'])) {
                         try {
                             // Use different JSON query approaches for different databases
-                            $query = LeadModel::where('id', '!=', $lead->id);
-                            
-                            // Only add relationships if not in testing environment
-                            if (!app()->environment('testing')) {
-                                $query->with(['person', 'stage', 'pipeline', 'user']);
-                            }
-                            
+                            $query = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
+                                ->where('id', '!=', $lead->id);
                             if (DB::getDriverName() === 'sqlite') {
                                 // SQLite: Use LIKE for JSON searching
                                 $query->where('emails', 'LIKE', '%"' . $email['value'] . '"%');
@@ -390,7 +387,7 @@ class LeadRepository extends Repository
                                 // MySQL/PostgreSQL: Use whereJsonContains
                                 $query->whereJsonContains('emails', [['value' => $email['value']]]);
                             }
-                            
+
                             $emailDuplicates = $query->get();
 
                             $duplicates = $duplicates->merge($emailDuplicates);
@@ -414,13 +411,8 @@ class LeadRepository extends Repository
                     if (is_array($phone) && !empty($phone['value'])) {
                         try {
                             // Use different JSON query approaches for different databases
-                            $query = LeadModel::where('id', '!=', $lead->id);
-                            
-                            // Only add relationships if not in testing environment
-                            if (!app()->environment('testing')) {
-                                $query->with(['person', 'stage', 'pipeline', 'user']);
-                            }
-                            
+                            $query = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
+                                ->where('id', '!=', $lead->id);
                             if (DB::getDriverName() === 'sqlite') {
                                 // SQLite: Use JSON_EXTRACT or LIKE for JSON searching
                                 $query->where('phones', 'LIKE', '%"' . $phone['value'] . '"%');
@@ -428,7 +420,7 @@ class LeadRepository extends Repository
                                 // MySQL/PostgreSQL: Use whereJsonContains
                                 $query->whereJsonContains('phones', [['value' => $phone['value']]]);
                             }
-                            
+
                             $phoneDuplicates = $query->get();
 
                             $duplicates = $duplicates->merge($phoneDuplicates);
@@ -445,27 +437,26 @@ class LeadRepository extends Repository
         // Check for name similarity (first + last name)
         if (!empty($lead->first_name) && !empty($lead->last_name)) {
             try {
-                $nameDuplicates = LeadModel::where('id', '!=', $lead->id);
-                
-                // Only add relationships if not in testing environment
-                if (!app()->environment('testing')) {
-                    $nameDuplicates->with(['person', 'stage', 'pipeline', 'user']);
-                }
-                
-                $nameDuplicates = $nameDuplicates
-                    ->where(function($query) use ($lead) {
+                $nameDuplicates = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
+                    ->where('id', '!=', $lead->id)
+                    ->where(function ($query) use ($lead) {
                         // Exact match for full name
-                        $query->where(function($subQuery) use ($lead) {
-                            $subQuery->where('first_name', $lead->first_name)
-                                    ->where('last_name', $lead->last_name);
-                        })
-                        // Or check for common nickname variations
-                        ->orWhere(function($subQuery) use ($lead) {
-                            $firstNameVariations = $this->getNameVariations($lead->first_name);
-                            if (count($firstNameVariations) > 1) {
-                                $subQuery->whereIn('first_name', $firstNameVariations)
+                        $query->where(function ($subQuery) use ($lead) {
+                            $subQuery->where(function ($query) use ($lead) {
+                                // Exact match for full name
+                                $query->where(function ($subQuery) use ($lead) {
+                                    $subQuery->where('first_name', $lead->first_name)
                                         ->where('last_name', $lead->last_name);
-                            }
+                                })
+                                    // Or check for common nickname variations
+                                    ->orWhere(function ($subQuery) use ($lead) {
+                                        $firstNameVariations = $this->getNameVariations($lead->first_name);
+                                        if (count($firstNameVariations) > 1) {
+                                            $subQuery->whereIn('first_name', $firstNameVariations)
+                                                ->where('last_name', $lead->last_name);
+                                        }
+                                    });
+                            });
                         });
                     })
                     ->get();
@@ -483,10 +474,11 @@ class LeadRepository extends Repository
     /**
      * Check if a lead has potential duplicates.
      *
-     * @param  \Webkul\Lead\Contracts\Lead  $lead
+     * @param \Webkul\Lead\Contracts\Lead $lead
      * @return bool
      */
-    public function hasPotentialDuplicates($lead)
+    public
+    function hasPotentialDuplicates($lead)
     {
         return $this->findPotentialDuplicates($lead)->isNotEmpty();
     }
@@ -494,13 +486,14 @@ class LeadRepository extends Repository
     /**
      * Get name variations for similarity matching.
      *
-     * @param  string  $name
+     * @param string $name
      * @return array
      */
-    private function getNameVariations($name)
+    private
+    function getNameVariations($name)
     {
         $variations = [$name];
-        
+
         // Common nickname variations
         $nicknameMap = [
             'John' => ['Johnny', 'Jon', 'Jack'],
@@ -533,21 +526,22 @@ class LeadRepository extends Repository
             'Betty' => ['Elizabeth', 'Liz', 'Beth'],
             'Lizzy' => ['Elizabeth', 'Liz'],
         ];
-        
+
         if (isset($nicknameMap[$name])) {
             $variations = array_merge($variations, $nicknameMap[$name]);
         }
-        
+
         return array_unique($variations);
     }
 
     /**
      * Debug method to check lead data structure.
      *
-     * @param  \Webkul\Lead\Contracts\Lead  $lead
+     * @param \Webkul\Lead\Contracts\Lead $lead
      * @return array
      */
-    public function debugLeadData($lead)
+    public
+    function debugLeadData($lead)
     {
         return [
             'id' => $lead->id,
@@ -564,12 +558,13 @@ class LeadRepository extends Repository
     /**
      * Merge leads - keep the primary lead and archive others.
      *
-     * @param  int  $primaryLeadId
-     * @param  array  $duplicateLeadIds
-     * @param  array  $fieldMappings
+     * @param int $primaryLeadId
+     * @param array $duplicateLeadIds
+     * @param array $fieldMappings
      * @return \Webkul\Lead\Contracts\Lead
      */
-    public function mergeLeads($primaryLeadId, $duplicateLeadIds, $fieldMappings = [])
+    public
+    function mergeLeads($primaryLeadId, $duplicateLeadIds, $fieldMappings = [])
     {
         $primaryLead = $this->findOrFail($primaryLeadId);
         $duplicateLeads = $this->findWhereIn('id', $duplicateLeadIds);
@@ -631,7 +626,9 @@ class LeadRepository extends Repository
             throw $e;
         }
     }
-    private function addSystemActivity($primaryLead, $duplicateLead): void
+
+    private
+    function addSystemActivity($primaryLead, $duplicateLead): void
     {
         // Create a system activity for audit purposes
         $activityData = [
@@ -659,11 +656,12 @@ class LeadRepository extends Repository
     /**
      * Add a note about the lead merge.
      *
-     * @param  \Webkul\Lead\Contracts\Lead  $primaryLead
-     * @param  \Webkul\Lead\Contracts\Lead  $duplicateLead
+     * @param \Webkul\Lead\Contracts\Lead $primaryLead
+     * @param \Webkul\Lead\Contracts\Lead $duplicateLead
      * @return void
      */
-    private function addMergeNote($primaryLead, $duplicateLead)
+    private
+    function addMergeNote($primaryLead, $duplicateLead)
     {
         // Create an activity note about the merge
         $activityData = [

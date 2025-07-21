@@ -3,10 +3,11 @@
 namespace Webkul\Installer\Database\Seeders\Lead;
 
 use Carbon\Carbon;
+use Database\Seeders\BaseSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class SourceSeeder extends Seeder
+class SourceSeeder extends BaseSeeder
 {
     /**
      * Seed the application's database.
@@ -16,9 +17,7 @@ class SourceSeeder extends Seeder
      */
     public function run($parameters = [])
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        DB::table('lead_sources')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        $this->truncateTables(['lead_sources']);
 
         $now = Carbon::now();
 

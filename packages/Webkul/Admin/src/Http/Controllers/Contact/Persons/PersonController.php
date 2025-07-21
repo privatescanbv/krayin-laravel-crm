@@ -725,12 +725,13 @@ class PersonController extends Controller
 
             // Check if it's an AJAX request
             if (request()->expectsJson() || request()->ajax()) {
+                logger()->info(" ajax call");
                 return response()->json([
                     'message' => 'Person en lead succesvol bijgewerkt.',
                     'redirect_url' => route('admin.contacts.persons.view', $person->id)
                 ]);
             }
-
+            logger()->inf( " ajax NIET call");
             return redirect()->route('admin.contacts.persons.view', $person->id);
 
         } catch (Exception $e) {

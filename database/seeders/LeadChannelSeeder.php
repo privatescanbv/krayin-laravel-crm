@@ -3,16 +3,13 @@
 namespace Database\Seeders;
 
 use Carbon\Carbon;
-use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class LeadChannelSeeder extends Seeder
+class LeadChannelSeeder extends BaseSeeder
 {
     public function run(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        DB::table('lead_channels')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        $this->truncateTables(['lead_channels']);
         $now = Carbon::now();
         $channels = [
             'Telefoon',

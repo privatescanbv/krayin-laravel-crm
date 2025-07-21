@@ -2,8 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Enums\PipelineDefaultKeys;
-use App\Enums\PipelineStageDefaultKeys;
 use App\Models\Address;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\Lead\Models\Lead;
@@ -31,12 +29,30 @@ class LeadFactory extends Factory
     public function definition()
     {
         // Get or create required related models
-        //        $person = Person::first() ?? Person::factory()->create();
+        $person = null; // Person is optional for leads
         $user = User::first() ?? WebkulUserFactory::new()->create();
         $source = Source::first() ?? Source::create(['name' => 'Website']);
         $type = Type::first() ?? Type::create(['name' => 'New Lead']);
 
         // Get or create pipeline and stage
+        $pipeline = \Webkul\Lead\Models\Pipeline::first();
+        if (! $pipeline) {
+            $pipeline = \Webkul\Lead\Models\Pipeline::create([
+                'name'        => 'Default Pipeline',
+                'is_default'  => 1,
+                'rotten_days' => 30,
+            ]);
+        }
+
+        $stage = \Webkul\Lead\Models\Stage::where('lead_pipeline_id', $pipeline->id)->first();
+        if (! $stage) {
+            $stage = \Webkul\Lead\Models\Stage::create([
+                'name'             => 'New',
+                'code'             => 'new',
+                'lead_pipeline_id' => $pipeline->id,
+                'sort_order'       => 1,
+            ]);
+        }
 
         return [
             'title'                  => $this->faker->sentence(3),
@@ -50,8 +66,8 @@ class LeadFactory extends Factory
             'person_id'              => $person->id ?? null,
             'lead_source_id'         => $source->id,
             'lead_type_id'           => $type->id,
-            'lead_pipeline_id'       => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value,
-            'lead_pipeline_stage_id' => PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_PRIVATESCAN_ID->value,
+            'lead_pipeline_id'       => $pipeline->id,
+            'lead_pipeline_stage_id' => $stage->id,
         ];
     }
 

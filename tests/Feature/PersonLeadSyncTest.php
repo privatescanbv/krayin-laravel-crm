@@ -35,6 +35,21 @@ beforeEach(function () {
     }
 });
 
+// Helper method to ensure authentication before HTTP requests
+function authenticatedRequest($method, $uri, $data = []) {
+    // Re-authenticate before each request to prevent 302 redirects
+    test()->actingAs(test()->user, 'user');
+
+    return match($method) {
+        'GET' => test()->get($uri),
+        'POST' => test()->post($uri, $data),
+        'PUT' => test()->put($uri, $data),
+        'PATCH' => test()->patch($uri, $data),
+        'DELETE' => test()->delete($uri),
+        default => throw new InvalidArgumentException("Unsupported HTTP method: $method")
+    };
+}
+
 test('can access edit with lead page', function () {
     $person = Person::factory()->create([
         'first_name' => 'John',
@@ -237,10 +252,16 @@ test('handles array fields correctly during sync', function () {
 });
 
 test('returns validation error for invalid data', function () {
-    $person = Person::factory()->create();
+    // Re-authenticate to prevent 302 redirect
+    $this->actingAs($this->user, 'user');
+
+    $person = Person::factory()->create([
+        'user_id' => $this->user->id,
+    ]);
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
+        'user_id' => $this->user->id,
     ]);
 
     // Test with invalid person ID
@@ -279,10 +300,14 @@ test('shows no differences message when records are identical', function () {
 });
 
 test('handles edge case with malformed birth dates', function () {
+    // Re-authenticate to prevent 302 redirect
+    $this->actingAs($this->user, 'user');
+
     // Create person with potentially malformed date
     $person = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
+        'user_id' => $this->user->id,
     ]);
 
     // Manually set a malformed date in the database
@@ -294,6 +319,7 @@ test('handles edge case with malformed birth dates', function () {
         'date_of_birth'          => null,
         'lead_pipeline_id'       => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
+        'user_id' => $this->user->id,
     ]);
 
     // Refresh person to get the malformed date
@@ -313,10 +339,14 @@ test('handles edge case with malformed birth dates', function () {
 });
 
 test('handles date comparison with valid vs invalid dates', function () {
+    // Re-authenticate to prevent 302 redirect
+    $this->actingAs($this->user, 'user');
+
     $person = Person::factory()->create([
         'first_name'    => 'John',
         'last_name'     => 'Doe',
         'date_of_birth' => '1990-01-01', // Valid date
+        'user_id' => $this->user->id,
     ]);
 
     $lead = Lead::factory()->create([
@@ -325,6 +355,7 @@ test('handles date comparison with valid vs invalid dates', function () {
         'date_of_birth'          => null, // No date
         'lead_pipeline_id'       => $this->pipelineId,
         'lead_pipeline_stage_id' => $this->stageId,
+        'user_id' => $this->user->id,
     ]);
 
     $response = $this->get(route('admin.contacts.persons.edit_with_lead', [

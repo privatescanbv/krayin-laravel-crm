@@ -4,9 +4,28 @@
     <div class="panel-header mb-3">
         <h3 class="text-lg font-semibold text-blue-800">Contactpersoon Koppelen</h3>
         <p class="text-sm text-blue-600">Zoek en koppel een bestaande contactpersoon of maak een nieuwe aan</p>
-        <div class="mt-2 text-xs text-blue-500 bg-blue-25 p-2 rounded">
-            <strong>Matching criteria:</strong> Naamvelden (55%), E-mailadressen (25%), Telefoonnummers (20%)
-            <br><small>Naamvelden: voornaam, achternaam, achternaam voorvoegsel, getrouwde naam, getrouwde naam voorvoegsel, initialen</small>
+        <div class="mt-2 text-xs text-blue-500">
+            <div class="flex items-center gap-1">
+                <strong>Matching criteria:</strong>
+                <div class="relative inline-block group">
+                    <span class="cursor-help underline decoration-dotted hover:text-blue-700">
+                        Naamvelden (90%), E-mailadressen (5%), Telefoonnummers (5%) ℹ️
+                    </span>
+                    <!-- Custom tooltip -->
+                    <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+                        <div class="space-y-1">
+                            <div><strong>Naamvelden (90%):</strong></div>
+                            <div class="text-gray-300 text-xs pl-2">• voornaam, achternaam, achternaam voorvoegsel</div>
+                            <div class="text-gray-300 text-xs pl-2">• getrouwde naam, getrouwde naam voorvoegsel</div>
+                            <div class="text-gray-300 text-xs pl-2">• initialen</div>
+                            <div class="mt-1"><strong>E-mailadressen (5%)</strong></div>
+                            <div class="mt-1"><strong>Telefoonnummers (5%)</strong></div>
+                        </div>
+                        <!-- Tooltip arrow -->
+                        <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -18,8 +18,8 @@ beforeEach(function () {
     $this->actingAs($this->user);
 
     // Ensure we have pipeline and stage
-    $this->pipelineId = 1;
-    $this->stageId = 1;
+    $this->pipeline = Pipeline::factory()->create();
+    $this->stage = Stage::factory()->create(['lead_pipeline_id' => $this->pipeline->id]);
 });
 
 test('can access edit with lead page', function () {
@@ -33,8 +33,8 @@ test('can access edit with lead page', function () {
         'first_name'             => 'John',
         'last_name'              => 'Smith',
         'emails'                 => [['value' => 'john.smith@example.com', 'label' => 'Work']],
-        'lead_pipeline_id'       => $this->pipelineId,
-        'lead_pipeline_stage_id' => $this->stageId,
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
     ]);
 
     $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
@@ -63,8 +63,8 @@ test('shows field differences between person and lead', function () {
         'emails'                 => [['value' => 'john.smith@example.com', 'label' => 'Work']], // Different email
         'phones'                 => [['value' => '123456789', 'label' => 'Mobile']], // Same phone
         'date_of_birth'          => '1985-05-15', // Different birth date
-        'lead_pipeline_id'       => $this->pipelineId,
-        'lead_pipeline_stage_id' => $this->stageId,
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
     ]);
 
     $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
@@ -95,8 +95,8 @@ test('handles invalid birth dates correctly', function () {
         'first_name'             => 'John',
         'last_name'              => 'Doe',
         'date_of_birth'          => null, // Also no birth date
-        'lead_pipeline_id'       => $this->pipelineId,
-        'lead_pipeline_stage_id' => $this->stageId,
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
     ]);
 
     $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
@@ -106,6 +106,9 @@ test('handles invalid birth dates correctly', function () {
 
     $response->assertStatus(200);
 
+    // Check if we're getting the right view
+    $response->assertViewIs('admin::contacts.persons.edit-with-lead');
+    
     // Should not show birth date differences when both are null/invalid
     $response->assertDontSee('Geboortedatum');
     $response->assertDontSee('-0001-11-30');
@@ -125,11 +128,11 @@ test('can update person with lead data', function () {
         'last_name'              => 'Smith',
         'emails'                 => [['value' => 'john.smith@example.com', 'label' => 'Work']],
         'date_of_birth'          => '1985-05-15',
-        'lead_pipeline_id'       => $this->pipelineId,
-        'lead_pipeline_stage_id' => $this->stageId,
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
     ]);
 
-    $response = $this->post(route('admin.contacts.persons.update_with_lead', [
+    $response = $this->postJson(route('admin.contacts.persons.update_with_lead', [
         'personId' => $person->id,
         'leadId'   => $lead->id,
     ]), [
@@ -144,7 +147,11 @@ test('can update person with lead data', function () {
         ],
     ]);
 
-    $response->assertStatus(302);
+    $response->assertStatus(200);
+    $response->assertJson([
+        'message' => 'Person en lead succesvol bijgewerkt.',
+        'redirect_url' => route('admin.contacts.persons.view', $person->id),
+    ]);
 
     // Verify person was updated
     $person->refresh();
@@ -164,11 +171,11 @@ test('can update lead data during sync', function () {
     $lead = Lead::factory()->create([
         'first_name'             => 'John',
         'last_name'              => 'Smith',
-        'lead_pipeline_id'       => $this->pipelineId,
-        'lead_pipeline_stage_id' => $this->stageId,
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
     ]);
 
-    $response = $this->post(route('admin.contacts.persons.update_with_lead', [
+    $response = $this->postJson(route('admin.contacts.persons.update_with_lead', [
         'personId' => $person->id,
         'leadId'   => $lead->id,
     ]), [
@@ -180,7 +187,7 @@ test('can update lead data during sync', function () {
         ],
     ]);
 
-    $response->assertStatus(302);
+    $response->assertStatus(200);
 
     // Verify both were updated
     $person->refresh();
@@ -203,11 +210,11 @@ test('handles array fields correctly during sync', function () {
         'last_name'              => 'Doe',
         'emails'                 => [['value' => 'john.smith@example.com', 'label' => 'Work']],
         'phones'                 => [['value' => '987654321', 'label' => 'Mobile']],
-        'lead_pipeline_id'       => $this->pipelineId,
-        'lead_pipeline_stage_id' => $this->stageId,
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
     ]);
 
-    $response = $this->post(route('admin.contacts.persons.update_with_lead', [
+    $response = $this->postJson(route('admin.contacts.persons.update_with_lead', [
         'personId' => $person->id,
         'leadId'   => $lead->id,
     ]), [
@@ -221,7 +228,7 @@ test('handles array fields correctly during sync', function () {
         ],
     ]);
 
-    $response->assertStatus(302);
+    $response->assertStatus(200);
 
     // Verify arrays were updated correctly
     $person->refresh();
@@ -238,8 +245,8 @@ test('handles array fields correctly during sync', function () {
 test('returns validation error for invalid data', function () {
     $person = Person::factory()->create();
     $lead = Lead::factory()->create([
-        'lead_pipeline_id'       => $this->pipelineId,
-        'lead_pipeline_stage_id' => $this->stageId,
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
     ]);
 
     // Test with invalid person ID
@@ -264,8 +271,8 @@ test('shows no differences message when records are identical', function () {
         'last_name'              => 'Doe',
         'emails'                 => [['value' => 'john@example.com', 'label' => 'Work']],
         'date_of_birth'          => '1990-01-01',
-        'lead_pipeline_id'       => $this->pipelineId,
-        'lead_pipeline_stage_id' => $this->stageId,
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
     ]);
 
     $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
@@ -291,8 +298,8 @@ test('handles edge case with malformed birth dates', function () {
         'first_name'             => 'John',
         'last_name'              => 'Doe',
         'date_of_birth'          => null,
-        'lead_pipeline_id'       => $this->pipelineId,
-        'lead_pipeline_stage_id' => $this->stageId,
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
     ]);
 
     // Refresh person to get the malformed date
@@ -322,8 +329,8 @@ test('handles date comparison with valid vs invalid dates', function () {
         'first_name'             => 'John',
         'last_name'              => 'Doe',
         'date_of_birth'          => null, // No date
-        'lead_pipeline_id'       => $this->pipelineId,
-        'lead_pipeline_stage_id' => $this->stageId,
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
     ]);
 
     $response = $this->get(route('admin.contacts.persons.edit_with_lead', [
@@ -351,14 +358,17 @@ test('validates required route parameters', function () {
 test('handles empty form submission gracefully', function () {
     $person = Person::factory()->create();
     $lead = Lead::factory()->create([
-        'lead_pipeline_id'       => $this->pipelineId,
-        'lead_pipeline_stage_id' => $this->stageId,
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
     ]);
 
-    $response = $this->post(route('admin.contacts.persons.update_with_lead', [
+    $response = $this->postJson(route('admin.contacts.persons.update_with_lead', [
         'personId' => $person->id,
         'leadId'   => $lead->id,
     ]), []);
 
-    $response->assertStatus(302);
+    $response->assertStatus(200);
+    $response->assertJson([
+        'message' => 'Person en lead succesvol bijgewerkt.',
+    ]);
 });

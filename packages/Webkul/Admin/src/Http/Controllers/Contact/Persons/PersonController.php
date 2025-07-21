@@ -640,7 +640,7 @@ class PersonController extends Controller
     /**
      * Update person with selected lead data.
      */
-    public function updateWithLead(int $personId, int $leadId): RedirectResponse
+    public function updateWithLead(int $personId, int $leadId)
     {
         $person = $this->personRepository->findOrFail($personId);
         $lead = app(LeadRepository::class)->findOrFail($leadId);
@@ -690,6 +690,15 @@ class PersonController extends Controller
                     $person->update($updateData);
                 }
             }
+
+            // Check if it's an AJAX request
+            if (request()->expectsJson() || request()->ajax()) {
+                return response()->json([
+                    'message' => 'Person en lead succesvol bijgewerkt.',
+                    'redirect_url' => route('admin.contacts.persons.view', $person->id)
+                ]);
+            }
+
             return redirect()->route('admin.contacts.persons.view', $person->id);
 
         } catch (Exception $e) {
@@ -697,10 +706,15 @@ class PersonController extends Controller
                 'person_id' => $personId,
                 'lead_id' => $leadId,
                 'data' => $data
-            ]);;
-            return response()->json([
-                'message' => 'Could not sync person with lead ' . $e->getMessage()
-            ], 500);
+            ]);
+
+            if (request()->expectsJson() || request()->ajax()) {
+                return response()->json([
+                    'message' => 'Er is een fout opgetreden: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->back()->withErrors(['message' => 'Er is een fout opgetreden: ' . $e->getMessage()]);
         }
     }
 

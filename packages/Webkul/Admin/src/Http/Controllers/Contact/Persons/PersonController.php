@@ -724,7 +724,7 @@ class PersonController extends Controller
             }
 
             // Check if it's an AJAX request
-            if (request()->expectsJson() || request()->ajax()) {
+            if (request()->expectsJson() || request()->ajax() || request()->header('Accept') === 'application/json') {
                 return response()->json([
                     'message' => 'Person en lead succesvol bijgewerkt.',
                     'redirect_url' => route('admin.contacts.persons.view', $person->id)
@@ -740,7 +740,7 @@ class PersonController extends Controller
                 'data' => $data
             ]);
 
-            if (request()->expectsJson() || request()->ajax()) {
+            if (request()->expectsJson() || request()->ajax() || request()->header('Accept') === 'application/json') {
                 return response()->json([
                     'message' => 'Er is een fout opgetreden: ' . $e->getMessage()
                 ], 500);

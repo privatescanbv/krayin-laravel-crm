@@ -22,13 +22,6 @@ beforeEach(function () {
     // Ensure we have pipeline and stage
     $this->pipelineId = 1;
     $this->stageId = 1;
-
-    if (!DB::table('lead_pipelines')->where('id', 1)->first()) {
-        throw new ModelNotFoundException('lead_pipelines not found');
-    }
-    if (!DB::table('lead_pipeline_stages')->where('id', 1)->first()) {
-        throw new ModelNotFoundException('lead_pipelines not found');
-    }
 });
 
 test('can access edit with lead page', function () {
@@ -91,6 +84,7 @@ test('shows field differences between person and lead', function () {
     // Should not show phone as it's the same
     $response->assertDontSee('Telefoonnummers'); // Should not appear in differences table
 });
+
 
 test('can update person with lead data', function () {
     $person = Person::factory()->create([

@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('product_groups', function (Blueprint $table) {
-            if (DB::getDriverName() !== 'sqlite') { $table->dropForeign(['parent_id']);
+            $table->dropForeign(['parent_id']);
             $table->dropColumn('parent_id');
         });
     }

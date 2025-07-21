@@ -18,25 +18,15 @@ return new class extends Migration
 
         $tableName = DB::getTablePrefix().'persons';
 
-        // Use different SQL for different database drivers
-        if (DB::getDriverName() === 'sqlite') {
-            // SQLite: Use simpler approach or skip complex JSON operations during testing
-            DB::statement("
-                UPDATE {$tableName}
-                SET unique_id = (user_id || '|' || organization_id || '|email|phone')
-            ");
-        } else {
-            // MySQL/PostgreSQL: Use JSON functions
-            DB::statement("
-                UPDATE {$tableName}
-                SET unique_id = CONCAT(
-                    user_id, '|', 
-                    organization_id, '|', 
-                    JSON_UNQUOTE(JSON_EXTRACT(emails, '$[0].value')), '|',
-                    JSON_UNQUOTE(JSON_EXTRACT(contact_numbers, '$[0].value'))
-                )
-            ");
-        }
+        DB::statement("
+            UPDATE {$tableName}
+            SET unique_id = CONCAT(
+                user_id, '|', 
+                organization_id, '|', 
+                JSON_UNQUOTE(JSON_EXTRACT(emails, '$[0].value')), '|',
+                JSON_UNQUOTE(JSON_EXTRACT(contact_numbers, '$[0].value'))
+            )
+        ");
     }
 
     /**

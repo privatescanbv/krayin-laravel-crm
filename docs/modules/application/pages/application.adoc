@@ -12,6 +12,10 @@
 
 TODO...
 
+==== Contact Matcher
+
+include::contact-matcher.adoc[]
+
 ==== Login
 
 [plantuml]

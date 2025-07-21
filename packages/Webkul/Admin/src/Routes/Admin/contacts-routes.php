@@ -27,6 +27,10 @@ Route::prefix('contacts')->group(function () {
 
         Route::get('searchByLead/{lead}', 'searchByLead')->name('admin.contacts.persons.searchbylead');
 
+        Route::get('edit-with-lead/{personId}/{leadId}', 'editWithLead')->name('admin.contacts.persons.edit_with_lead');
+
+        Route::post('update-with-lead/{personId}/{leadId}', 'updateWithLead')->name('admin.contacts.persons.update_with_lead');
+
         Route::middleware(['throttle:100,60'])->delete('{id}', 'destroy')->name('admin.contacts.persons.delete');
 
         Route::post('mass-destroy', 'massDestroy')->name('admin.contacts.persons.mass_delete');

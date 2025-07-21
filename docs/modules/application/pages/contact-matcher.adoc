@@ -86,3 +86,57 @@ Wanneer je een lead bewerkt, kun je de contact matcher gebruiken om bestaande co
 * **E-mail adressen**: E-mail adressen geven sterke validatie van matches
 * **Telefoonnummers**: Nederlandse nummers worden automatisch genormaliseerd (+31 → 0)
 * **Getrouwde namen**: Het systeem herkent zowel meisjesnamen als getrouwde namen
+
+==== Person-Lead Synchronisatie
+
+===== Overzicht
+
+Naast het matchen van contactpersonen kun je ook gegevens synchroniseren tussen leads en persons. Dit is handig wanneer een lead nieuwere of meer complete informatie bevat dan de gekoppelde contactpersoon.
+
+===== Toegang tot Synchronisatie
+
+Je kunt de synchronisatie functie bereiken via:
+
+. **Contact Matcher**: Klik op het groene synchronisatie icoon (🔄) naast elke contactpersoon in de suggesties
+. **Geselecteerde Person**: Klik op het groene synchronisatie icoon naast de geselecteerde contactpersoon
+. **Lead View**: Klik op het groene synchronisatie icoon naast de gekoppelde contactpersoon in de lead details
+
+===== Synchronisatie Scherm
+
+Het synchronisatie scherm toont:
+
+. **Veld Vergelijking**: Een tabel met alle velden die verschillen tussen lead en person
+. **Selectie Opties**: Checkboxes om te kiezen welke velden je wilt bijwerken
+. **Bewerkbare Waarden**: Mogelijkheid om lead waarden aan te passen voor synchronisatie
+. **Bulk Acties**: Knoppen om alle velden te selecteren of de selectie op te heffen
+
+===== Ondersteunde Velden
+
+De volgende velden kunnen gesynchroniseerd worden:
+
+* **Voornaam** (first_name)
+* **Achternaam** (last_name)  
+* **Achternaam voorvoegsel** (lastname_prefix)
+* **Getrouwde naam** (married_name)
+* **Getrouwde naam voorvoegsel** (married_name_prefix)
+* **Initialen** (initials)
+* **E-mailadressen** (emails)
+* **Telefoonnummers** (phones)
+* **Geboortedatum** (date_of_birth)
+* **Geslacht** (gender)
+
+===== Synchronisatie Proces
+
+. **Open Synchronisatie Scherm**: Klik op het groene synchronisatie icoon
+. **Bekijk Verschillen**: Het systeem toont automatisch alle velden met verschillende waarden
+. **Pas Lead Waarden Aan** (optioneel): Wijzig lead waarden in de rechtse kolom indien nodig
+. **Selecteer Velden**: Vink de checkboxes aan voor velden die je wilt bijwerken in de person
+. **Opslaan**: Klik op "Wijzigingen opslaan" om beide records bij te werken
+
+===== Belangrijke Opmerkingen
+
+* **Twee-richtings Update**: Het systeem werkt zowel de lead als de person bij
+* **Selectieve Synchronisatie**: Je kunt kiezen welke velden je wilt synchroniseren
+* **Waarde Aanpassing**: Lead waarden kunnen aangepast worden voor synchronisatie
+* **Array Velden**: E-mails en telefoonnummers worden automatisch correct geformatteerd
+* **Veilige Operatie**: Alleen geselecteerde velden worden bijgewerkt

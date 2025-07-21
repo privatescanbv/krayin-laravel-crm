@@ -98,6 +98,15 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                                     </svg>
                                 </a>
+                                <a :href="'/admin/contacts/persons/edit-with-lead/' + person.id + '/' + lead.id"
+                                   target="_blank"
+                                   class="ml-1 text-green-600 hover:text-green-800 text-xs"
+                                   title="Synchroniseer met lead gegevens"
+                                   @click.stop>
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                    </svg>
+                                </a>
                             </div>
                             <div class="text-sm text-gray-600">
                                 <span v-if="person.email">{{ person.email }}</span>
@@ -149,6 +158,14 @@
                            title="Bekijk contactpersoon details">
                             <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                            </svg>
+                        </a>
+                        <a :href="'/admin/contacts/persons/edit-with-lead/' + selectedPerson.id + '/' + lead.id"
+                           target="_blank"
+                           class="ml-1 text-green-600 hover:text-green-800 text-xs"
+                           title="Synchroniseer met lead gegevens">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                             </svg>
                         </a>
                     </div>

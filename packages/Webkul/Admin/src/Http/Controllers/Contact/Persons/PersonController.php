@@ -623,4 +623,164 @@ class PersonController extends Controller
             'message' => trans('admin::app.contacts.persons.index.delete-success'),
         ]);
     }
+
+    /**
+     * Show the form for updating person with lead data.
+     */
+    public function editWithLead(int $personId, int $leadId): View
+    {
+        $person = $this->personRepository->findOrFail($personId);
+        $lead = app(LeadRepository::class)->findOrFail($leadId);
+
+        $fieldDifferences = $this->comparePersonWithLead($person, $lead);
+
+        return view('admin::contacts.persons.edit-with-lead', compact('person', 'lead', 'fieldDifferences'));
+    }
+
+    /**
+     * Update person with selected lead data.
+     */
+    public function updateWithLead(int $personId, int $leadId): JsonResponse
+    {
+        $person = $this->personRepository->findOrFail($personId);
+        $lead = app(LeadRepository::class)->findOrFail($leadId);
+
+        $data = request()->all();
+        $leadUpdates = $data['lead_updates'] ?? [];
+        $personUpdates = $data['person_updates'] ?? [];
+
+        try {
+            // Update lead with modified values
+            if (!empty($leadUpdates)) {
+                $lead->update($leadUpdates);
+            }
+
+            // Update person with selected values from lead
+            if (!empty($personUpdates)) {
+                $updateData = [];
+                foreach ($personUpdates as $field => $shouldUpdate) {
+                    if ($shouldUpdate) {
+                        if (isset($leadUpdates[$field])) {
+                            // Use the potentially modified lead value
+                            $value = $leadUpdates[$field];
+                        } else {
+                            // Use the original lead value
+                            $value = $lead->$field;
+                        }
+
+                        // Handle array fields (emails, phones) - convert string back to array format
+                        if (in_array($field, ['emails', 'phones']) && is_string($value)) {
+                            $values = array_filter(explode(', ', $value));
+                            $arrayData = [];
+                            foreach ($values as $index => $val) {
+                                $arrayData[] = [
+                                    'value' => trim($val),
+                                    'label' => $field === 'emails' ? 'Work' : 'Mobile',
+                                    'is_default' => $index === 0
+                                ];
+                            }
+                            $updateData[$field] = $arrayData;
+                        } else {
+                            $updateData[$field] = $value;
+                        }
+                    }
+                }
+
+                if (!empty($updateData)) {
+                    $person->update($updateData);
+                }
+            }
+
+            return response()->json([
+                'message' => 'Person en lead succesvol bijgewerkt.',
+                'redirect_url' => route('admin.contacts.persons.view', $person->id)
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Er is een fout opgetreden: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Compare person and lead fields to find differences.
+     */
+    private function comparePersonWithLead(Person $person, Lead $lead): array
+    {
+        $comparableFields = [
+            'first_name' => 'Voornaam',
+            'last_name' => 'Achternaam',
+            'lastname_prefix' => 'Achternaam voorvoegsel',
+            'married_name' => 'Getrouwde naam',
+            'married_name_prefix' => 'Getrouwde naam voorvoegsel',
+            'initials' => 'Initialen',
+            'emails' => 'E-mailadressen',
+            'phones' => 'Telefoonnummers',
+            'date_of_birth' => 'Geboortedatum',
+            'gender' => 'Geslacht'
+        ];
+
+        $differences = [];
+
+        foreach ($comparableFields as $field => $label) {
+            $personValue = $person->$field;
+            $leadValue = $lead->$field;
+
+            // Handle array fields (emails, phones)
+            if (in_array($field, ['emails', 'phones'])) {
+                $personValue = $this->normalizeArrayField($personValue);
+                $leadValue = $this->normalizeArrayField($leadValue);
+            }
+
+            // Handle date fields
+            if ($field === 'date_of_birth') {
+                $personValue = $personValue ? $personValue->format('Y-m-d') : null;
+                $leadValue = $leadValue ? $leadValue->format('Y-m-d') : null;
+            }
+
+            // Compare values
+            if ($this->valuesAreDifferent($personValue, $leadValue)) {
+                $differences[$field] = [
+                    'label' => $label,
+                    'person_value' => $personValue,
+                    'lead_value' => $leadValue,
+                    'type' => in_array($field, ['emails', 'phones']) ? 'array' : 'text'
+                ];
+            }
+        }
+
+        return $differences;
+    }
+
+    /**
+     * Normalize array fields for comparison.
+     */
+    private function normalizeArrayField($value): string
+    {
+        if (empty($value)) {
+            return '';
+        }
+
+        if (is_array($value)) {
+            $values = array_map(function ($item) {
+                return is_array($item) ? ($item['value'] ?? '') : $item;
+            }, $value);
+            return implode(', ', array_filter($values));
+        }
+
+        return (string) $value;
+    }
+
+    /**
+     * Check if two values are different.
+     */
+    private function valuesAreDifferent($value1, $value2): bool
+    {
+        // Handle null/empty comparisons
+        $value1 = $value1 === null ? '' : $value1;
+        $value2 = $value2 === null ? '' : $value2;
+
+        return trim($value1) !== trim($value2);
+    }
 }

@@ -111,9 +111,9 @@ Breadcrumbs::for('contacts.persons.view', function (BreadcrumbTrail $trail, $per
 });
 
 // Dashboard > Contacts > Persons > Edit with Lead
-Breadcrumbs::for('contacts.persons.edit_with_lead', function (BreadcrumbTrail $trail, $person, $lead) {
+Breadcrumbs::for('contacts.persons.edit_with_lead', function (BreadcrumbTrail $trail, $person) {
     $trail->parent('contacts.persons.view', $person);
-    $trail->push('Sync met Lead #'.$lead->id);
+    $trail->push('Sync met Lead');
 });
 
 // Dashboard > Contacts > Organizations

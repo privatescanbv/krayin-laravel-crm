@@ -9,7 +9,7 @@
     <div class="flex items-center justify-between gap-4 max-sm:flex-wrap">
         <div class="flex flex-col gap-2">
             <div class="flex cursor-pointer items-center">
-                <x-admin::breadcrumbs name="contacts.persons.edit_with_lead" :entity="$person" :lead="$lead" />
+                <x-admin::breadcrumbs name="contacts.persons.edit_with_lead" :entity="$person" />
             </div>
 
             <div class="text-xl font-bold dark:text-white">

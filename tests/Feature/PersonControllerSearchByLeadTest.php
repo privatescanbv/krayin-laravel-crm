@@ -354,3 +354,75 @@ test('finds exact first name match', function () {
 //    expect($result)->toBeInstanceOf(JsonResource::class)
 //        ->and($result->collection)->toHaveCount(0);
 // });
+
+test('returns results with match scores and sorts by score', function () {
+    // Create a lead with multiple attributes
+    $lead = createLeadWithAttributes(
+        $this->attributeValueRepository,
+        'John',
+        'Smith',
+        [
+            'email' => 'john.smith@example.com',
+            'phone' => '0612345678',
+            'married_name' => 'Johnson',
+        ]
+    );
+
+    // Create person with high match score (exact name and email match)
+    $highMatchPerson = createPersonWithAttributes(
+        $this->attributeValueRepository,
+        'John',
+        'Smith',
+        [['value' => 'john.smith@example.com', 'label' => 'work']],
+        [
+            'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        ]
+    );
+
+    // Create person with medium match score (name match only)
+    $mediumMatchPerson = createPersonWithAttributes(
+        $this->attributeValueRepository,
+        'John',
+        'Smith',
+        [['value' => 'different@example.com', 'label' => 'work']],
+        [
+            'contact_numbers' => [['value' => '0687654321', 'label' => 'mobile']],
+        ]
+    );
+
+    // Create person with low match score (first name only)
+    $lowMatchPerson = createPersonWithAttributes(
+        $this->attributeValueRepository,
+        'John',
+        'Doe',
+        [['value' => 'john.doe@example.com', 'label' => 'work']],
+        [
+            'contact_numbers' => [['value' => '0698765432', 'label' => 'mobile']],
+        ]
+    );
+
+    // Call the method
+    $result = $this->controller->searchByLead($lead);
+
+    // Assert results are returned with scores
+    expect($result)->toBeInstanceOf(\Illuminate\Http\Resources\Json\AnonymousResourceCollection::class);
+    
+    $collection = $result->collection;
+    expect($collection)->toHaveCount(3);
+
+    // Assert all results have match scores
+    foreach ($collection as $person) {
+        expect($person)->toHaveKey('match_score')
+            ->and($person)->toHaveKey('match_score_percentage')
+            ->and($person['match_score'])->toBeGreaterThan(0);
+    }
+
+    // Assert results are sorted by score (highest first)
+    $scores = $collection->pluck('match_score')->toArray();
+    $sortedScores = collect($scores)->sortDesc()->values()->toArray();
+    expect($scores)->toBe($sortedScores);
+
+    // Assert the high match person has the highest score
+    expect($collection->first()['id'])->toBe($highMatchPerson->id);
+    expect($collection->first()['match_score'])->toBeGreaterThan($collection->get(1)['match_score']);
+});

@@ -298,26 +298,217 @@ class PersonController extends Controller
     }
 
     /**
-     * Search person results based on lead data.
+     * Search person results based on lead data with scoring.
      */
     public function searchByLead(Lead $lead): JsonResource
     {
-        // Query persons met een join op attribute_values
-        $query = Person::query()
-            ->select('persons.*');
-// Filter op de lead-waarden (exact match, je kunt ook LIKE gebruiken voor fuzzy)
-        if (!empty($lead->first_name)) {
-            $query->where('first_name', $lead->first_name);
-        }
-        if (!empty($lead->last_name)) {
-            $query->where('last_name', $lead->last_name);
-        }
-        Log::info($query->toRawSql());
+        $persons = Person::all();
+        $scoredResults = [];
 
-        // Uniek maken
-        $persons = $query->distinct()->get();
+        foreach ($persons as $person) {
+            $score = $this->calculateMatchScore($lead, $person);
+            
+            if ($score > 0) {
+                $personData = $person->toArray();
+                $personData['match_score'] = $score;
+                $personData['match_score_percentage'] = round($score, 1);
+                $scoredResults[] = $personData;
+            }
+        }
 
-        return PersonResource::collection($persons);
+        // Sort by score descending
+        usort($scoredResults, function ($a, $b) {
+            return $b['match_score'] <=> $a['match_score'];
+        });
+
+        // Convert back to collection and limit results
+        $collection = collect(array_slice($scoredResults, 0, 10));
+
+        return new \Illuminate\Http\Resources\Json\AnonymousResourceCollection($collection);
+    }
+
+    /**
+     * Calculate match score between lead and person.
+     */
+    private function calculateMatchScore(Lead $lead, Person $person): float
+    {
+        $score = 0.0;
+        $maxScore = 100.0;
+
+        // First name matching (20% weight)
+        if (!empty($lead->first_name) && !empty($person->first_name)) {
+            if (strtolower($lead->first_name) === strtolower($person->first_name)) {
+                $score += 20.0;
+            } elseif (stripos($person->first_name, $lead->first_name) !== false || 
+                      stripos($lead->first_name, $person->first_name) !== false) {
+                $score += 10.0;
+            }
+        }
+
+        // Last name matching (20% weight)
+        if (!empty($lead->last_name) && !empty($person->last_name)) {
+            if (strtolower($lead->last_name) === strtolower($person->last_name)) {
+                $score += 20.0;
+            } elseif (stripos($person->last_name, $lead->last_name) !== false || 
+                      stripos($lead->last_name, $person->last_name) !== false) {
+                $score += 10.0;
+            }
+        }
+
+        // Married name matching (15% weight)
+        if (!empty($lead->married_name) && !empty($person->married_name)) {
+            if (strtolower($lead->married_name) === strtolower($person->married_name)) {
+                $score += 15.0;
+            } elseif (stripos($person->married_name, $lead->married_name) !== false || 
+                      stripos($lead->married_name, $person->married_name) !== false) {
+                $score += 7.5;
+            }
+        }
+
+        // Email matching (25% weight - highest since emails are usually unique)
+        $emailScore = $this->calculateEmailMatchScore($lead, $person);
+        $score += $emailScore * 0.25 * 100;
+
+        // Phone number matching (20% weight)
+        $phoneScore = $this->calculatePhoneMatchScore($lead, $person);
+        $score += $phoneScore * 0.20 * 100;
+
+        return min($score, $maxScore);
+    }
+
+    /**
+     * Calculate email match score between lead and person.
+     */
+    private function calculateEmailMatchScore(Lead $lead, Person $person): float
+    {
+        $leadEmails = $this->extractEmails($lead);
+        $personEmails = $this->extractEmails($person);
+
+        if (empty($leadEmails) || empty($personEmails)) {
+            return 0.0;
+        }
+
+        $matchCount = 0;
+        $totalPersonEmails = count($personEmails);
+
+        foreach ($leadEmails as $leadEmail) {
+            foreach ($personEmails as $personEmail) {
+                if (strtolower($leadEmail) === strtolower($personEmail)) {
+                    $matchCount++;
+                    break; // Don't count the same lead email multiple times
+                }
+            }
+        }
+
+        // If all person emails match, return 1.0
+        // If some match, return partial score
+        return $matchCount > 0 ? ($matchCount / $totalPersonEmails) : 0.0;
+    }
+
+    /**
+     * Calculate phone match score between lead and person.
+     */
+    private function calculatePhoneMatchScore(Lead $lead, Person $person): float
+    {
+        $leadPhones = $this->extractPhones($lead);
+        $personPhones = $this->extractPhones($person);
+
+        if (empty($leadPhones) || empty($personPhones)) {
+            return 0.0;
+        }
+
+        $matchCount = 0;
+        $totalPersonPhones = count($personPhones);
+
+        foreach ($leadPhones as $leadPhone) {
+            foreach ($personPhones as $personPhone) {
+                if ($this->normalizePhoneNumber($leadPhone) === $this->normalizePhoneNumber($personPhone)) {
+                    $matchCount++;
+                    break; // Don't count the same lead phone multiple times
+                }
+            }
+        }
+
+        return $matchCount > 0 ? ($matchCount / $totalPersonPhones) : 0.0;
+    }
+
+    /**
+     * Extract emails from lead or person.
+     */
+    private function extractEmails($entity): array
+    {
+        $emails = [];
+
+        // Handle array format (from emails field)
+        if (!empty($entity->emails) && is_array($entity->emails)) {
+            foreach ($entity->emails as $email) {
+                if (is_array($email) && !empty($email['value'])) {
+                    $emails[] = $email['value'];
+                } elseif (is_string($email)) {
+                    $emails[] = $email;
+                }
+            }
+        }
+
+        // Handle single email field (if exists)
+        if (!empty($entity->email)) {
+            $emails[] = $entity->email;
+        }
+
+        return array_filter($emails);
+    }
+
+    /**
+     * Extract phone numbers from lead or person.
+     */
+    private function extractPhones($entity): array
+    {
+        $phones = [];
+
+        // Handle array format (from phones or contact_numbers field)
+        if (!empty($entity->phones) && is_array($entity->phones)) {
+            foreach ($entity->phones as $phone) {
+                if (is_array($phone) && !empty($phone['value'])) {
+                    $phones[] = $phone['value'];
+                } elseif (is_string($phone)) {
+                    $phones[] = $phone;
+                }
+            }
+        }
+
+        // Handle contact_numbers field for persons
+        if (!empty($entity->contact_numbers) && is_array($entity->contact_numbers)) {
+            foreach ($entity->contact_numbers as $phone) {
+                if (is_array($phone) && !empty($phone['value'])) {
+                    $phones[] = $phone['value'];
+                } elseif (is_string($phone)) {
+                    $phones[] = $phone;
+                }
+            }
+        }
+
+        // Handle single phone field (if exists)
+        if (!empty($entity->phone)) {
+            $phones[] = $entity->phone;
+        }
+
+        return array_filter($phones);
+    }
+
+    /**
+     * Normalize phone number for comparison.
+     */
+    private function normalizePhoneNumber(string $phone): string
+    {
+        // Remove all non-numeric characters
+        $normalized = preg_replace('/[^0-9]/', '', $phone);
+        
+        // Handle Dutch phone numbers - convert +31 to 0
+        if (str_starts_with($normalized, '31') && strlen($normalized) >= 10) {
+            $normalized = '0' . substr($normalized, 2);
+        }
+        
+        return $normalized;
     }
 
     /**

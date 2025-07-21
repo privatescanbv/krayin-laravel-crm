@@ -4,6 +4,9 @@
     <div class="panel-header mb-3">
         <h3 class="text-lg font-semibold text-blue-800">Contactpersoon Koppelen</h3>
         <p class="text-sm text-blue-600">Zoek en koppel een bestaande contactpersoon of maak een nieuwe aan</p>
+        <div class="mt-2 text-xs text-blue-500 bg-blue-25 p-2 rounded">
+            <strong>Matching criteria:</strong> Voornaam (20%), Achternaam (20%), Getrouwde naam (15%), E-mailadressen (25%), Telefoonnummers (20%)
+        </div>
     </div>
     
     <v-contact-matcher
@@ -79,19 +82,60 @@
                     v-for="person in suggestions"
                     :key="person.id"
                     @click="selectPerson(person)"
-                    class="px-3 py-2 cursor-pointer hover:bg-gray-100"
+                    class="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b last:border-b-0"
                 >
-                    {{ person.name }}
-                    <span v-if="person.email"> ({{ person.email }})</span>
-                    <span v-if="person.phone"> {{ person.phone }}</span>
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="font-medium">{{ person.name }}</div>
+                            <div class="text-sm text-gray-600">
+                                <span v-if="person.email">{{ person.email }}</span>
+                                <span v-if="person.phone && person.email"> • </span>
+                                <span v-if="person.phone">{{ person.phone }}</span>
+                            </div>
+                        </div>
+                        <div v-if="person.match_score_percentage" class="ml-3 flex-shrink-0">
+                            <div class="flex items-center">
+                                <div class="text-xs font-medium text-gray-700 mr-2">
+                                    {{ person.match_score_percentage }}% match
+                                </div>
+                                <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                    <div 
+                                        class="h-full rounded-full transition-all duration-300"
+                                        :class="getScoreColorClass(person.match_score_percentage)"
+                                        :style="{ width: person.match_score_percentage + '%' }"
+                                    ></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </li>
             </ul>
 
             <!-- Geselecteerde persoon tonen -->
-            <div v-if="selectedPerson && selectedPerson.id !== currentPerson?.id" class="mt-2 p-2 border rounded bg-blue-50 border-blue-200">
-                <strong>Nieuwe selectie:</strong> {{ selectedPerson.name }}<br>
-                <span v-if="selectedPerson.email">Email: {{ selectedPerson.email }}</span><br>
-                <span v-if="selectedPerson.phone">Telefoon: {{ selectedPerson.phone }}</span>
+            <div v-if="selectedPerson && selectedPerson.id !== currentPerson?.id" class="mt-2 p-3 border rounded bg-blue-50 border-blue-200">
+                <div class="flex items-center justify-between mb-2">
+                    <strong class="text-blue-800">Nieuwe selectie:</strong>
+                    <div v-if="selectedPerson.match_score_percentage" class="flex items-center">
+                        <span class="text-xs font-medium text-blue-700 mr-2">
+                            {{ selectedPerson.match_score_percentage }}% match
+                        </span>
+                        <div class="w-12 h-1.5 bg-blue-200 rounded-full overflow-hidden">
+                            <div 
+                                class="h-full rounded-full"
+                                :class="getScoreColorClass(selectedPerson.match_score_percentage)"
+                                :style="{ width: selectedPerson.match_score_percentage + '%' }"
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="text-sm">
+                    <div class="font-medium text-blue-900">{{ selectedPerson.name }}</div>
+                    <div class="text-blue-700 mt-1">
+                        <span v-if="selectedPerson.email">Email: {{ selectedPerson.email }}</span>
+                        <span v-if="selectedPerson.phone && selectedPerson.email"><br></span>
+                        <span v-if="selectedPerson.phone">Telefoon: {{ selectedPerson.phone }}</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Hidden veld voor formulier -->
@@ -259,6 +303,18 @@
                         });
                     } finally {
                         this.isCreatingPerson = false;
+                    }
+                },
+
+                getScoreColorClass(score) {
+                    if (score >= 80) {
+                        return 'bg-green-500';
+                    } else if (score >= 60) {
+                        return 'bg-yellow-500';
+                    } else if (score >= 40) {
+                        return 'bg-orange-500';
+                    } else {
+                        return 'bg-red-500';
                     }
                 },
             }

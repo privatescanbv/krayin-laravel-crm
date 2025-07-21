@@ -24,10 +24,13 @@ class PersonDataGrid extends DataGrid
         $queryBuilder = DB::table('persons')
             ->addSelect(
                 'persons.id',
-                DB::raw("CONCAT_WS(' ', 
-                    NULLIF(persons.first_name, ''), 
-                    NULLIF(persons.lastname_prefix, ''), 
-                    NULLIF(persons.last_name, '')
+                DB::raw("CONCAT_WS(' ',
+                    NULLIF(persons.first_name, ''),
+                    NULLIF(persons.lastname_prefix, ''),
+                    NULLIF(persons.last_name, ''),
+                    '; ',
+                    NULLIF(persons.married_name_prefix, ''),
+                    NULLIF(persons.married_name, '')
                 ) as person_name"),
                 'persons.emails',
                 'persons.contact_numbers',
@@ -41,9 +44,9 @@ class PersonDataGrid extends DataGrid
         }
 
         $this->addFilter('id', 'persons.id');
-        $this->addFilter('person_name', DB::raw("CONCAT_WS(' ', 
-            NULLIF(persons.first_name, ''), 
-            NULLIF(persons.lastname_prefix, ''), 
+        $this->addFilter('person_name', DB::raw("CONCAT_WS(' ',
+            NULLIF(persons.first_name, ''),
+            NULLIF(persons.lastname_prefix, ''),
             NULLIF(persons.last_name, '')
         )"));
         $this->addFilter('organization', 'organizations.name');

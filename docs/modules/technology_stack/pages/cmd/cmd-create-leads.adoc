@@ -1,0 +1,31 @@
+==== Leads generen
+
+Voor test doeleinden, kun je hiermee snel en veel leads aanmaken.
+Implementatie maak gebruik van de API interface.
+
+==== Gebruik
+
+===== Basis Import
+
+[source,bash]
+----
+# Test lead aanmaak via API
+sail artisan create:leads --count=10
+
+# Maak leads aan met specifieke data
+sail artisan create:leads --count=5 --source="Website" --value=1000
+----
+
+===== Parameters
+
+[cols="1,3"]
+|===
+|Parameter |Beschrijving
+
+|`--source`
+|Kanaal
+
+|`--value`
+|Aantal leads aan te maken
+
+|===

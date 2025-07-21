@@ -14,7 +14,7 @@ class PersonResource extends JsonResource
      */
     public function toArray($request)
     {
-        return [
+        $data = [
             'id'              => $this->id,
             'name'            => $this->name,
             'emails'          => $this->emails,
@@ -23,5 +23,16 @@ class PersonResource extends JsonResource
             'created_at'      => $this->created_at,
             'updated_at'      => $this->updated_at,
         ];
+
+        // Include match score data if present
+        if (isset($this->match_score)) {
+            $data['match_score'] = $this->match_score;
+        }
+        
+        if (isset($this->match_score_percentage)) {
+            $data['match_score_percentage'] = $this->match_score_percentage;
+        }
+
+        return $data;
     }
 }

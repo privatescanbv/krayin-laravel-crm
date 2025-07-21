@@ -4,6 +4,7 @@ namespace Webkul\Contact\Database\Factories;
 
 use App\Models\Address;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 
 class PersonFactory extends Factory
@@ -36,6 +37,20 @@ class PersonFactory extends Factory
     {
         return $this->afterCreating(function (Person $person) {
             Address::factory()->forPerson($person)->create();
+        });
+    }
+
+    /**
+     * Indicate that the person should have an organization.
+     */
+    public function withOrganisation(string $name): static
+    {
+        return $this->afterCreating(function (Person $person) use ($name) {
+            $organization = Organization::factory()->create([
+                'name' => $name,
+            ]);
+            $person->organization()->associate($organization);
+            $person->save();
         });
     }
 }

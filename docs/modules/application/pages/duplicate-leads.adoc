@@ -1,0 +1,50 @@
+==== Duplicate Lead Detection and Merging Feature
+
+This feature provides automatic detection of potential duplicate leads and allows users to merge them through an intuitive interface. The system can detect duplicates based on email addresses, phone numbers, and name similarity.
+
+===== Features
+
+====== 1. Duplicate Detection
+
+The system automatically detects potential duplicates based on:
+
+* *Email addresses*: Leads with matching email addresses
+* *Phone numbers*: Leads with matching phone numbers
+* *Name similarity*: Leads with similar first and last names
+
+====== 2. Visual Indicators
+
+Kanban View
+* Duplicate leads show an orange warning icon (⚠️) on kanban cards
+* Hover tooltip shows the number of potential duplicates found
+* Tooltip text: "Mogelijke duplicate gevonden (X gelijkenissen)"
+
+Lead Detail View
+* Orange warning banner appears at the top when duplicates are detected
+* Shows count of potential duplicates
+* "Merge Duplicates" button provides direct access to merge interface
+
+====== 3. Merge Interface
+
+The merge interface (`/admin/leads/{id}/duplicates`) provides:
+
+* *Comparison Table*: Side-by-side comparison of lead fields
+* *Field Selection*: Radio buttons to choose which values to keep for each field
+* *Multi-select*: Checkboxes to select which leads to merge
+* *Primary Lead*: The original lead is always marked as primary and cannot be deselected
+
+Supported Fields for Merging
+* Title
+* First Name
+* Last Name
+* Email addresses
+* Phone numbers
+
+====== 4. Merge Process
+
+When leads are merged:
+
+. *Data Transfer*: Activities, quotes, products, and emails are transferred to the primary lead
+. *Field Mapping*: Selected field values are applied to the primary lead
+. *Archival*: Duplicate leads are marked as inactive and prefixed with "[ARCHIVED]"
+. *Activity Log*: A note is added to the primary lead documenting the merge

@@ -12,7 +12,7 @@
 
 include::leads.adoc[]
 
-==== Contact Matcher
+include::duplicate-leads.adoc[]
 
 include::contact-matcher.adoc[]
 

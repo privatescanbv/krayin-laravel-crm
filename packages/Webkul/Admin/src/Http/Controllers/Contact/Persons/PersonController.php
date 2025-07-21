@@ -299,7 +299,7 @@ class PersonController extends Controller
         if ($leadId) {
             try {
                 $lead = app(LeadRepository::class)->findOrFail($leadId);
-                
+
                 // Calculate match scores for each person
                 $personsWithScores = $persons->map(function ($person) use ($lead) {
                     $score = $this->calculateMatchScore($lead, $person);
@@ -851,7 +851,11 @@ class PersonController extends Controller
                 }
                 return $carbonDate->format('Y-m-d');
             }
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
+            logger()->error('Error parsing date for comparison', [
+                'date' => $date,
+                'error' => $e->getMessage()
+            ]);
             // If parsing fails, treat as null
             return null;
         }

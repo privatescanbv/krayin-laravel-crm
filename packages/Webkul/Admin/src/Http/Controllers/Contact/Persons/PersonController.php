@@ -322,9 +322,19 @@ class PersonController extends Controller
         });
 
         // Convert back to collection and limit results
-        $collection = collect(array_slice($scoredResults, 0, 10));
+        $limitedResults = array_slice($scoredResults, 0, 10);
+        
+        // Create Person objects with additional score data
+        $personsWithScores = collect($limitedResults)->map(function ($personData) {
+            $person = new Person($personData);
+            $person->id = $personData['id'];
+            $person->match_score = $personData['match_score'];
+            $person->match_score_percentage = $personData['match_score_percentage'];
+            $person->exists = true; // Mark as existing model
+            return $person;
+        });
 
-        return new \Illuminate\Http\Resources\Json\AnonymousResourceCollection($collection);
+        return PersonResource::collection($personsWithScores);
     }
 
     /**

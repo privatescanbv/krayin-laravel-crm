@@ -107,7 +107,17 @@ Potential improvements:
 
 1. `packages/Webkul/Admin/src/Http/Controllers/Contact/Persons/PersonController.php`
 2. `packages/Webkul/Admin/src/Resources/views/leads/common/contactmatcher.blade.php`
-3. `tests/Feature/PersonControllerSearchByLeadTest.php`
+3. `packages/Webkul/Admin/src/Http/Resources/PersonResource.php` - Enhanced to include match scores
+4. `tests/Feature/PersonControllerSearchByLeadTest.php`
+
+## Bug Fixes
+
+### ArgumentCountError Fix
+Fixed an issue where `AnonymousResourceCollection` constructor was called with insufficient arguments. The solution involved:
+
+1. **Maintaining Compatibility**: Modified the return structure to use `PersonResource::collection()` to maintain compatibility with existing tests
+2. **Enhanced PersonResource**: Updated `PersonResource` to conditionally include `match_score` and `match_score_percentage` fields when present
+3. **Proper Model Creation**: Created proper Person model instances with score data attached as properties
 
 ## Configuration
 

@@ -405,16 +405,15 @@ test('returns results with match scores and sorts by score', function () {
     $result = $this->controller->searchByLead($lead);
 
     // Assert results are returned with scores
-    expect($result)->toBeInstanceOf(\Illuminate\Http\Resources\Json\AnonymousResourceCollection::class);
+    expect($result)->toBeInstanceOf(JsonResource::class);
     
     $collection = $result->collection;
     expect($collection)->toHaveCount(3);
 
     // Assert all results have match scores
     foreach ($collection as $person) {
-        expect($person)->toHaveKey('match_score')
-            ->and($person)->toHaveKey('match_score_percentage')
-            ->and($person['match_score'])->toBeGreaterThan(0);
+        expect($person->match_score)->toBeGreaterThan(0)
+            ->and($person->match_score_percentage)->toBeGreaterThan(0);
     }
 
     // Assert results are sorted by score (highest first)
@@ -423,6 +422,6 @@ test('returns results with match scores and sorts by score', function () {
     expect($scores)->toBe($sortedScores);
 
     // Assert the high match person has the highest score
-    expect($collection->first()['id'])->toBe($highMatchPerson->id);
-    expect($collection->first()['match_score'])->toBeGreaterThan($collection->get(1)['match_score']);
+    expect($collection->first()->id)->toBe($highMatchPerson->id);
+    expect($collection->first()->match_score)->toBeGreaterThan($collection->get(1)->match_score);
 });

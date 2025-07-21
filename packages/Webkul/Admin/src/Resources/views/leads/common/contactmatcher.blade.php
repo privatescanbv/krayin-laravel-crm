@@ -5,7 +5,8 @@
         <h3 class="text-lg font-semibold text-blue-800">Contactpersoon Koppelen</h3>
         <p class="text-sm text-blue-600">Zoek en koppel een bestaande contactpersoon of maak een nieuwe aan</p>
         <div class="mt-2 text-xs text-blue-500 bg-blue-25 p-2 rounded">
-            <strong>Matching criteria:</strong> Voornaam (20%), Achternaam (20%), Getrouwde naam (15%), E-mailadressen (25%), Telefoonnummers (20%)
+            <strong>Matching criteria:</strong> Naamvelden (55%), E-mailadressen (25%), Telefoonnummers (20%)
+            <br><small>Naamvelden: voornaam, achternaam, achternaam voorvoegsel, getrouwde naam, getrouwde naam voorvoegsel, initialen</small>
         </div>
     </div>
     

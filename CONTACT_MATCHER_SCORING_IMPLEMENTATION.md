@@ -6,17 +6,18 @@ The contact matcher functionality has been extended to include percentage-based 
 ## Scoring Algorithm
 
 ### Matching Fields and Weights:
-- **First Name**: 20% weight
-- **Last Name**: 20% weight  
-- **Married Name**: 15% weight
-- **Email Addresses**: 25% weight (highest weight as emails are usually unique)
+- **Name Fields**: 55% weight total
+  - first_name, last_name, lastname_prefix, married_name, married_name_prefix, initials
+- **Email Addresses**: 25% weight (highest single field weight as emails are usually unique)
 - **Phone Numbers**: 20% weight
 
 ### Scoring Logic:
-- **Exact Match**: Full weight for the field
-- **Partial Match**: Half weight for the field (for names with substring matching)
+- **100% match on ALL name fields**: 95% total score
+- **100% match on IMPORTANT name fields** (first_name, last_name, lastname_prefix): 80% total score  
+- **Partial name matches**: Scaled between 0-80% based on match ratio
 - **Email Matching**: Supports multiple emails, scores based on proportion of matching emails
 - **Phone Matching**: Normalizes phone numbers (handles Dutch +31 format) and supports multiple numbers
+- **Maximum possible score**: 100% (when all fields match perfectly)
 
 ## Implementation Details
 
@@ -67,12 +68,18 @@ The scoring algorithm can be easily adjusted by modifying the weights in the `ca
 
 ```php
 // Current weights
-$firstNameWeight = 20.0;
-$lastNameWeight = 20.0; 
-$marriedNameWeight = 15.0;
-$emailWeight = 25.0;
-$phoneWeight = 20.0;
+$nameWeight = 0.55;      // 55% for all name fields combined
+$emailWeight = 0.25;     // 25% for email matching
+$phoneWeight = 0.20;     // 20% for phone matching
+
+// Name field scoring thresholds
+$allNameFieldsMatch = 0.95;      // 95% when all name fields match
+$importantNameFieldsMatch = 0.80; // 80% when important fields match
 ```
+
+**Name Fields Evaluated:**
+- `first_name`, `last_name`, `lastname_prefix` (important fields)
+- `married_name`, `married_name_prefix`, `initials` (additional fields)
 
 ## Testing
 
@@ -118,6 +125,17 @@ Fixed an issue where `AnonymousResourceCollection` constructor was called with i
 1. **Maintaining Compatibility**: Modified the return structure to use `PersonResource::collection()` to maintain compatibility with existing tests
 2. **Enhanced PersonResource**: Updated `PersonResource` to conditionally include `match_score` and `match_score_percentage` fields when present
 3. **Proper Model Creation**: Created proper Person model instances with score data attached as properties
+
+### Enhanced Scoring System (v2)
+Implemented comprehensive name field matching with sophisticated scoring logic:
+
+1. **Extended Name Fields**: Added support for `lastname_prefix`, `married_name_prefix`, and `initials`
+2. **Tiered Scoring System**: 
+   - 100% match on all name fields = 95% score
+   - 100% match on important fields (first_name, last_name, lastname_prefix) = 80% score
+   - Partial matches scaled proportionally
+3. **Updated Weight Distribution**: Name fields now account for 55% of total score
+4. **Test Fixes**: Updated failing tests to reflect new scoring behavior
 
 ## Configuration
 

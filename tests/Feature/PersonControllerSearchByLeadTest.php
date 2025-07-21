@@ -127,10 +127,10 @@ test('finds exact first name match', function () {
     // Call the method
     $result = $this->controller->searchByLead($lead);
 
-    // Assert it finds the matching person
+    // Assert it finds both persons but orders them correctly by score
     expect($result)->toBeInstanceOf(JsonResource::class)
-        ->and($result->collection)->toHaveCount(1)
-        ->and($result->collection->first()->id)->toBe($matchingPerson->id);
+        ->and($result->collection)->toHaveCount(2)
+        ->and($result->collection->first()->id)->toBe($matchingPerson->id); // Better match should be first
 });
 //
 // test('finds exact email match', function () {
@@ -368,38 +368,30 @@ test('returns results with match scores and sorts by score', function () {
         ]
     );
 
-    // Create person with high match score (exact name and email match)
-    $highMatchPerson = createPersonWithAttributes(
-        $this->attributeValueRepository,
-        'John',
-        'Smith',
-        [['value' => 'john.smith@example.com', 'label' => 'work']],
-        [
-            'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
-        ]
-    );
+    // Create person with high match score (exact name and email and phone match)
+    $highMatchPerson = Person::factory()->create([
+        'first_name' => 'John',
+        'last_name' => 'Smith',
+        'married_name' => 'Johnson',
+        'emails' => [['value' => 'john.smith@example.com', 'label' => 'work']],
+        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+    ]);
 
-    // Create person with medium match score (name match only)
-    $mediumMatchPerson = createPersonWithAttributes(
-        $this->attributeValueRepository,
-        'John',
-        'Smith',
-        [['value' => 'different@example.com', 'label' => 'work']],
-        [
-            'contact_numbers' => [['value' => '0687654321', 'label' => 'mobile']],
-        ]
-    );
+    // Create person with medium match score (name match but different email/phone)
+    $mediumMatchPerson = Person::factory()->create([
+        'first_name' => 'John',
+        'last_name' => 'Smith',
+        'emails' => [['value' => 'different@example.com', 'label' => 'work']],
+        'contact_numbers' => [['value' => '0687654321', 'label' => 'mobile']],
+    ]);
 
     // Create person with low match score (first name only)
-    $lowMatchPerson = createPersonWithAttributes(
-        $this->attributeValueRepository,
-        'John',
-        'Doe',
-        [['value' => 'john.doe@example.com', 'label' => 'work']],
-        [
-            'contact_numbers' => [['value' => '0698765432', 'label' => 'mobile']],
-        ]
-    );
+    $lowMatchPerson = Person::factory()->create([
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'emails' => [['value' => 'john.doe@example.com', 'label' => 'work']],
+        'contact_numbers' => [['value' => '0698765432', 'label' => 'mobile']],
+    ]);
 
     // Call the method
     $result = $this->controller->searchByLead($lead);

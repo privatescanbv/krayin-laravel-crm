@@ -345,36 +345,9 @@ class PersonController extends Controller
         $score = 0.0;
         $maxScore = 100.0;
 
-        // First name matching (20% weight)
-        if (!empty($lead->first_name) && !empty($person->first_name)) {
-            if (strtolower($lead->first_name) === strtolower($person->first_name)) {
-                $score += 20.0;
-            } elseif (stripos($person->first_name, $lead->first_name) !== false || 
-                      stripos($lead->first_name, $person->first_name) !== false) {
-                $score += 10.0;
-            }
-        }
-
-        // Last name matching (20% weight)
-        if (!empty($lead->last_name) && !empty($person->last_name)) {
-            if (strtolower($lead->last_name) === strtolower($person->last_name)) {
-                $score += 20.0;
-            } elseif (stripos($person->last_name, $lead->last_name) !== false || 
-                      stripos($lead->last_name, $person->last_name) !== false) {
-                $score += 10.0;
-            }
-        }
-
-        // Married name matching (15% weight)
-        if (!empty($lead->married_name) && !empty($person->married_name)) {
-            if (strtolower($lead->married_name) === strtolower($person->married_name)) {
-                $score += 15.0;
-            } elseif (stripos($person->married_name, $lead->married_name) !== false || 
-                      stripos($lead->married_name, $person->married_name) !== false) {
-                $score += 7.5;
-            }
-        }
-
+        // Calculate name field matches
+        $nameScore = $this->calculateNameMatchScore($lead, $person);
+        
         // Email matching (25% weight - highest since emails are usually unique)
         $emailScore = $this->calculateEmailMatchScore($lead, $person);
         $score += $emailScore * 0.25 * 100;
@@ -383,7 +356,92 @@ class PersonController extends Controller
         $phoneScore = $this->calculatePhoneMatchScore($lead, $person);
         $score += $phoneScore * 0.20 * 100;
 
+        // Add name score (55% total weight)
+        $score += $nameScore * 0.55 * 100;
+
         return min($score, $maxScore);
+    }
+
+    /**
+     * Calculate name match score with new logic.
+     */
+    private function calculateNameMatchScore(Lead $lead, Person $person): float
+    {
+        $nameFields = [
+            'first_name',
+            'last_name', 
+            'lastname_prefix',
+            'married_name',
+            'married_name_prefix',
+            'initials'
+        ];
+
+        $importantNameFields = [
+            'first_name',
+            'last_name',
+            'lastname_prefix'
+        ];
+
+        $totalMatches = 0;
+        $totalPossibleMatches = 0;
+        $importantMatches = 0;
+        $importantPossibleMatches = 0;
+
+        foreach ($nameFields as $field) {
+            $leadValue = $lead->$field ?? '';
+            $personValue = $person->$field ?? '';
+
+            if (!empty($leadValue) || !empty($personValue)) {
+                $totalPossibleMatches++;
+                
+                if (in_array($field, $importantNameFields)) {
+                    $importantPossibleMatches++;
+                }
+
+                if (!empty($leadValue) && !empty($personValue)) {
+                    $isMatch = false;
+                    
+                    // Exact match
+                    if (strtolower(trim($leadValue)) === strtolower(trim($personValue))) {
+                        $isMatch = true;
+                    }
+                    // Partial match for names (not for initials)
+                    elseif ($field !== 'initials' && 
+                            (stripos($personValue, $leadValue) !== false || 
+                             stripos($leadValue, $personValue) !== false)) {
+                        $isMatch = true;
+                    }
+
+                    if ($isMatch) {
+                        $totalMatches++;
+                        if (in_array($field, $importantNameFields)) {
+                            $importantMatches++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Calculate scores based on new criteria
+        if ($totalPossibleMatches === 0) {
+            return 0.0;
+        }
+
+        $totalMatchRatio = $totalMatches / $totalPossibleMatches;
+        
+        // 100% match on all name fields = 95% score
+        if ($totalMatchRatio === 1.0) {
+            return 0.95;
+        }
+
+        // 100% match on important name fields = 80% score  
+        if ($importantPossibleMatches > 0 && $importantMatches === $importantPossibleMatches) {
+            return 0.80;
+        }
+
+        // Partial scoring based on match ratio
+        // Scale between 0 and 0.80 based on total match ratio
+        return $totalMatchRatio * 0.80;
     }
 
     /**

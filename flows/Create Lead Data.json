@@ -1,10 +1,19 @@
 {
-  "name": "create lead data",
+  "name": "Create Lead Data",
   "nodes": [
     {
       "parameters": {
         "method": "POST",
         "url": "http://crm/api/leads/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "3!LvFF3HNTUGz*E^X@cu"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "{\n  \"first_name\": \"Mark\",\n  \"last_name\": \"Bulthuis\",\n  \"email\": \"mark@example.com\",\n  \"phone\": \"0612345678\",\n  \"company_name\": \"MB Software\",\n  \"title\": \"lead tel (privatescan)\",\n  \"lead_source_id\": 1,\n  \"lead_channel_id\": 1,\n  \"lead_type_id\" :1,\n  \"tags\": [\"crm\", \"n8n\"]\n}\n",
@@ -16,13 +25,22 @@
         0,
         0
       ],
-      "id": "61a356d2-88c1-469a-8f90-0021a6dd2089",
+      "id": "e8e8c8d3-3712-4892-88ae-779af0c38b57",
       "name": "Create Lead Tel privatescan"
     },
     {
       "parameters": {
         "method": "POST",
         "url": "http://crm/api/leads/",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "3!LvFF3HNTUGz*E^X@cu"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "{\n  \"first_name\": \"Mark\",\n  \"last_name\": \"Bulthuis\",\n  \"email\": \"mark@example.com\",\n  \"phone\": \"0612345678\",\n  \"title\": \"lead tel (hernia)\",\n  \"lead_source_id\": 2,\n  \"lead_channel_id\": 2,\n  \"lead_type_id\" :3,\n  \"tags\": [\"crm\", \"n8n\"]\n}\n",
@@ -34,29 +52,20 @@
         400,
         0
       ],
-      "id": "49baffa4-08d7-4b42-b27a-e33c650b7baf",
+      "id": "07ae2706-b429-49f9-badd-b37ffcdc91c3",
       "name": "Create Lead Tel Hernia"
     }
   ],
   "pinData": {},
-  "connections": {
-    "Create Lead Tel Hernia": {
-      "main": [
-        []
-      ]
-    }
-  },
+  "connections": {},
   "active": false,
   "settings": {
-    "executionOrder": "v1",
-    "callerPolicy": "workflowsFromSameOwner",
-    "errorWorkflow": "b8PHf3zTNTQZsSzB",
-    "timezone": "Europe/Paris"
+    "executionOrder": "v1"
   },
-  "versionId": "c97e69ad-113e-482f-b34f-87ea51dbe283",
+  "versionId": "673f74ab-bd6a-4919-83bc-ba487dc850d2",
   "meta": {
-    "instanceId": "04a589aba7becd1dde047957b525fc8163605bfcbd5c7304b882c2d0f7b90473"
+    "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },
-  "id": "lMKYlS9U06v6rUKm",
+  "id": "sg4ADibCBdYooAaw",
   "tags": []
 }

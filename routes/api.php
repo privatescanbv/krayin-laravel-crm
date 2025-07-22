@@ -18,28 +18,30 @@ use Webkul\Lead\Http\Controllers\Api\LeadController;
 |
 */
 
-// Route::middleware('auth:sanctum')->group(function () {
-// Lead routes
-Route::prefix('leads')->group(function () {
-    Route::get('/', [LeadController::class, 'index']);
-    Route::post('/', [LeadController::class, 'store']);
-    Route::get('{id}', [LeadController::class, 'show']);
-    Route::put('{id}', [LeadController::class, 'update']);
-    Route::patch('{id}/stage', [LeadController::class, 'updateStage']);
-    Route::patch('{id}/next_stage', [LeadController::class, 'nextStage']);
-    Route::delete('{id}', [LeadController::class, 'destroy']);
-    // notes
-    Route::post('{leadId}/notes', [LeadNoteController::class, 'store']);
+// All API routes are protected with API key authentication
+Route::middleware('api.key')->group(function () {
+    // Lead routes
+    Route::prefix('leads')->group(function () {
+        Route::get('/', [LeadController::class, 'index']);
+        Route::post('/', [LeadController::class, 'store']);
+        Route::get('{id}', [LeadController::class, 'show']);
+        Route::put('{id}', [LeadController::class, 'update']);
+        Route::patch('{id}/stage', [LeadController::class, 'updateStage']);
+        Route::patch('{id}/next_stage', [LeadController::class, 'nextStage']);
+        Route::delete('{id}', [LeadController::class, 'destroy']);
+        // notes
+        Route::post('{leadId}/notes', [LeadNoteController::class, 'store']);
 
-    // Lead activities
-    Route::post('{id}/activities', [ActivityController::class, 'store'])->name('admin.leads.activities.store');
-    Route::get('{id}/activities', [ActivityController::class, 'index']);
-});
+        // Lead activities
+        Route::post('{id}/activities', [ActivityController::class, 'store'])->name('admin.leads.activities.store');
+        Route::get('{id}/activities', [ActivityController::class, 'index']);
+    });
 
-// Existing routes
-Route::get('groups/byDepartment/{departmentName}', [GroupController::class, 'findByDepartment']);
+    // Existing routes
+    Route::get('groups/byDepartment/{departmentName}', [GroupController::class, 'findByDepartment']);
 
-// Workflow Leads API
-Route::prefix('workflow-leads')->group(function () {
-    Route::post('/', [WorkflowLeadController::class, 'store']);
+    // Workflow Leads API
+    Route::prefix('workflow-leads')->group(function () {
+        Route::post('/', [WorkflowLeadController::class, 'store']);
+    });
 });

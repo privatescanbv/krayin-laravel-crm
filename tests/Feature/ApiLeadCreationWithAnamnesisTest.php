@@ -18,7 +18,20 @@ beforeEach(function () {
 
     // Create a test user
     $this->user = User::factory()->create();
+    
+    // Set up test API key
+    config(['api.keys' => ['test-api-key-123']]);
 });
+
+// Helper function to make API requests with authentication
+function makeApiRequest($method, $uri, $data = [])
+{
+    return test()->withHeaders([
+        'X-API-KEY' => 'test-api-key-123',
+        'Accept' => 'application/json',
+        'Content-Type' => 'application/json',
+    ])->{$method}($uri, $data);
+}
 
 test('API lead creation successfully creates a lead with anamnesis', function () {
     // Arrange: Get required IDs for lead creation
@@ -41,7 +54,7 @@ test('API lead creation successfully creates a lead with anamnesis', function ()
     ];
 
     // Act: Make API request to create lead
-    $response = $this->postJson('/api/leads', $leadData);
+    $response = makeApiRequest('postJson', '/api/leads', $leadData);
 
     // Assert: Check API response
     $response->assertStatus(201)
@@ -108,7 +121,7 @@ test('API lead creation handles missing optional fields gracefully', function ()
     ];
 
     // Act: Make API request
-    $response = $this->postJson('/api/leads', $leadData);
+    $response = makeApiRequest('postJson', '/api/leads', $leadData);
 
     // Assert: Should still work
     $response->assertStatus(201);
@@ -134,7 +147,7 @@ test('API lead creation fails gracefully with invalid data', function () {
     ];
 
     // Act: Make API request
-    $response = $this->postJson('/api/leads', $leadData);
+    $response = makeApiRequest('postJson', '/api/leads', $leadData);
 
     // Assert: Should fail validation
     $response->assertStatus(422); // Unprocessable Entity
@@ -183,7 +196,7 @@ test('anamnesis creation failure does not prevent lead creation', function () {
     ];
 
     // Act: Create lead
-    $response = $this->postJson('/api/leads', $leadData);
+    $response = makeApiRequest('postJson', '/api/leads', $leadData);
 
     // Assert: Lead creation should succeed
     $response->assertStatus(201);
@@ -220,7 +233,7 @@ test('API lead creation with different lead types works correctly', function () 
             'lead_type_id'    => $type->id,
         ];
 
-        $response = $this->postJson('/api/leads', $leadData);
+        $response = makeApiRequest('postJson', '/api/leads', $leadData);
 
         $response->assertStatus(201, 'Failed to create lead for type: '.$type->name)
             ->assertJson([
@@ -256,7 +269,7 @@ test('anamnesis has correct UUID format and relationships', function () {
         'lead_type_id'    => $type->id,
     ];
 
-    $response = $this->postJson('/api/leads', $leadData);
+    $response = makeApiRequest('postJson', '/api/leads', $leadData);
     $response->assertStatus(201);
     $leadId = $response->json('data.id');
 
@@ -294,7 +307,7 @@ test('API response includes correct lead data structure', function () {
         'lead_type_id'    => $type->id,
     ];
 
-    $response = $this->postJson('/api/leads', $leadData);
+    $response = makeApiRequest('postJson', '/api/leads', $leadData);
 
     $response->assertStatus(201)
         ->assertJsonStructure([

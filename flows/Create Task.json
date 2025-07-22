@@ -1,10 +1,19 @@
 {
-  "name": "create task",
+  "name": "Create Task",
   "nodes": [
     {
       "parameters": {
         "method": "POST",
         "url": "=http://crm/api/leads/{{ $json.lead_id }}/activities",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "3!LvFF3HNTUGz*E^X@cu"
+            }
+          ]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -39,10 +48,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -100,
-        -120
+        1080,
+        400
       ],
-      "id": "5d18699a-7641-462c-95c5-26b8d9209686",
+      "id": "17aeb0ea-a7ee-4f68-8814-9489158c490f",
       "name": "Add task - klant bellen"
     },
     {
@@ -70,10 +79,10 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        -840,
-        -280
+        340,
+        240
       ],
-      "id": "6c9cf789-27f4-415e-a317-d73770bcd051",
+      "id": "70143ec9-9f1c-4a78-901c-c15a12d66077",
       "name": "When Executed by Another Workflow"
     },
     {
@@ -84,10 +93,10 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1120,
-        -440
+        60,
+        80
       ],
-      "id": "4bdd7faa-f74b-4719-b4f5-f5cc06e7dd11",
+      "id": "88d08499-9cbc-4c71-91e8-ab8965176663",
       "name": "Sticky Note"
     }
   ],
@@ -107,15 +116,12 @@
   },
   "active": false,
   "settings": {
-    "executionOrder": "v1",
-    "callerPolicy": "workflowsFromSameOwner",
-    "errorWorkflow": "b8PHf3zTNTQZsSzB",
-    "timezone": "Europe/Paris"
+    "executionOrder": "v1"
   },
-  "versionId": "ed2077f2-34a6-4a01-adca-d6ae5a546185",
+  "versionId": "c3be4ae1-c458-4a6c-b8a7-07f4baf25d25",
   "meta": {
-    "instanceId": "04a589aba7becd1dde047957b525fc8163605bfcbd5c7304b882c2d0f7b90473"
+    "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },
-  "id": "NPfjupzlLSnFXidF",
+  "id": "FoL6phxyuOVrAwz5",
   "tags": []
 }

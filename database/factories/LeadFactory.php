@@ -5,12 +5,14 @@ namespace Database\Factories;
 use App\Models\Address;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Source;
+use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Models\Type;
 use Webkul\User\Models\User;
 
 /**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\Webkul\Lead\Models\Lead>
+ * @extends Factory<Lead>
  */
 class LeadFactory extends Factory
 {
@@ -35,18 +37,18 @@ class LeadFactory extends Factory
         $type = Type::first() ?? Type::create(['name' => 'New Lead']);
 
         // Get or create pipeline and stage
-        $pipeline = \Webkul\Lead\Models\Pipeline::first();
+        $pipeline = Pipeline::first();
         if (! $pipeline) {
-            $pipeline = \Webkul\Lead\Models\Pipeline::create([
+            $pipeline = Pipeline::create([
                 'name'        => 'Default Pipeline',
                 'is_default'  => 1,
                 'rotten_days' => 30,
             ]);
         }
 
-        $stage = \Webkul\Lead\Models\Stage::where('lead_pipeline_id', $pipeline->id)->first();
+        $stage = Stage::where('lead_pipeline_id', $pipeline->id)->first();
         if (! $stage) {
-            $stage = \Webkul\Lead\Models\Stage::create([
+            $stage = Stage::create([
                 'name'             => 'New',
                 'code'             => 'new',
                 'lead_pipeline_id' => $pipeline->id,
@@ -84,7 +86,7 @@ class LeadFactory extends Factory
     /**
      * Indicate that the lead is closed.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
     public function closed()
     {
@@ -99,7 +101,7 @@ class LeadFactory extends Factory
     /**
      * Indicate that the lead is active.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
     public function active()
     {
@@ -114,7 +116,7 @@ class LeadFactory extends Factory
     /**
      * Indicate that the lead has a high value.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
     public function highValue()
     {
@@ -128,7 +130,7 @@ class LeadFactory extends Factory
     /**
      * Indicate that the lead is expected to close soon.
      *
-     * @return \Illuminate\Database\Eloquent\Factories\Factory
+     * @return Factory
      */
     public function closingSoon()
     {

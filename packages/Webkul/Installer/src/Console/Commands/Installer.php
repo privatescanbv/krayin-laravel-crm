@@ -136,11 +136,10 @@ class Installer extends Command
         $this->call('migrate:fresh');
 
         $this->warn('Step: Seeding basic data for Krayin kickstart...');
-        $this->info(app(KrayinDatabaseSeeder::class)->run([
-            'locale'   => $applicationDetails['locale'] ?? 'en',
+        app(KrayinDatabaseSeeder::class)->run(['parameters' => [
+            'locale' => $applicationDetails['locale'] ?? 'en',
             'currency' => $applicationDetails['currency'] ?? 'USD',
-        ]));
-
+        ]]);
         $this->warn('Step: Publishing assets and configurations...');
         $result = $this->call('vendor:publish', ['--provider' => CoreServiceProvider::class, '--force' => true]);
         $this->info($result);

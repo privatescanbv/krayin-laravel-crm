@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class LeadChannelSeeder extends BaseSeeder
 {
-    public function run(): void
+    public function run(array $parameters = []): void
     {
         $this->truncateTables(['lead_channels']);
         $now = Carbon::now();

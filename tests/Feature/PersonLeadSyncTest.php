@@ -15,6 +15,7 @@ beforeEach(function () {
 
     // Create a test user
     test()->user = User::factory()->create();
+
 });
 
 // Helper to get required pipeline/stage data and ensure authentication
@@ -142,11 +143,10 @@ test('can update person with lead data', function () {
 
     // Verify person was updated
     $person->refresh();
-    expect($person->last_name)->toBe('Smith');
-    expect($person->date_of_birth->format('Y-m-d'))->toBe('1985-05-15');
-
+    expect($person->last_name)->toBe('Smith')
+        ->and($person->date_of_birth->format('Y-m-d'))->toBe('1985-05-15')
+        ->and($person->emails[0]['value'])->toBe('john@example.com');
     // Email should not be updated as it wasn't checked
-    expect($person->emails[0]['value'])->toBe('john@example.com');
 });
 
 test('can update lead data during sync', function () {
@@ -203,7 +203,7 @@ test('handles array fields correctly during sync', function () {
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id, ]);
 
-    $response = test()->postJson(route('admin.contacts.persons.update_with_lead', [
+    test()->postJson(route('admin.contacts.persons.update_with_lead', [
         'personId' => $person->id,
         'leadId'   => $lead->id,
     ]), [
@@ -220,13 +220,13 @@ test('handles array fields correctly during sync', function () {
     // Verify arrays were updated correctly
     $person->refresh();
 
-    expect($person->emails)->toHaveCount(2);
-    expect($person->emails[0]['value'])->toBe('john.updated@example.com');
-    expect($person->emails[1]['value'])->toBe('john.second@example.com');
+    expect($person->emails)->toHaveCount(2)
+        ->and($person->emails[0]['value'])->toBe('john.updated@example.com')
+        ->and($person->emails[1]['value'])->toBe('john.second@example.com')
+        ->and($person->phones)->toHaveCount(2)
+        ->and($person->phones[0]['value'])->toBe('111222333')
+        ->and($person->phones[1]['value'])->toBe('444555666');
 
-    expect($person->phones)->toHaveCount(2);
-    expect($person->phones[0]['value'])->toBe('111222333');
-    expect($person->phones[1]['value'])->toBe('444555666');
 });
 
 test('returns validation error for invalid data', function () {

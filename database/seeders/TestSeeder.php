@@ -9,7 +9,7 @@ use Webkul\Installer\Database\Seeders\Lead\TypeSeeder;
 
 class TestSeeder extends BaseSeeder
 {
-    public function run(): void
+    public function run($parameters = []): void
     {
         $this->call([
             PipelineSeeder::class,
@@ -17,6 +17,6 @@ class TestSeeder extends BaseSeeder
             DepartmentSeeder::class,
             TypeSeeder::class,
             SourceSeeder::class,
-        ]);
+        ], $parameters);
     }
 }

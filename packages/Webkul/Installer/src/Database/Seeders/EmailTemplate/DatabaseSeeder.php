@@ -14,6 +14,6 @@ class DatabaseSeeder extends Seeder
      */
     public function run($parameters = [])
     {
-        $this->call(EmailTemplateSeeder::class, false, ['parameters' => $parameters]);
+        $this->call(EmailTemplateSeeder::class, false, $parameters);
     }
 }

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class DepartmentSeeder extends BaseSeeder
 {
-    public function run(): void
+    public function run(array $parameters = []): void
     {
         $this->truncateTables(['departments']);
         $now = Carbon::now();

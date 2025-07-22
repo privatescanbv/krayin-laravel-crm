@@ -12,7 +12,7 @@ class DatabaseSeeder extends Seeder
      *
      * @return void
      */
-    public function run()
+    public function run(array $parameters = [])
     {
         $this->call(KrayinDatabaseSeeder::class);
         $this->call(DutchLocaleSeeder::class);

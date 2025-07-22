@@ -2,13 +2,15 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Database\Seeders\TestSeeder;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\User\Models\User;
 
-uses(RefreshDatabase::class);
-
+// beforeEach(function () {
+//
+//    $this->seed(TestSeeder::class);
+// });
 test('test_address_is_saved_when_creating_person', function () {
 
     // Arrange

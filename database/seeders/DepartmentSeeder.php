@@ -3,16 +3,13 @@
 namespace Database\Seeders;
 
 use Carbon\Carbon;
-use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
-class DepartmentSeeder extends Seeder
+class DepartmentSeeder extends BaseSeeder
 {
     public function run(): void
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        DB::table('departments')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        $this->truncateTables(['departments']);
         $now = Carbon::now();
         $departments = ['Hernia', 'Privatescan'];
         $rows = [];

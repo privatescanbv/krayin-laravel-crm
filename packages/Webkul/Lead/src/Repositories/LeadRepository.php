@@ -2,6 +2,7 @@
 
 namespace Webkul\Lead\Repositories;
 
+use App\Models\Anamnesis;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Container\Container;
@@ -196,8 +197,8 @@ class LeadRepository extends Repository
         $currentUserId = auth()->id() ?? $lead->user_id ?? 1;
 
         try {
-            \App\Models\Anamnesis::create([
-                'id' => \Illuminate\Support\Str::uuid(),
+            Anamnesis::create([
+                'id' => Str::uuid(),
                 'lead_id' => $lead->id,
                 'name' => 'Anamnesis voor ' . $lead->title,
                 'created_by' => null, // Set to null since it's now nullable

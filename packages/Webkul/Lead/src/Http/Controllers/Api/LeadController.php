@@ -105,6 +105,7 @@ class LeadController extends Controller
         foreach ($leadData as $key => $value) {
             request()->request->add([$key => $value]);
         }
+        request()->request->add(['entity_type' => 'leads']);
         //we need pipeline changes, to trigger n8n. Lead should never be left on this pipeline stage.
         $request['lead_pipeline_stage_id'] = PipelineDefaultKeys::PIPELINE_TECHNICAL_STAGE_ID->value;
         $request['lead_pipeline_id'] = PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value;

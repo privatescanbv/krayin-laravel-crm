@@ -3,26 +3,24 @@
 namespace Webkul\Installer\Database\Seeders\Lead;
 
 use Carbon\Carbon;
+use Database\Seeders\BaseSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
 /**
  * Lead Type
  */
-class TypeSeeder extends Seeder
+class TypeSeeder extends BaseSeeder
 {
     /**
      * Seed the application's database.
      *
-     * @param  array  $parameters
+     * @param array $parameters
      * @return void
      */
     public function run($parameters = [])
     {
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        DB::table('lead_types')->truncate();
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-
+        $this->truncateTables(['lead_types']);
         $now = Carbon::now();
 
         $types = [
@@ -35,8 +33,8 @@ class TypeSeeder extends Seeder
         $rows = [];
         foreach ($types as $i => $name) {
             $rows[] = [
-                'id'         => $i + 1,
-                'name'       => $name,
+                'id' => $i + 1,
+                'name' => $name,
                 'created_at' => $now,
                 'updated_at' => $now,
             ];

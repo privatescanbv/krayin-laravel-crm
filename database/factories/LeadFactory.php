@@ -2,8 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Enums\PipelineDefaultKeys;
-use App\Enums\PipelineStageDefaultKeys;
 use App\Models\Address;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\Lead\Models\Lead;
@@ -38,21 +36,21 @@ class LeadFactory extends Factory
 
         // Get or create pipeline and stage
         $pipeline = \Webkul\Lead\Models\Pipeline::first();
-        if (!$pipeline) {
+        if (! $pipeline) {
             $pipeline = \Webkul\Lead\Models\Pipeline::create([
-                'name' => 'Default Pipeline',
-                'is_default' => 1,
+                'name'        => 'Default Pipeline',
+                'is_default'  => 1,
                 'rotten_days' => 30,
             ]);
         }
-        
+
         $stage = \Webkul\Lead\Models\Stage::where('lead_pipeline_id', $pipeline->id)->first();
-        if (!$stage) {
+        if (! $stage) {
             $stage = \Webkul\Lead\Models\Stage::create([
-                'name' => 'New',
-                'code' => 'new',
+                'name'             => 'New',
+                'code'             => 'new',
                 'lead_pipeline_id' => $pipeline->id,
-                'sort_order' => 1,
+                'sort_order'       => 1,
             ]);
         }
 

@@ -4,16 +4,15 @@ namespace Tests\Feature;
 
 use App\Models\Anamnesis;
 use Database\Seeders\LeadChannelSeeder;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Database\Seeders\TestSeeder;
 use Webkul\Lead\Models\Channel;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Source;
 use Webkul\Lead\Models\Type;
 use Webkul\User\Models\User;
 
-uses(RefreshDatabase::class);
-
 beforeEach(function () {
+    $this->seed(TestSeeder::class);
     // Seed required data for lead creation
     $this->artisan('db:seed', ['--class' => LeadChannelSeeder::class]);
 
@@ -223,7 +222,14 @@ test('API lead creation with different lead types works correctly', function () 
 
         $response = $this->postJson('/api/leads', $leadData);
 
-        $response->assertStatus(201);
+        $response->assertStatus(201, 'Failed to create lead for type: '.$type->name)
+            ->assertJson([
+                'message' => 'Lead created successfully.',
+            ])
+            ->assertJsonStructure([
+                'message',
+                'data' => ['id'],
+            ]);
         $leadId = $response->json('data.id');
 
         // Each lead should have its anamnesis

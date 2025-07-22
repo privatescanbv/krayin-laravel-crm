@@ -1,14 +1,13 @@
 <?php
 
 use App\Enums\PipelineType;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Database\Seeders\TestSeeder;
 use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Repositories\PipelineRepository;
 
-uses(RefreshDatabase::class);
-
 beforeEach(function () {
     $this->pipelineRepository = app(PipelineRepository::class);
+    $this->seed(TestSeeder::class);
 });
 
 test('getDefaultPipelineByType returns default workflow pipeline when exists', function () {

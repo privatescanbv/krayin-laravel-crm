@@ -6,12 +6,13 @@ use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Enums\PipelineType;
 use Carbon\Carbon;
+use Database\Seeders\BaseSeeder;
 use Exception;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Webkul\Lead\Models\Stage;
 
-class PipelineSeeder extends Seeder
+class PipelineSeeder extends BaseSeeder
 {
     /**
      * Seed the application's database.
@@ -22,14 +23,8 @@ class PipelineSeeder extends Seeder
      */
     public function run($parameters = [])
     {
-        if (DB::getDriverName() !== 'sqlite') {
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-        }
-        DB::table('lead_pipeline_stages')->truncate();
-        DB::table('lead_pipelines')->truncate();
-        if (DB::getDriverName() !== 'sqlite') {
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-        }
+        $this->truncateTables(['lead_pipeline_stages', 'lead_pipelines']);
+
         $now = Carbon::now();
         $defaultLocale = $parameters['locale'] ?? config('app.locale');
 

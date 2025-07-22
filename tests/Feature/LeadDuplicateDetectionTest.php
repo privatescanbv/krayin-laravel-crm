@@ -2,125 +2,15 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Database\Seeders\TestSeeder;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
 
 beforeEach(function () {
-    // Set environment to testing so LeadRepository skips relationships
-    app()['env'] = 'testing';
 
-    // Create a fresh in-memory SQLite database for each test
-    config(['database.connections.sqlite.database' => ':memory:']);
-    config(['database.default' => 'sqlite']);
-
-    // Create all tables needed for duplicate detection with relationships
-    Schema::dropIfExists('leads');
-    Schema::dropIfExists('lead_pipeline_stages');
-    Schema::dropIfExists('lead_pipelines');
-    Schema::dropIfExists('lead_types');
-    Schema::dropIfExists('lead_sources');
-    Schema::dropIfExists('persons');
-    Schema::dropIfExists('users');
-Schema::dropIfExists('roles');
-Schema::dropIfExists('attributes');
-
-    Schema::create('roles', function ($table) {
-        $table->increments('id');
-        $table->string('name');
-        $table->text('description')->nullable();
-        $table->string('permission_type')->default('custom');
-        $table->json('permissions')->nullable();
-        $table->timestamps();
-    });
-
-    Schema::create('users', function ($table) {
-        $table->increments('id');
-        $table->string('name');
-        $table->string('email');
-        $table->string('password');
-        $table->boolean('status')->default(true);
-        $table->integer('role_id')->unsigned()->nullable();
-        $table->timestamps();
-    });
-
-    // Create reference tables that the factory needs
-    Schema::create('lead_sources', function ($table) {
-        $table->increments('id');
-        $table->string('name');
-        $table->timestamps();
-    });
-
-    Schema::create('lead_types', function ($table) {
-        $table->increments('id');
-        $table->string('name');
-        $table->timestamps();
-    });
-
-    Schema::create('persons', function ($table) {
-        $table->increments('id');
-        $table->string('name');
-        $table->timestamps();
-    });
-
-    Schema::create('lead_pipelines', function ($table) {
-        $table->increments('id');
-        $table->string('name');
-        $table->timestamps();
-    });
-
-    Schema::create('lead_pipeline_stages', function ($table) {
-        $table->increments('id');
-        $table->string('name');
-        $table->string('code')->nullable();
-        $table->integer('lead_pipeline_id')->unsigned();
-        $table->timestamps();
-    });
-
-    Schema::create('attributes', function ($table) {
-        $table->increments('id');
-        $table->string('code');
-        $table->string('name');
-        $table->string('entity_type');
-        $table->string('type');
-        $table->boolean('is_required')->default(false);
-        $table->boolean('is_unique')->default(false);
-        $table->timestamps();
-    });
-
-    Schema::create('leads', function ($table) {
-        $table->increments('id');
-        $table->string('title');
-        $table->text('description')->nullable();
-        $table->decimal('lead_value', 10, 2)->nullable();
-        $table->boolean('status')->default(true);
-        $table->text('lost_reason')->nullable();
-        $table->timestamp('expected_close_date')->nullable();
-        $table->timestamp('closed_at')->nullable();
-        $table->string('first_name')->nullable();
-        $table->string('last_name')->nullable();
-        $table->json('emails')->nullable();
-        $table->json('phones')->nullable();
-        $table->integer('user_id')->unsigned()->nullable();
-        $table->integer('person_id')->unsigned()->nullable();
-        $table->integer('lead_source_id')->unsigned()->nullable();
-        $table->integer('lead_type_id')->unsigned()->nullable();
-        $table->integer('lead_pipeline_id')->unsigned()->nullable();
-        $table->integer('lead_pipeline_stage_id')->unsigned()->nullable();
-        $table->timestamps();
-    });
-
-    // Create basic data that relationships expect
-    DB::table('roles')->insert(['id' => 1, 'name' => 'Admin', 'permission_type' => 'all', 'created_at' => now(), 'updated_at' => now()]);
-    DB::table('lead_sources')->insert(['id' => 1, 'name' => 'Website', 'created_at' => now(), 'updated_at' => now()]);
-    DB::table('lead_types')->insert(['id' => 1, 'name' => 'New Business', 'created_at' => now(), 'updated_at' => now()]);
-    DB::table('lead_pipelines')->insert(['id' => 1, 'name' => 'Default Pipeline', 'created_at' => now(), 'updated_at' => now()]);
-    DB::table('lead_pipeline_stages')->insert(['id' => 1, 'name' => 'New', 'code' => 'new', 'lead_pipeline_id' => 1, 'created_at' => now(), 'updated_at' => now()]);
-
+    $this->seed(TestSeeder::class);
     // Disable observers during testing to avoid database dependency issues
-    \Webkul\Lead\Models\Lead::unsetEventDispatcher();
-
+    Lead::unsetEventDispatcher();
     $this->leadRepository = app(LeadRepository::class);
 });
 

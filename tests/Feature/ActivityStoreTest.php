@@ -2,12 +2,8 @@
 
 namespace Tests\Feature;
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\User;
-
-uses(RefreshDatabase::class, WithFaker::class);
 
 test('test fields with storing activities', function () {
     // Arrange

@@ -1,10 +1,7 @@
 <?php
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
-
-uses(RefreshDatabase::class);
 
 beforeEach(function () {
 

@@ -22,6 +22,15 @@ beforeEach(function () {
     $this->actingAs($this->user, 'user');
 });
 
+afterEach(function () {
+    // Force authentication reset after each test to prevent race conditions
+    if (isset($this->user)) {
+        $this->actingAs($this->user, 'user');
+        // Clear any cached authentication state
+        auth()->forgetGuards();
+    }
+});
+
 // Helper to get required pipeline/stage data and ensure authentication
 function getPipelineData(): array
 {
@@ -192,6 +201,8 @@ test('can update lead data during sync', function () {
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => $this->user->id, ]);
 
+    // Double authentication for stability
+    $this->actingAs($this->user, 'user');
     test()->actingAs(test()->user, 'user');
     $response = test()->withHeaders([
         'Accept'           => 'application/json',
@@ -347,6 +358,9 @@ test('handles edge case with malformed birth dates', function () {
     // Refresh person to get the malformed date
     $person = $person->fresh();
 
+    // Force re-authentication before this specific request due to DB manipulation
+    $this->actingAs($this->user, 'user');
+    
     $response = authenticatedGet(route('admin.contacts.persons.edit_with_lead', [
         'personId' => $person->id,
         'leadId'   => $lead->id,
@@ -474,6 +488,8 @@ test('manual search without lead_id returns regular results', function () {
     ]);
 
     // Test manual search without lead_id parameter
+    // Double authentication for AJAX stability
+    $this->actingAs($this->user, 'user');
     test()->actingAs(test()->user, 'user');
     $response = test()->withHeaders([
         'X-Requested-With' => 'XMLHttpRequest',

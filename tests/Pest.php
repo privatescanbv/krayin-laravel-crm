@@ -11,7 +11,12 @@
 |
  */
 
-uses(\Tests\TestCase::class)->in('Feature');
+use Illuminate\Contracts\Auth\Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
+use Laravel\Sanctum\Sanctum;
+use Tests\TestCase;
+
+uses(TestCase::class)->in('Feature');
 
 /*
 |--------------------------------------------------------------------------
@@ -54,23 +59,12 @@ function getDefaultAdmin()
 /**
  * Sanctum authenticated admin.
  *
- * @return \Webkul\User\Models\User
+ * @return Authenticatable|HasApiTokens
  */
-function actingAsSanctumAuthenticatedAdmin()
+function actingAsSanctumAuthenticatedAdmin(): HasApiTokens|Authenticatable
 {
-    return \Laravel\Sanctum\Sanctum::actingAs(
+    return Sanctum::actingAs(
         getDefaultAdmin(),
         ['*']
     );
-}
-
-/**
- * Get first name.
- *
- * @param  string  $fullName
- * @return string
- */
-function getFirstName($fullName)
-{
-    return explode(' ', $fullName)[0];
 }

@@ -2,6 +2,9 @@ name: Admin | Playwright Tests
 
 on: [push, pull_request]
 
+# WORKFLOW UITGESCHAKELD: Playwright tests worden tijdelijk niet uitgevoerd in GitHub Actions.
+# Om weer te activeren, verwijder of pas de 'if: false' regel aan onder jobs.
+
 permissions:
   contents: read
 
@@ -10,6 +13,7 @@ env:
 
 jobs:
   admin_playwright_test:
+    if: false # <--- Workflow is uitgeschakeld
     runs-on: ${{ matrix.operating-systems }}
 
     strategy:

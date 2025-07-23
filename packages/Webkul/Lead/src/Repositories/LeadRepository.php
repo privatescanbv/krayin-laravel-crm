@@ -243,11 +243,6 @@ class LeadRepository extends Repository
         ) {
             throw new InvalidArgumentException('Een organisatie mag alleen gekoppeld worden als er ook een contactpersoon is.');
         }
-        logger()->info('Updating lead with data', [
-            'data' => $data['person'],
-            'id' => $id,
-            'attributes' => $attributes,
-        ]);
         /**
          * If a person is provided, create or update the person and set the `person_id`.
          * Be cautious, as a lead can be updated without providing person data.

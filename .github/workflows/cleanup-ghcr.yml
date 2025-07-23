@@ -1,8 +1,9 @@
-name: 🧹 Cleanup GHCR images
+name: Cleanup GHCR images
+
 on:
-  schedule:
-    - cron: '0 2 * * *' # Elke nacht om 02:00
   workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'
 
 jobs:
   cleanup:
@@ -14,5 +15,9 @@ jobs:
           account: privatescanbv
           token: ${{ secrets.GHCR_PAT }}
           image-names: "krayin-laravel-crm/krayincrm"
-          keep: 5
+          image-tags: "!latest"
+          keep-n-most-recent: 3
           dry-run: false
+          tag-selection: both
+          cut-off: '2w'
+          rust-log: info

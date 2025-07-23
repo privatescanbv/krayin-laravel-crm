@@ -32,7 +32,7 @@ test('API request without API key returns 401', function () {
 });
 
 test('API request with invalid API key returns 401', function () {
-    $response = $this->withHeaders([
+    $response = test()->withHeaders([
         'X-API-KEY' => 'invalid-key',
         'Accept'    => 'application/json',
     ])->postJson('/api/leads', [

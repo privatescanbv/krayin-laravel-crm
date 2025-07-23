@@ -5,6 +5,10 @@ namespace Tests\Feature;
 use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\User;
 
+beforeEach(function () {
+    config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
+});
+
 test('test fields with storing activities', function () {
     // Arrange
     $user = User::factory()->create();
@@ -23,7 +27,9 @@ test('test fields with storing activities', function () {
     ];
 
     // Act
-    $response = $this->postJson(route('admin.leads.activities.store', $lead->id), $activityData);
+    $response = test()->withHeaders([
+        'X-API-KEY' => 'valid-api-key-123',
+    ])->postJson(route('admin.leads.activities.store', $lead->id), $activityData);
     $response->assertStatus(200);
 
     // Assert

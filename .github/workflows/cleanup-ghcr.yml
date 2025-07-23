@@ -1,0 +1,18 @@
+name: 🧹 Cleanup GHCR images
+on:
+  schedule:
+    - cron: '0 2 * * *' # Elke nacht om 02:00
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reinig GHCR container images
+        uses: snok/container-retention-policy@v3.0.0
+        with:
+          account: privatescanbv
+          token: ${{ secrets.GHCR_PAT }}
+          image-names: "krayin-laravel-crm/krayincrm"
+          keep: 5
+          dry-run: false

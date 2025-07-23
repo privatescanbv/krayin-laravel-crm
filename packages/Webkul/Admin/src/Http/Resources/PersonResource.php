@@ -14,12 +14,17 @@ class PersonResource extends JsonResource
      */
     public function toArray($request)
     {
+        // Handle null person gracefully
+        if (!$this->resource) {
+            return null;
+        }
+
         $data = [
             'id'              => $this->id,
             'name'            => $this->name,
             'emails'          => $this->emails,
             'contact_numbers' => $this->contact_numbers,
-            'organization'    => new OrganizationResource($this->organization),
+            'organization'    => $this->organization ? new OrganizationResource($this->organization) : null,
             'created_at'      => $this->created_at,
             'updated_at'      => $this->updated_at,
         ];

@@ -38,7 +38,7 @@
 
         @if($duplicates->count() > 0)
             <!-- Duplicates Management Vue Component -->
-            <v-duplicates-manager 
+            <v-duplicates-manager
                 :primary-lead="{{ json_encode($leadData) }}"
                 :duplicates="{{ json_encode($duplicatesData) }}"
                 merge-url="{{ route('admin.leads.duplicates.merge', $lead->id) }}"
@@ -73,7 +73,7 @@
             // Make CSRF token globally available
             window.csrfToken = '{{ csrf_token() }}';
         </script>
-        
+
         <script type="text/x-template" id="v-duplicates-manager-template">
             <div class="flex flex-col gap-4">
                 <!-- Duplicates List -->
@@ -94,8 +94,8 @@
                                         <th class="w-32 p-3 text-left font-semibold">Field</th>
                                         <th class="p-3 text-center text-green-600 min-w-48">
                                             <div class="flex flex-col items-center">
-                                                <input 
-                                                    type="checkbox" 
+                                                <input
+                                                    type="checkbox"
                                                     :checked="selectedLeads.includes(primaryLead.id)"
                                                     @change="toggleLeadSelection(primaryLead.id)"
                                                     class="mb-2"
@@ -104,15 +104,15 @@
                                                 <span class="text-xs text-gray-500">ID: @{{ primaryLead.id }}</span>
                                             </div>
                                         </th>
-                                        <th 
-                                            v-for="duplicate in duplicates" 
+                                        <th
+                                            v-for="duplicate in duplicates"
                                             :key="duplicate.id"
                                             class="p-3 text-center min-w-48"
                                             :class="{ 'text-blue-600': selectedLeads.includes(duplicate.id) }"
                                         >
                                             <div class="flex flex-col items-center">
-                                                <input 
-                                                    type="checkbox" 
+                                                <input
+                                                    type="checkbox"
                                                     :checked="selectedLeads.includes(duplicate.id)"
                                                     @change="toggleLeadSelection(duplicate.id)"
                                                     class="mb-2"
@@ -129,9 +129,9 @@
                                         <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Title</td>
                                         <td class="p-3">
                                             <label class="flex flex-col items-center">
-                                                <input 
-                                                    type="radio" 
-                                                    name="title" 
+                                                <input
+                                                    type="radio"
+                                                    name="title"
                                                     :value="primaryLead.id"
                                                     v-model="fieldMappings.title"
                                                     class="mb-2"
@@ -139,15 +139,15 @@
                                                 <span class="text-sm text-center break-words">@{{ primaryLead.title }}</span>
                                             </label>
                                         </td>
-                                        <td 
-                                            v-for="duplicate in duplicates" 
+                                        <td
+                                            v-for="duplicate in duplicates"
                                             :key="duplicate.id"
                                             class="p-3"
                                         >
                                             <label class="flex flex-col items-center">
-                                                <input 
-                                                    type="radio" 
-                                                    name="title" 
+                                                <input
+                                                    type="radio"
+                                                    name="title"
                                                     :value="duplicate.id"
                                                     v-model="fieldMappings.title"
                                                     class="mb-2"
@@ -163,8 +163,8 @@
                                         <td class="p-3 text-center">
                                             <span class="text-sm">@{{ primaryLead.pipeline?.name || 'N/A' }}</span>
                                         </td>
-                                        <td 
-                                            v-for="duplicate in duplicates" 
+                                        <td
+                                            v-for="duplicate in duplicates"
                                             :key="duplicate.id"
                                             class="p-3 text-center"
                                         >
@@ -178,8 +178,8 @@
                                         <td class="p-3 text-center">
                                             <span class="text-sm">@{{ primaryLead.stage?.name || 'N/A' }}</span>
                                         </td>
-                                        <td 
-                                            v-for="duplicate in duplicates" 
+                                        <td
+                                            v-for="duplicate in duplicates"
                                             :key="duplicate.id"
                                             class="p-3 text-center"
                                         >
@@ -192,9 +192,9 @@
                                         <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">First Name</td>
                                         <td class="p-3">
                                             <label class="flex flex-col items-center">
-                                                <input 
-                                                    type="radio" 
-                                                    name="first_name" 
+                                                <input
+                                                    type="radio"
+                                                    name="first_name"
                                                     :value="primaryLead.id"
                                                     v-model="fieldMappings.first_name"
                                                     class="mb-2"
@@ -202,15 +202,15 @@
                                                 <span class="text-sm text-center break-words">@{{ primaryLead.first_name }}</span>
                                             </label>
                                         </td>
-                                        <td 
-                                            v-for="duplicate in duplicates" 
+                                        <td
+                                            v-for="duplicate in duplicates"
                                             :key="duplicate.id"
                                             class="p-3"
                                         >
                                             <label class="flex flex-col items-center">
-                                                <input 
-                                                    type="radio" 
-                                                    name="first_name" 
+                                                <input
+                                                    type="radio"
+                                                    name="first_name"
                                                     :value="duplicate.id"
                                                     v-model="fieldMappings.first_name"
                                                     class="mb-2"
@@ -225,9 +225,9 @@
                                         <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Last Name</td>
                                         <td class="p-3">
                                             <label class="flex flex-col items-center">
-                                                <input 
-                                                    type="radio" 
-                                                    name="last_name" 
+                                                <input
+                                                    type="radio"
+                                                    name="last_name"
                                                     :value="primaryLead.id"
                                                     v-model="fieldMappings.last_name"
                                                     class="mb-2"
@@ -235,15 +235,15 @@
                                                 <span class="text-sm text-center break-words">@{{ primaryLead.last_name }}</span>
                                             </label>
                                         </td>
-                                        <td 
-                                            v-for="duplicate in duplicates" 
+                                        <td
+                                            v-for="duplicate in duplicates"
                                             :key="duplicate.id"
                                             class="p-3"
                                         >
                                             <label class="flex flex-col items-center">
-                                                <input 
-                                                    type="radio" 
-                                                    name="last_name" 
+                                                <input
+                                                    type="radio"
+                                                    name="last_name"
                                                     :value="duplicate.id"
                                                     v-model="fieldMappings.last_name"
                                                     class="mb-2"
@@ -258,9 +258,9 @@
                                         <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Emails</td>
                                         <td class="p-3">
                                             <label class="flex flex-col items-center">
-                                                <input 
-                                                    type="radio" 
-                                                    name="emails" 
+                                                <input
+                                                    type="radio"
+                                                    name="emails"
                                                     :value="primaryLead.id"
                                                     v-model="fieldMappings.emails"
                                                     class="mb-2"
@@ -273,15 +273,15 @@
                                                 </div>
                                             </label>
                                         </td>
-                                        <td 
-                                            v-for="duplicate in duplicates" 
+                                        <td
+                                            v-for="duplicate in duplicates"
                                             :key="duplicate.id"
                                             class="p-3"
                                         >
                                             <label class="flex flex-col items-center">
-                                                <input 
-                                                    type="radio" 
-                                                    name="emails" 
+                                                <input
+                                                    type="radio"
+                                                    name="emails"
                                                     :value="duplicate.id"
                                                     v-model="fieldMappings.emails"
                                                     class="mb-2"
@@ -301,9 +301,9 @@
                                         <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Phones</td>
                                         <td class="p-3">
                                             <label class="flex flex-col items-center">
-                                                <input 
-                                                    type="radio" 
-                                                    name="phones" 
+                                                <input
+                                                    type="radio"
+                                                    name="phones"
                                                     :value="primaryLead.id"
                                                     v-model="fieldMappings.phones"
                                                     class="mb-2"
@@ -316,15 +316,15 @@
                                                 </div>
                                             </label>
                                         </td>
-                                        <td 
-                                            v-for="duplicate in duplicates" 
+                                        <td
+                                            v-for="duplicate in duplicates"
                                             :key="duplicate.id"
                                             class="p-3"
                                         >
                                             <label class="flex flex-col items-center">
-                                                <input 
-                                                    type="radio" 
-                                                    name="phones" 
+                                                <input
+                                                    type="radio"
+                                                    name="phones"
                                                     :value="duplicate.id"
                                                     v-model="fieldMappings.phones"
                                                     class="mb-2"
@@ -352,13 +352,13 @@
                                     </div>
                                 </div>
                                 <div class="flex gap-3">
-                                    <a 
-                                        :href="redirectUrl" 
+                                    <a
+                                        :href="redirectUrl"
                                         class="rounded border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                                     >
                                         Cancel
                                     </a>
-                                    <button 
+                                    <button
                                         @click="mergeLeads"
                                         :disabled="selectedLeads.length < 2 || isLoading"
                                         class="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -397,12 +397,12 @@
                     console.log('Primary lead:', this.primaryLead);
                     console.log('Duplicates:', this.duplicates);
                     console.log('CSRF token from props:', this.csrfToken);
-                    
+
                     // Test CSRF token availability
                     const metaToken = document.querySelector('meta[name="csrf-token"]');
                     console.log('Meta CSRF token element:', metaToken);
                     console.log('Meta CSRF token value:', metaToken ? metaToken.getAttribute('content') : 'not found');
-                    
+
                     const formToken = document.querySelector('#csrf-form input[name="_token"]');
                     console.log('Form CSRF token element:', formToken);
                     console.log('Form CSRF token value:', formToken ? formToken.value : 'not found');
@@ -413,7 +413,7 @@
                             // Primary lead must always be selected
                             return;
                         }
-                        
+
                         const index = this.selectedLeads.indexOf(leadId);
                         if (index > -1) {
                             this.selectedLeads.splice(index, 1);
@@ -435,36 +435,36 @@
 
                         try {
                             const duplicateIds = this.selectedLeads.filter(id => id !== this.primaryLead.id);
-                            
+
                             // Get CSRF token with fallback methods
                             let csrfToken = this.csrfToken;
-                            
+
                             // Fallback 1: Try meta tag
                             if (!csrfToken) {
                                 const csrfTokenElement = document.querySelector('meta[name="csrf-token"]');
                                 csrfToken = csrfTokenElement ? csrfTokenElement.getAttribute('content') : '';
                             }
-                            
+
                             // Fallback 2: Try Laravel.csrfToken if available
                             if (!csrfToken && typeof window.Laravel !== 'undefined' && window.Laravel.csrfToken) {
                                 csrfToken = window.Laravel.csrfToken;
                             }
-                            
+
                             // Fallback 3: Try hidden form CSRF token
                             if (!csrfToken) {
                                 const csrfInput = document.querySelector('#csrf-form input[name="_token"]');
                                 csrfToken = csrfInput ? csrfInput.value : '';
                             }
-                            
+
                             // Fallback 4: Try global window.csrfToken
                             if (!csrfToken && window.csrfToken) {
                                 csrfToken = window.csrfToken;
                             }
-                            
+
                             if (!csrfToken) {
                                 throw new Error('CSRF token not found. Please refresh the page and try again.');
                             }
-                            
+
                             const response = await fetch(this.mergeUrl, {
                                 method: 'POST',
                                 headers: {
@@ -486,7 +486,6 @@
                             const result = await response.json();
 
                             if (result.success) {
-                                alert('Leads successfully merged!');
                                 window.location.href = this.redirectUrl;
                             } else {
                                 alert('Error merging leads: ' + (result.message || 'Unknown error occurred'));

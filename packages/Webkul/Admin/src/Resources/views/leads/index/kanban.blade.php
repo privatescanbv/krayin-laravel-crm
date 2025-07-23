@@ -131,11 +131,11 @@
                                     <div class="flex items-start justify-between">
                                        <div class="flex items-center gap-1">
                                            <div v-if="element.person?.name || element.first_name">
-                                               <x-admin::avatar ::name="element.person ? element.person.name : element.first_name" class="w-6 h-6" />
+                                               <x-admin::avatar ::name="element.person?.name || element.first_name" class="w-6 h-6" />
                                            </div>
                                            <div class="flex flex-col gap-0.5">
                                                <span class="text-[11px] font-medium">
-                                                   @{{ element.person ? element.person.name : element.first_name }}
+                                                   @{{ element.person?.name || element.first_name }}
                                                </span>
                                                <span class="text-[9px] leading-normal">
                                                    @{{ element.person?.organization?.name }}
@@ -190,8 +190,9 @@
                                             <span class="icon-settings-user text-xs"></span>
                                             @{{ element.user.name }}
                                         </div>
-                                        <div class="rounded-xl bg-gray-200 px-2 py-0.5 text-[10px] font-medium dark:bg-gray-800 dark:text-white">
-                                            @{{ element.source.name }}
+                                        <div class="rounded-xl bg-gray-200 px-2 py-0.5 text-[10px] font-medium dark:bg-gray-800 dark:text-white"
+                                             v-if="element.source">
+                                            @{{ element.source?.name }}
                                         </div>
                                         <!-- Tags -->
                                         <template v-for="tag in element.tags">
@@ -227,25 +228,25 @@
 
                                         <!-- Days Until Due Date -->
                                         <div class="text-[10px] text-gray-600 dark:text-gray-400">
-                                            <span 
+                                            <span
                                                 v-if="element.days_until_due_date === null"
                                                 class="text-gray-500"
                                             >
                                                 -
                                             </span>
-                                            <span 
+                                            <span
                                                 v-else-if="element.days_until_due_date > 0"
                                                 class="text-green-600"
                                             >
                                                 @{{ element.days_until_due_date }}d
                                             </span>
-                                            <span 
+                                            <span
                                                 v-else-if="element.days_until_due_date === 0"
                                                 class="text-orange-600 font-medium"
                                             >
                                                 @lang('admin::app.common.filters.date-range.today')
                                             </span>
-                                            <span 
+                                            <span
                                                 v-else
                                                 class="text-red-600 font-medium"
                                             >

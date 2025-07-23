@@ -1,0 +1,249 @@
+=== SugarCRM Lead Import
+
+Deze functie importeert leads uit een SugarCRM database naar Krayin CRM, inclusief anamnese gegevens en pipeline mapping.
+
+==== Configuratie
+
+===== Database Connectie
+
+Voeg de volgende variabelen toe aan je `.env` bestand:
+
+[source,env]
+----
+# SugarCRM Database Connectie
+SUGARCRM_DB_HOST=127.0.0.1
+SUGARCRM_DB_PORT=3306
+SUGARCRM_DB_DATABASE=sugarcrm
+SUGARCRM_DB_USERNAME=your_username
+SUGARCRM_DB_PASSWORD=your_password
+SUGARCRM_DB_PREFIX=
+----
+
+===== SugarCRM Tabel Structuur
+
+De import functie verwacht de volgende tabellen in de SugarCRM database:
+
+**`leads` tabel:**
+
+* `id` - Unieke ID
+* `first_name` - Voornaam
+* `last_name` - Achternaam
+* `salutation` - Aanhef
+* `phone_work` - Werk telefoon
+* `phone_mobile` - Mobiele telefoon
+* `phone_home` - Thuis telefoon
+* `birthdate` - Geboortedatum
+* `status` - Lead status
+* `date_entered` - Aanmaakdatum
+* `date_modified` - Wijzigingsdatum
+* `deleted` - Verwijderd (0/1)
+
+**`leads_cstm` tabel (custom velden):**
+
+* `id_c` - Koppeling naar leads.id
+* `gender_c` - Geslacht
+* `workflow_status_c` - Workflow status
+* `anamnese_c` - Anamnese beschrijving
+* `lengte_c` - Lengte (cm)
+* `gewicht_c` - Gewicht (kg)
+* `metalen_c` - Metalen in lichaam (0/1)
+* `medicijnen_c` - Medicijngebruik (0/1)
+* `glaucoom_c` - Glaucoom (0/1)
+* `claustrofobie_c` - Claustrofobie (0/1)
+* `dormicum_c` - Dormicum nodig (0/1)
+* `hart_erfelijk_c` - Erfelijke hartziekten (0/1)
+* `vaat_erfelijk_c` - Erfelijke vaatziekten (0/1)
+* `tumoren_erfelijk_c` - Erfelijke tumoren (0/1)
+* `smoking_c` - Roken (0/1)
+* `heart_problems_c` - Hartproblemen (0/1)
+* `rugklachten_c` - Rugklachten (0/1)
+* `diabetes_c` - Diabetes (0/1)
+* `spijverteringsklachten_c` - Spijsverteringsproblemen (0/1)
+* `allergie_c` - Allergieën (0/1)
+* `hart_operatie_c` - Hartoperaties (0/1)
+* `implantaat_c` - Implantaten (0/1)
+* `operaties_c` - Operaties (0/1)
+* Plus alle `opm_*_c` velden voor opmerkingen
+
+**Email tabellen (optioneel):**
+
+* `email_addr_bean_rel` - Email koppeling
+* `email_addresses` - Email adressen
+
+==== Pipeline Mapping
+
+Alle leads worden geïmporteerd naar de **Privatescan pipeline (ID: 1)**.
+
+===== Stage Mapping
+
+[cols="2,3,1"]
+|===
+|SugarCRM Workflow Status |Krayin Pipeline Stage |Stage ID
+
+|`nieuweaanvraag`, `nieuwe-aanvraag`, `kwalificeren`
+|Nieuwe aanvraag kwalificeren
+|1
+
+|`adviseren`, `klant-adviseren`, `adviseren-start`
+|Klant adviseren
+|2
+
+|`opvolgen`, `adviseren-opvolgen`
+|Klant adviseren opvolgen
+|3
+
+|`won`, `converted`
+|Won
+|4
+
+|`lost`, `dead`
+|Lost
+|5
+|===
+
+**Prioriteit:** Lead status heeft voorrang over workflow status. Als geen mapping wordt gevonden, wordt stage 1 gebruikt.
+
+==== Gebruik
+
+===== Basis Import
+
+[source,bash]
+----
+# Dry-run - toon wat er geïmporteerd zou worden
+sail artisan import:leads-from-sugarcrm --dry-run
+
+# Import 50 leads (standaard: 100)
+sail artisan import:leads-from-sugarcrm --limit=50
+
+# Import met andere database connectie
+sail artisan import:leads-from-sugarcrm --connection=sugarcrm_prod
+----
+
+===== Parameters
+
+[cols="1,3,1"]
+|===
+|Parameter |Beschrijving |Standaard
+
+|`--connection`
+|Database connectie naam
+|`sugarcrm`
+
+|`--limit`
+|Aantal leads om te importeren
+|`100`
+
+|`--dry-run`
+|Test de import zonder daadwerkelijk data op te slaan
+|`false`
+|===
+
+===== Dry-Run Output
+
+[source,text]
+----
+=== DRY RUN RESULTS ===
+┌──────────────┬────────────┬───────────┬─────────────┬────────────┬──────────┬─────────────────┬──────────┬─────────────┬──────────────┐
+│ ID           │ First Name │ Last Name │ Email       │ Phone      │ Status   │ Workflow Status │ Stage ID │ Date Entered│ Person Match │
+├──────────────┼────────────┼───────────┼─────────────┼────────────┼──────────┼─────────────────┼──────────┼─────────────┼──────────────┤
+│ abc-123-def  │ Jan        │ Jansen    │ jan@test.nl │ 0612345678 │ New      │ nieuweaanvraag  │ 1        │ 2024-01-15  │ ✓ Jan Jansen │
+│ def-456-ghi  │ Marie      │ Bakker    │ N/A         │ 0687654321 │ Assigned │ adviseren       │ 2        │ 2024-01-14  │ ✗ Not found  │
+└──────────────┴────────────┴───────────┴─────────────┴────────────┴──────────┴─────────────────┴──────────┴─────────────┴──────────────┘
+Would import 2 leads
+----
+
+===== Import Output
+
+[source,text]
+----
+Starting lead import from SugarCRM...
+Connection: sugarcrm
+Limit: 50
+Dry run: No
+Testing database connection...
+✓ Database connection successful
+Found 50 records to import
+ 50/50 [████████████████████████████] 100%
+
+Import completed!
+✓ Imported: 45
+⚠ Skipped: 2
+✗ Person not found: 3
+✗ Errors: 0
+----
+
+==== Person Matching
+
+De importer zoekt naar bestaande personen in de volgende volgorde:
+
+1. **Email adres** - Exacte match in `emails` veld
+2. **Telefoonnummer** - Match in `phones` of `contact_numbers` velden
+3. **Voor- en achternaam** - Exacte match van beide velden
+
+**Belangrijk:** Als geen persoon wordt gevonden, wordt de lead **niet** geïmporteerd en wordt een foutmelding getoond.
+
+==== Anamnese Data
+
+Alle anamnese gegevens uit `leads_cstm` worden automatisch geïmporteerd naar de `Anamnesis` tabel:
+
+* **Medische geschiedenis** - Hart, diabetes, roken, rugklachten, etc.
+* **Erfelijke aandoeningen** - Hart, vaten, tumoren
+* **Operaties en implantaten** - Inclusief opmerkingen
+* **Allergieën en medicijnen** - Met details
+* **Fysieke gegevens** - Lengte, gewicht
+* **Opmerkingen** - Alle `opm_*_c` velden
+
+==== Belangrijke Opmerkingen
+
+* **Vereiste:** Personen moeten al geïmporteerd zijn voordat leads kunnen worden geïmporteerd
+* **Volgorde:** Nieuwste leads worden eerst geïmporteerd (ORDER BY date_entered DESC)
+* **Filter:** Alleen leads met `deleted = 0` worden geïmporteerd
+* **Duplicaten:** Leads met dezelfde titel worden overgeslagen
+* **Pipeline:** Alle leads gaan naar Privatescan pipeline (ID: 1)
+* **Anamnese ID:** SugarCRM lead ID wordt gebruikt als anamnese ID
+
+==== Troubleshooting
+
+===== Veelvoorkomende Problemen
+
+**Database Connectie Fout**
+[source,text]
+----
+SQLSTATE[HY000] [2002] Connection refused
+----
+
+*Oplossing:* Controleer of de SugarCRM database toegankelijk is en de credentials correct zijn.
+
+**Person Not Found Errors**
+[source,text]
+----
+Person not found for lead: Jan Jansen (ID: abc-123)
+----
+
+*Oplossing:*
+1. Importeer eerst alle personen met `import:persons-from-sugarcrm`
+2. Controleer of email/telefoon/naam overeenkomt tussen leads en persons
+3. Gebruik `--dry-run` om te controleren welke personen niet gevonden worden
+
+**Memory Limit Overschreden**
+[source,text]
+----
+Fatal error: Allowed memory size exhausted
+----
+
+*Oplossing:* Gebruik een kleinere `--limit` waarde of verhoog het PHP memory limit.
+
+**Anamnesis Creation Failed**
+[source,text]
+----
+SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry
+----
+
+*Oplossing:* SugarCRM lead ID bestaat al in anamnesis tabel. Controleer op duplicaten of gebruik andere ID strategie.
+
+===== Debug Tips
+
+1. Gebruik altijd `--dry-run` eerst om de data te controleren
+2. Start met een kleine `--limit` (bijv. 10) voor testing
+3. Controleer de Laravel logs voor gedetailleerde foutmeldingen
+4. Verifieer dat alle vereiste tabellen bestaan in SugarCRM database

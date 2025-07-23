@@ -37,6 +37,7 @@ Zet sugarcrm database op de server, vanuit hier te importeren. (gezien de server
 
 include::cmd/cmd-import-sugarcrm-contacts.adoc[]
 
+include::cmd/cmd-import-sugarcrm-leads.adoc[]
 
 include::cmd/cmd-create-leads.adoc[]
 

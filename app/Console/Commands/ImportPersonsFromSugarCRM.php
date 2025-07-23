@@ -74,6 +74,7 @@ class ImportPersonsFromSugarCRM extends Command
                     'ea.email_address as email',
                 ])
                 ->where('c.deleted', 0)
+                ->orderBy('c.date_entered', 'desc') // Nieuwste eerst
                 ->limit($limit)
                 ->get();
 

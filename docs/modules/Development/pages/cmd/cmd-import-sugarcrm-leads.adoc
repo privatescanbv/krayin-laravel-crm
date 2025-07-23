@@ -110,13 +110,13 @@ Alle leads worden geïmporteerd naar de **Privatescan pipeline (ID: 1)**.
 [source,bash]
 ----
 # Dry-run - toon wat er geïmporteerd zou worden
-sail artisan import:leads-from-sugarcrm --dry-run
+sail artisan import:leads --dry-run
 
 # Import 50 leads (standaard: 100)
-sail artisan import:leads-from-sugarcrm --limit=50
+sail artisan import:leads --limit=50
 
 # Import met andere database connectie
-sail artisan import:leads-from-sugarcrm --connection=sugarcrm_prod
+sail artisan import:leads --connection=sugarcrm_prod
 ----
 
 ===== Parameters
@@ -221,7 +221,7 @@ Person not found for lead: Jan Jansen (ID: abc-123)
 ----
 
 *Oplossing:*
-1. Importeer eerst alle personen met `import:persons-from-sugarcrm`
+1. Importeer eerst alle personen met `import:persons`
 2. Controleer of email/telefoon/naam overeenkomt tussen leads en persons
 3. Gebruik `--dry-run` om te controleren welke personen niet gevonden worden
 

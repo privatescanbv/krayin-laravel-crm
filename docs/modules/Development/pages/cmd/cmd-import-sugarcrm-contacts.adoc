@@ -40,13 +40,13 @@ De import functie verwacht de volgende kolommen in de SugarCRM `contacts` tabel:
 [source,bash]
 ----
 # Import 10 contactpersonen (standaard)
-sail artisan import:persons-from-sugarcrm
+sail artisan import:persons
 
 # Import specifiek aantal contactpersonen
-sail artisan import:persons-from-sugarcrm --limit=100
+sail artisan import:persons --limit=100
 
 # Import alle contactpersonen
-sail artisan import:persons-from-sugarcrm --limit=10000
+sail artisan import:persons --limit=10000
 ----
 
 ===== Parameters

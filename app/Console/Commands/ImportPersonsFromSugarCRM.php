@@ -16,7 +16,7 @@ class ImportPersonsFromSugarCRM extends Command
      *
      * @var string
      */
-    protected $signature = 'import:persons-from-sugarcrm
+    protected $signature = 'import:persons
                             {--connection=sugarcrm : Database connection name}
                             {--table=contacts : Source table name}
                             {--limit=100 : Number of records to import}

@@ -19,7 +19,7 @@ class ImportLeadsFromSugarCRM extends Command
      *
      * @var string
      */
-    protected $signature = 'import:leads-from-sugarcrm
+    protected $signature = 'import:leads
                             {--connection=sugarcrm : Database connection name}
                             {--limit=100 : Number of records to import}
                             {--dry-run : Show what would be imported without actually importing}';

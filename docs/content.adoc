@@ -19,7 +19,7 @@ include::modules/application/pages/application.adoc[]
 include::modules/technology_stack/pages/tech_stack.adoc[]
 
 == Development
-include::modules/technology_stack/pages/dev.adoc[]
+include::modules/Development/pages/dev.adoc[]
 
 include::modules/continuous_delivery/pages/cd.adoc[]
 

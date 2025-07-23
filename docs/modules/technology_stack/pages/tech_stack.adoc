@@ -44,7 +44,19 @@ Firewall --> Internet : Uitgaand verkeer
 
 === Technologie Stack
 
-==== Backend
+Het CRM systeem is gebaseerd op de volgende kerntechnologieën:
+
+* **Laravel Framework**: Gekozen voor zijn robuuste MVC architectuur, uitgebreide ecosystem en security features
+* **Vue.js**: Voor een moderne, reactieve gebruikersinterface met component-based development
+* **MySQL**: Relationele database voor consistente data opslag en ACID compliance
+* **Docker**: Voor containerisatie en consistente deployment environments
+* **Modular Package Structure**: Krayin's modulaire opbouw via Webkul packages voor schaalbaarheid
+
+NOTE: Voor een uitgebreide uitleg van alle tool keuzes en technische implementatie details, zie: link:#_tool_keuzes_technische_implementatie[Tool Keuzes & Technische Implementatie]
+
+==== Systeem Architectuur
+**Backend**
+
 De applicatie is gebouwd met de volgende backend technologieën:
 
 * Laravel Framework (v10.x)
@@ -53,13 +65,17 @@ De applicatie is gebouwd met de volgende backend technologieën:
   ** Laravel Sail voor development environment
   ** Laravel Sanctum voor API authenticatie
 
-==== Frontend
+**Frontend**
+
 De frontend is gebouwd met:
 
 * Blade templates
 * Tailwind CSS voor styling
 * Alpine.js voor interactiviteit
+* Vue.js met Laravel UI
 * Livewire voor real-time updates
+
+
 
 ==== Development Tools
 De volgende tools worden gebruikt voor development:
@@ -93,3 +109,22 @@ De applicatie integreert met:
 * CRM API voor patiënt- en orderregel data
 * PDF parser voor factuur extractie
 * Mail service voor notificaties
+
+==== Kernmodules
+
+Het systeem bestaat uit de volgende hoofdmodules:
+
+* **Admin**: Beheerinterface en dashboard
+* **Lead**: Lead management en conversie
+* **Backoffice**: Workflow na lead conversie
+* **Contact**: Contact- en relatiebeheer
+* **Activity**: Activiteiten tracking
+* **Email**: E-mail integratie en templates
+* **Product**: Product catalogus beheer
+* **Quote**: Offerte generatie
+* **User**: Gebruikersbeheer en authenticatie
+* **Automation**: Workflow automatisering
+* **WebForm**: Web formulieren voor lead capture
+
+
+include::tool-keuzes.adoc[]

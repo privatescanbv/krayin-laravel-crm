@@ -1,0 +1,192 @@
+==== Dagelijkse Werkwijze Checklist
+
+===== Taak Oppakken
+1. ✅ Ga naar Trello board: https://trello.com/b/iONGaeXJ/taken-mm
+2. ✅ Kies taak uit backlog / current sprint
+3. ✅ Verplaats naar "In Progress" lane
+4. ✅ Voeg jezelf toe als member aan de kaart
+
+===== Tijdens Development
+1. ✅ Werk lokaal met `php artisan serve` of Docker
+2. ✅ Commit regelmatig met duidelijke messages
+3. ✅ Run tests voor elke wijziging: `php artisan test`
+4. ✅ Update Trello kaart met voortgang
+
+===== Implementatie/ontwerp taak Afronden
+1. ✅ Final testing van functionaliteit
+2. ✅ Code review zelf uitvoeren
+3. ✅ Verplaats naar "Review" lane in Trello
+4. ✅ Voeg reviewer toe aan kaart
+5. ✅ Beschrijf wat er getest moet worden
+
+
+===== Taak Afronden
+1. ✅ Na opleveren komt deze in review lane in Trello
+   - Indien de reviewer akkoord geeft, dan zet je de taak op "completed" of sleep je deze naar lane "Done" (automatisering zorgt ervoor dat altijd beide gebeuren). Voeg opmerking toe wat er bekeken is.
+   - Indien de reviewer geen akkoord geeft, dan terug zetten in "In Progress", moet opmerking wat de feedback is.
+
+
+===== Wekelijkse Uren Registratie (Maandag)
+1. ✅ Open uren sheet: link:https://docs.google.com/spreadsheets/d/1eSzE_QESgNRYwMp4o1xD3Y7GVNgOwQCsfEHva4C1QbM/edit?gid=479078650#gid=479078650[uren registratie]
+2. ✅ Vul werkelijke uren in voor afgelopen week
+3. ✅ Vergelijk met geplande uren
+4. ✅ Pas planning bij indien nodig
+5. ✅ Update Trello taken status
+
+==== Belangrijke Links
+
+[cols="2,3"]
+|===
+|Resource |URL
+
+|**Trello Board**
+|https://trello.com/b/iONGaeXJ/taken-mm
+
+|**Uren Registratie**
+|https://docs.google.com/spreadsheets/d/1eSzE_QESgNRYwMp4o1xD3Y7GVNgOwQCsfEHva4C1QbM/edit?gid=479078650#gid=479078650
+
+|**Krayin CRM Docs**
+|https://devdocs.krayincrm.com/
+
+|**Laravel Docs**
+|https://laravel.com/docs
+
+|**Local Development**
+|http://localhost:8000
+
+|**Admin Login**
+|http://localhost:8000/admin/login
+|===
+
+
+
+==== Veelgebruikte Commands
+
+==== Development Setup
+```bash
+# Start lokale development
+php artisan serve
+
+# Start met Docker
+docker-compose up -d
+
+# Database reset
+php artisan migrate:fresh --seed
+```
+
+==== Testing
+```bash
+# Alle tests
+php artisan test
+
+# Specifieke test
+php artisan test --filter=LeadTest
+
+# Integration tests
+./run-integration-test.sh
+```
+
+==== Cache & Debug
+```bash
+# Cache legen
+php artisan cache:clear
+php artisan config:clear
+php artisan route:clear
+
+# Debug mode
+php artisan tinker
+```
+
+==== Review Process
+
+===== Als Ontwikkelaar
+1. **Voor Review**: Zorg voor complete implementatie
+2. **Review Aanvragen**: Verplaats naar "Review" + tag reviewer
+3. **Feedback Verwerken**: Bij afkeuring terug naar "In Progress"
+4. **Completion**: Bij goedkeuring automatisch naar "Done"
+
+===== Als Reviewer
+1. **Code Quality**: Check coding standards
+2. **Functionaliteit**: Test volgens requirements
+3. **Documentation**: Controleer code comments
+4. **Feedback**: Geef duidelijke feedback in Trello
+
+==== Planning Guidelines
+
+===== Maandelijkse Planning
+* **Thema-gebaseerd**: Focus op 1-2 hoofdthema's per maand
+* **10 Items Max**: Niet meer dan 10 taken per maand plannen
+* **Buffer Time**: 20% buffer voor onverwachte taken
+* **Review Moment**: Elke maand planning evalueren
+
+===== Capaciteitsplanning
+* Verwachte doorlooptijd per thema wordt vooraf ingeschat
+* Maandelijkse review van geplande vs werkelijke voortgang
+* Bijsturing op basis van werkelijke doorlooptijden
+* **8 uur per dag** standaard
+* **8/32 uur per week** afhankelijk van beschikbaarheid. Leg toekomstige beschikbaarheid van in de uren sheet.
+* **Vakantie/ziekte** vooraf communiceren
+* **Overwerk** alleen in uitzonderlijke gevallen
+
+===== Maandelijkse Thema Planning
+* Planning wordt gedaan op **thema niveau per maand**
+* Onderwerpen worden opgedeeld in **maximaal 10 items per maand**
+* Dit biedt voldoende granulariteit voor monitoring en bijsturing
+
+==== Troubleshooting Snelgids
+
+==== Veelvoorkomende Problemen
+
+**Database Connection Error**
+```bash
+# Check .env configuratie
+cat .env | grep DB_
+
+# Test database connectie
+php artisan tinker
+>>> DB::connection()->getPdo()
+```
+
+**Permission Denied**
+```bash
+# Fix storage permissions
+sudo chmod -R 775 storage bootstrap/cache
+sudo chown -R $USER:www-data storage bootstrap/cache
+```
+
+**Docker Issues**
+```bash
+# Restart containers
+docker-compose down && docker-compose up -d
+
+# Check logs
+docker-compose logs crm
+```
+
+**Frontend Build Errors**
+```bash
+# Clear node modules
+rm -rf node_modules package-lock.json
+npm install
+
+# Rebuild assets
+./build.sh (doet een npm run build op root level en in admin module)
+```
+
+
+==== Best Practices Samenvatting
+
+✅ **DO:**
+* Commit vaak met duidelijke messages
+* Test voor elke push
+* Update Trello regelmatig
+* Vraag hulp bij onduidelijkheden
+* Documenteer complexe code
+* Volg coding standards (Pint)
+
+❌ **DON'T:**
+* Push zonder tests
+* Vergeet Trello updates
+* Werk aan meerdere taken tegelijk
+* Hardcode configuratie waarden
+* Negeer linting errors

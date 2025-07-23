@@ -1,3 +1,6 @@
+=== Werkwijze
+
+include::quick-reference.adoc[]
 
 === Local Development Setup
 

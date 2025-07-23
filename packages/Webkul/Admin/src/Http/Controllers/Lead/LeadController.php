@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\DataGrids\Lead\LeadDataGrid;
@@ -32,6 +33,7 @@ use Webkul\Lead\Repositories\TypeRepository;
 use Webkul\Lead\Services\MagicAIService;
 use Webkul\Tag\Repositories\TagRepository;
 use Webkul\User\Repositories\UserRepository;
+use InvalidArgumentException;
 
 class LeadController extends Controller
 {
@@ -159,84 +161,101 @@ class LeadController extends Controller
      */
     public function store(LeadForm $request): RedirectResponse
     {
-        $request->validate([
-            'first_name' => ['required', 'string'],
-            'last_name' => ['required', 'string'],
-            'emails' => ['nullable', 'array'],
-            'emails.*.value' => ['nullable', new EmailValidator()],
-            'emails.*.label' => ['nullable', 'string'],
-            'phones' => ['nullable', 'array'],
-            'phones.*.value' => ['nullable', new PhoneValidator()],
-            'phones.*.label' => ['nullable', 'string'],
-            'date_of_birth' => ['nullable', new DateValidator()],
-            'organization_id' => ['nullable', 'exists:organizations,id', function ($attribute, $value, $fail) use ($request) {
-                if ($value && !$request->input('person_id')) {
-                    $fail('Een organisatie kan alleen gekoppeld worden als er ook een contactpersoon is gekoppeld.');
+            $request->validate([
+                'first_name' => ['required', 'string'],
+                'last_name' => ['required', 'string'],
+                'emails' => ['nullable', 'array'],
+                'emails.*.value' => ['nullable', new EmailValidator()],
+                'emails.*.label' => ['nullable', 'string'],
+                'phones' => ['nullable', 'array'],
+                'phones.*.value' => ['nullable', new PhoneValidator()],
+                'phones.*.label' => ['nullable', 'string'],
+                'date_of_birth' => ['nullable', new DateValidator()],
+                'organization_id' => ['nullable', 'exists:organizations,id', function ($attribute, $value, $fail) use ($request) {
+                    if ($value && !$request->input('person_id')) {
+                        $fail('Een organisatie kan alleen gekoppeld worden als er ook een contactpersoon is gekoppeld.');
+                    }
+                }],
+            ]);
+            try {
+                [$lead, $leadPipelineId] = $this->storeLead($request);
+
+                session()->flash('success', trans('admin::app.leads.create-success'));
+
+                return redirect()->route('admin.leads.index', ['pipeline_id' => $leadPipelineId]);
+            } catch (InvalidArgumentException $e) {
+                if (request()->ajax()) {
+                    throw new ValidationException(
+                        Validator::make([], []),
+                        response()->json([
+                            'message' => $e->getMessage(),
+                        ], 422)
+                    );
                 }
-            }],
-        ]);
-        [$lead, $leadPipelineId] =  $this->storeLead($request);
 
-        session()->flash('success', trans('admin::app.leads.create-success'));
-
-        return redirect()->route('admin.leads.index', ['pipeline_id' => $leadPipelineId]);
+                return redirect()->back()->withInput()->withErrors(['error' => $e->getMessage()]);
+            }
     }
 
+    /**
+     * @param LeadForm $request
+     * @throws InvalidArgumentException validation
+     * @return array
+     */
     public function storeLead(LeadForm $request): array
     {
-        Event::dispatch('lead.create.before');
+            Event::dispatch('lead.create.before');
 
-        $data = $request->all();
+            $data = $request->all();
 
-        // Handle empty date fields
-        if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
-            $data['date_of_birth'] = null;
-        }
+            // Handle empty date fields
+            if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
+                $data['date_of_birth'] = null;
+            }
 
-        // Normaliseer is_default naar boolean voor phones
-        if (isset($data['phones']) && is_array($data['phones'])) {
-            $data['phones'] = array_map(function($phone) {
-                if (isset($phone['is_default'])) {
-                    $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
-                }
-                return $phone;
-            }, $data['phones']);
-        }
-        // Normaliseer is_default naar boolean voor emails
-        if (isset($data['emails']) && is_array($data['emails'])) {
-            $data['emails'] = array_map(function($email) {
-                if (isset($email['is_default'])) {
-                    $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
-                }
-                return $email;
-            }, $data['emails']);
-        }
+            // Normaliseer is_default naar boolean voor phones
+            if (isset($data['phones']) && is_array($data['phones'])) {
+                $data['phones'] = array_map(function($phone) {
+                    if (isset($phone['is_default'])) {
+                        $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
+                    }
+                    return $phone;
+                }, $data['phones']);
+            }
+            // Normaliseer is_default naar boolean voor emails
+            if (isset($data['emails']) && is_array($data['emails'])) {
+                $data['emails'] = array_map(function($email) {
+                    if (isset($email['is_default'])) {
+                        $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
+                    }
+                    return $email;
+                }, $data['emails']);
+            }
 
-        $data['status'] = 1;
+            $data['status'] = 1;
 
-        if (isset($data['lead_pipeline_stage_id'])) {
-            $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
+            if (isset($data['lead_pipeline_stage_id'])) {
+                $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
 
-            $data['lead_pipeline_id'] = $stage->lead_pipeline_id;
-        } else {
-            $pipeline = $this->pipelineRepository->getDefaultPipeline();
+                $data['lead_pipeline_id'] = $stage->lead_pipeline_id;
+            } else {
+                $pipeline = $this->pipelineRepository->getDefaultPipeline();
 
-            $stage = $pipeline->stages()->first();
+                $stage = $pipeline->stages()->first();
 
-            $data['lead_pipeline_id'] = $pipeline->id;
+                $data['lead_pipeline_id'] = $pipeline->id;
 
-            $data['lead_pipeline_stage_id'] = $stage->id;
-        }
+                $data['lead_pipeline_stage_id'] = $stage->id;
+            }
 
-        if (in_array($stage->code, ['won', 'lost'])) {
-            $data['closed_at'] = Carbon::now();
-        }
+            if (in_array($stage->code, ['won', 'lost'])) {
+                $data['closed_at'] = Carbon::now();
+            }
+            $lead = $this->leadRepository->create($data);
 
-        $lead = $this->leadRepository->create($data);
+            Event::dispatch('lead.create.after', $lead);
 
-        Event::dispatch('lead.create.after', $lead);
-
-       return [$lead, $data['lead_pipeline_id']];
+            return [$lead, $data['lead_pipeline_id']];
     }
 
     /**
@@ -273,80 +292,92 @@ class LeadController extends Controller
      */
     public function update(LeadForm $request, int $id): RedirectResponse|JsonResponse
     {
-        $request->validate([
-            'first_name' => ['required', 'string'],
-            'last_name' => ['required', 'string'],
-            'emails' => ['nullable', 'array'],
-            'emails.*.value' => ['nullable', new EmailValidator()],
-            'emails.*.label' => ['nullable', 'string'],
-            'phones' => ['nullable', 'array'],
-            'phones.*.value' => ['nullable', new PhoneValidator()],
-            'phones.*.label' => ['nullable', 'string'],
-            'date_of_birth' => ['nullable', new DateValidator()],
-            'organization_id' => ['nullable', 'exists:organizations,id', function ($attribute, $value, $fail) use ($request) {
-                if ($value && !$request->input('person_id')) {
-                    $fail('Een organisatie kan alleen gekoppeld worden als er ook een contactpersoon is gekoppeld.');
-                }
-            }],
-        ]);
-        Event::dispatch('lead.update.before', $id);
-
-        $data = $request->all();
-
-        // Handle empty date fields
-        if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
-            $data['date_of_birth'] = null;
-        }
-
-        // Normaliseer is_default naar boolean voor phones
-        if (isset($data['phones']) && is_array($data['phones'])) {
-            $data['phones'] = array_map(function($phone) {
-                if (isset($phone['is_default'])) {
-                    $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
-                }
-                return $phone;
-            }, $data['phones']);
-        }
-        // Normaliseer is_default naar boolean voor emails
-        if (isset($data['emails']) && is_array($data['emails'])) {
-            $data['emails'] = array_map(function($email) {
-                if (isset($email['is_default'])) {
-                    $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
-                }
-                return $email;
-            }, $data['emails']);
-        }
-
-        if (isset($data['lead_pipeline_stage_id'])) {
-            $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
-
-            $data['lead_pipeline_id'] = $stage->lead_pipeline_id;
-        } else {
-            $pipeline = $this->pipelineRepository->getDefaultPipeline();
-
-            $stage = $pipeline->stages()->first();
-
-            $data['lead_pipeline_id'] = $pipeline->id;
-
-            $data['lead_pipeline_stage_id'] = $stage->id;
-        }
-
-        $lead = $this->leadRepository->update($data, $id);
-
-        Event::dispatch('lead.update.after', $lead);
-
-        if (request()->ajax()) {
-            return response()->json([
-                'message' => trans('admin::app.leads.update-success'),
+        try {
+            $request->validate([
+                'first_name' => ['required', 'string'],
+                'last_name' => ['required', 'string'],
+                'emails' => ['nullable', 'array'],
+                'emails.*.value' => ['nullable', new EmailValidator()],
+                'emails.*.label' => ['nullable', 'string'],
+                'phones' => ['nullable', 'array'],
+                'phones.*.value' => ['nullable', new PhoneValidator()],
+                'phones.*.label' => ['nullable', 'string'],
+                'date_of_birth' => ['nullable', new DateValidator()],
+                'organization_id' => ['nullable', 'exists:organizations,id', function ($attribute, $value, $fail) use ($request) {
+                    if ($value && !$request->input('person_id')) {
+                        $fail('Een organisatie kan alleen gekoppeld worden als er ook een contactpersoon is gekoppeld.');
+                    }
+                }],
             ]);
-        }
+            Event::dispatch('lead.update.before', $id);
 
-        session()->flash('success', trans('admin::app.leads.update-success'));
+            $data = $request->all();
 
-        if (request()->has('closed_at')) {
-            return redirect()->back();
-        } else {
-            return redirect()->route('admin.leads.index', ['pipeline_id' => $data['lead_pipeline_id']]);
+            // Handle empty date fields
+            if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
+                $data['date_of_birth'] = null;
+            }
+
+            // Normaliseer is_default naar boolean voor phones
+            if (isset($data['phones']) && is_array($data['phones'])) {
+                $data['phones'] = array_map(function($phone) {
+                    if (isset($phone['is_default'])) {
+                        $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
+                    }
+                    return $phone;
+                }, $data['phones']);
+            }
+            // Normaliseer is_default naar boolean voor emails
+            if (isset($data['emails']) && is_array($data['emails'])) {
+                $data['emails'] = array_map(function($email) {
+                    if (isset($email['is_default'])) {
+                        $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
+                    }
+                    return $email;
+                }, $data['emails']);
+            }
+
+            if (isset($data['lead_pipeline_stage_id'])) {
+                $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
+
+                $data['lead_pipeline_id'] = $stage->lead_pipeline_id;
+            } else {
+                $pipeline = $this->pipelineRepository->getDefaultPipeline();
+
+                $stage = $pipeline->stages()->first();
+
+                $data['lead_pipeline_id'] = $pipeline->id;
+
+                $data['lead_pipeline_stage_id'] = $stage->id;
+            }
+
+            $lead = $this->leadRepository->update($data, $id);
+
+            Event::dispatch('lead.update.after', $lead);
+
+            if (request()->ajax()) {
+                return response()->json([
+                    'message' => trans('admin::app.leads.update-success'),
+                ]);
+            }
+
+            session()->flash('success', trans('admin::app.leads.update-success'));
+
+            if (request()->has('closed_at')) {
+                return redirect()->back();
+            } else {
+                return redirect()->route('admin.leads.index', ['pipeline_id' => $data['lead_pipeline_id']]);
+            }
+        } catch (InvalidArgumentException $e) {
+            if (request()->ajax()) {
+                throw new ValidationException(
+                    Validator::make([], []),
+                    response()->json([
+                        'message' => $e->getMessage(),
+                    ], 422)
+                );
+            }
+            return redirect()->back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }
     }
 

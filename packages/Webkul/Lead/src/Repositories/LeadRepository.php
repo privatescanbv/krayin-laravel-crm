@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Models\Address;
+use InvalidArgumentException;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Repositories\PersonRepository;
@@ -116,8 +117,15 @@ class LeadRepository extends Repository
      *
      * @return \Webkul\Lead\Contracts\Lead
      */
-    public function create(array $data)
+    public function create(array $data): Lead
     {
+       if (
+           array_key_exists('person', $data)
+           && !empty($data['person']['organization_id'])
+           && (empty($data['person_id']) || empty($data['person']['id']))
+       ) {
+           throw new InvalidArgumentException('Een organisatie mag alleen gekoppeld worden als er ook een contactpersoon is.');
+       }
         /**
          * If a person is provided, create or update the person and set the `person_id`.
          */
@@ -226,8 +234,20 @@ class LeadRepository extends Repository
      * @param array|\Illuminate\Database\Eloquent\Collection $attributes
      * @return \Webkul\Lead\Contracts\Lead
      */
-    public function update(array $data, $id, $attributes = [])
+    public function update(array $data, $id, $attributes = []): Lead
     {
+        if (
+            array_key_exists('person', $data)
+            && !empty($data['person']['organization_id'])
+            && (empty($data['person_id']) || empty($data['person']['id']))
+        ) {
+            throw new InvalidArgumentException('Een organisatie mag alleen gekoppeld worden als er ook een contactpersoon is.');
+        }
+        logger()->info('Updating lead with data', [
+            'data' => $data['person'],
+            'id' => $id,
+            'attributes' => $attributes,
+        ]);
         /**
          * If a person is provided, create or update the person and set the `person_id`.
          * Be cautious, as a lead can be updated without providing person data.

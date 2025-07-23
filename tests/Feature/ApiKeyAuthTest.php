@@ -11,41 +11,41 @@ use Webkul\Lead\Models\Type;
 beforeEach(function () {
     $this->seed(TestSeeder::class);
     $this->artisan('db:seed', ['--class' => LeadChannelSeeder::class]);
-    
+
     // Set up test API key
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
 });
 
 test('API request without API key returns 401', function () {
     $response = $this->postJson('/api/leads', [
-        'title' => 'Test Lead',
+        'title'      => 'Test Lead',
         'first_name' => 'John',
-        'last_name' => 'Doe',
-        'email' => 'john@example.com',
+        'last_name'  => 'Doe',
+        'email'      => 'john@example.com',
     ]);
 
     $response->assertStatus(401)
         ->assertJson([
-            'error' => 'API key is required',
-            'message' => 'Please provide a valid API key in the X-API-KEY header'
+            'error'   => 'API key is required',
+            'message' => 'Please provide a valid API key in the X-API-KEY header',
         ]);
 });
 
 test('API request with invalid API key returns 401', function () {
     $response = $this->withHeaders([
         'X-API-KEY' => 'invalid-key',
-        'Accept' => 'application/json',
+        'Accept'    => 'application/json',
     ])->postJson('/api/leads', [
-        'title' => 'Test Lead',
+        'title'      => 'Test Lead',
         'first_name' => 'John',
-        'last_name' => 'Doe',
-        'email' => 'john@example.com',
+        'last_name'  => 'Doe',
+        'email'      => 'john@example.com',
     ]);
 
     $response->assertStatus(401)
         ->assertJson([
-            'error' => 'Invalid API key',
-            'message' => 'The provided API key is not valid'
+            'error'   => 'Invalid API key',
+            'message' => 'The provided API key is not valid',
         ]);
 });
 
@@ -55,18 +55,18 @@ test('API request with valid API key works', function () {
     $channel = Channel::first();
 
     $leadData = [
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'email' => 'john@example.com',
-        'title' => 'Test Lead',
-        'lead_source_id' => $source->id,
+        'first_name'      => 'John',
+        'last_name'       => 'Doe',
+        'email'           => 'john@example.com',
+        'title'           => 'Test Lead',
+        'lead_source_id'  => $source->id,
         'lead_channel_id' => $channel->id,
-        'lead_type_id' => $type->id,
+        'lead_type_id'    => $type->id,
     ];
 
     $response = $this->withHeaders([
         'X-API-KEY' => 'valid-api-key-123',
-        'Accept' => 'application/json',
+        'Accept'    => 'application/json',
     ])->postJson('/api/leads', $leadData);
 
     $response->assertStatus(201)
@@ -81,18 +81,18 @@ test('API request with alternative valid API key works', function () {
     $channel = Channel::first();
 
     $leadData = [
-        'first_name' => 'Jane',
-        'last_name' => 'Smith',
-        'email' => 'jane@example.com',
-        'title' => 'Test Lead 2',
-        'lead_source_id' => $source->id,
+        'first_name'      => 'Jane',
+        'last_name'       => 'Smith',
+        'email'           => 'jane@example.com',
+        'title'           => 'Test Lead 2',
+        'lead_source_id'  => $source->id,
         'lead_channel_id' => $channel->id,
-        'lead_type_id' => $type->id,
+        'lead_type_id'    => $type->id,
     ];
 
     $response = $this->withHeaders([
         'X-API-KEY' => 'another-valid-key',
-        'Accept' => 'application/json',
+        'Accept'    => 'application/json',
     ])->postJson('/api/leads', $leadData);
 
     $response->assertStatus(201)
@@ -109,31 +109,31 @@ test('GET request to leads index requires API key', function () {
     // Test with valid API key
     $response = $this->withHeaders([
         'X-API-KEY' => 'valid-api-key-123',
-        'Accept' => 'application/json',
+        'Accept'    => 'application/json',
     ])->getJson('/api/leads');
-    
+
     $response->assertStatus(200);
 });
 
 test('workflow-leads endpoint requires API key', function () {
     // Test without API key
     $response = $this->postJson('/api/workflow-leads', [
-        'title' => 'Test Workflow Lead',
+        'title'      => 'Test Workflow Lead',
         'first_name' => 'Test',
-        'last_name' => 'User',
+        'last_name'  => 'User',
     ]);
     $response->assertStatus(401);
 
     // Test with valid API key
     $response = $this->withHeaders([
         'X-API-KEY' => 'valid-api-key-123',
-        'Accept' => 'application/json',
+        'Accept'    => 'application/json',
     ])->postJson('/api/workflow-leads', [
-        'title' => 'Test Workflow Lead',
+        'title'      => 'Test Workflow Lead',
         'first_name' => 'Test',
-        'last_name' => 'User',
+        'last_name'  => 'User',
     ]);
-    
+
     // This might return a different status depending on validation,
     // but it should not be 401 (unauthorized)
     expect($response->getStatusCode())->not->toBe(401);
@@ -147,9 +147,9 @@ test('groups endpoint requires API key', function () {
     // Test with valid API key
     $response = $this->withHeaders([
         'X-API-KEY' => 'valid-api-key-123',
-        'Accept' => 'application/json',
+        'Accept'    => 'application/json',
     ])->getJson('/api/groups/byDepartment/test');
-    
+
     // This might return 404 or other status depending on data,
     // but it should not be 401 (unauthorized)
     expect($response->getStatusCode())->not->toBe(401);

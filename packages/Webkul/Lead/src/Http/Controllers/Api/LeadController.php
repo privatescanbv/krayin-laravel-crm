@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 use Webkul\Admin\Http\Requests\LeadForm;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Type;
@@ -111,6 +112,11 @@ class LeadController extends Controller
         $request['lead_pipeline_id'] = PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value;
         try {
             [$lead, $leadPipelineId] = $this->leadService->storeLead($request);
+        } catch (InvalidArgumentException $e) {
+            return response()->json([
+                'message' => 'Lead creation failed.',
+                'errors' => [$e->getMessage()],
+            ], 400);
         } catch (Exception $e) {
             Log::error('Could not store lead ', [
                 'error' => $e->getMessage(),

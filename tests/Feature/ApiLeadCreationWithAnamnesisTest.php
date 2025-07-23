@@ -18,7 +18,7 @@ beforeEach(function () {
 
     // Create a test user
     $this->user = User::factory()->create();
-    
+
     // Set up test API key
     config(['api.keys' => ['test-api-key-123']]);
 });
@@ -27,8 +27,8 @@ beforeEach(function () {
 function makeApiRequest($method, $uri, $data = [])
 {
     return test()->withHeaders([
-        'X-API-KEY' => 'test-api-key-123',
-        'Accept' => 'application/json',
+        'X-API-KEY'    => 'test-api-key-123',
+        'Accept'       => 'application/json',
         'Content-Type' => 'application/json',
     ])->{$method}($uri, $data);
 }
@@ -96,11 +96,11 @@ test('API lead creation successfully creates a lead with anamnesis', function ()
         ->and($anamnesis->lead_id)->toBe($leadId)
         ->and($anamnesis->lead->id)->toBe($leadId)
         ->and($anamnesis->id)->toBeString() // UUID format
-        ->and(strlen($anamnesis->id))->toBe(36); // UUID length
+        ->and(strlen($anamnesis->id))->toBe(36)
+        ->and($lead->anamnesis)->not->toBeNull()
+        ->and($lead->anamnesis->id)->toBe($anamnesis->id); // UUID length
 
     // Assert: Check lead has anamnesis relationship
-    expect($lead->anamnesis)->not->toBeNull()
-        ->and($lead->anamnesis->id)->toBe($anamnesis->id);
 });
 
 test('API lead creation handles missing optional fields gracefully', function () {
@@ -327,4 +327,36 @@ test('API response includes correct lead data structure', function () {
     // Verify the lead actually exists with this ID
     $lead = Lead::find($leadId);
     expect($lead)->not->toBeNull();
+});
+
+test('May not store lead with relation to organisation without patient', function () {
+    // Arrange: Get required IDs for lead creation
+    $source = Source::first();
+    $type = Type::first();
+    $channel = Channel::first();
+
+    $uniqueId = uniqid();
+    $leadData = [
+        'first_name'      => 'John',
+        'last_name'       => 'Doe'.$uniqueId,
+        'email'           => 'john.doe.'.$uniqueId.'@example.com',
+        'phone'           => '0612345678',
+        'company_name'    => 'Test Company',
+        'title'           => 'Test Lead via API '.$uniqueId,
+        'lead_source_id'  => $source->id,
+        'lead_channel_id' => $channel->id,
+        'lead_type_id'    => $type->id,
+        'person'          => ['organization_id' => 2],
+        'tags'            => ['api', 'test'],
+    ];
+
+    // Act: Make API request to create lead
+    $response = makeApiRequest('postJson', '/api/leads', $leadData);
+
+    // Assert: Check API response
+    $response->assertStatus(400)
+        ->assertJson([
+            'message' => 'Lead creation failed.',
+            'errors'  => ['Een organisatie mag alleen gekoppeld worden als er ook een contactpersoon is.'],
+        ]);
 });

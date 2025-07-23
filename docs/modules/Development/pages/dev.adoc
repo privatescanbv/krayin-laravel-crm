@@ -23,6 +23,16 @@ Logs:
 
 Of in PHPStorm
 
+=== Migratie instructies
+
+Zet sugarcrm database op de server, vanuit hier te importeren. (gezien de server nog geen connectie kan maken met de sugarcrm server)
+
+1. maak mysql dump (doe ik via phpstorm)
+2. scp sugarcrm_privatesuite9_local-2025_07_23_12_25_32-dump.sql mbulthuis@178.251.28.76:/home/mbulthuis
+3. https://phpmyadmin.dev.privatescan.nl ->  maak database aan met naam `sugarcrm_privatesuite9`
+4. sudo docker exec -i mysql mysql -u root -p[DB_PASSWORD] scrm_privatesuite9 -h 127.0.0.1 -P 3306 < ./sugarcrm_privatesuite9_local-2025_07_23_12_25_32-dump.sql
+
+
 === Commands
 
 include::cmd/cmd-import-sugarcrm-contacts.adoc[]

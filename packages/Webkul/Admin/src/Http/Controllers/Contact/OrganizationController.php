@@ -11,6 +11,8 @@ use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Contact\Repositories\OrganizationRepository;
+use Webkul\Contact\Models\Organization;
+use App\Models\Address;
 
 class OrganizationController extends Controller
 {
@@ -51,7 +53,17 @@ class OrganizationController extends Controller
     {
         Event::dispatch('contacts.organization.create.before');
 
-        $organization = $this->organizationRepository->create(request()->all());
+        $data = request()->all();
+        
+        $organization = $this->organizationRepository->create($data);
+
+        // Handle address creation
+        if (isset($data['address']) && !empty(array_filter($data['address']))) {
+            $addressData = array_merge($data['address'], [
+                'organization_id' => $organization->id
+            ]);
+            Address::create($addressData);
+        }
 
         Event::dispatch('contacts.organization.create.after', $organization);
 
@@ -65,7 +77,8 @@ class OrganizationController extends Controller
      */
     public function edit(int $id): View
     {
-        $organization = $this->organizationRepository->findOrFail($id);
+        // Use the model directly to ensure proper relationship loading
+        $organization = Organization::with('address')->findOrFail($id);
 
         return view('admin::contacts.organizations.edit', compact('organization'));
     }
@@ -77,7 +90,33 @@ class OrganizationController extends Controller
     {
         Event::dispatch('contacts.organization.update.before', $id);
 
-        $organization = $this->organizationRepository->update(request()->all(), $id);
+        $data = request()->all();
+        
+        $organization = $this->organizationRepository->update($data, $id);
+
+        // Handle address update
+        if (isset($data['address'])) {
+            // Get fresh organization instance with address relationship
+            $organization = $this->organizationRepository->find($id);
+            $existingAddress = $organization->address;
+            
+            if (!empty(array_filter($data['address']))) {
+                $addressData = array_merge($data['address'], [
+                    'organization_id' => $organization->id
+                ]);
+                
+                if ($existingAddress && is_object($existingAddress)) {
+                    $existingAddress->update($addressData);
+                } else {
+                    // Delete any existing address first (in case of data inconsistency)
+                    Address::where('organization_id', $organization->id)->delete();
+                    Address::create($addressData);
+                }
+            } else if ($existingAddress && is_object($existingAddress)) {
+                // If address data is empty, delete existing address
+                $existingAddress->delete();
+            }
+        }
 
         Event::dispatch('contacts.organization.update.after', $organization);
 

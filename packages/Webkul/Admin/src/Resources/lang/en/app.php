@@ -677,11 +677,13 @@ return [
             'create' => [
                 'title'    => 'Create Organization',
                 'save-btn' => 'Save Organization',
+                'address'  => 'Address',
             ],
 
             'edit' => [
                 'title'    => 'Edit Organization',
                 'save-btn' => 'Save Organization',
+                'address'  => 'Address',
             ],
         ],
     ],

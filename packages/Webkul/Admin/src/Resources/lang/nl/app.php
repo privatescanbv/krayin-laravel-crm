@@ -643,10 +643,12 @@ return [
             'create' => [
                 'title' => 'Organisatie aanmaken',
                 'save-btn' => 'Organisatie opslaan',
+                'address' => 'Adres',
             ],
             'edit' => [
                 'title' => 'Organisatie bewerken',
                 'save-btn' => 'Organisatie opslaan',
+                'address' => 'Adres',
             ],
         ],
     ],

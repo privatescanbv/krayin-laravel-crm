@@ -113,6 +113,11 @@ class OrganizationRepository extends Repository
                 'entity_type' => 'organizations',
             ]);
 
+            // Delete associated address
+            if ($organization->address) {
+                $organization->address->delete();
+            }
+
             $organization->delete();
         });
     }

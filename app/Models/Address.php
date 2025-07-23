@@ -18,8 +18,9 @@ class Address extends Model
      * @var array
      */
     public static $rules = [
-        'lead_id'             => 'required_without:person_id|nullable|exists:leads,id',
-        'person_id'           => 'required_without:lead_id|nullable|exists:persons,id',
+        'lead_id'             => 'required_without_all:person_id,organization_id|nullable|exists:leads,id',
+        'person_id'           => 'required_without_all:lead_id,organization_id|nullable|exists:persons,id',
+        'organization_id'     => 'required_without_all:lead_id,person_id|nullable|exists:organizations,id',
         'street'              => 'nullable|string|max:255',
         'house_number'        => 'nullable|string|max:50',
         'postal_code'         => 'nullable|string|max:20',
@@ -37,6 +38,7 @@ class Address extends Model
     protected $fillable = [
         'lead_id',
         'person_id',
+        'organization_id',
         'street',
         'house_number',
         'postal_code',
@@ -54,14 +56,20 @@ class Address extends Model
         parent::boot();
 
         static::saving(function ($address) {
-            // Ensure either lead_id or person_id is set
-            if (empty($address->lead_id) && empty($address->person_id)) {
-                throw new InvalidArgumentException('Either lead_id or person_id must be provided');
+            // Ensure at least one of lead_id, person_id, or organization_id is set
+            if (empty($address->lead_id) && empty($address->person_id) && empty($address->organization_id)) {
+                throw new InvalidArgumentException('Either lead_id, person_id, or organization_id must be provided');
             }
 
-            // Ensure not both are set
-            if (! empty($address->lead_id) && ! empty($address->person_id)) {
-                throw new InvalidArgumentException('Cannot set both lead_id and person_id');
+            // Ensure only one is set
+            $setFields = array_filter([
+                $address->lead_id,
+                $address->person_id,
+                $address->organization_id
+            ]);
+            
+            if (count($setFields) > 1) {
+                throw new InvalidArgumentException('Cannot set multiple entity IDs (lead_id, person_id, organization_id)');
             }
         });
     }
@@ -80,6 +88,14 @@ class Address extends Model
     public function person()
     {
         return $this->belongsTo(Person::class);
+    }
+
+    /**
+     * Get the organization that owns the address.
+     */
+    public function organization()
+    {
+        return $this->belongsTo(\Webkul\Contact\Models\Organization::class);
     }
 
     /**

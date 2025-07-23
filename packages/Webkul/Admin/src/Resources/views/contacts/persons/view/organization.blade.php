@@ -35,32 +35,32 @@
 
                 @if ($person->organization->address)
                     <div class="flex flex-col gap-0.5 dark:text-white">
-                        @isset($person->organization->address['address'])
+                        @if($person->organization->address->street && $person->organization->address->house_number)
                             <span>
-                                {{ $person->organization->address['address'] }}
-                            </span>
-                        @endisset
-
-                        @if(
-                            isset($person->organization->address['postcode'])
-                            && isset($person->organization->address['city'])
-                        )
-                            <span>
-                                {{ $person->organization->address['postcode'] . '  ' . $person->organization->address['city'] }}
+                                {{ $person->organization->address->street . ' ' . $person->organization->address->house_number }}
+                                @if($person->organization->address->house_number_suffix)
+                                    {{ ' ' . $person->organization->address->house_number_suffix }}
+                                @endif
                             </span>
                         @endif
 
-                        @isset($person->organization->address['state'])
+                        @if($person->organization->address->postal_code && $person->organization->address->city)
                             <span>
-                                {{ core()->state_name($person->organization->address['state']) }}
+                                {{ $person->organization->address->postal_code . '  ' . $person->organization->address->city }}
                             </span>
-                        @endisset
+                        @endif
 
-                        @isset($person->organization->address['country'])
+                        @if($person->organization->address->state)
                             <span>
-                                {{ core()->country_name($person->organization->address['country']) }}
+                                {{ $person->organization->address->state }}
                             </span>
-                        @endisset
+                        @endif
+
+                        @if($person->organization->address->country)
+                            <span>
+                                {{ $person->organization->address->country }}
+                            </span>
+                        @endif
                     </div>
                 @endif
 

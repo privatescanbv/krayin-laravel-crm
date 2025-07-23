@@ -14,9 +14,7 @@ class Organization extends Model implements OrganizationContract
 {
     use CustomAttribute, hasFactory;
 
-    protected $casts = [
-        'address' => 'array',
-    ];
+
 
     /**
      * The attributes that are mass assignable.
@@ -25,7 +23,6 @@ class Organization extends Model implements OrganizationContract
      */
     protected $fillable = [
         'name',
-        'address',
         'user_id',
     ];
 
@@ -45,6 +42,14 @@ class Organization extends Model implements OrganizationContract
     public function user()
     {
         return $this->belongsTo(UserProxy::modelClass());
+    }
+
+    /**
+     * Get the address that belongs to the organization.
+     */
+    public function address()
+    {
+        return $this->hasOne(\App\Models\Address::class, 'organization_id');
     }
 
     /**

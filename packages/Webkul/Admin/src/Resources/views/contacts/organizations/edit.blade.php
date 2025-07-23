@@ -16,8 +16,8 @@
                 <div class="flex flex-col gap-2">
                     {!! view_render_event('admin.organizations.edit.breadcrumbs.before', ['organization' => $organization]) !!}
 
-                    <x-admin::breadcrumbs 
-                        name="contacts.organizations.edit" 
+                    <x-admin::breadcrumbs
+                        name="contacts.organizations.edit"
                         :entity="$organization"
                     />
 
@@ -56,16 +56,18 @@
                         'name' => [
                             'max:100',
                         ],
-                        'address' => [
-                            'max:100',
-                        ],
-                        'postcode' => [
-                            'postcode',
-                        ],
                     ]"
                     :entity="$organization"
                 />
-                
+
+                {!! view_render_event('admin.contacts.organizations.edit.form_controls.after') !!}
+            </div>
+
+            <!-- Address Section -->
+            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+
+                @include('admin::components.address', ['entity' => $organization])
+
                 {!! view_render_event('admin.contacts.organizations.edit.form_controls.after') !!}
             </div>
         </div>

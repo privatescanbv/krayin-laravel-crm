@@ -34,6 +34,8 @@ class AddressFactory extends Factory
             'city'                => $this->faker->city(),
             'state'               => $this->faker->state(),
             'country'             => $this->faker->country(),
+            'created_by'          => null, // Will be set by audit trail if user is authenticated
+            'updated_by'          => null, // Will be set by audit trail if user is authenticated
         ];
     }
 

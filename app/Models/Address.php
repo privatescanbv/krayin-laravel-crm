@@ -3,12 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 
-class Address extends Model
+class Address extends BaseModel
 {
     use HasFactory;
 
@@ -46,12 +45,14 @@ class Address extends Model
         'state',
         'city',
         'country',
+        'created_by',
+        'updated_by',
     ];
 
     /**
      * Boot the model.
      */
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
 

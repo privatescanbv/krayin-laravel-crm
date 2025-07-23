@@ -84,7 +84,7 @@
         <!-- Last Name -->
         <x-admin::form.control-group class="flex-1">
             <x-admin::form.control-group.label>
-                Achternaam
+                Achternaam bij geboorte
             </x-admin::form.control-group.label>
 
             <x-admin::form.control-group.control

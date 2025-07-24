@@ -26,7 +26,8 @@ class MyModel extends BaseModel
     protected $fillable = [
         'name',
         'description',
-        // created_by en updated_by worden automatisch toegevoegd
+        'created_by',
+        'updated_by',
     ];
 }
 ```
@@ -178,6 +179,9 @@ $address = Address::create([
     'street' => 'Hoofdstraat',
     'house_number' => '123',
     'city' => 'Amsterdam',
+    'postal_code' => '1000AA',
+    'country' => 'Nederland',
+    'lead_id' => 1, // Of person_id of organization_id
 ]);
 
 // created_by en updated_by zijn nu automatisch ingesteld

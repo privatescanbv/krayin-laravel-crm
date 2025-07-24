@@ -45,12 +45,14 @@ class Address extends BaseModel
         'state',
         'city',
         'country',
+        'created_by',
+        'updated_by',
     ];
 
     /**
      * Boot the model.
      */
-    protected static function boot()
+    protected static function boot(): void
     {
         parent::boot();
 

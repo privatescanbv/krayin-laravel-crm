@@ -111,29 +111,36 @@ class AuditTrailServiceProvider extends ServiceProvider
      */
     private function addAuditTrailFillable(string $modelClass): void
     {
-        $fillableMap = [
-            Organization::class => ['name', 'user_id'],
-            User::class => ['name', 'email', 'image', 'password', 'api_token', 'role_id', 'status'],
-        ];
-
-        if (isset($fillableMap[$modelClass])) {
-            $originalFillable = $fillableMap[$modelClass];
-            
-            $modelClass::mixin(new class($originalFillable) {
-                private array $originalFillable;
-
-                public function __construct(array $originalFillable)
-                {
-                    $this->originalFillable = $originalFillable;
-                }
-
-                public function getFillable()
-                {
-                    return function () {
-                        return array_merge($this->originalFillable, ['created_by', 'updated_by']);
-                    };
-                }
-            });
+        if ($modelClass === Organization::class) {
+            $this->addFillableToModel($modelClass, ['name', 'user_id']);
+        } elseif ($modelClass === User::class) {
+            $this->addFillableToModel($modelClass, ['name', 'email', 'image', 'password', 'api_token', 'role_id', 'status']);
         }
+    }
+
+    /**
+     * Add fillable fields to a model via mixin
+     */
+    private function addFillableToModel(string $modelClass, array $originalFillable): void
+    {
+        // Create the fillable array with audit trail fields
+        $fillableWithAudit = array_merge($originalFillable, ['created_by', 'updated_by']);
+        
+        $modelClass::mixin(new class($fillableWithAudit) {
+            private array $fillable;
+
+            public function __construct(array $fillable)
+            {
+                $this->fillable = $fillable;
+            }
+
+            public function getFillable()
+            {
+                $fillable = $this->fillable;
+                return function () use ($fillable) {
+                    return $fillable;
+                };
+            }
+        });
     }
 }

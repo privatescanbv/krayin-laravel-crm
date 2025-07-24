@@ -204,5 +204,13 @@ Het audit trail systeem bestaat uit:
 2. **BaseModel** (`app/Models/BaseModel.php`) - Abstract model met audit trail
 3. **AuditTrailMigrationHelper** (`app/Helpers/AuditTrailMigrationHelper.php`) - Migration helper
 4. **AddAuditTrailCommand** (`app/Console/Commands/AddAuditTrailCommand.php`) - Artisan commando
+5. **AuditTrailServiceProvider** (`app/Providers/AuditTrailServiceProvider.php`) - Service provider voor Webkul User model
+
+## Belangrijke opmerkingen
+
+- Het systeem werkt automatisch voor alle modellen die de `HasAuditTrail` trait gebruiken of van `BaseModel` erven
+- Voor het Webkul User model wordt de audit trail functionaliteit toegevoegd via de `AuditTrailServiceProvider`
+- De audit trail velden (`created_by`, `updated_by`) worden alleen ingesteld als er een gebruiker is ingelogd
+- Als er geen gebruiker is ingelogd, blijven deze velden `null`
 
 Dit systeem vereist minimale code en is goed onderhoudbaar door de gecentreerde logica.

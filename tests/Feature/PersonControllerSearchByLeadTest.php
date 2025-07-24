@@ -12,6 +12,7 @@ use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Repositories\LeadRepository;
+use Webkul\User\Models\User;
 
 beforeEach(function () {
     $this->seed(TestSeeder::class);
@@ -21,6 +22,10 @@ beforeEach(function () {
     $this->controller = new PersonController($this->personRepository, app(LeadRepository::class), $this->attributeRepository);
 
     Person::query()->delete();
+
+    // Create and authenticate a user
+    $this->user = User::factory()->create();
+    $this->actingAs($this->user);
 });
 
 // Voeg deze helper toe:
@@ -82,7 +87,7 @@ test('returns empty collection when no persons exist', function () {
         'Doe',
         [
             'email'                             => 'john@example.com',
-            'phone'                             => '0612345678',
+            'phone'                             => '+31612345678',
         ]);
 
     // Call the method
@@ -259,4 +264,78 @@ test('returns results with match scores and sorts by score', function () {
     $onlyNameMatch = round($x->first()->match_score, 2);
     expect($firstScore)->toBeGreaterThan($secondScore);
     $this->assertEquals($onlyNameMatch, 72);
+});
+
+test('validates email and phone array structure when creating person', function () {
+    // Test case 1: Valid email and phone structure should pass
+    $validData = [
+        'first_name' => 'John',
+        'last_name'  => 'Doe',
+        'emails'     => [
+            ['value' => 'john@example.com', 'label' => 'work', 'is_default' => true],
+        ],
+        'phones' => [
+            ['value' => '+31612345678', 'label' => 'work', 'is_default' => true],
+        ],
+        'entity_type' => 'persons',
+    ];
+
+    $response = $this->postJson('/admin/contacts/persons/create', $validData);
+    $response->assertStatus(302);
+
+    // Test case 2: Email without label should get default label work
+    $invalidEmailData = [
+        'first_name' => 'Jane',
+        'last_name'  => 'Smith',
+        'emails'     => [
+            ['value' => 'jane@example.com', 'is_default' => true], // Missing label
+        ],
+        'entity_type' => 'persons',
+    ];
+
+    $response = $this->postJson('/admin/contacts/persons/create', $invalidEmailData);
+    $response->assertStatus(302);
+
+    // Test case 3: Phone without label should get default label work
+    $invalidPhoneData = [
+        'first_name' => 'Bob',
+        'last_name'  => 'Johnson',
+        'phones'     => [
+            ['value' => '+31687654321', 'is_default' => true], // Missing label
+        ],
+        'entity_type' => 'persons',
+    ];
+
+    $response = $this->postJson('/admin/contacts/persons/create', $invalidPhoneData);
+    $response->assertStatus(302);
+
+    //    todo later
+    //    // Test case 4: Invalid email label should fail
+    //    $invalidLabelData = [
+    //        'first_name' => 'Alice',
+    //        'last_name' => 'Brown',
+    //        'emails' => [
+    //            ['value' => 'alice@example.com', 'label' => 'invalid_label', 'is_default' => true]
+    //        ],
+    //        'entity_type' => 'persons'
+    //    ];
+    //
+    //    $response = $this->postJson('/admin/contacts/persons/create', $invalidLabelData);
+    //    $response->assertStatus(422);
+    //    $response->assertJsonValidationErrors(['emails']);
+
+    // Test case 5: Empty values with labels should pass (allows for empty contact fields)
+    $emptyValuesData = [
+        'first_name' => 'Charlie',
+        'last_name'  => 'Wilson',
+        'emails'     => [
+            ['value' => '', 'label' => 'work', 'is_default' => true],
+        ],
+        'phones' => [
+            ['value' => '', 'label' => 'work', 'is_default' => true],
+        ],
+        'entity_type' => 'persons',
+    ];
+
+    $this->postJson('/admin/contacts/persons/create', $emptyValuesData)->assertStatus(302);
 });

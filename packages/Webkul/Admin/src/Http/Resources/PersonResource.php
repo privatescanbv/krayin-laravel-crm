@@ -24,7 +24,20 @@ class PersonResource extends JsonResource
             'name'            => $this->name,
             'emails'          => $this->emails,
             'contact_numbers' => $this->contact_numbers,
+            'phones'          => $this->contact_numbers, // Alias for compatibility
             'organization'    => $this->organization ? new OrganizationResource($this->organization) : null,
+            'address'         => $this->address,
+            'first_name'      => $this->first_name,
+            'last_name'       => $this->last_name,
+            'lastname_prefix' => $this->lastname_prefix,
+            'married_name'    => $this->married_name,
+            'married_name_prefix' => $this->married_name_prefix,
+            'initials'        => $this->initials,
+            'date_of_birth'   => $this->date_of_birth ? $this->date_of_birth->format('Y-m-d') : null,
+            'gender'          => $this->gender,
+            'salutation'      => $this->salutation,
+            'emails'          => $this->emails,
+            'phones'          => $this->contact_numbers, // Use contact_numbers for phones
             'created_at'      => $this->created_at,
             'updated_at'      => $this->updated_at,
         ];

@@ -13,9 +13,9 @@ return new class extends Migration
             $table->string('first_name')->nullable()->after('salutation');
             $table->string('last_name')->nullable()->after('first_name');
             $table->string('lastname_prefix')->nullable()->after('last_name');
-            $table->string('maiden_name')->nullable()->after('lastname_prefix');
-            $table->string('maiden_name_prefix')->nullable()->after('maiden_name');
-            $table->string('initials')->nullable()->after('maiden_name_prefix');
+            $table->string('married_name')->nullable()->after('lastname_prefix');
+            $table->string('married_name_prefix')->nullable()->after('married_name');
+            $table->string('initials')->nullable()->after('married_name_prefix');
             $table->date('date_of_birth')->nullable()->after('initials');
         });
     }
@@ -28,8 +28,8 @@ return new class extends Migration
                 'first_name',
                 'last_name',
                 'lastname_prefix',
-                'maiden_name',
-                'maiden_name_prefix',
+                'married_name',
+                'married_name_prefix',
                 'initials',
                 'date_of_birth',
             ]);

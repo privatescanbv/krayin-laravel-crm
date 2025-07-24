@@ -24,6 +24,7 @@ use Webkul\Core\Contracts\Validations\PhoneValidator;
 use App\Validators\DateValidator;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
+use App\Services\PersonValidationService;
 
 class PersonController extends Controller
 {
@@ -65,17 +66,12 @@ class PersonController extends Controller
      */
     public function store(AttributeForm $request): RedirectResponse|JsonResponse
     {
-        $request->validate([
-            'first_name' => ['required', 'string'],
-            'last_name' => ['required', 'string'],
-            'emails' => ['nullable', 'array'],
-            'emails.*.value' => ['nullable', new EmailValidator()],
-            'emails.*.label' => ['nullable', 'string'],
-            'phones' => ['nullable', 'array'],
-            'phones.*.value' => ['nullable', new PhoneValidator()],
-            'phones.*.label' => ['nullable', 'string'],
-            'date_of_birth' => ['nullable', new DateValidator()],
-        ]);
+        // Normalize contact arrays before validation
+        $this->normalizeContactArrays($request);
+        
+        // Normalize contact arrays before validation
+        $this->normalizeContactArrays($request);
+        $request->validate(PersonValidationService::getWebValidationRules($request));
         Event::dispatch('contacts.person.create.before');
 
         $data = $request->all();
@@ -183,17 +179,12 @@ class PersonController extends Controller
      */
     public function update(AttributeForm $request, int $id): RedirectResponse|JsonResponse
     {
-        $request->validate([
-            'first_name' => ['required', 'string'],
-            'last_name' => ['required', 'string'],
-            'emails' => ['nullable', 'array'],
-            'emails.*.value' => ['nullable', new EmailValidator()],
-            'emails.*.label' => ['nullable', 'string'],
-            'phones' => ['nullable', 'array'],
-            'phones.*.value' => ['nullable', new PhoneValidator()],
-            'phones.*.label' => ['nullable', 'string'],
-            'date_of_birth' => ['nullable', new DateValidator()],
-        ]);
+        // Normalize contact arrays before validation
+        $this->normalizeContactArrays($request);
+        
+        $request->validate(PersonValidationService::getWebValidationRules($request));
+        // Normalize contact arrays before validation
+        $this->normalizeContactArrays($request);
         Event::dispatch('contacts.person.update.before', $id);
 
         $data = $request->all();
@@ -287,10 +278,12 @@ class PersonController extends Controller
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $persons = $this->personRepository
                 ->pushCriteria(app(RequestCriteria::class))
+                ->with(['address'])
                 ->findWhereIn('user_id', $userIds);
         } else {
             $persons = $this->personRepository
                 ->pushCriteria(app(RequestCriteria::class))
+                ->with(['address'])
                 ->all();
         }
 
@@ -335,6 +328,7 @@ class PersonController extends Controller
     public function searchByLead(Lead $lead): JsonResource
     {
         $persons = Person::query()
+            ->with(['address'])
             ->where('first_name', 'like', '%' . $lead->first_name . '%')
             ->where(function ($query) use ($lead) {
                 $query->where('last_name', 'like', '%' . $lead->last_name . '%')
@@ -874,5 +868,124 @@ class PersonController extends Controller
         $value2 = $value2 === null ? '' : $value2;
 
         return trim($value1) !== trim($value2);
+    }
+
+    /**
+     * Normalize contact arrays to ensure proper data types
+     */
+    private function normalizeContactArrays($request)
+    {
+        $requestData = $request->all();
+        
+        // Normalize emails
+        if (isset($requestData['emails']) && is_array($requestData['emails'])) {
+            foreach ($requestData['emails'] as $index => $email) {
+                if (is_array($email)) {
+                    // Ensure label exists and normalize it
+                    if (!isset($email['label']) || empty($email['label'])) {
+                        $requestData['emails'][$index]['label'] = 'work';
+                    } else {
+                        $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
+                    }
+                    
+                    // Normalize is_default to boolean
+                    if (isset($email['is_default'])) {
+                        $requestData['emails'][$index]['is_default'] = $this->normalizeBoolean($email['is_default']);
+                    } else {
+                        $requestData['emails'][$index]['is_default'] = false;
+                    }
+                }
+            }
+        }
+        
+        // Normalize phones
+        if (isset($requestData['phones']) && is_array($requestData['phones'])) {
+            foreach ($requestData['phones'] as $index => $phone) {
+                if (is_array($phone)) {
+                    // Ensure label exists and normalize it
+                    if (!isset($phone['label']) || empty($phone['label'])) {
+                        $requestData['phones'][$index]['label'] = 'work';
+                    } else {
+                        $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
+                    }
+                    
+                    // Normalize is_default to boolean
+                    if (isset($phone['is_default'])) {
+                        $requestData['phones'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
+                    } else {
+                        $requestData['phones'][$index]['is_default'] = false;
+                    }
+                }
+            }
+        }
+        
+        // Normalize contact_numbers (for backwards compatibility)
+        if (isset($requestData['contact_numbers']) && is_array($requestData['contact_numbers'])) {
+            foreach ($requestData['contact_numbers'] as $index => $phone) {
+                if (is_array($phone)) {
+                    // Ensure label exists and normalize it
+                    if (!isset($phone['label']) || empty($phone['label'])) {
+                        $requestData['contact_numbers'][$index]['label'] = 'work';
+                    } else {
+                        $requestData['contact_numbers'][$index]['label'] = $this->normalizeLabel($phone['label']);
+                    }
+                    
+                    // Normalize is_default to boolean
+                    if (isset($phone['is_default'])) {
+                        $requestData['contact_numbers'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
+                    } else {
+                        $requestData['contact_numbers'][$index]['is_default'] = false;
+                    }
+                }
+            }
+        }
+        
+        // Replace the request data
+        $request->replace($requestData);
+    }
+
+    /**
+     * Normalize various representations to boolean
+     */
+    private function normalizeBoolean($value)
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+        
+        if (is_string($value)) {
+            return in_array(strtolower($value), ['true', '1', 'on', 'yes']);
+        }
+        
+        if (is_numeric($value)) {
+            return (bool) $value;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Normalize label to lowercase and handle common variations
+     */
+    private function normalizeLabel(string $label): string
+    {
+        if (empty($label)) {
+            return 'work';
+        }
+        
+        // Convert to lowercase and map common variations
+        $normalizedLabel = strtolower(trim($label));
+        $labelMap = [
+            'work' => 'work',
+            'werk' => 'work',
+            'home' => 'home',
+            'thuis' => 'home',
+            'mobile' => 'mobile',
+            'mobiel' => 'mobile',
+            'other' => 'other',
+            'anders' => 'other'
+        ];
+        
+        return $labelMap[$normalizedLabel] ?? 'work';
     }
 }

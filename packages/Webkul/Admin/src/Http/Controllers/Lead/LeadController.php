@@ -34,6 +34,7 @@ use Webkul\Lead\Services\MagicAIService;
 use Webkul\Tag\Repositories\TagRepository;
 use Webkul\User\Repositories\UserRepository;
 use InvalidArgumentException;
+use App\Services\LeadValidationService;
 
 class LeadController extends Controller
 {
@@ -161,22 +162,11 @@ class LeadController extends Controller
      */
     public function store(LeadForm $request): RedirectResponse
     {
-            $request->validate([
-                'first_name' => ['required', 'string'],
-                'last_name' => ['required', 'string'],
-                'emails' => ['nullable', 'array'],
-                'emails.*.value' => ['nullable', new EmailValidator()],
-                'emails.*.label' => ['nullable', 'string'],
-                'phones' => ['nullable', 'array'],
-                'phones.*.value' => ['nullable', new PhoneValidator()],
-                'phones.*.label' => ['nullable', 'string'],
-                'date_of_birth' => ['nullable', new DateValidator()],
-                'organization_id' => ['nullable', 'exists:organizations,id', function ($attribute, $value, $fail) use ($request) {
-                    if ($value && !$request->input('person_id')) {
-                        $fail('Een organisatie kan alleen gekoppeld worden als er ook een contactpersoon is gekoppeld.');
-                    }
-                }],
-            ]);
+        // Normalize contact arrays before validation
+        $this->normalizeContactArrays($request);
+        
+        $this->validate($request, LeadValidationService::getWebValidationRules($request));
+
             try {
                 [$lead, $leadPipelineId] = $this->storeLead($request);
 
@@ -293,22 +283,8 @@ class LeadController extends Controller
     public function update(LeadForm $request, int $id): RedirectResponse|JsonResponse
     {
         try {
-            $request->validate([
-                'first_name' => ['required', 'string'],
-                'last_name' => ['required', 'string'],
-                'emails' => ['nullable', 'array'],
-                'emails.*.value' => ['nullable', new EmailValidator()],
-                'emails.*.label' => ['nullable', 'string'],
-                'phones' => ['nullable', 'array'],
-                'phones.*.value' => ['nullable', new PhoneValidator()],
-                'phones.*.label' => ['nullable', 'string'],
-                'date_of_birth' => ['nullable', new DateValidator()],
-                'organization_id' => ['nullable', 'exists:organizations,id', function ($attribute, $value, $fail) use ($request) {
-                    if ($value && !$request->input('person_id')) {
-                        $fail('Een organisatie kan alleen gekoppeld worden als er ook een contactpersoon is gekoppeld.');
-                    }
-                }],
-            ]);
+            $this->validate($request, LeadValidationService::getWebValidationRules($request));
+
             Event::dispatch('lead.update.before', $id);
 
             $data = $request->all();
@@ -829,5 +805,103 @@ class LeadController extends Controller
         }
 
         return $leads;
+    }
+
+    /**
+     * Normalize contact arrays to ensure proper data types
+     */
+    private function normalizeContactArrays($request)
+    {
+        $requestData = $request->all();
+        
+        // Normalize emails
+        if (isset($requestData['emails']) && is_array($requestData['emails'])) {
+            foreach ($requestData['emails'] as $index => $email) {
+                if (is_array($email)) {
+                    // Ensure label exists and normalize it
+                    if (!isset($email['label']) || empty($email['label'])) {
+                        $requestData['emails'][$index]['label'] = 'work';
+                    } else {
+                        $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
+                    }
+                    
+                    // Normalize is_default to boolean
+                    if (isset($email['is_default'])) {
+                        $requestData['emails'][$index]['is_default'] = $this->normalizeBoolean($email['is_default']);
+                    } else {
+                        $requestData['emails'][$index]['is_default'] = false;
+                    }
+                }
+            }
+        }
+        
+        // Normalize phones
+        if (isset($requestData['phones']) && is_array($requestData['phones'])) {
+            foreach ($requestData['phones'] as $index => $phone) {
+                if (is_array($phone)) {
+                    // Ensure label exists and normalize it
+                    if (!isset($phone['label']) || empty($phone['label'])) {
+                        $requestData['phones'][$index]['label'] = 'work';
+                    } else {
+                        $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
+                    }
+                    
+                    // Normalize is_default to boolean
+                    if (isset($phone['is_default'])) {
+                        $requestData['phones'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
+                    } else {
+                        $requestData['phones'][$index]['is_default'] = false;
+                    }
+                }
+            }
+        }
+        
+        // Replace the request data
+        $request->replace($requestData);
+    }
+
+    /**
+     * Normalize various representations to boolean
+     */
+    private function normalizeBoolean($value)
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+        
+        if (is_string($value)) {
+            return in_array(strtolower($value), ['true', '1', 'on', 'yes']);
+        }
+        
+        if (is_numeric($value)) {
+            return (bool) $value;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Normalize label to lowercase and handle common variations
+     */
+    private function normalizeLabel(string $label): string
+    {
+        if (empty($label)) {
+            return 'work';
+        }
+        
+        // Convert to lowercase and map common variations
+        $normalizedLabel = strtolower(trim($label));
+        $labelMap = [
+            'work' => 'work',
+            'werk' => 'work',
+            'home' => 'home',
+            'thuis' => 'home',
+            'mobile' => 'mobile',
+            'mobiel' => 'mobile',
+            'other' => 'other',
+            'anders' => 'other'
+        ];
+        
+        return $labelMap[$normalizedLabel] ?? 'work';
     }
 }

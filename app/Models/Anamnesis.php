@@ -105,4 +105,181 @@ class Anamnesis extends Model
     {
         return $this->belongsTo(\App\Models\User::class, 'user_id');
     }
+
+    // Dutch field name accessors for backward compatibility with views
+    public function getLengteAttribute()
+    {
+        return $this->height;
+    }
+
+    public function getGewichtAttribute()
+    {
+        return $this->weight;
+    }
+
+    public function getMetalenAttribute()
+    {
+        return $this->metals;
+    }
+
+    public function getMedicijnenAttribute()
+    {
+        return $this->medications;
+    }
+
+    public function getGlaucoomAttribute()
+    {
+        return $this->glaucoma;
+    }
+
+    public function getClaustrofobieAttribute()
+    {
+        return $this->claustrophobia;
+    }
+
+    public function getHartOperatieCAttribute()
+    {
+        return $this->heart_surgery;
+    }
+
+    public function getImplantaatCAttribute()
+    {
+        return $this->implant;
+    }
+
+    public function getOperatiesCAttribute()
+    {
+        return $this->surgeries;
+    }
+
+    public function getHartErfelijkAttribute()
+    {
+        return $this->hereditary_heart;
+    }
+
+    public function getVaatErfelijkAttribute()
+    {
+        return $this->hereditary_vascular;
+    }
+
+    public function getTumorenErfelijkAttribute()
+    {
+        return $this->hereditary_tumors;
+    }
+
+    public function getAllergieAttribute()
+    {
+        return $this->allergies;
+    }
+
+    public function getAllergieCAttribute()
+    {
+        return $this->allergies;
+    }
+
+    public function getRugklachtenAttribute()
+    {
+        return $this->back_problems;
+    }
+
+    public function getActiefAttribute()
+    {
+        return $this->active;
+    }
+
+    public function getSpijsverteringsklachtenAttribute()
+    {
+        return $this->digestive_problems;
+    }
+
+    public function getOpmerkingAttribute()
+    {
+        return $this->remarks;
+    }
+
+    public function getRisicoHartinfarctAttribute()
+    {
+        return $this->heart_attack_risk;
+    }
+
+    // Notes accessors
+    public function getOpmMetalenCAttribute()
+    {
+        return $this->metals_notes;
+    }
+
+    public function getOpmMedicijnenCAttribute()
+    {
+        return $this->medications_notes;
+    }
+
+    public function getOpmGlaucoomCAttribute()
+    {
+        return $this->glaucoma_notes;
+    }
+
+    public function getOpmHartOperatieCAttribute()
+    {
+        return $this->heart_surgery_notes;
+    }
+
+    public function getOpmImplantaatCAttribute()
+    {
+        return $this->implant_notes;
+    }
+
+    public function getOpmOperatiesCAttribute()
+    {
+        return $this->surgeries_notes;
+    }
+
+    public function getOpmErfHartCAttribute()
+    {
+        return $this->hereditary_heart_notes;
+    }
+
+    public function getOpmErfVaatCAttribute()
+    {
+        return $this->hereditary_vascular_notes;
+    }
+
+    public function getOpmErfTumorCAttribute()
+    {
+        return $this->hereditary_tumors_notes;
+    }
+
+    public function getOpmAllergieCAttribute()
+    {
+        return $this->allergies_notes;
+    }
+
+    public function getOpmRugklachtenCAttribute()
+    {
+        return $this->back_problems_notes;
+    }
+
+    public function getOpmRokenCAttribute()
+    {
+        return $this->smoking_notes;
+    }
+
+    public function getOpmDiabetesCAttribute()
+    {
+        return $this->diabetes_notes;
+    }
+
+    public function getOpmSpijsverteringCAttribute()
+    {
+        return $this->digestive_problems_notes;
+    }
+
+    public function getOpmHartklachtenCAttribute()
+    {
+        return $this->heart_problems_notes;
+    }
+
+    public function getOpmAdviesCAttribute()
+    {
+        return $this->advice_notes;
+    }
 }

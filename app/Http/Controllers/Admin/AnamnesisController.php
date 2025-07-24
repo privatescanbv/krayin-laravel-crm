@@ -37,7 +37,55 @@ class AnamnesisController extends Controller
     {
         $anamnesis = Anamnesis::findOrFail($id);
 
-        $data = $request->validate([
+        // Map Dutch field names to English database column names
+        $fieldMapping = [
+            'metalen' => 'metals',
+            'medicijnen' => 'medications',
+            'glaucoom' => 'glaucoma',
+            'claustrofobie' => 'claustrophobia',
+            'hart_operatie_c' => 'heart_surgery',
+            'implantaat_c' => 'implant',
+            'operaties_c' => 'surgeries',
+            'hart_erfelijk' => 'hereditary_heart',
+            'vaat_erfelijk' => 'hereditary_vascular',
+            'tumoren_erfelijk' => 'hereditary_tumors',
+            'allergie_c' => 'allergies',
+            'rugklachten' => 'back_problems',
+            'actief' => 'active',
+            'spijsverteringsklachten' => 'digestive_problems',
+            'lengte' => 'height',
+            'gewicht' => 'weight',
+            'risico_hartinfarct' => 'heart_attack_risk',
+            'opmerking' => 'remarks',
+            'opm_metalen_c' => 'metals_notes',
+            'opm_medicijnen_c' => 'medications_notes',
+            'opm_glaucoom_c' => 'glaucoma_notes',
+            'opm_hart_operatie_c' => 'heart_surgery_notes',
+            'opm_implantaat_c' => 'implant_notes',
+            'opm_operaties_c' => 'surgeries_notes',
+            'opm_erf_hart_c' => 'hereditary_heart_notes',
+            'opm_erf_vaat_c' => 'hereditary_vascular_notes',
+            'opm_erf_tumor_c' => 'hereditary_tumors_notes',
+            'opm_allergie_c' => 'allergies_notes',
+            'opm_rugklachten_c' => 'back_problems_notes',
+            'opm_roken_c' => 'smoking_notes',
+            'opm_diabetes_c' => 'diabetes_notes',
+            'opm_spijsvertering_c' => 'digestive_problems_notes',
+            'opm_hartklachten_c' => 'heart_problems_notes',
+            'opm_advies_c' => 'advice_notes',
+        ];
+
+        // Create a new array with mapped field names
+        $mappedData = [];
+        foreach ($request->all() as $key => $value) {
+            $mappedKey = $fieldMapping[$key] ?? $key;
+            $mappedData[$mappedKey] = $value;
+        }
+
+        // Create a new request instance with mapped data
+        $mappedRequest = new Request($mappedData);
+
+        $data = $mappedRequest->validate([
             'name'                      => 'nullable|string|max:255',
             'description'               => 'nullable|string',
             'comment_clinic'            => 'nullable|string',
@@ -80,24 +128,24 @@ class AnamnesisController extends Controller
             'active'                    => 'required|in:0,1',
             'advice_notes'              => 'nullable|string',
         ], [
-            'metals.required'              => 'Please select an answer for Metals.',
-            'medications.required'         => 'Please select an answer for Medications.',
-            'glaucoma.required'            => 'Please select an answer for Glaucoma.',
-            'claustrophobia.required'      => 'Please select an answer for Claustrophobia.',
-            'dormicum.required'            => 'Please select an answer for Dormicum.',
-            'heart_surgery.required'       => 'Please select an answer for Heart Surgery.',
-            'implant.required'             => 'Please select an answer for Implant.',
-            'surgeries.required'           => 'Please select an answer for Surgeries.',
-            'hereditary_heart.required'    => 'Please select an answer for Hereditary Heart.',
-            'hereditary_vascular.required' => 'Please select an answer for Hereditary Vascular.',
-            'hereditary_tumors.required'   => 'Please select an answer for Hereditary Tumors.',
-            'allergies.required'           => 'Please select an answer for Allergies.',
-            'back_problems.required'       => 'Please select an answer for Back Problems.',
-            'heart_problems.required'      => 'Please select an answer for Heart Problems.',
-            'smoking.required'             => 'Please select an answer for Smoking.',
-            'diabetes.required'            => 'Please select an answer for Diabetes.',
-            'digestive_problems.required'  => 'Please select an answer for Digestive Problems.',
-            'active.required'              => 'Please select an answer for Active.',
+            'metals.required'              => 'Selecteer een antwoord voor Metalen.',
+            'medications.required'         => 'Selecteer een antwoord voor Medicijnen.',
+            'glaucoma.required'            => 'Selecteer een antwoord voor Glaucoom.',
+            'claustrophobia.required'      => 'Selecteer een antwoord voor Claustrofobie.',
+            'dormicum.required'            => 'Selecteer een antwoord voor Dormicum.',
+            'heart_surgery.required'       => 'Selecteer een antwoord voor Hart operatie.',
+            'implant.required'             => 'Selecteer een antwoord voor Implantaat.',
+            'surgeries.required'           => 'Selecteer een antwoord voor Operaties.',
+            'hereditary_heart.required'    => 'Selecteer een antwoord voor Hart erfelijk.',
+            'hereditary_vascular.required' => 'Selecteer een antwoord voor Vaat erfelijk.',
+            'hereditary_tumors.required'   => 'Selecteer een antwoord voor Tumoren erfelijk.',
+            'allergies.required'           => 'Selecteer een antwoord voor Allergie.',
+            'back_problems.required'       => 'Selecteer een antwoord voor Rugklachten.',
+            'heart_problems.required'      => 'Selecteer een antwoord voor Hartproblemen.',
+            'smoking.required'             => 'Selecteer een antwoord voor Roken.',
+            'diabetes.required'            => 'Selecteer een antwoord voor Diabetes.',
+            'digestive_problems.required'  => 'Selecteer een antwoord voor Spijsverteringsklachten.',
+            'active.required'              => 'Selecteer een antwoord voor Actief.',
         ]);
 
         $data['updated_by'] = null; // Set to null since it's now nullable

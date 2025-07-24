@@ -308,7 +308,7 @@ class ComprehensiveAuditTrailTest extends TestCase
     {
         $this->actingAs($this->user1);
 
-        // Create user with manual audit trail
+        // Create user with explicit audit trail (fillable now supports it)
         $newUser = User::create([
             'name' => 'New User',
             'email' => 'newuser@example.com',

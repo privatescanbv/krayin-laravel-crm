@@ -26,11 +26,11 @@ class AuditTrailServiceProvider extends ServiceProvider
     {
         // Add audit trail functionality to Webkul models
         $this->addAuditTrailToModel(Organization::class);
+        $this->addAuditTrailToModel(User::class);
         
         // Add only relations to models that have their own observers for audit trail logic
         $this->addAuditTrailRelationsToModel(Lead::class);   // LeadObserver handles audit trail
         $this->addAuditTrailRelationsToModel(Person::class); // PersonObserver handles audit trail
-        $this->addAuditTrailRelationsToModel(User::class);   // User audit trail via manual handling
     }
 
     /**
@@ -69,13 +69,25 @@ class AuditTrailServiceProvider extends ServiceProvider
             }
         });
 
-        // Add audit trail fields to fillable for Organization model (if not already present)
+        // Add audit trail fields to fillable for models that don't have them
         if ($modelClass === Organization::class) {
             $modelClass::mixin(new class {
                 public function getFillable()
                 {
                     return function () {
                         $originalFillable = ['name', 'user_id']; // Original Organization fillable
+                        return array_merge($originalFillable, ['created_by', 'updated_by']);
+                    };
+                }
+            });
+        }
+        
+        if ($modelClass === User::class) {
+            $modelClass::mixin(new class {
+                public function getFillable()
+                {
+                    return function () {
+                        $originalFillable = ['name', 'email', 'image', 'password', 'api_token', 'role_id', 'status']; // Original User fillable
                         return array_merge($originalFillable, ['created_by', 'updated_by']);
                     };
                 }

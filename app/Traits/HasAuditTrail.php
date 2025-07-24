@@ -4,7 +4,6 @@ namespace App\Traits;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Facades\Auth;
 
 trait HasAuditTrail
 {
@@ -14,15 +13,15 @@ trait HasAuditTrail
     protected static function bootHasAuditTrail(): void
     {
         static::creating(function (Model $model) {
-            if (Auth::check()) {
-                $model->created_by = Auth::id();
-                $model->updated_by = Auth::id();
+            if (auth()->check()) {
+                $model->created_by = auth()->id();
+                $model->updated_by = auth()->id();
             }
         });
 
         static::updating(function (Model $model) {
-            if (Auth::check()) {
-                $model->updated_by = Auth::id();
+            if (auth()->check()) {
+                $model->updated_by = auth()->id();
             }
         });
     }

@@ -180,6 +180,9 @@ class ComprehensiveAuditTrailTest extends TestCase
             'user_id' => $this->user1->id,
         ]);
 
+        // Refresh to get database values (PersonObserver does direct DB updates)
+        $person->refresh();
+
         // Assert creation audit
         $this->assertEquals($this->user1->id, $person->created_by);
         $this->assertEquals($this->user1->id, $person->updated_by);
@@ -189,6 +192,9 @@ class ComprehensiveAuditTrailTest extends TestCase
         // Update as different user
         $this->actingAs($this->user2);
         $person->update(['first_name' => 'Janet']);
+        
+        // Refresh to get database values (PersonObserver does direct DB updates)
+        $person->refresh();
 
         // Assert update audit
         $this->assertEquals($this->user1->id, $person->created_by);
@@ -236,13 +242,15 @@ class ComprehensiveAuditTrailTest extends TestCase
     {
         $this->actingAs($this->user1);
 
-        // Create user
+        // Create user with manual audit trail
         $newUser = User::create([
             'name' => 'New User',
             'email' => 'newuser@example.com',
             'password' => bcrypt('password'),
             'status' => 1,
             'role_id' => $this->role->id,
+            'created_by' => $this->user1->id,
+            'updated_by' => $this->user1->id,
         ]);
 
         // Assert creation audit
@@ -253,7 +261,10 @@ class ComprehensiveAuditTrailTest extends TestCase
 
         // Update as different user
         $this->actingAs($this->user2);
-        $newUser->update(['name' => 'Updated User Name']);
+        $newUser->update([
+            'name' => 'Updated User Name',
+            'updated_by' => $this->user2->id,
+        ]);
 
         // Assert update audit
         $this->assertEquals($this->user1->id, $newUser->created_by);

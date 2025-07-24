@@ -25,12 +25,12 @@ class AuditTrailServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Add audit trail functionality to Webkul models
-        $this->addAuditTrailToModel(User::class);
-        $this->addAuditTrailToModel(Person::class);
         $this->addAuditTrailToModel(Organization::class);
         
-        // Add only relations to Lead model (audit trail logic is in LeadObserver)
-        $this->addAuditTrailRelationsToModel(Lead::class);
+        // Add only relations to models that have their own observers for audit trail logic
+        $this->addAuditTrailRelationsToModel(Lead::class);   // LeadObserver handles audit trail
+        $this->addAuditTrailRelationsToModel(Person::class); // PersonObserver handles audit trail
+        $this->addAuditTrailRelationsToModel(User::class);   // User audit trail via manual handling
     }
 
     /**

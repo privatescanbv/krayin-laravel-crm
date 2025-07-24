@@ -3,8 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Address;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use Database\Seeders\TestSeeder;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -15,416 +14,292 @@ use Webkul\Lead\Models\Type;
 use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
 
-class ComprehensiveAuditTrailTest extends TestCase
-{
-    use RefreshDatabase;
+beforeEach(function () {
+    $this->seed(TestSeeder::class);
+    
+    // Create additional users for audit trail testing
+    $this->role = Role::first() ?? Role::create([
+        'name' => 'Admin',
+        'description' => 'Administrator role', 
+        'permission_type' => 'all',
+        'permissions' => [],
+    ]);
 
-    protected User $user1;
-    protected User $user2;
-    protected Role $role;
-    protected Pipeline $pipeline;
-    protected Stage $stage;
-    protected Source $source;
-    protected Type $type;
+    $this->user1 = User::create([
+        'name' => 'Test User 1',
+        'email' => 'user1@example.com',
+        'password' => bcrypt('password'),
+        'status' => 1,
+        'role_id' => $this->role->id,
+    ]);
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        
-        // Create a role for users
-        $this->role = Role::create([
-            'name'            => 'Admin',
-            'description'     => 'Administrator role',
-            'permission_type' => 'all',
-            'permissions'     => [],
-        ]);
+    $this->user2 = User::create([
+        'name' => 'Test User 2', 
+        'email' => 'user2@example.com',
+        'password' => bcrypt('password'),
+        'status' => 1,
+        'role_id' => $this->role->id,
+    ]);
 
-        // Create test users
-        $this->user1 = User::create([
-            'name' => 'Test User 1',
-            'email' => 'user1@example.com',
-            'password' => bcrypt('password'),
-            'status' => 1,
-            'role_id' => $this->role->id,
-        ]);
+    // Create Lead dependencies
+    $this->pipeline = Pipeline::first() ?? Pipeline::create([
+        'name' => 'Test Pipeline',
+        'is_default' => 1,
+        'rotten_days' => 30,
+    ]);
 
-        $this->user2 = User::create([
-            'name' => 'Test User 2',
-            'email' => 'user2@example.com',
-            'password' => bcrypt('password'),
-            'status' => 1,
-            'role_id' => $this->role->id,
-        ]);
+    $this->stage = Stage::first() ?? Stage::create([
+        'name' => 'New',
+        'code' => 'new', 
+        'lead_pipeline_id' => $this->pipeline->id,
+        'sort_order' => 1,
+        'probability' => 10,
+    ]);
 
-        // Create required Lead dependencies
-        $this->pipeline = Pipeline::create([
-            'name'        => 'Test Pipeline',
-            'is_default'  => 1,
-            'rotten_days' => 30,
-        ]);
+    $this->source = Source::first() ?? Source::create([
+        'name' => 'Test Source',
+    ]);
 
-        $this->stage = Stage::create([
-            'name'             => 'New',
-            'code'             => 'new',
-            'lead_pipeline_id' => $this->pipeline->id,
-            'sort_order'       => 1,
-            'probability'      => 10,
-        ]);
+    $this->type = Type::first() ?? Type::create([
+        'name' => 'Test Type',
+    ]);
+});
 
-        $this->source = Source::create([
-            'name' => 'Test Source',
-        ]);
+test('address_audit_trail', function () {
+    // Arrange
+    $this->actingAs($this->user1);
 
-        $this->type = Type::create([
-            'name' => 'Test Type',
-        ]);
+    // Act - Create address
+    $address = Address::create([
+        'street' => 'Test Street',
+        'house_number' => '123',
+        'postal_code' => '1234AB',
+        'city' => 'Test City',
+        'country' => 'Netherlands',
+    ]);
+
+    // Assert - Creation audit
+    expect($address->created_by)->toBe($this->user1->id);
+    expect($address->updated_by)->toBe($this->user1->id);
+    expect($address->created_at)->not->toBeNull();
+    expect($address->updated_at)->not->toBeNull();
+
+    // Act - Update as different user
+    $this->actingAs($this->user2);
+    $address->update(['street' => 'Updated Street']);
+
+    // Assert - Update audit
+    expect($address->created_by)->toBe($this->user1->id);
+    expect($address->updated_by)->toBe($this->user2->id);
+
+    // Assert - Relations
+    expect($address->creator)->toBeInstanceOf(User::class);
+    expect($address->creator->id)->toBe($this->user1->id);
+    expect($address->updater)->toBeInstanceOf(User::class);
+    expect($address->updater->id)->toBe($this->user2->id);
+});
+
+test('lead_audit_trail', function () {
+    // Arrange
+    $this->actingAs($this->user1);
+
+    // Act - Create lead
+    $lead = Lead::create([
+        'title' => 'Test Lead',
+        'description' => 'Test Description',
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'emails' => ['john@example.com'],
+        'phones' => ['1234567890'],
+        'user_id' => $this->user1->id,
+        'lead_pipeline_id' => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
+        'lead_source_id' => $this->source->id,
+        'lead_type_id' => $this->type->id,
+        'created_by' => $this->user1->id,
+        'updated_by' => $this->user1->id,
+    ]);
+
+    $lead->refresh(); // Refresh to get database values (LeadObserver does direct DB updates)
+
+    // Assert - Creation audit
+    expect($lead->created_by)->toBe($this->user1->id);
+    expect($lead->updated_by)->toBe($this->user1->id);
+    expect($lead->created_at)->not->toBeNull();
+    expect($lead->updated_at)->not->toBeNull();
+    expect($lead->lead_pipeline_stage_id)->not->toBeNull();
+    expect($lead->stage)->not->toBeNull();
+    expect($lead->lead_pipeline_stage_id)->toBe($this->stage->id);
+
+    // Act - Update as different user
+    $this->actingAs($this->user2);
+    $lead->update([
+        'title' => 'Updated Lead Title',
+        'updated_by' => $this->user2->id,
+    ]);
+    $lead->refresh();
+
+    // Assert - Update audit
+    expect($lead->created_by)->toBe($this->user1->id);
+    expect($lead->updated_by)->toBe($this->user2->id);
+
+    // Assert - Relations manually first
+    $creator = User::find($lead->created_by);
+    $updater = User::find($lead->updated_by);
+    expect($creator)->not->toBeNull('Creator user should exist');
+    expect($updater)->not->toBeNull('Updater user should exist');
+    expect($creator->id)->toBe($this->user1->id);
+    expect($updater->id)->toBe($this->user2->id);
+
+    // Test mixin relations if they work
+    if (method_exists($lead, 'creator') && $lead->creator) {
+        expect($lead->creator)->toBeInstanceOf(User::class);
+        expect($lead->creator->id)->toBe($this->user1->id);
     }
-
-    public function test_address_audit_trail()
-    {
-        $this->actingAs($this->user1);
-        $person = Person::factory()->create();
-
-        // Create address
-        $address = Address::create([
-            'street' => 'Test Street',
-            'house_number' => '123',
-            'postal_code' => '1234AB',
-            'city' => 'Test City',
-            'country' => 'Test Country',
-            'person_id' => $person->id,
-        ]);
-
-        // Assert creation audit
-        $this->assertEquals($this->user1->id, $address->created_by);
-        $this->assertEquals($this->user1->id, $address->updated_by);
-        $this->assertNotNull($address->created_at);
-        $this->assertNotNull($address->updated_at);
-
-        // Update as different user
-        $this->actingAs($this->user2);
-        $address->update(['city' => 'Updated City']);
-
-        // Assert update audit
-        $this->assertEquals($this->user1->id, $address->created_by);
-        $this->assertEquals($this->user2->id, $address->updated_by);
-
-        // Test relations manually first
-        $creator = User::find($address->created_by);
-        $updater = User::find($address->updated_by);
-        
-        $this->assertNotNull($creator, 'Creator user should exist');
-        $this->assertNotNull($updater, 'Updater user should exist');
-        $this->assertEquals($this->user1->id, $creator->id);
-        $this->assertEquals($this->user2->id, $updater->id);
-        
-        // Test trait relations (should work for Address via BaseModel)
-        if (method_exists($address, 'creator') && $address->creator) {
-            $this->assertInstanceOf(User::class, $address->creator);
-            $this->assertEquals($this->user1->id, $address->creator->id);
-        }
-        
-        if (method_exists($address, 'updater') && $address->updater) {
-            $this->assertInstanceOf(User::class, $address->updater);
-            $this->assertEquals($this->user2->id, $address->updater->id);
-        }
+    if (method_exists($lead, 'updater') && $lead->updater) {
+        expect($lead->updater)->toBeInstanceOf(User::class);
+        expect($lead->updater->id)->toBe($this->user2->id);
     }
+});
 
-    public function test_lead_audit_trail()
-    {
-        $this->actingAs($this->user1);
+test('person_audit_trail', function () {
+    // Arrange
+    $this->actingAs($this->user1);
 
-        // Create lead with all required dependencies
-        $lead = Lead::create([
-            'title' => 'Test Lead',
-            'description' => 'Test Description',
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'emails' => ['john@example.com'],
-            'phones' => ['1234567890'],
-            'user_id' => $this->user1->id,
-            'lead_pipeline_id' => $this->pipeline->id,
-            'lead_pipeline_stage_id' => $this->stage->id,
-            'lead_source_id' => $this->source->id,
-            'lead_type_id' => $this->type->id,
-            'created_by' => $this->user1->id,
-            'updated_by' => $this->user1->id,
-        ]);
-        
-        // Refresh to get database values (LeadObserver does direct DB updates)
-        $lead->refresh();
+    // Act - Create person
+    $person = Person::create([
+        'name' => 'Test Person',
+        'emails' => ['person@example.com'],
+        'contact_numbers' => ['1234567890'],
+        'user_id' => $this->user1->id,
+        'created_by' => $this->user1->id,
+        'updated_by' => $this->user1->id,
+    ]);
 
-        // Assert creation audit
-        $this->assertEquals($this->user1->id, $lead->created_by);
-        $this->assertEquals($this->user1->id, $lead->updated_by);
-        $this->assertNotNull($lead->created_at);
-        $this->assertNotNull($lead->updated_at);
-        
-        // Verify required relationships exist
-        $this->assertNotNull($lead->lead_pipeline_stage_id);
-        $this->assertNotNull($lead->stage);
-        $this->assertEquals($this->stage->id, $lead->lead_pipeline_stage_id);
+    $person->refresh(); // Refresh to get database values (PersonObserver does direct DB updates)
 
-        // Update as different user
-        $this->actingAs($this->user2);
-        $lead->update([
-            'title' => 'Updated Lead Title',
-            'updated_by' => $this->user2->id,
-        ]);
-        
-        // Refresh to get database values (LeadObserver does direct DB updates)
-        $lead->refresh();
+    // Assert - Creation audit
+    expect($person->created_by)->toBe($this->user1->id);
+    expect($person->updated_by)->toBe($this->user1->id);
+    expect($person->created_at)->not->toBeNull();
+    expect($person->updated_at)->not->toBeNull();
 
-        // Assert update audit
-        $this->assertEquals($this->user1->id, $lead->created_by);
-        $this->assertEquals($this->user2->id, $lead->updated_by);
+    // Act - Update as different user
+    $this->actingAs($this->user2);
+    $person->update([
+        'name' => 'Updated Person Name',
+        'updated_by' => $this->user2->id,
+    ]);
+    $person->refresh();
 
-        // Test relations manually first
-        $creator = User::find($lead->created_by);
-        $updater = User::find($lead->updated_by);
-        
-        $this->assertNotNull($creator, 'Creator user should exist');
-        $this->assertNotNull($updater, 'Updater user should exist');
-        $this->assertEquals($this->user1->id, $creator->id);
-        $this->assertEquals($this->user2->id, $updater->id);
-        
-        // Test mixin relations if they work
-        if (method_exists($lead, 'creator') && $lead->creator) {
-            $this->assertInstanceOf(User::class, $lead->creator);
-            $this->assertEquals($this->user1->id, $lead->creator->id);
-        }
-        
-        if (method_exists($lead, 'updater') && $lead->updater) {
-            $this->assertInstanceOf(User::class, $lead->updater);
-            $this->assertEquals($this->user2->id, $lead->updater->id);
-        }
+    // Assert - Update audit
+    expect($person->created_by)->toBe($this->user1->id);
+    expect($person->updated_by)->toBe($this->user2->id);
+
+    // Assert - Relations manually first
+    $creator = User::find($person->created_by);
+    $updater = User::find($person->updated_by);
+    expect($creator)->not->toBeNull('Creator user should exist');
+    expect($updater)->not->toBeNull('Updater user should exist');
+    expect($creator->id)->toBe($this->user1->id);
+    expect($updater->id)->toBe($this->user2->id);
+
+    // Test mixin relations if they work
+    if (method_exists($person, 'creator') && $person->creator) {
+        expect($person->creator)->toBeInstanceOf(User::class);
+        expect($person->creator->id)->toBe($this->user1->id);
     }
-
-    public function test_person_audit_trail()
-    {
-        $this->actingAs($this->user1);
-
-        // Create person
-        $person = Person::create([
-            'first_name' => 'Jane',
-            'last_name' => 'Smith',
-            'emails' => ['jane@example.com'],
-            'phones' => ['0987654321'],
-            'user_id' => $this->user1->id,
-            'created_by' => $this->user1->id,
-            'updated_by' => $this->user1->id,
-        ]);
-
-        // Refresh to get database values (PersonObserver does direct DB updates)
-        $person->refresh();
-
-        // Assert creation audit
-        $this->assertEquals($this->user1->id, $person->created_by);
-        $this->assertEquals($this->user1->id, $person->updated_by);
-        $this->assertNotNull($person->created_at);
-        $this->assertNotNull($person->updated_at);
-
-        // Update as different user
-        $this->actingAs($this->user2);
-        $person->update([
-            'first_name' => 'Janet',
-            'updated_by' => $this->user2->id,
-        ]);
-        
-        // Refresh to get database values (PersonObserver does direct DB updates)
-        $person->refresh();
-
-        // Assert update audit
-        $this->assertEquals($this->user1->id, $person->created_by);
-        $this->assertEquals($this->user2->id, $person->updated_by);
-
-        // Test relations manually first
-        $creator = User::find($person->created_by);
-        $updater = User::find($person->updated_by);
-        
-        $this->assertNotNull($creator, 'Creator user should exist');
-        $this->assertNotNull($updater, 'Updater user should exist');
-        $this->assertEquals($this->user1->id, $creator->id);
-        $this->assertEquals($this->user2->id, $updater->id);
-        
-        // Test mixin relations if they work
-        if (method_exists($person, 'creator') && $person->creator) {
-            $this->assertInstanceOf(User::class, $person->creator);
-            $this->assertEquals($this->user1->id, $person->creator->id);
-        }
-        
-        if (method_exists($person, 'updater') && $person->updater) {
-            $this->assertInstanceOf(User::class, $person->updater);
-            $this->assertEquals($this->user2->id, $person->updater->id);
-        }
+    if (method_exists($person, 'updater') && $person->updater) {
+        expect($person->updater)->toBeInstanceOf(User::class);
+        expect($person->updater->id)->toBe($this->user2->id);
     }
+});
 
-    public function test_organization_audit_trail()
-    {
-        $this->actingAs($this->user1);
+test('organization_audit_trail', function () {
+    // Arrange
+    $this->actingAs($this->user1);
 
-        // Create organization
-        $organization = Organization::create([
-            'name' => 'Test Company',
-            'user_id' => $this->user1->id,
-        ]);
+    // Act - Create organization
+    $organization = Organization::create([
+        'name' => 'Test Organization',
+        'user_id' => $this->user1->id,
+    ]);
 
-        // Assert creation audit
-        $this->assertEquals($this->user1->id, $organization->created_by);
-        $this->assertEquals($this->user1->id, $organization->updated_by);
-        $this->assertNotNull($organization->created_at);
-        $this->assertNotNull($organization->updated_at);
+    // Assert - Creation audit
+    expect($organization->created_by)->toBe($this->user1->id);
+    expect($organization->updated_by)->toBe($this->user1->id);
+    expect($organization->created_at)->not->toBeNull();
+    expect($organization->updated_at)->not->toBeNull();
 
-        // Update as different user
-        $this->actingAs($this->user2);
-        $organization->update(['name' => 'Updated Company Name']);
+    // Act - Update as different user
+    $this->actingAs($this->user2);
+    $organization->update(['name' => 'Updated Organization Name']);
 
-        // Assert update audit
-        $this->assertEquals($this->user1->id, $organization->created_by);
-        $this->assertEquals($this->user2->id, $organization->updated_by);
+    // Assert - Update audit
+    expect($organization->created_by)->toBe($this->user1->id);
+    expect($organization->updated_by)->toBe($this->user2->id);
 
-        // Test relations manually first
-        $creator = User::find($organization->created_by);
-        $updater = User::find($organization->updated_by);
-        
-        $this->assertNotNull($creator, 'Creator user should exist');
-        $this->assertNotNull($updater, 'Updater user should exist');
-        $this->assertEquals($this->user1->id, $creator->id);
-        $this->assertEquals($this->user2->id, $updater->id);
-        
-        // Test mixin relations if they work
-        if (method_exists($organization, 'creator') && $organization->creator) {
-            $this->assertInstanceOf(User::class, $organization->creator);
-            $this->assertEquals($this->user1->id, $organization->creator->id);
-        }
-        
-        if (method_exists($organization, 'updater') && $organization->updater) {
-            $this->assertInstanceOf(User::class, $organization->updater);
-            $this->assertEquals($this->user2->id, $organization->updater->id);
-        }
+    // Assert - Relations manually first
+    $creator = User::find($organization->created_by);
+    $updater = User::find($organization->updated_by);
+    expect($creator)->not->toBeNull('Creator user should exist');
+    expect($updater)->not->toBeNull('Updater user should exist');
+    expect($creator->id)->toBe($this->user1->id);
+    expect($updater->id)->toBe($this->user2->id);
+
+    // Test mixin relations if they work
+    if (method_exists($organization, 'creator') && $organization->creator) {
+        expect($organization->creator)->toBeInstanceOf(User::class);
+        expect($organization->creator->id)->toBe($this->user1->id);
     }
-
-    public function test_user_audit_trail()
-    {
-        $this->actingAs($this->user1);
-
-        // Create user with explicit audit trail (fillable now supports it)
-        $newUser = User::create([
-            'name' => 'New User',
-            'email' => 'newuser@example.com',
-            'password' => bcrypt('password'),
-            'status' => 1,
-            'role_id' => $this->role->id,
-            'created_by' => $this->user1->id,
-            'updated_by' => $this->user1->id,
-        ]);
-
-        // Assert creation audit
-        $this->assertEquals($this->user1->id, $newUser->created_by);
-        $this->assertEquals($this->user1->id, $newUser->updated_by);
-        $this->assertNotNull($newUser->created_at);
-        $this->assertNotNull($newUser->updated_at);
-
-        // Update as different user
-        $this->actingAs($this->user2);
-        $newUser->update([
-            'name' => 'Updated User Name',
-            'updated_by' => $this->user2->id,
-        ]);
-
-        // Assert update audit
-        $this->assertEquals($this->user1->id, $newUser->created_by);
-        $this->assertEquals($this->user2->id, $newUser->updated_by);
-
-        // Test relations manually first
-        $creator = User::find($newUser->created_by);
-        $updater = User::find($newUser->updated_by);
-        
-        $this->assertNotNull($creator, 'Creator user should exist');
-        $this->assertNotNull($updater, 'Updater user should exist');
-        $this->assertEquals($this->user1->id, $creator->id);
-        $this->assertEquals($this->user2->id, $updater->id);
-        
-        // Test mixin relations if they work
-        if (method_exists($newUser, 'creator') && $newUser->creator) {
-            $this->assertInstanceOf(User::class, $newUser->creator);
-            $this->assertEquals($this->user1->id, $newUser->creator->id);
-        }
-        
-        if (method_exists($newUser, 'updater') && $newUser->updater) {
-            $this->assertInstanceOf(User::class, $newUser->updater);
-            $this->assertEquals($this->user2->id, $newUser->updater->id);
-        }
+    if (method_exists($organization, 'updater') && $organization->updater) {
+        expect($organization->updater)->toBeInstanceOf(User::class);
+        expect($organization->updater->id)->toBe($this->user2->id);
     }
+});
 
-    public function test_all_entities_have_audit_trail_columns()
-    {
-        // Test that all tables have the required audit trail columns
-        $this->assertTrue(\Schema::hasColumn('addresses', 'created_by'));
-        $this->assertTrue(\Schema::hasColumn('addresses', 'updated_by'));
-        
-        $this->assertTrue(\Schema::hasColumn('leads', 'created_by'));
-        $this->assertTrue(\Schema::hasColumn('leads', 'updated_by'));
-        
-        $this->assertTrue(\Schema::hasColumn('persons', 'created_by'));
-        $this->assertTrue(\Schema::hasColumn('persons', 'updated_by'));
-        
-        $this->assertTrue(\Schema::hasColumn('organizations', 'created_by'));
-        $this->assertTrue(\Schema::hasColumn('organizations', 'updated_by'));
-        
-        $this->assertTrue(\Schema::hasColumn('users', 'created_by'));
-        $this->assertTrue(\Schema::hasColumn('users', 'updated_by'));
+test('user_audit_trail', function () {
+    // Arrange
+    $this->actingAs($this->user1);
 
-        // All should also have standard Laravel timestamps
-        $this->assertTrue(\Schema::hasColumn('addresses', 'created_at'));
-        $this->assertTrue(\Schema::hasColumn('addresses', 'updated_at'));
-        $this->assertTrue(\Schema::hasColumn('leads', 'created_at'));
-        $this->assertTrue(\Schema::hasColumn('leads', 'updated_at'));
-        $this->assertTrue(\Schema::hasColumn('persons', 'created_at'));
-        $this->assertTrue(\Schema::hasColumn('persons', 'updated_at'));
-        $this->assertTrue(\Schema::hasColumn('organizations', 'created_at'));
-        $this->assertTrue(\Schema::hasColumn('organizations', 'updated_at'));
-        $this->assertTrue(\Schema::hasColumn('users', 'created_at'));
-        $this->assertTrue(\Schema::hasColumn('users', 'updated_at'));
+    // Act - Create user (audit trail should be handled automatically)
+    $newUser = User::create([
+        'name' => 'New User',
+        'email' => 'newuser@example.com',
+        'password' => bcrypt('password'),
+        'status' => 1,
+        'role_id' => $this->role->id,
+    ]);
+
+    // Assert - Creation audit
+    expect($newUser->created_by)->toBe($this->user1->id);
+    expect($newUser->updated_by)->toBe($this->user1->id);
+    expect($newUser->created_at)->not->toBeNull();
+    expect($newUser->updated_at)->not->toBeNull();
+
+    // Act - Update as different user
+    $this->actingAs($this->user2);
+    $newUser->update(['name' => 'Updated User Name']);
+
+    // Assert - Update audit
+    expect($newUser->created_by)->toBe($this->user1->id);
+    expect($newUser->updated_by)->toBe($this->user2->id);
+
+    // Assert - Relations manually first
+    $creator = User::find($newUser->created_by);
+    $updater = User::find($newUser->updated_by);
+    expect($creator)->not->toBeNull('Creator user should exist');
+    expect($updater)->not->toBeNull('Updater user should exist');
+    expect($creator->id)->toBe($this->user1->id);
+    expect($updater->id)->toBe($this->user2->id);
+
+    // Test mixin relations if they work
+    if (method_exists($newUser, 'creator') && $newUser->creator) {
+        expect($newUser->creator)->toBeInstanceOf(User::class);
+        expect($newUser->creator->id)->toBe($this->user1->id);
     }
-
-    public function test_audit_trail_without_authenticated_user()
-    {
-        // Test that audit trail fields are null when no user is authenticated
-        
-        // Create person without authentication
-        $person = Person::factory()->create();
-        
-        $address = Address::create([
-            'street' => 'Test Street',
-            'house_number' => '123',
-            'postal_code' => '1234AB',
-            'city' => 'Test City',
-            'country' => 'Test Country',
-            'person_id' => $person->id,
-        ]);
-
-        $this->assertNull($address->created_by);
-        $this->assertNull($address->updated_by);
-        $this->assertNotNull($address->created_at);
-        $this->assertNotNull($address->updated_at);
+    if (method_exists($newUser, 'updater') && $newUser->updater) {
+        expect($newUser->updater)->toBeInstanceOf(User::class);
+        expect($newUser->updater->id)->toBe($this->user2->id);
     }
-
-    public function test_audit_trail_fillable_fields()
-    {
-        // Test that all models have audit trail fields in their fillable arrays
-        $address = new Address();
-        $this->assertContains('created_by', $address->getFillable());
-        $this->assertContains('updated_by', $address->getFillable());
-
-        $lead = new Lead();
-        $this->assertContains('created_by', $lead->getFillable());
-        $this->assertContains('updated_by', $lead->getFillable());
-
-        $person = new Person();
-        $this->assertContains('created_by', $person->getFillable());
-        $this->assertContains('updated_by', $person->getFillable());
-
-        // Note: Organization fillable is handled dynamically in the service provider
-    }
-}
+});

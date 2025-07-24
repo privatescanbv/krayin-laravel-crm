@@ -10,14 +10,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            AuditTrailMigrationHelper::addAuditTrailColumns($table);
+            AuditTrailMigrationHelper::addAuditTrailColumnsIfNotExists($table, 'users');
         });
     }
 
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            AuditTrailMigrationHelper::dropAuditTrailColumns($table);
+            AuditTrailMigrationHelper::dropAuditTrailColumnsIfExists($table, 'users');
         });
     }
 };

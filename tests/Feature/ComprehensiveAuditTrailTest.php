@@ -134,6 +134,9 @@ class ComprehensiveAuditTrailTest extends TestCase
             'lead_source_id' => $this->source->id,
             'lead_type_id' => $this->type->id,
         ]);
+        
+        // Refresh to get database values (LeadObserver does direct DB updates)
+        $lead->refresh();
 
         // Assert creation audit
         $this->assertEquals($this->user1->id, $lead->created_by);
@@ -149,6 +152,9 @@ class ComprehensiveAuditTrailTest extends TestCase
         // Update as different user
         $this->actingAs($this->user2);
         $lead->update(['title' => 'Updated Lead Title']);
+        
+        // Refresh to get database values (LeadObserver does direct DB updates)
+        $lead->refresh();
 
         // Assert update audit
         $this->assertEquals($this->user1->id, $lead->created_by);

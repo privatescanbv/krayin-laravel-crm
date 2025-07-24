@@ -26,9 +26,11 @@ class AuditTrailServiceProvider extends ServiceProvider
     {
         // Add audit trail functionality to Webkul models
         $this->addAuditTrailToModel(User::class);
-        $this->addAuditTrailToModel(Lead::class);
         $this->addAuditTrailToModel(Person::class);
         $this->addAuditTrailToModel(Organization::class);
+        
+        // Add only relations to Lead model (audit trail logic is in LeadObserver)
+        $this->addAuditTrailRelationsToModel(Lead::class);
     }
 
     /**
@@ -41,14 +43,14 @@ class AuditTrailServiceProvider extends ServiceProvider
             public function creator()
             {
                 return function () {
-                    return $this->belongsTo(config('auth.providers.users.model'), 'created_by');
+                    return $this->belongsTo(\Webkul\User\Models\User::class, 'created_by');
                 };
             }
 
             public function updater()
             {
                 return function () {
-                    return $this->belongsTo(config('auth.providers.users.model'), 'updated_by');
+                    return $this->belongsTo(\Webkul\User\Models\User::class, 'updated_by');
                 };
             }
         });
@@ -77,5 +79,28 @@ class AuditTrailServiceProvider extends ServiceProvider
                 }
             });
         }
+    }
+
+    /**
+     * Add only audit trail relations to a model (without event listeners)
+     */
+    private function addAuditTrailRelationsToModel(string $modelClass): void
+    {
+        // Add audit trail relations
+        $modelClass::mixin(new class {
+            public function creator()
+            {
+                return function () {
+                    return $this->belongsTo(\Webkul\User\Models\User::class, 'created_by');
+                };
+            }
+
+            public function updater()
+            {
+                return function () {
+                    return $this->belongsTo(\Webkul\User\Models\User::class, 'updated_by');
+                };
+            }
+        });
     }
 }

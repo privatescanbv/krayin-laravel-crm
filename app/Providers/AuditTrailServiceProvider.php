@@ -71,11 +71,13 @@ class AuditTrailServiceProvider extends ServiceProvider
 
         // Add audit trail fields to fillable for Organization model (if not already present)
         if ($modelClass === Organization::class) {
-            $modelClass::creating(function ($model) {
-                // Ensure audit trail fields are fillable
-                $currentFillable = $model->getFillable();
-                if (!in_array('created_by', $currentFillable)) {
-                    $model->fillable(array_merge($currentFillable, ['created_by', 'updated_by']));
+            $modelClass::mixin(new class {
+                public function getFillable()
+                {
+                    return function () {
+                        $originalFillable = ['name', 'user_id']; // Original Organization fillable
+                        return array_merge($originalFillable, ['created_by', 'updated_by']);
+                    };
                 }
             });
         }

@@ -133,6 +133,8 @@ class ComprehensiveAuditTrailTest extends TestCase
             'lead_pipeline_stage_id' => $this->stage->id,
             'lead_source_id' => $this->source->id,
             'lead_type_id' => $this->type->id,
+            'created_by' => $this->user1->id,
+            'updated_by' => $this->user1->id,
         ]);
         
         // Refresh to get database values (LeadObserver does direct DB updates)
@@ -151,7 +153,10 @@ class ComprehensiveAuditTrailTest extends TestCase
 
         // Update as different user
         $this->actingAs($this->user2);
-        $lead->update(['title' => 'Updated Lead Title']);
+        $lead->update([
+            'title' => 'Updated Lead Title',
+            'updated_by' => $this->user2->id,
+        ]);
         
         // Refresh to get database values (LeadObserver does direct DB updates)
         $lead->refresh();
@@ -178,6 +183,8 @@ class ComprehensiveAuditTrailTest extends TestCase
             'emails' => ['jane@example.com'],
             'phones' => ['0987654321'],
             'user_id' => $this->user1->id,
+            'created_by' => $this->user1->id,
+            'updated_by' => $this->user1->id,
         ]);
 
         // Refresh to get database values (PersonObserver does direct DB updates)
@@ -191,7 +198,10 @@ class ComprehensiveAuditTrailTest extends TestCase
 
         // Update as different user
         $this->actingAs($this->user2);
-        $person->update(['first_name' => 'Janet']);
+        $person->update([
+            'first_name' => 'Janet',
+            'updated_by' => $this->user2->id,
+        ]);
         
         // Refresh to get database values (PersonObserver does direct DB updates)
         $person->refresh();

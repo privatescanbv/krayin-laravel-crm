@@ -8,6 +8,10 @@ use Tests\TestCase;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Pipeline;
+use Webkul\Lead\Models\Source;
+use Webkul\Lead\Models\Stage;
+use Webkul\Lead\Models\Type;
 use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
 
@@ -18,6 +22,10 @@ class ComprehensiveAuditTrailTest extends TestCase
     protected User $user1;
     protected User $user2;
     protected Role $role;
+    protected Pipeline $pipeline;
+    protected Stage $stage;
+    protected Source $source;
+    protected Type $type;
 
     protected function setUp(): void
     {
@@ -46,6 +54,29 @@ class ComprehensiveAuditTrailTest extends TestCase
             'password' => bcrypt('password'),
             'status' => 1,
             'role_id' => $this->role->id,
+        ]);
+
+        // Create required Lead dependencies
+        $this->pipeline = Pipeline::create([
+            'name'        => 'Test Pipeline',
+            'is_default'  => 1,
+            'rotten_days' => 30,
+        ]);
+
+        $this->stage = Stage::create([
+            'name'             => 'New',
+            'code'             => 'new',
+            'lead_pipeline_id' => $this->pipeline->id,
+            'sort_order'       => 1,
+            'probability'      => 10,
+        ]);
+
+        $this->source = Source::create([
+            'name' => 'Test Source',
+        ]);
+
+        $this->type = Type::create([
+            'name' => 'Test Type',
         ]);
     }
 
@@ -89,8 +120,8 @@ class ComprehensiveAuditTrailTest extends TestCase
     {
         $this->actingAs($this->user1);
 
-        // Create lead using factory to ensure all required relationships exist
-        $lead = Lead::factory()->create([
+        // Create lead with all required dependencies
+        $lead = Lead::create([
             'title' => 'Test Lead',
             'description' => 'Test Description',
             'first_name' => 'John',
@@ -98,20 +129,22 @@ class ComprehensiveAuditTrailTest extends TestCase
             'emails' => ['john@example.com'],
             'phones' => ['1234567890'],
             'user_id' => $this->user1->id,
+            'lead_pipeline_id' => $this->pipeline->id,
+            'lead_pipeline_stage_id' => $this->stage->id,
+            'lead_source_id' => $this->source->id,
+            'lead_type_id' => $this->type->id,
         ]);
-
-        // Refresh the model to ensure all relationships are loaded
-        $lead->refresh();
-
-        // Debug: Check if stage exists
-        $this->assertNotNull($lead->lead_pipeline_stage_id, 'Lead should have a pipeline stage ID');
-        $this->assertNotNull($lead->stage, 'Lead should have a stage relationship');
 
         // Assert creation audit
         $this->assertEquals($this->user1->id, $lead->created_by);
         $this->assertEquals($this->user1->id, $lead->updated_by);
         $this->assertNotNull($lead->created_at);
         $this->assertNotNull($lead->updated_at);
+        
+        // Verify required relationships exist
+        $this->assertNotNull($lead->lead_pipeline_stage_id);
+        $this->assertNotNull($lead->stage);
+        $this->assertEquals($this->stage->id, $lead->lead_pipeline_stage_id);
 
         // Update as different user
         $this->actingAs($this->user2);

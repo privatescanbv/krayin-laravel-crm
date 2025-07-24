@@ -129,7 +129,7 @@ class LeadObserver
 
         $this->webhookService->sendWebhook([
             'entity_id'      => $lead->id,
-            'status'         => $lead->stage?->code,
+            'status'         => $lead->stage->code,
             'source_code'    => $lead->source?->name,
             'source_code_id' => $lead->source?->id,
             'department'     => $departmentValue,

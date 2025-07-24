@@ -89,8 +89,8 @@ class ComprehensiveAuditTrailTest extends TestCase
     {
         $this->actingAs($this->user1);
 
-        // Create lead
-        $lead = Lead::create([
+        // Create lead using factory to ensure all required relationships exist
+        $lead = Lead::factory()->create([
             'title' => 'Test Lead',
             'description' => 'Test Description',
             'first_name' => 'John',
@@ -99,6 +99,13 @@ class ComprehensiveAuditTrailTest extends TestCase
             'phones' => ['1234567890'],
             'user_id' => $this->user1->id,
         ]);
+
+        // Refresh the model to ensure all relationships are loaded
+        $lead->refresh();
+
+        // Debug: Check if stage exists
+        $this->assertNotNull($lead->lead_pipeline_stage_id, 'Lead should have a pipeline stage ID');
+        $this->assertNotNull($lead->stage, 'Lead should have a stage relationship');
 
         // Assert creation audit
         $this->assertEquals($this->user1->id, $lead->created_by);

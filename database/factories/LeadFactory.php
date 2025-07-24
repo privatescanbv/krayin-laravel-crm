@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Address;
+use Database\Factories\WebkulUserFactory;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;

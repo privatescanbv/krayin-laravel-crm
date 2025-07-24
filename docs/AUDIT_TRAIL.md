@@ -173,27 +173,79 @@ Voor bestaande modellen die al audit trail velden hebben:
 
 ## Voorbeeld gebruik
 
+### Address
 ```php
-// Maak een nieuw record aan (automatisch audit trail)
+// Maak een nieuw address aan (automatisch audit trail)
 $address = Address::create([
     'street' => 'Hoofdstraat',
     'house_number' => '123',
     'city' => 'Amsterdam',
     'postal_code' => '1000AA',
     'country' => 'Nederland',
-    'lead_id' => 1, // Of person_id of organization_id
+    'person_id' => 1,
 ]);
-
-// created_by en updated_by zijn nu automatisch ingesteld
-
-// Update het record (automatisch updated_by bijwerken)
-$address->update(['city' => 'Rotterdam']);
 
 // Toegang tot audit informatie
 echo "Aangemaakt door: " . $address->creator->name;
 echo "Laatst bijgewerkt door: " . $address->updater->name;
-echo "Aangemaakt op: " . $address->created_at;
-echo "Laatst bijgewerkt op: " . $address->updated_at;
+```
+
+### Lead
+```php
+// Maak een nieuwe lead aan
+$lead = Lead::create([
+    'title' => 'Potentiële klant',
+    'first_name' => 'Jan',
+    'last_name' => 'de Vries',
+    'emails' => ['jan@example.com'],
+    'user_id' => auth()->id(),
+]);
+
+// Audit trail is automatisch ingesteld
+echo "Lead aangemaakt door: " . $lead->creator->name;
+```
+
+### Person
+```php
+// Maak een nieuwe persoon aan
+$person = Person::create([
+    'first_name' => 'Maria',
+    'last_name' => 'Jansen',
+    'emails' => ['maria@example.com'],
+    'user_id' => auth()->id(),
+]);
+
+// Audit trail is automatisch ingesteld
+echo "Persoon aangemaakt door: " . $person->creator->name;
+```
+
+### Organization
+```php
+// Maak een nieuwe organisatie aan
+$organization = Organization::create([
+    'name' => 'ACME Corporation',
+    'user_id' => auth()->id(),
+]);
+
+// Audit trail is automatisch ingesteld
+echo "Organisatie aangemaakt door: " . $organization->creator->name;
+```
+
+### Algemeen gebruik
+```php
+// Update elk record (automatisch updated_by bijwerken)
+$address->update(['city' => 'Rotterdam']);
+$lead->update(['title' => 'Nieuwe titel']);
+$person->update(['first_name' => 'Marianne']);
+$organization->update(['name' => 'ACME Inc.']);
+
+// Alle entiteiten hebben dezelfde audit trail interface
+foreach ([$address, $lead, $person, $organization] as $entity) {
+    echo "Aangemaakt door: " . $entity->creator->name;
+    echo "Laatst bijgewerkt door: " . $entity->updater->name;
+    echo "Aangemaakt op: " . $entity->created_at;
+    echo "Laatst bijgewerkt op: " . $entity->updated_at;
+}
 ```
 
 ## Componenten
@@ -206,11 +258,22 @@ Het audit trail systeem bestaat uit:
 4. **AddAuditTrailCommand** (`app/Console/Commands/AddAuditTrailCommand.php`) - Artisan commando
 5. **AuditTrailServiceProvider** (`app/Providers/AuditTrailServiceProvider.php`) - Service provider voor Webkul User model
 
+## Ondersteunde Entiteiten
+
+Het audit trail systeem is volledig geïmplementeerd voor de volgende entiteiten:
+
+- ✅ **Address** (`App\Models\Address`) - Via BaseModel
+- ✅ **Lead** (`Webkul\Lead\Models\Lead`) - Via AuditTrailServiceProvider
+- ✅ **Person** (`Webkul\Contact\Models\Person`) - Via AuditTrailServiceProvider  
+- ✅ **Organization** (`Webkul\Contact\Models\Organization`) - Via AuditTrailServiceProvider
+- ✅ **User** (`Webkul\User\Models\User`) - Via AuditTrailServiceProvider
+
 ## Belangrijke opmerkingen
 
 - Het systeem werkt automatisch voor alle modellen die de `HasAuditTrail` trait gebruiken of van `BaseModel` erven
-- Voor het Webkul User model wordt de audit trail functionaliteit toegevoegd via de `AuditTrailServiceProvider`
+- Voor Webkul package modellen (User, Lead, Person, Organization) wordt de audit trail functionaliteit toegevoegd via de `AuditTrailServiceProvider`
 - De audit trail velden (`created_by`, `updated_by`) worden alleen ingesteld als er een gebruiker is ingelogd
 - Als er geen gebruiker is ingelogd, blijven deze velden `null`
+- Alle entiteiten hebben automatisch de `creator()` en `updater()` relaties beschikbaar
 
 Dit systeem vereist minimale code en is goed onderhoudbaar door de gecentreerde logica.

@@ -45,7 +45,7 @@ include::cmd/cmd-create-leads.adoc[]
 
 ==== Github docker login
 Eerste keer docker login uitvoeren:
-echo <token> | docker login ghcr.io -u <username> --password-stdin
+sudo echo <token> | sudo docker login ghcr.io -u <username> --password-stdin
 
 Eerste keer een docker netwerk aanmaken
 
@@ -71,9 +71,20 @@ delete from shared_workflow;
 
 === Mail server lokaal opzetten
 
+Het idee is om een eenvoudige mail server lokaal op te zetten. Later gaan we dit met bestaande mail accounts configureren en mail versturen via PostMark.
+
+In de opzet maken wij 2 mail accounts aan:
+
+ * user1@test.local -> Hier mail naar toe sturen vanuit CRM, simuleert een patient.
+ * privatescan@test.local -> CRM leest deze mailbox en zal ze verwerken na en commando (Lees later een cronjob om de 5 minuten)
+
+test.local is een gekozen opzet, certificaten zijn hiervoor gemaakt voor communicatie met de mailserver.
+
 zie mailserver in docker-compose.yml.
 
-1. User aanmaken in de mailserver:
+NOTE: Op dit moment is deze opzet ook uitgerold op de test omgeving.
+
+1. User aanmaken in de mailserver (mag je skippen, werkt out of de box door config file te delen. Zie postfix-accounts.cf):
    * docker run --rm -v "$(pwd)/docker/config":/tmp/docker-mailserver \
       mailserver/docker-mailserver setup email add user1@test.local test1234
    * docker run --rm -v "$(pwd)/docker/config":/tmp/docker-mailserver \

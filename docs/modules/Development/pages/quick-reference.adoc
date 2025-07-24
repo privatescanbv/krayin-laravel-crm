@@ -1,5 +1,18 @@
 ==== Dagelijkse Werkwijze Checklist
 
+===== Taak aanmaken
+1. ✅ Open Trello board: https://trello.com/b/iONGaeXJ/taken-mm
+2. ✅ Maak nieuwe taak in lane:
+- backlog -> niet CRM gerelateerd
+- backlog CRM -> als het om CRM gaat
+- current sprint -> CRM gerelateerd en onderdeel van huidige thema (als leads)
+- onhold of notes -> indien geen MVP taak, of als het een notitie is
+- No MVP -> indien het geen MVP taak is, maar wel een taak die opgepakt moet worden
+- Reject -> Verzoeken die zijn afgewezen (We kiezen ervoor om deze wel vast te leggen, om eventuele discussies later te voorkomen)
+3. ✅ Vul titel in formaat: `[APP_NAME] | [Thema] | Titel van de taak`, b.v. `[CRM] | Leads | Lead importeren` of Aankoop | Factuur | parsing error (Note: voor automatisering belangrijk dat het formaat wordt aangehouden)
+4. Geef label NO_MVP, indien het geen MVP taak is. Plaats dit
+5. Plan deze in met link:https://planyway.com/app?collectionId=5577a9a0-62df-11f0-8bd1-473542ed2965[planyway] (indien nodig, groot onderwerp is)
+
 ===== Taak Oppakken
 1. ✅ Ga naar Trello board: https://trello.com/b/iONGaeXJ/taken-mm
 2. ✅ Kies taak uit backlog / current sprint

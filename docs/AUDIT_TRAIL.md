@@ -300,7 +300,7 @@ class MyModel extends BaseModel
 
 **Voor nieuwe Webkul package modellen:**
 1. Voeg het model toe aan `AuditTrailServiceProvider::FULL_AUDIT_MODELS`
-2. Voeg fillable velden toe aan `addAuditTrailFillable()` als nodig
+2. Voeg een nieuwe fillable methode toe (bijv. `addMyModelFillable()`) als het model geen `created_by`/`updated_by` in zijn fillable heeft
 3. Maak een migration met `AuditTrailMigrationHelper::addAuditTrailColumns()`
 
 **Voor modellen met bestaande observers:**

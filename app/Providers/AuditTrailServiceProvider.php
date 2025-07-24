@@ -112,33 +112,37 @@ class AuditTrailServiceProvider extends ServiceProvider
     private function addAuditTrailFillable(string $modelClass): void
     {
         if ($modelClass === Organization::class) {
-            $this->addFillableToModel($modelClass, ['name', 'user_id']);
+            $this->addOrganizationFillable($modelClass);
         } elseif ($modelClass === User::class) {
-            $this->addFillableToModel($modelClass, ['name', 'email', 'image', 'password', 'api_token', 'role_id', 'status']);
+            $this->addUserFillable($modelClass);
         }
     }
 
     /**
-     * Add fillable fields to a model via mixin
+     * Add fillable fields to Organization model
      */
-    private function addFillableToModel(string $modelClass, array $originalFillable): void
+    private function addOrganizationFillable(string $modelClass): void
     {
-        // Create the fillable array with audit trail fields
-        $fillableWithAudit = array_merge($originalFillable, ['created_by', 'updated_by']);
-        
-        $modelClass::mixin(new class($fillableWithAudit) {
-            private array $fillable;
-
-            public function __construct(array $fillable)
-            {
-                $this->fillable = $fillable;
-            }
-
+        $modelClass::mixin(new class {
             public function getFillable()
             {
-                $fillable = $this->fillable;
-                return function () use ($fillable) {
-                    return $fillable;
+                return function () {
+                    return ['name', 'user_id', 'created_by', 'updated_by'];
+                };
+            }
+        });
+    }
+
+    /**
+     * Add fillable fields to User model
+     */
+    private function addUserFillable(string $modelClass): void
+    {
+        $modelClass::mixin(new class {
+            public function getFillable()
+            {
+                return function () {
+                    return ['name', 'email', 'image', 'password', 'api_token', 'role_id', 'status', 'created_by', 'updated_by'];
                 };
             }
         });

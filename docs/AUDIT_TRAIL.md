@@ -262,18 +262,60 @@ Het audit trail systeem bestaat uit:
 
 Het audit trail systeem is volledig geïmplementeerd voor de volgende entiteiten:
 
-- ✅ **Address** (`App\Models\Address`) - Via BaseModel
-- ✅ **Lead** (`Webkul\Lead\Models\Lead`) - Via AuditTrailServiceProvider
-- ✅ **Person** (`Webkul\Contact\Models\Person`) - Via AuditTrailServiceProvider  
-- ✅ **Organization** (`Webkul\Contact\Models\Organization`) - Via AuditTrailServiceProvider
-- ✅ **User** (`Webkul\User\Models\User`) - Via AuditTrailServiceProvider
+- ✅ **Address** (`App\Models\Address`) - Via BaseModel + HasAuditTrail trait
+- ✅ **Lead** (`Webkul\Lead\Models\Lead`) - Via LeadObserver + relaties via AuditTrailServiceProvider
+- ✅ **Person** (`Webkul\Contact\Models\Person`) - Via PersonObserver + relaties via AuditTrailServiceProvider  
+- ✅ **Organization** (`Webkul\Contact\Models\Organization`) - Via AuditTrailServiceProvider (volledig)
+- ✅ **User** (`Webkul\User\Models\User`) - Via AuditTrailServiceProvider (volledig)
 
-## Belangrijke opmerkingen
+## Implementatie Details
 
-- Het systeem werkt automatisch voor alle modellen die de `HasAuditTrail` trait gebruiken of van `BaseModel` erven
-- Voor Webkul package modellen (User, Lead, Person, Organization) wordt de audit trail functionaliteit toegevoegd via de `AuditTrailServiceProvider`
-- De audit trail velden (`created_by`, `updated_by`) worden alleen ingesteld als er een gebruiker is ingelogd
+### Automatische Audit Trail
+- **Address**: Via `BaseModel` + `HasAuditTrail` trait - volledig automatisch
+- **Organization & User**: Via `AuditTrailServiceProvider` - volledig automatisch
+
+### Hybride Implementatie  
+- **Lead & Person**: Hebben bestaande observers voor audit trail logica
+- Service provider voegt alleen `creator()` en `updater()` relaties toe
+- Audit trail velden worden ingesteld door bestaande observers
+
+### Belangrijke Kenmerken
+- Audit trail velden (`created_by`, `updated_by`) worden alleen ingesteld als er een gebruiker is ingelogd
 - Als er geen gebruiker is ingelogd, blijven deze velden `null`
-- Alle entiteiten hebben automatisch de `creator()` en `updater()` relaties beschikbaar
+- Alle entiteiten hebben de `creator()` en `updater()` relaties beschikbaar
+- Fillable arrays worden automatisch uitgebreid waar nodig
+
+## Voor Ontwikkelaars
+
+### Nieuwe Modellen Toevoegen
+
+**Voor nieuwe app modellen:**
+```php
+class MyModel extends BaseModel
+{
+    protected $fillable = ['name', 'description'];
+    // Audit trail wordt automatisch toegevoegd
+}
+```
+
+**Voor nieuwe Webkul package modellen:**
+1. Voeg het model toe aan `AuditTrailServiceProvider::FULL_AUDIT_MODELS`
+2. Voeg fillable velden toe aan `addAuditTrailFillable()` als nodig
+3. Maak een migration met `AuditTrailMigrationHelper::addAuditTrailColumns()`
+
+**Voor modellen met bestaande observers:**
+1. Voeg het model toe aan `AuditTrailServiceProvider::RELATIONS_ONLY_MODELS`
+2. Zorg dat de observer de audit trail velden instelt
+
+### Artisan Commando's
+```bash
+# Voeg audit trail toe aan bestaande tabel
+php artisan audit:add-trail table_name
+```
+
+### Testing
+- Gebruik `ComprehensiveAuditTrailTest` als voorbeeld
+- Test zowel handmatige relatie verificatie als mixin relaties
+- Gebruik factories waar mogelijk
 
 Dit systeem vereist minimale code en is goed onderhoudbaar door de gecentreerde logica.

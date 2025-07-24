@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 trait HasAuditTrail
 {
     /**
-     * Boot the trait
+     * Boot the trait - automatically set audit trail fields
      */
     protected static function bootHasAuditTrail(): void
     {
@@ -31,7 +31,7 @@ trait HasAuditTrail
      */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(config('auth.providers.users.model'), 'created_by');
+        return $this->belongsTo(\Webkul\User\Models\User::class, 'created_by');
     }
 
     /**
@@ -39,7 +39,7 @@ trait HasAuditTrail
      */
     public function updater(): BelongsTo
     {
-        return $this->belongsTo(config('auth.providers.users.model'), 'updated_by');
+        return $this->belongsTo(\Webkul\User\Models\User::class, 'updated_by');
     }
 
     /**

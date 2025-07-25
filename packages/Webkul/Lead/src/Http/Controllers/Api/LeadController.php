@@ -24,6 +24,7 @@ use Webkul\Admin\Http\Controllers\Lead\LeadController as AdminLeadController;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Illuminate\Support\Facades\DB;
+use App\Services\LeadValidationService;
 
 class LeadController extends Controller
 {
@@ -59,27 +60,7 @@ class LeadController extends Controller
      */
     public function store(LeadForm $request): JsonResponse
     {
-        $this->validate($request, [
-            'title' => 'required',
-            'first_name' => 'required',
-            'last_name' => 'required',
-            'email' => 'required|email',
-            'lead_source_id' => 'required:numeric',
-            'lead_channel_id' => 'required:numeric',
-            'lead_type_id' => 'required:numeric',
-            'emails' => ['nullable', 'array'],
-            'emails.*.value' => ['nullable', new EmailValidator()],
-            'emails.*.label' => ['nullable', 'string'],
-            'phones' => ['nullable', 'array'],
-            'phones.*.value' => ['nullable', new PhoneValidator()],
-            'phones.*.label' => ['nullable', 'string'],
-            'date_of_birth' => ['nullable', new DateValidator()],
-            'organization_id' => ['nullable', 'exists:organizations,id', function ($attribute, $value, $fail) use ($request) {
-                if ($value && !$request->input('person_id')) {
-                    $fail('Een organisatie kan alleen gekoppeld worden als er ook een contactpersoon is gekoppeld.');
-                }
-            }],
-        ]);
+        $this->validate($request, LeadValidationService::getApiValidationRules($request));
 
         // TODO replace with auth()-> id
         $currentUserId = User::query()->first()?->id;

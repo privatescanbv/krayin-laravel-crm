@@ -741,12 +741,6 @@
                          try {
                              const formData = new FormData(this.$refs.leadForm);
                              
-                             // Debug: log what's in the form
-                             console.log('Form data before processing:', this.formData);
-                             for (let pair of formData.entries()) {
-                                 console.log('FormData:', pair[0], pair[1]);
-                             }
-                             
                              // Add our Vue form data to the FormData
                              Object.keys(this.formData).forEach(key => {
                                  // Skip emails and phones as they are handled by the HTML form inputs

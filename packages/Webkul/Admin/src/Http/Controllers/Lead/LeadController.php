@@ -34,6 +34,7 @@ use Webkul\Lead\Services\MagicAIService;
 use Webkul\Tag\Repositories\TagRepository;
 use Webkul\User\Repositories\UserRepository;
 use InvalidArgumentException;
+use App\Services\LeadValidationService;
 
 class LeadController extends Controller
 {
@@ -161,27 +162,7 @@ class LeadController extends Controller
      */
     public function store(LeadForm $request): RedirectResponse
     {
-        $this->validate($request, [
-            'title' => 'required',
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'email' => 'required|email',
-            'lead_source_id' => 'required:numeric',
-            'lead_channel_id' => 'required:numeric',
-            'lead_type_id' => 'required:numeric',
-            'emails' => ['nullable', 'array'],
-            'emails.*.value' => ['nullable', new EmailValidator()],
-            'emails.*.label' => ['nullable', 'string'],
-            'phones' => ['nullable', 'array'],
-            'phones.*.value' => ['nullable', new PhoneValidator()],
-            'phones.*.label' => ['nullable', 'string'],
-            'date_of_birth' => ['nullable', new DateValidator()],
-            'organization_id' => ['nullable', 'exists:organizations,id', function ($attribute, $value, $fail) use ($request) {
-                if ($value && !$request->input('person_id')) {
-                    $fail('Een organisatie kan alleen gekoppeld worden als er ook een contactpersoon is gekoppeld.');
-                }
-            }],
-        ]);
+        $this->validate($request, LeadValidationService::getWebValidationRules($request));
 
             try {
                 [$lead, $leadPipelineId] = $this->storeLead($request);
@@ -299,28 +280,7 @@ class LeadController extends Controller
     public function update(LeadForm $request, int $id): RedirectResponse|JsonResponse
     {
         try {
-            // Validate required personal fields
-            $this->validate($request, [
-                'title' => 'required',
-                'first_name' => ['required', 'string', 'max:255'],
-                'last_name' => ['required', 'string', 'max:255'],
-                'email' => 'required|email',
-                'lead_source_id' => 'required:numeric',
-                'lead_channel_id' => 'required:numeric',
-                'lead_type_id' => 'required:numeric',
-                'emails' => ['nullable', 'array'],
-                'emails.*.value' => ['nullable', new EmailValidator()],
-                'emails.*.label' => ['nullable', 'string'],
-                'phones' => ['nullable', 'array'],
-                'phones.*.value' => ['nullable', new PhoneValidator()],
-                'phones.*.label' => ['nullable', 'string'],
-                'date_of_birth' => ['nullable', new DateValidator()],
-                'organization_id' => ['nullable', 'exists:organizations,id', function ($attribute, $value, $fail) use ($request) {
-                    if ($value && !$request->input('person_id')) {
-                        $fail('Een organisatie kan alleen gekoppeld worden als er ook een contactpersoon is gekoppeld.');
-                    }
-                }],
-            ]);
+            $this->validate($request, LeadValidationService::getWebValidationRules($request));
 
             Event::dispatch('lead.update.before', $id);
 

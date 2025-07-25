@@ -441,57 +441,7 @@
 
                                                                          <!-- Address -->
                                      <div class="mt-4">
-                                         <p class="text-base font-semibold dark:text-white mb-4">Adresgegevens</p>
-                                         
-                                         <div class="flex gap-4 mb-4">
-                                             <x-admin::form.control-group class="flex-1">
-                                                 <x-admin::form.control-group.label>Postcode</x-admin::form.control-group.label>
-                                                 <x-admin::form.control-group.control
-                                                     type="text"
-                                                     name="address[postal_code]"
-                                                     placeholder="1234 AB"
-                                                 />
-                                             </x-admin::form.control-group>
-
-                                             <x-admin::form.control-group class="flex-1">
-                                                 <x-admin::form.control-group.label>Huisnummer</x-admin::form.control-group.label>
-                                                 <x-admin::form.control-group.control
-                                                     type="text"
-                                                     name="address[house_number]"
-                                                     placeholder="123"
-                                                 />
-                                             </x-admin::form.control-group>
-                                         </div>
-
-                                         <div class="flex gap-4 mb-4">
-                                             <x-admin::form.control-group class="flex-1">
-                                                 <x-admin::form.control-group.label>Straat</x-admin::form.control-group.label>
-                                                 <x-admin::form.control-group.control
-                                                     type="text"
-                                                     name="address[street]"
-                                                     placeholder="Straatnaam"
-                                                 />
-                                             </x-admin::form.control-group>
-
-                                             <x-admin::form.control-group class="flex-1">
-                                                 <x-admin::form.control-group.label>Plaats</x-admin::form.control-group.label>
-                                                 <x-admin::form.control-group.control
-                                                     type="text"
-                                                     name="address[city]"
-                                                     placeholder="Plaatsnaam"
-                                                 />
-                                             </x-admin::form.control-group>
-                                         </div>
-
-                                         <x-admin::form.control-group>
-                                             <x-admin::form.control-group.label>Land</x-admin::form.control-group.label>
-                                             <x-admin::form.control-group.control
-                                                 type="text"
-                                                 name="address[country]"
-                                                 value="Nederland"
-                                                 placeholder="Land"
-                                             />
-                                         </x-admin::form.control-group>
+                                         @include('admin::components.address', ['entity' => null])
                                      </div>
                                 </div>
                             </div>

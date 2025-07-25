@@ -161,14 +161,18 @@ test('API lead creation fails gracefully with invalid data', function () {
     // Assert: Should fail validation
     $response->assertStatus(422); // Unprocessable Entity
 
-    // Assert: Response should contain validation errors
+    // Assert: Response should contain validation errors for missing required fields
     $response->assertJsonValidationErrors([
-        'title',
-        'last_name',
-        'email',
-        'lead_source_id',
-        'lead_channel_id',
-        'lead_type_id',
+        'title',      // Required field that's missing
+        'last_name',  // Required field that's missing
+    ]);
+    
+    // Assert: Should NOT have errors for fields we provided
+    $response->assertJsonMissingValidationErrors([
+        'lead_source_id',  // We provided this
+        'lead_channel_id', // We provided this
+        'lead_type_id',    // We provided this
+        'first_name',      // We provided this
     ]);
 
     // Assert: No new leads should be created

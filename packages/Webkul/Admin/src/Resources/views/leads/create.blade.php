@@ -105,7 +105,7 @@
                         @endif
 
                         <!-- Hidden person_id field -->
-                        <input type="hidden" name="person_id" :value="selectedPerson?.id || ''" />
+                        <input v-if="selectedPerson?.id" type="hidden" name="person_id" :value="selectedPerson.id" />
 
                         <div class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-6">
                             <div class="flex flex-col gap-1">
@@ -795,8 +795,14 @@
                                  // Skip emails and phones as they are handled by the HTML form inputs
                                  if (key === 'emails' || key === 'phones') {
                                      return;
-                                 } else if (this.formData[key] !== null && this.formData[key] !== '') {
-                                     formData.set(key, this.formData[key]);
+                                 } else if (this.formData[key] !== null && this.formData[key] !== '' && this.formData[key] !== undefined) {
+                                     // Special handling for dates
+                                     if (key === 'date_of_birth' && this.formData[key]) {
+                                         // Ensure date is in correct format
+                                         formData.set(key, this.formData[key]);
+                                     } else if (key !== 'date_of_birth') {
+                                         formData.set(key, this.formData[key]);
+                                     }
                                  }
                              });
 

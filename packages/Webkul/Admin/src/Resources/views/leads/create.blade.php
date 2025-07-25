@@ -38,7 +38,7 @@
                             class="primary-button"
                             :disabled="isSubmitting"
                         >
-                            {{ isSubmitting ? 'Bezig...' : '@lang('admin::app.leads.create.save-btn')' }}
+                            {{ isSubmitting ? 'Bezig...' : 'Opslaan' }}
                         </button>
                     </div>
                 </div>
@@ -142,8 +142,8 @@
                                                 name="title"
                                                 v-model="formData.title"
                                                 rules="required"
-                                                :label="trans('admin::app.leads.create.title')"
-                                                :placeholder="trans('admin::app.leads.create.title')"
+                                                label="Titel"
+                                                placeholder="Titel"
                                             />
                                             <x-admin::form.control-group.error control-name="title"/>
                                         </x-admin::form.control-group>
@@ -159,8 +159,8 @@
                                                 type="textarea"
                                                 name="description"
                                                 v-model="formData.description"
-                                                :label="trans('admin::app.leads.create.description')"
-                                                :placeholder="trans('admin::app.leads.create.description')"
+                                                label="Beschrijving"
+                                                placeholder="Beschrijving"
                                                 class="min-h-[80px]"
                                             />
                                             <x-admin::form.control-group.error control-name="description"/>
@@ -709,53 +709,53 @@
                     };
                 },
 
-                methods: {
+                                methods: {
                     goToStep(step) {
                         this.currentStep = step;
                     },
 
-                                         handlePersonSelected(person) {
-                         this.selectedPerson = person;
-                         if (person) {
-                             // Pre-fill form data with person information
-                             this.formData.first_name = person.first_name || '';
-                             this.formData.last_name = person.last_name || '';
-                             this.formData.lastname_prefix = person.lastname_prefix || '';
-                             this.formData.married_name = person.married_name || '';
-                             this.formData.married_name_prefix = person.married_name_prefix || '';
-                             this.formData.initials = person.initials || '';
-                             this.formData.date_of_birth = person.date_of_birth || '';
-                             this.formData.gender = person.gender || '';
-                             this.formData.salutation = person.salutation || '';
+                    handlePersonSelected(person) {
+                        this.selectedPerson = person;
+                        if (person) {
+                            // Pre-fill form data with person information
+                            this.formData.first_name = person.first_name || '';
+                            this.formData.last_name = person.last_name || '';
+                            this.formData.lastname_prefix = person.lastname_prefix || '';
+                            this.formData.married_name = person.married_name || '';
+                            this.formData.married_name_prefix = person.married_name_prefix || '';
+                            this.formData.initials = person.initials || '';
+                            this.formData.date_of_birth = person.date_of_birth || '';
+                            this.formData.gender = person.gender || '';
+                            this.formData.salutation = person.salutation || '';
 
-                             // Pre-populate emails and phones if available
-                             if (person.emails && person.emails.length > 0) {
-                                 this.formData.emails = [...person.emails];
-                             }
-                             if (person.phones && person.phones.length > 0) {
-                                 this.formData.phones = [...person.phones];
-                             }
-                         }
-                     },
+                            // Pre-populate emails and phones if available
+                            if (person.emails && person.emails.length > 0) {
+                                this.formData.emails = [...person.emails];
+                            }
+                            if (person.phones && person.phones.length > 0) {
+                                this.formData.phones = [...person.phones];
+                            }
+                        }
+                    },
 
-                                         handlePersonNotFound() {
-                         this.selectedPerson = null;
-                         // Clear personal fields
-                         this.formData.first_name = '';
-                         this.formData.last_name = '';
-                         this.formData.lastname_prefix = '';
-                         this.formData.married_name = '';
-                         this.formData.married_name_prefix = '';
-                         this.formData.initials = '';
-                         this.formData.date_of_birth = '';
-                         this.formData.gender = '';
-                         this.formData.salutation = '';
-                         // Reset contact arrays
-                         this.formData.emails = [{ value: '', label: 'work' }];
-                         this.formData.phones = [{ value: '', label: 'work' }];
-                     },
+                    handlePersonNotFound() {
+                        this.selectedPerson = null;
+                        // Clear personal fields
+                        this.formData.first_name = '';
+                        this.formData.last_name = '';
+                        this.formData.lastname_prefix = '';
+                        this.formData.married_name = '';
+                        this.formData.married_name_prefix = '';
+                        this.formData.initials = '';
+                        this.formData.date_of_birth = '';
+                        this.formData.gender = '';
+                        this.formData.salutation = '';
+                        // Reset contact arrays
+                        this.formData.emails = [{ value: '', label: 'work' }];
+                        this.formData.phones = [{ value: '', label: 'work' }];
+                    },
 
-                                         async submitForm() {
+                     async submitForm() {
                          if (this.isSubmitting) return;
 
                          this.isSubmitting = true;
@@ -802,7 +802,7 @@
                                  type: 'error',
                                  message: errorMessage
                              });
-                                                  } finally {
+                         } finally {
                              this.isSubmitting = false;
                          }
                      },

@@ -100,7 +100,7 @@ class PersonController extends Controller
 
             // If no valid phones remain, set to empty array
             if (empty($data['phones'])) {
-                $data['phones'] = PersonValidationService::getWebValidationRules($request);
+                $data['phones'] = [];
             }
         }
 
@@ -112,7 +112,7 @@ class PersonController extends Controller
 
             // If no valid emails remain, set to empty array
             if (empty($data['emails'])) {
-                $data['emails'] = PersonValidationService::getWebValidationRules($request);
+                $data['emails'] = [];
             }
         }
 
@@ -216,7 +216,7 @@ class PersonController extends Controller
 
             // If no valid phones remain, set to empty array
             if (empty($data['phones'])) {
-                $data['phones'] = PersonValidationService::getWebValidationRules($request);
+                $data['phones'] = [];
             }
         }
 
@@ -228,7 +228,7 @@ class PersonController extends Controller
 
             // If no valid emails remain, set to empty array
             if (empty($data['emails'])) {
-                $data['emails'] = PersonValidationService::getWebValidationRules($request);
+                $data['emails'] = [];
             }
         }
 
@@ -532,22 +532,22 @@ class PersonController extends Controller
      */
     private function extractEmails($entity): array
     {
-        $emails = PersonValidationService::getWebValidationRules($request);
+        $emails = [];
 
         // Handle array format (from emails field)
         if (!empty($entity->emails) && is_array($entity->emails)) {
             foreach ($entity->emails as $email) {
                 if (is_array($email) && !empty($email['value'])) {
-                    $emailsPersonValidationService::getWebValidationRules($request) = $email['value'];
+                    $emails[] = $email['value'];
                 } elseif (is_string($email)) {
-                    $emailsPersonValidationService::getWebValidationRules($request) = $email;
+                    $emails[] = $email;
                 }
             }
         }
 
         // Handle single email field (if exists)
         if (!empty($entity->email)) {
-            $emailsPersonValidationService::getWebValidationRules($request) = $entity->email;
+            $emails[] = $entity->email;
         }
 
         return array_filter($emails);
@@ -558,15 +558,15 @@ class PersonController extends Controller
      */
     private function extractPhones($entity): array
     {
-        $phones = PersonValidationService::getWebValidationRules($request);
+        $phones = [];
 
         // Handle array format (from phones or contact_numbers field)
         if (!empty($entity->phones) && is_array($entity->phones)) {
             foreach ($entity->phones as $phone) {
                 if (is_array($phone) && !empty($phone['value'])) {
-                    $phonesPersonValidationService::getWebValidationRules($request) = $phone['value'];
+                    $phones[] = $phone['value'];
                 } elseif (is_string($phone)) {
-                    $phonesPersonValidationService::getWebValidationRules($request) = $phone;
+                    $phones[] = $phone;
                 }
             }
         }
@@ -575,16 +575,16 @@ class PersonController extends Controller
         if (!empty($entity->contact_numbers) && is_array($entity->contact_numbers)) {
             foreach ($entity->contact_numbers as $phone) {
                 if (is_array($phone) && !empty($phone['value'])) {
-                    $phonesPersonValidationService::getWebValidationRules($request) = $phone['value'];
+                    $phones[] = $phone['value'];
                 } elseif (is_string($phone)) {
-                    $phonesPersonValidationService::getWebValidationRules($request) = $phone;
+                    $phones[] = $phone;
                 }
             }
         }
 
         // Handle single phone field (if exists)
         if (!empty($entity->phone)) {
-            $phonesPersonValidationService::getWebValidationRules($request) = $entity->phone;
+            $phones[] = $entity->phone;
         }
 
         return array_filter($phones);
@@ -672,8 +672,8 @@ class PersonController extends Controller
         $lead = app(LeadRepository::class)->findOrFail($leadId);
 
         $data = request()->all();
-        $leadUpdates = $data['lead_updates'] ?? PersonValidationService::getWebValidationRules($request);
-        $personUpdates = $data['person_updates'] ?? PersonValidationService::getWebValidationRules($request);
+        $leadUpdates = $data['lead_updates'] ?? [];
+        $personUpdates = $data['person_updates'] ?? [];
 
         try {
             // Update lead with modified values
@@ -683,7 +683,7 @@ class PersonController extends Controller
 
             // Update person with selected values from lead
             if (!empty($personUpdates)) {
-                $updateData = PersonValidationService::getWebValidationRules($request);
+                $updateData = [];
                 foreach ($personUpdates as $field => $shouldUpdate) {
                     if ($shouldUpdate) {
                         if (isset($leadUpdates[$field])) {
@@ -697,9 +697,9 @@ class PersonController extends Controller
                         // Handle array fields (emails, phones) - convert string back to array format
                         if (in_array($field, ['emails', 'phones']) && is_string($value)) {
                             $values = array_filter(explode(', ', $value));
-                            $arrayData = PersonValidationService::getWebValidationRules($request);
+                            $arrayData = [];
                             foreach ($values as $index => $val) {
-                                $arrayDataPersonValidationService::getWebValidationRules($request) = [
+                                $arrayData[] = [
                                     'value' => trim($val),
                                     'label' => $field === 'emails' ? 'Work' : 'Mobile',
                                     'is_default' => $index === 0
@@ -763,7 +763,7 @@ class PersonController extends Controller
             'gender' => 'Geslacht'
         ];
 
-        $differences = PersonValidationService::getWebValidationRules($request);
+        $differences = [];
 
         foreach ($comparableFields as $field => $label) {
             $personValue = $person->$field;

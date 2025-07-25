@@ -69,6 +69,8 @@ class PersonController extends Controller
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
         
+        // Normalize contact arrays before validation
+        $this->normalizeContactArrays($request);
         $request->validate(PersonValidationService::getWebValidationRules($request));
         Event::dispatch('contacts.person.create.before');
 
@@ -181,6 +183,8 @@ class PersonController extends Controller
         $this->normalizeContactArrays($request);
         
         $request->validate(PersonValidationService::getWebValidationRules($request));
+        // Normalize contact arrays before validation
+        $this->normalizeContactArrays($request);
         Event::dispatch('contacts.person.update.before', $id);
 
         $data = $request->all();

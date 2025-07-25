@@ -825,8 +825,10 @@
                          const addressFields = {
                              'address[postal_code]': address.postal_code || '',
                              'address[house_number]': address.house_number || '',
+                             'address[house_number_suffix]': address.house_number_suffix || '',
                              'address[street]': address.street || '',
                              'address[city]': address.city || '',
+                             'address[state]': address.state || '',
                              'address[country]': address.country || 'Nederland'
                          };
 

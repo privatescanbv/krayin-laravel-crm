@@ -2,11 +2,11 @@
 <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
     <div class="flex items-center justify-between">
         <h4 class="text-lg font-semibold dark:text-white">
-            Anamnesis
+            Anamnese
         </h4>
-        
+
         @if($lead->anamnesis)
-            <a 
+            <a
                 href="{{ route('admin.anamnesis.edit', $lead->anamnesis->id) }}"
                 class="inline-flex items-center gap-x-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
             >
@@ -24,7 +24,7 @@
                     <span class="text-gray-600 dark:text-gray-400">Naam:</span>
                     <span class="font-medium dark:text-white">{{ $lead->anamnesis->name ?: '-' }}</span>
                 </div>
-                
+
                 @if($lead->anamnesis->description)
                     <div class="flex justify-between">
                         <span class="text-gray-600 dark:text-gray-400">Beschrijving:</span>
@@ -101,7 +101,7 @@
         </div>
     @else
         <div class="text-center text-gray-500 dark:text-gray-400">
-            <p>Geen anamnesis gevonden</p>
+            <p>Geen anamnese gevonden</p>
         </div>
     @endif
 </div>

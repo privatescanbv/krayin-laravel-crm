@@ -105,7 +105,7 @@ class AnamnesisController extends Controller
 
         $anamnesis->update($data);
 
-        session()->flash('success', 'Anamnesis updated successfully.');
+        session()->flash('success', 'Anamnese is aangepast.');
 
         return redirect()->route('admin.leads.view', $anamnesis->lead_id);
     }

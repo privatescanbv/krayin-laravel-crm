@@ -569,6 +569,15 @@
     {
       "parameters": {
         "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "3!LvFF3HNTUGz*E^X@cu"
+            }
+          ]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -616,6 +625,15 @@
     {
       "parameters": {
         "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "3!LvFF3HNTUGz*E^X@cu"
+            }
+          ]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -661,6 +679,15 @@
       "parameters": {
         "method": "POST",
         "url": "=http://crm/api/workflow-leads",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "3!LvFF3HNTUGz*E^X@cu"
+            }
+          ]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -783,6 +810,15 @@
     {
       "parameters": {
         "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "3!LvFF3HNTUGz*E^X@cu"
+            }
+          ]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -828,6 +864,15 @@
       "parameters": {
         "method": "PATCH",
         "url": "=http://crm/api/leads/{{ $json.lead_id }}/next_stage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "3!LvFF3HNTUGz*E^X@cu"
+            }
+          ]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -923,6 +968,15 @@
     {
       "parameters": {
         "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "3!LvFF3HNTUGz*E^X@cu"
+            }
+          ]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -934,7 +988,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1480,
+        -1500,
         520
       ],
       "id": "dd5d2b3e-4abf-4e5c-a784-75847813da2e",
@@ -982,6 +1036,15 @@
     {
       "parameters": {
         "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "3!LvFF3HNTUGz*E^X@cu"
+            }
+          ]
+        },
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -1354,7 +1417,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "42b9ecb4-eac6-449a-9125-2dee938b4053",
+  "versionId": "daa93ab9-078b-4bd9-886f-d6040da4c1e7",
   "meta": {
     "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },

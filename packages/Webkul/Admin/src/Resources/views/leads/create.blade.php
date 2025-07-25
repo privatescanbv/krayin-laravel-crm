@@ -708,7 +708,7 @@
                                  this.formData.emails = person.emails.map((email, index) => ({
                                      value: email.value || '',
                                      label: email.label || 'work',
-                                     is_default: email.is_default || (index === 0)
+                                     is_default: email.is_default !== undefined ? Boolean(email.is_default) : (index === 0)
                                  }));
                              } else {
                                  // Reset to default if no emails
@@ -720,7 +720,7 @@
                                  this.formData.phones = person.phones.map((phone, index) => ({
                                      value: phone.value || '',
                                      label: phone.label || 'work',
-                                     is_default: phone.is_default || (index === 0)
+                                     is_default: phone.is_default !== undefined ? Boolean(phone.is_default) : (index === 0)
                                  }));
                              } else {
                                  // Reset to default if no phones

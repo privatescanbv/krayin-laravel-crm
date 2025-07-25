@@ -59,10 +59,17 @@ class ContactArrayValidator implements Rule
                 }
             }
 
-            // is_default is optional, but if present should be boolean
-            if (isset($item['is_default']) && !is_bool($item['is_default'])) {
-                $this->message = "Het {$this->type} veld 'is_default' moet een boolean zijn.";
-                return false;
+            // is_default is optional, but if present should be boolean or boolean-like
+            if (isset($item['is_default'])) {
+                // Convert string representations to boolean
+                if (is_string($item['is_default'])) {
+                    $item['is_default'] = in_array(strtolower($item['is_default']), ['true', '1', 'on', 'yes']);
+                } elseif (is_numeric($item['is_default'])) {
+                    $item['is_default'] = (bool) $item['is_default'];
+                } elseif (!is_bool($item['is_default'])) {
+                    $this->message = "Het {$this->type} veld 'is_default' moet een boolean waarde zijn.";
+                    return false;
+                }
             }
         }
 

@@ -66,6 +66,9 @@ class PersonController extends Controller
      */
     public function store(AttributeForm $request): RedirectResponse|JsonResponse
     {
+        // Normalize contact arrays before validation
+        $this->normalizeContactArrays($request);
+        
         $request->validate(PersonValidationService::getWebValidationRules($request));
         Event::dispatch('contacts.person.create.before');
 
@@ -174,6 +177,9 @@ class PersonController extends Controller
      */
     public function update(AttributeForm $request, int $id): RedirectResponse|JsonResponse
     {
+        // Normalize contact arrays before validation
+        $this->normalizeContactArrays($request);
+        
         $request->validate(PersonValidationService::getWebValidationRules($request));
         Event::dispatch('contacts.person.update.before', $id);
 
@@ -858,5 +864,93 @@ class PersonController extends Controller
         $value2 = $value2 === null ? '' : $value2;
 
         return trim($value1) !== trim($value2);
+    }
+
+    /**
+     * Normalize contact arrays to ensure proper data types
+     */
+    private function normalizeContactArrays($request)
+    {
+        $requestData = $request->all();
+        
+        // Normalize emails
+        if (isset($requestData['emails']) && is_array($requestData['emails'])) {
+            foreach ($requestData['emails'] as $index => $email) {
+                if (is_array($email)) {
+                    // Ensure label exists
+                    if (!isset($email['label']) || empty($email['label'])) {
+                        $requestData['emails'][$index]['label'] = 'work';
+                    }
+                    
+                    // Normalize is_default to boolean
+                    if (isset($email['is_default'])) {
+                        $requestData['emails'][$index]['is_default'] = $this->normalizeBoolean($email['is_default']);
+                    } else {
+                        $requestData['emails'][$index]['is_default'] = false;
+                    }
+                }
+            }
+        }
+        
+        // Normalize phones
+        if (isset($requestData['phones']) && is_array($requestData['phones'])) {
+            foreach ($requestData['phones'] as $index => $phone) {
+                if (is_array($phone)) {
+                    // Ensure label exists
+                    if (!isset($phone['label']) || empty($phone['label'])) {
+                        $requestData['phones'][$index]['label'] = 'work';
+                    }
+                    
+                    // Normalize is_default to boolean
+                    if (isset($phone['is_default'])) {
+                        $requestData['phones'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
+                    } else {
+                        $requestData['phones'][$index]['is_default'] = false;
+                    }
+                }
+            }
+        }
+        
+        // Normalize contact_numbers (for backwards compatibility)
+        if (isset($requestData['contact_numbers']) && is_array($requestData['contact_numbers'])) {
+            foreach ($requestData['contact_numbers'] as $index => $phone) {
+                if (is_array($phone)) {
+                    // Ensure label exists
+                    if (!isset($phone['label']) || empty($phone['label'])) {
+                        $requestData['contact_numbers'][$index]['label'] = 'work';
+                    }
+                    
+                    // Normalize is_default to boolean
+                    if (isset($phone['is_default'])) {
+                        $requestData['contact_numbers'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
+                    } else {
+                        $requestData['contact_numbers'][$index]['is_default'] = false;
+                    }
+                }
+            }
+        }
+        
+        // Replace the request data
+        $request->replace($requestData);
+    }
+
+    /**
+     * Normalize various representations to boolean
+     */
+    private function normalizeBoolean($value)
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+        
+        if (is_string($value)) {
+            return in_array(strtolower($value), ['true', '1', 'on', 'yes']);
+        }
+        
+        if (is_numeric($value)) {
+            return (bool) $value;
+        }
+        
+        return false;
     }
 }

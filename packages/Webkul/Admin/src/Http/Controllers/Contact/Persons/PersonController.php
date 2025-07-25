@@ -24,6 +24,7 @@ use Webkul\Core\Contracts\Validations\PhoneValidator;
 use App\Validators\DateValidator;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
+use App\Services\PersonValidationService;
 
 class PersonController extends Controller
 {
@@ -65,17 +66,7 @@ class PersonController extends Controller
      */
     public function store(AttributeForm $request): RedirectResponse|JsonResponse
     {
-        $request->validate([
-            'first_name' => ['required', 'string'],
-            'last_name' => ['required', 'string'],
-            'emails' => ['nullable', 'array'],
-            'emails.*.value' => ['nullable', new EmailValidator()],
-            'emails.*.label' => ['nullable', 'string'],
-            'phones' => ['nullable', 'array'],
-            'phones.*.value' => ['nullable', new PhoneValidator()],
-            'phones.*.label' => ['nullable', 'string'],
-            'date_of_birth' => ['nullable', new DateValidator()],
-        ]);
+        $request->validate(PersonValidationService::getWebValidationRules($request));
         Event::dispatch('contacts.person.create.before');
 
         $data = $request->all();
@@ -183,17 +174,7 @@ class PersonController extends Controller
      */
     public function update(AttributeForm $request, int $id): RedirectResponse|JsonResponse
     {
-        $request->validate([
-            'first_name' => ['required', 'string'],
-            'last_name' => ['required', 'string'],
-            'emails' => ['nullable', 'array'],
-            'emails.*.value' => ['nullable', new EmailValidator()],
-            'emails.*.label' => ['nullable', 'string'],
-            'phones' => ['nullable', 'array'],
-            'phones.*.value' => ['nullable', new PhoneValidator()],
-            'phones.*.label' => ['nullable', 'string'],
-            'date_of_birth' => ['nullable', new DateValidator()],
-        ]);
+        $request->validate(PersonValidationService::getWebValidationRules($request));
         Event::dispatch('contacts.person.update.before', $id);
 
         $data = $request->all();

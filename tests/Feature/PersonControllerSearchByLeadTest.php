@@ -12,6 +12,7 @@ use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Repositories\LeadRepository;
+use Webkul\User\Models\User;
 
 beforeEach(function () {
     $this->seed(TestSeeder::class);
@@ -21,6 +22,10 @@ beforeEach(function () {
     $this->controller = new PersonController($this->personRepository, app(LeadRepository::class), $this->attributeRepository);
 
     Person::query()->delete();
+
+    // Create and authenticate a user
+    $this->user = User::factory()->create();
+    $this->actingAs($this->user);
 });
 
 // Voeg deze helper toe:

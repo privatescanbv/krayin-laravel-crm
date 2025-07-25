@@ -260,3 +260,79 @@ test('returns results with match scores and sorts by score', function () {
     expect($firstScore)->toBeGreaterThan($secondScore);
     $this->assertEquals($onlyNameMatch, 72);
 });
+
+test('validates email and phone array structure when creating person', function () {
+    // Test case 1: Valid email and phone structure should pass
+    $validData = [
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'emails' => [
+            ['value' => 'john@example.com', 'label' => 'work', 'is_default' => true]
+        ],
+        'phones' => [
+            ['value' => '0612345678', 'label' => 'work', 'is_default' => true]
+        ],
+        'entity_type' => 'persons'
+    ];
+
+    $response = $this->postJson('/admin/contacts/persons/create', $validData);
+    $response->assertStatus(200);
+
+    // Test case 2: Email without label should fail
+    $invalidEmailData = [
+        'first_name' => 'Jane',
+        'last_name' => 'Smith',
+        'emails' => [
+            ['value' => 'jane@example.com', 'is_default' => true] // Missing label
+        ],
+        'entity_type' => 'persons'
+    ];
+
+    $response = $this->postJson('/admin/contacts/persons/create', $invalidEmailData);
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors(['emails']);
+
+    // Test case 3: Phone without label should fail
+    $invalidPhoneData = [
+        'first_name' => 'Bob',
+        'last_name' => 'Johnson',
+        'phones' => [
+            ['value' => '0687654321', 'is_default' => true] // Missing label
+        ],
+        'entity_type' => 'persons'
+    ];
+
+    $response = $this->postJson('/admin/contacts/persons/create', $invalidPhoneData);
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors(['phones']);
+
+    // Test case 4: Invalid email label should fail
+    $invalidLabelData = [
+        'first_name' => 'Alice',
+        'last_name' => 'Brown',
+        'emails' => [
+            ['value' => 'alice@example.com', 'label' => 'invalid_label', 'is_default' => true]
+        ],
+        'entity_type' => 'persons'
+    ];
+
+    $response = $this->postJson('/admin/contacts/persons/create', $invalidLabelData);
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors(['emails']);
+
+    // Test case 5: Empty values with labels should pass (allows for empty contact fields)
+    $emptyValuesData = [
+        'first_name' => 'Charlie',
+        'last_name' => 'Wilson',
+        'emails' => [
+            ['value' => '', 'label' => 'work', 'is_default' => true]
+        ],
+        'phones' => [
+            ['value' => '', 'label' => 'work', 'is_default' => true]
+        ],
+        'entity_type' => 'persons'
+    ];
+
+    $response = $this->postJson('/admin/contacts/persons/create', $emptyValuesData);
+    $response->assertStatus(200);
+});

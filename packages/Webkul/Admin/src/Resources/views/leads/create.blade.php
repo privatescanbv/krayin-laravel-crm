@@ -38,7 +38,7 @@
                             class="primary-button"
                             :disabled="isSubmitting"
                         >
-                            {{ isSubmitting ? 'Bezig...' : 'Opslaan' }}
+                            @{{ isSubmitting ? 'Bezig...' : 'Opslaan' }}
                         </button>
                     </div>
                 </div>
@@ -123,7 +123,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                         </svg>
                                         <span class="font-medium text-green-800">Contactpersoon gekoppeld:</span>
-                                        <span class="text-green-700">{{ selectedPerson.name }}</span>
+                                        <span class="text-green-700">@{{ selectedPerson.name }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -526,7 +526,7 @@
                             <div class="flex items-center justify-between">
                                 <div class="flex-1">
                                     <div class="flex items-center">
-                                        <div class="font-medium">{{ person.name }}</div>
+                                        <div class="font-medium">@{{ person.name }}</div>
                                         <div v-if="selectedPersonId === person.id" class="ml-2 text-blue-600">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -534,15 +534,15 @@
                                         </div>
                                     </div>
                                     <div class="text-sm text-gray-600">
-                                        <span v-if="person.email">{{ person.email }}</span>
+                                        <span v-if="person.email">@{{ person.email }}</span>
                                         <span v-if="person.phone && person.email"> • </span>
-                                        <span v-if="person.phone">{{ person.phone }}</span>
+                                        <span v-if="person.phone">@{{ person.phone }}</span>
                                     </div>
                                 </div>
                                 <div v-if="person.match_score_percentage" class="ml-3 flex-shrink-0">
                                     <div class="flex items-center">
                                         <div class="text-xs font-medium text-gray-700 mr-2">
-                                            {{ person.match_score_percentage }}% match
+                                            @{{ person.match_score_percentage }}% match
                                         </div>
                                         <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
                                             <div
@@ -585,11 +585,11 @@
                                     <span class="font-medium text-green-800">Contactpersoon geselecteerd:</span>
                                 </div>
                                 <div class="mt-1">
-                                    <div class="font-medium text-green-900">{{ selectedPerson.name }}</div>
+                                    <div class="font-medium text-green-900">@{{ selectedPerson.name }}</div>
                                     <div class="text-sm text-green-700">
-                                        <span v-if="selectedPerson.email">{{ selectedPerson.email }}</span>
+                                        <span v-if="selectedPerson.email">@{{ selectedPerson.email }}</span>
                                         <span v-if="selectedPerson.phone && selectedPerson.email"> • </span>
-                                        <span v-if="selectedPerson.phone">{{ selectedPerson.phone }}</span>
+                                        <span v-if="selectedPerson.phone">@{{ selectedPerson.phone }}</span>
                                     </div>
                                 </div>
                             </div>

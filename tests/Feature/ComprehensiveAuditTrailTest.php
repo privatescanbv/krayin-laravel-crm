@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Address;
+use App\Models\Anamnesis;
 use Database\Seeders\TestSeeder;
+use Illuminate\Support\Str;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -313,4 +315,76 @@ test('user_audit_trail', function () {
         expect($newUser->updater)->toBeInstanceOf(User::class);
         expect($newUser->updater->id)->toBe($this->user2->id);
     }
+});
+
+test('anamnesis_audit_trail', function () {
+    // Arrange
+    $this->actingAs($this->user1);
+
+    // Create a lead to associate with the anamnesis
+    $lead = Lead::create([
+        'title'                  => 'Test Lead for Anamnesis',
+        'description'            => 'Test Description',
+        'first_name'             => 'John',
+        'last_name'              => 'Doe',
+        'emails'                 => ['john@example.com'],
+        'phones'                 => ['1234567890'],
+        'user_id'                => $this->user1->id,
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
+        'lead_source_id'         => $this->source->id,
+        'lead_type_id'           => $this->type->id,
+        'created_by'             => $this->user1->id,
+        'updated_by'             => $this->user1->id,
+    ]);
+
+    // Act - Create anamnesis
+    $anamnesis = Anamnesis::create([
+        'id'      => Str::uuid(),
+        'lead_id' => $lead->id,
+        'name'    => 'Test Anamnesis',
+        'user_id' => $this->user1->id,
+        'height'  => 180,
+        'weight'  => 75,
+        'metals'  => true,
+        'active'  => true,
+    ]);
+
+    // Assert - Creation audit
+    expect($anamnesis->created_by)->toBe($this->user1->id);
+    expect($anamnesis->updated_by)->toBe($this->user1->id);
+    expect($anamnesis->created_at)->not->toBeNull();
+    expect($anamnesis->updated_at)->not->toBeNull();
+
+    // Act - Update as different user
+    $this->actingAs($this->user2);
+    $anamnesis->update([
+        'name'   => 'Updated Anamnesis Name',
+        'height' => 185,
+        'metals' => false,
+    ]);
+
+    // Assert - Update audit
+    expect($anamnesis->created_by)->toBe($this->user1->id);
+    expect($anamnesis->updated_by)->toBe($this->user2->id);
+
+    // Assert - Relations manually first
+    $creator = User::find($anamnesis->created_by);
+    $updater = User::find($anamnesis->updated_by);
+    expect($creator)->not->toBeNull('Creator user should exist');
+    expect($updater)->not->toBeNull('Updater user should exist');
+    expect($creator->id)->toBe($this->user1->id);
+    expect($updater->id)->toBe($this->user2->id);
+
+    // Test trait relations
+    expect($anamnesis->creator)->toBeInstanceOf(User::class);
+    expect($anamnesis->creator->id)->toBe($this->user1->id);
+    expect($anamnesis->updater)->toBeInstanceOf(User::class);
+    expect($anamnesis->updater->id)->toBe($this->user2->id);
+
+    // Test model relationships
+    expect($anamnesis->lead)->toBeInstanceOf(Lead::class);
+    expect($anamnesis->lead->id)->toBe($lead->id);
+    expect($anamnesis->user)->toBeInstanceOf(User::class);
+    expect($anamnesis->user->id)->toBe($this->user1->id);
 });

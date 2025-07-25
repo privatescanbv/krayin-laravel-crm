@@ -15,15 +15,25 @@ return new class extends Migration
         // Fix emails in persons table
         $this->fixContactArrays('persons', 'emails');
         
-        // Fix phones in persons table
-        $this->fixContactArrays('persons', 'phones');
-        $this->fixContactArrays('persons', 'contact_numbers');
+        // Fix phones in persons table (if column exists)
+        if (Schema::hasColumn('persons', 'phones')) {
+            $this->fixContactArrays('persons', 'phones');
+        }
+        
+        // Fix contact_numbers in persons table
+        if (Schema::hasColumn('persons', 'contact_numbers')) {
+            $this->fixContactArrays('persons', 'contact_numbers');
+        }
         
         // Fix emails in leads table
-        $this->fixContactArrays('leads', 'emails');
+        if (Schema::hasColumn('leads', 'emails')) {
+            $this->fixContactArrays('leads', 'emails');
+        }
         
         // Fix phones in leads table
-        $this->fixContactArrays('leads', 'phones');
+        if (Schema::hasColumn('leads', 'phones')) {
+            $this->fixContactArrays('leads', 'phones');
+        }
     }
 
     /**
@@ -39,15 +49,25 @@ return new class extends Migration
      */
     private function fixContactArrays(string $table, string $column): void
     {
+        // Check if table and column exist
+        if (!Schema::hasTable($table) || !Schema::hasColumn($table, $column)) {
+            return;
+        }
+
         $records = DB::table($table)
             ->whereNotNull($column)
             ->where($column, '!=', '[]')
+            ->where($column, '!=', '')
             ->get(['id', $column]);
+
+        if ($records->isEmpty()) {
+            return;
+        }
 
         foreach ($records as $record) {
             $contactArray = json_decode($record->$column, true);
             
-            if (!is_array($contactArray)) {
+            if (!is_array($contactArray) || empty($contactArray)) {
                 continue;
             }
 

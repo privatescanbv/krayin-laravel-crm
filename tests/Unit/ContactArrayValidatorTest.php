@@ -24,8 +24,8 @@ class ContactArrayValidatorTest extends TestCase
         $validator = new ContactArrayValidator('telefoon');
         
         $validPhones = [
-            ['value' => '0612345678', 'label' => 'work', 'is_default' => true],
-            ['value' => '0687654321', 'label' => 'mobile', 'is_default' => false]
+            ['value' => '+31612345678', 'label' => 'work', 'is_default' => true],
+            ['value' => '+31687654321', 'label' => 'mobile', 'is_default' => false]
         ];
         
         $this->assertTrue($validator->passes('phones', $validPhones));
@@ -68,7 +68,7 @@ class ContactArrayValidatorTest extends TestCase
         $validator = new ContactArrayValidator('telefoon');
         
         $validPhones = [
-            ['value' => '0612345678', 'label' => 'mobile', 'is_default' => true]
+            ['value' => '+31612345678', 'label' => 'mobile', 'is_default' => true]
         ];
         
         $this->assertTrue($validator->passes('phones', $validPhones));

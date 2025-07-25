@@ -381,7 +381,7 @@ test('API lead creation validates email and phone array structure', function () 
             ['value' => 'john.doe.'.$uniqueId.'@example.com', 'label' => 'work', 'is_default' => true]
         ],
         'phones'          => [
-            ['value' => '0612345678', 'label' => 'work', 'is_default' => true]
+            ['value' => '+31612345678', 'label' => 'work', 'is_default' => true]
         ],
     ];
 
@@ -420,7 +420,7 @@ test('API lead creation validates email and phone array structure', function () 
         'lead_type_id'    => $type->id,
         'lead_channel_id' => $channel->id,
         'phones'          => [
-            ['value' => '0687654321', 'is_default' => true] // Missing label
+            ['value' => '+31687654321', 'is_default' => true] // Missing label
         ],
     ];
 

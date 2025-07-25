@@ -270,7 +270,7 @@ test('validates email and phone array structure when creating person', function 
             ['value' => 'john@example.com', 'label' => 'work', 'is_default' => true]
         ],
         'phones' => [
-            ['value' => '0612345678', 'label' => 'work', 'is_default' => true]
+            ['value' => '+31612345678', 'label' => 'work', 'is_default' => true]
         ],
         'entity_type' => 'persons'
     ];
@@ -297,7 +297,7 @@ test('validates email and phone array structure when creating person', function 
         'first_name' => 'Bob',
         'last_name' => 'Johnson',
         'phones' => [
-            ['value' => '0687654321', 'is_default' => true] // Missing label
+            ['value' => '+31687654321', 'is_default' => true] // Missing label
         ],
         'entity_type' => 'persons'
     ];

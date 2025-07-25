@@ -43,7 +43,7 @@ class AuditTrailServiceProvider extends ServiceProvider
         foreach (self::FULL_AUDIT_MODELS as $modelClass) {
             $this->addAuditTrailToModel($modelClass);
         }
-        
+
         // Add only relations for models with existing observers
         foreach (self::RELATIONS_ONLY_MODELS as $modelClass) {
             $this->addAuditTrailRelations($modelClass);
@@ -57,10 +57,10 @@ class AuditTrailServiceProvider extends ServiceProvider
     {
         // Add relations
         $this->addAuditTrailRelations($modelClass);
-        
+
         // Add event listeners for automatic audit trail
         $this->addAuditTrailEventListeners($modelClass);
-        
+
         // Add fillable fields for models that need them
         $this->addAuditTrailFillable($modelClass);
     }
@@ -70,18 +70,19 @@ class AuditTrailServiceProvider extends ServiceProvider
      */
     private function addAuditTrailRelations(string $modelClass): void
     {
-        $modelClass::mixin(new class {
+        $modelClass::mixin(new class
+        {
             public function creator()
             {
                 return function () {
-                    return $this->belongsTo(\Webkul\User\Models\User::class, 'created_by');
+                    return $this->belongsTo(User::class, 'created_by');
                 };
             }
 
             public function updater()
             {
                 return function () {
-                    return $this->belongsTo(\Webkul\User\Models\User::class, 'updated_by');
+                    return $this->belongsTo(User::class, 'updated_by');
                 };
             }
         });
@@ -123,7 +124,8 @@ class AuditTrailServiceProvider extends ServiceProvider
      */
     private function addOrganizationFillable(string $modelClass): void
     {
-        $modelClass::mixin(new class {
+        $modelClass::mixin(new class
+        {
             public function getFillable()
             {
                 return function () {
@@ -138,7 +140,8 @@ class AuditTrailServiceProvider extends ServiceProvider
      */
     private function addUserFillable(string $modelClass): void
     {
-        $modelClass::mixin(new class {
+        $modelClass::mixin(new class
+        {
             public function getFillable()
             {
                 return function () {

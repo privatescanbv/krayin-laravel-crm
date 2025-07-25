@@ -1,8 +1,8 @@
-# Audit Trail Systeem
+### Audit Trail Systeem
 
 Dit document beschrijft hoe het audit trail systeem werkt en hoe het te gebruiken.
 
-## Overzicht
+#### Overzicht
 
 Het audit trail systeem zorgt ervoor dat elk model automatisch de volgende velden bijhoudt:
 - `created_by` - ID van de gebruiker die het record heeft aangemaakt
@@ -10,9 +10,9 @@ Het audit trail systeem zorgt ervoor dat elk model automatisch de volgende velde
 - `created_at` - Tijdstip waarop het record is aangemaakt (standaard Laravel)
 - `updated_at` - Tijdstip waarop het record het laatst is bijgewerkt (standaard Laravel)
 
-## Gebruik voor nieuwe modellen
+#### Gebruik voor nieuwe modellen
 
-### Optie 1: Gebruik BaseModel (Aanbevolen)
+##### Optie 1: Gebruik BaseModel (Aanbevolen)
 
 Voor nieuwe modellen, extend van `BaseModel` in plaats van `Model`:
 
@@ -32,7 +32,7 @@ class MyModel extends BaseModel
 }
 ```
 
-### Optie 2: Gebruik HasAuditTrail trait
+##### Optie 2: Gebruik HasAuditTrail trait
 
 Als je niet van BaseModel kunt extenden, gebruik dan de trait:
 
@@ -62,9 +62,9 @@ class MyModel extends Model
 }
 ```
 
-## Database migrations
+#### Database migrations
 
-### Voor nieuwe tabellen
+##### Voor nieuwe tabellen
 
 Gebruik de `AuditTrailMigrationHelper` in je migrations:
 
@@ -85,7 +85,7 @@ return new class extends Migration
             $table->string('name');
             $table->text('description')->nullable();
             $table->timestamps();
-            
+
             // Voeg audit trail velden toe
             AuditTrailMigrationHelper::addAuditTrailColumns($table);
         });
@@ -98,7 +98,7 @@ return new class extends Migration
 };
 ```
 
-### Voor bestaande tabellen
+##### Voor bestaande tabellen
 
 Gebruik de `AuditTrailMigrationHelper` om audit trail velden toe te voegen:
 
@@ -128,7 +128,7 @@ return new class extends Migration
 };
 ```
 
-### Artisan commando
+##### Artisan commando
 
 Je kunt ook het Artisan commando gebruiken om snel audit trail velden toe te voegen:
 
@@ -142,7 +142,7 @@ Dit commando:
 3. Voegt de audit trail velden toe
 4. Genereert automatisch een migration bestand
 
-## Relaties gebruiken
+#### Relaties gebruiken
 
 Elk model met audit trail heeft automatisch relaties naar de gebruikers:
 
@@ -154,7 +154,7 @@ $creator = $model->creator;
 $updater = $model->updater;
 ```
 
-## Automatische werking
+#### Automatische werking
 
 Het systeem werkt volledig automatisch:
 
@@ -162,7 +162,7 @@ Het systeem werkt volledig automatisch:
 - Bij het bijwerken van een record wordt `updated_by` bijgewerkt naar de huidige gebruiker
 - Als er geen gebruiker is ingelogd, blijven de velden `null`
 
-## Bestaande modellen updaten
+#### Bestaande modellen updaten
 
 Voor bestaande modellen die al audit trail velden hebben:
 
@@ -171,9 +171,9 @@ Voor bestaande modellen die al audit trail velden hebben:
 3. Voeg de casts toe
 4. Zorg dat de database tabel de juiste velden heeft
 
-## Voorbeeld gebruik
+#### Voorbeeld gebruik
 
-### Address
+##### Address
 ```php
 // Maak een nieuw address aan (automatisch audit trail)
 $address = Address::create([
@@ -190,7 +190,7 @@ echo "Aangemaakt door: " . $address->creator->name;
 echo "Laatst bijgewerkt door: " . $address->updater->name;
 ```
 
-### Lead
+##### Lead
 ```php
 // Maak een nieuwe lead aan
 $lead = Lead::create([
@@ -205,7 +205,7 @@ $lead = Lead::create([
 echo "Lead aangemaakt door: " . $lead->creator->name;
 ```
 
-### Person
+##### Person
 ```php
 // Maak een nieuwe persoon aan
 $person = Person::create([
@@ -219,7 +219,7 @@ $person = Person::create([
 echo "Persoon aangemaakt door: " . $person->creator->name;
 ```
 
-### Organization
+##### Organization
 ```php
 // Maak een nieuwe organisatie aan
 $organization = Organization::create([
@@ -231,7 +231,7 @@ $organization = Organization::create([
 echo "Organisatie aangemaakt door: " . $organization->creator->name;
 ```
 
-### Algemeen gebruik
+##### Algemeen gebruik
 ```php
 // Update elk record (automatisch updated_by bijwerken)
 $address->update(['city' => 'Rotterdam']);
@@ -248,7 +248,7 @@ foreach ([$address, $lead, $person, $organization] as $entity) {
 }
 ```
 
-## Componenten
+#### Componenten
 
 Het audit trail systeem bestaat uit:
 
@@ -258,36 +258,36 @@ Het audit trail systeem bestaat uit:
 4. **AddAuditTrailCommand** (`app/Console/Commands/AddAuditTrailCommand.php`) - Artisan commando
 5. **AuditTrailServiceProvider** (`app/Providers/AuditTrailServiceProvider.php`) - Service provider voor Webkul User model
 
-## Ondersteunde Entiteiten
+#### Ondersteunde Entiteiten
 
 Het audit trail systeem is volledig geïmplementeerd voor de volgende entiteiten:
 
 - ✅ **Address** (`App\Models\Address`) - Via BaseModel + HasAuditTrail trait
 - ✅ **Lead** (`Webkul\Lead\Models\Lead`) - Via LeadObserver + relaties via AuditTrailServiceProvider
-- ✅ **Person** (`Webkul\Contact\Models\Person`) - Via PersonObserver + relaties via AuditTrailServiceProvider  
+- ✅ **Person** (`Webkul\Contact\Models\Person`) - Via PersonObserver + relaties via AuditTrailServiceProvider
 - ✅ **Organization** (`Webkul\Contact\Models\Organization`) - Via AuditTrailServiceProvider (volledig)
 - ✅ **User** (`Webkul\User\Models\User`) - Via AuditTrailServiceProvider (volledig)
 
-## Implementatie Details
+#### Implementatie Details
 
-### Automatische Audit Trail
+##### Automatische Audit Trail
 - **Address**: Via `BaseModel` + `HasAuditTrail` trait - volledig automatisch
 - **Organization & User**: Via `AuditTrailServiceProvider` - volledig automatisch
 
-### Hybride Implementatie  
+##### Hybride Implementatie
 - **Lead & Person**: Hebben bestaande observers voor audit trail logica
 - Service provider voegt alleen `creator()` en `updater()` relaties toe
 - Audit trail velden worden ingesteld door bestaande observers
 
-### Belangrijke Kenmerken
+##### Belangrijke Kenmerken
 - Audit trail velden (`created_by`, `updated_by`) worden alleen ingesteld als er een gebruiker is ingelogd
 - Als er geen gebruiker is ingelogd, blijven deze velden `null`
 - Alle entiteiten hebben de `creator()` en `updater()` relaties beschikbaar
 - Fillable arrays worden automatisch uitgebreid waar nodig
 
-## Voor Ontwikkelaars
+#### Voor Ontwikkelaars
 
-### Nieuwe Modellen Toevoegen
+##### Nieuwe Modellen Toevoegen
 
 **Voor nieuwe app modellen:**
 ```php
@@ -307,13 +307,13 @@ class MyModel extends BaseModel
 1. Voeg het model toe aan `AuditTrailServiceProvider::RELATIONS_ONLY_MODELS`
 2. Zorg dat de observer de audit trail velden instelt
 
-### Artisan Commando's
+##### Artisan Commando's
 ```bash
 # Voeg audit trail toe aan bestaande tabel
 php artisan audit:add-trail table_name
 ```
 
-### Testing
+##### Testing
 - Gebruik `ComprehensiveAuditTrailTest` als voorbeeld
 - Test zowel handmatige relatie verificatie als mixin relaties
 - Gebruik factories waar mogelijk

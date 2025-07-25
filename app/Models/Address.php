@@ -66,9 +66,9 @@ class Address extends BaseModel
             $setFields = array_filter([
                 $address->lead_id,
                 $address->person_id,
-                $address->organization_id
+                $address->organization_id,
             ]);
-            
+
             if (count($setFields) > 1) {
                 throw new InvalidArgumentException('Cannot set multiple entity IDs (lead_id, person_id, organization_id)');
             }

@@ -16,44 +16,44 @@ use Webkul\User\Models\User;
 
 beforeEach(function () {
     $this->seed(TestSeeder::class);
-    
+
     // Create additional users for audit trail testing
     $this->role = Role::first() ?? Role::create([
-        'name' => 'Admin',
-        'description' => 'Administrator role', 
+        'name'            => 'Admin',
+        'description'     => 'Administrator role',
         'permission_type' => 'all',
-        'permissions' => [],
+        'permissions'     => [],
     ]);
 
     $this->user1 = User::create([
-        'name' => 'Test User 1',
-        'email' => 'user1@example.com',
+        'name'     => 'Test User 1',
+        'email'    => 'user1@example.com',
         'password' => bcrypt('password'),
-        'status' => 1,
-        'role_id' => $this->role->id,
+        'status'   => 1,
+        'role_id'  => $this->role->id,
     ]);
 
     $this->user2 = User::create([
-        'name' => 'Test User 2', 
-        'email' => 'user2@example.com',
+        'name'     => 'Test User 2',
+        'email'    => 'user2@example.com',
         'password' => bcrypt('password'),
-        'status' => 1,
-        'role_id' => $this->role->id,
+        'status'   => 1,
+        'role_id'  => $this->role->id,
     ]);
 
     // Create Lead dependencies
     $this->pipeline = Pipeline::first() ?? Pipeline::create([
-        'name' => 'Test Pipeline',
-        'is_default' => 1,
+        'name'        => 'Test Pipeline',
+        'is_default'  => 1,
         'rotten_days' => 30,
     ]);
 
     $this->stage = Stage::first() ?? Stage::create([
-        'name' => 'New',
-        'code' => 'new', 
+        'name'             => 'New',
+        'code'             => 'new',
         'lead_pipeline_id' => $this->pipeline->id,
-        'sort_order' => 1,
-        'probability' => 10,
+        'sort_order'       => 1,
+        'probability'      => 10,
     ]);
 
     $this->source = Source::first() ?? Source::create([
@@ -69,13 +69,24 @@ test('address_audit_trail', function () {
     // Arrange
     $this->actingAs($this->user1);
 
+    // Create a person to associate with the address
+    $person = Person::create([
+        'name'            => 'Test Person',
+        'emails'          => ['test@example.com'],
+        'contact_numbers' => ['1234567890'],
+        'user_id'         => $this->user1->id,
+        'created_by'      => $this->user1->id,
+        'updated_by'      => $this->user1->id,
+    ]);
+
     // Act - Create address
     $address = Address::create([
-        'street' => 'Test Street',
+        'person_id'    => $person->id,
+        'street'       => 'Test Street',
         'house_number' => '123',
-        'postal_code' => '1234AB',
-        'city' => 'Test City',
-        'country' => 'Netherlands',
+        'postal_code'  => '1234AB',
+        'city'         => 'Test City',
+        'country'      => 'Netherlands',
     ]);
 
     // Assert - Creation audit
@@ -105,19 +116,19 @@ test('lead_audit_trail', function () {
 
     // Act - Create lead
     $lead = Lead::create([
-        'title' => 'Test Lead',
-        'description' => 'Test Description',
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'emails' => ['john@example.com'],
-        'phones' => ['1234567890'],
-        'user_id' => $this->user1->id,
-        'lead_pipeline_id' => $this->pipeline->id,
+        'title'                  => 'Test Lead',
+        'description'            => 'Test Description',
+        'first_name'             => 'John',
+        'last_name'              => 'Doe',
+        'emails'                 => ['john@example.com'],
+        'phones'                 => ['1234567890'],
+        'user_id'                => $this->user1->id,
+        'lead_pipeline_id'       => $this->pipeline->id,
         'lead_pipeline_stage_id' => $this->stage->id,
-        'lead_source_id' => $this->source->id,
-        'lead_type_id' => $this->type->id,
-        'created_by' => $this->user1->id,
-        'updated_by' => $this->user1->id,
+        'lead_source_id'         => $this->source->id,
+        'lead_type_id'           => $this->type->id,
+        'created_by'             => $this->user1->id,
+        'updated_by'             => $this->user1->id,
     ]);
 
     $lead->refresh(); // Refresh to get database values (LeadObserver does direct DB updates)
@@ -134,7 +145,7 @@ test('lead_audit_trail', function () {
     // Act - Update as different user
     $this->actingAs($this->user2);
     $lead->update([
-        'title' => 'Updated Lead Title',
+        'title'      => 'Updated Lead Title',
         'updated_by' => $this->user2->id,
     ]);
     $lead->refresh();
@@ -168,12 +179,12 @@ test('person_audit_trail', function () {
 
     // Act - Create person
     $person = Person::create([
-        'name' => 'Test Person',
-        'emails' => ['person@example.com'],
+        'name'            => 'Test Person',
+        'emails'          => ['person@example.com'],
         'contact_numbers' => ['1234567890'],
-        'user_id' => $this->user1->id,
-        'created_by' => $this->user1->id,
-        'updated_by' => $this->user1->id,
+        'user_id'         => $this->user1->id,
+        'created_by'      => $this->user1->id,
+        'updated_by'      => $this->user1->id,
     ]);
 
     $person->refresh(); // Refresh to get database values (PersonObserver does direct DB updates)
@@ -187,7 +198,7 @@ test('person_audit_trail', function () {
     // Act - Update as different user
     $this->actingAs($this->user2);
     $person->update([
-        'name' => 'Updated Person Name',
+        'name'       => 'Updated Person Name',
         'updated_by' => $this->user2->id,
     ]);
     $person->refresh();
@@ -221,7 +232,7 @@ test('organization_audit_trail', function () {
 
     // Act - Create organization
     $organization = Organization::create([
-        'name' => 'Test Organization',
+        'name'    => 'Test Organization',
         'user_id' => $this->user1->id,
     ]);
 
@@ -264,11 +275,11 @@ test('user_audit_trail', function () {
 
     // Act - Create user (audit trail should be handled automatically)
     $newUser = User::create([
-        'name' => 'New User',
-        'email' => 'newuser@example.com',
+        'name'     => 'New User',
+        'email'    => 'newuser@example.com',
         'password' => bcrypt('password'),
-        'status' => 1,
-        'role_id' => $this->role->id,
+        'status'   => 1,
+        'role_id'  => $this->role->id,
     ]);
 
     // Assert - Creation audit

@@ -128,3 +128,5 @@ Het systeem bestaat uit de volgende hoofdmodules:
 
 
 include::tool-keuzes.adoc[]
+
+include::audit_trail.adoc[]

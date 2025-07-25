@@ -1,10 +1,8 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\DB;
 use App\Models\Address;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
@@ -17,27 +15,27 @@ return new class extends Migration
 
         foreach ($organizationsWithAddress as $organization) {
             $addressData = json_decode($organization->address, true);
-            
+
             if ($addressData && is_array($addressData)) {
                 Address::create([
-                    'organization_id' => $organization->id,
-                    'street' => $addressData['street'] ?? null,
-                    'house_number' => $addressData['house_number'] ?? null,
-                    'postal_code' => $addressData['postal_code'] ?? null,
+                    'organization_id'     => $organization->id,
+                    'street'              => $addressData['street'] ?? null,
+                    'house_number'        => $addressData['house_number'] ?? null,
+                    'postal_code'         => $addressData['postal_code'] ?? null,
                     'house_number_suffix' => $addressData['house_number_suffix'] ?? null,
-                    'state' => $addressData['state'] ?? null,
-                    'city' => $addressData['city'] ?? null,
-                    'country' => $addressData['country'] ?? 'Nederland',
+                    'state'               => $addressData['state'] ?? null,
+                    'city'                => $addressData['city'] ?? null,
+                    'country'             => $addressData['country'] ?? 'Nederland',
                 ]);
             }
         }
 
         // Then migrate data from attribute_values (if any exists)
         $addressAttribute = DB::table('attributes')->where([
-            'code' => 'address',
-            'entity_type' => 'organizations'
+            'code'        => 'address',
+            'entity_type' => 'organizations',
         ])->first();
-        
+
         if ($addressAttribute) {
             $addressValues = DB::table('attribute_values')
                 ->where('attribute_id', $addressAttribute->id)
@@ -52,17 +50,17 @@ return new class extends Migration
                 }
 
                 $addressData = json_decode($addressValue->json_value, true);
-                
+
                 if ($addressData && is_array($addressData)) {
                     Address::create([
-                        'organization_id' => $addressValue->entity_id,
-                        'street' => $addressData['street'] ?? null,
-                        'house_number' => $addressData['house_number'] ?? null,
-                        'postal_code' => $addressData['postal_code'] ?? null,
+                        'organization_id'     => $addressValue->entity_id,
+                        'street'              => $addressData['street'] ?? null,
+                        'house_number'        => $addressData['house_number'] ?? null,
+                        'postal_code'         => $addressData['postal_code'] ?? null,
                         'house_number_suffix' => $addressData['house_number_suffix'] ?? null,
-                        'state' => $addressData['state'] ?? null,
-                        'city' => $addressData['city'] ?? null,
-                        'country' => $addressData['country'] ?? 'Nederland',
+                        'state'               => $addressData['state'] ?? null,
+                        'city'                => $addressData['city'] ?? null,
+                        'country'             => $addressData['country'] ?? 'Nederland',
                     ]);
                 }
             }

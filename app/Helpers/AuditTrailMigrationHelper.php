@@ -15,7 +15,7 @@ class AuditTrailMigrationHelper
     {
         $table->unsignedInteger('created_by')->nullable();
         $table->unsignedInteger('updated_by')->nullable();
-        
+
         $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
         $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
     }
@@ -25,12 +25,12 @@ class AuditTrailMigrationHelper
      */
     public static function addAuditTrailColumnsIfNotExists(Blueprint $table, string $tableName): void
     {
-        if (!Schema::hasColumn($tableName, 'created_by')) {
+        if (! Schema::hasColumn($tableName, 'created_by')) {
             $table->unsignedInteger('created_by')->nullable();
             $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
         }
-        
-        if (!Schema::hasColumn($tableName, 'updated_by')) {
+
+        if (! Schema::hasColumn($tableName, 'updated_by')) {
             $table->unsignedInteger('updated_by')->nullable();
             $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
         }
@@ -46,7 +46,7 @@ class AuditTrailMigrationHelper
             $table->dropForeign(['created_by']);
             $table->dropForeign(['updated_by']);
         }
-        
+
         $table->dropColumn(['created_by', 'updated_by']);
     }
 
@@ -64,7 +64,7 @@ class AuditTrailMigrationHelper
                 $table->dropForeign(['updated_by']);
             }
         }
-        
+
         // Drop columns only if they exist
         $columnsToDrop = [];
         if (Schema::hasColumn($tableName, 'created_by')) {
@@ -73,8 +73,8 @@ class AuditTrailMigrationHelper
         if (Schema::hasColumn($tableName, 'updated_by')) {
             $columnsToDrop[] = 'updated_by';
         }
-        
-        if (!empty($columnsToDrop)) {
+
+        if (! empty($columnsToDrop)) {
             $table->dropColumn($columnsToDrop);
         }
     }

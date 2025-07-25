@@ -4,6 +4,7 @@ namespace Webkul\Lead\Http\Controllers\Api;
 
 use App\Enums\PipelineDefaultKeys;
 use App\Models\Department;
+use App\Validators\DateValidator;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -13,6 +14,8 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Webkul\Admin\Http\Requests\LeadForm;
+use Webkul\Core\Contracts\Validations\EmailValidator;
+use Webkul\Core\Contracts\Validations\PhoneValidator;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Type;
 use Webkul\Lead\Repositories\LeadRepository;
@@ -64,6 +67,18 @@ class LeadController extends Controller
             'lead_source_id' => 'required:numeric',
             'lead_channel_id' => 'required:numeric',
             'lead_type_id' => 'required:numeric',
+            'emails' => ['nullable', 'array'],
+            'emails.*.value' => ['nullable', new EmailValidator()],
+            'emails.*.label' => ['nullable', 'string'],
+            'phones' => ['nullable', 'array'],
+            'phones.*.value' => ['nullable', new PhoneValidator()],
+            'phones.*.label' => ['nullable', 'string'],
+            'date_of_birth' => ['nullable', new DateValidator()],
+            'organization_id' => ['nullable', 'exists:organizations,id', function ($attribute, $value, $fail) use ($request) {
+                if ($value && !$request->input('person_id')) {
+                    $fail('Een organisatie kan alleen gekoppeld worden als er ook een contactpersoon is gekoppeld.');
+                }
+            }],
         ]);
 
         // TODO replace with auth()-> id

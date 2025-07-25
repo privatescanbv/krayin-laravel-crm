@@ -69,8 +69,19 @@ test('address_audit_trail', function () {
     // Arrange
     $this->actingAs($this->user1);
 
+    // Create a person to associate with the address
+    $person = Person::create([
+        'name' => 'Test Person',
+        'emails' => ['test@example.com'],
+        'contact_numbers' => ['1234567890'],
+        'user_id' => $this->user1->id,
+        'created_by' => $this->user1->id,
+        'updated_by' => $this->user1->id,
+    ]);
+
     // Act - Create address
     $address = Address::create([
+        'person_id' => $person->id,
         'street' => 'Test Street',
         'house_number' => '123',
         'postal_code' => '1234AB',

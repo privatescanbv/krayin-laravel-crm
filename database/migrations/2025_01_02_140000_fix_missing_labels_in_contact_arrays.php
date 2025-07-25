@@ -63,6 +63,15 @@ return new class extends Migration
                     $fixed = true;
                 }
 
+                // Normalize label to lowercase
+                if (isset($contact['label'])) {
+                    $normalizedLabel = $this->normalizeLabel($contact['label']);
+                    if ($contact['label'] !== $normalizedLabel) {
+                        $contact['label'] = $normalizedLabel;
+                        $fixed = true;
+                    }
+                }
+
                 // Add missing is_default
                 if (!isset($contact['is_default'])) {
                     $contact['is_default'] = false;
@@ -93,5 +102,30 @@ return new class extends Migration
                     ->update([$column => json_encode($contactArray)]);
             }
         }
+    }
+
+    /**
+     * Normalize label to lowercase and handle common variations
+     */
+    private function normalizeLabel(string $label): string
+    {
+        if (empty($label)) {
+            return 'work';
+        }
+        
+        // Convert to lowercase and map common variations
+        $normalizedLabel = strtolower(trim($label));
+        $labelMap = [
+            'work' => 'work',
+            'werk' => 'work',
+            'home' => 'home',
+            'thuis' => 'home',
+            'mobile' => 'mobile',
+            'mobiel' => 'mobile',
+            'other' => 'other',
+            'anders' => 'other'
+        ];
+        
+        return $labelMap[$normalizedLabel] ?? 'work';
     }
 };

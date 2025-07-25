@@ -707,7 +707,7 @@
                                  // Ensure each email has is_default property
                                  this.formData.emails = person.emails.map((email, index) => ({
                                      value: email.value || '',
-                                     label: email.label || 'work',
+                                     label: this.normalizeLabel(email.label) || 'work',
                                      is_default: email.is_default !== undefined ? Boolean(email.is_default) : (index === 0)
                                  }));
                              } else {
@@ -719,7 +719,7 @@
                                  // Ensure each phone has is_default property
                                  this.formData.phones = person.phones.map((phone, index) => ({
                                      value: phone.value || '',
-                                     label: phone.label || 'work',
+                                     label: this.normalizeLabel(phone.label) || 'work',
                                      is_default: phone.is_default !== undefined ? Boolean(phone.is_default) : (index === 0)
                                  }));
                              } else {
@@ -899,6 +899,25 @@
                          if (!isChecked && this.formData.phones.length > 0) {
                              this.formData.phones[0].is_default = true;
                          }
+                     },
+
+                     normalizeLabel(label) {
+                         if (!label) return 'work';
+                         
+                         // Convert to lowercase and map common variations
+                         const normalizedLabel = label.toLowerCase();
+                         const labelMap = {
+                             'work': 'work',
+                             'werk': 'work',
+                             'home': 'home', 
+                             'thuis': 'home',
+                             'mobile': 'mobile',
+                             'mobiel': 'mobile',
+                             'other': 'other',
+                             'anders': 'other'
+                         };
+                         
+                         return labelMap[normalizedLabel] || 'work';
                      },
 
                      populateAddressFields(address) {

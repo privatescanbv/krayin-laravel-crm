@@ -877,9 +877,11 @@ class PersonController extends Controller
         if (isset($requestData['emails']) && is_array($requestData['emails'])) {
             foreach ($requestData['emails'] as $index => $email) {
                 if (is_array($email)) {
-                    // Ensure label exists
+                    // Ensure label exists and normalize it
                     if (!isset($email['label']) || empty($email['label'])) {
                         $requestData['emails'][$index]['label'] = 'work';
+                    } else {
+                        $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
                     }
                     
                     // Normalize is_default to boolean
@@ -896,9 +898,11 @@ class PersonController extends Controller
         if (isset($requestData['phones']) && is_array($requestData['phones'])) {
             foreach ($requestData['phones'] as $index => $phone) {
                 if (is_array($phone)) {
-                    // Ensure label exists
+                    // Ensure label exists and normalize it
                     if (!isset($phone['label']) || empty($phone['label'])) {
                         $requestData['phones'][$index]['label'] = 'work';
+                    } else {
+                        $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
                     
                     // Normalize is_default to boolean
@@ -915,9 +919,11 @@ class PersonController extends Controller
         if (isset($requestData['contact_numbers']) && is_array($requestData['contact_numbers'])) {
             foreach ($requestData['contact_numbers'] as $index => $phone) {
                 if (is_array($phone)) {
-                    // Ensure label exists
+                    // Ensure label exists and normalize it
                     if (!isset($phone['label']) || empty($phone['label'])) {
                         $requestData['contact_numbers'][$index]['label'] = 'work';
+                    } else {
+                        $requestData['contact_numbers'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
                     
                     // Normalize is_default to boolean
@@ -952,5 +958,30 @@ class PersonController extends Controller
         }
         
         return false;
+    }
+
+    /**
+     * Normalize label to lowercase and handle common variations
+     */
+    private function normalizeLabel(string $label): string
+    {
+        if (empty($label)) {
+            return 'work';
+        }
+        
+        // Convert to lowercase and map common variations
+        $normalizedLabel = strtolower(trim($label));
+        $labelMap = [
+            'work' => 'work',
+            'werk' => 'work',
+            'home' => 'home',
+            'thuis' => 'home',
+            'mobile' => 'mobile',
+            'mobiel' => 'mobile',
+            'other' => 'other',
+            'anders' => 'other'
+        ];
+        
+        return $labelMap[$normalizedLabel] ?? 'work';
     }
 }

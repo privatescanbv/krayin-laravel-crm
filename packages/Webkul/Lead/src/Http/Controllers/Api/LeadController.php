@@ -65,8 +65,13 @@ class LeadController extends Controller
 
         try {
             $departmentId = Department::findPrivateScanId();
-            if (Type::query()->where('id', $request['lead_type_id'])->firstOrFail()->name == 'Operatie') {
-                $departmentId = Department::findHerniaId();
+            
+            // Check if lead type exists and is "Operatie"
+            if (isset($request['lead_type_id'])) {
+                $leadType = Type::query()->where('id', $request['lead_type_id'])->first();
+                if ($leadType && $leadType->name == 'Operatie') {
+                    $departmentId = Department::findHerniaId();
+                }
             }
         } catch (ModelNotFoundException $e) {
             Log::error('Could not find departments by name Hernia ', [
@@ -88,7 +93,14 @@ class LeadController extends Controller
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
         
-        $this->validate($request, LeadValidationService::getApiValidationRules($request));
+        try {
+            $this->validate($request, LeadValidationService::getApiValidationRules($request));
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Lead creation failed.',
+                'errors' => $e->errors(),
+            ], 422);
+        }
 
         // Create lead with person_id
         $leadData = $request->all();

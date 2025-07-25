@@ -138,12 +138,21 @@ test('API lead creation fails gracefully with invalid data', function () {
     // Arrange: Count existing leads before the test
     $initialLeadCount = Lead::count();
     $initialAnamnesisCount = Anamnesis::count();
+    
+    // Get required IDs to avoid 500 errors
+    $source = Source::first();
+    $type = Type::first();
+    $channel = Channel::first();
 
     // Use unique data to avoid conflicts
     $uniqueId = uniqid();
     $leadData = [
         'first_name' => 'InvalidTest'.$uniqueId,
-        // Missing last_name, email, and other required fields
+        // Include required IDs to avoid 500 errors, but missing other required fields
+        'lead_source_id'  => $source->id,
+        'lead_type_id'    => $type->id,
+        'lead_channel_id' => $channel->id,
+        // Missing last_name, title, and other required fields to trigger validation errors
     ];
 
     // Act: Make API request

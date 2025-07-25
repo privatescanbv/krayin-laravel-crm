@@ -668,29 +668,36 @@
                         this.currentStep = step;
                     },
 
-                    handlePersonSelected(person) {
-                        this.selectedPerson = person;
-                        if (person) {
-                            // Pre-fill form data with person information
-                            this.formData.first_name = person.first_name || '';
-                            this.formData.last_name = person.last_name || '';
-                            this.formData.lastname_prefix = person.lastname_prefix || '';
-                            this.formData.married_name = person.married_name || '';
-                            this.formData.married_name_prefix = person.married_name_prefix || '';
-                            this.formData.initials = person.initials || '';
-                            this.formData.date_of_birth = person.date_of_birth || '';
-                            this.formData.gender = person.gender || '';
-                            this.formData.salutation = person.salutation || '';
+                                         handlePersonSelected(person) {
+                         this.selectedPerson = person;
+                         if (person) {
+                             // Pre-fill form data with person information
+                             this.formData.first_name = person.first_name || '';
+                             this.formData.last_name = person.last_name || '';
+                             this.formData.lastname_prefix = person.lastname_prefix || '';
+                             this.formData.married_name = person.married_name || '';
+                             this.formData.married_name_prefix = person.married_name_prefix || '';
+                             this.formData.initials = person.initials || '';
+                             this.formData.date_of_birth = person.date_of_birth || '';
+                             this.formData.gender = person.gender || '';
+                             this.formData.salutation = person.salutation || '';
 
-                            // Pre-populate emails and phones if available
-                            if (person.emails && person.emails.length > 0) {
-                                this.formData.emails = [...person.emails];
-                            }
-                            if (person.phones && person.phones.length > 0) {
-                                this.formData.phones = [...person.phones];
-                            }
-                        }
-                    },
+                             // Pre-populate emails and phones if available
+                             if (person.emails && person.emails.length > 0) {
+                                 this.formData.emails = [...person.emails];
+                             }
+                             if (person.phones && person.phones.length > 0) {
+                                 this.formData.phones = [...person.phones];
+                             }
+
+                             // Pre-populate address if available
+                             this.$nextTick(() => {
+                                 if (person.address) {
+                                     this.populateAddressFields(person.address);
+                                 }
+                             });
+                         }
+                     },
 
                     handlePersonNotFound() {
                         this.selectedPerson = null;
@@ -811,6 +818,27 @@
                          if (this.formData.phones.length > 1) {
                              this.formData.phones.splice(index, 1);
                          }
+                     },
+
+                     populateAddressFields(address) {
+                         // Populate address form fields by setting their values directly
+                         const addressFields = {
+                             'address[postal_code]': address.postal_code || '',
+                             'address[house_number]': address.house_number || '',
+                             'address[street]': address.street || '',
+                             'address[city]': address.city || '',
+                             'address[country]': address.country || 'Nederland'
+                         };
+
+                         // Set values in the actual form inputs
+                         Object.keys(addressFields).forEach(fieldName => {
+                             const input = this.$refs.leadForm.querySelector(`[name="${fieldName}"]`);
+                             if (input && addressFields[fieldName]) {
+                                 input.value = addressFields[fieldName];
+                                 // Trigger change event to ensure any listeners are notified
+                                 input.dispatchEvent(new Event('change', { bubbles: true }));
+                             }
+                         });
                      }
                  }
              });

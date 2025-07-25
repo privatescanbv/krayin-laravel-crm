@@ -287,10 +287,12 @@ class PersonController extends Controller
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $persons = $this->personRepository
                 ->pushCriteria(app(RequestCriteria::class))
+                ->with(['address'])
                 ->findWhereIn('user_id', $userIds);
         } else {
             $persons = $this->personRepository
                 ->pushCriteria(app(RequestCriteria::class))
+                ->with(['address'])
                 ->all();
         }
 
@@ -335,6 +337,7 @@ class PersonController extends Controller
     public function searchByLead(Lead $lead): JsonResource
     {
         $persons = Person::query()
+            ->with(['address'])
             ->where('first_name', 'like', '%' . $lead->first_name . '%')
             ->where(function ($query) use ($lead) {
                 $query->where('last_name', 'like', '%' . $lead->last_name . '%')

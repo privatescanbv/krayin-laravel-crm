@@ -78,12 +78,13 @@ class ContactArrayValidatorTest extends TestCase
     {
         $validator = new ContactArrayValidator('email');
         
+        // Use an array as is_default value - this should definitely fail
         $invalidEmails = [
-            ['value' => 'test@example.com', 'label' => 'work', 'is_default' => 'not_boolean']
+            ['value' => 'test@example.com', 'label' => 'work', 'is_default' => ['not_a_boolean']]
         ];
         
         $this->assertFalse($validator->passes('emails', $invalidEmails));
-        $this->assertStringContainsString('boolean zijn', $validator->message());
+        $this->assertStringContainsString('boolean waarde zijn', $validator->message());
     }
 
     public function test_fails_when_multiple_items_without_default()
@@ -119,5 +120,36 @@ class ContactArrayValidatorTest extends TestCase
         ];
         
         $this->assertTrue($validator->passes('emails', $singleEmail));
+    }
+
+    public function test_converts_string_to_boolean_for_is_default()
+    {
+        $validator = new ContactArrayValidator('email');
+        
+        // Test various string representations that should be converted to boolean
+        $emailsWithStringDefaults = [
+            ['value' => 'test1@example.com', 'label' => 'work', 'is_default' => 'true'],
+            ['value' => 'test2@example.com', 'label' => 'home', 'is_default' => '1'],
+            ['value' => 'test3@example.com', 'label' => 'other', 'is_default' => 'on']
+        ];
+        
+        // This should pass because strings are converted to booleans
+        $this->assertTrue($validator->passes('emails', $emailsWithStringDefaults));
+    }
+
+    public function test_converts_falsy_strings_to_false()
+    {
+        $validator = new ContactArrayValidator('email');
+        
+        // Test strings that should be converted to false
+        $emailsWithFalsyDefaults = [
+            ['value' => 'test1@example.com', 'label' => 'work', 'is_default' => 'false'],
+            ['value' => 'test2@example.com', 'label' => 'home', 'is_default' => '0'],
+            ['value' => 'test3@example.com', 'label' => 'other', 'is_default' => 'random_string']
+        ];
+        
+        // This should fail because no item has is_default = true
+        $this->assertFalse($validator->passes('emails', $emailsWithFalsyDefaults));
+        $this->assertStringContainsString('standaard zijn gemarkeerd', $validator->message());
     }
 }

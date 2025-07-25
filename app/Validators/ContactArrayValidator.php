@@ -28,11 +28,16 @@ class ContactArrayValidator implements Rule
             return false;
         }
 
+        // Create a normalized copy of the value for validation
+        $normalizedValue = [];
+        
         foreach ($value as $index => $item) {
             if (!is_array($item)) {
                 $this->message = "Elk {$this->type} item moet een object zijn.";
                 return false;
             }
+
+            $normalizedItem = $item;
 
             // Check required fields - only validate if value is not empty
             // Allow empty values but require label to be present
@@ -63,18 +68,22 @@ class ContactArrayValidator implements Rule
             if (isset($item['is_default'])) {
                 // Convert string representations to boolean
                 if (is_string($item['is_default'])) {
-                    $item['is_default'] = in_array(strtolower($item['is_default']), ['true', '1', 'on', 'yes']);
+                    $normalizedItem['is_default'] = in_array(strtolower($item['is_default']), ['true', '1', 'on', 'yes']);
                 } elseif (is_numeric($item['is_default'])) {
-                    $item['is_default'] = (bool) $item['is_default'];
+                    $normalizedItem['is_default'] = (bool) $item['is_default'];
                 } elseif (!is_bool($item['is_default'])) {
                     $this->message = "Het {$this->type} veld 'is_default' moet een boolean waarde zijn.";
                     return false;
+                } else {
+                    $normalizedItem['is_default'] = $item['is_default'];
                 }
             }
+            
+            $normalizedValue[] = $normalizedItem;
         }
 
         // Check that at least one non-empty item has is_default = true if multiple non-empty items
-        $nonEmptyItems = array_filter($value, function($item) {
+        $nonEmptyItems = array_filter($normalizedValue, function($item) {
             return isset($item['value']) && !empty(trim($item['value']));
         });
         

@@ -5,6 +5,7 @@ namespace App\Services;
 use Webkul\Core\Contracts\Validations\EmailValidator;
 use Webkul\Core\Contracts\Validations\PhoneValidator;
 use App\Validators\DateValidator;
+use App\Validators\ContactArrayValidator;
 
 class PersonValidationService
 {
@@ -29,13 +30,13 @@ class PersonValidationService
             'job_title' => 'nullable|string|max:255',
             
             // Contact information
-            'emails' => 'nullable|array',
+            'emails' => ['nullable', new ContactArrayValidator('email')],
             'emails.*.value' => ['nullable', new EmailValidator()],
             'emails.*.label' => 'nullable|string|max:50',
-            'phones' => 'nullable|array',
+            'phones' => ['nullable', new ContactArrayValidator('telefoon')],
             'phones.*.value' => ['nullable', new PhoneValidator()],
             'phones.*.label' => 'nullable|string|max:50',
-            'contact_numbers' => 'nullable|array',
+            'contact_numbers' => ['nullable', new ContactArrayValidator('telefoon')],
             'contact_numbers.*.value' => ['nullable', new PhoneValidator()],
             'contact_numbers.*.label' => 'nullable|string|max:50',
             

@@ -1,0 +1,97 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        // Fix emails in persons table
+        $this->fixContactArrays('persons', 'emails');
+        
+        // Fix phones in persons table
+        $this->fixContactArrays('persons', 'phones');
+        $this->fixContactArrays('persons', 'contact_numbers');
+        
+        // Fix emails in leads table
+        $this->fixContactArrays('leads', 'emails');
+        
+        // Fix phones in leads table
+        $this->fixContactArrays('leads', 'phones');
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        // This migration only fixes data, no schema changes to reverse
+    }
+
+    /**
+     * Fix contact arrays by ensuring they have proper label and is_default fields
+     */
+    private function fixContactArrays(string $table, string $column): void
+    {
+        $records = DB::table($table)
+            ->whereNotNull($column)
+            ->where($column, '!=', '[]')
+            ->get(['id', $column]);
+
+        foreach ($records as $record) {
+            $contactArray = json_decode($record->$column, true);
+            
+            if (!is_array($contactArray)) {
+                continue;
+            }
+
+            $fixed = false;
+            foreach ($contactArray as &$contact) {
+                if (!is_array($contact)) {
+                    continue;
+                }
+
+                // Add missing label
+                if (!isset($contact['label']) || empty($contact['label'])) {
+                    $contact['label'] = 'work';
+                    $fixed = true;
+                }
+
+                // Add missing is_default
+                if (!isset($contact['is_default'])) {
+                    $contact['is_default'] = false;
+                    $fixed = true;
+                }
+            }
+
+            // Ensure at least one item is marked as default
+            if (count($contactArray) > 0) {
+                $hasDefault = false;
+                foreach ($contactArray as $contact) {
+                    if (isset($contact['is_default']) && $contact['is_default'] === true) {
+                        $hasDefault = true;
+                        break;
+                    }
+                }
+
+                if (!$hasDefault) {
+                    $contactArray[0]['is_default'] = true;
+                    $fixed = true;
+                }
+            }
+
+            // Update the record if changes were made
+            if ($fixed) {
+                DB::table($table)
+                    ->where('id', $record->id)
+                    ->update([$column => json_encode($contactArray)]);
+            }
+        }
+    }
+};

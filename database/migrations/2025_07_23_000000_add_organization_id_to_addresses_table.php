@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::table('addresses', function (Blueprint $table) {
             // Add organization_id column
             $table->unsignedInteger('organization_id')->nullable()->after('person_id');
-            
+
             // Add foreign key constraint
             $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('cascade');
         });

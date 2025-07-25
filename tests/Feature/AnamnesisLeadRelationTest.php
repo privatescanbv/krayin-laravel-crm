@@ -22,14 +22,14 @@ test('it can create anamnesis with lead and retrieve relation', function () {
 test('anamnesis model uses english field names', function () {
     $lead = Lead::factory()->create();
     $anamnesis = Anamnesis::factory()->create([
-        'lead_id' => $lead->id,
-        'height' => 180,
-        'weight' => 75,
-        'metals' => 1,
-        'medications' => 0,
-        'glaucoma' => 1,
-        'claustrophobia' => 0,
-        'metals_notes' => 'Test metalen opmerking',
+        'lead_id'           => $lead->id,
+        'height'            => 180,
+        'weight'            => 75,
+        'metals'            => 1,
+        'medications'       => 0,
+        'glaucoma'          => 1,
+        'claustrophobia'    => 0,
+        'metals_notes'      => 'Test metalen opmerking',
         'medications_notes' => 'Test medicijnen opmerking',
     ]);
 

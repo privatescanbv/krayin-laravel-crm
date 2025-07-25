@@ -2,15 +2,15 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\PipelineDefaultKeys;
+use App\Enums\PipelineStageDefaultKeys;
+use App\Models\Anamnesis;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
-use App\Models\Anamnesis;
-use App\Enums\PipelineDefaultKeys;
-use App\Enums\PipelineStageDefaultKeys;
 
 class ImportLeadsFromSugarCRM extends Command
 {
@@ -176,6 +176,7 @@ class ImportLeadsFromSugarCRM extends Command
 
             if ($dryRun) {
                 $this->showDryRunResults($records);
+
                 return;
             }
 
@@ -205,7 +206,7 @@ class ImportLeadsFromSugarCRM extends Command
         foreach ($records as $record) {
             // Try to find matching person
             $person = $this->findMatchingPerson($record);
-            $personMatch = $person ? "✓ {$person->name}" : "✗ Not found";
+            $personMatch = $person ? "✓ {$person->name}" : '✗ Not found';
 
             $rows[] = [
                 $record->id ?? 'N/A',
@@ -241,19 +242,21 @@ class ImportLeadsFromSugarCRM extends Command
         foreach ($records as $record) {
             try {
                 // Check if lead already exists
-                $existingLead = Lead::where('title', $record->first_name . ' ' . $record->last_name . ' - ' . $record->id)->first();
+                $existingLead = Lead::where('title', $record->first_name.' '.$record->last_name.' - '.$record->id)->first();
                 if ($existingLead) {
                     $skipped++;
                     $bar->advance();
+
                     continue;
                 }
 
                 // Find matching person
                 $person = $this->findMatchingPerson($record);
-                if (!$person) {
+                if (! $person) {
                     $personNotFound++;
                     $this->error("\nPerson not found for lead: {$record->first_name} {$record->last_name} (ID: {$record->id})");
                     $bar->advance();
+
                     continue;
                 }
 
@@ -262,25 +265,25 @@ class ImportLeadsFromSugarCRM extends Command
 
                 // Create lead
                 $lead = Lead::create([
-                    'title' => $record->first_name . ' ' . $record->last_name . ' - ' . $record->id,
-                    'description' => $record->description ?? '',
-                    'emails' => $this->formatEmails($record),
-                    'phones' => $this->formatPhones($record),
-                    'lead_value' => 0,
-                    'status' => $this->mapStatus($record->status),
-                    'person_id' => $person->id,
-                    'lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value,
+                    'title'                  => $record->first_name.' '.$record->last_name.' - '.$record->id,
+                    'description'            => $record->description ?? '',
+                    'emails'                 => $this->formatEmails($record),
+                    'phones'                 => $this->formatPhones($record),
+                    'lead_value'             => 0,
+                    'status'                 => $this->mapStatus($record->status),
+                    'person_id'              => $person->id,
+                    'lead_pipeline_id'       => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value,
                     'lead_pipeline_stage_id' => $this->mapStage($record),
-                    'salutation' => $record->salutation,
-                    'first_name' => $record->first_name,
-                    'last_name' => $record->last_name,
-                    'lastname_prefix' => $record->tussenvoegsel_c ?? '',
-                    'married_name' => $record->meisjesnaam_c ?? '',
-                    'initials' => $record->voorletters_c ?? '',
-                    'date_of_birth' => $record->birthdate,
-                    'gender' => $record->gender_c,
-                    'created_at' => $record->date_entered ?? now(),
-                    'updated_at' => $record->date_modified ?? now(),
+                    'salutation'             => $record->salutation,
+                    'first_name'             => $record->first_name,
+                    'last_name'              => $record->last_name,
+                    'lastname_prefix'        => $record->tussenvoegsel_c ?? '',
+                    'married_name'           => $record->meisjesnaam_c ?? '',
+                    'initials'               => $record->voorletters_c ?? '',
+                    'date_of_birth'          => $record->birthdate,
+                    'gender'                 => $record->gender_c,
+                    'created_at'             => $record->date_entered ?? now(),
+                    'updated_at'             => $record->date_modified ?? now(),
                 ]);
 
                 // Create anamnesis data
@@ -288,7 +291,7 @@ class ImportLeadsFromSugarCRM extends Command
 
                 // Debug: Check if lead has person relation
                 $lead->load('person');
-                $this->info("Lead created with person: " . ($lead->person ? $lead->person->name : 'NULL'));
+                $this->info('Lead created with person: '.($lead->person ? $lead->person->name : 'NULL'));
 
                 $imported++;
                 $bar->advance();
@@ -297,7 +300,7 @@ class ImportLeadsFromSugarCRM extends Command
                 $errors++;
                 Log::error('Failed to import lead', [
                     'record_id' => $record->id ?? 'unknown',
-                    'error' => $e->getMessage(),
+                    'error'     => $e->getMessage(),
                 ]);
                 $bar->advance();
             }
@@ -321,7 +324,7 @@ class ImportLeadsFromSugarCRM extends Command
 
         // First try to match by email
         if ($email) {
-            $person = Person::where('emails', 'like', '%' . $email . '%')->first();
+            $person = Person::where('emails', 'like', '%'.$email.'%')->first();
             if ($person) {
                 return $person;
             }
@@ -329,8 +332,8 @@ class ImportLeadsFromSugarCRM extends Command
 
         // Then try to match by phone
         if ($record->phone_work) {
-            $person = Person::where('phones', 'like', '%' . $record->phone_work . '%')
-                ->orWhere('contact_numbers', 'like', '%' . $record->phone_work . '%')
+            $person = Person::where('phones', 'like', '%'.$record->phone_work.'%')
+                ->orWhere('contact_numbers', 'like', '%'.$record->phone_work.'%')
                 ->first();
             if ($person) {
                 return $person;
@@ -369,9 +372,9 @@ class ImportLeadsFromSugarCRM extends Command
 
         if ($email) {
             $emails[] = [
-                'label' => 'work',
-                'value' => $email,
-                'is_default' => true
+                'label'      => 'work',
+                'value'      => $email,
+                'is_default' => true,
             ];
         }
 
@@ -387,25 +390,25 @@ class ImportLeadsFromSugarCRM extends Command
 
         if ($record->phone_work) {
             $phones[] = [
-                'label' => 'work',
-                'value' => $record->phone_work,
-                'is_default' => true
+                'label'      => 'work',
+                'value'      => $record->phone_work,
+                'is_default' => true,
             ];
         }
 
         if ($record->phone_mobile) {
             $phones[] = [
-                'label' => 'mobile',
-                'value' => $record->phone_mobile,
-                'is_default' => false
+                'label'      => 'mobile',
+                'value'      => $record->phone_mobile,
+                'is_default' => false,
             ];
         }
 
         if ($record->phone_home) {
             $phones[] = [
-                'label' => 'home',
-                'value' => $record->phone_home,
-                'is_default' => false
+                'label'      => 'home',
+                'value'      => $record->phone_home,
+                'is_default' => false,
             ];
         }
 
@@ -418,12 +421,12 @@ class ImportLeadsFromSugarCRM extends Command
     private function mapStatus($status)
     {
         $statusMap = [
-            'New' => 'new',
-            'Assigned' => 'assigned',
+            'New'        => 'new',
+            'Assigned'   => 'assigned',
             'In Process' => 'in_process',
-            'Converted' => 'converted',
-            'Recycled' => 'recycled',
-            'Dead' => 'dead',
+            'Converted'  => 'converted',
+            'Recycled'   => 'recycled',
+            'Dead'       => 'dead',
         ];
 
         return $statusMap[$status] ?? 'new';
@@ -440,18 +443,18 @@ class ImportLeadsFromSugarCRM extends Command
 
         // Map Sugar CRM workflow statuses to pipeline stages
         $stageMap = [
-            'nieuweaanvraag' => 1, // nieuwe-aanvraag-kwalificeren
-            'nieuwe-aanvraag' => 1, // nieuwe-aanvraag-kwalificeren
-            'kwalificeren' => 1, // nieuwe-aanvraag-kwalificeren
-            'adviseren' => 2, // klant-adviseren-start
-            'klant-adviseren' => 2, // klant-adviseren-start
-            'adviseren-start' => 2, // klant-adviseren-start
-            'opvolgen' => 3, // klant-adviseren-opvolgen
+            'nieuweaanvraag'     => 1, // nieuwe-aanvraag-kwalificeren
+            'nieuwe-aanvraag'    => 1, // nieuwe-aanvraag-kwalificeren
+            'kwalificeren'       => 1, // nieuwe-aanvraag-kwalificeren
+            'adviseren'          => 2, // klant-adviseren-start
+            'klant-adviseren'    => 2, // klant-adviseren-start
+            'adviseren-start'    => 2, // klant-adviseren-start
+            'opvolgen'           => 3, // klant-adviseren-opvolgen
             'adviseren-opvolgen' => 3, // klant-adviseren-opvolgen
-            'won' => 4, // won
-            'converted' => 4, // won
-            'lost' => 5, // lost
-            'dead' => 5, // lost
+            'won'                => 4, // won
+            'converted'          => 4, // won
+            'lost'               => 5, // lost
+            'dead'               => 5, // lost
         ];
 
         // Check lead status first (higher priority)
@@ -475,53 +478,53 @@ class ImportLeadsFromSugarCRM extends Command
     /**
      * Create anamnesis data for the lead
      */
-    private function createAnamnesis($lead, $record):Anamnesis
+    private function createAnamnesis($lead, $record): Anamnesis
     {
         return Anamnesis::create([
-            'id' => $record->id, // Use SugarCRM ID
-            'name' => $lead->title,
-            'description' => $record->anamnese_c ?? '',
-            'lead_id' => $lead->id,
-            'height' => $record->lengte_c,
-            'weight' => $record->gewicht_c,
-            'metals' => (bool) $record->metalen_c,
-            'metals_notes' => $record->opm_metalen_c,
-            'medications' => (bool) $record->medicijnen_c,
-            'medications_notes' => $record->opm_medicijnen_c,
-            'glaucoma' => (bool) $record->glaucoom_c,
-            'glaucoma_notes' => $record->opm_glaucoom_c,
-            'claustrophobia' => (bool) $record->claustrofobie_c,
-            'dormicum' => (bool) $record->dormicum_c,
-            'heart_surgery' => (bool) $record->hart_operatie_c,
-            'heart_surgery_notes' => $record->opm_hart_operatie_c,
-            'implant' => (bool) $record->implantaat_c,
-            'implant_notes' => $record->opm_implantaat_c,
-            'surgeries' => (bool) $record->operaties_c,
-            'surgeries_notes' => $record->opm_operaties_c,
-            'remarks' => $record->opmerking_c,
-            'hereditary_heart' => (bool) $record->hart_erfelijk_c,
-            'hereditary_heart_notes' => $record->opm_erf_hart_c,
-            'hereditary_vascular' => (bool) $record->vaat_erfelijk_c,
+            'id'                        => $record->id, // Use SugarCRM ID
+            'name'                      => $lead->title,
+            'description'               => $record->anamnese_c ?? '',
+            'lead_id'                   => $lead->id,
+            'height'                    => $record->lengte_c,
+            'weight'                    => $record->gewicht_c,
+            'metals'                    => (bool) $record->metalen_c,
+            'metals_notes'              => $record->opm_metalen_c,
+            'medications'               => (bool) $record->medicijnen_c,
+            'medications_notes'         => $record->opm_medicijnen_c,
+            'glaucoma'                  => (bool) $record->glaucoom_c,
+            'glaucoma_notes'            => $record->opm_glaucoom_c,
+            'claustrophobia'            => (bool) $record->claustrofobie_c,
+            'dormicum'                  => (bool) $record->dormicum_c,
+            'heart_surgery'             => (bool) $record->hart_operatie_c,
+            'heart_surgery_notes'       => $record->opm_hart_operatie_c,
+            'implant'                   => (bool) $record->implantaat_c,
+            'implant_notes'             => $record->opm_implantaat_c,
+            'surgeries'                 => (bool) $record->operaties_c,
+            'surgeries_notes'           => $record->opm_operaties_c,
+            'remarks'                   => $record->opmerking_c,
+            'hereditary_heart'          => (bool) $record->hart_erfelijk_c,
+            'hereditary_heart_notes'    => $record->opm_erf_hart_c,
+            'hereditary_vascular'       => (bool) $record->vaat_erfelijk_c,
             'hereditary_vascular_notes' => $record->opm_erf_vaat_c,
-            'hereditary_tumors' => (bool) $record->tumoren_erfelijk_c,
-            'hereditary_tumors_notes' => $record->opm_erf_tumoren_c,
-            'allergies' => (bool) $record->allergie_c,
-            'allergies_notes' => $record->opm_allergie_c,
-            'back_problems' => (bool) $record->rugklachten_c,
-            'back_problems_notes' => $record->opm_rugklachten_c,
-            'heart_problems' => (bool) $record->heart_problems_c,
-            'heart_problems_notes' => $record->opm_hartklachten_c,
-            'smoking' => (bool) $record->smoking_c,
-            'smoking_notes' => $record->opm_roken_c,
-            'diabetes' => (bool) $record->diabetes_c,
-            'diabetes_notes' => $record->opm_diabetes_c,
-            'digestive_problems' => (bool) $record->spijverteringsklachten_c,
-            'digestive_problems_notes' => $record->opm_spijsverterering_c,
-            'heart_attack_risk' => $record->risico_hartinfarct_c,
-            'advice_notes' => $record->opm_advies_c,
-            'active' => true,
-            'created_at' => $record->date_entered ?? now(),
-            'updated_at' => $record->date_modified ?? now(),
+            'hereditary_tumors'         => (bool) $record->tumoren_erfelijk_c,
+            'hereditary_tumors_notes'   => $record->opm_erf_tumoren_c,
+            'allergies'                 => (bool) $record->allergie_c,
+            'allergies_notes'           => $record->opm_allergie_c,
+            'back_problems'             => (bool) $record->rugklachten_c,
+            'back_problems_notes'       => $record->opm_rugklachten_c,
+            'heart_problems'            => (bool) $record->heart_problems_c,
+            'heart_problems_notes'      => $record->opm_hartklachten_c,
+            'smoking'                   => (bool) $record->smoking_c,
+            'smoking_notes'             => $record->opm_roken_c,
+            'diabetes'                  => (bool) $record->diabetes_c,
+            'diabetes_notes'            => $record->opm_diabetes_c,
+            'digestive_problems'        => (bool) $record->spijverteringsklachten_c,
+            'digestive_problems_notes'  => $record->opm_spijsverterering_c,
+            'heart_attack_risk'         => $record->risico_hartinfarct_c,
+            'advice_notes'              => $record->opm_advies_c,
+            'active'                    => true,
+            'created_at'                => $record->date_entered ?? now(),
+            'updated_at'                => $record->date_modified ?? now(),
         ]);
     }
 }

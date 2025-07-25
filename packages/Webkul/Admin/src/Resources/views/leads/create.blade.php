@@ -305,6 +305,16 @@
                                                  <option value="home">Thuis</option>
                                                  <option value="other">Anders</option>
                                              </select>
+                                             <div class="flex items-center">
+                                                 <input
+                                                     type="checkbox"
+                                                     :name="'emails[' + index + '][is_default]'"
+                                                     v-model="email.is_default"
+                                                     @change="handleEmailDefaultChange(index, $event)"
+                                                     class="mr-1"
+                                                 />
+                                                 <label class="text-xs text-gray-600">Standaard</label>
+                                             </div>
                                              <button type="button" @click="removeEmail(index)" class="text-red-600 hover:text-red-800">
                                                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -336,6 +346,16 @@
                                                  <option value="mobile">Mobiel</option>
                                                  <option value="other">Anders</option>
                                              </select>
+                                             <div class="flex items-center">
+                                                 <input
+                                                     type="checkbox"
+                                                     :name="'phones[' + index + '][is_default]'"
+                                                     v-model="phone.is_default"
+                                                     @change="handlePhoneDefaultChange(index, $event)"
+                                                     class="mr-1"
+                                                 />
+                                                 <label class="text-xs text-gray-600">Standaard</label>
+                                             </div>
                                              <button type="button" @click="removePhone(index)" class="text-red-600 hover:text-red-800">
                                                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -657,8 +677,8 @@
                              gender: '',
                              salutation: '',
                              // Contact arrays
-                             emails: [{ value: '', label: 'work' }],
-                             phones: [{ value: '', label: 'work' }],
+                             emails: [{ value: '', label: 'work', is_default: true }],
+                             phones: [{ value: '', label: 'work', is_default: true }],
                          }
                     };
                 },
@@ -684,10 +704,27 @@
 
                              // Pre-populate emails and phones if available
                              if (person.emails && person.emails.length > 0) {
-                                 this.formData.emails = [...person.emails];
+                                 // Ensure each email has is_default property
+                                 this.formData.emails = person.emails.map((email, index) => ({
+                                     value: email.value || '',
+                                     label: email.label || 'work',
+                                     is_default: email.is_default || (index === 0)
+                                 }));
+                             } else {
+                                 // Reset to default if no emails
+                                 this.formData.emails = [{ value: '', label: 'work', is_default: true }];
                              }
+                             
                              if (person.phones && person.phones.length > 0) {
-                                 this.formData.phones = [...person.phones];
+                                 // Ensure each phone has is_default property
+                                 this.formData.phones = person.phones.map((phone, index) => ({
+                                     value: phone.value || '',
+                                     label: phone.label || 'work',
+                                     is_default: phone.is_default || (index === 0)
+                                 }));
+                             } else {
+                                 // Reset to default if no phones
+                                 this.formData.phones = [{ value: '', label: 'work', is_default: true }];
                              }
 
                              // Pre-populate address if available
@@ -712,8 +749,8 @@
                         this.formData.gender = '';
                         this.formData.salutation = '';
                         // Reset contact arrays
-                        this.formData.emails = [{ value: '', label: 'work' }];
-                        this.formData.phones = [{ value: '', label: 'work' }];
+                        this.formData.emails = [{ value: '', label: 'work', is_default: true }];
+                        this.formData.phones = [{ value: '', label: 'work', is_default: true }];
                     },
 
                      async submitForm() {
@@ -795,22 +832,72 @@
                      },
 
                      addEmail() {
-                         this.formData.emails.push({ value: '', label: 'work' });
+                         this.formData.emails.push({ value: '', label: 'work', is_default: false });
                      },
 
                      removeEmail(index) {
                          if (this.formData.emails.length > 1) {
+                             const wasDefault = this.formData.emails[index].is_default;
                              this.formData.emails.splice(index, 1);
+                             
+                             // If we removed the default email, make the first one default
+                             if (wasDefault && this.formData.emails.length > 0) {
+                                 this.formData.emails[0].is_default = true;
+                             }
                          }
                      },
 
                      addPhone() {
-                         this.formData.phones.push({ value: '', label: 'work' });
+                         this.formData.phones.push({ value: '', label: 'work', is_default: false });
                      },
 
                      removePhone(index) {
                          if (this.formData.phones.length > 1) {
+                             const wasDefault = this.formData.phones[index].is_default;
                              this.formData.phones.splice(index, 1);
+                             
+                             // If we removed the default phone, make the first one default
+                             if (wasDefault && this.formData.phones.length > 0) {
+                                 this.formData.phones[0].is_default = true;
+                             }
+                         }
+                     },
+
+                     handleEmailDefaultChange(index, event) {
+                         const isChecked = event.target.checked;
+
+                         // Uncheck all other checkboxes
+                         this.formData.emails.forEach((email, i) => {
+                             if (i !== index) {
+                                 email.is_default = false;
+                             }
+                         });
+
+                         // Set the current email's default status
+                         this.formData.emails[index].is_default = isChecked;
+
+                         // If no email is checked, make the first one default
+                         if (!isChecked && this.formData.emails.length > 0) {
+                             this.formData.emails[0].is_default = true;
+                         }
+                     },
+
+                     handlePhoneDefaultChange(index, event) {
+                         const isChecked = event.target.checked;
+
+                         // Uncheck all other checkboxes
+                         this.formData.phones.forEach((phone, i) => {
+                             if (i !== index) {
+                                 phone.is_default = false;
+                             }
+                         });
+
+                         // Set the current phone's default status
+                         this.formData.phones[index].is_default = isChecked;
+
+                         // If no phone is checked, make the first one default
+                         if (!isChecked && this.formData.phones.length > 0) {
+                             this.formData.phones[0].is_default = true;
                          }
                      },
 

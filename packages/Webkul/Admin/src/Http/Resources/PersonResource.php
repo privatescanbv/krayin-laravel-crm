@@ -36,6 +36,8 @@ class PersonResource extends JsonResource
             'date_of_birth'   => $this->date_of_birth ? $this->date_of_birth->format('Y-m-d') : null,
             'gender'          => $this->gender,
             'salutation'      => $this->salutation,
+            'emails'          => $this->emails,
+            'phones'          => $this->contact_numbers, // Use contact_numbers for phones
             'created_at'      => $this->created_at,
             'updated_at'      => $this->updated_at,
         ];

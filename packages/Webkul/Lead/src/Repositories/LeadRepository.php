@@ -210,10 +210,7 @@ class LeadRepository extends Repository
                 'id' => Str::uuid(),
                 'lead_id' => $lead->id,
                 'name' => 'Anamnesis voor ' . $lead->title,
-                'created_by' => null, // Set to null since it's now nullable
                 'user_id' => $currentUserId,
-                'created_at' => now(),
-                'updated_at' => now(),
             ]);
         } catch (Exception $e) {
             // Log the error but don't fail the lead creation

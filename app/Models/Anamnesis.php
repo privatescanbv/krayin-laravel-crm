@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Webkul\Lead\Models\Lead;
+use Webkul\User\Models\User;
 
 class Anamnesis extends Model
 {
-    use HasFactory;
+    use HasAuditTrail, HasFactory;
 
     public $incrementing = false;
 
@@ -20,11 +23,6 @@ class Anamnesis extends Model
     protected $fillable = [
         'id',
         'name',
-        'created_at',
-        'updated_at',
-        'created_at',
-        'updated_by',
-        'created_by',
         'description',
         'deleted',
         'team_id',
@@ -71,6 +69,8 @@ class Anamnesis extends Model
         'advice_notes',
         'lead_id',
         'user_id',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
@@ -93,16 +93,18 @@ class Anamnesis extends Model
         'diabetes'            => 'boolean',
         'digestive_problems'  => 'boolean',
         'active'              => 'boolean',
+        'created_by'          => 'integer',
+        'updated_by'          => 'integer',
     ];
 
     // Relaties
     public function lead()
     {
-        return $this->belongsTo(\Webkul\Lead\Models\Lead::class, 'lead_id');
+        return $this->belongsTo(Lead::class, 'lead_id');
     }
 
     public function user()
     {
-        return $this->belongsTo(\App\Models\User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

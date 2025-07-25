@@ -100,9 +100,6 @@ class AnamnesisController extends Controller
             'active.required'              => 'Selecteer een antwoord voor Actief.',
         ]);
 
-        $data['updated_by'] = null; // Set to null since it's now nullable
-        $data['updated_at'] = now();
-
         $anamnesis->update($data);
 
         session()->flash('success', 'Anamnese is aangepast.');

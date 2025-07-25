@@ -22,8 +22,8 @@ class AnamnesisFactory extends Factory
             'name'                      => $this->faker->name(),
             'created_at'                => $this->faker->dateTime(),
             'updated_at'                => $this->faker->dateTime(),
-            'updated_by'                => (string) Str::uuid(),
-            'created_by'                => (string) Str::uuid(),
+            'updated_by'                => null, // Will be set by audit trail if user is authenticated
+            'created_by'                => null, // Will be set by audit trail if user is authenticated
             'description'               => $this->faker->optional()->paragraph(),
             'deleted'                   => 0,
             'team_id'                   => (string) Str::uuid(),

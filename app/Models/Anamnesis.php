@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Anamnesis extends Model
 {
-    use HasFactory;
+    use HasFactory, HasAuditTrail;
 
     public $incrementing = false;
 
@@ -20,11 +21,6 @@ class Anamnesis extends Model
     protected $fillable = [
         'id',
         'name',
-        'created_at',
-        'updated_at',
-        'created_at',
-        'updated_by',
-        'created_by',
         'description',
         'deleted',
         'team_id',
@@ -71,6 +67,8 @@ class Anamnesis extends Model
         'advice_notes',
         'lead_id',
         'user_id',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
@@ -93,6 +91,8 @@ class Anamnesis extends Model
         'diabetes'            => 'boolean',
         'digestive_problems'  => 'boolean',
         'active'              => 'boolean',
+        'created_by'          => 'integer',
+        'updated_by'          => 'integer',
     ];
 
     // Relaties

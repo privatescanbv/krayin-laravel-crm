@@ -47,13 +47,10 @@ class CreateMissingAnamnesis extends Command
         foreach ($leadsWithoutAnamnesis as $lead) {
             try {
                 Anamnesis::create([
-                    'id'         => Str::uuid(),
-                    'lead_id'    => $lead->id,
-                    'name'       => 'Anamnesis voor '.$lead->title,
-                    'created_by' => null,
-                    'user_id'    => $lead->user_id ?? 1,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'id'      => Str::uuid(),
+                    'lead_id' => $lead->id,
+                    'name'    => 'Anamnesis voor '.$lead->title,
+                    'user_id' => $lead->user_id ?? 1,
                 ]);
 
                 $created++;

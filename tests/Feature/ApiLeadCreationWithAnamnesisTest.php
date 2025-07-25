@@ -278,9 +278,9 @@ test('anamnesis has correct UUID format and relationships', function () {
     // Check UUID format
     expect($anamnesis->id)->toMatch('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i');
 
-    // Check created_by is also UUID format (or null if nullable)
+    // Check created_by is integer (user ID) or null if nullable
     if ($anamnesis->created_by) {
-        expect($anamnesis->created_by)->toMatch('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i');
+        expect($anamnesis->created_by)->toBeInt();
     }
 
     // Check timestamps

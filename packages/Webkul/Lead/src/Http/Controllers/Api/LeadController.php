@@ -60,8 +60,6 @@ class LeadController extends Controller
      */
     public function store(LeadForm $request): JsonResponse
     {
-        $this->validate($request, LeadValidationService::getApiValidationRules($request));
-
         // TODO replace with auth()-> id
         $currentUserId = User::query()->first()?->id;
 
@@ -79,12 +77,21 @@ class LeadController extends Controller
                 'data' => [],
             ], 500);
         }
-        // Create lead with person_id
-        $leadData = array_merge($request->all(), [
+        
+        // Add required fields before validation
+        $request->merge([
             'user_id' => $currentUserId,
             'status' => 1,
             'department_id' => $departmentId
         ]);
+        
+        // Normalize contact arrays before validation
+        $this->normalizeContactArrays($request);
+        
+        $this->validate($request, LeadValidationService::getApiValidationRules($request));
+
+        // Create lead with person_id
+        $leadData = $request->all();
 
         // Convert single email to emails array format expected by the admin controller
         if (isset($leadData['email']) && !isset($leadData['emails'])) {
@@ -217,5 +224,103 @@ class LeadController extends Controller
             'message' => 'Lead stage updated successfully.',
             'data' => $lead,
         ]);
+    }
+
+    /**
+     * Normalize contact arrays to ensure proper data types
+     */
+    private function normalizeContactArrays($request)
+    {
+        $requestData = $request->all();
+        
+        // Normalize emails
+        if (isset($requestData['emails']) && is_array($requestData['emails'])) {
+            foreach ($requestData['emails'] as $index => $email) {
+                if (is_array($email)) {
+                    // Ensure label exists and normalize it
+                    if (!isset($email['label']) || empty($email['label'])) {
+                        $requestData['emails'][$index]['label'] = 'work';
+                    } else {
+                        $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
+                    }
+                    
+                    // Normalize is_default to boolean
+                    if (isset($email['is_default'])) {
+                        $requestData['emails'][$index]['is_default'] = $this->normalizeBoolean($email['is_default']);
+                    } else {
+                        $requestData['emails'][$index]['is_default'] = false;
+                    }
+                }
+            }
+        }
+        
+        // Normalize phones
+        if (isset($requestData['phones']) && is_array($requestData['phones'])) {
+            foreach ($requestData['phones'] as $index => $phone) {
+                if (is_array($phone)) {
+                    // Ensure label exists and normalize it
+                    if (!isset($phone['label']) || empty($phone['label'])) {
+                        $requestData['phones'][$index]['label'] = 'work';
+                    } else {
+                        $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
+                    }
+                    
+                    // Normalize is_default to boolean
+                    if (isset($phone['is_default'])) {
+                        $requestData['phones'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
+                    } else {
+                        $requestData['phones'][$index]['is_default'] = false;
+                    }
+                }
+            }
+        }
+        
+        // Replace the request data
+        $request->replace($requestData);
+    }
+
+    /**
+     * Normalize various representations to boolean
+     */
+    private function normalizeBoolean($value)
+    {
+        if (is_bool($value)) {
+            return $value;
+        }
+        
+        if (is_string($value)) {
+            return in_array(strtolower($value), ['true', '1', 'on', 'yes']);
+        }
+        
+        if (is_numeric($value)) {
+            return (bool) $value;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Normalize label to lowercase and handle common variations
+     */
+    private function normalizeLabel(string $label): string
+    {
+        if (empty($label)) {
+            return 'work';
+        }
+        
+        // Convert to lowercase and map common variations
+        $normalizedLabel = strtolower(trim($label));
+        $labelMap = [
+            'work' => 'work',
+            'werk' => 'work',
+            'home' => 'home',
+            'thuis' => 'home',
+            'mobile' => 'mobile',
+            'mobiel' => 'mobile',
+            'other' => 'other',
+            'anders' => 'other'
+        ];
+        
+        return $labelMap[$normalizedLabel] ?? 'work';
     }
 }

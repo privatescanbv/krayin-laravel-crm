@@ -37,55 +37,7 @@ class AnamnesisController extends Controller
     {
         $anamnesis = Anamnesis::findOrFail($id);
 
-        // Map Dutch field names to English database column names
-        $fieldMapping = [
-            'metalen' => 'metals',
-            'medicijnen' => 'medications',
-            'glaucoom' => 'glaucoma',
-            'claustrofobie' => 'claustrophobia',
-            'hart_operatie_c' => 'heart_surgery',
-            'implantaat_c' => 'implant',
-            'operaties_c' => 'surgeries',
-            'hart_erfelijk' => 'hereditary_heart',
-            'vaat_erfelijk' => 'hereditary_vascular',
-            'tumoren_erfelijk' => 'hereditary_tumors',
-            'allergie_c' => 'allergies',
-            'rugklachten' => 'back_problems',
-            'actief' => 'active',
-            'spijsverteringsklachten' => 'digestive_problems',
-            'lengte' => 'height',
-            'gewicht' => 'weight',
-            'risico_hartinfarct' => 'heart_attack_risk',
-            'opmerking' => 'remarks',
-            'opm_metalen_c' => 'metals_notes',
-            'opm_medicijnen_c' => 'medications_notes',
-            'opm_glaucoom_c' => 'glaucoma_notes',
-            'opm_hart_operatie_c' => 'heart_surgery_notes',
-            'opm_implantaat_c' => 'implant_notes',
-            'opm_operaties_c' => 'surgeries_notes',
-            'opm_erf_hart_c' => 'hereditary_heart_notes',
-            'opm_erf_vaat_c' => 'hereditary_vascular_notes',
-            'opm_erf_tumor_c' => 'hereditary_tumors_notes',
-            'opm_allergie_c' => 'allergies_notes',
-            'opm_rugklachten_c' => 'back_problems_notes',
-            'opm_roken_c' => 'smoking_notes',
-            'opm_diabetes_c' => 'diabetes_notes',
-            'opm_spijsvertering_c' => 'digestive_problems_notes',
-            'opm_hartklachten_c' => 'heart_problems_notes',
-            'opm_advies_c' => 'advice_notes',
-        ];
-
-        // Create a new array with mapped field names
-        $mappedData = [];
-        foreach ($request->all() as $key => $value) {
-            $mappedKey = $fieldMapping[$key] ?? $key;
-            $mappedData[$mappedKey] = $value;
-        }
-
-        // Create a new request instance with mapped data
-        $mappedRequest = new Request($mappedData);
-
-        $data = $mappedRequest->validate([
+        $data = $request->validate([
             'name'                      => 'nullable|string|max:255',
             'description'               => 'nullable|string',
             'comment_clinic'            => 'nullable|string',

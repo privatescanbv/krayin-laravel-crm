@@ -34,19 +34,19 @@
             </div>
 
             <!-- Physical Info -->
-            @if($lead->anamnesis->lengte || $lead->anamnesis->gewicht)
+            @if($lead->anamnesis->height || $lead->anamnesis->weight)
                 <div class="space-y-2">
                     <h5 class="font-medium text-gray-800 dark:text-gray-200">Fysieke gegevens</h5>
-                    @if($lead->anamnesis->lengte)
+                    @if($lead->anamnesis->height)
                         <div class="flex justify-between">
                             <span class="text-gray-600 dark:text-gray-400">Lengte:</span>
-                            <span class="font-medium dark:text-white">{{ $lead->anamnesis->lengte }} cm</span>
+                            <span class="font-medium dark:text-white">{{ $lead->anamnesis->height }} cm</span>
                         </div>
                     @endif
-                    @if($lead->anamnesis->gewicht)
+                    @if($lead->anamnesis->weight)
                         <div class="flex justify-between">
                             <span class="text-gray-600 dark:text-gray-400">Gewicht:</span>
-                            <span class="font-medium dark:text-white">{{ $lead->anamnesis->gewicht }} kg</span>
+                            <span class="font-medium dark:text-white">{{ $lead->anamnesis->weight }} kg</span>
                         </div>
                     @endif
                 </div>
@@ -55,24 +55,24 @@
             <!-- Medical Conditions -->
             @php
                 $conditions = collect([
-                    'metalen' => 'Metalen',
-                    'medicijnen' => 'Medicijnen',
-                    'glaucoom' => 'Glaucoom',
-                    'claustrofobie' => 'Claustrofobie',
+                    'metals' => 'Metalen',
+                    'medications' => 'Medicijnen',
+                    'glaucoma' => 'Glaucoom',
+                    'claustrophobia' => 'Claustrofobie',
                     'dormicum' => 'Dormicum',
-                    'hart_operatie_c' => 'Hart operatie',
-                    'implantaat_c' => 'Implantaat',
-                    'operaties_c' => 'Operaties',
-                    'hart_erfelijk' => 'Hart erfelijk',
-                    'vaat_erfelijk' => 'Vaat erfelijk',
-                    'tumoren_erfelijk' => 'Tumoren erfelijk',
-                    'allergie_c' => 'Allergie',
-                    'rugklachten' => 'Rugklachten',
+                    'heart_surgery' => 'Hart operatie',
+                    'implant' => 'Implantaat',
+                    'surgeries' => 'Operaties',
+                    'hereditary_heart' => 'Hart erfelijk',
+                    'hereditary_vascular' => 'Vaat erfelijk',
+                    'hereditary_tumors' => 'Tumoren erfelijk',
+                    'allergies' => 'Allergie',
+                    'back_problems' => 'Rugklachten',
                     'heart_problems' => 'Hartproblemen',
                     'smoking' => 'Roken',
                     'diabetes' => 'Diabetes',
-                    'spijsverteringsklachten' => 'Spijsverteringsklachten',
-                    'actief' => 'Actief'
+                    'digestive_problems' => 'Spijsverteringsklachten',
+                    'active' => 'Actief'
                 ])->filter(function($label, $field) use ($lead) {
                     return $lead->anamnesis->{$field} == 1;
                 });

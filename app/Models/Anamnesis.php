@@ -5,10 +5,12 @@ namespace App\Models;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Webkul\Lead\Models\Lead;
+use Webkul\User\Models\User;
 
 class Anamnesis extends Model
 {
-    use HasFactory, HasAuditTrail;
+    use HasAuditTrail, HasFactory;
 
     public $incrementing = false;
 
@@ -98,11 +100,11 @@ class Anamnesis extends Model
     // Relaties
     public function lead()
     {
-        return $this->belongsTo(\Webkul\Lead\Models\Lead::class, 'lead_id');
+        return $this->belongsTo(Lead::class, 'lead_id');
     }
 
     public function user()
     {
-        return $this->belongsTo(\Webkul\User\Models\User::class, 'user_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

@@ -103,6 +103,6 @@ class Anamnesis extends Model
 
     public function user()
     {
-        return $this->belongsTo(\App\Models\User::class, 'user_id');
+        return $this->belongsTo(\Webkul\User\Models\User::class, 'user_id');
     }
 }

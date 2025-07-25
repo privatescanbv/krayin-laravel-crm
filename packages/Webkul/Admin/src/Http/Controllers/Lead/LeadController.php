@@ -161,6 +161,12 @@ class LeadController extends Controller
      */
     public function store(LeadForm $request): RedirectResponse
     {
+            // Validate required personal fields
+            $request->validate([
+                'first_name' => ['required', 'string', 'max:255'],
+                'last_name' => ['required', 'string', 'max:255'],
+            ]);
+            
             try {
                 [$lead, $leadPipelineId] = $this->storeLead($request);
 
@@ -277,6 +283,12 @@ class LeadController extends Controller
     public function update(LeadForm $request, int $id): RedirectResponse|JsonResponse
     {
         try {
+            // Validate required personal fields
+            $request->validate([
+                'first_name' => ['required', 'string', 'max:255'],
+                'last_name' => ['required', 'string', 'max:255'],
+            ]);
+            
             Event::dispatch('lead.update.before', $id);
 
             $data = $request->all();

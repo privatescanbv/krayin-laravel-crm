@@ -45,7 +45,7 @@
 
         <!-- First Name -->
         <x-admin::form.control-group class="flex-1">
-            <x-admin::form.control-group.label>
+            <x-admin::form.control-group.label class="required">
                 Voornaam
             </x-admin::form.control-group.label>
 
@@ -55,6 +55,7 @@
                 :value="$entity->first_name ?? ''"
                 :label="trans('Voornaam')"
                 placeholder="Voornaam"
+                rules="required"
             />
 
             <x-admin::form.control-group.error control-name="first_name"/>
@@ -83,7 +84,7 @@
 
         <!-- Last Name -->
         <x-admin::form.control-group class="flex-1">
-            <x-admin::form.control-group.label>
+            <x-admin::form.control-group.label class="required">
                 Achternaam bij geboorte
             </x-admin::form.control-group.label>
 
@@ -93,6 +94,7 @@
                 :value="$entity->last_name ?? ''"
                 :label="trans('Achternaam')"
                 placeholder="Achternaam"
+                rules="required"
             />
 
             <x-admin::form.control-group.error control-name="last_name"/>

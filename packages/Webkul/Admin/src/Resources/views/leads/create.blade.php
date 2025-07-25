@@ -199,15 +199,17 @@
                                                 />
                                             </x-admin::form.control-group>
 
-                                            <x-admin::form.control-group class="flex-1">
-                                                <x-admin::form.control-group.label>Voornaam</x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="text"
-                                                    name="first_name"
-                                                    v-model="formData.first_name"
-                                                    placeholder="Voornaam"
-                                                />
-                                            </x-admin::form.control-group>
+                                                                                         <x-admin::form.control-group class="flex-1">
+                                                 <x-admin::form.control-group.label class="required">Voornaam</x-admin::form.control-group.label>
+                                                 <x-admin::form.control-group.control
+                                                     type="text"
+                                                     name="first_name"
+                                                     v-model="formData.first_name"
+                                                     placeholder="Voornaam"
+                                                     rules="required"
+                                                 />
+                                                 <x-admin::form.control-group.error control-name="first_name"/>
+                                             </x-admin::form.control-group>
                                         </div>
 
                                         <!-- Last Name Row -->
@@ -222,15 +224,17 @@
                                                 />
                                             </x-admin::form.control-group>
 
-                                            <x-admin::form.control-group class="flex-1">
-                                                <x-admin::form.control-group.label>Achternaam bij geboorte</x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="text"
-                                                    name="last_name"
-                                                    v-model="formData.last_name"
-                                                    placeholder="Achternaam"
-                                                />
-                                            </x-admin::form.control-group>
+                                                                                         <x-admin::form.control-group class="flex-1">
+                                                 <x-admin::form.control-group.label class="required">Achternaam bij geboorte</x-admin::form.control-group.label>
+                                                 <x-admin::form.control-group.control
+                                                     type="text"
+                                                     name="last_name"
+                                                     v-model="formData.last_name"
+                                                     placeholder="Achternaam"
+                                                     rules="required"
+                                                 />
+                                                 <x-admin::form.control-group.error control-name="last_name"/>
+                                             </x-admin::form.control-group>
                                         </div>
 
                                         <!-- Married Name Row -->
@@ -757,6 +761,23 @@
 
                      async submitForm() {
                          if (this.isSubmitting) return;
+
+                         // Validate required fields
+                         if (!this.formData.first_name || this.formData.first_name.trim() === '') {
+                             this.$emitter.emit('add-flash', {
+                                 type: 'error',
+                                 message: 'Voornaam is verplicht.'
+                             });
+                             return;
+                         }
+
+                         if (!this.formData.last_name || this.formData.last_name.trim() === '') {
+                             this.$emitter.emit('add-flash', {
+                                 type: 'error',
+                                 message: 'Achternaam is verplicht.'
+                             });
+                             return;
+                         }
 
                          this.isSubmitting = true;
 

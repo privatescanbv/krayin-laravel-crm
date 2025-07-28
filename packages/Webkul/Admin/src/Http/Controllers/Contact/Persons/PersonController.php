@@ -798,6 +798,10 @@ class PersonController extends Controller
                                 ];
                             }
                             $updateData[$field] = $arrayData;
+                        } elseif ($field === 'address') {
+                            // Skip address field as it requires special handling
+                            // Address updates should be handled separately via relationship
+                            continue;
                         } else {
                             $updateData[$field] = $value;
                         }
@@ -843,16 +847,30 @@ class PersonController extends Controller
     private function comparePersonWithLead(Person $person, Lead $lead): array
     {
         $comparableFields = [
+            // Personal Information
+            'salutation' => 'Aanhef',
+            'title' => 'Titel',
             'first_name' => 'Voornaam',
             'last_name' => 'Achternaam',
-            'lastname_prefix' => 'Achternaam voorvoegsel',
-            'married_name' => 'Getrouwde naam',
-            'married_name_prefix' => 'Getrouwde naam voorvoegsel',
+            'lastname_prefix' => 'Voorvoegsel achternaam',
+            'married_name' => 'Gehuwde naam',
+            'married_name_prefix' => 'Voorvoegsel gehuwde naam',
             'initials' => 'Initialen',
+            'date_of_birth' => 'Geboortedatum',
+            'gender' => 'Geslacht',
+
+            // Contact Information
             'emails' => 'E-mailadressen',
             'phones' => 'Telefoonnummers',
-            'date_of_birth' => 'Geboortedatum',
-            'gender' => 'Geslacht'
+
+            // Lead Information
+            'lead_value' => 'Lead waarde',
+            'description' => 'Beschrijving',
+            'lost_reason' => 'Reden verlies',
+            'expected_close_date' => 'Verwachte sluitingsdatum',
+            
+            // Address Information
+            'address' => 'Adres',
         ];
 
         $differences = [];
@@ -868,9 +886,15 @@ class PersonController extends Controller
             }
 
             // Handle date fields
-            if ($field === 'date_of_birth') {
+            if (in_array($field, ['date_of_birth', 'expected_close_date'])) {
                 $personValue = $this->formatDateForComparison($personValue);
                 $leadValue = $this->formatDateForComparison($leadValue);
+            }
+
+            // Handle address field
+            if ($field === 'address') {
+                $personValue = $this->normalizeAddressField($person->address);
+                $leadValue = $this->normalizeAddressField($lead->address);
             }
 
             // Compare values
@@ -879,7 +903,7 @@ class PersonController extends Controller
                     'label' => $label,
                     'person_value' => $personValue,
                     'lead_value' => $leadValue,
-                    'type' => in_array($field, ['emails', 'phones']) ? 'array' : 'text'
+                    'type' => $this->getFieldType($field)
                 ];
             }
         }
@@ -948,6 +972,46 @@ class PersonController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Normalize address field for comparison.
+     */
+    private function normalizeAddressField($address): string
+    {
+        if (empty($address)) {
+            return '';
+        }
+
+        // Create a normalized address string for comparison
+        $addressParts = [
+            $address->full_address ?? '',
+            $address->street ?? '',
+            $address->house_number ?? '',
+            $address->house_number_suffix ?? '',
+            $address->postal_code ?? '',
+            $address->city ?? '',
+            $address->state ?? '',
+            $address->country ?? ''
+        ];
+
+        return implode('|', array_filter($addressParts));
+    }
+
+    /**
+     * Get the field type for proper display handling.
+     */
+    private function getFieldType(string $field): string
+    {
+        if (in_array($field, ['emails', 'phones'])) {
+            return 'array';
+        }
+
+        if ($field === 'address') {
+            return 'address';
+        }
+
+        return 'text';
     }
 
     /**

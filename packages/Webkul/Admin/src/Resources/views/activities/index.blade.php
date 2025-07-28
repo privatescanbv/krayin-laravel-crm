@@ -88,7 +88,7 @@
                         {!! view_render_event('admin.activities.index.datagrid.before') !!}
 
                         <x-admin::datagrid
-                            :src="'{{ route('admin.activities.get') }}' + (currentView ? '?view=' + currentView : '')"
+                            :src="dataGridSrc"
                             :isMultiRow="true"
                             ref="datagrid"
                         >
@@ -106,7 +106,7 @@
 
                                 <template v-else>
                                     <div
-                                        class="row grid grid-cols-[.3fr_.1fr_.3fr_.5fr] grid-rows-1 items-center gap-x-2.5 border-b px-4 py-2.5 dark:border-gray-800 max-lg:hidden">
+                                        class="row grid grid-cols-[0.3fr_0.1fr_0.3fr_0.5fr] grid-rows-1 items-center gap-x-2.5 border-b px-4 py-2.5 dark:border-gray-800 max-lg:hidden">
                                         <div
                                             class="flex select-none items-center gap-2.5"
                                             v-for="(columnGroup, index) in [['title', 'assigned_user_id'], ['is_done'], ['comment', 'lead_title', 'type'], ['created_at', 'days_until_deadline']]"
@@ -249,7 +249,7 @@
 
                                 <template v-else>
                                     <div
-                                        class="row grid grid-cols-[.3fr_.1fr_.3fr_.5fr] grid-rows-1 gap-x-2.5 border-b px-4 py-2.5 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950 max-lg:hidden"
+                                        class="row grid grid-cols-[0.3fr_0.1fr_0.3fr_0.5fr] grid-rows-1 gap-x-2.5 border-b px-4 py-2.5 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950 max-lg:hidden"
                                         v-for="record in available.records"
                                     >
                                         <!-- Mass Actions, Title and Created By -->
@@ -503,6 +503,11 @@
                 computed: {
                     hasViews() {
                         return this.availableViews && Object.keys(this.availableViews).length > 0;
+                    },
+                    
+                    dataGridSrc() {
+                        const baseUrl = '{{ route('admin.activities.get') }}';
+                        return this.currentView ? `${baseUrl}?view=${this.currentView}` : baseUrl;
                     }
                 },
 
@@ -552,10 +557,11 @@
 
                     refreshDatagrid() {
                         if (this.$refs.datagrid) {
-                            // Update the datagrid source URL with current view
-                            const newSrc = '{{ route('admin.activities.get') }}' + (this.currentView ? '?view=' + this.currentView : '');
-                            this.$refs.datagrid.src = newSrc;
-                            this.$refs.datagrid.get();
+                            // The dataGridSrc computed property will automatically update
+                            // Force refresh the datagrid
+                            this.$nextTick(() => {
+                                this.$refs.datagrid.get();
+                            });
                         }
                     },
                     assignToMe(record) {
@@ -630,7 +636,10 @@
                         const urlParams = new URLSearchParams(window.location.search);
                         const currentView = this.$parent.currentView || urlParams.get('view') || 'for_me';
 
-                        this.$axios.get("{{ route('admin.activities.get', ['view_type' => 'calendar']) }}" + `&startDate=${new Date(startDate).toLocaleDateString("en-US")}&endDate=${new Date(endDate).toLocaleDateString("en-US")}&view=${currentView}`)
+                        const baseUrl = "{{ route('admin.activities.get') }}?view_type=calendar";
+                        const params = `&startDate=${new Date(startDate).toLocaleDateString("en-US")}&endDate=${new Date(endDate).toLocaleDateString("en-US")}&view=${currentView}`;
+                        
+                        this.$axios.get(baseUrl + params)
                             .then(response => {
                                 this.events = this.processEvents(response.data.activities);
                             })

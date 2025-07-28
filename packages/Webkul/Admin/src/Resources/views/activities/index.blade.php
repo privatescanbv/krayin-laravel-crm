@@ -88,8 +88,9 @@
                         {!! view_render_event('admin.activities.index.datagrid.before') !!}
 
                         <x-admin::datagrid
-                            src="{{ route('admin.activities.get') }}?view={{ $currentView }}"
+                            :src="'{{ route('admin.activities.get') }}?view=' + currentView"
                             :isMultiRow="true"
+                            :key="'datagrid-' + currentView"
                             ref="datagrid"
                         >
                             <template #header="{
@@ -551,19 +552,8 @@
                     },
 
                     refreshDatagrid() {
-                        if (this.$refs.datagrid) {
-                            // Update the datagrid src with current view
-                            const baseUrl = '{{ route('admin.activities.get') }}';
-                            const newSrc = this.currentView ? `${baseUrl}?view=${this.currentView}` : baseUrl;
-                            
-                            // Update the src property of the datagrid
-                            this.$refs.datagrid.src = newSrc;
-                            
-                            // Force refresh the datagrid
-                            this.$nextTick(() => {
-                                this.$refs.datagrid.get();
-                            });
-                        }
+                        // The datagrid will automatically refresh due to the reactive :src and :key bindings
+                        // No manual refresh needed
                     },
                     assignToMe(record) {
                         if (!record.id) return;

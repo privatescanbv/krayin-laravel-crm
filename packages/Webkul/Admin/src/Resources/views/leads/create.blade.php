@@ -84,11 +84,8 @@
                             </p>
                         </div>
 
-                        <!-- Contact Matcher Component -->
-                        <v-step-one-contact-matcher
-                            @person-selected="handlePersonSelected"
-                            @person-not-found="handlePersonNotFound"
-                        ></v-step-one-contact-matcher>
+                        <!-- Use the reusable contact matcher component -->
+                        @include('admin::leads.common.contactmatcher', ['lead' => (object)['id' => null]])
 
                         <div class="flex justify-end pt-4">
                             <button
@@ -110,8 +107,7 @@
                             <input type="hidden" name="lead_pipeline_stage_id" value="{{ request('stage_id') }}"/>
                         @endif
 
-                        <!-- Hidden person_id field -->
-                        <input v-if="selectedPerson?.id" type="hidden" name="person_id" :value="selectedPerson.id"/>
+
 
                         <div
                             class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-6">
@@ -504,231 +500,7 @@
             </div>
         </script>
 
-        <!-- Step 1 Contact Matcher Component -->
-        <script type="text/x-template" id="v-step-one-contact-matcher-template">
-            <div class="flex flex-col gap-4">
-                <!-- Search Input -->
-                <div class="max-w-md">
-                    <label class="block font-semibold mb-2">Zoek contactpersoon</label>
-                    <div class="relative">
-                        <input
-                            v-model="search"
-                            @input="onSearch"
-                            placeholder="Zoek op naam, e-mail, telefoon..."
-                            class="input w-full"
-                            autocomplete="off"
-                        />
-                        <!-- Loading spinner -->
-                        <div v-if="isSearching" class="absolute right-3 top-1/2 transform -translate-y-1/2">
-                            <svg
-                                class="h-4 w-4 animate-spin text-gray-500"
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                            >
-                                <circle
-                                    class="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    stroke-width="4"
-                                ></circle>
-                                <path
-                                    class="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                ></path>
-                            </svg>
-                        </div>
-                    </div>
-                    <!-- Search status indicator -->
-                    <div v-if="isSearching" class="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                        <svg class="h-3 w-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Zoeken naar contactpersonen...
-                    </div>
-                </div>
-
-                <!-- Search Results -->
-                <div v-if="suggestions.length" class="max-w-2xl">
-                    <h4 class="font-semibold mb-2">Gevonden contactpersonen:</h4>
-                    <ul class="border rounded bg-white shadow">
-                        <li
-                            v-for="person in suggestions"
-                            :key="person.id"
-                            @click="selectPerson(person)"
-                            class="px-4 py-3 cursor-pointer hover:bg-gray-100 border-b last:border-b-0"
-                            :class="{ 'bg-blue-50 border-blue-200': selectedPersonId === person.id }"
-                        >
-                            <div class="flex items-center justify-between">
-                                <div class="flex-1">
-                                    <div class="flex items-center">
-                                        <div class="font-medium">@{{ person.name }}</div>
-                                        <div v-if="selectedPersonId === person.id" class="ml-2 text-blue-600">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                      d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                        </div>
-                                    </div>
-                                    <div class="text-sm text-gray-600">
-                                        <span v-if="person.email">@{{ person.email }}</span>
-                                        <span v-if="person.phone && person.email"> • </span>
-                                        <span v-if="person.phone">@{{ person.phone }}</span>
-                                    </div>
-                                </div>
-                                <div v-if="person.match_score_percentage" class="ml-3 flex-shrink-0">
-                                    <div class="flex items-center">
-                                        <div class="text-xs font-medium text-gray-700 mr-2">
-                                            @{{ person.match_score_percentage }}% match
-                                        </div>
-                                        <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                            <div
-                                                class="h-full rounded-full transition-all duration-300"
-                                                :class="getScoreColorClass(person.match_score_percentage)"
-                                                :style="{ width: person.match_score_percentage + '%' }"
-                                            ></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- No results message -->
-                <div v-else-if="search && hasSearched" class="max-w-2xl">
-                    <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor"
-                                 viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                            </svg>
-                            <span class="font-medium text-yellow-800">Geen contactpersoon gevonden</span>
-                        </div>
-                        <p class="text-sm text-yellow-700 mt-1">
-                            Er is geen bestaande contactpersoon gevonden met deze zoekterm. U kunt doorgaan naar stap 2
-                            om een nieuwe lead aan te maken.
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Selected person display -->
-                <div v-if="selectedPersonId && selectedPerson" class="max-w-2xl">
-                    <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <div class="flex items-center">
-                                    <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor"
-                                         viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M5 13l4 4L19 7"></path>
-                                    </svg>
-                                    <span class="font-medium text-green-800">Contactpersoon geselecteerd:</span>
-                                </div>
-                                <div class="mt-1">
-                                    <div class="font-medium text-green-900">@{{ selectedPerson.name }}</div>
-                                    <div class="text-sm text-green-700">
-                                        <span v-if="selectedPerson.email">@{{ selectedPerson.email }}</span>
-                                        <span v-if="selectedPerson.phone && selectedPerson.email"> • </span>
-                                        <span v-if="selectedPerson.phone">@{{ selectedPerson.phone }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <button
-                                @click="clearSelection"
-                                type="button"
-                                class="text-green-600 hover:text-green-800"
-                                title="Selectie wissen"
-                            >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </script>
-
         <script type="module">
-            // Step One Contact Matcher Component
-            app.component('v-step-one-contact-matcher', {
-                template: '#v-step-one-contact-matcher-template',
-
-                data() {
-                    return {
-                        search: '',
-                        suggestions: [],
-                        selectedPersonId: null,
-                        selectedPerson: null,
-                        searchTimeout: null,
-                        hasSearched: false,
-                        isSearching: false,
-                    };
-                },
-
-                methods: {
-                    onSearch() {
-                        clearTimeout(this.searchTimeout);
-                        this.hasSearched = false;
-
-                        if (!this.search) {
-                            this.suggestions = [];
-                            this.isSearching = false;
-                            return;
-                        }
-
-                        this.isSearching = true;
-                        this.searchTimeout = setTimeout(() => {
-                            this.fetchSuggestions(this.search);
-                        }, 300);
-                    },
-
-                    async fetchSuggestions(query) {
-                        try {
-                            const response = await axios.get('/admin/contacts/persons/search', {
-                                params: {query: query}
-                            });
-
-                            this.suggestions = response.data.data || [];
-                            this.hasSearched = true;
-                        } catch (e) {
-                            console.warn('Zoekopdracht mislukt:', e);
-                            this.suggestions = [];
-                            this.hasSearched = true;
-                        } finally {
-                            this.isSearching = false;
-                        }
-                    },
-
-                    selectPerson(person) {
-                        this.selectedPersonId = person.id;
-                        this.selectedPerson = person;
-                        this.isSearching = false;
-                        this.$emit('person-selected', person);
-                    },
-
-                    clearSelection() {
-                        this.selectedPersonId = null;
-                        this.selectedPerson = null;
-                        this.$emit('person-selected', null);
-                    },
-
-                    getScoreColorClass(score) {
-                        if (score >= 80) return 'bg-green-500';
-                        if (score >= 60) return 'bg-yellow-500';
-                        if (score >= 40) return 'bg-orange-500';
-                        return 'bg-red-500';
-                    },
-                }
-            });
-
             // Main Two Step Form Component
             app.component('v-two-step-lead-form', {
                 template: '#v-two-step-lead-form-template',
@@ -738,6 +510,8 @@
                         currentStep: 1,
                         selectedPerson: null,
                         isSubmitting: false,
+                        personWatcherInterval: null,
+                        lastPersonId: null,
                         formData: {
                             title: '',
                             description: '',
@@ -762,7 +536,62 @@
                     };
                 },
 
+                mounted() {
+                    // Set up a watcher to detect person selection from the contact matcher
+                    this.setupPersonWatcher();
+                },
+
+                beforeUnmount() {
+                    if (this.personWatcherInterval) {
+                        clearInterval(this.personWatcherInterval);
+                    }
+                },
+
                 methods: {
+                    setupPersonWatcher() {
+                        // Watch for changes in the person_id hidden input from the contact matcher
+                        this.personWatcherInterval = setInterval(() => {
+                            const personIdInput = document.querySelector('input[name="person_id"]');
+                            const currentPersonId = personIdInput ? personIdInput.value : null;
+                            
+                            if (currentPersonId && currentPersonId !== this.lastPersonId) {
+                                this.lastPersonId = currentPersonId;
+                                this.fetchPersonDetails(currentPersonId);
+                            } else if (!currentPersonId && this.lastPersonId) {
+                                // Person was deselected
+                                this.lastPersonId = null;
+                                this.selectedPerson = null;
+                                this.clearFormData();
+                            }
+                        }, 500);
+                    },
+
+                    async fetchPersonDetails(personId) {
+                        try {
+                            const response = await axios.get(`/admin/contacts/persons/${personId}`);
+                            const person = response.data.data;
+                            this.handlePersonSelected(person);
+                        } catch (error) {
+                            console.warn('Could not fetch person details:', error);
+                        }
+                    },
+
+                    clearFormData() {
+                        // Clear personal fields
+                        this.formData.first_name = '';
+                        this.formData.last_name = '';
+                        this.formData.lastname_prefix = '';
+                        this.formData.married_name = '';
+                        this.formData.married_name_prefix = '';
+                        this.formData.initials = '';
+                        this.formData.date_of_birth = '';
+                        this.formData.gender = '';
+                        this.formData.salutation = '';
+                        // Reset contact arrays
+                        this.formData.emails = [{value: '', label: 'work', is_default: true}];
+                        this.formData.phones = [{value: '', label: 'work', is_default: true}];
+                    },
+
                     goToStep(step) {
                         this.currentStep = step;
                     },
@@ -815,23 +644,6 @@
                         }
                     },
 
-                    handlePersonNotFound() {
-                        this.selectedPerson = null;
-                        // Clear personal fields
-                        this.formData.first_name = '';
-                        this.formData.last_name = '';
-                        this.formData.lastname_prefix = '';
-                        this.formData.married_name = '';
-                        this.formData.married_name_prefix = '';
-                        this.formData.initials = '';
-                        this.formData.date_of_birth = '';
-                        this.formData.gender = '';
-                        this.formData.salutation = '';
-                        // Reset contact arrays
-                        this.formData.emails = [{value: '', label: 'work', is_default: true}];
-                        this.formData.phones = [{value: '', label: 'work', is_default: true}];
-                    },
-
                     async submitForm() {
                         if (this.isSubmitting) return;
 
@@ -873,9 +685,10 @@
                                 }
                             });
 
-                            // Ensure person_id is set if we have a selected person
-                            if (this.selectedPerson && this.selectedPerson.id) {
-                                formData.set('person_id', this.selectedPerson.id);
+                            // Get person_id from the contact matcher component (hidden input)
+                            const personIdInput = document.querySelector('input[name="person_id"]');
+                            if (personIdInput && personIdInput.value) {
+                                formData.set('person_id', personIdInput.value);
                             }
 
                             const response = await axios.post('{{ route('admin.leads.store') }}', formData, {

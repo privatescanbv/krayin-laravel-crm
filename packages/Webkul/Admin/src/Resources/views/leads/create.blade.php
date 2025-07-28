@@ -547,22 +547,47 @@
                 methods: {
                     goToStep(step) {
                         this.currentStep = step;
+                        
+                        // If going to step 2 and we have a selected person, populate address
+                        if (step === 2 && this.selectedPerson && this.selectedPerson.address) {
+                            this.$nextTick(() => {
+                                console.log('Populating address on step 2:', this.selectedPerson.address);
+                                this.populateAddressFields(this.selectedPerson.address);
+                            });
+                        }
                     },
 
                     handlePersonSelected(person) {
                         console.log('Person selected:', person); // Debug log
                         this.selectedPerson = person;
                         if (person) {
-                            // Pre-fill form data with person information
-                            this.formData.first_name = person.first_name || '';
-                            this.formData.last_name = person.last_name || '';
-                            this.formData.lastname_prefix = person.lastname_prefix || '';
-                            this.formData.married_name = person.married_name || '';
-                            this.formData.married_name_prefix = person.married_name_prefix || '';
-                            this.formData.initials = person.initials || '';
-                            this.formData.date_of_birth = person.date_of_birth || '';
-                            this.formData.gender = person.gender || '';
-                            this.formData.salutation = person.salutation || '';
+                            console.log('Person data fields:', {
+                                first_name: person.first_name,
+                                last_name: person.last_name,
+                                emails: person.emails,
+                                phones: person.phones
+                            });
+                            
+                            // Pre-fill form data with person information - use Object.assign for reactivity
+                            Object.assign(this.formData, {
+                                first_name: person.first_name || '',
+                                last_name: person.last_name || '',
+                                lastname_prefix: person.lastname_prefix || '',
+                                married_name: person.married_name || '',
+                                married_name_prefix: person.married_name_prefix || '',
+                                initials: person.initials || '',
+                                date_of_birth: person.date_of_birth || '',
+                                gender: person.gender || '',
+                                salutation: person.salutation || ''
+                            });
+                            
+                            console.log('Form data after basic fields:', {
+                                first_name: this.formData.first_name,
+                                last_name: this.formData.last_name
+                            });
+
+                            // Force reactivity update
+                            this.$forceUpdate();
 
                             // Pre-populate emails and phones if available
                             if (person.emails && person.emails.length > 0) {
@@ -592,6 +617,7 @@
                             // Pre-populate address if available
                             this.$nextTick(() => {
                                 if (person.address) {
+                                    console.log('Populating address:', person.address);
                                     this.populateAddressFields(person.address);
                                 }
                             });
@@ -769,6 +795,12 @@
                     },
 
                     populateAddressFields(address) {
+                        // Only populate if we're in step 2 and the form exists
+                        if (this.currentStep !== 2 || !this.$refs.leadForm) {
+                            console.log('Skipping address population - form not available');
+                            return;
+                        }
+
                         // Populate address form fields by setting their values directly
                         const addressFields = {
                             'address[postal_code]': address.postal_code || '',

@@ -86,13 +86,7 @@
                 </div>
             </div>
 
-            <!-- Person Attributes -->
-            @include ('admin::contacts.persons.view.attributes')
-
-            <!-- Contact Organization -->
-            @include ('admin::contacts.persons.view.organization')
-
-            <!-- Compact Person Overview -->
+            <!-- Person Overview (merged attributes and organization) -->
             @include ('admin::contacts.persons.view.compact-overview')
         </div>
 

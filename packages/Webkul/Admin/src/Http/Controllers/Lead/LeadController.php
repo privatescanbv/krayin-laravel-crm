@@ -20,6 +20,7 @@ use Webkul\Admin\Http\Resources\LeadResource;
 use Webkul\Admin\Http\Resources\StageResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Repositories\PersonRepository;
+use Webkul\Contact\Repositories\OrganizationRepository;
 use Webkul\Core\Contracts\Validations\EmailValidator;
 use Webkul\Core\Contracts\Validations\PhoneValidator;
 use App\Validators\DateValidator;
@@ -49,15 +50,16 @@ class LeadController extends Controller
      * @return void
      */
     public function __construct(
-        protected UserRepository      $userRepository,
-        protected AttributeRepository $attributeRepository,
-        protected SourceRepository    $sourceRepository,
-        protected TypeRepository      $typeRepository,
-        protected PipelineRepository  $pipelineRepository,
-        protected StageRepository     $stageRepository,
-        protected LeadRepository      $leadRepository,
-        protected ProductRepository   $productRepository,
-        protected PersonRepository    $personRepository
+        protected UserRepository         $userRepository,
+        protected AttributeRepository    $attributeRepository,
+        protected SourceRepository       $sourceRepository,
+        protected TypeRepository         $typeRepository,
+        protected PipelineRepository     $pipelineRepository,
+        protected StageRepository        $stageRepository,
+        protected LeadRepository         $leadRepository,
+        protected ProductRepository      $productRepository,
+        protected PersonRepository       $personRepository,
+        protected OrganizationRepository $organizationRepository
     )
     {
         request()->request->add(['entity_type' => 'leads']);
@@ -377,6 +379,28 @@ class LeadController extends Controller
             'entity_type' => 'leads',
             ['code', 'NOTIN', ['title', 'description']],
         ]);
+
+        // Special handling for organization_id updates
+        if (isset($data['organization_id']) && count($data) === 1) {
+            // If only organization_id is being updated, handle it directly without person validation
+            $lead = $this->leadRepository->findOrFail($id);
+            
+            // Validate that the organization exists
+            if ($data['organization_id'] && !$this->organizationRepository->find($data['organization_id'])) {
+                return response()->json([
+                    'message' => 'De geselecteerde organisatie bestaat niet.',
+                ], 422);
+            }
+            
+            // Update only the organization_id field directly
+            $lead->update(['organization_id' => $data['organization_id']]);
+            
+            Event::dispatch('lead.update.after', $lead);
+            
+            return response()->json([
+                'message' => trans('admin::app.leads.update-success'),
+            ]);
+        }
 
         Event::dispatch('lead.update.before', $id);
 

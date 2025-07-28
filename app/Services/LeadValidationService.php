@@ -16,8 +16,8 @@ class LeadValidationService
     {
         return [
             'title'               => 'required|string|max:255',
-            'first_name'          => 'required|string|max:255',
-            'last_name'           => 'required|string|max:255',
+            'first_name'          => 'nullable|string|max:255',
+            'last_name'           => 'nullable|string|max:255',
             'description'         => 'nullable|string',
             'salutation'          => 'nullable|string|max:50',
             'initials'            => 'nullable|string|max:50',

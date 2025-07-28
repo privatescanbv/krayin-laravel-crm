@@ -133,7 +133,7 @@ class LeadController extends Controller
                     'pipeline.stages',
                     'stage',
                     'attribute_values',
-                ])->paginate(10)),
+                ])->orderBy('leads.created_at', 'desc')->paginate(10)),
 
                 'meta' => [
                     'current_page' => $paginator->currentPage(),

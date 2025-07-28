@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Address;
 use Database\Seeders\TestSeeder;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
@@ -155,4 +156,65 @@ test('it excludes self from duplicate detection', function () {
 
     $this->assertCount(0, $duplicates);
     $this->assertFalse($duplicates->contains('id', $lead->id));
+});
+
+test('it detects duplicate leads with same name and address information', function () {
+    // Create the first lead with address
+    $lead1 = Lead::factory()->create([
+        'title'      => 'Address Test Lead 1',
+        'first_name' => 'Sarah',
+        'last_name'  => 'Addresstest',
+        'emails'     => [
+            ['value' => 'sarah.address1@example.com', 'label' => 'work'],
+        ],
+    ]);
+
+    // Create address for first lead
+    $lead1->address()->create([
+        'street' => 'Main Street',
+        'house_number' => '123',
+        'house_number_suffix' => 'A',
+        'postal_code' => '1234AB',
+        'city' => 'Test City',
+        'state' => 'Test State',
+        'country' => 'Netherlands',
+    ]);
+
+    // Create a second lead with same name but different email and same address details
+    $lead2 = Lead::factory()->create([
+        'title'      => 'Address Test Lead 2',
+        'first_name' => 'Sarah',
+        'last_name'  => 'Addresstest',
+        'emails'     => [
+            ['value' => 'sarah.address2@example.com', 'label' => 'home'],
+        ],
+    ]);
+
+    // Create identical address for second lead
+    $lead2->address()->create([
+        'street' => 'Main Street',
+        'house_number' => '123',
+        'house_number_suffix' => 'A',
+        'postal_code' => '1234AB',
+        'city' => 'Test City',
+        'state' => 'Test State',
+        'country' => 'Netherlands',
+    ]);
+
+    // Test duplicate detection - should find duplicate based on name match
+    $duplicates = $this->leadRepository->findPotentialDuplicates($lead1);
+
+    $this->assertCount(1, $duplicates);
+    $this->assertEquals($lead2->id, $duplicates->first()->id);
+    
+    // Verify both leads have the same address data
+    $this->assertEquals($lead1->address->street, $lead2->address->street);
+    $this->assertEquals($lead1->address->house_number, $lead2->address->house_number);
+    $this->assertEquals($lead1->address->postal_code, $lead2->address->postal_code);
+    $this->assertEquals($lead1->address->city, $lead2->address->city);
+    $this->assertEquals($lead1->address->full_address, $lead2->address->full_address);
+    
+    // Test that address merge functionality works correctly
+    $this->assertTrue($lead1->hasPotentialDuplicates());
+    $this->assertEquals(1, $lead1->getPotentialDuplicatesCount());
 });

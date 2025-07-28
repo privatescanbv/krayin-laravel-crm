@@ -40,10 +40,9 @@ function createPipelineData(): array
 
 test('can access edit with lead page with all fields', function () {
     $data = createPipelineData();
-    
+
     $person = Person::factory()->create([
         'salutation' => 'Mr.',
-        'title' => 'Developer',
         'first_name' => 'John',
         'last_name' => 'Doe',
         'lastname_prefix' => 'van',
@@ -108,14 +107,12 @@ test('can access edit with lead page with all fields', function () {
         ->get(route('admin.contacts.persons.edit_with_lead', [
             'personId' => $person->id,
             'leadId' => $lead->id,
-        ]));
-
-    $response->assertOk();
+        ]))->assertOk();
     $response->assertViewIs('admin::contacts.persons.edit-with-lead');
     $response->assertViewHas('person', $person);
     $response->assertViewHas('lead', $lead);
     $response->assertViewHas('fieldDifferences');
-    
+
     // Check that all different fields are shown
     $response->assertSee('Dr.'); // Different salutation
     $response->assertSee('Smith'); // Different last name
@@ -135,7 +132,7 @@ test('can access edit with lead page with all fields', function () {
 
 test('shows no differences when person and lead have identical data', function () {
     $data = createPipelineData();
-    
+
     $person = Person::factory()->create([
         'first_name' => 'John',
         'last_name' => 'Doe',
@@ -152,20 +149,19 @@ test('shows no differences when person and lead have identical data', function (
         'user_id' => test()->user->id,
     ]);
 
-    $response = test()
+    test()
         ->actingAs(test()->user, 'user')
         ->get(route('admin.contacts.persons.edit_with_lead', [
             'personId' => $person->id,
             'leadId' => $lead->id,
-        ]));
-
-    $response->assertOk();
-    $response->assertSee('Geen verschillen gevonden');
+        ]))
+        ->assertOk()
+        ->assertSee('Geen verschillen gevonden');
 });
 
 test('can update person with lead address', function () {
     $data = createPipelineData();
-    
+
     $person = Person::factory()->create([
         'first_name' => 'John',
         'last_name' => 'Doe',
@@ -230,21 +226,21 @@ test('can update person with lead address', function () {
 
     // Verify address was copied from lead to person
     $personAddress = $person->address;
-    expect($personAddress)->not->toBeNull();
-    expect($personAddress->street)->toBe('New Street');
-    expect($personAddress->house_number)->toBe('456');
-    expect($personAddress->house_number_suffix)->toBe('B');
-    expect($personAddress->postal_code)->toBe('5678CD');
-    expect($personAddress->city)->toBe('New City');
-    expect($personAddress->state)->toBe('New State');
-    expect($personAddress->country)->toBe('Netherlands');
-    expect($personAddress->person_id)->toBe($person->id);
-    expect($personAddress->lead_id)->toBeNull();
+    expect($personAddress)->not->toBeNull()
+        ->and($personAddress->street)->toBe('New Street')
+        ->and($personAddress->house_number)->toBe('456')
+        ->and($personAddress->house_number_suffix)->toBe('B')
+        ->and($personAddress->postal_code)->toBe('5678CD')
+        ->and($personAddress->city)->toBe('New City')
+        ->and($personAddress->state)->toBe('New State')
+        ->and($personAddress->country)->toBe('Netherlands')
+        ->and($personAddress->person_id)->toBe($person->id)
+        ->and($personAddress->lead_id)->toBeNull();
 });
 
 test('can update person with multiple lead fields including new fields', function () {
     $data = createPipelineData();
-    
+
     $person = Person::factory()->create([
         'salutation' => 'Mr.',
         'title' => 'Old Title',
@@ -348,7 +344,7 @@ test('can update person with multiple lead fields including new fields', functio
 
 test('address is replaced when person already has address', function () {
     $data = createPipelineData();
-    
+
     $person = Person::factory()->create([
         'first_name' => 'John',
         'last_name' => 'Doe',
@@ -404,18 +400,18 @@ test('address is replaced when person already has address', function () {
     // Verify new address was created
     $person->refresh();
     $newAddress = $person->address;
-    expect($newAddress)->not->toBeNull();
-    expect($newAddress->id)->not->toBe($oldAddress->id);
-    expect($newAddress->street)->toBe('New Street');
-    expect($newAddress->house_number)->toBe('456');
-    expect($newAddress->postal_code)->toBe('5678CD');
-    expect($newAddress->city)->toBe('New City');
-    expect($newAddress->person_id)->toBe($person->id);
+    expect($newAddress)->not->toBeNull()
+        ->and($newAddress->id)->not->toBe($oldAddress->id)
+        ->and($newAddress->street)->toBe('New Street')
+        ->and($newAddress->house_number)->toBe('456')
+        ->and($newAddress->postal_code)->toBe('5678CD')
+        ->and($newAddress->city)->toBe('New City')
+        ->and($newAddress->person_id)->toBe($person->id);
 });
 
 test('does not update address when address field is not selected', function () {
     $data = createPipelineData();
-    
+
     $person = Person::factory()->create([
         'first_name' => 'John',
         'last_name' => 'Doe',
@@ -469,9 +465,10 @@ test('does not update address when address field is not selected', function () {
     // Verify person's address remains unchanged
     $person->refresh();
     expect($person->last_name)->toBe('Smith'); // Last name updated
-    
+
     $address = $person->address;
-    expect($address)->not->toBeNull();
-    expect($address->street)->toBe('Original Street'); // Address unchanged
-    expect($address->city)->toBe('Original City'); // Address unchanged
+    expect($address)->not->toBeNull()
+        ->and($address->street)->toBe('Original Street')
+        ->and($address->city)->toBe('Original City');
+    // Address unchanged
 });

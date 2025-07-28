@@ -103,6 +103,15 @@ class UserSeeder extends Seeder
                 'view_permission' => 'global',
                 'group_id'        => $groupHerniaId,
             ],
+            [
+                'name'            => 'Frank',
+                'email'           => 'frank@privatescan.nl',
+                'password'        => '8A115dc@d3Ad',
+                'status'          => 1,
+                'role_id'         => 1,
+                'view_permission' => 'global',
+                'group_id'        => null,
+            ],
         ];
 
         // Create users and assign to groups

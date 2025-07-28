@@ -25,28 +25,28 @@ class LeadAddressMergeTest extends TestCase
     {
         // Create primary lead without address
         $primaryLead = Lead::factory()->create([
-            'title' => 'Primary Lead',
+            'title'      => 'Primary Lead',
             'first_name' => 'John',
-            'last_name' => 'Doe'
+            'last_name'  => 'Doe',
         ]);
 
         // Create duplicate lead with address
         $duplicateLead = Lead::factory()->create([
-            'title' => 'Duplicate Lead',
+            'title'      => 'Duplicate Lead',
             'first_name' => 'John',
-            'last_name' => 'Doe'
+            'last_name'  => 'Doe',
         ]);
 
         // Create address for duplicate lead
         $duplicateAddress = Address::create([
-            'lead_id' => $duplicateLead->id,
-            'street' => 'Test Street',
-            'house_number' => '123',
+            'lead_id'             => $duplicateLead->id,
+            'street'              => 'Test Street',
+            'house_number'        => '123',
             'house_number_suffix' => 'A',
-            'postal_code' => '1234AB',
-            'city' => 'Test City',
-            'state' => 'Test State',
-            'country' => 'Test Country',
+            'postal_code'         => '1234AB',
+            'city'                => 'Test City',
+            'state'               => 'Test State',
+            'country'             => 'Test Country',
         ]);
 
         // Verify initial state
@@ -56,7 +56,7 @@ class LeadAddressMergeTest extends TestCase
         // Perform merge with address from duplicate lead
         $fieldMappings = [
             'address' => $duplicateLead->id, // Choose address from duplicate lead
-            'title' => $primaryLead->id,     // Keep title from primary lead
+            'title'   => $primaryLead->id,     // Keep title from primary lead
         ];
 
         $mergedLead = $this->leadRepository->mergeLeads(
@@ -87,36 +87,36 @@ class LeadAddressMergeTest extends TestCase
     {
         // Create primary lead with existing address
         $primaryLead = Lead::factory()->create([
-            'title' => 'Primary Lead',
+            'title'      => 'Primary Lead',
             'first_name' => 'John',
-            'last_name' => 'Doe'
+            'last_name'  => 'Doe',
         ]);
 
         Address::create([
-            'lead_id' => $primaryLead->id,
-            'street' => 'Old Street',
+            'lead_id'      => $primaryLead->id,
+            'street'       => 'Old Street',
             'house_number' => '456',
-            'postal_code' => '5678CD',
-            'city' => 'Old City',
-            'country' => 'Old Country',
+            'postal_code'  => '5678CD',
+            'city'         => 'Old City',
+            'country'      => 'Old Country',
         ]);
 
         // Create duplicate lead with different address
         $duplicateLead = Lead::factory()->create([
-            'title' => 'Duplicate Lead',
+            'title'      => 'Duplicate Lead',
             'first_name' => 'John',
-            'last_name' => 'Doe'
+            'last_name'  => 'Doe',
         ]);
 
         Address::create([
-            'lead_id' => $duplicateLead->id,
-            'street' => 'New Street',
-            'house_number' => '789',
+            'lead_id'             => $duplicateLead->id,
+            'street'              => 'New Street',
+            'house_number'        => '789',
             'house_number_suffix' => 'B',
-            'postal_code' => '9012EF',
-            'city' => 'New City',
-            'state' => 'New State',
-            'country' => 'New Country',
+            'postal_code'         => '9012EF',
+            'city'                => 'New City',
+            'state'               => 'New State',
+            'country'             => 'New Country',
         ]);
 
         // Perform merge choosing address from duplicate lead
@@ -146,34 +146,34 @@ class LeadAddressMergeTest extends TestCase
     {
         // Create primary lead with address
         $primaryLead = Lead::factory()->create([
-            'title' => 'Primary Lead',
+            'title'      => 'Primary Lead',
             'first_name' => 'John',
-            'last_name' => 'Doe'
+            'last_name'  => 'Doe',
         ]);
 
         Address::create([
-            'lead_id' => $primaryLead->id,
-            'street' => 'Primary Street',
+            'lead_id'      => $primaryLead->id,
+            'street'       => 'Primary Street',
             'house_number' => '111',
-            'postal_code' => '1111AA',
-            'city' => 'Primary City',
-            'country' => 'Primary Country',
+            'postal_code'  => '1111AA',
+            'city'         => 'Primary City',
+            'country'      => 'Primary Country',
         ]);
 
         // Create duplicate lead with different address
         $duplicateLead = Lead::factory()->create([
-            'title' => 'Duplicate Lead',
+            'title'      => 'Duplicate Lead',
             'first_name' => 'John',
-            'last_name' => 'Doe'
+            'last_name'  => 'Doe',
         ]);
 
         Address::create([
-            'lead_id' => $duplicateLead->id,
-            'street' => 'Duplicate Street',
+            'lead_id'      => $duplicateLead->id,
+            'street'       => 'Duplicate Street',
             'house_number' => '222',
-            'postal_code' => '2222BB',
-            'city' => 'Duplicate City',
-            'country' => 'Duplicate Country',
+            'postal_code'  => '2222BB',
+            'city'         => 'Duplicate City',
+            'country'      => 'Duplicate Country',
         ]);
 
         // Perform merge without specifying address in field mappings

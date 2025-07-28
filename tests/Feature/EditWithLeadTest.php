@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Address;
-use Illuminate\Support\Facades\DB;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Lead\Models\Lead;
@@ -42,71 +41,71 @@ test('can access edit with lead page with all fields', function () {
     $data = createPipelineData();
 
     $person = Person::factory()->create([
-        'salutation' => 'Mr.',
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'lastname_prefix' => 'van',
-        'married_name' => 'Johnson',
+        'salutation'          => 'Mr.',
+        'first_name'          => 'John',
+        'last_name'           => 'Doe',
+        'lastname_prefix'     => 'van',
+        'married_name'        => 'Johnson',
         'married_name_prefix' => 'de',
-        'initials' => 'J.D.',
-        'emails' => [['value' => 'john@example.com', 'label' => 'Work']],
-        'phones' => [['value' => '123456789', 'label' => 'Mobile']],
-        'date_of_birth' => '1990-01-01',
-        'gender' => 'male',
-        'user_id' => test()->user->id,
+        'initials'            => 'J.D.',
+        'emails'              => [['value' => 'john@example.com', 'label' => 'Work']],
+        'phones'              => [['value' => '123456789', 'label' => 'Mobile']],
+        'date_of_birth'       => '1990-01-01',
+        'gender'              => 'male',
+        'user_id'             => test()->user->id,
     ]);
 
     // Create address for person
     Address::create([
-        'person_id' => $person->id,
-        'street' => 'Main Street',
-        'house_number' => '123',
+        'person_id'           => $person->id,
+        'street'              => 'Main Street',
+        'house_number'        => '123',
         'house_number_suffix' => 'A',
-        'postal_code' => '1234AB',
-        'city' => 'Amsterdam',
-        'state' => 'North Holland',
-        'country' => 'Netherlands',
+        'postal_code'         => '1234AB',
+        'city'                => 'Amsterdam',
+        'state'               => 'North Holland',
+        'country'             => 'Netherlands',
     ]);
 
     $lead = Lead::factory()->create([
-        'title' => 'Lead Title',
-        'salutation' => 'Dr.',
-        'first_name' => 'John',
-        'last_name' => 'Smith',
-        'lastname_prefix' => 'de',
-        'married_name' => 'Williams',
-        'married_name_prefix' => 'van',
-        'initials' => 'J.S.',
-        'emails' => [['value' => 'john.smith@example.com', 'label' => 'Work']],
-        'phones' => [['value' => '987654321', 'label' => 'Mobile']],
-        'date_of_birth' => '1985-05-15',
-        'gender' => 'male',
-        'lead_value' => 5000.00,
-        'description' => 'Test lead description',
-        'lost_reason' => null,
-        'expected_close_date' => '2024-12-31',
-        'lead_pipeline_id' => $data['pipelineId'],
+        'title'                  => 'Lead Title',
+        'salutation'             => 'Dr.',
+        'first_name'             => 'John',
+        'last_name'              => 'Smith',
+        'lastname_prefix'        => 'de',
+        'married_name'           => 'Williams',
+        'married_name_prefix'    => 'van',
+        'initials'               => 'J.S.',
+        'emails'                 => [['value' => 'john.smith@example.com', 'label' => 'Work']],
+        'phones'                 => [['value' => '987654321', 'label' => 'Mobile']],
+        'date_of_birth'          => '1985-05-15',
+        'gender'                 => 'male',
+        'lead_value'             => 5000.00,
+        'description'            => 'Test lead description',
+        'lost_reason'            => null,
+        'expected_close_date'    => '2024-12-31',
+        'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
-        'user_id' => test()->user->id,
+        'user_id'                => test()->user->id,
     ]);
 
     // Create address for lead
     Address::create([
-        'lead_id' => $lead->id,
-        'street' => 'Second Street',
-        'house_number' => '456',
+        'lead_id'             => $lead->id,
+        'street'              => 'Second Street',
+        'house_number'        => '456',
         'house_number_suffix' => 'B',
-        'postal_code' => '5678CD',
-        'city' => 'Rotterdam',
-        'state' => 'South Holland',
-        'country' => 'Netherlands',
+        'postal_code'         => '5678CD',
+        'city'                => 'Rotterdam',
+        'state'               => 'South Holland',
+        'country'             => 'Netherlands',
     ]);
 
     $response = test()
         ->actingAs(test()->user, 'user')
         ->get(route('admin.contacts.persons.edit_with_lead', [
             'personId' => $person->id,
-            'leadId' => $lead->id,
+            'leadId'   => $lead->id,
         ]))->assertOk();
     $response->assertViewIs('admin::contacts.persons.edit-with-lead');
     $response->assertViewHas('person', $person);
@@ -131,7 +130,7 @@ test('shows no differences when person and lead have identical data', function (
     $data = createPipelineData();
 
     // Create person with minimal data to avoid factory defaults
-    $person = new Person();
+    $person = new Person;
     $person->first_name = 'John';
     $person->last_name = 'Doe';
     $person->emails = [['value' => 'john@example.com', 'label' => 'Work']];
@@ -139,7 +138,7 @@ test('shows no differences when person and lead have identical data', function (
     $person->save();
 
     // Create lead with minimal data to avoid factory defaults
-    $lead = new Lead();
+    $lead = new Lead;
     $lead->first_name = 'John';
     $lead->last_name = 'Doe';
     $lead->title = 'Lead for John Doe';
@@ -153,7 +152,7 @@ test('shows no differences when person and lead have identical data', function (
         ->actingAs(test()->user, 'user')
         ->get(route('admin.contacts.persons.edit_with_lead', [
             'personId' => $person->id,
-            'leadId' => $lead->id,
+            'leadId'   => $lead->id,
         ]))
         ->assertOk()
         ->assertSee('Geen verschillen gevonden');
@@ -164,59 +163,59 @@ test('can update person with lead address', function () {
 
     $person = Person::factory()->create([
         'first_name' => 'John',
-        'last_name' => 'Doe',
-        'user_id' => test()->user->id,
+        'last_name'  => 'Doe',
+        'user_id'    => test()->user->id,
     ]);
 
     // Create initial address for person
     Address::create([
-        'person_id' => $person->id,
-        'street' => 'Old Street',
+        'person_id'    => $person->id,
+        'street'       => 'Old Street',
         'house_number' => '111',
-        'postal_code' => '1111AA',
-        'city' => 'Old City',
-        'country' => 'Netherlands',
+        'postal_code'  => '1111AA',
+        'city'         => 'Old City',
+        'country'      => 'Netherlands',
     ]);
 
     $lead = Lead::factory()->create([
-        'first_name' => 'John',
-        'last_name' => 'Smith', // Different
-        'lead_pipeline_id' => $data['pipelineId'],
+        'first_name'             => 'John',
+        'last_name'              => 'Smith', // Different
+        'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
-        'user_id' => test()->user->id,
+        'user_id'                => test()->user->id,
     ]);
 
     // Create address for lead
     Address::create([
-        'lead_id' => $lead->id,
-        'street' => 'New Street',
-        'house_number' => '456',
+        'lead_id'             => $lead->id,
+        'street'              => 'New Street',
+        'house_number'        => '456',
         'house_number_suffix' => 'B',
-        'postal_code' => '5678CD',
-        'city' => 'New City',
-        'state' => 'New State',
-        'country' => 'Netherlands',
+        'postal_code'         => '5678CD',
+        'city'                => 'New City',
+        'state'               => 'New State',
+        'country'             => 'Netherlands',
     ]);
 
     $response = test()
         ->actingAs(test()->user, 'user')
         ->postJson(route('admin.contacts.persons.update_with_lead', [
             'personId' => $person->id,
-            'leadId' => $lead->id,
+            'leadId'   => $lead->id,
         ]), [
             'person_updates' => [
                 'last_name' => '1', // Update last name
-                'address' => '1', // Update address
+                'address'   => '1', // Update address
             ],
             'lead_updates' => [
                 'last_name' => 'Smith',
-                'address' => 'lead_address_data', // This will be ignored for address
+                'address'   => 'lead_address_data', // This will be ignored for address
             ],
         ]);
 
     $response->assertOk();
     $response->assertJson([
-        'message' => 'Person en lead succesvol bijgewerkt.',
+        'message'      => 'Person en lead succesvol bijgewerkt.',
         'redirect_url' => route('admin.contacts.persons.view', $person->id),
     ]);
 
@@ -242,71 +241,71 @@ test('can update person with multiple lead fields including new fields', functio
     $data = createPipelineData();
 
     $person = Person::factory()->create([
-        'salutation' => 'Mr.',
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'lastname_prefix' => 'van',
-        'married_name' => 'Johnson',
+        'salutation'          => 'Mr.',
+        'first_name'          => 'John',
+        'last_name'           => 'Doe',
+        'lastname_prefix'     => 'van',
+        'married_name'        => 'Johnson',
         'married_name_prefix' => 'de',
-        'initials' => 'J.D.',
-        'emails' => [['value' => 'john@example.com', 'label' => 'Work']],
-        'phones' => [['value' => '123456789', 'label' => 'Mobile']],
-        'date_of_birth' => '1990-01-01',
-        'gender' => 'male',
-        'user_id' => test()->user->id,
+        'initials'            => 'J.D.',
+        'emails'              => [['value' => 'john@example.com', 'label' => 'Work']],
+        'phones'              => [['value' => '123456789', 'label' => 'Mobile']],
+        'date_of_birth'       => '1990-01-01',
+        'gender'              => 'male',
+        'user_id'             => test()->user->id,
     ]);
 
     $lead = Lead::factory()->create([
-        'title' => 'New Lead Title',
-        'salutation' => 'Dr.',
-        'first_name' => 'John',
-        'last_name' => 'Smith',
-        'lastname_prefix' => 'de',
-        'married_name' => 'Williams',
-        'married_name_prefix' => 'van',
-        'initials' => 'J.S.',
-        'emails' => [['value' => 'john.smith@example.com', 'label' => 'Work']],
-        'phones' => [['value' => '987654321', 'label' => 'Mobile']],
-        'date_of_birth' => '1985-05-15',
-        'gender' => 'female',
-        'lead_value' => 7500.00,
-        'description' => 'Updated lead description',
-        'lost_reason' => 'Competition',
-        'expected_close_date' => '2024-06-30',
-        'lead_pipeline_id' => $data['pipelineId'],
+        'title'                  => 'New Lead Title',
+        'salutation'             => 'Dr.',
+        'first_name'             => 'John',
+        'last_name'              => 'Smith',
+        'lastname_prefix'        => 'de',
+        'married_name'           => 'Williams',
+        'married_name_prefix'    => 'van',
+        'initials'               => 'J.S.',
+        'emails'                 => [['value' => 'john.smith@example.com', 'label' => 'Work']],
+        'phones'                 => [['value' => '987654321', 'label' => 'Mobile']],
+        'date_of_birth'          => '1985-05-15',
+        'gender'                 => 'female',
+        'lead_value'             => 7500.00,
+        'description'            => 'Updated lead description',
+        'lost_reason'            => 'Competition',
+        'expected_close_date'    => '2024-06-30',
+        'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
-        'user_id' => test()->user->id,
+        'user_id'                => test()->user->id,
     ]);
 
     $response = test()
         ->actingAs(test()->user, 'user')
         ->postJson(route('admin.contacts.persons.update_with_lead', [
             'personId' => $person->id,
-            'leadId' => $lead->id,
+            'leadId'   => $lead->id,
         ]), [
             'person_updates' => [
-                'salutation' => '1',
-                'last_name' => '1',
-                'lastname_prefix' => '1',
-                'married_name' => '1',
+                'salutation'          => '1',
+                'last_name'           => '1',
+                'lastname_prefix'     => '1',
+                'married_name'        => '1',
                 'married_name_prefix' => '1',
-                'initials' => '1',
-                'emails' => '1',
-                'phones' => '1',
-                'date_of_birth' => '1',
-                'gender' => '1',
+                'initials'            => '1',
+                'emails'              => '1',
+                'phones'              => '1',
+                'date_of_birth'       => '1',
+                'gender'              => '1',
             ],
             'lead_updates' => [
-                'salutation' => 'Dr.',
-                'last_name' => 'Smith',
-                'lastname_prefix' => 'de',
-                'married_name' => 'Williams',
+                'salutation'          => 'Dr.',
+                'last_name'           => 'Smith',
+                'lastname_prefix'     => 'de',
+                'married_name'        => 'Williams',
                 'married_name_prefix' => 'van',
-                'initials' => 'J.S.',
-                'emails' => 'john.smith@example.com',
-                'phones' => '987654321',
-                'date_of_birth' => '1985-05-15',
-                'gender' => 'female',
+                'initials'            => 'J.S.',
+                'emails'              => 'john.smith@example.com',
+                'phones'              => '987654321',
+                'date_of_birth'       => '1985-05-15',
+                'gender'              => 'female',
             ],
         ]);
 
@@ -331,36 +330,36 @@ test('address is replaced when person already has address', function () {
 
     $person = Person::factory()->create([
         'first_name' => 'John',
-        'last_name' => 'Doe',
-        'user_id' => test()->user->id,
+        'last_name'  => 'Doe',
+        'user_id'    => test()->user->id,
     ]);
 
     // Create existing address for person
     $oldAddress = Address::create([
-        'person_id' => $person->id,
-        'street' => 'Old Street',
+        'person_id'    => $person->id,
+        'street'       => 'Old Street',
         'house_number' => '111',
-        'postal_code' => '1111AA',
-        'city' => 'Old City',
-        'country' => 'Netherlands',
+        'postal_code'  => '1111AA',
+        'city'         => 'Old City',
+        'country'      => 'Netherlands',
     ]);
 
     $lead = Lead::factory()->create([
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'lead_pipeline_id' => $data['pipelineId'],
+        'first_name'             => 'John',
+        'last_name'              => 'Doe',
+        'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
-        'user_id' => test()->user->id,
+        'user_id'                => test()->user->id,
     ]);
 
     // Create address for lead
     Address::create([
-        'lead_id' => $lead->id,
-        'street' => 'New Street',
+        'lead_id'      => $lead->id,
+        'street'       => 'New Street',
         'house_number' => '456',
-        'postal_code' => '5678CD',
-        'city' => 'New City',
-        'country' => 'Netherlands',
+        'postal_code'  => '5678CD',
+        'city'         => 'New City',
+        'country'      => 'Netherlands',
     ]);
 
     // Update person with lead address
@@ -368,7 +367,7 @@ test('address is replaced when person already has address', function () {
         ->actingAs(test()->user, 'user')
         ->postJson(route('admin.contacts.persons.update_with_lead', [
             'personId' => $person->id,
-            'leadId' => $lead->id,
+            'leadId'   => $lead->id,
         ]), [
             'person_updates' => [
                 'address' => '1',
@@ -398,36 +397,36 @@ test('does not update address when address field is not selected', function () {
 
     $person = Person::factory()->create([
         'first_name' => 'John',
-        'last_name' => 'Doe',
-        'user_id' => test()->user->id,
+        'last_name'  => 'Doe',
+        'user_id'    => test()->user->id,
     ]);
 
     // Create existing address for person
     Address::create([
-        'person_id' => $person->id,
-        'street' => 'Original Street',
+        'person_id'    => $person->id,
+        'street'       => 'Original Street',
         'house_number' => '111',
-        'postal_code' => '1111AA',
-        'city' => 'Original City',
-        'country' => 'Netherlands',
+        'postal_code'  => '1111AA',
+        'city'         => 'Original City',
+        'country'      => 'Netherlands',
     ]);
 
     $lead = Lead::factory()->create([
-        'first_name' => 'John',
-        'last_name' => 'Smith', // Different
-        'lead_pipeline_id' => $data['pipelineId'],
+        'first_name'             => 'John',
+        'last_name'              => 'Smith', // Different
+        'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
-        'user_id' => test()->user->id,
+        'user_id'                => test()->user->id,
     ]);
 
     // Create different address for lead
     Address::create([
-        'lead_id' => $lead->id,
-        'street' => 'Lead Street',
+        'lead_id'      => $lead->id,
+        'street'       => 'Lead Street',
         'house_number' => '456',
-        'postal_code' => '5678CD',
-        'city' => 'Lead City',
-        'country' => 'Netherlands',
+        'postal_code'  => '5678CD',
+        'city'         => 'Lead City',
+        'country'      => 'Netherlands',
     ]);
 
     // Update only last name, not address
@@ -435,7 +434,7 @@ test('does not update address when address field is not selected', function () {
         ->actingAs(test()->user, 'user')
         ->postJson(route('admin.contacts.persons.update_with_lead', [
             'personId' => $person->id,
-            'leadId' => $lead->id,
+            'leadId'   => $lead->id,
         ]), [
             'person_updates' => [
                 'last_name' => '1', // Only update last name

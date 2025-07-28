@@ -90,12 +90,12 @@ class ViewService
             [
                 'column' => 'assigned_user_id',
                 'operator' => 'eq',
-                'value' => $currentUserId,
+                'value' => (string) $currentUserId,
             ],
             [
                 'column' => 'is_done',
                 'operator' => 'eq',
-                'value' => 0,
+                'value' => '0', // String value for filter interface
             ],
         ];
     }
@@ -123,7 +123,7 @@ class ViewService
             [
                 'column' => 'is_done',
                 'operator' => 'eq',
-                'value' => 0,
+                'value' => '0', // String value for filter interface
             ],
         ];
     }
@@ -139,12 +139,12 @@ class ViewService
             [
                 'column' => 'group',
                 'operator' => 'eq',
-                'value' => '2', // Hernia group ID
+                'value' => 'Hernia',
             ],
             [
                 'column' => 'is_done',
                 'operator' => 'eq',
-                'value' => 0,
+                'value' => '0', // String value for filter interface
             ],
         ];
     }
@@ -160,12 +160,12 @@ class ViewService
             [
                 'column' => 'group',
                 'operator' => 'eq',
-                'value' => '1', // Privatescan group ID
+                'value' => 'Privatescan',
             ],
             [
                 'column' => 'is_done',
                 'operator' => 'eq',
-                'value' => 0,
+                'value' => '0', // String value for filter interface
             ],
         ];
     }
@@ -215,7 +215,7 @@ class ViewService
                 break;
                 
             case 'group':
-                $queryBuilder->where('activities.group_id', $value);
+                $queryBuilder->where('groups.name', $value);
                 break;
                 
             case 'user_or_groups':
@@ -225,15 +225,12 @@ class ViewService
                     if (!empty($value['group_ids'])) {
                         $query->orWhereIn('activities.group_id', $value['group_ids']);
                         
-                        // Also include activities where user is a participant and activity belongs to user's groups
-                        $query->orWhere(function ($subQuery) use ($value) {
-                            $subQuery->whereIn('activities.group_id', $value['group_ids'])
-                                ->whereExists(function ($existsQuery) use ($value) {
-                                    $existsQuery->select(DB::raw(1))
-                                        ->from('activity_participants')
-                                        ->whereColumn('activity_participants.activity_id', 'activities.id')
-                                        ->where('activity_participants.user_id', $value['user_id']);
-                                });
+                        // Include activities where user is a participant
+                        $query->orWhereExists(function ($existsQuery) use ($value) {
+                            $existsQuery->select(DB::raw(1))
+                                ->from('activity_participants')
+                                ->whereColumn('activity_participants.activity_id', 'activities.id')
+                                ->where('activity_participants.user_id', $value['user_id']);
                         });
                     }
                 });

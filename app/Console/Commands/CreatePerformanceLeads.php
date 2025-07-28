@@ -71,9 +71,9 @@ class CreatePerformanceLeads extends Command
                 try {
                     $response = Http::timeout(30)
                         ->withHeaders([
-                            'Content-Type' =>'application/json',
-                            'Accept' => 'application/json',
-                            'X-API-KEY' => $apiKey
+                            'Content-Type' => 'application/json',
+                            'Accept'       => 'application/json',
+                            'X-API-KEY'    => $apiKey,
                         ])
                         ->post('http://crm/api/leads/', $leadData);
 

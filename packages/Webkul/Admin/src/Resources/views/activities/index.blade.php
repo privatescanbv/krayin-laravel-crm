@@ -88,7 +88,7 @@
                         {!! view_render_event('admin.activities.index.datagrid.before') !!}
 
                         <x-admin::datagrid
-                            src="{{ route('admin.activities.get') }}"
+                            src="/admin/activities/get"
                             :isMultiRow="true"
                             ref="datagrid"
                         >
@@ -106,10 +106,10 @@
 
                                 <template v-else>
                                     <div
-                                        class="row grid grid-cols-[.3fr_.1fr_.3fr_.5fr] grid-rows-1 items-center gap-x-2.5 border-b px-4 py-2.5 dark:border-gray-800 max-lg:hidden">
+                                        class="row grid grid-cols-[0.25fr_0.1fr_0.15fr_0.5fr] grid-rows-1 items-center gap-x-2.5 border-b px-4 py-2.5 dark:border-gray-800 max-lg:hidden">
                                         <div
                                             class="flex select-none items-center gap-2.5"
-                                            v-for="(columnGroup, index) in [['title', 'assigned_user_id'], ['is_done'], ['comment', 'lead_title', 'type'], ['created_at', 'days_until_deadline']]"
+                                            v-for="(columnGroup, index) in [['title', 'assigned_user_id'], ['is_done'], ['group'], ['comment', 'lead_title', 'type', 'created_at', 'days_until_deadline']]"
                                         >
                                             <label
                                                 class="flex w-max cursor-pointer select-none items-center gap-1"
@@ -249,7 +249,7 @@
 
                                 <template v-else>
                                     <div
-                                        class="row grid grid-cols-[.3fr_.1fr_.3fr_.5fr] grid-rows-1 gap-x-2.5 border-b px-4 py-2.5 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950 max-lg:hidden"
+                                        class="row grid grid-cols-[0.25fr_0.1fr_0.15fr_0.5fr] grid-rows-1 gap-x-2.5 border-b px-4 py-2.5 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950 max-lg:hidden"
                                         v-for="record in available.records"
                                     >
                                         <!-- Mass Actions, Title and Created By -->
@@ -293,8 +293,15 @@
                                             </div>
                                         </div>
 
-                                        <!-- Comment, Lead Title and Type -->
+                                        <!-- Group -->
                                         <div class="flex gap-1.5">
+                                            <div class="flex flex-col gap-1.5">
+                                                <p class="text-gray-600 dark:text-gray-300" v-html="record.group"></p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Comment, Lead Title, Type, Created At, Days Until Deadline and Actions -->
+                                        <div class="flex items-start justify-between gap-x-4">
                                             <div class="flex flex-col gap-1.5">
                                                 <p class="text-gray-600 dark:text-gray-300">
                                                     @{{ record.comment && record.comment.length > 180 ?
@@ -307,13 +314,6 @@
                                                     @{{ record.type ?? 'N/A'}}
                                                 </p>
 
-                                                {{--                                                <p class="text-gray-600 dark:text-gray-300" v-html="record.group"></p>--}}
-
-                                            </div>
-                                        </div>
-
-                                        <div class="flex items-start justify-between gap-x-4">
-                                            <div class="flex flex-col gap-1.5">
                                                 <p class="text-gray-600 dark:text-gray-300">
                                                     @{{ record.created_at }}
                                                 </p>
@@ -321,7 +321,6 @@
                                                 <p class="text-gray-600 dark:text-gray-300"
                                                    v-html="record.days_until_deadline">
                                                 </p>
-
                                             </div>
 
                                             <div class="flex items-center gap-1.5">
@@ -484,26 +483,20 @@
                         viewType: '{{ request('view-type') }}' || 'table',
                         currentView: 'for_me',
                         availableViews: {},
-                        defaultFiltersApplied: false,
                     };
                 },
 
                 created() {
                     this.availableViews = {!! json_encode($views ?? []) !!};
 
-
-                    const persistedView = sessionStorage.getItem('selected_activity_view');
-                    const urlView = {!! json_encode($currentView ?? 'for_me') !!};
-
-                    if (persistedView && this.availableViews[persistedView]&& urlView !== persistedView) {
-
-                        // Redirect to persisted view
-                        let currentUrl = new URL(window.location);
-                        currentUrl.searchParams.set('view', persistedView);
-                        window.location.href = currentUrl.toString();
-                    } else {
-                        this.currentView = urlView;
-                    }
+                    // Get view from URL or use default
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const urlView = urlParams.get('view') || {!! json_encode($currentView ?? 'for_me') !!};
+                    
+                    this.currentView = urlView;
+                    
+                    // Store current view in session for persistence
+                    sessionStorage.setItem('selected_activity_view', urlView);
                 },
                 computed: {
                     hasViews() {
@@ -512,7 +505,14 @@
                 },
 
                 mounted() {
-                    // Temporarily simplified
+                    // Apply default view filters if no view is specified in URL
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (!urlParams.get('view')) {
+                        // Redirect to include default view
+                        urlParams.set('view', this.currentView);
+                        const newUrl = window.location.pathname + '?' + urlParams.toString();
+                        window.location.href = newUrl;
+                    }
                 },
                 methods: {
                     /**
@@ -533,11 +533,13 @@
                         const selectedView = event.target.value;
                         sessionStorage.setItem('selected_activity_view', selectedView);
 
-
+                        // Redirect to the new view (simple and reliable)
                         let currentUrl = new URL(window.location);
                         currentUrl.searchParams.set('view', selectedView);
                         window.location.href = currentUrl.toString();
                     },
+
+
                     assignToMe(record) {
                         if (!record.id) return;
                         this.$axios.put(`/admin/activities/edit/${record.id}`, {
@@ -606,10 +608,14 @@
                     getActivities({startDate, endDate}) {
                         this.$root.pageLoaded = false;
 
-                        // Get current view from parent component
-                        const currentView = this.$parent.currentView || 'for_me';
+                        // Get current view from parent component or URL
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const currentView = this.$parent.currentView || urlParams.get('view') || 'for_me';
 
-                        this.$axios.get("{{ route('admin.activities.get', ['view_type' => 'calendar']) }}" + `&startDate=${new Date(startDate).toLocaleDateString("en-US")}&endDate=${new Date(endDate).toLocaleDateString("en-US")}&view=${currentView}`)
+                        const baseUrl = "/admin/activities/get?view_type=calendar";
+                        const params = `&startDate=${new Date(startDate).toLocaleDateString("en-US")}&endDate=${new Date(endDate).toLocaleDateString("en-US")}&view=${currentView}`;
+                        
+                        this.$axios.get(baseUrl + params)
                             .then(response => {
                                 this.events = this.processEvents(response.data.activities);
                             })

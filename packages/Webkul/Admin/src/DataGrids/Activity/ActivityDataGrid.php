@@ -54,10 +54,31 @@ class ActivityDataGrid extends DataGrid
                 }
             })->groupBy('activities.id', 'leads.id', 'users.id', 'groups.id');
 
-        // Apply view filters if specified
-        if ($view = request()->get('view')) {
-            $viewService = app(ViewService::class);
+        // Apply view filters - use default view if none specified
+        $viewService = app(ViewService::class);
+        $view = request()->get('view');
+        if (!$view) {
+            $defaultView = $viewService->getDefaultView();
+            $view = $defaultView['key'];
+        }
+        
+        // Get view configuration to add filters to the interface
+        $viewConfig = $viewService->getView($view);
+        if ($viewConfig) {
+            // Apply view filters to the query
             $queryBuilder = $viewService->applyViewFilters($queryBuilder, $view);
+            
+            // Add view filters to the request so they appear in the filter interface
+            foreach ($viewConfig['filters'] as $filter) {
+                // Skip custom filters that can't be shown in the interface
+                if ($filter['operator'] === 'custom') {
+                    continue;
+                }
+                
+                if (!request()->has($filter['column'])) {
+                    request()->merge([$filter['column'] => $filter['value']]);
+                }
+            }
         }
 
         // Default sorting: urgent tasks first, then newest
@@ -77,7 +98,7 @@ class ActivityDataGrid extends DataGrid
         $this->addFilter('created_at', 'activities.created_at');
         $this->addFilter('days_until_deadline', 'days_until_deadline');
         $this->addFilter('lead_title', 'leads.title');
-        $this->addFilter('group', 'activities.group_id');
+        $this->addFilter('group', 'groups.name');
 
         return $queryBuilder;
     }
@@ -164,12 +185,11 @@ class ActivityDataGrid extends DataGrid
                 'repository' => GroupRepository::class,
                 'column'     => [
                     'label' => 'name',
-                    'value' => 'id',
+                    'value' => 'name',
                 ],
             ],
             'closure' => function ($row) {
-                $row->group = $row->group_name ?? 'N/A';
-                return $row->group;
+                return $row->group_name ?? 'N/A';
             },
         ]);
 

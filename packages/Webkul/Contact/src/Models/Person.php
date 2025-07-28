@@ -149,10 +149,8 @@ class Person extends Model implements PersonContract
 
     /**
      * Get the full name attribute.
-     *
-     * @return string
      */
-    public function getNameAttribute($value)
+    public function getNameAttribute($value): string
     {
         $parts = [];
 
@@ -166,6 +164,16 @@ class Person extends Model implements PersonContract
 
         if ($this->last_name) {
             $parts[] = trim($this->last_name);
+        }
+        if(!empty($this->married_name)) {
+            $marriedNameParts = [];
+            if ($this->married_name_prefix) {
+                $marriedNameParts[] = trim($this->married_name_prefix);
+            }
+            if ($this->married_name) {
+                $marriedNameParts[] = trim($this->married_name);
+            }
+            $parts[] = '/ '.implode(' ', array_filter($marriedNameParts));
         }
 
         return implode(' ', array_filter($parts));

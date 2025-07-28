@@ -94,7 +94,28 @@
                                         </td>
                                         <td class="px-4 py-4">
                                             <div class="text-sm text-gray-600 dark:text-gray-300">
-                                                {{ $difference['person_value'] ?: 'Geen waarde' }}
+                                                @if($difference['type'] === 'address')
+                                                    @if($person->address)
+                                                        <div class="text-xs">
+                                                            @if($person->address->full_address)
+                                                                <div>{{ $person->address->full_address }}</div>
+                                                            @endif
+                                                            @if($person->address->street && $person->address->house_number)
+                                                                <div>{{ $person->address->street }} {{ $person->address->house_number }}{{ $person->address->house_number_suffix }}</div>
+                                                            @endif
+                                                            @if($person->address->postal_code || $person->address->city)
+                                                                <div>{{ $person->address->postal_code }} {{ $person->address->city }}</div>
+                                                            @endif
+                                                            @if($person->address->state || $person->address->country)
+                                                                <div>{{ $person->address->state }} {{ $person->address->country }}</div>
+                                                            @endif
+                                                        </div>
+                                                    @else
+                                                        Geen adres
+                                                    @endif
+                                                @else
+                                                    {{ $difference['person_value'] ?: 'Geen waarde' }}
+                                                @endif
                                             </div>
                                         </td>
                                         <td class="px-4 py-4">
@@ -103,14 +124,45 @@
                                                     {{ $difference['lead_value'] ?: 'Geen waarde' }}
                                                 </div>
                                                 <input type="hidden" name="lead_updates[{{ $field }}]" value="{{ $difference['lead_value'] }}">
+                                            @elseif($difference['type'] === 'address')
+                                                <div class="text-sm text-blue-600 dark:text-blue-400">
+                                                    @if($lead->address)
+                                                        <div class="text-xs">
+                                                            @if($lead->address->full_address)
+                                                                <div>{{ $lead->address->full_address }}</div>
+                                                            @endif
+                                                            @if($lead->address->street && $lead->address->house_number)
+                                                                <div>{{ $lead->address->street }} {{ $lead->address->house_number }}{{ $lead->address->house_number_suffix }}</div>
+                                                            @endif
+                                                            @if($lead->address->postal_code || $lead->address->city)
+                                                                <div>{{ $lead->address->postal_code }} {{ $lead->address->city }}</div>
+                                                            @endif
+                                                            @if($lead->address->state || $lead->address->country)
+                                                                <div>{{ $lead->address->state }} {{ $lead->address->country }}</div>
+                                                            @endif
+                                                        </div>
+                                                    @else
+                                                        Geen adres
+                                                    @endif
+                                                </div>
+                                                <input type="hidden" name="lead_updates[{{ $field }}]" value="{{ $difference['lead_value'] }}">
                                             @else
-                                                <input 
-                                                    type="text" 
-                                                    name="lead_updates[{{ $field }}]" 
-                                                    value="{{ $difference['lead_value'] }}"
-                                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                                                    placeholder="Geen waarde"
-                                                >
+                                                @if($field === 'description')
+                                                    <textarea 
+                                                        name="lead_updates[{{ $field }}]" 
+                                                        rows="3"
+                                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                                        placeholder="Geen waarde"
+                                                    >{{ $difference['lead_value'] }}</textarea>
+                                                @else
+                                                    <input 
+                                                        type="text" 
+                                                        name="lead_updates[{{ $field }}]" 
+                                                        value="{{ $difference['lead_value'] }}"
+                                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                                                        placeholder="Geen waarde"
+                                                    >
+                                                @endif
                                             @endif
                                         </td>
                                     </tr>

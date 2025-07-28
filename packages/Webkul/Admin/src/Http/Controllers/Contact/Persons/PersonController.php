@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
+use App\Models\Address;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -159,7 +160,7 @@ class PersonController extends Controller
      */
     public function show(int $id): View
     {
-        $person = $this->personRepository->findOrFail($id);
+        $person = $this->personRepository->with(['address', 'organization'])->findOrFail($id);
 
         return view('admin::contacts.persons.view', compact('person'));
     }
@@ -798,6 +799,11 @@ class PersonController extends Controller
                                 ];
                             }
                             $updateData[$field] = $arrayData;
+                        } elseif ($field === 'address') {
+                            // Handle address field - copy lead address to person
+                            if ($lead->address) {
+                                $this->copyAddressFromLeadToPerson($lead, $person);
+                            }
                         } else {
                             $updateData[$field] = $value;
                         }
@@ -811,13 +817,11 @@ class PersonController extends Controller
 
             // Check if it's an AJAX request
             if (request()->expectsJson() || request()->ajax()) {
-                logger()->info(" ajax call");
                 return response()->json([
                     'message' => 'Person en lead succesvol bijgewerkt.',
                     'redirect_url' => route('admin.contacts.persons.view', $person->id)
                 ]);
             }
-            logger()->inf( " ajax NIET call");
             return redirect()->route('admin.contacts.persons.view', $person->id);
 
         } catch (Exception $e) {
@@ -842,17 +846,24 @@ class PersonController extends Controller
      */
     private function comparePersonWithLead(Person $person, Lead $lead): array
     {
-        $comparableFields = [
+                $comparableFields = [
+            // Personal Information (fields that exist in both Person and Lead models)
+            'salutation' => 'Aanhef',
             'first_name' => 'Voornaam',
             'last_name' => 'Achternaam',
-            'lastname_prefix' => 'Achternaam voorvoegsel',
-            'married_name' => 'Getrouwde naam',
-            'married_name_prefix' => 'Getrouwde naam voorvoegsel',
+            'lastname_prefix' => 'Voorvoegsel achternaam',
+            'married_name' => 'Gehuwde naam',
+            'married_name_prefix' => 'Voorvoegsel gehuwde naam',
             'initials' => 'Initialen',
+            'date_of_birth' => 'Geboortedatum',
+            'gender' => 'Geslacht',
+
+            // Contact Information
             'emails' => 'E-mailadressen',
             'phones' => 'Telefoonnummers',
-            'date_of_birth' => 'Geboortedatum',
-            'gender' => 'Geslacht'
+            
+            // Address Information
+            'address' => 'Adres',
         ];
 
         $differences = [];
@@ -873,13 +884,19 @@ class PersonController extends Controller
                 $leadValue = $this->formatDateForComparison($leadValue);
             }
 
+            // Handle address field
+            if ($field === 'address') {
+                $personValue = $this->normalizeAddressField($person->address);
+                $leadValue = $this->normalizeAddressField($lead->address);
+            }
+
             // Compare values
             if ($this->valuesAreDifferent($personValue, $leadValue)) {
                 $differences[$field] = [
                     'label' => $label,
                     'person_value' => $personValue,
                     'lead_value' => $leadValue,
-                    'type' => in_array($field, ['emails', 'phones']) ? 'array' : 'text'
+                    'type' => $this->getFieldType($field)
                 ];
             }
         }
@@ -948,6 +965,75 @@ class PersonController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Normalize address field for comparison.
+     */
+    private function normalizeAddressField($address): string
+    {
+        if (empty($address)) {
+            return '';
+        }
+
+        // Create a normalized address string for comparison
+        $addressParts = [
+            $address->full_address ?? '',
+            $address->street ?? '',
+            $address->house_number ?? '',
+            $address->house_number_suffix ?? '',
+            $address->postal_code ?? '',
+            $address->city ?? '',
+            $address->state ?? '',
+            $address->country ?? ''
+        ];
+
+        return implode('|', array_filter($addressParts));
+    }
+
+    /**
+     * Get the field type for proper display handling.
+     */
+    private function getFieldType(string $field): string
+    {
+        if (in_array($field, ['emails', 'phones'])) {
+            return 'array';
+        }
+
+        if ($field === 'address') {
+            return 'address';
+        }
+
+        return 'text';
+    }
+
+    /**
+     * Copy address from lead to person.
+     */
+    private function copyAddressFromLeadToPerson($lead, $person): void
+    {
+        if (!$lead->address) {
+            return;
+        }
+
+        $addressData = [
+            'street' => $lead->address->street,
+            'house_number' => $lead->address->house_number,
+            'house_number_suffix' => $lead->address->house_number_suffix,
+            'postal_code' => $lead->address->postal_code,
+            'city' => $lead->address->city,
+            'state' => $lead->address->state,
+            'country' => $lead->address->country,
+            'person_id' => $person->id,
+        ];
+
+        // Delete existing address if it exists
+        if ($person->address) {
+            $person->address->delete();
+        }
+
+        // Create new address for person
+        Address::create($addressData);
     }
 
     /**

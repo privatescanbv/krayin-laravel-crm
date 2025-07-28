@@ -140,6 +140,20 @@
                                 </thead>
                                 <tbody>
                                     <!-- Fields with Differences Section -->
+                                    <template v-if="fieldsWithDifferences.length > 0">
+                                        <tr class="bg-orange-50 dark:bg-orange-900/20">
+                                            <td :colspan="2 + duplicates.length" class="p-4 text-center border-b border-orange-200 dark:border-orange-800">
+                                                <div class="flex items-center justify-center gap-2">
+                                                    <span class="icon-alert text-orange-600 text-lg"></span>
+                                                    <h4 class="text-sm font-semibold text-orange-700 dark:text-orange-400">
+                                                        Velden met verschillen (@{{ fieldsWithDifferences.length }})
+                                                    </h4>
+                                                </div>
+                                                <p class="text-xs text-orange-600 mt-1">Deze velden hebben verschillende waarden - selecteer welke waarde behouden moet blijven</p>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                    
                                     <template v-for="fieldConfig in fieldsWithDifferences" :key="'diff-' + fieldConfig.field">
                                         <tr class="border-b border-gray-100 dark:border-gray-800">
                                             <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">

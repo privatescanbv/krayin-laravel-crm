@@ -263,7 +263,16 @@ class LeadController extends Controller
      */
     public function view(int $id)
     {
-        $lead = $this->leadRepository->with('anamnesis')->findOrFail($id);
+        $lead = $this->leadRepository->with([
+            'anamnesis', 
+            'address', 
+            'person.organization', 
+            'source', 
+            'type', 
+            'channel', 
+            'department',
+            'user'
+        ])->findOrFail($id);
 
         $userIds = bouncer()->getAuthorizedUserIds();
 

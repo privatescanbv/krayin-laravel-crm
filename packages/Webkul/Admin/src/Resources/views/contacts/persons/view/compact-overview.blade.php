@@ -11,34 +11,34 @@
         <x-slot:content class="mt-4 !px-0 !pb-0">
             {!! view_render_event('admin.contacts.persons.view.attributes.form_controls.before', ['person' => $person]) !!}
 
-            <div class="flex flex-col gap-3 text-sm">
+            <div class="flex flex-col text-sm">
                 <!-- Name Summary -->
-                <div>
-                    <span class="font-medium text-gray-700 dark:text-gray-300">Naam:</span>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100">
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Naam</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                          {{ $person->name }}
                     </div>
                 </div>
 
                 <!-- Contact Person (Job Title) -->
                 @if($person->job_title)
-                <div>
-                    <span class="font-medium text-gray-700 dark:text-gray-300">Functie:</span>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100">
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Functie</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {{ $person->job_title }}
                     </div>
                 </div>
                 @endif
 
-                <!-- Organization -->
+                                <!-- Organization -->
                 @if($person->organization)
-                <div>
-                    <span class="font-medium text-gray-700 dark:text-gray-300">Organisatie:</span>
-                    <div class="mt-1">
-                        <a
-                            href="{{ route('admin.contacts.organizations.view', $person->organization->id) }}"
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Organisatie</div>
+                    <div>
+                        <a 
+                            href="{{ route('admin.contacts.organizations.view', $person->organization->id) }}" 
                             target="_blank"
-                            class="text-brandColor hover:underline font-medium"
+                            class="text-sm font-medium text-brandColor hover:underline"
                         >
                             {{ $person->organization->name }}
                             <span class="icon-external-link text-xs ml-1"></span>
@@ -48,9 +48,9 @@
                 @endif
 
                 <!-- Address -->
-                <div>
-                    <span class="font-medium text-gray-700 dark:text-gray-300">Adres:</span>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100">
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Adres</div>
+                    <div class="text-sm text-gray-900 dark:text-gray-100">
                         @if($person->address && $person->address->full_address)
                             {{ $person->address->full_address }}
                             <a 
@@ -68,9 +68,9 @@
                 </div>
 
                 <!-- Contact Information -->
-                <div>
-                    <span class="font-medium text-gray-700 dark:text-gray-300">Contactgegevens:</span>
-                    <div class="mt-1">
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Contactgegevens</div>
+                    <div class="text-sm">
                         <!-- Email Addresses -->
                         @if($person->emails && count($person->emails) > 0)
                             @php

@@ -18,20 +18,39 @@
         <x-slot:content class="mt-4 !px-0 !pb-0">
             {!! view_render_event('admin.leads.view.attributes.form_controls.before', ['lead' => $lead]) !!}
 
-            <div class="flex flex-col gap-3 text-sm">
+            <div class="flex flex-col text-sm">
                 <!-- Name Summary -->
-                <div>
-                    <span class="font-medium text-gray-700 dark:text-gray-300">Naam:</span>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100">
-                        {{ $lead->name }}
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Naam</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        @php
+                            $nameParts = array_filter([
+                                $lead->salutation,
+                                $lead->initials,
+                                $lead->first_name,
+                                $lead->lastname_prefix,
+                                $lead->last_name
+                            ]);
+                            
+                            // Add married name in parentheses if it exists
+                            if ($lead->married_name) {
+                                $marriedNamePart = $lead->married_name_prefix 
+                                    ? "({$lead->married_name_prefix} {$lead->married_name})"
+                                    : "({$lead->married_name})";
+                                $nameParts[] = $marriedNamePart;
+                            }
+                            
+                            $fullName = implode(' ', $nameParts);
+                        @endphp
+                        {{ $fullName ?: ($lead->first_name . ' ' . $lead->last_name) }}
                     </div>
                 </div>
 
                 <!-- Lead Value -->
                 @if($lead->lead_value)
-                <div>
-                    <span class="font-medium text-gray-700 dark:text-gray-300">Lead waarde:</span>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100">
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Lead waarde</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                         € {{ number_format($lead->lead_value, 2, ',', '.') }}
                     </div>
                 </div>
@@ -39,9 +58,9 @@
 
                 <!-- Sales Owner -->
                 @if($lead->user)
-                <div>
-                    <span class="font-medium text-gray-700 dark:text-gray-300">Verkoop eigenaar:</span>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100">
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Verkoop eigenaar</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {{ $lead->user->name }}
                     </div>
                 </div>
@@ -49,23 +68,40 @@
 
                 <!-- Expected Close Date -->
                 @if($lead->expected_close_date)
-                <div>
-                    <span class="font-medium text-gray-700 dark:text-gray-300">Verwachte sluitingsdatum:</span>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100">
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Verwachte sluitingsdatum</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {{ $lead->expected_close_date->format('d-m-Y') }}
+                    </div>
+                </div>
+                @endif
+
+                <!-- Contact Person (if linked) -->
+                @if($lead->person)
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Contact persoon</div>
+                    <div>
+                        <a 
+                            href="{{ route('admin.contacts.persons.view', $lead->person->id) }}" 
+                            target="_blank"
+                            class="text-sm font-medium text-brandColor hover:underline"
+                        >
+                            {{ $lead->person->name }}
+                            <span class="icon-external-link text-xs ml-1"></span>
+                        </a>
                     </div>
                 </div>
                 @endif
 
                 <!-- Organization (if person has organization) -->
                 @if($lead->person && $lead->person->organization)
-                <div>
-                    <span class="font-medium text-gray-700 dark:text-gray-300">Organisatie:</span>
-                    <div class="mt-1">
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Organisatie</div>
+                    <div>
                         <a
                             href="{{ route('admin.contacts.organizations.view', $lead->person->organization->id) }}"
                             target="_blank"
-                            class="text-brandColor hover:underline font-medium"
+                            class="text-sm font-medium text-brandColor hover:underline"
                         >
                             {{ $lead->person->organization->name }}
                             <span class="icon-external-link text-xs ml-1"></span>
@@ -75,9 +111,9 @@
                 @endif
 
                 <!-- Address -->
-                <div>
-                    <span class="font-medium text-gray-700 dark:text-gray-300">Adres:</span>
-                    <div class="mt-1 text-gray-900 dark:text-gray-100">
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Adres</div>
+                    <div class="text-sm text-gray-900 dark:text-gray-100">
                         @if($lead->address && $lead->address->full_address)
                             {{ $lead->address->full_address }}
                             <a
@@ -95,9 +131,9 @@
                 </div>
 
                 <!-- Contact Information -->
-                <div>
-                    <span class="font-medium text-gray-700 dark:text-gray-300">Contactgegevens:</span>
-                    <div class="mt-1">
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Contactgegevens</div>
+                    <div class="text-sm">
                         <!-- Email Addresses -->
                         @if($lead->emails && is_array($lead->emails) && count($lead->emails) > 0)
                             @php
@@ -151,38 +187,38 @@
                 </div>
 
                 <!-- Lead Specific Fields -->
-                <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-                    <h5 class="font-medium text-gray-700 dark:text-gray-300 mb-2">Lead informatie</h5>
+                <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">Lead informatie</div>
 
-                    <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div class="grid grid-cols-2 gap-4">
                         <!-- Lead Source -->
-                        <div>
-                            <span class="text-gray-600 dark:text-gray-400">Bron:</span>
-                            <div class="text-gray-900 dark:text-gray-100">
+                        <div class="mb-3">
+                            <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Bron</div>
+                            <div class="text-sm text-gray-900 dark:text-gray-100">
                                 {{ $lead->source->name ?? 'Onbekend' }}
                             </div>
                         </div>
 
                         <!-- Lead Type -->
-                        <div>
-                            <span class="text-gray-600 dark:text-gray-400">Type:</span>
-                            <div class="text-gray-900 dark:text-gray-100">
+                        <div class="mb-3">
+                            <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Type</div>
+                            <div class="text-sm text-gray-900 dark:text-gray-100">
                                 {{ $lead->type->name ?? 'Onbekend' }}
                             </div>
                         </div>
 
                         <!-- Lead Channel -->
-                        <div>
-                            <span class="text-gray-600 dark:text-gray-400">Kanaal:</span>
-                            <div class="text-gray-900 dark:text-gray-100">
+                        <div class="mb-3">
+                            <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Kanaal</div>
+                            <div class="text-sm text-gray-900 dark:text-gray-100">
                                 {{ $lead->channel->name ?? 'Onbekend' }}
                             </div>
                         </div>
 
                         <!-- Department -->
-                        <div>
-                            <span class="text-gray-600 dark:text-gray-400">Afdeling:</span>
-                            <div class="text-gray-900 dark:text-gray-100">
+                        <div class="mb-3">
+                            <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Afdeling</div>
+                            <div class="text-sm text-gray-900 dark:text-gray-100">
                                 {{ $lead->department->name ?? 'Onbekend' }}
                             </div>
                         </div>

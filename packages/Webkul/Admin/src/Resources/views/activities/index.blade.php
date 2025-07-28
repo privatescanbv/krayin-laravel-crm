@@ -112,12 +112,13 @@
                             <template v-else>
                                 <!-- Desktop View -->
                                 <div
-                                    class="row grid grid-cols-[0.25fr_0.1fr_0.15fr_0.5fr] grid-rows-1 gap-x-2.5 border-b px-4 py-2.5 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950 max-lg:hidden"
                                     v-for="record in available.records"
+                                    class="row grid items-center gap-2.5 border-b px-4 py-4 text-gray-600 transition-all hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-950 max-lg:hidden"
+                                    :style="`grid-template-columns: repeat(${$parent.gridsCount || available.columns.filter(c => c.visibility).length + (available.massActions.length ? 1 : 0) + (available.actions.length ? 1 : 0)}, minmax(0, 1fr))`"
                                     :key="record.id"
                                 >
-                                    <!-- Mass Actions, Title and Assigned User -->
-                                    <div class="flex gap-2.5">
+                                    <!-- Mass Actions -->
+                                    <div class="flex select-none items-center gap-2.5" v-if="available.massActions.length">
                                         <input
                                             type="checkbox"
                                             :name="`mass_action_select_record_${record.id}`"
@@ -131,86 +132,91 @@
                                             class="icon-checkbox-outline peer-checked:icon-checkbox-select cursor-pointer rounded-md text-2xl text-gray-600 peer-checked:text-brandColor dark:text-gray-300"
                                             :for="`mass_action_select_record_${record.id}`"
                                         ></label>
-
-                                        <div class="flex flex-col gap-1.5">
-                                            <p class="text-gray-600 dark:text-gray-300 font-medium">
-                                                @{{ record.title }}
-                                            </p>
-                                            <p class="text-gray-600 dark:text-gray-300 text-sm"
-                                               v-html="record.assigned_user_id">
-                                            </p>
-                                        </div>
                                     </div>
 
-                                    <!-- Is Done Status -->
-                                    <div class="flex gap-1.5">
-                                        <div class="flex flex-col gap-1.5">
-                                            <p
-                                                class="text-gray-600 dark:text-gray-300"
-                                                v-html="record.is_done"
-                                            >
-                                            </p>
+                                    <!-- Individual columns based on available.columns -->
+                                    <template v-for="column in available.columns" :key="column.index">
+                                        <div v-if="column.visibility" class="flex flex-col gap-1.5">
+                                            <!-- ID Column -->
+                                            <template v-if="column.index === 'id'">
+                                                <p class="text-gray-600 dark:text-gray-300">@{{ record.id }}</p>
+                                            </template>
+
+                                            <!-- Title Column -->
+                                            <template v-else-if="column.index === 'title'">
+                                                <p class="text-gray-600 dark:text-gray-300 font-medium">@{{ record.title }}</p>
+                                            </template>
+
+                                            <!-- Is Done Column -->
+                                            <template v-else-if="column.index === 'is_done'">
+                                                <div v-html="record.is_done"></div>
+                                            </template>
+
+                                            <!-- Assigned User Column -->
+                                            <template v-else-if="column.index === 'assigned_user_id'">
+                                                <div v-html="record.assigned_user_id"></div>
+                                            </template>
+
+                                            <!-- Group Column -->
+                                            <template v-else-if="column.index === 'group'">
+                                                <p class="text-gray-600 dark:text-gray-300" v-html="record.group"></p>
+                                            </template>
+
+                                            <!-- Comment Column -->
+                                            <template v-else-if="column.index === 'comment'">
+                                                <p class="text-gray-600 dark:text-gray-300 text-sm" v-if="record.comment">
+                                                    @{{ record.comment && record.comment.length > 100 ?
+                                                    record.comment.slice(0, 100) + '...' : record.comment }}
+                                                </p>
+                                            </template>
+
+                                            <!-- Lead Title Column -->
+                                            <template v-else-if="column.index === 'lead_title'">
+                                                <div v-html="record.lead_title" class="text-sm"></div>
+                                            </template>
+
+                                            <!-- Type Column -->
+                                            <template v-else-if="column.index === 'type'">
+                                                <p class="text-gray-600 dark:text-gray-300 text-sm">@{{ record.type ?? 'N/A'}}</p>
+                                            </template>
+
+                                            <!-- Created At Column -->
+                                            <template v-else-if="column.index === 'created_at'">
+                                                <p class="text-gray-600 dark:text-gray-300 text-sm">@{{ record.created_at }}</p>
+                                            </template>
+
+                                            <!-- Days Until Deadline Column -->
+                                            <template v-else-if="column.index === 'days_until_deadline'">
+                                                <div v-html="record.days_until_deadline" class="text-sm"></div>
+                                            </template>
+
+                                            <!-- Default Column -->
+                                            <template v-else>
+                                                <div v-html="record[column.index]" class="text-sm"></div>
+                                            </template>
                                         </div>
-                                    </div>
+                                    </template>
 
-                                    <!-- Group -->
-                                    <div class="flex gap-1.5">
-                                        <div class="flex flex-col gap-1.5">
-                                            <p class="text-gray-600 dark:text-gray-300" v-html="record.group"></p>
-                                        </div>
-                                    </div>
-
-                                    <!-- Details and Actions -->
-                                    <div class="flex items-start justify-between gap-x-4">
-                                        <div class="flex flex-col gap-1.5 flex-1">
-                                            <!-- Comment -->
-                                            <p class="text-gray-600 dark:text-gray-300 text-sm" v-if="record.comment">
-                                                @{{ record.comment && record.comment.length > 180 ?
-                                                record.comment.slice(0, 180) + '...' : record.comment }}
-                                            </p>
-
-                                            <!-- Lead Title -->
-                                            <p v-html="record.lead_title" class="text-sm"></p>
-
-                                            <!-- Type -->
-                                            <p class="text-gray-600 dark:text-gray-300 text-sm">
-                                                @{{ record.type ?? 'N/A'}}
-                                            </p>
-
-                                            <!-- Created At -->
-                                            <p class="text-gray-600 dark:text-gray-300 text-sm">
-                                                @{{ record.created_at }}
-                                            </p>
-
-                                            <!-- Days Until Deadline -->
-                                            <p class="text-gray-600 dark:text-gray-300 text-sm"
-                                               v-html="record.days_until_deadline">
-                                            </p>
-                                        </div>
-
-                                        <!-- Actions -->
-                                        <div class="flex items-center gap-1.5">
-                                            <!-- Standard Actions -->
-                                            <div class="flex items-center gap-1" v-if="available.actions.length">
-                                                <span
-                                                    class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800"
-                                                    :class="action.icon"
-                                                    :title="action.title"
-                                                    v-for="action in record.actions"
-                                                    @click="performAction(action)"
-                                                ></span>
-                                            </div>
-                                            
-                                            <!-- Assign to Me Button -->
-                                            <button
-                                                v-if="!record.user_id"
-                                                class="ml-2 px-2 py-1 rounded bg-blue-500 text-white text-xs hover:bg-blue-600 transition-colors"
-                                                @click="assignToMe(record)"
-                                                title="Aan mij toekennen"
-                                            >
-                                                Aan mij toekennen
-                                            </button>
-                                        </div>
+                                    <!-- Actions Column -->
+                                    <div class="flex items-center justify-end gap-1.5" v-if="available.actions.length">
+                                        <!-- Standard Actions -->
+                                        <span
+                                            class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-200 dark:hover:bg-gray-800"
+                                            :class="action.icon"
+                                            :title="action.title"
+                                            v-for="action in record.actions"
+                                            @click="performAction(action)"
+                                        ></span>
+                                        
+                                        <!-- Assign to Me Button -->
+                                        <button
+                                            v-if="!record.user_id"
+                                            class="ml-2 px-2 py-1 rounded bg-blue-500 text-white text-xs hover:bg-blue-600 transition-colors"
+                                            @click="assignToMe(record)"
+                                            title="Aan mij toekennen"
+                                        >
+                                            Toekennen
+                                        </button>
                                     </div>
                                 </div>
 
@@ -267,7 +273,7 @@
                                     <!-- Card Content -->
                                     <div class="grid gap-2">
                                         <template v-for="column in available.columns">
-                                            <div class="flex flex-wrap items-baseline gap-x-2" v-if="record[column.index]">
+                                            <div class="flex flex-wrap items-baseline gap-x-2" v-if="record[column.index] && column.visibility">
                                                 <span class="text-slate-600 dark:text-gray-300 font-medium"
                                                       v-html="column.label + ':'"></span>
                                                 <span class="break-words text-slate-900 dark:text-white"

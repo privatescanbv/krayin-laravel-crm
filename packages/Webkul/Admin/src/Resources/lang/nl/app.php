@@ -2064,6 +2064,20 @@ return [
                'destroy-success' => 'Tag succesvol verwijderd.',
            ],
        ],
+       'merge' => [
+           'selected-count'      => ':count lead(s) geselecteerd voor samenvoegen',
+           'merging'             => 'Samenvoegen...',
+           'merge-selected'      => 'Geselecteerde leads samenvoegen',
+           'cancel'              => 'Annuleren',
+           'field-title'         => 'Titel',
+           'field-first-name'    => 'Voornaam',
+           'field-last-name'     => 'Achternaam',
+           'field-last-name-birth' => 'Achternaam',
+           'field-last-name-married' => 'Getrouwde achternaam',
+           'field-emails'        => 'E-mailadressen',
+           'field-phones'        => 'Telefoonnummers',
+           'lead-number'         => 'Lead #:id',
+       ],
    ],
 
    'configuration' => [

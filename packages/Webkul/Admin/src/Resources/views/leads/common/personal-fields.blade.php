@@ -85,15 +85,15 @@
         <!-- Last Name -->
         <x-admin::form.control-group class="flex-1">
             <x-admin::form.control-group.label class="required">
-                Achternaam bij geboorte
+                @lang('admin::app.leads.merge.field-last-name-birth')
             </x-admin::form.control-group.label>
 
             <x-admin::form.control-group.control
                 type="text"
                 name="last_name"
                 :value="$entity->last_name ?? ''"
-                :label="trans('Achternaam')"
-                placeholder="Achternaam"
+                :label="trans('admin::app.leads.merge.field-last-name-birth')"
+                placeholder="@lang('admin::app.leads.merge.field-last-name-birth')"
                 rules="required"
             />
 
@@ -125,7 +125,7 @@
         <!-- Married Name -->
         <x-admin::form.control-group class="flex-1">
             <x-admin::form.control-group.label>
-                Aangetrouwde naam
+                @lang('admin::app.leads.merge.field-last-name-married')
             </x-admin::form.control-group.label>
 
             <x-admin::form.control-group.control

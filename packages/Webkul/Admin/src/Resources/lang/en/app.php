@@ -2144,6 +2144,8 @@ return [
                 'field-title'         => 'Title',
                 'field-first-name'    => 'First Name',
                 'field-last-name'     => 'Last Name',
+                'field-last-name-birth' => 'Last Name at Birth',
+                'field-last-name-married' => 'Married Last Name',
                 'field-emails'        => 'Emails',
                 'field-phones'        => 'Phones',
                 'lead-number'         => 'Lead #:id',

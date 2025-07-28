@@ -142,6 +142,7 @@ test('shows no differences when person and lead have identical data', function (
     $lead = new Lead();
     $lead->first_name = 'John';
     $lead->last_name = 'Doe';
+    $lead->title = 'Lead for John Doe';
     $lead->emails = [['value' => 'john@example.com', 'label' => 'Work']];
     $lead->lead_pipeline_id = $data['pipelineId'];
     $lead->lead_pipeline_stage_id = $data['stageId'];

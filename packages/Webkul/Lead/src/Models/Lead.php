@@ -299,7 +299,7 @@ class Lead extends Model implements LeadContract
 
         $today = Carbon::today();
         $dueDate = Carbon::parse($this->expected_close_date);
-        
+
         return $today->diffInDays($dueDate, false);
     }
 
@@ -348,5 +348,34 @@ class Lead extends Model implements LeadContract
             Log::error('Error counting potential duplicates: ' . $e->getMessage());
             return 0;
         }
+    }
+
+    public function getNameAttribute($value): string
+    {
+        $parts = [];
+
+        if ($this->first_name) {
+            $parts[] = trim($this->first_name);
+        }
+
+        if ($this->lastname_prefix) {
+            $parts[] = trim($this->lastname_prefix);
+        }
+
+        if ($this->last_name) {
+            $parts[] = trim($this->last_name);
+        }
+        if(!empty($this->married_name)) {
+            $marriedNameParts = [];
+            if ($this->married_name_prefix) {
+                $marriedNameParts[] = trim($this->married_name_prefix);
+            }
+            if ($this->married_name) {
+                $marriedNameParts[] = trim($this->married_name);
+            }
+            $parts[] = '/ '.implode(' ', array_filter($marriedNameParts));
+        }
+
+        return implode(' ', array_filter($parts));
     }
 }

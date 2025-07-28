@@ -23,26 +23,7 @@
                 <div>
                     <span class="font-medium text-gray-700 dark:text-gray-300">Naam:</span>
                     <div class="mt-1 text-gray-900 dark:text-gray-100">
-                        @php
-                            $nameParts = array_filter([
-                                $lead->salutation,
-                                $lead->initials,
-                                $lead->first_name,
-                                $lead->lastname_prefix,
-                                $lead->last_name
-                            ]);
-                            
-                            // Add married name in parentheses if it exists
-                            if ($lead->married_name) {
-                                $marriedNamePart = $lead->married_name_prefix 
-                                    ? "({$lead->married_name_prefix} {$lead->married_name})"
-                                    : "({$lead->married_name})";
-                                $nameParts[] = $marriedNamePart;
-                            }
-                            
-                            $fullName = implode(' ', $nameParts);
-                        @endphp
-                        {{ $fullName ?: ($lead->first_name . ' ' . $lead->last_name) }}
+                        {{ $lead->name }}
                     </div>
                 </div>
 
@@ -76,30 +57,13 @@
                 </div>
                 @endif
 
-                <!-- Contact Person (if linked) -->
-                @if($lead->person)
-                <div>
-                    <span class="font-medium text-gray-700 dark:text-gray-300">Contact persoon:</span>
-                    <div class="mt-1">
-                        <a 
-                            href="{{ route('admin.contacts.persons.view', $lead->person->id) }}" 
-                            target="_blank"
-                            class="text-brandColor hover:underline font-medium"
-                        >
-                            {{ $lead->person->name }}
-                            <span class="icon-external-link text-xs ml-1"></span>
-                        </a>
-                    </div>
-                </div>
-                @endif
-
                 <!-- Organization (if person has organization) -->
                 @if($lead->person && $lead->person->organization)
                 <div>
                     <span class="font-medium text-gray-700 dark:text-gray-300">Organisatie:</span>
                     <div class="mt-1">
-                        <a 
-                            href="{{ route('admin.contacts.organizations.view', $lead->person->organization->id) }}" 
+                        <a
+                            href="{{ route('admin.contacts.organizations.view', $lead->person->organization->id) }}"
                             target="_blank"
                             class="text-brandColor hover:underline font-medium"
                         >
@@ -116,9 +80,9 @@
                     <div class="mt-1 text-gray-900 dark:text-gray-100">
                         @if($lead->address && $lead->address->full_address)
                             {{ $lead->address->full_address }}
-                            <a 
-                                href="https://maps.google.com/?q={{ urlencode($lead->address->full_address) }}" 
-                                target="_blank" 
+                            <a
+                                href="https://maps.google.com/?q={{ urlencode($lead->address->full_address) }}"
+                                target="_blank"
                                 class="ml-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                                 title="Bekijk op Google Maps"
                             >
@@ -137,17 +101,17 @@
                         <!-- Email Addresses -->
                         @if($lead->emails && is_array($lead->emails) && count($lead->emails) > 0)
                             @php
-                                $defaultEmail = collect($lead->emails)->firstWhere('is_default', true) 
+                                $defaultEmail = collect($lead->emails)->firstWhere('is_default', true)
                                                ?? collect($lead->emails)->first();
                                 $otherEmails = collect($lead->emails)->reject(function($email) use ($defaultEmail) {
                                     return $email['value'] === $defaultEmail['value'];
                                 });
                             @endphp
-                            
+
                             <div class="text-gray-900 dark:text-gray-100">
                                 {{ $defaultEmail['value'] }}
                             </div>
-                            
+
                             @if($otherEmails->count() > 0)
                                 <div class="text-xs text-gray-500 dark:text-gray-400 italic ml-2">
                                     @foreach($otherEmails as $email)
@@ -162,17 +126,17 @@
                         <!-- Phone Numbers -->
                         @if($lead->phones && is_array($lead->phones) && count($lead->phones) > 0)
                             @php
-                                $defaultPhone = collect($lead->phones)->firstWhere('is_default', true) 
+                                $defaultPhone = collect($lead->phones)->firstWhere('is_default', true)
                                                ?? collect($lead->phones)->first();
                                 $otherPhones = collect($lead->phones)->reject(function($phone) use ($defaultPhone) {
                                     return $phone['value'] === $defaultPhone['value'];
                                 });
                             @endphp
-                            
+
                             <div class="text-gray-900 dark:text-gray-100 mt-1">
                                 {{ $defaultPhone['value'] }}
                             </div>
-                            
+
                             @if($otherPhones->count() > 0)
                                 <div class="text-xs text-gray-500 dark:text-gray-400 italic ml-2">
                                     @foreach($otherPhones as $phone)
@@ -189,7 +153,7 @@
                 <!-- Lead Specific Fields -->
                 <div class="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
                     <h5 class="font-medium text-gray-700 dark:text-gray-300 mb-2">Lead informatie</h5>
-                    
+
                     <div class="grid grid-cols-2 gap-3 text-xs">
                         <!-- Lead Source -->
                         <div>

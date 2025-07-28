@@ -149,10 +149,8 @@ class Person extends Model implements PersonContract
 
     /**
      * Get the full name attribute.
-     *
-     * @return string
      */
-    public function getNameAttribute($value)
+    public function getNameAttribute($value): string
     {
         $parts = [];
 

@@ -329,7 +329,12 @@
                                             </div>
                                         </div>
 
-                                            <!-- Actions -->
+                                        <!-- Actions -->
+                                        <div class="flex items-start justify-between gap-x-4">
+                                            <div class="flex flex-col gap-1.5">
+                                                <!-- Empty space for alignment -->
+                                            </div>
+
                                             <div class="flex items-center gap-1.5">
                                                 <p
                                                     class="place-self-end"

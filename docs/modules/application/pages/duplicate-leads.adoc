@@ -4,23 +4,28 @@ Deze functionaliteit biedt automatische detectie van mogelijke duplicaat leads e
 
 ===== Functies
 
-====== 1. Duplicaat Detectie
+====== 1. Duplicaat Detectie Algoritme
 
-Het systeem detecteert automatisch mogelijke duplicaten op basis van:
+Het systeem gebruikt de volgende logica voor het detecteren van duplicaten:
 
-* *E-mailadressen*: Leads met overeenkomende e-mailadressen
-* *Telefoonnummers*: Leads met overeenkomende telefoonnummers  
-* *Naamgelijkenis*: Leads met gelijkaardige voor- en achternamen
-* *Getrouwde naam matching*: Het systeem controleert ook of de getrouwde naam (`married_name`) overeenkomt met de achternaam van andere leads en vice versa
+* *E-mail matching*: Exacte overeenkomst van e-mailadressen
+* *Telefoon matching*: Exacte overeenkomst van telefoonnummers
+* *Naam matching*:
+- Exacte overeenkomst van voornaam EN achternaam
+- Overeenkomst tussen `married_name` en `last_name` (in beide richtingen)
+- Gelijkaardige namen gebaseerd op string vergelijking
+
 
 ====== 2. Visuele Indicatoren
 
 Kanban Weergave
+
 * Duplicaat leads tonen een oranje waarschuwingspictogram (⚠️) op kanban kaarten
 * Hover tooltip toont het aantal mogelijke duplicaten gevonden
 * Tooltip tekst: "Mogelijke duplicate gevonden (X gelijkenissen)"
 
 Lead Detail Weergave
+
 * Oranje waarschuwingsbanner verschijnt bovenaan wanneer duplicaten worden gedetecteerd
 * Toont aantal mogelijke duplicaten
 * "Merge Duplicates" knop biedt directe toegang tot samenvoeg interface
@@ -35,6 +40,7 @@ De samenvoeg interface (`/admin/leads/{id}/duplicates`) biedt:
 * *Primaire Lead*: De oorspronkelijke lead is altijd gemarkeerd als primair en kan niet gedeselecteerd worden
 
 Ondersteunde Velden voor Samenvoegen
+
 * Titel
 * Voornaam
 * Achternaam
@@ -58,28 +64,3 @@ Wanneer leads worden samengevoegd:
 . *Veld Mapping*: Geselecteerde veldwaarden worden toegepast op de primaire lead
 . *Archivering*: Duplicaat leads worden gemarkeerd als inactief en vooraf gegaan door "[ARCHIVED]"
 . *Activiteiten Log*: Een notitie wordt toegevoegd aan de primaire lead die de samenvoeging documenteert
-
-===== Technische Details
-
-====== Duplicaat Detectie Algoritme
-
-Het systeem gebruikt de volgende logica voor het detecteren van duplicaten:
-
-* *E-mail matching*: Exacte overeenkomst van e-mailadressen
-* *Telefoon matching*: Exacte overeenkomst van telefoonnummers
-* *Naam matching*: 
-  - Exacte overeenkomst van voornaam EN achternaam
-  - Overeenkomst tussen `married_name` en `last_name` (in beide richtingen)
-  - Gelijkaardige namen gebaseerd op string vergelijking
-
-====== Database Structuur
-
-De lead tabel bevat de volgende relevante velden voor duplicaat detectie:
-* `first_name` - Voornaam
-* `last_name` - Achternaam  
-* `lastname_prefix` - Achternaam voorvoegsel
-* `married_name` - Getrouwde naam
-* `married_name_prefix` - Getrouwde naam voorvoegsel
-* `emails` - JSON array van e-mailadressen
-* `phones` - JSON array van telefoonnummers
-* `lead_pipeline_stage_id` - Verwijzing naar pipeline fase (status wordt getoond als fase naam)

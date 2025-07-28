@@ -5,6 +5,7 @@ namespace Webkul\Admin\Http\Controllers\Activity;
 use App\Enums\WebhookType;
 use App\Services\WebhookService;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
@@ -44,12 +45,12 @@ class ActivityController extends Controller
     {
         $views = [];
         $currentView = 'for_me';
-        
+
         if ($this->viewService) {
             $views = $this->viewService->getAvailableViews();
             $currentView = request()->get('view', $this->viewService->getDefaultView()['key']);
         }
-        
+
         return view('admin::activities.index', compact('views', 'currentView'));
     }
 
@@ -69,7 +70,7 @@ class ActivityController extends Controller
         $endDate = request()->get('endDate')
             ? Carbon::createFromTimeString(request()->get('endDate').' 23:59:59')
             : Carbon::now()->endOfWeek()->format('Y-m-d H:i:s');
-        
+
         $view = request()->get('view');
         $activities = $this->activityRepository->getActivities([$startDate, $endDate], $view)->toArray();
 
@@ -84,7 +85,7 @@ class ActivityController extends Controller
     public function getViews(): JsonResponse
     {
         $views = $this->viewService->getAvailableViews();
-        
+
         return response()->json([
             'views' => $views,
         ]);
@@ -277,7 +278,7 @@ class ActivityController extends Controller
             $file = $this->fileRepository->findOrFail($id);
 
             return Storage::download($file->path);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             abort(404);
         }
     }

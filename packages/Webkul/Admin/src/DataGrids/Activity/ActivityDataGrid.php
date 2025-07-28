@@ -115,6 +115,7 @@ class ActivityDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+            'visibility' => false, // Hide ID column from view
         ]);
 
         $this->addColumn([

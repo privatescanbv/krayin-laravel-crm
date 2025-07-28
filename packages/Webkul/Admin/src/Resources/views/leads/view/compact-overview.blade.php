@@ -56,6 +56,26 @@
                 </div>
                 @endif
 
+                <!-- Sales Owner -->
+                @if($lead->user)
+                <div>
+                    <span class="font-medium text-gray-700 dark:text-gray-300">Verkoop eigenaar:</span>
+                    <div class="mt-1 text-gray-900 dark:text-gray-100">
+                        {{ $lead->user->name }}
+                    </div>
+                </div>
+                @endif
+
+                <!-- Expected Close Date -->
+                @if($lead->expected_close_date)
+                <div>
+                    <span class="font-medium text-gray-700 dark:text-gray-300">Verwachte sluitingsdatum:</span>
+                    <div class="mt-1 text-gray-900 dark:text-gray-100">
+                        {{ $lead->expected_close_date->format('d-m-Y') }}
+                    </div>
+                </div>
+                @endif
+
                 <!-- Contact Person (if linked) -->
                 @if($lead->person)
                 <div>
@@ -96,6 +116,14 @@
                     <div class="mt-1 text-gray-900 dark:text-gray-100">
                         @if($lead->address && $lead->address->full_address)
                             {{ $lead->address->full_address }}
+                            <a 
+                                href="https://maps.google.com/?q={{ urlencode($lead->address->full_address) }}" 
+                                target="_blank" 
+                                class="ml-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                title="Bekijk op Google Maps"
+                            >
+                                <span class="icon-location text-sm"></span>
+                            </a>
                         @else
                             <span class="text-gray-500 dark:text-gray-400 italic">Geen adres</span>
                         @endif
@@ -107,7 +135,7 @@
                     <span class="font-medium text-gray-700 dark:text-gray-300">Contactgegevens:</span>
                     <div class="mt-1">
                         <!-- Email Addresses -->
-                        @if($lead->emails && count($lead->emails) > 0)
+                        @if($lead->emails && is_array($lead->emails) && count($lead->emails) > 0)
                             @php
                                 $defaultEmail = collect($lead->emails)->firstWhere('is_default', true) 
                                                ?? collect($lead->emails)->first();
@@ -132,7 +160,7 @@
                         @endif
 
                         <!-- Phone Numbers -->
-                        @if($lead->phones && count($lead->phones) > 0)
+                        @if($lead->phones && is_array($lead->phones) && count($lead->phones) > 0)
                             @php
                                 $defaultPhone = collect($lead->phones)->firstWhere('is_default', true) 
                                                ?? collect($lead->phones)->first();

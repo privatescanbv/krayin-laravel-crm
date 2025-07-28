@@ -66,7 +66,15 @@ class LeadObserver
             'stage'   => $lead->stage?->name,
         ]);
         $this->updatePipelineState($lead);
-        $this->sendWebhook($lead, 'LeadObserver@created');
+        
+        try {
+            $this->sendWebhook($lead, 'LeadObserver@created');
+        } catch (\Exception $e) {
+            Log::warning('Failed to send webhook for lead creation', [
+                'lead_id' => $lead->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -82,17 +90,23 @@ class LeadObserver
         $this->updatePipelineState($lead);
         // Send webhook if stage has changed and the stage is actually different
         if ($lead->wasChanged('lead_pipeline_stage_id') && $lead->stage) {
-
-            logger()->info('lead update', [
-                'lead_id'            => $lead->id,
-                'original'           => $lead->getOriginal('lead_pipeline_stage_id'),
-                'new'                => $lead->lead_pipeline_stage_id,
-                'wasChanged'         => $lead->wasChanged('lead_pipeline_stage_id'),
-                'changed_attributes' => $lead->getChanges(),
-                'dirty_attributes'   => $lead->getDirty(),
-            ]);
-            // 'stack_trace' => (new \Exception())->getTraceAsString(),
-            $this->sendWebhook($lead, 'LeadObserver@updated');
+            try {
+                logger()->info('lead update', [
+                    'lead_id'            => $lead->id,
+                    'original'           => $lead->getOriginal('lead_pipeline_stage_id'),
+                    'new'                => $lead->lead_pipeline_stage_id,
+                    'wasChanged'         => $lead->wasChanged('lead_pipeline_stage_id'),
+                    'changed_attributes' => $lead->getChanges(),
+                    'dirty_attributes'   => $lead->getDirty(),
+                ]);
+                // 'stack_trace' => (new \Exception())->getTraceAsString(),
+                $this->sendWebhook($lead, 'LeadObserver@updated');
+            } catch (\Exception $e) {
+                Log::warning('Failed to send webhook for lead update', [
+                    'lead_id' => $lead->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         // Log activities for fixed fields
@@ -122,6 +136,11 @@ class LeadObserver
 
     private function sendWebhook(Lead $lead, string $caller): void
     {
+        // Don't send webhook if stage is null
+        if (!$lead->stage) {
+            return;
+        }
+
         // Eager load the source relation
         $lead->load('source');
 
@@ -148,46 +167,53 @@ class LeadObserver
      */
     private function logFixedFieldsActivity(Lead $lead): void
     {
-        $fixedFields = ['first_name', 'last_name', 'maiden_name', 'description'];
-        $fieldLabels = [
-            'first_name'  => 'Voornaam',
-            'last_name'   => 'Achternaam',
-            'maiden_name' => 'Aangetrouwde naam',
-            'description' => 'omschrijving',
-        ];
+        try {
+            $fixedFields = ['first_name', 'last_name', 'maiden_name', 'description'];
+            $fieldLabels = [
+                'first_name'  => 'Voornaam',
+                'last_name'   => 'Achternaam',
+                'maiden_name' => 'Aangetrouwde naam',
+                'description' => 'omschrijving',
+            ];
 
-        foreach ($fixedFields as $field) {
-            if ($lead->wasChanged($field)) {
-                $oldValue = $lead->getOriginal($field);
-                $newValue = $lead->$field;
+            foreach ($fixedFields as $field) {
+                if ($lead->wasChanged($field)) {
+                    $oldValue = $lead->getOriginal($field);
+                    $newValue = $lead->$field;
 
-                // Skip if both values are empty/null
-                if (empty($oldValue) && empty($newValue)) {
-                    continue;
+                    // Skip if both values are empty/null
+                    if (empty($oldValue) && empty($newValue)) {
+                        continue;
+                    }
+
+                    $fieldLabel = $fieldLabels[$field];
+
+                    $activity = $this->activityRepository->create([
+                        'type'       => 'system',
+                        'title'      => "$fieldLabel gewijzigd",
+                        'is_done'    => 1,
+                        'additional' => json_encode([
+                            'attribute' => $fieldLabel,
+                            'new'       => [
+                                'value' => $newValue ?: '-',
+                                'label' => $newValue ?: '-',
+                            ],
+                            'old' => [
+                                'value' => $oldValue ?: '-',
+                                'label' => $oldValue ?: '-',
+                            ],
+                        ]),
+                        'user_id' => auth()->id() ?? 1,
+                    ]);
+
+                    $lead->activities()->attach($activity->id);
                 }
-
-                $fieldLabel = $fieldLabels[$field];
-
-                $activity = $this->activityRepository->create([
-                    'type'       => 'system',
-                    'title'      => "$fieldLabel gewijzigd",
-                    'is_done'    => 1,
-                    'additional' => json_encode([
-                        'attribute' => $fieldLabel,
-                        'new'       => [
-                            'value' => $newValue ?: '-',
-                            'label' => $newValue ?: '-',
-                        ],
-                        'old' => [
-                            'value' => $oldValue ?: '-',
-                            'label' => $oldValue ?: '-',
-                        ],
-                    ]),
-                    'user_id' => auth()->id() ?? 1,
-                ]);
-
-                $lead->activities()->attach($activity->id);
             }
+        } catch (\Exception $e) {
+            Log::warning('Failed to log fixed fields activity', [
+                'lead_id' => $lead->id,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 }

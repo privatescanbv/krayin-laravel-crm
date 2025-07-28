@@ -88,7 +88,7 @@
                         {!! view_render_event('admin.activities.index.datagrid.before') !!}
 
                         <x-admin::datagrid
-                            src="{{ route('admin.activities.get') }}"
+                            :src="'{{ route('admin.activities.get') }}' + (currentView ? '?view=' + currentView : '')"
                             :isMultiRow="true"
                             ref="datagrid"
                         >
@@ -491,19 +491,14 @@
                 created() {
                     this.availableViews = {!! json_encode($views ?? []) !!};
 
-
-                    const persistedView = sessionStorage.getItem('selected_activity_view');
-                    const urlView = {!! json_encode($currentView ?? 'for_me') !!};
-
-                    if (persistedView && this.availableViews[persistedView]&& urlView !== persistedView) {
-
-                        // Redirect to persisted view
-                        let currentUrl = new URL(window.location);
-                        currentUrl.searchParams.set('view', persistedView);
-                        window.location.href = currentUrl.toString();
-                    } else {
-                        this.currentView = urlView;
-                    }
+                    // Get view from URL or use default
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const urlView = urlParams.get('view') || {!! json_encode($currentView ?? 'for_me') !!};
+                    
+                    this.currentView = urlView;
+                    
+                    // Store current view in session for persistence
+                    sessionStorage.setItem('selected_activity_view', urlView);
                 },
                 computed: {
                     hasViews() {
@@ -512,7 +507,19 @@
                 },
 
                 mounted() {
-                    // Temporarily simplified
+                    // Apply default view filters if no view is specified in URL
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (!urlParams.get('view')) {
+                        // Update URL to include default view
+                        urlParams.set('view', this.currentView);
+                        const newUrl = window.location.pathname + '?' + urlParams.toString();
+                        window.history.replaceState({}, '', newUrl);
+                    }
+                    
+                    // Always refresh datagrid to ensure correct view is applied
+                    this.$nextTick(() => {
+                        this.refreshDatagrid();
+                    });
                 },
                 methods: {
                     /**
@@ -532,11 +539,24 @@
                     onViewChange(event) {
                         const selectedView = event.target.value;
                         sessionStorage.setItem('selected_activity_view', selectedView);
+                        this.currentView = selectedView;
 
-
+                        // Update URL without reload
                         let currentUrl = new URL(window.location);
                         currentUrl.searchParams.set('view', selectedView);
-                        window.location.href = currentUrl.toString();
+                        window.history.pushState({}, '', currentUrl.toString());
+                        
+                        // Refresh datagrid with new view
+                        this.refreshDatagrid();
+                    },
+
+                    refreshDatagrid() {
+                        if (this.$refs.datagrid) {
+                            // Update the datagrid source URL with current view
+                            const newSrc = '{{ route('admin.activities.get') }}' + (this.currentView ? '?view=' + this.currentView : '');
+                            this.$refs.datagrid.src = newSrc;
+                            this.$refs.datagrid.get();
+                        }
                     },
                     assignToMe(record) {
                         if (!record.id) return;
@@ -606,8 +626,9 @@
                     getActivities({startDate, endDate}) {
                         this.$root.pageLoaded = false;
 
-                        // Get current view from parent component
-                        const currentView = this.$parent.currentView || 'for_me';
+                        // Get current view from parent component or URL
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const currentView = this.$parent.currentView || urlParams.get('view') || 'for_me';
 
                         this.$axios.get("{{ route('admin.activities.get', ['view_type' => 'calendar']) }}" + `&startDate=${new Date(startDate).toLocaleDateString("en-US")}&endDate=${new Date(endDate).toLocaleDateString("en-US")}&view=${currentView}`)
                             .then(response => {

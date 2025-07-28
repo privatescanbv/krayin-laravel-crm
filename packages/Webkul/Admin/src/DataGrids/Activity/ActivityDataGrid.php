@@ -54,11 +54,14 @@ class ActivityDataGrid extends DataGrid
                 }
             })->groupBy('activities.id', 'leads.id', 'users.id', 'groups.id');
 
-        // Apply view filters if specified
-        if ($view = request()->get('view')) {
-            $viewService = app(ViewService::class);
-            $queryBuilder = $viewService->applyViewFilters($queryBuilder, $view);
+        // Apply view filters - use default view if none specified
+        $viewService = app(ViewService::class);
+        $view = request()->get('view');
+        if (!$view) {
+            $defaultView = $viewService->getDefaultView();
+            $view = $defaultView['key'];
         }
+        $queryBuilder = $viewService->applyViewFilters($queryBuilder, $view);
 
         // Default sorting: urgent tasks first, then newest
         if (!request()->has('sort')) {

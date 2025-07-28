@@ -148,11 +148,13 @@ class ActivityRepository extends Repository
                 }
             });
 
-        // Apply view filters if specified
-        if ($view) {
-            $viewService = app(ViewService::class);
-            $query = $viewService->applyViewFilters($query, $view);
+        // Apply view filters - use default view if none specified
+        $viewService = app(ViewService::class);
+        if (!$view) {
+            $defaultView = $viewService->getDefaultView();
+            $view = $defaultView['key'];
         }
+        $query = $viewService->applyViewFilters($query, $view);
 
         return $query->distinct()->get();
     }

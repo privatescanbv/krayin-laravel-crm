@@ -91,6 +91,9 @@
 
             <!-- Contact Organization -->
             @include ('admin::contacts.persons.view.organization')
+
+            <!-- Compact Person Overview -->
+            @include ('admin::contacts.persons.view.compact-overview')
         </div>
 
         {!! view_render_event('admin.contact.persons.view.left.after', ['person' => $person]) !!}

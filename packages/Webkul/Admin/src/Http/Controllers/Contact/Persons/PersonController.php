@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
+use App\Models\Address;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -799,9 +800,10 @@ class PersonController extends Controller
                             }
                             $updateData[$field] = $arrayData;
                         } elseif ($field === 'address') {
-                            // Skip address field as it requires special handling
-                            // Address updates should be handled separately via relationship
-                            continue;
+                            // Handle address field - copy lead address to person
+                            if ($lead->address) {
+                                $this->copyAddressFromLeadToPerson($lead, $person);
+                            }
                         } else {
                             $updateData[$field] = $value;
                         }
@@ -1012,6 +1014,35 @@ class PersonController extends Controller
         }
 
         return 'text';
+    }
+
+    /**
+     * Copy address from lead to person.
+     */
+    private function copyAddressFromLeadToPerson($lead, $person): void
+    {
+        if (!$lead->address) {
+            return;
+        }
+
+        $addressData = [
+            'street' => $lead->address->street,
+            'house_number' => $lead->address->house_number,
+            'house_number_suffix' => $lead->address->house_number_suffix,
+            'postal_code' => $lead->address->postal_code,
+            'city' => $lead->address->city,
+            'state' => $lead->address->state,
+            'country' => $lead->address->country,
+            'person_id' => $person->id,
+        ];
+
+        // Delete existing address if it exists
+        if ($person->address) {
+            $person->address->delete();
+        }
+
+        // Create new address for person
+        Address::create($addressData);
     }
 
     /**

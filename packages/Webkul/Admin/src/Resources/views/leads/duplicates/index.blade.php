@@ -582,7 +582,7 @@
                                                     v-model="fieldMappings.status"
                                                     class="mb-2"
                                                 />
-                                                <span class="text-sm text-center break-words">@{{ primaryLead.status || 'N/A' }}</span>
+                                                <span class="text-sm text-center break-words">@{{ primaryLead.stage?.name || 'N/A' }}</span>
                                             </label>
                                         </td>
                                         <td
@@ -598,7 +598,7 @@
                                                     v-model="fieldMappings.status"
                                                     class="mb-2"
                                                 />
-                                                <span class="text-sm text-center break-words">@{{ duplicate.status || 'N/A' }}</span>
+                                                <span class="text-sm text-center break-words">@{{ duplicate.stage?.name || 'N/A' }}</span>
                                             </label>
                                         </td>
                                     </tr>

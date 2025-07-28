@@ -1,50 +1,85 @@
-==== Duplicate Lead Detection and Merging Feature
+==== Duplicaat Lead Detectie en Samenvoegen Functionaliteit
 
-This feature provides automatic detection of potential duplicate leads and allows users to merge them through an intuitive interface. The system can detect duplicates based on email addresses, phone numbers, and name similarity.
+Deze functionaliteit biedt automatische detectie van mogelijke duplicaat leads en stelt gebruikers in staat om deze samen te voegen via een intuïtieve interface. Het systeem kan duplicaten detecteren op basis van e-mailadressen, telefoonnummers, en naamgelijkenis.
 
-===== Features
+===== Functies
 
-====== 1. Duplicate Detection
+====== 1. Duplicaat Detectie
 
-The system automatically detects potential duplicates based on:
+Het systeem detecteert automatisch mogelijke duplicaten op basis van:
 
-* *Email addresses*: Leads with matching email addresses
-* *Phone numbers*: Leads with matching phone numbers
-* *Name similarity*: Leads with similar first and last names
+* *E-mailadressen*: Leads met overeenkomende e-mailadressen
+* *Telefoonnummers*: Leads met overeenkomende telefoonnummers  
+* *Naamgelijkenis*: Leads met gelijkaardige voor- en achternamen
+* *Getrouwde naam matching*: Het systeem controleert ook of de getrouwde naam (`married_name`) overeenkomt met de achternaam van andere leads en vice versa
 
-====== 2. Visual Indicators
+====== 2. Visuele Indicatoren
 
-Kanban View
-* Duplicate leads show an orange warning icon (⚠️) on kanban cards
-* Hover tooltip shows the number of potential duplicates found
-* Tooltip text: "Mogelijke duplicate gevonden (X gelijkenissen)"
+Kanban Weergave
+* Duplicaat leads tonen een oranje waarschuwingspictogram (⚠️) op kanban kaarten
+* Hover tooltip toont het aantal mogelijke duplicaten gevonden
+* Tooltip tekst: "Mogelijke duplicate gevonden (X gelijkenissen)"
 
-Lead Detail View
-* Orange warning banner appears at the top when duplicates are detected
-* Shows count of potential duplicates
-* "Merge Duplicates" button provides direct access to merge interface
+Lead Detail Weergave
+* Oranje waarschuwingsbanner verschijnt bovenaan wanneer duplicaten worden gedetecteerd
+* Toont aantal mogelijke duplicaten
+* "Merge Duplicates" knop biedt directe toegang tot samenvoeg interface
 
-====== 3. Merge Interface
+====== 3. Samenvoeg Interface
 
-The merge interface (`/admin/leads/{id}/duplicates`) provides:
+De samenvoeg interface (`/admin/leads/{id}/duplicates`) biedt:
 
-* *Comparison Table*: Side-by-side comparison of lead fields
-* *Field Selection*: Radio buttons to choose which values to keep for each field
-* *Multi-select*: Checkboxes to select which leads to merge
-* *Primary Lead*: The original lead is always marked as primary and cannot be deselected
+* *Vergelijkingstabel*: Zij-aan-zij vergelijking van lead velden
+* *Veldselectie*: Radio buttons om te kiezen welke waarden behouden blijven voor elk veld
+* *Multi-selectie*: Checkboxes om te selecteren welke leads samengevoegd worden
+* *Primaire Lead*: De oorspronkelijke lead is altijd gemarkeerd als primair en kan niet gedeselecteerd worden
 
-Supported Fields for Merging
-* Title
-* First Name
-* Last Name
-* Email addresses
-* Phone numbers
+Ondersteunde Velden voor Samenvoegen
+* Titel
+* Voornaam
+* Achternaam
+* Achternaam voorvoegsel
+* Getrouwde naam
+* Getrouwde naam voorvoegsel
+* Initialen
+* E-mailadressen
+* Telefoonnummers
+* Geboortedatum
+* Geslacht
+* Lead waarde
+* Status (wordt getoond als pipeline fase naam)
+* Beschrijving
 
-====== 4. Merge Process
+====== 4. Samenvoeg Proces
 
-When leads are merged:
+Wanneer leads worden samengevoegd:
 
-. *Data Transfer*: Activities, quotes, products, and emails are transferred to the primary lead
-. *Field Mapping*: Selected field values are applied to the primary lead
-. *Archival*: Duplicate leads are marked as inactive and prefixed with "[ARCHIVED]"
-. *Activity Log*: A note is added to the primary lead documenting the merge
+. *Data Overdracht*: Activiteiten, offertes, producten en e-mails worden overgedragen naar de primaire lead
+. *Veld Mapping*: Geselecteerde veldwaarden worden toegepast op de primaire lead
+. *Archivering*: Duplicaat leads worden gemarkeerd als inactief en vooraf gegaan door "[ARCHIVED]"
+. *Activiteiten Log*: Een notitie wordt toegevoegd aan de primaire lead die de samenvoeging documenteert
+
+===== Technische Details
+
+====== Duplicaat Detectie Algoritme
+
+Het systeem gebruikt de volgende logica voor het detecteren van duplicaten:
+
+* *E-mail matching*: Exacte overeenkomst van e-mailadressen
+* *Telefoon matching*: Exacte overeenkomst van telefoonnummers
+* *Naam matching*: 
+  - Exacte overeenkomst van voornaam EN achternaam
+  - Overeenkomst tussen `married_name` en `last_name` (in beide richtingen)
+  - Gelijkaardige namen gebaseerd op string vergelijking
+
+====== Database Structuur
+
+De lead tabel bevat de volgende relevante velden voor duplicaat detectie:
+* `first_name` - Voornaam
+* `last_name` - Achternaam  
+* `lastname_prefix` - Achternaam voorvoegsel
+* `married_name` - Getrouwde naam
+* `married_name_prefix` - Getrouwde naam voorvoegsel
+* `emails` - JSON array van e-mailadressen
+* `phones` - JSON array van telefoonnummers
+* `lead_pipeline_stage_id` - Verwijzing naar pipeline fase (status wordt getoond als fase naam)

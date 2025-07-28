@@ -1,0 +1,148 @@
+<?php
+
+namespace Tests\Unit;
+
+use App\Enums\PipelineDefaultKeys;
+use App\Enums\PipelineStageDefaultKeys;
+use App\Enums\WebhookType;
+use App\Models\Department;
+use App\Observers\LeadObserver;
+use App\Services\WebhookService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Mockery;
+use Tests\TestCase;
+use Webkul\Activity\Repositories\ActivityRepository;
+use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Repositories\LeadRepository;
+
+class LeadWebhookTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected $webhookService;
+    protected $activityRepository;
+    protected $leadRepository;
+    protected $observer;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->webhookService = Mockery::mock(WebhookService::class);
+        $this->activityRepository = Mockery::mock(ActivityRepository::class);
+        $this->leadRepository = Mockery::mock(LeadRepository::class);
+        
+        $this->observer = new LeadObserver(
+            $this->webhookService,
+            $this->activityRepository,
+            $this->leadRepository
+        );
+    }
+
+    /** @test */
+    public function test_webhook_not_sent_on_create_when_pipeline_will_be_updated()
+    {
+        // Create a mock lead that will trigger pipeline update
+        $lead = Mockery::mock(Lead::class);
+        $department = Mockery::mock(Department::class);
+        $department->shouldReceive('getAttribute')->with('name')->andReturn('Hernia');
+        
+        $lead->shouldReceive('getAttribute')->with('id')->andReturn(1);
+        $lead->shouldReceive('getAttribute')->with('department')->andReturn($department);
+        $lead->shouldReceive('getAttribute')->with('created_by')->andReturn(null);
+        $lead->shouldReceive('getAttribute')->with('stage')->andReturn(null);
+        $lead->shouldReceive('getAttribute')->with('lead_pipeline_id')
+            ->andReturn(PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value); // Different from expected Hernia pipeline
+        
+        // Mock the leadRepository to return the same lead
+        $this->leadRepository->shouldReceive('findOrFail')->with(1)->andReturn($lead);
+        
+        // The lead should be updated with new pipeline
+        $lead->shouldReceive('update')->with([
+            'lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_HERNIA_ID->value,
+            'lead_pipeline_stage_id' => PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value,
+        ])->once();
+
+        // Webhook should NOT be sent because pipeline will be updated
+        $this->webhookService->shouldNotReceive('sendWebhook');
+
+        // Call the created method
+        $this->observer->created($lead);
+    }
+
+    /** @test */
+    public function test_webhook_sent_on_create_when_pipeline_wont_be_updated()
+    {
+        // Create a mock lead that won't trigger pipeline update
+        $lead = Mockery::mock(Lead::class);
+        $department = Mockery::mock(Department::class);
+        $department->shouldReceive('getAttribute')->with('name')->andReturn('Hernia');
+        
+        $lead->shouldReceive('getAttribute')->with('id')->andReturn(1);
+        $lead->shouldReceive('getAttribute')->with('department')->andReturn($department);
+        $lead->shouldReceive('getAttribute')->with('created_by')->andReturn(null);
+        $lead->shouldReceive('getAttribute')->with('stage')->andReturn(null);
+        $lead->shouldReceive('getAttribute')->with('lead_pipeline_id')
+            ->andReturn(PipelineDefaultKeys::PIPELINE_HERNIA_ID->value); // Same as expected pipeline
+        
+        $lead->shouldReceive('load')->with('source')->andReturn($lead);
+        $lead->shouldReceive('getAttribute')->with('source')->andReturn(null);
+
+        // Webhook SHOULD be sent because pipeline won't be updated
+        $this->webhookService->shouldReceive('sendWebhook')
+            ->once()
+            ->with(
+                Mockery::type('array'),
+                WebhookType::LEAD_PIPELINE_STAGE_CHANGE,
+                'LeadObserver@created'
+            )
+            ->andReturn(true);
+
+        // Call the created method
+        $this->observer->created($lead);
+    }
+
+    /** @test */
+    public function test_webhook_sent_on_update_when_stage_changed()
+    {
+        // Create a mock lead with changed stage
+        $lead = Mockery::mock(Lead::class);
+        $stage = Mockery::mock();
+        $stage->shouldReceive('getAttribute')->with('code')->andReturn('new_stage');
+        
+        $lead->shouldReceive('getAttribute')->with('id')->andReturn(1);
+        $lead->shouldReceive('getAttribute')->with('stage')->andReturn($stage);
+        $lead->shouldReceive('getAttribute')->with('department')->andReturn(null);
+        $lead->shouldReceive('wasChanged')->with('lead_pipeline_stage_id')->andReturn(true);
+        $lead->shouldReceive('load')->with('source')->andReturn($lead);
+        $lead->shouldReceive('getAttribute')->with('source')->andReturn(null);
+
+        // Mock activity repository for logFixedFieldsActivity
+        $this->activityRepository->shouldReceive('create')->andReturn(Mockery::mock());
+        $lead->shouldReceive('activities')->andReturn(Mockery::mock());
+        $lead->shouldReceive('activities->attach')->andReturn(true);
+        $lead->shouldReceive('wasChanged')->with('first_name')->andReturn(false);
+        $lead->shouldReceive('wasChanged')->with('last_name')->andReturn(false);
+        $lead->shouldReceive('wasChanged')->with('maiden_name')->andReturn(false);
+        $lead->shouldReceive('wasChanged')->with('description')->andReturn(false);
+
+        // Webhook should be sent for stage change
+        $this->webhookService->shouldReceive('sendWebhook')
+            ->once()
+            ->with(
+                Mockery::type('array'),
+                WebhookType::LEAD_PIPELINE_STAGE_CHANGE,
+                'LeadObserver@updated'
+            )
+            ->andReturn(true);
+
+        // Call the updated method
+        $this->observer->updated($lead);
+    }
+
+    protected function tearDown(): void
+    {
+        Mockery::close();
+        parent::tearDown();
+    }
+}

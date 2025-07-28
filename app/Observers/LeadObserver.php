@@ -65,8 +65,17 @@ class LeadObserver
             'lead_id' => $lead->id,
             'stage'   => $lead->stage?->name,
         ]);
+        
+        // Check if pipeline will be updated to avoid duplicate webhooks
+        $willUpdatePipeline = $this->willPipelineBeUpdated($lead);
+        
         $this->updatePipelineState($lead);
-        $this->sendWebhook($lead, 'LeadObserver@created');
+        
+        // Only send webhook if pipeline wasn't updated (to avoid duplicate)
+        // The updated observer will handle the webhook if pipeline changed
+        if (!$willUpdatePipeline) {
+            $this->sendWebhook($lead, 'LeadObserver@created');
+        }
     }
 
     /**
@@ -118,6 +127,23 @@ class LeadObserver
                 'lead_pipeline_stage_id' => $leadPipelineStageId,
             ]);
         }
+    }
+
+    /**
+     * Check if the pipeline will be updated for this lead
+     */
+    private function willPipelineBeUpdated(Lead $lead): bool
+    {
+        if (is_null($lead->department)) {
+            return false;
+        }
+        
+        $expectedPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
+        if ($lead->department->name == 'Hernia') {
+            $expectedPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
+        }
+        
+        return $lead->lead_pipeline_id != $expectedPipelineId;
     }
 
     private function sendWebhook(Lead $lead, string $caller): void

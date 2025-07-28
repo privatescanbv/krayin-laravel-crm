@@ -358,11 +358,12 @@ test('match algorithm includes date of birth and address in scoring', function (
 
     // Create address for the lead
     \App\Models\Address::create([
-        'lead_id'     => $lead->id,
-        'street'      => 'Hoofdstraat 123',
-        'city'        => 'Amsterdam',
-        'postal_code' => '1012 AB',
-        'country'     => 'Netherlands',
+        'lead_id'      => $lead->id,
+        'street'       => 'Hoofdstraat',
+        'house_number' => '123',
+        'city'         => 'Amsterdam',
+        'postal_code'  => '1012 AB',
+        'country'      => 'Netherlands',
     ]);
 
     // Create person with perfect match (all fields including date of birth and address)
@@ -376,11 +377,12 @@ test('match algorithm includes date of birth and address in scoring', function (
 
     // Create address for perfect match person
     \App\Models\Address::create([
-        'person_id'   => $perfectMatchPerson->id,
-        'street'      => 'Hoofdstraat 123',
-        'city'        => 'Amsterdam',
-        'postal_code' => '1012 AB',
-        'country'     => 'Netherlands',
+        'person_id'    => $perfectMatchPerson->id,
+        'street'       => 'Hoofdstraat',
+        'house_number' => '123',
+        'city'         => 'Amsterdam',
+        'postal_code'  => '1012 AB',
+        'country'      => 'Netherlands',
     ]);
 
     // Create person without date of birth and address (should have lower score)
@@ -403,11 +405,12 @@ test('match algorithm includes date of birth and address in scoring', function (
 
     // Create address for different data person
     \App\Models\Address::create([
-        'person_id'   => $differentDataPerson->id,
-        'street'      => 'Kerkstraat 456',  // Different street
-        'city'        => 'Utrecht',         // Different city
-        'postal_code' => '3511 AB',         // Different postal code
-        'country'     => 'Netherlands',     // Same country
+        'person_id'    => $differentDataPerson->id,
+        'street'       => 'Kerkstraat',     // Different street
+        'house_number' => '456',            // Different house number
+        'city'         => 'Utrecht',        // Different city
+        'postal_code'  => '3511 AB',        // Different postal code
+        'country'      => 'Netherlands',    // Same country
     ]);
 
     // Load the address relationships
@@ -472,11 +475,12 @@ test('address matching works with partial postal code matches', function () {
 
     // Create address for the lead
     \App\Models\Address::create([
-        'lead_id'     => $lead->id,
-        'street'      => 'Damrak 1',
-        'city'        => 'Amsterdam',
-        'postal_code' => '1012JS', // Without space
-        'country'     => 'Netherlands',
+        'lead_id'      => $lead->id,
+        'street'       => 'Damrak',
+        'house_number' => '1',
+        'city'         => 'Amsterdam',
+        'postal_code'  => '1012JS', // Without space
+        'country'      => 'Netherlands',
     ]);
 
     // Create person with exact address match
@@ -488,11 +492,12 @@ test('address matching works with partial postal code matches', function () {
     ]);
 
     \App\Models\Address::create([
-        'person_id'   => $exactMatchPerson->id,
-        'street'      => 'Damrak 1',
-        'city'        => 'Amsterdam',
-        'postal_code' => '1012JS',
-        'country'     => 'Netherlands',
+        'person_id'    => $exactMatchPerson->id,
+        'street'       => 'Damrak',
+        'house_number' => '1',
+        'city'         => 'Amsterdam',
+        'postal_code'  => '1012JS',
+        'country'      => 'Netherlands',
     ]);
 
     // Create person with partial postal code match (with space)
@@ -504,11 +509,12 @@ test('address matching works with partial postal code matches', function () {
     ]);
 
     \App\Models\Address::create([
-        'person_id'   => $partialMatchPerson->id,
-        'street'      => 'Damrak 1',
-        'city'        => 'Amsterdam',
-        'postal_code' => '1012 JS', // With space - should still partially match
-        'country'     => 'Netherlands',
+        'person_id'    => $partialMatchPerson->id,
+        'street'       => 'Damrak',
+        'house_number' => '1',
+        'city'         => 'Amsterdam',
+        'postal_code'  => '1012 JS', // With space - should still partially match
+        'country'      => 'Netherlands',
     ]);
 
     // Create person with different address
@@ -520,11 +526,12 @@ test('address matching works with partial postal code matches', function () {
     ]);
 
     \App\Models\Address::create([
-        'person_id'   => $differentAddressPerson->id,
-        'street'      => 'Kalverstraat 123',
-        'city'        => 'Utrecht',
-        'postal_code' => '3511 AB',
-        'country'     => 'Netherlands',
+        'person_id'    => $differentAddressPerson->id,
+        'street'       => 'Kalverstraat',
+        'house_number' => '123',
+        'city'         => 'Utrecht',
+        'postal_code'  => '3511 AB',
+        'country'      => 'Netherlands',
     ]);
 
     // Load address relationships

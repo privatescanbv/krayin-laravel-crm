@@ -553,7 +553,7 @@ class PersonController extends Controller
             return 0.0;
         }
 
-        $addressFields = ['street', 'city', 'postal_code', 'country'];
+        $addressFields = ['street', 'house_number', 'city', 'postal_code', 'country'];
         $matchCount = 0;
         $totalFields = 0;
 
@@ -659,6 +659,7 @@ class PersonController extends Controller
         if (method_exists($entity, 'address') && $entity->address) {
             $address = [
                 'street' => $entity->address->street ?? '',
+                'house_number' => $entity->address->house_number ?? '',
                 'city' => $entity->address->city ?? '',
                 'postal_code' => $entity->address->postal_code ?? '',
                 'country' => $entity->address->country ?? '',
@@ -668,6 +669,7 @@ class PersonController extends Controller
         else {
             $address = [
                 'street' => $entity->street ?? '',
+                'house_number' => $entity->house_number ?? '',
                 'city' => $entity->city ?? '',
                 'postal_code' => $entity->postal_code ?? '',
                 'country' => $entity->country ?? '',

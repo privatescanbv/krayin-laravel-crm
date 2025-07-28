@@ -79,9 +79,24 @@
                 <!-- Duplicates List -->
                 <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                     <div class="border-b border-gray-200 p-4 dark:border-gray-800">
-                        <h3 class="text-lg font-semibold text-orange-600">
-                            Mogelijke duplicaten (@{{ duplicates.length }})
-                        </h3>
+                        <div class="flex items-center gap-2 mb-2">
+                            <h3 class="text-lg font-semibold text-orange-600">
+                                Mogelijke duplicaten (@{{ duplicates.length }})
+                            </h3>
+                            <div class="relative group">
+                                <span class="icon-info rounded-full bg-blue-200 text-blue-600 dark:!text-blue-600 cursor-help text-sm"></span>
+                                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-blue-600 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 shadow-lg">
+                                    <div class="font-medium mb-1">Hoe worden duplicaten gevonden?</div>
+                                    <div class="">
+                                        • <strong>E-mailadressen:</strong> Exacte match van e-mailadressen<br>
+                                        • <strong>Telefoonnummers:</strong> Exacte match van telefoonnummers<br>
+                                        • <strong>Namen:</strong> Voornaam + achternaam combinatie<br>
+                                        • <strong>Gehuwde naam:</strong> Wordt ook meegenomen bij naam matching
+                                    </div>
+                                    <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-blue-600"></div>
+                                </div>
+                            </div>
+                        </div>
                         <p class="text-sm text-gray-600">Selecteer leads om samen te voegen en kies welke veldwaarden behouden blijven.</p>
                     </div>
 
@@ -682,7 +697,7 @@
                                                             @{{ duplicate.address.state || '' }} @{{ duplicate.address.country || '' }}
                                                         </div>
                                                     </div>
-                                                    <span v-else class="text-gray-400">No address</span>
+                                                    <span v-else class="text-gray-400">Geen adres</span>
                                                 </div>
                                             </label>
                                         </td>
@@ -695,9 +710,9 @@
                         <div class="mt-6 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
                             <div class="flex items-center justify-between">
                                 <div class="text-sm text-gray-600 dark:text-gray-300">
-                                    <span class="font-medium">Selected:</span> @{{ selectedLeads.length }} lead(s) for merging
+                                    <span class="font-medium">Geselecteerd:</span> @{{ selectedLeads.length }} lead(s) voor samenvoegen
                                     <div v-if="selectedLeads.length < 2" class="mt-1 text-xs text-orange-600">
-                                        Select at least one duplicate to merge
+                                        Selecteer ten minste één duplicaat om samen te voegen
                                     </div>
                                 </div>
                                 <div class="flex gap-3">
@@ -705,7 +720,7 @@
                                         :href="redirectUrl"
                                         class="rounded border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                                     >
-                                        Cancel
+                                        Annuleren
                                     </a>
                                     <button
                                         @click="mergeLeads"
@@ -713,8 +728,8 @@
                                         class="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                     >
                                         <span v-if="isLoading" class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-                                        <span v-if="isLoading">Merging...</span>
-                                        <span v-else>Merge Selected Leads</span>
+                                        <span v-if="isLoading">Samenvoegen...</span>
+                                        <span v-else>Samenvoegen geselecteerde leads</span>
                                     </button>
                                 </div>
                             </div>
@@ -782,11 +797,11 @@
                     },
                     async mergeLeads() {
                         if (this.selectedLeads.length < 2) {
-                            alert('Please select at least one duplicate lead to merge.');
+                            alert('Selecteer ten minste één duplicaat lead om samen te voegen.');
                             return;
                         }
 
-                        if (!confirm('Are you sure you want to merge these leads? This action cannot be undone.')) {
+                        if (!confirm('Weet je zeker dat je deze leads wilt samenvoegen? Deze actie kan niet ongedaan worden gemaakt.')) {
                             return;
                         }
 
@@ -821,7 +836,7 @@
                             }
 
                             if (!csrfToken) {
-                                throw new Error('CSRF token not found. Please refresh the page and try again.');
+                                throw new Error('CSRF token niet gevonden. Vernieuw de pagina en probeer opnieuw.');
                             }
 
                             const response = await fetch(this.mergeUrl, {
@@ -847,11 +862,11 @@
                             if (result.success) {
                                 window.location.href = this.redirectUrl;
                             } else {
-                                alert('Error merging leads: ' + (result.message || 'Unknown error occurred'));
+                                alert('Fout bij samenvoegen van leads: ' + (result.message || 'Onbekende fout opgetreden'));
                             }
                         } catch (error) {
                             console.error('Merge error:', error);
-                            alert('Error merging leads: ' + error.message);
+                            alert('Fout bij samenvoegen van leads: ' + error.message);
                         } finally {
                             this.isLoading = false;
                         }

@@ -139,10 +139,15 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Dynamic Field Rows -->
-                                    <template v-for="fieldConfig in fieldConfigurations" :key="fieldConfig.field">
+                                    <!-- Fields with Differences Section -->
+                                    <template v-for="fieldConfig in fieldsWithDifferences" :key="'diff-' + fieldConfig.field">
                                         <tr class="border-b border-gray-100 dark:border-gray-800">
-                                            <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">@{{ fieldConfig.label }}</td>
+                                            <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">
+                                                @{{ fieldConfig.label }}
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                                    Verschil
+                                                </span>
+                                            </td>
                                             
                                             <!-- Primary Lead Column -->
                                             <td class="p-3" :class="fieldConfig.type === 'readonly' ? 'text-center' : ''">
@@ -185,6 +190,53 @@
                                                         <div v-html="renderFieldValue(duplicate, fieldConfig)"></div>
                                                     </label>
                                                 </template>
+                                            </td>
+                                        </tr>
+                                    </template>
+
+                                    <!-- Section Divider for Identical Fields -->
+                                    <template v-if="fieldsWithoutDifferences.length > 0">
+                                        <tr class="bg-green-50 dark:bg-green-900/20">
+                                            <td :colspan="2 + duplicates.length" class="p-4 text-center">
+                                                <div class="flex items-center justify-center gap-2">
+                                                    <span class="icon-check text-green-600 text-lg"></span>
+                                                    <h4 class="text-sm font-semibold text-green-700 dark:text-green-400">
+                                                        Velden zonder verschillen (@{{ fieldsWithoutDifferences.length }})
+                                                    </h4>
+                                                    <button 
+                                                        @click="showIdenticalFields = !showIdenticalFields"
+                                                        class="ml-2 text-xs text-green-600 hover:text-green-800 underline"
+                                                    >
+                                                        @{{ showIdenticalFields ? 'Verbergen' : 'Tonen voor controle' }}
+                                                    </button>
+                                                </div>
+                                                <p class="text-xs text-green-600 mt-1">Deze velden hebben dezelfde waarde in alle leads - geen actie vereist</p>
+                                            </td>
+                                        </tr>
+                                    </template>
+
+                                    <!-- Fields without Differences Section (Collapsible) -->
+                                    <template v-if="showIdenticalFields" v-for="fieldConfig in fieldsWithoutDifferences" :key="'same-' + fieldConfig.field">
+                                        <tr class="border-b border-gray-100 dark:border-gray-800 bg-green-50/30 dark:bg-green-900/10">
+                                            <td class="p-3 font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                                                @{{ fieldConfig.label }}
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-200 text-green-800">
+                                                    Identiek
+                                                </span>
+                                            </td>
+                                            
+                                            <!-- Primary Lead Column -->
+                                            <td class="p-3 text-center bg-green-50/50 dark:bg-green-900/20">
+                                                <div v-html="renderFieldValue(primaryLead, fieldConfig)"></div>
+                                            </td>
+                                            
+                                            <!-- Duplicate Leads Columns -->
+                                            <td
+                                                v-for="duplicate in duplicates"
+                                                :key="duplicate.id"
+                                                class="p-3 text-center bg-green-50/50 dark:bg-green-900/20"
+                                            >
+                                                <div v-html="renderFieldValue(duplicate, fieldConfig)"></div>
                                             </td>
                                         </tr>
                                     </template>
@@ -234,6 +286,7 @@
                         selectedLeads: [this.primaryLead.id], // Primary lead is always selected
                         fieldMappings: {},
                         isLoading: false,
+                        showIdenticalFields: false, // Control visibility of identical fields
                         fieldConfigurations: [
                             // Personal Information
                             { field: 'salutation', label: 'Aanhef', type: 'simple' },
@@ -265,6 +318,18 @@
                         ]
                     };
                 },
+                computed: {
+                    fieldsWithDifferences() {
+                        return this.fieldConfigurations.filter(config => {
+                            return this.hasFieldDifferences(config);
+                        });
+                    },
+                    fieldsWithoutDifferences() {
+                        return this.fieldConfigurations.filter(config => {
+                            return !this.hasFieldDifferences(config);
+                        });
+                    }
+                },
                 mounted() {
                     // Initialize field mappings
                     this.initializeFieldMappings();
@@ -273,6 +338,8 @@
                     console.log('Primary lead:', this.primaryLead);
                     console.log('Duplicates:', this.duplicates);
                     console.log('Field configurations:', this.fieldConfigurations);
+                    console.log('Fields with differences:', this.fieldsWithDifferences);
+                    console.log('Fields without differences:', this.fieldsWithoutDifferences);
                 },
                 methods: {
                     initializeFieldMappings() {
@@ -281,6 +348,72 @@
                                 this.fieldMappings[config.field] = this.primaryLead.id;
                             }
                         });
+                    },
+                    
+                    hasFieldDifferences(fieldConfig) {
+                        // Skip readonly fields from difference checking
+                        if (fieldConfig.type === 'readonly') {
+                            return false;
+                        }
+                        
+                        const primaryValue = this.normalizeFieldValue(this.primaryLead, fieldConfig);
+                        
+                        // Check if any duplicate has a different value
+                        return this.duplicates.some(duplicate => {
+                            const duplicateValue = this.normalizeFieldValue(duplicate, fieldConfig);
+                            return !this.areValuesEqual(primaryValue, duplicateValue, fieldConfig.type);
+                        });
+                    },
+                    
+                    normalizeFieldValue(lead, fieldConfig) {
+                        const fieldValue = lead[fieldConfig.field];
+                        
+                        switch (fieldConfig.type) {
+                            case 'simple':
+                            case 'stage':
+                                if (fieldConfig.field === 'status' || fieldConfig.type === 'stage') {
+                                    return lead.stage?.name || '';
+                                }
+                                return fieldValue || '';
+                                
+                            case 'array':
+                                if (!fieldValue || !Array.isArray(fieldValue)) {
+                                    return [];
+                                }
+                                return fieldValue.map(item => item.value || '').sort();
+                                
+                            case 'address':
+                                if (!lead.address) {
+                                    return '';
+                                }
+                                // Create a normalized address string for comparison
+                                return [
+                                    lead.address.full_address || '',
+                                    lead.address.street || '',
+                                    lead.address.house_number || '',
+                                    lead.address.house_number_suffix || '',
+                                    lead.address.postal_code || '',
+                                    lead.address.city || '',
+                                    lead.address.state || '',
+                                    lead.address.country || ''
+                                ].join('|');
+                                
+                            default:
+                                return fieldValue || '';
+                        }
+                    },
+                    
+                    areValuesEqual(value1, value2, fieldType) {
+                        if (fieldType === 'array') {
+                            // Compare arrays
+                            if (value1.length !== value2.length) {
+                                return false;
+                            }
+                            return value1.every((item, index) => item === value2[index]);
+                        }
+                        
+                        // Compare strings/primitives
+                        return value1 === value2;
                     },
                     
                     toggleLeadSelection(leadId) {

@@ -79,9 +79,24 @@
                 <!-- Duplicates List -->
                 <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                     <div class="border-b border-gray-200 p-4 dark:border-gray-800">
-                        <h3 class="text-lg font-semibold text-orange-600">
-                            Mogelijke duplicaten (@{{ duplicates.length }})
-                        </h3>
+                        <div class="flex items-center gap-2 mb-2">
+                            <h3 class="text-lg font-semibold text-orange-600">
+                                Mogelijke duplicaten (@{{ duplicates.length }})
+                            </h3>
+                            <div class="relative group">
+                                <span class="icon-info rounded-full bg-blue-200 text-blue-600 dark:!text-blue-600 cursor-help text-sm"></span>
+                                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-blue-600 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 shadow-lg">
+                                    <div class="font-medium mb-1">Hoe worden duplicaten gevonden?</div>
+                                    <div class="">
+                                        • <strong>E-mailadressen:</strong> Exacte match van e-mailadressen<br>
+                                        • <strong>Telefoonnummers:</strong> Exacte match van telefoonnummers<br>
+                                        • <strong>Namen:</strong> Voornaam + achternaam combinatie<br>
+                                        • <strong>Gehuwde naam:</strong> Wordt ook meegenomen bij naam matching
+                                    </div>
+                                    <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-blue-600"></div>
+                                </div>
+                            </div>
+                        </div>
                         <p class="text-sm text-gray-600">Selecteer leads om samen te voegen en kies welke veldwaarden behouden blijven.</p>
                     </div>
 

@@ -88,7 +88,7 @@
                         {!! view_render_event('admin.activities.index.datagrid.before') !!}
 
                         <x-admin::datagrid
-                            :src="dataGridSrc"
+                            :src="datagridUrl"
                             :isMultiRow="true"
                             ref="datagrid"
                         >
@@ -504,8 +504,8 @@
                     hasViews() {
                         return this.availableViews && Object.keys(this.availableViews).length > 0;
                     },
-                    
-                    dataGridSrc() {
+
+                    datagridUrl() {
                         const baseUrl = '{{ route('admin.activities.get') }}';
                         return this.currentView ? `${baseUrl}?view=${this.currentView}` : baseUrl;
                     }
@@ -557,8 +557,7 @@
 
                     refreshDatagrid() {
                         if (this.$refs.datagrid) {
-                            // The dataGridSrc computed property will automatically update
-                            // Force refresh the datagrid
+                            // Force refresh the datagrid - it will automatically pick up URL parameters
                             this.$nextTick(() => {
                                 this.$refs.datagrid.get();
                             });

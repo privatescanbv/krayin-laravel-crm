@@ -128,10 +128,10 @@
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.header.before') !!}
 
                                     <!-- Header -->
-                                    <div class="flex items-start justify-between">
+                                    <div v-if="element.person?.name" class="flex items-start justify-between">
                                        <div class="flex items-center gap-1">
-                                           <div v-if="element.person?.name || element.first_name">
-                                               <x-admin::avatar ::name="element.person?.name || element.first_name" class="w-6 h-6" />
+                                           <div>
+                                               <x-admin::avatar ::name="element.person?.name" class="w-6 h-6" />
                                            </div>
                                            <div class="flex flex-col gap-0.5">
                                                <span class="text-[11px] font-medium">

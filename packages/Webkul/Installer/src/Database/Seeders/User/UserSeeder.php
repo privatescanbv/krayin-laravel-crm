@@ -74,7 +74,7 @@ class UserSeeder extends Seeder
                 'status'          => 1,
                 'role_id'         => 1,
                 'view_permission' => 'global',
-                'group_id'        => $groupPrivatescanId,
+                'group_id'        => null,
             ],
             [
                 'name'            => 'Petra',

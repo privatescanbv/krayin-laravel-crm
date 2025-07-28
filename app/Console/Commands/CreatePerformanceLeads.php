@@ -41,6 +41,7 @@ class CreatePerformanceLeads extends Command
         $userId = $this->option('user');
         $delay = (int) $this->option('delay');
         $dryRun = $this->option('dry-run');
+        $apiKey = config('api.keys', [])[0] ?? null;
 
         if ($dryRun) {
             $this->info('DRY RUN MODE - No leads will be created');
@@ -68,7 +69,13 @@ class CreatePerformanceLeads extends Command
                 $successCount++;
             } else {
                 try {
-                    $response = Http::timeout(30)->post('http://crm/api/leads/', $leadData);
+                    $response = Http::timeout(30)
+                        ->withHeaders([
+                            'Content-Type' =>'application/json',
+                            'Accept' => 'application/json',
+                            'X-API-KEY' => $apiKey
+                        ])
+                        ->post('http://crm/api/leads/', $leadData);
 
                     if ($response->successful()) {
                         $successCount++;

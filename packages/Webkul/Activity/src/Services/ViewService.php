@@ -90,7 +90,7 @@ class ViewService
             [
                 'column' => 'assigned_user_id',
                 'operator' => 'eq',
-                'value' => (string) $currentUserId, // String value for filter interface
+                'value' => (string) $currentUserId,
             ],
             [
                 'column' => 'is_done',
@@ -139,7 +139,7 @@ class ViewService
             [
                 'column' => 'group',
                 'operator' => 'eq',
-                'value' => 'Hernia', // Hernia group name
+                'value' => 'Hernia',
             ],
             [
                 'column' => 'is_done',
@@ -160,7 +160,7 @@ class ViewService
             [
                 'column' => 'group',
                 'operator' => 'eq',
-                'value' => 'Privatescan', // Privatescan group name
+                'value' => 'Privatescan',
             ],
             [
                 'column' => 'is_done',
@@ -220,14 +220,12 @@ class ViewService
                 
             case 'user_or_groups':
                 $queryBuilder->where(function ($query) use ($value) {
-                    // Activities assigned to the user
                     $query->where('activities.user_id', $value['user_id']);
                     
                     if (!empty($value['group_ids'])) {
-                        // Activities assigned to user's groups (including unassigned ones)
                         $query->orWhereIn('activities.group_id', $value['group_ids']);
                         
-                        // Activities where user is a participant
+                        // Include activities where user is a participant
                         $query->orWhereExists(function ($existsQuery) use ($value) {
                             $existsQuery->select(DB::raw(1))
                                 ->from('activity_participants')

@@ -483,7 +483,6 @@
                         viewType: '{{ request('view-type') }}' || 'table',
                         currentView: 'for_me',
                         availableViews: {},
-                        defaultFiltersApplied: false,
                     };
                 },
 
@@ -540,9 +539,7 @@
                         window.location.href = currentUrl.toString();
                     },
 
-                    refreshDatagrid() {
-                        // Not needed anymore since we use page redirects for view changes
-                    },
+
                     assignToMe(record) {
                         if (!record.id) return;
                         this.$axios.put(`/admin/activities/edit/${record.id}`, {

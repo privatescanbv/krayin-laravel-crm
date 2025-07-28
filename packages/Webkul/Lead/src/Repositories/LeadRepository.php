@@ -625,11 +625,16 @@ class LeadRepository extends Repository
             // Apply field mappings to primary lead
             if (!empty($fieldMappings)) {
                 $updateData = [];
+                $addressSourceLeadId = null;
 
                 foreach ($fieldMappings as $field => $sourceLeadId) {
                     if ($sourceLeadId != $primaryLeadId) {
                         $sourceLead = $duplicateLeads->firstWhere('id', $sourceLeadId);
-                        if ($sourceLead && !empty($sourceLead->$field)) {
+                        
+                        if ($field === 'address') {
+                            // Handle address separately - we need to merge the full address data
+                            $addressSourceLeadId = $sourceLeadId;
+                        } elseif ($sourceLead && !empty($sourceLead->$field)) {
                             $updateData[$field] = $sourceLead->$field;
                         }
                     }
@@ -637,6 +642,11 @@ class LeadRepository extends Repository
 
                 if (!empty($updateData)) {
                     $primaryLead->update($updateData);
+                }
+
+                // Handle address merge separately
+                if ($addressSourceLeadId) {
+                    $this->mergeAddress($primaryLead, $duplicateLeads->firstWhere('id', $addressSourceLeadId));
                 }
             }
 
@@ -674,6 +684,60 @@ class LeadRepository extends Repository
             DB::rollback();
             throw $e;
         }
+    }
+
+    /**
+     * Merge address data from source lead to primary lead
+     */
+    private function mergeAddress($primaryLead, $sourceLead): void
+    {
+        if (!$sourceLead || !$sourceLead->address) {
+            return;
+        }
+
+        $sourceAddress = $sourceLead->address;
+        
+        // Get or create address for primary lead
+        $primaryAddress = $primaryLead->address;
+        
+        if ($primaryAddress) {
+            // Update existing address with source address data
+            $primaryAddress->update([
+                'street' => $sourceAddress->street,
+                'house_number' => $sourceAddress->house_number,
+                'house_number_suffix' => $sourceAddress->house_number_suffix,
+                'postal_code' => $sourceAddress->postal_code,
+                'city' => $sourceAddress->city,
+                'state' => $sourceAddress->state,
+                'country' => $sourceAddress->country,
+                'updated_by' => auth()->id(),
+            ]);
+        } else {
+            // Create new address for primary lead
+            $primaryLead->address()->create([
+                'lead_id' => $primaryLead->id,
+                'street' => $sourceAddress->street,
+                'house_number' => $sourceAddress->house_number,
+                'house_number_suffix' => $sourceAddress->house_number_suffix,
+                'postal_code' => $sourceAddress->postal_code,
+                'city' => $sourceAddress->city,
+                'state' => $sourceAddress->state,
+                'country' => $sourceAddress->country,
+                'created_by' => auth()->id(),
+                'updated_by' => auth()->id(),
+            ]);
+        }
+        
+        Log::info('Address merged successfully', [
+            'primary_lead_id' => $primaryLead->id,
+            'source_lead_id' => $sourceLead->id,
+            'merged_address' => [
+                'street' => $sourceAddress->street,
+                'house_number' => $sourceAddress->house_number,
+                'postal_code' => $sourceAddress->postal_code,
+                'city' => $sourceAddress->city,
+            ]
+        ]);
     }
 
     private

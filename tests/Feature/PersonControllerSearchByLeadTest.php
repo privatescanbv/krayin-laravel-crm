@@ -352,12 +352,17 @@ test('match algorithm includes date of birth and address in scoring', function (
         'emails'                 => [['value' => 'alice.johnson@example.com', 'label' => 'work']],
         'phones'                 => [['value' => '0612345678', 'label' => 'mobile']],
         'date_of_birth'          => '1985-03-15',
-        'street'                 => 'Hoofdstraat 123',
-        'city'                   => 'Amsterdam',
-        'postal_code'            => '1012 AB',
-        'country'                => 'Netherlands',
         'lead_pipeline_id'       => $pipeline->id,
         'lead_pipeline_stage_id' => $stage->id,
+    ]);
+
+    // Create address for the lead
+    \App\Models\Address::create([
+        'lead_id'     => $lead->id,
+        'street'      => 'Hoofdstraat 123',
+        'city'        => 'Amsterdam',
+        'postal_code' => '1012 AB',
+        'country'     => 'Netherlands',
     ]);
 
     // Create person with perfect match (all fields including date of birth and address)
@@ -406,6 +411,7 @@ test('match algorithm includes date of birth and address in scoring', function (
     ]);
 
     // Load the address relationships
+    $lead->load('address');
     $perfectMatchPerson->load('address');
     $differentDataPerson->load('address');
 
@@ -460,12 +466,17 @@ test('address matching works with partial postal code matches', function () {
         'last_name'              => 'Wilson',
         'emails'                 => [['value' => 'bob.wilson@example.com', 'label' => 'work']],
         'phones'                 => [['value' => '0612345678', 'label' => 'mobile']],
-        'street'                 => 'Damrak 1',
-        'city'                   => 'Amsterdam',
-        'postal_code'            => '1012JS', // Without space
-        'country'                => 'Netherlands',
         'lead_pipeline_id'       => $pipeline->id,
         'lead_pipeline_stage_id' => $stage->id,
+    ]);
+
+    // Create address for the lead
+    \App\Models\Address::create([
+        'lead_id'     => $lead->id,
+        'street'      => 'Damrak 1',
+        'city'        => 'Amsterdam',
+        'postal_code' => '1012JS', // Without space
+        'country'     => 'Netherlands',
     ]);
 
     // Create person with exact address match
@@ -517,6 +528,7 @@ test('address matching works with partial postal code matches', function () {
     ]);
 
     // Load address relationships
+    $lead->load('address');
     $exactMatchPerson->load('address');
     $partialMatchPerson->load('address');
     $differentAddressPerson->load('address');

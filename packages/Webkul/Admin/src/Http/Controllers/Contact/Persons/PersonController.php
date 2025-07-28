@@ -655,7 +655,7 @@ class PersonController extends Controller
     {
         $address = [];
 
-        // For persons, check if they have an address relationship
+        // For both persons and leads, check if they have an address relationship
         if (method_exists($entity, 'address') && $entity->address) {
             $address = [
                 'street' => $entity->address->street ?? '',
@@ -664,7 +664,7 @@ class PersonController extends Controller
                 'country' => $entity->address->country ?? '',
             ];
         }
-        // For leads, check direct address fields
+        // Fallback to direct address fields (for backwards compatibility)
         else {
             $address = [
                 'street' => $entity->street ?? '',

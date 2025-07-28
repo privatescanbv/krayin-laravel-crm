@@ -26,7 +26,7 @@ class LeadObserver
     public function __construct(
         protected WebhookService $webhookService,
         protected ActivityRepository $activityRepository,
-        private LeadRepository $leadRepository,
+        private readonly LeadRepository $leadRepository,
     ) {}
 
     /**
@@ -65,8 +65,17 @@ class LeadObserver
             'lead_id' => $lead->id,
             'stage'   => $lead->stage?->name,
         ]);
+
+        // Check if pipeline will be updated to avoid duplicate webhooks
+        $willUpdatePipeline = $this->willPipelineBeUpdated($lead);
+
         $this->updatePipelineState($lead);
-        $this->sendWebhook($lead, 'LeadObserver@created');
+
+        // Only send webhook if pipeline wasn't updated (to avoid duplicate)
+        // The updated observer will handle the webhook if pipeline changed
+        if (! $willUpdatePipeline) {
+            $this->sendWebhook($lead, 'LeadObserver@created');
+        }
     }
 
     /**
@@ -81,7 +90,7 @@ class LeadObserver
 
         $this->updatePipelineState($lead);
         // Send webhook if stage has changed and the stage is actually different
-        if ($lead->wasChanged('lead_pipeline_stage_id') && $lead->stage) {
+        if ($lead->isDirty('lead_pipeline_stage_id') && $lead->lead_pipeline_stage_id !== $lead->getOriginal('lead_pipeline_stage_id') && $lead->stage) {
 
             logger()->info('lead update', [
                 'lead_id'            => $lead->id,
@@ -120,6 +129,23 @@ class LeadObserver
         }
     }
 
+    /**
+     * Check if the pipeline will be updated for this lead
+     */
+    private function willPipelineBeUpdated(Lead $lead): bool
+    {
+        if (is_null($lead->department)) {
+            return false;
+        }
+
+        $expectedPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
+        if ($lead->department->name == 'Hernia') {
+            $expectedPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
+        }
+
+        return $lead->lead_pipeline_id != $expectedPipelineId;
+    }
+
     private function sendWebhook(Lead $lead, string $caller): void
     {
         // Eager load the source relation
@@ -129,7 +155,7 @@ class LeadObserver
 
         $this->webhookService->sendWebhook([
             'entity_id'      => $lead->id,
-            'status'         => $lead->stage->code,
+            'status'         => $lead->stage?->code,
             'source_code'    => $lead->source?->name,
             'source_code_id' => $lead->source?->id,
             'department'     => $departmentValue,

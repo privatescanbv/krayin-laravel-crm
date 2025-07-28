@@ -88,9 +88,9 @@
                         {!! view_render_event('admin.activities.index.datagrid.before') !!}
 
                         <x-admin::datagrid
-                            :src="'{{ route('admin.activities.get') }}?view=' + currentView"
+                            :src="datagridSrc"
                             :isMultiRow="true"
-                            :key="'datagrid-' + currentView"
+                            :key="datagridKey"
                             ref="datagrid"
                         >
                             <template #header="{
@@ -486,6 +486,7 @@
                         currentView: 'for_me',
                         availableViews: {},
                         defaultFiltersApplied: false,
+                        baseDatagridUrl: '{{ route('admin.activities.get') }}',
                     };
                 },
 
@@ -504,6 +505,14 @@
                 computed: {
                     hasViews() {
                         return this.availableViews && Object.keys(this.availableViews).length > 0;
+                    },
+
+                    datagridSrc() {
+                        return this.currentView ? `${this.baseDatagridUrl}?view=${this.currentView}` : this.baseDatagridUrl;
+                    },
+
+                    datagridKey() {
+                        return `datagrid-${this.currentView}`;
                     }
                 },
 

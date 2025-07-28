@@ -129,7 +129,19 @@ class ActivityController extends Controller
 
         Event::dispatch('activity.create.before');
 
-        $activity = $this->activityRepository->create(array_merge(request()->all(), [
+        // Auto-assign group if not specified but user has a group
+        $data = request()->all();
+        if (!isset($data['group_id']) || !$data['group_id']) {
+            $userId = $data['user_id'] ?? auth()->guard('user')->id();
+            if ($userId) {
+                $user = \Webkul\User\Models\User::find($userId);
+                if ($user && $user->groups()->count() > 0) {
+                    $data['group_id'] = $user->groups()->first()->id;
+                }
+            }
+        }
+
+        $activity = $this->activityRepository->create(array_merge($data, [
             'is_done' => request('type') == 'note' ? 1 : 0,
         ]));
 

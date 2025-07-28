@@ -77,7 +77,7 @@ class ActivityDataGrid extends DataGrid
         $this->addFilter('created_at', 'activities.created_at');
         $this->addFilter('days_until_deadline', 'days_until_deadline');
         $this->addFilter('lead_title', 'leads.title');
-        $this->addFilter('group', 'activities.group_id');
+        $this->addFilter('group', 'groups.name');
 
         return $queryBuilder;
     }
@@ -164,12 +164,11 @@ class ActivityDataGrid extends DataGrid
                 'repository' => GroupRepository::class,
                 'column'     => [
                     'label' => 'name',
-                    'value' => 'id',
+                    'value' => 'name',
                 ],
             ],
             'closure' => function ($row) {
-                $row->group = $row->group_name ?? 'N/A';
-                return $row->group;
+                return $row->group_name ?? 'N/A';
             },
         ]);
 

@@ -46,9 +46,19 @@ class ActivityController extends Controller
         $request['comment'] = $request->description;
         $lead = $this->leadRepository->findOrFail($id);
 
+        // Auto-assign group if not specified but user has a group
+        $groupId = $request->group_id;
+        if (!$groupId && $request->user_id) {
+            $user = \Webkul\User\Models\User::find($request->user_id);
+            if ($user && $user->groups()->count() > 0) {
+                $groupId = $user->groups()->first()->id;
+            }
+        }
+
         $activity = $this->activityRepository->create(array_merge($request->all(), [
             'is_done' => $request->type == 'note' ? 1 : 0,
             'user_id' => $request->user_id,
+            'group_id' => $groupId,
         ]));
 
         $lead->activities()->attach($activity->id);

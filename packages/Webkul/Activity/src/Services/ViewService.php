@@ -139,7 +139,7 @@ class ViewService
             [
                 'column' => 'group',
                 'operator' => 'eq',
-                'value' => '2', // Hernia group ID
+                'value' => 'Hernia', // Hernia group name
             ],
             [
                 'column' => 'is_done',
@@ -160,7 +160,7 @@ class ViewService
             [
                 'column' => 'group',
                 'operator' => 'eq',
-                'value' => '1', // Privatescan group ID
+                'value' => 'Privatescan', // Privatescan group name
             ],
             [
                 'column' => 'is_done',
@@ -215,7 +215,7 @@ class ViewService
                 break;
                 
             case 'group':
-                $queryBuilder->where('activities.group_id', $value);
+                $queryBuilder->where('groups.name', $value);
                 break;
                 
             case 'user_or_groups':

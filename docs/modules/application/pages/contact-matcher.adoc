@@ -8,10 +8,11 @@ De contact matcher functionaliteit is uitgebreid met een intelligent scoring sys
 
 ===== Matching Velden en Gewichten
 
-* **Naamvelden**: 90% gewicht totaal (primaire focus)
-** first_name, last_name, lastname_prefix, married_name, married_name_prefix, initials
+* **Naamvelden**: 85% gewicht totaal (primaire focus)
+** first_name, last_name, lastname_prefix, married_name, married_name_prefix, initials, date_of_birth
 * **E-mailadressen**: 5% gewicht
 * **Telefoonnummers**: 5% gewicht
+* **Adresgegevens**: 5% gewicht
 
 ===== Scoring Logica
 
@@ -20,7 +21,21 @@ De contact matcher functionaliteit is uitgebreid met een intelligent scoring sys
 * **Gedeeltelijke naammatches**: Geschaald tussen 0-80% gebaseerd op match ratio
 * **E-mail Matching**: Ondersteunt meerdere e-mails, scores gebaseerd op proportie van matchende e-mails
 * **Telefoon Matching**: Normaliseert telefoonnummers (handelt Nederlandse +31 formaat af) en ondersteunt meerdere nummers
+* **Adres Matching**: Vergelijkt straat, huisnummer, stad, postcode en land; ondersteunt partial matching voor postcodes
+* **Geboortedatum Matching**: Exacte datum vergelijking als onderdeel van naamveld scoring
 * **Maximaal mogelijke score**: 100% (wanneer alle velden perfect matchen)
+
+===== Adres Matching Details
+
+Het adres matching systeem evalueert de volgende velden:
+
+* **Straat**: Exacte match van straatnaam
+* **Huisnummer**: Exacte match van huisnummer
+* **Stad**: Exacte match van stadsnaam
+* **Postcode**: Exacte match met partial matching ondersteuning (bijv. "1012AB" vs "1012 AB")
+* **Land**: Exacte match van landnaam
+
+**Scoring**: Adres score wordt berekend als het percentage van matchende adresvelden gedeeld door het totaal aantal beschikbare adresvelden.
 
 ===== Performance Optimalisatie
 
@@ -40,8 +55,8 @@ Het systeem gebruikt intelligente database pre-filtering om performance te verbe
 . Resultaten zijn gesorteerd op relevantie (hoogste match eerst)
 . Visuele indicatoren helpen bij het identificeren van de kwaliteit van matches
 . Klik op het externe link icoon naast elke contactnaam om volledige contactdetails te bekijken in een nieuwe tab
-. Naamvelden zijn de primaire matching criteria (90% van totale score)
-. E-mail en telefoon matches bieden aanvullende validatie (5% elk)
+. Naamvelden (inclusief geboortedatum) zijn de primaire matching criteria (85% van totale score)
+. E-mail, telefoon en adres matches bieden aanvullende validatie (5% elk)
 
 
 ==== Gebruikershandleiding
@@ -83,8 +98,10 @@ Wanneer je een lead bewerkt, kun je de contact matcher gebruiken om bestaande co
 
 * **Volledige namen**: Zorg ervoor dat leads volledige voor- en achternamen hebben
 * **Consistente spelling**: Gebruik consistente spelling van namen
+* **Geboortedatum**: Voeg geboortedatum toe voor betere naam matching accuracy
 * **E-mail adressen**: E-mail adressen geven sterke validatie van matches
 * **Telefoonnummers**: Nederlandse nummers worden automatisch genormaliseerd (+31 → 0)
+* **Adresgegevens**: Volledige adressen (straat, huisnummer, stad, postcode) verbeteren match accuracy
 * **Getrouwde namen**: Het systeem herkent zowel meisjesnamen als getrouwde namen
 
 ==== Person-Lead Synchronisatie

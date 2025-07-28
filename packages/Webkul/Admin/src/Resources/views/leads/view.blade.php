@@ -107,14 +107,26 @@
                 </div>
             </div>
 
-            <!-- Lead Attributes -->
-            @include ('admin::leads.view.attributes')
+            <!-- Lead Overview (compact overview with all information) -->
+            @include ('admin::leads.view.compact-overview')
 
             <!-- Anamnesis Information -->
             @include ('admin::leads.view.anamnesis')
 
             <!-- Contact Person -->
             @include ('admin::leads.view.person')
+
+            <!-- Footer with creation and modification dates -->
+            <div class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
+                <div class="flex justify-between">
+                    <span>Aangemaakt:</span>
+                    <span>{{ $lead->created_at->format('d-m-Y') }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Laatst gewijzigd:</span>
+                    <span>{{ $lead->updated_at->format('d-m-Y') }}</span>
+                </div>
+            </div>
         </div>
 
         {!! view_render_event('admin.leads.view.left.after', ['lead' => $lead]) !!}

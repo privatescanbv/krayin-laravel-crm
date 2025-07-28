@@ -80,9 +80,9 @@
                 <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                     <div class="border-b border-gray-200 p-4 dark:border-gray-800">
                         <h3 class="text-lg font-semibold text-orange-600">
-                            Potential Duplicates (@{{ duplicates.length }})
+                            Mogelijke duplicaten (@{{ duplicates.length }})
                         </h3>
-                        <p class="text-sm text-gray-600">Select leads to merge and choose which field values to keep.</p>
+                        <p class="text-sm text-gray-600">Selecteer leads om samen te voegen en kies welke veldwaarden behouden blijven.</p>
                     </div>
 
                     <div class="p-4">
@@ -100,7 +100,7 @@
                                                     @change="toggleLeadSelection(primaryLead.id)"
                                                     class="mb-2"
                                                 />
-                                                <span class="font-semibold">Primary Lead</span>
+                                                <span class="font-semibold">Primaire lead</span>
                                                 <span class="text-xs text-gray-500">ID: @{{ primaryLead.id }}</span>
                                             </div>
                                         </th>
@@ -117,7 +117,7 @@
                                                     @change="toggleLeadSelection(duplicate.id)"
                                                     class="mb-2"
                                                 />
-                                                <span class="font-semibold">Duplicate Lead</span>
+                                                <span class="font-semibold">Dubbele lead</span>
                                                 <span class="text-xs text-gray-500">ID: @{{ duplicate.id }}</span>
                                             </div>
                                         </th>
@@ -126,7 +126,7 @@
                                 <tbody>
                                     <!-- Title Row -->
                                     <tr class="border-b border-gray-100 dark:border-gray-800">
-                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Title</td>
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Titel</td>
                                         <td class="p-3">
                                             <label class="flex flex-col items-center">
                                                 <input
@@ -174,7 +174,7 @@
 
                                     <!-- Stage Row -->
                                     <tr class="border-b border-gray-100 dark:border-gray-800">
-                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Stage</td>
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Fase</td>
                                         <td class="p-3 text-center">
                                             <span class="text-sm">@{{ primaryLead.stage?.name || 'N/A' }}</span>
                                         </td>
@@ -189,7 +189,7 @@
 
                                     <!-- First Name Row -->
                                     <tr class="border-b border-gray-100 dark:border-gray-800">
-                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">First Name</td>
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Voornaam</td>
                                         <td class="p-3">
                                             <label class="flex flex-col items-center">
                                                 <input
@@ -222,7 +222,7 @@
 
                                     <!-- Last Name Row -->
                                     <tr class="border-b border-gray-100 dark:border-gray-800">
-                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Last Name</td>
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Achternaam</td>
                                         <td class="p-3">
                                             <label class="flex flex-col items-center">
                                                 <input
@@ -255,7 +255,7 @@
 
                                     <!-- Emails Row -->
                                     <tr class="border-b border-gray-100 dark:border-gray-800">
-                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Emails</td>
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">E-mailadressen</td>
                                         <td class="p-3">
                                             <label class="flex flex-col items-center">
                                                 <input
@@ -269,7 +269,7 @@
                                                     <div v-for="email in primaryLead.emails" :key="email.value" class="mb-1">
                                                         @{{ email.value }}
                                                     </div>
-                                                    <span v-if="!primaryLead.emails || primaryLead.emails.length === 0" class="text-gray-400">No emails</span>
+                                                    <span v-if="!primaryLead.emails || primaryLead.emails.length === 0" class="text-gray-400">Geen e-mails</span>
                                                 </div>
                                             </label>
                                         </td>
@@ -290,7 +290,7 @@
                                                     <div v-for="email in duplicate.emails" :key="email.value" class="mb-1">
                                                         @{{ email.value }}
                                                     </div>
-                                                    <span v-if="!duplicate.emails || duplicate.emails.length === 0" class="text-gray-400">No emails</span>
+                                                    <span v-if="!duplicate.emails || duplicate.emails.length === 0" class="text-gray-400">Geen e-mails</span>
                                                 </div>
                                             </label>
                                         </td>
@@ -298,7 +298,7 @@
 
                                     <!-- Phones Row -->
                                     <tr class="border-b border-gray-100 dark:border-gray-800">
-                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Phones</td>
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Telefoonnummers</td>
                                         <td class="p-3">
                                             <label class="flex flex-col items-center">
                                                 <input
@@ -312,7 +312,7 @@
                                                     <div v-for="phone in primaryLead.phones" :key="phone.value" class="mb-1">
                                                         @{{ phone.value }}
                                                     </div>
-                                                    <span v-if="!primaryLead.phones || primaryLead.phones.length === 0" class="text-gray-400">No phones</span>
+                                                    <span v-if="!primaryLead.phones || primaryLead.phones.length === 0" class="text-gray-400">Geen telefoonnummers</span>
                                                 </div>
                                             </label>
                                         </td>
@@ -333,7 +333,356 @@
                                                     <div v-for="phone in duplicate.phones" :key="phone.value" class="mb-1">
                                                         @{{ phone.value }}
                                                     </div>
-                                                    <span v-if="!duplicate.phones || duplicate.phones.length === 0" class="text-gray-400">No phones</span>
+                                                    <span v-if="!duplicate.phones || duplicate.phones.length === 0" class="text-gray-400">Geen telefoonnummers</span>
+                                                </div>
+                                            </label>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Married Name Row -->
+                                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Gehuwde naam</td>
+                                        <td class="p-3">
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="married_name"
+                                                    :value="primaryLead.id"
+                                                    v-model="fieldMappings.married_name"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ primaryLead.married_name || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                        <td
+                                            v-for="duplicate in duplicates"
+                                            :key="duplicate.id"
+                                            class="p-3"
+                                        >
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="married_name"
+                                                    :value="duplicate.id"
+                                                    v-model="fieldMappings.married_name"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ duplicate.married_name || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Lastname Prefix Row -->
+                                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Voorvoegsel achternaam</td>
+                                        <td class="p-3">
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="lastname_prefix"
+                                                    :value="primaryLead.id"
+                                                    v-model="fieldMappings.lastname_prefix"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ primaryLead.lastname_prefix || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                        <td
+                                            v-for="duplicate in duplicates"
+                                            :key="duplicate.id"
+                                            class="p-3"
+                                        >
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="lastname_prefix"
+                                                    :value="duplicate.id"
+                                                    v-model="fieldMappings.lastname_prefix"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ duplicate.lastname_prefix || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Married Name Prefix Row -->
+                                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Voorvoegsel gehuwde naam</td>
+                                        <td class="p-3">
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="married_name_prefix"
+                                                    :value="primaryLead.id"
+                                                    v-model="fieldMappings.married_name_prefix"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ primaryLead.married_name_prefix || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                        <td
+                                            v-for="duplicate in duplicates"
+                                            :key="duplicate.id"
+                                            class="p-3"
+                                        >
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="married_name_prefix"
+                                                    :value="duplicate.id"
+                                                    v-model="fieldMappings.married_name_prefix"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ duplicate.married_name_prefix || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Initials Row -->
+                                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Initialen</td>
+                                        <td class="p-3">
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="initials"
+                                                    :value="primaryLead.id"
+                                                    v-model="fieldMappings.initials"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ primaryLead.initials || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                        <td
+                                            v-for="duplicate in duplicates"
+                                            :key="duplicate.id"
+                                            class="p-3"
+                                        >
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="initials"
+                                                    :value="duplicate.id"
+                                                    v-model="fieldMappings.initials"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ duplicate.initials || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Date of Birth Row -->
+                                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Geboortedatum</td>
+                                        <td class="p-3">
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="date_of_birth"
+                                                    :value="primaryLead.id"
+                                                    v-model="fieldMappings.date_of_birth"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ primaryLead.date_of_birth || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                        <td
+                                            v-for="duplicate in duplicates"
+                                            :key="duplicate.id"
+                                            class="p-3"
+                                        >
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="date_of_birth"
+                                                    :value="duplicate.id"
+                                                    v-model="fieldMappings.date_of_birth"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ duplicate.date_of_birth || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Gender Row -->
+                                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Geslacht</td>
+                                        <td class="p-3">
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="gender"
+                                                    :value="primaryLead.id"
+                                                    v-model="fieldMappings.gender"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ primaryLead.gender || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                        <td
+                                            v-for="duplicate in duplicates"
+                                            :key="duplicate.id"
+                                            class="p-3"
+                                        >
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="gender"
+                                                    :value="duplicate.id"
+                                                    v-model="fieldMappings.gender"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ duplicate.gender || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Lead Value Row -->
+                                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Lead waarde</td>
+                                        <td class="p-3">
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="lead_value"
+                                                    :value="primaryLead.id"
+                                                    v-model="fieldMappings.lead_value"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ primaryLead.lead_value || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                        <td
+                                            v-for="duplicate in duplicates"
+                                            :key="duplicate.id"
+                                            class="p-3"
+                                        >
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="lead_value"
+                                                    :value="duplicate.id"
+                                                    v-model="fieldMappings.lead_value"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ duplicate.lead_value || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Status Row -->
+                                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Status</td>
+                                        <td class="p-3">
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="status"
+                                                    :value="primaryLead.id"
+                                                    v-model="fieldMappings.status"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ primaryLead.status || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                        <td
+                                            v-for="duplicate in duplicates"
+                                            :key="duplicate.id"
+                                            class="p-3"
+                                        >
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="status"
+                                                    :value="duplicate.id"
+                                                    v-model="fieldMappings.status"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ duplicate.status || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Description Row -->
+                                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Beschrijving</td>
+                                        <td class="p-3">
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="description"
+                                                    :value="primaryLead.id"
+                                                    v-model="fieldMappings.description"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words max-w-xs">@{{ primaryLead.description || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                        <td
+                                            v-for="duplicate in duplicates"
+                                            :key="duplicate.id"
+                                            class="p-3"
+                                        >
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="description"
+                                                    :value="duplicate.id"
+                                                    v-model="fieldMappings.description"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words max-w-xs">@{{ duplicate.description || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Address Row -->
+                                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Adres</td>
+                                        <td class="p-3">
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="address"
+                                                    :value="primaryLead.id"
+                                                    v-model="fieldMappings.address"
+                                                    class="mb-2"
+                                                />
+                                                <div class="text-xs text-center">
+                                                    <div v-if="primaryLead.address" class="mb-1">
+                                                        <div>@{{ primaryLead.address.full_address || 'N/A' }}</div>
+                                                    </div>
+                                                    <span v-else class="text-gray-400">Geen adres</span>
+                                                </div>
+                                            </label>
+                                        </td>
+                                        <td
+                                            v-for="duplicate in duplicates"
+                                            :key="duplicate.id"
+                                            class="p-3"
+                                        >
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="address"
+                                                    :value="duplicate.id"
+                                                    v-model="fieldMappings.address"
+                                                    class="mb-2"
+                                                />
+                                                <div class="text-xs text-center">
+                                                    <div v-if="duplicate.address" class="mb-1">
+                                                        <div>@{{ duplicate.address.full_address || 'N/A' }}</div>
+                                                        <div v-if="duplicate.address.street && duplicate.address.house_number">
+                                                            @{{ duplicate.address.street }} @{{ duplicate.address.house_number }}@{{ duplicate.address.house_number_suffix || '' }}
+                                                        </div>
+                                                        <div v-if="duplicate.address.postal_code || duplicate.address.city">
+                                                            @{{ duplicate.address.postal_code || '' }} @{{ duplicate.address.city || '' }}
+                                                        </div>
+                                                        <div v-if="duplicate.address.state || duplicate.address.country">
+                                                            @{{ duplicate.address.state || '' }} @{{ duplicate.address.country || '' }}
+                                                        </div>
+                                                    </div>
+                                                    <span v-else class="text-gray-400">No address</span>
                                                 </div>
                                             </label>
                                         </td>
@@ -386,6 +735,16 @@
                             title: this.primaryLead.id,
                             first_name: this.primaryLead.id,
                             last_name: this.primaryLead.id,
+                            married_name: this.primaryLead.id,
+                            lastname_prefix: this.primaryLead.id,
+                            married_name_prefix: this.primaryLead.id,
+                            initials: this.primaryLead.id,
+                            date_of_birth: this.primaryLead.id,
+                            gender: this.primaryLead.id,
+                            lead_value: this.primaryLead.id,
+                            status: this.primaryLead.id,
+                            description: this.primaryLead.id,
+                            address: this.primaryLead.id,
                             emails: this.primaryLead.id,
                             phones: this.primaryLead.id,
                         },

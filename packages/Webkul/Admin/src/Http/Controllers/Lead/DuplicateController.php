@@ -2,10 +2,11 @@
 
 namespace Webkul\Admin\Http\Controllers\Lead;
 
+use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
+use Webkul\Admin\Http\Resources\LeadResource;
 use Webkul\Lead\Repositories\LeadRepository;
 
 class DuplicateController extends Controller
@@ -26,11 +27,9 @@ class DuplicateController extends Controller
         $lead = $this->leadRepository->with(['person', 'stage', 'pipeline', 'user'])->findOrFail($leadId);
         $duplicates = $this->leadRepository->findPotentialDuplicates($lead);
 
-        // Convert lead data for JavaScript
-        $leadData = $this->formatLeadForJs($lead);
-        $duplicatesData = $duplicates->map(function($duplicate) {
-            return $this->formatLeadForJs($duplicate);
-        });
+        // Use LeadResource for consistent data formatting
+        $leadData = (new LeadResource($lead))->resolve();
+        $duplicatesData = LeadResource::collection($duplicates)->resolve();
 
         return view('admin::leads.duplicates.index', [
             'lead' => $lead,
@@ -49,20 +48,7 @@ class DuplicateController extends Controller
         $duplicates = $this->leadRepository->findPotentialDuplicates($lead);
 
         return response()->json([
-            'duplicates' => $duplicates->map(function ($duplicate) {
-                return [
-                    'id' => $duplicate->id,
-                    'title' => $duplicate->title,
-                    'first_name' => $duplicate->first_name,
-                    'last_name' => $duplicate->last_name,
-                    'emails' => $duplicate->emails,
-                    'phones' => $duplicate->phones,
-                    'person_name' => $duplicate->person?->name,
-                    'stage_name' => $duplicate->stage?->name,
-                    'pipeline_name' => $duplicate->pipeline?->name,
-                    'created_at' => $duplicate->created_at?->format('Y-m-d H:i:s'),
-                ];
-            }),
+            'duplicates' => LeadResource::collection($duplicates),
             'count' => $duplicates->count(),
         ]);
     }
@@ -94,7 +80,7 @@ class DuplicateController extends Controller
                     'title' => $mergedLead->title,
                 ],
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to merge leads: ' . $e->getMessage(),
@@ -125,12 +111,12 @@ class DuplicateController extends Controller
         try {
             $lead = $this->leadRepository->findOrFail($leadId);
             $debugData = $this->leadRepository->debugLeadData($lead);
-            
+
             return response()->json([
                 'success' => true,
                 'debug_data' => $debugData,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage(),
@@ -139,31 +125,5 @@ class DuplicateController extends Controller
         }
     }
 
-    /**
-     * Format lead data for JavaScript consumption.
-     */
-    private function formatLeadForJs($lead): array
-    {
-        return [
-            'id' => $lead->id,
-            'title' => $lead->title,
-            'first_name' => $lead->first_name,
-            'last_name' => $lead->last_name,
-            'emails' => is_array($lead->emails) ? $lead->emails : [],
-            'phones' => is_array($lead->phones) ? $lead->phones : [],
-            'pipeline' => $lead->pipeline ? [
-                'id' => $lead->pipeline->id,
-                'name' => $lead->pipeline->name,
-            ] : null,
-            'stage' => $lead->stage ? [
-                'id' => $lead->stage->id,
-                'name' => $lead->stage->name,
-            ] : null,
-            'person' => $lead->person ? [
-                'id' => $lead->person->id,
-                'name' => $lead->person->name,
-            ] : null,
-            'created_at' => $lead->created_at ? $lead->created_at->format('Y-m-d H:i:s') : null,
-        ];
-    }
+
 }

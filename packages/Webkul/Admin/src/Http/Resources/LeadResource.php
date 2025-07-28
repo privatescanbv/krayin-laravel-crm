@@ -18,28 +18,59 @@ class LeadResource extends JsonResource
         return [
             'id'                   => $this->id,
             'title'                => $this->title,
+            'description'          => $this->description,
+            'lead_value'           => $this->lead_value,
             'status'               => $this->status,
-            'expected_close_date'  => $this->expected_close_date,
+            'lost_reason'          => $this->lost_reason,
+            'expected_close_date'  => $this->expected_close_date?->format('Y-m-d'),
+            'closed_at'            => $this->closed_at?->format('Y-m-d H:i:s'),
             'rotten_days'          => $this->rotten_days,
-            'closed_at'            => $this->closed_at,
-            'created_at'           => $this->created_at,
-            'updated_at'           => $this->updated_at,
+            'created_at'           => $this->created_at?->format('Y-m-d H:i:s'),
+            'updated_at'           => $this->updated_at?->format('Y-m-d H:i:s'),
+            
+            // Personal information
+            'salutation'           => $this->salutation,
+            'first_name'           => $this->first_name,
+            'last_name'            => $this->last_name,
+            'lastname_prefix'      => $this->lastname_prefix,
+            'married_name'         => $this->married_name,
+            'married_name_prefix'  => $this->married_name_prefix,
+            'initials'             => $this->initials,
+            'date_of_birth'        => $this->date_of_birth?->format('Y-m-d'),
+            'gender'               => $this->gender,
+            
+            // Contact information
+            'emails'               => is_array($this->emails) ? $this->emails : [],
+            'phones'               => is_array($this->phones) ? $this->phones : [],
+            
+            // Relationships
             'person'               => $this->person ? new PersonResource($this->person) : null,
             'user'                 => $this->user ? new UserResource($this->user) : null,
             'type'                 => $this->type ? new TypeResource($this->type) : null,
             'source'               => $this->source ? new SourceResource($this->source) : null,
             'pipeline'             => $this->pipeline ? new PipelineResource($this->pipeline) : null,
             'stage'                => $this->stage ? new StageResource($this->stage) : null,
+            'address'              => $this->address ? new AddressResource($this->address) : null,
             'tags'                 => TagResource::collection($this->tags),
-            'open_activities_count'=> $this->open_activities_count,
+            
+            // Computed attributes
+            'open_activities_count'=> $this->open_activities_count ?? 0,
+            'unread_emails_count'  => $this->unread_emails_count ?? 0,
+            'days_until_due_date'  => $this->days_until_due_date,
             'has_duplicates'       => $this->getSafeDuplicateStatus(),
             'duplicates_count'     => $this->getSafeDuplicateCount(),
-            'first_name'           => $this->first_name,
-            'last_name'            => $this->last_name,
-            'emails'               => is_array($this->emails) ? $this->emails : [],
-            'phones'               => is_array($this->phones) ? $this->phones : [],
-            'unread_emails_count'  => $this->unread_emails_count,
-            'days_until_due_date'  => $this->days_until_due_date,
+            
+            // IDs for relationships
+            'user_id'              => $this->user_id,
+            'person_id'            => $this->person_id,
+            'lead_source_id'       => $this->lead_source_id,
+            'lead_type_id'         => $this->lead_type_id,
+            'lead_pipeline_id'     => $this->lead_pipeline_id,
+            'lead_pipeline_stage_id'=> $this->lead_pipeline_stage_id,
+            'lead_channel_id'      => $this->lead_channel_id,
+            'department_id'        => $this->department_id,
+            'created_by'           => $this->created_by,
+            'updated_by'           => $this->updated_by,
         ];
     }
 

@@ -106,10 +106,10 @@
 
                                 <template v-else>
                                     <div
-                                        class="row grid grid-cols-[0.2fr_0.08fr_0.12fr_0.3fr_0.3fr] grid-rows-1 items-center gap-x-2.5 border-b px-4 py-2.5 dark:border-gray-800 max-lg:hidden">
+                                        class="row grid grid-cols-[0.25fr_0.1fr_0.15fr_0.5fr] grid-rows-1 items-center gap-x-2.5 border-b px-4 py-2.5 dark:border-gray-800 max-lg:hidden">
                                         <div
                                             class="flex select-none items-center gap-2.5"
-                                            v-for="(columnGroup, index) in [['title', 'assigned_user_id'], ['is_done'], ['group'], ['comment', 'lead_title', 'type'], ['created_at', 'days_until_deadline']]"
+                                            v-for="(columnGroup, index) in [['title', 'assigned_user_id'], ['is_done'], ['group'], ['comment', 'lead_title', 'type', 'created_at', 'days_until_deadline']]"
                                         >
                                             <label
                                                 class="flex w-max cursor-pointer select-none items-center gap-1"
@@ -249,7 +249,7 @@
 
                                 <template v-else>
                                     <div
-                                        class="row grid grid-cols-[0.2fr_0.08fr_0.12fr_0.3fr_0.3fr] grid-rows-1 gap-x-2.5 border-b px-4 py-2.5 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950 max-lg:hidden"
+                                        class="row grid grid-cols-[0.25fr_0.1fr_0.15fr_0.5fr] grid-rows-1 gap-x-2.5 border-b px-4 py-2.5 transition-all hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-950 max-lg:hidden"
                                         v-for="record in available.records"
                                     >
                                         <!-- Mass Actions, Title and Created By -->
@@ -300,8 +300,8 @@
                                             </div>
                                         </div>
 
-                                        <!-- Comment, Lead Title and Type -->
-                                        <div class="flex gap-1.5">
+                                        <!-- Comment, Lead Title, Type, Created At, Days Until Deadline and Actions -->
+                                        <div class="flex items-start justify-between gap-x-4">
                                             <div class="flex flex-col gap-1.5">
                                                 <p class="text-gray-600 dark:text-gray-300">
                                                     @{{ record.comment && record.comment.length > 180 ?
@@ -313,12 +313,7 @@
                                                 <p class="text-gray-600 dark:text-gray-300">
                                                     @{{ record.type ?? 'N/A'}}
                                                 </p>
-                                            </div>
-                                        </div>
 
-                                        <!-- Created At and Days Until Deadline -->
-                                        <div class="flex gap-1.5">
-                                            <div class="flex flex-col gap-1.5">
                                                 <p class="text-gray-600 dark:text-gray-300">
                                                     @{{ record.created_at }}
                                                 </p>
@@ -326,13 +321,6 @@
                                                 <p class="text-gray-600 dark:text-gray-300"
                                                    v-html="record.days_until_deadline">
                                                 </p>
-                                            </div>
-                                        </div>
-
-                                        <!-- Actions -->
-                                        <div class="flex items-start justify-between gap-x-4">
-                                            <div class="flex flex-col gap-1.5">
-                                                <!-- Empty space for alignment -->
                                             </div>
 
                                             <div class="flex items-center gap-1.5">

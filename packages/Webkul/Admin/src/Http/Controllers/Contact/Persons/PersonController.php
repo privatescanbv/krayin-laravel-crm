@@ -373,19 +373,23 @@ class PersonController extends Controller
         $score = 0.0;
         $maxScore = 100.0;
 
-        // Calculate name field matches
+        // Calculate name field matches (including date of birth)
         $nameScore = $this->calculateNameMatchScore($lead, $person);
 
-        // Email matching (25% weight - highest since emails are usually unique)
+        // Email matching (5% weight)
         $emailScore = $this->calculateEmailMatchScore($lead, $person);
         $score += $emailScore * 0.05 * 100;
 
-        // Phone number matching (20% weight)
+        // Phone number matching (5% weight)
         $phoneScore = $this->calculatePhoneMatchScore($lead, $person);
         $score += $phoneScore * 0.05 * 100;
 
-        // Add name score (55% total weight)
-        $score += $nameScore * 0.9 * 100;
+        // Address matching (5% weight)
+        $addressScore = $this->calculateAddressMatchScore($lead, $person);
+        $score += $addressScore * 0.05 * 100;
+
+        // Add name score (85% total weight)
+        $score += $nameScore * 0.85 * 100;
 
         return min($score, $maxScore);
     }
@@ -401,7 +405,8 @@ class PersonController extends Controller
             'lastname_prefix',
             'married_name',
             'married_name_prefix',
-            'initials'
+            'initials',
+            'date_of_birth'
         ];
 
         $importantNameFields = [
@@ -429,11 +434,20 @@ class PersonController extends Controller
                 if (!empty($leadValue) && !empty($personValue)) {
                     $isMatch = false;
 
-                    // Exact match
-                    if (strtolower(trim($leadValue)) === strtolower(trim($personValue))) {
+                    // Special handling for date_of_birth
+                    if ($field === 'date_of_birth') {
+                        $leadDate = $this->formatDateForComparison($leadValue);
+                        $personDate = $this->formatDateForComparison($personValue);
+                        if ($leadDate && $personDate && $leadDate === $personDate) {
+                            $isMatch = true;
+                        }
+                    }
+                    // Exact match for other fields
+                    elseif (strtolower(trim($leadValue)) === strtolower(trim($personValue))) {
                         $isMatch = true;
-                    } // Partial match for names (not for initials)
-                    elseif ($field !== 'initials' &&
+                    } 
+                    // Partial match for names (not for initials or date_of_birth)
+                    elseif (!in_array($field, ['initials', 'date_of_birth']) &&
                         (stripos($personValue, $leadValue) !== false ||
                             stripos($leadValue, $personValue) !== false)) {
                         $isMatch = true;
@@ -528,6 +542,50 @@ class PersonController extends Controller
     }
 
     /**
+     * Calculate address match score between lead and person.
+     */
+    private function calculateAddressMatchScore(Lead $lead, Person $person): float
+    {
+        $leadAddress = $this->extractAddressData($lead);
+        $personAddress = $this->extractAddressData($person);
+
+        if (empty($leadAddress) || empty($personAddress)) {
+            return 0.0;
+        }
+
+        $addressFields = ['street', 'city', 'postal_code', 'country'];
+        $matchCount = 0;
+        $totalFields = 0;
+
+        foreach ($addressFields as $field) {
+            $leadValue = $leadAddress[$field] ?? '';
+            $personValue = $personAddress[$field] ?? '';
+
+            if (!empty($leadValue) || !empty($personValue)) {
+                $totalFields++;
+
+                if (!empty($leadValue) && !empty($personValue)) {
+                    // Normalize and compare
+                    $leadNormalized = strtolower(trim($leadValue));
+                    $personNormalized = strtolower(trim($personValue));
+
+                    if ($leadNormalized === $personNormalized) {
+                        $matchCount++;
+                    }
+                    // For postal codes, also check partial matches (useful for Dutch postal codes)
+                    elseif ($field === 'postal_code' && 
+                           (strpos($leadNormalized, $personNormalized) !== false ||
+                            strpos($personNormalized, $leadNormalized) !== false)) {
+                        $matchCount += 0.5; // Partial match
+                    }
+                }
+            }
+        }
+
+        return $totalFields > 0 ? ($matchCount / $totalFields) : 0.0;
+    }
+
+    /**
      * Extract emails from lead or person.
      */
     private function extractEmails($entity): array
@@ -588,6 +646,38 @@ class PersonController extends Controller
         }
 
         return array_filter($phones);
+    }
+
+    /**
+     * Extract address data from lead or person.
+     */
+    private function extractAddressData($entity): array
+    {
+        $address = [];
+
+        // For persons, check if they have an address relationship
+        if (method_exists($entity, 'address') && $entity->address) {
+            $address = [
+                'street' => $entity->address->street ?? '',
+                'city' => $entity->address->city ?? '',
+                'postal_code' => $entity->address->postal_code ?? '',
+                'country' => $entity->address->country ?? '',
+            ];
+        }
+        // For leads, check direct address fields
+        else {
+            $address = [
+                'street' => $entity->street ?? '',
+                'city' => $entity->city ?? '',
+                'postal_code' => $entity->postal_code ?? '',
+                'country' => $entity->country ?? '',
+            ];
+        }
+
+        // Filter out empty values
+        return array_filter($address, function($value) {
+            return !empty(trim($value));
+        });
     }
 
     /**

@@ -14,12 +14,13 @@
                     <!-- Custom tooltip -->
                     <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                         <div class="space-y-1">
-                            <div><strong>Naamvelden (90%):</strong></div>
+                            <div><strong>Naamvelden (85%):</strong></div>
                             <div class="text-gray-300 text-xs pl-2">• voornaam, achternaam, achternaam voorvoegsel</div>
                             <div class="text-gray-300 text-xs pl-2">• getrouwde naam, getrouwde naam voorvoegsel</div>
-                            <div class="text-gray-300 text-xs pl-2">• initialen</div>
+                            <div class="text-gray-300 text-xs pl-2">• initialen, geboortedatum</div>
                             <div class="mt-1"><strong>E-mailadressen (5%)</strong></div>
                             <div class="mt-1"><strong>Telefoonnummers (5%)</strong></div>
+                            <div class="mt-1"><strong>Adresgegevens (5%)</strong></div>
                         </div>
                         <!-- Tooltip arrow -->
                         <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>

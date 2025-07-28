@@ -1,6 +1,6 @@
 <x-admin::layouts>
     <x-slot:title>
-        Merge Duplicates - {{ $lead->title }}
+        Duplicaten samenvoegen - {{ $lead->title }}
     </x-slot>
 
     <div class="flex flex-col gap-4">
@@ -13,13 +13,13 @@
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <a href="{{ route('admin.leads.view', $lead->id) }}" class="icon-arrow-left text-2xl"></a>
-                <h1 class="text-xl font-bold">Merge Duplicate Leads</h1>
+                <h1 class="text-xl font-bold">Duplicaten samenvoegen - Leads</h1>
             </div>
         </div>
 
-        <!-- Primary Lead Info -->
+        <!-- Primaire Lead Info -->
         <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <h3 class="mb-3 text-lg font-semibold text-green-600">Primary Lead</h3>
+            <h3 class="mb-3 text-lg font-semibold text-green-600">Primaire Lead</h3>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div>
                     <span class="text-sm font-medium text-gray-600">Title:</span>
@@ -116,7 +116,7 @@
                                                     disabled
                                                     class="mb-2"
                                                 />
-                                                <span class="text-sm font-medium">Primary Lead</span>
+                                                <span class="text-sm font-medium">Primaire Lead</span>
                                                 <span class="text-xs text-gray-500">ID: @{{ primaryLead.id }}</span>
                                             </div>
                                         </th>
@@ -148,7 +148,7 @@
                                                     Verschil
                                                 </span>
                                             </td>
-                                            
+
                                             <!-- Primary Lead Column -->
                                             <td class="p-3" :class="fieldConfig.type === 'readonly' ? 'text-center' : ''">
                                                 <template v-if="fieldConfig.type === 'readonly'">
@@ -167,7 +167,7 @@
                                                     </label>
                                                 </template>
                                             </td>
-                                            
+
                                             <!-- Duplicate Leads Columns -->
                                             <td
                                                 v-for="duplicate in duplicates"
@@ -203,7 +203,7 @@
                                                     <h4 class="text-sm font-semibold text-green-700 dark:text-green-400">
                                                         Velden zonder verschillen (@{{ fieldsWithoutDifferences.length }})
                                                     </h4>
-                                                    <button 
+                                                    <button
                                                         @click="showIdenticalFields = !showIdenticalFields"
                                                         class="ml-2 text-xs text-green-600 hover:text-green-800 underline"
                                                     >
@@ -224,12 +224,12 @@
                                                     Identiek
                                                 </span>
                                             </td>
-                                            
+
                                             <!-- Primary Lead Column -->
                                             <td class="p-3 text-center bg-green-50/50 dark:bg-green-900/20">
                                                 <div v-html="renderFieldValue(primaryLead, fieldConfig)"></div>
                                             </td>
-                                            
+
                                             <!-- Duplicate Leads Columns -->
                                             <td
                                                 v-for="duplicate in duplicates"
@@ -299,16 +299,16 @@
                             { field: 'initials', label: 'Initialen', type: 'simple' },
                             { field: 'date_of_birth', label: 'Geboortedatum', type: 'simple' },
                             { field: 'gender', label: 'Geslacht', type: 'simple' },
-                            
+
                             // Pipeline Information (readonly)
                             { field: 'pipeline', label: 'Pipeline', type: 'readonly' },
                             { field: 'stage', label: 'Fase', type: 'readonly' },
-                            
+
                             // Contact Information
                             { field: 'emails', label: 'E-mailadressen', type: 'array' },
                             { field: 'phones', label: 'Telefoonnummers', type: 'array' },
                             { field: 'address', label: 'Adres', type: 'address' },
-                            
+
                             // Lead Information
                             { field: 'lead_value', label: 'Lead waarde', type: 'simple' },
                             { field: 'status', label: 'Status', type: 'stage' }, // Special handling for status as stage name
@@ -333,7 +333,7 @@
                 mounted() {
                     // Initialize field mappings
                     this.initializeFieldMappings();
-                    
+
                     // Debug logging
                     console.log('Primary lead:', this.primaryLead);
                     console.log('Duplicates:', this.duplicates);
@@ -349,25 +349,25 @@
                             }
                         });
                     },
-                    
+
                     hasFieldDifferences(fieldConfig) {
                         // Skip readonly fields from difference checking
                         if (fieldConfig.type === 'readonly') {
                             return false;
                         }
-                        
+
                         const primaryValue = this.normalizeFieldValue(this.primaryLead, fieldConfig);
-                        
+
                         // Check if any duplicate has a different value
                         return this.duplicates.some(duplicate => {
                             const duplicateValue = this.normalizeFieldValue(duplicate, fieldConfig);
                             return !this.areValuesEqual(primaryValue, duplicateValue, fieldConfig.type);
                         });
                     },
-                    
+
                     normalizeFieldValue(lead, fieldConfig) {
                         const fieldValue = lead[fieldConfig.field];
-                        
+
                         switch (fieldConfig.type) {
                             case 'simple':
                             case 'stage':
@@ -375,13 +375,13 @@
                                     return lead.stage?.name || '';
                                 }
                                 return fieldValue || '';
-                                
+
                             case 'array':
                                 if (!fieldValue || !Array.isArray(fieldValue)) {
                                     return [];
                                 }
                                 return fieldValue.map(item => item.value || '').sort();
-                                
+
                             case 'address':
                                 if (!lead.address) {
                                     return '';
@@ -397,12 +397,12 @@
                                     lead.address.state || '',
                                     lead.address.country || ''
                                 ].join('|');
-                                
+
                             default:
                                 return fieldValue || '';
                         }
                     },
-                    
+
                     areValuesEqual(value1, value2, fieldType) {
                         if (fieldType === 'array') {
                             // Compare arrays
@@ -411,11 +411,11 @@
                             }
                             return value1.every((item, index) => item === value2[index]);
                         }
-                        
+
                         // Compare strings/primitives
                         return value1 === value2;
                     },
-                    
+
                     toggleLeadSelection(leadId) {
                         if (leadId === this.primaryLead.id) {
                             // Primary lead must always be selected
@@ -429,26 +429,26 @@
                             this.selectedLeads.push(leadId);
                         }
                     },
-                    
+
                     getFieldValue(lead, fieldConfig) {
                         if (fieldConfig.type === 'readonly') {
                             return lead[fieldConfig.field]?.name || 'N/A';
                         }
                         return lead[fieldConfig.field] || 'N/A';
                     },
-                    
+
                     renderFieldValue(lead, fieldConfig) {
                         const cssClass = fieldConfig.cssClass || 'text-sm text-center break-words';
-                        
+
                         switch (fieldConfig.type) {
                             case 'simple':
                                 const value = lead[fieldConfig.field] || 'N/A';
                                 return `<span class="${cssClass}">${value}</span>`;
-                                
+
                             case 'stage':
                                 const stageName = lead.stage?.name || 'N/A';
                                 return `<span class="${cssClass}">${stageName}</span>`;
-                                
+
                             case 'array':
                                 if (!lead[fieldConfig.field] || lead[fieldConfig.field].length === 0) {
                                     const emptyText = fieldConfig.field === 'emails' ? 'Geen e-mails' : 'Geen telefoonnummers';
@@ -456,7 +456,7 @@
                                 }
                                 const items = lead[fieldConfig.field].map(item => `<div class="mb-1">${item.value}</div>`).join('');
                                 return `<div class="text-xs text-center">${items}</div>`;
-                                
+
                             case 'address':
                                 if (!lead.address) {
                                     return '<div class="text-xs text-center"><span class="text-gray-400">Geen adres</span></div>';
@@ -473,12 +473,12 @@
                                 }
                                 addressHtml += '</div></div>';
                                 return addressHtml;
-                                
+
                             default:
                                 return `<span class="${cssClass}">N/A</span>`;
                         }
                     },
-                    
+
                     async mergeLeads() {
                         if (this.selectedLeads.length < 2) {
                             alert('Selecteer ten minste één duplicaat lead om samen te voegen.');
@@ -489,7 +489,7 @@
 
                         try {
                             const duplicateIds = this.selectedLeads.filter(id => id !== this.primaryLead.id);
-                            
+
                             // Get CSRF token
                             let csrfToken = this.csrfToken;
                             if (!csrfToken) {

@@ -139,6 +139,39 @@
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    <!-- Salutation Row -->
+                                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Aanhef</td>
+                                        <td class="p-3">
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="salutation"
+                                                    :value="primaryLead.id"
+                                                    v-model="fieldMappings.salutation"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ primaryLead.salutation || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                        <td
+                                            v-for="duplicate in duplicates"
+                                            :key="duplicate.id"
+                                            class="p-3"
+                                        >
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="salutation"
+                                                    :value="duplicate.id"
+                                                    v-model="fieldMappings.salutation"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ duplicate.salutation || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                    </tr>
+
                                     <!-- Title Row -->
                                     <tr class="border-b border-gray-100 dark:border-gray-800">
                                         <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Titel</td>
@@ -651,6 +684,72 @@
                                         </td>
                                     </tr>
 
+                                    <!-- Lost Reason Row -->
+                                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Reden verlies</td>
+                                        <td class="p-3">
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="lost_reason"
+                                                    :value="primaryLead.id"
+                                                    v-model="fieldMappings.lost_reason"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ primaryLead.lost_reason || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                        <td
+                                            v-for="duplicate in duplicates"
+                                            :key="duplicate.id"
+                                            class="p-3"
+                                        >
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="lost_reason"
+                                                    :value="duplicate.id"
+                                                    v-model="fieldMappings.lost_reason"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ duplicate.lost_reason || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                    </tr>
+
+                                    <!-- Expected Close Date Row -->
+                                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Verwachte sluitingsdatum</td>
+                                        <td class="p-3">
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="expected_close_date"
+                                                    :value="primaryLead.id"
+                                                    v-model="fieldMappings.expected_close_date"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ primaryLead.expected_close_date || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                        <td
+                                            v-for="duplicate in duplicates"
+                                            :key="duplicate.id"
+                                            class="p-3"
+                                        >
+                                            <label class="flex flex-col items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="expected_close_date"
+                                                    :value="duplicate.id"
+                                                    v-model="fieldMappings.expected_close_date"
+                                                    class="mb-2"
+                                                />
+                                                <span class="text-sm text-center break-words">@{{ duplicate.expected_close_date || 'N/A' }}</span>
+                                            </label>
+                                        </td>
+                                    </tr>
+
                                     <!-- Address Row -->
                                     <tr class="border-b border-gray-100 dark:border-gray-800">
                                         <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Adres</td>
@@ -747,6 +846,7 @@
                     return {
                         selectedLeads: [this.primaryLead.id], // Primary lead is always selected
                         fieldMappings: {
+                            salutation: this.primaryLead.id,
                             title: this.primaryLead.id,
                             first_name: this.primaryLead.id,
                             last_name: this.primaryLead.id,
@@ -759,6 +859,8 @@
                             lead_value: this.primaryLead.id,
                             status: this.primaryLead.id,
                             description: this.primaryLead.id,
+                            lost_reason: this.primaryLead.id,
+                            expected_close_date: this.primaryLead.id,
                             address: this.primaryLead.id,
                             emails: this.primaryLead.id,
                             phones: this.primaryLead.id,

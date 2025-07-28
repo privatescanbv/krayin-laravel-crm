@@ -41,26 +41,104 @@ De samenvoeg interface (`/admin/leads/{id}/duplicates`) biedt:
 
 Ondersteunde Velden voor Samenvoegen
 
-* Titel
+*Persoonlijke Informatie:*
+* Aanhef
+* Titel  
 * Voornaam
 * Achternaam
 * Achternaam voorvoegsel
 * Getrouwde naam
 * Getrouwde naam voorvoegsel
 * Initialen
-* E-mailadressen
-* Telefoonnummers
 * Geboortedatum
 * Geslacht
+
+*Contact Informatie:*
+* E-mailadressen
+* Telefoonnummers
+* Adres (volledig adresblok met straat, huisnummer, postcode, plaats, provincie, land)
+
+*Lead Informatie:*
 * Lead waarde
 * Status (wordt getoond als pipeline fase naam)
 * Beschrijving
+* Reden verlies
+* Verwachte sluitingsdatum
 
 ====== 4. Samenvoeg Proces
 
-Wanneer leads worden samengevoegd:
+Het samenvoegproces werkt als volgt:
 
-. *Data Overdracht*: Activiteiten, offertes, producten en e-mails worden overgedragen naar de primaire lead
+*Voorbereiding:*
+. Selecteer de leads die samengevoegd moeten worden via checkboxes
+. De primaire lead (oorspronkelijke lead) blijft altijd geselecteerd
+. Voor elk veld kies je via radio buttons welke waarde behouden blijft
+
+*Samenvoegen:*
 . *Veld Mapping*: Geselecteerde veldwaarden worden toegepast op de primaire lead
-. *Archivering*: Duplicaat leads worden gemarkeerd als inactief en vooraf gegaan door "[ARCHIVED]"
+. *Relatie Overdracht*: 
+  - Activiteiten worden overgedragen naar de primaire lead
+  - E-mail records (hasMany relatie) worden overgedragen
+  - Adres informatie wordt overgenomen volgens selectie
+. *Data Integriteit*: Het proces wordt uitgevoerd binnen een database transactie
+. *Logging*: Systeem activiteiten worden aangemaakt voor traceerbaarheid
+
+*Afronding:*
+. *Archivering*: Duplicaat leads worden soft-deleted (verwijderd maar behouden in database)
 . *Activiteiten Log*: Een notitie wordt toegevoegd aan de primaire lead die de samenvoeging documenteert
+. *Systeem Activiteit*: Een systeem notitie documenteert welke leads zijn samengevoegd
+
+*Belangrijke Opmerkingen:*
+- Het proces is onomkeerbaar - zorg dat de juiste selecties zijn gemaakt
+- Alle lead velden worden ondersteund voor samenvoegen
+- Adres relatie wordt volledig ondersteund (straat, huisnummer, postcode, etc.)
+- Andere complexe relaties (zoals quotes, producten) worden niet automatisch samengevoegd
+
+===== Technische Implementatie Details
+
+====== Database Structuur
+
+*Lead Tabel Velden:*
+De volgende velden worden ondersteund voor samenvoegen:
+
+```
+// Persoonlijke informatie
+'salutation', 'first_name', 'last_name', 'lastname_prefix', 
+'married_name', 'married_name_prefix', 'initials', 
+'date_of_birth', 'gender'
+
+// Lead informatie  
+'title', 'description', 'lead_value', 'status', 
+'lost_reason', 'expected_close_date'
+
+// Contact arrays (JSON)
+'emails', 'phones'
+```
+
+*Adres Relatie:*
+De adres tabel is gekoppeld via een belongsTo relatie en bevat:
+- street (straat)
+- house_number (huisnummer) 
+- house_number_suffix (huisnummer toevoeging)
+- postal_code (postcode)
+- city (plaats)
+- state (provincie)
+- country (land)
+- full_address (volledig geformatteerd adres)
+
+====== Merge Algoritme
+
+Het samenvoegproces gebruikt de volgende logica:
+
+. *Veld Validatie*: Controleert of het bron lead het gevraagde veld heeft
+. *Waarde Overdracht*: Kopieert alleen niet-lege waarden naar de primaire lead
+. *Relatie Beheer*: Werkt adres relaties bij via foreign key updates
+. *Transactie Veiligheid*: Alle wijzigingen worden uitgevoerd in een database transactie
+. *Foutafhandeling*: Bij fouten wordt de volledige transactie teruggedraaid
+
+====== API Endpoints
+
+* `GET /admin/leads/{id}/duplicates` - Toon samenvoeg interface
+* `GET /admin/leads/{id}/duplicates/get` - Haal duplicaten op via AJAX  
+* `POST /admin/leads/{id}/duplicates/merge` - Voer samenvoeging uit
+* `GET /admin/leads/{id}/duplicates/check` - Controleer op duplicaten

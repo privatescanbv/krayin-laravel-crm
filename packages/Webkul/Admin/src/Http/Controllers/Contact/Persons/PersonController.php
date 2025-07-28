@@ -68,7 +68,7 @@ class PersonController extends Controller
     {
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
-        
+
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
         $request->validate(PersonValidationService::getWebValidationRules($request));
@@ -181,7 +181,7 @@ class PersonController extends Controller
     {
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
-        
+
         $request->validate(PersonValidationService::getWebValidationRules($request));
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
@@ -310,7 +310,7 @@ class PersonController extends Controller
                     ->values();
 
                 return PersonResource::collection($personsWithScores);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // If lead not found or error in scoring, return regular results
                 logger()->warning('Could not calculate match scores for search', [
                     'lead_id' => $leadId,
@@ -445,7 +445,7 @@ class PersonController extends Controller
                     // Exact match for other fields
                     elseif (strtolower(trim($leadValue)) === strtolower(trim($personValue))) {
                         $isMatch = true;
-                    } 
+                    }
                     // Partial match for names (not for initials or date_of_birth)
                     elseif (!in_array($field, ['initials', 'date_of_birth']) &&
                         (stripos($personValue, $leadValue) !== false ||
@@ -573,7 +573,7 @@ class PersonController extends Controller
                         $matchCount++;
                     }
                     // For postal codes, also check partial matches (useful for Dutch postal codes)
-                    elseif ($field === 'postal_code' && 
+                    elseif ($field === 'postal_code' &&
                            (strpos($leadNormalized, $personNormalized) !== false ||
                             strpos($personNormalized, $leadNormalized) !== false)) {
                         $matchCount += 0.5; // Partial match
@@ -968,7 +968,7 @@ class PersonController extends Controller
     private function normalizeContactArrays($request)
     {
         $requestData = $request->all();
-        
+
         // Normalize emails
         if (isset($requestData['emails']) && is_array($requestData['emails'])) {
             foreach ($requestData['emails'] as $index => $email) {
@@ -979,7 +979,7 @@ class PersonController extends Controller
                     } else {
                         $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
                     }
-                    
+
                     // Normalize is_default to boolean
                     if (isset($email['is_default'])) {
                         $requestData['emails'][$index]['is_default'] = $this->normalizeBoolean($email['is_default']);
@@ -989,7 +989,7 @@ class PersonController extends Controller
                 }
             }
         }
-        
+
         // Normalize phones
         if (isset($requestData['phones']) && is_array($requestData['phones'])) {
             foreach ($requestData['phones'] as $index => $phone) {
@@ -1000,7 +1000,7 @@ class PersonController extends Controller
                     } else {
                         $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
-                    
+
                     // Normalize is_default to boolean
                     if (isset($phone['is_default'])) {
                         $requestData['phones'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
@@ -1010,7 +1010,7 @@ class PersonController extends Controller
                 }
             }
         }
-        
+
         // Normalize contact_numbers (for backwards compatibility)
         if (isset($requestData['contact_numbers']) && is_array($requestData['contact_numbers'])) {
             foreach ($requestData['contact_numbers'] as $index => $phone) {
@@ -1021,7 +1021,7 @@ class PersonController extends Controller
                     } else {
                         $requestData['contact_numbers'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
-                    
+
                     // Normalize is_default to boolean
                     if (isset($phone['is_default'])) {
                         $requestData['contact_numbers'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
@@ -1031,7 +1031,7 @@ class PersonController extends Controller
                 }
             }
         }
-        
+
         // Replace the request data
         $request->replace($requestData);
     }
@@ -1044,15 +1044,15 @@ class PersonController extends Controller
         if (is_bool($value)) {
             return $value;
         }
-        
+
         if (is_string($value)) {
             return in_array(strtolower($value), ['true', '1', 'on', 'yes']);
         }
-        
+
         if (is_numeric($value)) {
             return (bool) $value;
         }
-        
+
         return false;
     }
 
@@ -1064,7 +1064,7 @@ class PersonController extends Controller
         if (empty($label)) {
             return 'work';
         }
-        
+
         // Convert to lowercase and map common variations
         $normalizedLabel = strtolower(trim($label));
         $labelMap = [
@@ -1077,7 +1077,7 @@ class PersonController extends Controller
             'other' => 'other',
             'anders' => 'other'
         ];
-        
+
         return $labelMap[$normalizedLabel] ?? 'work';
     }
 }

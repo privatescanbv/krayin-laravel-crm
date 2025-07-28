@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Address;
 use Database\Seeders\TestSeeder;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Webkul\Admin\Http\Controllers\Contact\Persons\PersonController;
@@ -357,7 +358,7 @@ test('match algorithm includes date of birth and address in scoring', function (
     ]);
 
     // Create address for the lead
-    \App\Models\Address::create([
+    Address::create([
         'lead_id'      => $lead->id,
         'street'       => 'Hoofdstraat',
         'house_number' => '123',
@@ -376,7 +377,7 @@ test('match algorithm includes date of birth and address in scoring', function (
     ]);
 
     // Create address for perfect match person
-    \App\Models\Address::create([
+    Address::create([
         'person_id'    => $perfectMatchPerson->id,
         'street'       => 'Hoofdstraat',
         'house_number' => '123',
@@ -404,7 +405,7 @@ test('match algorithm includes date of birth and address in scoring', function (
     ]);
 
     // Create address for different data person
-    \App\Models\Address::create([
+    Address::create([
         'person_id'    => $differentDataPerson->id,
         'street'       => 'Kerkstraat',     // Different street
         'house_number' => '456',            // Different house number
@@ -441,7 +442,7 @@ test('match algorithm includes date of birth and address in scoring', function (
 
     // Perfect match should have higher score than partial match
     expect($perfectScore)->toBeGreaterThan($partialScore);
-    
+
     // Partial match should have higher score than different data match
     expect($partialScore)->toBeGreaterThan($differentScore);
 
@@ -474,7 +475,7 @@ test('address matching works with partial postal code matches', function () {
     ]);
 
     // Create address for the lead
-    \App\Models\Address::create([
+    Address::create([
         'lead_id'      => $lead->id,
         'street'       => 'Damrak',
         'house_number' => '1',
@@ -491,7 +492,7 @@ test('address matching works with partial postal code matches', function () {
         'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
     ]);
 
-    \App\Models\Address::create([
+    Address::create([
         'person_id'    => $exactMatchPerson->id,
         'street'       => 'Damrak',
         'house_number' => '1',
@@ -508,7 +509,7 @@ test('address matching works with partial postal code matches', function () {
         'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
     ]);
 
-    \App\Models\Address::create([
+    Address::create([
         'person_id'    => $partialMatchPerson->id,
         'street'       => 'Damrak',
         'house_number' => '1',
@@ -525,7 +526,7 @@ test('address matching works with partial postal code matches', function () {
         'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
     ]);
 
-    \App\Models\Address::create([
+    Address::create([
         'person_id'    => $differentAddressPerson->id,
         'street'       => 'Kalverstraat',
         'house_number' => '123',
@@ -555,10 +556,10 @@ test('address matching works with partial postal code matches', function () {
 
     // Exact match should have highest score
     expect($exactScore)->toBeGreaterThan($partialScore);
-    
+
     // Partial match should have higher score than different address
     expect($partialScore)->toBeGreaterThan($differentScore);
-    
+
     // The difference should be relatively small (only 5% weight for address)
     $scoreDifference = $exactScore - $partialScore;
     expect($scoreDifference)->toBeLessThan(5); // Should be less than 5% difference
@@ -623,12 +624,12 @@ test('date of birth matching affects name field scoring', function () {
     // Person with matching date should have highest score
     expect($matchingDateScore)->toBeGreaterThanOrEqual($differentDateScore);
     expect($matchingDateScore)->toBeGreaterThanOrEqual($noDateScore);
-    
+
     // All persons should have reasonably high scores due to name, email, phone matches
     expect($matchingDateScore)->toBeGreaterThan(70);
     expect($differentDateScore)->toBeGreaterThan(70);
     expect($noDateScore)->toBeGreaterThan(70);
-    
+
     // The scores should reflect the date_of_birth matching impact
     $scoreDifference = $matchingDateScore - $differentDateScore;
     expect($scoreDifference)->toBeGreaterThanOrEqual(0);

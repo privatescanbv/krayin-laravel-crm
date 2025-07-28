@@ -61,7 +61,25 @@ class ActivityDataGrid extends DataGrid
             $defaultView = $viewService->getDefaultView();
             $view = $defaultView['key'];
         }
-        $queryBuilder = $viewService->applyViewFilters($queryBuilder, $view);
+        
+        // Get view configuration to add filters to the interface
+        $viewConfig = $viewService->getView($view);
+        if ($viewConfig) {
+            // Apply view filters to the query
+            $queryBuilder = $viewService->applyViewFilters($queryBuilder, $view);
+            
+            // Add view filters to the request so they appear in the filter interface
+            foreach ($viewConfig['filters'] as $filter) {
+                // Skip custom filters that can't be shown in the interface
+                if ($filter['operator'] === 'custom') {
+                    continue;
+                }
+                
+                if (!request()->has($filter['column'])) {
+                    request()->merge([$filter['column'] => $filter['value']]);
+                }
+            }
+        }
 
         // Default sorting: urgent tasks first, then newest
         if (!request()->has('sort')) {

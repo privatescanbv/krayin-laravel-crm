@@ -90,12 +90,12 @@ class ViewService
             [
                 'column' => 'assigned_user_id',
                 'operator' => 'eq',
-                'value' => $currentUserId,
+                'value' => (string) $currentUserId, // String value for filter interface
             ],
             [
                 'column' => 'is_done',
                 'operator' => 'eq',
-                'value' => 0,
+                'value' => '0', // String value for filter interface
             ],
         ];
     }
@@ -123,7 +123,7 @@ class ViewService
             [
                 'column' => 'is_done',
                 'operator' => 'eq',
-                'value' => 0,
+                'value' => '0', // String value for filter interface
             ],
         ];
     }
@@ -144,7 +144,7 @@ class ViewService
             [
                 'column' => 'is_done',
                 'operator' => 'eq',
-                'value' => 0,
+                'value' => '0', // String value for filter interface
             ],
         ];
     }
@@ -165,7 +165,7 @@ class ViewService
             [
                 'column' => 'is_done',
                 'operator' => 'eq',
-                'value' => 0,
+                'value' => '0', // String value for filter interface
             ],
         ];
     }
@@ -220,20 +220,19 @@ class ViewService
                 
             case 'user_or_groups':
                 $queryBuilder->where(function ($query) use ($value) {
+                    // Activities assigned to the user
                     $query->where('activities.user_id', $value['user_id']);
                     
                     if (!empty($value['group_ids'])) {
+                        // Activities assigned to user's groups (including unassigned ones)
                         $query->orWhereIn('activities.group_id', $value['group_ids']);
                         
-                        // Also include activities where user is a participant and activity belongs to user's groups
-                        $query->orWhere(function ($subQuery) use ($value) {
-                            $subQuery->whereIn('activities.group_id', $value['group_ids'])
-                                ->whereExists(function ($existsQuery) use ($value) {
-                                    $existsQuery->select(DB::raw(1))
-                                        ->from('activity_participants')
-                                        ->whereColumn('activity_participants.activity_id', 'activities.id')
-                                        ->where('activity_participants.user_id', $value['user_id']);
-                                });
+                        // Activities where user is a participant
+                        $query->orWhereExists(function ($existsQuery) use ($value) {
+                            $existsQuery->select(DB::raw(1))
+                                ->from('activity_participants')
+                                ->whereColumn('activity_participants.activity_id', 'activities.id')
+                                ->where('activity_participants.user_id', $value['user_id']);
                         });
                     }
                 });

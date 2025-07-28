@@ -510,13 +510,46 @@
                 <!-- Search Input -->
                 <div class="max-w-md">
                     <label class="block font-semibold mb-2">Zoek contactpersoon</label>
-                    <input
-                        v-model="search"
-                        @input="onSearch"
-                        placeholder="Zoek op naam, e-mail, telefoon..."
-                        class="input w-full"
-                        autocomplete="off"
-                    />
+                    <div class="relative">
+                        <input
+                            v-model="search"
+                            @input="onSearch"
+                            placeholder="Zoek op naam, e-mail, telefoon..."
+                            class="input w-full"
+                            autocomplete="off"
+                        />
+                        <!-- Loading spinner -->
+                        <div v-if="isSearching" class="absolute right-3 top-1/2 transform -translate-y-1/2">
+                            <svg
+                                class="h-4 w-4 animate-spin text-gray-500"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <circle
+                                    class="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    stroke-width="4"
+                                ></circle>
+                                <path
+                                    class="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <!-- Search status indicator -->
+                    <div v-if="isSearching" class="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                        <svg class="h-3 w-3 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Zoeken naar contactpersonen...
+                    </div>
                 </div>
 
                 <!-- Search Results -->
@@ -636,6 +669,7 @@
                         selectedPerson: null,
                         searchTimeout: null,
                         hasSearched: false,
+                        isSearching: false,
                     };
                 },
 
@@ -646,9 +680,11 @@
 
                         if (!this.search) {
                             this.suggestions = [];
+                            this.isSearching = false;
                             return;
                         }
 
+                        this.isSearching = true;
                         this.searchTimeout = setTimeout(() => {
                             this.fetchSuggestions(this.search);
                         }, 300);
@@ -666,12 +702,15 @@
                             console.warn('Zoekopdracht mislukt:', e);
                             this.suggestions = [];
                             this.hasSearched = true;
+                        } finally {
+                            this.isSearching = false;
                         }
                     },
 
                     selectPerson(person) {
                         this.selectedPersonId = person.id;
                         this.selectedPerson = person;
+                        this.isSearching = false;
                         this.$emit('person-selected', person);
                     },
 

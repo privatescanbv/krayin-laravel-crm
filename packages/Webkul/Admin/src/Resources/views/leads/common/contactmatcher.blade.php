@@ -384,6 +384,10 @@
                     this.search = '';
                     this.suggestions = [];
                     this.isSearching = false;
+                    
+                    // Emit event for external components to listen to
+                    console.log('Emitting person selected event:', person); // Debug log
+                    this.$emitter.emit('contact-matcher-person-selected', person);
                 },
 
                 async createPersonFromLead() {
@@ -436,6 +440,10 @@
                             // Update the lead object in the component with the new person_id
                             this.lead.person_id = newPerson.id;
                             this.lead.person = newPerson;
+
+                            // Emit event for external components to listen to
+                            console.log('Emitting person created event:', newPerson); // Debug log
+                            this.$emitter.emit('contact-matcher-person-selected', newPerson);
 
                             // Show success message
                             this.$emitter.emit('add-flash', {

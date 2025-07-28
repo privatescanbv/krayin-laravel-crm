@@ -510,8 +510,6 @@
                         currentStep: 1,
                         selectedPerson: null,
                         isSubmitting: false,
-                        personWatcherInterval: null,
-                        lastPersonId: null,
                         formData: {
                             title: '',
                             description: '',
@@ -537,66 +535,22 @@
                 },
 
                 mounted() {
-                    // Set up a watcher to detect person selection from the contact matcher
-                    this.setupPersonWatcher();
+                    // Listen for person selection from the contact matcher component
+                    console.log('Setting up person selection listener'); // Debug log
+                    this.$emitter.on('contact-matcher-person-selected', this.handlePersonSelected);
                 },
 
                 beforeUnmount() {
-                    if (this.personWatcherInterval) {
-                        clearInterval(this.personWatcherInterval);
-                    }
+                    this.$emitter.off('contact-matcher-person-selected', this.handlePersonSelected);
                 },
 
                 methods: {
-                    setupPersonWatcher() {
-                        // Watch for changes in the person_id hidden input from the contact matcher
-                        this.personWatcherInterval = setInterval(() => {
-                            const personIdInput = document.querySelector('input[name="person_id"]');
-                            const currentPersonId = personIdInput ? personIdInput.value : null;
-                            
-                            if (currentPersonId && currentPersonId !== this.lastPersonId) {
-                                this.lastPersonId = currentPersonId;
-                                this.fetchPersonDetails(currentPersonId);
-                            } else if (!currentPersonId && this.lastPersonId) {
-                                // Person was deselected
-                                this.lastPersonId = null;
-                                this.selectedPerson = null;
-                                this.clearFormData();
-                            }
-                        }, 500);
-                    },
-
-                    async fetchPersonDetails(personId) {
-                        try {
-                            const response = await axios.get(`/admin/contacts/persons/${personId}`);
-                            const person = response.data.data;
-                            this.handlePersonSelected(person);
-                        } catch (error) {
-                            console.warn('Could not fetch person details:', error);
-                        }
-                    },
-
-                    clearFormData() {
-                        // Clear personal fields
-                        this.formData.first_name = '';
-                        this.formData.last_name = '';
-                        this.formData.lastname_prefix = '';
-                        this.formData.married_name = '';
-                        this.formData.married_name_prefix = '';
-                        this.formData.initials = '';
-                        this.formData.date_of_birth = '';
-                        this.formData.gender = '';
-                        this.formData.salutation = '';
-                        // Reset contact arrays
-                        this.formData.emails = [{value: '', label: 'work', is_default: true}];
-                        this.formData.phones = [{value: '', label: 'work', is_default: true}];
-                    },
-
                     goToStep(step) {
                         this.currentStep = step;
                     },
 
                     handlePersonSelected(person) {
+                        console.log('Person selected:', person); // Debug log
                         this.selectedPerson = person;
                         if (person) {
                             // Pre-fill form data with person information
@@ -641,6 +595,8 @@
                                     this.populateAddressFields(person.address);
                                 }
                             });
+
+                            console.log('Form data after person selection:', this.formData); // Debug log
                         }
                     },
 

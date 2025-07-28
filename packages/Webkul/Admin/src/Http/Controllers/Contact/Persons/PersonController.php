@@ -68,7 +68,7 @@ class PersonController extends Controller
     {
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
-        
+
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
         $request->validate(PersonValidationService::getWebValidationRules($request));
@@ -181,7 +181,7 @@ class PersonController extends Controller
     {
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
-        
+
         $request->validate(PersonValidationService::getWebValidationRules($request));
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
@@ -310,7 +310,7 @@ class PersonController extends Controller
                     ->values();
 
                 return PersonResource::collection($personsWithScores);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // If lead not found or error in scoring, return regular results
                 logger()->warning('Could not calculate match scores for search', [
                     'lead_id' => $leadId,
@@ -373,19 +373,23 @@ class PersonController extends Controller
         $score = 0.0;
         $maxScore = 100.0;
 
-        // Calculate name field matches
+        // Calculate name field matches (including date of birth)
         $nameScore = $this->calculateNameMatchScore($lead, $person);
 
-        // Email matching (25% weight - highest since emails are usually unique)
+        // Email matching (5% weight)
         $emailScore = $this->calculateEmailMatchScore($lead, $person);
         $score += $emailScore * 0.05 * 100;
 
-        // Phone number matching (20% weight)
+        // Phone number matching (5% weight)
         $phoneScore = $this->calculatePhoneMatchScore($lead, $person);
         $score += $phoneScore * 0.05 * 100;
 
-        // Add name score (55% total weight)
-        $score += $nameScore * 0.9 * 100;
+        // Address matching (5% weight)
+        $addressScore = $this->calculateAddressMatchScore($lead, $person);
+        $score += $addressScore * 0.05 * 100;
+
+        // Add name score (85% total weight)
+        $score += $nameScore * 0.85 * 100;
 
         return min($score, $maxScore);
     }
@@ -401,7 +405,8 @@ class PersonController extends Controller
             'lastname_prefix',
             'married_name',
             'married_name_prefix',
-            'initials'
+            'initials',
+            'date_of_birth'
         ];
 
         $importantNameFields = [
@@ -429,11 +434,20 @@ class PersonController extends Controller
                 if (!empty($leadValue) && !empty($personValue)) {
                     $isMatch = false;
 
-                    // Exact match
-                    if (strtolower(trim($leadValue)) === strtolower(trim($personValue))) {
+                    // Special handling for date_of_birth
+                    if ($field === 'date_of_birth') {
+                        $leadDate = $this->formatDateForComparison($leadValue);
+                        $personDate = $this->formatDateForComparison($personValue);
+                        if ($leadDate && $personDate && $leadDate === $personDate) {
+                            $isMatch = true;
+                        }
+                    }
+                    // Exact match for other fields
+                    elseif (strtolower(trim($leadValue)) === strtolower(trim($personValue))) {
                         $isMatch = true;
-                    } // Partial match for names (not for initials)
-                    elseif ($field !== 'initials' &&
+                    }
+                    // Partial match for names (not for initials or date_of_birth)
+                    elseif (!in_array($field, ['initials', 'date_of_birth']) &&
                         (stripos($personValue, $leadValue) !== false ||
                             stripos($leadValue, $personValue) !== false)) {
                         $isMatch = true;
@@ -528,6 +542,50 @@ class PersonController extends Controller
     }
 
     /**
+     * Calculate address match score between lead and person.
+     */
+    private function calculateAddressMatchScore(Lead $lead, Person $person): float
+    {
+        $leadAddress = $this->extractAddressData($lead);
+        $personAddress = $this->extractAddressData($person);
+
+        if (empty($leadAddress) || empty($personAddress)) {
+            return 0.0;
+        }
+
+        $addressFields = ['street', 'house_number', 'city', 'postal_code', 'country'];
+        $matchCount = 0;
+        $totalFields = 0;
+
+        foreach ($addressFields as $field) {
+            $leadValue = $leadAddress[$field] ?? '';
+            $personValue = $personAddress[$field] ?? '';
+
+            if (!empty($leadValue) || !empty($personValue)) {
+                $totalFields++;
+
+                if (!empty($leadValue) && !empty($personValue)) {
+                    // Normalize and compare
+                    $leadNormalized = strtolower(trim($leadValue));
+                    $personNormalized = strtolower(trim($personValue));
+
+                    if ($leadNormalized === $personNormalized) {
+                        $matchCount++;
+                    }
+                    // For postal codes, also check partial matches (useful for Dutch postal codes)
+                    elseif ($field === 'postal_code' &&
+                           (strpos($leadNormalized, $personNormalized) !== false ||
+                            strpos($personNormalized, $leadNormalized) !== false)) {
+                        $matchCount += 0.5; // Partial match
+                    }
+                }
+            }
+        }
+
+        return $totalFields > 0 ? ($matchCount / $totalFields) : 0.0;
+    }
+
+    /**
      * Extract emails from lead or person.
      */
     private function extractEmails($entity): array
@@ -588,6 +646,40 @@ class PersonController extends Controller
         }
 
         return array_filter($phones);
+    }
+
+    /**
+     * Extract address data from lead or person.
+     */
+    private function extractAddressData($entity): array
+    {
+        $address = [];
+
+        // For both persons and leads, check if they have an address relationship
+        if (method_exists($entity, 'address') && $entity->address) {
+            $address = [
+                'street' => $entity->address->street ?? '',
+                'house_number' => $entity->address->house_number ?? '',
+                'city' => $entity->address->city ?? '',
+                'postal_code' => $entity->address->postal_code ?? '',
+                'country' => $entity->address->country ?? '',
+            ];
+        }
+        // Fallback to direct address fields (for backwards compatibility)
+        else {
+            $address = [
+                'street' => $entity->street ?? '',
+                'house_number' => $entity->house_number ?? '',
+                'city' => $entity->city ?? '',
+                'postal_code' => $entity->postal_code ?? '',
+                'country' => $entity->country ?? '',
+            ];
+        }
+
+        // Filter out empty values
+        return array_filter($address, function($value) {
+            return !empty(trim($value));
+        });
     }
 
     /**
@@ -876,7 +968,7 @@ class PersonController extends Controller
     private function normalizeContactArrays($request)
     {
         $requestData = $request->all();
-        
+
         // Normalize emails
         if (isset($requestData['emails']) && is_array($requestData['emails'])) {
             foreach ($requestData['emails'] as $index => $email) {
@@ -887,7 +979,7 @@ class PersonController extends Controller
                     } else {
                         $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
                     }
-                    
+
                     // Normalize is_default to boolean
                     if (isset($email['is_default'])) {
                         $requestData['emails'][$index]['is_default'] = $this->normalizeBoolean($email['is_default']);
@@ -897,7 +989,7 @@ class PersonController extends Controller
                 }
             }
         }
-        
+
         // Normalize phones
         if (isset($requestData['phones']) && is_array($requestData['phones'])) {
             foreach ($requestData['phones'] as $index => $phone) {
@@ -908,7 +1000,7 @@ class PersonController extends Controller
                     } else {
                         $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
-                    
+
                     // Normalize is_default to boolean
                     if (isset($phone['is_default'])) {
                         $requestData['phones'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
@@ -918,7 +1010,7 @@ class PersonController extends Controller
                 }
             }
         }
-        
+
         // Normalize contact_numbers (for backwards compatibility)
         if (isset($requestData['contact_numbers']) && is_array($requestData['contact_numbers'])) {
             foreach ($requestData['contact_numbers'] as $index => $phone) {
@@ -929,7 +1021,7 @@ class PersonController extends Controller
                     } else {
                         $requestData['contact_numbers'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
-                    
+
                     // Normalize is_default to boolean
                     if (isset($phone['is_default'])) {
                         $requestData['contact_numbers'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
@@ -939,7 +1031,7 @@ class PersonController extends Controller
                 }
             }
         }
-        
+
         // Replace the request data
         $request->replace($requestData);
     }
@@ -952,15 +1044,15 @@ class PersonController extends Controller
         if (is_bool($value)) {
             return $value;
         }
-        
+
         if (is_string($value)) {
             return in_array(strtolower($value), ['true', '1', 'on', 'yes']);
         }
-        
+
         if (is_numeric($value)) {
             return (bool) $value;
         }
-        
+
         return false;
     }
 
@@ -972,7 +1064,7 @@ class PersonController extends Controller
         if (empty($label)) {
             return 'work';
         }
-        
+
         // Convert to lowercase and map common variations
         $normalizedLabel = strtolower(trim($label));
         $labelMap = [
@@ -985,7 +1077,7 @@ class PersonController extends Controller
             'other' => 'other',
             'anders' => 'other'
         ];
-        
+
         return $labelMap[$normalizedLabel] ?? 'work';
     }
 }

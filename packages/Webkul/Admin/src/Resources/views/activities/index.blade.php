@@ -88,9 +88,8 @@
                         {!! view_render_event('admin.activities.index.datagrid.before') !!}
 
                         <x-admin::datagrid
-                            :src="datagridSrc"
+                            src="/admin/activities/get"
                             :isMultiRow="true"
-                            :key="datagridKey"
                             ref="datagrid"
                         >
                             <template #header="{
@@ -486,7 +485,6 @@
                         currentView: 'for_me',
                         availableViews: {},
                         defaultFiltersApplied: false,
-                        baseDatagridUrl: '/admin/activities/get',
                     };
                 },
 
@@ -505,14 +503,6 @@
                 computed: {
                     hasViews() {
                         return this.availableViews && Object.keys(this.availableViews).length > 0;
-                    },
-
-                    datagridSrc() {
-                        return this.currentView ? `${this.baseDatagridUrl}?view=${this.currentView}` : this.baseDatagridUrl;
-                    },
-
-                    datagridKey() {
-                        return `datagrid-${this.currentView}`;
                     }
                 },
 
@@ -520,16 +510,11 @@
                     // Apply default view filters if no view is specified in URL
                     const urlParams = new URLSearchParams(window.location.search);
                     if (!urlParams.get('view')) {
-                        // Update URL to include default view
+                        // Redirect to include default view
                         urlParams.set('view', this.currentView);
                         const newUrl = window.location.pathname + '?' + urlParams.toString();
-                        window.history.replaceState({}, '', newUrl);
+                        window.location.href = newUrl;
                     }
-                    
-                    // Always refresh datagrid to ensure correct view is applied
-                    this.$nextTick(() => {
-                        this.refreshDatagrid();
-                    });
                 },
                 methods: {
                     /**
@@ -549,20 +534,15 @@
                     onViewChange(event) {
                         const selectedView = event.target.value;
                         sessionStorage.setItem('selected_activity_view', selectedView);
-                        this.currentView = selectedView;
 
-                        // Update URL without reload
+                        // Redirect to the new view (simple and reliable)
                         let currentUrl = new URL(window.location);
                         currentUrl.searchParams.set('view', selectedView);
-                        window.history.pushState({}, '', currentUrl.toString());
-                        
-                        // Refresh datagrid with new view
-                        this.refreshDatagrid();
+                        window.location.href = currentUrl.toString();
                     },
 
                     refreshDatagrid() {
-                        // The datagrid will automatically refresh due to the reactive :src and :key bindings
-                        // No manual refresh needed
+                        // Not needed anymore since we use page redirects for view changes
                     },
                     assignToMe(record) {
                         if (!record.id) return;

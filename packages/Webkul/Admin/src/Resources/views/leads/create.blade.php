@@ -536,7 +536,6 @@
 
                 mounted() {
                     // Listen for person selection from the contact matcher component
-                    console.log('Setting up person selection listener'); // Debug log
                     this.$emitter.on('contact-matcher-person-selected', this.handlePersonSelected);
                 },
 
@@ -551,23 +550,14 @@
                         // If going to step 2 and we have a selected person, populate address
                         if (step === 2 && this.selectedPerson && this.selectedPerson.address) {
                             this.$nextTick(() => {
-                                console.log('Populating address on step 2:', this.selectedPerson.address);
                                 this.populateAddressFields(this.selectedPerson.address);
                             });
                         }
                     },
 
                     handlePersonSelected(person) {
-                        console.log('Person selected:', person); // Debug log
                         this.selectedPerson = person;
                         if (person) {
-                            console.log('Person data fields:', {
-                                first_name: person.first_name,
-                                last_name: person.last_name,
-                                emails: person.emails,
-                                phones: person.phones
-                            });
-                            
                             // Pre-fill form data with person information - use Object.assign for reactivity
                             Object.assign(this.formData, {
                                 first_name: person.first_name || '',
@@ -580,14 +570,6 @@
                                 gender: person.gender || '',
                                 salutation: person.salutation || ''
                             });
-                            
-                            console.log('Form data after basic fields:', {
-                                first_name: this.formData.first_name,
-                                last_name: this.formData.last_name
-                            });
-
-                            // Force reactivity update
-                            this.$forceUpdate();
 
                             // Pre-populate emails and phones if available
                             if (person.emails && person.emails.length > 0) {
@@ -617,12 +599,9 @@
                             // Pre-populate address if available
                             this.$nextTick(() => {
                                 if (person.address) {
-                                    console.log('Populating address:', person.address);
                                     this.populateAddressFields(person.address);
                                 }
                             });
-
-                            console.log('Form data after person selection:', this.formData); // Debug log
                         }
                     },
 
@@ -797,7 +776,6 @@
                     populateAddressFields(address) {
                         // Only populate if we're in step 2 and the form exists
                         if (this.currentStep !== 2 || !this.$refs.leadForm) {
-                            console.log('Skipping address population - form not available');
                             return;
                         }
 

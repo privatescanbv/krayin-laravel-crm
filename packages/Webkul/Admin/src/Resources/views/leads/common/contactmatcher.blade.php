@@ -386,7 +386,6 @@
                     this.isSearching = false;
                     
                     // Emit event for external components to listen to
-                    console.log('Emitting person selected event:', person); // Debug log
                     this.$emitter.emit('contact-matcher-person-selected', person);
                 },
 
@@ -442,7 +441,6 @@
                             this.lead.person = newPerson;
 
                             // Emit event for external components to listen to
-                            console.log('Emitting person created event:', newPerson); // Debug log
                             this.$emitter.emit('contact-matcher-person-selected', newPerson);
 
                             // Show success message

@@ -846,10 +846,9 @@ class PersonController extends Controller
      */
     private function comparePersonWithLead(Person $person, Lead $lead): array
     {
-        $comparableFields = [
-            // Personal Information
+                $comparableFields = [
+            // Personal Information (fields that exist in both Person and Lead models)
             'salutation' => 'Aanhef',
-            'title' => 'Titel',
             'first_name' => 'Voornaam',
             'last_name' => 'Achternaam',
             'lastname_prefix' => 'Voorvoegsel achternaam',
@@ -862,13 +861,7 @@ class PersonController extends Controller
             // Contact Information
             'emails' => 'E-mailadressen',
             'phones' => 'Telefoonnummers',
-
-            // Lead Information
-            'lead_value' => 'Lead waarde',
-            'description' => 'Beschrijving',
-            'lost_reason' => 'Reden verlies',
-            'expected_close_date' => 'Verwachte sluitingsdatum',
-
+            
             // Address Information
             'address' => 'Adres',
         ];
@@ -886,7 +879,7 @@ class PersonController extends Controller
             }
 
             // Handle date fields
-            if (in_array($field, ['date_of_birth', 'expected_close_date'])) {
+            if ($field === 'date_of_birth') {
                 $personValue = $this->formatDateForComparison($personValue);
                 $leadValue = $this->formatDateForComparison($leadValue);
             }

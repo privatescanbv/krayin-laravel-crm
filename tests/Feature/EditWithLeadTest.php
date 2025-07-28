@@ -123,9 +123,6 @@ test('can access edit with lead page with all fields', function () {
     $response->assertSee('john.smith@example.com'); // Different email
     $response->assertSee('987654321'); // Different phone
     $response->assertSee('1985-05-15'); // Different birth date
-    $response->assertSee('5000'); // Lead value
-    $response->assertSee('Test lead description'); // Description
-    $response->assertSee('2024-12-31'); // Expected close date
     $response->assertSee('Second Street'); // Different address
     $response->assertSee('Rotterdam'); // Different city
 });
@@ -133,21 +130,23 @@ test('can access edit with lead page with all fields', function () {
 test('shows no differences when person and lead have identical data', function () {
     $data = createPipelineData();
 
-    $person = Person::factory()->create([
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'emails' => [['value' => 'john@example.com', 'label' => 'Work']],
-        'user_id' => test()->user->id,
-    ]);
+    // Create person with minimal data to avoid factory defaults
+    $person = new Person();
+    $person->first_name = 'John';
+    $person->last_name = 'Doe';
+    $person->emails = [['value' => 'john@example.com', 'label' => 'Work']];
+    $person->user_id = test()->user->id;
+    $person->save();
 
-    $lead = Lead::factory()->create([
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'emails' => [['value' => 'john@example.com', 'label' => 'Work']],
-        'lead_pipeline_id' => $data['pipelineId'],
-        'lead_pipeline_stage_id' => $data['stageId'],
-        'user_id' => test()->user->id,
-    ]);
+    // Create lead with minimal data to avoid factory defaults
+    $lead = new Lead();
+    $lead->first_name = 'John';
+    $lead->last_name = 'Doe';
+    $lead->emails = [['value' => 'john@example.com', 'label' => 'Work']];
+    $lead->lead_pipeline_id = $data['pipelineId'];
+    $lead->lead_pipeline_stage_id = $data['stageId'];
+    $lead->user_id = test()->user->id;
+    $lead->save();
 
     test()
         ->actingAs(test()->user, 'user')
@@ -243,7 +242,6 @@ test('can update person with multiple lead fields including new fields', functio
 
     $person = Person::factory()->create([
         'salutation' => 'Mr.',
-        'title' => 'Old Title',
         'first_name' => 'John',
         'last_name' => 'Doe',
         'lastname_prefix' => 'van',
@@ -287,7 +285,6 @@ test('can update person with multiple lead fields including new fields', functio
         ]), [
             'person_updates' => [
                 'salutation' => '1',
-                'title' => '1',
                 'last_name' => '1',
                 'lastname_prefix' => '1',
                 'married_name' => '1',
@@ -297,14 +294,9 @@ test('can update person with multiple lead fields including new fields', functio
                 'phones' => '1',
                 'date_of_birth' => '1',
                 'gender' => '1',
-                'lead_value' => '1',
-                'description' => '1',
-                'lost_reason' => '1',
-                'expected_close_date' => '1',
             ],
             'lead_updates' => [
                 'salutation' => 'Dr.',
-                'title' => 'New Lead Title',
                 'last_name' => 'Smith',
                 'lastname_prefix' => 'de',
                 'married_name' => 'Williams',
@@ -314,10 +306,6 @@ test('can update person with multiple lead fields including new fields', functio
                 'phones' => '987654321',
                 'date_of_birth' => '1985-05-15',
                 'gender' => 'female',
-                'lead_value' => '7500.00',
-                'description' => 'Updated lead description',
-                'lost_reason' => 'Competition',
-                'expected_close_date' => '2024-06-30',
             ],
         ]);
 
@@ -326,7 +314,6 @@ test('can update person with multiple lead fields including new fields', functio
     // Verify person was updated with all new values
     $person->refresh();
     expect($person->salutation)->toBe('Dr.');
-    expect($person->title)->toBe('New Lead Title');
     expect($person->last_name)->toBe('Smith');
     expect($person->lastname_prefix)->toBe('de');
     expect($person->married_name)->toBe('Williams');
@@ -336,10 +323,6 @@ test('can update person with multiple lead fields including new fields', functio
     expect($person->phones[0]['value'])->toBe('987654321');
     expect($person->date_of_birth->format('Y-m-d'))->toBe('1985-05-15');
     expect($person->gender)->toBe('female');
-    expect($person->lead_value)->toBe('7500.00');
-    expect($person->description)->toBe('Updated lead description');
-    expect($person->lost_reason)->toBe('Competition');
-    expect($person->expected_close_date->format('Y-m-d'))->toBe('2024-06-30');
 });
 
 test('address is replaced when person already has address', function () {

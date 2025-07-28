@@ -486,7 +486,7 @@
                         currentView: 'for_me',
                         availableViews: {},
                         defaultFiltersApplied: false,
-                        baseDatagridUrl: '{{ route('admin.activities.get') }}',
+                        baseDatagridUrl: '/admin/activities/get',
                     };
                 },
 
@@ -636,7 +636,7 @@
                         const urlParams = new URLSearchParams(window.location.search);
                         const currentView = this.$parent.currentView || urlParams.get('view') || 'for_me';
 
-                        const baseUrl = "{{ route('admin.activities.get') }}?view_type=calendar";
+                        const baseUrl = "/admin/activities/get?view_type=calendar";
                         const params = `&startDate=${new Date(startDate).toLocaleDateString("en-US")}&endDate=${new Date(endDate).toLocaleDateString("en-US")}&view=${currentView}`;
                         
                         this.$axios.get(baseUrl + params)

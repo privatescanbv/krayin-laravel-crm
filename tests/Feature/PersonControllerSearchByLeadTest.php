@@ -339,3 +339,277 @@ test('validates email and phone array structure when creating person', function 
 
     $this->postJson('/admin/contacts/persons/create', $emptyValuesData)->assertStatus(302);
 });
+
+test('match algorithm includes date of birth and address in scoring', function () {
+    // Create a lead with all fields including date of birth and address
+    $pipeline = Pipeline::first();
+    $stage = Stage::first();
+
+    $lead = Lead::factory()->create([
+        'title'                  => 'Test Lead',
+        'first_name'             => 'Alice',
+        'last_name'              => 'Johnson',
+        'emails'                 => [['value' => 'alice.johnson@example.com', 'label' => 'work']],
+        'phones'                 => [['value' => '0612345678', 'label' => 'mobile']],
+        'date_of_birth'          => '1985-03-15',
+        'street'                 => 'Hoofdstraat 123',
+        'city'                   => 'Amsterdam',
+        'postal_code'            => '1012 AB',
+        'country'                => 'Netherlands',
+        'lead_pipeline_id'       => $pipeline->id,
+        'lead_pipeline_stage_id' => $stage->id,
+    ]);
+
+    // Create person with perfect match (all fields including date of birth and address)
+    $perfectMatchPerson = Person::factory()->create([
+        'first_name'      => 'Alice',
+        'last_name'       => 'Johnson',
+        'emails'          => [['value' => 'alice.johnson@example.com', 'label' => 'work']],
+        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        'date_of_birth'   => '1985-03-15',
+    ]);
+
+    // Create address for perfect match person
+    \App\Models\Address::create([
+        'person_id'   => $perfectMatchPerson->id,
+        'street'      => 'Hoofdstraat 123',
+        'city'        => 'Amsterdam',
+        'postal_code' => '1012 AB',
+        'country'     => 'Netherlands',
+    ]);
+
+    // Create person without date of birth and address (should have lower score)
+    $partialMatchPerson = Person::factory()->create([
+        'first_name'      => 'Alice',
+        'last_name'       => 'Johnson',
+        'emails'          => [['value' => 'alice.johnson@example.com', 'label' => 'work']],
+        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        // No date_of_birth and no address
+    ]);
+
+    // Create person with different date of birth and address (should have lower score)
+    $differentDataPerson = Person::factory()->create([
+        'first_name'      => 'Alice',
+        'last_name'       => 'Johnson',
+        'emails'          => [['value' => 'alice.johnson@example.com', 'label' => 'work']],
+        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        'date_of_birth'   => '1990-06-20', // Different date
+    ]);
+
+    // Create address for different data person
+    \App\Models\Address::create([
+        'person_id'   => $differentDataPerson->id,
+        'street'      => 'Kerkstraat 456',  // Different street
+        'city'        => 'Utrecht',         // Different city
+        'postal_code' => '3511 AB',         // Different postal code
+        'country'     => 'Netherlands',     // Same country
+    ]);
+
+    // Load the address relationships
+    $perfectMatchPerson->load('address');
+    $differentDataPerson->load('address');
+
+    // Call the method
+    $result = $this->controller->searchByLead($lead);
+
+    // Assert results are returned
+    expect($result)->toBeInstanceOf(JsonResource::class);
+    $collection = $result->collection;
+    expect($collection)->toHaveCount(3);
+
+    // Assert results are sorted by score (highest first)
+    $scores = $collection->pluck('match_score')->toArray();
+    $sortedScores = collect($scores)->sortDesc()->values()->toArray();
+    expect($scores)->toBe($sortedScores);
+
+    // The perfect match person should have the highest score
+    expect($collection->first()->id)->toBe($perfectMatchPerson->id);
+
+    // Get the actual scores for comparison
+    $perfectScore = round($collection->first()->match_score, 2);
+    $partialScore = round($collection->get(1)->match_score, 2);
+    $differentScore = round($collection->get(2)->match_score, 2);
+
+    // Perfect match should have higher score than partial match
+    expect($perfectScore)->toBeGreaterThan($partialScore);
+    
+    // Partial match should have higher score than different data match
+    expect($partialScore)->toBeGreaterThan($differentScore);
+
+    // Verify that the perfect match has a very high score (close to 100%)
+    // With 85% for names + date_of_birth, 5% for email, 5% for phone, 5% for address
+    expect($perfectScore)->toBeGreaterThan(95); // Should be close to 100%
+
+    // Verify that partial match (missing date_of_birth and address) has lower score
+    // Should have 85% * (name_match_ratio) + 5% + 5% + 0% for address
+    expect($partialScore)->toBeLessThan($perfectScore);
+    expect($partialScore)->toBeGreaterThan(80); // Should still be high due to name, email, phone match
+
+    // Verify that different data match has even lower score
+    expect($differentScore)->toBeLessThan($partialScore);
+});
+
+test('address matching works with partial postal code matches', function () {
+    // Create a lead with Dutch postal code format
+    $pipeline = Pipeline::first();
+    $stage = Stage::first();
+
+    $lead = Lead::factory()->create([
+        'title'                  => 'Test Lead',
+        'first_name'             => 'Bob',
+        'last_name'              => 'Wilson',
+        'emails'                 => [['value' => 'bob.wilson@example.com', 'label' => 'work']],
+        'phones'                 => [['value' => '0612345678', 'label' => 'mobile']],
+        'street'                 => 'Damrak 1',
+        'city'                   => 'Amsterdam',
+        'postal_code'            => '1012JS', // Without space
+        'country'                => 'Netherlands',
+        'lead_pipeline_id'       => $pipeline->id,
+        'lead_pipeline_stage_id' => $stage->id,
+    ]);
+
+    // Create person with exact address match
+    $exactMatchPerson = Person::factory()->create([
+        'first_name'      => 'Bob',
+        'last_name'       => 'Wilson',
+        'emails'          => [['value' => 'bob.wilson@example.com', 'label' => 'work']],
+        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+    ]);
+
+    \App\Models\Address::create([
+        'person_id'   => $exactMatchPerson->id,
+        'street'      => 'Damrak 1',
+        'city'        => 'Amsterdam',
+        'postal_code' => '1012JS',
+        'country'     => 'Netherlands',
+    ]);
+
+    // Create person with partial postal code match (with space)
+    $partialMatchPerson = Person::factory()->create([
+        'first_name'      => 'Bob',
+        'last_name'       => 'Wilson',
+        'emails'          => [['value' => 'bob.wilson@example.com', 'label' => 'work']],
+        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+    ]);
+
+    \App\Models\Address::create([
+        'person_id'   => $partialMatchPerson->id,
+        'street'      => 'Damrak 1',
+        'city'        => 'Amsterdam',
+        'postal_code' => '1012 JS', // With space - should still partially match
+        'country'     => 'Netherlands',
+    ]);
+
+    // Create person with different address
+    $differentAddressPerson = Person::factory()->create([
+        'first_name'      => 'Bob',
+        'last_name'       => 'Wilson',
+        'emails'          => [['value' => 'bob.wilson@example.com', 'label' => 'work']],
+        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+    ]);
+
+    \App\Models\Address::create([
+        'person_id'   => $differentAddressPerson->id,
+        'street'      => 'Kalverstraat 123',
+        'city'        => 'Utrecht',
+        'postal_code' => '3511 AB',
+        'country'     => 'Netherlands',
+    ]);
+
+    // Load address relationships
+    $exactMatchPerson->load('address');
+    $partialMatchPerson->load('address');
+    $differentAddressPerson->load('address');
+
+    // Call the method
+    $result = $this->controller->searchByLead($lead);
+
+    // Assert results are returned
+    expect($result)->toBeInstanceOf(JsonResource::class);
+    $collection = $result->collection;
+    expect($collection)->toHaveCount(3);
+
+    // Get the scores
+    $exactScore = round($collection->firstWhere('id', $exactMatchPerson->id)->match_score, 2);
+    $partialScore = round($collection->firstWhere('id', $partialMatchPerson->id)->match_score, 2);
+    $differentScore = round($collection->firstWhere('id', $differentAddressPerson->id)->match_score, 2);
+
+    // Exact match should have highest score
+    expect($exactScore)->toBeGreaterThan($partialScore);
+    
+    // Partial match should have higher score than different address
+    expect($partialScore)->toBeGreaterThan($differentScore);
+    
+    // The difference should be relatively small (only 5% weight for address)
+    $scoreDifference = $exactScore - $partialScore;
+    expect($scoreDifference)->toBeLessThan(5); // Should be less than 5% difference
+});
+
+test('date of birth matching affects name field scoring', function () {
+    // Create a lead with date of birth
+    $pipeline = Pipeline::first();
+    $stage = Stage::first();
+
+    $lead = Lead::factory()->create([
+        'title'                  => 'Test Lead',
+        'first_name'             => 'Charlie',
+        'last_name'              => 'Brown',
+        'emails'                 => [['value' => 'charlie.brown@example.com', 'label' => 'work']],
+        'phones'                 => [['value' => '0612345678', 'label' => 'mobile']],
+        'date_of_birth'          => '1980-12-25',
+        'lead_pipeline_id'       => $pipeline->id,
+        'lead_pipeline_stage_id' => $stage->id,
+    ]);
+
+    // Create person with matching date of birth
+    $matchingDatePerson = Person::factory()->create([
+        'first_name'      => 'Charlie',
+        'last_name'       => 'Brown',
+        'emails'          => [['value' => 'charlie.brown@example.com', 'label' => 'work']],
+        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        'date_of_birth'   => '1980-12-25', // Exact match
+    ]);
+
+    // Create person with different date of birth
+    $differentDatePerson = Person::factory()->create([
+        'first_name'      => 'Charlie',
+        'last_name'       => 'Brown',
+        'emails'          => [['value' => 'charlie.brown@example.com', 'label' => 'work']],
+        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        'date_of_birth'   => '1985-06-15', // Different date
+    ]);
+
+    // Create person without date of birth
+    $noDatePerson = Person::factory()->create([
+        'first_name'      => 'Charlie',
+        'last_name'       => 'Brown',
+        'emails'          => [['value' => 'charlie.brown@example.com', 'label' => 'work']],
+        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        // No date_of_birth
+    ]);
+
+    // Call the method
+    $result = $this->controller->searchByLead($lead);
+
+    // Assert results are returned
+    expect($result)->toBeInstanceOf(JsonResource::class);
+    $collection = $result->collection;
+    expect($collection)->toHaveCount(3);
+
+    // Get the scores
+    $matchingDateScore = round($collection->firstWhere('id', $matchingDatePerson->id)->match_score, 2);
+    $differentDateScore = round($collection->firstWhere('id', $differentDatePerson->id)->match_score, 2);
+    $noDateScore = round($collection->firstWhere('id', $noDatePerson->id)->match_score, 2);
+
+    // Person with matching date should have highest score
+    expect($matchingDateScore)->toBeGreaterThan($differentDateScore);
+    expect($matchingDateScore)->toBeGreaterThan($noDateScore);
+    
+    // Person with different date should have lower score than matching date
+    // but could have higher or equal score compared to no date (depends on name field ratio)
+    expect($differentDateScore)->toBeLessThan($matchingDateScore);
+    
+    // The difference should be noticeable since date_of_birth is part of the 85% name field weight
+    $scoreDifference = $matchingDateScore - $differentDateScore;
+    expect($scoreDifference)->toBeGreaterThan(0);
+});

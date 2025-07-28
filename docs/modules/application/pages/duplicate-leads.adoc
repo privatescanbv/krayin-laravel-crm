@@ -1,50 +1,95 @@
-==== Duplicate Lead Detection and Merging Feature
+==== Duplicaat Lead Detectie en Samenvoegen Functionaliteit
 
-This feature provides automatic detection of potential duplicate leads and allows users to merge them through an intuitive interface. The system can detect duplicates based on email addresses, phone numbers, and name similarity.
+Deze functionaliteit biedt automatische detectie van mogelijke duplicaat leads en stelt gebruikers in staat om deze samen te voegen via een intuïtieve interface. Het systeem kan duplicaten detecteren op basis van e-mailadressen, telefoonnummers, en naamgelijkenis.
 
-===== Features
+===== Functies
 
-====== 1. Duplicate Detection
+====== 1. Duplicaat Detectie Algoritme
 
-The system automatically detects potential duplicates based on:
+Het systeem gebruikt de volgende logica voor het detecteren van duplicaten:
 
-* *Email addresses*: Leads with matching email addresses
-* *Phone numbers*: Leads with matching phone numbers
-* *Name similarity*: Leads with similar first and last names
+* *E-mail matching*: Exacte overeenkomst van e-mailadressen
+* *Telefoon matching*: Exacte overeenkomst van telefoonnummers
+* *Naam matching*:
+- Exacte overeenkomst van voornaam EN achternaam
+- Overeenkomst tussen `married_name` en `last_name` (in beide richtingen)
+- Gelijkaardige namen gebaseerd op string vergelijking
 
-====== 2. Visual Indicators
 
-Kanban View
-* Duplicate leads show an orange warning icon (⚠️) on kanban cards
-* Hover tooltip shows the number of potential duplicates found
-* Tooltip text: "Mogelijke duplicate gevonden (X gelijkenissen)"
+====== 2. Visuele Indicatoren
 
-Lead Detail View
-* Orange warning banner appears at the top when duplicates are detected
-* Shows count of potential duplicates
-* "Merge Duplicates" button provides direct access to merge interface
+Kanban Weergave
 
-====== 3. Merge Interface
+* Duplicaat leads tonen een oranje waarschuwingspictogram (⚠️) op kanban kaarten
+* Hover tooltip toont het aantal mogelijke duplicaten gevonden
+* Tooltip tekst: "Mogelijke duplicate gevonden (X gelijkenissen)"
 
-The merge interface (`/admin/leads/{id}/duplicates`) provides:
+Lead Detail Weergave
 
-* *Comparison Table*: Side-by-side comparison of lead fields
-* *Field Selection*: Radio buttons to choose which values to keep for each field
-* *Multi-select*: Checkboxes to select which leads to merge
-* *Primary Lead*: The original lead is always marked as primary and cannot be deselected
+* Oranje waarschuwingsbanner verschijnt bovenaan wanneer duplicaten worden gedetecteerd
+* Toont aantal mogelijke duplicaten
+* "Merge Duplicates" knop biedt directe toegang tot samenvoeg interface
 
-Supported Fields for Merging
-* Title
-* First Name
-* Last Name
-* Email addresses
-* Phone numbers
+====== 3. Samenvoeg Interface
 
-====== 4. Merge Process
+De samenvoeg interface (`/admin/leads/{id}/duplicates`) biedt:
 
-When leads are merged:
+* *Vergelijkingstabel*: Zij-aan-zij vergelijking van lead velden
+* *Veldselectie*: Radio buttons om te kiezen welke waarden behouden blijven voor elk veld
+* *Multi-selectie*: Checkboxes om te selecteren welke leads samengevoegd worden
+* *Primaire Lead*: De oorspronkelijke lead is altijd gemarkeerd als primair en kan niet gedeselecteerd worden
 
-. *Data Transfer*: Activities, quotes, products, and emails are transferred to the primary lead
-. *Field Mapping*: Selected field values are applied to the primary lead
-. *Archival*: Duplicate leads are marked as inactive and prefixed with "[ARCHIVED]"
-. *Activity Log*: A note is added to the primary lead documenting the merge
+Ondersteunde Velden voor Samenvoegen
+
+*Persoonlijke Informatie:*
+* Aanhef
+* Titel  
+* Voornaam
+* Achternaam
+* Achternaam voorvoegsel
+* Getrouwde naam
+* Getrouwde naam voorvoegsel
+* Initialen
+* Geboortedatum
+* Geslacht
+
+*Contact Informatie:*
+* E-mailadressen
+* Telefoonnummers
+* Adres (volledig adresblok met straat, huisnummer, postcode, plaats, provincie, land)
+
+*Lead Informatie:*
+* Lead waarde
+* Status (wordt getoond als pipeline fase naam)
+* Beschrijving
+* Reden verlies
+* Verwachte sluitingsdatum
+
+====== 4. Samenvoeg Proces
+
+Het samenvoegproces werkt als volgt:
+
+*Voorbereiding:*
+. Selecteer de leads die samengevoegd moeten worden via checkboxes
+. De primaire lead (oorspronkelijke lead) blijft altijd geselecteerd
+. Voor elk veld kies je via radio buttons welke waarde behouden blijft
+
+*Samenvoegen:*
+. *Veld Mapping*: Geselecteerde veldwaarden worden toegepast op de primaire lead
+. *Relatie Overdracht*: 
+  - Activiteiten worden overgedragen naar de primaire lead
+  - E-mail records (hasMany relatie) worden overgedragen
+  - Adres informatie wordt overgenomen volgens selectie
+. *Data Integriteit*: Het proces wordt uitgevoerd binnen een database transactie
+. *Logging*: Systeem activiteiten worden aangemaakt voor traceerbaarheid
+
+*Afronding:*
+. *Archivering*: Duplicaat leads worden soft-deleted (verwijderd maar behouden in database)
+. *Activiteiten Log*: Een notitie wordt toegevoegd aan de primaire lead die de samenvoeging documenteert
+. *Systeem Activiteit*: Een systeem notitie documenteert welke leads zijn samengevoegd
+
+*Belangrijke Opmerkingen:*
+- Het proces is onomkeerbaar - zorg dat de juiste selecties zijn gemaakt
+- Alle lead velden worden ondersteund voor samenvoegen
+- Adres relatie wordt volledig ondersteund (straat, huisnummer, postcode, etc.)
+- Andere complexe relaties (zoals quotes, producten) worden niet automatisch samengevoegd

@@ -6,6 +6,7 @@ use App\Models\Anamnesis;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Container\Container;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -115,7 +116,7 @@ class LeadRepository extends Repository
     /**
      * Create.
      *
-     * @return \Webkul\Lead\Contracts\Lead
+     * @return Lead
      */
     public function create(array $data): Lead
     {
@@ -229,7 +230,7 @@ class LeadRepository extends Repository
      *
      * @param int $id
      * @param array|\Illuminate\Database\Eloquent\Collection $attributes
-     * @return \Webkul\Lead\Contracts\Lead
+     * @return Lead
      */
     public function update(array $data, $id, $attributes = []): Lead
     {
@@ -368,115 +369,26 @@ class LeadRepository extends Repository
 
     /**
      * Find potential duplicate leads based on email, phone, and name similarity.
-     *
-     * @param \Webkul\Lead\Contracts\Lead $lead
-     * @return \Illuminate\Support\Collection
      */
-    public function findPotentialDuplicates($lead)
+    public function findPotentialDuplicates($lead): Collection
     {
         $duplicates = collect();
 
         try {
             // Check for email duplicates
-            $emails = $lead->emails;
-
-            // Handle case where emails might be a string or null
-            if (is_string($emails)) {
-                $emails = json_decode($emails, true) ?: [];
-            }
-
-            if (is_array($emails) && !empty($emails)) {
-                foreach ($emails as $email) {
-                    if (is_array($email) && !empty($email['value'])) {
-                        try {
-                            // Use different JSON query approaches for different databases
-                            $query = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
-                                ->where('id', '!=', $lead->id);
-                            if (DB::getDriverName() === 'sqlite') {
-                                // SQLite: Use LIKE for JSON searching
-                                $query->where('emails', 'LIKE', '%"' . $email['value'] . '"%');
-                            } else {
-                                // MySQL/PostgreSQL: Use whereJsonContains
-                                $query->whereJsonContains('emails', [['value' => $email['value']]]);
-                            }
-
-                            $emailDuplicates = $query->get();
-
-                            $duplicates = $duplicates->merge($emailDuplicates);
-                        } catch (Exception $e) {
-                            Log::warning('Error searching for email duplicates: ' . $e->getMessage());
-                        }
-                    }
-                }
-            }
+            $emailDuplicates = $this->findEmailDuplicates($lead);
+            $duplicates = $duplicates->merge($emailDuplicates);
 
             // Check for phone duplicates
-            $phones = $lead->phones;
+            $phoneDuplicates = $this->findPhoneDuplicates($lead);
+            $duplicates = $duplicates->merge($phoneDuplicates);
 
-            // Handle case where phones might be a string or null
-            if (is_string($phones)) {
-                $phones = json_decode($phones, true) ?: [];
-            }
+            // Check for name similarity
+            $nameDuplicates = $this->findNameDuplicates($lead);
+            $duplicates = $duplicates->merge($nameDuplicates);
 
-            if (is_array($phones) && !empty($phones)) {
-                foreach ($phones as $phone) {
-                    if (is_array($phone) && !empty($phone['value'])) {
-                        try {
-                            // Use different JSON query approaches for different databases
-                            $query = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
-                                ->where('id', '!=', $lead->id);
-                            if (DB::getDriverName() === 'sqlite') {
-                                // SQLite: Use JSON_EXTRACT or LIKE for JSON searching
-                                $query->where('phones', 'LIKE', '%"' . $phone['value'] . '"%');
-                            } else {
-                                // MySQL/PostgreSQL: Use whereJsonContains
-                                $query->whereJsonContains('phones', [['value' => $phone['value']]]);
-                            }
-
-                            $phoneDuplicates = $query->get();
-
-                            $duplicates = $duplicates->merge($phoneDuplicates);
-                        } catch (Exception $e) {
-                            Log::warning('Error searching for phone duplicates: ' . $e->getMessage());
-                        }
-                    }
-                }
-            }
         } catch (Exception $e) {
-            Log::error('Error in email/phone duplicate detection: ' . $e->getMessage());
-        }
-
-        // Check for name similarity (first + last name)
-        if (!empty($lead->first_name) && !empty($lead->last_name)) {
-            try {
-                $nameDuplicates = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
-                    ->where('id', '!=', $lead->id)
-                    ->where(function ($query) use ($lead) {
-                        // Exact match for full name
-                        $query->where(function ($subQuery) use ($lead) {
-                            $subQuery->where(function ($query) use ($lead) {
-                                // Exact match for full name
-                                $query->where(function ($subQuery) use ($lead) {
-                                    $subQuery->where('first_name', $lead->first_name)
-                                        ->where('last_name', $lead->last_name);
-                                })
-                                    // Or check for common nickname variations
-                                    ->orWhere(function ($subQuery) use ($lead) {
-                                        $firstNameVariations = $this->getNameVariations($lead->first_name);
-                                        if (count($firstNameVariations) > 1) {
-                                            $subQuery->whereIn('first_name', $firstNameVariations)
-                                                ->where('last_name', $lead->last_name);
-                                        }
-                                    });
-                            });
-                        });
-                    })
-                    ->get();
-
-                $duplicates = $duplicates->merge($nameDuplicates);
-            } catch (Exception $e) {
-                Log::warning('Error searching for name duplicates: ' . $e->getMessage());
-            }
+            Log::error('Error in duplicate detection: ' . $e->getMessage());
         }
 
         // Remove duplicates from the collection and return unique leads
@@ -486,23 +398,152 @@ class LeadRepository extends Repository
     /**
      * Check if a lead has potential duplicates.
      *
-     * @param \Webkul\Lead\Contracts\Lead $lead
-     * @return bool
      */
-    public
-    function hasPotentialDuplicates($lead)
+    public function hasPotentialDuplicates(Lead $lead): bool
     {
         return $this->findPotentialDuplicates($lead)->isNotEmpty();
     }
 
     /**
-     * Get name variations for similarity matching.
+     * Find duplicate leads based on email addresses.
      *
-     * @param string $name
-     * @return array
+     * @param Lead $lead
+     * @return Collection
      */
-    private
-    function getNameVariations($name)
+    private function findEmailDuplicates($lead): Collection
+    {
+        $duplicates = collect();
+        $emails = $lead->emails;
+
+        // Handle case where emails might be a string or null
+        if (is_string($emails)) {
+            $emails = json_decode($emails, true) ?: [];
+        }
+
+        if (is_array($emails) && !empty($emails)) {
+            foreach ($emails as $email) {
+                if (is_array($email) && !empty($email['value'])) {
+                    try {
+                        // Use different JSON query approaches for different databases
+                        $query = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
+                            ->where('id', '!=', $lead->id);
+                        if (DB::getDriverName() === 'sqlite') {
+                            // SQLite: Use LIKE for JSON searching
+                            $query->where('emails', 'LIKE', '%"' . $email['value'] . '"%');
+                        } else {
+                            // MySQL/PostgreSQL: Use whereJsonContains
+                            $query->whereJsonContains('emails', [['value' => $email['value']]]);
+                        }
+
+                        $emailDuplicates = $query->get();
+                        $duplicates = $duplicates->merge($emailDuplicates);
+                    } catch (Exception $e) {
+                        Log::warning('Error searching for email duplicates: ' . $e->getMessage());
+                    }
+                }
+            }
+        }
+
+        return $duplicates;
+    }
+
+    /**
+     * Find duplicate leads based on phone numbers.
+     *
+     * @param Lead $lead
+     * @return Collection
+     */
+    private function findPhoneDuplicates($lead): Collection
+    {
+        $duplicates = collect();
+        $phones = $lead->phones;
+
+        // Handle case where phones might be a string or null
+        if (is_string($phones)) {
+            $phones = json_decode($phones, true) ?: [];
+        }
+
+        if (is_array($phones) && !empty($phones)) {
+            foreach ($phones as $phone) {
+                if (is_array($phone) && !empty($phone['value'])) {
+                    try {
+                        // Use different JSON query approaches for different databases
+                        $query = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
+                            ->where('id', '!=', $lead->id);
+                        if (DB::getDriverName() === 'sqlite') {
+                            // SQLite: Use JSON_EXTRACT or LIKE for JSON searching
+                            $query->where('phones', 'LIKE', '%"' . $phone['value'] . '"%');
+                        } else {
+                            // MySQL/PostgreSQL: Use whereJsonContains
+                            $query->whereJsonContains('phones', [['value' => $phone['value']]]);
+                        }
+
+                        $phoneDuplicates = $query->get();
+                        $duplicates = $duplicates->merge($phoneDuplicates);
+                    } catch (Exception $e) {
+                        Log::warning('Error searching for phone duplicates: ' . $e->getMessage());
+                    }
+                }
+            }
+        }
+
+        return $duplicates;
+    }
+
+    /**
+     * Find duplicate leads based on name similarity.
+     * - first_name + last_name exact match
+     * - last_name + married_name exact match or the other way around
+     */
+    private function findNameDuplicates(Lead $lead): Collection
+    {
+        $duplicates = collect();
+
+        // Check for name similarity (first + last name)
+        if (!empty($lead->first_name) && !empty($lead->last_name)) {
+            try {
+                $nameDuplicates = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
+                    ->where('id', '!=', $lead->id)
+                    ->where(function ($query) use ($lead) {
+                        // Exact match for full name
+                        $query->where(function ($subQuery) use ($lead) {
+                            $subQuery->where('first_name', $lead->first_name)
+                                ->where('last_name', $lead->last_name);
+                        })
+                            // Or check for common nickname variations
+                            ->orWhere(function ($subQuery) use ($lead) {
+                                $firstNameVariations = $this->getNameVariations($lead->first_name);
+                                if (count($firstNameVariations) > 1) {
+                                    $subQuery->whereIn('first_name', $firstNameVariations)
+                                        ->where('last_name', $lead->last_name);
+                                }
+                            })
+                            // Or check if married_name matches last_name (users sometimes confuse these fields)
+                            ->orWhere(function ($subQuery) use ($lead) {
+                                $subQuery->where('first_name', $lead->first_name)
+                                    ->where('married_name', $lead->last_name);
+                            })
+                            // Or check if last_name matches married_name
+                            ->orWhere(function ($subQuery) use ($lead) {
+                                $subQuery->where('first_name', $lead->first_name)
+                                    ->where('last_name', $lead->married_name);
+                            });
+                    })
+                    ->get();
+
+                $duplicates = $duplicates->merge($nameDuplicates);
+            } catch (Exception $e) {
+                Log::warning('Error searching for name duplicates: ' . $e->getMessage());
+            }
+        }
+
+        return $duplicates;
+    }
+
+    /**
+     * Get name variations for similarity matching.
+     */
+    private function getNameVariations(String $name): array
     {
         $variations = [$name];
 
@@ -548,12 +589,8 @@ class LeadRepository extends Repository
 
     /**
      * Debug method to check lead data structure.
-     *
-     * @param \Webkul\Lead\Contracts\Lead $lead
-     * @return array
      */
-    public
-    function debugLeadData($lead)
+    public function debugLeadData(Lead $lead): array
     {
         return [
             'id' => $lead->id,
@@ -573,7 +610,7 @@ class LeadRepository extends Repository
      * @param int $primaryLeadId
      * @param array $duplicateLeadIds
      * @param array $fieldMappings
-     * @return \Webkul\Lead\Contracts\Lead
+     * @return Lead
      */
     public
     function mergeLeads($primaryLeadId, $duplicateLeadIds, $fieldMappings = [])
@@ -588,11 +625,16 @@ class LeadRepository extends Repository
             // Apply field mappings to primary lead
             if (!empty($fieldMappings)) {
                 $updateData = [];
+                $addressSourceLeadId = null;
 
                 foreach ($fieldMappings as $field => $sourceLeadId) {
                     if ($sourceLeadId != $primaryLeadId) {
                         $sourceLead = $duplicateLeads->firstWhere('id', $sourceLeadId);
-                        if ($sourceLead && !empty($sourceLead->$field)) {
+                        
+                        if ($field === 'address') {
+                            // Handle address separately - we need to merge the full address data
+                            $addressSourceLeadId = $sourceLeadId;
+                        } elseif ($sourceLead && !empty($sourceLead->$field)) {
                             $updateData[$field] = $sourceLead->$field;
                         }
                     }
@@ -600,6 +642,11 @@ class LeadRepository extends Repository
 
                 if (!empty($updateData)) {
                     $primaryLead->update($updateData);
+                }
+
+                // Handle address merge separately
+                if ($addressSourceLeadId) {
+                    $this->mergeAddress($primaryLead, $duplicateLeads->firstWhere('id', $addressSourceLeadId));
                 }
             }
 
@@ -639,6 +686,60 @@ class LeadRepository extends Repository
         }
     }
 
+    /**
+     * Merge address data from source lead to primary lead
+     */
+    private function mergeAddress($primaryLead, $sourceLead): void
+    {
+        if (!$sourceLead || !$sourceLead->address) {
+            return;
+        }
+
+        $sourceAddress = $sourceLead->address;
+        
+        // Get or create address for primary lead
+        $primaryAddress = $primaryLead->address;
+        
+        if ($primaryAddress) {
+            // Update existing address with source address data
+            $primaryAddress->update([
+                'street' => $sourceAddress->street,
+                'house_number' => $sourceAddress->house_number,
+                'house_number_suffix' => $sourceAddress->house_number_suffix,
+                'postal_code' => $sourceAddress->postal_code,
+                'city' => $sourceAddress->city,
+                'state' => $sourceAddress->state,
+                'country' => $sourceAddress->country,
+                'updated_by' => auth()->id(),
+            ]);
+        } else {
+            // Create new address for primary lead
+            $primaryLead->address()->create([
+                'lead_id' => $primaryLead->id,
+                'street' => $sourceAddress->street,
+                'house_number' => $sourceAddress->house_number,
+                'house_number_suffix' => $sourceAddress->house_number_suffix,
+                'postal_code' => $sourceAddress->postal_code,
+                'city' => $sourceAddress->city,
+                'state' => $sourceAddress->state,
+                'country' => $sourceAddress->country,
+                'created_by' => auth()->id(),
+                'updated_by' => auth()->id(),
+            ]);
+        }
+        
+        Log::info('Address merged successfully', [
+            'primary_lead_id' => $primaryLead->id,
+            'source_lead_id' => $sourceLead->id,
+            'merged_address' => [
+                'street' => $sourceAddress->street,
+                'house_number' => $sourceAddress->house_number,
+                'postal_code' => $sourceAddress->postal_code,
+                'city' => $sourceAddress->city,
+            ]
+        ]);
+    }
+
     private
     function addSystemActivity($primaryLead, $duplicateLead): void
     {
@@ -668,8 +769,8 @@ class LeadRepository extends Repository
     /**
      * Add a note about the lead merge.
      *
-     * @param \Webkul\Lead\Contracts\Lead $primaryLead
-     * @param \Webkul\Lead\Contracts\Lead $duplicateLead
+     * @param Lead $primaryLead
+     * @param Lead $duplicateLead
      * @return void
      */
     private

@@ -1,6 +1,6 @@
 <x-admin::layouts>
     <x-slot:title>
-        Merge Duplicates - {{ $lead->title }}
+        Duplicaten samenvoegen - {{ $lead->title }}
     </x-slot>
 
     <div class="flex flex-col gap-4">
@@ -13,24 +13,24 @@
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <a href="{{ route('admin.leads.view', $lead->id) }}" class="icon-arrow-left text-2xl"></a>
-                <h1 class="text-xl font-bold">Merge Duplicate Leads</h1>
+                <h1 class="text-xl font-bold">Duplicaten samenvoegen - Leads</h1>
             </div>
         </div>
 
-        <!-- Primary Lead Info -->
+        <!-- Primaire Lead Info -->
         <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <h3 class="mb-3 text-lg font-semibold text-green-600">Primary Lead</h3>
+            <h3 class="mb-3 text-lg font-semibold text-green-600">Primaire Lead</h3>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div>
-                    <span class="text-sm font-medium text-gray-600">Title:</span>
+                    <span class="text-sm font-medium text-gray-600">Titel:</span>
                     <p class="text-sm">{{ $lead->title }}</p>
                 </div>
                 <div>
-                    <span class="text-sm font-medium text-gray-600">Name:</span>
+                    <span class="text-sm font-medium text-gray-600">Naam:</span>
                     <p class="text-sm">{{ $lead->first_name }} {{ $lead->last_name }}</p>
                 </div>
                 <div>
-                    <span class="text-sm font-medium text-gray-600">Stage:</span>
+                    <span class="text-sm font-medium text-gray-600">Status:</span>
                     <p class="text-sm">{{ $lead->stage ? $lead->stage->name : 'N/A' }}</p>
                 </div>
             </div>
@@ -59,8 +59,8 @@
                 <div class="mx-auto mb-4 h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
                     <span class="icon-check text-2xl text-green-600"></span>
                 </div>
-                <h3 class="mb-2 text-lg font-semibold">No Duplicates Found</h3>
-                <p class="text-gray-600">No potential duplicate leads were found for this lead.</p>
+                <h3 class="mb-2 text-lg font-semibold">Geen duplicaten gevonden</h3>
+                <p class="text-gray-600">Er zijn geen potentiële dubbele leads gevonden voor deze lead.</p>
                 <a href="{{ route('admin.leads.view', $lead->id) }}" class="mt-4 inline-block rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
                     Back to Lead
                 </a>
@@ -79,10 +79,25 @@
                 <!-- Duplicates List -->
                 <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                     <div class="border-b border-gray-200 p-4 dark:border-gray-800">
-                        <h3 class="text-lg font-semibold text-orange-600">
-                            Potential Duplicates (@{{ duplicates.length }})
-                        </h3>
-                        <p class="text-sm text-gray-600">Select leads to merge and choose which field values to keep.</p>
+                        <div class="flex items-center gap-2 mb-2">
+                            <h3 class="text-lg font-semibold text-orange-600">
+                                Mogelijke duplicaten (@{{ duplicates.length }})
+                            </h3>
+                            <div class="relative group">
+                                <span class="icon-info rounded-full bg-blue-200 text-blue-600 dark:!text-blue-600 cursor-help text-sm"></span>
+                                <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-blue-600 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-10 shadow-lg">
+                                    <div class="font-medium mb-1">Hoe worden duplicaten gevonden?</div>
+                                    <div class="">
+                                        • <strong>E-mailadressen:</strong> Exacte match van e-mailadressen<br>
+                                        • <strong>Telefoonnummers:</strong> Exacte match van telefoonnummers<br>
+                                        • <strong>Namen:</strong> Voornaam + achternaam combinatie<br>
+                                        • <strong>Gehuwde naam:</strong> Wordt ook meegenomen bij naam matching
+                                    </div>
+                                    <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-blue-600"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600">Selecteer leads om samen te voegen en kies welke veldwaarden behouden blijven.</p>
                     </div>
 
                     <div class="p-4">
@@ -91,24 +106,24 @@
                             <table class="w-full border-collapse table-fixed">
                                 <thead>
                                     <tr class="border-b border-gray-200 dark:border-gray-700">
-                                        <th class="w-32 p-3 text-left font-semibold">Field</th>
+                                        <th class="w-32 p-3 text-left font-semibold">Veld</th>
                                         <th class="p-3 text-center text-green-600 min-w-48">
                                             <div class="flex flex-col items-center">
                                                 <input
                                                     type="checkbox"
                                                     :checked="selectedLeads.includes(primaryLead.id)"
                                                     @change="toggleLeadSelection(primaryLead.id)"
+                                                    disabled
                                                     class="mb-2"
                                                 />
-                                                <span class="font-semibold">Primary Lead</span>
+                                                <span class="text-sm font-medium">Primaire Lead</span>
                                                 <span class="text-xs text-gray-500">ID: @{{ primaryLead.id }}</span>
                                             </div>
                                         </th>
                                         <th
                                             v-for="duplicate in duplicates"
                                             :key="duplicate.id"
-                                            class="p-3 text-center min-w-48"
-                                            :class="{ 'text-blue-600': selectedLeads.includes(duplicate.id) }"
+                                            class="p-3 text-center text-orange-600 min-w-48"
                                         >
                                             <div class="flex flex-col items-center">
                                                 <input
@@ -117,227 +132,114 @@
                                                     @change="toggleLeadSelection(duplicate.id)"
                                                     class="mb-2"
                                                 />
-                                                <span class="font-semibold">Duplicate Lead</span>
+                                                <span class="text-sm font-medium">Duplicaat</span>
                                                 <span class="text-xs text-gray-500">ID: @{{ duplicate.id }}</span>
                                             </div>
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Title Row -->
-                                    <tr class="border-b border-gray-100 dark:border-gray-800">
-                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Title</td>
-                                        <td class="p-3">
-                                            <label class="flex flex-col items-center">
-                                                <input
-                                                    type="radio"
-                                                    name="title"
-                                                    :value="primaryLead.id"
-                                                    v-model="fieldMappings.title"
-                                                    class="mb-2"
-                                                />
-                                                <span class="text-sm text-center break-words">@{{ primaryLead.title }}</span>
-                                            </label>
-                                        </td>
-                                        <td
-                                            v-for="duplicate in duplicates"
-                                            :key="duplicate.id"
-                                            class="p-3"
-                                        >
-                                            <label class="flex flex-col items-center">
-                                                <input
-                                                    type="radio"
-                                                    name="title"
-                                                    :value="duplicate.id"
-                                                    v-model="fieldMappings.title"
-                                                    class="mb-2"
-                                                />
-                                                <span class="text-sm text-center break-words">@{{ duplicate.title }}</span>
-                                            </label>
-                                        </td>
-                                    </tr>
+                                    <!-- Fields with Differences Section -->
+                                    <template v-for="fieldConfig in fieldsWithDifferences" :key="'diff-' + fieldConfig.field">
+                                        <tr class="border-b border-gray-100 dark:border-gray-800">
+                                            <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">
+                                                @{{ fieldConfig.label }}
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                                                    Verschil
+                                                </span>
+                                            </td>
 
-                                    <!-- Pipeline Row -->
-                                    <tr class="border-b border-gray-100 dark:border-gray-800">
-                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Pipeline</td>
-                                        <td class="p-3 text-center">
-                                            <span class="text-sm">@{{ primaryLead.pipeline?.name || 'N/A' }}</span>
-                                        </td>
-                                        <td
-                                            v-for="duplicate in duplicates"
-                                            :key="duplicate.id"
-                                            class="p-3 text-center"
-                                        >
-                                            <span class="text-sm">@{{ duplicate.pipeline?.name || 'N/A' }}</span>
-                                        </td>
-                                    </tr>
+                                            <!-- Primary Lead Column -->
+                                            <td class="p-3" :class="fieldConfig.type === 'readonly' ? 'text-center' : ''">
+                                                <template v-if="fieldConfig.type === 'readonly'">
+                                                    <span class="text-sm text-center break-words">@{{ getFieldValue(primaryLead, fieldConfig) }}</span>
+                                                </template>
+                                                <template v-else>
+                                                    <label class="flex flex-col items-center">
+                                                        <input
+                                                            type="radio"
+                                                            :name="fieldConfig.field"
+                                                            :value="primaryLead.id"
+                                                            v-model="fieldMappings[fieldConfig.field]"
+                                                            class="mb-2"
+                                                        />
+                                                        <div v-html="renderFieldValue(primaryLead, fieldConfig)"></div>
+                                                    </label>
+                                                </template>
+                                            </td>
 
-                                    <!-- Stage Row -->
-                                    <tr class="border-b border-gray-100 dark:border-gray-800">
-                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Stage</td>
-                                        <td class="p-3 text-center">
-                                            <span class="text-sm">@{{ primaryLead.stage?.name || 'N/A' }}</span>
-                                        </td>
-                                        <td
-                                            v-for="duplicate in duplicates"
-                                            :key="duplicate.id"
-                                            class="p-3 text-center"
-                                        >
-                                            <span class="text-sm">@{{ duplicate.stage?.name || 'N/A' }}</span>
-                                        </td>
-                                    </tr>
+                                            <!-- Duplicate Leads Columns -->
+                                            <td
+                                                v-for="duplicate in duplicates"
+                                                :key="duplicate.id"
+                                                class="p-3"
+                                                :class="fieldConfig.type === 'readonly' ? 'text-center' : ''"
+                                            >
+                                                <template v-if="fieldConfig.type === 'readonly'">
+                                                    <span class="text-sm text-center break-words">@{{ getFieldValue(duplicate, fieldConfig) }}</span>
+                                                </template>
+                                                <template v-else>
+                                                    <label class="flex flex-col items-center">
+                                                        <input
+                                                            type="radio"
+                                                            :name="fieldConfig.field"
+                                                            :value="duplicate.id"
+                                                            v-model="fieldMappings[fieldConfig.field]"
+                                                            class="mb-2"
+                                                        />
+                                                        <div v-html="renderFieldValue(duplicate, fieldConfig)"></div>
+                                                    </label>
+                                                </template>
+                                            </td>
+                                        </tr>
+                                    </template>
 
-                                    <!-- First Name Row -->
-                                    <tr class="border-b border-gray-100 dark:border-gray-800">
-                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">First Name</td>
-                                        <td class="p-3">
-                                            <label class="flex flex-col items-center">
-                                                <input
-                                                    type="radio"
-                                                    name="first_name"
-                                                    :value="primaryLead.id"
-                                                    v-model="fieldMappings.first_name"
-                                                    class="mb-2"
-                                                />
-                                                <span class="text-sm text-center break-words">@{{ primaryLead.first_name }}</span>
-                                            </label>
-                                        </td>
-                                        <td
-                                            v-for="duplicate in duplicates"
-                                            :key="duplicate.id"
-                                            class="p-3"
-                                        >
-                                            <label class="flex flex-col items-center">
-                                                <input
-                                                    type="radio"
-                                                    name="first_name"
-                                                    :value="duplicate.id"
-                                                    v-model="fieldMappings.first_name"
-                                                    class="mb-2"
-                                                />
-                                                <span class="text-sm text-center break-words">@{{ duplicate.first_name }}</span>
-                                            </label>
-                                        </td>
-                                    </tr>
-
-                                    <!-- Last Name Row -->
-                                    <tr class="border-b border-gray-100 dark:border-gray-800">
-                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Last Name</td>
-                                        <td class="p-3">
-                                            <label class="flex flex-col items-center">
-                                                <input
-                                                    type="radio"
-                                                    name="last_name"
-                                                    :value="primaryLead.id"
-                                                    v-model="fieldMappings.last_name"
-                                                    class="mb-2"
-                                                />
-                                                <span class="text-sm text-center break-words">@{{ primaryLead.last_name }}</span>
-                                            </label>
-                                        </td>
-                                        <td
-                                            v-for="duplicate in duplicates"
-                                            :key="duplicate.id"
-                                            class="p-3"
-                                        >
-                                            <label class="flex flex-col items-center">
-                                                <input
-                                                    type="radio"
-                                                    name="last_name"
-                                                    :value="duplicate.id"
-                                                    v-model="fieldMappings.last_name"
-                                                    class="mb-2"
-                                                />
-                                                <span class="text-sm text-center break-words">@{{ duplicate.last_name }}</span>
-                                            </label>
-                                        </td>
-                                    </tr>
-
-                                    <!-- Emails Row -->
-                                    <tr class="border-b border-gray-100 dark:border-gray-800">
-                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Emails</td>
-                                        <td class="p-3">
-                                            <label class="flex flex-col items-center">
-                                                <input
-                                                    type="radio"
-                                                    name="emails"
-                                                    :value="primaryLead.id"
-                                                    v-model="fieldMappings.emails"
-                                                    class="mb-2"
-                                                />
-                                                <div class="text-xs text-center">
-                                                    <div v-for="email in primaryLead.emails" :key="email.value" class="mb-1">
-                                                        @{{ email.value }}
-                                                    </div>
-                                                    <span v-if="!primaryLead.emails || primaryLead.emails.length === 0" class="text-gray-400">No emails</span>
+                                    <!-- Section Divider for Identical Fields -->
+                                    <template v-if="fieldsWithoutDifferences.length > 0">
+                                        <tr class="bg-green-50 dark:bg-green-900/20">
+                                            <td :colspan="2 + duplicates.length" class="p-4 text-center">
+                                                <div class="flex items-center justify-center gap-2">
+                                                    <span class="icon-check text-green-600 text-lg"></span>
+                                                    <h4 class="text-sm font-semibold text-green-700 dark:text-green-400">
+                                                        Velden zonder verschillen (@{{ fieldsWithoutDifferences.length }})
+                                                    </h4>
+                                                    <button
+                                                        @click="showIdenticalFields = !showIdenticalFields"
+                                                        class="ml-2 text-xs text-green-600 hover:text-green-800 underline"
+                                                    >
+                                                        @{{ showIdenticalFields ? 'Verbergen' : 'Tonen voor controle' }}
+                                                    </button>
                                                 </div>
-                                            </label>
-                                        </td>
-                                        <td
-                                            v-for="duplicate in duplicates"
-                                            :key="duplicate.id"
-                                            class="p-3"
-                                        >
-                                            <label class="flex flex-col items-center">
-                                                <input
-                                                    type="radio"
-                                                    name="emails"
-                                                    :value="duplicate.id"
-                                                    v-model="fieldMappings.emails"
-                                                    class="mb-2"
-                                                />
-                                                <div class="text-xs text-center">
-                                                    <div v-for="email in duplicate.emails" :key="email.value" class="mb-1">
-                                                        @{{ email.value }}
-                                                    </div>
-                                                    <span v-if="!duplicate.emails || duplicate.emails.length === 0" class="text-gray-400">No emails</span>
-                                                </div>
-                                            </label>
-                                        </td>
-                                    </tr>
+                                                <p class="text-xs text-green-600 mt-1">Deze velden hebben dezelfde waarde in alle leads - geen actie vereist</p>
+                                            </td>
+                                        </tr>
+                                    </template>
 
-                                    <!-- Phones Row -->
-                                    <tr class="border-b border-gray-100 dark:border-gray-800">
-                                        <td class="p-3 font-medium bg-gray-50 dark:bg-gray-800">Phones</td>
-                                        <td class="p-3">
-                                            <label class="flex flex-col items-center">
-                                                <input
-                                                    type="radio"
-                                                    name="phones"
-                                                    :value="primaryLead.id"
-                                                    v-model="fieldMappings.phones"
-                                                    class="mb-2"
-                                                />
-                                                <div class="text-xs text-center">
-                                                    <div v-for="phone in primaryLead.phones" :key="phone.value" class="mb-1">
-                                                        @{{ phone.value }}
-                                                    </div>
-                                                    <span v-if="!primaryLead.phones || primaryLead.phones.length === 0" class="text-gray-400">No phones</span>
-                                                </div>
-                                            </label>
-                                        </td>
-                                        <td
-                                            v-for="duplicate in duplicates"
-                                            :key="duplicate.id"
-                                            class="p-3"
-                                        >
-                                            <label class="flex flex-col items-center">
-                                                <input
-                                                    type="radio"
-                                                    name="phones"
-                                                    :value="duplicate.id"
-                                                    v-model="fieldMappings.phones"
-                                                    class="mb-2"
-                                                />
-                                                <div class="text-xs text-center">
-                                                    <div v-for="phone in duplicate.phones" :key="phone.value" class="mb-1">
-                                                        @{{ phone.value }}
-                                                    </div>
-                                                    <span v-if="!duplicate.phones || duplicate.phones.length === 0" class="text-gray-400">No phones</span>
-                                                </div>
-                                            </label>
-                                        </td>
-                                    </tr>
+                                    <!-- Fields without Differences Section (Collapsible) -->
+                                    <template v-if="showIdenticalFields" v-for="fieldConfig in fieldsWithoutDifferences" :key="'same-' + fieldConfig.field">
+                                        <tr class="border-b border-gray-100 dark:border-gray-800 bg-green-50/30 dark:bg-green-900/10">
+                                            <td class="p-3 font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                                                @{{ fieldConfig.label }}
+                                                <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-200 text-green-800">
+                                                    Identiek
+                                                </span>
+                                            </td>
+
+                                            <!-- Primary Lead Column -->
+                                            <td class="p-3 text-center bg-green-50/50 dark:bg-green-900/20">
+                                                <div v-html="renderFieldValue(primaryLead, fieldConfig)"></div>
+                                            </td>
+
+                                            <!-- Duplicate Leads Columns -->
+                                            <td
+                                                v-for="duplicate in duplicates"
+                                                :key="duplicate.id"
+                                                class="p-3 text-center bg-green-50/50 dark:bg-green-900/20"
+                                            >
+                                                <div v-html="renderFieldValue(duplicate, fieldConfig)"></div>
+                                            </td>
+                                        </tr>
+                                    </template>
                                 </tbody>
                             </table>
                         </div>
@@ -346,9 +248,9 @@
                         <div class="mt-6 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
                             <div class="flex items-center justify-between">
                                 <div class="text-sm text-gray-600 dark:text-gray-300">
-                                    <span class="font-medium">Selected:</span> @{{ selectedLeads.length }} lead(s) for merging
+                                    <span class="font-medium">Geselecteerd:</span> @{{ selectedLeads.length }} lead(s) voor samenvoegen
                                     <div v-if="selectedLeads.length < 2" class="mt-1 text-xs text-orange-600">
-                                        Select at least one duplicate to merge
+                                        Selecteer ten minste één duplicaat om samen te voegen
                                     </div>
                                 </div>
                                 <div class="flex gap-3">
@@ -356,7 +258,7 @@
                                         :href="redirectUrl"
                                         class="rounded border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                                     >
-                                        Cancel
+                                        Annuleren
                                     </a>
                                     <button
                                         @click="mergeLeads"
@@ -364,8 +266,8 @@
                                         class="rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                                     >
                                         <span v-if="isLoading" class="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
-                                        <span v-if="isLoading">Merging...</span>
-                                        <span v-else>Merge Selected Leads</span>
+                                        <span v-if="isLoading">Samenvoegen...</span>
+                                        <span v-else>Samenvoegen geselecteerde leads</span>
                                     </button>
                                 </div>
                             </div>
@@ -382,32 +284,138 @@
                 data() {
                     return {
                         selectedLeads: [this.primaryLead.id], // Primary lead is always selected
-                        fieldMappings: {
-                            title: this.primaryLead.id,
-                            first_name: this.primaryLead.id,
-                            last_name: this.primaryLead.id,
-                            emails: this.primaryLead.id,
-                            phones: this.primaryLead.id,
-                        },
+                        fieldMappings: {},
                         isLoading: false,
+                        showIdenticalFields: false, // Control visibility of identical fields
+                        fieldConfigurations: [
+                            // Personal Information
+                            { field: 'salutation', label: 'Aanhef', type: 'simple' },
+                            { field: 'title', label: 'Titel', type: 'simple' },
+                            { field: 'first_name', label: 'Voornaam', type: 'simple' },
+                            { field: 'last_name', label: 'Achternaam', type: 'simple' },
+                            { field: 'lastname_prefix', label: 'Voorvoegsel achternaam', type: 'simple' },
+                            { field: 'married_name', label: 'Gehuwde naam', type: 'simple' },
+                            { field: 'married_name_prefix', label: 'Voorvoegsel gehuwde naam', type: 'simple' },
+                            { field: 'initials', label: 'Initialen', type: 'simple' },
+                            { field: 'date_of_birth', label: 'Geboortedatum', type: 'simple' },
+                            { field: 'gender', label: 'Geslacht', type: 'simple' },
+
+                            // Pipeline Information (readonly)
+                            { field: 'pipeline', label: 'Pipeline', type: 'readonly' },
+                            { field: 'stage', label: 'Fase', type: 'readonly' },
+
+                            // Contact Information
+                            { field: 'emails', label: 'E-mailadressen', type: 'array' },
+                            { field: 'phones', label: 'Telefoonnummers', type: 'array' },
+                            { field: 'address', label: 'Adres', type: 'address' },
+
+                            // Lead Information
+                            { field: 'lead_value', label: 'Lead waarde', type: 'simple' },
+                            { field: 'status', label: 'Status', type: 'stage' }, // Special handling for status as stage name
+                            { field: 'description', label: 'Beschrijving', type: 'simple', cssClass: 'text-sm text-center break-words max-w-xs' },
+                            { field: 'lost_reason', label: 'Reden verlies', type: 'simple' },
+                            { field: 'expected_close_date', label: 'Verwachte sluitingsdatum', type: 'simple' },
+                        ]
                     };
                 },
+                computed: {
+                    fieldsWithDifferences() {
+                        return this.fieldConfigurations.filter(config => {
+                            return this.hasFieldDifferences(config);
+                        });
+                    },
+                    fieldsWithoutDifferences() {
+                        return this.fieldConfigurations.filter(config => {
+                            return !this.hasFieldDifferences(config);
+                        });
+                    }
+                },
                 mounted() {
-                    // Ensure all leads have proper structure
+                    // Initialize field mappings
+                    this.initializeFieldMappings();
+
+                    // Debug logging
                     console.log('Primary lead:', this.primaryLead);
                     console.log('Duplicates:', this.duplicates);
-                    console.log('CSRF token from props:', this.csrfToken);
-
-                    // Test CSRF token availability
-                    const metaToken = document.querySelector('meta[name="csrf-token"]');
-                    console.log('Meta CSRF token element:', metaToken);
-                    console.log('Meta CSRF token value:', metaToken ? metaToken.getAttribute('content') : 'not found');
-
-                    const formToken = document.querySelector('#csrf-form input[name="_token"]');
-                    console.log('Form CSRF token element:', formToken);
-                    console.log('Form CSRF token value:', formToken ? formToken.value : 'not found');
+                    console.log('Field configurations:', this.fieldConfigurations);
+                    console.log('Fields with differences:', this.fieldsWithDifferences);
+                    console.log('Fields without differences:', this.fieldsWithoutDifferences);
                 },
                 methods: {
+                    initializeFieldMappings() {
+                        this.fieldConfigurations.forEach(config => {
+                            if (config.type !== 'readonly') {
+                                this.fieldMappings[config.field] = this.primaryLead.id;
+                            }
+                        });
+                    },
+
+                    hasFieldDifferences(fieldConfig) {
+                        // Skip readonly fields from difference checking
+                        if (fieldConfig.type === 'readonly') {
+                            return false;
+                        }
+
+                        const primaryValue = this.normalizeFieldValue(this.primaryLead, fieldConfig);
+
+                        // Check if any duplicate has a different value
+                        return this.duplicates.some(duplicate => {
+                            const duplicateValue = this.normalizeFieldValue(duplicate, fieldConfig);
+                            return !this.areValuesEqual(primaryValue, duplicateValue, fieldConfig.type);
+                        });
+                    },
+
+                    normalizeFieldValue(lead, fieldConfig) {
+                        const fieldValue = lead[fieldConfig.field];
+
+                        switch (fieldConfig.type) {
+                            case 'simple':
+                            case 'stage':
+                                if (fieldConfig.field === 'status' || fieldConfig.type === 'stage') {
+                                    return lead.stage?.name || '';
+                                }
+                                return fieldValue || '';
+
+                            case 'array':
+                                if (!fieldValue || !Array.isArray(fieldValue)) {
+                                    return [];
+                                }
+                                return fieldValue.map(item => item.value || '').sort();
+
+                            case 'address':
+                                if (!lead.address) {
+                                    return '';
+                                }
+                                // Create a normalized address string for comparison
+                                return [
+                                    lead.address.full_address || '',
+                                    lead.address.street || '',
+                                    lead.address.house_number || '',
+                                    lead.address.house_number_suffix || '',
+                                    lead.address.postal_code || '',
+                                    lead.address.city || '',
+                                    lead.address.state || '',
+                                    lead.address.country || ''
+                                ].join('|');
+
+                            default:
+                                return fieldValue || '';
+                        }
+                    },
+
+                    areValuesEqual(value1, value2, fieldType) {
+                        if (fieldType === 'array') {
+                            // Compare arrays
+                            if (value1.length !== value2.length) {
+                                return false;
+                            }
+                            return value1.every((item, index) => item === value2[index]);
+                        }
+
+                        // Compare strings/primitives
+                        return value1 === value2;
+                    },
+
                     toggleLeadSelection(leadId) {
                         if (leadId === this.primaryLead.id) {
                             // Primary lead must always be selected
@@ -421,13 +429,59 @@
                             this.selectedLeads.push(leadId);
                         }
                     },
+
+                    getFieldValue(lead, fieldConfig) {
+                        if (fieldConfig.type === 'readonly') {
+                            return lead[fieldConfig.field]?.name || 'N/A';
+                        }
+                        return lead[fieldConfig.field] || 'N/A';
+                    },
+
+                    renderFieldValue(lead, fieldConfig) {
+                        const cssClass = fieldConfig.cssClass || 'text-sm text-center break-words';
+
+                        switch (fieldConfig.type) {
+                            case 'simple':
+                                const value = lead[fieldConfig.field] || 'N/A';
+                                return `<span class="${cssClass}">${value}</span>`;
+
+                            case 'stage':
+                                const stageName = lead.stage?.name || 'N/A';
+                                return `<span class="${cssClass}">${stageName}</span>`;
+
+                            case 'array':
+                                if (!lead[fieldConfig.field] || lead[fieldConfig.field].length === 0) {
+                                    const emptyText = fieldConfig.field === 'emails' ? 'Geen e-mails' : 'Geen telefoonnummers';
+                                    return `<div class="text-xs text-center"><span class="text-gray-400">${emptyText}</span></div>`;
+                                }
+                                const items = lead[fieldConfig.field].map(item => `<div class="mb-1">${item.value}</div>`).join('');
+                                return `<div class="text-xs text-center">${items}</div>`;
+
+                            case 'address':
+                                if (!lead.address) {
+                                    return '<div class="text-xs text-center"><span class="text-gray-400">Geen adres</span></div>';
+                                }
+                                let addressHtml = `<div class="text-xs text-center"><div class="mb-1"><div>${lead.address.full_address || 'N/A'}</div>`;
+                                if (lead.address.street && lead.address.house_number) {
+                                    addressHtml += `<div>${lead.address.street} ${lead.address.house_number}${lead.address.house_number_suffix || ''}</div>`;
+                                }
+                                if (lead.address.postal_code || lead.address.city) {
+                                    addressHtml += `<div>${lead.address.postal_code || ''} ${lead.address.city || ''}</div>`;
+                                }
+                                if (lead.address.state || lead.address.country) {
+                                    addressHtml += `<div>${lead.address.state || ''} ${lead.address.country || ''}</div>`;
+                                }
+                                addressHtml += '</div></div>';
+                                return addressHtml;
+
+                            default:
+                                return `<span class="${cssClass}">N/A</span>`;
+                        }
+                    },
+
                     async mergeLeads() {
                         if (this.selectedLeads.length < 2) {
-                            alert('Please select at least one duplicate lead to merge.');
-                            return;
-                        }
-
-                        if (!confirm('Are you sure you want to merge these leads? This action cannot be undone.')) {
+                            alert('Selecteer ten minste één duplicaat lead om samen te voegen.');
                             return;
                         }
 
@@ -436,33 +490,18 @@
                         try {
                             const duplicateIds = this.selectedLeads.filter(id => id !== this.primaryLead.id);
 
-                            // Get CSRF token with fallback methods
+                            // Get CSRF token
                             let csrfToken = this.csrfToken;
-
-                            // Fallback 1: Try meta tag
                             if (!csrfToken) {
-                                const csrfTokenElement = document.querySelector('meta[name="csrf-token"]');
-                                csrfToken = csrfTokenElement ? csrfTokenElement.getAttribute('content') : '';
-                            }
-
-                            // Fallback 2: Try Laravel.csrfToken if available
-                            if (!csrfToken && typeof window.Laravel !== 'undefined' && window.Laravel.csrfToken) {
-                                csrfToken = window.Laravel.csrfToken;
-                            }
-
-                            // Fallback 3: Try hidden form CSRF token
-                            if (!csrfToken) {
-                                const csrfInput = document.querySelector('#csrf-form input[name="_token"]');
-                                csrfToken = csrfInput ? csrfInput.value : '';
-                            }
-
-                            // Fallback 4: Try global window.csrfToken
-                            if (!csrfToken && window.csrfToken) {
-                                csrfToken = window.csrfToken;
-                            }
-
-                            if (!csrfToken) {
-                                throw new Error('CSRF token not found. Please refresh the page and try again.');
+                                const metaToken = document.querySelector('meta[name="csrf-token"]');
+                                if (metaToken) {
+                                    csrfToken = metaToken.getAttribute('content');
+                                } else {
+                                    const formToken = document.querySelector('#csrf-form input[name="_token"]');
+                                    if (formToken) {
+                                        csrfToken = formToken.value;
+                                    }
+                                }
                             }
 
                             const response = await fetch(this.mergeUrl, {
@@ -479,25 +518,22 @@
                                 }),
                             });
 
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
-                            }
-
                             const result = await response.json();
 
-                            if (result.success) {
+                            if (response.ok) {
+                                alert('Leads succesvol samengevoegd!');
                                 window.location.href = this.redirectUrl;
                             } else {
-                                alert('Error merging leads: ' + (result.message || 'Unknown error occurred'));
+                                throw new Error(result.message || 'Er is een fout opgetreden bij het samenvoegen.');
                             }
                         } catch (error) {
                             console.error('Merge error:', error);
-                            alert('Error merging leads: ' + error.message);
+                            alert('Er is een fout opgetreden: ' + error.message);
                         } finally {
                             this.isLoading = false;
                         }
-                    },
-                },
+                    }
+                }
             });
         </script>
     @endPushOnce

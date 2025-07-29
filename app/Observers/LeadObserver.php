@@ -24,9 +24,9 @@ class LeadObserver
      * Create a new observer instance.
      */
     public function __construct(
-        protected WebhookService $webhookService,
-        protected ActivityRepository $activityRepository,
-        private LeadRepository $leadRepository,
+        protected WebhookService        $webhookService,
+        protected ActivityRepository    $activityRepository,
+        private readonly LeadRepository $leadRepository,
     ) {}
 
     /**
@@ -65,12 +65,12 @@ class LeadObserver
             'lead_id' => $lead->id,
             'stage'   => $lead->stage?->name,
         ]);
-        
+
         // Check if pipeline will be updated to avoid duplicate webhooks
         $willUpdatePipeline = $this->willPipelineBeUpdated($lead);
-        
+
         $this->updatePipelineState($lead);
-        
+
         // Only send webhook if pipeline wasn't updated (to avoid duplicate)
         // The updated observer will handle the webhook if pipeline changed
         if (!$willUpdatePipeline) {
@@ -137,12 +137,12 @@ class LeadObserver
         if (is_null($lead->department)) {
             return false;
         }
-        
+
         $expectedPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
         if ($lead->department->name == 'Hernia') {
             $expectedPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
         }
-        
+
         return $lead->lead_pipeline_id != $expectedPipelineId;
     }
 

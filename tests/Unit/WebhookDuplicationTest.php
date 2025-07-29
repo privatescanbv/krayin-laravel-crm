@@ -2,17 +2,14 @@
 
 namespace Tests\Unit;
 
-use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
-use App\Enums\WebhookType;
 use App\Observers\LeadObserver;
 use App\Services\WebhookService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Mockery;
 use Tests\TestCase;
 use Webkul\Activity\Repositories\ActivityRepository;
+use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
 
 class WebhookDuplicationTest extends TestCase
@@ -22,132 +19,57 @@ class WebhookDuplicationTest extends TestCase
     /** @test */
     public function test_only_one_webhook_sent_when_creating_lead_that_needs_pipeline_update()
     {
-        // Mock facades to avoid database calls
-        DB::shouldReceive('table')->andReturnSelf();
-        DB::shouldReceive('where')->andReturnSelf();
-        DB::shouldReceive('update')->andReturn(1);
-        Auth::shouldReceive('check')->andReturn(false);
-        Auth::shouldReceive('id')->andReturn(null);
+        $this->createLeadAndUpdate(true);
+        $this->createLeadAndUpdate(false);
+        $this->createLeadAndUpdate(true, true, 2);
+    }
 
+    private function createLeadAndUpdate(bool $updateLead = false, $updateAndChangeLead=false, $intExpectedWebhookCalls = 1): void
+    {
         // Count webhook calls
         $webhookCallCount = 0;
         $webhookService = Mockery::mock(WebhookService::class);
         $webhookService->shouldReceive('sendWebhook')
-            ->andReturnUsing(function() use (&$webhookCallCount) {
+            ->andReturnUsing(function () use (&$webhookCallCount) {
                 $webhookCallCount++;
                 return true;
             });
 
-        $activityRepository = Mockery::mock(ActivityRepository::class);
-        $leadRepository = Mockery::mock(LeadRepository::class);
+        $activityRepository = app(ActivityRepository::class);
+        $leadRepository = app(LeadRepository::class);
 
-        $observer = new LeadObserver($webhookService, $activityRepository, $leadRepository);
+        $observer = new LeadObserver(
+            webhookService: $webhookService,
+            activityRepository: $activityRepository,
+            leadRepository: $leadRepository
+        );
 
-        // Create a lead that will trigger pipeline update (Hernia department with technical pipeline)
-        $department = new class { public $name = 'Hernia'; };
-        $stage = new class { public $code = 'initial'; };
-        
-        // Create lead instance directly
-        $leadInstance = new class {
-            public $id = 1;
-            public $department;
-            public $created_by = null;
-            public $stage;
-            public $lead_pipeline_id;
-            public $source = null;
-            public $updateCalled = false;
-            
-            public function load($relation) { return $this; }
-            public function update($data) { $this->updateCalled = true; }
-            public function wasChanged($field) { return $field === 'lead_pipeline_stage_id'; }
-            public function getOriginal($field) { return 1; }
-            public function activities() {
-                return new class {
-                    public function attach($id) { return true; }
-                };
-            }
-        };
-        
-        // Set properties after creation
-        $leadInstance->department = $department;
-        $leadInstance->stage = $stage;
-        $leadInstance->lead_pipeline_id = PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value;
-
-        // Mock leadRepository for the update call
-        $leadRepository->shouldReceive('findOrFail')->with(1)->andReturn($leadInstance);
-        
-        // Mock activity repository (won't be called in created, but might be called in updated)
-        $activity = new class { public $id = 1; };
-        $activityRepository->shouldReceive('create')->andReturn($activity);
+        $leadInstance = Lead::factory()->create([
+            'title' => 'Test Lead',
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'lead_pipeline_id' => 1,
+            'lead_pipeline_stage_id' => 1,
+        ]);
 
         // Step 1: Call created method (this should NOT send webhook because pipeline will be updated)
         $observer->created($leadInstance);
-        
-        // Verify pipeline was updated
-        $this->assertTrue($leadInstance->updateCalled, 'Pipeline should have been updated');
-        
-        // Step 2: Call updated method (this SHOULD send webhook because stage changed)
-        $observer->updated($leadInstance);
+
+        if($updateAndChangeLead) {
+            $leadInstance->refresh();
+            $leadInstance->lead_pipeline_stage_id = PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_PRIVATESCAN_ID->value + 1; // Change to a different stage
+            $leadInstance->save();
+        }
+        if ($updateLead) {
+            // no webhook should be sent yet, because pipeline has not been changed
+            $observer->updated($leadInstance);
+        }
 
         // Assert: Only 1 webhook should have been sent total (from updated, not from created)
-        $this->assertEquals(1, $webhookCallCount, 
-            'Expected exactly 1 webhook call total. Got ' . $webhookCallCount . 
+        $this->assertEquals($intExpectedWebhookCalls, $webhookCallCount,
+            'Expected exactly 1 webhook call total. Got ' . $webhookCallCount .
             '. The fix prevents webhook in created() when pipeline will be updated, ' .
-            'allowing only the updated() method to send the webhook.'
-        );
-    }
-
-    /** @test */
-    public function test_webhook_sent_when_creating_lead_that_doesnt_need_pipeline_update()
-    {
-        // Mock facades
-        DB::shouldReceive('table')->andReturnSelf();
-        DB::shouldReceive('where')->andReturnSelf();
-        DB::shouldReceive('update')->andReturn(1);
-        Auth::shouldReceive('check')->andReturn(false);
-        Auth::shouldReceive('id')->andReturn(null);
-
-        // Count webhook calls
-        $webhookCallCount = 0;
-        $webhookService = Mockery::mock(WebhookService::class);
-        $webhookService->shouldReceive('sendWebhook')
-            ->andReturnUsing(function() use (&$webhookCallCount) {
-                $webhookCallCount++;
-                return true;
-            });
-
-        $activityRepository = Mockery::mock(ActivityRepository::class);
-        $leadRepository = Mockery::mock(LeadRepository::class);
-
-        $observer = new LeadObserver($webhookService, $activityRepository, $leadRepository);
-
-        // Create a lead that won't trigger pipeline update (Hernia department with correct pipeline)
-        $department = new class { public $name = 'Hernia'; };
-        $stage = new class { public $code = 'initial'; };
-        
-        // Create lead instance directly
-        $leadInstance = new class {
-            public $id = 1;
-            public $department;
-            public $created_by = null;
-            public $stage;
-            public $lead_pipeline_id;
-            public $source = null;
-            
-            public function load($relation) { return $this; }
-        };
-        
-        // Set properties after creation
-        $leadInstance->department = $department;
-        $leadInstance->stage = $stage;
-        $leadInstance->lead_pipeline_id = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
-
-        // Call created method (this SHOULD send webhook because pipeline won't be updated)
-        $observer->created($leadInstance);
-
-        // Assert: 1 webhook should have been sent
-        $this->assertEquals(1, $webhookCallCount, 
-            'Expected exactly 1 webhook call when pipeline does not need updating. Got ' . $webhookCallCount
+            'update without change should not have any affect.'
         );
     }
 

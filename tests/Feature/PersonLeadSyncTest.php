@@ -13,8 +13,8 @@ beforeEach(function () {
     test()->personRepository = app(PersonRepository::class);
     test()->leadRepository = app(LeadRepository::class);
 
-    // Create a test user
-    test()->user = User::factory()->create();
+    // Create a test user with active status and proper role
+    test()->user = User::factory()->active()->create();
 
 });
 
@@ -61,7 +61,9 @@ test('can access edit with lead page', function () {
         ->getJson(route('admin.contacts.persons.edit_with_lead', [
             'personId' => $person->id,
             'leadId'   => $lead->id,
-        ]))->assertOk();
+        ]));
+    
+    $response->assertOk();
     $response->assertViewIs('admin::contacts.persons.edit-with-lead');
     $response->assertViewHas('person', $person);
     $response->assertViewHas('lead', $lead);
@@ -138,7 +140,9 @@ test('can update person with lead data', function () {
                 'emails'        => 'john.smith@example.com',
                 'date_of_birth' => '1985-05-15',
             ],
-        ])->assertOk();
+        ]);
+    
+    $response->assertOk();
     $response->assertJson([
         'message'      => 'Person en lead succesvol bijgewerkt.',
         'redirect_url' => route('admin.contacts.persons.view', $person->id),
@@ -206,7 +210,7 @@ test('handles array fields correctly during sync', function () {
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id, ]);
 
-    test()
+    $response = test()
         ->actingAs(test()->user, 'user')
         ->postJson(route('admin.contacts.persons.update_with_lead', [
             'personId' => $person->id,
@@ -220,7 +224,9 @@ test('handles array fields correctly during sync', function () {
                 'emails' => 'john.updated@example.com, john.second@example.com',
                 'phones' => '111222333, 444555666',
             ],
-        ])->assertOk();
+        ]);
+    
+    $response->assertOk();
 
     // Verify arrays were updated correctly
     $person->refresh();

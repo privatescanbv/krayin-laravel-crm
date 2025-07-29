@@ -21,7 +21,6 @@ beforeEach(function () {
 // Helper to get required pipeline/stage data and ensure authentication
 function createPipelineData(): array
 {
-    // Re-authenticate to prevent race conditions
     // Create pipeline and stage if not exists
     $pipeline = Pipeline::firstOrCreate([
         'name'        => 'Test Pipeline',
@@ -90,10 +89,12 @@ test('shows field differences between person and lead', function () {
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id, ]);
 
-    $response = test()->get(route('admin.contacts.persons.edit_with_lead', [
-        'personId' => $person->id,
-        'leadId'   => $lead->id,
-    ]))->assertOk();
+    $response = test()
+        ->actingAs(test()->user, 'user')
+        ->get(route('admin.contacts.persons.edit_with_lead', [
+            'personId' => $person->id,
+            'leadId'   => $lead->id,
+        ]))->assertOk();
 
     // Check that differences are shown
     $response->assertSee('Smith'); // Lead's different last name
@@ -122,20 +123,22 @@ test('can update person with lead data', function () {
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id, ]);
 
-    $response = test()->postJson(route('admin.contacts.persons.update_with_lead', [
-        'personId' => $person->id,
-        'leadId'   => $lead->id,
-    ]), [
-        'person_updates' => [
-            'last_name'     => '1', // Update last name
-            'date_of_birth' => '1', // Update birth date
-        ],
-        'lead_updates' => [
-            'last_name'     => 'Smith',
-            'emails'        => 'john.smith@example.com',
-            'date_of_birth' => '1985-05-15',
-        ],
-    ])->assertOk();
+    $response = test()
+        ->actingAs(test()->user, 'user')
+        ->postJson(route('admin.contacts.persons.update_with_lead', [
+            'personId' => $person->id,
+            'leadId'   => $lead->id,
+        ]), [
+            'person_updates' => [
+                'last_name'     => '1', // Update last name
+                'date_of_birth' => '1', // Update birth date
+            ],
+            'lead_updates' => [
+                'last_name'     => 'Smith',
+                'emails'        => 'john.smith@example.com',
+                'date_of_birth' => '1985-05-15',
+            ],
+        ])->assertOk();
     $response->assertJson([
         'message'      => 'Person en lead succesvol bijgewerkt.',
         'redirect_url' => route('admin.contacts.persons.view', $person->id),
@@ -203,19 +206,21 @@ test('handles array fields correctly during sync', function () {
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id, ]);
 
-    test()->postJson(route('admin.contacts.persons.update_with_lead', [
-        'personId' => $person->id,
-        'leadId'   => $lead->id,
-    ]), [
-        'person_updates' => [
-            'emails' => '1',
-            'phones' => '1',
-        ],
-        'lead_updates' => [
-            'emails' => 'john.updated@example.com, john.second@example.com',
-            'phones' => '111222333, 444555666',
-        ],
-    ])->assertOk();
+    test()
+        ->actingAs(test()->user, 'user')
+        ->postJson(route('admin.contacts.persons.update_with_lead', [
+            'personId' => $person->id,
+            'leadId'   => $lead->id,
+        ]), [
+            'person_updates' => [
+                'emails' => '1',
+                'phones' => '1',
+            ],
+            'lead_updates' => [
+                'emails' => 'john.updated@example.com, john.second@example.com',
+                'phones' => '111222333, 444555666',
+            ],
+        ])->assertOk();
 
     // Verify arrays were updated correctly
     $person->refresh();
@@ -241,10 +246,12 @@ test('returns validation error for invalid data', function () {
     ]);
 
     // Test with invalid person ID
-    $response = test()->post(route('admin.contacts.persons.update_with_lead', [
-        'personId' => 99999,
-        'leadId'   => $lead->id,
-    ]), []);
+    $response = test()
+        ->actingAs(test()->user, 'user')
+        ->post(route('admin.contacts.persons.update_with_lead', [
+            'personId' => 99999,
+            'leadId'   => $lead->id,
+        ]), []);
 
     $response->assertStatus(404);
 });
@@ -352,13 +359,17 @@ test('validates required route parameters', function () {
     $response->assertStatus(404);
 
     // Test with missing lead ID
-    $response = test()->getJson('/admin/contacts/persons/edit-with-lead/1/');
+    $response = test()
+        ->actingAs(test()->user, 'user')
+        ->getJson('/admin/contacts/persons/edit-with-lead/1/');
     $response->assertStatus(404);
 });
 
 test('handles empty form submission gracefully', function () {
     $data = createPipelineData(); // Get pipeline data (auth is mocked)
-    $person = Person::factory()->create();
+    $person = Person::factory()->create([
+        'user_id' => test()->user->id,
+    ]);
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],

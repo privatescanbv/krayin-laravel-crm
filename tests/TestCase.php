@@ -10,7 +10,6 @@ abstract class TestCase extends BaseTestCase
 {
     use CreatesApplication, RefreshDatabase, WithFaker;
 
-    // RefreshDatabase
     protected function setUp(): void
     {
         parent::setUp();

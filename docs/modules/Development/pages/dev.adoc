@@ -91,6 +91,7 @@ NOTE: Op dit moment is deze opzet ook uitgerold op de test omgeving.
       mailserver/docker-mailserver setup email add privatescan@test.local test1234
 2. rainbow config aanpassen (na opstarten):
     * http://localhost:8888/?admin
+    * Inloggen met admin / 12345
 
 image::rainbow_config.png[]
 
@@ -99,3 +100,5 @@ image::rainbow_config.png[]
 ----
 sail artisan inbound-emails:process
 ----
+
+Note: Op de test omgeving is dit geautomatiseerd via een cronjob die elke minuut draait.

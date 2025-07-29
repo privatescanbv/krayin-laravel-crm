@@ -18,7 +18,7 @@ beforeEach(function () {
 });
 
 // Helper to get required pipeline/stage data and ensure authentication
-function createPipelineData(): array
+function createPipelineDataEditWithLead(): array
 {
     // Create pipeline and stage if not exists
     $pipeline = Pipeline::firstOrCreate([
@@ -38,7 +38,7 @@ function createPipelineData(): array
 }
 
 test('can access edit with lead page with all fields', function () {
-    $data = createPipelineData();
+    $data = createPipelineDataEditWithLead();
 
     $person = Person::factory()->create([
         'salutation'          => 'Mr.',
@@ -127,7 +127,7 @@ test('can access edit with lead page with all fields', function () {
 });
 
 test('shows no differences when person and lead have identical data', function () {
-    $data = createPipelineData();
+    $data = createPipelineDataEditWithLead();
 
     // Create person with minimal data to avoid factory defaults
     $person = new Person;
@@ -159,7 +159,7 @@ test('shows no differences when person and lead have identical data', function (
 });
 
 test('can update person with lead address', function () {
-    $data = createPipelineData();
+    $data = createPipelineDataEditWithLead();
 
     $person = Person::factory()->create([
         'first_name' => 'John',
@@ -238,7 +238,7 @@ test('can update person with lead address', function () {
 });
 
 test('can update person with multiple lead fields including new fields', function () {
-    $data = createPipelineData();
+    $data = createPipelineDataEditWithLead();
 
     $person = Person::factory()->create([
         'salutation'          => 'Mr.',
@@ -326,7 +326,7 @@ test('can update person with multiple lead fields including new fields', functio
 });
 
 test('address is replaced when person already has address', function () {
-    $data = createPipelineData();
+    $data = createPipelineDataEditWithLead();
 
     $person = Person::factory()->create([
         'first_name' => 'John',
@@ -393,7 +393,7 @@ test('address is replaced when person already has address', function () {
 });
 
 test('does not update address when address field is not selected', function () {
-    $data = createPipelineData();
+    $data = createPipelineDataEditWithLead();
 
     $person = Person::factory()->create([
         'first_name' => 'John',

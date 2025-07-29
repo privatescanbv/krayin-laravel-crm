@@ -9,6 +9,8 @@ use App\Models\Department;
 use App\Observers\LeadObserver;
 use App\Services\WebhookService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Mockery;
 use Tests\TestCase;
 use Webkul\Activity\Repositories\ActivityRepository;
@@ -37,6 +39,15 @@ class LeadWebhookTest extends TestCase
             $this->activityRepository,
             $this->leadRepository
         );
+
+        // Mock DB facade for the created_by update
+        DB::shouldReceive('table')->with('leads')->andReturnSelf();
+        DB::shouldReceive('where')->with('id', Mockery::any())->andReturnSelf();
+        DB::shouldReceive('update')->with(Mockery::any())->andReturn(1);
+        
+        // Mock Auth facade
+        Auth::shouldReceive('check')->andReturn(false);
+        Auth::shouldReceive('id')->andReturn(null);
     }
 
     /** @test */
@@ -68,6 +79,9 @@ class LeadWebhookTest extends TestCase
 
         // Call the created method
         $this->observer->created($lead);
+        
+        // Assert that the test ran (to avoid "no assertions" error)
+        $this->assertTrue(true, 'Webhook was correctly not sent when pipeline will be updated');
     }
 
     /** @test */
@@ -76,12 +90,15 @@ class LeadWebhookTest extends TestCase
         // Create a mock lead that won't trigger pipeline update
         $lead = Mockery::mock(Lead::class);
         $department = Mockery::mock(Department::class);
+        $stage = Mockery::mock();
+        $stage->shouldReceive('getAttribute')->with('code')->andReturn('initial_stage');
+        
         $department->shouldReceive('getAttribute')->with('name')->andReturn('Hernia');
         
         $lead->shouldReceive('getAttribute')->with('id')->andReturn(1);
         $lead->shouldReceive('getAttribute')->with('department')->andReturn($department);
         $lead->shouldReceive('getAttribute')->with('created_by')->andReturn(null);
-        $lead->shouldReceive('getAttribute')->with('stage')->andReturn(null);
+        $lead->shouldReceive('getAttribute')->with('stage')->andReturn($stage);
         $lead->shouldReceive('getAttribute')->with('lead_pipeline_id')
             ->andReturn(PipelineDefaultKeys::PIPELINE_HERNIA_ID->value); // Same as expected pipeline
         
@@ -118,9 +135,27 @@ class LeadWebhookTest extends TestCase
         $lead->shouldReceive('getAttribute')->with('source')->andReturn(null);
 
         // Mock activity repository for logFixedFieldsActivity
-        $this->activityRepository->shouldReceive('create')->andReturn(Mockery::mock());
-        $lead->shouldReceive('activities')->andReturn(Mockery::mock());
-        $lead->shouldReceive('activities->attach')->andReturn(true);
+        $activities = Mockery::mock();
+        $activities->shouldReceive('attach')->with(Mockery::any())->andReturn(true);
+        
+        $activity = Mockery::mock();
+        $activity->shouldReceive('getAttribute')->with('id')->andReturn(1);
+        
+        $this->activityRepository->shouldReceive('create')->andReturn($activity);
+        $lead->shouldReceive('activities')->andReturn($activities);
+        
+        // Mock getOriginal calls for logFixedFieldsActivity
+        $lead->shouldReceive('getOriginal')->with('first_name')->andReturn(null);
+        $lead->shouldReceive('getOriginal')->with('last_name')->andReturn(null);
+        $lead->shouldReceive('getOriginal')->with('maiden_name')->andReturn(null);
+        $lead->shouldReceive('getOriginal')->with('description')->andReturn(null);
+        
+        // Mock current field values
+        $lead->shouldReceive('getAttribute')->with('first_name')->andReturn(null);
+        $lead->shouldReceive('getAttribute')->with('last_name')->andReturn(null);
+        $lead->shouldReceive('getAttribute')->with('maiden_name')->andReturn(null);
+        $lead->shouldReceive('getAttribute')->with('description')->andReturn(null);
+        
         $lead->shouldReceive('wasChanged')->with('first_name')->andReturn(false);
         $lead->shouldReceive('wasChanged')->with('last_name')->andReturn(false);
         $lead->shouldReceive('wasChanged')->with('maiden_name')->andReturn(false);

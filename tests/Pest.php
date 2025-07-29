@@ -15,6 +15,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
+use Webkul\User\Models\User;
 
 uses(TestCase::class)->in('Feature');
 
@@ -47,11 +48,11 @@ expect()->extend('toBeOne', function () {
 /**
  * Get default admin which is created on fresh instance.
  *
- * @return \Webkul\User\Models\User
+ * @return User
  */
 function getDefaultAdmin()
 {
-    $admin = \Webkul\User\Models\User::find(1);
+    $admin = User::orderBy('id', 'asc')->first();
 
     return $admin;
 }

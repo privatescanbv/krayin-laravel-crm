@@ -13,8 +13,8 @@ beforeEach(function () {
     test()->personRepository = app(PersonRepository::class);
     test()->leadRepository = app(LeadRepository::class);
 
-    // Create a test user
-    test()->user = User::factory()->create();
+    // Create a test user with active status and proper role
+    test()->user = User::factory()->active()->create();
 });
 
 // Helper to get required pipeline/stage data and ensure authentication

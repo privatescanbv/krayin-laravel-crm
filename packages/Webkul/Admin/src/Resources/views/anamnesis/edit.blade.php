@@ -443,7 +443,7 @@
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label class="required">
-                                        Hart erfelijk
+                                        Hartafwijking?
                                     </x-admin::form.control-group.label>
                                     
                                     <div class="flex gap-4">
@@ -478,7 +478,7 @@
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label class="required">
-                                        Vaat erfelijk
+                                        Komt / kwam er in naaste familie hart- en/of vaatziekten voor?
                                     </x-admin::form.control-group.label>
                                     
                                     <div class="flex gap-4">
@@ -513,7 +513,7 @@
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label class="required">
-                                        Tumoren erfelijk
+                                        Komt / kwam er in de naaste familie kanker voor?
                                     </x-admin::form.control-group.label>
                                     
                                     <div class="flex gap-4">

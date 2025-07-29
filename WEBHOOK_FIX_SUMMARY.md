@@ -93,12 +93,12 @@ private function willPipelineBeUpdated(Lead $lead): bool
 
 ### Run Feature Test:
 ```bash
-./run_webhook_test.sh
+./vendor/bin/pest tests/Feature/ApiLeadWebhookTest.php --verbose
 ```
 
 ### Run Unit Test:
 ```bash
-./run_unit_webhook_test.sh
+./vendor/bin/pest tests/Unit/LeadWebhookTest.php --verbose
 ```
 
 ### Expected Results:

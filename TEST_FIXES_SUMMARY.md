@@ -53,27 +53,23 @@ Created `tests/Unit/LeadWebhookLogicTest.php` that:
 - Focuses on testing the business logic without framework dependencies
 - Covers all scenarios: Hernia, Privatescan, null department, correct/incorrect pipelines
 
-### 3. Test Scripts
-- `run_webhook_logic_test.sh` - Runs the simpler logic test
-- Updated existing scripts to handle the improved tests
-
 ## Running the Tests
 
 ### Logic Test (Recommended)
 ```bash
-./run_webhook_logic_test.sh
+./vendor/bin/pest tests/Unit/LeadWebhookLogicTest.php --verbose
 ```
 This test is more reliable and focuses on the core logic.
 
 ### Full Unit Test
 ```bash
-./run_unit_webhook_test.sh
+./vendor/bin/pest tests/Unit/LeadWebhookTest.php --verbose
 ```
 This test covers the full observer behavior with proper mocking.
 
 ### Feature Test
 ```bash
-./run_webhook_test.sh
+./vendor/bin/pest tests/Feature/ApiLeadWebhookTest.php --verbose
 ```
 This test covers the full API integration (requires proper environment setup).
 

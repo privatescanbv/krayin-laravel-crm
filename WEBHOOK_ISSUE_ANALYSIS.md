@@ -189,12 +189,6 @@ $request->merge([
 To run the webhook test:
 
 ```bash
-./run_webhook_test.sh
-```
-
-Or directly:
-
-```bash
 ./vendor/bin/pest tests/Feature/ApiLeadWebhookTest.php --verbose
 ```
 

@@ -57,6 +57,7 @@ class LeadWebhookTest extends TestCase
         $lead = Mockery::mock(Lead::class);
         $department = Mockery::mock(Department::class);
         $department->shouldReceive('getAttribute')->with('name')->andReturn('Hernia');
+        $department->name = 'Hernia'; // Add property access
         
         $lead->shouldReceive('getAttribute')->with('id')->andReturn(1);
         $lead->shouldReceive('getAttribute')->with('department')->andReturn($department);
@@ -64,6 +65,12 @@ class LeadWebhookTest extends TestCase
         $lead->shouldReceive('getAttribute')->with('stage')->andReturn(null);
         $lead->shouldReceive('getAttribute')->with('lead_pipeline_id')
             ->andReturn(PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value); // Different from expected Hernia pipeline
+        
+        // Add property access for direct property calls
+        $lead->id = 1;
+        $lead->department = $department;
+        $lead->stage = null;
+        $lead->lead_pipeline_id = PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value;
         
         // Mock the leadRepository to return the same lead
         $this->leadRepository->shouldReceive('findOrFail')->with(1)->andReturn($lead);
@@ -92,8 +99,10 @@ class LeadWebhookTest extends TestCase
         $department = Mockery::mock(Department::class);
         $stage = Mockery::mock();
         $stage->shouldReceive('getAttribute')->with('code')->andReturn('initial_stage');
+        $stage->code = 'initial_stage'; // Add property access
         
         $department->shouldReceive('getAttribute')->with('name')->andReturn('Hernia');
+        $department->name = 'Hernia'; // Add property access
         
         $lead->shouldReceive('getAttribute')->with('id')->andReturn(1);
         $lead->shouldReceive('getAttribute')->with('department')->andReturn($department);
@@ -102,8 +111,15 @@ class LeadWebhookTest extends TestCase
         $lead->shouldReceive('getAttribute')->with('lead_pipeline_id')
             ->andReturn(PipelineDefaultKeys::PIPELINE_HERNIA_ID->value); // Same as expected pipeline
         
+        // Add property access for direct property calls
+        $lead->id = 1;
+        $lead->department = $department;
+        $lead->stage = $stage;
+        $lead->lead_pipeline_id = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
+        
         $lead->shouldReceive('load')->with('source')->andReturn($lead);
         $lead->shouldReceive('getAttribute')->with('source')->andReturn(null);
+        $lead->source = null; // Add property access
 
         // Webhook SHOULD be sent because pipeline won't be updated
         $this->webhookService->shouldReceive('sendWebhook')
@@ -126,6 +142,7 @@ class LeadWebhookTest extends TestCase
         $lead = Mockery::mock(Lead::class);
         $stage = Mockery::mock();
         $stage->shouldReceive('getAttribute')->with('code')->andReturn('new_stage');
+        $stage->code = 'new_stage'; // Add property access
         
         $lead->shouldReceive('getAttribute')->with('id')->andReturn(1);
         $lead->shouldReceive('getAttribute')->with('stage')->andReturn($stage);
@@ -133,6 +150,12 @@ class LeadWebhookTest extends TestCase
         $lead->shouldReceive('wasChanged')->with('lead_pipeline_stage_id')->andReturn(true);
         $lead->shouldReceive('load')->with('source')->andReturn($lead);
         $lead->shouldReceive('getAttribute')->with('source')->andReturn(null);
+
+        // Add property access for direct property calls
+        $lead->id = 1;
+        $lead->stage = $stage;
+        $lead->department = null;
+        $lead->source = null;
 
         // Mock activity repository for logFixedFieldsActivity
         $activities = Mockery::mock();
@@ -144,7 +167,8 @@ class LeadWebhookTest extends TestCase
         $this->activityRepository->shouldReceive('create')->andReturn($activity);
         $lead->shouldReceive('activities')->andReturn($activities);
         
-        // Mock getOriginal calls for logFixedFieldsActivity
+        // Mock getOriginal calls for logFixedFieldsActivity - including lead_pipeline_stage_id
+        $lead->shouldReceive('getOriginal')->with('lead_pipeline_stage_id')->andReturn(1);
         $lead->shouldReceive('getOriginal')->with('first_name')->andReturn(null);
         $lead->shouldReceive('getOriginal')->with('last_name')->andReturn(null);
         $lead->shouldReceive('getOriginal')->with('maiden_name')->andReturn(null);
@@ -155,6 +179,12 @@ class LeadWebhookTest extends TestCase
         $lead->shouldReceive('getAttribute')->with('last_name')->andReturn(null);
         $lead->shouldReceive('getAttribute')->with('maiden_name')->andReturn(null);
         $lead->shouldReceive('getAttribute')->with('description')->andReturn(null);
+        
+        // Add property access for direct field access
+        $lead->first_name = null;
+        $lead->last_name = null;
+        $lead->maiden_name = null;
+        $lead->description = null;
         
         $lead->shouldReceive('wasChanged')->with('first_name')->andReturn(false);
         $lead->shouldReceive('wasChanged')->with('last_name')->andReturn(false);

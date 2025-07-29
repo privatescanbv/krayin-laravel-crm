@@ -69,7 +69,7 @@
                     <!-- Basic Information -->
                     <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <h2 class="mb-4 text-lg font-semibold dark:text-white">Algemene informatie</h2>
-                        
+
                         <div class="mb-4">
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label>
@@ -121,7 +121,7 @@
                     <!-- Physical Information -->
                     <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <h2 class="mb-4 text-lg font-semibold dark:text-white">Fysieke informatie</h2>
-                        
+
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <x-admin::form.control-group>
@@ -155,11 +155,11 @@
                                 </x-admin::form.control-group>
                             </div>
                         </div>
-                        
+
                         <!-- BMI Calculator -->
                         <div id="bmi-display">
-                            <x-admin::health.bmi-calculator 
-                                :height="$anamnesis->height" 
+                            <x-admin::health.bmi-calculator
+                                :height="$anamnesis->height"
                                 :weight="$anamnesis->weight"
                                 :show-label="false"
                             />
@@ -169,7 +169,7 @@
                     <!-- Contra-indicaties -->
                     <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <h2 class="mb-4 text-lg font-semibold dark:text-white">Contra-indicaties</h2>
-                        
+
                         <div class="space-y-6">
                             <!-- Metalen -->
                             <div class="space-y-2">
@@ -177,29 +177,29 @@
                                     <x-admin::form.control-group.label class="required">
                                         Heeft u metaal in uw lichaam?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="metals" value="1" 
+                                            <input type="radio" name="metals" value="1"
                                                    {{ $anamnesis->metals == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('metals', this.checked)"
                                                    class="mr-2 {{ $errors->has('metals') ? 'border-red-500' : '' }}">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="metals" value="0" 
+                                            <input type="radio" name="metals" value="0"
                                                    {{ $anamnesis->metals == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('metals', false)"
                                                    class="mr-2 {{ $errors->has('metals') ? 'border-red-500' : '' }}">
                                             Nee
                                         </label>
                                     </div>
-                                    
+
                                     @error('metals')
                                         <p class="mt-1 text-xs italic text-red-600">{{ $message }}</p>
                                     @enderror
                                 </x-admin::form.control-group>
-                                
+
                                 <div id="metals_comment" class="mt-2" style="display: {{ $anamnesis->metals == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -216,17 +216,17 @@
                                     <x-admin::form.control-group.label class="required">
                                         Gebruikt u Metformine?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="medications" value="1" 
+                                            <input type="radio" name="medications" value="1"
                                                    {{ $anamnesis->medications == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('medications', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="medications" value="0" 
+                                            <input type="radio" name="medications" value="0"
                                                    {{ $anamnesis->medications == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('medications', false)"
                                                    class="mr-2">
@@ -234,7 +234,7 @@
                                         </label>
                                     </div>
                                 </x-admin::form.control-group>
-                                
+
                                 <div id="medications_comment" class="mt-2" style="display: {{ $anamnesis->medications == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -249,19 +249,19 @@
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label class="required">
-                                        Glaucoom
+                                        Heeft u glaucoom?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="glaucoma" value="1" 
+                                            <input type="radio" name="glaucoma" value="1"
                                                    {{ $anamnesis->glaucoma == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('glaucoma', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="glaucoma" value="0" 
+                                            <input type="radio" name="glaucoma" value="0"
                                                    {{ $anamnesis->glaucoma == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('glaucoma', false)"
                                                    class="mr-2">
@@ -269,7 +269,7 @@
                                         </label>
                                     </div>
                                 </x-admin::form.control-group>
-                                
+
                                 <div id="glaucoma_comment" class="mt-2" style="display: {{ $anamnesis->glaucoma == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -286,16 +286,16 @@
                                     <x-admin::form.control-group.label class="required">
                                         Bent u claustrofobisch?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="claustrophobia" value="1" 
+                                            <input type="radio" name="claustrophobia" value="1"
                                                    {{ $anamnesis->claustrophobia == 1 ? 'checked' : '' }}
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="claustrophobia" value="0" 
+                                            <input type="radio" name="claustrophobia" value="0"
                                                    {{ $anamnesis->claustrophobia == 0 ? 'checked' : '' }}
                                                    class="mr-2">
                                             Nee
@@ -310,16 +310,16 @@
                                     <x-admin::form.control-group.label class="required">
                                         Wenst u een rustgevend middel?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="dormicum" value="1" 
+                                            <input type="radio" name="dormicum" value="1"
                                                    {{ $anamnesis->dormicum == 1 ? 'checked' : '' }}
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="dormicum" value="0" 
+                                            <input type="radio" name="dormicum" value="0"
                                                    {{ $anamnesis->dormicum == 0 ? 'checked' : '' }}
                                                    class="mr-2">
                                             Nee
@@ -334,17 +334,17 @@
                                     <x-admin::form.control-group.label class="required">
                                         Heeft u ooit een hartkatheterisatie gehad?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="heart_surgery" value="1" 
+                                            <input type="radio" name="heart_surgery" value="1"
                                                    {{ $anamnesis->heart_surgery == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('heart_surgery', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="heart_surgery" value="0" 
+                                            <input type="radio" name="heart_surgery" value="0"
                                                    {{ $anamnesis->heart_surgery == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('heart_surgery', false)"
                                                    class="mr-2">
@@ -352,7 +352,7 @@
                                         </label>
                                     </div>
                                 </x-admin::form.control-group>
-                                
+
                                 <div id="heart_surgery_comment" class="mt-2" style="display: {{ $anamnesis->heart_surgery == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -367,19 +367,19 @@
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label class="required">
-                                        Implantaat
+                                        Draagt u een implantaat?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="implant" value="1" 
+                                            <input type="radio" name="implant" value="1"
                                                    {{ $anamnesis->implant == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('implant', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="implant" value="0" 
+                                            <input type="radio" name="implant" value="0"
                                                    {{ $anamnesis->implant == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('implant', false)"
                                                    class="mr-2">
@@ -387,7 +387,7 @@
                                         </label>
                                     </div>
                                 </x-admin::form.control-group>
-                                
+
                                 <div id="implant_comment" class="mt-2" style="display: {{ $anamnesis->implant == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -402,19 +402,19 @@
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label class="required">
-                                        Operaties
+                                        Heeft u in het verleden operaties gehad?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="surgeries" value="1" 
+                                            <input type="radio" name="surgeries" value="1"
                                                    {{ $anamnesis->surgeries == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('surgeries', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="surgeries" value="0" 
+                                            <input type="radio" name="surgeries" value="0"
                                                    {{ $anamnesis->surgeries == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('surgeries', false)"
                                                    class="mr-2">
@@ -422,7 +422,7 @@
                                         </label>
                                     </div>
                                 </x-admin::form.control-group>
-                                
+
                                 <div id="surgeries_comment" class="mt-2" style="display: {{ $anamnesis->surgeries == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -437,19 +437,19 @@
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label class="required">
-                                        Hartproblemen
+                                        Heeft u hartproblemen?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="heart_problems" value="1" 
+                                            <input type="radio" name="heart_problems" value="1"
                                                    {{ $anamnesis->heart_problems == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('heart_problems', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="heart_problems" value="0" 
+                                            <input type="radio" name="heart_problems" value="0"
                                                    {{ $anamnesis->heart_problems == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('heart_problems', false)"
                                                    class="mr-2">
@@ -457,7 +457,7 @@
                                         </label>
                                     </div>
                                 </x-admin::form.control-group>
-                                
+
                                 <div id="heart_problems_comment" class="mt-2" style="display: {{ $anamnesis->heart_problems == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -474,17 +474,17 @@
                                     <x-admin::form.control-group.label class="required">
                                         Kunt u langere tijd stil liggen op uw rug?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="back_problems" value="1" 
+                                            <input type="radio" name="back_problems" value="1"
                                                    {{ $anamnesis->back_problems == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('back_problems', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="back_problems" value="0" 
+                                            <input type="radio" name="back_problems" value="0"
                                                    {{ $anamnesis->back_problems == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('back_problems', false)"
                                                    class="mr-2">
@@ -492,7 +492,7 @@
                                         </label>
                                     </div>
                                 </x-admin::form.control-group>
-                                
+
                                 <div id="back_problems_comment" class="mt-2" style="display: {{ $anamnesis->back_problems == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -509,17 +509,17 @@
                                     <x-admin::form.control-group.label class="required">
                                         Heeft u allergieën?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="allergies" value="1" 
+                                            <input type="radio" name="allergies" value="1"
                                                    {{ $anamnesis->allergies == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('allergies', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="allergies" value="0" 
+                                            <input type="radio" name="allergies" value="0"
                                                    {{ $anamnesis->allergies == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('allergies', false)"
                                                    class="mr-2">
@@ -527,7 +527,7 @@
                                         </label>
                                     </div>
                                 </x-admin::form.control-group>
-                                
+
                                 <div id="allergies_comment" class="mt-2" style="display: {{ $anamnesis->allergies == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -542,19 +542,19 @@
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label class="required">
-                                        Spijsverteringsklachten
+                                        Heeft u spijsverteringsklachten
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="digestive_problems" value="1" 
+                                            <input type="radio" name="digestive_problems" value="1"
                                                    {{ $anamnesis->digestive_problems == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('digestive_problems', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="digestive_problems" value="0" 
+                                            <input type="radio" name="digestive_problems" value="0"
                                                    {{ $anamnesis->digestive_problems == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('digestive_problems', false)"
                                                    class="mr-2">
@@ -562,7 +562,7 @@
                                         </label>
                                     </div>
                                 </x-admin::form.control-group>
-                                
+
                                 <div id="digestive_problems_comment" class="mt-2" style="display: {{ $anamnesis->digestive_problems == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -581,7 +581,7 @@
                     <!-- Gezondheid & Erfelijkheden -->
                     <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <h2 class="mb-4 text-lg font-semibold dark:text-white">Gezondheid & Erfelijkheden</h2>
-                        
+
                         <div class="space-y-6">
                             <!-- Hart erfelijk -->
                             <div class="space-y-2">
@@ -589,17 +589,17 @@
                                     <x-admin::form.control-group.label class="required">
                                         Hartafwijking?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="hereditary_heart" value="1" 
+                                            <input type="radio" name="hereditary_heart" value="1"
                                                    {{ $anamnesis->hereditary_heart == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('hereditary_heart', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="hereditary_heart" value="0" 
+                                            <input type="radio" name="hereditary_heart" value="0"
                                                    {{ $anamnesis->hereditary_heart == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('hereditary_heart', false)"
                                                    class="mr-2">
@@ -607,7 +607,7 @@
                                         </label>
                                     </div>
                                 </x-admin::form.control-group>
-                                
+
                                 <div id="hereditary_heart_comment" class="mt-2" style="display: {{ $anamnesis->hereditary_heart == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -624,17 +624,17 @@
                                     <x-admin::form.control-group.label class="required">
                                         Komt / kwam er in naaste familie hart- en/of vaatziekten voor?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="hereditary_vascular" value="1" 
+                                            <input type="radio" name="hereditary_vascular" value="1"
                                                    {{ $anamnesis->hereditary_vascular == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('hereditary_vascular', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="hereditary_vascular" value="0" 
+                                            <input type="radio" name="hereditary_vascular" value="0"
                                                    {{ $anamnesis->hereditary_vascular == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('hereditary_vascular', false)"
                                                    class="mr-2">
@@ -642,7 +642,7 @@
                                         </label>
                                     </div>
                                 </x-admin::form.control-group>
-                                
+
                                 <div id="hereditary_vascular_comment" class="mt-2" style="display: {{ $anamnesis->hereditary_vascular == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -659,17 +659,17 @@
                                     <x-admin::form.control-group.label class="required">
                                         Komt / kwam er in de naaste familie kanker voor?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="hereditary_tumors" value="1" 
+                                            <input type="radio" name="hereditary_tumors" value="1"
                                                    {{ $anamnesis->hereditary_tumors == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('hereditary_tumors', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="hereditary_tumors" value="0" 
+                                            <input type="radio" name="hereditary_tumors" value="0"
                                                    {{ $anamnesis->hereditary_tumors == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('hereditary_tumors', false)"
                                                    class="mr-2">
@@ -677,7 +677,7 @@
                                         </label>
                                     </div>
                                 </x-admin::form.control-group>
-                                
+
                                 <div id="hereditary_tumors_comment" class="mt-2" style="display: {{ $anamnesis->hereditary_tumors == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -694,17 +694,17 @@
                                     <x-admin::form.control-group.label class="required">
                                         Rookt u?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="smoking" value="1" 
+                                            <input type="radio" name="smoking" value="1"
                                                    {{ $anamnesis->smoking == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('smoking', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="smoking" value="0" 
+                                            <input type="radio" name="smoking" value="0"
                                                    {{ $anamnesis->smoking == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('smoking', false)"
                                                    class="mr-2">
@@ -712,7 +712,7 @@
                                         </label>
                                     </div>
                                 </x-admin::form.control-group>
-                                
+
                                 <div id="smoking_comment" class="mt-2" style="display: {{ $anamnesis->smoking == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -729,17 +729,17 @@
                                     <x-admin::form.control-group.label class="required">
                                         Heeft u diabetes?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="diabetes" value="1" 
+                                            <input type="radio" name="diabetes" value="1"
                                                    {{ $anamnesis->diabetes == 1 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('diabetes', this.checked)"
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="diabetes" value="0" 
+                                            <input type="radio" name="diabetes" value="0"
                                                    {{ $anamnesis->diabetes == 0 ? 'checked' : '' }}
                                                    onchange="toggleCommentField('diabetes', false)"
                                                    class="mr-2">
@@ -747,7 +747,7 @@
                                         </label>
                                     </div>
                                 </x-admin::form.control-group>
-                                
+
                                 <div id="diabetes_comment" class="mt-2" style="display: {{ $anamnesis->diabetes == 1 ? 'block' : 'none' }}">
                                     <x-admin::form.control-group.control
                                         type="text"
@@ -762,18 +762,18 @@
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label class="required">
-                                        Bent u lichamelijk actief?
+                                        Beweegt u regelmatig?
                                     </x-admin::form.control-group.label>
-                                    
+
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="active" value="1" 
+                                            <input type="radio" name="active" value="1"
                                                    {{ $anamnesis->active == 1 ? 'checked' : '' }}
                                                    class="mr-2">
                                             Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="active" value="0" 
+                                            <input type="radio" name="active" value="0"
                                                    {{ $anamnesis->active == 0 ? 'checked' : '' }}
                                                    class="mr-2">
                                             Nee
@@ -805,7 +805,7 @@
                     <!-- Final Notes -->
                     <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                         <h2 class="mb-4 text-lg font-semibold dark:text-white">Opmerkingen en advies</h2>
-                        
+
                         <div class="space-y-4">
                             <div>
                                 <x-admin::form.control-group>
@@ -856,15 +856,15 @@
             const heightInput = document.querySelector('input[name="height"]');
             const weightInput = document.querySelector('input[name="weight"]');
             const bmiDisplay = document.getElementById('bmi-display');
-            
+
             const height = parseFloat(heightInput.value);
             const weight = parseFloat(weightInput.value);
-            
+
             if (height && weight) {
                 // Calculate BMI
                 const heightInMeters = height / 100;
                 const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(1);
-                
+
                 // Determine category and colors
                 let category, bgColor, textColor, barColor;
                 if (bmi < 18.5) {
@@ -888,17 +888,17 @@
                     textColor = 'text-red-700';
                     barColor = 'bg-red-500';
                 }
-                
+
                 // Calculate position (BMI scale from 15 to 40)
                 const position = Math.min(Math.max((bmi - 15) / 25 * 100, 0), 100);
-                
+
                 // Update the BMI display
                 bmiDisplay.innerHTML = `
                     <div class="mt-4 p-3 ${bgColor} rounded-lg border dark:border-gray-600 dark:bg-opacity-20">
                         <div class="flex justify-between items-center mb-2">
                             <span class="font-bold ${textColor} dark:text-white">${bmi} - ${category}</span>
                         </div>
-                        
+
                         <!-- BMI Visual Bar -->
                         <div class="relative">
                             <div class="w-full h-6 bg-gray-200 rounded-full overflow-hidden dark:bg-gray-700">
@@ -910,13 +910,13 @@
                                     <div class="bg-red-300 flex-1 dark:bg-red-600"></div>
                                 </div>
                             </div>
-                            
+
                             <!-- BMI indicator -->
-                            <div class="absolute top-0 h-6 w-1 ${barColor} rounded-full transform -translate-x-1/2" 
+                            <div class="absolute top-0 h-6 w-1 ${barColor} rounded-full transform -translate-x-1/2"
                                  style="left: ${position}%;">
                             </div>
                         </div>
-                        
+
                         <!-- BMI scale labels -->
                         <div class="flex justify-between text-xs text-gray-500 mt-1 dark:text-gray-400">
                             <span>15</span>
@@ -936,7 +936,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             // Get all radio buttons with value="1" (Ja options)
             const yesRadios = document.querySelectorAll('input[type="radio"][value="1"]');
-            
+
             yesRadios.forEach(function(radio) {
                 if (radio.checked) {
                     toggleCommentField(radio.name, true);

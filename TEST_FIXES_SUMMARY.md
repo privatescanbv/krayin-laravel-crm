@@ -55,11 +55,17 @@ Created `tests/Unit/LeadWebhookLogicTest.php` that:
 
 ## Running the Tests
 
-### Logic Test (Recommended)
+### Webhook Duplication Test (Most Recommended)
+```bash
+./vendor/bin/pest tests/Unit/WebhookDuplicationTest.php --verbose
+```
+This test directly verifies the webhook duplication fix with minimal mocking.
+
+### Logic Test 
 ```bash
 ./vendor/bin/pest tests/Unit/LeadWebhookLogicTest.php --verbose
 ```
-This test is more reliable and focuses on the core logic.
+This test focuses on the core `willPipelineBeUpdated()` logic.
 
 ### Full Unit Test
 ```bash

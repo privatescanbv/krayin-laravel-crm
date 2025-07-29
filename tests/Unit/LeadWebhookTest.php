@@ -40,12 +40,12 @@ class LeadWebhookTest extends TestCase
             $this->leadRepository
         );
 
-        // Mock DB facade for the created_by update
-        DB::shouldReceive('table')->with('leads')->andReturnSelf();
-        DB::shouldReceive('where')->with('id', Mockery::any())->andReturnSelf();
-        DB::shouldReceive('update')->with(Mockery::any())->andReturn(1);
+        // Mock DB facade for the created_by update - allow any calls
+        DB::shouldReceive('table')->andReturnSelf();
+        DB::shouldReceive('where')->andReturnSelf();
+        DB::shouldReceive('update')->andReturn(1);
         
-        // Mock Auth facade
+        // Mock Auth facade - allow any calls
         Auth::shouldReceive('check')->andReturn(false);
         Auth::shouldReceive('id')->andReturn(null);
     }
@@ -53,73 +53,87 @@ class LeadWebhookTest extends TestCase
     /** @test */
     public function test_webhook_not_sent_on_create_when_pipeline_will_be_updated()
     {
-        // Create a mock lead that will trigger pipeline update
-        $lead = Mockery::mock(Lead::class);
-        $department = Mockery::mock(Department::class);
-        $department->shouldReceive('getAttribute')->with('name')->andReturn('Hernia');
-        $department->name = 'Hernia'; // Add property access
+        // Create a simple mock object with just the properties we need
+        $department = new class {
+            public $name = 'Hernia';
+        };
         
-        $lead->shouldReceive('getAttribute')->with('id')->andReturn(1);
-        $lead->shouldReceive('getAttribute')->with('department')->andReturn($department);
-        $lead->shouldReceive('getAttribute')->with('created_by')->andReturn(null);
-        $lead->shouldReceive('getAttribute')->with('stage')->andReturn(null);
-        $lead->shouldReceive('getAttribute')->with('lead_pipeline_id')
-            ->andReturn(PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value); // Different from expected Hernia pipeline
+        $lead = new class {
+            public $id = 1;
+            public $department;
+            public $created_by = null;
+            public $stage = null;
+            public $lead_pipeline_id;
+            public $source = null;
+            public $updateCalled = false;
+            public $updateData = null;
+            
+            public function __construct($department, $pipelineId) {
+                $this->department = $department;
+                $this->lead_pipeline_id = $pipelineId;
+            }
+            
+            public function load($relation) {
+                return $this;
+            }
+            
+            public function update($data) {
+                $this->updateCalled = true;
+                $this->updateData = $data;
+            }
+        };
         
-        // Add property access for direct property calls
-        $lead->id = 1;
-        $lead->department = $department;
-        $lead->stage = null;
-        $lead->lead_pipeline_id = PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value;
+        $leadInstance = new $lead($department, PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value);
         
         // Mock the leadRepository to return the same lead
-        $this->leadRepository->shouldReceive('findOrFail')->with(1)->andReturn($lead);
-        
-        // The lead should be updated with new pipeline
-        $lead->shouldReceive('update')->with([
-            'lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_HERNIA_ID->value,
-            'lead_pipeline_stage_id' => PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value,
-        ])->once();
+        $this->leadRepository->shouldReceive('findOrFail')->with(1)->andReturn($leadInstance);
 
         // Webhook should NOT be sent because pipeline will be updated
         $this->webhookService->shouldNotReceive('sendWebhook');
 
         // Call the created method
-        $this->observer->created($lead);
+        $this->observer->created($leadInstance);
         
-        // Assert that the test ran (to avoid "no assertions" error)
-        $this->assertTrue(true, 'Webhook was correctly not sent when pipeline will be updated');
+        // Assert that update was called (pipeline was updated)
+        $this->assertTrue($leadInstance->updateCalled, 'Pipeline update should have been called');
+        $this->assertEquals([
+            'lead_pipeline_id' => PipelineDefaultKeys::PIPELINE_HERNIA_ID->value,
+            'lead_pipeline_stage_id' => PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value,
+        ], $leadInstance->updateData);
     }
 
     /** @test */
     public function test_webhook_sent_on_create_when_pipeline_wont_be_updated()
     {
-        // Create a mock lead that won't trigger pipeline update
-        $lead = Mockery::mock(Lead::class);
-        $department = Mockery::mock(Department::class);
-        $stage = Mockery::mock();
-        $stage->shouldReceive('getAttribute')->with('code')->andReturn('initial_stage');
-        $stage->code = 'initial_stage'; // Add property access
+        // Create simple mock objects
+        $stage = new class {
+            public $code = 'initial_stage';
+        };
         
-        $department->shouldReceive('getAttribute')->with('name')->andReturn('Hernia');
-        $department->name = 'Hernia'; // Add property access
+        $department = new class {
+            public $name = 'Hernia';
+        };
         
-        $lead->shouldReceive('getAttribute')->with('id')->andReturn(1);
-        $lead->shouldReceive('getAttribute')->with('department')->andReturn($department);
-        $lead->shouldReceive('getAttribute')->with('created_by')->andReturn(null);
-        $lead->shouldReceive('getAttribute')->with('stage')->andReturn($stage);
-        $lead->shouldReceive('getAttribute')->with('lead_pipeline_id')
-            ->andReturn(PipelineDefaultKeys::PIPELINE_HERNIA_ID->value); // Same as expected pipeline
+        $lead = new class {
+            public $id = 1;
+            public $department;
+            public $created_by = null;
+            public $stage;
+            public $lead_pipeline_id;
+            public $source = null;
+            
+            public function __construct($department, $stage, $pipelineId) {
+                $this->department = $department;
+                $this->stage = $stage;
+                $this->lead_pipeline_id = $pipelineId;
+            }
+            
+            public function load($relation) {
+                return $this;
+            }
+        };
         
-        // Add property access for direct property calls
-        $lead->id = 1;
-        $lead->department = $department;
-        $lead->stage = $stage;
-        $lead->lead_pipeline_id = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
-        
-        $lead->shouldReceive('load')->with('source')->andReturn($lead);
-        $lead->shouldReceive('getAttribute')->with('source')->andReturn(null);
-        $lead->source = null; // Add property access
+        $leadInstance = new $lead($department, $stage, PipelineDefaultKeys::PIPELINE_HERNIA_ID->value);
 
         // Webhook SHOULD be sent because pipeline won't be updated
         $this->webhookService->shouldReceive('sendWebhook')
@@ -132,64 +146,74 @@ class LeadWebhookTest extends TestCase
             ->andReturn(true);
 
         // Call the created method
-        $this->observer->created($lead);
+        $this->observer->created($leadInstance);
     }
 
     /** @test */
     public function test_webhook_sent_on_update_when_stage_changed()
     {
-        // Create a mock lead with changed stage
-        $lead = Mockery::mock(Lead::class);
-        $stage = Mockery::mock();
-        $stage->shouldReceive('getAttribute')->with('code')->andReturn('new_stage');
-        $stage->code = 'new_stage'; // Add property access
+        // Create simple mock objects
+        $stage = new class {
+            public $code = 'new_stage';
+        };
         
-        $lead->shouldReceive('getAttribute')->with('id')->andReturn(1);
-        $lead->shouldReceive('getAttribute')->with('stage')->andReturn($stage);
-        $lead->shouldReceive('getAttribute')->with('department')->andReturn(null);
-        $lead->shouldReceive('wasChanged')->with('lead_pipeline_stage_id')->andReturn(true);
-        $lead->shouldReceive('load')->with('source')->andReturn($lead);
-        $lead->shouldReceive('getAttribute')->with('source')->andReturn(null);
-
-        // Add property access for direct property calls
-        $lead->id = 1;
-        $lead->stage = $stage;
-        $lead->department = null;
-        $lead->source = null;
+        $activities = new class {
+            public function attach($id) {
+                return true;
+            }
+        };
+        
+        $activity = new class {
+            public $id = 1;
+        };
+        
+        $lead = new class {
+            public $id = 1;
+            public $stage;
+            public $department = null;
+            public $source = null;
+            public $first_name = null;
+            public $last_name = null;
+            public $maiden_name = null;
+            public $description = null;
+            private $originalValues = [
+                'lead_pipeline_stage_id' => 1,
+                'first_name' => null,
+                'last_name' => null,
+                'maiden_name' => null,
+                'description' => null,
+            ];
+            private $changedFields = ['lead_pipeline_stage_id'];
+            
+            public function __construct($stage) {
+                $this->stage = $stage;
+            }
+            
+            public function load($relation) {
+                return $this;
+            }
+            
+            public function wasChanged($field) {
+                return in_array($field, $this->changedFields);
+            }
+            
+            public function getOriginal($field) {
+                return $this->originalValues[$field] ?? null;
+            }
+            
+            public function activities() {
+                return new class {
+                    public function attach($id) {
+                        return true;
+                    }
+                };
+            }
+        };
+        
+        $leadInstance = new $lead($stage);
 
         // Mock activity repository for logFixedFieldsActivity
-        $activities = Mockery::mock();
-        $activities->shouldReceive('attach')->with(Mockery::any())->andReturn(true);
-        
-        $activity = Mockery::mock();
-        $activity->shouldReceive('getAttribute')->with('id')->andReturn(1);
-        
         $this->activityRepository->shouldReceive('create')->andReturn($activity);
-        $lead->shouldReceive('activities')->andReturn($activities);
-        
-        // Mock getOriginal calls for logFixedFieldsActivity - including lead_pipeline_stage_id
-        $lead->shouldReceive('getOriginal')->with('lead_pipeline_stage_id')->andReturn(1);
-        $lead->shouldReceive('getOriginal')->with('first_name')->andReturn(null);
-        $lead->shouldReceive('getOriginal')->with('last_name')->andReturn(null);
-        $lead->shouldReceive('getOriginal')->with('maiden_name')->andReturn(null);
-        $lead->shouldReceive('getOriginal')->with('description')->andReturn(null);
-        
-        // Mock current field values
-        $lead->shouldReceive('getAttribute')->with('first_name')->andReturn(null);
-        $lead->shouldReceive('getAttribute')->with('last_name')->andReturn(null);
-        $lead->shouldReceive('getAttribute')->with('maiden_name')->andReturn(null);
-        $lead->shouldReceive('getAttribute')->with('description')->andReturn(null);
-        
-        // Add property access for direct field access
-        $lead->first_name = null;
-        $lead->last_name = null;
-        $lead->maiden_name = null;
-        $lead->description = null;
-        
-        $lead->shouldReceive('wasChanged')->with('first_name')->andReturn(false);
-        $lead->shouldReceive('wasChanged')->with('last_name')->andReturn(false);
-        $lead->shouldReceive('wasChanged')->with('maiden_name')->andReturn(false);
-        $lead->shouldReceive('wasChanged')->with('description')->andReturn(false);
 
         // Webhook should be sent for stage change
         $this->webhookService->shouldReceive('sendWebhook')
@@ -202,7 +226,7 @@ class LeadWebhookTest extends TestCase
             ->andReturn(true);
 
         // Call the updated method
-        $this->observer->updated($lead);
+        $this->observer->updated($leadInstance);
     }
 
     protected function tearDown(): void

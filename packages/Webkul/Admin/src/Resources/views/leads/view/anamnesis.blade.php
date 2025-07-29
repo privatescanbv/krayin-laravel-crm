@@ -136,13 +136,13 @@
                     'hereditary_heart' => 'Hartafwijking',
                     'hereditary_vascular' => 'Hart-/vaatziekten familie',
                     'hereditary_tumors' => 'Kanker familie',
-                    'allergies' => 'Allergie',
+                    'allergies' => 'Allergieën',
                     'back_problems' => 'Rugklachten',
                     'heart_problems' => 'Hartproblemen',
-                    'smoking' => 'Roken',
+                    'smoking' => 'Rookt',
                     'diabetes' => 'Diabetes',
                     'digestive_problems' => 'Spijsverteringsklachten',
-                    'active' => 'Actief'
+                    'active' => 'Lichamelijk actief'
                 ])->filter(function($label, $field) use ($lead) {
                     return $lead->anamnesis->{$field} == 1;
                 });

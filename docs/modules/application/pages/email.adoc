@@ -4,14 +4,14 @@ Het CRM systeem heeft een geïntegreerde email functionaliteit die automatische 
 
 ==== Email Accounts Configuratie
 
-Het systeem werkt met twee specifieke email accounts die elk een verschillende functie hebben:
+Op het moment werkt het systeem werkt met twee specifieke email accounts die elk een verschillende functie hebben:
 
 ===== Patient Email Account
 * **Email adres**: `user1@test.local`
 * **Functie**: Simuleert een patiënt account
 * **Gebruik**: Voor het ontvangen van uitgaande berichten vanuit het CRM
 
-===== CRM Inbox Account  
+===== CRM Inbox Account
 * **Email adres**: `privatescan@test.local`
 * **Functie**: Centrale inbox voor inkomende berichten
 * **Gebruik**: Automatische koppeling aan leads en contactpersonen
@@ -118,11 +118,13 @@ Na succesvolle verwerking zie je:
 **Probleem**: Reply email verschijnt niet in CRM of bij de juiste lead
 
 **Mogelijke Oorzaken:**
+
 * Reply niet naar `privatescan@test.local` gestuurd
 * Onderwerp regel gewijzigd
 * Verwerkingstijd nog niet verstreken
 
 **Oplossing:**
+
 . Verificeer dat reply naar `privatescan@test.local` is gestuurd
 . Wacht volledige minuut voor automatische verwerking
 . Controleer of onderwerp regel intact is gebleven
@@ -132,11 +134,13 @@ Na succesvolle verwerking zie je:
 **Probleem**: Kan niet inloggen op webmail interface
 
 **Mogelijke Oorzaken:**
+
 * Verkeerde inloggegevens
 * Browser cache problemen
 * Webmail server niet beschikbaar
 
 **Oplossing:**
+
 . Gebruik exact: `user1@test.local` / `test1234`
 . Probeer incognito/private browsing mode
 . Wis browser cache en cookies

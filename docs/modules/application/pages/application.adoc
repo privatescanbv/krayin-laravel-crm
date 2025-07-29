@@ -20,6 +20,8 @@ include::contact-matcher.adoc[]
 
 include::anamnesis-form.adoc[]
 
+include::email.adoc[]
+
 ==== Login
 
 [plantuml]

@@ -51,30 +51,36 @@
                             <span class="font-medium dark:text-white">{{ $lead->anamnesis->weight }} kg</span>
                         </div>
                     @endif
+                    
+                    <!-- BMI Calculation and Display -->
+                    <x-admin::health.bmi-calculator 
+                        :height="$lead->anamnesis->height" 
+                        :weight="$lead->anamnesis->weight" 
+                    />
                 </div>
             @endif
 
             <!-- Medical Conditions -->
             @php
                 $conditions = collect([
-                    'metals' => 'Metalen',
-                    'medications' => 'Medicijnen',
+                    'metals' => 'Metaal in lichaam',
+                    'medications' => 'Metformine',
                     'glaucoma' => 'Glaucoom',
-                    'claustrophobia' => 'Claustrofobie',
-                    'dormicum' => 'Dormicum',
-                    'heart_surgery' => 'Hart operatie',
+                    'claustrophobia' => 'Claustrofobisch',
+                    'dormicum' => 'Rustgevend middel',
+                    'heart_surgery' => 'Hartkatheterisatie',
                     'implant' => 'Implantaat',
                     'surgeries' => 'Operaties',
-                    'hereditary_heart' => 'Hart erfelijk',
-                    'hereditary_vascular' => 'Vaat erfelijk',
-                    'hereditary_tumors' => 'Tumoren erfelijk',
-                    'allergies' => 'Allergie',
-                    'back_problems' => 'Rugklachten',
+                    'hereditary_heart' => 'Hartafwijking',
+                    'hereditary_vascular' => 'Hart-/vaatziekten familie',
+                    'hereditary_tumors' => 'Kanker familie',
+                    'allergies' => 'Allergieën',
+                    'back_problems' => 'Kan stil liggen op rug',
                     'heart_problems' => 'Hartproblemen',
-                    'smoking' => 'Roken',
+                    'smoking' => 'Rookt',
                     'diabetes' => 'Diabetes',
                     'digestive_problems' => 'Spijsverteringsklachten',
-                    'active' => 'Actief'
+                    'active' => 'Lichamelijk actief'
                 ])->filter(function($label, $field) use ($lead) {
                     return $lead->anamnesis->{$field} == 1;
                 });

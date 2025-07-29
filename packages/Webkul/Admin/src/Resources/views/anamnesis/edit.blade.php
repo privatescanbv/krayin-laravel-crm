@@ -175,7 +175,7 @@
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label class="required">
-                                        Metalen
+                                        Heeft u metaal in uw lichaam?
                                     </x-admin::form.control-group.label>
                                     
                                     <div class="flex gap-4">
@@ -214,7 +214,7 @@
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label class="required">
-                                        Medicijnen
+                                        Gebruikt u Metformine?
                                     </x-admin::form.control-group.label>
                                     
                                     <div class="flex gap-4">
@@ -284,7 +284,7 @@
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label class="required">
-                                        Claustrofobie
+                                        Bent u claustrofobisch?
                                     </x-admin::form.control-group.label>
                                     
                                     <div class="flex gap-4">
@@ -308,7 +308,7 @@
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label class="required">
-                                        Dormicum (kalmeringsmiddel)
+                                        Wenst u een rustgevend middel?
                                     </x-admin::form.control-group.label>
                                     
                                     <div class="flex gap-4">
@@ -332,7 +332,7 @@
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label class="required">
-                                        Hart operatie
+                                        Heeft u ooit een hartkatheterisatie gehad?
                                     </x-admin::form.control-group.label>
                                     
                                     <div class="flex gap-4">
@@ -472,7 +472,7 @@
                             <div class="space-y-2">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label class="required">
-                                        Rugklachten
+                                        Kunt u langere tijd stil liggen op uw rug?
                                     </x-admin::form.control-group.label>
                                     
                                     <div class="flex gap-4">

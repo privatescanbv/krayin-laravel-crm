@@ -47,7 +47,7 @@ class WebhookDuplicationTest extends TestCase
         $department = new class { public $name = 'Hernia'; };
         $stage = new class { public $code = 'initial'; };
         
-        $lead = new class {
+        $leadClass = new class {
             public $id = 1;
             public $department;
             public $created_by = null;
@@ -73,7 +73,7 @@ class WebhookDuplicationTest extends TestCase
             }
         };
 
-        $leadInstance = new $lead($department, $stage, PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value);
+        $leadInstance = new $leadClass($department, $stage, PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value);
 
         // Mock leadRepository for the update call
         $leadRepository->shouldReceive('findOrFail')->with(1)->andReturn($leadInstance);
@@ -127,7 +127,7 @@ class WebhookDuplicationTest extends TestCase
         $department = new class { public $name = 'Hernia'; };
         $stage = new class { public $code = 'initial'; };
         
-        $lead = new class {
+        $leadClass = new class {
             public $id = 1;
             public $department;
             public $created_by = null;
@@ -144,7 +144,7 @@ class WebhookDuplicationTest extends TestCase
             public function load($relation) { return $this; }
         };
 
-        $leadInstance = new $lead($department, $stage, PipelineDefaultKeys::PIPELINE_HERNIA_ID->value);
+        $leadInstance = new $leadClass($department, $stage, PipelineDefaultKeys::PIPELINE_HERNIA_ID->value);
 
         // Call created method (this SHOULD send webhook because pipeline won't be updated)
         $observer->created($leadInstance);

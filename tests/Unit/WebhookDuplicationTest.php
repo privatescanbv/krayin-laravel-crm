@@ -47,7 +47,8 @@ class WebhookDuplicationTest extends TestCase
         $department = new class { public $name = 'Hernia'; };
         $stage = new class { public $code = 'initial'; };
         
-        $leadClass = new class {
+        // Create lead instance directly
+        $leadInstance = new class {
             public $id = 1;
             public $department;
             public $created_by = null;
@@ -55,12 +56,6 @@ class WebhookDuplicationTest extends TestCase
             public $lead_pipeline_id;
             public $source = null;
             public $updateCalled = false;
-            
-            public function __construct($department, $stage, $pipelineId) {
-                $this->department = $department;
-                $this->stage = $stage;
-                $this->lead_pipeline_id = $pipelineId;
-            }
             
             public function load($relation) { return $this; }
             public function update($data) { $this->updateCalled = true; }
@@ -72,8 +67,11 @@ class WebhookDuplicationTest extends TestCase
                 };
             }
         };
-
-        $leadInstance = new $leadClass($department, $stage, PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value);
+        
+        // Set properties after creation
+        $leadInstance->department = $department;
+        $leadInstance->stage = $stage;
+        $leadInstance->lead_pipeline_id = PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value;
 
         // Mock leadRepository for the update call
         $leadRepository->shouldReceive('findOrFail')->with(1)->andReturn($leadInstance);
@@ -127,7 +125,8 @@ class WebhookDuplicationTest extends TestCase
         $department = new class { public $name = 'Hernia'; };
         $stage = new class { public $code = 'initial'; };
         
-        $leadClass = new class {
+        // Create lead instance directly
+        $leadInstance = new class {
             public $id = 1;
             public $department;
             public $created_by = null;
@@ -135,16 +134,13 @@ class WebhookDuplicationTest extends TestCase
             public $lead_pipeline_id;
             public $source = null;
             
-            public function __construct($department, $stage, $pipelineId) {
-                $this->department = $department;
-                $this->stage = $stage;
-                $this->lead_pipeline_id = $pipelineId;
-            }
-            
             public function load($relation) { return $this; }
         };
-
-        $leadInstance = new $leadClass($department, $stage, PipelineDefaultKeys::PIPELINE_HERNIA_ID->value);
+        
+        // Set properties after creation
+        $leadInstance->department = $department;
+        $leadInstance->stage = $stage;
+        $leadInstance->lead_pipeline_id = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
 
         // Call created method (this SHOULD send webhook because pipeline won't be updated)
         $observer->created($leadInstance);

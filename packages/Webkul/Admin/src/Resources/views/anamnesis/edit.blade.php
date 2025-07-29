@@ -134,6 +134,7 @@
                                         name="height"
                                         :value="$anamnesis->height"
                                         placeholder="180"
+                                        onchange="updateBMI()"
                                     />
                                 </x-admin::form.control-group>
                             </div>
@@ -149,9 +150,19 @@
                                         name="weight"
                                         :value="$anamnesis->weight"
                                         placeholder="70"
+                                        onchange="updateBMI()"
                                     />
                                 </x-admin::form.control-group>
                             </div>
+                        </div>
+                        
+                        <!-- BMI Calculator -->
+                        <div id="bmi-display">
+                            <x-admin::health.bmi-calculator 
+                                :height="$anamnesis->height" 
+                                :weight="$anamnesis->weight"
+                                :show-label="false"
+                            />
                         </div>
                     </div>
 
@@ -838,6 +849,86 @@
             const commentDiv = document.getElementById(fieldName + '_comment');
             if (commentDiv) {
                 commentDiv.style.display = showField ? 'block' : 'none';
+            }
+        }
+
+        function updateBMI() {
+            const heightInput = document.querySelector('input[name="height"]');
+            const weightInput = document.querySelector('input[name="weight"]');
+            const bmiDisplay = document.getElementById('bmi-display');
+            
+            const height = parseFloat(heightInput.value);
+            const weight = parseFloat(weightInput.value);
+            
+            if (height && weight) {
+                // Calculate BMI
+                const heightInMeters = height / 100;
+                const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(1);
+                
+                // Determine category and colors
+                let category, bgColor, textColor, barColor;
+                if (bmi < 18.5) {
+                    category = 'Ondergewicht';
+                    bgColor = 'bg-blue-50';
+                    textColor = 'text-blue-700';
+                    barColor = 'bg-blue-500';
+                } else if (bmi < 25) {
+                    category = 'Normaal gewicht';
+                    bgColor = 'bg-green-50';
+                    textColor = 'text-green-700';
+                    barColor = 'bg-green-500';
+                } else if (bmi < 30) {
+                    category = 'Overgewicht';
+                    bgColor = 'bg-yellow-50';
+                    textColor = 'text-yellow-700';
+                    barColor = 'bg-yellow-500';
+                } else {
+                    category = 'Obesitas';
+                    bgColor = 'bg-red-50';
+                    textColor = 'text-red-700';
+                    barColor = 'bg-red-500';
+                }
+                
+                // Calculate position (BMI scale from 15 to 40)
+                const position = Math.min(Math.max((bmi - 15) / 25 * 100, 0), 100);
+                
+                // Update the BMI display
+                bmiDisplay.innerHTML = `
+                    <div class="mt-4 p-3 ${bgColor} rounded-lg border dark:border-gray-600 dark:bg-opacity-20">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-bold ${textColor} dark:text-white">${bmi} - ${category}</span>
+                        </div>
+                        
+                        <!-- BMI Visual Bar -->
+                        <div class="relative">
+                            <div class="w-full h-6 bg-gray-200 rounded-full overflow-hidden dark:bg-gray-700">
+                                <!-- BMI scale background -->
+                                <div class="h-full flex">
+                                    <div class="bg-blue-300 flex-1 dark:bg-blue-600"></div>
+                                    <div class="bg-green-300 flex-1 dark:bg-green-600"></div>
+                                    <div class="bg-yellow-300 flex-1 dark:bg-yellow-600"></div>
+                                    <div class="bg-red-300 flex-1 dark:bg-red-600"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- BMI indicator -->
+                            <div class="absolute top-0 h-6 w-1 ${barColor} rounded-full transform -translate-x-1/2" 
+                                 style="left: ${position}%;">
+                            </div>
+                        </div>
+                        
+                        <!-- BMI scale labels -->
+                        <div class="flex justify-between text-xs text-gray-500 mt-1 dark:text-gray-400">
+                            <span>15</span>
+                            <span>18.5</span>
+                            <span>25</span>
+                            <span>30</span>
+                            <span>40</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                bmiDisplay.innerHTML = '';
             }
         }
 

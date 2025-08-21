@@ -184,7 +184,7 @@ services:
       - "1025:25"     # SMTP inkomend (van Laravel)
       - "587:587"     # SMTP met AUTH (voor RainLoop)
       - "993:993"     # IMAPS voor Webklex of mailclient
-    restart: always
+    restart: unless-stopped
     cap_add:
       - NET_ADMIN
     networks:

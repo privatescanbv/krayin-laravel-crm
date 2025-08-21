@@ -107,7 +107,7 @@ class ImportPersonsFromSugarCRM extends Command
     {
         $this->info("\n=== DRY RUN RESULTS ===");
 
-        $headers = ['ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Gender', 'Meisjesnaam', 'Roepnaam', 'Voorletters'];
+        $headers = ['External ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Gender', 'Meisjesnaam', 'Roepnaam', 'Voorletters'];
         $rows = [];
 
         foreach ($records as $record) {
@@ -143,7 +143,8 @@ class ImportPersonsFromSugarCRM extends Command
         $attributeValueRepo = app(AttributeValueRepository::class);
         foreach ($records as $record) {
             try {
-                $existingPerson = Person::where('emails', 'like', '%'.$record->email.'%')->first();
+                // Check if person already exists by external_id
+                $existingPerson = Person::where('external_id', $record->id)->first();
                 if ($existingPerson) {
                     $skipped++;
                     $bar->advance();
@@ -151,6 +152,7 @@ class ImportPersonsFromSugarCRM extends Command
                     continue;
                 }
                 $person = Person::create([
+                    'external_id'     => $record->id,
                     'emails'          => [['label' => 'work', 'value' => $record->email ?? '']],
                     'contact_numbers' => [['label' => 'work', 'value' => $record->phone_work ?? '']],
                     'initials'        => $record->voorletters_c ?? '',

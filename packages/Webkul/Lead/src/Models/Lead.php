@@ -37,6 +37,7 @@ class Lead extends Model implements LeadContract
      */
     protected $appends = [
         'rotten_days',
+        'name',
     ];
 
     /**
@@ -46,6 +47,7 @@ class Lead extends Model implements LeadContract
      */
     protected $fillable = [
         'title',
+        'external_id',
         'description',
         'emails',
         'phones',

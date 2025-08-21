@@ -196,11 +196,11 @@ class ImportLeadsFromSugarCRM extends Command
     /**
      * Show dry run results
      */
-    private function showDryRunResults($records)
+    private function showDryRunResults($records): void
     {
         $this->info("\n=== DRY RUN RESULTS ===");
 
-        $headers = ['ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Status', 'Workflow Status', 'Stage ID', 'Date Entered', 'Person Match'];
+        $headers = ['External ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Status', 'Workflow Status', 'Stage ID', 'Department', 'Channel', 'Type', 'Source', 'Date Entered', 'Person Match'];
         $rows = [];
 
         foreach ($records as $record) {
@@ -217,6 +217,9 @@ class ImportLeadsFromSugarCRM extends Command
                 $record->status ?? 'N/A',
                 $record->workflow_status_c ?? 'N/A',
                 $this->mapStage($record),
+                $this->mapChannel($record),
+                $this->mapType($record),
+                $this->mapSource($record),
                 $record->date_entered ?? 'N/A',
                 $personMatch,
             ];
@@ -229,7 +232,7 @@ class ImportLeadsFromSugarCRM extends Command
     /**
      * Import records
      */
-    private function importRecords($records)
+    private function importRecords($records): void
     {
         $bar = $this->output->createProgressBar($records->count());
         $bar->start();
@@ -241,8 +244,8 @@ class ImportLeadsFromSugarCRM extends Command
 
         foreach ($records as $record) {
             try {
-                // Check if lead already exists
-                $existingLead = Lead::where('title', $record->first_name.' '.$record->last_name.' - '.$record->id)->first();
+                // Check if lead already exists by external_id
+                $existingLead = Lead::where('external_id', $record->id)->first();
                 if ($existingLead) {
                     $skipped++;
                     $bar->advance();
@@ -265,7 +268,8 @@ class ImportLeadsFromSugarCRM extends Command
 
                 // Create lead
                 $lead = Lead::create([
-                    'title'                  => $record->first_name.' '.$record->last_name.' - '.$record->id,
+                    'title'                  => $record->first_name.' '.$record->last_name,
+                    'external_id'            => $record->id,
                     'description'            => $record->description ?? '',
                     'emails'                 => $this->formatEmails($record),
                     'phones'                 => $this->formatPhones($record),
@@ -282,6 +286,10 @@ class ImportLeadsFromSugarCRM extends Command
                     'initials'               => $record->voorletters_c ?? '',
                     'date_of_birth'          => $record->birthdate,
                     'gender'                 => $record->gender_c,
+                    // skip departement mapping for now, will be done by business rules later
+                    'lead_channel_id'        => $this->mapChannel($record),
+                    'lead_type_id'           => $this->mapType($record),
+                    'lead_source_id'         => $this->mapSource($record),
                     'created_at'             => $record->date_entered ?? now(),
                     'updated_at'             => $record->date_modified ?? now(),
                 ]);
@@ -365,7 +373,7 @@ class ImportLeadsFromSugarCRM extends Command
     /**
      * Format emails for Lead model
      */
-    private function formatEmails($record)
+    private function formatEmails($record): array
     {
         $emails = [];
         $email = $this->extractEmail($record);
@@ -384,7 +392,7 @@ class ImportLeadsFromSugarCRM extends Command
     /**
      * Format phones for Lead model
      */
-    private function formatPhones($record)
+    private function formatPhones($record): array
     {
         $phones = [];
 
@@ -418,7 +426,7 @@ class ImportLeadsFromSugarCRM extends Command
     /**
      * Map SugarCRM status to our system
      */
-    private function mapStatus($status)
+    private function mapStatus($status): string
     {
         $statusMap = [
             'New'        => 'new',
@@ -435,7 +443,7 @@ class ImportLeadsFromSugarCRM extends Command
     /**
      * Map SugarCRM workflow status to pipeline stage
      */
-    private function mapStage($record)
+    private function mapStage($record): int
     {
         // Get workflow status from Sugar CRM
         $workflowStatus = $record->workflow_status_c ?? 'nieuweaanvraag';
@@ -526,5 +534,100 @@ class ImportLeadsFromSugarCRM extends Command
             'created_at'                => $record->date_entered ?? now(),
             'updated_at'                => $record->date_modified ?? now(),
         ]);
+    }
+
+    /**
+     * Map channel based on SugarCRM kanaal field
+     */
+    private function mapChannel($record): int
+    {
+        $kanaal = $record->kanaal_c ?? '';
+
+        // Map SugarCRM channels to our channel IDs
+        $channelMap = [
+            'telefoon'     => 1, // Telefoon
+            'website'      => 2, // Website
+            'email'        => 3, // E-mail
+            'tel-en-tel'   => 4, // Tel-en-Tel
+            'agenten'      => 5, // Agenten
+            'partners'     => 6, // Partners
+            'social media' => 7, // Social media
+            'webshop'      => 8, // Webshop
+            'campagne'     => 9, // Campagne
+        ];
+
+        $kanaalLower = strtolower(trim($kanaal));
+
+        return $channelMap[$kanaalLower] ?? 2; // Default to Website (ID: 2)
+    }
+
+    /**
+     * Map type based on SugarCRM soort_aanvraag field
+     */
+    private function mapType($record): int
+    {
+        $soortAanvraag = $record->soort_aanvraag_c ?? '';
+
+        // Map SugarCRM types to our type IDs
+        $typeMap = [
+            'preventie' => 1, // Preventie
+            'gericht'   => 2, // Gericht
+            'operatie'  => 3, // Operatie
+            'overig'    => 4, // Overig
+        ];
+
+        $soortAanvraagLower = strtolower(trim($soortAanvraag));
+
+        return $typeMap[$soortAanvraagLower] ?? 4; // Default to Overig (ID: 4)
+    }
+
+    /**
+     * Map source based on SugarCRM lead source or other criteria
+     */
+    private function mapSource($record): int
+    {
+        $leadSource = $record->lead_source ?? '';
+
+        // Map SugarCRM sources to our source IDs
+        $sourceMap = [
+            'bodyscan.nl'                  => 1,
+            'privatescan.nl'               => 2,
+            'mri-scan.nl'                  => 3,
+            'ccsvi-online.nl'              => 4,
+            'ccsvi-online.com'             => 5,
+            'google zoeken'                => 6,
+            'adwords'                      => 7,
+            'krant telegraaf'              => 8,
+            'krant spits'                  => 9,
+            'krant regionaal'              => 10,
+            'krant overige dagbladen'      => 11,
+            'krant redactioneel'           => 12,
+            'magazine dito'                => 13,
+            'magazine humo belgie'         => 14,
+            'dokterdokter.nl'              => 15,
+            'vrouw.nl'                     => 16,
+            'dito-magazine.nl'             => 17,
+            'groupdeal.nl'                 => 18,
+            'marktplaats'                  => 19,
+            'zorgplanet.nl'                => 20,
+            'linkpartner'                  => 21,
+            'youtube'                      => 22,
+            'linkedin'                     => 23,
+            'twitter'                      => 24,
+            'facebook'                     => 25,
+            'rtl business class'           => 26,
+            'nieuwsbrief'                  => 27,
+            'bestaande klant'              => 28,
+            'zakenrelatie'                 => 29,
+            'vrienden, familie, kennissen' => 30,
+            'collega'                      => 31,
+            'anders'                       => 32,
+            'wegener webshop'              => 33,
+            'herniapoli.nl'                => 34,
+        ];
+
+        $leadSourceLower = strtolower(trim($leadSource));
+
+        return $sourceMap[$leadSourceLower] ?? 32; // Default to Anders (ID: 32)
     }
 }

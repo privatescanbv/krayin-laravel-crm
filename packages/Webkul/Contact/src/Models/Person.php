@@ -58,6 +58,7 @@ class Person extends Model implements PersonContract
         'user_id',
         'organization_id',
         'unique_id',
+        'external_id',
         'salutation',
         'first_name',
         'last_name',

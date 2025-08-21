@@ -62,7 +62,7 @@ test('can access edit with lead page', function () {
             'personId' => $person->id,
             'leadId'   => $lead->id,
         ]));
-    
+
     $response->assertOk();
     $response->assertViewIs('admin::contacts.persons.edit-with-lead');
     $response->assertViewHas('person', $person);
@@ -141,7 +141,7 @@ test('can update person with lead data', function () {
                 'date_of_birth' => '1985-05-15',
             ],
         ]);
-    
+
     $response->assertOk();
     $response->assertJson([
         'message'      => 'Person en lead succesvol bijgewerkt.',
@@ -225,7 +225,7 @@ test('handles array fields correctly during sync', function () {
                 'phones' => '111222333, 444555666',
             ],
         ]);
-    
+
     $response->assertOk();
 
     // Verify arrays were updated correctly

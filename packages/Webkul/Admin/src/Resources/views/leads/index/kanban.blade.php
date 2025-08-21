@@ -128,101 +128,92 @@
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.header.before') !!}
 
                                     <!-- Header -->
-                                    <div v-if="element.person?.name" class="flex items-start justify-between">
+                                    <div class="flex items-start justify-between">
                                        <div class="flex items-center gap-1">
-                                           <div>
+                                           <div v-if="element.person?.name">
                                                <x-admin::avatar ::name="element.person?.name" class="w-6 h-6" />
                                            </div>
                                            <div class="flex flex-col gap-0.5">
                                                <span class="text-[11px] font-medium">
-                                                   @{{ element.person?.name || element.first_name }}
+                                                   @{{ element.person?.name || element.name }}
                                                </span>
-                                               <span class="text-[9px] leading-normal">
+                                               <span class="text-[9px] leading-normal" v-if="element.person?.organization?.name">
                                                    @{{ element.person?.organization?.name }}
                                                </span>
                                            </div>
                                        </div>
 
-                                        <div
-                                            class="group relative"
-                                            v-if="element.rotten_days > 0"
-                                        >
-                                            <span class="icon-rotten cursor-default text-lg text-rose-600"></span>
-                                            <div class="absolute -top-1 right-7 hidden w-max flex-col items-center group-hover:flex">
-                                                <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
-                                                    @{{ "@lang('admin::app.leads.index.kanban.rotten-days', ['days' => 'replaceDays'])".replace('replaceDays', element.rotten_days) }}
-                                                </span>
-                                                <div class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
-                                            </div>
-                                        </div>
+                                                                                  <!-- Date and Rotten Days Indicator -->
+                                           <div class="flex items-center gap-1">
+                                               <!-- Date -->
+                                               <span class="text-[9px] text-gray-500">
+                                                   @{{ formatDate(element.created_at) }}
+                                               </span>
 
-                                        <!-- Duplicate Indicator -->
-                                        <div
-                                            class="group relative"
-                                            v-if="element.has_duplicates"
-                                        >
-                                            <span class="icon-warning cursor-default text-lg text-orange-600"></span>
-                                            <div class="absolute -top-1 right-7 hidden w-max flex-col items-center group-hover:flex">
-                                                <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
-                                                    Mogelijke duplicate gevonden (@{{ element.duplicates_count }} gelijkenissen)
-                                                </span>
-                                                <div class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
-                                            </div>
-                                        </div>
+                                               <!-- Rotten Days Indicator -->
+                                               <div
+                                                   class="group relative"
+                                                   v-if="element.rotten_days > 0"
+                                               >
+                                                   <span class="icon-rotten cursor-default text-sm text-rose-600"></span>
+                                                   <div class="absolute -top-1 right-7 hidden w-max flex-col items-center group-hover:flex">
+                                                       <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                           @{{ "@lang('admin::app.leads.index.kanban.rotten-days', ['days' => 'replaceDays'])".replace('replaceDays', element.rotten_days) }}
+                                                       </span>
+                                                       <div class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                   </div>
+                                               </div>
+                                           </div>
                                     </div>
 
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.header.after') !!}
 
-                                    {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.before') !!}
-
-                                    <!-- Lead Title -->
-                                    <p class="text-[12px] font-medium leading-tight mb-0.5">
-                                        @{{ element.title }}
-                                    </p>
+                                                                        {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.before') !!}
 
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.after') !!}
 
-                                    <div class="flex flex-wrap gap-0.5">
-                                        <div
-                                            class="flex items-center gap-0.5 rounded-xl bg-gray-200 px-2 py-0.5 text-[10px] font-medium dark:bg-gray-800 dark:text-white"
-                                            v-if="element.user"
-                                        >
-                                            <span class="icon-settings-user text-xs"></span>
-                                            @{{ element.user.name }}
-                                        </div>
-                                        <div class="rounded-xl bg-gray-200 px-2 py-0.5 text-[10px] font-medium dark:bg-gray-800 dark:text-white"
-                                             v-if="element.source">
-                                            @{{ element.source?.name }}
-                                        </div>
-                                        <!-- Tags -->
-                                        <template v-for="tag in element.tags">
-                                            {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.tag.before') !!}
-                                            <div
-                                                class="rounded-xl px-2 py-0.5 text-[10px] font-medium"
-                                                :style="{
-                                                    backgroundColor: tag.color,
-                                                    color: tagTextColor[tag.color]
-                                                }"
-                                            >
-                                                @{{ tag.name }}
-                                            </div>
-                                            {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.tag.after') !!}
-                                        </template>
-                                    </div>
-
                                     <!-- Card Footer -->
-                                    <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-200 dark:border-gray-600">
+                                    <div
+                                        class="flex items-center justify-between mt-2 pt-2 border-t border-gray-200 dark:border-gray-600"
+                                        v-if="(element.open_activities_count && element.open_activities_count > 0) || (element.unread_emails_count && element.unread_emails_count > 0)"
+                                    >
                                         <div class="flex items-center gap-3">
                                             <!-- Open Activities Count -->
-                                            <div class="flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
+                                            <div class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
                                                 <span class="icon-activity text-xs"></span>
                                                 <span>@{{ element.open_activities_count || 0 }}</span>
+                                                <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
+                                                    <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                        Openstaande activiteiten
+                                                    </span>
+                                                    <div class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                </div>
                                             </div>
 
                                             <!-- Unread Emails Count -->
-                                            <div class="flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
+                                            <div class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
                                                 <span class="icon-mail text-xs"></span>
                                                 <span>@{{ element.unread_emails_count || 0 }}</span>
+                                                <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
+                                                    <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                        Ongelezen e-mails
+                                                    </span>
+                                                    <div class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Duplicate Indicator -->
+                                            <div
+                                                class="group relative flex items-center gap-1"
+                                                v-if="element.has_duplicates"
+                                            >
+                                                <span class="icon-warning cursor-default text-xs text-orange-600"></span>
+                                                <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
+                                                    <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                        Mogelijke duplicate gevonden (@{{ element.duplicates_count }} gelijkenissen)
+                                                    </span>
+                                                    <div class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                </div>
                                             </div>
                                         </div>
 
@@ -313,6 +304,37 @@
             },
 
             methods: {
+                                /**
+                 * Format date to a more readable format
+                 *
+                 * @param {string} dateString - The date string to format
+                 * @returns {string} Formatted date string
+                 */
+                formatDate(dateString) {
+                    if (!dateString) return '';
+
+                    const date = new Date(dateString);
+                    const now = new Date();
+                    const diffTime = Math.abs(now - date);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    if (diffDays === 1) {
+                        return 'Vandaag';
+                    } else if (diffDays === 2) {
+                        return 'Gisteren';
+                    } else if (diffDays <= 7) {
+                        return `${diffDays - 1} dagen geleden`;
+                    } else {
+                        return date.toLocaleDateString('nl-NL', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: '2-digit'
+                        });
+                    }
+                },
+
+
+
                 /**
                  * Initialization: This function checks for any previously saved filters in local storage and applies them as needed.
                  *

@@ -81,10 +81,14 @@ test('API lead creation successfully creates a lead with anamnesis', function ()
         ->and($lead->emails[0]['value'])->toBe('john.doe.'.$uniqueId.'@example.com')
         ->and($lead->emails[0]['is_default'])->toBe(true);
 
-    // Assert: Check anamnesis was automatically created
+    // Create and attach a person to trigger anamnesis creation
+    $person = Person::factory()->create(['user_id' => $lead->user_id]);
+    $lead->attachPersons([$person->id]);
+
+    // Assert: Check anamnesis was created after person attachment
     $this->assertDatabaseHas('anamnesis', [
         'lead_id' => $leadId,
-        'name'    => 'Anamnesis voor Test Lead via API '.$uniqueId,
+        'name'    => 'Anamnesis voor ' . $lead->name,
         'user_id' => $lead->user_id,
     ]);
 

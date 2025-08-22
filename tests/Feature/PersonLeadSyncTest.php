@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Address;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Lead\Models\Lead;
@@ -399,7 +400,7 @@ test('manual search handles exact match correctly', function () {
     ]);
 
     // Add matching address for perfect score
-    \App\Models\Address::create([
+    Address::create([
         'person_id' => $exactMatchPerson->id,
         'street' => 'Test Street 123',
         'city' => 'Test City',
@@ -417,7 +418,7 @@ test('manual search handles exact match correctly', function () {
     ]);
 
     $differentAddressPerson = Person::factory()->create([
-        'name'        => 'John Doe', // Override factory name  
+        'name'        => 'John Doe', // Override factory name
         'first_name'  => 'John',
         'last_name'   => 'Doe',
         'emails'      => [['value' => 'john@example.com', 'label' => 'Work']],
@@ -494,12 +495,12 @@ test('manual search handles exact match correctly', function () {
 
     // Should find exact match with score 100
     $exactMatch = collect($data['data'])->firstWhere('id', $exactMatchPerson->id);
-    
+
     \Log::info('Found exact match', [
         'exactMatch' => $exactMatch,
         'looking_for_id' => $exactMatchPerson->id,
     ]);
-    
+
     expect($exactMatch)->not->toBeNull();
     expect($exactMatch['score'])->toBe(100.0);
 });

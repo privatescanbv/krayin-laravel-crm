@@ -14,7 +14,7 @@
         src="{{ route('admin.contacts.organizations.search') }}"
         name="organization_id"
         label="Naam"
-        :value="{{ $organization }}"
+        value="{{ json_encode($organization) }}"
         placeholder="Zoek organisatie..."
         :can-add-new="true"
     />

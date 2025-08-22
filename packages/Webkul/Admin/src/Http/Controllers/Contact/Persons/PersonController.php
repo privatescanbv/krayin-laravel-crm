@@ -545,7 +545,7 @@ class PersonController extends Controller
         }
 
         // 100% match on all name fields = 95% score
-        if ($totalMatchRatio === 1.0) {
+        if ($totalMatchRatio >= 1.0) {
             return 0.95;
         }
 

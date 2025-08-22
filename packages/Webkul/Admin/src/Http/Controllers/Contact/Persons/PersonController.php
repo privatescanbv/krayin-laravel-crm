@@ -292,7 +292,7 @@ class PersonController extends Controller
         $leadId = request()->get('lead_id');
         if ($leadId) {
             try {
-                $lead = app(LeadRepository::class)->findOrFail($leadId);
+                $lead = app(LeadRepository::class)->with(['address'])->findOrFail($leadId);
 
                 // Calculate match scores for each person
                 $personsWithScores = $persons->map(function ($person) use ($lead) {

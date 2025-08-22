@@ -400,9 +400,10 @@ test('manual search handles exact match correctly', function () {
     ]);
 
     // Add matching address for perfect score
-    Address::create([
+    \App\Models\Address::create([
         'person_id' => $exactMatchPerson->id,
-        'street' => 'Test Street 123',
+        'street' => 'Test Street',
+        'house_number' => '123', // Required field
         'city' => 'Test City',
         'postal_code' => '1234AB',
         'country' => 'Nederland',
@@ -449,7 +450,8 @@ test('manual search handles exact match correctly', function () {
     // Add matching address to lead for perfect score
     \App\Models\Address::create([
         'lead_id' => $lead->id,
-        'street' => 'Test Street 123',
+        'street' => 'Test Street',
+        'house_number' => '123', // Required field
         'city' => 'Test City',
         'postal_code' => '1234AB',
         'country' => 'Nederland',

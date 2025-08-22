@@ -533,7 +533,7 @@ class PersonController extends Controller
         }
 
         // 100% match on important name fields = 80% score
-        if ($importantPossibleMatches > 0 && $importantMatches === $importantPossibleMatches) {
+        if ($importantPossibleMatches > 0 && $importantMatches === $importantPossibleMatches && $totalMatchRatio < 1.0) {
             return 0.80;
         }
 

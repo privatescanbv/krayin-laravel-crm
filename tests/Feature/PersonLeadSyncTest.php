@@ -393,8 +393,7 @@ test('manual search handles exact match correctly', function () {
         'salutation'          => null,
         'gender'              => null,
         'emails'              => [['value' => 'john@example.com', 'label' => 'Work']],
-        'phones'              => [['value' => '123456789', 'label' => 'Mobile']], // Exact same format as Lead
-        'contact_numbers'     => [['value' => '123456789', 'label' => 'Mobile']], // Exact same format as Lead
+        'contact_numbers'     => [['value' => '123456789', 'label' => 'Mobile']], // Only use contact_numbers to avoid duplication
         'date_of_birth'       => '1985-05-15',
         'user_id'             => test()->user->id,
     ]);

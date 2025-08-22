@@ -16,6 +16,8 @@ Dit zal de volgende migraties uitvoeren:
 1. `2025_01_15_000000_create_lead_persons_table.php` - Maakt pivot tabel aan
 2. `2025_01_15_000001_migrate_lead_person_data.php` - Migreert bestaande data
 3. `2025_01_15_000002_remove_person_id_from_leads_table.php` - Verwijdert person_id kolom
+4. `2025_01_15_000004_add_organization_id_to_leads_table.php` - Voegt organization_id toe
+5. `2025_01_15_000005_modify_lead_persons_table_structure.php` - Composite primary key
 
 ## 📋 Stap 2: Activeer Persons Relationship Loading
 

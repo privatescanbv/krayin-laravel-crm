@@ -10,13 +10,11 @@ De Lead-Person relatie is succesvol aangepast van **1-op-1 verplicht** naar **ve
 
 ```sql
 CREATE TABLE `lead_persons` (
-  `id` int unsigned NOT NULL AUTO_INCREMENT,
   `lead_id` int unsigned NOT NULL,
   `person_id` int unsigned NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `lead_persons_lead_id_person_id_unique` (`lead_id`,`person_id`),
+  PRIMARY KEY (`lead_id`, `person_id`),
   FOREIGN KEY (`lead_id`) REFERENCES `leads` (`id`) ON DELETE CASCADE,
   FOREIGN KEY (`person_id`) REFERENCES `persons` (`id`) ON DELETE CASCADE
 );

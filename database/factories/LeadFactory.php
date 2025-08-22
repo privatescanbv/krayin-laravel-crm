@@ -69,11 +69,11 @@ class LeadFactory extends Factory
             'lead_pipeline_id'       => $pipeline->id,
             'lead_pipeline_stage_id' => $stage->id,
             // 'combine_order'          => $this->faker->boolean(), // Temporarily disabled until migration runs
-            // Personal fields - set to null by default to avoid test conflicts, can be overridden
-            'first_name'             => null,
-            'last_name'              => null,
-            'emails'                 => null,
-            'phones'                 => null,
+            // Personal fields - minimal defaults, can be overridden
+            'first_name'             => $this->faker->firstName(),
+            'last_name'              => $this->faker->lastName(),
+            'emails'                 => [['value' => $this->faker->email(), 'label' => 'work', 'is_default' => true]],
+            'phones'                 => [['value' => $this->faker->randomNumber(9), 'label' => 'mobile', 'is_default' => true]],
             'lastname_prefix'        => null,
             'married_name'           => null,
             'married_name_prefix'    => null,

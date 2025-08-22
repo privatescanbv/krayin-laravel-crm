@@ -431,6 +431,23 @@ class PersonController extends Controller
             ]);
         }
 
+        // Debug score after empty fields fix
+        if (app()->environment('testing') && $person->id == 1) {
+            \Log::info('Score After Empty Fields Fix', [
+                'nameScore' => $nameScore,
+                'emailScore' => $emailScore, 
+                'phoneScore' => $phoneScore,
+                'addressScore' => $addressScore,
+                'finalScore' => min($score, $maxScore),
+                'calculation' => [
+                    'name_contribution' => $nameScore * 0.85 * 100,
+                    'email_contribution' => $emailScore * 0.05 * 100,
+                    'phone_contribution' => $phoneScore * 0.05 * 100,
+                    'address_contribution' => $addressScore * 0.05 * 100,
+                ]
+            ]);
+        }
+
         return min($score, $maxScore);
     }
 

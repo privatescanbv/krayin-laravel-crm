@@ -175,7 +175,67 @@
                                         </x-admin::form.control-group>
                                     </div>
 
+                                    <!-- Personal Fields (for matching) -->
+                                    <div class="flex flex-col gap-4 mb-4">
+                                        <p class="text-base font-semibold dark:text-white">Lead persoon gegevens (voor matching)</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            Deze gegevens worden gebruikt om te matchen met bestaande personen
+                                        </p>
 
+                                        <!-- Name Fields -->
+                                        <div class="flex gap-4">
+                                            <x-admin::form.control-group class="flex-1">
+                                                <x-admin::form.control-group.label class="required">Voornaam</x-admin::form.control-group.label>
+                                                <x-admin::form.control-group.control
+                                                    type="text"
+                                                    name="first_name"
+                                                    v-model="formData.first_name"
+                                                    placeholder="Voornaam"
+                                                    rules="required"
+                                                />
+                                                <x-admin::form.control-group.error control-name="first_name"/>
+                                            </x-admin::form.control-group>
+
+                                            <x-admin::form.control-group class="flex-1">
+                                                <x-admin::form.control-group.label class="required">Achternaam</x-admin::form.control-group.label>
+                                                <x-admin::form.control-group.control
+                                                    type="text"
+                                                    name="last_name"
+                                                    v-model="formData.last_name"
+                                                    placeholder="Achternaam"
+                                                    rules="required"
+                                                />
+                                                <x-admin::form.control-group.error control-name="last_name"/>
+                                            </x-admin::form.control-group>
+                                        </div>
+
+                                        <!-- Contact Fields -->
+                                        <div class="flex gap-4">
+                                            <x-admin::form.control-group class="flex-1">
+                                                <x-admin::form.control-group.label>E-mail</x-admin::form.control-group.label>
+                                                <x-admin::form.control-group.control
+                                                    type="email"
+                                                    name="emails[0][value]"
+                                                    v-model="formData.email"
+                                                    placeholder="email@example.com"
+                                                />
+                                                <input type="hidden" name="emails[0][label]" value="work">
+                                                <input type="hidden" name="emails[0][is_default]" value="1">
+                                            </x-admin::form.control-group>
+
+                                            <x-admin::form.control-group class="flex-1">
+                                                <x-admin::form.control-group.label>Telefoon</x-admin::form.control-group.label>
+                                                <x-admin::form.control-group.control
+                                                    type="text"
+                                                    name="phones[0][value]"
+                                                    v-model="formData.phone"
+                                                    placeholder="+31 6 12345678"
+                                                />
+                                                <input type="hidden" name="phones[0][label]" value="work">
+                                                <input type="hidden" name="phones[0][is_default]" value="1">
+                                            </x-admin::form.control-group>
+                                        </div>
+                                    </div>
 
                                     <!-- Channel and Source -->
                                     <div class="flex gap-4 mb-4">
@@ -303,6 +363,11 @@
                             lead_source_id: '',
                             department_id: '',
                             lead_type_id: '',
+                            // Personal fields for matching
+                            first_name: '',
+                            last_name: '',
+                            email: '',
+                            phone: '',
                         }
                     };
                 },
@@ -341,6 +406,22 @@
                             this.$emitter.emit('add-flash', {
                                 type: 'error',
                                 message: 'Titel is verplicht.'
+                            });
+                            return;
+                        }
+
+                        if (!this.formData.first_name || this.formData.first_name.trim() === '') {
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: 'Voornaam is verplicht.'
+                            });
+                            return;
+                        }
+
+                        if (!this.formData.last_name || this.formData.last_name.trim() === '') {
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: 'Achternaam is verplicht.'
                             });
                             return;
                         }

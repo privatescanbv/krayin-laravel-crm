@@ -40,11 +40,18 @@
                                     <!-- Expand/Collapse Icon -->
                                     <button
                                         type="button"
-                                        class="icon-arrow-down rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 person-toggle-icon text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
+                                        class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 hover:bg-blue-200 dark:bg-blue-800 dark:hover:bg-blue-700 transition-all person-toggle-icon border border-blue-300 dark:border-blue-600"
                                         id="toggle-icon-{{ $person->id }}"
                                         title="Klik om details te tonen/verbergen"
-                                        onclick="event.stopPropagation()"
-                                    ></button>
+                                        onclick="event.stopPropagation(); togglePersonCard({{ $person->id }})"
+                                    >
+                                        <!-- Chevron Down Icon -->
+                                        <svg class="w-4 h-4 text-blue-600 dark:text-blue-300 transition-transform duration-200" id="toggle-svg-{{ $person->id }}" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                                        </svg>
+                                        <!-- Fallback text if icon doesn't work -->
+                                        <span class="sr-only">Toggle</span>
+                                    </button>
 
                                     @if (bouncer()->hasPermission('contacts.persons.edit'))
                                         <a
@@ -206,28 +213,29 @@ function detachPerson(personId) {
 function togglePersonCard(personId) {
     const details = document.getElementById(`person-details-${personId}`);
     const icon = document.getElementById(`toggle-icon-${personId}`);
+    const svg = document.getElementById(`toggle-svg-${personId}`);
     
     if (details.style.display === 'none') {
+        // Expand
         details.style.display = 'block';
-        icon.classList.remove('icon-arrow-down');
-        icon.classList.add('icon-arrow-up');
+        svg.style.transform = 'rotate(180deg)';
         icon.title = 'Klik om details te verbergen';
+        icon.classList.remove('bg-blue-100', 'hover:bg-blue-200');
+        icon.classList.add('bg-blue-200', 'hover:bg-blue-300');
     } else {
+        // Collapse  
         details.style.display = 'none';
-        icon.classList.remove('icon-arrow-up');
-        icon.classList.add('icon-arrow-down');
+        svg.style.transform = 'rotate(0deg)';
         icon.title = 'Klik om details te tonen';
+        icon.classList.remove('bg-blue-200', 'hover:bg-blue-300');
+        icon.classList.add('bg-blue-100', 'hover:bg-blue-200');
     }
 }
 
-// Also allow clicking the icon directly
+// Initialize all person cards as collapsed on page load
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.person-toggle-icon').forEach(function(icon) {
-        icon.addEventListener('click', function(e) {
-            e.stopPropagation();
-            const personId = this.id.replace('toggle-icon-', '');
-            togglePersonCard(personId);
-        });
+    document.querySelectorAll('.person-details').forEach(function(details) {
+        details.style.display = 'none';
     });
 });
 </script>

@@ -15,6 +15,7 @@ beforeEach(function () {
 
     // Create a test user with active status and proper role
     test()->user = User::factory()->active()->create();
+    $this->logDedbug = false; // Set to true to enable debug logging
 
 });
 
@@ -128,7 +129,7 @@ test('manual search returns exact match when exact data provided', function () {
     $response->assertOk();
     $data = $response->json();
     expect($data['data'])->toBeArray()->toHaveCount(1);
-    expect($data['data'][0]['score'])->toBe(100.0);
+    expect($data['data'][0]['score'])->toBe(100);
     expect($data['data'][0]['name'])->toBe('John Doe');
 });
 
@@ -480,28 +481,29 @@ test('manual search handles exact match correctly', function () {
     $data = $response->json();
     expect($data['data'])->toBeArray();
 
-    // Debug: Log what we're looking for
-    \Log::info('Test Debug - Looking for exact match', [
-        'exactMatchPerson_id' => $exactMatchPerson->id,
-        'partialMatchPerson_id' => $partialMatchPerson->id,
-        'differentAddressPerson_id' => $differentAddressPerson->id,
-        'response_data_count' => count($data['data']),
-        'response_person_ids' => collect($data['data'])->pluck('id')->toArray(),
-    ]);
+    if( $this->logDedbug) {
+        // Debug: Log what we're looking for
+        Log::info('Test Debug - Looking for exact match', [
+            'exactMatchPerson_id' => $exactMatchPerson->id,
+            'partialMatchPerson_id' => $partialMatchPerson->id,
+            'differentAddressPerson_id' => $differentAddressPerson->id,
+            'response_data_count' => count($data['data']),
+            'response_person_ids' => collect($data['data'])->pluck('id')->toArray(),
+        ]);
 
-    // Debug: Show all returned persons and their scores
-    \Log::info('All returned persons with scores', [
-        'persons' => collect($data['data'])->map(function($person) {
-            return [
-                'id' => $person['id'],
-                'name' => $person['name'],
-                'first_name' => $person['first_name'],
-                'last_name' => $person['last_name'],
-                'score' => $person['score'] ?? 'NO SCORE',
-            ];
-        })->toArray()
-    ]);
-
+        // Debug: Show all returned persons and their scores
+        Log::info('All returned persons with scores', [
+            'persons' => collect($data['data'])->map(function($person) {
+                return [
+                    'id' => $person['id'],
+                    'name' => $person['name'],
+                    'first_name' => $person['first_name'],
+                    'last_name' => $person['last_name'],
+                    'score' => $person['score'] ?? 'NO SCORE',
+                ];
+            })->toArray()
+        ]);
+    }
     // Should find exact match with score 100
     $exactMatch = collect($data['data'])->firstWhere('id', $exactMatchPerson->id);
 

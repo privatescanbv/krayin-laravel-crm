@@ -38,7 +38,7 @@
                     >
                         <div class="flex items-center gap-3 flex-1">
                             <!-- Person Avatar -->
-                            <div 
+                            <div
                                 class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
                                 :class="getAvatarClass(person)"
                             >
@@ -51,17 +51,17 @@
                                     <span class="font-medium text-sm dark:text-white">
                                         @{{ person.name || 'Nieuwe persoon' }}
                                     </span>
-                                    
+
                                     <!-- Match Percentage -->
-                                    <span 
-                                        v-if="person.match_percentage" 
+                                    <span
+                                        v-if="person.match_percentage"
                                         class="px-2 py-1 text-xs rounded-full font-medium"
                                         :class="getMatchBadgeClass(person.match_percentage)"
                                     >
                                         @{{ Math.round(person.match_percentage || 0) }}% match
                                     </span>
                                 </div>
-                                
+
                                 <!-- Organization -->
                                 <div v-if="person.organization" class="text-xs text-gray-500 dark:text-gray-400">
                                     @{{ person.organization.name }}
@@ -84,7 +84,7 @@
                         <!-- Actions -->
                         <div class="flex items-center gap-2">
                             <!-- View Person (if existing) -->
-                            <a 
+                            <a
                                 v-if="person.id"
                                 :href="`/admin/contacts/persons/view/${person.id}`"
                                 target="_blank"
@@ -435,8 +435,8 @@
                                                 name="combine_order"
                                                 v-model="formData.combine_order"
                                             >
-                                                <option value="1">Ja - Orders mogen gecombineerd worden</option>
-                                                <option value="0">Nee - Gescheiden orders per persoon</option>
+                                                <option value="1">Ja</option>
+                                                <option value="0">Nee</option>
                                             </x-admin::form.control-group.control>
                                             <x-admin::form.control-group.error control-name="combine_order"/>
                                         </x-admin::form.control-group>
@@ -503,7 +503,7 @@
                 mounted() {
                     // Initialize global variable for persons data
                     window.leadFormPersons = this.persons;
-                    
+
                     // Initialize with empty person if needed
                     if (this.persons.length === 0) {
                         this.persons.push({
@@ -518,7 +518,7 @@
                 methods: {
                     goToStep(step) {
                         this.currentStep = step;
-                        
+
                         // If going to step 2 and we have selected persons, populate address from first person
                         if (step === 2 && this.persons.length > 0 && this.persons[0].address) {
                             this.$nextTick(() => {
@@ -565,7 +565,7 @@
 
                             // Add persons data from multi-contact-matcher component
                             const personIdInputs = document.querySelectorAll('input[name^="person_ids["]');
-                            
+
                             // Add person_ids from multi-contact-matcher hidden inputs
                             personIdInputs.forEach((input, index) => {
                                 if (input.value) {
@@ -695,12 +695,12 @@
 
                 async calculateMatchPercentage(person) {
                     if (!person.id || !this.leadId) return null;
-                    
+
                     try {
                         // Call the person search API with lead_id to get match score
                         const response = await fetch(`/admin/contacts/persons/search?lead_id=${this.leadId}&person_id=${person.id}`);
                         const data = await response.json();
-                        
+
                         if (data.data && data.data.length > 0) {
                             const matchedPerson = data.data.find(p => p.id === person.id);
                             return matchedPerson?.match_score_percentage || null;
@@ -708,13 +708,13 @@
                     } catch (error) {
                         console.warn('Could not calculate match percentage:', error);
                     }
-                    
+
                     return null;
                 },
 
                 getPersonInitials(person) {
                         if (!person.name) return '?';
-                        
+
                         const names = person.name.split(' ');
                         if (names.length >= 2) {
                             return (names[0][0] + names[names.length - 1][0]).toUpperCase();
@@ -726,7 +726,7 @@
                         if (!person.id) {
                             return 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900';
                         }
-                        
+
                         if (person.match_percentage >= 90) {
                             return 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900';
                         } else if (person.match_percentage >= 70) {
@@ -742,7 +742,7 @@
                         if (!person.id) {
                             return 'bg-blue-600';
                         }
-                        
+
                         if (person.match_percentage >= 90) {
                             return 'bg-green-600';
                         } else if (person.match_percentage >= 70) {

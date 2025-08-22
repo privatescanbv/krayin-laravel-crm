@@ -128,7 +128,7 @@ class Lead extends Model implements LeadContract
                 DB::table('lead_persons')->where('lead_id', $this->id)->pluck('person_id')
             )->get();
         } catch (Exception $e) {
-            \Log::warning('Could not load persons for lead', ['lead_id' => $this->id, 'error' => $e->getMessage()]);
+            Log::warning('Could not load persons for lead', ['lead_id' => $this->id, 'error' => $e->getMessage()]);
             return collect();
         }
     }
@@ -446,5 +446,11 @@ class Lead extends Model implements LeadContract
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    public function findAnamnesisByPersonId(int $personId): Anamnesis
+    {
+        return Anamnesis::where('lead_id', $this->id)
+            ->where('person_id', $personId)->firstOrFail();
     }
 }

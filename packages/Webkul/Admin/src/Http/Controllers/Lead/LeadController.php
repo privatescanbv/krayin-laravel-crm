@@ -135,7 +135,7 @@ class LeadController extends Controller
 
             $data[$stage->sort_order] = (new StageResource($stage))->jsonSerialize();
 
-            // Load relationships - persons loaded via attribute, not relationship
+            // Load relationships - including persons for kanban display
             $data[$stage->sort_order]['leads'] = [
                 'data' => LeadResource::collection($paginator = $query->with([
                     'tags',

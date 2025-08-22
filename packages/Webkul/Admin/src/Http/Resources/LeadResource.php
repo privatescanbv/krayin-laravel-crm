@@ -48,6 +48,8 @@ class LeadResource extends JsonResource
             'persons'              => $this->whenLoaded('persons', function () {
                 return PersonResource::collection($this->persons);
             }, []),
+            'persons_count'        => $this->persons_count ?? 0,
+            'has_multiple_persons' => $this->hasMultiplePersons(),
             'organization'         => $this->organization ? new OrganizationResource($this->organization) : null,
             'user'                 => $this->user ? new UserResource($this->user) : null,
             'type'                 => $this->type ? new TypeResource($this->type) : null,

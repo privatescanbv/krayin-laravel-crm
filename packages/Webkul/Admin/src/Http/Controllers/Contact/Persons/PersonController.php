@@ -299,6 +299,18 @@ class PersonController extends Controller
                     $score = $this->calculateMatchScore($lead, $person);
                     $person->match_score = $score;
                     $person->match_score_percentage = round($score, 1);
+                    
+                    // Debug: Log which persons are being scored
+                    if (app()->environment('testing')) {
+                        \Log::info('Person being scored', [
+                            'person_id' => $person->id,
+                            'person_name' => $person->name,
+                            'person_first_name' => $person->first_name,
+                            'person_last_name' => $person->last_name,
+                            'calculated_score' => $score,
+                        ]);
+                    }
+                    
                     return $person;
                 });
 

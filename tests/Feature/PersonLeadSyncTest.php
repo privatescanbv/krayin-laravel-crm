@@ -453,6 +453,15 @@ test('manual search handles exact match correctly', function () {
     $data = $response->json();
     expect($data['data'])->toBeArray();
 
+    // Debug: Log what we're looking for
+    \Log::info('Test Debug - Looking for exact match', [
+        'exactMatchPerson_id' => $exactMatchPerson->id,
+        'partialMatchPerson_id' => $partialMatchPerson->id,
+        'differentAddressPerson_id' => $differentAddressPerson->id,
+        'response_data_count' => count($data['data']),
+        'response_person_ids' => collect($data['data'])->pluck('id')->toArray(),
+    ]);
+
     // Should find exact match with score 100
     $exactMatch = collect($data['data'])->firstWhere('id', $exactMatchPerson->id);
     expect($exactMatch)->not->toBeNull();

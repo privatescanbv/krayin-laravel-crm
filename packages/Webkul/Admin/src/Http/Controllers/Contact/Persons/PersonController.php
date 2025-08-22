@@ -404,8 +404,8 @@ class PersonController extends Controller
         // Add name score (85% total weight)
         $score += $nameScore * 0.85 * 100;
 
-        // Debug logging for tests
-        if (app()->environment('testing')) {
+        // Debug logging for tests - always log for person ID 1 in tests
+        if (app()->environment('testing') && ($person->id == 1 || $lead->id == 1)) {
             \Log::info('Match Score Debug', [
                 'lead_id' => $lead->id,
                 'person_id' => $person->id,

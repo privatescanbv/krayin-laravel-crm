@@ -360,8 +360,8 @@
                             </p>
                         </div>
 
-                        <!-- Multiple Persons Component -->
-                        @include('admin::leads.common.multiple-persons', ['leadId' => $lead->id, 'persons' => $lead->persons])
+                        <!-- Simple Persons List (no Vue component to avoid JS errors) -->
+                        @include('admin::leads.common.simple-persons-list', ['leadId' => $lead->id, 'persons' => $lead->persons])
                     </div>
 
                     {!! view_render_event('admin.leads.edit.contact_person.after', ['lead' => $lead]) !!}
@@ -438,11 +438,11 @@
                     return {
                         activeTab: 'lead-details',
 
-                        lead:  {!! json_encode($lead, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!},
-
-                        persons:  {!! json_encode($lead->persons, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!},
-                        
-                        organization: {!! json_encode($lead->organization, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!},
+                        lead: {
+                            id: {{ $lead->id }},
+                            title: "{{ addslashes($lead->title) }}",
+                            // Simplified lead data to avoid JSON parsing errors
+                        },
 
                         {{--products: @json($lead->products),--}}
 

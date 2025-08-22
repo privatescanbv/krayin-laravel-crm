@@ -11,9 +11,6 @@ return new class extends Migration
         Schema::table('leads', function (Blueprint $table) {
             // Remove title column
             $table->dropColumn('title');
-
-            // Add combine_order boolean column (NOT NULL, default true)
-            $table->boolean('combine_order')->default(true);
         });
     }
 
@@ -22,9 +19,6 @@ return new class extends Migration
         Schema::table('leads', function (Blueprint $table) {
             // Add title column back
             $table->string('title')->after('id');
-
-            // Remove combine_order column
-            $table->dropColumn('combine_order');
         });
     }
 };

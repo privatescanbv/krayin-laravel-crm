@@ -54,16 +54,71 @@
                             </div>
 
                             <!-- Person Details -->
-                            <div class="text-sm">
+                            <div class="text-sm space-y-2">
                                 @if ($person->emails && count($person->emails) > 0)
                                     @php
                                         $defaultEmail = collect($person->emails)->firstWhere('is_default', true) ?? $person->emails[0] ?? null;
                                     @endphp
                                     @if ($defaultEmail)
-                                        <a href="mailto:{{ $defaultEmail['value'] }}" class="text-blue-600 hover:text-blue-800">
-                                            {{ $defaultEmail['value'] }}
-                                        </a>
+                                        <div>
+                                            <a href="mailto:{{ $defaultEmail['value'] }}" class="text-blue-600 hover:text-blue-800">
+                                                {{ $defaultEmail['value'] }}
+                                            </a>
+                                        </div>
                                     @endif
+                                @endif
+
+                                <!-- Anamnesis for this person (if exists and this is the primary person) -->
+                                @if ($lead->anamnesis && $loop->first)
+                                    <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-900/20 dark:border-blue-800">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <h6 class="text-xs font-semibold text-blue-800 dark:text-blue-200">Anamnese</h6>
+                                            <a
+                                                href="{{ route('admin.anamnesis.edit', $lead->anamnesis->id) }}"
+                                                class="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                                                title="Anamnese bewerken"
+                                            >
+                                                <i class="icon-edit"></i>
+                                            </a>
+                                        </div>
+                                        
+                                        <div class="space-y-1 text-xs">
+                                            @if ($lead->anamnesis->height || $lead->anamnesis->weight)
+                                                <div class="flex gap-3">
+                                                    @if ($lead->anamnesis->height)
+                                                        <span class="text-gray-600 dark:text-gray-400">{{ $lead->anamnesis->height }}cm</span>
+                                                    @endif
+                                                    @if ($lead->anamnesis->weight)
+                                                        <span class="text-gray-600 dark:text-gray-400">{{ $lead->anamnesis->weight }}kg</span>
+                                                    @endif
+                                                </div>
+                                            @endif
+
+                                            @php
+                                                $conditions = collect([
+                                                    'metals' => 'Metaal',
+                                                    'medications' => 'Medicatie',
+                                                    'glaucoma' => 'Glaucoom',
+                                                    'claustrophobia' => 'Claustrofobisch',
+                                                    'heart_surgery' => 'Hartoperatie',
+                                                    'diabetes' => 'Diabetes',
+                                                    'smoking' => 'Rookt',
+                                                ])->filter(function($label, $field) use ($lead) {
+                                                    return $lead->anamnesis->{$field} == 1;
+                                                });
+                                            @endphp
+
+                                            @if ($conditions->isNotEmpty())
+                                                <div class="flex flex-wrap gap-1 mt-2">
+                                                    @foreach ($conditions as $field => $label)
+                                                        <span class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                                            {{ $label }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
                                 @endif
                             </div>
                         </div>

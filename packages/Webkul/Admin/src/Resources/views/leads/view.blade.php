@@ -110,9 +110,6 @@
             <!-- Lead Overview (compact overview with all information) -->
             @include ('admin::leads.view.compact-overview')
 
-            <!-- Anamnesis Information -->
-            @include ('admin::leads.view.anamnesis')
-
             <!-- Contact Person -->
             @include ('admin::leads.view.person')
 

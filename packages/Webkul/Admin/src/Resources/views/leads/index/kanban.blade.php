@@ -129,7 +129,7 @@
                                            <!-- Show group icon if multiple persons, otherwise show avatar -->
                                            <div v-if="element.has_multiple_persons" class="flex-shrink-0">
                                                <div class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-200 text-blue-900">
-                                                   <i class="icon-users text-xs"></i>
+                                                   <i class="icon-contact text-xs"></i>
                                                </div>
                                            </div>
                                            <div v-else-if="element.persons && element.persons.length === 1" class="flex-shrink-0">

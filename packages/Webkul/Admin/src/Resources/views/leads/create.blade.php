@@ -489,7 +489,7 @@
                         lead_channel_id: '',
                         lead_source_id: '',
                         department_id: '',
-                        combine_order: 0,
+                        combine_order: 1,
                             lead_type_id: '',
                             // Personal fields for matching
                             first_name: '',

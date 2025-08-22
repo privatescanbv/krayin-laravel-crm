@@ -126,7 +126,13 @@
                                                                         <!-- Header -->
                                     <div class="flex items-start justify-between gap-2">
                                        <div class="flex items-center gap-1 min-w-0 flex-1">
-                                           <div v-if="element.persons && element.persons.length > 0" class="flex-shrink-0">
+                                           <!-- Show group icon if multiple persons, otherwise show avatar -->
+                                           <div v-if="element.persons && element.persons.length > 1" class="flex-shrink-0">
+                                               <div class="flex h-6 w-6 items-center justify-center rounded-full bg-blue-200 text-blue-900">
+                                                   <i class="icon-users text-xs"></i>
+                                               </div>
+                                           </div>
+                                           <div v-else-if="element.persons && element.persons.length === 1" class="flex-shrink-0">
                                                <x-admin::avatar ::name="element.persons[0]?.name" class="w-6 h-6" />
                                            </div>
                                            <div v-else-if="element.first_name">

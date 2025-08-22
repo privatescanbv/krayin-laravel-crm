@@ -435,7 +435,7 @@ class PersonController extends Controller
         if (app()->environment('testing') && $person->id == 1) {
             \Log::info('Score After Empty Fields Fix', [
                 'nameScore' => $nameScore,
-                'emailScore' => $emailScore, 
+                'emailScore' => $emailScore,
                 'phoneScore' => $phoneScore,
                 'addressScore' => $addressScore,
                 'finalScore' => min($score, $maxScore),
@@ -523,12 +523,14 @@ class PersonController extends Controller
                     if (in_array($field, $importantNameFields)) {
                         $importantMatches++;
                     }
-                } else {
-                    Log::info("Name field '{$field}' did not match", [
-                        'lead_value' => $leadValue,
-                        'person_value' => $personValue
-                    ]);
                 }
+//                // can be used for debugging specific name field matches
+//                else {
+//                    Log::info("Name field '{$field}' did not match", [
+//                        'lead_value' => $leadValue,
+//                        'person_value' => $personValue
+//                    ]);
+//                }
             }
         }
 
@@ -658,7 +660,7 @@ class PersonController extends Controller
         if (empty($leadAddress) && empty($personAddress)) {
             return 1.0;
         }
-        
+
         // If only one address is empty, no match
         if (empty($leadAddress) || empty($personAddress)) {
             return 0.0;

@@ -60,9 +60,9 @@ return new class extends Migration
             $table->tinyInteger('active')->nullable();
             $table->text('advice_notes')->nullable();
             $table->unsignedInteger('lead_id')->nullable();
-            $table->unsignedInteger('user_id')->nullable();
+            $table->unsignedInteger('person_id')->nullable();
             $table->foreign('lead_id')->references('id')->on('leads')->onDelete('set null');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('person_id')->references('id')->on('persons')->onDelete('set null');
         });
     }
 

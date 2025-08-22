@@ -299,9 +299,9 @@ class ImportLeadsFromSugarCRM extends Command
                 // Attach person to lead using new many-to-many relationship
                 if ($person && $person->id) {
                     $lead->attachPersons([$person->id]);
-                    
+
                     // Create anamnesis data after person is attached
-                    $this->createAnamnesis($lead, $record);
+                    $this->createAnamnesis($lead, $record, $person->id);
                 }
 
                 // Debug: Check if lead has persons relation
@@ -492,17 +492,14 @@ class ImportLeadsFromSugarCRM extends Command
     /**
      * Create anamnesis data for the lead
      */
-    private function createAnamnesis($lead, $record): Anamnesis
+    private function createAnamnesis($lead, $record, int $personId): Anamnesis
     {
-        // Get the first attached person for anamnesis
-        $firstPersonId = \DB::table('lead_persons')->where('lead_id', $lead->id)->value('person_id');
-        
         return Anamnesis::create([
             'id'                        => $record->id, // Use SugarCRM ID
             'name'                      => $lead->name, // Use lead name instead of title
             'description'               => $record->anamnese_c ?? '',
             'lead_id'                   => $lead->id,
-            'person_id'                 => $firstPersonId, // Link to attached person
+            'person_id'                 => $personId, // Link to attached person
             'height'                    => $record->lengte_c,
             'weight'                    => $record->gewicht_c,
             'metals'                    => (bool) $record->metalen_c,
@@ -598,11 +595,11 @@ class ImportLeadsFromSugarCRM extends Command
     {
         $kanaal = $record->kanaal_c ?? '';
         $soortAanvraag = $record->soort_aanvraag_c ?? '';
-        
+
         // Map based on channel/type to determine department
         $kanaalLower = strtolower(trim($kanaal));
         $soortLower = strtolower(trim($soortAanvraag));
-        
+
         // Hernia department indicators
         $herniaIndicators = ['hernia', 'liesbreuk', 'operatie'];
         foreach ($herniaIndicators as $indicator) {
@@ -610,7 +607,7 @@ class ImportLeadsFromSugarCRM extends Command
                 return Department::findHerniaId();
             }
         }
-        
+
         // Default to Privatescan department
         return Department::findPrivateScanId();
     }

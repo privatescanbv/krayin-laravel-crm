@@ -51,7 +51,6 @@ class LeadDataGrid extends DataGrid
         $queryBuilder = DB::table('leads')
             ->addSelect(
                 'leads.id',
-                'leads.title',
                 'leads.status',
                 'leads.expected_close_date',
                 'lead_sources.name as lead_source_name',
@@ -131,14 +130,6 @@ class LeadDataGrid extends DataGrid
                     'value' => 'name',
                 ],
             ],
-        ]);
-
-        $this->addColumn([
-            'index'      => 'title',
-            'label'      => trans('admin::app.leads.index.datagrid.subject'),
-            'type'       => 'string',
-            'searchable' => true,
-            'sortable'   => true,
         ]);
 
         $this->addColumn([

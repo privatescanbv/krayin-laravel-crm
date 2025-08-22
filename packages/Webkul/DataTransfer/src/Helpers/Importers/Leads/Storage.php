@@ -14,7 +14,7 @@ class Storage
     /**
      * Columns which will be selected from database.
      */
-    protected array $selectColumns = ['id', 'title'];
+    protected array $selectColumns = ['id'];
 
     /**
      * Create a new helper instance.
@@ -36,18 +36,17 @@ class Storage
     /**
      * Load the leads.
      */
-    public function load(array $titles = []): void
+    public function load(array $ids = []): void
     {
-        if (empty($titles)) {
+        if (empty($ids)) {
             $leads = $this->leadRepository->all($this->selectColumns);
         } else {
-            $leads = $this->leadRepository->findWhereIn('title', $titles, $this->selectColumns);
+            $leads = $this->leadRepository->findWhereIn('id', $ids, $this->selectColumns);
         }
 
         foreach ($leads as $lead) {
-            $this->set($lead->name, [
+            $this->set($lead->id, [
                 'id'    => $lead->id,
-                'name' => $lead->name,
             ]);
         }
     }
@@ -55,9 +54,9 @@ class Storage
     /**
      * Get Ids and Unique Id.
      */
-    public function set(string $title, array $data): self
+    public function set(string $id, array $data): self
     {
-        $this->items[$title] = $data;
+        $this->items[$id] = $data;
 
         return $this;
     }
@@ -65,21 +64,21 @@ class Storage
     /**
      * Check if unique id exists.
      */
-    public function has(string $title): bool
+    public function has(string $id): bool
     {
-        return isset($this->items[$title]);
+        return isset($this->items[$id]);
     }
 
     /**
      * Get unique id information.
      */
-    public function get(string $title): ?array
+    public function get(string $id): ?array
     {
-        if (! $this->has($title)) {
+        if (! $this->has($id)) {
             return null;
         }
 
-        return $this->items[$title];
+        return $this->items[$id];
     }
 
     public function getItems(): array

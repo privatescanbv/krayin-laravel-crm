@@ -126,18 +126,26 @@
                                                                         <!-- Header -->
                                     <div class="flex items-start justify-between gap-2">
                                        <div class="flex items-center gap-1 min-w-0 flex-1">
-                                           <div v-if="element.persons && element.persons.length > 0" class="flex-shrink-0">
+                                           <!-- Show group icon if multiple persons, otherwise show avatar -->
+                                           <div v-if="element.has_multiple_persons" class="flex-shrink-0">
+                                               <div class="flex h-9 w-9 items-center justify-center rounded-full bg-blue-200 text-blue-900">
+                                                   <i class="icon-contact text-xs"></i>
+                                               </div>
+                                           </div>
+                                           <div v-else-if="element.persons && element.persons.length === 1" class="flex-shrink-0">
                                                <x-admin::avatar ::name="element.persons[0]?.name" class="w-6 h-6" />
                                            </div>
-                                           <div v-else-if="element.first_name">
-                                               <x-admin::avatar ::name="`${element.first_name} ${element.last_name}`" class="w-6 h-6" />
+                                           <div v-else-if="element.first_name" class="flex-shrink-0">
+                                           </div>
+                                           <div v-else class="flex-shrink-0">
+                                               <x-admin::avatar ::name="element.name || 'Lead'" class="w-6 h-6" />
                                            </div>
                                            <div class="flex flex-col gap-0.5 min-w-0">
                                                <span class="text-[11px] font-medium truncate">
                                                    @{{ element.persons && element.persons.length > 0 ? element.persons[0]?.name : (element.first_name ? `${element.first_name} ${element.last_name}` : element.name) }}
                                                </span>
-                                               <span class="text-[9px] leading-normal truncate" v-if="element.persons && element.persons.length > 1">
-                                                   +@{{ element.persons.length - 1 }} meer
+                                               <span class="text-[9px] leading-normal truncate" v-if="element.has_multiple_persons">
+                                                   +@{{ element.persons_count - 1 }} meer
                                                </span>
                                                <span class="text-[9px] leading-normal" v-if="element.persons && element.persons.length > 0 && element.persons[0]?.organization?.name">
                                                    @{{ element.persons[0]?.organization?.name }}

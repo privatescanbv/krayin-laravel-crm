@@ -82,7 +82,7 @@ class WebFormController extends Controller
 
             $data['lead_pipeline_stage_id'] = $stage->id;
 
-            $data['title'] = request('leads.title') ?: 'Lead From Web Form';
+            // Note: title field removed from leads table
 
             $data['lead_value'] = request('leads.lead_value') ?: 0;
 

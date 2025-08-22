@@ -27,7 +27,6 @@ class Importer extends AbstractImporter
      */
     protected array $validColumnNames = [
         'id',
-        'title',
         'description',
         'lead_value',
         'status',
@@ -55,7 +54,7 @@ class Importer extends AbstractImporter
      *
      * @var string[]
      */
-    protected $permanentAttributes = ['title'];
+    protected $permanentAttributes = ['id'];
 
     /**
      * Permanent entity column.
@@ -127,7 +126,7 @@ class Importer extends AbstractImporter
          * If import action is delete than no need for further validation.
          */
         if ($this->import->action == Import::ACTION_DELETE) {
-            if (! $this->isTitleExist($rowData['title'])) {
+            if (! $this->isIdExist($rowData['id'])) {
                 $this->skipRow($rowNumber, self::ERROR_ID_NOT_FOUND_FOR_DELETE, 'id');
 
                 return false;
@@ -341,7 +340,7 @@ class Importer extends AbstractImporter
         /**
          * Load leads storage with batch ids.
          */
-        $this->leadsStorage->load(Arr::pluck($batch->data, 'title'));
+        $this->leadsStorage->load(Arr::pluck($batch->data, 'id'));
 
         $products = [];
 
@@ -372,7 +371,7 @@ class Importer extends AbstractImporter
     public function prepareProducts($rowData, &$product): void
     {
         if (! empty($rowData['product'])) {
-            $product[$rowData['title']] = $this->parseProducts($rowData['product']);
+            $product[$rowData['id']] = $this->parseProducts($rowData['product']);
         }
     }
 
@@ -413,16 +412,16 @@ class Importer extends AbstractImporter
         /**
          * Load leads storage with batch ids.
          */
-        $this->leadsStorage->load(Arr::pluck($batch->data, 'title'));
+        $this->leadsStorage->load(Arr::pluck($batch->data, 'id'));
 
         $idsToDelete = [];
 
         foreach ($batch->data as $rowData) {
-            if (! $this->isTitleExist($rowData['title'])) {
+            if (! $this->isIdExist($rowData['id'])) {
                 continue;
             }
 
-            $idsToDelete[] = $this->leadsStorage->get($rowData['title']);
+            $idsToDelete[] = $this->leadsStorage->get($rowData['id']);
         }
 
         $idsToDelete = array_unique($idsToDelete);
@@ -440,9 +439,9 @@ class Importer extends AbstractImporter
     protected function saveLeads(ImportBatchContract $batch): bool
     {
         /**
-         * Load lead storage with batch unique title.
+         * Load lead storage with batch unique ids.
          */
-        $this->leadsStorage->load(Arr::pluck($batch->data, 'title'));
+        $this->leadsStorage->load(Arr::pluck($batch->data, 'id'));
 
         $leads = [];
 
@@ -453,7 +452,7 @@ class Importer extends AbstractImporter
             if (isset($rowData['id'])) {
                 $leads['update'][$rowData['id']] = Arr::except($rowData, ['product']);
             } else {
-                $leads['insert'][$rowData['title']] = [
+                $leads['insert'][$rowData['id']] = [
                     ...Arr::except($rowData, ['id', 'product']),
                     'created_at' => $rowData['created_at'] ?? now(),
                     'updated_at' => $rowData['updated_at'] ?? now(),
@@ -476,21 +475,19 @@ class Importer extends AbstractImporter
             $this->leadRepository->insert($leads['insert']);
 
             /**
-             * Update the sku storage with newly created products
+             * Update the storage with newly created leads
              */
             $newLeads = $this->leadRepository->findWhereIn(
-                'title',
+                'id',
                 array_keys($leads['insert']),
                 [
                     'id',
-                    'title',
                 ]
             );
 
             foreach ($newLeads as $lead) {
-                $this->leadsStorage->set($lead->name, [
+                $this->leadsStorage->set($lead->id, [
                     'id'    => $lead->id,
-                    'name' => $lead->name,
                 ]);
             }
         }
@@ -499,11 +496,11 @@ class Importer extends AbstractImporter
     }
 
     /**
-     * Check if title exists.
+     * Check if ID exists.
      */
-    public function isTitleExist(string $title): bool
+    public function isIdExist(string $id): bool
     {
-        return $this->leadsStorage->has($title);
+        return $this->leadsStorage->has($id);
     }
 
     /**

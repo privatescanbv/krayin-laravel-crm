@@ -69,7 +69,7 @@ class LeadFactory extends Factory
             'lead_type_id'           => $type->id,
             'lead_pipeline_id'       => $pipeline->id,
             'lead_pipeline_stage_id' => $stage->id,
-            'combine_order'          => false, // Default false for simplicity
+            'combine_order'          => true, // Default true
             // Personal fields - minimal defaults, can be overridden
             'first_name'             => $this->faker->firstName(),
             'last_name'              => $this->faker->lastName(),

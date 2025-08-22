@@ -40,7 +40,7 @@ De volgende velden worden doorzocht bij person lookup:
 
 === Contact Velden (5% match weight each)
 - `emails` - E-mailadressen (JSON array)
-- `contact_numbers` - Telefoonnummers (JSON array)
+- `phones` - Telefoonnummers (JSON array)
 
 === Organisatie Velden
 - `organization_id` - Organisatie ID
@@ -89,11 +89,11 @@ De volgende velden worden doorzocht bij person lookup:
 |Vindt personen met dit e-mailadres
 
 |`+31612345678`
-|`contact_numbers`
+|`phones`
 |Vindt personen met dit telefoonnummer
 
 |`06-12345678`
-|`contact_numbers`
+|`phones`
 |Vindt personen met variaties van telefoonnummer
 |===
 
@@ -142,7 +142,7 @@ WHERE (
     married_name_prefix LIKE '%John%' OR
     initials LIKE '%John%' OR
     emails LIKE '%John%' OR
-    contact_numbers LIKE '%John%' OR
+    phones LIKE '%John%' OR
     job_title LIKE '%John%'
 )
 ----
@@ -203,7 +203,7 @@ this.suggestions = allSuggestions.filter(person =>
 === Verkeerde Resultaten  
 - **Check**: `$fieldSearchable` array in PersonRepository
 - **Check**: Database indexen op name velden voor performance
-- **Check**: JSON structuur van emails/contact_numbers velden
+- **Check**: JSON structuur van emails/phones velden
 
 === Match Scores Werken Niet
 - **Check**: Of `lead_id` parameter wordt meegegeven

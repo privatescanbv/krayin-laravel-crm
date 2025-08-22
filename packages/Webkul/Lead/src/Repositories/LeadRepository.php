@@ -219,6 +219,15 @@ class LeadRepository extends Repository
      */
     public function update(array $data, $id, $attributes = []): Lead
     {
+        // Debug: Log what data is received
+        \Log::info('LeadRepository update received data', [
+            'lead_id' => $id,
+            'has_persons' => array_key_exists('persons', $data),
+            'has_person_ids' => array_key_exists('person_ids', $data),
+            'persons_data' => $data['persons'] ?? null,
+            'person_ids_data' => $data['person_ids'] ?? null,
+        ]);
+
         // Handle multiple persons update
         $personsToSync = [];
         
@@ -344,8 +353,9 @@ class LeadRepository extends Repository
             $this->productRepository->delete($productId);
         }
 
-        // Sync persons to the lead if persons data was provided
-        if (isset($data['persons']) || isset($data['person_ids'])) {
+        // Sync persons to the lead 
+        // Only sync if persons data was explicitly provided (not for partial updates like stage changes)
+        if (array_key_exists('persons', $data) || array_key_exists('person_ids', $data)) {
             $lead->persons()->sync(array_unique($personsToSync));
         }
 

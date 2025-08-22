@@ -58,6 +58,13 @@
                             :can-add-new="true"
                         />
 
+                        <!-- Hidden fields for form submission -->
+                        <input
+                            type="hidden"
+                            ::name="`person_ids[${index}]`"
+                            ::value="person.id"
+                            v-if="person.id"
+                        />
                         <input
                             type="hidden"
                             ::name="`persons[${index}][id]`"

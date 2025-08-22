@@ -438,11 +438,11 @@
                     return {
                         activeTab: 'lead-details',
 
-                        lead:  @json($lead),
+                        lead:  {!! json_encode($lead, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!},
 
-                        persons:  @json($lead->persons),
+                        persons:  {!! json_encode($lead->persons, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!},
                         
-                        organization: @json($lead->organization),
+                        organization: {!! json_encode($lead->organization, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!},
 
                         {{--products: @json($lead->products),--}}
 

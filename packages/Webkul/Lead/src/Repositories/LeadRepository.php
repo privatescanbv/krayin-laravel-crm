@@ -185,7 +185,7 @@ class LeadRepository extends Repository
 
         // Attach persons to the lead
         if (!empty($personsToAttach)) {
-            $lead->persons()->attach(array_unique($personsToAttach));
+            $lead->attachPersons(array_unique($personsToAttach));
         }
 
         // Always create an anamnesis for new leads
@@ -363,12 +363,12 @@ class LeadRepository extends Repository
         // Sync persons to the lead 
         // Only sync if persons data was explicitly provided (not for partial updates like stage changes)
         if (array_key_exists('persons', $data) || array_key_exists('person_ids', $data)) {
-            $lead->persons()->sync(array_unique($personsToSync));
+            $lead->syncPersons(array_unique($personsToSync));
             
             \Log::info('LeadRepository persons synced', [
                 'lead_id' => $id,
                 'synced_persons' => array_unique($personsToSync),
-                'final_count' => $lead->persons()->count(),
+                'final_count' => $lead->persons->count(),
             ]);
         }
 

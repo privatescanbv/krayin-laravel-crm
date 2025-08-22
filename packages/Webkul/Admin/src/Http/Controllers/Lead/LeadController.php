@@ -136,15 +136,13 @@ class LeadController extends Controller
 
             $data[$stage->sort_order] = (new StageResource($stage))->jsonSerialize();
 
-            // Load relationships following existing pivot table pattern
+            // Load relationships - persons loaded via attribute, not relationship
             $data[$stage->sort_order]['leads'] = [
                 'data' => LeadResource::collection($paginator = $query->with([
                     'tags',
                     'type',
                     'source',
                     'user',
-                    'persons',
-                    'persons.organization',
                     'organization',
                     'pipeline',
                     'pipeline.stages',
@@ -284,19 +282,8 @@ class LeadController extends Controller
      */
     public function edit(int $id): View
     {
-        try {
-            $lead = $this->leadRepository->with(['address', 'persons', 'organization'])->findOrFail($id);
-        } catch (\Exception $e) {
-            \Log::error('Error loading lead for edit', [
-                'lead_id' => $id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            // Fallback: load without persons
-            $lead = $this->leadRepository->with(['address', 'organization'])->findOrFail($id);
-            $lead->persons = collect(); // Empty collection
-        }
+        // Load lead without persons relationship (persons loaded via attribute)
+        $lead = $this->leadRepository->with(['address', 'organization'])->findOrFail($id);
 
         return view('admin::leads.edit', compact('lead'));
     }
@@ -481,12 +468,10 @@ class LeadController extends Controller
     {
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $results = $this->leadRepository
-                ->with(['persons', 'persons.organization'])
                 ->pushCriteria(app(RequestCriteria::class))
                 ->findWhereIn('user_id', $userIds);
         } else {
             $results = $this->leadRepository
-                ->with(['persons', 'persons.organization'])
                 ->pushCriteria(app(RequestCriteria::class))
                 ->all();
         }

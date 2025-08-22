@@ -115,11 +115,18 @@ class Person extends Model implements PersonContract
     }
 
     /**
-     * Get all leads gekoppeld aan deze persoon.
+     * Get all leads gekoppeld aan deze persoon (repository-based).
      */
-    public function leads()
+    public function getLeadsAttribute()
     {
-        return $this->belongsToMany(LeadProxy::modelClass(), 'lead_persons');
+        try {
+            return \Webkul\Lead\Models\Lead::whereIn('id', 
+                \DB::table('lead_persons')->where('person_id', $this->id)->pluck('lead_id')
+            )->get();
+        } catch (\Exception $e) {
+            \Log::warning('Could not load leads for person', ['person_id' => $this->id, 'error' => $e->getMessage()]);
+            return collect();
+        }
     }
 
     /**

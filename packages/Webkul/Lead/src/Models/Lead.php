@@ -112,11 +112,45 @@ class Lead extends Model implements LeadContract
     }
 
     /**
-     * Get the persons associated with the lead.
+     * Get the persons associated with the lead (repository-based).
      */
-    public function persons()
+    public function getPersonsAttribute()
     {
-        return $this->belongsToMany(PersonProxy::modelClass(), 'lead_persons');
+        try {
+            return \Webkul\Contact\Models\Person::whereIn('id', 
+                \DB::table('lead_persons')->where('lead_id', $this->id)->pluck('person_id')
+            )->get();
+        } catch (\Exception $e) {
+            \Log::warning('Could not load persons for lead', ['lead_id' => $this->id, 'error' => $e->getMessage()]);
+            return collect();
+        }
+    }
+
+    /**
+     * Attach persons to this lead.
+     */
+    public function attachPersons(array $personIds)
+    {
+        foreach ($personIds as $personId) {
+            \DB::table('lead_persons')->insertOrIgnore([
+                'lead_id' => $this->id,
+                'person_id' => $personId,
+            ]);
+        }
+    }
+
+    /**
+     * Sync persons to this lead (replace all existing).
+     */
+    public function syncPersons(array $personIds)
+    {
+        // Remove existing relationships
+        \DB::table('lead_persons')->where('lead_id', $this->id)->delete();
+        
+        // Add new relationships
+        if (!empty($personIds)) {
+            $this->attachPersons($personIds);
+        }
     }
 
     /**

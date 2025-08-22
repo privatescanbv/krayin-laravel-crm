@@ -58,7 +58,7 @@
                                         class="px-2 py-1 text-xs rounded-full font-medium"
                                         :class="getMatchBadgeClass(person.match_percentage)"
                                     >
-                                        @{{ person.match_percentage }}% match
+                                        @{{ Math.round(person.match_percentage || 0) }}% match
                                     </span>
                                 </div>
                                 

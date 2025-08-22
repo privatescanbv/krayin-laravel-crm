@@ -92,7 +92,7 @@
                                                         'bg-yellow-500': person.match_score_percentage >= 50 && person.match_score_percentage < 80,
                                                         'bg-green-500': person.match_score_percentage >= 80
                                                     }"
-                                                    :style="{ width: person.match_score_percentage + '%' }"
+                                                    :style="{ width: (person.match_score_percentage || 0) + '%' }"
                                                 ></div>
                                             </div>
                                             <span class="text-xs font-medium"
@@ -101,7 +101,7 @@
                                                       'text-yellow-600': person.match_score_percentage >= 50 && person.match_score_percentage < 80,
                                                       'text-green-600': person.match_score_percentage >= 80
                                                   }">
-                                                {{ Math.round(person.match_score_percentage) }}%
+                                                {{ Math.round(person.match_score_percentage || 0) }}%
                                             </span>
                                         </div>
                                     </div>
@@ -193,13 +193,13 @@
                              <div v-if="person.match_score_percentage" class="ml-3 flex-shrink-0">
                                  <div class="flex items-center">
                                      <div class="text-xs font-medium text-gray-700 mr-2">
-                                         {{ person.match_score_percentage }}% match
+                                         {{ Math.round(person.match_score_percentage || 0) }}% match
                                      </div>
                                      <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
                                          <div
                                              class="h-full rounded-full transition-all duration-300"
                                              :class="getScoreColorClass(person.match_score_percentage)"
-                                             :style="{ width: person.match_score_percentage + '%' }"
+                                             :style="{ width: (person.match_score_percentage || 0) + '%' }"
                                          ></div>
                                      </div>
                                  </div>

@@ -120,13 +120,37 @@
                     </div>
                 </div>
                 
-                <div v-if="selectedPersons.length === 0" class="p-3 border rounded bg-gray-50 border-gray-200 text-center text-gray-500">
-                    Geen contactpersonen gekoppeld
-                </div>
-            </div>
+                                 <div v-if="selectedPersons.length === 0" class="p-3 border rounded bg-gray-50 border-gray-200 text-center text-gray-500">
+                     Geen contactpersonen gekoppeld
+                 </div>
+             </div>
 
-            <!-- Zoeken naar nieuwe personen -->
-            <div class="mb-4">
+             <!-- Contact aanmaken van lead gegevens -->
+             <div v-if="lead && lead.id && (lead.first_name || lead.last_name || lead.emails || lead.phones)" class="mb-4 p-3 border rounded bg-yellow-50 border-yellow-200">
+                 <div class="flex items-center justify-between">
+                     <div>
+                         <div class="font-semibold text-sm text-yellow-800">Contact aanmaken van lead gegevens</div>
+                         <div class="text-sm text-yellow-700">
+                             <span v-if="lead.first_name || lead.last_name">
+                                 {{ (lead.first_name || '') + ' ' + (lead.last_name || '') }}
+                             </span>
+                             <span v-if="lead.emails && lead.emails.length"> ({{ lead.emails[0].value }})</span>
+                             <span v-if="lead.phones && lead.phones.length"> - {{ lead.phones[0].value }}</span>
+                         </div>
+                     </div>
+                     <button
+                         @click="createPersonFromLead"
+                         :disabled="isCreatingPerson"
+                         class="text-yellow-600 hover:text-yellow-800 bg-yellow-100 hover:bg-yellow-200 px-3 py-1 rounded text-sm"
+                         :class="{ 'opacity-50 cursor-not-allowed': isCreatingPerson }"
+                     >
+                         {{ isCreatingPerson ? 'Aanmaken...' : 'Contact aanmaken' }}
+                     </button>
+                 </div>
+             </div>
+
+             <!-- Zoeken naar nieuwe personen -->
+             <div class="mb-4">
                 <label class="block font-semibold mb-1">Contactpersoon zoeken</label>
                 
                 <!-- Zoekveld -->
@@ -147,44 +171,57 @@
                     </div>
                 </div>
 
-                <!-- Suggesties -->
-                <ul v-if="suggestions.length" class="border rounded bg-white shadow mb-2 max-h-60 overflow-y-auto">
-                    <li
-                        v-for="person in suggestions"
-                        :key="person.id"
-                        @click="addPerson(person)"
-                        class="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b last:border-b-0"
-                        :class="{ 'opacity-50': isPersonSelected(person.id) }"
-                    >
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <div class="flex items-center">
-                                    <div class="font-medium">{{ person.name }}</div>
-                                    <span v-if="isPersonSelected(person.id)" class="ml-2 text-green-600 text-xs">✓ Gekoppeld</span>
-                                </div>
-                                <div class="text-sm text-gray-600">
-                                    <span v-if="person.emails && person.emails.length">{{ person.emails[0].value }}</span>
-                                    <span v-if="person.phones && person.phones.length"> • {{ person.phones[0].value }}</span>
-                                </div>
-                            </div>
-                            <div v-if="person.match_score_percentage" class="ml-3 flex-shrink-0">
-                                <div class="flex items-center">
-                                    <div class="text-xs font-medium text-gray-700 mr-2">
-                                        {{ person.match_score_percentage }}% match
-                                    </div>
-                                    <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                        <div
-                                            class="h-full rounded-full transition-all duration-300"
-                                            :class="getScoreColorClass(person.match_score_percentage)"
-                                            :style="{ width: person.match_score_percentage + '%' }"
-                                        ></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </li>
-                </ul>
-            </div>
+                                 <!-- Suggesties -->
+                 <ul v-if="suggestions.length" class="border rounded bg-white shadow mb-2 max-h-60 overflow-y-auto">
+                     <li
+                         v-for="person in suggestions"
+                         :key="person.id"
+                         @click="addPerson(person)"
+                         class="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b last:border-b-0"
+                         :class="{ 'opacity-50': isPersonSelected(person.id) }"
+                     >
+                         <div class="flex items-center justify-between">
+                             <div class="flex-1">
+                                 <div class="flex items-center">
+                                     <div class="font-medium">{{ person.name }}</div>
+                                     <span v-if="isPersonSelected(person.id)" class="ml-2 text-green-600 text-xs">✓ Gekoppeld</span>
+                                 </div>
+                                 <div class="text-sm text-gray-600">
+                                     <span v-if="person.emails && person.emails.length">{{ person.emails[0].value }}</span>
+                                     <span v-if="person.phones && person.phones.length"> • {{ person.phones[0].value }}</span>
+                                 </div>
+                             </div>
+                             <div v-if="person.match_score_percentage" class="ml-3 flex-shrink-0">
+                                 <div class="flex items-center">
+                                     <div class="text-xs font-medium text-gray-700 mr-2">
+                                         {{ person.match_score_percentage }}% match
+                                     </div>
+                                     <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                         <div
+                                             class="h-full rounded-full transition-all duration-300"
+                                             :class="getScoreColorClass(person.match_score_percentage)"
+                                             :style="{ width: person.match_score_percentage + '%' }"
+                                         ></div>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                     </li>
+                 </ul>
+                 
+                 <!-- Geen resultaten - optie om nieuwe persoon aan te maken -->
+                 <div v-if="search.length >= 2 && !isSearching && suggestions.length === 0" class="p-3 border rounded bg-blue-50 border-blue-200">
+                     <div class="text-center">
+                         <div class="text-sm text-blue-700 mb-2">Geen bestaande contactpersonen gevonden voor "{{ search }}"</div>
+                         <button
+                             @click="createNewPerson"
+                             class="text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-3 py-1 rounded text-sm"
+                         >
+                             Nieuwe persoon aanmaken: "{{ search }}"
+                         </button>
+                     </div>
+                 </div>
+             </div>
 
             <!-- Hidden form fields -->
             <input 
@@ -203,15 +240,16 @@
 
             props: ['lead', 'existingPersons'],
 
-            data() {
-                return {
-                    search: '',
-                    suggestions: [],
-                    selectedPersons: [...(this.existingPersons || [])],
-                    searchTimeout: null,
-                    isSearching: false,
-                };
-            },
+                         data() {
+                 return {
+                     search: '',
+                     suggestions: [],
+                     selectedPersons: [...(this.existingPersons || [])],
+                     searchTimeout: null,
+                     isSearching: false,
+                     isCreatingPerson: false,
+                 };
+             },
 
             mounted() {
                 // Calculate match scores for existing persons
@@ -305,19 +343,130 @@
                     }
                 },
 
-                async detachPersonFromLead(personId) {
-                    try {
-                        await fetch(`/admin/leads/${this.lead.id}/detach-person/${personId}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                                'Content-Type': 'application/json'
-                            }
-                        });
-                    } catch (error) {
-                        console.error('Error detaching person:', error);
-                    }
-                },
+                                 async createPersonFromLead() {
+                     if (!this.lead || this.isCreatingPerson) {
+                         return;
+                     }
+
+                     // Check if we have at least a name or email
+                     const hasName = (this.lead.first_name || this.lead.last_name);
+                     const hasEmail = this.lead.emails && this.lead.emails.length > 0;
+
+                     if (!hasName && !hasEmail) {
+                         alert('Kan geen contact aanmaken: naam of e-mail is vereist.');
+                         return;
+                     }
+
+                     this.isCreatingPerson = true;
+
+                     try {
+                         const personData = {
+                             entity_type: 'persons',
+                             first_name: this.lead.first_name || '',
+                             last_name: this.lead.last_name || '',
+                             lastname_prefix: this.lead.lastname_prefix || '',
+                             married_name: this.lead.married_name || '',
+                             married_name_prefix: this.lead.married_name_prefix || '',
+                             initials: this.lead.initials || '',
+                             date_of_birth: this.lead.date_of_birth || '',
+                             gender: this.lead.gender || '',
+                             salutation: this.lead.salutation || '',
+                             emails: this.lead.emails || [],
+                             phones: this.lead.phones || []
+                         };
+
+                         const response = await axios.post('/admin/contacts/persons/store', personData);
+
+                         if (response.data && response.data.data) {
+                             const newPerson = response.data.data;
+                             
+                             // Add to selected persons
+                             this.selectedPersons.push(newPerson);
+                             
+                             alert('Contactpersoon succesvol aangemaakt en gekoppeld aan deze lead.');
+                         }
+                     } catch (error) {
+                         console.error('Fout bij aanmaken contactpersoon:', error);
+                         
+                         let errorMessage = 'Er is een fout opgetreden bij het aanmaken van de contactpersoon.';
+                         if (error.response?.data?.message) {
+                             errorMessage = error.response.data.message;
+                         } else if (error.response?.data?.errors) {
+                             const errors = Object.values(error.response.data.errors).flat();
+                             errorMessage = errors.join(', ');
+                         }
+                         
+                         alert(errorMessage);
+                     } finally {
+                         this.isCreatingPerson = false;
+                     }
+                 },
+
+                 async createNewPerson() {
+                     if (!this.search || this.search.length < 2) {
+                         return;
+                     }
+
+                     this.isCreatingPerson = true;
+
+                     try {
+                         // Parse the search term for name parts
+                         const nameParts = this.search.trim().split(' ');
+                         const firstName = nameParts[0] || '';
+                         const lastName = nameParts.slice(1).join(' ') || '';
+
+                         const personData = {
+                             entity_type: 'persons',
+                             first_name: firstName,
+                             last_name: lastName,
+                             emails: [],
+                             phones: []
+                         };
+
+                         const response = await axios.post('/admin/contacts/persons/store', personData);
+
+                         if (response.data && response.data.data) {
+                             const newPerson = response.data.data;
+                             
+                             // Add to selected persons
+                             this.selectedPersons.push(newPerson);
+                             
+                             // Clear search
+                             this.search = '';
+                             this.suggestions = [];
+                             
+                             alert(`Nieuwe contactpersoon "${newPerson.name}" succesvol aangemaakt en gekoppeld.`);
+                         }
+                     } catch (error) {
+                         console.error('Fout bij aanmaken nieuwe contactpersoon:', error);
+                         
+                         let errorMessage = 'Er is een fout opgetreden bij het aanmaken van de nieuwe contactpersoon.';
+                         if (error.response?.data?.message) {
+                             errorMessage = error.response.data.message;
+                         } else if (error.response?.data?.errors) {
+                             const errors = Object.values(error.response.data.errors).flat();
+                             errorMessage = errors.join(', ');
+                         }
+                         
+                         alert(errorMessage);
+                     } finally {
+                         this.isCreatingPerson = false;
+                     }
+                 },
+
+                 async detachPersonFromLead(personId) {
+                     try {
+                         await fetch(`/admin/leads/${this.lead.id}/detach-person/${personId}`, {
+                             method: 'DELETE',
+                             headers: {
+                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                 'Content-Type': 'application/json'
+                             }
+                         });
+                     } catch (error) {
+                         console.error('Error detaching person:', error);
+                     }
+                 },
 
                 getScoreColorClass(score) {
                     if (score >= 80) {

@@ -366,6 +366,29 @@
 
                     {!! view_render_event('admin.leads.edit.contact_person.after', ['lead' => $lead]) !!}
 
+                    {!! view_render_event('admin.leads.edit.organization.before', ['lead' => $lead]) !!}
+
+                    <!-- Organization Section -->
+                    <div
+                        class="flex flex-col gap-4"
+                        id="organization"
+                    >
+                        <div class="flex flex-col gap-1">
+                            <p class="text-base font-semibold dark:text-white">
+                                Organisatie
+                            </p>
+
+                            <p class="text-gray-600 dark:text-gray-300">
+                                Koppel een organisatie voor facturatie doeleinden
+                            </p>
+                        </div>
+
+                        <!-- Organization Component -->
+                        @include('admin::leads.common.organization')
+                    </div>
+
+                    {!! view_render_event('admin.leads.edit.organization.after', ['lead' => $lead]) !!}
+
                     {!! view_render_event('admin.leads.edit.personal_fields.before', ['lead' => $lead]) !!}
 
                     <!-- Personal Fields Section -->
@@ -418,6 +441,8 @@
                         lead:  @json($lead),
 
                         persons:  @json($lead->persons),
+                        
+                        organization: @json($lead->organization),
 
                         {{--products: @json($lead->products),--}}
 

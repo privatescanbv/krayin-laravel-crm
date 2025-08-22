@@ -237,6 +237,29 @@
                                         </div>
                                     </div>
 
+                                    <!-- Organization Section -->
+                                    <div class="flex flex-col gap-4 mb-4">
+                                        <p class="text-base font-semibold dark:text-white">Organisatie (facturatie)</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            Koppel een organisatie voor facturatie doeleinden (optioneel)
+                                        </p>
+
+                                        <x-admin::form.control-group>
+                                            <x-admin::form.control-group.label>
+                                                Organisatie
+                                            </x-admin::form.control-group.label>
+
+                                            <x-admin::form.control-group.control
+                                                type="text"
+                                                name="organization_lookup"
+                                                placeholder="Zoek organisatie..."
+                                                v-model="formData.organization_lookup"
+                                            />
+                                            
+                                            <input type="hidden" name="organization_id" v-model="formData.organization_id">
+                                        </x-admin::form.control-group>
+                                    </div>
+
                                     <!-- Channel and Source -->
                                     <div class="flex gap-4 mb-4">
                                         <div class="flex-1">
@@ -368,6 +391,9 @@
                             last_name: '',
                             email: '',
                             phone: '',
+                            // Organization for billing
+                            organization_id: '',
+                            organization_lookup: '',
                         }
                     };
                 },
@@ -379,9 +405,7 @@
                             id: null,
                             name: '',
                             email: '',
-                            phone: '',
-                            organization_id: null,
-                            organization: null
+                            phone: ''
                         });
                     }
                 },
@@ -454,9 +478,6 @@
                                     }
                                     if (person.phone) {
                                         formData.set(`persons[${index}][phone]`, person.phone);
-                                    }
-                                    if (person.organization_id) {
-                                        formData.set(`persons[${index}][organization_id]`, person.organization_id);
                                     }
                                 });
                             }

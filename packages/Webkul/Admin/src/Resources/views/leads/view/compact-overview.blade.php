@@ -94,13 +94,30 @@
                                 <span class="icon-external-link text-xs ml-1"></span>
                             </a>
                             @if($person->organization)
-                                <div class="text-xs text-gray-500 ml-2">{{ $person->organization->name }}</div>
-                            @endif
-                        </div>
-                        @endforeach
-                    </div>
-                </div>
-                @endif
+                                                                 <div class="text-xs text-gray-500 ml-2">{{ $person->organization->name }}</div>
+                             @endif
+                         </div>
+                         @endforeach
+                     </div>
+                 </div>
+                 @endif
+
+                 <!-- Lead Organization (for billing) -->
+                 @if($lead->organization)
+                 <div class="mb-4">
+                     <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Organisatie (facturatie)</div>
+                     <div>
+                         <a
+                             href="{{ route('admin.contacts.organizations.view', $lead->organization->id) }}"
+                             target="_blank"
+                             class="text-sm font-medium text-brandColor hover:underline"
+                         >
+                             {{ $lead->organization->name }}
+                             <span class="icon-external-link text-xs ml-1"></span>
+                         </a>
+                     </div>
+                 </div>
+                 @endif
 
                 <!-- Address -->
                 <div class="mb-4">

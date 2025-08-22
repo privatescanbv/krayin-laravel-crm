@@ -72,6 +72,7 @@ class Lead extends Model implements LeadContract
         'phones',
         'lead_channel_id',
         'department_id',
+        'organization_id',
         'created_by',
         'updated_by',
     ];
@@ -213,6 +214,14 @@ class Lead extends Model implements LeadContract
     public function department()
     {
         return $this->belongsTo(\App\Models\Department::class, 'department_id');
+    }
+
+    /**
+     * Get the organization that owns the lead.
+     */
+    public function organization()
+    {
+        return $this->belongsTo(\Webkul\Contact\Models\Organization::class, 'organization_id');
     }
 
     /**

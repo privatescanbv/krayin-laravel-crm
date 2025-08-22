@@ -110,29 +110,7 @@
                             />
                         </x-admin::form.control-group>
 
-                        <!-- Organization -->
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                Organisatie
-                            </x-admin::form.control-group.label>
 
-                            <x-admin::lookup
-                                ::src="`{{ route('admin.contacts.organizations.search') }}`"
-                                ::name="`persons[${index}][organization_id]`"
-                                :label="'Naam'"
-                                ::value="person.organization"
-                                placeholder="Zoek organisatie..."
-                                @on-selected="(selectedOrg) => updatePersonOrganization(index, selectedOrg)"
-                                :can-add-new="true"
-                            />
-
-                            <input
-                                type="hidden"
-                                ::name="`persons[${index}][organization_id]`"
-                                ::value="person.organization_id"
-                                v-if="person.organization_id"
-                            />
-                        </x-admin::form.control-group>
                     </div>
                 </div>
             </div>
@@ -173,9 +151,7 @@
                         id: null,
                         name: '',
                         email: '',
-                        phone: '',
-                        organization_id: null,
-                        organization: null
+                        phone: ''
                     });
                 },
 
@@ -188,15 +164,8 @@
                         id: selectedPerson.id,
                         name: selectedPerson.name,
                         email: selectedPerson.email || '',
-                        phone: selectedPerson.phone || '',
-                        organization_id: selectedPerson.organization_id || null,
-                        organization: selectedPerson.organization || null
+                        phone: selectedPerson.phone || ''
                     });
-                },
-
-                updatePersonOrganization(index, selectedOrganization) {
-                    this.persons[index].organization_id = selectedOrganization.id;
-                    this.persons[index].organization = selectedOrganization;
                 }
             }
         });

@@ -398,6 +398,15 @@ test('manual search handles exact match correctly', function () {
         'user_id'             => test()->user->id,
     ]);
 
+    // Add matching address for perfect score
+    \App\Models\Address::create([
+        'person_id' => $exactMatchPerson->id,
+        'street' => 'Test Street 123',
+        'city' => 'Test City',
+        'postal_code' => '1234AB',
+        'country' => 'Nederland',
+    ]);
+
     $partialMatchPerson = Person::factory()->create([
         'name'        => 'John Smith', // Override factory name
         'first_name'  => 'John',
@@ -434,6 +443,15 @@ test('manual search handles exact match correctly', function () {
         'date_of_birth'          => '1985-05-15',
         'description'            => null, // Override factory description
         'lead_value'             => null, // Override factory lead_value
+    ]);
+
+    // Add matching address to lead for perfect score
+    \App\Models\Address::create([
+        'lead_id' => $lead->id,
+        'street' => 'Test Street 123',
+        'city' => 'Test City',
+        'postal_code' => '1234AB',
+        'country' => 'Nederland',
     ]);
 
     $response = test()

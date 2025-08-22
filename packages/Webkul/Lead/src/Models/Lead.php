@@ -136,11 +136,18 @@ class Lead extends Model implements LeadContract
      */
     public function attachPersons(array $personIds)
     {
+        $hadPersons = $this->persons->count() > 0;
+        
         foreach ($personIds as $personId) {
             DB::table('lead_persons')->insertOrIgnore([
                 'lead_id' => $this->id,
                 'person_id' => $personId,
             ]);
+        }
+        
+        // Create anamnesis if this is the first person attached
+        if (!$hadPersons && count($personIds) > 0) {
+            $this->createAnamnesis();
         }
     }
 
@@ -426,5 +433,32 @@ class Lead extends Model implements LeadContract
         }
 
         return implode(' ', array_filter($parts));
+    }
+
+    /**
+     * Create anamnesis for this lead.
+     */
+    private function createAnamnesis(): void
+    {
+        // Check if anamnesis already exists
+        if ($this->anamnesis) {
+            return;
+        }
+
+        $currentUserId = auth()->id() ?? $this->user_id ?? 1;
+
+        try {
+            \App\Models\Anamnesis::create([
+                'id' => \Illuminate\Support\Str::uuid(),
+                'lead_id' => $this->id,
+                'name' => 'Anamnesis voor ' . $this->name,
+                'user_id' => $currentUserId,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to create anamnesis for lead: ' . $e->getMessage(), [
+                'lead_id' => $this->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

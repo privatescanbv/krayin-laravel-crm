@@ -384,7 +384,7 @@
                         </div>
 
                         <!-- Organization Component -->
-                        @include('admin::leads.common.organization')
+                        @include('admin::leads.common.organization', ['organization' => $lead->organization])
                     </div>
 
                     {!! view_render_event('admin.leads.edit.organization.after', ['lead' => $lead]) !!}

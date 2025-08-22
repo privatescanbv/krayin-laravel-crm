@@ -244,20 +244,7 @@
                                             Koppel een organisatie voor facturatie doeleinden (optioneel)
                                         </p>
 
-                                        <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label>
-                                                Organisatie
-                                            </x-admin::form.control-group.label>
-
-                                            <x-admin::form.control-group.control
-                                                type="text"
-                                                name="organization_lookup"
-                                                placeholder="Zoek organisatie..."
-                                                v-model="formData.organization_lookup"
-                                            />
-                                            
-                                            <input type="hidden" name="organization_id" v-model="formData.organization_id">
-                                        </x-admin::form.control-group>
+                                        @include('admin::leads.common.organization', ['organization' => null])
                                     </div>
 
                                     <!-- Channel and Source -->
@@ -391,9 +378,6 @@
                             last_name: '',
                             email: '',
                             phone: '',
-                            // Organization for billing
-                            organization_id: '',
-                            organization_lookup: '',
                         }
                     };
                 },

@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Models\Anamnesis;
+use App\Models\Department;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -217,6 +218,7 @@ class ImportLeadsFromSugarCRM extends Command
                 $record->status ?? 'N/A',
                 $record->workflow_status_c ?? 'N/A',
                 $this->mapStage($record),
+                $this->mapDepartment($record),
                 $this->mapChannel($record),
                 $this->mapType($record),
                 $this->mapSource($record),
@@ -286,7 +288,7 @@ class ImportLeadsFromSugarCRM extends Command
                     'initials'               => $record->voorletters_c ?? '',
                     'date_of_birth'          => $record->birthdate,
                     'gender'                 => $record->gender_c,
-                    // skip departement mapping for now, will be done by business rules later
+                    'department_id'          => $this->mapDepartment($record),
                     'lead_channel_id'        => $this->mapChannel($record),
                     'lead_type_id'           => $this->mapType($record),
                     'lead_source_id'         => $this->mapSource($record),
@@ -583,6 +585,30 @@ class ImportLeadsFromSugarCRM extends Command
         $soortAanvraagLower = strtolower(trim($soortAanvraag));
 
         return $typeMap[$soortAanvraagLower] ?? 4; // Default to Overig (ID: 4)
+    }
+
+    /**
+     * Map department based on SugarCRM kanaal or soort_aanvraag
+     */
+    private function mapDepartment($record): int
+    {
+        $kanaal = $record->kanaal_c ?? '';
+        $soortAanvraag = $record->soort_aanvraag_c ?? '';
+        
+        // Map based on channel/type to determine department
+        $kanaalLower = strtolower(trim($kanaal));
+        $soortLower = strtolower(trim($soortAanvraag));
+        
+        // Hernia department indicators
+        $herniaIndicators = ['hernia', 'liesbreuk', 'operatie'];
+        foreach ($herniaIndicators as $indicator) {
+            if (str_contains($kanaalLower, $indicator) || str_contains($soortLower, $indicator)) {
+                return Department::findHerniaId();
+            }
+        }
+        
+        // Default to Privatescan department
+        return Department::findPrivateScanId();
     }
 
     /**

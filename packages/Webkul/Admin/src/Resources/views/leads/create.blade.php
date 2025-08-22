@@ -54,7 +54,7 @@
                         </div>
                         <span class="ml-2 text-sm font-medium"
                               :class="currentStep >= 1 ? 'text-blue-600' : 'text-gray-500'">
-                            Contactpersoon zoeken
+                            Contactpersonen koppelen
                         </span>
                     </div>
                     <div class="w-16 h-0.5" :class="currentStep >= 2 ? 'bg-blue-600' : 'bg-gray-300'"></div>
@@ -352,17 +352,8 @@
 
                             // Add our Vue form data to the FormData
                             Object.keys(this.formData).forEach(key => {
-                                // Skip emails and phones as they are handled by the HTML form inputs
-                                if (key === 'emails' || key === 'phones') {
-                                    return;
-                                } else if (this.formData[key] !== null && this.formData[key] !== '' && this.formData[key] !== undefined) {
-                                    // Special handling for dates
-                                    if (key === 'date_of_birth' && this.formData[key]) {
-                                        // Ensure date is in correct format
-                                        formData.set(key, this.formData[key]);
-                                    } else if (key !== 'date_of_birth') {
-                                        formData.set(key, this.formData[key]);
-                                    }
+                                if (this.formData[key] !== null && this.formData[key] !== '' && this.formData[key] !== undefined) {
+                                    formData.set(key, this.formData[key]);
                                 }
                             });
 
@@ -414,95 +405,6 @@
                         } finally {
                             this.isSubmitting = false;
                         }
-                    },
-
-                    addEmail() {
-                        this.formData.emails.push({value: '', label: 'work', is_default: false});
-                    },
-
-                    removeEmail(index) {
-                        if (this.formData.emails.length > 1) {
-                            const wasDefault = this.formData.emails[index].is_default;
-                            this.formData.emails.splice(index, 1);
-
-                            // If we removed the default email, make the first one default
-                            if (wasDefault && this.formData.emails.length > 0) {
-                                this.formData.emails[0].is_default = true;
-                            }
-                        }
-                    },
-
-                    addPhone() {
-                        this.formData.phones.push({value: '', label: 'work', is_default: false});
-                    },
-
-                    removePhone(index) {
-                        if (this.formData.phones.length > 1) {
-                            const wasDefault = this.formData.phones[index].is_default;
-                            this.formData.phones.splice(index, 1);
-
-                            // If we removed the default phone, make the first one default
-                            if (wasDefault && this.formData.phones.length > 0) {
-                                this.formData.phones[0].is_default = true;
-                            }
-                        }
-                    },
-
-                    handleEmailDefaultChange(index, event) {
-                        const isChecked = event.target.checked;
-
-                        // Uncheck all other checkboxes
-                        this.formData.emails.forEach((email, i) => {
-                            if (i !== index) {
-                                email.is_default = false;
-                            }
-                        });
-
-                        // Set the current email's default status
-                        this.formData.emails[index].is_default = isChecked;
-
-                        // If no email is checked, make the first one default
-                        if (!isChecked && this.formData.emails.length > 0) {
-                            this.formData.emails[0].is_default = true;
-                        }
-                    },
-
-                    handlePhoneDefaultChange(index, event) {
-                        const isChecked = event.target.checked;
-
-                        // Uncheck all other checkboxes
-                        this.formData.phones.forEach((phone, i) => {
-                            if (i !== index) {
-                                phone.is_default = false;
-                            }
-                        });
-
-                        // Set the current phone's default status
-                        this.formData.phones[index].is_default = isChecked;
-
-                        // If no phone is checked, make the first one default
-                        if (!isChecked && this.formData.phones.length > 0) {
-                            this.formData.phones[0].is_default = true;
-                        }
-                    },
-
-                    normalizeLabel(label) {
-                        if (!label) return 'work';
-
-                        // Convert to lowercase and map common variations
-                        const normalizedLabel = label.toLowerCase();
-                        const labelMap = {
-                            'work': 'work',
-                            'werk': 'work',
-                            'home': 'home',
-                            'thuis': 'home',
-                            'mobile': 'mobile',
-                            'mobiel': 'mobile',
-                            'other': 'other',
-                            'anders': 'other'
-                        };
-
-                        return labelMap[normalizedLabel] || 'work';
                     },
 
                     populateAddressFields(address) {

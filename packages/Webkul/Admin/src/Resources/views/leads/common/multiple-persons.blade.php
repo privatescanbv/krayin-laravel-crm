@@ -46,13 +46,18 @@
                                 </span>
                                 
                                 <!-- Match Percentage -->
-                                <span 
-                                    v-if="person.match_percentage" 
-                                    class="px-2 py-1 text-xs rounded-full font-medium"
-                                    :class="getMatchBadgeClass(person.match_percentage)"
-                                >
-                                    @{{ person.match_percentage }}% match
-                                </span>
+                                <div v-if="person.match_percentage" class="flex items-center gap-2">
+                                    <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                        @{{ person.match_percentage }}% match
+                                    </span>
+                                    <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                        <div
+                                            class="h-full rounded-full transition-all duration-300"
+                                            :class="getScoreBarClass(person.match_percentage)"
+                                            :style="{ width: person.match_percentage + '%' }"
+                                        ></div>
+                                    </div>
+                                </div>
                             </div>
                             
                             <!-- Organization -->
@@ -230,8 +235,8 @@
                     if (!person.id || !this.leadId) return null;
                     
                     try {
-                        // Call the person search API with lead_id to get match score
-                        const response = await fetch(`/admin/contacts/persons/search?lead_id=${this.leadId}&person_id=${person.id}`);
+                        // Use the searchByLead API that calculates match scores
+                        const response = await fetch(`/admin/contacts/persons/searchByLead/${this.leadId}`);
                         const data = await response.json();
                         
                         if (data.data && data.data.length > 0) {
@@ -287,15 +292,15 @@
                     }
                 },
 
-                getMatchBadgeClass(percentage) {
-                    if (percentage >= 90) {
-                        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-                    } else if (percentage >= 70) {
-                        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-                    } else if (percentage >= 50) {
-                        return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+                getScoreBarClass(percentage) {
+                    if (percentage >= 80) {
+                        return 'bg-green-500';
+                    } else if (percentage >= 60) {
+                        return 'bg-yellow-500';
+                    } else if (percentage >= 40) {
+                        return 'bg-orange-500';
                     } else {
-                        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+                        return 'bg-red-500';
                     }
                 }
             }

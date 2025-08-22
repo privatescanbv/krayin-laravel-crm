@@ -944,4 +944,37 @@ class LeadController extends Controller
 
         return $labelMap[$normalizedLabel] ?? 'work';
     }
+
+    /**
+     * Detach person from lead.
+     */
+    public function detachPerson(int $leadId, int $personId)
+    {
+        try {
+            $lead = $this->leadRepository->findOrFail($leadId);
+            
+            // Remove the relationship
+            \DB::table('lead_persons')
+                ->where('lead_id', $leadId)
+                ->where('person_id', $personId)
+                ->delete();
+            
+            return response()->json([
+                'message' => 'Persoon succesvol ontkoppeld van lead.',
+                'success' => true
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error detaching person from lead', [
+                'lead_id' => $leadId,
+                'person_id' => $personId,
+                'error' => $e->getMessage()
+            ]);
+            
+            return response()->json([
+                'message' => 'Er is een fout opgetreden bij het ontkoppelen van de persoon.',
+                'success' => false
+            ], 500);
+        }
+    }
 }

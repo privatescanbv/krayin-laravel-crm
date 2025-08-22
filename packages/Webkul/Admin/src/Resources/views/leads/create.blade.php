@@ -759,15 +759,15 @@
                         }
                     },
 
-                    getMatchBadgeClass(percentage) {
-                        if (percentage >= 90) {
-                            return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-                        } else if (percentage >= 70) {
-                            return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-                        } else if (percentage >= 50) {
-                            return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
+                    getScoreBarClass(percentage) {
+                        if (percentage >= 80) {
+                            return 'bg-green-500';
+                        } else if (percentage >= 60) {
+                            return 'bg-yellow-500';
+                        } else if (percentage >= 40) {
+                            return 'bg-orange-500';
                         } else {
-                            return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+                            return 'bg-red-500';
                         }
                     }
                 }

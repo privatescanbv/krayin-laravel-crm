@@ -442,7 +442,7 @@
 
                         persons:  @json($lead->persons),
                         
-                        organization: @json($lead->organization),
+                        organization: @json($lead->organization)
 
                         {{--products: @json($lead->products),--}}
 

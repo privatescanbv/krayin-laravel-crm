@@ -1,109 +1,130 @@
-{!! view_render_event('admin.leads.view.person.before', ['lead' => $lead]) !!}
+{!! view_render_event('admin.leads.view.persons.before', ['lead' => $lead]) !!}
 
-@if ($lead?->person)
+@if ($lead?->persons && $lead->persons->count() > 0)
     <div class="flex w-full flex-col gap-4 border-b border-gray-200 p-4 dark:border-gray-800">
         <x-admin::accordion class="select-none !border-none">
             <x-slot:header class="!p-0">
                 <div class="flex w-full items-center justify-between gap-4 font-semibold dark:text-white">
-                    <h4 >@lang('admin::app.leads.view.persons.title')</h4>
+                    <h4>@lang('admin::app.leads.view.persons.title') ({{ $lead->persons->count() }})</h4>
 
                     <div class="flex items-center gap-1">
-                        @if (bouncer()->hasPermission('contacts.persons.edit'))
-                            <a
-                                href="{{ route('admin.contacts.persons.edit', $lead->person->id) }}"
-                                class="icon-edit rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
-                                title="Wijzig persoon"
-                            ></a>
-                        @endif
-
-                        <a
-                            href="{{ route('admin.contacts.persons.edit_with_lead', [$lead->person->id, $lead->id]) }}"
-                            class="rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 text-green-600 hover:text-green-700"
-                            title="Synchroniseer persoon met lead gegevens"
-                            target="_blank"
-                        >
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                            </svg>
-                        </a>
+                        <button
+                            type="button"
+                            class="icon-plus rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 text-blue-600 hover:text-blue-700"
+                            title="Persoon toevoegen"
+                            onclick="openAddPersonModal()"
+                        ></button>
                     </div>
                 </div>
             </x-slot>
 
-            <x-slot:content class="mt-4 !px-0 !pb-0">
-                <div class="flex gap-2">
-                    {!! view_render_event('admin.leads.view.person.avatar.before', ['lead' => $lead]) !!}
+            <x-slot:content class="!p-0">
+                <div class="space-y-3">
+                    @foreach ($lead->persons as $person)
+                        <div class="border border-gray-200 rounded-lg p-4 bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                        {{ strtoupper(substr($person->name, 0, 1)) }}
+                                    </div>
+                                    <div>
+                                        <h5 class="font-semibold dark:text-white">{{ $person->name }}</h5>
+                                        @if ($person->organization)
+                                            <p class="text-sm text-gray-600 dark:text-gray-400">{{ $person->organization->name }}</p>
+                                        @endif
+                                    </div>
+                                </div>
 
-                    <!-- Person Initials -->
-                    <x-admin::avatar :name="$lead->person->name" />
+                                <div class="flex items-center gap-1">
+                                    @if (bouncer()->hasPermission('contacts.persons.edit'))
+                                        <a
+                                            href="{{ route('admin.contacts.persons.edit', $person->id) }}"
+                                            class="icon-edit rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                                            title="Wijzig persoon"
+                                        ></a>
+                                    @endif
 
-                    {!! view_render_event('admin.leads.view.person.avatar.after', ['lead' => $lead]) !!}
-
-                    <!-- Person Details -->
-                    <div class="flex flex-col gap-1">
-                        {!! view_render_event('admin.leads.view.person.name.before', ['lead' => $lead]) !!}
-
-                        @if (bouncer()->hasPermission('contacts.persons.edit'))
-                            <a
-                                href="{{ route('admin.contacts.persons.edit', $lead->person->id) }}"
-                                class="font-semibold text-brandColor hover:underline"
-                                title="Wijzig persoon"
-                            >
-                                {{ $lead->person->name }}
-                            </a>
-                        @else
-                            <a
-                                href="{{ route('admin.contacts.persons.view', $lead->person->id) }}"
-                                class="font-semibold text-brandColor"
-                                target="_blank"
-                            >
-                                {{ $lead->person->name }}
-                            </a>
-                        @endif
-
-                        {!! view_render_event('admin.leads.view.person.name.after', ['lead' => $lead]) !!}
-
-                        {!! view_render_event('admin.leads.view.person.email.before', ['lead' => $lead]) !!}
-
-                        @foreach ($lead->person->emails as $email)
-                            <div class="flex gap-1">
-                                <a
-                                    class="text-brandColor"
-                                    href="mailto:{{ $email['value'] }}"
-                                >
-                                    {{ $email['value'] }}
-                                </a>
-
-                                <span class="text-gray-500 dark:text-gray-300">
-                                    ({{ $email['label'] }})
-                                </span>
+                                    <button
+                                        type="button"
+                                        class="icon-trash rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 text-red-600 hover:text-red-700"
+                                        title="Persoon ontkoppelen"
+                                        onclick="detachPerson({{ $person->id }})"
+                                    ></button>
+                                </div>
                             </div>
-                        @endforeach
 
-                        {!! view_render_event('admin.leads.view.person.email.after', ['lead' => $lead]) !!}
+                            <!-- Person Details -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                @if ($person->emails && count($person->emails) > 0)
+                                    <div>
+                                        <label class="font-medium text-gray-700 dark:text-gray-300">E-mail:</label>
+                                        @foreach ($person->emails as $email)
+                                            <div class="flex items-center gap-2 mt-1">
+                                                <a href="mailto:{{ $email['value'] }}" class="text-blue-600 hover:text-blue-800">
+                                                    {{ $email['value'] }}
+                                                </a>
+                                                @if (isset($email['is_default']) && $email['is_default'])
+                                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Standaard</span>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
 
-                        {!! view_render_event('admin.leads.view.person.contact_numbers.before', ['lead' => $lead]) !!}
-
-                        @foreach ($lead->person->contact_numbers as $contactNumber)
-                            <div class="flex gap-1">
-                                <a
-                                    class="text-brandColor"
-                                    href="callto:{{ $contactNumber['value'] }}"
-                                >
-                                    {{ $contactNumber['value'] }}
-                                </a>
-
-                                <span class="text-gray-500 dark:text-gray-300">
-                                    ({{ $contactNumber['label'] }})
-                                </span>
+                                @if ($person->phones && count($person->phones) > 0)
+                                    <div>
+                                        <label class="font-medium text-gray-700 dark:text-gray-300">Telefoon:</label>
+                                        @foreach ($person->phones as $phone)
+                                            <div class="flex items-center gap-2 mt-1">
+                                                <a href="tel:{{ $phone['value'] }}" class="text-blue-600 hover:text-blue-800">
+                                                    {{ $phone['value'] }}
+                                                </a>
+                                                @if (isset($phone['is_default']) && $phone['is_default'])
+                                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Standaard</span>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @endif
                             </div>
-                        @endforeach
-
-                        {!! view_render_event('admin.leads.view.person.contact_numbers.after', ['lead' => $lead]) !!}
-                    </div>
+                        </div>
+                    @endforeach
                 </div>
-            </x-slot>
+            </x-slot:content>
         </x-admin::accordion>
     </div>
+@else
+    <div class="flex w-full flex-col gap-4 border-b border-gray-200 p-4 dark:border-gray-800">
+        <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+            <i class="icon-users text-4xl mb-2"></i>
+            <p class="font-medium">Geen contactpersonen gekoppeld</p>
+            <p class="text-sm">Klik op "Persoon toevoegen" om contactpersonen te koppelen</p>
+            <button
+                type="button"
+                class="mt-3 secondary-button"
+                onclick="openAddPersonModal()"
+            >
+                <i class="icon-plus text-xs"></i>
+                Persoon toevoegen
+            </button>
+        </div>
+    </div>
 @endif
-{!! view_render_event('admin.leads.view.person.after', ['lead' => $lead]) !!}
+
+{!! view_render_event('admin.leads.view.persons.after', ['lead' => $lead]) !!}
+
+@pushOnce('scripts')
+<script>
+function openAddPersonModal() {
+    // TODO: Implement modal for adding person to lead
+    alert('Add person modal - to be implemented');
+}
+
+function detachPerson(personId) {
+    if (confirm('Weet je zeker dat je deze persoon wilt ontkoppelen van de lead?')) {
+        // TODO: Implement AJAX call to detach person
+        alert(`Detach person ${personId} - to be implemented`);
+    }
+}
+</script>
+@endPushOnce

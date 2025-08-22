@@ -641,7 +641,7 @@ class LeadController extends Controller
                 'visibility' => true,
             ],
             [
-                'index' => 'person.id',
+                'index' => 'persons.id',
                 'label' => trans('admin::app.leads.index.kanban.columns.contact-person'),
                 'type' => 'string',
                 'searchable' => false,

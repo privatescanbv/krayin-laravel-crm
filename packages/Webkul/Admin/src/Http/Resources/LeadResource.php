@@ -29,23 +29,8 @@ class LeadResource extends JsonResource
             'created_at'           => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at'           => $this->updated_at?->format('Y-m-d H:i:s'),
             
-            // Personal information
-            'salutation'           => $this->salutation,
-            'first_name'           => $this->first_name,
-            'last_name'            => $this->last_name,
-            'lastname_prefix'      => $this->lastname_prefix,
-            'married_name'         => $this->married_name,
-            'married_name_prefix'  => $this->married_name_prefix,
-            'initials'             => $this->initials,
-            'date_of_birth'        => $this->date_of_birth?->format('Y-m-d'),
-            'gender'               => $this->gender,
-            
-            // Contact information
-            'emails'               => is_array($this->emails) ? $this->emails : [],
-            'phones'               => is_array($this->phones) ? $this->phones : [],
-            
             // Relationships
-            'person'               => $this->person ? new PersonResource($this->person) : null,
+            'persons'              => PersonResource::collection($this->whenLoaded('persons')),
             'user'                 => $this->user ? new UserResource($this->user) : null,
             'type'                 => $this->type ? new TypeResource($this->type) : null,
             'source'               => $this->source ? new SourceResource($this->source) : null,

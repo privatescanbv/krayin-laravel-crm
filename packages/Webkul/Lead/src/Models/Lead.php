@@ -25,9 +25,6 @@ class Lead extends Model implements LeadContract
     protected $casts = [
         'closed_at'           => 'datetime',
         'expected_close_date' => 'date',
-        'date_of_birth'       => 'date',
-        'emails'              => 'array',
-        'phones'              => 'array',
     ];
 
     /**
@@ -49,8 +46,6 @@ class Lead extends Model implements LeadContract
         'title',
         'external_id',
         'description',
-        'emails',
-        'phones',
         'lead_value',
         'status',
         'lost_reason',
@@ -61,15 +56,6 @@ class Lead extends Model implements LeadContract
         'lead_type_id',
         'lead_pipeline_id',
         'lead_pipeline_stage_id',
-        'salutation',
-        'first_name',
-        'last_name',
-        'lastname_prefix',
-        'married_name',
-        'married_name_prefix',
-        'initials',
-        'date_of_birth',
-        'gender',
         'lead_channel_id',
         'department_id',
         'created_by',
@@ -237,43 +223,33 @@ class Lead extends Model implements LeadContract
     }
 
     /**
-     * Find the default email address from the emails array
+     * Find the default email address from associated persons
      */
     public function findDefaultEmail(): ?string
     {
-        if (empty($this->emails)) {
-            return null;
-        }
-
-        // First, try to find an email marked as default
-        foreach ($this->emails as $email) {
-            if (isset($email['is_default']) && ($email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1')) {
-                return $email['value'] ?? null;
+        foreach ($this->persons as $person) {
+            $email = $person->findDefaultEmail();
+            if ($email) {
+                return $email;
             }
         }
-
-        // If no default is found, return the first email's value
-        return $this->emails[0]['value'] ?? null;
+        
+        return null;
     }
 
     /**
-     * Find the default phone number from the phones array
+     * Find the default phone number from associated persons
      */
     public function findDefaultPhone(): ?string
     {
-        if (empty($this->phones)) {
-            return null;
-        }
-
-        // First, try to find a phone marked as default
-        foreach ($this->phones as $phone) {
-            if (isset($phone['is_default']) && ($phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1')) {
-                return $phone['value'] ?? null;
+        foreach ($this->persons as $person) {
+            $phone = $person->findDefaultPhone();
+            if ($phone) {
+                return $phone;
             }
         }
-
-        // If no default is found, return the first phone's value
-        return $this->phones[0]['value'] ?? null;
+        
+        return null;
     }
 
     public function getOpenActivitiesCountAttribute():int
@@ -353,30 +329,12 @@ class Lead extends Model implements LeadContract
 
     public function getNameAttribute($value): string
     {
-        $parts = [];
-
-        if ($this->first_name) {
-            $parts[] = trim($this->first_name);
+        // If lead has persons, use the first person's name
+        if ($this->persons && $this->persons->count() > 0) {
+            return $this->persons->first()->name;
         }
-
-        if ($this->lastname_prefix) {
-            $parts[] = trim($this->lastname_prefix);
-        }
-
-        if ($this->last_name) {
-            $parts[] = trim($this->last_name);
-        }
-        if(!empty($this->married_name)) {
-            $marriedNameParts = [];
-            if ($this->married_name_prefix) {
-                $marriedNameParts[] = trim($this->married_name_prefix);
-            }
-            if ($this->married_name) {
-                $marriedNameParts[] = trim($this->married_name);
-            }
-            $parts[] = '/ '.implode(' ', array_filter($marriedNameParts));
-        }
-
-        return implode(' ', array_filter($parts));
+        
+        // Otherwise use the lead title
+        return $this->title;
     }
 }

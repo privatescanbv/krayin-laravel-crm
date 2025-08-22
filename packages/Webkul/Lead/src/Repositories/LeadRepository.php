@@ -138,20 +138,6 @@ class LeadRepository extends Repository
         }
         
         /**
-         * If a single person is provided (backwards compatibility), process it
-         */
-        if (isset($data['person']) && !empty($data['person']) && $this->hasValidPersonData($data['person'])) {
-            if (!empty($data['person']['id'])) {
-                $person = $this->personRepository->findOrFail($data['person']['id']);
-            } else {
-                $person = $this->personRepository->create(array_merge($data['person'], [
-                    'entity_type' => 'persons',
-                ]));
-            }
-            $personsToAttach[] = $person->id;
-        }
-        
-        /**
          * If person_ids array is provided directly
          */
         if (isset($data['person_ids']) && is_array($data['person_ids'])) {
@@ -247,20 +233,6 @@ class LeadRepository extends Repository
                     $personsToSync[] = $person->id;
                 }
             }
-        }
-        
-        /**
-         * If a single person is provided (backwards compatibility), process it
-         */
-        if (isset($data['person']) && $this->hasValidPersonData($data['person'])) {
-            if (!empty($data['person']['id'])) {
-                $person = $this->personRepository->findOrFail($data['person']['id']);
-            } else {
-                $person = $this->personRepository->create(array_merge($data['person'], [
-                    'entity_type' => 'persons',
-                ]));
-            }
-            $personsToSync[] = $person->id;
         }
         
         /**
@@ -363,7 +335,7 @@ class LeadRepository extends Repository
         }
 
         // Sync persons to the lead if persons data was provided
-        if (isset($data['persons']) || isset($data['person']) || isset($data['person_ids'])) {
+        if (isset($data['persons']) || isset($data['person_ids'])) {
             $lead->persons()->sync(array_unique($personsToSync));
         }
 

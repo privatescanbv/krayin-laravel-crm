@@ -130,15 +130,18 @@
                                     <!-- Header -->
                                     <div class="flex items-start justify-between">
                                        <div class="flex items-center gap-1">
-                                           <div v-if="element.person?.name">
-                                               <x-admin::avatar ::name="element.person?.name" class="w-6 h-6" />
+                                           <div v-if="element.persons && element.persons.length > 0">
+                                               <x-admin::avatar ::name="element.persons[0]?.name" class="w-6 h-6" />
                                            </div>
                                            <div class="flex flex-col gap-0.5">
                                                <span class="text-[11px] font-medium">
-                                                   @{{ element.person?.name || element.name }}
+                                                   @{{ element.persons && element.persons.length > 0 ? element.persons[0]?.name : element.title }}
                                                </span>
-                                               <span class="text-[9px] leading-normal" v-if="element.person?.organization?.name">
-                                                   @{{ element.person?.organization?.name }}
+                                               <span class="text-[9px] leading-normal" v-if="element.persons && element.persons.length > 1">
+                                                   +@{{ element.persons.length - 1 }} meer
+                                               </span>
+                                               <span class="text-[9px] leading-normal" v-if="element.persons && element.persons.length > 0 && element.persons[0]?.organization?.name">
+                                                   @{{ element.persons[0]?.organization?.name }}
                                                </span>
                                            </div>
                                        </div>

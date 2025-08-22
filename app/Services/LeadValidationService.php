@@ -52,12 +52,6 @@ class LeadValidationService
             'persons.*.name'  => 'nullable|string|max:255',
             'persons.*.emails' => 'nullable|array',
             'persons.*.contact_numbers' => 'nullable|array',
-            
-            // Backwards compatibility for single person
-            'person.id'       => 'nullable|numeric|exists:persons,id',
-            'person.name'     => 'nullable|string|max:255',
-            'person.emails'   => 'nullable|array',
-            'person.contact_numbers' => 'nullable|array',
 
             // Address fields
             'address.postal_code'         => 'nullable|string|max:20',

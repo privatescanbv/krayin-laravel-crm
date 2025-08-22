@@ -67,9 +67,9 @@ class MagicAI
         $validator = Validator::make($dataArray, [
             'title'                         => 'required|string|max:255',
             'lead_value'                    => 'required|numeric|min:0',
-            'person.name'                   => 'required|string|max:255',
-            'person.emails.value'           => 'required|email',
-            'person.contact_numbers.value'  => 'required|string|max:20',
+            'person.name'                   => 'nullable|string|max:255',
+            'person.emails.value'           => 'nullable|email',
+            'person.contact_numbers.value'  => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {

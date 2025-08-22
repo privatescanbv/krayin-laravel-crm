@@ -164,7 +164,7 @@ class Importer extends AbstractImporter
             'id'                     => 'numeric',
             'status'                 => 'sometimes|required|in:0,1',
             'user_id'                => 'required|exists:users,id',
-            'person_id'              => 'required|exists:persons,id',
+            'person_id'              => 'nullable|exists:persons,id',
             'lead_source_id'         => 'required|exists:lead_sources,id',
             'lead_type_id'           => 'required|exists:lead_types,id',
             'lead_pipeline_id'       => 'required|exists:lead_pipelines,id',

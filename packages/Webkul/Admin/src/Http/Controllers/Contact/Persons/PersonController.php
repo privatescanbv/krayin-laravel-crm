@@ -392,6 +392,33 @@ class PersonController extends Controller
         // Add name score (85% total weight)
         $score += $nameScore * 0.85 * 100;
 
+        // Debug logging for tests
+        if (app()->environment('testing')) {
+            \Log::info('Match Score Debug', [
+                'lead_id' => $lead->id,
+                'person_id' => $person->id,
+                'nameScore' => $nameScore,
+                'emailScore' => $emailScore,
+                'phoneScore' => $phoneScore,
+                'addressScore' => $addressScore,
+                'finalScore' => min($score, $maxScore),
+                'lead_data' => [
+                    'first_name' => $lead->first_name,
+                    'last_name' => $lead->last_name,
+                    'lastname_prefix' => $lead->lastname_prefix,
+                    'emails' => $lead->emails,
+                    'phones' => $lead->phones,
+                ],
+                'person_data' => [
+                    'first_name' => $person->first_name,
+                    'last_name' => $person->last_name,
+                    'lastname_prefix' => $person->lastname_prefix,
+                    'emails' => $person->emails,
+                    'phones' => $person->phones,
+                ]
+            ]);
+        }
+
         return min($score, $maxScore);
     }
 

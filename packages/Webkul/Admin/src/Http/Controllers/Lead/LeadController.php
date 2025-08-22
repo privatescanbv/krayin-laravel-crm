@@ -134,19 +134,26 @@ class LeadController extends Controller
 
             $data[$stage->sort_order] = (new StageResource($stage))->jsonSerialize();
 
+            // Check if lead_persons table exists before loading persons relationship
+            $withRelations = [
+                'tags',
+                'type',
+                'source',
+                'user',
+                'pipeline',
+                'pipeline.stages',
+                'stage',
+                'attribute_values',
+            ];
+            
+            // Only load persons if pivot table exists
+            if (\Schema::hasTable('lead_persons')) {
+                $withRelations[] = 'persons';
+                $withRelations[] = 'persons.organization';
+            }
+
             $data[$stage->sort_order]['leads'] = [
-                'data' => LeadResource::collection($paginator = $query->with([
-                    'tags',
-                    'type',
-                    'source',
-                    'user',
-                    'persons',
-                    'persons.organization',
-                    'pipeline',
-                    'pipeline.stages',
-                    'stage',
-                    'attribute_values',
-                ])->paginate(10)),
+                'data' => LeadResource::collection($paginator = $query->with($withRelations)->paginate(10)),
 
                 'meta' => [
                     'current_page' => $paginator->currentPage(),
@@ -464,12 +471,10 @@ class LeadController extends Controller
     {
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $results = $this->leadRepository
-                ->with(['persons', 'persons.organization'])
                 ->pushCriteria(app(RequestCriteria::class))
                 ->findWhereIn('user_id', $userIds);
         } else {
             $results = $this->leadRepository
-                ->with(['persons', 'persons.organization'])
                 ->pushCriteria(app(RequestCriteria::class))
                 ->all();
         }

@@ -133,9 +133,12 @@
                                            <div v-if="element.persons && element.persons.length > 0">
                                                <x-admin::avatar ::name="element.persons[0]?.name" class="w-6 h-6" />
                                            </div>
+                                           <div v-else-if="element.first_name">
+                                               <x-admin::avatar ::name="`${element.first_name} ${element.last_name}`" class="w-6 h-6" />
+                                           </div>
                                            <div class="flex flex-col gap-0.5">
                                                <span class="text-[11px] font-medium">
-                                                   @{{ element.persons && element.persons.length > 0 ? element.persons[0]?.name : element.title }}
+                                                   @{{ element.persons && element.persons.length > 0 ? element.persons[0]?.name : (element.first_name ? `${element.first_name} ${element.last_name}` : element.title) }}
                                                </span>
                                                <span class="text-[9px] leading-normal" v-if="element.persons && element.persons.length > 1">
                                                    +@{{ element.persons.length - 1 }} meer

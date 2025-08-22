@@ -45,7 +45,9 @@ class LeadResource extends JsonResource
             'phones'               => is_array($this->phones) ? $this->phones : [],
             
             // Relationships
-            'persons'              => PersonResource::collection($this->whenLoaded('persons')),
+            'persons'              => $this->whenLoaded('persons', function () {
+                return PersonResource::collection($this->persons);
+            }, []),
             'user'                 => $this->user ? new UserResource($this->user) : null,
             'type'                 => $this->type ? new TypeResource($this->type) : null,
             'source'               => $this->source ? new SourceResource($this->source) : null,

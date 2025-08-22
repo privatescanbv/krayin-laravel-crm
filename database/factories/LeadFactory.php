@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Address;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Source;
@@ -115,7 +116,7 @@ class LeadFactory extends Factory
     public function withPersons(int $count = 1): static
     {
         return $this->afterCreating(function (Lead $lead) use ($count) {
-            $persons = \Webkul\Contact\Models\Person::factory()->count($count)->create();
+            $persons = Person::factory()->count($count)->create();
             $lead->persons()->attach($persons->pluck('id'));
         });
     }

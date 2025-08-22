@@ -34,7 +34,7 @@ class Lead extends Model implements LeadContract
         'date_of_birth'       => 'date',
         'emails'              => 'array',
         'phones'              => 'array',
-        // 'combine_order'       => 'boolean', // Temporarily disabled until migration runs
+        'combine_order'       => 'boolean',
     ];
 
     /**
@@ -79,7 +79,7 @@ class Lead extends Model implements LeadContract
         'lead_channel_id',
         'department_id',
         'organization_id',
-        // 'combine_order', // Temporarily disabled until migration runs
+        'combine_order',
         'created_by',
         'updated_by',
     ];

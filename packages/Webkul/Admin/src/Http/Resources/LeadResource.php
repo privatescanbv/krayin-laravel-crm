@@ -73,7 +73,7 @@ class LeadResource extends JsonResource
             'lead_pipeline_stage_id'=> $this->lead_pipeline_stage_id,
             'lead_channel_id'      => $this->lead_channel_id,
             'department_id'        => $this->department_id,
-            // 'combine_order'        => $this->combine_order, // Temporarily disabled until migration runs
+            'combine_order'        => $this->combine_order,
             'created_by'           => $this->created_by,
             'updated_by'           => $this->updated_by,
         ];

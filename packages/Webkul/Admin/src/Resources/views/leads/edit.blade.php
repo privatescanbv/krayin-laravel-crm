@@ -243,8 +243,7 @@
                                 </div>
                             </div>
 
-                            <!-- Combine Order Setting - Temporarily disabled until migration runs -->
-                            <!--
+                            <!-- Combine Order Setting -->
                             <div class="mb-0.5">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label>
@@ -261,7 +260,6 @@
                                     <x-admin::form.control-group.error control-name="combine_order"/>
                                 </x-admin::form.control-group>
                             </div>
-                            -->
 
                             <!-- Lead Details Other input fields -->
                             <div class="flex gap-4 max-sm:flex-wrap">

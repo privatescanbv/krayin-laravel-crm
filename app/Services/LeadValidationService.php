@@ -56,7 +56,7 @@ class LeadValidationService
             'organization_id' => 'nullable|numeric|exists:organizations,id',
 
             // Order combination setting
-            // 'combine_order' => 'nullable|boolean', // Temporarily disabled until migration runs
+            'combine_order' => 'nullable|boolean',
 
             // Address fields
             'address.postal_code'         => 'nullable|string|max:20',

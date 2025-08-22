@@ -101,7 +101,8 @@ class Lead extends Model implements LeadContract
      */
     public function persons()
     {
-        return $this->belongsToMany(PersonProxy::modelClass(), 'lead_persons');
+        return $this->belongsToMany(\Webkul\Contact\Models\Person::class, 'lead_persons', 'lead_id', 'person_id')
+                    ->withTimestamps();
     }
 
     /**

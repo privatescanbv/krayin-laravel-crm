@@ -22,8 +22,8 @@ return new class extends Migration
             $table->integer('person_id')->unsigned();
             $table->timestamps();
             
-            // Create composite primary key
-            $table->primary(['lead_id', 'person_id']);
+            // Create composite unique index (not primary key for Laravel compatibility)
+            $table->unique(['lead_id', 'person_id']);
             
             // Foreign key constraints with cascade delete
             $table->foreign('lead_id')->references('id')->on('leads')->onDelete('cascade');

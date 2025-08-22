@@ -197,7 +197,7 @@ class LeadRepository extends Repository
             Anamnesis::create([
                 'id' => Str::uuid(),
                 'lead_id' => $lead->id,
-                'name' => 'Anamnesis voor ' . $lead->title,
+                'name' => 'Anamnesis voor ' . $lead->name,
                 'user_id' => $currentUserId,
             ]);
         } catch (Exception $e) {
@@ -591,7 +591,7 @@ class LeadRepository extends Repository
     {
         return [
             'id' => $lead->id,
-            'title' => $lead->title,
+            'name' => $lead->name,
             'emails_type' => gettype($lead->emails),
             'emails_value' => $lead->emails,
             'phones_type' => gettype($lead->phones),

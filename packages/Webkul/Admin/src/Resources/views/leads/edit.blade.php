@@ -114,23 +114,7 @@
 
                         <div class="w-1/2 max-md:w-full">
                             {!! view_render_event('admin.leads.edit.lead_details.attributes.before', ['lead' => $lead]) !!}
-                            <!-- Lead Details Title and Description -->
-                            <div class="mb-0.5">
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('installer::app.seeders.attributes.leads.title')
-                                    </x-admin::form.control-group.label>
-                                    <x-admin::form.control-group.control
-                                        type="text"
-                                        name="title"
-                                        value="{{ old('title', $lead->title) }}"
-                                        rules="required"
-                                        :label="trans('admin::app.leads.edit.title')"
-                                        :placeholder="trans('admin::app.leads.edit.title')"
-                                    />
-                                    <x-admin::form.control-group.error control-name="title"/>
-                                </x-admin::form.control-group>
-                            </div>
+                            <!-- Lead Details Description -->
                             <div class="mb-0.5">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label>
@@ -257,6 +241,24 @@
                                         <x-admin::form.control-group.error control-name="lead_type_id"/>
                                     </x-admin::form.control-group>
                                 </div>
+                            </div>
+
+                            <!-- Combine Order Setting -->
+                            <div class="mb-0.5">
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label>
+                                        Orders combineren
+                                    </x-admin::form.control-group.label>
+                                    <x-admin::form.control-group.control
+                                        type="select"
+                                        name="combine_order"
+                                        value="{{ old('combine_order', $lead->combine_order ?? 1) }}"
+                                    >
+                                        <option value="1" {{ (old('combine_order', $lead->combine_order ?? 1) == 1) ? 'selected' : '' }}>Ja - Orders mogen gecombineerd worden</option>
+                                        <option value="0" {{ (old('combine_order', $lead->combine_order ?? 1) == 0) ? 'selected' : '' }}>Nee - Gescheiden orders per persoon</option>
+                                    </x-admin::form.control-group.control>
+                                    <x-admin::form.control-group.error control-name="combine_order"/>
+                                </x-admin::form.control-group>
                             </div>
 
                             <!-- Lead Details Other input fields -->
@@ -440,7 +442,7 @@
 
                         lead: {
                             id: {{ $lead->id }},
-title: "{{ addslashes($lead->title) }}",
+title: "{{ addslashes($lead->name) }}",
                             // Simplified lead data to avoid JSON parsing errors
                         },
 

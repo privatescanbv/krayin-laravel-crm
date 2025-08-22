@@ -488,9 +488,9 @@ class Importer extends AbstractImporter
             );
 
             foreach ($newLeads as $lead) {
-                $this->leadsStorage->set($lead->title, [
+                $this->leadsStorage->set($lead->name, [
                     'id'    => $lead->id,
-                    'title' => $lead->title,
+                    'name' => $lead->name,
                 ]);
             }
         }

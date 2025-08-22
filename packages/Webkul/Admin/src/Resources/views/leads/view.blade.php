@@ -1,6 +1,6 @@
 <x-admin::layouts>
     <x-slot:title>
-        @lang('admin::app.leads.view.title', ['title' => $lead->title])
+        {{ $lead->name }}
     </x-slot>
 
     <!-- Content -->
@@ -46,7 +46,7 @@
 
                 <!-- Title -->
                 <h3 class="text-lg font-bold dark:text-white">
-                    {{ $lead->title }}
+                    {{ $lead->name }}
                 </h3>
 
                 {!! view_render_event('admin.leads.view.title.after', ['lead' => $lead]) !!}

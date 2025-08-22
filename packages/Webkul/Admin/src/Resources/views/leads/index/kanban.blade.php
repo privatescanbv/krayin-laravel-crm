@@ -138,7 +138,7 @@
                                            </div>
                                            <div class="flex flex-col gap-0.5">
                                                <span class="text-[11px] font-medium">
-                                                   @{{ element.persons && element.persons.length > 0 ? element.persons[0]?.name : (element.first_name ? `${element.first_name} ${element.last_name}` : element.title) }}
+                                                   @{{ element.persons && element.persons.length > 0 ? element.persons[0]?.name : (element.first_name ? `${element.first_name} ${element.last_name}` : element.name) }}
                                                </span>
                                                <span class="text-[9px] leading-normal" v-if="element.persons && element.persons.length > 1">
                                                    +@{{ element.persons.length - 1 }} meer
@@ -394,8 +394,8 @@
                                 return;
                             }
 
-                            params['search'] += `title:${column.value.join(',')};`;
-                            params['searchFields'] += `title:like;`;
+                            params['search'] += `name:${column.value.join(',')};`;
+                            params['searchFields'] += `name:like;`;
 
                             return;
                         }

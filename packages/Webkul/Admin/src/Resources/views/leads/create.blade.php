@@ -257,24 +257,6 @@
                             <!-- Lead Details -->
                             <div class="flex flex-col gap-4">
                                 <div class="w-1/2 max-md:w-full">
-                                    <!-- Title -->
-                                    <div class="mb-4">
-                                        <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label class="required">
-                                                @lang('admin::app.leads.create.title')
-                                            </x-admin::form.control-group.label>
-                                            <x-admin::form.control-group.control
-                                                type="text"
-                                                name="title"
-                                                v-model="formData.title"
-                                                rules="required"
-                                                label="Titel"
-                                                placeholder="Titel"
-                                            />
-                                            <x-admin::form.control-group.error control-name="title"/>
-                                        </x-admin::form.control-group>
-                                    </div>
-
                                     <!-- Description -->
                                     <div class="mb-4">
                                         <x-admin::form.control-group>
@@ -442,6 +424,24 @@
                                         </div>
                                     </div>
 
+                                    <!-- Combine Order Setting -->
+                                    <div class="mb-4">
+                                        <x-admin::form.control-group>
+                                            <x-admin::form.control-group.label>
+                                                Orders combineren
+                                            </x-admin::form.control-group.label>
+                                            <x-admin::form.control-group.control
+                                                type="select"
+                                                name="combine_order"
+                                                v-model="formData.combine_order"
+                                            >
+                                                <option value="1">Ja - Orders mogen gecombineerd worden</option>
+                                                <option value="0">Nee - Gescheiden orders per persoon</option>
+                                            </x-admin::form.control-group.control>
+                                            <x-admin::form.control-group.error control-name="combine_order"/>
+                                        </x-admin::form.control-group>
+                                    </div>
+
                                     <!-- Other attributes -->
                                     <div class="flex gap-4 max-sm:flex-wrap">
                                         <div class="w-full">
@@ -484,12 +484,12 @@
                         selectedPersons: [],
                         persons: [],
                         isSubmitting: false,
-                        formData: {
-                            title: '',
-                            description: '',
-                            lead_channel_id: '',
-                            lead_source_id: '',
-                            department_id: '',
+                                            formData: {
+                        description: '',
+                        lead_channel_id: '',
+                        lead_source_id: '',
+                        department_id: '',
+                        combine_order: 1,
                             lead_type_id: '',
                             // Personal fields for matching
                             first_name: '',
@@ -533,13 +533,7 @@
                         if (this.isSubmitting) return;
 
                         // Validate required fields
-                        if (!this.formData.title || this.formData.title.trim() === '') {
-                            this.$emitter.emit('add-flash', {
-                                type: 'error',
-                                message: 'Titel is verplicht.'
-                            });
-                            return;
-                        }
+
 
                         if (!this.formData.first_name || this.formData.first_name.trim() === '') {
                             this.$emitter.emit('add-flash', {

@@ -18,7 +18,6 @@ class LeadResource extends JsonResource
     {
         return [
             'id'                   => $this->id,
-            'title'                => $this->title,
             'name'                 => $this->name,
             'description'          => $this->description,
             'lead_value'           => $this->lead_value,
@@ -74,6 +73,7 @@ class LeadResource extends JsonResource
             'lead_pipeline_stage_id'=> $this->lead_pipeline_stage_id,
             'lead_channel_id'      => $this->lead_channel_id,
             'department_id'        => $this->department_id,
+            'combine_order'        => $this->combine_order,
             'created_by'           => $this->created_by,
             'updated_by'           => $this->updated_by,
         ];
@@ -86,7 +86,7 @@ class LeadResource extends JsonResource
     {
         try {
             // Only check for duplicates if the lead has basic required data
-            if (!$this->id || !$this->title) {
+            if (!$this->id || !$this->name) {
                 return false;
             }
 
@@ -104,7 +104,7 @@ class LeadResource extends JsonResource
     {
         try {
             // Only check for duplicates if the lead has basic required data
-            if (!$this->id || !$this->title) {
+            if (!$this->id || !$this->name) {
                 return 0;
             }
 

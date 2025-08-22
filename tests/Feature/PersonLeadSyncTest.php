@@ -54,7 +54,7 @@ test('can access edit with lead page', function () {
     ]);
 
     // Attach the person to the lead
-    $lead->persons()->attach($person->id);
+    $lead->attachPersons([$person->id]);
 
     $response = test()
         ->actingAs(test()->user, 'user')

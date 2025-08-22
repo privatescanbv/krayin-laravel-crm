@@ -38,10 +38,10 @@ test('cascade delete removes lead_persons records when lead is deleted', functio
     $person2 = Person::factory()->create(['user_id' => test()->user->id]);
 
     // Attach persons to lead
-    $lead->persons()->attach([$person1->id, $person2->id]);
+    $lead->attachPersons([$person1->id, $person2->id]);
 
     // Verify relationships exist
-    expect($lead->persons()->count())->toBe(2);
+    expect($lead->persons->count())->toBe(2);
     expect(DB::table('lead_persons')->where('lead_id', $lead->id)->count())->toBe(2);
 
     // Delete the lead
@@ -73,11 +73,11 @@ test('cascade delete removes lead_persons records when person is deleted', funct
     $person = Person::factory()->create(['user_id' => test()->user->id]);
 
     // Attach person to multiple leads
-    $lead1->persons()->attach($person->id);
-    $lead2->persons()->attach($person->id);
+    $lead1->attachPersons([$person->id]);
+    $lead2->attachPersons([$person->id]);
 
     // Verify relationships exist
-    expect($person->leads()->count())->toBe(2);
+    expect($person->leads->count())->toBe(2);
     expect(DB::table('lead_persons')->where('person_id', $person->id)->count())->toBe(2);
 
     // Delete the person
@@ -119,12 +119,12 @@ test('composite primary key prevents duplicate lead-person combinations', functi
     $person = Person::factory()->create(['user_id' => test()->user->id]);
 
     // Attach person to lead
-    $lead->persons()->attach($person->id);
+    $lead->attachPersons([$person->id]);
 
     // Try to attach same person again - should not create duplicate
-    $lead->persons()->attach($person->id);
+    $lead->attachPersons([$person->id]);
 
     // Should still only have one relationship
-    expect($lead->persons()->count())->toBe(1);
+    expect($lead->persons->count())->toBe(1);
     expect(DB::table('lead_persons')->where('lead_id', $lead->id)->where('person_id', $person->id)->count())->toBe(1);
 });

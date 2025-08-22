@@ -13,9 +13,19 @@ return new class extends Migration
      */
     public function up()
     {
+        // First, migrate data from contact_numbers to phones for records where phones is null/empty
+        \DB::statement("
+            UPDATE persons 
+            SET phones = contact_numbers 
+            WHERE (phones IS NULL OR phones = '[]' OR phones = '') 
+            AND contact_numbers IS NOT NULL 
+            AND contact_numbers != '[]' 
+            AND contact_numbers != ''
+        ");
+
+        // Then drop the contact_numbers column
         Schema::table('persons', function (Blueprint $table) {
-            // Rename contact_numbers column to phones
-            $table->renameColumn('contact_numbers', 'phones');
+            $table->dropColumn('contact_numbers');
         });
     }
 
@@ -27,8 +37,8 @@ return new class extends Migration
     public function down()
     {
         Schema::table('persons', function (Blueprint $table) {
-            // Rename phones column back to contact_numbers
-            $table->renameColumn('phones', 'contact_numbers');
+            // Re-add contact_numbers column
+            $table->json('contact_numbers')->nullable()->after('phones');
         });
     }
 };

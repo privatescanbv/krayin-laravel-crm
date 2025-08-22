@@ -154,8 +154,7 @@ class LeadController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        // TODO: Add 'persons' back after migrations are run
-        $lead = $this->leadRepository->with(['address'])->findOrFail($id);
+        $lead = $this->leadRepository->with(['address', 'persons'])->findOrFail($id);
 
         return response()->json([
             'data' => $lead,

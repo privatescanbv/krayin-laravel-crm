@@ -77,7 +77,7 @@
                 @endif
 
                 <!-- Contact Persons (if linked) -->
-                @if(isset($lead->persons) && $lead->persons && $lead->persons->count() > 0)
+                @if($lead->persons && $lead->persons->count() > 0)
                 <div class="mb-4">
                     <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
                         Contactpersonen ({{ $lead->persons->count() }})

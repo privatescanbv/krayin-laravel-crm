@@ -417,7 +417,7 @@
 
                         lead:  @json($lead),
 
-                        persons:  @json($lead->persons ?? []),
+                        persons:  @json($lead->persons),
 
                         {{--products: @json($lead->products),--}}
 

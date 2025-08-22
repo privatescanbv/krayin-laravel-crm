@@ -134,18 +134,19 @@ class LeadController extends Controller
 
             $data[$stage->sort_order] = (new StageResource($stage))->jsonSerialize();
 
-            // Load relationships - temporarily excluding persons until migrations are complete
+            // Load relationships including persons (migrations are complete)
             $data[$stage->sort_order]['leads'] = [
                 'data' => LeadResource::collection($paginator = $query->with([
                     'tags',
                     'type',
                     'source',
                     'user',
+                    'persons',
+                    'persons.organization',
                     'pipeline',
                     'pipeline.stages',
                     'stage',
                     'attribute_values',
-                    // TODO: Add 'persons', 'persons.organization' after migrations are run
                 ])->paginate(10)),
 
                 'meta' => [
@@ -280,8 +281,7 @@ class LeadController extends Controller
      */
     public function edit(int $id): View
     {
-        // TODO: Add 'persons' back after migrations are run
-        $lead = $this->leadRepository->with(['address'])->findOrFail($id);
+        $lead = $this->leadRepository->with(['address', 'persons'])->findOrFail($id);
 
         return view('admin::leads.edit', compact('lead'));
     }
@@ -294,7 +294,7 @@ class LeadController extends Controller
         $lead = $this->leadRepository->with([
             'anamnesis', 
             'address', 
-            // TODO: Add 'persons.organization' back after migrations are run
+            'persons.organization', 
             'source', 
             'type', 
             'channel', 
@@ -465,10 +465,12 @@ class LeadController extends Controller
     {
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $results = $this->leadRepository
+                ->with(['persons', 'persons.organization'])
                 ->pushCriteria(app(RequestCriteria::class))
                 ->findWhereIn('user_id', $userIds);
         } else {
             $results = $this->leadRepository
+                ->with(['persons', 'persons.organization'])
                 ->pushCriteria(app(RequestCriteria::class))
                 ->all();
         }

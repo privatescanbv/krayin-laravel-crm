@@ -24,8 +24,7 @@ class DuplicateController extends Controller
      */
     public function index(int $leadId): View
     {
-        // TODO: Add 'persons' back after migrations are run
-        $lead = $this->leadRepository->with(['stage', 'pipeline', 'user'])->findOrFail($leadId);
+        $lead = $this->leadRepository->with(['persons', 'stage', 'pipeline', 'user'])->findOrFail($leadId);
         $duplicates = $this->leadRepository->findPotentialDuplicates($lead);
 
         // Use LeadResource for consistent data formatting

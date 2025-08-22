@@ -515,6 +515,18 @@ class PersonController extends Controller
 
         $totalMatchRatio = $totalMatches / $totalPossibleMatches;
 
+        // Debug name matching for person ID 1
+        if (app()->environment('testing') && $person->id == 1) {
+            \Log::info('Name Match Debug', [
+                'totalMatches' => $totalMatches,
+                'totalPossibleMatches' => $totalPossibleMatches,
+                'importantMatches' => $importantMatches,
+                'importantPossibleMatches' => $importantPossibleMatches,
+                'totalMatchRatio' => $totalMatchRatio,
+                'will_return_score' => $totalMatchRatio === 1.0 ? 0.95 : ($importantPossibleMatches > 0 && $importantMatches === $importantPossibleMatches ? 0.80 : $totalMatchRatio * 0.80)
+            ]);
+        }
+
         // 100% match on all name fields = 95% score
         if ($totalMatchRatio === 1.0) {
             return 0.95;
@@ -566,6 +578,19 @@ class PersonController extends Controller
     {
         $leadPhones = $this->extractPhones($lead);
         $personPhones = $this->extractPhones($person);
+
+        // Debug phone extraction for person ID 1
+        if (app()->environment('testing') && $person->id == 1) {
+            \Log::info('Phone Match Debug', [
+                'lead_id' => $lead->id,
+                'person_id' => $person->id,
+                'leadPhones' => $leadPhones,
+                'personPhones' => $personPhones,
+                'lead_phones_raw' => $lead->phones,
+                'person_phones_raw' => $person->phones,
+                'person_contact_numbers_raw' => $person->contact_numbers,
+            ]);
+        }
 
         if (empty($leadPhones) || empty($personPhones)) {
             return 0.0;

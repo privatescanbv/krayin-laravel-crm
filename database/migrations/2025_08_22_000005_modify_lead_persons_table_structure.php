@@ -18,6 +18,9 @@ return new class extends Migration
             $table->integer('person_id')->unsigned();
             $table->foreign('person_id')->references('id')->on('persons')->onDelete('cascade');
 
+            // Add unique constraint to prevent duplicates
+            $table->unique(['lead_id', 'person_id']);
+
             // No id column and no timestamps - following existing pivot table pattern
         });
     }

@@ -136,14 +136,15 @@ class LeadController extends Controller
 
             $data[$stage->sort_order] = (new StageResource($stage))->jsonSerialize();
 
-            // Load relationships - temporarily excluding persons due to BelongsToMany error
+            // Load relationships following existing pivot table pattern
             $data[$stage->sort_order]['leads'] = [
                 'data' => LeadResource::collection($paginator = $query->with([
                     'tags',
                     'type',
                     'source',
                     'user',
-                    // 'persons', // Temporarily disabled due to BelongsToMany error
+                    'persons',
+                    'persons.organization',
                     'organization',
                     'pipeline',
                     'pipeline.stages',
@@ -283,17 +284,7 @@ class LeadController extends Controller
      */
     public function edit(int $id): View
     {
-        $lead = $this->leadRepository->with(['address', 'organization'])->findOrFail($id);
-        
-        // Manually load persons to avoid BelongsToMany error
-        try {
-            $lead->persons = \Webkul\Contact\Models\Person::whereIn('id', 
-                \DB::table('lead_persons')->where('lead_id', $id)->pluck('person_id')
-            )->get();
-        } catch (\Exception $e) {
-            \Log::warning('Could not load persons for lead edit', ['error' => $e->getMessage()]);
-            $lead->persons = collect();
-        }
+        $lead = $this->leadRepository->with(['address', 'persons', 'organization'])->findOrFail($id);
 
         return view('admin::leads.edit', compact('lead'));
     }
@@ -478,12 +469,12 @@ class LeadController extends Controller
     {
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $results = $this->leadRepository
-                // ->with(['persons', 'persons.organization']) // Temporarily disabled
+                ->with(['persons', 'persons.organization'])
                 ->pushCriteria(app(RequestCriteria::class))
                 ->findWhereIn('user_id', $userIds);
         } else {
             $results = $this->leadRepository
-                // ->with(['persons', 'persons.organization']) // Temporarily disabled
+                ->with(['persons', 'persons.organization'])
                 ->pushCriteria(app(RequestCriteria::class))
                 ->all();
         }

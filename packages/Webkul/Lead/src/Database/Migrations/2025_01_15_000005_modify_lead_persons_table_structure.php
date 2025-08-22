@@ -18,17 +18,13 @@ return new class extends Migration
         Schema::dropIfExists('lead_persons');
         
         Schema::create('lead_persons', function (Blueprint $table) {
-            $table->increments('id'); // Keep id for Laravel BelongsToMany compatibility
             $table->integer('lead_id')->unsigned();
-            $table->integer('person_id')->unsigned();
-            $table->timestamps();
-            
-            // Create unique constraint to prevent duplicates
-            $table->unique(['lead_id', 'person_id']);
-            
-            // Foreign key constraints with cascade delete
             $table->foreign('lead_id')->references('id')->on('leads')->onDelete('cascade');
+            
+            $table->integer('person_id')->unsigned();
             $table->foreign('person_id')->references('id')->on('persons')->onDelete('cascade');
+            
+            // No id column and no timestamps - following existing pivot table pattern
         });
     }
 

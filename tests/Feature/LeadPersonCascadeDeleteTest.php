@@ -94,19 +94,21 @@ test('cascade delete removes lead_persons records when person is deleted', funct
     expect(Lead::find($lead2->id))->not->toBeNull();
 });
 
-test('lead_persons table has correct structure with id column', function () {
+test('lead_persons table has correct structure following existing pivot table pattern', function () {
     // Check table structure
     $columns = DB::select("DESCRIBE lead_persons");
     $columnNames = collect($columns)->pluck('Field')->toArray();
     
-    // Should have id column for Laravel compatibility
-    expect($columnNames)->toContain('id');
+    // Should not have id column (following lead_activities pattern)
+    expect($columnNames)->not->toContain('id');
     
     // Should have lead_id and person_id
     expect($columnNames)->toContain('lead_id');
     expect($columnNames)->toContain('person_id');
-    expect($columnNames)->toContain('created_at');
-    expect($columnNames)->toContain('updated_at');
+    
+    // Should not have timestamps (following existing pivot table pattern)
+    expect($columnNames)->not->toContain('created_at');
+    expect($columnNames)->not->toContain('updated_at');
 });
 
 test('composite primary key prevents duplicate lead-person combinations', function () {

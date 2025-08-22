@@ -440,7 +440,7 @@
 
                         lead:  @json($lead),
 
-                        persons:  @json($lead->persons ?? []),
+                        persons:  @json($lead->persons),
                         
                         organization: @json($lead->organization),
 

@@ -18,11 +18,12 @@ return new class extends Migration
         Schema::dropIfExists('lead_persons');
         
         Schema::create('lead_persons', function (Blueprint $table) {
+            $table->increments('id'); // Keep id for Laravel BelongsToMany compatibility
             $table->integer('lead_id')->unsigned();
             $table->integer('person_id')->unsigned();
             $table->timestamps();
             
-            // Create composite unique index (not primary key for Laravel compatibility)
+            // Create unique constraint to prevent duplicates
             $table->unique(['lead_id', 'person_id']);
             
             // Foreign key constraints with cascade delete

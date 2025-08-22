@@ -104,6 +104,12 @@ test('manual search returns exact match when exact data provided', function () {
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
+        // Set lead personal fields to match the search criteria
+        'first_name'             => 'John',
+        'last_name'              => 'Doe',
+        'emails'                 => [['value' => 'john@example.com', 'label' => 'Work']],
+        'phones'                 => [['value' => '123456789', 'label' => 'Mobile']],
+        'date_of_birth'          => '1985-05-15',
     ]);
 
     $response = test()
@@ -172,6 +178,12 @@ test('manual search returns partial match', function () {
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
+        // Set lead personal fields to match the search criteria
+        'first_name'             => 'John',
+        'last_name'              => 'Smith', // Different from person for partial match
+        'emails'                 => [['value' => 'john@example.com', 'label' => 'Work']],
+        'phones'                 => [['value' => '123456789', 'label' => 'Mobile']],
+        'date_of_birth'          => '1985-05-15',
     ]);
 
     $response = test()
@@ -323,6 +335,12 @@ test('manual search returns match scores when lead_id provided', function () {
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
+        // Set lead personal fields to match the search criteria
+        'first_name'             => 'John',
+        'last_name'              => 'Doe',
+        'emails'                 => [['value' => 'john@example.com', 'label' => 'Work']],
+        'phones'                 => [['value' => '123456789', 'label' => 'Mobile']],
+        'date_of_birth'          => '1985-05-15',
     ]);
 
     test()
@@ -391,6 +409,12 @@ test('manual search handles exact match correctly', function () {
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
+        // Set lead personal fields to match the search criteria
+        'first_name'             => 'John',
+        'last_name'              => 'Doe',
+        'emails'                 => [['value' => 'john@example.com', 'label' => 'Work']],
+        'phones'                 => [['value' => '123456789', 'label' => 'Mobile']],
+        'date_of_birth'          => '1985-05-15',
     ]);
 
     $response = test()

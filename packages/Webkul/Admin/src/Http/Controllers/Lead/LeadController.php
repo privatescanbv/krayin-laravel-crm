@@ -283,7 +283,17 @@ class LeadController extends Controller
      */
     public function edit(int $id): View
     {
-        $lead = $this->leadRepository->with(['address', 'persons', 'organization'])->findOrFail($id);
+        $lead = $this->leadRepository->with(['address', 'organization'])->findOrFail($id);
+        
+        // Manually load persons to avoid BelongsToMany error
+        try {
+            $lead->persons = \Webkul\Contact\Models\Person::whereIn('id', 
+                \DB::table('lead_persons')->where('lead_id', $id)->pluck('person_id')
+            )->get();
+        } catch (\Exception $e) {
+            \Log::warning('Could not load persons for lead edit', ['error' => $e->getMessage()]);
+            $lead->persons = collect();
+        }
 
         return view('admin::leads.edit', compact('lead'));
     }

@@ -173,19 +173,18 @@
 
                                  <!-- Suggesties -->
                  <ul v-if="suggestions.length" class="border rounded bg-white shadow mb-2 max-h-60 overflow-y-auto">
-                     <li
-                         v-for="person in suggestions"
-                         :key="person.id"
-                         @click="addPerson(person)"
-                         class="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b last:border-b-0"
-                         :class="{ 'opacity-50': isPersonSelected(person.id) }"
-                     >
-                         <div class="flex items-center justify-between">
-                             <div class="flex-1">
-                                 <div class="flex items-center">
-                                     <div class="font-medium">{{ person.name }}</div>
-                                     <span v-if="isPersonSelected(person.id)" class="ml-2 text-green-600 text-xs">✓ Gekoppeld</span>
-                                 </div>
+                                           <li
+                          v-for="person in suggestions"
+                          :key="person.id"
+                          @click="addPerson(person)"
+                          class="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b last:border-b-0"
+                      >
+                          <div class="flex items-center justify-between">
+                              <div class="flex-1">
+                                  <div class="flex items-center">
+                                      <div class="font-medium">{{ person.name }}</div>
+                                      <span class="ml-2 text-green-600 text-xs">+ Toevoegen</span>
+                                  </div>
                                  <div class="text-sm text-gray-600">
                                      <span v-if="person.emails && person.emails.length">{{ person.emails[0].value }}</span>
                                      <span v-if="person.phones && person.phones.length"> • {{ person.phones[0].value }}</span>
@@ -280,11 +279,22 @@
                             params.lead_id = this.lead.id;
                         }
 
-                        const response = await axios.get('/admin/contacts/persons/search', {
-                            params: params
-                        });
+                                                 const response = await axios.get('/admin/contacts/persons/search', {
+                             params: params
+                         });
 
-                        this.suggestions = response.data.data || [];
+                         // Filter out already selected persons from suggestions
+                         const allSuggestions = response.data.data || [];
+                         this.suggestions = allSuggestions.filter(person => 
+                             !this.isPersonSelected(person.id)
+                         );
+                         
+                         console.log('Search results:', {
+                             'query': query,
+                             'allSuggestions.length': allSuggestions.length,
+                             'filteredSuggestions.length': this.suggestions.length,
+                             'selectedPersons.length': this.selectedPersons.length
+                         });
                     } catch (e) {
                         console.warn('Zoekopdracht mislukt:', e);
                         this.suggestions = [];
@@ -293,13 +303,17 @@
                     }
                 },
 
-                addPerson(person) {
-                    if (!this.isPersonSelected(person.id)) {
-                        this.selectedPersons.push(person);
-                    }
-                    this.search = '';
-                    this.suggestions = [];
-                },
+                                 addPerson(person) {
+                     if (!this.isPersonSelected(person.id)) {
+                         this.selectedPersons.push(person);
+                         
+                         // Clear search and suggestions after adding
+                         this.search = '';
+                         this.suggestions = [];
+                         
+                         console.log('Person added:', person.name, 'Total selected:', this.selectedPersons.length);
+                     }
+                 },
 
                 removePerson(index) {
                     const person = this.selectedPersons[index];

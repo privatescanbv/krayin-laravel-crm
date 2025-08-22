@@ -18,7 +18,6 @@ beforeEach(function () {
 test('it detects duplicate leads by email', function () {
     // Create the first lead
     $lead1 = Lead::factory()->create([
-        'title'      => 'Email Test Lead 1',
         'first_name' => 'Marcus',
         'last_name'  => 'Emailtest',
         'emails'     => [
@@ -28,7 +27,6 @@ test('it detects duplicate leads by email', function () {
 
     // Create a second lead with the same email but different name
     $lead2 = Lead::factory()->create([
-        'title'      => 'Email Test Lead 2',
         'first_name' => 'Natasha',
         'last_name'  => 'Differentname',
         'emails'     => [
@@ -48,7 +46,6 @@ test('it detects duplicate leads by email', function () {
 test('it detects duplicate leads by phone', function () {
     // Create the first lead
     $lead1 = Lead::factory()->create([
-        'title'      => 'Phone Test Lead 1',
         'first_name' => 'Alexander',
         'last_name'  => 'Phonetest',
         'phones'     => [
@@ -58,7 +55,6 @@ test('it detects duplicate leads by phone', function () {
 
     // Create a second lead with the same phone but different name
     $lead2 = Lead::factory()->create([
-        'title'      => 'Phone Test Lead 2',
         'first_name' => 'Bethany',
         'last_name'  => 'Differentname',
         'phones'     => [
@@ -76,14 +72,12 @@ test('it detects duplicate leads by phone', function () {
 test('it detects duplicate leads by name similarity', function () {
     // Create the first lead
     $lead1 = Lead::factory()->create([
-        'title'      => 'Name Similarity Test Lead 1',
         'first_name' => 'John',
         'last_name'  => 'Similaritytest',
     ]);
 
     // Create a second lead with similar name (nickname variation)
     $lead2 = Lead::factory()->create([
-        'title'      => 'Name Similarity Test Lead 2',
         'first_name' => 'Johnny',
         'last_name'  => 'Similaritytest',
     ]);
@@ -98,14 +92,12 @@ test('it detects duplicate leads by name similarity', function () {
 test('it detects duplicate leads by full name', function () {
     // Create the first lead
     $lead1 = Lead::factory()->create([
-        'title'      => 'Full Name Test Lead 1',
         'first_name' => 'Gabriel',
         'last_name'  => 'Fullnametest',
     ]);
 
     // Create a second lead with the exact same full name
     $lead2 = Lead::factory()->create([
-        'title'      => 'Full Name Test Lead 2',
         'first_name' => 'Gabriel',
         'last_name'  => 'Fullnametest',
     ]);
@@ -121,7 +113,6 @@ test('it detects duplicate leads by full name', function () {
 test('it returns empty collection when no duplicates exist', function () {
     // Create a lead with very unique data that shouldn't match anything
     $lead = Lead::factory()->create([
-        'title'      => 'Absolutely Unique Lead XYZ123',
         'first_name' => 'Zephyr',
         'last_name'  => 'Quintessential',
         'emails'     => [
@@ -143,7 +134,6 @@ test('it returns empty collection when no duplicates exist', function () {
 test('it excludes self from duplicate detection', function () {
     // Create a lead
     $lead = Lead::factory()->create([
-        'title'      => 'Self Exclusion Test Lead',
         'first_name' => 'Selftest',
         'last_name'  => 'Exclusion',
         'emails'     => [
@@ -161,7 +151,6 @@ test('it excludes self from duplicate detection', function () {
 test('it detects duplicate leads with same name and address information', function () {
     // Create the first lead with address
     $lead1 = Lead::factory()->create([
-        'title'      => 'Address Test Lead 1',
         'first_name' => 'Sarah',
         'last_name'  => 'Addresstest',
         'emails'     => [
@@ -182,7 +171,6 @@ test('it detects duplicate leads with same name and address information', functi
 
     // Create a second lead with same name but different email and same address details
     $lead2 = Lead::factory()->create([
-        'title'      => 'Address Test Lead 2',
         'first_name' => 'Sarah',
         'last_name'  => 'Addresstest',
         'emails'     => [

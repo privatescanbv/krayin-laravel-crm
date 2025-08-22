@@ -361,7 +361,7 @@
                         </div>
 
                         <!-- Multiple Persons Component -->
-                        @include('admin::leads.common.multiple-persons', ['leadId' => $lead->id])
+                        @include('admin::leads.common.multiple-persons', ['leadId' => $lead->id, 'persons' => $lead->persons])
                     </div>
 
                     {!! view_render_event('admin.leads.edit.contact_person.after', ['lead' => $lead]) !!}

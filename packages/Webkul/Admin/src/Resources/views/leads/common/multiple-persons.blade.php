@@ -149,16 +149,24 @@
             props: ['data', 'leadId'],
 
             data() {
+                console.log('Multiple-persons component initialized with data:', this.data);
                 return {
                     persons: this.data || []
                 };
             },
 
             async mounted() {
+                console.log('Multiple-persons component mounted:', {
+                    'leadId': this.leadId,
+                    'persons.length': this.persons.length,
+                    'persons': this.persons
+                });
+                
                 // Calculate match percentages for existing persons
                 if (this.leadId) {
                     for (let i = 0; i < this.persons.length; i++) {
                         if (this.persons[i].id && !this.persons[i].match_percentage) {
+                            console.log(`Calculating match for person ${i}:`, this.persons[i]);
                             const matchPercentage = await this.calculateMatchPercentage(this.persons[i]);
                             if (matchPercentage !== null) {
                                 this.$set(this.persons[i], 'match_percentage', matchPercentage);

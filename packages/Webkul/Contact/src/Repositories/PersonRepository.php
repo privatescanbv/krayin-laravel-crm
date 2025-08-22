@@ -26,7 +26,7 @@ class PersonRepository extends Repository
         'married_name_prefix',
         'initials',
         'emails',
-        'contact_numbers',
+        'phones', // Renamed from contact_numbers
         'organization_id',
         'organization.name',
         'user_id',
@@ -252,11 +252,11 @@ class PersonRepository extends Repository
 
         $data['unique_id'] = implode('|', $uniqueIdParts);
 
-        if (isset($data['contact_numbers'])) {
-            $data['contact_numbers'] = collect($data['contact_numbers'])->filter(fn ($number) => ! is_null($number['value']))->toArray();
+        if (isset($data['phones'])) {
+            $data['phones'] = collect($data['phones'])->filter(fn ($number) => ! is_null($number['value']))->toArray();
 
-            if (!empty($data['contact_numbers'])) {
-                $data['unique_id'] .= '|'.$data['contact_numbers'][0]['value'];
+            if (!empty($data['phones'])) {
+                $data['unique_id'] .= '|'.$data['phones'][0]['value'];
             }
         }
 

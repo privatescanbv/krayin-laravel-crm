@@ -388,8 +388,8 @@
                         this.persons.push({
                             id: null,
                             name: '',
-                            email: '',
-                            phone: ''
+                            match_percentage: null,
+                            organization: null
                         });
                     }
                 },
@@ -456,12 +456,6 @@
                                     }
                                     if (person.name) {
                                         formData.set(`persons[${index}][name]`, person.name);
-                                    }
-                                    if (person.email) {
-                                        formData.set(`persons[${index}][email]`, person.email);
-                                    }
-                                    if (person.phone) {
-                                        formData.set(`persons[${index}][phone]`, person.phone);
                                     }
                                 });
                             }

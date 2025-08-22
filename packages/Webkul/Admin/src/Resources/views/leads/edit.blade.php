@@ -360,8 +360,8 @@
                             </p>
                         </div>
 
-                        <!-- Simple Persons List (no Vue component to avoid JS errors) -->
-                        @include('admin::leads.common.simple-persons-list', ['leadId' => $lead->id, 'persons' => $lead->persons])
+                        <!-- Multi Contact Matcher (based on original contactmatcher) -->
+                        @include('admin::leads.common.multi-contactmatcher', ['lead' => $lead, 'persons' => $lead->persons])
                     </div>
 
                     {!! view_render_event('admin.leads.edit.contact_person.after', ['lead' => $lead]) !!}

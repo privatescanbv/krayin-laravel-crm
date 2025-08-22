@@ -202,8 +202,8 @@
                             </p>
                         </div>
 
-                        <!-- Multiple Persons Component -->
-                        @include('admin::leads.common.multiple-persons', ['leadId' => null, 'persons' => []])
+                        <!-- Multi Contact Matcher (based on original contactmatcher) -->
+                        @include('admin::leads.common.multi-contactmatcher', ['lead' => (object)['id' => null], 'persons' => []])
 
                         <div class="flex justify-end pt-4">
                             <button
@@ -569,28 +569,17 @@
                                 }
                             });
 
-                            // Add persons data to form - collect from hidden form fields
+                            // Add persons data from multi-contact-matcher component
                             const personIdInputs = document.querySelectorAll('input[name^="person_ids["]');
-                            const personInputs = document.querySelectorAll('input[name^="persons["][name$="[id]"]');
                             
-                            console.log('Create form submission - found inputs:', {
-                                'personIdInputs.length': personIdInputs.length,
-                                'personInputs.length': personInputs.length,
-                                'window.leadFormPersons': window.leadFormPersons
+                            console.log('Create form submission - found person inputs:', {
+                                'personIdInputs.length': personIdInputs.length
                             });
                             
-                            // Add person_ids from hidden inputs
+                            // Add person_ids from multi-contact-matcher hidden inputs
                             personIdInputs.forEach((input, index) => {
                                 if (input.value) {
-                                    console.log(`Adding person_id from input ${index}:`, input.value);
-                                    formData.set(input.name, input.value);
-                                }
-                            });
-                            
-                            // Add persons data from hidden inputs  
-                            personInputs.forEach((input, index) => {
-                                if (input.value) {
-                                    console.log(`Adding person from input ${index}:`, input.name, input.value);
+                                    console.log(`Adding person_id ${index}:`, input.value);
                                     formData.set(input.name, input.value);
                                 }
                             });

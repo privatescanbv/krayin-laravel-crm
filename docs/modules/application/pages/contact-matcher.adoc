@@ -47,6 +47,52 @@ Het systeem gebruikt intelligente database pre-filtering om performance te verbe
 * Alleen personen met scores > 0 worden teruggegeven naar de frontend
 
 
+==== Person Lookup Velden
+
+===== Doorzoekbare Velden
+
+Het systeem zoekt automatisch in de volgende velden wanneer je een persoon opzoekt:
+
+====== Naam Velden
+* **Voornaam** - Zoekt in first_name veld
+* **Achternaam** - Zoekt in last_name veld  
+* **Volledige naam** - Zoekt in berekende name veld
+* **Tussenvoegsel** - Zoekt in lastname_prefix (van, de, den, etc.)
+* **Getrouwde naam** - Zoekt in married_name veld
+* **Initialen** - Zoekt in initials veld (J.A., P.J., etc.)
+
+====== Contact Velden
+* **E-mailadressen** - Zoekt in emails JSON veld
+* **Telefoonnummers** - Zoekt in phones JSON veld
+
+====== Bedrijfs Velden
+* **Bedrijfsnaam** - Zoekt in organization.name via relatie
+* **Functietitel** - Zoekt in job_title veld
+
+====== Zoek Voorbeelden
+[cols="1,2"]
+|===
+|Zoekterm |Resultaat
+
+|`John`
+|Vindt personen met "John" in voornaam, achternaam, of volledige naam
+
+|`van der`
+|Vindt personen met tussenvoegsel "van der"
+
+|`john@email.com`
+|Vindt personen met exact dit e-mailadres
+
+|`06-12345678`
+|Vindt personen met dit telefoonnummer (alle formaten)
+
+|`ACME`
+|Vindt personen die werken bij bedrijven met "ACME" in de naam
+
+|`Manager`
+|Vindt personen met "Manager" in hun functietitel
+|===
+
 ==== Gebruik
 
 ===== Voor Gebruikers

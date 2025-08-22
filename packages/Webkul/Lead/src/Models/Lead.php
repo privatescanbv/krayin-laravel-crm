@@ -2,6 +2,7 @@
 
 namespace Webkul\Lead\Models;
 
+use App\Models\Department;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
-use Webkul\Contact\Models\Person;
+use Webkul\Contact\Models\Organization;
 use Webkul\Email\Models\EmailProxy;
 use Webkul\Lead\Contracts\Lead as LeadContract;
 use Webkul\Quote\Models\QuoteProxy;
@@ -117,7 +118,7 @@ class Lead extends Model implements LeadContract
     public function getPersonsAttribute()
     {
         try {
-            return \Webkul\Contact\Models\Person::whereIn('id', 
+            return \Webkul\Contact\Models\Person::whereIn('id',
                 \DB::table('lead_persons')->where('lead_id', $this->id)->pluck('person_id')
             )->get();
         } catch (\Exception $e) {
@@ -146,7 +147,7 @@ class Lead extends Model implements LeadContract
     {
         // Remove existing relationships
         \DB::table('lead_persons')->where('lead_id', $this->id)->delete();
-        
+
         // Add new relationships
         if (!empty($personIds)) {
             $this->attachPersons($personIds);
@@ -246,7 +247,7 @@ class Lead extends Model implements LeadContract
      */
     public function department()
     {
-        return $this->belongsTo(\App\Models\Department::class, 'department_id');
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
     /**
@@ -254,7 +255,7 @@ class Lead extends Model implements LeadContract
      */
     public function organization()
     {
-        return $this->belongsTo(\Webkul\Contact\Models\Organization::class, 'organization_id');
+        return $this->belongsTo(Organization::class, 'organization_id');
     }
 
     /**

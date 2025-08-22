@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -21,6 +22,7 @@ use Webkul\Admin\Http\Requests\MassUpdateRequest;
 use Webkul\Admin\Http\Resources\LeadResource;
 use Webkul\Admin\Http\Resources\StageResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
+use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Core\Contracts\Validations\EmailValidator;
 use Webkul\Core\Contracts\Validations\PhoneValidator;
@@ -296,7 +298,6 @@ class LeadController extends Controller
         $lead = $this->leadRepository->with([
             'anamnesis',
             'address',
-            'persons.organization',
             'organization',
             'source',
             'type',
@@ -952,25 +953,25 @@ class LeadController extends Controller
     {
         try {
             $lead = $this->leadRepository->findOrFail($leadId);
-            
+
             // Remove the relationship
             \DB::table('lead_persons')
                 ->where('lead_id', $leadId)
                 ->where('person_id', $personId)
                 ->delete();
-            
+
             return response()->json([
                 'message' => 'Persoon succesvol ontkoppeld van lead.',
                 'success' => true
             ]);
-            
+
         } catch (\Exception $e) {
             \Log::error('Error detaching person from lead', [
                 'lead_id' => $leadId,
                 'person_id' => $personId,
                 'error' => $e->getMessage()
             ]);
-            
+
             return response()->json([
                 'message' => 'Er is een fout opgetreden bij het ontkoppelen van de persoon.',
                 'success' => false

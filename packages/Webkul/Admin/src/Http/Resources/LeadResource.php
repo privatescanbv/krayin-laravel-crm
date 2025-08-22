@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Resources;
 
+use Exception;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Log;
 
@@ -90,7 +91,7 @@ class LeadResource extends JsonResource
             }
 
             return $this->hasPotentialDuplicates();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::warning('Error checking duplicate status in LeadResource: ' . $e->getMessage());
             return false;
         }

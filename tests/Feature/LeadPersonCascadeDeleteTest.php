@@ -1,16 +1,16 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Stage;
 use Webkul\User\Models\User;
-use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
     // Create required test data
     test()->user = User::factory()->active()->create();
-    
+
     test()->pipeline = Pipeline::firstOrCreate([
         'name'        => 'Test Pipeline',
         'is_default'  => 1,
@@ -50,7 +50,7 @@ test('cascade delete removes lead_persons records when lead is deleted', functio
 
     // Verify cascade delete worked
     expect(DB::table('lead_persons')->where('lead_id', $lead->id)->count())->toBe(0);
-    
+
     // Verify persons still exist (should not be deleted)
     expect(Person::find($person1->id))->not->toBeNull();
     expect(Person::find($person2->id))->not->toBeNull();
@@ -88,7 +88,7 @@ test('cascade delete removes lead_persons records when person is deleted', funct
 
     // Verify cascade delete worked
     expect(DB::table('lead_persons')->where('person_id', $person->id)->count())->toBe(0);
-    
+
     // Verify leads still exist (should not be deleted)
     expect(Lead::find($lead1->id))->not->toBeNull();
     expect(Lead::find($lead2->id))->not->toBeNull();
@@ -96,16 +96,16 @@ test('cascade delete removes lead_persons records when person is deleted', funct
 
 test('lead_persons table has correct structure following existing pivot table pattern', function () {
     // Check table structure
-    $columns = DB::select("DESCRIBE lead_persons");
+    $columns = DB::select('DESCRIBE lead_persons');
     $columnNames = collect($columns)->pluck('Field')->toArray();
-    
+
     // Should not have id column (following lead_activities pattern)
     expect($columnNames)->not->toContain('id');
-    
+
     // Should have lead_id and person_id
     expect($columnNames)->toContain('lead_id');
     expect($columnNames)->toContain('person_id');
-    
+
     // Should not have timestamps (following existing pivot table pattern)
     expect($columnNames)->not->toContain('created_at');
     expect($columnNames)->not->toContain('updated_at');

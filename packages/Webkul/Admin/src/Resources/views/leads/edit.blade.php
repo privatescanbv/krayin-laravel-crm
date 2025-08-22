@@ -440,7 +440,7 @@
 
                         lead: {
                             id: {{ $lead->id }},
-                            title: "{{ addslashes($lead->title) }}",
+title: "{{ addslashes($lead->title) }}",
                             // Simplified lead data to avoid JSON parsing errors
                         },
 

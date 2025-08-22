@@ -126,7 +126,7 @@ class LeadRepository extends Repository
 
         // Handle multiple persons
         $personsToAttach = [];
-        
+
         /**
          * If persons array is provided, process each person
          */
@@ -144,7 +144,7 @@ class LeadRepository extends Repository
                 }
             }
         }
-        
+
         /**
          * If person_ids array is provided directly
          */
@@ -201,7 +201,7 @@ class LeadRepository extends Repository
         // Attach persons to the lead
         if (!empty($personsToAttach)) {
             $lead->attachPersons(array_unique($personsToAttach));
-            
+
             \Log::info('LeadRepository create persons attached', [
                 'lead_id' => $lead->id,
                 'attached_persons' => array_unique($personsToAttach),
@@ -241,7 +241,7 @@ class LeadRepository extends Repository
     public function update(array $data, $id, $attributes = []): Lead
     {
         // Debug: Log what data is received
-        \Log::info('LeadRepository update received data', [
+        Log::info('LeadRepository update received data', [
             'lead_id' => $id,
             'has_persons' => array_key_exists('persons', $data),
             'has_person_ids' => array_key_exists('person_ids', $data),
@@ -251,7 +251,7 @@ class LeadRepository extends Repository
 
         // Handle multiple persons update
         $personsToSync = [];
-        
+
         /**
          * If persons array is provided, process each person
          */
@@ -269,7 +269,7 @@ class LeadRepository extends Repository
                 }
             }
         }
-        
+
         /**
          * If person_ids array is provided directly
          */
@@ -381,11 +381,11 @@ class LeadRepository extends Repository
             'will_sync' => array_key_exists('persons', $data) || array_key_exists('person_ids', $data),
         ]);
 
-        // Sync persons to the lead 
+        // Sync persons to the lead
         // Only sync if persons data was explicitly provided (not for partial updates like stage changes)
         if (array_key_exists('persons', $data) || array_key_exists('person_ids', $data)) {
             $lead->syncPersons(array_unique($personsToSync));
-            
+
             \Log::info('LeadRepository persons synced', [
                 'lead_id' => $id,
                 'synced_persons' => array_unique($personsToSync),
@@ -659,7 +659,7 @@ class LeadRepository extends Repository
                 foreach ($fieldMappings as $field => $sourceLeadId) {
                     if ($sourceLeadId != $primaryLeadId) {
                         $sourceLead = $duplicateLeads->firstWhere('id', $sourceLeadId);
-                        
+
                         if ($field === 'address') {
                             // Handle address separately - we need to merge the full address data
                             $addressSourceLeadId = $sourceLeadId;
@@ -725,10 +725,10 @@ class LeadRepository extends Repository
         }
 
         $sourceAddress = $sourceLead->address;
-        
+
         // Get or create address for primary lead
         $primaryAddress = $primaryLead->address;
-        
+
         if ($primaryAddress) {
             // Update existing address with source address data
             $primaryAddress->update([
@@ -756,7 +756,7 @@ class LeadRepository extends Repository
                 'updated_by' => auth()->id(),
             ]);
         }
-        
+
         Log::info('Address merged successfully', [
             'primary_lead_id' => $primaryLead->id,
             'source_lead_id' => $sourceLead->id,

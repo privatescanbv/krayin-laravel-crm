@@ -465,6 +465,10 @@ test('manual search handles exact match correctly', function () {
         'country' => 'Nederland',
     ]);
 
+    // Refresh models to load address relationships
+    $lead = $lead->fresh(['address']);
+    $exactMatchPerson = $exactMatchPerson->fresh(['address']);
+
     $response = test()
         ->actingAs(test()->user, 'user')
         ->getJson('/admin/contacts/persons/search?'.http_build_query([

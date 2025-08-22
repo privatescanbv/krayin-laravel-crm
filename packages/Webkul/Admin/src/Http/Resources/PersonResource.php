@@ -36,8 +36,6 @@ class PersonResource extends JsonResource
             'date_of_birth'   => $this->date_of_birth ? $this->date_of_birth->format('Y-m-d') : null,
             'gender'          => $this->gender,
             'salutation'      => $this->salutation,
-            'emails'          => $this->emails,
-            'phones'          => $this->contact_numbers, // Use contact_numbers for phones
             'created_at'      => $this->created_at,
             'updated_at'      => $this->updated_at,
         ];
@@ -46,7 +44,7 @@ class PersonResource extends JsonResource
         if (isset($this->match_score)) {
             $data['match_score'] = $this->match_score;
         }
-        
+
         if (isset($this->match_score_percentage)) {
             $data['match_score_percentage'] = $this->match_score_percentage;
         }

@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Lead\Models\Lead;
@@ -53,7 +52,7 @@ test('can access edit with lead page', function () {
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
     ]);
-    
+
     // Attach the person to the lead
     $lead->persons()->attach($person->id);
 
@@ -72,7 +71,7 @@ test('can access edit with lead page', function () {
 
 test('manual search returns no results when no person_id provided', function () {
     $data = createPipelineData();
-    
+
     $lead = Lead::factory()->create([
         'title'                  => 'Test Lead',
         'lead_pipeline_id'       => $data['pipelineId'],
@@ -83,7 +82,7 @@ test('manual search returns no results when no person_id provided', function () 
     $response = test()
         ->actingAs(test()->user, 'user')
         ->getJson('/admin/contacts/persons/search?'.http_build_query([
-            'search' => 'John',
+            'search'  => 'John',
             'lead_id' => $lead->id,
         ]));
 
@@ -95,12 +94,12 @@ test('manual search returns no results when no person_id provided', function () 
 test('manual search returns exact match when exact data provided', function () {
     $data = createPipelineData();
     $person = Person::factory()->create([
-        'first_name' => 'John',
-        'last_name'  => 'Doe',
-        'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
-        'phones'     => [['value' => '123456789', 'label' => 'Mobile']],
+        'first_name'    => 'John',
+        'last_name'     => 'Doe',
+        'emails'        => [['value' => 'john@example.com', 'label' => 'Work']],
+        'phones'        => [['value' => '123456789', 'label' => 'Mobile']],
         'date_of_birth' => '1985-05-15',
-        'user_id'    => test()->user->id,
+        'user_id'       => test()->user->id,
     ]);
 
     $lead = Lead::factory()->create([
@@ -113,12 +112,12 @@ test('manual search returns exact match when exact data provided', function () {
     $response = test()
         ->actingAs(test()->user, 'user')
         ->getJson('/admin/contacts/persons/search?'.http_build_query([
-            'search' => 'John',
-            'lead_id' => $lead->id,
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'emails' => [['value' => 'john@example.com', 'label' => 'Work']],
-            'phones' => [['value' => '123456789', 'label' => 'Mobile']],
+            'search'        => 'John',
+            'lead_id'       => $lead->id,
+            'first_name'    => 'John',
+            'last_name'     => 'Doe',
+            'emails'        => [['value' => 'john@example.com', 'label' => 'Work']],
+            'phones'        => [['value' => '123456789', 'label' => 'Mobile']],
             'date_of_birth' => '1985-05-15',
         ]));
 
@@ -165,12 +164,12 @@ test('can update person with lead data', function () {
 test('manual search returns partial match', function () {
     $data = createPipelineData();
     $person = Person::factory()->create([
-        'first_name' => 'John',
-        'last_name'  => 'Doe',
-        'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
-        'phones'     => [['value' => '123456789', 'label' => 'Mobile']],
+        'first_name'    => 'John',
+        'last_name'     => 'Doe',
+        'emails'        => [['value' => 'john@example.com', 'label' => 'Work']],
+        'phones'        => [['value' => '123456789', 'label' => 'Mobile']],
         'date_of_birth' => '1985-05-15',
-        'user_id'    => test()->user->id,
+        'user_id'       => test()->user->id,
     ]);
 
     $lead = Lead::factory()->create([
@@ -183,12 +182,12 @@ test('manual search returns partial match', function () {
     $response = test()
         ->actingAs(test()->user, 'user')
         ->getJson('/admin/contacts/persons/search?'.http_build_query([
-            'search' => 'John',
-            'lead_id' => $lead->id,
-            'first_name' => 'John',
-            'last_name' => 'Smith', // Different last name
-            'emails' => [['value' => 'john@example.com', 'label' => 'Work']], // Same email
-            'phones' => [['value' => '123456789', 'label' => 'Mobile']], // Same phone
+            'search'        => 'John',
+            'lead_id'       => $lead->id,
+            'first_name'    => 'John',
+            'last_name'     => 'Smith', // Different last name
+            'emails'        => [['value' => 'john@example.com', 'label' => 'Work']], // Same email
+            'phones'        => [['value' => '123456789', 'label' => 'Mobile']], // Same phone
             'date_of_birth' => '1985-05-15', // Same birth date
         ]));
 
@@ -228,12 +227,12 @@ test('handles validation errors gracefully', function () {
 test('returns correct field differences', function () {
     $data = createPipelineData();
     $person = Person::factory()->create([
-        'first_name' => 'John',
-        'last_name'  => 'Doe',
-        'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
-        'phones'     => [['value' => '123456789', 'label' => 'Mobile']],
+        'first_name'    => 'John',
+        'last_name'     => 'Doe',
+        'emails'        => [['value' => 'john@example.com', 'label' => 'Work']],
+        'phones'        => [['value' => '123456789', 'label' => 'Mobile']],
         'date_of_birth' => '1990-01-01',
-        'user_id'    => test()->user->id,
+        'user_id'       => test()->user->id,
     ]);
 
     $lead = Lead::factory()->create([
@@ -257,10 +256,10 @@ test('returns correct field differences', function () {
 test('handles malformed date gracefully', function () {
     $data = createPipelineData();
     $person = Person::factory()->create([
-        'first_name' => 'John',
-        'last_name'  => 'Doe',
+        'first_name'    => 'John',
+        'last_name'     => 'Doe',
         'date_of_birth' => '1990-13-40', // Invalid date
-        'user_id'    => test()->user->id,
+        'user_id'       => test()->user->id,
     ]);
 
     $lead = Lead::factory()->create([
@@ -286,10 +285,10 @@ test('handles malformed date gracefully', function () {
 test('handles null date values correctly', function () {
     $data = createPipelineData();
     $person = Person::factory()->create([
-        'first_name' => 'John',
-        'last_name'  => 'Doe',
+        'first_name'    => 'John',
+        'last_name'     => 'Doe',
         'date_of_birth' => null,
-        'user_id'    => test()->user->id,
+        'user_id'       => test()->user->id,
     ]);
 
     $lead = Lead::factory()->create([
@@ -311,15 +310,15 @@ test('handles null date values correctly', function () {
 
 test('manual search returns match scores when lead_id provided', function () {
     $data = createPipelineData();
-    
+
     // Create persons with different similarity levels
     $perfectMatchPerson = Person::factory()->create([
-        'first_name' => 'John',
-        'last_name'  => 'Doe',
-        'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
-        'phones'     => [['value' => '123456789', 'label' => 'Mobile']],
+        'first_name'    => 'John',
+        'last_name'     => 'Doe',
+        'emails'        => [['value' => 'john@example.com', 'label' => 'Work']],
+        'phones'        => [['value' => '123456789', 'label' => 'Mobile']],
         'date_of_birth' => '1985-05-15',
-        'user_id'    => test()->user->id,
+        'user_id'       => test()->user->id,
     ]);
 
     $differentDataPerson = Person::factory()->create([
@@ -353,19 +352,19 @@ test('manual search returns match scores when lead_id provided', function () {
     $response = test()
         ->actingAs(test()->user, 'user')
         ->getJson('/admin/contacts/persons/search?'.http_build_query([
-            'search' => 'John',
-            'lead_id' => $lead->id,
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'emails' => [['value' => 'john@example.com', 'label' => 'Work']],
-            'phones' => [['value' => '123456789', 'label' => 'Mobile']],
+            'search'        => 'John',
+            'lead_id'       => $lead->id,
+            'first_name'    => 'John',
+            'last_name'     => 'Doe',
+            'emails'        => [['value' => 'john@example.com', 'label' => 'Work']],
+            'phones'        => [['value' => '123456789', 'label' => 'Mobile']],
             'date_of_birth' => '1985-05-15',
         ]));
 
     $response->assertOk();
     $data = $response->json();
     expect($data['data'])->toBeArray();
-    
+
     // Should find the partial match person
     $foundPartialMatch = collect($data['data'])->firstWhere('id', $partialMatchPerson->id);
     expect($foundPartialMatch)->not->toBeNull();
@@ -374,14 +373,14 @@ test('manual search returns match scores when lead_id provided', function () {
 
 test('manual search handles exact match correctly', function () {
     $data = createPipelineData();
-    
+
     $exactMatchPerson = Person::factory()->create([
-        'first_name' => 'John',
-        'last_name'  => 'Doe',
-        'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
-        'phones'     => [['value' => '123456789', 'label' => 'Mobile']],
+        'first_name'    => 'John',
+        'last_name'     => 'Doe',
+        'emails'        => [['value' => 'john@example.com', 'label' => 'Work']],
+        'phones'        => [['value' => '123456789', 'label' => 'Mobile']],
         'date_of_birth' => '1985-05-15',
-        'user_id'    => test()->user->id,
+        'user_id'       => test()->user->id,
     ]);
 
     $partialMatchPerson = Person::factory()->create([
@@ -408,19 +407,19 @@ test('manual search handles exact match correctly', function () {
     $response = test()
         ->actingAs(test()->user, 'user')
         ->getJson('/admin/contacts/persons/search?'.http_build_query([
-            'search' => 'John',
-            'lead_id' => $lead->id,
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'emails' => [['value' => 'john@example.com', 'label' => 'Work']],
-            'phones' => [['value' => '123456789', 'label' => 'Mobile']],
+            'search'        => 'John',
+            'lead_id'       => $lead->id,
+            'first_name'    => 'John',
+            'last_name'     => 'Doe',
+            'emails'        => [['value' => 'john@example.com', 'label' => 'Work']],
+            'phones'        => [['value' => '123456789', 'label' => 'Mobile']],
             'date_of_birth' => '1985-05-15',
         ]));
 
     $response->assertOk();
     $data = $response->json();
     expect($data['data'])->toBeArray();
-    
+
     // Should find exact match with score 100
     $exactMatch = collect($data['data'])->firstWhere('id', $exactMatchPerson->id);
     expect($exactMatch)->not->toBeNull();

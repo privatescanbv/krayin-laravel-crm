@@ -45,15 +45,14 @@ class LeadValidationService
             'user_id'             => 'nullable|numeric|exists:users,id',
 
             // Person relationships (multiple persons supported)
-            'person_ids'      => 'nullable|array',
-            'person_ids.*'    => 'numeric|exists:persons,id',
-            'persons'         => 'nullable|array',
-            'persons.*.id'    => 'nullable|numeric|exists:persons,id',
-            'persons.*.name'  => 'nullable|string|max:255',
-            'persons.*.emails' => 'nullable|array',
+            'person_ids'                => 'nullable|array',
+            'person_ids.*'              => 'numeric|exists:persons,id',
+            'persons'                   => 'nullable|array',
+            'persons.*.id'              => 'nullable|numeric|exists:persons,id',
+            'persons.*.name'            => 'nullable|string|max:255',
+            'persons.*.emails'          => 'nullable|array',
             'persons.*.contact_numbers' => 'nullable|array',
 
-            
             // Lead organization (standalone for billing)
             'organization_id' => 'nullable|numeric|exists:organizations,id',
 

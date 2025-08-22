@@ -101,7 +101,7 @@ class LeadController extends Controller
                     'pipeline_id' => request()->query('pipeline_id'),
                     'request_params' => request()->all()
                 ]);
-                
+
                 return response()->json([
                     'error' => 'No pipeline found',
                     'message' => 'Could not find the specified pipeline'
@@ -142,7 +142,6 @@ class LeadController extends Controller
                     'source',
                     'user',
                     'persons',
-                    'persons.organization',
                     'organization',
                     'pipeline',
                     'pipeline.stages',
@@ -162,14 +161,14 @@ class LeadController extends Controller
         }
 
         return response()->json($data);
-        
+
         } catch (\Exception $e) {
             \Log::error('Error in leads.get endpoint', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'request_params' => request()->all()
             ]);
-            
+
             return response()->json([
                 'error' => 'Internal server error',
                 'message' => $e->getMessage(),
@@ -193,7 +192,7 @@ class LeadController extends Controller
     {
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
-        
+
         $this->validate($request, LeadValidationService::getWebValidationRules($request));
 
             try {
@@ -293,13 +292,13 @@ class LeadController extends Controller
     public function view(int $id)
     {
         $lead = $this->leadRepository->with([
-            'anamnesis', 
-            'address', 
-            'persons.organization', 
+            'anamnesis',
+            'address',
+            'persons.organization',
             'organization',
-            'source', 
-            'type', 
-            'channel', 
+            'source',
+            'type',
+            'channel',
             'department',
             'user'
         ])->findOrFail($id);
@@ -854,7 +853,7 @@ class LeadController extends Controller
     private function normalizeContactArrays($request)
     {
         $requestData = $request->all();
-        
+
         // Normalize emails
         if (isset($requestData['emails']) && is_array($requestData['emails'])) {
             foreach ($requestData['emails'] as $index => $email) {
@@ -865,7 +864,7 @@ class LeadController extends Controller
                     } else {
                         $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
                     }
-                    
+
                     // Normalize is_default to boolean
                     if (isset($email['is_default'])) {
                         $requestData['emails'][$index]['is_default'] = $this->normalizeBoolean($email['is_default']);
@@ -875,7 +874,7 @@ class LeadController extends Controller
                 }
             }
         }
-        
+
         // Normalize phones
         if (isset($requestData['phones']) && is_array($requestData['phones'])) {
             foreach ($requestData['phones'] as $index => $phone) {
@@ -886,7 +885,7 @@ class LeadController extends Controller
                     } else {
                         $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
-                    
+
                     // Normalize is_default to boolean
                     if (isset($phone['is_default'])) {
                         $requestData['phones'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
@@ -896,7 +895,7 @@ class LeadController extends Controller
                 }
             }
         }
-        
+
         // Replace the request data
         $request->replace($requestData);
     }
@@ -909,15 +908,15 @@ class LeadController extends Controller
         if (is_bool($value)) {
             return $value;
         }
-        
+
         if (is_string($value)) {
             return in_array(strtolower($value), ['true', '1', 'on', 'yes']);
         }
-        
+
         if (is_numeric($value)) {
             return (bool) $value;
         }
-        
+
         return false;
     }
 
@@ -929,7 +928,7 @@ class LeadController extends Controller
         if (empty($label)) {
             return 'work';
         }
-        
+
         // Convert to lowercase and map common variations
         $normalizedLabel = strtolower(trim($label));
         $labelMap = [
@@ -942,7 +941,7 @@ class LeadController extends Controller
             'other' => 'other',
             'anders' => 'other'
         ];
-        
+
         return $labelMap[$normalizedLabel] ?? 'work';
     }
 }

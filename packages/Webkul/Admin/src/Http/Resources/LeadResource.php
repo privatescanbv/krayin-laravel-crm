@@ -28,7 +28,7 @@ class LeadResource extends JsonResource
             'rotten_days'          => $this->rotten_days,
             'created_at'           => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at'           => $this->updated_at?->format('Y-m-d H:i:s'),
-            
+
             // Personal information (for matching purposes)
             'salutation'           => $this->salutation,
             'first_name'           => $this->first_name,
@@ -39,11 +39,11 @@ class LeadResource extends JsonResource
             'initials'             => $this->initials,
             'date_of_birth'        => $this->date_of_birth?->format('Y-m-d'),
             'gender'               => $this->gender,
-            
+
             // Contact information (for matching purposes)
             'emails'               => is_array($this->emails) ? $this->emails : [],
             'phones'               => is_array($this->phones) ? $this->phones : [],
-            
+
             // Relationships
             'persons'              => $this->whenLoaded('persons', function () {
                 return PersonResource::collection($this->persons);
@@ -56,14 +56,14 @@ class LeadResource extends JsonResource
             'stage'                => $this->stage ? new StageResource($this->stage) : null,
             'address'              => $this->address ? new AddressResource($this->address) : null,
             'tags'                 => TagResource::collection($this->tags),
-            
+
             // Computed attributes
             'open_activities_count'=> $this->open_activities_count ?? 0,
             'unread_emails_count'  => $this->unread_emails_count ?? 0,
             'days_until_due_date'  => $this->days_until_due_date,
             'has_duplicates'       => $this->getSafeDuplicateStatus(),
             'duplicates_count'     => $this->getSafeDuplicateCount(),
-            
+
             // IDs for relationships
             'user_id'              => $this->user_id,
             'person_id'            => $this->person_id,

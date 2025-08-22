@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
-use Webkul\Contact\Models\PersonProxy;
+use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\EmailProxy;
 use Webkul\Lead\Contracts\Lead as LeadContract;
 use Webkul\Quote\Models\QuoteProxy;
@@ -28,6 +28,7 @@ class Lead extends Model implements LeadContract
         'date_of_birth'       => 'date',
         'emails'              => 'array',
         'phones'              => 'array',
+        'persons'              => 'array',
     ];
 
     /**
@@ -70,6 +71,7 @@ class Lead extends Model implements LeadContract
         'gender',
         'emails',
         'phones',
+        'persons',
         'lead_channel_id',
         'department_id',
         'organization_id',
@@ -116,8 +118,8 @@ class Lead extends Model implements LeadContract
      */
     public function persons()
     {
-        return $this->belongsToMany(\Webkul\Contact\Models\Person::class, 'lead_persons', 'lead_id', 'person_id')
-                    ->withTimestamps();
+        return $this->belongsToMany(Person::class, 'lead_persons', 'lead_id', 'person_id');
+//                    ->withTimestamps();
     }
 
     /**

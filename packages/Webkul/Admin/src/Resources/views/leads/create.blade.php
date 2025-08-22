@@ -85,7 +85,7 @@
                         </div>
 
                         <!-- Multiple Persons Component -->
-                        <v-multiple-persons-component :data="persons"></v-multiple-persons-component>
+                        <v-multiple-persons-component :data="persons" @update:data="persons = $event"></v-multiple-persons-component>
 
                         <div class="flex justify-end pt-4">
                             <button

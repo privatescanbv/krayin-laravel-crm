@@ -65,7 +65,6 @@ class LeadFactory extends Factory
             'expected_close_date'    => $this->faker->optional()->dateTimeBetween('now', '+3 months'),
             'closed_at'              => $this->faker->optional()->dateTimeBetween('-1 month', 'now'),
             'user_id'                => $user->id,
-            'person_id'              => $person->id ?? null,
             'lead_source_id'         => $source->id,
             'lead_type_id'           => $type->id,
             'lead_pipeline_id'       => $pipeline->id,
@@ -80,6 +79,17 @@ class LeadFactory extends Factory
     {
         return $this->afterCreating(function (Lead $lead) {
             Address::factory()->forLead($lead)->create();
+        });
+    }
+
+    /**
+     * Indicate that the lead should have persons.
+     */
+    public function withPersons(int $count = 1): static
+    {
+        return $this->afterCreating(function (Lead $lead) use ($count) {
+            $persons = \Webkul\Contact\Models\Person::factory()->count($count)->create();
+            $lead->persons()->attach($persons->pluck('id'));
         });
     }
 

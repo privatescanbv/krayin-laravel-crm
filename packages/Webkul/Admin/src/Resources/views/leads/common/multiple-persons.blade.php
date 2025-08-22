@@ -134,6 +134,15 @@
                 };
             },
 
+            watch: {
+                persons: {
+                    handler(newValue) {
+                        this.$emit('update:data', newValue);
+                    },
+                    deep: true
+                }
+            },
+
             methods: {
                 addPerson() {
                     this.persons.push({

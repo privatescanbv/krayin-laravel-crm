@@ -89,11 +89,24 @@ class LeadController extends Controller
      */
     public function get(): JsonResponse
     {
-        if (request()->query('pipeline_id')) {
-            $pipeline = $this->pipelineRepository->find(request()->query('pipeline_id'));
-        } else {
-            $pipeline = $this->pipelineRepository->getDefaultPipeline();
-        }
+        try {
+            if (request()->query('pipeline_id')) {
+                $pipeline = $this->pipelineRepository->find(request()->query('pipeline_id'));
+            } else {
+                $pipeline = $this->pipelineRepository->getDefaultPipeline();
+            }
+
+            if (!$pipeline) {
+                \Log::error('No pipeline found for leads.get endpoint', [
+                    'pipeline_id' => request()->query('pipeline_id'),
+                    'request_params' => request()->all()
+                ]);
+                
+                return response()->json([
+                    'error' => 'No pipeline found',
+                    'message' => 'Could not find the specified pipeline'
+                ], 500);
+            }
 
         if ($stageId = request()->query('pipeline_stage_id')) {
             $stages = $pipeline->stages->where('id', request()->query('pipeline_stage_id'));
@@ -147,6 +160,20 @@ class LeadController extends Controller
         }
 
         return response()->json($data);
+        
+        } catch (\Exception $e) {
+            \Log::error('Error in leads.get endpoint', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_params' => request()->all()
+            ]);
+            
+            return response()->json([
+                'error' => 'Internal server error',
+                'message' => $e->getMessage(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null
+            ], 500);
+        }
     }
 
     /**

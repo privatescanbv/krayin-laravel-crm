@@ -104,8 +104,8 @@ class MagicAI
                     ],
                     'contact_numbers' => [
                         [
-                            'value' => $finalData->person->contact_numbers->value ?? null,
-                            'label' => $finalData->person->contact_numbers->label ?? 'work',
+                            'value' => $finalData->person->phones->value ?? null,
+                            'label' => $finalData->person->phones->label ?? 'work',
                         ],
                     ],
                     'entity_type'     => self::PERSON_ENTITY,

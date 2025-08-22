@@ -23,8 +23,7 @@ class PersonResource extends JsonResource
             'id'              => $this->id,
             'name'            => $this->name,
             'emails'          => $this->emails,
-            'contact_numbers' => $this->contact_numbers,
-            'phones'          => $this->contact_numbers, // Alias for compatibility
+            'phones'          => $this->phones, // Alias for compatibility
             'organization'    => $this->organization ? new OrganizationResource($this->organization) : null,
             'address'         => $this->address,
             'first_name'      => $this->first_name,

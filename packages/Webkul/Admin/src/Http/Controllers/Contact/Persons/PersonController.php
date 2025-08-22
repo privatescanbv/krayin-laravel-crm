@@ -699,17 +699,6 @@ class PersonController extends Controller
             }
         }
 
-        // Handle contact_numbers field for persons
-        if (!empty($entity->contact_numbers) && is_array($entity->contact_numbers)) {
-            foreach ($entity->contact_numbers as $phone) {
-                if (is_array($phone) && !empty($phone['value'])) {
-                    $phones[] = $phone['value'];
-                } elseif (is_string($phone)) {
-                    $phones[] = $phone;
-                }
-            }
-        }
-
         // Handle single phone field (if exists)
         if (!empty($entity->phone)) {
             $phones[] = $entity->phone;

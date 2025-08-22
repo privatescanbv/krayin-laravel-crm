@@ -4,13 +4,16 @@ namespace Webkul\Lead\Models;
 
 use App\Models\Department;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
 use Webkul\Contact\Models\Organization;
+use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\EmailProxy;
 use Webkul\Lead\Contracts\Lead as LeadContract;
 use Webkul\Quote\Models\QuoteProxy;
@@ -119,10 +122,10 @@ class Lead extends Model implements LeadContract
     public function getPersonsAttribute()
     {
         try {
-            return \Webkul\Contact\Models\Person::whereIn('id',
-                \DB::table('lead_persons')->where('lead_id', $this->id)->pluck('person_id')
+            return Person::whereIn('id',
+                DB::table('lead_persons')->where('lead_id', $this->id)->pluck('person_id')
             )->get();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             \Log::warning('Could not load persons for lead', ['lead_id' => $this->id, 'error' => $e->getMessage()]);
             return collect();
         }
@@ -134,7 +137,7 @@ class Lead extends Model implements LeadContract
     public function attachPersons(array $personIds)
     {
         foreach ($personIds as $personId) {
-            \DB::table('lead_persons')->insertOrIgnore([
+            DB::table('lead_persons')->insertOrIgnore([
                 'lead_id' => $this->id,
                 'person_id' => $personId,
             ]);
@@ -147,7 +150,7 @@ class Lead extends Model implements LeadContract
     public function syncPersons(array $personIds)
     {
         // Remove existing relationships
-        \DB::table('lead_persons')->where('lead_id', $this->id)->delete();
+        DB::table('lead_persons')->where('lead_id', $this->id)->delete();
 
         // Add new relationships
         if (!empty($personIds)) {

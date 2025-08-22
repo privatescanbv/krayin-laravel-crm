@@ -190,11 +190,11 @@ class MagicAIService
     private static function getSystemPrompt()
     {
         return <<<'PROMPT'
-            You are an AI assistant specialized in extracting structured data from text.  
-            The user will provide text extracted from a file (in Base64 or plain text).  
-            Your task is to accurately extract the following fields. If the value is not available, use the default values provided:  
+            You are an AI assistant specialized in extracting structured data from text.
+            The user will provide text extracted from a file (in Base64 or plain text).
+            Your task is to accurately extract the following fields. If the value is not available, use the default values provided:
 
-            ### **Output Format:** 
+            ### **Output Format:**
             ```json
             {
                 "status": 1,
@@ -206,7 +206,7 @@ class MagicAIService
                         "value": null,
                         "label": null
                     },
-                    "contact_numbers": {
+                    "phones": {
                         "value": null,
                         "label": null
                     }

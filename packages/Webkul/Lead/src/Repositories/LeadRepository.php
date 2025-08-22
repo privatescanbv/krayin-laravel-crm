@@ -188,7 +188,7 @@ class LeadRepository extends Repository
                 // Attach persons to the lead
         if (!empty($personsToAttach)) {
             $lead->attachPersons(array_unique($personsToAttach));
-            
+
             // Create anamnesis when first person is attached
             $this->createAnamnesisForLead($lead);
         }
@@ -339,17 +339,17 @@ class LeadRepository extends Repository
             $this->productRepository->delete($productId);
         }
 
-                // Sync persons to the lead 
+                // Sync persons to the lead
         // Only sync if persons data was explicitly provided (not for partial updates like stage changes)
         if (array_key_exists('persons', $data) || array_key_exists('person_ids', $data)) {
             // Get current person count before sync
             $hadPersons = $lead->persons->count() > 0;
-            
+
             $lead->syncPersons(array_unique($personsToSync));
-            
+
             // Manage anamnesis lifecycle based on person changes
             $hasPersonsNow = count($personsToSync) > 0;
-            
+
             if (!$hadPersons && $hasPersonsNow) {
                 // First person attached - create anamnesis
                 $this->createAnamnesisForLead($lead);
@@ -809,8 +809,8 @@ class LeadRepository extends Repository
             }
         }
 
-        if (!empty($personData['contact_numbers'])) {
-            foreach ($personData['contact_numbers'] as $number) {
+        if (!empty($personData['phones'])) {
+            foreach ($personData['phones'] as $number) {
                 if (!empty($number['value'])) {
                     return true;
                 }

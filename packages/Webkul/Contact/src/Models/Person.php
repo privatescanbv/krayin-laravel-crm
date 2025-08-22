@@ -41,7 +41,6 @@ class Person extends Model implements PersonContract
     protected $casts = [
         'emails'          => 'array',
         'phones'          => 'array',
-        'contact_numbers' => 'array',
         'date_of_birth'   => 'date',
     ];
 
@@ -53,7 +52,6 @@ class Person extends Model implements PersonContract
     protected $fillable = [
         'emails',
         'phones',
-        'contact_numbers',
         'job_title',
         'user_id',
         'organization_id',
@@ -120,7 +118,7 @@ class Person extends Model implements PersonContract
     public function getLeadsAttribute()
     {
         try {
-            return \Webkul\Lead\Models\Lead::whereIn('id', 
+            return \Webkul\Lead\Models\Lead::whereIn('id',
                 \DB::table('lead_persons')->where('person_id', $this->id)->pluck('lead_id')
             )->get();
         } catch (\Exception $e) {

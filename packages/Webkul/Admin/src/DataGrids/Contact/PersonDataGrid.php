@@ -88,13 +88,13 @@ class PersonDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'contact_numbers',
+            'index'      => 'phones',
             'label'      => trans('admin::app.contacts.persons.index.datagrid.contact-numbers'),
             'type'       => 'string',
             'sortable'   => true,
             'filterable' => true,
             'searchable' => true,
-            'closure'    => fn ($row) => collect(json_decode($row->contact_numbers, true) ?? [])->pluck('value')->join(', '),
+            'closure'    => fn ($row) => collect(json_decode($row->phones, true) ?? [])->pluck('value')->join(', '),
         ]);
 
         $this->addColumn([

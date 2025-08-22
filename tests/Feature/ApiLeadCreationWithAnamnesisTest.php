@@ -85,6 +85,9 @@ test('API lead creation successfully creates a lead with anamnesis', function ()
     $person = Person::factory()->create(['user_id' => $lead->user_id]);
     $lead->attachPersons([$person->id]);
 
+    // Refresh lead to load anamnesis relationship
+    $lead = $lead->fresh(['anamnesis']);
+
     // Assert: Check anamnesis was created after person attachment
     $this->assertDatabaseHas('anamnesis', [
         'lead_id' => $leadId,

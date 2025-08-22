@@ -284,7 +284,19 @@ class LeadController extends Controller
      */
     public function edit(int $id): View
     {
-        $lead = $this->leadRepository->with(['address', 'persons', 'organization'])->findOrFail($id);
+        try {
+            $lead = $this->leadRepository->with(['address', 'persons', 'organization'])->findOrFail($id);
+        } catch (\Exception $e) {
+            \Log::error('Error loading lead for edit', [
+                'lead_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            // Fallback: load without persons
+            $lead = $this->leadRepository->with(['address', 'organization'])->findOrFail($id);
+            $lead->persons = collect(); // Empty collection
+        }
 
         return view('admin::leads.edit', compact('lead'));
     }

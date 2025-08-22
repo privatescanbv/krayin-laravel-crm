@@ -119,7 +119,7 @@ class Person extends Model implements PersonContract
      */
     public function leads()
     {
-        return $this->belongsToMany(\Webkul\Lead\Models\Lead::class, 'lead_persons');
+        return $this->belongsToMany(LeadProxy::modelClass(), 'lead_persons');
     }
 
     /**

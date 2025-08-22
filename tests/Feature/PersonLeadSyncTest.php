@@ -462,8 +462,27 @@ test('manual search handles exact match correctly', function () {
         'response_person_ids' => collect($data['data'])->pluck('id')->toArray(),
     ]);
 
+    // Debug: Show all returned persons and their scores
+    \Log::info('All returned persons with scores', [
+        'persons' => collect($data['data'])->map(function($person) {
+            return [
+                'id' => $person['id'],
+                'name' => $person['name'],
+                'first_name' => $person['first_name'],
+                'last_name' => $person['last_name'],
+                'score' => $person['score'] ?? 'NO SCORE',
+            ];
+        })->toArray()
+    ]);
+
     // Should find exact match with score 100
     $exactMatch = collect($data['data'])->firstWhere('id', $exactMatchPerson->id);
+    
+    \Log::info('Found exact match', [
+        'exactMatch' => $exactMatch,
+        'looking_for_id' => $exactMatchPerson->id,
+    ]);
+    
     expect($exactMatch)->not->toBeNull();
     expect($exactMatch['score'])->toBe(100.0);
 });

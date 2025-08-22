@@ -1,6 +1,9 @@
 {!! view_render_event('admin.leads.multiple_persons.before') !!}
 
-<v-multiple-persons-component :data="persons"></v-multiple-persons-component>
+<v-multiple-persons-component 
+    :data="@json($persons ?? [])" 
+    :lead-id="{{ $leadId ?? 'null' }}"
+></v-multiple-persons-component>
 
 {!! view_render_event('admin.leads.multiple_persons.after') !!}
 
@@ -169,6 +172,11 @@
                 persons: {
                     handler(newValue) {
                         this.$emit('update:data', newValue);
+                        
+                        // Also update global variable for form access
+                        if (window.leadFormPersons !== undefined) {
+                            window.leadFormPersons = newValue;
+                        }
                     },
                     deep: true
                 }

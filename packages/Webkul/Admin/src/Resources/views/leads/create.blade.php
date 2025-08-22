@@ -203,7 +203,7 @@
                         </div>
 
                         <!-- Multiple Persons Component -->
-                        <v-multiple-persons-component :data="persons" :lead-id="null" @update:data="persons = $event"></v-multiple-persons-component>
+                        @include('admin::leads.common.multiple-persons', ['leadId' => null, 'persons' => []])
 
                         <div class="flex justify-end pt-4">
                             <button
@@ -501,6 +501,9 @@
                 },
 
                 mounted() {
+                    // Initialize global variable for persons data
+                    window.leadFormPersons = this.persons;
+                    
                     // Initialize with empty person if needed
                     if (this.persons.length === 0) {
                         this.persons.push({
@@ -566,10 +569,12 @@
                                 }
                             });
 
-                            // Add persons data to form
-                            if (this.persons && this.persons.length > 0) {
-                                this.persons.forEach((person, index) => {
+                            // Add persons data to form from global variable
+                            const personsData = window.leadFormPersons || this.persons || [];
+                            if (personsData && personsData.length > 0) {
+                                personsData.forEach((person, index) => {
                                     if (person.id) {
+                                        formData.set(`person_ids[${index}]`, person.id);
                                         formData.set(`persons[${index}][id]`, person.id);
                                     }
                                     if (person.name) {

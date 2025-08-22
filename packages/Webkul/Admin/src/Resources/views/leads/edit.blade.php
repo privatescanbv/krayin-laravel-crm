@@ -361,7 +361,7 @@
                         </div>
 
                         <!-- Multiple Persons Component -->
-                        <v-multiple-persons-component :data="persons" :lead-id="{{ $lead->id }}"></v-multiple-persons-component>
+                        @include('admin::leads.common.multiple-persons', ['leadId' => $lead->id])
                     </div>
 
                     {!! view_render_event('admin.leads.edit.contact_person.after', ['lead' => $lead]) !!}

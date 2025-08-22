@@ -353,10 +353,23 @@ class LeadRepository extends Repository
             $this->productRepository->delete($productId);
         }
 
+        // Debug: Log what will be synced
+        \Log::info('LeadRepository persons sync', [
+            'lead_id' => $id,
+            'personsToSync' => $personsToSync,
+            'will_sync' => array_key_exists('persons', $data) || array_key_exists('person_ids', $data),
+        ]);
+
         // Sync persons to the lead 
         // Only sync if persons data was explicitly provided (not for partial updates like stage changes)
         if (array_key_exists('persons', $data) || array_key_exists('person_ids', $data)) {
             $lead->persons()->sync(array_unique($personsToSync));
+            
+            \Log::info('LeadRepository persons synced', [
+                'lead_id' => $id,
+                'synced_persons' => array_unique($personsToSync),
+                'final_count' => $lead->persons()->count(),
+            ]);
         }
 
         return $lead;
@@ -791,6 +804,12 @@ class LeadRepository extends Repository
      */
     private function hasValidPersonData(array $personData): bool
     {
+        // If person has an ID, it's valid (existing person)
+        if (!empty($personData['id']) && is_numeric($personData['id'])) {
+            return true;
+        }
+
+        // For new persons, check if they have valid data
         if (!empty($personData['name'])) {
             return true;
         }

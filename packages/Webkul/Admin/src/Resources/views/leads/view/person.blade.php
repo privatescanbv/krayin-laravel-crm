@@ -87,13 +87,9 @@
                                     if ($person->emails && count($person->emails) > 0) {
                                         $defaultEmail = collect($person->emails)->firstWhere('is_default', true) ?? $person->emails[0] ?? null;
                                     }
-                                    
-                                    // Get anamnesis for this specific person
-                                    $personAnamnesis = \App\Models\Anamnesis::where('lead_id', $lead->id)
-                                        ->where('person_id', $person->id)
-                                        ->first();
+                                    $personAnamnesis = $lead->findAnamnesisByPersonId($person->id);
                                 @endphp
-                                
+
                                 @if ($defaultEmail)
                                     <div>
                                         <a href="mailto:{{ $defaultEmail['value'] }}" class="text-blue-600 hover:text-blue-800">
@@ -153,7 +149,6 @@
                                             @endif
                                         </div>
                                     </div>
-                                                                 @endif
                                 </div>
                             </div>
                         </div>

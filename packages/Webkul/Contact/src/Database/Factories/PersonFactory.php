@@ -23,12 +23,11 @@ class PersonFactory extends Factory
      */
     public function definition()
     {
-        $phoneNumber = $this->faker->randomNumber(9);
         return [
             'name'            => $this->faker->name(),
             'emails'          => [['value' => $this->faker->unique()->safeEmail(), 'label' => 'work', 'is_default' => true]],
-            'contact_numbers' => [['value' => $phoneNumber, 'label' => 'mobile', 'is_default' => true]],
-            'phones'          => [['value' => $phoneNumber, 'label' => 'mobile', 'is_default' => true]], // Add phones field too
+            'contact_numbers' => [], // Empty by default to avoid conflicts in tests
+            'phones'          => null, // Null by default to avoid conflicts in tests
         ];
     }
 

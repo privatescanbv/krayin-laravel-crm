@@ -5,7 +5,7 @@
         <x-admin::accordion class="select-none !border-none">
             <x-slot:header class="!p-0">
                 <div class="flex w-full items-center justify-between gap-4 font-semibold dark:text-white">
-                    <h4>@lang('admin::app.leads.view.persons.title') ({{ $lead->persons->count() }})</h4>
+                    <h4>Personen ({{ $lead->persons->count() }})</h4>
 
                     <div class="flex items-center gap-1">
                         <button
@@ -54,37 +54,16 @@
                             </div>
 
                             <!-- Person Details -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div class="text-sm">
                                 @if ($person->emails && count($person->emails) > 0)
-                                    <div>
-                                        <label class="font-medium text-gray-700 dark:text-gray-300">E-mail:</label>
-                                        @foreach ($person->emails as $email)
-                                            <div class="flex items-center gap-2 mt-1">
-                                                <a href="mailto:{{ $email['value'] }}" class="text-blue-600 hover:text-blue-800">
-                                                    {{ $email['value'] }}
-                                                </a>
-                                                @if (isset($email['is_default']) && $email['is_default'])
-                                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Standaard</span>
-                                                @endif
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                @endif
-
-                                @if ($person->phones && count($person->phones) > 0)
-                                    <div>
-                                        <label class="font-medium text-gray-700 dark:text-gray-300">Telefoon:</label>
-                                        @foreach ($person->phones as $phone)
-                                            <div class="flex items-center gap-2 mt-1">
-                                                <a href="tel:{{ $phone['value'] }}" class="text-blue-600 hover:text-blue-800">
-                                                    {{ $phone['value'] }}
-                                                </a>
-                                                @if (isset($phone['is_default']) && $phone['is_default'])
-                                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Standaard</span>
-                                                @endif
-                                            </div>
-                                        @endforeach
-                                    </div>
+                                    @php
+                                        $defaultEmail = collect($person->emails)->firstWhere('is_default', true) ?? $person->emails[0] ?? null;
+                                    @endphp
+                                    @if ($defaultEmail)
+                                        <a href="mailto:{{ $defaultEmail['value'] }}" class="text-blue-600 hover:text-blue-800">
+                                            {{ $defaultEmail['value'] }}
+                                        </a>
+                                    @endif
                                 @endif
                             </div>
                         </div>

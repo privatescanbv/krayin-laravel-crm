@@ -635,6 +635,18 @@ class PersonController extends Controller
         $leadAddress = $this->extractAddressData($lead);
         $personAddress = $this->extractAddressData($person);
 
+        // Debug address extraction for person ID 1
+        if (app()->environment('testing') && $person->id == 1) {
+            \Log::info('Address Match Debug', [
+                'lead_id' => $lead->id,
+                'person_id' => $person->id,
+                'leadAddress' => $leadAddress,
+                'personAddress' => $personAddress,
+                'leadAddressEmpty' => empty($leadAddress),
+                'personAddressEmpty' => empty($personAddress),
+            ]);
+        }
+
         if (empty($leadAddress) || empty($personAddress)) {
             return 0.0;
         }

@@ -654,6 +654,12 @@ class PersonController extends Controller
             ]);
         }
 
+        // If both addresses are empty, treat as perfect match (like empty fields fix)
+        if (empty($leadAddress) && empty($personAddress)) {
+            return 1.0;
+        }
+        
+        // If only one address is empty, no match
         if (empty($leadAddress) || empty($personAddress)) {
             return 0.0;
         }

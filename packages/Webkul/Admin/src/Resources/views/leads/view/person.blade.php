@@ -40,9 +40,10 @@
                                     <!-- Expand/Collapse Icon -->
                                     <button
                                         type="button"
-                                        class="icon-arrow-down rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 person-toggle-icon"
+                                        class="icon-arrow-down rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 person-toggle-icon text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
                                         id="toggle-icon-{{ $person->id }}"
-                                        title="Uitklappen/Inklappen"
+                                        title="Klik om details te tonen/verbergen"
+                                        onclick="event.stopPropagation()"
                                     ></button>
 
                                     @if (bouncer()->hasPermission('contacts.persons.edit'))
@@ -210,11 +211,24 @@ function togglePersonCard(personId) {
         details.style.display = 'block';
         icon.classList.remove('icon-arrow-down');
         icon.classList.add('icon-arrow-up');
+        icon.title = 'Klik om details te verbergen';
     } else {
         details.style.display = 'none';
         icon.classList.remove('icon-arrow-up');
         icon.classList.add('icon-arrow-down');
+        icon.title = 'Klik om details te tonen';
     }
 }
+
+// Also allow clicking the icon directly
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.person-toggle-icon').forEach(function(icon) {
+        icon.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const personId = this.id.replace('toggle-icon-', '');
+            togglePersonCard(personId);
+        });
+    });
+});
 </script>
 @endPushOnce

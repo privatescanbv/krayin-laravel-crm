@@ -424,7 +424,8 @@
                                         </div>
                                     </div>
 
-                                    <!-- Combine Order Setting -->
+                                    <!-- Combine Order Setting - Temporarily disabled until migration runs -->
+                                    <!--
                                     <div class="mb-4">
                                         <x-admin::form.control-group>
                                             <x-admin::form.control-group.label>
@@ -441,6 +442,7 @@
                                             <x-admin::form.control-group.error control-name="combine_order"/>
                                         </x-admin::form.control-group>
                                     </div>
+                                    -->
 
                                     <!-- Other attributes -->
                                     <div class="flex gap-4 max-sm:flex-wrap">
@@ -484,12 +486,12 @@
                         selectedPersons: [],
                         persons: [],
                         isSubmitting: false,
-                                            formData: {
+                                                                                         formData: {
                         description: '',
                         lead_channel_id: '',
                         lead_source_id: '',
                         department_id: '',
-                        combine_order: 1,
+                        // combine_order: 1, // Temporarily disabled until migration runs
                             lead_type_id: '',
                             // Personal fields for matching
                             first_name: '',

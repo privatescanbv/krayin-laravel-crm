@@ -15,7 +15,6 @@ class LeadValidationService
     public static function getValidationRules($request = null): array
     {
         return [
-            'title'               => 'required|string|max:255',
             'first_name'          => 'required|string|max:255',
             'last_name'           => 'required|string|max:255',
             'description'         => 'nullable|string',
@@ -55,6 +54,9 @@ class LeadValidationService
 
             // Lead organization (standalone for billing)
             'organization_id' => 'nullable|numeric|exists:organizations,id',
+
+            // Order combination setting
+            'combine_order' => 'nullable|boolean',
 
             // Address fields
             'address.postal_code'         => 'nullable|string|max:20',

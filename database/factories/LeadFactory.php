@@ -57,7 +57,6 @@ class LeadFactory extends Factory
         }
 
         return [
-            'title'                  => $this->faker->sentence(3),
             'description'            => $this->faker->paragraph(),
             'lead_value'             => $this->faker->randomFloat(2, 100, 10000),
             'status'                 => $this->faker->boolean(),
@@ -69,6 +68,7 @@ class LeadFactory extends Factory
             'lead_type_id'           => $type->id,
             'lead_pipeline_id'       => $pipeline->id,
             'lead_pipeline_stage_id' => $stage->id,
+            'combine_order'          => $this->faker->boolean(),
         ];
     }
 

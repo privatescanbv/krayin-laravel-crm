@@ -29,6 +29,7 @@ class Lead extends Model implements LeadContract
         'date_of_birth'       => 'date',
         'emails'              => 'array',
         'phones'              => 'array',
+        'combine_order'       => 'boolean',
     ];
 
     /**
@@ -47,7 +48,6 @@ class Lead extends Model implements LeadContract
      * @var array
      */
     protected $fillable = [
-        'title',
         'external_id',
         'description',
         'lead_value',
@@ -74,6 +74,7 @@ class Lead extends Model implements LeadContract
         'lead_channel_id',
         'department_id',
         'organization_id',
+        'combine_order',
         'created_by',
         'updated_by',
     ];

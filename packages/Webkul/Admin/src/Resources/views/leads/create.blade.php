@@ -379,7 +379,9 @@
                             id: null,
                             name: '',
                             email: '',
-                            phone: ''
+                            phone: '',
+                            organization_id: null,
+                            organization: null
                         });
                     }
                 },
@@ -452,6 +454,9 @@
                                     }
                                     if (person.phone) {
                                         formData.set(`persons[${index}][phone]`, person.phone);
+                                    }
+                                    if (person.organization_id) {
+                                        formData.set(`persons[${index}][organization_id]`, person.organization_id);
                                     }
                                 });
                             }

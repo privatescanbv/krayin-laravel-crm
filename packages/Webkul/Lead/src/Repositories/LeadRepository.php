@@ -127,6 +127,11 @@ class LeadRepository extends Repository
                 if (!empty($personData) && $this->hasValidPersonData($personData)) {
                     if (!empty($personData['id'])) {
                         $person = $this->personRepository->findOrFail($personData['id']);
+                        
+                        // Update organization if provided
+                        if (isset($personData['organization_id'])) {
+                            $person->update(['organization_id' => $personData['organization_id']]);
+                        }
                     } else {
                         $person = $this->personRepository->create(array_merge($personData, [
                             'entity_type' => 'persons',
@@ -225,6 +230,11 @@ class LeadRepository extends Repository
                 if (!empty($personData) && $this->hasValidPersonData($personData)) {
                     if (!empty($personData['id'])) {
                         $person = $this->personRepository->findOrFail($personData['id']);
+                        
+                        // Update organization if provided
+                        if (isset($personData['organization_id'])) {
+                            $person->update(['organization_id' => $personData['organization_id']]);
+                        }
                     } else {
                         $person = $this->personRepository->create(array_merge($personData, [
                             'entity_type' => 'persons',

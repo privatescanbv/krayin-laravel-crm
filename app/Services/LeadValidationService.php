@@ -52,6 +52,7 @@ class LeadValidationService
             'persons.*.name'  => 'nullable|string|max:255',
             'persons.*.emails' => 'nullable|array',
             'persons.*.contact_numbers' => 'nullable|array',
+            'persons.*.organization_id' => 'nullable|numeric|exists:organizations,id',
 
             // Address fields
             'address.postal_code'         => 'nullable|string|max:20',

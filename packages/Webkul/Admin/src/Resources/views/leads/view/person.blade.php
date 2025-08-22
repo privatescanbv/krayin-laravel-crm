@@ -1,6 +1,6 @@
 {!! view_render_event('admin.leads.view.persons.before', ['lead' => $lead]) !!}
 
-@if ($lead?->persons && $lead->persons->count() > 0)
+@if (isset($lead->persons) && $lead->persons && $lead->persons->count() > 0)
     <div class="flex w-full flex-col gap-4 border-b border-gray-200 p-4 dark:border-gray-800">
         <x-admin::accordion class="select-none !border-none">
             <x-slot:header class="!p-0">

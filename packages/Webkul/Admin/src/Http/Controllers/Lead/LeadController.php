@@ -136,14 +136,14 @@ class LeadController extends Controller
 
             $data[$stage->sort_order] = (new StageResource($stage))->jsonSerialize();
 
-            // Load relationships including persons (migrations are complete)
+            // Load relationships - temporarily excluding persons due to BelongsToMany error
             $data[$stage->sort_order]['leads'] = [
                 'data' => LeadResource::collection($paginator = $query->with([
                     'tags',
                     'type',
                     'source',
                     'user',
-                    'persons',
+                    // 'persons', // Temporarily disabled due to BelongsToMany error
                     'organization',
                     'pipeline',
                     'pipeline.stages',
@@ -478,12 +478,12 @@ class LeadController extends Controller
     {
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $results = $this->leadRepository
-                ->with(['persons', 'persons.organization'])
+                // ->with(['persons', 'persons.organization']) // Temporarily disabled
                 ->pushCriteria(app(RequestCriteria::class))
                 ->findWhereIn('user_id', $userIds);
         } else {
             $results = $this->leadRepository
-                ->with(['persons', 'persons.organization'])
+                // ->with(['persons', 'persons.organization']) // Temporarily disabled
                 ->pushCriteria(app(RequestCriteria::class))
                 ->all();
         }

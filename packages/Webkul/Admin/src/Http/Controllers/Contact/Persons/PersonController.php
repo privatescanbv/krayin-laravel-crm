@@ -488,9 +488,15 @@ class PersonController extends Controller
                     $importantPossibleMatches++;
                 }
 
-                if (!empty($leadValue) && !empty($personValue)) {
-                    $isMatch = false;
+                // Handle matching logic
+                $isMatch = false;
 
+                // If both values are empty, treat as match
+                if (empty($leadValue) && empty($personValue)) {
+                    $isMatch = true;
+                }
+                // If both values exist, compare them
+                elseif (!empty($leadValue) && !empty($personValue)) {
                     // Special handling for date_of_birth
                     if ($field === 'date_of_birth') {
                         $leadDate = $this->formatDateForComparison($leadValue);
@@ -509,18 +515,19 @@ class PersonController extends Controller
                             stripos($leadValue, $personValue) !== false)) {
                         $isMatch = true;
                     }
+                }
+                // If one is empty and one is not, no match (default $isMatch = false)
 
-                    if ($isMatch) {
-                        $totalMatches++;
-                        if (in_array($field, $importantNameFields)) {
-                            $importantMatches++;
-                        }
-                    } else {
-                        Log::info("Name field '{$field}' did not match", [
-                            'lead_value' => $leadValue,
-                            'person_value' => $personValue
-                        ]);
+                if ($isMatch) {
+                    $totalMatches++;
+                    if (in_array($field, $importantNameFields)) {
+                        $importantMatches++;
                     }
+                } else {
+                    Log::info("Name field '{$field}' did not match", [
+                        'lead_value' => $leadValue,
+                        'person_value' => $personValue
+                    ]);
                 }
             }
         }

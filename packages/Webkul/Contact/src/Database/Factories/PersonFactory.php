@@ -25,8 +25,8 @@ class PersonFactory extends Factory
     {
         return [
             'name'            => $this->faker->name(),
-            'emails'          => [$this->faker->unique()->safeEmail()],
-            'contact_numbers' => [$this->faker->randomNumber(9)],
+            'emails'          => [['value' => $this->faker->unique()->safeEmail(), 'label' => 'work', 'is_default' => true]],
+            'phones' => [], // Empty by default to avoid conflicts in tests
         ];
     }
 

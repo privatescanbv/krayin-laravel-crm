@@ -12,6 +12,124 @@
     {!! view_render_event('admin.leads.create.form.after') !!}
 
     @pushOnce('scripts')
+        <script type="text/x-template" id="v-multiple-persons-component-template">
+            <div class="flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold dark:text-white">
+                        Contactpersonen (@{{ persons.length }})
+                    </h3>
+                    <button
+                        @click="addPerson"
+                        type="button"
+                        class="secondary-button"
+                    >
+                        <i class="icon-plus text-xs"></i>
+                        Toevoegen
+                    </button>
+                </div>
+
+                <!-- Persons List -->
+                <div v-if="persons.length > 0" class="space-y-2">
+                    <div
+                        v-for="(person, index) in persons"
+                        :key="index"
+                        class="flex items-center justify-between p-3 rounded-lg border"
+                        :class="getPersonCardClass(person)"
+                    >
+                        <div class="flex items-center gap-3 flex-1">
+                            <!-- Person Avatar -->
+                            <div
+                                class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+                                :class="getAvatarClass(person)"
+                            >
+                                @{{ getPersonInitials(person) }}
+                            </div>
+
+                            <!-- Person Info -->
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="font-medium text-sm dark:text-white">
+                                        @{{ person.name || 'Nieuwe persoon' }}
+                                    </span>
+
+                                    <!-- Match Percentage -->
+                                    <span
+                                        v-if="person.match_percentage"
+                                        class="px-2 py-1 text-xs rounded-full font-medium"
+                                        :class="getMatchBadgeClass(person.match_percentage)"
+                                    >
+                                        @{{ Math.round(person.match_percentage || 0) }}% match
+                                    </span>
+                                </div>
+
+                                <!-- Organization -->
+                                <div v-if="person.organization" class="text-xs text-gray-500 dark:text-gray-400">
+                                    @{{ person.organization.name }}
+                                </div>
+                            </div>
+
+                            <!-- Person Lookup (for new persons) -->
+                            <div v-if="!person.id" class="flex-1 max-w-xs">
+                                <x-admin::lookup
+                                    ::src="`{{ route('admin.contacts.persons.search') }}`"
+                                    ::name="`person_ids[${index}]`"
+                                    :label="'Naam'"
+                                    placeholder="Zoek persoon..."
+                                    @on-selected="(selectedPerson) => updatePerson(index, selectedPerson)"
+                                    :can-add-new="true"
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex items-center gap-2">
+                            <!-- View Person (if existing) -->
+                            <a
+                                v-if="person.id"
+                                :href="`/admin/contacts/persons/view/${person.id}`"
+                                target="_blank"
+                                class="text-blue-600 hover:text-blue-800 p-1"
+                                title="Bekijk persoon"
+                            >
+                                <i class="icon-eye text-sm"></i>
+                            </a>
+
+                            <!-- Remove Person -->
+                            <button
+                                @click="removePerson(index)"
+                                type="button"
+                                class="text-red-600 hover:text-red-800 p-1"
+                                title="Verwijder persoon"
+                            >
+                                <i class="icon-trash text-sm"></i>
+                            </button>
+                        </div>
+
+                        <!-- Hidden form fields -->
+                        <input
+                            type="hidden"
+                            ::name="`person_ids[${index}]`"
+                            ::value="person.id"
+                            v-if="person.id"
+                        />
+                        <input
+                            type="hidden"
+                            ::name="`persons[${index}][id]`"
+                            ::value="person.id"
+                            v-if="person.id"
+                        />
+                    </div>
+                </div>
+
+                <!-- Empty state -->
+                <div v-if="persons.length === 0" class="text-center py-6 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                    <i class="icon-users text-3xl mb-2"></i>
+                    <p class="font-medium">Geen contactpersonen gekoppeld</p>
+                    <p class="text-sm">Klik op "Toevoegen" om contactpersonen te koppelen</p>
+                </div>
+            </div>
+        </script>
+
         <script type="text/x-template" id="v-two-step-lead-form-template">
             <div class="flex flex-col gap-4">
                 <!-- Header -->
@@ -54,7 +172,7 @@
                         </div>
                         <span class="ml-2 text-sm font-medium"
                               :class="currentStep >= 1 ? 'text-blue-600' : 'text-gray-500'">
-                            Contactpersoon zoeken
+                            Contactpersonen koppelen
                         </span>
                     </div>
                     <div class="w-16 h-0.5" :class="currentStep >= 2 ? 'bg-blue-600' : 'bg-gray-300'"></div>
@@ -77,15 +195,15 @@
                     <div class="flex flex-col gap-4">
                         <div class="flex flex-col gap-1">
                             <p class="text-xl font-semibold dark:text-white">
-                                Stap 1: Contactpersoon zoeken
+                                Stap 1: Contactpersonen koppelen
                             </p>
                             <p class="text-gray-600 dark:text-white">
-                                Zoek eerst of de contactpersoon al bestaat in het systeem
+                                Koppel een of meerdere contactpersonen aan deze lead (optioneel)
                             </p>
                         </div>
 
-                        <!-- Use the reusable contact matcher component -->
-                        @include('admin::leads.common.contactmatcher', ['lead' => (object)['id' => null]])
+                        <!-- Multi Contact Matcher (based on original contactmatcher) -->
+                        @include('admin::leads.common.multi-contactmatcher', ['lead' => (object)['id' => null], 'persons' => []])
 
                         <div class="flex justify-end pt-4">
                             <button
@@ -119,8 +237,8 @@
                                     Vul de lead informatie in
                                 </p>
 
-                                <!-- Show selected person info if available -->
-                                <div v-if="selectedPerson"
+                                <!-- Show selected persons info if available -->
+                                <div v-if="persons.length > 0 && persons.some(p => p.id || p.name)"
                                      class="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
                                     <div class="flex items-center gap-2">
                                         <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor"
@@ -128,8 +246,10 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                   d="M5 13l4 4L19 7"></path>
                                         </svg>
-                                        <span class="font-medium text-green-800">Contactpersoon gekoppeld:</span>
-                                        <span class="text-green-700">@{{ selectedPerson.name }}</span>
+                                        <span class="font-medium text-green-800">Contactpersonen gekoppeld:</span>
+                                        <span class="text-green-700">
+                                            @{{ persons.filter(p => p.id || p.name).map(p => p.name).join(', ') }}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
@@ -137,24 +257,6 @@
                             <!-- Lead Details -->
                             <div class="flex flex-col gap-4">
                                 <div class="w-1/2 max-md:w-full">
-                                    <!-- Title -->
-                                    <div class="mb-4">
-                                        <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label class="required">
-                                                @lang('admin::app.leads.create.title')
-                                            </x-admin::form.control-group.label>
-                                            <x-admin::form.control-group.control
-                                                type="text"
-                                                name="title"
-                                                v-model="formData.title"
-                                                rules="required"
-                                                label="Titel"
-                                                placeholder="Titel"
-                                            />
-                                            <x-admin::form.control-group.error control-name="title"/>
-                                        </x-admin::form.control-group>
-                                    </div>
-
                                     <!-- Description -->
                                     <div class="mb-4">
                                         <x-admin::form.control-group>
@@ -173,43 +275,17 @@
                                         </x-admin::form.control-group>
                                     </div>
 
-                                    <!-- Personal Fields -->
+                                    <!-- Personal Fields (for matching) -->
                                     <div class="flex flex-col gap-4 mb-4">
-                                        <p class="text-base font-semibold dark:text-white">Persoons gegevens</p>
+                                        <p class="text-base font-semibold dark:text-white">Lead persoon gegevens (voor matching)</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            Deze gegevens worden gebruikt om te matchen met bestaande personen
+                                        </p>
 
-                                        <!-- Salutation -->
+                                        <!-- Name Fields -->
                                         <div class="flex gap-4">
-                                            <x-admin::form.control-group class="w-40">
-                                                <x-admin::form.control-group.label>Aanhef
-                                                </x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="select"
-                                                    name="salutation"
-                                                    v-model="formData.salutation"
-                                                >
-                                                    <option value="">Selecteer aanhef</option>
-                                                    <option value="Dhr.">Dhr.</option>
-                                                    <option value="Mevr.">Mevr.</option>
-                                                </x-admin::form.control-group.control>
-                                            </x-admin::form.control-group>
-                                        </div>
-
-                                        <!-- Initials and First Name Row -->
-                                        <div class="flex gap-4">
-                                            <x-admin::form.control-group class="w-20">
-                                                <x-admin::form.control-group.label>Initialen
-                                                </x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="text"
-                                                    name="initials"
-                                                    v-model="formData.initials"
-                                                    placeholder="J.A."
-                                                />
-                                            </x-admin::form.control-group>
-
                                             <x-admin::form.control-group class="flex-1">
-                                                <x-admin::form.control-group.label class="required">Voornaam
-                                                </x-admin::form.control-group.label>
+                                                <x-admin::form.control-group.label class="required">Voornaam</x-admin::form.control-group.label>
                                                 <x-admin::form.control-group.control
                                                     type="text"
                                                     name="first_name"
@@ -219,177 +295,56 @@
                                                 />
                                                 <x-admin::form.control-group.error control-name="first_name"/>
                                             </x-admin::form.control-group>
-                                        </div>
-
-                                        <!-- Last Name Row -->
-                                        <div class="flex gap-4">
-                                            <x-admin::form.control-group class="w-25">
-                                                <x-admin::form.control-group.label>Tussenvoegsel
-                                                </x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="text"
-                                                    name="lastname_prefix"
-                                                    v-model="formData.lastname_prefix"
-                                                    placeholder="van, de, den, etc."
-                                                />
-                                            </x-admin::form.control-group>
 
                                             <x-admin::form.control-group class="flex-1">
-                                                <x-admin::form.control-group.label
-                                                    class="required">@lang('admin::app.leads.merge.field-last-name-birth')</x-admin::form.control-group.label>
+                                                <x-admin::form.control-group.label class="required">Achternaam</x-admin::form.control-group.label>
                                                 <x-admin::form.control-group.control
                                                     type="text"
                                                     name="last_name"
                                                     v-model="formData.last_name"
+                                                    placeholder="Achternaam"
                                                     rules="required"
                                                 />
                                                 <x-admin::form.control-group.error control-name="last_name"/>
                                             </x-admin::form.control-group>
                                         </div>
 
-                                        <!-- Married Name Row -->
+                                        <!-- Contact Fields -->
                                         <div class="flex gap-4">
-                                            <x-admin::form.control-group class="w-25">
-                                                <x-admin::form.control-group.label>Tussenvoegsel
-                                                </x-admin::form.control-group.label>
+                                            <x-admin::form.control-group class="flex-1">
+                                                <x-admin::form.control-group.label>E-mail</x-admin::form.control-group.label>
                                                 <x-admin::form.control-group.control
-                                                    type="text"
-                                                    name="married_name_prefix"
-                                                    v-model="formData.married_name_prefix"
-                                                    placeholder="van, de, den, etc."
+                                                    type="email"
+                                                    name="emails[0][value]"
+                                                    v-model="formData.email"
+                                                    placeholder="email@example.com"
                                                 />
+                                                <input type="hidden" name="emails[0][label]" value="work">
+                                                <input type="hidden" name="emails[0][is_default]" value="1">
                                             </x-admin::form.control-group>
 
                                             <x-admin::form.control-group class="flex-1">
-                                                <x-admin::form.control-group.label>@lang('admin::app.leads.merge.field-last-name-married')</x-admin::form.control-group.label>
+                                                <x-admin::form.control-group.label>Telefoon</x-admin::form.control-group.label>
                                                 <x-admin::form.control-group.control
                                                     type="text"
-                                                    name="married_name"
-                                                    v-model="formData.married_name"
+                                                    name="phones[0][value]"
+                                                    v-model="formData.phone"
+                                                    placeholder="+31 6 12345678"
                                                 />
+                                                <input type="hidden" name="phones[0][label]" value="work">
+                                                <input type="hidden" name="phones[0][is_default]" value="1">
                                             </x-admin::form.control-group>
                                         </div>
-
-                                        <!-- Date of Birth -->
-                                        <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label>Geboortedatum
-                                            </x-admin::form.control-group.label>
-                                            <x-admin::form.control-group.control
-                                                type="date"
-                                                name="date_of_birth"
-                                                v-model="formData.date_of_birth"
-                                            />
-                                        </x-admin::form.control-group>
-
-                                        <!-- Gender -->
-                                        <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label>Geslacht
-                                            </x-admin::form.control-group.label>
-                                            <x-admin::form.control-group.control
-                                                type="select"
-                                                name="gender"
-                                                v-model="formData.gender"
-                                            >
-                                                <option value="">Selecteer geslacht</option>
-                                                <option value="Man">Man</option>
-                                                <option value="Vrouw">Vrouw</option>
-                                                <option value="Anders">Anders</option>
-                                            </x-admin::form.control-group.control>
-                                        </x-admin::form.control-group>
                                     </div>
 
-                                    <!-- Emails and Phones -->
-                                    <div class="mb-4">
-                                        <label
-                                            class="block text-sm font-medium text-gray-700 mb-2">E-mailadressen</label>
-                                        <div v-for="(email, index) in formData.emails" :key="'email-' + index"
-                                             class="flex items-center space-x-2 mb-2">
-                                            <input
-                                                type="email"
-                                                :name="'emails[' + index + '][value]'"
-                                                v-model="email.value"
-                                                placeholder="E-mailadres"
-                                                class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                            />
-                                            <select
-                                                :name="'emails[' + index + '][label]'"
-                                                v-model="email.label"
-                                                class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                            >
-                                                <option value="work">Werk</option>
-                                                <option value="home">Thuis</option>
-                                                <option value="other">Anders</option>
-                                            </select>
-                                            <div class="flex items-center">
-                                                <input
-                                                    type="checkbox"
-                                                    :name="'emails[' + index + '][is_default]'"
-                                                    v-model="email.is_default"
-                                                    @change="handleEmailDefaultChange(index, $event)"
-                                                    class="mr-1"
-                                                />
-                                                <label class="text-xs text-gray-600">Standaard</label>
-                                            </div>
-                                            <button type="button" @click="removeEmail(index)"
-                                                    class="text-red-600 hover:text-red-800">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                     viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                          stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                        <button type="button" @click="addEmail"
-                                                class="text-blue-600 hover:text-blue-800 text-sm">
-                                            + E-mailadres toevoegen
-                                        </button>
-                                    </div>
+                                    <!-- Organization Section -->
+                                    <div class="flex flex-col gap-4 mb-4">
+                                        <p class="text-base font-semibold dark:text-white">Organisatie (facturatie)</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                                            Koppel een organisatie voor facturatie doeleinden (optioneel)
+                                        </p>
 
-                                    <div class="mb-4">
-                                        <label
-                                            class="block text-sm font-medium text-gray-700 mb-2">Telefoonnummers</label>
-                                        <div v-for="(phone, index) in formData.phones" :key="'phone-' + index"
-                                             class="flex items-center space-x-2 mb-2">
-                                            <input
-                                                type="tel"
-                                                :name="'phones[' + index + '][value]'"
-                                                v-model="phone.value"
-                                                placeholder="Telefoonnummer"
-                                                class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                            />
-                                            <select
-                                                :name="'phones[' + index + '][label]'"
-                                                v-model="phone.label"
-                                                class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                            >
-                                                <option value="work">Werk</option>
-                                                <option value="home">Thuis</option>
-                                                <option value="mobile">Mobiel</option>
-                                                <option value="other">Anders</option>
-                                            </select>
-                                            <div class="flex items-center">
-                                                <input
-                                                    type="checkbox"
-                                                    :name="'phones[' + index + '][is_default]'"
-                                                    v-model="phone.is_default"
-                                                    @change="handlePhoneDefaultChange(index, $event)"
-                                                    class="mr-1"
-                                                />
-                                                <label class="text-xs text-gray-600">Standaard</label>
-                                            </div>
-                                            <button type="button" @click="removePhone(index)"
-                                                    class="text-red-600 hover:text-red-800">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor"
-                                                     viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                                          stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                        <button type="button" @click="addPhone"
-                                                class="text-blue-600 hover:text-blue-800 text-sm">
-                                            + Telefoonnummer toevoegen
-                                        </button>
+                                        @include('admin::leads.common.organization', ['organization' => null])
                                     </div>
 
                                     <!-- Channel and Source -->
@@ -469,6 +424,24 @@
                                         </div>
                                     </div>
 
+                                    <!-- Combine Order Setting -->
+                                    <div class="mb-4">
+                                        <x-admin::form.control-group>
+                                            <x-admin::form.control-group.label>
+                                                Orders combineren
+                                            </x-admin::form.control-group.label>
+                                            <x-admin::form.control-group.control
+                                                type="select"
+                                                name="combine_order"
+                                                v-model="formData.combine_order"
+                                            >
+                                                <option value="1">Ja</option>
+                                                <option value="0">Nee</option>
+                                            </x-admin::form.control-group.control>
+                                            <x-admin::form.control-group.error control-name="combine_order"/>
+                                        </x-admin::form.control-group>
+                                    </div>
+
                                     <!-- Other attributes -->
                                     <div class="flex gap-4 max-sm:flex-wrap">
                                         <div class="w-full">
@@ -508,107 +481,60 @@
                 data() {
                     return {
                         currentStep: 1,
-                        selectedPerson: null,
+                        selectedPersons: [],
+                        persons: [],
                         isSubmitting: false,
-                        formData: {
-                            title: '',
-                            description: '',
-                            lead_channel_id: '',
-                            lead_source_id: '',
-                            department_id: '',
+                                                                                         formData: {
+                        description: '',
+                        lead_channel_id: '',
+                        lead_source_id: '',
+                        department_id: '',
+                        combine_order: 0,
                             lead_type_id: '',
-                            // Personal fields will be populated from selectedPerson
+                            // Personal fields for matching
                             first_name: '',
                             last_name: '',
-                            lastname_prefix: '',
-                            married_name: '',
-                            married_name_prefix: '',
-                            initials: '',
-                            date_of_birth: '',
-                            gender: '',
-                            salutation: '',
-                            // Contact arrays
-                            emails: [{value: '', label: 'work', is_default: true}],
-                            phones: [{value: '', label: 'work', is_default: true}],
+                            email: '',
+                            phone: '',
                         }
                     };
                 },
 
                 mounted() {
-                    // Listen for person selection from the contact matcher component
-                    this.$emitter.on('contact-matcher-person-selected', this.handlePersonSelected);
-                },
+                    // Initialize global variable for persons data
+                    window.leadFormPersons = this.persons;
 
-                beforeUnmount() {
-                    this.$emitter.off('contact-matcher-person-selected', this.handlePersonSelected);
+                    // Initialize with empty person if needed
+                    if (this.persons.length === 0) {
+                        this.persons.push({
+                            id: null,
+                            name: '',
+                            match_percentage: null,
+                            organization: null
+                        });
+                    }
                 },
 
                 methods: {
                     goToStep(step) {
                         this.currentStep = step;
-                        
-                        // If going to step 2 and we have a selected person, populate address
-                        if (step === 2 && this.selectedPerson && this.selectedPerson.address) {
+
+                        // If going to step 2 and we have selected persons, populate address from first person
+                        if (step === 2 && this.persons.length > 0 && this.persons[0].address) {
                             this.$nextTick(() => {
-                                this.populateAddressFields(this.selectedPerson.address);
+                                this.populateAddressFields(this.persons[0].address);
                             });
                         }
                     },
 
-                    handlePersonSelected(person) {
-                        this.selectedPerson = person;
-                        if (person) {
-                            // Pre-fill form data with person information - use Object.assign for reactivity
-                            Object.assign(this.formData, {
-                                first_name: person.first_name || '',
-                                last_name: person.last_name || '',
-                                lastname_prefix: person.lastname_prefix || '',
-                                married_name: person.married_name || '',
-                                married_name_prefix: person.married_name_prefix || '',
-                                initials: person.initials || '',
-                                date_of_birth: person.date_of_birth || '',
-                                gender: person.gender || '',
-                                salutation: person.salutation || ''
-                            });
 
-                            // Pre-populate emails and phones if available
-                            if (person.emails && person.emails.length > 0) {
-                                // Ensure each email has is_default property
-                                this.formData.emails = person.emails.map((email, index) => ({
-                                    value: email.value || '',
-                                    label: this.normalizeLabel(email.label) || 'work',
-                                    is_default: email.is_default !== undefined ? Boolean(email.is_default) : (index === 0)
-                                }));
-                            } else {
-                                // Reset to default if no emails
-                                this.formData.emails = [{value: '', label: 'work', is_default: true}];
-                            }
-
-                            if (person.phones && person.phones.length > 0) {
-                                // Ensure each phone has is_default property
-                                this.formData.phones = person.phones.map((phone, index) => ({
-                                    value: phone.value || '',
-                                    label: this.normalizeLabel(phone.label) || 'work',
-                                    is_default: phone.is_default !== undefined ? Boolean(phone.is_default) : (index === 0)
-                                }));
-                            } else {
-                                // Reset to default if no phones
-                                this.formData.phones = [{value: '', label: 'work', is_default: true}];
-                            }
-
-                            // Pre-populate address if available
-                            this.$nextTick(() => {
-                                if (person.address) {
-                                    this.populateAddressFields(person.address);
-                                }
-                            });
-                        }
-                    },
 
                     async submitForm() {
                         if (this.isSubmitting) return;
 
                         // Validate required fields
+
+
                         if (!this.formData.first_name || this.formData.first_name.trim() === '') {
                             this.$emitter.emit('add-flash', {
                                 type: 'error',
@@ -632,25 +558,20 @@
 
                             // Add our Vue form data to the FormData
                             Object.keys(this.formData).forEach(key => {
-                                // Skip emails and phones as they are handled by the HTML form inputs
-                                if (key === 'emails' || key === 'phones') {
-                                    return;
-                                } else if (this.formData[key] !== null && this.formData[key] !== '' && this.formData[key] !== undefined) {
-                                    // Special handling for dates
-                                    if (key === 'date_of_birth' && this.formData[key]) {
-                                        // Ensure date is in correct format
-                                        formData.set(key, this.formData[key]);
-                                    } else if (key !== 'date_of_birth') {
-                                        formData.set(key, this.formData[key]);
-                                    }
+                                if (this.formData[key] !== null && this.formData[key] !== '' && this.formData[key] !== undefined) {
+                                    formData.set(key, this.formData[key]);
                                 }
                             });
 
-                            // Get person_id from the contact matcher component (hidden input)
-                            const personIdInput = document.querySelector('input[name="person_id"]');
-                            if (personIdInput && personIdInput.value) {
-                                formData.set('person_id', personIdInput.value);
-                            }
+                            // Add persons data from multi-contact-matcher component
+                            const personIdInputs = document.querySelectorAll('input[name^="person_ids["]');
+
+                            // Add person_ids from multi-contact-matcher hidden inputs
+                            personIdInputs.forEach((input, index) => {
+                                if (input.value) {
+                                    formData.set(input.name, input.value);
+                                }
+                            });
 
                             const response = await axios.post('{{ route('admin.leads.store') }}', formData, {
                                 headers: {'Content-Type': 'multipart/form-data'}
@@ -684,95 +605,6 @@
                         }
                     },
 
-                    addEmail() {
-                        this.formData.emails.push({value: '', label: 'work', is_default: false});
-                    },
-
-                    removeEmail(index) {
-                        if (this.formData.emails.length > 1) {
-                            const wasDefault = this.formData.emails[index].is_default;
-                            this.formData.emails.splice(index, 1);
-
-                            // If we removed the default email, make the first one default
-                            if (wasDefault && this.formData.emails.length > 0) {
-                                this.formData.emails[0].is_default = true;
-                            }
-                        }
-                    },
-
-                    addPhone() {
-                        this.formData.phones.push({value: '', label: 'work', is_default: false});
-                    },
-
-                    removePhone(index) {
-                        if (this.formData.phones.length > 1) {
-                            const wasDefault = this.formData.phones[index].is_default;
-                            this.formData.phones.splice(index, 1);
-
-                            // If we removed the default phone, make the first one default
-                            if (wasDefault && this.formData.phones.length > 0) {
-                                this.formData.phones[0].is_default = true;
-                            }
-                        }
-                    },
-
-                    handleEmailDefaultChange(index, event) {
-                        const isChecked = event.target.checked;
-
-                        // Uncheck all other checkboxes
-                        this.formData.emails.forEach((email, i) => {
-                            if (i !== index) {
-                                email.is_default = false;
-                            }
-                        });
-
-                        // Set the current email's default status
-                        this.formData.emails[index].is_default = isChecked;
-
-                        // If no email is checked, make the first one default
-                        if (!isChecked && this.formData.emails.length > 0) {
-                            this.formData.emails[0].is_default = true;
-                        }
-                    },
-
-                    handlePhoneDefaultChange(index, event) {
-                        const isChecked = event.target.checked;
-
-                        // Uncheck all other checkboxes
-                        this.formData.phones.forEach((phone, i) => {
-                            if (i !== index) {
-                                phone.is_default = false;
-                            }
-                        });
-
-                        // Set the current phone's default status
-                        this.formData.phones[index].is_default = isChecked;
-
-                        // If no phone is checked, make the first one default
-                        if (!isChecked && this.formData.phones.length > 0) {
-                            this.formData.phones[0].is_default = true;
-                        }
-                    },
-
-                    normalizeLabel(label) {
-                        if (!label) return 'work';
-
-                        // Convert to lowercase and map common variations
-                        const normalizedLabel = label.toLowerCase();
-                        const labelMap = {
-                            'work': 'work',
-                            'werk': 'work',
-                            'home': 'home',
-                            'thuis': 'home',
-                            'mobile': 'mobile',
-                            'mobiel': 'mobile',
-                            'other': 'other',
-                            'anders': 'other'
-                        };
-
-                        return labelMap[normalizedLabel] || 'work';
-                    },
-
                     populateAddressFields(address) {
                         // Only populate if we're in step 2 and the form exists
                         if (this.currentStep !== 2 || !this.$refs.leadForm) {
@@ -799,6 +631,139 @@
                                 input.dispatchEvent(new Event('change', {bubbles: true}));
                             }
                         });
+                    }
+                }
+            });
+
+            // Multiple Persons Component
+            app.component('v-multiple-persons-component', {
+                template: '#v-multiple-persons-component-template',
+
+                props: ['data', 'leadId'],
+
+                data() {
+                    return {
+                        persons: this.data || []
+                    };
+                },
+
+                async mounted() {
+                    // Calculate match percentages for existing persons
+                    if (this.leadId) {
+                        for (let i = 0; i < this.persons.length; i++) {
+                            if (this.persons[i].id && !this.persons[i].match_percentage) {
+                                const matchPercentage = await this.calculateMatchPercentage(this.persons[i]);
+                                if (matchPercentage !== null) {
+                                    this.$set(this.persons[i], 'match_percentage', matchPercentage);
+                                }
+                            }
+                        }
+                    }
+                },
+
+                watch: {
+                    persons: {
+                        handler(newValue) {
+                            this.$emit('update:data', newValue);
+                        },
+                        deep: true
+                    }
+                },
+
+                methods: {
+                    addPerson() {
+                        this.persons.push({
+                            id: null,
+                            name: '',
+                            match_percentage: null,
+                            organization: null
+                        });
+                    },
+
+                    removePerson(index) {
+                        this.persons.splice(index, 1);
+                    },
+
+                    updatePerson(index, selectedPerson) {
+                        this.$set(this.persons, index, {
+                            id: selectedPerson.id,
+                            name: selectedPerson.name,
+                            match_percentage: selectedPerson.match_percentage || null,
+                            organization: selectedPerson.organization || null
+                                            });
+                },
+
+                async calculateMatchPercentage(person) {
+                    if (!person.id || !this.leadId) return null;
+
+                    try {
+                        // Call the person search API with lead_id to get match score
+                        const response = await fetch(`/admin/contacts/persons/search?lead_id=${this.leadId}&person_id=${person.id}`);
+                        const data = await response.json();
+
+                        if (data.data && data.data.length > 0) {
+                            const matchedPerson = data.data.find(p => p.id === person.id);
+                            return matchedPerson?.match_score_percentage || null;
+                        }
+                    } catch (error) {
+                        console.warn('Could not calculate match percentage:', error);
+                    }
+
+                    return null;
+                },
+
+                getPersonInitials(person) {
+                        if (!person.name) return '?';
+
+                        const names = person.name.split(' ');
+                        if (names.length >= 2) {
+                            return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+                        }
+                        return person.name[0].toUpperCase();
+                    },
+
+                    getPersonCardClass(person) {
+                        if (!person.id) {
+                            return 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900';
+                        }
+
+                        if (person.match_percentage >= 90) {
+                            return 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-900';
+                        } else if (person.match_percentage >= 70) {
+                            return 'border-yellow-200 bg-yellow-50 dark:border-yellow-800 dark:bg-yellow-900';
+                        } else if (person.match_percentage >= 50) {
+                            return 'border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900';
+                        } else {
+                            return 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800';
+                        }
+                    },
+
+                    getAvatarClass(person) {
+                        if (!person.id) {
+                            return 'bg-blue-600';
+                        }
+
+                        if (person.match_percentage >= 90) {
+                            return 'bg-green-600';
+                        } else if (person.match_percentage >= 70) {
+                            return 'bg-yellow-600';
+                        } else if (person.match_percentage >= 50) {
+                            return 'bg-orange-600';
+                        } else {
+                            return 'bg-gray-600';
+                        }
+                    },
+
+                    getScoreBarClass(percentage) {
+                        if (percentage >= 80) {
+                            return 'bg-green-500';
+                        } else if (percentage >= 60) {
+                            return 'bg-yellow-500';
+                        } else if (percentage >= 40) {
+                            return 'bg-orange-500';
+                        } else {
+                            return 'bg-red-500';
+                        }
                     }
                 }
             });

@@ -18,10 +18,16 @@ class PersonRepository extends Repository
      * Searchable fields.
      */
     protected $fieldSearchable = [
+        'name',
+        'first_name',
+        'last_name',
+        'lastname_prefix',
+        'married_name',
+        'married_name_prefix',
+        'initials',
         'emails',
-        'contact_numbers',
+        'phones', // Renamed from contact_numbers
         'organization_id',
-        'job_title',
         'organization.name',
         'user_id',
         'user.name',
@@ -89,13 +95,13 @@ class PersonRepository extends Repository
                 $addressDataWithPersonId = array_merge($addressData, [
                     'person_id' => $person->id,
                 ]);
-                
+
                 // Validate address data
                 $validator = Validator::make($addressDataWithPersonId, Address::$rules);
                 if ($validator->fails()) {
                     throw new InvalidArgumentException('Address validation failed: ' . $validator->errors()->first());
                 }
-                
+
                 Address::create($addressDataWithPersonId);
             }
         }
@@ -157,7 +163,7 @@ class PersonRepository extends Repository
                 return !empty(trim($value));
             });
             $hasAddressData = !empty($filledAddressData);
-            
+
             Log::info('Address filtering debug:', [
                 'original_data' => $addressData,
                 'filled_data' => $filledAddressData,
@@ -175,13 +181,13 @@ class PersonRepository extends Repository
                 $addressDataWithPersonId = array_merge($addressData, [
                     'person_id' => $id,
                 ]);
-                
+
                 // Validate address data
                 $validator = Validator::make($addressDataWithPersonId, Address::$rules);
                 if ($validator->fails()) {
                     throw new InvalidArgumentException('Address validation failed: ' . $validator->errors()->first());
                 }
-                
+
                 // Check if person already has an address
                 $existingAddress = Address::where('person_id', $id)->first();
 
@@ -246,11 +252,11 @@ class PersonRepository extends Repository
 
         $data['unique_id'] = implode('|', $uniqueIdParts);
 
-        if (isset($data['contact_numbers'])) {
-            $data['contact_numbers'] = collect($data['contact_numbers'])->filter(fn ($number) => ! is_null($number['value']))->toArray();
+        if (isset($data['phones'])) {
+            $data['phones'] = collect($data['phones'])->filter(fn ($number) => ! is_null($number['value']))->toArray();
 
-            if (!empty($data['contact_numbers'])) {
-                $data['unique_id'] .= '|'.$data['contact_numbers'][0]['value'];
+            if (!empty($data['phones'])) {
+                $data['unique_id'] .= '|'.$data['phones'][0]['value'];
             }
         }
 

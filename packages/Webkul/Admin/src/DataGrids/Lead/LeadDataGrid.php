@@ -61,15 +61,15 @@ class LeadDataGrid extends DataGrid
                 'lead_tags.tag_id as tag_id',
                 'users.id as user_id',
                 'users.name as sales_person',
-                'persons.id as person_id',
-                'persons.name as person_name',
+                DB::raw('GROUP_CONCAT(DISTINCT persons.name SEPARATOR ", ") as person_names'),
                 'tags.name as tag_name',
                 'lead_pipelines.rotten_days as pipeline_rotten_days',
                 'lead_pipeline_stages.code as stage_code',
                 DB::raw('CASE WHEN DATEDIFF(NOW(),'.$tablePrefix.'leads.created_at) >='.$tablePrefix.'lead_pipelines.rotten_days THEN 1 ELSE 0 END as rotten_lead'),
             )
             ->leftJoin('users', 'leads.user_id', '=', 'users.id')
-            ->leftJoin('persons', 'leads.person_id', '=', 'persons.id')
+            ->leftJoin('lead_persons', 'leads.id', '=', 'lead_persons.lead_id')
+            ->leftJoin('persons', 'lead_persons.person_id', '=', 'persons.id')
             ->leftJoin('lead_types', 'leads.lead_type_id', '=', 'lead_types.id')
             ->leftJoin('lead_pipeline_stages', 'leads.lead_pipeline_stage_id', '=', 'lead_pipeline_stages.id')
             ->leftJoin('lead_sources', 'leads.lead_source_id', '=', 'lead_sources.id')
@@ -92,7 +92,7 @@ class LeadDataGrid extends DataGrid
         $this->addFilter('sales_person', 'users.name');
         $this->addFilter('lead_source_name', 'lead_sources.name');
         $this->addFilter('lead_type_name', 'lead_types.name');
-        $this->addFilter('person_name', 'persons.name');
+        $this->addFilter('person_names', 'persons.name');
         $this->addFilter('type', 'lead_pipeline_stages.code');
         $this->addFilter('stage', 'lead_pipeline_stages.id');
         $this->addFilter('tag_name', 'tags.name');
@@ -191,7 +191,7 @@ class LeadDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'              => 'person_name',
+            'index'              => 'person_names',
             'label'              => trans('admin::app.leads.index.datagrid.contact-person'),
             'type'               => 'string',
             'searchable'         => false,
@@ -206,44 +206,7 @@ class LeadDataGrid extends DataGrid
                 ],
             ],
             'closure'    => function ($row) {
-                if (! is_null($row->person_id)) {
-                    $route = route('admin.contacts.persons.view', $row->person_id);
-
-                    return "<a class=\"text-brandColor transition-all hover:underline\" href='".$route."'>".$row->person_name.'</a>';
-                }
-
-                // Get custom attributes for the lead
-                $firstName = DB::table('attribute_values')
-                    ->where('entity_type', 'leads')
-                    ->where('entity_id', $row->id)
-                    ->where('attribute_id', function ($query) {
-                        $query->select('id')
-                            ->from('attributes')
-                            ->where('code', 'firstName')
-                            ->where('entity_type', 'leads')
-                            ->first();
-                    })
-                    ->value('text_value');
-
-                $lastname = DB::table('attribute_values')
-                    ->where('entity_type', 'leads')
-                    ->where('entity_id', $row->id)
-                    ->where('attribute_id', function ($query) {
-                        $query->select('id')
-                            ->from('attributes')
-                            ->where('code', 'lastname')
-                            ->where('entity_type', 'leads')
-                            ->first();
-                    })
-                    ->value('text_value');
-
-                if ($firstName || $lastname) {
-                    $firstName = $firstName ?? '';
-                    $lastname = $lastname ?? '';
-                    return trim($firstName.' '.$lastname);
-                }
-
-                return '--';
+                return $row->person_names ?: '--';
             },
         ]);
 

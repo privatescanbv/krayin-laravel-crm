@@ -70,7 +70,7 @@ class Person extends AbstractReporting
                 'id'                => $item->id,
                 'name'              => $item->name,
                 'emails'            => $item->emails,
-                'contact_numbers'   => $item->contact_numbers,
+                'phones'   => $item->phones,
                 'revenue'           => $item->revenue,
                 'formatted_revenue' => core()->formatBasePrice($item->revenue),
             ];

@@ -1,6 +1,6 @@
 <x-admin::layouts>
     <x-slot:title>
-        Duplicaten samenvoegen - {{ $lead->title }}
+        Duplicaten samenvoegen - {{ $lead->name }}
     </x-slot>
 
     <div class="flex flex-col gap-4">
@@ -23,7 +23,7 @@
             <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div>
                     <span class="text-sm font-medium text-gray-600">Titel:</span>
-                    <p class="text-sm">{{ $lead->title }}</p>
+                    <p class="text-sm">{{ $lead->name }}</p>
                 </div>
                 <div>
                     <span class="text-sm font-medium text-gray-600">Naam:</span>

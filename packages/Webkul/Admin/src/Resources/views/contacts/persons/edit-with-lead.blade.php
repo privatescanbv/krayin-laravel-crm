@@ -18,7 +18,7 @@
             
             <p class="text-gray-600 dark:text-gray-300">
                 Vergelijk en synchroniseer gegevens tussen 
-                <strong>{{ $person->name }}</strong> en Lead <strong>{{ $lead->title }}</strong>
+                <strong>{{ $person->name }}</strong> en Lead <strong>{{ $lead->name }}</strong>
             </p>
         </div>
 

@@ -67,9 +67,9 @@ class MagicAI
         $validator = Validator::make($dataArray, [
             'title'                         => 'required|string|max:255',
             'lead_value'                    => 'required|numeric|min:0',
-            'person.name'                   => 'required|string|max:255',
-            'person.emails.value'           => 'required|email',
-            'person.contact_numbers.value'  => 'required|string|max:20',
+            'person.name'                   => 'nullable|string|max:255',
+            'person.emails.value'           => 'nullable|email',
+            'person.contact_numbers.value'  => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -93,21 +93,23 @@ class MagicAI
             'description'         => $finalData->description ?? null,
             'lead_source_id'      => 1,
             'lead_type_id'        => 1,
-            'person'              => [
-                'name'            => $finalData->person->name ?? 'Unknown',
-                'emails'          => [
-                    [
-                        'value' => $finalData->person->emails->value ?? null,
-                        'label' => $finalData->person->emails->label ?? 'work',
+            'persons'             => [
+                [
+                    'name'            => $finalData->person->name ?? 'Unknown',
+                    'emails'          => [
+                        [
+                            'value' => $finalData->person->emails->value ?? null,
+                            'label' => $finalData->person->emails->label ?? 'work',
+                        ],
                     ],
-                ],
-                'contact_numbers' => [
-                    [
-                        'value' => $finalData->person->contact_numbers->value ?? null,
-                        'label' => $finalData->person->contact_numbers->label ?? 'work',
+                    'contact_numbers' => [
+                        [
+                            'value' => $finalData->person->phones->value ?? null,
+                            'label' => $finalData->person->phones->label ?? 'work',
+                        ],
                     ],
-                ],
-                'entity_type'     => self::PERSON_ENTITY,
+                    'entity_type'     => self::PERSON_ENTITY,
+                ]
             ],
             'entity_type'         => self::LEAD_ENTITY,
         ];

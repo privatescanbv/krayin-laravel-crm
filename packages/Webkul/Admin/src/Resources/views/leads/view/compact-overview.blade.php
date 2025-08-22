@@ -76,39 +76,48 @@
                 </div>
                 @endif
 
-                <!-- Contact Person (if linked) -->
-                @if($lead->person)
+                <!-- Contact Persons (if linked) -->
+                @if($lead->persons && $lead->persons->count() > 0)
                 <div class="mb-4">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Contact persoon</div>
-                    <div>
-                        <a 
-                            href="{{ route('admin.contacts.persons.view', $lead->person->id) }}" 
-                            target="_blank"
-                            class="text-sm font-medium text-brandColor hover:underline"
-                        >
-                            {{ $lead->person->name }}
-                            <span class="icon-external-link text-xs ml-1"></span>
-                        </a>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                        Contactpersonen ({{ $lead->persons->count() }})
                     </div>
-                </div>
-                @endif
+                    <div class="space-y-1">
+                        @foreach($lead->persons as $person)
+                        <div>
+                            <a 
+                                href="{{ route('admin.contacts.persons.view', $person->id) }}" 
+                                target="_blank"
+                                class="text-sm font-medium text-brandColor hover:underline"
+                            >
+                                {{ $person->name }}
+                                <span class="icon-external-link text-xs ml-1"></span>
+                            </a>
+                            @if($person->organization)
+                                                                 <div class="text-xs text-gray-500 ml-2">{{ $person->organization->name }}</div>
+                             @endif
+                         </div>
+                         @endforeach
+                     </div>
+                 </div>
+                 @endif
 
-                <!-- Organization (if person has organization) -->
-                @if($lead->person && $lead->person->organization)
-                <div class="mb-4">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Organisatie</div>
-                    <div>
-                        <a
-                            href="{{ route('admin.contacts.organizations.view', $lead->person->organization->id) }}"
-                            target="_blank"
-                            class="text-sm font-medium text-brandColor hover:underline"
-                        >
-                            {{ $lead->person->organization->name }}
-                            <span class="icon-external-link text-xs ml-1"></span>
-                        </a>
-                    </div>
-                </div>
-                @endif
+                 <!-- Lead Organization (for billing) -->
+                 @if($lead->organization)
+                 <div class="mb-4">
+                     <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Organisatie (facturatie)</div>
+                     <div>
+                         <a
+                             href="{{ route('admin.contacts.organizations.view', $lead->organization->id) }}"
+                             target="_blank"
+                             class="text-sm font-medium text-brandColor hover:underline"
+                         >
+                             {{ $lead->organization->name }}
+                             <span class="icon-external-link text-xs ml-1"></span>
+                         </a>
+                     </div>
+                 </div>
+                 @endif
 
                 <!-- Address -->
                 <div class="mb-4">

@@ -5,8 +5,8 @@ namespace App\Models;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
-use Webkul\User\Models\User;
 
 class Anamnesis extends Model
 {
@@ -68,7 +68,7 @@ class Anamnesis extends Model
         'active',
         'advice_notes',
         'lead_id',
-        'user_id',
+        'person_id',
         'created_by',
         'updated_by',
     ];
@@ -103,8 +103,8 @@ class Anamnesis extends Model
         return $this->belongsTo(Lead::class, 'lead_id');
     }
 
-    public function user()
+    public function person()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(Person::class, 'person_id');
     }
 }

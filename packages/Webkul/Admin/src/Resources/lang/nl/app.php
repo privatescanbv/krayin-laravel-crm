@@ -154,7 +154,7 @@ return [
                 'all' => 'Alles',
                 'bcc' => 'BCC',
                 'by-user' => 'Door :user',
-                'calls' => 'Telefoontjes',
+                'calls' => 'Gesprekken',
                 'cc' => 'CC',
                 'change-log' => 'Wijzigingslog',
                 'delete' => 'Verwijderen',

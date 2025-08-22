@@ -30,8 +30,7 @@ class LeadRepository extends Repository
         'status',
         'user_id',
         'user.name',
-        'person_id',
-        'person.name',
+        'persons.name',
         'lead_source_id',
         'lead_type_id',
         'lead_pipeline_id',
@@ -89,14 +88,11 @@ class LeadRepository extends Repository
                 'leads.created_at as created_at',
                 'title',
                 'lead_value',
-                'persons.name as person_name',
-                'leads.person_id as person_id',
                 'lead_pipelines.id as lead_pipeline_id',
                 'lead_pipeline_stages.name as status',
                 'lead_pipeline_stages.id as lead_pipeline_stage_id'
             )
                 ->addSelect(DB::raw('DATEDIFF(' . DB::getTablePrefix() . 'leads.created_at + INTERVAL lead_pipelines.rotten_days DAY, now()) as rotten_days'))
-                ->leftJoin('persons', 'leads.person_id', '=', 'persons.id')
                 ->leftJoin('lead_pipelines', 'leads.lead_pipeline_id', '=', 'lead_pipelines.id')
                 ->leftJoin('lead_pipeline_stages', 'leads.lead_pipeline_stage_id', '=', 'lead_pipeline_stages.id')
                 ->where('title', 'like', "%$term%")
@@ -120,57 +116,43 @@ class LeadRepository extends Repository
      */
     public function create(array $data): Lead
     {
-       if (
-           array_key_exists('person', $data)
-           && !empty($data['person']['organization_id'])
-           && (empty($data['person_id']) || empty($data['person']['id']))
-       ) {
-           throw new InvalidArgumentException('Een organisatie mag alleen gekoppeld worden als er ook een contactpersoon is.');
-       }
+
+
+        // Handle multiple persons
+        $personsToAttach = [];
+
         /**
-         * If a person is provided, create or update the person and set the `person_id`.
+         * If persons array is provided, process each person
          */
-        if (isset($data['person']) && !empty($data['person'])) {
-            // Check if there are any non-empty values in the person data
-            $hasValidData = false;
-
-            if (!empty($data['person']['name'])) {
-                $hasValidData = true;
-            }
-
-            if (!empty($data['person']['emails'])) {
-                foreach ($data['person']['emails'] as $email) {
-                    if (!empty($email['value'])) {
-                        $hasValidData = true;
-                        break;
+        if (isset($data['persons']) && is_array($data['persons'])) {
+            foreach ($data['persons'] as $personData) {
+                if (!empty($personData) && $this->hasValidPersonData($personData)) {
+                    if (!empty($personData['id'])) {
+                        $person = $this->personRepository->findOrFail($personData['id']);
+                    } else {
+                        $person = $this->personRepository->create(array_merge($personData, [
+                            'entity_type' => 'persons',
+                        ]));
                     }
+                    $personsToAttach[] = $person->id;
                 }
             }
+        }
 
-            if (!empty($data['person']['contact_numbers'])) {
-                foreach ($data['person']['contact_numbers'] as $number) {
-                    if (!empty($number['value'])) {
-                        $hasValidData = true;
-                        break;
-                    }
-                }
-            }
-
-            if ($hasValidData) {
-                if (!empty($data['person']['id'])) {
-                    $person = $this->personRepository->findOrFail($data['person']['id']);
-                } else {
-                    $person = $this->personRepository->create(array_merge($data['person'], [
-                        'entity_type' => 'persons',
-                    ]));
-                }
-
-                $data['person_id'] = $person->id;
-            }
+        /**
+         * If person_ids array is provided directly
+         */
+        if (isset($data['person_ids']) && is_array($data['person_ids'])) {
+            $personsToAttach = array_merge($personsToAttach, array_filter($data['person_ids']));
         }
 
         if (empty($data['expected_close_date'])) {
             $data['expected_close_date'] = null;
+        }
+
+        // Handle empty organization_id
+        if (empty($data['organization_id']) || !is_numeric($data['organization_id'])) {
+            $data['organization_id'] = null;
         }
 
         $lead = parent::create(array_merge([
@@ -203,23 +185,12 @@ class LeadRepository extends Repository
             }
         }
 
-        // Always create an anamnesis for new leads
-        $currentUserId = auth()->id() ?? $lead->user_id ?? 1;
+                // Attach persons to the lead
+        if (!empty($personsToAttach)) {
+            $lead->attachPersons(array_unique($personsToAttach));
 
-        try {
-            Anamnesis::create([
-                'id' => Str::uuid(),
-                'lead_id' => $lead->id,
-                'name' => 'Anamnesis voor ' . $lead->title,
-                'user_id' => $currentUserId,
-            ]);
-        } catch (Exception $e) {
-            // Log the error but don't fail the lead creation
-            Log::error('Failed to create anamnesis for lead: ' . $e->getMessage(), [
-                'lead_id' => $lead->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            // Create anamnesis when first person is attached
+            $this->createAnamnesisForLead($lead);
         }
 
         return $lead;
@@ -234,39 +205,41 @@ class LeadRepository extends Repository
      */
     public function update(array $data, $id, $attributes = []): Lead
     {
-        if (
-            array_key_exists('person', $data)
-            && !empty($data['person']['organization_id'])
-            && (empty($data['person_id']) || empty($data['person']['id']))
-        ) {
-            throw new InvalidArgumentException('Een organisatie mag alleen gekoppeld worden als er ook een contactpersoon is.');
-        }
-        /**
-         * If a person is provided, create or update the person and set the `person_id`.
-         * Be cautious, as a lead can be updated without providing person data.
-         * For example, in the lead Kanban section, when switching stages, only the stage will be updated.
-         */
-        if (isset($data['person'])) {
-            $personData = $data['person'];
-            $values = [];
-            array_walk_recursive($personData, function ($v, $k) use (&$values) {
-                if ($k !== 'label') {
-                    $values[] = $v;
-                }
-            });
-            $personContainsData = !empty(array_filter($values));
-            $data['person'] = $personData;
-            if ($personContainsData) {
-                if (!empty($data['person']['id'])) {
-                    $person = $this->personRepository->findOrFail($data['person']['id']);
-                } else {
-                    $person = $this->personRepository->create(array_merge($data['person'], [
-                        'entity_type' => 'persons',
-                    ]));
-                }
+        // Debug: Log what data is received
+        Log::info('LeadRepository update received data', [
+            'lead_id' => $id,
+            'has_persons' => array_key_exists('persons', $data),
+            'has_person_ids' => array_key_exists('person_ids', $data),
+            'persons_data' => $data['persons'] ?? null,
+            'person_ids_data' => $data['person_ids'] ?? null,
+        ]);
 
-                $data['person_id'] = $person->id;
+        // Handle multiple persons update
+        $personsToSync = [];
+
+        /**
+         * If persons array is provided, process each person
+         */
+        if (isset($data['persons']) && is_array($data['persons'])) {
+            foreach ($data['persons'] as $personData) {
+                if (!empty($personData) && $this->hasValidPersonData($personData)) {
+                    if (!empty($personData['id'])) {
+                        $person = $this->personRepository->findOrFail($personData['id']);
+                    } else {
+                        $person = $this->personRepository->create(array_merge($personData, [
+                            'entity_type' => 'persons',
+                        ]));
+                    }
+                    $personsToSync[] = $person->id;
+                }
             }
+        }
+
+        /**
+         * If person_ids array is provided directly
+         */
+        if (isset($data['person_ids']) && is_array($data['person_ids'])) {
+            $personsToSync = array_merge($personsToSync, array_filter($data['person_ids']));
         }
 
         if (isset($data['lead_pipeline_stage_id'])) {
@@ -282,8 +255,10 @@ class LeadRepository extends Repository
         if (empty($data['expected_close_date'])) {
             $data['expected_close_date'] = null;
         }
-        if (empty($data['person_id'])) {
-            unset($data['person_id']);
+
+        // Handle empty organization_id
+        if (empty($data['organization_id']) || !is_numeric($data['organization_id'])) {
+            $data['organization_id'] = null;
         }
 
         // Handle address data
@@ -364,6 +339,26 @@ class LeadRepository extends Repository
             $this->productRepository->delete($productId);
         }
 
+                // Sync persons to the lead
+        // Only sync if persons data was explicitly provided (not for partial updates like stage changes)
+        if (array_key_exists('persons', $data) || array_key_exists('person_ids', $data)) {
+            // Get current person count before sync
+            $hadPersons = $lead->persons->count() > 0;
+
+            $lead->syncPersons(array_unique($personsToSync));
+
+            // Manage anamnesis lifecycle based on person changes
+            $hasPersonsNow = count($personsToSync) > 0;
+
+            if (!$hadPersons && $hasPersonsNow) {
+                // First person attached - create anamnesis
+                $this->createAnamnesisForLead($lead);
+            } elseif ($hadPersons && !$hasPersonsNow) {
+                // All persons removed - delete anamnesis
+                $this->deleteAnamnesisForLead($lead);
+            }
+        }
+
         return $lead;
     }
 
@@ -412,39 +407,7 @@ class LeadRepository extends Repository
      */
     private function findEmailDuplicates($lead): Collection
     {
-        $duplicates = collect();
-        $emails = $lead->emails;
-
-        // Handle case where emails might be a string or null
-        if (is_string($emails)) {
-            $emails = json_decode($emails, true) ?: [];
-        }
-
-        if (is_array($emails) && !empty($emails)) {
-            foreach ($emails as $email) {
-                if (is_array($email) && !empty($email['value'])) {
-                    try {
-                        // Use different JSON query approaches for different databases
-                        $query = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
-                            ->where('id', '!=', $lead->id);
-                        if (DB::getDriverName() === 'sqlite') {
-                            // SQLite: Use LIKE for JSON searching
-                            $query->where('emails', 'LIKE', '%"' . $email['value'] . '"%');
-                        } else {
-                            // MySQL/PostgreSQL: Use whereJsonContains
-                            $query->whereJsonContains('emails', [['value' => $email['value']]]);
-                        }
-
-                        $emailDuplicates = $query->get();
-                        $duplicates = $duplicates->merge($emailDuplicates);
-                    } catch (Exception $e) {
-                        Log::warning('Error searching for email duplicates: ' . $e->getMessage());
-                    }
-                }
-            }
-        }
-
-        return $duplicates;
+        return $this->findJsonFieldDuplicates($lead, 'emails');
     }
 
     /**
@@ -455,39 +418,7 @@ class LeadRepository extends Repository
      */
     private function findPhoneDuplicates($lead): Collection
     {
-        $duplicates = collect();
-        $phones = $lead->phones;
-
-        // Handle case where phones might be a string or null
-        if (is_string($phones)) {
-            $phones = json_decode($phones, true) ?: [];
-        }
-
-        if (is_array($phones) && !empty($phones)) {
-            foreach ($phones as $phone) {
-                if (is_array($phone) && !empty($phone['value'])) {
-                    try {
-                        // Use different JSON query approaches for different databases
-                        $query = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
-                            ->where('id', '!=', $lead->id);
-                        if (DB::getDriverName() === 'sqlite') {
-                            // SQLite: Use JSON_EXTRACT or LIKE for JSON searching
-                            $query->where('phones', 'LIKE', '%"' . $phone['value'] . '"%');
-                        } else {
-                            // MySQL/PostgreSQL: Use whereJsonContains
-                            $query->whereJsonContains('phones', [['value' => $phone['value']]]);
-                        }
-
-                        $phoneDuplicates = $query->get();
-                        $duplicates = $duplicates->merge($phoneDuplicates);
-                    } catch (Exception $e) {
-                        Log::warning('Error searching for phone duplicates: ' . $e->getMessage());
-                    }
-                }
-            }
-        }
-
-        return $duplicates;
+        return $this->findJsonFieldDuplicates($lead, 'phones');
     }
 
     /**
@@ -497,47 +428,22 @@ class LeadRepository extends Repository
      */
     private function findNameDuplicates(Lead $lead): Collection
     {
-        $duplicates = collect();
-
-        // Check for name similarity (first + last name)
-        if (!empty($lead->first_name) && !empty($lead->last_name)) {
-            try {
-                $nameDuplicates = LeadModel::with(['person', 'stage', 'pipeline', 'user'])
-                    ->where('id', '!=', $lead->id)
-                    ->where(function ($query) use ($lead) {
-                        // Exact match for full name
-                        $query->where(function ($subQuery) use ($lead) {
-                            $subQuery->where('first_name', $lead->first_name)
-                                ->where('last_name', $lead->last_name);
-                        })
-                            // Or check for common nickname variations
-                            ->orWhere(function ($subQuery) use ($lead) {
-                                $firstNameVariations = $this->getNameVariations($lead->first_name);
-                                if (count($firstNameVariations) > 1) {
-                                    $subQuery->whereIn('first_name', $firstNameVariations)
-                                        ->where('last_name', $lead->last_name);
-                                }
-                            })
-                            // Or check if married_name matches last_name (users sometimes confuse these fields)
-                            ->orWhere(function ($subQuery) use ($lead) {
-                                $subQuery->where('first_name', $lead->first_name)
-                                    ->where('married_name', $lead->last_name);
-                            })
-                            // Or check if last_name matches married_name
-                            ->orWhere(function ($subQuery) use ($lead) {
-                                $subQuery->where('first_name', $lead->first_name)
-                                    ->where('last_name', $lead->married_name);
-                            });
-                    })
-                    ->get();
-
-                $duplicates = $duplicates->merge($nameDuplicates);
-            } catch (Exception $e) {
-                Log::warning('Error searching for name duplicates: ' . $e->getMessage());
-            }
+        if (empty($lead->first_name) && empty($lead->last_name)) {
+            return collect();
         }
 
-        return $duplicates;
+        try {
+            $query = LeadModel::with(['stage', 'pipeline', 'user'])
+                ->where('id', '!=', $lead->id);
+
+            // Build name matching conditions
+            $this->addNameMatchConditions($query, $lead);
+
+            return $query->get();
+        } catch (Exception $e) {
+            Log::error('Error searching for name duplicates: ' . $e->getMessage());
+            return collect();
+        }
     }
 
     /**
@@ -594,7 +500,7 @@ class LeadRepository extends Repository
     {
         return [
             'id' => $lead->id,
-            'title' => $lead->title,
+            'name' => $lead->name,
             'emails_type' => gettype($lead->emails),
             'emails_value' => $lead->emails,
             'phones_type' => gettype($lead->phones),
@@ -630,7 +536,7 @@ class LeadRepository extends Repository
                 foreach ($fieldMappings as $field => $sourceLeadId) {
                     if ($sourceLeadId != $primaryLeadId) {
                         $sourceLead = $duplicateLeads->firstWhere('id', $sourceLeadId);
-                        
+
                         if ($field === 'address') {
                             // Handle address separately - we need to merge the full address data
                             $addressSourceLeadId = $sourceLeadId;
@@ -696,10 +602,10 @@ class LeadRepository extends Repository
         }
 
         $sourceAddress = $sourceLead->address;
-        
+
         // Get or create address for primary lead
         $primaryAddress = $primaryLead->address;
-        
+
         if ($primaryAddress) {
             // Update existing address with source address data
             $primaryAddress->update([
@@ -727,7 +633,7 @@ class LeadRepository extends Repository
                 'updated_by' => auth()->id(),
             ]);
         }
-        
+
         Log::info('Address merged successfully', [
             'primary_lead_id' => $primaryLead->id,
             'source_lead_id' => $sourceLead->id,
@@ -789,5 +695,159 @@ class LeadRepository extends Repository
 
         // Attach the activity to the primary lead
         $primaryLead->activities()->attach($activity->id);
+    }
+
+    /**
+     * Check if person data contains valid information
+     */
+    private function hasValidPersonData(array $personData): bool
+    {
+        // If person has an ID, it's valid (existing person)
+        if (!empty($personData['id']) && is_numeric($personData['id'])) {
+            return true;
+        }
+
+        // For new persons, check if they have valid data
+        if (!empty($personData['name'])) {
+            return true;
+        }
+
+        if (!empty($personData['emails'])) {
+            foreach ($personData['emails'] as $email) {
+                if (!empty($email['value'])) {
+                    return true;
+                }
+            }
+        }
+
+        if (!empty($personData['phones'])) {
+            foreach ($personData['phones'] as $number) {
+                if (!empty($number['value'])) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Create anamnesis for a lead when first person is attached.
+     */
+    private function createAnamnesisForLead(Lead $lead): void
+    {
+        // Check if anamnesis already exists
+        if ($lead->anamnesis) {
+            return;
+        }
+
+        $currentUserId = auth()->id() ?? $lead->user_id ?? 1;
+
+        try {
+            // Get the first attached person for anamnesis
+            $firstPersonId = \DB::table('lead_persons')->where('lead_id', $lead->id)->value('person_id');
+            
+            \App\Models\Anamnesis::create([
+                'id' => \Illuminate\Support\Str::uuid(),
+                'lead_id' => $lead->id,
+                'name' => 'Anamnesis voor ' . $lead->name,
+                'person_id' => $firstPersonId,
+            ]);
+        } catch (Exception $e) {
+            Log::error('Failed to create anamnesis for lead: ' . $e->getMessage(), [
+                'lead_id' => $lead->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Delete anamnesis for a lead when all persons are removed.
+     */
+    private function deleteAnamnesisForLead(Lead $lead): void
+    {
+        try {
+            if ($lead->anamnesis) {
+                $lead->anamnesis->delete();
+            }
+        } catch (Exception $e) {
+            Log::error('Failed to delete anamnesis for lead: ' . $e->getMessage(), [
+                'lead_id' => $lead->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Generic helper to find duplicates based on JSON field values.
+     */
+    private function findJsonFieldDuplicates(Lead $lead, string $fieldName): Collection
+    {
+        $duplicates = collect();
+        $fieldData = $lead->$fieldName;
+
+        // Handle case where field might be a string or null
+        if (is_string($fieldData)) {
+            $fieldData = json_decode($fieldData, true) ?: [];
+        }
+
+        if (is_array($fieldData) && !empty($fieldData)) {
+            foreach ($fieldData as $item) {
+                if (is_array($item) && !empty($item['value'])) {
+                    try {
+                        $query = LeadModel::with(['stage', 'pipeline', 'user'])
+                            ->where('id', '!=', $lead->id);
+                            
+                        if (DB::getDriverName() === 'sqlite') {
+                            $query->where($fieldName, 'LIKE', '%"' . $item['value'] . '"%');
+                        } else {
+                            $query->whereJsonContains($fieldName, [['value' => $item['value']]]);
+                        }
+
+                        $duplicates = $duplicates->merge($query->get());
+                    } catch (Exception $e) {
+                        Log::error("Error searching for {$fieldName} duplicates: " . $e->getMessage());
+                    }
+                }
+            }
+        }
+
+        return $duplicates;
+    }
+
+    /**
+     * Add name matching conditions to query.
+     */
+    private function addNameMatchConditions($query, Lead $lead): void
+    {
+        $query->where(function ($q) use ($lead) {
+            // Exact match for full name
+            if (!empty($lead->first_name) && !empty($lead->last_name)) {
+                $q->orWhere(function ($subQuery) use ($lead) {
+                    $subQuery->where('first_name', $lead->first_name)
+                        ->where('last_name', $lead->last_name);
+                });
+
+                // Nickname variations
+                $firstNameVariations = $this->getNameVariations($lead->first_name);
+                if (count($firstNameVariations) > 1) {
+                    $q->orWhere(function ($subQuery) use ($lead, $firstNameVariations) {
+                        $subQuery->whereIn('first_name', $firstNameVariations)
+                            ->where('last_name', $lead->last_name);
+                    });
+                }
+
+                // Married name confusion checks
+                if (!empty($lead->married_name)) {
+                    $q->orWhere(function ($subQuery) use ($lead) {
+                        $subQuery->where('first_name', $lead->first_name)
+                            ->where('married_name', $lead->last_name);
+                    })->orWhere(function ($subQuery) use ($lead) {
+                        $subQuery->where('first_name', $lead->first_name)
+                            ->where('last_name', $lead->married_name);
+                    });
+                }
+            }
+        });
     }
 }

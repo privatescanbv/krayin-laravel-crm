@@ -2,11 +2,15 @@
 
 namespace Webkul\Admin\Http\Controllers\Lead;
 
+use App\Models\Anamnesis;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -20,9 +24,6 @@ use Webkul\Admin\Http\Resources\LeadResource;
 use Webkul\Admin\Http\Resources\StageResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Repositories\PersonRepository;
-use Webkul\Core\Contracts\Validations\EmailValidator;
-use Webkul\Core\Contracts\Validations\PhoneValidator;
-use App\Validators\DateValidator;
 use Webkul\Lead\Helpers\MagicAI;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Lead\Repositories\PipelineRepository;
@@ -89,11 +90,24 @@ class LeadController extends Controller
      */
     public function get(): JsonResponse
     {
-        if (request()->query('pipeline_id')) {
-            $pipeline = $this->pipelineRepository->find(request()->query('pipeline_id'));
-        } else {
-            $pipeline = $this->pipelineRepository->getDefaultPipeline();
-        }
+        try {
+            if (request()->query('pipeline_id')) {
+                $pipeline = $this->pipelineRepository->find(request()->query('pipeline_id'));
+            } else {
+                $pipeline = $this->pipelineRepository->getDefaultPipeline();
+            }
+
+            if (!$pipeline) {
+                \Log::error('No pipeline found for leads.get endpoint', [
+                    'pipeline_id' => request()->query('pipeline_id'),
+                    'request_params' => request()->all()
+                ]);
+
+                return response()->json([
+                    'error' => 'No pipeline found',
+                    'message' => 'Could not find the specified pipeline'
+                ], 500);
+            }
 
         if ($stageId = request()->query('pipeline_stage_id')) {
             $stages = $pipeline->stages->where('id', request()->query('pipeline_stage_id'));
@@ -121,14 +135,14 @@ class LeadController extends Controller
 
             $data[$stage->sort_order] = (new StageResource($stage))->jsonSerialize();
 
+            // Load relationships - persons loaded via attribute, not relationship
             $data[$stage->sort_order]['leads'] = [
                 'data' => LeadResource::collection($paginator = $query->with([
                     'tags',
                     'type',
                     'source',
                     'user',
-                    'person',
-                    'person.organization',
+                    'organization',
                     'pipeline',
                     'pipeline.stages',
                     'stage',
@@ -147,6 +161,20 @@ class LeadController extends Controller
         }
 
         return response()->json($data);
+
+        } catch (Exception $e) {
+            Log::error('Error in leads.get endpoint', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_params' => request()->all()
+            ]);
+
+            return response()->json([
+                'error' => 'Internal server error',
+                'message' => $e->getMessage(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null
+            ], 500);
+        }
     }
 
     /**
@@ -164,7 +192,7 @@ class LeadController extends Controller
     {
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
-        
+
         $this->validate($request, LeadValidationService::getWebValidationRules($request));
 
             try {
@@ -253,7 +281,8 @@ class LeadController extends Controller
      */
     public function edit(int $id): View
     {
-        $lead = $this->leadRepository->with('address')->findOrFail($id);
+        // Load lead without persons relationship (persons loaded via attribute)
+        $lead = $this->leadRepository->with(['address', 'organization'])->findOrFail($id);
 
         return view('admin::leads.edit', compact('lead'));
     }
@@ -264,14 +293,13 @@ class LeadController extends Controller
     public function view(int $id)
     {
         $lead = $this->leadRepository->with([
-            'anamnesis', 
-            'address', 
-            'person.organization', 
-            'source', 
-            'type', 
-            'channel', 
+            'address',
+            'organization',
+            'source',
+            'type',
+            'channel',
             'department',
-            'user'
+            'user',
         ])->findOrFail($id);
 
         $userIds = bouncer()->getAuthorizedUserIds();
@@ -641,7 +669,7 @@ class LeadController extends Controller
                 'visibility' => true,
             ],
             [
-                'index' => 'person.id',
+                'index' => 'persons.id',
                 'label' => trans('admin::app.leads.index.kanban.columns.contact-person'),
                 'type' => 'string',
                 'searchable' => false,
@@ -822,7 +850,7 @@ class LeadController extends Controller
     private function normalizeContactArrays($request)
     {
         $requestData = $request->all();
-        
+
         // Normalize emails
         if (isset($requestData['emails']) && is_array($requestData['emails'])) {
             foreach ($requestData['emails'] as $index => $email) {
@@ -833,7 +861,7 @@ class LeadController extends Controller
                     } else {
                         $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
                     }
-                    
+
                     // Normalize is_default to boolean
                     if (isset($email['is_default'])) {
                         $requestData['emails'][$index]['is_default'] = $this->normalizeBoolean($email['is_default']);
@@ -843,7 +871,7 @@ class LeadController extends Controller
                 }
             }
         }
-        
+
         // Normalize phones
         if (isset($requestData['phones']) && is_array($requestData['phones'])) {
             foreach ($requestData['phones'] as $index => $phone) {
@@ -854,7 +882,7 @@ class LeadController extends Controller
                     } else {
                         $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
-                    
+
                     // Normalize is_default to boolean
                     if (isset($phone['is_default'])) {
                         $requestData['phones'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
@@ -864,7 +892,7 @@ class LeadController extends Controller
                 }
             }
         }
-        
+
         // Replace the request data
         $request->replace($requestData);
     }
@@ -877,15 +905,15 @@ class LeadController extends Controller
         if (is_bool($value)) {
             return $value;
         }
-        
+
         if (is_string($value)) {
             return in_array(strtolower($value), ['true', '1', 'on', 'yes']);
         }
-        
+
         if (is_numeric($value)) {
             return (bool) $value;
         }
-        
+
         return false;
     }
 
@@ -897,7 +925,7 @@ class LeadController extends Controller
         if (empty($label)) {
             return 'work';
         }
-        
+
         // Convert to lowercase and map common variations
         $normalizedLabel = strtolower(trim($label));
         $labelMap = [
@@ -910,7 +938,42 @@ class LeadController extends Controller
             'other' => 'other',
             'anders' => 'other'
         ];
-        
+
         return $labelMap[$normalizedLabel] ?? 'work';
+    }
+
+    /**
+     * Detach person from lead.
+     */
+    public function detachPerson(int $leadId, int $personId)
+    {
+        try {
+            // Remove the relationship
+            DB::table('lead_persons')
+                ->where('lead_id', $leadId)
+                ->where('person_id', $personId)
+                ->delete();
+
+            Anamnesis::where('lead_id', $leadId)
+                ->where('user_id', $personId)
+                ->delete();
+
+            return response()->json([
+                'message' => 'Persoon succesvol ontkoppeld van lead.',
+                'success' => true
+            ]);
+
+        } catch (Exception $e) {
+            Log::error('Error detaching person from lead', [
+                'lead_id' => $leadId,
+                'person_id' => $personId,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'message' => 'Er is een fout opgetreden bij het ontkoppelen van de persoon.',
+                'success' => false
+            ], 500);
+        }
     }
 }

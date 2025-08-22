@@ -25,14 +25,12 @@ class LeadAddressMergeTest extends TestCase
     {
         // Create primary lead without address
         $primaryLead = Lead::factory()->create([
-            'title'      => 'Primary Lead',
             'first_name' => 'John',
             'last_name'  => 'Doe',
         ]);
 
         // Create duplicate lead with address
         $duplicateLead = Lead::factory()->create([
-            'title'      => 'Duplicate Lead',
             'first_name' => 'John',
             'last_name'  => 'Doe',
         ]);
@@ -56,7 +54,6 @@ class LeadAddressMergeTest extends TestCase
         // Perform merge with address from duplicate lead
         $fieldMappings = [
             'address' => $duplicateLead->id, // Choose address from duplicate lead
-            'title'   => $primaryLead->id,     // Keep title from primary lead
         ];
 
         $mergedLead = $this->leadRepository->mergeLeads(
@@ -87,7 +84,6 @@ class LeadAddressMergeTest extends TestCase
     {
         // Create primary lead with existing address
         $primaryLead = Lead::factory()->create([
-            'title'      => 'Primary Lead',
             'first_name' => 'John',
             'last_name'  => 'Doe',
         ]);
@@ -103,7 +99,6 @@ class LeadAddressMergeTest extends TestCase
 
         // Create duplicate lead with different address
         $duplicateLead = Lead::factory()->create([
-            'title'      => 'Duplicate Lead',
             'first_name' => 'John',
             'last_name'  => 'Doe',
         ]);
@@ -146,7 +141,6 @@ class LeadAddressMergeTest extends TestCase
     {
         // Create primary lead with address
         $primaryLead = Lead::factory()->create([
-            'title'      => 'Primary Lead',
             'first_name' => 'John',
             'last_name'  => 'Doe',
         ]);
@@ -162,7 +156,6 @@ class LeadAddressMergeTest extends TestCase
 
         // Create duplicate lead with different address
         $duplicateLead = Lead::factory()->create([
-            'title'      => 'Duplicate Lead',
             'first_name' => 'John',
             'last_name'  => 'Doe',
         ]);
@@ -178,7 +171,6 @@ class LeadAddressMergeTest extends TestCase
 
         // Perform merge without specifying address in field mappings
         $fieldMappings = [
-            'title' => $primaryLead->id, // Only specify title
         ];
 
         $mergedLead = $this->leadRepository->mergeLeads(

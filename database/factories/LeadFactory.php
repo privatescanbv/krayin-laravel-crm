@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Address;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Source;
@@ -57,7 +58,6 @@ class LeadFactory extends Factory
         }
 
         return [
-            'title'                  => $this->faker->sentence(3),
             'description'            => $this->faker->paragraph(),
             'lead_value'             => $this->faker->randomFloat(2, 100, 10000),
             'status'                 => $this->faker->boolean(),
@@ -65,12 +65,39 @@ class LeadFactory extends Factory
             'expected_close_date'    => $this->faker->optional()->dateTimeBetween('now', '+3 months'),
             'closed_at'              => $this->faker->optional()->dateTimeBetween('-1 month', 'now'),
             'user_id'                => $user->id,
-            'person_id'              => $person->id ?? null,
             'lead_source_id'         => $source->id,
             'lead_type_id'           => $type->id,
             'lead_pipeline_id'       => $pipeline->id,
             'lead_pipeline_stage_id' => $stage->id,
+            'combine_order'          => false, // Default false for simplicity
+            // Personal fields - minimal defaults, can be overridden
+            'first_name'             => $this->faker->firstName(),
+            'last_name'              => $this->faker->lastName(),
+            'emails'                 => [['value' => $this->faker->email(), 'label' => 'work', 'is_default' => true]],
+            'phones'                 => [['value' => $this->faker->randomNumber(9), 'label' => 'mobile', 'is_default' => true]],
+            'lastname_prefix'        => null,
+            'married_name'           => null,
+            'married_name_prefix'    => null,
+            'initials'               => null,
+            'salutation'             => null,
+            'gender'                 => null,
+            'date_of_birth'          => null,
         ];
+    }
+
+    /**
+     * Add personal data for leads that need name attributes.
+     */
+    public function withPersonalData(): static
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'first_name'    => $this->faker->firstName(),
+                'last_name'     => $this->faker->lastName(),
+                'emails'        => [['value' => $this->faker->email(), 'label' => 'work', 'is_default' => true]],
+                'phones'        => [['value' => $this->faker->randomNumber(9), 'label' => 'mobile', 'is_default' => true]],
+            ];
+        });
     }
 
     /**
@@ -80,6 +107,17 @@ class LeadFactory extends Factory
     {
         return $this->afterCreating(function (Lead $lead) {
             Address::factory()->forLead($lead)->create();
+        });
+    }
+
+    /**
+     * Indicate that the lead should have persons.
+     */
+    public function withPersons(int $count = 1): static
+    {
+        return $this->afterCreating(function (Lead $lead) use ($count) {
+            $persons = Person::factory()->count($count)->create();
+            $lead->persons()->attach($persons->pluck('id'));
         });
     }
 

@@ -33,7 +33,7 @@ class PersonDataGrid extends DataGrid
                     NULLIF(persons.married_name, '')
                 ) as person_name"),
                 'persons.emails',
-                'persons.contact_numbers',
+                'persons.phones',
                 'organizations.name as organization',
                 'organizations.id as organization_id'
             )
@@ -88,13 +88,13 @@ class PersonDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'contact_numbers',
+            'index'      => 'phones',
             'label'      => trans('admin::app.contacts.persons.index.datagrid.contact-numbers'),
             'type'       => 'string',
             'sortable'   => true,
             'filterable' => true,
             'searchable' => true,
-            'closure'    => fn ($row) => collect(json_decode($row->contact_numbers, true) ?? [])->pluck('value')->join(', '),
+            'closure'    => fn ($row) => collect(json_decode($row->phones, true) ?? [])->pluck('value')->join(', '),
         ]);
 
         $this->addColumn([

@@ -110,7 +110,6 @@ class LeadWebhookTest extends TestCase
     private function createTestLead(): Lead
     {
         return Lead::factory()->create([
-            'title'                  => 'Test Lead',
             'first_name'             => 'John',
             'last_name'              => 'Doe',
             'lead_pipeline_id'       => 1,

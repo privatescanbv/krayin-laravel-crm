@@ -15,7 +15,6 @@ class LeadValidationService
     public static function getValidationRules($request = null): array
     {
         return [
-            'title'               => 'required|string|max:255',
             'first_name'          => 'required|string|max:255',
             'last_name'           => 'required|string|max:255',
             'description'         => 'nullable|string',
@@ -44,17 +43,20 @@ class LeadValidationService
             'department_id'       => 'required|numeric|exists:departments,id',
             'user_id'             => 'nullable|numeric|exists:users,id',
 
-            // Person relationship
-            'person_id'       => 'nullable|numeric|exists:persons,id',
-            'organization_id' => [
-                'nullable',
-                'exists:organizations,id',
-                function ($attribute, $value, $fail) use ($request) {
-                    if ($value && ! optional($request)->input('person_id')) {
-                        $fail('Een organisatie kan alleen gekoppeld worden als er ook een contactpersoon is gekoppeld.');
-                    }
-                },
-            ],
+            // Person relationships (multiple persons supported)
+            'person_ids'                => 'nullable|array',
+            'person_ids.*'              => 'numeric|exists:persons,id',
+            'persons'                   => 'nullable|array',
+            'persons.*.id'              => 'nullable|numeric|exists:persons,id',
+            'persons.*.name'            => 'nullable|string|max:255',
+            'persons.*.emails'          => 'nullable|array',
+            'persons.*.contact_numbers' => 'nullable|array',
+
+            // Lead organization (standalone for billing)
+            'organization_id' => 'nullable|numeric|exists:organizations,id',
+
+            // Order combination setting
+            'combine_order' => 'required|boolean',
 
             // Address fields
             'address.postal_code'         => 'nullable|string|max:20',

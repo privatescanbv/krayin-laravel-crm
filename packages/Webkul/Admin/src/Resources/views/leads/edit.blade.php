@@ -114,23 +114,7 @@
 
                         <div class="w-1/2 max-md:w-full">
                             {!! view_render_event('admin.leads.edit.lead_details.attributes.before', ['lead' => $lead]) !!}
-                            <!-- Lead Details Title and Description -->
-                            <div class="mb-0.5">
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label class="required">
-                                        @lang('installer::app.seeders.attributes.leads.title')
-                                    </x-admin::form.control-group.label>
-                                    <x-admin::form.control-group.control
-                                        type="text"
-                                        name="title"
-                                        value="{{ old('title', $lead->title) }}"
-                                        rules="required"
-                                        :label="trans('admin::app.leads.edit.title')"
-                                        :placeholder="trans('admin::app.leads.edit.title')"
-                                    />
-                                    <x-admin::form.control-group.error control-name="title"/>
-                                </x-admin::form.control-group>
-                            </div>
+                            <!-- Lead Details Description -->
                             <div class="mb-0.5">
                                 <x-admin::form.control-group>
                                     <x-admin::form.control-group.label>
@@ -259,6 +243,24 @@
                                 </div>
                             </div>
 
+                            <!-- Combine Order Setting -->
+                            <div class="mb-0.5">
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label>
+                                        Orders combineren
+                                    </x-admin::form.control-group.label>
+                                    <x-admin::form.control-group.control
+                                        type="select"
+                                        name="combine_order"
+                                        value="{{ old('combine_order', $lead->combine_order ?? 0) }}"
+                                    >
+                                        <option value="1" {{ (old('combine_order', $lead->combine_order ?? 0) == 1) ? 'selected' : '' }}>Ja</option>
+                                        <option value="0" {{ (old('combine_order', $lead->combine_order ?? 0) == 0) ? 'selected' : '' }}>Nee</option>
+                                    </x-admin::form.control-group.control>
+                                    <x-admin::form.control-group.error control-name="combine_order"/>
+                                </x-admin::form.control-group>
+                            </div>
+
                             <!-- Lead Details Other input fields -->
                             <div class="flex gap-4 max-sm:flex-wrap">
                                 <div class="w-full">
@@ -345,32 +347,49 @@
 
                     {!! view_render_event('admin.leads.edit.contact_person.before', ['lead' => $lead]) !!}
 
-                    <!-- Contact Person -->
+                    <!-- Contact Persons -->
                     <div
                         class="flex flex-col gap-4"
                         id="contact-person"
                     >
                         <div class="flex flex-col gap-1">
                             <p class="text-base font-semibold dark:text-white">
-                                @lang('admin::app.leads.edit.contact-person')
+                                Contactpersonen
                             </p>
 
-                            {{--                            <p class="text-gray-600 dark:text-white">--}}
-                            {{--                                @lang('admin::app.leads.edit.contact-info')--}}
-                            {{--                            </p>--}}
+                            <p class="text-gray-600 dark:text-gray-300">
+                                Koppel een of meerdere contactpersonen aan deze lead
+                            </p>
                         </div>
 
-                        <div class="w-1/2 max-md:w-full">
-                            <!-- Contact Person Component -->
-                            @include('admin::leads.common.contactmatcher')
-                        </div>
-                        <div class="w-1/2 max-md:w-full">
-                            <!-- Contact Person Component -->
-                            @include('admin::leads.common.contactorganisation')
-                        </div>
+                        <!-- Multi Contact Matcher (based on original contactmatcher) -->
+                        @include('admin::leads.common.multi-contactmatcher', ['lead' => $lead, 'persons' => $lead->persons])
                     </div>
 
                     {!! view_render_event('admin.leads.edit.contact_person.after', ['lead' => $lead]) !!}
+
+                    {!! view_render_event('admin.leads.edit.organization.before', ['lead' => $lead]) !!}
+
+                    <!-- Organization Section -->
+                    <div
+                        class="flex flex-col gap-4"
+                        id="organization"
+                    >
+                        <div class="flex flex-col gap-1">
+                            <p class="text-base font-semibold dark:text-white">
+                                Organisatie
+                            </p>
+
+                            <p class="text-gray-600 dark:text-gray-300">
+                                Koppel een organisatie voor facturatie doeleinden
+                            </p>
+                        </div>
+
+                        <!-- Organization Component -->
+                        @include('admin::leads.common.organization', ['organization' => $lead->organization])
+                    </div>
+
+                    {!! view_render_event('admin.leads.edit.organization.after', ['lead' => $lead]) !!}
 
                     {!! view_render_event('admin.leads.edit.personal_fields.before', ['lead' => $lead]) !!}
 
@@ -421,9 +440,11 @@
                     return {
                         activeTab: 'lead-details',
 
-                        lead:  @json($lead),
-
-                        person:  @json($lead->person),
+                        lead: {
+                            id: {{ $lead->id }},
+title: "{{ addslashes($lead->name) }}",
+                            // Simplified lead data to avoid JSON parsing errors
+                        },
 
                         {{--products: @json($lead->products),--}}
 

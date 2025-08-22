@@ -23,8 +23,7 @@ class PersonResource extends JsonResource
             'id'              => $this->id,
             'name'            => $this->name,
             'emails'          => $this->emails,
-            'contact_numbers' => $this->contact_numbers,
-            'phones'          => $this->contact_numbers, // Alias for compatibility
+            'phones'          => $this->phones, // Alias for compatibility
             'organization'    => $this->organization ? new OrganizationResource($this->organization) : null,
             'address'         => $this->address,
             'first_name'      => $this->first_name,
@@ -36,8 +35,6 @@ class PersonResource extends JsonResource
             'date_of_birth'   => $this->date_of_birth ? $this->date_of_birth->format('Y-m-d') : null,
             'gender'          => $this->gender,
             'salutation'      => $this->salutation,
-            'emails'          => $this->emails,
-            'phones'          => $this->contact_numbers, // Use contact_numbers for phones
             'created_at'      => $this->created_at,
             'updated_at'      => $this->updated_at,
         ];
@@ -45,8 +42,9 @@ class PersonResource extends JsonResource
         // Include match score data if present
         if (isset($this->match_score)) {
             $data['match_score'] = $this->match_score;
+            $data['score'] = $this->match_score; // Alias for test compatibility
         }
-        
+
         if (isset($this->match_score_percentage)) {
             $data['match_score_percentage'] = $this->match_score_percentage;
         }

@@ -2,14 +2,20 @@
 
 namespace Webkul\Lead\Models;
 
+use App\Models\Anamnesis;
+use App\Models\Department;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
-use Webkul\Contact\Models\PersonProxy;
+use Webkul\Contact\Models\Organization;
+use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\EmailProxy;
 use Webkul\Lead\Contracts\Lead as LeadContract;
 use Webkul\Quote\Models\QuoteProxy;
@@ -28,6 +34,7 @@ class Lead extends Model implements LeadContract
         'date_of_birth'       => 'date',
         'emails'              => 'array',
         'phones'              => 'array',
+        'combine_order'       => 'boolean',
     ];
 
     /**
@@ -46,18 +53,14 @@ class Lead extends Model implements LeadContract
      * @var array
      */
     protected $fillable = [
-        'title',
         'external_id',
         'description',
-        'emails',
-        'phones',
         'lead_value',
         'status',
         'lost_reason',
         'expected_close_date',
         'closed_at',
         'user_id',
-        'person_id',
         'lead_source_id',
         'lead_type_id',
         'lead_pipeline_id',
@@ -71,8 +74,12 @@ class Lead extends Model implements LeadContract
         'initials',
         'date_of_birth',
         'gender',
+        'emails',
+        'phones',
         'lead_channel_id',
         'department_id',
+        'organization_id',
+        'combine_order',
         'created_by',
         'updated_by',
     ];
@@ -112,11 +119,47 @@ class Lead extends Model implements LeadContract
     }
 
     /**
-     * Get the person that owns the lead.
+     * Get the persons associated with the lead (repository-based).
      */
-    public function person()
+    public function getPersonsAttribute()
     {
-        return $this->belongsTo(PersonProxy::modelClass());
+        try {
+            return Person::whereIn('id',
+                DB::table('lead_persons')->where('lead_id', $this->id)->pluck('person_id')
+            )->get();
+        } catch (Exception $e) {
+            Log::warning('Could not load persons for lead', ['lead_id' => $this->id, 'error' => $e->getMessage()]);
+            return collect();
+        }
+    }
+
+    /**
+     * Attach persons to this lead.
+     */
+    public function attachPersons(array $personIds)
+    {
+        foreach ($personIds as $personId) {
+            DB::table('lead_persons')->insertOrIgnore([
+                'lead_id' => $this->id,
+                'person_id' => $personId,
+            ]);
+        }
+
+        $this->createMissingAnamnesis($personIds);
+    }
+
+    /**
+     * Sync persons to this lead (replace all existing).
+     */
+    public function syncPersons(array $personIds)
+    {
+        // Remove existing relationships
+        DB::table('lead_persons')->where('lead_id', $this->id)->delete();
+
+        // Add new relationships
+        if (!empty($personIds)) {
+            $this->attachPersons($personIds);
+        }
     }
 
     /**
@@ -212,7 +255,15 @@ class Lead extends Model implements LeadContract
      */
     public function department()
     {
-        return $this->belongsTo(\App\Models\Department::class, 'department_id');
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
+    /**
+     * Get the organization that owns the lead.
+     */
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class, 'organization_id');
     }
 
     /**
@@ -306,14 +357,6 @@ class Lead extends Model implements LeadContract
     }
 
     /**
-     * Get the anamnesis that belongs to the lead.
-     */
-    public function anamnesis()
-    {
-        return $this->hasOne(\App\Models\Anamnesis::class, 'lead_id');
-    }
-
-    /**
      * Check if this lead has potential duplicates.
      */
     public function hasPotentialDuplicates(): bool
@@ -379,5 +422,35 @@ class Lead extends Model implements LeadContract
         }
 
         return implode(' ', array_filter($parts));
+    }
+
+    /**
+     * Create anamnesis for this lead.
+     */
+    private function createMissingAnamnesis(array $personIds): void
+    {
+        try {
+            foreach ($personIds as $personId) {
+              if (!Anamnesis::where('lead_id', $this->id)->where('person_id', $personId)->exists()) {
+                  Anamnesis::create([
+                      'id' => Str::uuid(),
+                      'lead_id' => $this->id,
+                      'name' => 'Anamnesis voor ' . $this->name,
+                      'person_id' => $personId,
+                  ]);
+              }
+            }
+        } catch (Exception $e) {
+            Log::error('Failed to create anamnesis for lead: ' . $e->getMessage(), [
+                'lead_id' => $this->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    public function findAnamnesisByPersonId(int $personId): Anamnesis
+    {
+        return Anamnesis::where('lead_id', $this->id)
+            ->where('person_id', $personId)->firstOrFail();
     }
 }

@@ -68,7 +68,6 @@ test('can access edit with lead page with all fields', function () {
     ]);
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Lead Title',
         'salutation'             => 'Dr.',
         'first_name'             => 'John',
         'last_name'              => 'Smith',
@@ -141,7 +140,6 @@ test('shows no differences when person and lead have identical data', function (
     $lead = new Lead;
     $lead->first_name = 'John';
     $lead->last_name = 'Doe';
-    $lead->title = 'Lead for John Doe';
     $lead->emails = [['value' => 'john@example.com', 'label' => 'Work']];
     $lead->lead_pipeline_id = $data['pipelineId'];
     $lead->lead_pipeline_stage_id = $data['stageId'];
@@ -256,7 +254,6 @@ test('can update person with multiple lead fields including new fields', functio
     ]);
 
     $lead = Lead::factory()->create([
-        'title'                  => 'New Lead Title',
         'salutation'             => 'Dr.',
         'first_name'             => 'John',
         'last_name'              => 'Smith',

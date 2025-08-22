@@ -57,7 +57,7 @@ class WebFormController extends Controller
         foreach ($tempAttributes as $attribute) {
             if (
                 $attribute->entity_type == 'persons'
-                && in_array($attribute->code, ['name', 'emails', 'contact_numbers'])
+                && in_array($attribute->code, ['name', 'emails', 'phones'])
             ) {
                 $attributes['default'][] = $attribute;
             } else {

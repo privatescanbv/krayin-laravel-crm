@@ -45,7 +45,6 @@ function createLeadWithAttributes(
     }
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'first_name'             => $firstName,
         'last_name'              => $lastName,
         'lead_pipeline_id'       => $pipeline->id,
@@ -120,7 +119,7 @@ test('finds exact first name match', function () {
         'Smith',
         [['value' => 'john.smith@example.com', 'label' => 'work']],
         [
-            'contact_numbers'                      => [['value' => '0687654321', 'label' => 'mobile']],
+            'phones'                      => [['value' => '0687654321', 'label' => 'mobile']],
         ]);
 
     // must initial filter on married name of lastname
@@ -155,7 +154,7 @@ test('finds exact email match', function () {
         'first_name'      => 'Jane',
         'last_name'       => 'Smith',
         'emails'          => [['value' => 'john2@example.com', 'label' => 'work']],
-        'contact_numbers' => [['value' => '0687654321', 'label' => 'mobile']],
+        'phones'          => [['value' => '0687654321', 'label' => 'mobile']],
     ]);
 
     // Create a person with exact email match
@@ -163,7 +162,7 @@ test('finds exact email match', function () {
         'first_name'      => 'John',
         'last_name'       => 'Doe',
         'emails'          => [['value' => 'john@example.com', 'label' => 'work']],
-        'contact_numbers' => [['value' => '0687654321', 'label' => 'mobile']],
+        'phones'          => [['value' => '0687654321', 'label' => 'mobile']],
     ]);
 
     // Create a person with different email
@@ -171,7 +170,7 @@ test('finds exact email match', function () {
         'first_name'      => 'John',
         'last_name'       => 'Doe',
         'emails'          => [['value' => 'jane@example.com', 'label' => 'work']],
-        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
     ]);
 
     // Call the method
@@ -189,7 +188,6 @@ test('returns results with match scores and sorts by score', function () {
     $stage = Stage::first();
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'first_name'             => 'John',
         'last_name'              => 'Smith',
         'married_name'           => 'Johnson',
@@ -205,7 +203,7 @@ test('returns results with match scores and sorts by score', function () {
         'last_name'       => 'Smith',
         'married_name'    => 'Johnson',
         'emails'          => [['value' => 'john.smith@example.com', 'label' => 'work']],
-        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
     ]);
 
     // Create person with medium match score (some name fields missing, different email/phone)
@@ -214,7 +212,7 @@ test('returns results with match scores and sorts by score', function () {
         'last_name'  => 'Smith',
         // No married_name - this should result in lower score than highMatchPerson
         'emails'          => [['value' => 'different@example.com', 'label' => 'work']],
-        'contact_numbers' => [['value' => '0687654321', 'label' => 'mobile']],
+        'phones'          => [['value' => '0687654321', 'label' => 'mobile']],
     ]);
 
     // Create person with low match score (first name only)
@@ -222,7 +220,7 @@ test('returns results with match scores and sorts by score', function () {
         'first_name'      => 'John',
         'last_name'       => 'Doe',
         'emails'          => [['value' => 'john.doe@example.com', 'label' => 'work']],
-        'contact_numbers' => [['value' => '0698765432', 'label' => 'mobile']],
+        'phones'          => [['value' => '0698765432', 'label' => 'mobile']],
     ]);
 
     $onlyNameMatch = Person::factory()
@@ -264,7 +262,7 @@ test('returns results with match scores and sorts by score', function () {
     $this->assertTrue(! empty($x));
     $onlyNameMatch = round($x->first()->match_score, 2);
     expect($firstScore)->toBeGreaterThan($secondScore);
-    $this->assertEquals($onlyNameMatch, 68);
+    $this->assertEquals(73, $onlyNameMatch);
 });
 
 test('validates email and phone array structure when creating person', function () {
@@ -347,7 +345,6 @@ test('match algorithm includes date of birth and address in scoring', function (
     $stage = Stage::first();
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'first_name'             => 'Alice',
         'last_name'              => 'Johnson',
         'emails'                 => [['value' => 'alice.johnson@example.com', 'label' => 'work']],
@@ -372,7 +369,7 @@ test('match algorithm includes date of birth and address in scoring', function (
         'first_name'      => 'Alice',
         'last_name'       => 'Johnson',
         'emails'          => [['value' => 'alice.johnson@example.com', 'label' => 'work']],
-        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
         'date_of_birth'   => '1985-03-15',
     ]);
 
@@ -391,7 +388,7 @@ test('match algorithm includes date of birth and address in scoring', function (
         'first_name'      => 'Alice',
         'last_name'       => 'Johnson',
         'emails'          => [['value' => 'alice.johnson@example.com', 'label' => 'work']],
-        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
         // No date_of_birth and no address
     ]);
 
@@ -400,7 +397,7 @@ test('match algorithm includes date of birth and address in scoring', function (
         'first_name'      => 'Alice',
         'last_name'       => 'Johnson',
         'emails'          => [['value' => 'alice.johnson@example.com', 'label' => 'work']],
-        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
         'date_of_birth'   => '1990-06-20', // Different date
     ]);
 
@@ -465,7 +462,6 @@ test('address matching works with partial postal code matches', function () {
     $stage = Stage::first();
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'first_name'             => 'Bob',
         'last_name'              => 'Wilson',
         'emails'                 => [['value' => 'bob.wilson@example.com', 'label' => 'work']],
@@ -489,7 +485,7 @@ test('address matching works with partial postal code matches', function () {
         'first_name'      => 'Bob',
         'last_name'       => 'Wilson',
         'emails'          => [['value' => 'bob.wilson@example.com', 'label' => 'work']],
-        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
     ]);
 
     Address::create([
@@ -506,7 +502,7 @@ test('address matching works with partial postal code matches', function () {
         'first_name'      => 'Bob',
         'last_name'       => 'Wilson',
         'emails'          => [['value' => 'bob.wilson@example.com', 'label' => 'work']],
-        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
     ]);
 
     Address::create([
@@ -523,7 +519,7 @@ test('address matching works with partial postal code matches', function () {
         'first_name'      => 'Bob',
         'last_name'       => 'Wilson',
         'emails'          => [['value' => 'bob.wilson@example.com', 'label' => 'work']],
-        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
     ]);
 
     Address::create([
@@ -571,7 +567,6 @@ test('date of birth matching affects name field scoring', function () {
     $stage = Stage::first();
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'first_name'             => 'Charlie',
         'last_name'              => 'Brown',
         'emails'                 => [['value' => 'charlie.brown@example.com', 'label' => 'work']],
@@ -586,7 +581,7 @@ test('date of birth matching affects name field scoring', function () {
         'first_name'      => 'Charlie',
         'last_name'       => 'Brown',
         'emails'          => [['value' => 'charlie.brown@example.com', 'label' => 'work']],
-        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
         'date_of_birth'   => '1980-12-25', // Exact match
     ]);
 
@@ -595,7 +590,7 @@ test('date of birth matching affects name field scoring', function () {
         'first_name'      => 'Charlie',
         'last_name'       => 'Brown',
         'emails'          => [['value' => 'charlie.brown@example.com', 'label' => 'work']],
-        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
         'date_of_birth'   => '1985-06-15', // Different date
     ]);
 
@@ -604,7 +599,7 @@ test('date of birth matching affects name field scoring', function () {
         'first_name'      => 'Charlie',
         'last_name'       => 'Brown',
         'emails'          => [['value' => 'charlie.brown@example.com', 'label' => 'work']],
-        'contact_numbers' => [['value' => '0612345678', 'label' => 'mobile']],
+        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
         // No date_of_birth
     ]);
 

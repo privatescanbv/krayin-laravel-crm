@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Resources;
 
+use Exception;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Log;
 
@@ -17,7 +18,6 @@ class LeadResource extends JsonResource
     {
         return [
             'id'                   => $this->id,
-            'title'                => $this->title,
             'name'                 => $this->name,
             'description'          => $this->description,
             'lead_value'           => $this->lead_value,
@@ -28,8 +28,8 @@ class LeadResource extends JsonResource
             'rotten_days'          => $this->rotten_days,
             'created_at'           => $this->created_at?->format('Y-m-d H:i:s'),
             'updated_at'           => $this->updated_at?->format('Y-m-d H:i:s'),
-            
-            // Personal information
+
+            // Personal information (for matching purposes)
             'salutation'           => $this->salutation,
             'first_name'           => $this->first_name,
             'last_name'            => $this->last_name,
@@ -39,13 +39,16 @@ class LeadResource extends JsonResource
             'initials'             => $this->initials,
             'date_of_birth'        => $this->date_of_birth?->format('Y-m-d'),
             'gender'               => $this->gender,
-            
-            // Contact information
+
+            // Contact information (for matching purposes)
             'emails'               => is_array($this->emails) ? $this->emails : [],
             'phones'               => is_array($this->phones) ? $this->phones : [],
-            
+
             // Relationships
-            'person'               => $this->person ? new PersonResource($this->person) : null,
+            'persons'              => $this->whenLoaded('persons', function () {
+                return PersonResource::collection($this->persons);
+            }, []),
+            'organization'         => $this->organization ? new OrganizationResource($this->organization) : null,
             'user'                 => $this->user ? new UserResource($this->user) : null,
             'type'                 => $this->type ? new TypeResource($this->type) : null,
             'source'               => $this->source ? new SourceResource($this->source) : null,
@@ -53,14 +56,14 @@ class LeadResource extends JsonResource
             'stage'                => $this->stage ? new StageResource($this->stage) : null,
             'address'              => $this->address ? new AddressResource($this->address) : null,
             'tags'                 => TagResource::collection($this->tags),
-            
+
             // Computed attributes
             'open_activities_count'=> $this->open_activities_count ?? 0,
             'unread_emails_count'  => $this->unread_emails_count ?? 0,
             'days_until_due_date'  => $this->days_until_due_date,
             'has_duplicates'       => $this->getSafeDuplicateStatus(),
             'duplicates_count'     => $this->getSafeDuplicateCount(),
-            
+
             // IDs for relationships
             'user_id'              => $this->user_id,
             'person_id'            => $this->person_id,
@@ -70,6 +73,7 @@ class LeadResource extends JsonResource
             'lead_pipeline_stage_id'=> $this->lead_pipeline_stage_id,
             'lead_channel_id'      => $this->lead_channel_id,
             'department_id'        => $this->department_id,
+            'combine_order'        => $this->combine_order,
             'created_by'           => $this->created_by,
             'updated_by'           => $this->updated_by,
         ];
@@ -82,12 +86,12 @@ class LeadResource extends JsonResource
     {
         try {
             // Only check for duplicates if the lead has basic required data
-            if (!$this->id || !$this->title) {
+            if (!$this->id || !$this->name) {
                 return false;
             }
 
             return $this->hasPotentialDuplicates();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::warning('Error checking duplicate status in LeadResource: ' . $e->getMessage());
             return false;
         }
@@ -100,7 +104,7 @@ class LeadResource extends JsonResource
     {
         try {
             // Only check for duplicates if the lead has basic required data
-            if (!$this->id || !$this->title) {
+            if (!$this->id || !$this->name) {
                 return 0;
             }
 

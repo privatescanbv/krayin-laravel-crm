@@ -13,7 +13,7 @@
                             href="{{ route('admin.leads.view', $lead->id) }}" 
                             class="text-brandColor hover:underline"
                         >
-                            {{ $lead->title ?? 'Lead #' . $lead->id }}
+                            {{ $lead->name ?? 'Lead #' . $lead->id }}
                         </a>
                         <span class="text-xs text-gray-500">{{ $lead->created_at->format('d-m-Y') }}</span>
                     </div>

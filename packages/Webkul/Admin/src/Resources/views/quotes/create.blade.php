@@ -2,17 +2,18 @@
     $quote = app('\Webkul\Quote\Repositories\QuoteRepository')->getModel();
 
     if (isset($lead)) {
+        $firstPerson = $lead->persons->first();
         $quote->fill([
-            'person_id'       => $lead->person_id,
+            'person_id'       => $firstPerson?->id,
             'user_id'         => $lead->user_id,
-            'billing_address' => $lead->person->organization && $lead->person->organization->address ? [
-                'street' => $lead->person->organization->address->street,
-                'house_number' => $lead->person->organization->address->house_number,
-                'postal_code' => $lead->person->organization->address->postal_code,
-                'house_number_suffix' => $lead->person->organization->address->house_number_suffix,
-                'state' => $lead->person->organization->address->state,
-                'city' => $lead->person->organization->address->city,
-                'country' => $lead->person->organization->address->country,
+            'billing_address' => $firstPerson?->organization?->address ? [
+                'street' => $firstPerson->organization->address->street,
+                'house_number' => $firstPerson->organization->address->house_number,
+                'postal_code' => $firstPerson->organization->address->postal_code,
+                'house_number_suffix' => $firstPerson->organization->address->house_number_suffix,
+                'state' => $firstPerson->organization->address->state,
+                'city' => $firstPerson->organization->address->city,
+                'country' => $firstPerson->organization->address->country,
             ] : null
         ]);
     }

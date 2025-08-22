@@ -127,8 +127,8 @@ class LeadController extends Controller
                     'type',
                     'source',
                     'user',
-                    'person',
-                    'person.organization',
+                    'persons',
+                    'persons.organization',
                     'pipeline',
                     'pipeline.stages',
                     'stage',
@@ -437,10 +437,12 @@ class LeadController extends Controller
     {
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $results = $this->leadRepository
+                ->with(['persons', 'persons.organization'])
                 ->pushCriteria(app(RequestCriteria::class))
                 ->findWhereIn('user_id', $userIds);
         } else {
             $results = $this->leadRepository
+                ->with(['persons', 'persons.organization'])
                 ->pushCriteria(app(RequestCriteria::class))
                 ->all();
         }

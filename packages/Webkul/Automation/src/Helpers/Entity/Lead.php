@@ -160,11 +160,19 @@ class Lead extends AbstractEntity
                     }
 
                     try {
-                        Mail::queue(new Common([
-                            'to'      => data_get($lead->person->emails, '*.value'),
-                            'subject' => $this->replacePlaceholders($lead, $emailTemplate->subject),
-                            'body'    => $this->replacePlaceholders($lead, $emailTemplate->content),
-                        ]));
+                        // Get all email addresses from all associated persons
+                        $emailAddresses = [];
+                        foreach ($lead->persons as $person) {
+                            $emailAddresses = array_merge($emailAddresses, data_get($person->emails, '*.value', []));
+                        }
+                        
+                        if (!empty($emailAddresses)) {
+                            Mail::queue(new Common([
+                                'to'      => $emailAddresses,
+                                'subject' => $this->replacePlaceholders($lead, $emailTemplate->subject),
+                                'body'    => $this->replacePlaceholders($lead, $emailTemplate->content),
+                            ]));
+                        }
                     } catch (\Exception $e) {
                     }
 

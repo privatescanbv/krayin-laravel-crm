@@ -93,21 +93,23 @@ class MagicAI
             'description'         => $finalData->description ?? null,
             'lead_source_id'      => 1,
             'lead_type_id'        => 1,
-            'person'              => [
-                'name'            => $finalData->person->name ?? 'Unknown',
-                'emails'          => [
-                    [
-                        'value' => $finalData->person->emails->value ?? null,
-                        'label' => $finalData->person->emails->label ?? 'work',
+            'persons'             => [
+                [
+                    'name'            => $finalData->person->name ?? 'Unknown',
+                    'emails'          => [
+                        [
+                            'value' => $finalData->person->emails->value ?? null,
+                            'label' => $finalData->person->emails->label ?? 'work',
+                        ],
                     ],
-                ],
-                'contact_numbers' => [
-                    [
-                        'value' => $finalData->person->contact_numbers->value ?? null,
-                        'label' => $finalData->person->contact_numbers->label ?? 'work',
+                    'contact_numbers' => [
+                        [
+                            'value' => $finalData->person->contact_numbers->value ?? null,
+                            'label' => $finalData->person->contact_numbers->label ?? 'work',
+                        ],
                     ],
-                ],
-                'entity_type'     => self::PERSON_ENTITY,
+                    'entity_type'     => self::PERSON_ENTITY,
+                ]
             ],
             'entity_type'         => self::LEAD_ENTITY,
         ];

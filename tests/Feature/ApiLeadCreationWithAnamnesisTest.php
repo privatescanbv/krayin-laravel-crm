@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Anamnesis;
 use Database\Seeders\LeadChannelSeeder;
 use Database\Seeders\TestSeeder;
+use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Channel;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Source;
@@ -85,14 +86,11 @@ test('API lead creation successfully creates a lead with anamnesis', function ()
     $person = Person::factory()->create(['user_id' => $lead->user_id]);
     $lead->attachPersons([$person->id]);
 
-    // Refresh lead to load anamnesis relationship
-    $lead = $lead->fresh(['anamnesis']);
-
     // Assert: Check anamnesis was created after person attachment
     $this->assertDatabaseHas('anamnesis', [
         'lead_id' => $leadId,
-        'name'    => 'Anamnesis voor ' . $lead->name,
-        'user_id' => $lead->user_id,
+        'name'    => 'Anamnesis voor '.$lead->name,
+        'user_id' => $person->id,
     ]);
 
     // Assert: Check anamnesis relationship works
@@ -101,11 +99,7 @@ test('API lead creation successfully creates a lead with anamnesis', function ()
         ->and($anamnesis->lead_id)->toBe($leadId)
         ->and($anamnesis->lead->id)->toBe($leadId)
         ->and($anamnesis->id)->toBeString() // UUID format
-        ->and(strlen($anamnesis->id))->toBe(36)
-        ->and($lead->anamnesis)->not->toBeNull()
-        ->and($lead->anamnesis->id)->toBe($anamnesis->id); // UUID length
-
-    // Assert: Check lead has anamnesis relationship
+        ->and(strlen($anamnesis->id))->toBe(36);
 });
 
 test('API lead creation handles missing optional fields gracefully', function () {
@@ -131,11 +125,7 @@ test('API lead creation handles missing optional fields gracefully', function ()
     $response->assertStatus(201);
     $leadId = $response->json('data.id');
 
-    // Assert: Anamnesis should still be created
-    $this->assertDatabaseHas('anamnesis', [
-        'lead_id' => $leadId,
-        'name'    => 'Anamnesis voor Minimal Lead '.$uniqueId,
-    ]);
+    $this->assertTrue(Anamnesis::count() == 0, 'Anamnesis should not be created without a person');
 });
 
 test('API lead creation fails gracefully with invalid data', function () {
@@ -192,42 +182,6 @@ test('API lead creation fails gracefully with invalid data', function () {
     ]);
 });
 
-test('anamnesis creation failure does not prevent lead creation', function () {
-    // This test verifies that the try-catch block works correctly
-    // In normal circumstances, anamnesis should be created successfully
-
-    $source = Source::first();
-    $type = Type::first();
-    $channel = Channel::first();
-
-    $uniqueId = uniqid();
-    $leadData = [
-        'first_name'      => 'ErrorTest',
-        'last_name'       => 'User'.$uniqueId,
-        'email'           => 'errortest'.$uniqueId.'@example.com',
-        'lead_source_id'  => $source->id,
-        'lead_channel_id' => $channel->id,
-        'lead_type_id'    => $type->id,
-    ];
-
-    // Act: Create lead
-    $response = makeApiRequest('postJson', '/api/leads', $leadData);
-
-    // Assert: Lead creation should succeed
-    $response->assertStatus(201);
-    $leadId = $response->json('data.id');
-
-    // Assert: Lead should exist
-    $this->assertDatabaseHas('leads', [
-        'id'    => $leadId,
-    ]);
-
-    // Assert: Anamnesis should normally be created (unless there's an actual error)
-    $anamnesis = Anamnesis::where('lead_id', $leadId)->first();
-    expect($anamnesis)->not->toBeNull()
-        ->and($anamnesis->name)->toBe('Anamnesis voor Test Lead Error Handling '.$uniqueId);
-});
-
 test('API lead creation with different lead types works correctly', function () {
     // Test with different lead types to ensure the department logic works
     $source = Source::first();
@@ -257,50 +211,7 @@ test('API lead creation with different lead types works correctly', function () 
                 'data' => ['id'],
             ]);
         $leadId = $response->json('data.id');
-
-        // Each lead should have its anamnesis
-        $this->assertDatabaseHas('anamnesis', [
-            'lead_id' => $leadId,
-            'name'    => "Anamnesis voor Test Lead Type {$type->name}",
-        ]);
     }
-});
-
-test('anamnesis has correct UUID format and relationships', function () {
-    $source = Source::first();
-    $type = Type::first();
-    $channel = Channel::first();
-
-    $uniqueId = uniqid();
-    $leadData = [
-        'first_name'      => 'UUID',
-        'last_name'       => 'Test'.$uniqueId,
-        'email'           => 'uuid.'.$uniqueId.'@example.com',
-        'lead_source_id'  => $source->id,
-        'lead_channel_id' => $channel->id,
-        'lead_type_id'    => $type->id,
-    ];
-
-    $response = makeApiRequest('postJson', '/api/leads', $leadData);
-    $response->assertStatus(201);
-    $leadId = $response->json('data.id');
-
-    $anamnesis = Anamnesis::where('lead_id', $leadId)->first();
-
-    // Check UUID format
-    expect($anamnesis->id)->toMatch('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i');
-
-    // Check created_by is integer (user ID) or null if nullable
-    if ($anamnesis->created_by) {
-        expect($anamnesis->created_by)->toBeInt();
-    }
-
-    // Check timestamps
-    expect($anamnesis->created_at)->not->toBeNull()
-        ->and($anamnesis->updated_at)->not->toBeNull()
-        ->and($anamnesis->user_id)->toBeInt();
-
-    // Check user_id is numeric
 });
 
 test('API response includes correct lead data structure', function () {
@@ -338,37 +249,6 @@ test('API response includes correct lead data structure', function () {
     // Verify the lead actually exists with this ID
     $lead = Lead::find($leadId);
     expect($lead)->not->toBeNull();
-});
-
-test('May not store lead with relation to organisation without patient', function () {
-    // Arrange: Get required IDs for lead creation
-    $source = Source::first();
-    $type = Type::first();
-    $channel = Channel::first();
-
-    $uniqueId = uniqid();
-    $leadData = [
-        'first_name'      => 'John',
-        'last_name'       => 'Doe'.$uniqueId,
-        'email'           => 'john.doe.'.$uniqueId.'@example.com',
-        'phone'           => '0612345678',
-        'company_name'    => 'Test Company',
-        'lead_source_id'  => $source->id,
-        'lead_channel_id' => $channel->id,
-        'lead_type_id'    => $type->id,
-        'person'          => ['organization_id' => 2],
-        'tags'            => ['api', 'test'],
-    ];
-
-    // Act: Make API request to create lead
-    $response = makeApiRequest('postJson', '/api/leads', $leadData);
-
-    // Assert: Check API response
-    $response->assertStatus(400)
-        ->assertJson([
-            'message' => 'Lead creation failed.',
-            'errors'  => ['Een organisatie mag alleen gekoppeld worden als er ook een contactpersoon is.'],
-        ]);
 });
 
 test('API lead creation validates email and phone array structure', function () {

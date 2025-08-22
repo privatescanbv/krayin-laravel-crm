@@ -89,7 +89,7 @@ class PersonDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'phones',
-            'label'      => trans('admin::app.contacts.persons.index.datagrid.phones'),
+            'label'      => trans('admin::app.contacts.persons.index.datagrid.contact-numbers'),
             'type'       => 'string',
             'sortable'   => true,
             'filterable' => true,

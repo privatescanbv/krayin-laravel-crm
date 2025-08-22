@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Lead;
 
+use App\Models\Anamnesis;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -22,11 +23,7 @@ use Webkul\Admin\Http\Requests\MassUpdateRequest;
 use Webkul\Admin\Http\Resources\LeadResource;
 use Webkul\Admin\Http\Resources\StageResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
-use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
-use Webkul\Core\Contracts\Validations\EmailValidator;
-use Webkul\Core\Contracts\Validations\PhoneValidator;
-use App\Validators\DateValidator;
 use Webkul\Lead\Helpers\MagicAI;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Lead\Repositories\PipelineRepository;
@@ -296,7 +293,6 @@ class LeadController extends Controller
     public function view(int $id)
     {
         $lead = $this->leadRepository->with([
-            'anamnesis',
             'address',
             'organization',
             'source',
@@ -952,31 +948,23 @@ class LeadController extends Controller
     public function detachPerson(int $leadId, int $personId)
     {
         try {
-            $lead = $this->leadRepository->findOrFail($leadId);
-
-            // Check if this is the last person
-            $currentPersonCount = \DB::table('lead_persons')->where('lead_id', $leadId)->count();
-
             // Remove the relationship
-            \DB::table('lead_persons')
+            DB::table('lead_persons')
                 ->where('lead_id', $leadId)
                 ->where('person_id', $personId)
                 ->delete();
 
-            // If this was the last person, delete anamnesis
-            if ($currentPersonCount <= 1) {
-                if ($lead->anamnesis) {
-                    $lead->anamnesis->delete();
-                }
-            }
+            Anamnesis::where('lead_id', $leadId)
+                ->where('user_id', $personId)
+                ->delete();
 
             return response()->json([
                 'message' => 'Persoon succesvol ontkoppeld van lead.',
                 'success' => true
             ]);
 
-        } catch (\Exception $e) {
-            \Log::error('Error detaching person from lead', [
+        } catch (Exception $e) {
+            Log::error('Error detaching person from lead', [
                 'lead_id' => $leadId,
                 'person_id' => $personId,
                 'error' => $e->getMessage()

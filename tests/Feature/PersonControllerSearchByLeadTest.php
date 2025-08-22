@@ -262,7 +262,7 @@ test('returns results with match scores and sorts by score', function () {
     $this->assertTrue(! empty($x));
     $onlyNameMatch = round($x->first()->match_score, 2);
     expect($firstScore)->toBeGreaterThan($secondScore);
-    $this->assertEquals( 73, $onlyNameMatch);
+    $this->assertEquals(73, $onlyNameMatch);
 });
 
 test('validates email and phone array structure when creating person', function () {

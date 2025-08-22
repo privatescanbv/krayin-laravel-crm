@@ -2,6 +2,7 @@
 
 namespace Webkul\Lead\Models;
 
+use App\Models\Anamnesis;
 use App\Models\Department;
 use Carbon\Carbon;
 use Exception;
@@ -9,6 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
@@ -136,19 +138,14 @@ class Lead extends Model implements LeadContract
      */
     public function attachPersons(array $personIds)
     {
-        $hadPersons = $this->persons->count() > 0;
-        
         foreach ($personIds as $personId) {
             DB::table('lead_persons')->insertOrIgnore([
                 'lead_id' => $this->id,
                 'person_id' => $personId,
             ]);
         }
-        
-        // Create anamnesis if this is the first person attached
-        if (!$hadPersons && count($personIds) > 0) {
-            $this->createAnamnesis();
-        }
+
+        $this->createMissingAnamnesis($personIds);
     }
 
     /**
@@ -360,14 +357,6 @@ class Lead extends Model implements LeadContract
     }
 
     /**
-     * Get the anamnesis that belongs to the lead.
-     */
-    public function anamnesis()
-    {
-        return $this->hasOne(\App\Models\Anamnesis::class, 'lead_id');
-    }
-
-    /**
      * Check if this lead has potential duplicates.
      */
     public function hasPotentialDuplicates(): bool
@@ -438,24 +427,21 @@ class Lead extends Model implements LeadContract
     /**
      * Create anamnesis for this lead.
      */
-    private function createAnamnesis(): void
+    private function createMissingAnamnesis(array $personIds): void
     {
-        // Check if anamnesis already exists
-        if ($this->anamnesis) {
-            return;
-        }
-
-        $currentUserId = auth()->id() ?? $this->user_id ?? 1;
-
         try {
-            \App\Models\Anamnesis::create([
-                'id' => \Illuminate\Support\Str::uuid(),
-                'lead_id' => $this->id,
-                'name' => 'Anamnesis voor ' . $this->name,
-                'user_id' => $currentUserId,
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Failed to create anamnesis for lead: ' . $e->getMessage(), [
+            foreach ($personIds as $personId) {
+              if (!Anamnesis::where('lead_id', $this->id)->where('user_id', $personId)->exists()) {
+                  Anamnesis::create([
+                      'id' => Str::uuid(),
+                      'lead_id' => $this->id,
+                      'name' => 'Anamnesis voor ' . $this->name,
+                      'user_id' => $personId,
+                  ]);
+              }
+            }
+        } catch (Exception $e) {
+            Log::error('Failed to create anamnesis for lead: ' . $e->getMessage(), [
                 'lead_id' => $this->id,
                 'error' => $e->getMessage(),
             ]);

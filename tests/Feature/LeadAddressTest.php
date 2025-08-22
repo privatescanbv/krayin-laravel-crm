@@ -19,7 +19,7 @@ test('test_address_is_saved_when_creating_lead', function () {
     $leadData = [
         'title'            => 'Test Lead',
         'emails'           => [['value' => 'test1@example.com', 'label' => 'Work']],
-        'contact_numbers'  => [['value' => '111111111', 'label' => 'Mobile']],
+        'phones'           => [['value' => '111111111', 'label' => 'Mobile']],
         'entity_type'      => 'leads',
         'department_id'    => 1,
         'address'          => [
@@ -69,7 +69,7 @@ test('test_address_is_updated_when_updating_lead', function () {
     $leadData = [
         'title'            => 'Test Lead',
         'emails'           => [['value' => 'test2@example.com', 'label' => 'Work']],
-        'contact_numbers'  => [['value' => '222222222', 'label' => 'Mobile']],
+        'phones'           => [['value' => '222222222', 'label' => 'Mobile']],
         'entity_type'      => 'leads',
         'address'          => [
             'street'       => 'Oude Straat',
@@ -85,7 +85,7 @@ test('test_address_is_updated_when_updating_lead', function () {
     $updateData = [
         'title'            => 'Updated Lead',
         'emails'           => [['value' => 'updated2@example.com', 'label' => 'Work']],
-        'contact_numbers'  => [['value' => '333333333', 'label' => 'Mobile']],
+        'phones'           => [['value' => '333333333', 'label' => 'Mobile']],
         'entity_type'      => 'leads',
         'address'          => [
             'street'              => 'Nieuwe Straat',

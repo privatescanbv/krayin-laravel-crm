@@ -393,7 +393,7 @@ test('manual search handles exact match correctly', function () {
         'salutation'          => null,
         'gender'              => null,
         'emails'              => [['value' => 'john@example.com', 'label' => 'Work']],
-        'contact_numbers'     => [['value' => '123456789', 'label' => 'Mobile']], // Only use contact_numbers to avoid duplication
+        'phones'              => [['value' => '123456789', 'label' => 'Mobile']], // Use phones instead of contact_numbers
         'date_of_birth'       => '1985-05-15',
         'user_id'             => test()->user->id,
     ]);
@@ -412,7 +412,7 @@ test('manual search handles exact match correctly', function () {
         'first_name'  => 'John',
         'last_name'   => 'Smith',
         'emails'      => [['value' => 'john.smith@example.com', 'label' => 'Work']],
-        'contact_numbers' => [['value' => '987654321', 'label' => 'Mobile']], // Different phone
+        'phones' => [['value' => '987654321', 'label' => 'Mobile']], // Different phone
         'user_id'     => test()->user->id,
     ]);
 
@@ -421,7 +421,7 @@ test('manual search handles exact match correctly', function () {
         'first_name'  => 'John',
         'last_name'   => 'Doe',
         'emails'      => [['value' => 'john@example.com', 'label' => 'Work']],
-        'contact_numbers' => [['value' => '555666777', 'label' => 'Mobile']], // Different phone
+        'phones' => [['value' => '555666777', 'label' => 'Mobile']], // Different phone
         'user_id'     => test()->user->id,
     ]);
 

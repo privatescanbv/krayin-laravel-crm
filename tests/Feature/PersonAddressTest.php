@@ -19,7 +19,7 @@ test('test_address_is_saved_when_creating_person', function () {
     $personData = [
         'first_name'            => 'Test Person',
         'emails'                => [['value' => 'test1@example.com', 'label' => 'Work']],
-        'contact_numbers'       => [['value' => '111111111', 'label' => 'Mobile']],
+        'phones'                => [['value' => '111111111', 'label' => 'Mobile']],
         'entity_type'           => 'persons',
         'address'               => [
             'street'              => 'Hoofdstraat',
@@ -67,7 +67,7 @@ test('test_address_is_updated_when_updating_person', function () {
     $personData = [
         'first_name'            => 'Test Person',
         'emails'                => [['value' => 'test2@example.com', 'label' => 'Work']],
-        'contact_numbers'       => [['value' => '222222222', 'label' => 'Mobile']],
+        'phones'                => [['value' => '222222222', 'label' => 'Mobile']],
         'entity_type'           => 'persons',
         'address'               => [
             'street'       => 'Oude Straat',
@@ -83,7 +83,7 @@ test('test_address_is_updated_when_updating_person', function () {
     $updateData = [
         'first_name'            => 'Updated Person',
         'emails'                => [['value' => 'updated2@example.com', 'label' => 'Work']],
-        'contact_numbers'       => [['value' => '333333333', 'label' => 'Mobile']],
+        'phones'                => [['value' => '333333333', 'label' => 'Mobile']],
         'entity_type'           => 'persons',
         'address'               => [
             'street'              => 'Nieuwe Straat',

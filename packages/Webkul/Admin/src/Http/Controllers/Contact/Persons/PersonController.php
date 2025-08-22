@@ -588,7 +588,6 @@ class PersonController extends Controller
                 'personPhones' => $personPhones,
                 'lead_phones_raw' => $lead->phones,
                 'person_phones_raw' => $person->phones,
-                'person_contact_numbers_raw' => $person->contact_numbers,
             ]);
         }
 

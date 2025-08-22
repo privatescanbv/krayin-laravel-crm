@@ -275,7 +275,7 @@ class ImportLeadsFromSugarCRM extends Command
                     'phones'                 => $this->formatPhones($record),
                     'lead_value'             => 0,
                     'status'                 => $this->mapStatus($record->status),
-                    'person_id'              => $person->id,
+                    // person_id removed - now using many-to-many relationship
                     'lead_pipeline_id'       => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value,
                     'lead_pipeline_stage_id' => $this->mapStage($record),
                     'salutation'             => $record->salutation,
@@ -294,12 +294,16 @@ class ImportLeadsFromSugarCRM extends Command
                     'updated_at'             => $record->date_modified ?? now(),
                 ]);
 
+                // Attach person to lead using new many-to-many relationship
+                if ($person && $person->id) {
+                    $lead->attachPersons([$person->id]);
+                }
+
                 // Create anamnesis data
                 $this->createAnamnesis($lead, $record);
 
-                // Debug: Check if lead has person relation
-                $lead->load('person');
-                $this->info('Lead created with person: '.($lead->person ? $lead->person->name : 'NULL'));
+                // Debug: Check if lead has persons relation
+                $this->info('Lead created with person attached: '.($lead->persons->count() > 0 ? $lead->persons->first()->name : 'NONE'));
 
                 $imported++;
                 $bar->advance();

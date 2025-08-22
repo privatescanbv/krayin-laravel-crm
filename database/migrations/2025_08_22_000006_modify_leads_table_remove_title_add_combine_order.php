@@ -13,7 +13,7 @@ return new class extends Migration
             $table->dropColumn('title');
 
             // Add combine_order boolean column (NOT NULL, default true)
-            $table->boolean('combine_order')->default(true)->after('organization_id');
+            $table->boolean('combine_order')->default(true);
         });
     }
 

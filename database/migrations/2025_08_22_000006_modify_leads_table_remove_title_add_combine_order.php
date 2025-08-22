@@ -6,33 +6,23 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up()
     {
         Schema::table('leads', function (Blueprint $table) {
             // Remove title column
             $table->dropColumn('title');
-            
+
             // Add combine_order boolean column
             $table->boolean('combine_order')->default(true)->after('organization_id');
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down()
     {
         Schema::table('leads', function (Blueprint $table) {
             // Add title column back
             $table->string('title')->after('id');
-            
+
             // Remove combine_order column
             $table->dropColumn('combine_order');
         });

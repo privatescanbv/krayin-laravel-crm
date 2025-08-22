@@ -163,7 +163,7 @@ test('can update person with lead data', function () {
                 'first_name' => true,
                 'last_name'  => true,
                 'emails'     => true,
-            ]
+            ],
         ])->assertOk();
 
     $person->refresh();
@@ -408,13 +408,13 @@ test('manual search handles exact match correctly', function () {
     ]);
 
     // Add matching address for perfect score
-    \App\Models\Address::create([
-        'person_id' => $exactMatchPerson->id,
-        'street' => 'Test Street',
+    Address::create([
+        'person_id'    => $exactMatchPerson->id,
+        'street'       => 'Test Street',
         'house_number' => '123', // Required field
-        'city' => 'Test City',
-        'postal_code' => '1234AB',
-        'country' => 'Nederland',
+        'city'         => 'Test City',
+        'postal_code'  => '1234AB',
+        'country'      => 'Nederland',
     ]);
 
     $partialMatchPerson = Person::factory()->create([
@@ -422,7 +422,7 @@ test('manual search handles exact match correctly', function () {
         'first_name'  => 'John',
         'last_name'   => 'Smith',
         'emails'      => [['value' => 'john.smith@example.com', 'label' => 'Work']],
-        'phones' => [['value' => '987654321', 'label' => 'Mobile']], // Different phone
+        'phones'      => [['value' => '987654321', 'label' => 'Mobile']], // Different phone
         'user_id'     => test()->user->id,
     ]);
 
@@ -431,7 +431,7 @@ test('manual search handles exact match correctly', function () {
         'first_name'  => 'John',
         'last_name'   => 'Doe',
         'emails'      => [['value' => 'john@example.com', 'label' => 'Work']],
-        'phones' => [['value' => '555666777', 'label' => 'Mobile']], // Different phone
+        'phones'      => [['value' => '555666777', 'label' => 'Mobile']], // Different phone
         'user_id'     => test()->user->id,
     ]);
 
@@ -456,13 +456,13 @@ test('manual search handles exact match correctly', function () {
     ]);
 
     // Add matching address to lead for perfect score
-    \App\Models\Address::create([
-        'lead_id' => $lead->id,
-        'street' => 'Test Street',
+    Address::create([
+        'lead_id'      => $lead->id,
+        'street'       => 'Test Street',
         'house_number' => '123', // Required field
-        'city' => 'Test City',
-        'postal_code' => '1234AB',
-        'country' => 'Nederland',
+        'city'         => 'Test City',
+        'postal_code'  => '1234AB',
+        'country'      => 'Nederland',
     ]);
 
     // Refresh models to load address relationships
@@ -485,37 +485,37 @@ test('manual search handles exact match correctly', function () {
     $data = $response->json();
     expect($data['data'])->toBeArray();
 
-    if( $this->logDedbug) {
+    if ($this->logDedbug) {
         // Debug: Log what we're looking for
         Log::info('Test Debug - Looking for exact match', [
-            'exactMatchPerson_id' => $exactMatchPerson->id,
-            'partialMatchPerson_id' => $partialMatchPerson->id,
+            'exactMatchPerson_id'       => $exactMatchPerson->id,
+            'partialMatchPerson_id'     => $partialMatchPerson->id,
             'differentAddressPerson_id' => $differentAddressPerson->id,
-            'response_data_count' => count($data['data']),
-            'response_person_ids' => collect($data['data'])->pluck('id')->toArray(),
+            'response_data_count'       => count($data['data']),
+            'response_person_ids'       => collect($data['data'])->pluck('id')->toArray(),
         ]);
 
         // Debug: Show all returned persons and their scores
         Log::info('All returned persons with scores', [
-            'persons' => collect($data['data'])->map(function($person) {
+            'persons' => collect($data['data'])->map(function ($person) {
                 return [
-                    'id' => $person['id'],
-                    'name' => $person['name'],
+                    'id'         => $person['id'],
+                    'name'       => $person['name'],
                     'first_name' => $person['first_name'],
-                    'last_name' => $person['last_name'],
-                    'score' => $person['score'] ?? 'NO SCORE',
+                    'last_name'  => $person['last_name'],
+                    'score'      => $person['score'] ?? 'NO SCORE',
                 ];
-            })->toArray()
+            })->toArray(),
         ]);
     }
     // Should find exact match with score 100
     $exactMatch = collect($data['data'])->firstWhere('id', $exactMatchPerson->id);
 
     \Log::info('Found exact match', [
-        'exactMatch' => $exactMatch,
+        'exactMatch'     => $exactMatch,
         'looking_for_id' => $exactMatchPerson->id,
     ]);
 
     expect($exactMatch)->not->toBeNull();
-    expect($exactMatch['score'])->toBe(100.0);
+    expect($exactMatch['score'])->toBe(100);
 });

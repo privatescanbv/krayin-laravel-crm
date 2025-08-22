@@ -17,7 +17,6 @@ test('test_address_is_saved_when_creating_lead', function () {
     $user = User::factory()->create();
 
     $leadData = [
-        'title'            => 'Test Lead',
         'emails'           => [['value' => 'test1@example.com', 'label' => 'Work']],
         'phones'           => [['value' => '111111111', 'label' => 'Mobile']],
         'entity_type'      => 'leads',
@@ -40,7 +39,6 @@ test('test_address_is_saved_when_creating_lead', function () {
     // Assert
     $this->assertDatabaseHas('leads', [
         'id'            => $lead->id,
-        'title'         => 'Test Lead',
         'department_id' => 1,
     ]);
 
@@ -67,7 +65,6 @@ test('test_address_is_updated_when_updating_lead', function () {
     $leadRepository = app(LeadRepository::class);
 
     $leadData = [
-        'title'            => 'Test Lead',
         'emails'           => [['value' => 'test2@example.com', 'label' => 'Work']],
         'phones'           => [['value' => '222222222', 'label' => 'Mobile']],
         'entity_type'      => 'leads',
@@ -83,7 +80,6 @@ test('test_address_is_updated_when_updating_lead', function () {
     $lead = $leadRepository->create($leadData);
 
     $updateData = [
-        'title'            => 'Updated Lead',
         'emails'           => [['value' => 'updated2@example.com', 'label' => 'Work']],
         'phones'           => [['value' => '333333333', 'label' => 'Mobile']],
         'entity_type'      => 'leads',
@@ -104,7 +100,6 @@ test('test_address_is_updated_when_updating_lead', function () {
     // Assert
     $this->assertDatabaseHas('leads', [
         'id'    => $lead->id,
-        'title' => 'Updated Lead',
     ]);
 
     $this->assertDatabaseHas('addresses', [

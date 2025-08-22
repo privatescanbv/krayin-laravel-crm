@@ -61,7 +61,12 @@
                                             onclick="event.stopPropagation()"
                                         ></a>
                                     @endif
-
+                                    <a
+                                        href="{{ route('admin.contacts.persons.view', $person->id) }}"
+                                        class="icon-eye rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                                        title="Bekijk persoon"
+                                        onclick="event.stopPropagation()"
+                                    ></a>
                                     <button
                                         type="button"
                                         class="icon-trash rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 text-red-600 hover:text-red-700"
@@ -103,7 +108,7 @@
                                                 <i class="icon-edit"></i>
                                             </a>
                                         </div>
-                                        
+
                                         <div class="space-y-1 text-xs">
                                             @if ($lead->anamnesis->height || $lead->anamnesis->weight)
                                                 <div class="flex gap-3">
@@ -181,7 +186,7 @@ function openAddPersonModal() {
 function detachPerson(personId) {
     if (confirm('Weet je zeker dat je deze persoon wilt ontkoppelen van de lead?')) {
         const leadId = {{ $lead->id }};
-        
+
         fetch(`/admin/leads/${leadId}/detach-person/${personId}`, {
             method: 'DELETE',
             headers: {
@@ -196,7 +201,7 @@ function detachPerson(personId) {
                 // Remove the person card from the DOM
                 const personCard = document.querySelector(`#person-details-${personId}`).closest('.border');
                 personCard.remove();
-                
+
                 // Show success message
                 window.location.reload(); // Reload to update person count and anamnesis
             } else {
@@ -214,7 +219,7 @@ function togglePersonCard(personId) {
     const details = document.getElementById(`person-details-${personId}`);
     const icon = document.getElementById(`toggle-icon-${personId}`);
     const svg = document.getElementById(`toggle-svg-${personId}`);
-    
+
     if (details.style.display === 'none') {
         // Expand
         details.style.display = 'block';
@@ -223,7 +228,7 @@ function togglePersonCard(personId) {
         icon.classList.remove('bg-blue-100', 'hover:bg-blue-200');
         icon.classList.add('bg-blue-200', 'hover:bg-blue-300');
     } else {
-        // Collapse  
+        // Collapse
         details.style.display = 'none';
         svg.style.transform = 'rotate(0deg)';
         icon.title = 'Klik om details te tonen';

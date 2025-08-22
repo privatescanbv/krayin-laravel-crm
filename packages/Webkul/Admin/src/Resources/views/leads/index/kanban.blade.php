@@ -241,7 +241,7 @@
                                                 v-else-if="element.days_until_due_date === 0"
                                                 class="text-orange-600 font-medium"
                                             >
-                                                @lang('admin::app.common.filters.date-range.today')
+                                                Vandaag
                                             </span>
                                             <span
                                                 v-else

@@ -299,7 +299,7 @@ class PersonController extends Controller
                     $score = $this->calculateMatchScore($lead, $person);
                     $person->match_score = $score;
                     $person->match_score_percentage = round($score, 1);
-                    
+
                     // Debug: Log which persons are being scored
                     if (app()->environment('testing')) {
                         \Log::info('Person being scored', [
@@ -310,7 +310,7 @@ class PersonController extends Controller
                             'calculated_score' => $score,
                         ]);
                     }
-                    
+
                     return $person;
                 });
 
@@ -498,6 +498,11 @@ class PersonController extends Controller
                         if (in_array($field, $importantNameFields)) {
                             $importantMatches++;
                         }
+                    } else {
+                        Log::info("Name field '{$field}' did not match", [
+                            'lead_value' => $leadValue,
+                            'person_value' => $personValue
+                        ]);
                     }
                 }
             }
@@ -900,7 +905,7 @@ class PersonController extends Controller
             // Contact Information
             'emails' => 'E-mailadressen',
             'phones' => 'Telefoonnummers',
-            
+
             // Address Information
             'address' => 'Adres',
         ];

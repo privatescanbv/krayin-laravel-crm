@@ -12,8 +12,8 @@ return new class extends Migration
             // Remove title column
             $table->dropColumn('title');
 
-            // Add combine_order boolean column
-            $table->boolean('combine_order')->default(true)->after('organization_id');
+            // Add combine_order boolean column (NOT NULL, default false)
+            $table->boolean('combine_order')->default(false)->after('organization_id');
         });
     }
 

@@ -252,10 +252,10 @@
                                     <x-admin::form.control-group.control
                                         type="select"
                                         name="combine_order"
-                                        value="{{ old('combine_order', $lead->combine_order ?? 1) }}"
+                                        value="{{ old('combine_order', $lead->combine_order ?? 0) }}"
                                     >
-                                        <option value="1" {{ (old('combine_order', $lead->combine_order ?? 1) == 1) ? 'selected' : '' }}>Ja - Orders mogen gecombineerd worden</option>
-                                        <option value="0" {{ (old('combine_order', $lead->combine_order ?? 1) == 0) ? 'selected' : '' }}>Nee - Gescheiden orders per persoon</option>
+                                        <option value="1" {{ (old('combine_order', $lead->combine_order ?? 0) == 1) ? 'selected' : '' }}>Ja - Orders mogen gecombineerd worden</option>
+                                        <option value="0" {{ (old('combine_order', $lead->combine_order ?? 0) == 0) ? 'selected' : '' }}>Nee - Gescheiden orders per persoon</option>
                                     </x-admin::form.control-group.control>
                                     <x-admin::form.control-group.error control-name="combine_order"/>
                                 </x-admin::form.control-group>

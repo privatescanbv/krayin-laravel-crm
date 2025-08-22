@@ -139,7 +139,7 @@ class LeadController extends Controller
             $data[$stage->sort_order]['leads'] = [
                 'data' => LeadResource::collection($paginator = $query->with([
                     'tags',
-                    'type',
+                    'type', 
                     'source',
                     'user',
                     'organization',
@@ -147,7 +147,7 @@ class LeadController extends Controller
                     'pipeline.stages',
                     'stage',
                     'attribute_values',
-                ])->paginate(10)),
+                ])->with('persons')->paginate(10)),
 
                 'meta' => [
                     'current_page' => $paginator->currentPage(),

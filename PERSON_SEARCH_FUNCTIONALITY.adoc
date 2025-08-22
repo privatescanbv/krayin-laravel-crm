@@ -1,211 +1,106 @@
-= Person Search Functionality
+= Personen Zoeken en Koppelen
 
-== Overzicht
+== Hoe werkt het zoeken naar personen?
 
-De person search functionaliteit in de Lead-Person koppeling gebruikt Laravel's `RequestCriteria` om te zoeken in de persons database. Deze documentatie legt uit hoe het zoeken werkt en welke velden doorzoekbaar zijn.
+Wanneer je een lead aanmaakt of bewerkt, kun je personen zoeken en koppelen. Het systeem zoekt automatisch in alle contactgegevens en toont de beste matches.
 
-== Hoe Person Search Werkt
+== Waar wordt op gezocht?
 
-=== API Endpoint
-----
-GET /admin/contacts/persons/search?query={zoekterm}&lead_id={lead_id}
-----
+=== Naam gegevens
+- Voornaam (bijv. "John")
+- Achternaam (bijv. "Doe") 
+- Tussenvoegsel (bijv. "van", "de")
+- Getrouwde naam
+- Initialen (bijv. "J.A.")
 
-=== Flow Diagram
-----
-Frontend Input → PersonController::search() → RequestCriteria → Database Query → Match Score Calculation → Filtered Results
-----
+=== Contact gegevens
+- E-mailadressen
+- Telefoonnummers
 
-=== Stappen:
+=== Bedrijfsgegevens
+- Bedrijfsnaam
+- Functietitel
 
-1. **Frontend**: Stuurt zoekterm via AJAX naar persons search endpoint
-2. **PersonController**: `search()` method (regel 286) ontvangt request
-3. **RequestCriteria**: Zoekt automatisch in alle `$fieldSearchable` velden
-4. **Database Query**: Genereert `WHERE` clauses met `LIKE '%zoekterm%'`
-5. **Match Scores**: Berekend als `lead_id` parameter aanwezig is
-6. **Response**: Retourneert gefilterde resultaten met match percentages
+== Zoeken in de praktijk
 
-== Doorzoekbare Velden
-
-De volgende velden worden doorzocht bij person lookup:
-
-=== Naam Velden (85% match weight)
-- `name` - Volledige naam (berekend veld)
-- `first_name` - Voornaam ✅
-- `last_name` - Achternaam ✅  
-- `lastname_prefix` - Tussenvoegsel (van, de, den, etc.)
-- `married_name` - Getrouwde naam
-- `married_name_prefix` - Getrouwde naam voorvoegsel
-- `initials` - Initialen (J.A., P.J., etc.)
-
-=== Contact Velden (5% match weight each)
-- `emails` - E-mailadressen (JSON array)
-- `phones` - Telefoonnummers (JSON array)
-
-=== Organisatie Velden
-- `organization_id` - Organisatie ID
-- `organization.name` - Organisatie naam (via relatie)
-- `job_title` - Functietitel
-
-=== Systeem Velden
-- `user_id` - Eigenaar ID
-- `user.name` - Eigenaar naam (via relatie)
-
-== Zoek Voorbeelden
-
-=== Naam Zoeken
-[cols="1,1,2"]
+=== Zoeken op naam
+[cols="1,2"]
 |===
-|Zoekterm |Veld |Resultaat
+|Zoekterm |Wat je vindt
 
 |`John`
-|`first_name`
-|Vindt alle personen met voornaam John
+|Alle personen met voornaam John
 
 |`Doe`
-|`last_name`
-|Vindt alle personen met achternaam Doe
-
-|`van`
-|`lastname_prefix`
-|Vindt alle personen met tussenvoegsel 'van'
+|Alle personen met achternaam Doe
 
 |`John Doe`
-|`name` (berekend)
-|Vindt personen met volledige naam John Doe
+|Personen met de volledige naam John Doe
 
-|`J.A.`
-|`initials`
-|Vindt personen met initialen J.A.
+|`van`
+|Personen met tussenvoegsel "van" (van der Berg, van Dijk, etc.)
 |===
 
-=== Contact Zoeken
-[cols="1,1,2"]
+=== Zoeken op contact
+[cols="1,2"]
 |===
-|Zoekterm |Veld |Resultaat
+|Zoekterm |Wat je vindt
 
-|`john@example.com`
-|`emails`
-|Vindt personen met dit e-mailadres
-
-|`+31612345678`
-|`phones`
-|Vindt personen met dit telefoonnummer
+|`john@email.com`
+|Personen met dit e-mailadres
 
 |`06-12345678`
-|`phones`
-|Vindt personen met variaties van telefoonnummer
+|Personen met dit telefoonnummer
+
+|`ACME`
+|Personen die werken bij bedrijven met "ACME" in de naam
 |===
 
-=== Organisatie Zoeken
-[cols="1,1,2"]
-|===
-|Zoekterm |Veld |Resultaat
+== Match percentages
 
-|`ACME Corp`
-|`organization.name`
-|Vindt alle personen van organisatie ACME Corp
+Wanneer je een lead hebt met contactgegevens, toont het systeem hoe goed elke persoon past:
 
-|`Manager`
-|`job_title`
-|Vindt alle personen met functietitel Manager
-|===
+=== Kleuren betekenis
+- **Groen (80%+)**: Perfecte match - waarschijnlijk dezelfde persoon
+- **Geel (60-79%)**: Goede match - mogelijk dezelfde persoon  
+- **Oranje (40-59%)**: Redelijke match - controleren aanbevolen
+- **Rood (<40%)**: Slechte match - waarschijnlijk andere persoon
 
-== Match Score Berekening
+=== Wat beïnvloedt de match?
+- **Naam overeenkomsten** (zwaarst gewicht)
+- **E-mail overeenkomsten**  
+- **Telefoon overeenkomsten**
+- **Adres overeenkomsten**
 
-Wanneer `lead_id` parameter wordt meegegeven, wordt een match score berekend:
+== Tips voor gebruik
 
-=== Gewichten
-- **Naam velden**: 85% (voornaam, achternaam, etc.)
-- **E-mailadressen**: 5%
-- **Telefoonnummers**: 5%
-- **Adresgegevens**: 5%
+=== Effectief zoeken
+1. **Begin met voornaam** - dit geeft meestal de beste resultaten
+2. **Probeer achternaam** als voornaam te veel resultaten geeft
+3. **Gebruik e-mail** voor exacte matches
+4. **Let op match kleuren** - groen is bijna altijd correct
 
-=== Score Kleuren
-- **80%+ (Groen)**: Perfecte match
-- **60-79% (Geel)**: Goede match
-- **40-59% (Oranje)**: Redelijke match
-- **<40% (Rood)**: Slechte match
+=== Nieuwe persoon aanmaken
+Als je de persoon niet kunt vinden:
+1. **Klik "Nieuwe persoon aanmaken"** 
+2. **Gebruik lead gegevens** - het systeem vult automatisch in
+3. **Of maak handmatig aan** met eigen gegevens
 
-== Technische Details
+=== Personen ontkoppelen
+- **Klik de rode prullenbak** naast een gekoppelde persoon
+- **Bevestig de actie** - dit verbreekt alleen de koppeling
+- **De persoon blijft bestaan** in het systeem
 
-=== RequestCriteria Query Building
-----
-// Automatisch gegenereerde query voor zoekterm "John":
-SELECT * FROM persons 
-WHERE (
-    name LIKE '%John%' OR
-    first_name LIKE '%John%' OR
-    last_name LIKE '%John%' OR
-    lastname_prefix LIKE '%John%' OR
-    married_name LIKE '%John%' OR
-    married_name_prefix LIKE '%John%' OR
-    initials LIKE '%John%' OR
-    emails LIKE '%John%' OR
-    phones LIKE '%John%' OR
-    job_title LIKE '%John%'
-)
-----
+== Veelgestelde vragen
 
-=== API Response Format
-----
-{
-  "data": [
-    {
-      "id": 1,
-      "name": "John Doe",
-      "first_name": "John",
-      "last_name": "Doe",
-      "emails": [{"value": "john@example.com", "label": "work"}],
-      "phones": [{"value": "+31612345678", "label": "mobile"}],
-      "organization": {"id": 5, "name": "ACME Corp"},
-      "match_score_percentage": 85.5  // Alleen als lead_id parameter aanwezig
-    }
-  ],
-  "meta": { ... }
-}
-----
+**Q: Waarom zie ik geen resultaten?**
+A: Controleer of je minimaal 2 letters hebt getypt en of de persoon daadwerkelijk bestaat.
 
-== Gebruik in Multi-ContactMatcher
+**Q: Waarom krijg ik verkeerde matches?**  
+A: Het systeem zoekt breed. Gebruik specifiekere zoektermen zoals e-mail voor exacte matches.
 
-=== Frontend Implementation
-----
-// API Call:
-const response = await axios.get('/admin/contacts/persons/search', {
-    params: { 
-        query: 'John',
-        lead_id: 28  // Voor match score berekening
-    }
-});
+**Q: Kan ik meerdere personen koppelen?**
+A: Ja, je kunt onbeperkt personen koppelen aan één lead.
 
-// Filtering:
-const allSuggestions = response.data.data || [];
-this.suggestions = allSuggestions.filter(person => 
-    !this.isPersonSelected(person.id)  // Verwijder al gekoppelde personen
-);
-----
-
-=== Zoek Gedrag
-1. **Minimaal 2 karakters** vereist voor zoeken
-2. **300ms debouncing** om API calls te beperken
-3. **Loading spinner** tijdens zoeken
-4. **Auto-filter** al gekoppelde personen
-5. **Match scores** automatisch berekend en getoond
-
-== Troubleshooting
-
-=== Geen Resultaten
-- **Check**: Of personen bestaan in database
-- **Check**: Of zoekterm minimaal 2 karakters heeft
-- **Check**: Browser console voor API errors
-- **Check**: Of velden daadwerkelijk searchable zijn
-
-=== Verkeerde Resultaten  
-- **Check**: `$fieldSearchable` array in PersonRepository
-- **Check**: Database indexen op name velden voor performance
-- **Check**: JSON structuur van emails/phones velden
-
-=== Match Scores Werken Niet
-- **Check**: Of `lead_id` parameter wordt meegegeven
-- **Check**: Of lead personal fields gevuld zijn voor matching
-- **Check**: `calculateMatchScore()` method in PersonController
+**Q: Wat betekenen de percentages?**
+A: Dit toont hoe goed de gevonden persoon past bij je lead gegevens. Groen = zeer waarschijnlijk dezelfde persoon.

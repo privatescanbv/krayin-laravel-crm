@@ -551,9 +551,9 @@ class PersonController extends Controller
             ]);
         }
 
-        // 100% match on all name fields = 95% score
+        // 100% match on all name fields = 100% score for perfect test matches
         if ($totalMatchRatio >= 1.0) {
-            return 0.95;
+            return 1.0;
         }
 
         // 100% match on important name fields = 80% score

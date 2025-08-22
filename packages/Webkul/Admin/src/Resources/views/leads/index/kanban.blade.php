@@ -136,7 +136,6 @@
                                                <x-admin::avatar ::name="element.persons[0]?.name" class="w-6 h-6" />
                                            </div>
                                            <div v-else-if="element.first_name" class="flex-shrink-0">
-                                               <x-admin::avatar ::name="`${element.first_name} ${element.last_name}`" class="w-6 h-6" />
                                            </div>
                                            <div v-else class="flex-shrink-0">
                                                <x-admin::avatar ::name="element.name || 'Lead'" class="w-6 h-6" />

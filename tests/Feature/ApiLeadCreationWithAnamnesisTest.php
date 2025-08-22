@@ -46,7 +46,6 @@ test('API lead creation successfully creates a lead with anamnesis', function ()
         'email'           => 'john.doe.'.$uniqueId.'@example.com',
         'phone'           => '0612345678',
         'company_name'    => 'Test Company',
-        'title'           => 'Test Lead via API '.$uniqueId,
         'lead_source_id'  => $source->id,
         'lead_channel_id' => $channel->id,
         'lead_type_id'    => $type->id,
@@ -71,7 +70,6 @@ test('API lead creation successfully creates a lead with anamnesis', function ()
     // Assert: Check lead was created in database
     $this->assertDatabaseHas('leads', [
         'id'         => $leadId,
-        'title'      => 'Test Lead via API '.$uniqueId,
         'first_name' => 'John',
         'last_name'  => 'Doe'.$uniqueId,
         'status'     => 1,
@@ -114,7 +112,6 @@ test('API lead creation handles missing optional fields gracefully', function ()
         'first_name'      => 'Jane',
         'last_name'       => 'Smith'.$uniqueId,
         'email'           => 'jane.smith.'.$uniqueId.'@example.com',
-        'title'           => 'Minimal Lead '.$uniqueId,
         'lead_source_id'  => $source->id,
         'lead_channel_id' => $channel->id,
         'lead_type_id'    => $type->id,
@@ -152,7 +149,7 @@ test('API lead creation fails gracefully with invalid data', function () {
         'lead_source_id'  => $source->id,
         'lead_type_id'    => $type->id,
         'lead_channel_id' => $channel->id,
-        // Missing last_name, title, and other required fields to trigger validation errors
+        // Missing last_name, and other required fields to trigger validation errors
     ];
 
     // Act: Make API request
@@ -163,7 +160,6 @@ test('API lead creation fails gracefully with invalid data', function () {
 
     // Assert: Response should contain validation errors for missing required fields
     $response->assertJsonValidationErrors([
-        'title',      // Required field that's missing
         'last_name',  // Required field that's missing
     ]);
 
@@ -202,7 +198,6 @@ test('anamnesis creation failure does not prevent lead creation', function () {
         'first_name'      => 'ErrorTest',
         'last_name'       => 'User'.$uniqueId,
         'email'           => 'errortest'.$uniqueId.'@example.com',
-        'title'           => 'Test Lead Error Handling '.$uniqueId,
         'lead_source_id'  => $source->id,
         'lead_channel_id' => $channel->id,
         'lead_type_id'    => $type->id,
@@ -218,7 +213,6 @@ test('anamnesis creation failure does not prevent lead creation', function () {
     // Assert: Lead should exist
     $this->assertDatabaseHas('leads', [
         'id'    => $leadId,
-        'title' => 'Test Lead Error Handling '.$uniqueId,
     ]);
 
     // Assert: Anamnesis should normally be created (unless there's an actual error)
@@ -240,7 +234,6 @@ test('API lead creation with different lead types works correctly', function () 
             'first_name'      => 'Test',
             'last_name'       => 'User '.$type->id,
             'email'           => "test{$type->id}@example.com",
-            'title'           => "Test Lead Type {$type->name}",
             'lead_source_id'  => $source->id,
             'lead_channel_id' => $channel->id,
             'lead_type_id'    => $type->id,
@@ -276,7 +269,6 @@ test('anamnesis has correct UUID format and relationships', function () {
         'first_name'      => 'UUID',
         'last_name'       => 'Test'.$uniqueId,
         'email'           => 'uuid.'.$uniqueId.'@example.com',
-        'title'           => 'UUID Format Test '.$uniqueId,
         'lead_source_id'  => $source->id,
         'lead_channel_id' => $channel->id,
         'lead_type_id'    => $type->id,
@@ -314,7 +306,6 @@ test('API response includes correct lead data structure', function () {
         'first_name'      => 'Response',
         'last_name'       => 'Test'.$uniqueId,
         'email'           => 'response.'.$uniqueId.'@example.com',
-        'title'           => 'Response Structure Test '.$uniqueId,
         'lead_source_id'  => $source->id,
         'lead_channel_id' => $channel->id,
         'lead_type_id'    => $type->id,
@@ -355,7 +346,6 @@ test('May not store lead with relation to organisation without patient', functio
         'email'           => 'john.doe.'.$uniqueId.'@example.com',
         'phone'           => '0612345678',
         'company_name'    => 'Test Company',
-        'title'           => 'Test Lead via API '.$uniqueId,
         'lead_source_id'  => $source->id,
         'lead_channel_id' => $channel->id,
         'lead_type_id'    => $type->id,
@@ -386,7 +376,6 @@ test('API lead creation validates email and phone array structure', function () 
     $validLeadData = [
         'first_name'      => 'John',
         'last_name'       => 'Doe'.$uniqueId,
-        'title'           => 'Test Lead with Valid Contacts '.$uniqueId,
         'lead_source_id'  => $source->id,
         'lead_type_id'    => $type->id,
         'lead_channel_id' => $channel->id,
@@ -405,7 +394,6 @@ test('API lead creation validates email and phone array structure', function () 
     $invalidEmailData = [
         'first_name'      => 'Jane',
         'last_name'       => 'Smith'.$uniqueId,
-        'title'           => 'Test Lead with Invalid Email '.$uniqueId,
         'lead_source_id'  => $source->id,
         'lead_type_id'    => $type->id,
         'lead_channel_id' => $channel->id,
@@ -421,7 +409,6 @@ test('API lead creation validates email and phone array structure', function () 
     $invalidPhoneData = [
         'first_name'      => 'Bob',
         'last_name'       => 'Johnson'.$uniqueId,
-        'title'           => 'Test Lead with Invalid Phone '.$uniqueId,
         'lead_source_id'  => $source->id,
         'lead_type_id'    => $type->id,
         'lead_channel_id' => $channel->id,
@@ -437,7 +424,6 @@ test('API lead creation validates email and phone array structure', function () 
     $invalidLabelData = [
         'first_name'      => 'Alice',
         'last_name'       => 'Brown'.$uniqueId,
-        'title'           => 'Test Lead with Invalid Label '.$uniqueId,
         'lead_source_id'  => $source->id,
         'lead_type_id'    => $type->id,
         'lead_channel_id' => $channel->id,

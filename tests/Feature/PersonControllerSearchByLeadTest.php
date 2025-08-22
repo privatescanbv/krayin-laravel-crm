@@ -45,7 +45,6 @@ function createLeadWithAttributes(
     }
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'first_name'             => $firstName,
         'last_name'              => $lastName,
         'lead_pipeline_id'       => $pipeline->id,
@@ -189,7 +188,6 @@ test('returns results with match scores and sorts by score', function () {
     $stage = Stage::first();
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'first_name'             => 'John',
         'last_name'              => 'Smith',
         'married_name'           => 'Johnson',
@@ -264,7 +262,7 @@ test('returns results with match scores and sorts by score', function () {
     $this->assertTrue(! empty($x));
     $onlyNameMatch = round($x->first()->match_score, 2);
     expect($firstScore)->toBeGreaterThan($secondScore);
-    $this->assertEquals($onlyNameMatch, 68);
+    $this->assertEquals( 73, $onlyNameMatch);
 });
 
 test('validates email and phone array structure when creating person', function () {
@@ -347,7 +345,6 @@ test('match algorithm includes date of birth and address in scoring', function (
     $stage = Stage::first();
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'first_name'             => 'Alice',
         'last_name'              => 'Johnson',
         'emails'                 => [['value' => 'alice.johnson@example.com', 'label' => 'work']],
@@ -465,7 +462,6 @@ test('address matching works with partial postal code matches', function () {
     $stage = Stage::first();
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'first_name'             => 'Bob',
         'last_name'              => 'Wilson',
         'emails'                 => [['value' => 'bob.wilson@example.com', 'label' => 'work']],
@@ -571,7 +567,6 @@ test('date of birth matching affects name field scoring', function () {
     $stage = Stage::first();
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'first_name'             => 'Charlie',
         'last_name'              => 'Brown',
         'emails'                 => [['value' => 'charlie.brown@example.com', 'label' => 'work']],

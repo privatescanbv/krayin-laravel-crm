@@ -407,39 +407,7 @@ class LeadRepository extends Repository
      */
     private function findEmailDuplicates($lead): Collection
     {
-        $duplicates = collect();
-        $emails = $lead->emails;
-
-        // Handle case where emails might be a string or null
-        if (is_string($emails)) {
-            $emails = json_decode($emails, true) ?: [];
-        }
-
-        if (is_array($emails) && !empty($emails)) {
-            foreach ($emails as $email) {
-                if (is_array($email) && !empty($email['value'])) {
-                    try {
-                        // Use different JSON query approaches for different databases
-                        $query = LeadModel::with(['stage', 'pipeline', 'user'])
-                            ->where('id', '!=', $lead->id);
-                        if (DB::getDriverName() === 'sqlite') {
-                            // SQLite: Use LIKE for JSON searching
-                            $query->where('emails', 'LIKE', '%"' . $email['value'] . '"%');
-                        } else {
-                            // MySQL/PostgreSQL: Use whereJsonContains
-                            $query->whereJsonContains('emails', [['value' => $email['value']]]);
-                        }
-
-                        $emailDuplicates = $query->get();
-                        $duplicates = $duplicates->merge($emailDuplicates);
-                    } catch (Exception $e) {
-                        Log::error('Error searching for email duplicates: ' . $e->getMessage());
-                    }
-                }
-            }
-        }
-
-        return $duplicates;
+        return $this->findJsonFieldDuplicates($lead, 'emails');
     }
 
     /**
@@ -450,39 +418,7 @@ class LeadRepository extends Repository
      */
     private function findPhoneDuplicates($lead): Collection
     {
-        $duplicates = collect();
-        $phones = $lead->phones;
-
-        // Handle case where phones might be a string or null
-        if (is_string($phones)) {
-            $phones = json_decode($phones, true) ?: [];
-        }
-
-        if (is_array($phones) && !empty($phones)) {
-            foreach ($phones as $phone) {
-                if (is_array($phone) && !empty($phone['value'])) {
-                    try {
-                        // Use different JSON query approaches for different databases
-                        $query = LeadModel::with(['stage', 'pipeline', 'user'])
-                            ->where('id', '!=', $lead->id);
-                        if (DB::getDriverName() === 'sqlite') {
-                            // SQLite: Use JSON_EXTRACT or LIKE for JSON searching
-                            $query->where('phones', 'LIKE', '%"' . $phone['value'] . '"%');
-                        } else {
-                            // MySQL/PostgreSQL: Use whereJsonContains
-                            $query->whereJsonContains('phones', [['value' => $phone['value']]]);
-                        }
-
-                        $phoneDuplicates = $query->get();
-                        $duplicates = $duplicates->merge($phoneDuplicates);
-                    } catch (Exception $e) {
-                        Log::error('Error searching for phone duplicates: ' . $e->getMessage());
-                    }
-                }
-            }
-        }
-
-        return $duplicates;
+        return $this->findJsonFieldDuplicates($lead, 'phones');
     }
 
     /**
@@ -492,47 +428,22 @@ class LeadRepository extends Repository
      */
     private function findNameDuplicates(Lead $lead): Collection
     {
-        $duplicates = collect();
-
-        // Check for name similarity (first + last name)
-        if (!empty($lead->first_name) && !empty($lead->last_name)) {
-            try {
-                $nameDuplicates = LeadModel::with(['stage', 'pipeline', 'user'])
-                    ->where('id', '!=', $lead->id)
-                    ->where(function ($query) use ($lead) {
-                        // Exact match for full name
-                        $query->where(function ($subQuery) use ($lead) {
-                            $subQuery->where('first_name', $lead->first_name)
-                                ->where('last_name', $lead->last_name);
-                        })
-                            // Or check for common nickname variations
-                            ->orWhere(function ($subQuery) use ($lead) {
-                                $firstNameVariations = $this->getNameVariations($lead->first_name);
-                                if (count($firstNameVariations) > 1) {
-                                    $subQuery->whereIn('first_name', $firstNameVariations)
-                                        ->where('last_name', $lead->last_name);
-                                }
-                            })
-                            // Or check if married_name matches last_name (users sometimes confuse these fields)
-                            ->orWhere(function ($subQuery) use ($lead) {
-                                $subQuery->where('first_name', $lead->first_name)
-                                    ->where('married_name', $lead->last_name);
-                            })
-                            // Or check if last_name matches married_name
-                            ->orWhere(function ($subQuery) use ($lead) {
-                                $subQuery->where('first_name', $lead->first_name)
-                                    ->where('last_name', $lead->married_name);
-                            });
-                    })
-                    ->get();
-
-                $duplicates = $duplicates->merge($nameDuplicates);
-            } catch (Exception $e) {
-                Log::error('Error searching for name duplicates: ' . $e->getMessage());
-            }
+        if (empty($lead->first_name) && empty($lead->last_name)) {
+            return collect();
         }
 
-        return $duplicates;
+        try {
+            $query = LeadModel::with(['stage', 'pipeline', 'user'])
+                ->where('id', '!=', $lead->id);
+
+            // Build name matching conditions
+            $this->addNameMatchConditions($query, $lead);
+
+            return $query->get();
+        } catch (Exception $e) {
+            Log::error('Error searching for name duplicates: ' . $e->getMessage());
+            return collect();
+        }
     }
 
     /**
@@ -862,5 +773,78 @@ class LeadRepository extends Repository
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * Generic helper to find duplicates based on JSON field values.
+     */
+    private function findJsonFieldDuplicates(Lead $lead, string $fieldName): Collection
+    {
+        $duplicates = collect();
+        $fieldData = $lead->$fieldName;
+
+        // Handle case where field might be a string or null
+        if (is_string($fieldData)) {
+            $fieldData = json_decode($fieldData, true) ?: [];
+        }
+
+        if (is_array($fieldData) && !empty($fieldData)) {
+            foreach ($fieldData as $item) {
+                if (is_array($item) && !empty($item['value'])) {
+                    try {
+                        $query = LeadModel::with(['stage', 'pipeline', 'user'])
+                            ->where('id', '!=', $lead->id);
+                            
+                        if (DB::getDriverName() === 'sqlite') {
+                            $query->where($fieldName, 'LIKE', '%"' . $item['value'] . '"%');
+                        } else {
+                            $query->whereJsonContains($fieldName, [['value' => $item['value']]]);
+                        }
+
+                        $duplicates = $duplicates->merge($query->get());
+                    } catch (Exception $e) {
+                        Log::error("Error searching for {$fieldName} duplicates: " . $e->getMessage());
+                    }
+                }
+            }
+        }
+
+        return $duplicates;
+    }
+
+    /**
+     * Add name matching conditions to query.
+     */
+    private function addNameMatchConditions($query, Lead $lead): void
+    {
+        $query->where(function ($q) use ($lead) {
+            // Exact match for full name
+            if (!empty($lead->first_name) && !empty($lead->last_name)) {
+                $q->orWhere(function ($subQuery) use ($lead) {
+                    $subQuery->where('first_name', $lead->first_name)
+                        ->where('last_name', $lead->last_name);
+                });
+
+                // Nickname variations
+                $firstNameVariations = $this->getNameVariations($lead->first_name);
+                if (count($firstNameVariations) > 1) {
+                    $q->orWhere(function ($subQuery) use ($lead, $firstNameVariations) {
+                        $subQuery->whereIn('first_name', $firstNameVariations)
+                            ->where('last_name', $lead->last_name);
+                    });
+                }
+
+                // Married name confusion checks
+                if (!empty($lead->married_name)) {
+                    $q->orWhere(function ($subQuery) use ($lead) {
+                        $subQuery->where('first_name', $lead->first_name)
+                            ->where('married_name', $lead->last_name);
+                    })->orWhere(function ($subQuery) use ($lead) {
+                        $subQuery->where('first_name', $lead->first_name)
+                            ->where('last_name', $lead->married_name);
+                    });
+                }
+            }
+        });
     }
 }

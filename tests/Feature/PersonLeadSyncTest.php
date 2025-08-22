@@ -153,9 +153,16 @@ test('can update person with lead data', function () {
             'personId' => $person->id,
             'leadId'   => $lead->id,
         ]), [
-            'first_name' => 'Jane',
-            'last_name'  => 'Smith',
-            'emails'     => [['value' => 'jane.smith@example.com', 'label' => 'Work']],
+            'lead_updates' => [
+                'first_name' => 'Jane',
+                'last_name'  => 'Smith',
+                'emails'     => [['value' => 'jane.smith@example.com', 'label' => 'Work']],
+            ],
+            'person_updates' => [
+                'first_name' => true,
+                'last_name'  => true,
+                'emails'     => true,
+            ]
         ])->assertOk();
 
     $person->refresh();

@@ -136,7 +136,7 @@
                                                <x-admin::avatar ::name="element.persons[0]?.name" class="w-6 h-6" />
                                            </div>
                                            <div v-else-if="element.first_name">
-                                               <x-admin::avatar ::name="`${element.first_name} ${element.last_name}`" class="w-6 h-6" />
+                                               <span>@{{element.first_name}} @{{element.last_name}}</span>
                                            </div>
                                            <div class="flex flex-col gap-0.5 min-w-0">
                                                <span class="text-[11px] font-medium truncate">

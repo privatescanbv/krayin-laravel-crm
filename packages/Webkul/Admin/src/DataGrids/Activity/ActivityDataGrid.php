@@ -25,7 +25,6 @@ class ActivityDataGrid extends DataGrid
             ->select(
                 'activities.*',
                 'leads.id as lead_id',
-                'leads.title as lead_title',
                 'leads.lead_pipeline_id',
                 'users.id as assigned_user_id',
                 'users.name as created_by',
@@ -97,7 +96,7 @@ class ActivityDataGrid extends DataGrid
         $this->addFilter('assigned_user_id', 'users.name');
         $this->addFilter('created_at', 'activities.created_at');
         $this->addFilter('days_until_deadline', 'days_until_deadline');
-        $this->addFilter('lead_title', 'leads.title');
+        // Removed lead_title filter as leads.title column no longer exists
         $this->addFilter('group', 'groups.name');
 
         return $queryBuilder;
@@ -201,28 +200,20 @@ class ActivityDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'              => 'lead_title',
+            'index'              => 'lead_id',
             'label'              => trans('admin::app.activities.index.datagrid.lead'),
-            'type'               => 'string',
+            'type'               => 'integer',
             'searchable'         => true,
             'sortable'           => true,
             'filterable'         => true,
-            'filterable_type'    => 'searchable_dropdown',
-            'filterable_options' => [
-                'repository' => LeadRepository::class,
-                'column'     => [
-                    'label' => 'title',
-                    'value' => 'title',
-                ],
-            ],
             'closure'    => function ($row) {
-                if ($row->lead_title == null) {
+                if ($row->lead_id == null) {
                     return "<span class='text-gray-800 dark:text-gray-300'>N/A</span>";
                 }
 
                 $route = urldecode(route('admin.leads.view', $row->lead_id));
 
-                return "<a class='text-brandColor hover:underline' target='_blank' href='".$route."'>".$row->lead_title.'</a>';
+                return "<a class='text-brandColor hover:underline' target='_blank' href='".$route."'>Lead #".$row->lead_id.'</a>';
             },
         ]);
 

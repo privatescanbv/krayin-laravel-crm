@@ -21,8 +21,9 @@
             <x-slot:content class="!p-0">
                 <div class="space-y-3">
                     @foreach ($lead->persons as $person)
-                        <div class="border border-gray-200 rounded-lg p-4 bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
-                            <div class="flex items-center justify-between mb-3">
+                        <div class="border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+                            <!-- Collapsible Header -->
+                            <div class="flex items-center justify-between p-4 cursor-pointer" onclick="togglePersonCard({{ $person->id }})">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
                                         {{ strtoupper(substr($person->name, 0, 1)) }}
@@ -36,11 +37,20 @@
                                 </div>
 
                                 <div class="flex items-center gap-1">
+                                    <!-- Expand/Collapse Icon -->
+                                    <button
+                                        type="button"
+                                        class="icon-arrow-down rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 person-toggle-icon"
+                                        id="toggle-icon-{{ $person->id }}"
+                                        title="Uitklappen/Inklappen"
+                                    ></button>
+
                                     @if (bouncer()->hasPermission('contacts.persons.edit'))
                                         <a
                                             href="{{ route('admin.contacts.persons.edit', $person->id) }}"
                                             class="icon-edit rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
                                             title="Wijzig persoon"
+                                            onclick="event.stopPropagation()"
                                         ></a>
                                     @endif
 
@@ -48,10 +58,14 @@
                                         type="button"
                                         class="icon-trash rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 text-red-600 hover:text-red-700"
                                         title="Persoon ontkoppelen"
-                                        onclick="detachPerson({{ $person->id }})"
+                                        onclick="event.stopPropagation(); detachPerson({{ $person->id }})"
                                     ></button>
                                 </div>
                             </div>
+
+                            <!-- Collapsible Content -->
+                            <div class="person-details" id="person-details-{{ $person->id }}" style="display: none;">
+                                <div class="px-4 pb-4 border-t border-gray-200 dark:border-gray-700">
 
                             <!-- Person Details -->
                             <div class="text-sm space-y-2">
@@ -119,8 +133,10 @@
                                             @endif
                                         </div>
                                     </div>
-                                @endif
+                                                                 @endif
+                                </div>
                             </div>
+                        </div>
                         </div>
                     @endforeach
                 </div>
@@ -156,8 +172,48 @@ function openAddPersonModal() {
 
 function detachPerson(personId) {
     if (confirm('Weet je zeker dat je deze persoon wilt ontkoppelen van de lead?')) {
-        // TODO: Implement AJAX call to detach person
-        alert(`Detach person ${personId} - to be implemented`);
+        const leadId = {{ $lead->id }};
+        
+        fetch(`/admin/leads/${leadId}/detach-person/${personId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove the person card from the DOM
+                const personCard = document.querySelector(`#person-details-${personId}`).closest('.border');
+                personCard.remove();
+                
+                // Show success message
+                window.location.reload(); // Reload to update person count and anamnesis
+            } else {
+                alert('Fout: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Er is een fout opgetreden bij het ontkoppelen van de persoon.');
+        });
+    }
+}
+
+function togglePersonCard(personId) {
+    const details = document.getElementById(`person-details-${personId}`);
+    const icon = document.getElementById(`toggle-icon-${personId}`);
+    
+    if (details.style.display === 'none') {
+        details.style.display = 'block';
+        icon.classList.remove('icon-arrow-down');
+        icon.classList.add('icon-arrow-up');
+    } else {
+        details.style.display = 'none';
+        icon.classList.remove('icon-arrow-up');
+        icon.classList.add('icon-arrow-down');
     }
 }
 </script>

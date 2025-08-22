@@ -188,25 +188,9 @@ class LeadRepository extends Repository
                 // Attach persons to the lead
         if (!empty($personsToAttach)) {
             $lead->attachPersons(array_unique($personsToAttach));
-        }
-
-        // Always create an anamnesis for new leads
-        $currentUserId = auth()->id() ?? $lead->user_id ?? 1;
-
-        try {
-            Anamnesis::create([
-                'id' => Str::uuid(),
-                'lead_id' => $lead->id,
-                'name' => 'Anamnesis voor ' . $lead->name,
-                'user_id' => $currentUserId,
-            ]);
-        } catch (Exception $e) {
-            // Log the error but don't fail the lead creation
-            Log::error('Failed to create anamnesis for lead: ' . $e->getMessage(), [
-                'lead_id' => $lead->id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            
+            // Create anamnesis when first person is attached
+            $this->createAnamnesisForLead($lead);
         }
 
         return $lead;
@@ -358,7 +342,21 @@ class LeadRepository extends Repository
                 // Sync persons to the lead 
         // Only sync if persons data was explicitly provided (not for partial updates like stage changes)
         if (array_key_exists('persons', $data) || array_key_exists('person_ids', $data)) {
+            // Get current person count before sync
+            $hadPersons = $lead->persons->count() > 0;
+            
             $lead->syncPersons(array_unique($personsToSync));
+            
+            // Manage anamnesis lifecycle based on person changes
+            $hasPersonsNow = count($personsToSync) > 0;
+            
+            if (!$hadPersons && $hasPersonsNow) {
+                // First person attached - create anamnesis
+                $this->createAnamnesisForLead($lead);
+            } elseif ($hadPersons && !$hasPersonsNow) {
+                // All persons removed - delete anamnesis
+                $this->deleteAnamnesisForLead($lead);
+            }
         }
 
         return $lead;
@@ -820,5 +818,49 @@ class LeadRepository extends Repository
         }
 
         return false;
+    }
+
+    /**
+     * Create anamnesis for a lead when first person is attached.
+     */
+    private function createAnamnesisForLead(Lead $lead): void
+    {
+        // Check if anamnesis already exists
+        if ($lead->anamnesis) {
+            return;
+        }
+
+        $currentUserId = auth()->id() ?? $lead->user_id ?? 1;
+
+        try {
+            \App\Models\Anamnesis::create([
+                'id' => \Illuminate\Support\Str::uuid(),
+                'lead_id' => $lead->id,
+                'name' => 'Anamnesis voor ' . $lead->name,
+                'user_id' => $currentUserId,
+            ]);
+        } catch (Exception $e) {
+            Log::error('Failed to create anamnesis for lead: ' . $e->getMessage(), [
+                'lead_id' => $lead->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Delete anamnesis for a lead when all persons are removed.
+     */
+    private function deleteAnamnesisForLead(Lead $lead): void
+    {
+        try {
+            if ($lead->anamnesis) {
+                $lead->anamnesis->delete();
+            }
+        } catch (Exception $e) {
+            Log::error('Failed to delete anamnesis for lead: ' . $e->getMessage(), [
+                'lead_id' => $lead->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 }

@@ -954,11 +954,21 @@ class LeadController extends Controller
         try {
             $lead = $this->leadRepository->findOrFail($leadId);
 
+            // Check if this is the last person
+            $currentPersonCount = \DB::table('lead_persons')->where('lead_id', $leadId)->count();
+
             // Remove the relationship
             \DB::table('lead_persons')
                 ->where('lead_id', $leadId)
                 ->where('person_id', $personId)
                 ->delete();
+
+            // If this was the last person, delete anamnesis
+            if ($currentPersonCount <= 1) {
+                if ($lead->anamnesis) {
+                    $lead->anamnesis->delete();
+                }
+            }
 
             return response()->json([
                 'message' => 'Persoon succesvol ontkoppeld van lead.',

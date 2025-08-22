@@ -420,7 +420,7 @@ class LeadRepository extends Repository
                 if (is_array($email) && !empty($email['value'])) {
                     try {
                         // Use different JSON query approaches for different databases
-                        $query = LeadModel::with(['persons', 'stage', 'pipeline', 'user'])
+                        $query = LeadModel::with(['stage', 'pipeline', 'user'])
                             ->where('id', '!=', $lead->id);
                         if (DB::getDriverName() === 'sqlite') {
                             // SQLite: Use LIKE for JSON searching
@@ -433,7 +433,7 @@ class LeadRepository extends Repository
                         $emailDuplicates = $query->get();
                         $duplicates = $duplicates->merge($emailDuplicates);
                     } catch (Exception $e) {
-                        Log::warning('Error searching for email duplicates: ' . $e->getMessage());
+                        Log::error('Error searching for email duplicates: ' . $e->getMessage());
                     }
                 }
             }
@@ -463,7 +463,7 @@ class LeadRepository extends Repository
                 if (is_array($phone) && !empty($phone['value'])) {
                     try {
                         // Use different JSON query approaches for different databases
-                        $query = LeadModel::with(['persons', 'stage', 'pipeline', 'user'])
+                        $query = LeadModel::with(['stage', 'pipeline', 'user'])
                             ->where('id', '!=', $lead->id);
                         if (DB::getDriverName() === 'sqlite') {
                             // SQLite: Use JSON_EXTRACT or LIKE for JSON searching
@@ -476,7 +476,7 @@ class LeadRepository extends Repository
                         $phoneDuplicates = $query->get();
                         $duplicates = $duplicates->merge($phoneDuplicates);
                     } catch (Exception $e) {
-                        Log::warning('Error searching for phone duplicates: ' . $e->getMessage());
+                        Log::error('Error searching for phone duplicates: ' . $e->getMessage());
                     }
                 }
             }
@@ -497,7 +497,7 @@ class LeadRepository extends Repository
         // Check for name similarity (first + last name)
         if (!empty($lead->first_name) && !empty($lead->last_name)) {
             try {
-                $nameDuplicates = LeadModel::with(['persons', 'stage', 'pipeline', 'user'])
+                $nameDuplicates = LeadModel::with(['stage', 'pipeline', 'user'])
                     ->where('id', '!=', $lead->id)
                     ->where(function ($query) use ($lead) {
                         // Exact match for full name
@@ -528,7 +528,7 @@ class LeadRepository extends Repository
 
                 $duplicates = $duplicates->merge($nameDuplicates);
             } catch (Exception $e) {
-                Log::warning('Error searching for name duplicates: ' . $e->getMessage());
+                Log::error('Error searching for name duplicates: ' . $e->getMessage());
             }
         }
 

@@ -511,11 +511,6 @@ test('manual search handles exact match correctly', function () {
     // Should find exact match with score 100
     $exactMatch = collect($data['data'])->firstWhere('id', $exactMatchPerson->id);
 
-    \Log::info('Found exact match', [
-        'exactMatch'     => $exactMatch,
-        'looking_for_id' => $exactMatchPerson->id,
-    ]);
-
     expect($exactMatch)->not->toBeNull();
     expect($exactMatch['score'])->toBe(100);
 });

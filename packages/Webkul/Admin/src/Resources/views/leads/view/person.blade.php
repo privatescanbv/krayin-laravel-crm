@@ -95,13 +95,18 @@
                                     @endif
                                 @endif
 
-                                <!-- Anamnesis for this person (if exists and this is the primary person) -->
-                                @if ($lead->anamnesis && $loop->first)
+                                <!-- Anamnesis for this specific person -->
+                                @php
+                                    $personAnamnesis = \App\Models\Anamnesis::where('lead_id', $lead->id)
+                                        ->where('person_id', $person->id)
+                                        ->first();
+                                @endphp
+                                @if ($personAnamnesis)
                                     <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-900/20 dark:border-blue-800">
                                         <div class="flex items-center justify-between mb-2">
                                             <h6 class="text-xs font-semibold text-blue-800 dark:text-blue-200">Anamnese</h6>
                                             <a
-                                                href="{{ route('admin.anamnesis.edit', $lead->anamnesis->id) }}"
+                                                href="{{ route('admin.anamnesis.edit', $personAnamnesis->id) }}"
                                                 class="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400"
                                                 title="Anamnese bewerken"
                                             >
@@ -110,13 +115,13 @@
                                         </div>
 
                                         <div class="space-y-1 text-xs">
-                                            @if ($lead->anamnesis->height || $lead->anamnesis->weight)
+                                            @if ($personAnamnesis->height || $personAnamnesis->weight)
                                                 <div class="flex gap-3">
-                                                    @if ($lead->anamnesis->height)
-                                                        <span class="text-gray-600 dark:text-gray-400">{{ $lead->anamnesis->height }}cm</span>
+                                                    @if ($personAnamnesis->height)
+                                                        <span class="text-gray-600 dark:text-gray-400">{{ $personAnamnesis->height }}cm</span>
                                                     @endif
-                                                    @if ($lead->anamnesis->weight)
-                                                        <span class="text-gray-600 dark:text-gray-400">{{ $lead->anamnesis->weight }}kg</span>
+                                                    @if ($personAnamnesis->weight)
+                                                        <span class="text-gray-600 dark:text-gray-400">{{ $personAnamnesis->weight }}kg</span>
                                                     @endif
                                                 </div>
                                             @endif
@@ -130,8 +135,8 @@
                                                     'heart_surgery' => 'Hartoperatie',
                                                     'diabetes' => 'Diabetes',
                                                     'smoking' => 'Rookt',
-                                                ])->filter(function($label, $field) use ($lead) {
-                                                    return $lead->anamnesis->{$field} == 1;
+                                                ])->filter(function($label, $field) use ($personAnamnesis) {
+                                                    return $personAnamnesis->{$field} == 1;
                                                 });
                                             @endphp
 

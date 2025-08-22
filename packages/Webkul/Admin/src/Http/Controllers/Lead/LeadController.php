@@ -299,7 +299,8 @@ class LeadController extends Controller
             'type',
             'channel',
             'department',
-            'user'
+            'user',
+            'anamnesis'
         ])->findOrFail($id);
 
         $userIds = bouncer()->getAuthorizedUserIds();

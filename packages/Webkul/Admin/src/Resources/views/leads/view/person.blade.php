@@ -82,25 +82,27 @@
 
                             <!-- Person Details -->
                             <div class="text-sm space-y-2">
-                                @if ($person->emails && count($person->emails) > 0)
-                                    @php
-                                        $defaultEmail = collect($person->emails)->firstWhere('is_default', true) ?? $person->emails[0] ?? null;
-                                    @endphp
-                                    @if ($defaultEmail)
-                                        <div>
-                                            <a href="mailto:{{ $defaultEmail['value'] }}" class="text-blue-600 hover:text-blue-800">
-                                                {{ $defaultEmail['value'] }}
-                                            </a>
-                                        </div>
-                                    @endif
-                                @endif
-
-                                <!-- Anamnesis for this specific person -->
                                 @php
+                                    $defaultEmail = null;
+                                    if ($person->emails && count($person->emails) > 0) {
+                                        $defaultEmail = collect($person->emails)->firstWhere('is_default', true) ?? $person->emails[0] ?? null;
+                                    }
+                                    
+                                    // Get anamnesis for this specific person
                                     $personAnamnesis = \App\Models\Anamnesis::where('lead_id', $lead->id)
                                         ->where('person_id', $person->id)
                                         ->first();
                                 @endphp
+                                
+                                @if ($defaultEmail)
+                                    <div>
+                                        <a href="mailto:{{ $defaultEmail['value'] }}" class="text-blue-600 hover:text-blue-800">
+                                            {{ $defaultEmail['value'] }}
+                                        </a>
+                                    </div>
+                                @endif
+
+                                <!-- Anamnesis for this specific person -->
                                 @if ($personAnamnesis)
                                     <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-900/20 dark:border-blue-800">
                                         <div class="flex items-center justify-between mb-2">

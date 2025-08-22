@@ -345,29 +345,23 @@
 
                     {!! view_render_event('admin.leads.edit.contact_person.before', ['lead' => $lead]) !!}
 
-                    <!-- Contact Person -->
+                    <!-- Contact Persons -->
                     <div
                         class="flex flex-col gap-4"
                         id="contact-person"
                     >
                         <div class="flex flex-col gap-1">
                             <p class="text-base font-semibold dark:text-white">
-                                @lang('admin::app.leads.edit.contact-person')
+                                Contactpersonen
                             </p>
 
-                            {{--                            <p class="text-gray-600 dark:text-white">--}}
-                            {{--                                @lang('admin::app.leads.edit.contact-info')--}}
-                            {{--                            </p>--}}
+                            <p class="text-gray-600 dark:text-gray-300">
+                                Koppel een of meerdere contactpersonen aan deze lead
+                            </p>
                         </div>
 
-                        <div class="w-1/2 max-md:w-full">
-                            <!-- Contact Person Component -->
-                            @include('admin::leads.common.contactmatcher')
-                        </div>
-                        <div class="w-1/2 max-md:w-full">
-                            <!-- Contact Person Component -->
-                            @include('admin::leads.common.contactorganisation')
-                        </div>
+                        <!-- Multiple Persons Component -->
+                        @include('admin::leads.common.multiple-persons')
                     </div>
 
                     {!! view_render_event('admin.leads.edit.contact_person.after', ['lead' => $lead]) !!}
@@ -423,7 +417,7 @@
 
                         lead:  @json($lead),
 
-                        person:  @json($lead->person),
+                        persons:  @json($lead->persons),
 
                         {{--products: @json($lead->products),--}}
 

@@ -119,7 +119,7 @@ class Person extends Model implements PersonContract
      */
     public function leads()
     {
-        return $this->hasMany(LeadProxy::modelClass(), 'person_id');
+        return $this->belongsToMany(LeadProxy::modelClass(), 'lead_persons');
     }
 
     /**

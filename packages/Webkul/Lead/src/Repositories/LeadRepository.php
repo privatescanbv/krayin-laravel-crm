@@ -30,8 +30,7 @@ class LeadRepository extends Repository
         'status',
         'user_id',
         'user.name',
-        'person_id',
-        'person.name',
+        'persons.name',
         'lead_source_id',
         'lead_type_id',
         'lead_pipeline_id',
@@ -89,14 +88,11 @@ class LeadRepository extends Repository
                 'leads.created_at as created_at',
                 'title',
                 'lead_value',
-                'persons.name as person_name',
-                'leads.person_id as person_id',
                 'lead_pipelines.id as lead_pipeline_id',
                 'lead_pipeline_stages.name as status',
                 'lead_pipeline_stages.id as lead_pipeline_stage_id'
             )
                 ->addSelect(DB::raw('DATEDIFF(' . DB::getTablePrefix() . 'leads.created_at + INTERVAL lead_pipelines.rotten_days DAY, now()) as rotten_days'))
-                ->leftJoin('persons', 'leads.person_id', '=', 'persons.id')
                 ->leftJoin('lead_pipelines', 'leads.lead_pipeline_id', '=', 'lead_pipelines.id')
                 ->leftJoin('lead_pipeline_stages', 'leads.lead_pipeline_stage_id', '=', 'lead_pipeline_stages.id')
                 ->where('title', 'like', "%$term%")
@@ -120,53 +116,46 @@ class LeadRepository extends Repository
      */
     public function create(array $data): Lead
     {
-       if (
-           array_key_exists('person', $data)
-           && !empty($data['person']['organization_id'])
-           && (empty($data['person_id']) || empty($data['person']['id']))
-       ) {
-           throw new InvalidArgumentException('Een organisatie mag alleen gekoppeld worden als er ook een contactpersoon is.');
-       }
+        // Handle multiple persons
+        $personsToAttach = [];
+        
         /**
-         * If a person is provided, create or update the person and set the `person_id`.
+         * If persons array is provided, process each person
          */
-        if (isset($data['person']) && !empty($data['person'])) {
-            // Check if there are any non-empty values in the person data
-            $hasValidData = false;
-
-            if (!empty($data['person']['name'])) {
-                $hasValidData = true;
-            }
-
-            if (!empty($data['person']['emails'])) {
-                foreach ($data['person']['emails'] as $email) {
-                    if (!empty($email['value'])) {
-                        $hasValidData = true;
-                        break;
+        if (isset($data['persons']) && is_array($data['persons'])) {
+            foreach ($data['persons'] as $personData) {
+                if (!empty($personData) && $this->hasValidPersonData($personData)) {
+                    if (!empty($personData['id'])) {
+                        $person = $this->personRepository->findOrFail($personData['id']);
+                    } else {
+                        $person = $this->personRepository->create(array_merge($personData, [
+                            'entity_type' => 'persons',
+                        ]));
                     }
+                    $personsToAttach[] = $person->id;
                 }
             }
-
-            if (!empty($data['person']['contact_numbers'])) {
-                foreach ($data['person']['contact_numbers'] as $number) {
-                    if (!empty($number['value'])) {
-                        $hasValidData = true;
-                        break;
-                    }
-                }
+        }
+        
+        /**
+         * If a single person is provided (backwards compatibility), process it
+         */
+        if (isset($data['person']) && !empty($data['person']) && $this->hasValidPersonData($data['person'])) {
+            if (!empty($data['person']['id'])) {
+                $person = $this->personRepository->findOrFail($data['person']['id']);
+            } else {
+                $person = $this->personRepository->create(array_merge($data['person'], [
+                    'entity_type' => 'persons',
+                ]));
             }
-
-            if ($hasValidData) {
-                if (!empty($data['person']['id'])) {
-                    $person = $this->personRepository->findOrFail($data['person']['id']);
-                } else {
-                    $person = $this->personRepository->create(array_merge($data['person'], [
-                        'entity_type' => 'persons',
-                    ]));
-                }
-
-                $data['person_id'] = $person->id;
-            }
+            $personsToAttach[] = $person->id;
+        }
+        
+        /**
+         * If person_ids array is provided directly
+         */
+        if (isset($data['person_ids']) && is_array($data['person_ids'])) {
+            $personsToAttach = array_merge($personsToAttach, array_filter($data['person_ids']));
         }
 
         if (empty($data['expected_close_date'])) {
@@ -203,6 +192,11 @@ class LeadRepository extends Repository
             }
         }
 
+        // Attach persons to the lead
+        if (!empty($personsToAttach)) {
+            $lead->persons()->attach(array_unique($personsToAttach));
+        }
+
         // Always create an anamnesis for new leads
         $currentUserId = auth()->id() ?? $lead->user_id ?? 1;
 
@@ -234,39 +228,46 @@ class LeadRepository extends Repository
      */
     public function update(array $data, $id, $attributes = []): Lead
     {
-        if (
-            array_key_exists('person', $data)
-            && !empty($data['person']['organization_id'])
-            && (empty($data['person_id']) || empty($data['person']['id']))
-        ) {
-            throw new InvalidArgumentException('Een organisatie mag alleen gekoppeld worden als er ook een contactpersoon is.');
-        }
+        // Handle multiple persons update
+        $personsToSync = [];
+        
         /**
-         * If a person is provided, create or update the person and set the `person_id`.
-         * Be cautious, as a lead can be updated without providing person data.
-         * For example, in the lead Kanban section, when switching stages, only the stage will be updated.
+         * If persons array is provided, process each person
          */
-        if (isset($data['person'])) {
-            $personData = $data['person'];
-            $values = [];
-            array_walk_recursive($personData, function ($v, $k) use (&$values) {
-                if ($k !== 'label') {
-                    $values[] = $v;
+        if (isset($data['persons']) && is_array($data['persons'])) {
+            foreach ($data['persons'] as $personData) {
+                if (!empty($personData) && $this->hasValidPersonData($personData)) {
+                    if (!empty($personData['id'])) {
+                        $person = $this->personRepository->findOrFail($personData['id']);
+                    } else {
+                        $person = $this->personRepository->create(array_merge($personData, [
+                            'entity_type' => 'persons',
+                        ]));
+                    }
+                    $personsToSync[] = $person->id;
                 }
-            });
-            $personContainsData = !empty(array_filter($values));
-            $data['person'] = $personData;
-            if ($personContainsData) {
-                if (!empty($data['person']['id'])) {
-                    $person = $this->personRepository->findOrFail($data['person']['id']);
-                } else {
-                    $person = $this->personRepository->create(array_merge($data['person'], [
-                        'entity_type' => 'persons',
-                    ]));
-                }
-
-                $data['person_id'] = $person->id;
             }
+        }
+        
+        /**
+         * If a single person is provided (backwards compatibility), process it
+         */
+        if (isset($data['person']) && $this->hasValidPersonData($data['person'])) {
+            if (!empty($data['person']['id'])) {
+                $person = $this->personRepository->findOrFail($data['person']['id']);
+            } else {
+                $person = $this->personRepository->create(array_merge($data['person'], [
+                    'entity_type' => 'persons',
+                ]));
+            }
+            $personsToSync[] = $person->id;
+        }
+        
+        /**
+         * If person_ids array is provided directly
+         */
+        if (isset($data['person_ids']) && is_array($data['person_ids'])) {
+            $personsToSync = array_merge($personsToSync, array_filter($data['person_ids']));
         }
 
         if (isset($data['lead_pipeline_stage_id'])) {
@@ -281,9 +282,6 @@ class LeadRepository extends Repository
 
         if (empty($data['expected_close_date'])) {
             $data['expected_close_date'] = null;
-        }
-        if (empty($data['person_id'])) {
-            unset($data['person_id']);
         }
 
         // Handle address data
@@ -362,6 +360,11 @@ class LeadRepository extends Repository
 
         foreach ($previousProductIds as $productId) {
             $this->productRepository->delete($productId);
+        }
+
+        // Sync persons to the lead if persons data was provided
+        if (isset($data['persons']) || isset($data['person']) || isset($data['person_ids'])) {
+            $lead->persons()->sync(array_unique($personsToSync));
         }
 
         return $lead;
@@ -789,5 +792,33 @@ class LeadRepository extends Repository
 
         // Attach the activity to the primary lead
         $primaryLead->activities()->attach($activity->id);
+    }
+
+    /**
+     * Check if person data contains valid information
+     */
+    private function hasValidPersonData(array $personData): bool
+    {
+        if (!empty($personData['name'])) {
+            return true;
+        }
+
+        if (!empty($personData['emails'])) {
+            foreach ($personData['emails'] as $email) {
+                if (!empty($email['value'])) {
+                    return true;
+                }
+            }
+        }
+
+        if (!empty($personData['contact_numbers'])) {
+            foreach ($personData['contact_numbers'] as $number) {
+                if (!empty($number['value'])) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

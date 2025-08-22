@@ -253,7 +253,7 @@ class LeadController extends Controller
      */
     public function edit(int $id): View
     {
-        $lead = $this->leadRepository->with('address')->findOrFail($id);
+        $lead = $this->leadRepository->with(['address', 'persons'])->findOrFail($id);
 
         return view('admin::leads.edit', compact('lead'));
     }
@@ -266,7 +266,7 @@ class LeadController extends Controller
         $lead = $this->leadRepository->with([
             'anamnesis', 
             'address', 
-            'person.organization', 
+            'persons.organization', 
             'source', 
             'type', 
             'channel', 

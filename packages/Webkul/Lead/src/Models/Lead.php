@@ -57,7 +57,6 @@ class Lead extends Model implements LeadContract
         'expected_close_date',
         'closed_at',
         'user_id',
-        'person_id',
         'lead_source_id',
         'lead_type_id',
         'lead_pipeline_id',
@@ -112,11 +111,11 @@ class Lead extends Model implements LeadContract
     }
 
     /**
-     * Get the person that owns the lead.
+     * Get the persons associated with the lead.
      */
-    public function person()
+    public function persons()
     {
-        return $this->belongsTo(PersonProxy::modelClass());
+        return $this->belongsToMany(PersonProxy::modelClass(), 'lead_persons');
     }
 
     /**

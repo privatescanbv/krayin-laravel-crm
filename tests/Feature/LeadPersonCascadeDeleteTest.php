@@ -28,7 +28,6 @@ beforeEach(function () {
 test('cascade delete removes lead_persons records when lead is deleted', function () {
     // Create a lead
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'lead_pipeline_id'       => test()->pipeline->id,
         'lead_pipeline_stage_id' => test()->stage->id,
         'user_id'                => test()->user->id,
@@ -59,14 +58,12 @@ test('cascade delete removes lead_persons records when lead is deleted', functio
 test('cascade delete removes lead_persons records when person is deleted', function () {
     // Create leads
     $lead1 = Lead::factory()->create([
-        'title'                  => 'Test Lead 1',
         'lead_pipeline_id'       => test()->pipeline->id,
         'lead_pipeline_stage_id' => test()->stage->id,
         'user_id'                => test()->user->id,
     ]);
 
     $lead2 = Lead::factory()->create([
-        'title'                  => 'Test Lead 2',
         'lead_pipeline_id'       => test()->pipeline->id,
         'lead_pipeline_stage_id' => test()->stage->id,
         'user_id'                => test()->user->id,
@@ -114,7 +111,6 @@ test('lead_persons table has correct structure following existing pivot table pa
 test('composite primary key prevents duplicate lead-person combinations', function () {
     // Create test data
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'lead_pipeline_id'       => test()->pipeline->id,
         'lead_pipeline_stage_id' => test()->stage->id,
         'user_id'                => test()->user->id,

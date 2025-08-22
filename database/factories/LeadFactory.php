@@ -69,6 +69,10 @@ class LeadFactory extends Factory
             'lead_pipeline_id'       => $pipeline->id,
             'lead_pipeline_stage_id' => $stage->id,
             'combine_order'          => $this->faker->boolean(),
+            // Personal fields for matching (required for name attribute)
+            'first_name'             => $this->faker->firstName(),
+            'last_name'              => $this->faker->lastName(),
+            'emails'                 => [['value' => $this->faker->email(), 'label' => 'work', 'is_default' => true]],
         ];
     }
 

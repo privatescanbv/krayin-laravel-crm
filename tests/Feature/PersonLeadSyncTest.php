@@ -47,7 +47,6 @@ test('can access edit with lead page', function () {
     ]);
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead for John Smith',
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
@@ -73,7 +72,6 @@ test('manual search returns no results when no person_id provided', function () 
     $data = createPipelineData();
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
@@ -103,7 +101,6 @@ test('manual search returns exact match when exact data provided', function () {
     ]);
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
@@ -138,7 +135,6 @@ test('can update person with lead data', function () {
     ]);
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
@@ -173,7 +169,6 @@ test('manual search returns partial match', function () {
     ]);
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
@@ -205,7 +200,6 @@ test('handles validation errors gracefully', function () {
     ]);
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
@@ -236,7 +230,6 @@ test('returns correct field differences', function () {
     ]);
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
@@ -263,7 +256,6 @@ test('handles malformed date gracefully', function () {
     ]);
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
@@ -292,7 +284,6 @@ test('handles null date values correctly', function () {
     ]);
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
@@ -329,7 +320,6 @@ test('manual search returns match scores when lead_id provided', function () {
     ]);
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
@@ -398,7 +388,6 @@ test('manual search handles exact match correctly', function () {
     ]);
 
     $lead = Lead::factory()->create([
-        'title'                  => 'Test Lead',
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,

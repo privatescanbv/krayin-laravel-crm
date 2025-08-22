@@ -300,8 +300,8 @@ class ImportLeadsFromSugarCRM extends Command
                 if ($person && $person->id) {
                     $lead->attachPersons([$person->id]);
 
-                    // Create anamnesis data after person is attached
-                    $this->createAnamnesis($lead, $record, $person->id);
+                    // Update anamnesis with SugarCRM data (anamnesis created by attachPersons)
+                    $this->updateAnamnesis($lead, $record);
                 }
 
                 // Debug: Check if lead has persons relation
@@ -492,14 +492,19 @@ class ImportLeadsFromSugarCRM extends Command
     /**
      * Create anamnesis data for the lead
      */
-    private function createAnamnesis($lead, $record, int $personId): Anamnesis
+    private function updateAnamnesis($lead, $record): void
     {
-        return Anamnesis::create([
-            'id'                        => $record->id, // Use SugarCRM ID
-            'name'                      => $lead->name, // Use lead name instead of title
+        // Find the anamnesis created by attachPersons
+        $anamnesis = $lead->anamnesis;
+        
+        if (!$anamnesis) {
+            $this->warn("No anamnesis found for lead {$lead->id} - skipping anamnesis update");
+            return;
+        }
+        
+        // Update with SugarCRM data
+        $anamnesis->update([
             'description'               => $record->anamnese_c ?? '',
-            'lead_id'                   => $lead->id,
-            'person_id'                 => $personId, // Link to attached person
             'height'                    => $record->lengte_c,
             'weight'                    => $record->gewicht_c,
             'metals'                    => (bool) $record->metalen_c,

@@ -299,10 +299,10 @@ class ImportLeadsFromSugarCRM extends Command
                 // Attach person to lead using new many-to-many relationship
                 if ($person && $person->id) {
                     $lead->attachPersons([$person->id]);
+                    
+                    // Create anamnesis data after person is attached
+                    $this->createAnamnesis($lead, $record);
                 }
-
-                // Create anamnesis data
-                $this->createAnamnesis($lead, $record);
 
                 // Debug: Check if lead has persons relation
                 $this->info('Lead created with person attached: '.($lead->persons->count() > 0 ? $lead->persons->first()->name : 'NONE'));
@@ -494,11 +494,15 @@ class ImportLeadsFromSugarCRM extends Command
      */
     private function createAnamnesis($lead, $record): Anamnesis
     {
+        // Get the first attached person for anamnesis
+        $firstPersonId = \DB::table('lead_persons')->where('lead_id', $lead->id)->value('person_id');
+        
         return Anamnesis::create([
             'id'                        => $record->id, // Use SugarCRM ID
-            'name'                      => $lead->title,
+            'name'                      => $lead->name, // Use lead name instead of title
             'description'               => $record->anamnese_c ?? '',
             'lead_id'                   => $lead->id,
+            'person_id'                 => $firstPersonId, // Link to attached person
             'height'                    => $record->lengte_c,
             'weight'                    => $record->gewicht_c,
             'metals'                    => (bool) $record->metalen_c,

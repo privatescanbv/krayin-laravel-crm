@@ -269,19 +269,23 @@
                     }, 300);
                 },
 
-                async fetchSuggestions(query) {
-                    this.isSearching = true;
-                    try {
-                        const params = { query };
-                        
-                        // Add lead_id for match score calculation if available
-                        if (this.lead && this.lead.id) {
-                            params.lead_id = this.lead.id;
-                        }
+                                 async fetchSuggestions(query) {
+                     this.isSearching = true;
+                     try {
+                         const params = { query };
+                         
+                         // Add lead_id for match score calculation if available
+                         if (this.lead && this.lead.id) {
+                             params.lead_id = this.lead.id;
+                         }
 
-                                                 const response = await axios.get('/admin/contacts/persons/search', {
+                         console.log('Fetching suggestions with params:', params);
+
+                         const response = await axios.get('/admin/contacts/persons/search', {
                              params: params
                          });
+
+                         console.log('API Response:', response.data);
 
                          // Filter out already selected persons from suggestions
                          const allSuggestions = response.data.data || [];
@@ -291,17 +295,25 @@
                          
                          console.log('Search results:', {
                              'query': query,
+                             'API_response': response.data,
                              'allSuggestions.length': allSuggestions.length,
+                             'allSuggestions': allSuggestions,
                              'filteredSuggestions.length': this.suggestions.length,
+                             'filteredSuggestions': this.suggestions,
                              'selectedPersons.length': this.selectedPersons.length
                          });
-                    } catch (e) {
-                        console.warn('Zoekopdracht mislukt:', e);
-                        this.suggestions = [];
-                    } finally {
-                        this.isSearching = false;
-                    }
-                },
+                     } catch (e) {
+                         console.error('Zoekopdracht mislukt:', e);
+                         console.log('Error details:', {
+                             'status': e.response?.status,
+                             'statusText': e.response?.statusText,
+                             'data': e.response?.data
+                         });
+                         this.suggestions = [];
+                     } finally {
+                         this.isSearching = false;
+                     }
+                 },
 
                                  addPerson(person) {
                      if (!this.isPersonSelected(person.id)) {

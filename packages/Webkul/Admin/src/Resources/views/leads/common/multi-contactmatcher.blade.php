@@ -279,13 +279,9 @@
                              params.lead_id = this.lead.id;
                          }
 
-                         console.log('Fetching suggestions with params:', params);
-
                          const response = await axios.get('/admin/contacts/persons/search', {
                              params: params
                          });
-
-                         console.log('API Response:', response.data);
 
                          // Filter out already selected persons from suggestions
                          const allSuggestions = response.data.data || [];
@@ -293,15 +289,7 @@
                              !this.isPersonSelected(person.id)
                          );
                          
-                         console.log('Search results:', {
-                             'query': query,
-                             'API_response': response.data,
-                             'allSuggestions.length': allSuggestions.length,
-                             'allSuggestions': allSuggestions,
-                             'filteredSuggestions.length': this.suggestions.length,
-                             'filteredSuggestions': this.suggestions,
-                             'selectedPersons.length': this.selectedPersons.length
-                         });
+
                      } catch (e) {
                          console.error('Zoekopdracht mislukt:', e);
                          console.log('Error details:', {
@@ -323,7 +311,7 @@
                          this.search = '';
                          this.suggestions = [];
                          
-                         console.log('Person added:', person.name, 'Total selected:', this.selectedPersons.length);
+
                      }
                  },
 

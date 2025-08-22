@@ -116,13 +116,7 @@ class LeadRepository extends Repository
      */
     public function create(array $data): Lead
     {
-        // Debug: Log what data is received for create
-        \Log::info('LeadRepository create received data', [
-            'has_persons' => array_key_exists('persons', $data),
-            'has_person_ids' => array_key_exists('person_ids', $data),
-            'persons_data' => $data['persons'] ?? null,
-            'person_ids_data' => $data['person_ids'] ?? null,
-        ]);
+
 
         // Handle multiple persons
         $personsToAttach = [];
@@ -191,22 +185,9 @@ class LeadRepository extends Repository
             }
         }
 
-        // Debug: Log what will be attached
-        \Log::info('LeadRepository create persons attach', [
-            'lead_id' => $lead->id,
-            'personsToAttach' => $personsToAttach,
-            'will_attach' => !empty($personsToAttach),
-        ]);
-
-        // Attach persons to the lead
+                // Attach persons to the lead
         if (!empty($personsToAttach)) {
             $lead->attachPersons(array_unique($personsToAttach));
-
-            \Log::info('LeadRepository create persons attached', [
-                'lead_id' => $lead->id,
-                'attached_persons' => array_unique($personsToAttach),
-                'final_count' => $lead->persons->count(),
-            ]);
         }
 
         // Always create an anamnesis for new leads
@@ -374,23 +355,10 @@ class LeadRepository extends Repository
             $this->productRepository->delete($productId);
         }
 
-        // Debug: Log what will be synced
-        \Log::info('LeadRepository persons sync', [
-            'lead_id' => $id,
-            'personsToSync' => $personsToSync,
-            'will_sync' => array_key_exists('persons', $data) || array_key_exists('person_ids', $data),
-        ]);
-
-        // Sync persons to the lead
+                // Sync persons to the lead 
         // Only sync if persons data was explicitly provided (not for partial updates like stage changes)
         if (array_key_exists('persons', $data) || array_key_exists('person_ids', $data)) {
             $lead->syncPersons(array_unique($personsToSync));
-
-            \Log::info('LeadRepository persons synced', [
-                'lead_id' => $id,
-                'synced_persons' => array_unique($personsToSync),
-                'final_count' => $lead->persons->count(),
-            ]);
         }
 
         return $lead;

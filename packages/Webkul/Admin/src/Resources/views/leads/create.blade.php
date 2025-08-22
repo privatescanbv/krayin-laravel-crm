@@ -572,14 +572,9 @@
                             // Add persons data from multi-contact-matcher component
                             const personIdInputs = document.querySelectorAll('input[name^="person_ids["]');
                             
-                            console.log('Create form submission - found person inputs:', {
-                                'personIdInputs.length': personIdInputs.length
-                            });
-                            
                             // Add person_ids from multi-contact-matcher hidden inputs
                             personIdInputs.forEach((input, index) => {
                                 if (input.value) {
-                                    console.log(`Adding person_id ${index}:`, input.value);
                                     formData.set(input.name, input.value);
                                 }
                             });

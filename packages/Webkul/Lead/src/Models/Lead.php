@@ -431,12 +431,12 @@ class Lead extends Model implements LeadContract
     {
         try {
             foreach ($personIds as $personId) {
-              if (!Anamnesis::where('lead_id', $this->id)->where('user_id', $personId)->exists()) {
+              if (!Anamnesis::where('lead_id', $this->id)->where('person_id', $personId)->exists()) {
                   Anamnesis::create([
                       'id' => Str::uuid(),
                       'lead_id' => $this->id,
                       'name' => 'Anamnesis voor ' . $this->name,
-                      'user_id' => $personId,
+                      'person_id' => $personId,
                   ]);
               }
             }

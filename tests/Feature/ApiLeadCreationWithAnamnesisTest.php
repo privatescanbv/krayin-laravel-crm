@@ -90,7 +90,7 @@ test('API lead creation successfully creates a lead with anamnesis', function ()
     $this->assertDatabaseHas('anamnesis', [
         'lead_id' => $leadId,
         'name'    => 'Anamnesis voor '.$lead->name,
-        'user_id' => $person->id,
+        'person_id' => $person->id,
     ]);
 
     // Assert: Check anamnesis relationship works

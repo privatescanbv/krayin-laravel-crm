@@ -744,11 +744,14 @@ class LeadRepository extends Repository
         $currentUserId = auth()->id() ?? $lead->user_id ?? 1;
 
         try {
+            // Get the first attached person for anamnesis
+            $firstPersonId = \DB::table('lead_persons')->where('lead_id', $lead->id)->value('person_id');
+            
             \App\Models\Anamnesis::create([
                 'id' => \Illuminate\Support\Str::uuid(),
                 'lead_id' => $lead->id,
                 'name' => 'Anamnesis voor ' . $lead->name,
-                'user_id' => $currentUserId,
+                'person_id' => $firstPersonId,
             ]);
         } catch (Exception $e) {
             Log::error('Failed to create anamnesis for lead: ' . $e->getMessage(), [

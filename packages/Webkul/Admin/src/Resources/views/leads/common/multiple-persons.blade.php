@@ -74,29 +74,40 @@
                         </div>
                     </div>
 
-                    <!-- Actions -->
-                    <div class="flex items-center gap-2">
-                        <!-- View Person (if existing) -->
-                        <a 
-                            v-if="person.id"
-                            :href="`/admin/contacts/persons/view/${person.id}`"
-                            target="_blank"
-                            class="text-blue-600 hover:text-blue-800 p-1"
-                            title="Bekijk persoon"
-                        >
-                            <i class="icon-eye text-sm"></i>
-                        </a>
+                                            <!-- Actions -->
+                        <div class="flex items-center gap-1">
+                            <!-- Edit with Lead (if existing person) -->
+                            <a 
+                                v-if="person.id && leadId"
+                                :href="`/admin/contacts/persons/edit-with-lead/${person.id}/${leadId}`"
+                                target="_blank"
+                                class="text-green-600 hover:text-green-800 p-1"
+                                title="Synchroniseer persoon met lead"
+                            >
+                                <i class="icon-sync text-sm"></i>
+                            </a>
 
-                        <!-- Remove Person -->
-                        <button
-                            @click="removePerson(index)"
-                            type="button"
-                            class="text-red-600 hover:text-red-800 p-1"
-                            title="Verwijder persoon"
-                        >
-                            <i class="icon-trash text-sm"></i>
-                        </button>
-                    </div>
+                            <!-- View Person (if existing) -->
+                            <a 
+                                v-if="person.id"
+                                :href="`/admin/contacts/persons/view/${person.id}`"
+                                target="_blank"
+                                class="text-blue-600 hover:text-blue-800 p-1"
+                                title="Bekijk persoon"
+                            >
+                                <i class="icon-eye text-sm"></i>
+                            </a>
+
+                            <!-- Remove Person -->
+                            <button
+                                @click="removePerson(index)"
+                                type="button"
+                                class="text-red-600 hover:text-red-800 p-1"
+                                title="Verwijder persoon"
+                            >
+                                <i class="icon-trash text-sm"></i>
+                            </button>
+                        </div>
 
                     <!-- Hidden form fields -->
                     <input
@@ -127,12 +138,26 @@
         app.component('v-multiple-persons-component', {
             template: '#v-multiple-persons-component-template',
 
-            props: ['data'],
+            props: ['data', 'leadId'],
 
             data() {
                 return {
                     persons: this.data || []
                 };
+            },
+
+            async mounted() {
+                // Calculate match percentages for existing persons
+                if (this.leadId) {
+                    for (let i = 0; i < this.persons.length; i++) {
+                        if (this.persons[i].id && !this.persons[i].match_percentage) {
+                            const matchPercentage = await this.calculateMatchPercentage(this.persons[i]);
+                            if (matchPercentage !== null) {
+                                this.$set(this.persons[i], 'match_percentage', matchPercentage);
+                            }
+                        }
+                    }
+                }
             },
 
             watch: {
@@ -154,7 +179,41 @@
                     });
                 },
 
-                removePerson(index) {
+                async removePerson(index) {
+                    const person = this.persons[index];
+                    
+                    // If it's an existing person relationship, confirm deletion
+                    if (person.id && this.leadId) {
+                        if (!confirm(`Weet je zeker dat je ${person.name} wilt ontkoppelen van deze lead?`)) {
+                            return;
+                        }
+                        
+                        try {
+                            // Call API to detach person from lead
+                            await fetch(`/admin/leads/${this.leadId}/detach-person/${person.id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+                            
+                            // Show success message
+                            this.$emitter.emit('add-flash', {
+                                type: 'success',
+                                message: `${person.name} is ontkoppeld van de lead.`
+                            });
+                        } catch (error) {
+                            console.error('Error detaching person:', error);
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: 'Er is een fout opgetreden bij het ontkoppelen van de persoon.'
+                            });
+                            return;
+                        }
+                    }
+                    
+                    // Remove from local array
                     this.persons.splice(index, 1);
                 },
 
@@ -162,9 +221,28 @@
                     this.$set(this.persons, index, {
                         id: selectedPerson.id,
                         name: selectedPerson.name,
-                        match_percentage: selectedPerson.match_percentage || null,
+                        match_percentage: selectedPerson.match_score_percentage || selectedPerson.match_percentage || null,
                         organization: selectedPerson.organization || null
                     });
+                },
+
+                async calculateMatchPercentage(person) {
+                    if (!person.id || !this.leadId) return null;
+                    
+                    try {
+                        // Call the person search API with lead_id to get match score
+                        const response = await fetch(`/admin/contacts/persons/search?lead_id=${this.leadId}&person_id=${person.id}`);
+                        const data = await response.json();
+                        
+                        if (data.data && data.data.length > 0) {
+                            const matchedPerson = data.data.find(p => p.id === person.id);
+                            return matchedPerson?.match_score_percentage || null;
+                        }
+                    } catch (error) {
+                        console.warn('Could not calculate match percentage:', error);
+                    }
+                    
+                    return null;
                 },
 
                 getPersonInitials(person) {

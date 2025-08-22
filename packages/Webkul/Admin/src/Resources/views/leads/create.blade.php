@@ -203,7 +203,7 @@
                         </div>
 
                         <!-- Multiple Persons Component -->
-                        <v-multiple-persons-component :data="persons" @update:data="persons = $event"></v-multiple-persons-component>
+                        <v-multiple-persons-component :data="persons" :lead-id="null" @update:data="persons = $event"></v-multiple-persons-component>
 
                         <div class="flex justify-end pt-4">
                             <button
@@ -644,12 +644,26 @@
             app.component('v-multiple-persons-component', {
                 template: '#v-multiple-persons-component-template',
 
-                props: ['data'],
+                props: ['data', 'leadId'],
 
                 data() {
                     return {
                         persons: this.data || []
                     };
+                },
+
+                async mounted() {
+                    // Calculate match percentages for existing persons
+                    if (this.leadId) {
+                        for (let i = 0; i < this.persons.length; i++) {
+                            if (this.persons[i].id && !this.persons[i].match_percentage) {
+                                const matchPercentage = await this.calculateMatchPercentage(this.persons[i]);
+                                if (matchPercentage !== null) {
+                                    this.$set(this.persons[i], 'match_percentage', matchPercentage);
+                                }
+                            }
+                        }
+                    }
                 },
 
                 watch: {
@@ -681,10 +695,29 @@
                             name: selectedPerson.name,
                             match_percentage: selectedPerson.match_percentage || null,
                             organization: selectedPerson.organization || null
-                        });
-                    },
+                                            });
+                },
 
-                    getPersonInitials(person) {
+                async calculateMatchPercentage(person) {
+                    if (!person.id || !this.leadId) return null;
+                    
+                    try {
+                        // Call the person search API with lead_id to get match score
+                        const response = await fetch(`/admin/contacts/persons/search?lead_id=${this.leadId}&person_id=${person.id}`);
+                        const data = await response.json();
+                        
+                        if (data.data && data.data.length > 0) {
+                            const matchedPerson = data.data.find(p => p.id === person.id);
+                            return matchedPerson?.match_score_percentage || null;
+                        }
+                    } catch (error) {
+                        console.warn('Could not calculate match percentage:', error);
+                    }
+                    
+                    return null;
+                },
+
+                getPersonInitials(person) {
                         if (!person.name) return '?';
                         
                         const names = person.name.split(' ');

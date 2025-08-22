@@ -58,6 +58,8 @@ Route::prefix('contacts')->group(function () {
     Route::controller(OrganizationController::class)->prefix('organizations')->group(function () {
         Route::get('', 'index')->name('admin.contacts.organizations.index');
 
+        Route::get('search', 'search')->name('admin.contacts.organizations.search');
+
         Route::get('create', 'create')->name('admin.contacts.organizations.create');
 
         Route::post('create', 'store')->name('admin.contacts.organizations.store');

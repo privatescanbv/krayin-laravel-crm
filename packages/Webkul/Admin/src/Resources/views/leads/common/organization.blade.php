@@ -11,10 +11,10 @@
     </p>
 
     <x-admin::lookup
-        ::src="`{{ route('admin.contacts.organizations.search') }}`"
+        src="{{ route('admin.contacts.organizations.search') }}"
         name="organization_id"
-        :label="'Naam'"
-        ::value="organization"
+        label="Naam"
+        :value="organization"
         placeholder="Zoek organisatie..."
         :can-add-new="true"
     />

@@ -143,6 +143,7 @@ class LeadController extends Controller
                     'user',
                     'persons',
                     'persons.organization',
+                    'organization',
                     'pipeline',
                     'pipeline.stages',
                     'stage',

@@ -166,4 +166,24 @@ class OrganizationController extends Controller
             'message' => trans('admin::app.contacts.organizations.index.delete-success'),
         ]);
     }
+
+    /**
+     * Search organizations for lookup.
+     */
+    public function search()
+    {
+        if ($userIds = bouncer()->getAuthorizedUserIds()) {
+            $organizations = $this->organizationRepository
+                ->pushCriteria(app(RequestCriteria::class))
+                ->with(['address'])
+                ->findWhereIn('user_id', $userIds);
+        } else {
+            $organizations = $this->organizationRepository
+                ->pushCriteria(app(RequestCriteria::class))
+                ->with(['address'])
+                ->all();
+        }
+
+        return \Webkul\Admin\Http\Resources\OrganizationResource::collection($organizations);
+    }
 }

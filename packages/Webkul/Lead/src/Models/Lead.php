@@ -28,7 +28,6 @@ class Lead extends Model implements LeadContract
         'date_of_birth'       => 'date',
         'emails'              => 'array',
         'phones'              => 'array',
-        'persons'              => 'array',
     ];
 
     /**
@@ -71,7 +70,6 @@ class Lead extends Model implements LeadContract
         'gender',
         'emails',
         'phones',
-        'persons',
         'lead_channel_id',
         'department_id',
         'organization_id',

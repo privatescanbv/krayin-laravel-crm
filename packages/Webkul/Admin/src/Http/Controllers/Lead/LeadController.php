@@ -3,10 +3,12 @@
 namespace Webkul\Admin\Http\Controllers\Lead;
 
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -162,8 +164,8 @@ class LeadController extends Controller
 
         return response()->json($data);
 
-        } catch (\Exception $e) {
-            \Log::error('Error in leads.get endpoint', [
+        } catch (Exception $e) {
+            Log::error('Error in leads.get endpoint', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
                 'request_params' => request()->all()

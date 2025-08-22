@@ -569,19 +569,31 @@
                                 }
                             });
 
-                            // Add persons data to form from global variable
-                            const personsData = window.leadFormPersons || this.persons || [];
-                            if (personsData && personsData.length > 0) {
-                                personsData.forEach((person, index) => {
-                                    if (person.id) {
-                                        formData.set(`person_ids[${index}]`, person.id);
-                                        formData.set(`persons[${index}][id]`, person.id);
-                                    }
-                                    if (person.name) {
-                                        formData.set(`persons[${index}][name]`, person.name);
-                                    }
-                                });
-                            }
+                            // Add persons data to form - collect from hidden form fields
+                            const personIdInputs = document.querySelectorAll('input[name^="person_ids["]');
+                            const personInputs = document.querySelectorAll('input[name^="persons["][name$="[id]"]');
+                            
+                            console.log('Create form submission - found inputs:', {
+                                'personIdInputs.length': personIdInputs.length,
+                                'personInputs.length': personInputs.length,
+                                'window.leadFormPersons': window.leadFormPersons
+                            });
+                            
+                            // Add person_ids from hidden inputs
+                            personIdInputs.forEach((input, index) => {
+                                if (input.value) {
+                                    console.log(`Adding person_id from input ${index}:`, input.value);
+                                    formData.set(input.name, input.value);
+                                }
+                            });
+                            
+                            // Add persons data from hidden inputs  
+                            personInputs.forEach((input, index) => {
+                                if (input.value) {
+                                    console.log(`Adding person from input ${index}:`, input.name, input.value);
+                                    formData.set(input.name, input.value);
+                                }
+                            });
 
                             const response = await axios.post('{{ route('admin.leads.store') }}', formData, {
                                 headers: {'Content-Type': 'multipart/form-data'}

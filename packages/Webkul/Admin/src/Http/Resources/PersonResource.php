@@ -43,6 +43,7 @@ class PersonResource extends JsonResource
         // Include match score data if present
         if (isset($this->match_score)) {
             $data['match_score'] = $this->match_score;
+            $data['score'] = $this->match_score; // Alias for test compatibility
         }
 
         if (isset($this->match_score_percentage)) {

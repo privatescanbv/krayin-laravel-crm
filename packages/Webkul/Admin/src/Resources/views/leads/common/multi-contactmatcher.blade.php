@@ -389,7 +389,7 @@
                              phones: this.lead.phones || []
                          };
 
-                         const response = await axios.post('/admin/contacts/persons/store', personData);
+                         const response = await axios.post('/admin/contacts/persons/create', personData);
 
                          if (response.data && response.data.data) {
                              const newPerson = response.data.data;
@@ -437,7 +437,7 @@
                              phones: []
                          };
 
-                         const response = await axios.post('/admin/contacts/persons/store', personData);
+                         const response = await axios.post('/admin/contacts/persons/create', personData);
 
                          if (response.data && response.data.data) {
                              const newPerson = response.data.data;

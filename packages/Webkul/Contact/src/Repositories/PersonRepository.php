@@ -28,7 +28,6 @@ class PersonRepository extends Repository
         'emails',
         'contact_numbers',
         'organization_id',
-        'job_title',
         'organization.name',
         'user_id',
         'user.name',
@@ -96,13 +95,13 @@ class PersonRepository extends Repository
                 $addressDataWithPersonId = array_merge($addressData, [
                     'person_id' => $person->id,
                 ]);
-                
+
                 // Validate address data
                 $validator = Validator::make($addressDataWithPersonId, Address::$rules);
                 if ($validator->fails()) {
                     throw new InvalidArgumentException('Address validation failed: ' . $validator->errors()->first());
                 }
-                
+
                 Address::create($addressDataWithPersonId);
             }
         }
@@ -164,7 +163,7 @@ class PersonRepository extends Repository
                 return !empty(trim($value));
             });
             $hasAddressData = !empty($filledAddressData);
-            
+
             Log::info('Address filtering debug:', [
                 'original_data' => $addressData,
                 'filled_data' => $filledAddressData,
@@ -182,13 +181,13 @@ class PersonRepository extends Repository
                 $addressDataWithPersonId = array_merge($addressData, [
                     'person_id' => $id,
                 ]);
-                
+
                 // Validate address data
                 $validator = Validator::make($addressDataWithPersonId, Address::$rules);
                 if ($validator->fails()) {
                     throw new InvalidArgumentException('Address validation failed: ' . $validator->errors()->first());
                 }
-                
+
                 // Check if person already has an address
                 $existingAddress = Address::where('person_id', $id)->first();
 

@@ -6,6 +6,7 @@ use App\Models\Anamnesis;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
+use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 
 /**
@@ -69,7 +70,7 @@ class AnamnesisFactory extends Factory
             'active'                    => $this->faker->boolean(),
             'advice_notes'              => $this->faker->optional()->sentence(),
             'lead_id'                   => Lead::factory(),
-            'user_id'                   => User::factory(),
+            'person_id'                 => Person::factory(),
         ];
     }
 

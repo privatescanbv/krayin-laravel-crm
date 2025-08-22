@@ -92,24 +92,24 @@ test('address_audit_trail', function () {
     ]);
 
     // Assert - Creation audit
-    expect($address->created_by)->toBe($this->user1->id);
-    expect($address->updated_by)->toBe($this->user1->id);
-    expect($address->created_at)->not->toBeNull();
-    expect($address->updated_at)->not->toBeNull();
+    expect($address->created_by)->toBe($this->user1->id)
+        ->and($address->updated_by)->toBe($this->user1->id)
+        ->and($address->created_at)->not->toBeNull()
+        ->and($address->updated_at)->not->toBeNull();
 
     // Act - Update as different user
     $this->actingAs($this->user2);
     $address->update(['street' => 'Updated Street']);
 
     // Assert - Update audit
-    expect($address->created_by)->toBe($this->user1->id);
-    expect($address->updated_by)->toBe($this->user2->id);
+    expect($address->created_by)->toBe($this->user1->id)
+        ->and($address->updated_by)->toBe($this->user2->id)
+        ->and($address->creator)->toBeInstanceOf(User::class)
+        ->and($address->creator->id)->toBe($this->user1->id)
+        ->and($address->updater)->toBeInstanceOf(User::class)
+        ->and($address->updater->id)->toBe($this->user2->id);
 
     // Assert - Relations
-    expect($address->creator)->toBeInstanceOf(User::class);
-    expect($address->creator->id)->toBe($this->user1->id);
-    expect($address->updater)->toBeInstanceOf(User::class);
-    expect($address->updater->id)->toBe($this->user2->id);
 });
 
 test('lead_audit_trail', function () {
@@ -136,13 +136,13 @@ test('lead_audit_trail', function () {
     $lead->refresh(); // Refresh to get database values (LeadObserver does direct DB updates)
 
     // Assert - Creation audit
-    expect($lead->created_by)->toBe($this->user1->id);
-    expect($lead->updated_by)->toBe($this->user1->id);
-    expect($lead->created_at)->not->toBeNull();
-    expect($lead->updated_at)->not->toBeNull();
-    expect($lead->lead_pipeline_stage_id)->not->toBeNull();
-    expect($lead->stage)->not->toBeNull();
-    expect($lead->lead_pipeline_stage_id)->toBe($this->stage->id);
+    expect($lead->created_by)->toBe($this->user1->id)
+        ->and($lead->updated_by)->toBe($this->user1->id)
+        ->and($lead->created_at)->not->toBeNull()
+        ->and($lead->updated_at)->not->toBeNull()
+        ->and($lead->lead_pipeline_stage_id)->not->toBeNull()
+        ->and($lead->stage)->not->toBeNull()
+        ->and($lead->lead_pipeline_stage_id)->toBe($this->stage->id);
 
     // Act - Update as different user
     $this->actingAs($this->user2);
@@ -153,25 +153,25 @@ test('lead_audit_trail', function () {
     $lead->refresh();
 
     // Assert - Update audit
-    expect($lead->created_by)->toBe($this->user1->id);
-    expect($lead->updated_by)->toBe($this->user2->id);
+    expect($lead->created_by)->toBe($this->user1->id)
+        ->and($lead->updated_by)->toBe($this->user2->id);
 
     // Assert - Relations manually first
     $creator = User::find($lead->created_by);
     $updater = User::find($lead->updated_by);
-    expect($creator)->not->toBeNull('Creator user should exist');
-    expect($updater)->not->toBeNull('Updater user should exist');
-    expect($creator->id)->toBe($this->user1->id);
-    expect($updater->id)->toBe($this->user2->id);
+    expect($creator)->not->toBeNull('Creator user should exist')
+        ->and($updater)->not->toBeNull('Updater user should exist')
+        ->and($creator->id)->toBe($this->user1->id)
+        ->and($updater->id)->toBe($this->user2->id);
 
     // Test mixin relations if they work
     if (method_exists($lead, 'creator') && $lead->creator) {
-        expect($lead->creator)->toBeInstanceOf(User::class);
-        expect($lead->creator->id)->toBe($this->user1->id);
+        expect($lead->creator)->toBeInstanceOf(User::class)
+            ->and($lead->creator->id)->toBe($this->user1->id);
     }
     if (method_exists($lead, 'updater') && $lead->updater) {
-        expect($lead->updater)->toBeInstanceOf(User::class);
-        expect($lead->updater->id)->toBe($this->user2->id);
+        expect($lead->updater)->toBeInstanceOf(User::class)
+            ->and($lead->updater->id)->toBe($this->user2->id);
     }
 });
 
@@ -192,10 +192,10 @@ test('person_audit_trail', function () {
     $person->refresh(); // Refresh to get database values (PersonObserver does direct DB updates)
 
     // Assert - Creation audit
-    expect($person->created_by)->toBe($this->user1->id);
-    expect($person->updated_by)->toBe($this->user1->id);
-    expect($person->created_at)->not->toBeNull();
-    expect($person->updated_at)->not->toBeNull();
+    expect($person->created_by)->toBe($this->user1->id)
+        ->and($person->updated_by)->toBe($this->user1->id)
+        ->and($person->created_at)->not->toBeNull()
+        ->and($person->updated_at)->not->toBeNull();
 
     // Act - Update as different user
     $this->actingAs($this->user2);
@@ -206,16 +206,16 @@ test('person_audit_trail', function () {
     $person->refresh();
 
     // Assert - Update audit
-    expect($person->created_by)->toBe($this->user1->id);
-    expect($person->updated_by)->toBe($this->user2->id);
+    expect($person->created_by)->toBe($this->user1->id)
+        ->and($person->updated_by)->toBe($this->user2->id);
 
     // Assert - Relations manually first
     $creator = User::find($person->created_by);
     $updater = User::find($person->updated_by);
-    expect($creator)->not->toBeNull('Creator user should exist');
-    expect($updater)->not->toBeNull('Updater user should exist');
-    expect($creator->id)->toBe($this->user1->id);
-    expect($updater->id)->toBe($this->user2->id);
+    expect($creator)->not->toBeNull('Creator user should exist')
+        ->and($updater)->not->toBeNull('Updater user should exist')
+        ->and($creator->id)->toBe($this->user1->id)
+        ->and($updater->id)->toBe($this->user2->id);
 
     // Test mixin relations if they work
     if (method_exists($person, 'creator') && $person->creator) {
@@ -239,26 +239,26 @@ test('organization_audit_trail', function () {
     ]);
 
     // Assert - Creation audit
-    expect($organization->created_by)->toBe($this->user1->id);
-    expect($organization->updated_by)->toBe($this->user1->id);
-    expect($organization->created_at)->not->toBeNull();
-    expect($organization->updated_at)->not->toBeNull();
+    expect($organization->created_by)->toBe($this->user1->id)
+        ->and($organization->updated_by)->toBe($this->user1->id)
+        ->and($organization->created_at)->not->toBeNull()
+        ->and($organization->updated_at)->not->toBeNull();
 
     // Act - Update as different user
     $this->actingAs($this->user2);
     $organization->update(['name' => 'Updated Organization Name']);
 
     // Assert - Update audit
-    expect($organization->created_by)->toBe($this->user1->id);
-    expect($organization->updated_by)->toBe($this->user2->id);
+    expect($organization->created_by)->toBe($this->user1->id)
+        ->and($organization->updated_by)->toBe($this->user2->id);
 
     // Assert - Relations manually first
     $creator = User::find($organization->created_by);
     $updater = User::find($organization->updated_by);
-    expect($creator)->not->toBeNull('Creator user should exist');
-    expect($updater)->not->toBeNull('Updater user should exist');
-    expect($creator->id)->toBe($this->user1->id);
-    expect($updater->id)->toBe($this->user2->id);
+    expect($creator)->not->toBeNull('Creator user should exist')
+        ->and($updater)->not->toBeNull('Updater user should exist')
+        ->and($creator->id)->toBe($this->user1->id)
+        ->and($updater->id)->toBe($this->user2->id);
 
     // Test mixin relations if they work
     if (method_exists($organization, 'creator') && $organization->creator) {
@@ -285,26 +285,26 @@ test('user_audit_trail', function () {
     ]);
 
     // Assert - Creation audit
-    expect($newUser->created_by)->toBe($this->user1->id);
-    expect($newUser->updated_by)->toBe($this->user1->id);
-    expect($newUser->created_at)->not->toBeNull();
-    expect($newUser->updated_at)->not->toBeNull();
+    expect($newUser->created_by)->toBe($this->user1->id)
+        ->and($newUser->updated_by)->toBe($this->user1->id)
+        ->and($newUser->created_at)->not->toBeNull()
+        ->and($newUser->updated_at)->not->toBeNull();
 
     // Act - Update as different user
     $this->actingAs($this->user2);
     $newUser->update(['name' => 'Updated User Name']);
 
     // Assert - Update audit
-    expect($newUser->created_by)->toBe($this->user1->id);
-    expect($newUser->updated_by)->toBe($this->user2->id);
+    expect($newUser->created_by)->toBe($this->user1->id)
+        ->and($newUser->updated_by)->toBe($this->user2->id);
 
     // Assert - Relations manually first
     $creator = User::find($newUser->created_by);
     $updater = User::find($newUser->updated_by);
-    expect($creator)->not->toBeNull('Creator user should exist');
-    expect($updater)->not->toBeNull('Updater user should exist');
-    expect($creator->id)->toBe($this->user1->id);
-    expect($updater->id)->toBe($this->user2->id);
+    expect($creator)->not->toBeNull('Creator user should exist')
+        ->and($updater)->not->toBeNull('Updater user should exist')
+        ->and($creator->id)->toBe($this->user1->id)
+        ->and($updater->id)->toBe($this->user2->id);
 
     // Test mixin relations if they work
     if (method_exists($newUser, 'creator') && $newUser->creator) {
@@ -339,11 +339,11 @@ test('anamnesis_audit_trail', function () {
     ]);
 
     // Act - Create anamnesis
-    $anamnesis = Anamnesis::create([
+    $anamnesis = Anamnesis::factory()->create([
         'id'      => Str::uuid(),
         'lead_id' => $lead->id,
         'name'    => 'Test Anamnesis',
-        'user_id' => $this->user1->id,
+        'person_id' => Person::factory()->create()->id,
         'height'  => 180,
         'weight'  => 75,
         'metals'  => true,
@@ -351,10 +351,10 @@ test('anamnesis_audit_trail', function () {
     ]);
 
     // Assert - Creation audit
-    expect($anamnesis->created_by)->toBe($this->user1->id);
-    expect($anamnesis->updated_by)->toBe($this->user1->id);
-    expect($anamnesis->created_at)->not->toBeNull();
-    expect($anamnesis->updated_at)->not->toBeNull();
+    expect($anamnesis->created_by)->toBe($this->user1->id)
+        ->and($anamnesis->updated_by)->toBe($this->user1->id)
+        ->and($anamnesis->created_at)->not->toBeNull()
+        ->and($anamnesis->updated_at)->not->toBeNull();
 
     // Act - Update as different user
     $this->actingAs($this->user2);
@@ -365,30 +365,30 @@ test('anamnesis_audit_trail', function () {
     ]);
 
     // Assert - Update audit
-    expect($anamnesis->created_by)->toBe($this->user1->id);
-    expect($anamnesis->updated_by)->toBe($this->user2->id);
+    expect($anamnesis->created_by)->toBe($this->user1->id)
+        ->and($anamnesis->updated_by)->toBe($this->user2->id);
 
     // Assert - Relations manually first
     $creator = User::find($anamnesis->created_by);
     $updater = User::find($anamnesis->updated_by);
-    expect($creator)->not->toBeNull('Creator user should exist');
-    expect($updater)->not->toBeNull('Updater user should exist');
-    expect($creator->id)->toBe($this->user1->id);
-    expect($updater->id)->toBe($this->user2->id);
+    expect($creator)->not->toBeNull('Creator user should exist')
+        ->and($updater)->not->toBeNull('Updater user should exist')
+        ->and($creator->id)->toBe($this->user1->id)
+        ->and($updater->id)->toBe($this->user2->id);
 
     // Test trait relations if they work
     if (method_exists($anamnesis, 'creator') && $anamnesis->creator) {
-        expect($anamnesis->creator)->toBeInstanceOf(User::class);
-        expect($anamnesis->creator->id)->toBe($this->user1->id);
+        expect($anamnesis->creator)->toBeInstanceOf(User::class)
+            ->and($anamnesis->creator->id)->toBe($this->user1->id);
     }
     if (method_exists($anamnesis, 'updater') && $anamnesis->updater) {
-        expect($anamnesis->updater)->toBeInstanceOf(User::class);
-        expect($anamnesis->updater->id)->toBe($this->user2->id);
+        expect($anamnesis->updater)->toBeInstanceOf(User::class)
+            ->and($anamnesis->updater->id)->toBe($this->user2->id);
     }
 
     // Test model relationships
-    expect($anamnesis->lead)->toBeInstanceOf(Lead::class);
-    expect($anamnesis->lead->id)->toBe($lead->id);
-    expect($anamnesis->user)->toBeInstanceOf(User::class);
-    expect($anamnesis->user->id)->toBe($this->user1->id);
+    expect($anamnesis->lead)->toBeInstanceOf(Lead::class)
+        ->and($anamnesis->lead->id)->toBe($lead->id)
+        ->and($anamnesis->person)->toBeInstanceOf(Person::class)
+        ->and($anamnesis->person->id)->toBe($this->user1->id);
 });

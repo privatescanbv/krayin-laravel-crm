@@ -50,7 +50,7 @@
 
                         <x-admin::lookup
                             ::src="`{{ route('admin.contacts.persons.search') }}`"
-                            :name="`persons[${index}][id]`"
+                            ::name="`persons[${index}][id]`"
                             :label="'Naam'"
                             ::value="person"
                             placeholder="Zoek op naam, email of telefoon..."
@@ -60,8 +60,8 @@
 
                         <input
                             type="hidden"
-                            :name="`persons[${index}][id]`"
-                            :value="person.id"
+                            ::name="`persons[${index}][id]`"
+                            ::value="person.id"
                             v-if="person.id"
                         />
                     </x-admin::form.control-group>
@@ -76,7 +76,7 @@
 
                             <x-admin::form.control-group.control
                                 type="text"
-                                :name="`persons[${index}][name]`"
+                                ::name="`persons[${index}][name]`"
                                 v-model="person.name"
                                 placeholder="Volledige naam"
                             />
@@ -90,7 +90,7 @@
 
                             <x-admin::form.control-group.control
                                 type="email"
-                                :name="`persons[${index}][email]`"
+                                ::name="`persons[${index}][email]`"
                                 v-model="person.email"
                                 placeholder="email@example.com"
                             />
@@ -104,7 +104,7 @@
 
                             <x-admin::form.control-group.control
                                 type="text"
-                                :name="`persons[${index}][phone]`"
+                                ::name="`persons[${index}][phone]`"
                                 v-model="person.phone"
                                 placeholder="+31 6 12345678"
                             />

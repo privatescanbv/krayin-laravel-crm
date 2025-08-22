@@ -386,13 +386,15 @@ test('manual search handles exact match correctly', function () {
         'name'                => 'John Doe', // Override factory name
         'first_name'          => 'John',
         'last_name'           => 'Doe',
-        'lastname_prefix'     => null, // Ensure no extra name fields
+        'lastname_prefix'     => null,
         'married_name'        => null,
         'married_name_prefix' => null,
         'initials'            => null,
+        'salutation'          => null,
+        'gender'              => null,
         'emails'              => [['value' => 'john@example.com', 'label' => 'Work']],
-        'phones'              => [['value' => '123456789', 'label' => 'Mobile']],
-        'contact_numbers'     => [['value' => '123456789', 'label' => 'Mobile']], // Match factory format
+        'phones'              => [['value' => '123456789', 'label' => 'Mobile']], // Ensure phones field exists
+        'contact_numbers'     => [['value' => '123456789', 'label' => 'Mobile']],
         'date_of_birth'       => '1985-05-15',
         'user_id'             => test()->user->id,
     ]);
@@ -419,16 +421,20 @@ test('manual search handles exact match correctly', function () {
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
-        // Set lead personal fields to exactly match the person
+        // Set lead personal fields to exactly match the person - override ALL fields
         'first_name'             => 'John',
         'last_name'              => 'Doe',
-        'lastname_prefix'        => null, // Ensure no extra name fields
+        'lastname_prefix'        => null,
         'married_name'           => null,
         'married_name_prefix'    => null,
         'initials'               => null,
+        'salutation'             => null,
+        'gender'                 => null,
         'emails'                 => [['value' => 'john@example.com', 'label' => 'Work']],
         'phones'                 => [['value' => '123456789', 'label' => 'Mobile']],
         'date_of_birth'          => '1985-05-15',
+        'description'            => null, // Override factory description
+        'lead_value'             => null, // Override factory lead_value
     ]);
 
     $response = test()

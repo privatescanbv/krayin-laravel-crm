@@ -18,6 +18,13 @@ class PersonRepository extends Repository
      * Searchable fields.
      */
     protected $fieldSearchable = [
+        'name',
+        'first_name',
+        'last_name',
+        'lastname_prefix',
+        'married_name',
+        'married_name_prefix',
+        'initials',
         'emails',
         'contact_numbers',
         'organization_id',

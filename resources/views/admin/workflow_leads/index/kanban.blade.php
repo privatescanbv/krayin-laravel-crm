@@ -35,27 +35,33 @@
                 <div class="flex gap-2.5 overflow-x-auto">
                     <!-- Pipeline Stage Cards -->
                     <div
-                        class="flex min-w-[275px] max-w-[275px] flex-col gap-1 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+                        class="flex min-w-[275px] max-w-[275px] flex-col gap-1 rounded-lg border border-gray-200 dark:border-gray-800"
                         v-for="(stage, index) in stages"
                     >
                         {!! view_render_event('admin.workflow-leads.index.kanban.content.stage.header.before') !!}
 
                         <!-- Stage Header -->
-                        <div class="flex flex-col px-2 py-3">
+                        <div class="flex flex-col px-2 py-3 rounded-t-lg" style="background-color: var(--brand-blue);">
                             <!-- Stage Title and Action -->
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-medium dark:text-white">
-                                    @{{ stage.name }} (@{{ stage.leads.meta.total }})
+                                <span class="text-xs font-medium text-white">
+                                    @{{ stage.name }}
                                 </span>
 
-                                @if (bouncer()->hasPermission('workflow-leads.create'))
-                                    <a
-                                        :href="'{{ route('admin.workflow-leads.create') }}' + '?pipeline_stage_id=' + stage.id"
-                                        class="icon-add cursor-pointer rounded p-1 text-lg text-gray-600 transition-all hover:bg-gray-200 hover:text-gray-800 dark:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-white"
-                                        target="_blank"
-                                    >
-                                    </a>
-                                @endif
+                                <div class="flex items-center gap-1">
+                                    <span class="inline-flex items-center justify-center rounded-full bg-white text-[10px] leading-none min-w-[18px] h-[18px] px-1" style="color: var(--brand-blue);">
+                                        @{{ stage.leads.meta.total }}
+                                    </span>
+
+                                    @if (bouncer()->hasPermission('workflow-leads.create'))
+                                        <a
+                                            :href="'{{ route('admin.workflow-leads.create') }}' + '?pipeline_stage_id=' + stage.id"
+                                            class="icon-add cursor-pointer rounded p-1 text-lg text-white transition-all hover:bg-white hover:bg-opacity-20"
+                                            target="_blank"
+                                        >
+                                        </a>
+                                    @endif
+                                </div>
                             </div>
                         </div>
 
@@ -117,15 +123,23 @@
                                     {!! view_render_event('admin.workflow-leads.index.kanban.content.stage.body.card.header.before') !!}
 
                                     <!-- Header -->
-                                    <div class="flex items-start justify-between">
-                                       <div class="flex items-center gap-1">
-                                           <x-admin::avatar ::name="lead.lead?.person?.name || lead.name" class="w-6 h-6" />
-
-                                           <div class="flex flex-col gap-0.5">
-                                               <span class="text-[11px] font-medium">
+                                    <div class="flex items-start justify-between gap-2">
+                                       <div class="flex items-center gap-1 min-w-0 flex-1">
+                                           <div v-if="lead.lead?.person?.name" class="flex-shrink-0">
+                                               <x-admin::avatar ::name="lead.lead?.person?.name" class="w-6 h-6" />
+                                           </div>
+                                           <div class="flex flex-col gap-0.5 min-w-0">
+                                               <span class="text-[11px] font-medium truncate">
                                                    @{{ lead.lead?.person?.name || lead.name }}
                                                </span>
                                            </div>
+                                       </div>
+
+                                       <!-- Date -->
+                                       <div class="flex items-center gap-1 flex-shrink-0">
+                                           <span class="text-[9px] text-gray-500 whitespace-nowrap">
+                                               @{{ formatDate(lead.created_at) }}
+                                           </span>
                                        </div>
                                     </div>
 
@@ -205,6 +219,35 @@
             },
 
             methods: {
+                /**
+                 * Format date to a more readable format
+                 *
+                 * @param {string} dateString - The date string to format
+                 * @returns {string} Formatted date string
+                 */
+                formatDate(dateString) {
+                    if (!dateString) return '';
+ 
+                    const date = new Date(dateString);
+                    const now = new Date();
+                    const diffTime = Math.abs(now - date);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+ 
+                    if (diffDays === 1) {
+                        return 'Vandaag';
+                    } else if (diffDays === 2) {
+                        return 'Gisteren';
+                    } else if (diffDays <= 7) {
+                        return `${diffDays - 1} dagen geleden`;
+                    } else {
+                        return date.toLocaleDateString('nl-NL', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: '2-digit'
+                        });
+                    }
+                },
+
                 /**
                  * Initialization
                  */

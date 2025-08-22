@@ -30,40 +30,36 @@
                 <div class="flex gap-2.5 overflow-x-auto">
                     <!-- Stage Cards -->
                     <div
-                        class="flex min-w-[275px] max-w-[275px] flex-col gap-1 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
+                        class="flex min-w-[275px] max-w-[275px] flex-col gap-1 rounded-lg border border-gray-200 dark:border-gray-800"
                         v-for="(stage, index) in stageLeads"
                     >
                         {!! view_render_event('admin.leads.index.kanban.content.stage.header.before') !!}
 
-                        <!-- Stage Header -->
-                        <div class="flex flex-col px-2 py-3">
+                                                <!-- Stage Header -->
+                        <div class="flex flex-col px-2 py-3 rounded-t-lg" style="background-color: var(--brand-blue);">
                             <!-- Stage Title and Action -->
                             <div class="flex items-center justify-between">
-                                <span class="text-xs font-medium dark:text-white">
-                                    @{{ stage.name }} (@{{ stage.leads.meta.total }})
+                                <span class="text-xs font-medium text-white">
+                                    @{{ stage.name }}
                                 </span>
 
-                                @if (bouncer()->hasPermission('leads.create'))
-                                    <a
-                                        :href="'{{ route('admin.leads.create') }}' + '?stage_id=' + stage.id"
-                                        class="icon-add cursor-pointer rounded p-1 text-lg text-gray-600 transition-all hover:bg-gray-200 hover:text-gray-800 dark:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-white"
-                                        target="_blank"
-                                    >
-                                    </a>
-                                @endif
-                            </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="inline-flex items-center justify-center rounded-full bg-white text-[10px] leading-none min-w-[18px] h-[18px] px-1" style="color: var(--brand-blue);">
+                                        @{{ stage.leads.meta.total }}
+                                    </span>
 
-                            <!-- Stage Total Leads and Amount -->
-                            <div class="flex items-center justify-between gap-2">
-
-                                <!-- Progress Bar -->
-                                <div class="h-1 w-36 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800">
-                                    <div
-                                        class="h-1 bg-green-500"
-                                        :style="{ width: (stage.lead_value / totalStagesAmount) * 100 + '%' }"
-                                    ></div>
+                                    @if (bouncer()->hasPermission('leads.create'))
+                                        <a
+                                            :href="'{{ route('admin.leads.create') }}' + '?stage_id=' + stage.id"
+                                            class="icon-add cursor-pointer rounded p-1 text-lg text-white transition-all hover:bg-white hover:bg-opacity-20"
+                                            target="_blank"
+                                        >
+                                        </a>
+                                    @endif
                                 </div>
                             </div>
+
+ 
                         </div>
 
                         {!! view_render_event('admin.leads.index.kanban.content.stage.header.after') !!}
@@ -127,43 +123,43 @@
                                 >
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.header.before') !!}
 
-                                    <!-- Header -->
-                                    <div class="flex items-start justify-between">
-                                       <div class="flex items-center gap-1">
-                                           <div v-if="element.person?.name">
+                                                                        <!-- Header -->
+                                    <div class="flex items-start justify-between gap-2">
+                                       <div class="flex items-center gap-1 min-w-0 flex-1">
+                                           <div v-if="element.person?.name" class="flex-shrink-0">
                                                <x-admin::avatar ::name="element.person?.name" class="w-6 h-6" />
                                            </div>
-                                           <div class="flex flex-col gap-0.5">
-                                               <span class="text-[11px] font-medium">
+                                           <div class="flex flex-col gap-0.5 min-w-0">
+                                               <span class="text-[11px] font-medium truncate">
                                                    @{{ element.person?.name || element.name }}
                                                </span>
-                                               <span class="text-[9px] leading-normal" v-if="element.person?.organization?.name">
+                                               <span class="text-[9px] leading-normal truncate" v-if="element.person?.organization?.name">
                                                    @{{ element.person?.organization?.name }}
                                                </span>
                                            </div>
                                        </div>
 
-                                                                                  <!-- Date and Rotten Days Indicator -->
-                                           <div class="flex items-center gap-1">
-                                               <!-- Date -->
-                                               <span class="text-[9px] text-gray-500">
-                                                   @{{ formatDate(element.created_at) }}
-                                               </span>
+                                       <!-- Date and Rotten Days Indicator -->
+                                       <div class="flex items-center gap-1 flex-shrink-0">
+                                           <!-- Date -->
+                                           <span class="text-[9px] text-gray-500 whitespace-nowrap">
+                                               @{{ formatDate(element.created_at) }}
+                                           </span>
 
-                                               <!-- Rotten Days Indicator -->
-                                               <div
-                                                   class="group relative"
-                                                   v-if="element.rotten_days > 0"
-                                               >
-                                                   <span class="icon-rotten cursor-default text-sm text-rose-600"></span>
-                                                   <div class="absolute -top-1 right-7 hidden w-max flex-col items-center group-hover:flex">
-                                                       <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
-                                                           @{{ "@lang('admin::app.leads.index.kanban.rotten-days', ['days' => 'replaceDays'])".replace('replaceDays', element.rotten_days) }}
-                                                       </span>
-                                                       <div class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
-                                                   </div>
+                                           <!-- Rotten Days Indicator -->
+                                           <div
+                                               class="group relative flex-shrink-0"
+                                               v-if="element.rotten_days > 0"
+                                           >
+                                               <span class="icon-rotten cursor-default text-sm text-rose-600"></span>
+                                               <div class="absolute -top-1 right-7 hidden w-max flex-col items-center group-hover:flex">
+                                                   <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                       @{{ "@lang('admin::app.leads.index.kanban.rotten-days', ['days' => 'replaceDays'])".replace('replaceDays', element.rotten_days) }}
+                                                   </span>
+                                                   <div class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                                </div>
                                            </div>
+                                       </div>
                                     </div>
 
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.header.after') !!}
@@ -235,7 +231,7 @@
                                                 v-else-if="element.days_until_due_date === 0"
                                                 class="text-orange-600 font-medium"
                                             >
-                                                @lang('admin::app.common.filters.date-range.today')
+                                                Vandaag
                                             </span>
                                             <span
                                                 v-else

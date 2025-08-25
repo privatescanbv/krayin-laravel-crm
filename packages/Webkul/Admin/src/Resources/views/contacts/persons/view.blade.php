@@ -89,6 +89,16 @@
             <!-- Person Overview (merged attributes and organization) -->
             @include ('admin::contacts.persons.view.compact-overview')
 
+            <!-- Gekoppelde Anamneses -->
+            <div class="border-b border-gray-200 dark:border-gray-800">
+                <x-admin::anamnesis.index :anamnesis="$person->anamnesis" />
+            </div>
+
+            <!-- Gekoppelde Leads -->
+            <div class="border-b border-gray-200 dark:border-gray-800">
+                <x-admin::leads :leads="$person->leads" />
+            </div>
+
             <!-- Footer with creation and modification dates -->
             <div class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
                 <div class="flex justify-between">
@@ -108,9 +118,6 @@
         <div class="flex w-full flex-row gap-4 rounded-lg">
             <div class="flex-1">
                 <x-admin::activities :endpoint="route('admin.contacts.persons.activities.index', $person->id)" />
-            </div>
-            <div class="flex-1">
-                <x-admin::leads :leads="$person->leads" />
             </div>
         </div>
     </div>

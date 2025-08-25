@@ -8,10 +8,12 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::table('leads', function (Blueprint $table) {
-            // Remove title column
-            $table->dropColumn('title');
-        });
+        if (Schema::hasColumn('leads', 'title')) {
+            Schema::table('leads', function (Blueprint $table) {
+                // Remove title column
+                $table->dropColumn('title');
+            });
+        }
     }
 
     public function down()

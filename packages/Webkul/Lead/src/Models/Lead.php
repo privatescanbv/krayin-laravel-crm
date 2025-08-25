@@ -426,26 +426,34 @@ class Lead extends Model implements LeadContract
     }
 
     /**
-     * Create anamnesis for this lead.
+     * Create missing anamnesis records for this lead and the given person IDs.
+     * Uses database-level unique constraint protection to prevent duplicates.
      */
     private function createMissingAnamnesis(array $personIds): void
     {
-        try {
-            foreach ($personIds as $personId) {
-              if (!Anamnesis::where('lead_id', $this->id)->where('person_id', $personId)->exists()) {
-                  Anamnesis::create([
-                      'id' => Str::uuid(),
-                      'lead_id' => $this->id,
-                      'name' => 'Anamnesis voor ' . $this->name,
-                      'person_id' => $personId,
-                  ]);
-              }
+        foreach ($personIds as $personId) {
+            try {
+                // Use firstOrCreate to prevent race conditions and duplicates
+                Anamnesis::firstOrCreate(
+                    [
+                        'lead_id' => $this->id,
+                        'person_id' => $personId,
+                    ],
+                    [
+                        'id' => Str::uuid(),
+                        'name' => 'Anamnesis voor ' . $this->name,
+                        'created_by' => auth()->id() ?? $this->user_id ?? 1,
+                        'updated_by' => auth()->id() ?? $this->user_id ?? 1,
+                    ]
+                );
+            } catch (Exception $e) {
+                // Log error but continue with other person IDs
+                Log::error('Failed to create anamnesis for lead-person combination', [
+                    'lead_id' => $this->id,
+                    'person_id' => $personId,
+                    'error' => $e->getMessage(),
+                ]);
             }
-        } catch (Exception $e) {
-            Log::error('Failed to create anamnesis for lead: ' . $e->getMessage(), [
-                'lead_id' => $this->id,
-                'error' => $e->getMessage(),
-            ]);
         }
     }
 

@@ -144,6 +144,14 @@ class Person extends Model implements PersonContract
     }
 
     /**
+     * Get all anamnesis records for this person.
+     */
+    public function anamnesis()
+    {
+        return $this->hasMany(\App\Models\Anamnesis::class, 'person_id');
+    }
+
+    /**
      * Create a new factory instance for the model.
      *
      * @return Factory

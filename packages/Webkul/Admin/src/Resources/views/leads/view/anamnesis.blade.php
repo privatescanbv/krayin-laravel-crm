@@ -19,21 +19,14 @@
     @if($lead->anamnesis)
         <div class="grid grid-cols-1 gap-4 text-sm">
             <!-- Basic Info -->
-            <div class="space-y-2">
+            @if($lead->anamnesis->description)
                 <div class="mb-4">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Naam:</div>
-                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {{ $lead->anamnesis->name ?: '-' }}
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Beschrijving:</div>
+                    <div class="text-sm text-gray-700 dark:text-gray-300">
+                        {{ Str::limit($lead->anamnesis->description, 120) }}
                     </div>
                 </div>
-
-                @if($lead->anamnesis->description)
-                    <div class="flex justify-between">
-                        <span class="text-gray-600 dark:text-gray-400">Beschrijving:</span>
-                        <span class="font-medium dark:text-white">{{ Str::limit($lead->anamnesis->description, 50) }}</span>
-                    </div>
-                @endif
-            </div>
+            @endif
 
             <!-- Physical Info -->
             @if($lead->anamnesis->height || $lead->anamnesis->weight)

@@ -46,6 +46,11 @@ class LeadController extends Controller
     const SUPPORTED_TYPES = 'pdf,bmp,jpeg,jpg,png,webp';
 
     /**
+     * Const variable for won/lost stage codes.
+     */
+    const WON_LOST_STAGE_CODES = ['won', 'lost', 'won-hernia', 'lost-hernia'];
+
+    /**
      * Create a new controller instance.
      *
      * @return void
@@ -110,10 +115,20 @@ class LeadController extends Controller
                 ], 500);
             }
 
+        // Check if we should exclude won/lost stages for performance optimization
+        $excludeWonLost = filter_var(request()->query('exclude_won_lost', false), FILTER_VALIDATE_BOOLEAN);
+        
         if ($stageId = request()->query('pipeline_stage_id')) {
             $stages = $pipeline->stages->where('id', request()->query('pipeline_stage_id'));
         } else {
             $stages = $pipeline->stages;
+            
+            // Filter out won/lost stages if requested to improve performance
+            if ($excludeWonLost) {
+                $stages = $stages->filter(function ($stage) {
+                    return !in_array($stage->code, self::WON_LOST_STAGE_CODES);
+                });
+            }
         }
 
         foreach ($stages as $stage) {
@@ -167,7 +182,8 @@ class LeadController extends Controller
             Log::error('Error in leads.get endpoint', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'request_params' => request()->all()
+                'request_params' => request()->all(),
+                'exclude_won_lost' => $excludeWonLost ?? null
             ]);
 
             return response()->json([

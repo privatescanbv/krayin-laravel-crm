@@ -14,7 +14,16 @@
         <!-- Filter -->
         @include('admin::leads.index.kanban.filter')
 
-        {!! view_render_event('admin.leads.index.kanban.toolbar.filter.after') !!}
+        {!! view_render_event('admin::leads.index.kanban.toolbar.filter.after') !!}
+
+        <!-- Collapse Won/Lost toggle -->
+        <button
+            type="button"
+            class="secondary-button whitespace-nowrap"
+            onclick="window.toggleWonLost && window.toggleWonLost()"
+        >
+            <span id="toggle-won-lost-text">Verberg gewonnen/verloren</span>
+        </button>
 
         <div class="z-10 hidden w-full divide-y divide-gray-100 rounded bg-white shadow dark:bg-gray-900"></div>
     </div>

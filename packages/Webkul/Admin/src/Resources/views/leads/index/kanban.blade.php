@@ -22,16 +22,17 @@
         </template>
 
         <template v-else>
-            <div class="flex flex-col gap-4">
-                @include('admin::leads.index.kanban.toolbar')
+                            <div class="flex flex-col gap-4">
+                    @include('admin::leads.index.kanban.toolbar')
 
-                {!! view_render_event('admin.leads.index.kanban.content.before') !!}
+                    {!! view_render_event('admin.leads.index.kanban.content.before') !!}
 
                 <div class="flex gap-2.5 overflow-x-auto">
                     <!-- Stage Cards -->
                     <div
                         class="flex min-w-[275px] max-w-[275px] flex-col gap-1 rounded-lg border border-gray-200 dark:border-gray-800"
                         v-for="(stage, index) in stageLeads"
+                        v-show="!(hideWonLost && (stage.code === 'won' || stage.code === 'lost' || stage.code === 'won-hernia' || stage.code === 'lost-hernia'))"
                     >
                         {!! view_render_event('admin.leads.index.kanban.content.stage.header.before') !!}
 
@@ -271,7 +272,8 @@
     </script>
 
     <script type="module">
-        app.component('v-leads-kanban', {
+        document.addEventListener('DOMContentLoaded', function() {
+            app.component('v-leads-kanban', {
             template: '#v-leads-kanban-template',
 
             data() {
@@ -300,6 +302,7 @@
                         '#ECFCCB': '#65A30D',
                         '#DCFCE7': '#16A34A',
                     },
+                    hideWonLost: true,
                 };
             },
 
@@ -311,6 +314,11 @@
 
             mounted () {
                 this.boot();
+                
+                // Register global function for button access
+                window.toggleWonLost = () => {
+                    this.toggleWonLost();
+                };
             },
 
             methods: {
@@ -358,6 +366,10 @@
 
                         if (currentKanban) {
                             this.applied.filters = currentKanban.applied.filters;
+
+                            if (typeof currentKanban.hideWonLost === 'boolean') {
+                                this.hideWonLost = currentKanban.hideWonLost;
+                            }
 
                             this.get()
                                 .then(response => {
@@ -581,6 +593,7 @@
                                         requestCount: ++kanban.requestCount,
                                         available: this.available,
                                         applied: this.applied,
+                                        hideWonLost: this.hideWonLost,
                                     };
                                 }
 
@@ -607,6 +620,7 @@
                         requestCount: 0,
                         available: this.available,
                         applied: this.applied,
+                        hideWonLost: this.hideWonLost,
                     };
                 },
 
@@ -644,7 +658,22 @@
                         JSON.stringify(kanbans)
                     );
                 },
+
+                /**
+                 * Toggle the visibility of won/lost stages
+                 */
+                                                                                                                   toggleWonLost() {
+                this.hideWonLost = !this.hideWonLost;
+                this.updateKanbans();
+                
+                // Update button text
+                const buttonText = document.getElementById('toggle-won-lost-text');
+                if (buttonText) {
+                    buttonText.textContent = this.hideWonLost ? 'Toon gewonnen/verloren' : 'Verberg gewonnen/verloren';
+                }
+            },
             }
+        });
         });
     </script>
 @endPushOnce

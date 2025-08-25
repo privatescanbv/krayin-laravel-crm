@@ -26,7 +26,8 @@ class Department extends Model
      * If user belongs to 'privatescan', choose 'privatescan' department.
      * Otherwise, choose based on the first matching group.
      *
-     * @param array $groupNames Array of group names the user belongs to, if empty means allow in all groups
+     * @param  array  $groupNames  Array of group names the user belongs to, if empty means allow in all groups
+     *
      * @throws Exception with unexpect database data.
      */
     public static function mapGroupToDepartmentId(array $groupNames): string
@@ -63,7 +64,7 @@ class Department extends Model
                         return $department->id;
                     }
                 } catch (Exception $e) {
-                    throw new Exception('Error finding department for group ' . $groupName . ': ' . $e->getMessage());
+                    throw new Exception('Error finding department for group '.$groupName.': '.$e->getMessage());
                 }
             }
         }

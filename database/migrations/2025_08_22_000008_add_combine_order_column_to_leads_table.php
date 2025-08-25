@@ -9,7 +9,7 @@ return new class extends Migration
     public function up()
     {
         Schema::table('leads', function (Blueprint $table) {
-            if (!Schema::hasColumn('leads', 'combine_order')) {
+            if (! Schema::hasColumn('leads', 'combine_order')) {
                 $table->boolean('combine_order')->default(true);
             }
         });

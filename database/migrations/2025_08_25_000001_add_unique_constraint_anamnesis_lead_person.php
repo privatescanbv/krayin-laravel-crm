@@ -2,14 +2,11 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         // First, remove any existing duplicates
@@ -21,9 +18,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::table('anamnesis', function (Blueprint $table) {
@@ -37,13 +31,13 @@ return new class extends Migration
     private function removeDuplicateAnamnesis(): void
     {
         // Find all duplicate combinations
-        $duplicates = DB::select("
+        $duplicates = DB::select('
             SELECT lead_id, person_id, COUNT(*) as count
             FROM anamnesis
             WHERE lead_id IS NOT NULL AND person_id IS NOT NULL
             GROUP BY lead_id, person_id
             HAVING COUNT(*) > 1
-        ");
+        ');
 
         foreach ($duplicates as $duplicate) {
             // Get all anamnesis records for this lead_id + person_id combination
@@ -62,9 +56,9 @@ return new class extends Migration
 
                 // Log the cleanup
                 Log::info('Removed duplicate anamnesis record', [
-                    'id' => $record->id,
-                    'lead_id' => $record->lead_id,
-                    'person_id' => $record->person_id,
+                    'id'         => $record->id,
+                    'lead_id'    => $record->lead_id,
+                    'person_id'  => $record->person_id,
                     'created_at' => $record->created_at,
                 ]);
             }

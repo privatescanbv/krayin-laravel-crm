@@ -340,14 +340,14 @@ test('anamnesis_audit_trail', function () {
 
     // Act - Create anamnesis
     $anamnesis = Anamnesis::factory()->create([
-        'id'      => Str::uuid(),
-        'lead_id' => $lead->id,
-        'name'    => 'Test Anamnesis',
+        'id'        => Str::uuid(),
+        'lead_id'   => $lead->id,
+        'name'      => 'Test Anamnesis',
         'person_id' => Person::factory()->create()->id,
-        'height'  => 180,
-        'weight'  => 75,
-        'metals'  => true,
-        'active'  => true,
+        'height'    => 180,
+        'weight'    => 75,
+        'metals'    => true,
+        'active'    => true,
     ]);
 
     // Assert - Creation audit

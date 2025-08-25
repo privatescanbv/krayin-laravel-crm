@@ -50,7 +50,7 @@ test('anamnesis model uses english field names', function () {
 test('it prevents duplicate anamnesis creation when attaching same person multiple times', function () {
     $this->seed(TestSeeder::class);
     $this->artisan('db:seed', ['--class' => LeadChannelSeeder::class]);
-    
+
     $lead = Lead::factory()->create();
     $person = Person::factory()->create();
 
@@ -73,27 +73,27 @@ test('database constraint prevents duplicate anamnesis insertion', function () {
 
     // Create first anamnesis
     $anamnesis1 = Anamnesis::create([
-        'id' => \Illuminate\Support\Str::uuid(),
-        'lead_id' => $lead->id,
+        'id'        => \Illuminate\Support\Str::uuid(),
+        'lead_id'   => $lead->id,
         'person_id' => $person->id,
-        'name' => 'First anamnesis',
+        'name'      => 'First anamnesis',
     ]);
 
     expect($anamnesis1)->toBeInstanceOf(Anamnesis::class);
 
     // Second creation with same lead_id + person_id should fail
-    expect(fn() => Anamnesis::create([
-        'id' => \Illuminate\Support\Str::uuid(),
-        'lead_id' => $lead->id,
+    expect(fn () => Anamnesis::create([
+        'id'        => \Illuminate\Support\Str::uuid(),
+        'lead_id'   => $lead->id,
         'person_id' => $person->id,
-        'name' => 'Duplicate anamnesis',
+        'name'      => 'Duplicate anamnesis',
     ]))->toThrow(\Illuminate\Database\QueryException::class);
 });
 
 test('it allows multiple anamnesis for different lead-person combinations', function () {
     $this->seed(TestSeeder::class);
     $this->artisan('db:seed', ['--class' => LeadChannelSeeder::class]);
-    
+
     $lead1 = Lead::factory()->create();
     $lead2 = Lead::factory()->create();
     $person1 = Person::factory()->create();

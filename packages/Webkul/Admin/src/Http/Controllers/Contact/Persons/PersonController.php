@@ -7,8 +7,10 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\DataGrids\Contact\PersonDataGrid;
@@ -20,24 +22,23 @@ use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 
-use Webkul\Core\Contracts\Validations\EmailValidator;
-use Webkul\Core\Contracts\Validations\PhoneValidator;
-use App\Validators\DateValidator;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
 use App\Services\PersonValidationService;
 
 class PersonController extends Controller
 {
+    private bool $enableLogging = false;
+
     /**
      * Create a new class instance.
      *
      * @return void
      */
     public function __construct(
-        protected PersonRepository  $personRepository,
-        private LeadRepository      $leadRepository,
-        private AttributeRepository $attributeRepository)
+        protected PersonRepository           $personRepository,
+        private readonly LeadRepository      $leadRepository,
+        private readonly AttributeRepository $attributeRepository)
     {
         request()->request->add(['entity_type' => 'persons']);
     }
@@ -161,7 +162,7 @@ class PersonController extends Controller
     public function show(int $id): View
     {
         $person = $this->personRepository->with(['address', 'organization'])->findOrFail($id);
-        
+
         // Load anamnesis sorted by newest first
         $person->load(['anamnesis' => function($query) {
             $query->orderBy('updated_at', 'desc');
@@ -281,6 +282,55 @@ class PersonController extends Controller
      */
     public function search(): JsonResource
     {
+        // Map incoming lookup term to RequestCriteria expectations (Contactpersoon zoeken)
+        $searchTerm = trim((string) (request('search') ?? request('query') ?? request('term') ?? ''));
+
+        // Log all SQL hitting the persons table for this request (interpolated)
+        if ($this->enableLogging) {
+            DB::listen(function ($query) {
+                if (Str::contains($query->sql, 'from `persons`')) {
+                    $interpolated = @vsprintf(
+                        str_replace('?', "'%s'", $query->sql),
+                        array_map(fn($b) => is_string($b) ? $b : (is_null($b) ? 'NULL' : (string)$b), $query->bindings)
+                    );
+
+                    Log::debug('Person search SQL', [
+                        'sql' => $query->sql,
+                        'bindings' => $query->bindings,
+                        'interpolated' => $interpolated,
+                        'time_ms' => $query->time,
+                    ]);
+                }
+            });
+        }
+
+        if ($searchTerm !== '') {
+            $tokens = preg_split('/\s+/', $searchTerm, -1, PREG_SPLIT_NO_EMPTY);
+
+            if (count($tokens) > 1) {
+                // Multi-token: apply tokenized AND-of-ORs; skip RequestCriteria merge to avoid conflicting AND
+                $this->personRepository->scopeQuery(function ($q) use ($tokens) {
+                    return $q->where(function ($qb) use ($tokens) {
+                        foreach ($tokens as $token) {
+                            $like = '%' . $token . '%';
+                            $qb->where(function ($qq) use ($like) {
+                                $qq->where('first_name', 'like', $like)
+                                   ->orWhere('last_name', 'like', $like)
+                                   ->orWhere('married_name', 'like', $like);
+                            });
+                        }
+                    });
+                });
+            } else {
+                // Single-token: delegate to RequestCriteria with explicit fields
+                $searchFields = 'first_name:like;last_name:like;married_name:like';
+
+                request()->merge([
+                    'search'       => $searchTerm,
+                    'searchFields' => $searchFields,
+                ]);
+            }
+        }
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $persons = $this->personRepository
                 ->pushCriteria(app(RequestCriteria::class))
@@ -292,7 +342,6 @@ class PersonController extends Controller
                 ->with(['address'])
                 ->all();
         }
-
         // Check if we need to calculate match scores against a lead
         $leadId = request()->get('lead_id');
         if ($leadId) {

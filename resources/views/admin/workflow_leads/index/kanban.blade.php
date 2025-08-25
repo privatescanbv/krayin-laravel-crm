@@ -227,12 +227,12 @@
                  */
                 formatDate(dateString) {
                     if (!dateString) return '';
- 
+
                     const date = new Date(dateString);
                     const now = new Date();
                     const diffTime = Math.abs(now - date);
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
- 
+
                     if (diffDays === 1) {
                         return 'Vandaag';
                     } else if (diffDays === 2) {

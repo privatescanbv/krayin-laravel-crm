@@ -362,6 +362,12 @@
                         viewType: '{{ request('view-type') }}' || 'table',
                         currentView: 'for_me',
                         availableViews: {},
+                        canTakeover: {{ auth()->guard('user')->user()->can('activities.takeover') ? 'true' : 'false' }},
+                        assignmentModal: {
+                            show: false,
+                            activity: null,
+                            conflictData: null,
+                        }
                     };
                 },
 

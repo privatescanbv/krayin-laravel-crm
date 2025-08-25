@@ -140,6 +140,11 @@ return [
         'route' => ['admin.activities.delete', 'admin.activities.mass_delete'],
         'sort'  => 3,
     ], [
+        'key'   => 'activities.takeover',
+        'name'  => 'admin::app.acl.takeover',
+        'route' => ['admin.activities.takeover'],
+        'sort'  => 4,
+    ], [
         'key'   => 'contacts',
         'name'  => 'admin::app.acl.contacts',
         'route' => 'admin.contacts.users.index',

@@ -28,16 +28,28 @@ class ActivityDataGrid extends DataGrid
                 'users.id as assigned_user_id',
                 'users.name as created_by',
                 'groups.name as group_name',
-                DB::raw('DATEDIFF(activities.schedule_to, CURDATE()) as days_until_deadline'),
+                // Cross-DB days until deadline: use different SQL per driver
+                DB::raw((function () {
+                    $driver = DB::connection()->getDriverName();
+                    if ($driver === 'sqlite') {
+                        // julianday returns day fractions; round to integer difference
+                        return "CAST((julianday(activities.schedule_to) - julianday('now')) AS INTEGER) as days_until_deadline";
+                    }
+                    if ($driver === 'pgsql') {
+                        return "(DATE(activities.schedule_to) - CURRENT_DATE) as days_until_deadline";
+                    }
+                    // default MySQL/MariaDB
+                    return 'DATEDIFF(activities.schedule_to, CURDATE()) as days_until_deadline';
+                })()),
                 // Add entity information
-                DB::raw('CASE 
+                DB::raw('CASE
                     WHEN activities.lead_id IS NOT NULL THEN "lead"
                     WHEN EXISTS (SELECT 1 FROM person_activities WHERE activity_id = activities.id LIMIT 1) THEN "person"
                     WHEN EXISTS (SELECT 1 FROM product_activities WHERE activity_id = activities.id LIMIT 1) THEN "product"
                     WHEN EXISTS (SELECT 1 FROM warehouse_activities WHERE activity_id = activities.id LIMIT 1) THEN "warehouse"
                     ELSE NULL
                 END as entity_type'),
-                DB::raw('CASE 
+                DB::raw('CASE
                     WHEN activities.lead_id IS NOT NULL THEN activities.lead_id
                     WHEN EXISTS (SELECT 1 FROM person_activities WHERE activity_id = activities.id LIMIT 1) THEN (SELECT person_id FROM person_activities WHERE activity_id = activities.id LIMIT 1)
                     WHEN EXISTS (SELECT 1 FROM product_activities WHERE activity_id = activities.id LIMIT 1) THEN (SELECT product_id FROM product_activities WHERE activity_id = activities.id LIMIT 1)
@@ -50,20 +62,22 @@ class ActivityDataGrid extends DataGrid
             ->leftJoin('users', 'activities.user_id', '=', 'users.id')
             ->leftJoin('groups', 'activities.group_id', '=', 'groups.id')
             ->whereIn('type', ['call', 'meeting','task'])
-            ->where(function ($query) {
-                if ($userIds = bouncer()->getAuthorizedUserIds()) {
-                    $query->whereIn('activities.user_id', $userIds)
-                        ->orWhereIn('activity_participants.user_id', $userIds)
-                        ->orWhere(function ($query) use ($userIds) {
-                            $query->whereNotNull('activities.group_id')
-                                ->whereExists(function ($query) use ($userIds) {
-                                    $query->select(DB::raw(1))
-                                        ->from('user_groups')
-                                        ->whereColumn('user_groups.group_id', 'activities.group_id')
-                                        ->whereIn('user_groups.user_id', $userIds);
-                                });
-                        });
-                }
+            ->when(!auth()->guard('user')->user()?->isGlobalAdmin(), function ($query) {
+                $query->where(function ($query) {
+                    if ($userIds = bouncer()->getAuthorizedUserIds()) {
+                        $query->whereIn('activities.user_id', $userIds)
+                            ->orWhereIn('activity_participants.user_id', $userIds)
+                            ->orWhere(function ($query) use ($userIds) {
+                                $query->whereNotNull('activities.group_id')
+                                    ->whereExists(function ($query) use ($userIds) {
+                                        $query->select(DB::raw(1))
+                                            ->from('user_groups')
+                                            ->whereColumn('user_groups.group_id', 'activities.group_id')
+                                            ->whereIn('user_groups.user_id', $userIds);
+                                    });
+                            });
+                    }
+                });
             })->groupBy('activities.id', 'leads.id', 'users.id', 'groups.id');
 
         // Apply view filters - use default view if none specified
@@ -73,22 +87,25 @@ class ActivityDataGrid extends DataGrid
             $defaultView = $viewService->getDefaultView();
             $view = $defaultView['key'];
         }
-        
+
         // Get view configuration to add filters to the interface
         $viewConfig = $viewService->getView($view);
         if ($viewConfig) {
             // Apply view filters to the query
             $queryBuilder = $viewService->applyViewFilters($queryBuilder, $view);
-            
+
             // Add view filters to the request so they appear in the filter interface
-            foreach ($viewConfig['filters'] as $filter) {
-                // Skip custom filters that can't be shown in the interface
-                if ($filter['operator'] === 'custom') {
-                    continue;
-                }
-                
-                if (!request()->has($filter['column'])) {
-                    request()->merge([$filter['column'] => $filter['value']]);
+            // Skip adding filters to request for global admins to prevent client-side filtering
+            if (!auth()->guard('user')->user()?->isGlobalAdmin()) {
+                foreach ($viewConfig['filters'] as $filter) {
+                    // Skip custom filters that can't be shown in the interface
+                    if ($filter['operator'] === 'custom') {
+                        continue;
+                    }
+
+                    if (!request()->has($filter['column'])) {
+                        request()->merge([$filter['column'] => $filter['value']]);
+                    }
                 }
             }
         }
@@ -97,7 +114,7 @@ class ActivityDataGrid extends DataGrid
         if (!request()->has('sort')) {
             $queryBuilder->orderByRaw('
                 CASE WHEN days_until_deadline IS NULL THEN 1 ELSE 0 END,
-                days_until_deadline ASC, 
+                days_until_deadline ASC,
                 activities.created_at DESC
             ');
         }
@@ -109,7 +126,6 @@ class ActivityDataGrid extends DataGrid
         $this->addFilter('assigned_user_id', 'users.name');
         $this->addFilter('created_at', 'activities.created_at');
         $this->addFilter('days_until_deadline', 'days_until_deadline');
-        // Removed lead_title filter as leads.title column no longer exists
         $this->addFilter('group', 'groups.name');
 
         return $queryBuilder;
@@ -229,7 +245,7 @@ class ActivityDataGrid extends DataGrid
             ],
             'closure'    => function ($row) {
                 if (!$row->entity_type || !$row->entity_id) {
-                    return "<span class='text-gray-800 dark:text-gray-300'>N/A</span>";
+                return "<span class='text-gray-800 dark:text-gray-300'>N/A</span>";
                 }
 
                 $route = '';
@@ -328,6 +344,17 @@ class ActivityDataGrid extends DataGrid
                 'url'    => fn ($row) => route('admin.activities.delete', $row->id),
             ]);
         }
+
+        // Add unassign action for activities assigned to current user
+        $currentUserId = auth()->guard('user')->id();
+        $this->addAction([
+            'index'  => 'unassign',
+            'icon'   => 'icon-undo',
+            'title'  => 'Ontkoppelen',
+            'method' => 'POST',
+            'url'    => fn ($row) => route('admin.activities.unassign', $row->id),
+            'condition' => fn ($row) => $row->user_id == $currentUserId,
+        ]);
     }
 
     /**
@@ -358,4 +385,6 @@ class ActivityDataGrid extends DataGrid
             ],
         ]);
     }
+
+
 }

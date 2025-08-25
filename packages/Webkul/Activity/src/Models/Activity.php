@@ -37,6 +37,7 @@ class Activity extends Model implements ActivityContract
     protected $casts = [
         'schedule_from' => 'datetime',
         'schedule_to'   => 'datetime',
+        'assigned_at'   => 'datetime',
     ];
 
     /**
@@ -54,6 +55,7 @@ class Activity extends Model implements ActivityContract
         'schedule_to',
         'is_done',
         'user_id',
+        'assigned_at',
         'group_id',
         'lead_id',
     ];

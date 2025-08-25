@@ -44,6 +44,7 @@ return [
         'import'          => 'Import',
         'event'           => 'Event',
         'campaigns'       => 'Campaigns',
+        'takeover'        => 'Takeover',
     ],
 
     'users' => [

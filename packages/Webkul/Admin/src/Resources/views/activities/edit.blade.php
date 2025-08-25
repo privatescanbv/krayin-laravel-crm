@@ -26,6 +26,18 @@
                 </div>
 
                 <div class="flex items-center gap-x-2.5">
+                    <!-- Takeover Button -->
+                    @if($activity->user_id && $activity->user_id != auth()->guard('user')->id() && $canTakeover)
+                        <button
+                            type="button"
+                            class="secondary-button bg-orange-500 hover:bg-orange-600 text-white"
+                            onclick="takeoverActivity({{ $activity->id }})"
+                            title="Overnemen van {{ $activity->user ? $activity->user->name : 'onbekend' }}"
+                        >
+                            Overnemen
+                        </button>
+                    @endif
+
                     <!-- Create button for person -->
                     <div class="flex items-center gap-x-2.5">
                         {!! view_render_event('admin.activities.edit.save_button.before') !!}
@@ -502,6 +514,41 @@
                     },
                 },
             });
+        </script>
+
+        <script>
+            /**
+             * Takeover activity from another user.
+             *
+             * @param {Number} activityId
+             * @return {void}
+             */
+            window.takeoverActivity = async function(activityId) {
+                if (!activityId) return;
+
+                try {
+                    const response = await fetch(`/admin/activities/${activityId}/takeover`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                        },
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Er is een fout opgetreden bij het overnemen van de activiteit.');
+                    }
+
+                    // Success - show message and redirect
+                    window.location.reload();
+
+                } catch (error) {
+                    // Show error message
+                    alert(error.message);
+                }
+            };
         </script>
     @endPushOnce
 </x-admin::layouts>

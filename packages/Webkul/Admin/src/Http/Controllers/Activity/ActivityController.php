@@ -176,7 +176,7 @@ class ActivityController extends Controller
         // Determine which entity this activity belongs to
         $relatedEntity = null;
         $relatedEntityName = null;
-        
+
         if ($activity->lead_id) {
             $relatedEntity = $activity->lead;
             $relatedEntityName = 'Lead';
@@ -191,7 +191,10 @@ class ActivityController extends Controller
             $relatedEntityName = 'Warehouse';
         }
 
-        return view('admin::activities.edit', compact('activity', 'groups', 'lookUpEntityData', 'relatedEntity', 'relatedEntityName'));
+        $user = auth()->guard('user')->user();
+        $canTakeover = $user->hasPermission('activities.takeover');
+
+        return view('admin::activities.edit', compact('activity', 'groups', 'lookUpEntityData', 'relatedEntity', 'relatedEntityName', 'canTakeover'));
     }
 
     /**

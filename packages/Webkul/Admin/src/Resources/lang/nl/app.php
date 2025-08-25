@@ -37,6 +37,7 @@ return [
         'view' => 'Bekijken',
         'print' => 'Afdrukken',
         'delete' => 'Verwijderen',
+        'takeover' => 'Overnemen',
         'export' => 'Exporteren',
         'mass-delete' => 'Bulk verwijderen',
         'data-transfer' => 'Gegevensoverdracht',

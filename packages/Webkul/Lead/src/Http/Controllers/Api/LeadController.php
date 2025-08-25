@@ -4,7 +4,6 @@ namespace Webkul\Lead\Http\Controllers\Api;
 
 use App\Enums\PipelineDefaultKeys;
 use App\Models\Department;
-use App\Validators\DateValidator;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
@@ -14,8 +13,6 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Webkul\Admin\Http\Requests\LeadForm;
-use Webkul\Core\Contracts\Validations\EmailValidator;
-use Webkul\Core\Contracts\Validations\PhoneValidator;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Type;
 use Webkul\Lead\Repositories\LeadRepository;
@@ -65,7 +62,7 @@ class LeadController extends Controller
 
         try {
             $departmentId = Department::findPrivateScanId();
-            
+
             // Check if lead type exists and is "Operatie"
             if (isset($request['lead_type_id'])) {
                 $leadType = Type::query()->where('id', $request['lead_type_id'])->first();
@@ -82,17 +79,17 @@ class LeadController extends Controller
                 'data' => [],
             ], 500);
         }
-        
+
         // Add required fields before validation
         $request->merge([
             'user_id' => $currentUserId,
             'status' => 1,
             'department_id' => $departmentId
         ]);
-        
+
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
-        
+
         try {
             $this->validate($request, LeadValidationService::getApiValidationRules($request));
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -244,7 +241,7 @@ class LeadController extends Controller
     private function normalizeContactArrays($request)
     {
         $requestData = $request->all();
-        
+
         // Normalize emails
         if (isset($requestData['emails']) && is_array($requestData['emails'])) {
             foreach ($requestData['emails'] as $index => $email) {
@@ -255,7 +252,7 @@ class LeadController extends Controller
                     } else {
                         $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
                     }
-                    
+
                     // Normalize is_default to boolean
                     if (isset($email['is_default'])) {
                         $requestData['emails'][$index]['is_default'] = $this->normalizeBoolean($email['is_default']);
@@ -265,7 +262,7 @@ class LeadController extends Controller
                 }
             }
         }
-        
+
         // Normalize phones
         if (isset($requestData['phones']) && is_array($requestData['phones'])) {
             foreach ($requestData['phones'] as $index => $phone) {
@@ -276,7 +273,7 @@ class LeadController extends Controller
                     } else {
                         $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
-                    
+
                     // Normalize is_default to boolean
                     if (isset($phone['is_default'])) {
                         $requestData['phones'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
@@ -286,7 +283,7 @@ class LeadController extends Controller
                 }
             }
         }
-        
+
         // Replace the request data
         $request->replace($requestData);
     }
@@ -299,15 +296,15 @@ class LeadController extends Controller
         if (is_bool($value)) {
             return $value;
         }
-        
+
         if (is_string($value)) {
             return in_array(strtolower($value), ['true', '1', 'on', 'yes']);
         }
-        
+
         if (is_numeric($value)) {
             return (bool) $value;
         }
-        
+
         return false;
     }
 
@@ -319,7 +316,7 @@ class LeadController extends Controller
         if (empty($label)) {
             return 'work';
         }
-        
+
         // Convert to lowercase and map common variations
         $normalizedLabel = strtolower(trim($label));
         $labelMap = [
@@ -332,7 +329,7 @@ class LeadController extends Controller
             'other' => 'other',
             'anders' => 'other'
         ];
-        
+
         return $labelMap[$normalizedLabel] ?? 'work';
     }
 }

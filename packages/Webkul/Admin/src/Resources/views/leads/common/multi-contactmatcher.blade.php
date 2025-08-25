@@ -303,17 +303,25 @@
                      }
                  },
 
-                                 addPerson(person) {
-                     if (!this.isPersonSelected(person.id)) {
-                         this.selectedPersons.push(person);
-                         
-                         // Clear search and suggestions after adding
-                         this.search = '';
-                         this.suggestions = [];
-                         
-
-                     }
-                 },
+                                                 addPerson(person) {
+                    if (!this.isPersonSelected(person.id)) {
+                        this.selectedPersons.push(person);
+                        
+                        // Clear search and suggestions after adding
+                        this.search = '';
+                        this.suggestions = [];
+                        
+                        // Emit event for parent components to listen to
+                        this.$emit('person-added', person);
+                        this.$emit('persons-updated', this.selectedPersons);
+                        
+                        // Also call the lead form component directly if available
+                        if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
+                            window.leadFormComponent.persons = this.selectedPersons;
+                            window.leadFormComponent.updateFormDataFromPersons();
+                        }
+                    }
+                },
 
                 removePerson(index) {
                     const person = this.selectedPersons[index];
@@ -325,12 +333,31 @@
                         }
                         
                         this.selectedPersons.splice(index, 1);
+                        
+                        // Emit event for parent components to listen to
+                        this.$emit('person-removed', person);
+                        this.$emit('persons-updated', this.selectedPersons);
+                        
+                        // Also call the lead form component directly if available
+                        if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
+                            window.leadFormComponent.persons = this.selectedPersons;
+                            window.leadFormComponent.updateFormDataFromPersons();
+                        }
                     }
                 },
 
                 clearAllPersons() {
                     if (confirm('Weet je zeker dat je alle contactpersonen wilt ontkoppelen?')) {
                         this.selectedPersons = [];
+                        
+                        // Emit event for parent components to listen to
+                        this.$emit('persons-updated', this.selectedPersons);
+                        
+                        // Also call the lead form component directly if available
+                        if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
+                            window.leadFormComponent.persons = this.selectedPersons;
+                            window.leadFormComponent.updateFormDataFromPersons();
+                        }
                     }
                 },
 
@@ -391,14 +418,24 @@
 
                          const response = await axios.post('/admin/contacts/persons/create', personData);
 
-                         if (response.data && response.data.data) {
-                             const newPerson = response.data.data;
-                             
-                             // Add to selected persons
-                             this.selectedPersons.push(newPerson);
-                             
-                             alert('Contactpersoon succesvol aangemaakt en gekoppeld aan deze lead.');
-                         }
+                                                 if (response.data && response.data.data) {
+                            const newPerson = response.data.data;
+                            
+                            // Add to selected persons
+                            this.selectedPersons.push(newPerson);
+                            
+                            // Emit event for parent components to listen to
+                            this.$emit('person-added', newPerson);
+                            this.$emit('persons-updated', this.selectedPersons);
+                            
+                            // Also call the lead form component directly if available
+                            if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
+                                window.leadFormComponent.persons = this.selectedPersons;
+                                window.leadFormComponent.updateFormDataFromPersons();
+                            }
+                            
+                            alert('Contactpersoon succesvol aangemaakt en gekoppeld aan deze lead.');
+                        }
                      } catch (error) {
                          console.error('Fout bij aanmaken contactpersoon:', error);
                          
@@ -439,18 +476,28 @@
 
                          const response = await axios.post('/admin/contacts/persons/create', personData);
 
-                         if (response.data && response.data.data) {
-                             const newPerson = response.data.data;
-                             
-                             // Add to selected persons
-                             this.selectedPersons.push(newPerson);
-                             
-                             // Clear search
-                             this.search = '';
-                             this.suggestions = [];
-                             
-                             alert(`Nieuwe contactpersoon "${newPerson.name}" succesvol aangemaakt en gekoppeld.`);
-                         }
+                                                 if (response.data && response.data.data) {
+                            const newPerson = response.data.data;
+                            
+                            // Add to selected persons
+                            this.selectedPersons.push(newPerson);
+                            
+                            // Clear search
+                            this.search = '';
+                            this.suggestions = [];
+                            
+                            // Emit event for parent components to listen to
+                            this.$emit('person-added', newPerson);
+                            this.$emit('persons-updated', this.selectedPersons);
+                            
+                            // Also call the lead form component directly if available
+                            if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
+                                window.leadFormComponent.persons = this.selectedPersons;
+                                window.leadFormComponent.updateFormDataFromPersons();
+                            }
+                            
+                            alert(`Nieuwe contactpersoon "${newPerson.name}" succesvol aangemaakt en gekoppeld.`);
+                        }
                      } catch (error) {
                          console.error('Fout bij aanmaken nieuwe contactpersoon:', error);
                          

@@ -32,7 +32,6 @@
                     <div
                         class="flex min-w-[275px] max-w-[275px] flex-col gap-1 rounded-lg border border-gray-200 dark:border-gray-800"
                         v-for="(stage, index) in stageLeads"
-                        v-show="!(hideWonLost && (stage.code === 'won' || stage.code === 'lost' || stage.code === 'won-hernia' || stage.code === 'lost-hernia'))"
                     >
                         {!! view_render_event('admin.leads.index.kanban.content.stage.header.before') !!}
 
@@ -402,6 +401,7 @@
                         searchFields: '',
                         pipeline_id: "{{ request('pipeline_id') }}",
                         limit: 10,
+                        exclude_won_lost: this.hideWonLost, // Performance optimization: exclude won/lost stages when hidden
                     };
 
                     this.applied.filters.columns.forEach((column) => {
@@ -443,12 +443,13 @@
                             return response;
                         })
                         .catch(error => {
-                            console.log(error)
+                            console.error('Error fetching leads:', error);
                         });
                 },
 
                 /**
                  * Filters the leads based on the applied filters.
+                 * Clears existing data and refetches with new filters and current exclude_won_lost state.
                  *
                  * @param {object} filters - The filters to be applied.
                  * @returns {void}
@@ -459,16 +460,22 @@
                         ...filters.columns,
                     ];
 
+                    // Clear existing data before applying new filters
+                    this.stageLeads = {};
                     this.get()
                         .then(response => {
                             for (let [sortOrder, data] of Object.entries(response.data)) {
                                 this.stageLeads[sortOrder] = data;
                             }
+                        })
+                        .catch(error => {
+                            console.error('Error applying filters:', error);
                         });
                 },
 
                 /**
                  * Searches the leads based on the applied filters.
+                 * Clears existing data and refetches with new search criteria and current exclude_won_lost state.
                  *
                  * @param {object} filters - The filters to be applied.
                  * @returns {void}
@@ -479,22 +486,34 @@
                         ...filters.columns,
                     ];
 
+                    // Clear existing data before applying new search
+                    this.stageLeads = {};
                     this.get()
                         .then(response => {
                             for (let [sortOrder, data] of Object.entries(response.data)) {
                                 this.stageLeads[sortOrder] = data;
                             }
+                        })
+                        .catch(error => {
+                            console.error('Error applying search:', error);
                         });
                 },
 
                 /**
                  * Appends the leads to the stage.
+                 * Ensures the exclude_won_lost parameter is included for performance optimization.
                  *
                  * @param {object} params - The parameters to be appended.
                  * @returns {void}
                  */
                 append(params) {
-                    this.get(params)
+                    // Ensure exclude_won_lost parameter is included for performance optimization
+                    const paramsWithExclude = {
+                        ...params,
+                        exclude_won_lost: this.hideWonLost,
+                    };
+                    
+                    this.get(paramsWithExclude)
                         .then(response => {
                             for (let [sortOrder, data] of Object.entries(response.data)) {
                                 if (! this.stageLeads[sortOrder]) {
@@ -660,18 +679,40 @@
                 },
 
                 /**
-                 * Toggle the visibility of won/lost stages
+                 * Toggle the visibility of won/lost stages and refetch data accordingly
+                 * This method optimizes performance by only fetching data for visible stages
                  */
-                                                                                                                   toggleWonLost() {
-                this.hideWonLost = !this.hideWonLost;
-                this.updateKanbans();
-                
-                // Update button text
-                const buttonText = document.getElementById('toggle-won-lost-text');
-                if (buttonText) {
-                    buttonText.textContent = this.hideWonLost ? 'Toon gewonnen/verloren' : 'Verberg gewonnen/verloren';
-                }
-            },
+                toggleWonLost() {
+                    this.hideWonLost = !this.hideWonLost;
+                    this.updateKanbans();
+                    
+                    // Update button text
+                    const buttonText = document.getElementById('toggle-won-lost-text');
+                    if (buttonText) {
+                        buttonText.textContent = this.hideWonLost ? 'Toon gewonnen/verloren' : 'Verberg gewonnen/verloren';
+                    }
+                    
+                    // Clear existing data and refetch with new exclude_won_lost parameter
+                    this.stageLeads = {};
+                    this.get()
+                        .then(response => {
+                            for (let [sortOrder, data] of Object.entries(response.data)) {
+                                this.stageLeads[sortOrder] = data;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error toggling won/lost stages:', error);
+                            // Revert the toggle if there's an error
+                            this.hideWonLost = !this.hideWonLost;
+                            this.updateKanbans();
+                            
+                            // Update button text back
+                            const buttonText = document.getElementById('toggle-won-lost-text');
+                            if (buttonText) {
+                                buttonText.textContent = this.hideWonLost ? 'Toon gewonnen/verloren' : 'Verberg gewonnen/verloren';
+                            }
+                        });
+                },
             }
         });
         });

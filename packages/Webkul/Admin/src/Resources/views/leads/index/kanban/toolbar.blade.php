@@ -22,7 +22,7 @@
             class="secondary-button whitespace-nowrap"
             onclick="window.toggleWonLost && window.toggleWonLost()"
         >
-            <span id="toggle-won-lost-text">Verberg gewonnen/verloren</span>
+            <span id="toggle-won-lost-text">Toon gewonnen/verloren</span>
         </button>
 
         <div class="z-10 hidden w-full divide-y divide-gray-100 rounded bg-white shadow dark:bg-gray-900"></div>

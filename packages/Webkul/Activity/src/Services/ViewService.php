@@ -14,7 +14,7 @@ class ViewService
      */
     public function getAvailableViews(): array
     {
-        return [
+        $views = [
             'for_me' => [
                 'key' => 'for_me',
                 'label' => 'Voor mij',
@@ -44,6 +44,8 @@ class ViewService
                 'filters' => $this->getPrivatescanFilters(),
             ],
         ];
+
+        return $views;
     }
 
     /**
@@ -55,7 +57,7 @@ class ViewService
     public function getView(string $key): ?array
     {
         $views = $this->getAvailableViews();
-        
+
         return $views[$key] ?? null;
     }
 
@@ -67,13 +69,13 @@ class ViewService
     public function getDefaultView(): array
     {
         $views = $this->getAvailableViews();
-        
+
         foreach ($views as $view) {
             if ($view['is_default']) {
                 return $view;
             }
         }
-        
+
         return reset($views);
     }
 
@@ -85,7 +87,7 @@ class ViewService
     protected function getForMeFilters(): array
     {
         $currentUserId = Auth::guard('user')->id();
-        
+
         return [
             [
                 'column' => 'assigned_user_id',
@@ -110,7 +112,7 @@ class ViewService
         $currentUserId = Auth::guard('user')->id();
         $currentUser = Auth::guard('user')->user();
         $userGroupIds = $currentUser ? $currentUser->groups()->pluck('id')->toArray() : [];
-        
+
         return [
             [
                 'column' => 'user_or_groups',
@@ -177,18 +179,31 @@ class ViewService
      * @param string $viewKey
      * @return mixed
      */
-    public function applyViewFilters($queryBuilder, string $viewKey)
+    public function applyViewFilters($queryBuilder, string $viewKey): mixed
     {
+        $user = Auth::guard('user')->user();
         $view = $this->getView($viewKey);
-        
+
         if (!$view) {
             return $queryBuilder;
         }
-        
+
+        // Global admins: apply all filters for 'for_me' and 'for_me_or_groups'.
+        // For other views, apply only non-user filters (e.g., group/is_done), so group filtering still works.
+        if ($user && $user->isGlobalAdmin() && !in_array($viewKey, ['for_me', 'for_me_or_groups'])) {
+            foreach ($view['filters'] as $filter) {
+                if (in_array($filter['column'], ['group', 'is_done'])) {
+                    $queryBuilder = $this->applyFilter($queryBuilder, $filter);
+                }
+            }
+
+            return $queryBuilder;
+        }
+
         foreach ($view['filters'] as $filter) {
             $queryBuilder = $this->applyFilter($queryBuilder, $filter);
         }
-        
+
         return $queryBuilder;
     }
 
@@ -204,27 +219,27 @@ class ViewService
         $column = $filter['column'];
         $operator = $filter['operator'];
         $value = $filter['value'];
-        
+
         switch ($column) {
             case 'assigned_user_id':
                 $queryBuilder->where('activities.user_id', $value);
                 break;
-                
+
             case 'is_done':
                 $queryBuilder->where('activities.is_done', $value);
                 break;
-                
+
             case 'group':
                 $queryBuilder->where('groups.name', $value);
                 break;
-                
+
             case 'user_or_groups':
                 $queryBuilder->where(function ($query) use ($value) {
                     $query->where('activities.user_id', $value['user_id']);
-                    
+
                     if (!empty($value['group_ids'])) {
                         $query->orWhereIn('activities.group_id', $value['group_ids']);
-                        
+
                         // Include activities where user is a participant
                         $query->orWhereExists(function ($existsQuery) use ($value) {
                             $existsQuery->select(DB::raw(1))
@@ -236,7 +251,7 @@ class ViewService
                 });
                 break;
         }
-        
+
         return $queryBuilder;
     }
 }

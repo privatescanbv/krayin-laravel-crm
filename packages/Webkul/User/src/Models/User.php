@@ -96,11 +96,37 @@ class User extends Authenticatable implements UserContract
      */
     public function hasPermission($permission)
     {
-        if ($this->role->permission_type == 'custom' && ! $this->role->permissions) {
+        // Grant all permissions when role is global admin
+        if ($this->role && $this->role->permission_type === 'all') {
+            return true;
+        }
+
+        // For custom permission type, ensure permissions is a non-empty array
+        if ($this->role->permission_type === 'custom' && ! $this->role->permissions) {
             return false;
         }
 
-        return in_array($permission, $this->role->permissions);
+        $permissions = $this->role->permissions;
+
+        if (! is_array($permissions)) {
+            return false;
+        }
+
+        return in_array($permission, $permissions);
+    }
+
+    /**
+     * Check if user is a global admin
+     *
+     * @return bool
+     */
+    public function isGlobalAdmin(): bool
+    {
+        if (!$this->role) {
+            return false;
+        }
+
+        return $this->role->permission_type === 'all';
     }
 
     /**

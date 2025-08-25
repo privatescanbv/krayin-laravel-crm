@@ -31,5 +31,7 @@ Route::controller(ActivityAssignmentController::class)->prefix('activities')->gr
     
     Route::post('{id}/takeover', 'takeover')
         ->name('admin.activities.takeover')
-        ->middleware('can:activities.takeover');
+        ->middleware('bouncer.permission:activities.takeover');
+        
+    Route::post('{id}/unassign', 'unassign')->name('admin.activities.unassign');
 });

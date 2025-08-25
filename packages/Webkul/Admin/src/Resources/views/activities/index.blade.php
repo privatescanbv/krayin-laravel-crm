@@ -54,12 +54,12 @@
                     </div>
 
                     {!! view_render_event('admin.activities.index.toggle_view.before') !!}
-                    
+
                     <div class="flex items-center gap-4">
                         <!-- Views Dropdown -->
                         <div v-show="hasViews" class="relative">
-                            <select 
-                                class="rounded-md border bg-white px-3 py-2 text-sm dark:bg-gray-900 dark:border-gray-800 dark:text-gray-300" 
+                            <select
+                                class="rounded-md border bg-white px-3 py-2 text-sm dark:bg-gray-900 dark:border-gray-800 dark:text-gray-300"
                                 @change="onViewChange"
                                 :value="currentView"
                             >
@@ -93,7 +93,7 @@
                     {!! view_render_event('admin.activities.index.datagrid.before') !!}
 
                     <x-admin::datagrid
-                        src="/admin/activities/get"
+                        src="/admin/activities/get?view={{ request()->get('view', $currentView ?? 'for_me') }}"
                         :isMultiRow="true"
                         ref="datagrid"
                     >
@@ -170,9 +170,9 @@
                                                 </p>
                                             </template>
 
-                                            <!-- Lead Title Column -->
-                                            <template v-else-if="column.index === 'lead_title'">
-                                                <div v-html="record.lead_title" class="text-sm"></div>
+                                            <!-- Related Entity Column -->
+                                            <template v-else-if="column.index === 'related_entity'">
+                                                <div v-html="record.related_entity" class="text-sm"></div>
                                             </template>
 
                                             <!-- Type Column -->
@@ -207,7 +207,7 @@
                                             v-for="action in record.actions"
                                             @click="performAction(action)"
                                         ></span>
-                                        
+
                                         <!-- Assign to Me Button -->
                                         <button
                                             v-if="!record.user_id"
@@ -217,7 +217,7 @@
                                         >
                                             Toekennen
                                         </button>
-                                        
+
                                         <!-- Takeover Button -->
                                         <button
                                             v-if="record.user_id && record.user_id != {{ auth()->guard('user')->id() ?? 'null' }} && canTakeover"
@@ -226,6 +226,16 @@
                                             :title="'Overnemen van ' + (record.user && record.user.name ? record.user.name : 'onbekend')"
                                         >
                                             Overnemen
+                                        </button>
+
+                                        <!-- Unassign Button -->
+                                        <button
+                                            v-if="record.user_id == {{ auth()->guard('user')->id() ?? 'null' }}"
+                                            class="ml-2 px-2 py-1 rounded bg-red-500 text-white text-xs hover:bg-red-600 transition-colors"
+                                            @click="unassignActivity(record)"
+                                            title="Ontkoppelen - maak beschikbaar voor anderen"
+                                        >
+                                            Ontkoppelen
                                         </button>
                                     </div>
                                 </div>
@@ -268,7 +278,7 @@
                                                         @click="performAction(action)"
                                                     ></span>
                                                 </div>
-                                                
+
                                                 <button
                                                     v-if="!record.user_id"
                                                     class="px-2 py-1 rounded bg-blue-500 text-white text-xs hover:bg-blue-600 transition-colors"
@@ -276,13 +286,21 @@
                                                 >
                                                     Toekennen
                                                 </button>
-                                                
+
                                                 <button
                                                     v-if="record.user_id && record.user_id != {{ auth()->guard('user')->id() ?? 'null' }} && canTakeover"
                                                     class="ml-2 px-2 py-1 rounded bg-orange-500 text-white text-xs hover:bg-orange-600 transition-colors"
                                                     @click="takeoverActivity(record)"
                                                 >
                                                     Overnemen
+                                                </button>
+
+                                                <button
+                                                    v-if="record.user_id == {{ auth()->guard('user')->id() ?? 'null' }}"
+                                                    class="ml-2 px-2 py-1 rounded bg-red-500 text-white text-xs hover:bg-red-600 transition-colors"
+                                                    @click="unassignActivity(record)"
+                                                >
+                                                    Ontkoppelen
                                                 </button>
                                             </div>
                                         </div>
@@ -316,31 +334,31 @@
                     {!! view_render_event('admin.activities.index.vue_calender.after') !!}
                 </template>
             </div>
-            
+
             <!-- Assignment Conflict Modal -->
             <div v-if="assignmentModal.show" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
                 <div class="bg-white rounded-lg p-6 max-w-md mx-4 dark:bg-gray-800">
                     <h3 class="text-lg font-semibold mb-4 dark:text-white">
                         Activiteit al toegekend
                     </h3>
-                    
+
                     <p class="mb-4 text-gray-600 dark:text-gray-300">
                         @{{ assignmentModal.conflictData?.message }}
                     </p>
-                    
+
                     <p class="mb-6 text-sm text-gray-500 dark:text-gray-400">
                         Wil je deze activiteit overnemen?
                     </p>
-                    
+
                     <div class="flex gap-3 justify-end">
-                        <button 
+                        <button
                             @click="closeAssignmentModal()"
                             class="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
                         >
                             Annuleren
                         </button>
-                        
-                        <button 
+
+                        <button
                             @click="takeoverActivity(assignmentModal.activity, true)"
                             class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
                         >
@@ -413,7 +431,15 @@
                         viewType: '{{ request('view-type') }}' || 'table',
                         currentView: 'for_me',
                         availableViews: {},
-                        canTakeover: {{ auth()->guard('user')->user()->can('activities.takeover') ? 'true' : 'false' }},
+                        canTakeover: (function() {
+                            const user = {{ auth()->guard('user')->user()->id }};
+                            const canTakeover = {{ (function() { 
+                                $user = auth()->guard('user')->user(); 
+                                return $user && $user->hasPermission('activities.takeover') ? 'true' : 'false'; 
+                            })() }};
+                            console.log('Takeover debug - User ID:', user, 'Can takeover:', canTakeover);
+                            return canTakeover;
+                        })(),
                         assignmentModal: {
                             show: false,
                             activity: null,
@@ -428,11 +454,11 @@
                     // Get view from URL, cookie, or use default
                     const urlParams = new URLSearchParams(window.location.search);
                     let urlView = urlParams.get('view');
-                    
+
                     if (!urlView) {
                         // If no URL parameter, try to get from cookie
                         urlView = this.getCookie('selected_activity_view') || {!! json_encode($currentView ?? 'for_me') !!};
-                        
+
                         // If we have a cookie value and it's different from default, redirect to include it in URL
                         if (urlView && urlView !== 'for_me') {
                             const newUrl = window.location.pathname + '?view=' + urlView;
@@ -440,9 +466,9 @@
                             return; // Stop execution as we're redirecting
                         }
                     }
-                    
+
                     this.currentView = urlView;
-                    
+
                     // Store current view in cookie for persistence across pages
                     this.setCookie('selected_activity_view', urlView, 30); // 30 days
                 },
@@ -527,20 +553,20 @@
                      */
                     async assignToMe(record) {
                         if (!record.id) return;
-                        
+
                         try {
                             const response = await this.$axios.post(`/admin/activities/${record.id}/assign`);
-                            
+
                             // Success - update the record
                             record.user_id = response.data.data.user_id;
                             record.user = response.data.data.user;
                             record.assigned_at = response.data.data.assigned_at;
-                            
+
                             this.$emitter.emit('add-flash', {
                                 type: 'success',
                                 message: response.data.message
                             });
-                            
+
                         } catch (error) {
                             if (error.response?.status === 409) {
                                 // Conflict - activity already assigned
@@ -587,28 +613,58 @@
                      */
                     async takeoverActivity(record, fromModal = false) {
                         if (!record.id) return;
-                        
+
                         try {
                             const response = await this.$axios.post(`/admin/activities/${record.id}/takeover`);
-                            
+
                             // Success - update the record
                             record.user_id = response.data.data.user_id;
                             record.user = response.data.data.user;
                             record.assigned_at = response.data.data.assigned_at;
-                            
+
                             this.$emitter.emit('add-flash', {
                                 type: 'success',
                                 message: response.data.message
                             });
-                            
+
                             if (fromModal) {
                                 this.assignmentModal.show = false;
                             }
-                            
+
                         } catch (error) {
                             this.$emitter.emit('add-flash', {
                                 type: 'error',
                                 message: 'Kon niet overnemen: ' + (error.response?.data?.message || error.message)
+                            });
+                        }
+                    },
+
+                    /**
+                     * Unassign activity.
+                     *
+                     * @param {Object} record
+                     * @return {void}
+                     */
+                    async unassignActivity(record) {
+                        if (!record.id) return;
+
+                        try {
+                            const response = await this.$axios.post(`/admin/activities/${record.id}/unassign`);
+
+                            // Success - update the record
+                            record.user_id = null;
+                            record.user = null;
+                            record.assigned_at = null;
+
+                            this.$emitter.emit('add-flash', {
+                                type: 'success',
+                                message: response.data.message
+                            });
+
+                        } catch (error) {
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: 'Kon niet ontkoppelen: ' + (error.response?.data?.message || error.message)
                             });
                         }
                     },
@@ -679,7 +735,7 @@
 
                         const baseUrl = "/admin/activities/get?view_type=calendar";
                         const params = `&startDate=${new Date(startDate).toLocaleDateString("en-US")}&endDate=${new Date(endDate).toLocaleDateString("en-US")}&view=${currentView}`;
-                        
+
                         this.$axios.get(baseUrl + params)
                             .then(response => {
                                 this.events = this.processEvents(response.data.activities);

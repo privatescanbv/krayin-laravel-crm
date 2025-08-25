@@ -28,7 +28,7 @@ class ActivityAssignmentController extends Controller
         
         // Check if activity is already assigned
         if ($activity->user_id) {
-            $canTakeover = auth()->guard('user')->user()->can('activities.takeover');
+            $canTakeover = auth()->guard('user')->user()->hasPermission('activities.takeover');
             
             return response()->json([
                 'message' => 'Deze activiteit is al toegekend aan ' . $activity->user->name . '.',
@@ -55,7 +55,7 @@ class ActivityAssignmentController extends Controller
      */
     public function takeover(int $id): JsonResponse
     {
-        if (!auth()->guard('user')->user()->can('activities.takeover')) {
+        if (!auth()->guard('user')->user()->hasPermission('activities.takeover')) {
             return response()->json([
                 'message' => 'Je hebt geen rechten om activiteiten over te nemen.',
             ], 403);
@@ -76,6 +76,34 @@ class ActivityAssignmentController extends Controller
         
         return response()->json([
             'message' => $message,
+            'data' => new ActivityResource($activity->fresh()),
+        ]);
+    }
+
+    /**
+     * Unassign activity (make it available for others).
+     */
+    public function unassign(int $id): JsonResponse
+    {
+        $activity = $this->activityRepository->findOrFail($id);
+        $currentUser = auth()->guard('user')->user();
+        
+        // Check if activity is assigned to current user
+        if (!$activity->user_id || $activity->user_id !== $currentUser->id) {
+            return response()->json([
+                'message' => 'Je kunt alleen activiteiten teruggeven die aan jou zijn toegewezen.',
+            ], 403);
+        }
+        
+        $previousUser = $activity->user->name;
+        
+        $activity->update([
+            'user_id' => null,
+            'assigned_at' => null,
+        ]);
+        
+        return response()->json([
+            'message' => "Activiteit ontkoppeld. {$previousUser} kan de activiteit niet meer zien.",
             'data' => new ActivityResource($activity->fresh()),
         ]);
     }

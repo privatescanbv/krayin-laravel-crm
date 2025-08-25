@@ -2,9 +2,9 @@
 
 namespace App\Console\Commands;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Webkul\Activity\Models\Activity;
-use Carbon\Carbon;
 
 class ReleaseOverdueActivities extends Command
 {
@@ -30,7 +30,7 @@ class ReleaseOverdueActivities extends Command
     public function handle()
     {
         $cutoffTime = Carbon::now()->subHours(24);
-        
+
         $overdueActivities = Activity::whereNotNull('user_id')
             ->whereNotNull('assigned_at')
             ->where('assigned_at', '<', $cutoffTime)
@@ -38,19 +38,19 @@ class ReleaseOverdueActivities extends Command
             ->get();
 
         $releasedCount = 0;
-        
+
         foreach ($overdueActivities as $activity) {
             $activity->update([
-                'user_id' => null,
+                'user_id'     => null,
                 'assigned_at' => null,
             ]);
             $releasedCount++;
-            
+
             $this->info("Released activity ID {$activity->id}: {$activity->title}");
         }
 
         $this->info("Released {$releasedCount} overdue activities.");
-        
+
         return Command::SUCCESS;
     }
 }

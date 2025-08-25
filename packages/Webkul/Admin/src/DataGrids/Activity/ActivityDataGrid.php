@@ -4,10 +4,13 @@ namespace Webkul\Admin\DataGrids\Activity;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use Throwable;
 use Webkul\Activity\Services\ViewService;
 use Webkul\Admin\Traits\ProvideDropdownOptions;
 use Webkul\DataGrid\DataGrid;
+use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
+use Webkul\Contact\Models\Person;
 use Webkul\User\Repositories\UserRepository;
 use Webkul\User\Repositories\GroupRepository;
 
@@ -28,6 +31,10 @@ class ActivityDataGrid extends DataGrid
                 'users.id as assigned_user_id',
                 'users.name as created_by',
                 'groups.name as group_name',
+                // Also select related entity names where possible
+                'persons.name as person_name',
+                'products.name as product_name',
+                'warehouses.name as warehouse_name',
                 // Cross-DB days until deadline: use different SQL per driver
                 DB::raw((function () {
                     $driver = DB::connection()->getDriverName();
@@ -61,6 +68,13 @@ class ActivityDataGrid extends DataGrid
             ->leftJoin('leads', 'activities.lead_id', '=', 'leads.id')
             ->leftJoin('users', 'activities.user_id', '=', 'users.id')
             ->leftJoin('groups', 'activities.group_id', '=', 'groups.id')
+            // Joins to fetch display names for related entities
+            ->leftJoin('person_activities', 'activities.id', '=', 'person_activities.activity_id')
+            ->leftJoin('persons', 'person_activities.person_id', '=', 'persons.id')
+            ->leftJoin('product_activities', 'activities.id', '=', 'product_activities.activity_id')
+            ->leftJoin('products', 'product_activities.product_id', '=', 'products.id')
+            ->leftJoin('warehouse_activities', 'activities.id', '=', 'warehouse_activities.activity_id')
+            ->leftJoin('warehouses', 'warehouse_activities.warehouse_id', '=', 'warehouses.id')
             ->whereIn('type', ['call', 'meeting','task'])
             ->when(!auth()->guard('user')->user()?->isGlobalAdmin(), function ($query) {
                 $query->where(function ($query) {
@@ -245,7 +259,7 @@ class ActivityDataGrid extends DataGrid
             ],
             'closure'    => function ($row) {
                 if (!$row->entity_type || !$row->entity_id) {
-                return "<span class='text-gray-800 dark:text-gray-300'>N/A</span>";
+                    return "<span class='text-gray-800 dark:text-gray-300'>N/A</span>";
                 }
 
                 $route = '';
@@ -254,19 +268,35 @@ class ActivityDataGrid extends DataGrid
                 switch ($row->entity_type) {
                     case 'lead':
                         $route = route('admin.leads.view', $row->entity_id);
-                        $label = 'Lead #' . $row->entity_id;
+                        // Try to resolve lead name via model accessor; fallback to #ID
+                        try {
+                            $lead = Lead::find($row->entity_id);
+                            $display = $lead ? ($lead->name ?? ('#'.$row->entity_id)) : ('#'.$row->entity_id);
+                        } catch (Throwable $e) {
+                            $display = '#'.$row->entity_id;
+                        }
+                        $label = 'Lead "' . e($display) . '"';
                         break;
                     case 'person':
                         $route = route('admin.contacts.persons.view', $row->entity_id);
-                        $label = 'Person #' . $row->entity_id;
+                        // Try to resolve person name via model accessor; fallback to #ID
+                        try {
+                            $person = Person::find($row->entity_id);
+                            $display = $person ? $person->name : ('#'.$row->entity_id);
+                        } catch (Throwable $e) {
+                            $display = '#'.$row->entity_id;
+                        }
+                        $label = 'Persoon "' . e($display) . '"';
                         break;
                     case 'product':
                         $route = route('admin.products.view', $row->entity_id);
-                        $label = 'Product #' . $row->entity_id;
+                        $display = $row->product_name ?: ('#'.$row->entity_id);
+                        $label = 'Product "' . e($display) . '"';
                         break;
                     case 'warehouse':
                         $route = route('admin.warehouses.view', $row->entity_id);
-                        $label = 'Warehouse #' . $row->entity_id;
+                        $display = $row->warehouse_name ?: ('#'.$row->entity_id);
+                        $label = 'Warehouse "' . e($display) . '"';
                         break;
                     default:
                         return "<span class='text-gray-800 dark:text-gray-300'>Onbekend</span>";
@@ -305,16 +335,28 @@ class ActivityDataGrid extends DataGrid
             'filterable' => true,
             'closure'    => function ($row) {
                 $days = $row->days_until_deadline;
+
+                // Determine time hint from schedule_to (HH:MM)
+                $timeHint = '';
+                if (! empty($row->schedule_to)) {
+                    $time = @date('H:i', strtotime($row->schedule_to));
+                    if ($time && $time !== '00:00') {
+                        $timeHint = '<br/>voor ' . $time;
+                    }
+                }
+
                 if ($days === null) {
                     return 'N/A';
                 } elseif ($days < 0) {
+                    // Overdue: keep current wording; omit time as deadline already passed
                     return '<span class="text-red-600 font-semibold">' . abs($days) . ' dagen over tijd</span>';
                 } elseif ($days == 0) {
-                    return '<span class="text-orange-600 font-semibold">Vandaag</span>';
+                    // Today: explicitly show time if available
+                    return '<span class="text-orange-600 font-semibold">Vandaag' . ($timeHint ?: '') . '</span>';
                 } elseif ($days <= 3) {
-                    return '<span class="text-yellow-600 font-semibold">' . $days . ' dagen</span>';
+                    return '<span class="text-yellow-600 font-semibold">' . $days . ' dagen</span>' . ($timeHint ?: '');
                 } else {
-                    return '<span class="text-green-600">' . $days . ' dagen</span>';
+                    return '<span class="text-green-600">' . $days . ' dagen</span>' . ($timeHint ?: '');
                 }
             },
         ]);

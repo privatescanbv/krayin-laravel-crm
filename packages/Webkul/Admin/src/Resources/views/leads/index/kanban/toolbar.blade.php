@@ -24,6 +24,16 @@
     <!-- View Switcher -->
     @include('admin::leads.index.view-switcher')
 
+    <!-- Collapse Won/Lost toggle -->
+    <button
+        type="button"
+        class="secondary-button whitespace-nowrap"
+        @click="$refs.leadsKanban.toggleWonLost()"
+    >
+        <span v-if="$refs.leadsKanban?.hideWonLost">Toon gewonnen/verloren</span>
+        <span v-else>Verberg gewonnen/verloren</span>
+    </button>
+
     {!! view_render_event('admin.leads.index.kanban.toolbar.switcher.after') !!}
 </div>
 

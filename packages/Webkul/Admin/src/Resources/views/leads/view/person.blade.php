@@ -81,57 +81,7 @@
                                 @endif
 
                                 <!-- Anamnesis for this specific person -->
-                                @if ($personAnamnesis)
-                                    <div class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded dark:bg-blue-900/20 dark:border-blue-800">
-                                        <div class="flex items-center justify-between mb-1">
-                                            <h6 class="text-xs font-semibold text-blue-800 dark:text-blue-200">Anamnese</h6>
-                                            <a
-                                                href="{{ route('admin.anamnesis.edit', $personAnamnesis->id) }}"
-                                                class="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400"
-                                                title="Anamnese bewerken"
-                                            >
-                                                <i class="icon-edit"></i>
-                                            </a>
-                                        </div>
-
-                                        <div class="space-y-1 text-xs">
-                                            @if ($personAnamnesis->height || $personAnamnesis->weight)
-                                                <div class="flex gap-2">
-                                                    @if ($personAnamnesis->height)
-                                                        <span class="text-gray-600 dark:text-gray-400">{{ $personAnamnesis->height }}cm</span>
-                                                    @endif
-                                                    @if ($personAnamnesis->weight)
-                                                        <span class="text-gray-600 dark:text-gray-400">{{ $personAnamnesis->weight }}kg</span>
-                                                    @endif
-                                                </div>
-                                            @endif
-
-                                            @php
-                                                $conditions = collect([
-                                                    'metals' => 'Metaal',
-                                                    'medications' => 'Medicatie',
-                                                    'glaucoma' => 'Glaucoom',
-                                                    'claustrophobia' => 'Claustrofobisch',
-                                                    'heart_surgery' => 'Hartoperatie',
-                                                    'diabetes' => 'Diabetes',
-                                                    'smoking' => 'Rookt',
-                                                ])->filter(function($label, $field) use ($personAnamnesis) {
-                                                    return $personAnamnesis->{$field} == 1;
-                                                });
-                                            @endphp
-
-                                            @if ($conditions->isNotEmpty())
-                                                <div class="flex flex-wrap gap-1 mt-1">
-                                                    @foreach ($conditions as $field => $label)
-                                                        <span class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                                                            {{ $label }}
-                                                        </span>
-                                                    @endforeach
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                @endif
+                                <x-admin::anamnesis.card :anamnesis="$personAnamnesis" />
                                 </div>
                             </div>
                         </div>

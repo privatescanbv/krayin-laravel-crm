@@ -3,6 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\Anamnesis;
+use Database\Seeders\LeadChannelSeeder;
+use Database\Seeders\TestSeeder;
+use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 
 test('it can create anamnesis with lead and retrieve relation', function () {
@@ -42,4 +45,72 @@ test('anamnesis model uses english field names', function () {
     $this->assertEquals(0, $anamnesis->claustrophobia);
     $this->assertEquals('Test metalen opmerking', $anamnesis->metals_notes);
     $this->assertEquals('Test medicijnen opmerking', $anamnesis->medications_notes);
+});
+
+test('it prevents duplicate anamnesis creation when attaching same person multiple times', function () {
+    $this->seed(TestSeeder::class);
+    $this->artisan('db:seed', ['--class' => LeadChannelSeeder::class]);
+    
+    $lead = Lead::factory()->create();
+    $person = Person::factory()->create();
+
+    // Attach the same person multiple times (simulating concurrent requests)
+    $lead->attachPersons([$person->id]);
+    $lead->attachPersons([$person->id]);
+    $lead->attachPersons([$person->id]);
+
+    // Only one anamnesis should exist
+    $anamnesisCount = Anamnesis::where('lead_id', $lead->id)
+        ->where('person_id', $person->id)
+        ->count();
+
+    expect($anamnesisCount)->toBe(1);
+});
+
+test('database constraint prevents duplicate anamnesis insertion', function () {
+    $lead = Lead::factory()->create();
+    $person = Person::factory()->create();
+
+    // Create first anamnesis
+    $anamnesis1 = Anamnesis::create([
+        'id' => \Illuminate\Support\Str::uuid(),
+        'lead_id' => $lead->id,
+        'person_id' => $person->id,
+        'name' => 'First anamnesis',
+    ]);
+
+    expect($anamnesis1)->toBeInstanceOf(Anamnesis::class);
+
+    // Second creation with same lead_id + person_id should fail
+    expect(fn() => Anamnesis::create([
+        'id' => \Illuminate\Support\Str::uuid(),
+        'lead_id' => $lead->id,
+        'person_id' => $person->id,
+        'name' => 'Duplicate anamnesis',
+    ]))->toThrow(\Illuminate\Database\QueryException::class);
+});
+
+test('it allows multiple anamnesis for different lead-person combinations', function () {
+    $this->seed(TestSeeder::class);
+    $this->artisan('db:seed', ['--class' => LeadChannelSeeder::class]);
+    
+    $lead1 = Lead::factory()->create();
+    $lead2 = Lead::factory()->create();
+    $person1 = Person::factory()->create();
+    $person2 = Person::factory()->create();
+
+    // Create anamnesis for different combinations
+    $lead1->attachPersons([$person1->id]);
+    $lead1->attachPersons([$person2->id]);
+    $lead2->attachPersons([$person1->id]);
+    $lead2->attachPersons([$person2->id]);
+
+    // Four different anamnesis should exist
+    expect(Anamnesis::count())->toBe(4);
+
+    // Each combination should have exactly one anamnesis
+    expect(Anamnesis::where('lead_id', $lead1->id)->where('person_id', $person1->id)->count())->toBe(1);
+    expect(Anamnesis::where('lead_id', $lead1->id)->where('person_id', $person2->id)->count())->toBe(1);
+    expect(Anamnesis::where('lead_id', $lead2->id)->where('person_id', $person1->id)->count())->toBe(1);
+    expect(Anamnesis::where('lead_id', $lead2->id)->where('person_id', $person2->id)->count())->toBe(1);
 });

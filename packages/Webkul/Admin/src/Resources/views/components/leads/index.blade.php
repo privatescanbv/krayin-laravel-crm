@@ -1,6 +1,6 @@
 @props(['leads'])
 
-<div class="w-full rounded-md border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-4">
+<div class="w-full p-4">
     <h4 class="font-semibold dark:text-white mb-2">
         @lang('admin::app.contacts.persons.view.linked-leads')
     </h4>

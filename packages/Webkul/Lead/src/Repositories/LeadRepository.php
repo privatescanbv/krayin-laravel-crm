@@ -189,8 +189,7 @@ class LeadRepository extends Repository
         if (!empty($personsToAttach)) {
             $lead->attachPersons(array_unique($personsToAttach));
 
-            // Create anamnesis when first person is attached
-            $this->createAnamnesisForLead($lead);
+            // Anamnesis creation is now handled by the attachPersons method
         }
 
         return $lead;
@@ -351,8 +350,7 @@ class LeadRepository extends Repository
             $hasPersonsNow = count($personsToSync) > 0;
 
             if (!$hadPersons && $hasPersonsNow) {
-                // First person attached - create anamnesis
-                $this->createAnamnesisForLead($lead);
+                // Anamnesis creation is now handled by the syncPersons method
             } elseif ($hadPersons && !$hasPersonsNow) {
                 // All persons removed - delete anamnesis
                 $this->deleteAnamnesisForLead($lead);
@@ -731,35 +729,7 @@ class LeadRepository extends Repository
         return false;
     }
 
-    /**
-     * Create anamnesis for a lead when first person is attached.
-     */
-    private function createAnamnesisForLead(Lead $lead): void
-    {
-        // Check if anamnesis already exists
-        if ($lead->anamnesis) {
-            return;
-        }
 
-        $currentUserId = auth()->id() ?? $lead->user_id ?? 1;
-
-        try {
-            // Get the first attached person for anamnesis
-            $firstPersonId = \DB::table('lead_persons')->where('lead_id', $lead->id)->value('person_id');
-            
-            \App\Models\Anamnesis::create([
-                'id' => \Illuminate\Support\Str::uuid(),
-                'lead_id' => $lead->id,
-                'name' => 'Anamnesis voor ' . $lead->name,
-                'person_id' => $firstPersonId,
-            ]);
-        } catch (Exception $e) {
-            Log::error('Failed to create anamnesis for lead: ' . $e->getMessage(), [
-                'lead_id' => $lead->id,
-                'error' => $e->getMessage(),
-            ]);
-        }
-    }
 
     /**
      * Delete anamnesis for a lead when all persons are removed.

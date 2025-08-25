@@ -161,6 +161,11 @@ class PersonController extends Controller
     public function show(int $id): View
     {
         $person = $this->personRepository->with(['address', 'organization'])->findOrFail($id);
+        
+        // Load anamnesis sorted by newest first
+        $person->load(['anamnesis' => function($query) {
+            $query->orderBy('updated_at', 'desc');
+        }]);
 
         return view('admin::contacts.persons.view', compact('person'));
     }

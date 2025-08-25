@@ -15,6 +15,28 @@ Het systeem gebruikt de volgende logica voor het detecteren van duplicaten:
 - Overeenkomst tussen `married_name` en `last_name` (in beide richtingen)
 - Gelijkaardige namen gebaseerd op string vergelijking
 
+====== 1.1. Duplicaat Filtering Criteria
+
+Naast de basis matching logica worden de volgende filters toegepast om irrelevante duplicaten uit te sluiten:
+
+* *Tijdsfilter*: Beide leads dienen maximaal binnen een tijdbestek van 2 weken van elkaar te zijn aangemaakt
+  - Leads die meer dan 2 weken uit elkaar liggen worden niet als duplicaten beschouwd
+  - Dit voorkomt dat oude, afgeronde leads onterecht als duplicaten worden gemarkeerd
+
+* *Statusfilter*: Leads in 'Won' status worden genegeerd
+  - Leads die al succesvol zijn afgerond worden niet als duplicaten beschouwd
+  - Dit voorkomt dat afgeronde leads nieuwe aanvragen verstoren
+
+*Voordelen van deze filtering:*
+
+- **Relevantie**: Alleen recente, actieve leads worden als duplicaten beschouwd
+
+- **Efficiëntie**: Vermindert het aantal irrelevante duplicaat meldingen
+
+- **Gebruiksvriendelijkheid**: Gebruikers worden niet gestoord door oude, afgeronde leads
+
+- **Accuraatheid**: Verbetert de kwaliteit van duplicaat detectie
+
 
 ====== 2. Visuele Indicatoren
 
@@ -43,7 +65,7 @@ Ondersteunde Velden voor Samenvoegen
 
 *Persoonlijke Informatie:*
 * Aanhef
-* Titel  
+* Titel
 * Voornaam
 * Achternaam
 * Achternaam voorvoegsel
@@ -76,7 +98,7 @@ Het samenvoegproces werkt als volgt:
 
 *Samenvoegen:*
 . *Veld Mapping*: Geselecteerde veldwaarden worden toegepast op de primaire lead
-. *Relatie Overdracht*: 
+. *Relatie Overdracht*:
   - Activiteiten worden overgedragen naar de primaire lead
   - E-mail records (hasMany relatie) worden overgedragen
   - Adres informatie wordt overgenomen volgens selectie

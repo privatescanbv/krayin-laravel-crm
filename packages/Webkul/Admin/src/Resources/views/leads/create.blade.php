@@ -203,7 +203,9 @@
                         </div>
 
                         <!-- Multi Contact Matcher (based on original contactmatcher) -->
-                        @include('admin::leads.common.multi-contactmatcher', ['lead' => (object)['id' => null], 'persons' => []])
+                        <div>
+                            @include('admin::leads.common.multi-contactmatcher', ['lead' => (object)['id' => null], 'persons' => []])
+                        </div>
 
                         <div class="flex justify-end pt-4">
                             <button
@@ -486,11 +488,11 @@
                         isSubmitting: false,
                                                                                          formData: {
                         description: '',
-                        lead_channel_id: '',
-                        lead_source_id: '',
-                        department_id: '',
+                        lead_channel_id: '1', // Default: Telefoon
+                        lead_source_id: 32, // Default: Anders
+                        department_id: '{{ $defaultDepartmentId ?? "" }}', // Set based on user groups
                         combine_order: 1,
-                            lead_type_id: '',
+                            lead_type_id: '1', // Default: Preventie
                             // Personal fields for matching
                             first_name: '',
                             last_name: '',
@@ -503,6 +505,9 @@
                 mounted() {
                     // Initialize global variable for persons data
                     window.leadFormPersons = this.persons;
+
+                    // Set up global reference to this component for cross-component communication
+                    window.leadFormComponent = this;
 
                     // Initialize with empty person if needed
                     if (this.persons.length === 0) {
@@ -524,6 +529,33 @@
                             this.$nextTick(() => {
                                 this.populateAddressFields(this.persons[0].address);
                             });
+                        }
+                    },
+
+
+
+                    updateFormDataFromPersons() {
+                        // If we have at least one person selected, use the first person's data
+                        if (this.persons.length > 0) {
+                            const firstPerson = this.persons[0];
+
+                            // Always populate first_name and last_name from the selected person
+                            // This ensures the lead data matches the selected person
+                            if (firstPerson.first_name || firstPerson.last_name) {
+                                this.formData.first_name = firstPerson.first_name || '';
+                                this.formData.last_name = firstPerson.last_name || '';
+                            }
+
+                            // Also populate email and phone if available and form fields are empty
+                            if (!this.formData.email && firstPerson.emails && firstPerson.emails.length > 0) {
+                                this.formData.email = firstPerson.emails[0].value || '';
+                            }
+
+                            if (!this.formData.phone && firstPerson.phones && firstPerson.phones.length > 0) {
+                                this.formData.phone = firstPerson.phones[0].value || '';
+                            }
+                        } else {
+                            // If no persons selected, keep the fields as they are to allow manual entry
                         }
                     },
 

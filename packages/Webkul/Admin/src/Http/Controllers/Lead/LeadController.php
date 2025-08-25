@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Controllers\Lead;
 
 use App\Models\Anamnesis;
+use App\Models\Department;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -139,7 +140,7 @@ class LeadController extends Controller
             $data[$stage->sort_order]['leads'] = [
                 'data' => LeadResource::collection($paginator = $query->with([
                     'tags',
-                    'type', 
+                    'type',
                     'source',
                     'user',
                     'organization',
@@ -182,7 +183,13 @@ class LeadController extends Controller
      */
     public function create(): View
     {
-        return view('admin::leads.create');
+        // Get current user's groups to determine default department
+        $user = auth()->user();
+        $userGroupNames = $user->groups->pluck('name')->toArray();
+        $defaultDepartmentId = Department::mapGroupToDepartmentId($userGroupNames);
+        return view('admin::leads.create', [
+            'defaultDepartmentId' => $defaultDepartmentId
+        ]);
     }
 
     /**

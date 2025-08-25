@@ -370,6 +370,9 @@ class LeadRepository extends Repository
 
     /**
      * Find potential duplicate leads based on email, phone, and name similarity.
+     * Filters out leads that are:
+     * - Created more than 2 weeks apart
+     * - In 'Won' status
      */
     public function findPotentialDuplicates($lead): Collection
     {
@@ -392,8 +395,35 @@ class LeadRepository extends Repository
             Log::error('Error in duplicate detection: ' . $e->getMessage());
         }
 
-        // Remove duplicates from the collection and return unique leads
-        return $duplicates->unique('id');
+        // Remove duplicates from the collection and apply time/status filters
+        $uniqueDuplicates = $duplicates->unique('id');
+        return $this->applyDuplicateFilters($lead, $uniqueDuplicates);
+    }
+
+    /**
+     * Apply time and status filters to potential duplicates.
+     * 
+     * @param Lead $lead The lead to check duplicates for
+     * @param Collection $duplicates Collection of potential duplicate leads
+     * @return Collection Filtered collection of duplicates
+     */
+    private function applyDuplicateFilters($lead, Collection $duplicates): Collection
+    {
+        $leadCreatedAt = Carbon::parse($lead->created_at);
+        $twoWeeksAgo = $leadCreatedAt->copy()->subWeeks(2);
+        $twoWeeksLater = $leadCreatedAt->copy()->addWeeks(2);
+
+        return $duplicates->filter(function ($duplicate) use ($twoWeeksAgo, $twoWeeksLater) {
+            // Filter out leads in 'Won' status
+            if ($duplicate->stage && $duplicate->stage->code === 'won') {
+                return false;
+            }
+
+            // Filter out leads created more than 2 weeks apart
+            $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
+            
+            return $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
+        });
     }
 
     /**

@@ -217,6 +217,16 @@
                                         >
                                             Toekennen
                                         </button>
+                                        
+                                        <!-- Takeover Button -->
+                                        <button
+                                            v-if="record.user_id && record.user_id != {{ auth()->guard('user')->id() ?? 'null' }} && canTakeover"
+                                            class="ml-2 px-2 py-1 rounded bg-orange-500 text-white text-xs hover:bg-orange-600 transition-colors"
+                                            @click="takeoverActivity(record)"
+                                            :title="'Overnemen van ' + (record.user && record.user.name ? record.user.name : 'onbekend')"
+                                        >
+                                            Overnemen
+                                        </button>
                                     </div>
                                 </div>
 
@@ -266,6 +276,14 @@
                                                 >
                                                     Toekennen
                                                 </button>
+                                                
+                                                <button
+                                                    v-if="record.user_id && record.user_id != {{ auth()->guard('user')->id() ?? 'null' }} && canTakeover"
+                                                    class="ml-2 px-2 py-1 rounded bg-orange-500 text-white text-xs hover:bg-orange-600 transition-colors"
+                                                    @click="takeoverActivity(record)"
+                                                >
+                                                    Overnemen
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -297,6 +315,39 @@
 
                     {!! view_render_event('admin.activities.index.vue_calender.after') !!}
                 </template>
+            </div>
+            
+            <!-- Assignment Conflict Modal -->
+            <div v-if="assignmentModal.show" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                <div class="bg-white rounded-lg p-6 max-w-md mx-4 dark:bg-gray-800">
+                    <h3 class="text-lg font-semibold mb-4 dark:text-white">
+                        Activiteit al toegekend
+                    </h3>
+                    
+                    <p class="mb-4 text-gray-600 dark:text-gray-300">
+                        @{{ assignmentModal.conflictData?.message }}
+                    </p>
+                    
+                    <p class="mb-6 text-sm text-gray-500 dark:text-gray-400">
+                        Wil je deze activiteit overnemen?
+                    </p>
+                    
+                    <div class="flex gap-3 justify-end">
+                        <button 
+                            @click="closeAssignmentModal()"
+                            class="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+                        >
+                            Annuleren
+                        </button>
+                        
+                        <button 
+                            @click="takeoverActivity(assignmentModal.activity, true)"
+                            class="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600"
+                        >
+                            Overnemen
+                        </button>
+                    </div>
+                </div>
             </div>
         </script>
 
@@ -469,32 +520,106 @@
                     },
 
                     /**
-                     * Assign activity to current user.
+                     * Assign activity to current user with conflict handling.
                      *
                      * @param {Object} record
                      * @return {void}
                      */
-                    assignToMe(record) {
+                    async assignToMe(record) {
                         if (!record.id) return;
                         
-                        this.$axios.put(`/admin/activities/edit/${record.id}`, {
-                            user_id: {{ auth()->guard('user')->id() ?? 'null' }}
-                        })
-                        .then(response => {
+                        try {
+                            const response = await this.$axios.post(`/admin/activities/${record.id}/assign`);
+                            
+                            // Success - update the record
                             record.user_id = response.data.data.user_id;
                             record.user = response.data.data.user;
+                            record.assigned_at = response.data.data.assigned_at;
                             
                             this.$emitter.emit('add-flash', {
                                 type: 'success',
-                                message: 'Activiteit succesvol toegekend'
+                                message: response.data.message
                             });
-                        })
-                        .catch(error => {
+                            
+                        } catch (error) {
+                            if (error.response?.status === 409) {
+                                // Conflict - activity already assigned
+                                this.handleAssignmentConflict(record, error.response.data);
+                            } else {
+                                this.$emitter.emit('add-flash', {
+                                    type: 'error',
+                                    message: 'Kon niet toekennen: ' + (error.response?.data?.message || error.message)
+                                });
+                            }
+                        }
+                    },
+
+                    /**
+                     * Handle assignment conflict (activity already assigned to someone else).
+                     *
+                     * @param {Object} record
+                     * @param {Object} conflictData
+                     * @return {void}
+                     */
+                    handleAssignmentConflict(record, conflictData) {
+                        if (conflictData.can_takeover) {
+                            // Show modal with takeover option
+                            this.assignmentModal = {
+                                show: true,
+                                activity: record,
+                                conflictData: conflictData,
+                            };
+                        } else {
+                            // Just show the conflict message
+                            this.$emitter.emit('add-flash', {
+                                type: 'warning',
+                                message: conflictData.message
+                            });
+                        }
+                    },
+
+                    /**
+                     * Takeover activity from another user.
+                     *
+                     * @param {Object} record
+                     * @param {Boolean} fromModal
+                     * @return {void}
+                     */
+                    async takeoverActivity(record, fromModal = false) {
+                        if (!record.id) return;
+                        
+                        try {
+                            const response = await this.$axios.post(`/admin/activities/${record.id}/takeover`);
+                            
+                            // Success - update the record
+                            record.user_id = response.data.data.user_id;
+                            record.user = response.data.data.user;
+                            record.assigned_at = response.data.data.assigned_at;
+                            
+                            this.$emitter.emit('add-flash', {
+                                type: 'success',
+                                message: response.data.message
+                            });
+                            
+                            if (fromModal) {
+                                this.assignmentModal.show = false;
+                            }
+                            
+                        } catch (error) {
                             this.$emitter.emit('add-flash', {
                                 type: 'error',
-                                message: 'Kon niet toekennen: ' + (error.response?.data?.message || error.message)
+                                message: 'Kon niet overnemen: ' + (error.response?.data?.message || error.message)
                             });
-                        });
+                        }
+                    },
+
+                    /**
+                     * Close assignment modal.
+                     *
+                     * @return {void}
+                     */
+                    closeAssignmentModal() {
+                        this.assignmentModal.show = false;
                     },
                 },
             });

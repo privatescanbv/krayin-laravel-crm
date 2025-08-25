@@ -175,7 +175,14 @@
 
             mounted() {
                 if (this.value) {
-                    this.getLookUpEntity();
+                    // Handle both array and object formats
+                    if (Array.isArray(this.value) && this.value.length > 0) {
+                        this.selectedItem = this.value[0];
+                    } else if (typeof this.value === 'object' && this.value.id) {
+                        this.selectedItem = this.value;
+                    } else {
+                        this.getLookUpEntity();
+                    }
                 }
 
                 window.addEventListener('click', this.handleFocusOut);

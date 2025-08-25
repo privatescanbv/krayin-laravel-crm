@@ -19,16 +19,26 @@ trait LogsActivity
             }
 
             if (! $model instanceof AttributeValue) {
-                $activity = app(ActivityRepository::class)->create([
+                $activityData = [
                     'type'    => 'system',
                     'title'   => trans('admin::app.activities.created'),
                     'is_done' => 1,
                     'user_id' => auth()->check()
                         ? auth()->id()
                         : null,
-                ]);
+                ];
 
-                $model->activities()->attach($activity->id);
+                // Add lead_id if this is a Lead model
+                if (method_exists($model, 'getTable') && $model->getTable() === 'leads') {
+                    $activityData['lead_id'] = $model->id;
+                }
+
+                $activity = app(ActivityRepository::class)->create($activityData);
+
+                // Only attach via pivot table if not a Lead model
+                if (!(method_exists($model, 'getTable') && $model->getTable() === 'leads')) {
+                    $model->activities()->attach($activity->id);
+                }
 
                 return;
             }
@@ -73,7 +83,8 @@ trait LogsActivity
 
             $attributeCode = $model->attribute?->name ?: $attributeCode;
 
-            $activity = app(ActivityRepository::class)->create([
+            // Check if this is a Lead model and use the new direct relationship
+            $activityData = [
                 'type'       => 'system',
                 'title'      => trans('admin::app.activities.updated', ['attribute' => $attributeCode]),
                 'is_done'    => 1,
@@ -89,12 +100,27 @@ trait LogsActivity
                     ],
                 ]),
                 'user_id'    => auth()->id(),
-            ]);
+            ];
+
+            // Add lead_id if this is a Lead model or if the entity is a Lead model
+            if (method_exists($model, 'getTable') && $model->getTable() === 'leads') {
+                $activityData['lead_id'] = $model->id;
+            } elseif ($model instanceof AttributeValue && method_exists($model->entity, 'getTable') && $model->entity->getTable() === 'leads') {
+                $activityData['lead_id'] = $model->entity->id;
+            }
+
+            $activity = app(ActivityRepository::class)->create($activityData);
 
             if ($model instanceof AttributeValue) {
-                $model->entity->activities()->attach($activity->id);
+                // Only attach via pivot table if the entity is not a Lead model
+                if (!(method_exists($model->entity, 'getTable') && $model->entity->getTable() === 'leads')) {
+                    $model->entity->activities()->attach($activity->id);
+                }
             } else {
-                $model->activities()->attach($activity->id);
+                // Only attach via pivot table if not a Lead model
+                if (!(method_exists($model, 'getTable') && $model->getTable() === 'leads')) {
+                    $model->activities()->attach($activity->id);
+                }
             }
         }
     }

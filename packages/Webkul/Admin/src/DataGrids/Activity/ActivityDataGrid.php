@@ -24,16 +24,29 @@ class ActivityDataGrid extends DataGrid
             ->distinct()
             ->select(
                 'activities.*',
-                'leads.id as lead_id',
                 'leads.lead_pipeline_id',
                 'users.id as assigned_user_id',
                 'users.name as created_by',
                 'groups.name as group_name',
-                DB::raw('DATEDIFF(activities.schedule_to, CURDATE()) as days_until_deadline')
+                DB::raw('DATEDIFF(activities.schedule_to, CURDATE()) as days_until_deadline'),
+                // Add entity information
+                DB::raw('CASE 
+                    WHEN activities.lead_id IS NOT NULL THEN "lead"
+                    WHEN EXISTS (SELECT 1 FROM person_activities WHERE activity_id = activities.id LIMIT 1) THEN "person"
+                    WHEN EXISTS (SELECT 1 FROM product_activities WHERE activity_id = activities.id LIMIT 1) THEN "product"
+                    WHEN EXISTS (SELECT 1 FROM warehouse_activities WHERE activity_id = activities.id LIMIT 1) THEN "warehouse"
+                    ELSE NULL
+                END as entity_type'),
+                DB::raw('CASE 
+                    WHEN activities.lead_id IS NOT NULL THEN activities.lead_id
+                    WHEN EXISTS (SELECT 1 FROM person_activities WHERE activity_id = activities.id LIMIT 1) THEN (SELECT person_id FROM person_activities WHERE activity_id = activities.id LIMIT 1)
+                    WHEN EXISTS (SELECT 1 FROM product_activities WHERE activity_id = activities.id LIMIT 1) THEN (SELECT product_id FROM product_activities WHERE activity_id = activities.id LIMIT 1)
+                    WHEN EXISTS (SELECT 1 FROM warehouse_activities WHERE activity_id = activities.id LIMIT 1) THEN (SELECT warehouse_id FROM warehouse_activities WHERE activity_id = activities.id LIMIT 1)
+                    ELSE NULL
+                END as entity_id')
             )
             ->leftJoin('activity_participants', 'activities.id', '=', 'activity_participants.activity_id')
-            ->leftJoin('lead_activities', 'activities.id', '=', 'lead_activities.activity_id')
-            ->leftJoin('leads', 'lead_activities.lead_id', '=', 'leads.id')
+            ->leftJoin('leads', 'activities.lead_id', '=', 'leads.id')
             ->leftJoin('users', 'activities.user_id', '=', 'users.id')
             ->leftJoin('groups', 'activities.group_id', '=', 'groups.id')
             ->whereIn('type', ['call', 'meeting','task'])
@@ -200,20 +213,50 @@ class ActivityDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'              => 'lead_id',
-            'label'              => trans('admin::app.activities.index.datagrid.lead'),
-            'type'               => 'integer',
-            'searchable'         => true,
+            'index'              => 'entity_type',
+            'label'              => 'Gerelateerd aan',
+            'type'               => 'string',
+            'searchable'         => false,
             'sortable'           => true,
             'filterable'         => true,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => [
+                ['label' => 'Alles', 'value' => ''],
+                ['label' => 'Lead', 'value' => 'lead'],
+                ['label' => 'Person', 'value' => 'person'],
+                ['label' => 'Product', 'value' => 'product'],
+                ['label' => 'Warehouse', 'value' => 'warehouse'],
+            ],
             'closure'    => function ($row) {
-                if ($row->lead_id == null) {
+                if (!$row->entity_type || !$row->entity_id) {
                     return "<span class='text-gray-800 dark:text-gray-300'>N/A</span>";
                 }
 
-                $route = urldecode(route('admin.leads.view', $row->lead_id));
+                $route = '';
+                $label = '';
 
-                return "<a class='text-brandColor hover:underline' target='_blank' href='".$route."'>Lead #".$row->lead_id.'</a>';
+                switch ($row->entity_type) {
+                    case 'lead':
+                        $route = route('admin.leads.view', $row->entity_id);
+                        $label = 'Lead #' . $row->entity_id;
+                        break;
+                    case 'person':
+                        $route = route('admin.contacts.persons.view', $row->entity_id);
+                        $label = 'Person #' . $row->entity_id;
+                        break;
+                    case 'product':
+                        $route = route('admin.products.view', $row->entity_id);
+                        $label = 'Product #' . $row->entity_id;
+                        break;
+                    case 'warehouse':
+                        $route = route('admin.warehouses.view', $row->entity_id);
+                        $label = 'Warehouse #' . $row->entity_id;
+                        break;
+                    default:
+                        return "<span class='text-gray-800 dark:text-gray-300'>Onbekend</span>";
+                }
+
+                return "<a class='text-brandColor hover:underline' target='_blank' href='".$route."'>".$label.'</a>';
             },
         ]);
 

@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Anamnesis;
 use Database\Seeders\LeadChannelSeeder;
 use Database\Seeders\TestSeeder;
+use Illuminate\Support\Str;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 
@@ -73,21 +74,21 @@ test('database constraint prevents duplicate anamnesis insertion', function () {
 
     // Create first anamnesis
     $anamnesis1 = Anamnesis::create([
-        'id'        => \Illuminate\Support\Str::uuid(),
+        'id'        => Str::uuid(),
         'lead_id'   => $lead->id,
         'person_id' => $person->id,
         'name'      => 'First anamnesis',
     ]);
 
-    expect($anamnesis1)->toBeInstanceOf(Anamnesis::class);
+    expect($anamnesis1)->toBeInstanceOf(Anamnesis::class)
+        ->and(fn () => Anamnesis::create([
+            'id'        => Str::uuid(),
+            'lead_id'   => $lead->id,
+            'person_id' => $person->id,
+            'name'      => 'Duplicate anamnesis',
+        ]))->toThrow(\Illuminate\Database\QueryException::class);
 
     // Second creation with same lead_id + person_id should fail
-    expect(fn () => Anamnesis::create([
-        'id'        => \Illuminate\Support\Str::uuid(),
-        'lead_id'   => $lead->id,
-        'person_id' => $person->id,
-        'name'      => 'Duplicate anamnesis',
-    ]))->toThrow(\Illuminate\Database\QueryException::class);
 });
 
 test('it allows multiple anamnesis for different lead-person combinations', function () {
@@ -106,11 +107,11 @@ test('it allows multiple anamnesis for different lead-person combinations', func
     $lead2->attachPersons([$person2->id]);
 
     // Four different anamnesis should exist
-    expect(Anamnesis::count())->toBe(4);
+    expect(Anamnesis::count())->toBe(4)
+        ->and(Anamnesis::where('lead_id', $lead1->id)->where('person_id', $person1->id)->count())->toBe(1)
+        ->and(Anamnesis::where('lead_id', $lead1->id)->where('person_id', $person2->id)->count())->toBe(1)
+        ->and(Anamnesis::where('lead_id', $lead2->id)->where('person_id', $person1->id)->count())->toBe(1)
+        ->and(Anamnesis::where('lead_id', $lead2->id)->where('person_id', $person2->id)->count())->toBe(1);
 
     // Each combination should have exactly one anamnesis
-    expect(Anamnesis::where('lead_id', $lead1->id)->where('person_id', $person1->id)->count())->toBe(1);
-    expect(Anamnesis::where('lead_id', $lead1->id)->where('person_id', $person2->id)->count())->toBe(1);
-    expect(Anamnesis::where('lead_id', $lead2->id)->where('person_id', $person1->id)->count())->toBe(1);
-    expect(Anamnesis::where('lead_id', $lead2->id)->where('person_id', $person2->id)->count())->toBe(1);
 });

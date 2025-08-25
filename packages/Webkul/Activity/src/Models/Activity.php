@@ -55,6 +55,7 @@ class Activity extends Model implements ActivityContract
         'is_done',
         'user_id',
         'group_id',
+        'lead_id',
     ];
 
     /**
@@ -82,11 +83,11 @@ class Activity extends Model implements ActivityContract
     }
 
     /**
-     * The leads that belong to the activity.
+     * Get the lead that owns the activity.
      */
-    public function leads()
+    public function lead()
     {
-        return $this->belongsToMany(LeadProxy::modelClass(), 'lead_activities');
+        return $this->belongsTo(LeadProxy::modelClass());
     }
 
     /**

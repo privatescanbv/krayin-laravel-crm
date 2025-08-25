@@ -347,7 +347,6 @@ class ImportLeadsFromSugarCRM extends Command
         // Then try to match by phone
         if ($record->phone_work) {
             $person = Person::where('phones', 'like', '%'.$record->phone_work.'%')
-                ->orWhere('contact_numbers', 'like', '%'.$record->phone_work.'%')
                 ->first();
             if ($person) {
                 return $person;

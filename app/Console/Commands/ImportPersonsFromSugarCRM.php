@@ -154,7 +154,7 @@ class ImportPersonsFromSugarCRM extends Command
                 $person = Person::create([
                     'external_id'     => $record->id,
                     'emails'          => [['label' => 'work', 'value' => $record->email ?? '']],
-                    'contact_numbers' => [['label' => 'work', 'value' => $record->phone_work ?? '']],
+                    'phones'          => [['label' => 'work', 'value' => $record->phone_work ?? '']],
                     'initials'        => $record->voorletters_c ?? '',
                     'first_name'      => $record->first_name ?? '',
                     'last_name'       => $record->last_name ?? '',

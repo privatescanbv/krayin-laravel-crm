@@ -3,6 +3,7 @@
 namespace Webkul\Attribute\Repositories;
 
 use Illuminate\Container\Container;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Webkul\Core\Eloquent\Repository;
 
@@ -27,7 +28,7 @@ class AttributeRepository extends Repository
      */
     public function model()
     {
-        return 'Webkul\Attribute\Contracts\Attribute';
+        return 'Webkul\\Attribute\\Contracts\\Attribute';
     }
 
     /**
@@ -118,10 +119,6 @@ class AttributeRepository extends Repository
     {
         $lookup = config('attribute_lookups.'.$lookup);
 
-        if (! count($columns)) {
-            $columns = [($lookup['value_column'] ?? 'id').' as id', ($lookup['label_column'] ?? 'name').' as name'];
-        }
-
         if (Str::contains($lookup['repository'], 'UserRepository')) {
             $userRepository = app($lookup['repository'])->where('status', 1);
 
@@ -136,6 +133,31 @@ class AttributeRepository extends Repository
             }
 
             return $userRepository->where('users.name', 'like', '%'.urldecode($query).'%')->get();
+        }
+
+        // For leads: use Eloquent models and getNameAttribute accessor
+        if (isset($lookup['repository']) && Str::contains($lookup['repository'], 'LeadRepository')) {
+            $leads = app($lookup['repository'])->scopeQuery(function ($q) use ($query) {
+                $term = '%'.urldecode($query).'%';
+                return $q->where(function ($qb) use ($term) {
+                    $qb->where('first_name', 'like', $term)
+                       ->orWhere('last_name', 'like', $term)
+                       ->orWhere(DB::raw("CONCAT_WS(' ', first_name, last_name)"), 'like', $term);
+                });
+            })->all();
+
+            // Transform to use the name accessor
+            return $leads->map(function ($lead) {
+                return [
+                    'id' => $lead->id,
+                    'name' => $lead->name
+                ];
+            });
+        }
+
+        // Default columns for other repositories
+        if (! count($columns)) {
+            $columns = [($lookup['value_column'] ?? 'id').' as id', ($lookup['label_column'] ?? 'name').' as name'];
         }
 
         return app($lookup['repository'])->findWhere([
@@ -157,6 +179,24 @@ class AttributeRepository extends Repository
 
         $lookup = config('attribute_lookups.'.$lookup);
 
+        // For leads: use Eloquent models and getNameAttribute accessor
+        if (isset($lookup['repository']) && Str::contains($lookup['repository'], 'LeadRepository')) {
+            if (is_array($entityId)) {
+                $leads = app($lookup['repository'])->findWhereIn('id', $entityId);
+            } else {
+                $leads = collect([app($lookup['repository'])->find($entityId)]);
+            }
+
+            // Transform to use the name accessor
+            return $leads->map(function ($lead) {
+                return [
+                    'id' => $lead->id,
+                    'name' => $lead->name
+                ];
+            });
+        }
+
+        // Default columns for other repositories
         if (! count($columns)) {
             $columns = [($lookup['value_column'] ?? 'id').' as id', ($lookup['label_column'] ?? 'name').' as name'];
         }

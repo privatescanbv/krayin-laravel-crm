@@ -28,11 +28,8 @@ class Activity
     public function afterUpdateOrCreate(ActivityContract $activity): void
     {
         if (request()->input('lead_id')) {
-            $lead = $this->leadRepository->find(request()->input('lead_id'));
-
-            if (! $lead->activities->contains($activity->id)) {
-                $lead->activities()->attach($activity->id);
-            }
+            // For leads, the lead_id is already set in the activity model
+            // No need to attach via pivot table anymore
         } elseif (request()->input('person_id')) {
             $person = $this->personRepository->find(request()->input('person_id'));
 

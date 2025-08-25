@@ -368,14 +368,26 @@
                 created() {
                     this.availableViews = {!! json_encode($views ?? []) !!};
 
-                    // Get view from URL or use default
+                    // Get view from URL, cookie, or use default
                     const urlParams = new URLSearchParams(window.location.search);
-                    const urlView = urlParams.get('view') || {!! json_encode($currentView ?? 'for_me') !!};
+                    let urlView = urlParams.get('view');
+                    
+                    if (!urlView) {
+                        // If no URL parameter, try to get from cookie
+                        urlView = this.getCookie('selected_activity_view') || {!! json_encode($currentView ?? 'for_me') !!};
+                        
+                        // If we have a cookie value and it's different from default, redirect to include it in URL
+                        if (urlView && urlView !== 'for_me') {
+                            const newUrl = window.location.pathname + '?view=' + urlView;
+                            window.location.href = newUrl;
+                            return; // Stop execution as we're redirecting
+                        }
+                    }
                     
                     this.currentView = urlView;
                     
-                    // Store current view in session for persistence
-                    sessionStorage.setItem('selected_activity_view', urlView);
+                    // Store current view in cookie for persistence across pages
+                    this.setCookie('selected_activity_view', urlView, 30); // 30 days
                 },
 
                 computed: {
@@ -385,14 +397,7 @@
                 },
 
                 mounted() {
-                    // Apply default view filters if no view is specified in URL
-                    const urlParams = new URLSearchParams(window.location.search);
-                    if (!urlParams.get('view')) {
-                        // Redirect to include default view
-                        urlParams.set('view', this.currentView);
-                        const newUrl = window.location.pathname + '?' + urlParams.toString();
-                        window.location.href = newUrl;
-                    }
+                    // View handling is now done in created() method
                 },
 
                 methods: {
@@ -418,12 +423,43 @@
                      */
                     onViewChange(event) {
                         const selectedView = event.target.value;
-                        sessionStorage.setItem('selected_activity_view', selectedView);
+                        this.setCookie('selected_activity_view', selectedView, 30); // 30 days
 
                         // Redirect to the new view
                         let currentUrl = new URL(window.location);
                         currentUrl.searchParams.set('view', selectedView);
                         window.location.href = currentUrl.toString();
+                    },
+
+                    /**
+                     * Set a cookie with the given name, value, and expiration days.
+                     *
+                     * @param {String} name
+                     * @param {String} value
+                     * @param {Number} days
+                     * @return {void}
+                     */
+                    setCookie(name, value, days) {
+                        const expires = new Date();
+                        expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+                        document.cookie = name + '=' + value + ';expires=' + expires.toUTCString() + ';path=/';
+                    },
+
+                    /**
+                     * Get a cookie value by name.
+                     *
+                     * @param {String} name
+                     * @return {String|null}
+                     */
+                    getCookie(name) {
+                        const nameEQ = name + "=";
+                        const ca = document.cookie.split(';');
+                        for(let i = 0; i < ca.length; i++) {
+                            let c = ca[i];
+                            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+                            if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+                        }
+                        return null;
                     },
 
                     /**

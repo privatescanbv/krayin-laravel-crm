@@ -44,12 +44,11 @@ class ActivityController extends Controller
             'file' => 'required_if:type,file',
         ]);
         $request['comment'] = $request->description;
-        $lead = $this->leadRepository->findOrFail($id);
 
         // Auto-assign group if not specified but user has a group
         $groupId = $request->group_id;
         if (!$groupId && $request->user_id) {
-            $user = \Webkul\User\Models\User::find($request->user_id);
+            $user = User::find($request->user_id);
             if ($user && $user->groups()->count() > 0) {
                 $groupId = $user->groups()->first()->id;
             }
@@ -59,9 +58,8 @@ class ActivityController extends Controller
             'is_done' => $request->type == 'note' ? 1 : 0,
             'user_id' => $request->user_id,
             'group_id' => $groupId,
+            'lead_id' => $id,
         ]));
-
-        $lead->activities()->attach($activity->id);
 
         return response()->json([
             'data' => new ActivityResource($activity),
@@ -78,8 +76,7 @@ class ActivityController extends Controller
     public function index($id)
     {
         $activities = $this->activityRepository
-            ->leftJoin('lead_activities', 'activities.id', '=', 'lead_activities.activity_id')
-            ->where('lead_activities.lead_id', $id)
+            ->where('lead_id', $id)
             ->get();
 
         return ActivityResource::collection($this->concatEmailAsActivities($id, $activities));

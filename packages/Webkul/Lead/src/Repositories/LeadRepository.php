@@ -25,7 +25,10 @@ class LeadRepository extends Repository
      * Searchable fields.
      */
     protected $fieldSearchable = [
-        'title',
+        // Use name-related fields instead of removed 'title' column
+        'first_name',
+        'last_name',
+        'married_name',
         'lead_value',
         'status',
         'user_id',
@@ -86,7 +89,7 @@ class LeadRepository extends Repository
             return $query->select(
                 'leads.id as id',
                 'leads.created_at as created_at',
-                'title',
+                DB::raw("CONCAT_WS(' ', ".DB::getTablePrefix()."leads.first_name, ".DB::getTablePrefix()."leads.last_name) as title"),
                 'lead_value',
                 'lead_pipelines.id as lead_pipeline_id',
                 'lead_pipeline_stages.name as status',
@@ -95,7 +98,12 @@ class LeadRepository extends Repository
                 ->addSelect(DB::raw('DATEDIFF(' . DB::getTablePrefix() . 'leads.created_at + INTERVAL lead_pipelines.rotten_days DAY, now()) as rotten_days'))
                 ->leftJoin('lead_pipelines', 'leads.lead_pipeline_id', '=', 'lead_pipelines.id')
                 ->leftJoin('lead_pipeline_stages', 'leads.lead_pipeline_stage_id', '=', 'lead_pipeline_stages.id')
-                ->where('title', 'like', "%$term%")
+                ->when($term, function($q) use ($term) {
+                    $q->whereRaw(
+                        "CONCAT_WS(' ', ".DB::getTablePrefix()."leads.first_name, ".DB::getTablePrefix()."leads.last_name) like ?",
+                        ["%{$term}%"]
+                    );
+                })
                 ->where('leads.lead_pipeline_id', $pipelineId)
                 ->where('leads.lead_pipeline_stage_id', $pipelineStageId)
                 ->when($createdAtRange, function ($query) use ($createdAtRange) {
@@ -656,10 +664,9 @@ class LeadRepository extends Repository
             'user_id' => auth()->id() ?? 1,
         ];
 
-        $activity = app('Webkul\Activity\Repositories\ActivityRepository')->create($activityData);
-
-        // Attach the activity to the primary lead for audit trail
-        $primaryLead->activities()->attach($activity->id);
+        $activity = app('Webkul\Activity\Repositories\ActivityRepository')->create(array_merge($activityData, [
+            'lead_id' => $primaryLead->id,
+        ]));
 
         Log::info('System activity created for duplicate removal', [
             'primary_lead_id' => $primaryLead->id,
@@ -689,10 +696,9 @@ class LeadRepository extends Repository
             'user_id' => auth()->id() ?? 1,
         ];
 
-        $activity = app('Webkul\Activity\Repositories\ActivityRepository')->create($activityData);
-
-        // Attach the activity to the primary lead
-        $primaryLead->activities()->attach($activity->id);
+        $activity = app('Webkul\Activity\Repositories\ActivityRepository')->create(array_merge($activityData, [
+            'lead_id' => $primaryLead->id,
+        ]));
     }
 
     /**

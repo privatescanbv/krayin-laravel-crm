@@ -148,25 +148,41 @@
                         </x-admin::form.control-group.control>
                     </x-admin::form.control-group>
 
-                    <!-- Lead -->
-                    <x-admin::form.control-group class="!mb-0">
-                        <x-admin::form.control-group.label>
-                            @lang('admin::app.activities.edit.lead')
-                        </x-admin::form.control-group.label>
+                    <!-- Related Entity Information -->
+                    @if($relatedEntity && $relatedEntityName)
+                        <x-admin::form.control-group class="!mb-0">
+                            <x-admin::form.control-group.label>
+                                Gerelateerd aan
+                            </x-admin::form.control-group.label>
 
-                        <x-admin::attributes.edit.lookup/>
+                            <div class="flex items-center gap-2 p-3 bg-gray-50 rounded-md border dark:bg-gray-800 dark:border-gray-700">
+                                <span class="text-sm font-medium text-gray-600 dark:text-gray-400">
+                                    {{ $relatedEntityName }}:
+                                </span>
+                                <span class="text-sm text-gray-900 dark:text-gray-100">
+                                    @if($relatedEntityName === 'Lead')
+                                        <a href="{{ route('admin.leads.view', $relatedEntity->id) }}" class="text-blue-600 hover:text-blue-800 underline">
+                                            {{ $relatedEntity->name ?? $relatedEntity->title ?? 'Onbekende lead' }}
+                                        </a>
+                                    @elseif($relatedEntityName === 'Person')
+                                        <a href="{{ route('admin.contacts.persons.view', $relatedEntity->id) }}" class="text-blue-600 hover:text-blue-800 underline">
+                                            {{ $relatedEntity->name ?? 'Onbekende persoon' }}
+                                        </a>
+                                    @elseif($relatedEntityName === 'Product')
+                                        <a href="{{ route('admin.products.view', $relatedEntity->id) }}" class="text-blue-600 hover:text-blue-800 underline">
+                                            {{ $relatedEntity->name ?? 'Onbekend product' }}
+                                        </a>
+                                    @elseif($relatedEntityName === 'Warehouse')
+                                        <a href="{{ route('admin.warehouses.view', $relatedEntity->id) }}" class="text-blue-600 hover:text-blue-800 underline">
+                                            {{ $relatedEntity->name ?? 'Onbekende warehouse' }}
+                                        </a>
+                                    @endif
+                                </span>
+                            </div>
+                        </x-admin::form.control-group>
+                    @endif
 
-                        <!-- Lead Lookup Vue Component -->
-                        <v-lookup-component
-                            :attribute="{'code': 'lead_id', 'name': 'Lead', 'lookup_type': 'leads'}"
-                            :value='@json($lookUpEntityData)'
-                        >
-                            <x-admin::form.control-group.control
-                                type="text"
-                                placeholder="@lang('admin::app.common.start-typing')"
-                            />
-                        </v-lookup-component>
-                    </x-admin::form.control-group>
+                    
 
                     <!-- is_done Checkbox -->
                     <x-admin::form.control-group>

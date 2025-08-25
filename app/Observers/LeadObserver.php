@@ -210,9 +210,8 @@ class LeadObserver
                         ],
                     ]),
                     'user_id' => auth()->id() ?? 1,
+                    'lead_id' => $lead->id,
                 ]);
-
-                $lead->activities()->attach($activity->id);
             }
         }
     }

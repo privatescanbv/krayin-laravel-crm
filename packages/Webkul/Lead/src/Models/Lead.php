@@ -200,7 +200,7 @@ class Lead extends Model implements LeadContract
      */
     public function activities()
     {
-        return $this->belongsToMany(ActivityProxy::modelClass(), 'lead_activities');
+        return $this->hasMany(ActivityProxy::modelClass());
     }
 
     /**

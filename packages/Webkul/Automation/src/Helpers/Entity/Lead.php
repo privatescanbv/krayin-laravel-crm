@@ -226,9 +226,8 @@ class Lead extends AbstractEntity
                         'comment' => $action['value'],
                         'is_done' => 1,
                         'user_id' => auth()->guard('user')->user()->id,
+                        'lead_id' => $lead->id,
                     ]);
-
-                    $lead->activities()->attach($activity->id);
 
                     break;
 

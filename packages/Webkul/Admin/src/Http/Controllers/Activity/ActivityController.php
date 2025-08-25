@@ -169,11 +169,29 @@ class ActivityController extends Controller
 
         $groups = app(GroupRepository::class)->all();
 
-        $leadId = old('lead_id') ?? optional($activity->leads()->first())->id;
+        $leadId = old('lead_id') ?? $activity->lead_id;
 
         $lookUpEntityData = $this->attributeRepository->getLookUpEntity('leads', $leadId);
 
-        return view('admin::activities.edit', compact('activity', 'groups', 'lookUpEntityData'));
+        // Determine which entity this activity belongs to
+        $relatedEntity = null;
+        $relatedEntityName = null;
+        
+        if ($activity->lead_id) {
+            $relatedEntity = $activity->lead;
+            $relatedEntityName = 'Lead';
+        } elseif ($activity->persons()->count() > 0) {
+            $relatedEntity = $activity->persons()->first();
+            $relatedEntityName = 'Person';
+        } elseif ($activity->products()->count() > 0) {
+            $relatedEntity = $activity->products()->first();
+            $relatedEntityName = 'Product';
+        } elseif ($activity->warehouses()->count() > 0) {
+            $relatedEntity = $activity->warehouses()->first();
+            $relatedEntityName = 'Warehouse';
+        }
+
+        return view('admin::activities.edit', compact('activity', 'groups', 'lookUpEntityData', 'relatedEntity', 'relatedEntityName'));
     }
 
     /**
@@ -192,11 +210,9 @@ class ActivityController extends Controller
          * `is_done` field, so `lead_id` will not be present in that case.
          */
         if (isset($data['lead_id'])) {
-            $activity->leads()->sync(
-                ! empty($data['lead_id'])
-                    ? [$data['lead_id']]
-                    : []
-            );
+            // Convert empty string to null for foreign key constraint
+            $activity->lead_id = (!empty($data['lead_id']) && $data['lead_id'] !== '') ? $data['lead_id'] : null;
+            $activity->save();
         }
 
         // Send webhook if activity is marked as done
@@ -210,7 +226,7 @@ class ActivityController extends Controller
                     'comment' => $activity->comment,
                     'schedule_from' => $activity->schedule_from,
                     'schedule_to' => $activity->schedule_to,
-                    'lead_id' => $activity->leads()->first()?->id,
+                    'lead_id' => $activity->lead_id,
                 ],
             ],
                 WebhookType::LEAD_ACTIVITY_IS_DONE);
@@ -255,7 +271,7 @@ class ActivityController extends Controller
                         'comment' => $activity->comment,
                         'schedule_from' => $activity->schedule_from,
                         'schedule_to' => $activity->schedule_to,
-                        'lead_id' => $activity->leads()->first()?->id,
+                        'lead_id' => $activity->lead_id,
                     ],
                 ],
                     WebhookType::LEAD_ACTIVITY_IS_DONE);

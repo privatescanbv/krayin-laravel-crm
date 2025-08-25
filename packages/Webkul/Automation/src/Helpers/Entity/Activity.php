@@ -196,8 +196,7 @@ class Activity extends AbstractEntity
             switch ($action['id']) {
                 case 'update_related_leads':
                     $leadIds = $this->activityRepository->getModel()
-                        ->leftJoin('lead_activities', 'activities.id', 'lead_activities.activity_id')
-                        ->leftJoin('leads', 'lead_activities.lead_id', 'leads.id')
+                        ->leftJoin('leads', 'activities.lead_id', 'leads.id')
                         ->addSelect('leads.id')
                         ->where('activities.id', $activity->id)
                         ->pluck('id');

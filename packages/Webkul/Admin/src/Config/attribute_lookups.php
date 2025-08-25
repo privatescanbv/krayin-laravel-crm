@@ -4,7 +4,9 @@ return [
     'leads' => [
         'name'         => 'Leads',
         'repository'   => 'Webkul\Lead\Repositories\LeadRepository',
-        'label_column' => 'title',
+        // Title column removed on leads; UI expects a name-like label.
+        // We map label_column to a virtual accessor via LeadRepository select (CONCAT first + last name).
+        'label_column' => 'name',
     ],
 
     'lead_sources' => [

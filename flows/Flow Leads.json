@@ -225,8 +225,8 @@
       "name": "Update CRM contact with call_status COMPLETED",
       "type": "n8n-nodes-base.airtable",
       "position": [
-        60,
-        500
+        64,
+        512
       ],
       "typeVersion": 2.1,
       "disabled": true
@@ -391,8 +391,8 @@
       "name": "Route based on call_status",
       "type": "n8n-nodes-base.switch",
       "position": [
-        -1780,
-        440
+        -1776,
+        448
       ],
       "typeVersion": 3.2
     },
@@ -406,7 +406,7 @@
       "name": "Sticky Note1",
       "type": "n8n-nodes-base.stickyNote",
       "position": [
-        60,
+        64,
         80
       ],
       "typeVersion": 1
@@ -429,8 +429,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        60,
-        260
+        64,
+        272
       ],
       "id": "a36bcd06-3418-46cc-8cd5-e12a602bbd82",
       "name": "Add Note to lead"
@@ -445,8 +445,8 @@
       "name": "Webhook - lead status change",
       "type": "n8n-nodes-base.webhook",
       "position": [
-        -2220,
-        460
+        -2224,
+        464
       ],
       "webhookId": "0de7745d-64c8-410b-9d23-f98f4b9c3787",
       "typeVersion": 2
@@ -514,7 +514,7 @@
       "name": "Route on task title",
       "type": "n8n-nodes-base.switch",
       "position": [
-        -1960,
+        -1968,
         1600
       ],
       "typeVersion": 3.2
@@ -526,7 +526,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1740,
+        -1744,
         1600
       ],
       "id": "f6445880-6d9a-43ad-8089-88533b11a6c3",
@@ -561,7 +561,7 @@
       "typeVersion": 2.2,
       "position": [
         -2000,
-        460
+        464
       ],
       "id": "010a9935-4969-42e0-bebe-a2f3ffcd59fb",
       "name": "department not null"
@@ -589,8 +589,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1560,
-        1000
+        -1568,
+        1008
       ],
       "id": "13a140e2-e8cb-4447-b059-4ccabe54ab5c",
       "name": "Find group by Department"
@@ -600,8 +600,8 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -1340,
-        940
+        -1344,
+        944
       ],
       "id": "756fddc2-8ff2-47b3-8133-2f7f945e9669",
       "name": "Merge"
@@ -615,7 +615,7 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        -2180,
+        -2176,
         1600
       ],
       "id": "b6eb007a-6ee6-41ea-8a46-5aff7a27affb",
@@ -645,8 +645,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1560,
-        1300
+        -1568,
+        1312
       ],
       "id": "4af4828a-6e16-4ce3-9c87-ab79d35193d7",
       "name": "Find group by Department1"
@@ -656,21 +656,21 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -1340,
-        1240
+        -1344,
+        1248
       ],
       "id": "2c9efa34-1e46-4659-8798-713e42077e00",
       "name": "Merge1"
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Klant bellen voor advies',\n      task_type: 'call',\n      task_description: '1. Adviseer de klant en koppel dit terug in het systeem. Zet de taak op down, zodra: 1. .. 2.. '\n    }\n  }\n];"
+        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Klant bellen voor advies',\n      task_type: 'call',\n      task_description: ''\n    }\n  }\n];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         -1120,
-        1240
+        1248
       ],
       "id": "6d05462a-e513-4005-9fec-29810509b3bf",
       "name": "set lead_id and group_id1"
@@ -702,8 +702,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1900,
-        940
+        -1904,
+        944
       ],
       "id": "0ae96eea-1712-422d-8f26-9495e201dddb",
       "name": "Add lead workflow"
@@ -715,21 +715,21 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -2120,
-        940
+        -2128,
+        944
       ],
       "id": "368c0314-c60a-4f8a-97fc-beb3201e0bae",
       "name": "lead_id"
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Klant data bijwerken',\n      task_description: '1. Koppel contact persoon. 2. Werk eventueel NAV gegevens bij'\n    }\n  }\n];"
+        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Klant data bijwerken',\n      task_description: ''\n    }\n  }\n];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         -1120,
-        940
+        944
       ],
       "id": "4fde4b6f-2d01-4b29-beae-1318008e1d08",
       "name": "set lead_id and group_id"
@@ -801,8 +801,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        -900,
-        940
+        -896,
+        944
       ],
       "id": "57eab30a-c3fa-4e7f-8d11-aa6d091bb1d1",
       "name": "Create task"
@@ -830,7 +830,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1560,
+        -1568,
         720
       ],
       "id": "dda058c9-288f-47e4-a4e8-1801c84b3574",
@@ -841,7 +841,7 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -1400,
+        -1408,
         720
       ],
       "id": "d2e448ec-de7d-445b-b48d-705c81d992d6",
@@ -849,12 +849,12 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Order verzenden',\n      task_description: '1. Samenstellen order; 2. Samenstellen mail in de juist taal met de bijlages (GVL, kaarten). 3. versturen '\n    }\n  }\n];"
+        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Order verzenden',\n      task_description: ''\n    }\n  }\n];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1140,
+        -1136,
         720
       ],
       "id": "f32055a5-327d-4921-b5b2-3e6dea6c8a5c",
@@ -899,7 +899,7 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -2220,
+        -2224,
         1760
       ],
       "id": "e3c5cd5b-9434-4239-9e55-6bd33812cddd",
@@ -930,7 +930,7 @@
       "typeVersion": 1,
       "position": [
         -1120,
-        660
+        672
       ],
       "id": "48aeaa36-23e7-4f06-949f-43e713b74325",
       "name": "Sticky Note3"
@@ -944,7 +944,7 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1080,
+        -1088,
         880
       ],
       "id": "ddd8e401-e541-428f-8f80-61c46910f2c9",
@@ -959,8 +959,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1100,
-        1180
+        -1104,
+        1184
       ],
       "id": "e5741c30-675c-411f-9790-6c0651cc3814",
       "name": "Sticky Note5"
@@ -988,8 +988,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1500,
-        520
+        -1504,
+        528
       ],
       "id": "dd5d2b3e-4abf-4e5c-a784-75847813da2e",
       "name": "Find group by Department3"
@@ -999,21 +999,21 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -1320,
-        520
+        -1328,
+        528
       ],
       "id": "aad7a928-a157-4fff-89aa-d1847a64fa1b",
       "name": "Merge3"
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'MRI aanleveren',\n      task_description: '1. Samenstellen order; 2. Samenstellen mail in de juist taal met de bijlages (GVL, kaarten). 3. versturen '\n    }\n  }\n];"
+        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'MRI aanleveren',\n      task_description: ''\n    }\n  }\n];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1060,
-        520
+        -1056,
+        528
       ],
       "id": "d66a1ad5-da70-4eb0-b4c5-811dc3fa26fb",
       "name": "set lead_id and group_id3"
@@ -1028,7 +1028,7 @@
       "typeVersion": 1,
       "position": [
         -1040,
-        460
+        464
       ],
       "id": "cce03068-29d6-4bb2-a7b2-b2020aa370df",
       "name": "Sticky Note6"
@@ -1056,7 +1056,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1500,
+        -1504,
         320
       ],
       "id": "1f6c6e2e-d53a-4d33-b77f-d07f765eda78",
@@ -1067,7 +1067,7 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -1340,
+        -1344,
         320
       ],
       "id": "f1f8fd2e-9c66-47e3-abca-e93f3834d3e1",
@@ -1080,7 +1080,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1080,
+        -1088,
         320
       ],
       "id": "8c66755c-a80f-4cbd-9322-0f81af5c065a",
@@ -1095,8 +1095,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1060,
-        260
+        -1056,
+        272
       ],
       "id": "97c47013-2ba3-496f-b5b3-5ad872d5244c",
       "name": "Sticky Note7"
@@ -1417,7 +1417,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "daa93ab9-078b-4bd9-886f-d6040da4c1e7",
+  "versionId": "7c963b1e-5d37-453d-a440-01bd3d742fcf",
   "meta": {
     "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },

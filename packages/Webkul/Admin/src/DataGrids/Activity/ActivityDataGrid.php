@@ -327,6 +327,27 @@ class ActivityDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
+            'index'      => 'schedule_from',
+            'label'      => 'Oppakken vanaf',
+            'type'       => 'datetime',
+            'sortable'   => true,
+            'searchable' => false,
+            'filterable' => false,
+            'closure'    => function ($row) {
+                if (empty($row->schedule_from)) {
+                    return 'N/A';
+                }
+
+                $timestamp = strtotime($row->schedule_from);
+                if ($timestamp === false) {
+                    return 'N/A';
+                }
+
+                return date('d-m-Y H:i', $timestamp);
+            },
+        ]);
+
+        $this->addColumn([
             'index'      => 'days_until_deadline',
             'label'      => 'Dagen tot deadline',
             'type'       => 'integer',

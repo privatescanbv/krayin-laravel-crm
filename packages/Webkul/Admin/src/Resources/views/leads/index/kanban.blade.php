@@ -322,7 +322,7 @@
 
             mounted () {
                 this.boot();
-                
+
                 // Register global function for button access
                 window.toggleWonLost = () => {
                     this.toggleWonLost();
@@ -521,7 +521,7 @@
                         ...params,
                         exclude_won_lost: this.hideWonLost,
                     };
-                    
+
                     this.get(paramsWithExclude)
                         .then(response => {
                             for (let [sortOrder, data] of Object.entries(response.data)) {
@@ -580,7 +580,8 @@
                  * @returns {void}
                  */
                 handleScroll(stage, event) {
-                    const bottom = event.target.scrollHeight - event.target.scrollTop === event.target.clientHeight;
+                    const element = event.target;
+                    const bottom = Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) < 1;
 
                     if (! bottom) {
                         return;
@@ -694,13 +695,13 @@
                 toggleWonLost() {
                     this.hideWonLost = !this.hideWonLost;
                     this.updateKanbans();
-                    
+
                     // Update button text
                     const buttonText = document.getElementById('toggle-won-lost-text');
                     if (buttonText) {
                         buttonText.textContent = this.hideWonLost ? 'Toon gewonnen/verloren' : 'Verberg gewonnen/verloren';
                     }
-                    
+
                     // Clear existing data and refetch with new exclude_won_lost parameter
                     this.stageLeads = {};
                     this.get()
@@ -714,7 +715,7 @@
                             // Revert the toggle if there's an error
                             this.hideWonLost = !this.hideWonLost;
                             this.updateKanbans();
-                            
+
                             // Update button text back
                             const buttonText = document.getElementById('toggle-won-lost-text');
                             if (buttonText) {

@@ -180,6 +180,15 @@
 
                                                                         {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.before') !!}
 
+                                    <!-- Lost Reason (only for lost status) -->
+                                    <div
+                                        class="text-[10px] text-red-700 dark:text-red-400 mt-1"
+                                        v-if="element?.stage?.code === 'lost' && element.lost_reason"
+                                    >
+                                        <span class="font-medium">Verliesreden:</span>
+                                        @{{ element.lost_reason }}
+                                    </div>
+
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.after') !!}
 
                                     <!-- Card Footer -->

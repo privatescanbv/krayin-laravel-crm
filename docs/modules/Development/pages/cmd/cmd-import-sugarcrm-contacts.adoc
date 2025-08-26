@@ -45,6 +45,9 @@ sail artisan import:persons
 # Import specifiek aantal contactpersonen
 sail artisan import:persons --limit=100
 
+# Import specifieke person IDs
+sail artisan import:persons --person-ids=abc123 def456 ghi789
+
 # Import alle contactpersonen
 sail artisan import:persons --limit=10000
 ----
@@ -57,6 +60,9 @@ sail artisan import:persons --limit=10000
 
 |`--limit`
 |Aantal contactpersonen om te importeren (standaard: 10)
+
+|`--person-ids`
+|Specifieke person IDs om te importeren (negeert limit)
 
 |`--dry-run`
 |Test de import zonder daadwerkelijk data op te slaan

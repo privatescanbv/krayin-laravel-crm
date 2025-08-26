@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Address;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +21,7 @@ class ImportPersonsFromSugarCRM extends Command
                             {--connection=sugarcrm : Database connection name}
                             {--table=contacts : Source table name}
                             {--limit=100 : Number of records to import}
+                            {--person-ids=* : Specific person IDs to import (ignores limit)}
                             {--dry-run : Show what would be imported without actually importing}';
 
     /**
@@ -27,7 +29,7 @@ class ImportPersonsFromSugarCRM extends Command
      *
      * @var string
      */
-    protected $description = 'Import persons from SugarCRM database';
+    protected $description = 'Import persons from SugarCRM database with addresses and contact information';
 
     /**
      * Execute the console command.
@@ -37,12 +39,17 @@ class ImportPersonsFromSugarCRM extends Command
         $connection = $this->option('connection');
         $table = $this->option('table');
         $limit = (int) $this->option('limit');
+        $personIds = $this->option('person-ids');
         $dryRun = $this->option('dry-run');
 
         $this->info('Starting import from SugarCRM...');
         $this->info("Connection: {$connection}");
         $this->info("Table: {$table}");
-        $this->info("Limit: {$limit}");
+        if (! empty($personIds)) {
+            $this->info('Person IDs: '.implode(', ', $personIds));
+        } else {
+            $this->info("Limit: {$limit}");
+        }
         $this->info('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
         try {
@@ -52,31 +59,58 @@ class ImportPersonsFromSugarCRM extends Command
             $this->info('✓ Database connection successful');
 
             // Get records from SugarCRM
-            $records = DB::connection($connection)
+            $sql = DB::connection($connection)
                 ->table($table.' as c')
                 ->join('contacts_cstm as cm', 'c.id', '=', 'cm.id_c')
                 ->leftJoin('email_addr_bean_rel as eabr', function ($join) {
                     $join->on('eabr.bean_id', '=', 'c.id')
                         ->where('eabr.bean_module', '=', 'Contacts')
-                        ->where('eabr.deleted', '=', 0)
-                        ->where('eabr.primary_address', '=', 1);
+                        ->where('eabr.deleted', '=', 0);
                 })
                 ->leftJoin('email_addresses as ea', function ($join) {
                     $join->on('ea.id', '=', 'eabr.email_address_id')
                         ->where('ea.deleted', '=', 0);
                 })
                 ->select([
-                    'c.*',
+                    'c.id',
+                    'c.first_name',
+                    'c.last_name',
+                    'c.phone_work',
+                    'c.phone_mobile',
+                    'c.phone_home',
+                    'c.phone_other',
+                    'c.birthdate',
+                    'c.date_entered',
+                    'c.date_modified',
+                    // Primary address fields from contacts
+                    'c.primary_address_street',
+                    'c.primary_address_city',
+                    'c.primary_address_state',
+                    'c.primary_address_postalcode',
+                    'c.primary_address_country',
                     'cm.gender_c',
                     'cm.meisjesnaam_c',
                     'cm.roepnaam_c',
                     'cm.voorletters_c',
-                    'ea.email_address as email',
+                    'cm.primary_huisnr_c',
+                    'cm.primary_huisnr_toevoeging_c',
+                    DB::raw('MAX(CASE WHEN eabr.primary_address = 1 THEN ea.email_address END) as email_primary'),
+                    DB::raw('MIN(CASE WHEN eabr.primary_address = 0 THEN ea.email_address END) as email_any'),
                 ])
                 ->where('c.deleted', 0)
-                ->orderBy('c.date_entered', 'desc') // Nieuwste eerst
-                ->limit($limit)
-                ->get();
+                ->whereNotNull('c.id')
+                ->where('c.id', '!=', '');
+
+            // If specific person IDs are provided, filter by them and ignore limit
+            if (! empty($personIds)) {
+                $sql->whereIn('c.id', $personIds);
+            } else {
+                $sql->groupBy('c.id')
+                    ->orderBy('c.date_entered', 'desc') // Nieuwste eerst
+                    ->limit($limit);
+            }
+            // $sql->dumpRawSql(); // Uncomment for debugging
+            $records = $sql->get();
 
             $this->info('Found '.$records->count().' records to import');
 
@@ -107,25 +141,38 @@ class ImportPersonsFromSugarCRM extends Command
     {
         $this->info("\n=== DRY RUN RESULTS ===");
 
-        $headers = ['External ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Gender', 'Meisjesnaam', 'Roepnaam', 'Voorletters'];
+        $headers = ['External ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Gender', 'Meisjesnaam', 'Roepnaam', 'Voorletters', 'Valid'];
         $rows = [];
+        $validCount = 0;
+        $invalidCount = 0;
 
         foreach ($records as $record) {
+            $isValid = ! empty($record->id) && ! empty($record->first_name) && ! empty($record->last_name);
+            if ($isValid) {
+                $validCount++;
+            } else {
+                $invalidCount++;
+            }
+
             $rows[] = [
                 $record->id ?? 'N/A',
                 $record->first_name ?? 'N/A',
                 $record->last_name ?? 'N/A',
-                $record->email ?? 'N/A',
+                $record->email_primary ?? $record->email_any ?? 'N/A',
                 $record->phone_work ?? 'N/A',
                 $record->gender_c ?? 'N/A',
                 $record->meisjesnaam_c ?? 'N/A',
                 $record->roepnaam_c ?? 'N/A',
                 $record->voorletters_c ?? 'N/A',
+                $isValid ? '✓' : '✗',
             ];
         }
 
         $this->table($headers, $rows);
-        $this->info('Would import '.count($rows).' persons');
+        $this->info("Would import {$validCount} valid persons");
+        if ($invalidCount > 0) {
+            $this->warn("Would skip {$invalidCount} invalid persons (missing required fields)");
+        }
     }
 
     /**
@@ -143,6 +190,15 @@ class ImportPersonsFromSugarCRM extends Command
         $attributeValueRepo = app(AttributeValueRepository::class);
         foreach ($records as $record) {
             try {
+                // Validate required fields
+                if (empty($record->id) || empty($record->first_name) || empty($record->last_name)) {
+                    $this->warn("Skipping record with missing required fields: ID={$record->id}, First Name={$record->first_name}, Last Name={$record->last_name}");
+                    $skipped++;
+                    $bar->advance();
+
+                    continue;
+                }
+
                 // Check if person already exists by external_id
                 $existingPerson = Person::where('external_id', $record->id)->first();
                 if ($existingPerson) {
@@ -151,25 +207,72 @@ class ImportPersonsFromSugarCRM extends Command
 
                     continue;
                 }
-                $person = Person::create([
+                // Build phones array from available SugarCRM fields
+                $phones = [];
+                if (! empty($record->phone_work)) {
+                    $phones[] = ['label' => 'work', 'value' => $record->phone_work];
+                }
+                if (! empty($record->phone_mobile)) {
+                    $phones[] = ['label' => 'mobile', 'value' => $record->phone_mobile];
+                }
+                if (! empty($record->phone_home)) {
+                    $phones[] = ['label' => 'home', 'value' => $record->phone_home];
+                }
+                if (! empty($record->phone_other)) {
+                    $phones[] = ['label' => 'other', 'value' => $record->phone_other];
+                }
+
+                $emails = [];
+                if (! empty($record->email_primary)) {
+                    $emails[] = ['label' => 'work', 'value' => $record->email_primary, 'is_default' => true];
+                } elseif (! empty($record->email_any)) {
+                    $emails[] = ['label' => 'work', 'value' => $record->email_any, 'is_default' => true];
+                }
+
+                $person = $this->createEntityWithTimestamps(Person::class, [
                     'external_id'     => $record->id,
-                    'emails'          => [['label' => 'work', 'value' => $record->email ?? '']],
-                    'phones'          => [['label' => 'work', 'value' => $record->phone_work ?? '']],
+                    'emails'          => $emails,
+                    'phones'          => $phones,
                     'initials'        => $record->voorletters_c ?? '',
                     'first_name'      => $record->first_name ?? '',
                     'last_name'       => $record->last_name ?? '',
                     'lastname_prefix' => $record->tussenvoegsel_c ?? '',
                     'maiden_name'     => $record->meisjesnaam_c ?? '',
-                    'created_at'      => $record->date_entered ?? now(),
-                    'updated_at'      => $record->date_modified ?? now(),
+                    'gender'          => $this->mapGender($record->gender_c ?? null),
+                    'date_of_birth'   => $record->birthdate ?? null,
+                ], [
+                    'created_at' => $this->parseSugarDate($record->date_entered),
+                    'updated_at' => $this->parseSugarDate($record->date_modified),
                 ]);
-                $attributeValueRepo->save([
-                    'entity_type' => 'persons',
-                    'entity_id'   => $person->id,
-                    // Use PersonAttributeKeys enum values for all person attributes:
-                    //                    PersonAttributeKeys::NICKNAME->value         => $record->roepnaam_c ?? '',
-                    //                    PersonAttributeKeys::GENDER->value           => $record->gender_c ?? '',
-                ]);
+
+                // Create/update primary address for person if present
+                $hasAnyAddress = $record->primary_address_street
+                    || $record->primary_huisnr_c
+                    || $record->primary_address_postalcode
+                    || $record->primary_address_city
+                    || $record->primary_address_state
+                    || $record->primary_address_country
+                    || $record->primary_huisnr_toevoeging_c;
+
+                if ($hasAnyAddress) {
+                    Address::create([
+                        'person_id'           => $person->id,
+                        'street'              => $record->primary_address_street ?? null,
+                        'house_number'        => $record->primary_huisnr_c ?? null,
+                        'house_number_suffix' => $record->primary_huisnr_toevoeging_c ?? null,
+                        'postal_code'         => $record->primary_address_postalcode ?? null,
+                        'state'               => $record->primary_address_state ?? null,
+                        'city'                => $record->primary_address_city ?? null,
+                        'country'             => $record->primary_address_country ?? null,
+                    ]);
+                }
+                // Note: PersonAttributeKeys enum values can be used here for additional attributes
+                // $attributeValueRepo->save([
+                //     'entity_type' => 'persons',
+                //     'entity_id'   => $person->id,
+                //     PersonAttributeKeys::NICKNAME->value => $record->roepnaam_c ?? '',
+                //     PersonAttributeKeys::GENDER->value   => $record->gender_c ?? '',
+                // ]);
                 $imported++;
                 $bar->advance();
             } catch (Exception $e) {
@@ -187,5 +290,72 @@ class ImportPersonsFromSugarCRM extends Command
         $this->info("✓ Imported: {$imported}");
         $this->info("⚠ Skipped: {$skipped}");
         $this->info("✗ Errors: {$errors}");
+    }
+
+    private function mapGender(?string $sugarGender): ?string
+    {
+        if (! $sugarGender) {
+            return null;
+        }
+        $g = strtolower(trim($sugarGender));
+
+        return match ($g) {
+            'male', 'm' => 'male',
+            'female', 'f' => 'female',
+            default => null,
+        };
+    }
+
+    /**
+     * Parse SugarCRM date and convert to application timezone
+     */
+    private function parseSugarDate($value): ?string
+    {
+        if (! $value) {
+            return null;
+        }
+        try {
+            // Accept Carbon, DateTimeInterface, or string
+            if ($value instanceof \DateTimeInterface) {
+                return \Illuminate\Support\Carbon::instance($value)->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s');
+            }
+
+            return \Illuminate\Support\Carbon::parse((string) $value, 'UTC')
+                ->setTimezone(config('app.timezone'))
+                ->format('Y-m-d H:i:s');
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Create an entity with proper timestamps from SugarCRM data
+     *
+     * @param  string  $modelClass  The model class to create
+     * @param  array  $data  The entity data
+     * @param  array  $timestamps  The timestamps to set (created_at, updated_at)
+     * @return mixed The created entity
+     */
+    private function createEntityWithTimestamps(string $modelClass, array $data, array $timestamps = [])
+    {
+        // Create entity without timestamps to avoid auto-override
+        $entity = new $modelClass($data);
+        $entity->timestamps = false;
+
+        // Set custom timestamps if provided
+        if (! empty($timestamps['created_at'])) {
+            $entity->setAttribute('created_at', $timestamps['created_at']);
+        }
+        if (! empty($timestamps['updated_at'])) {
+            $entity->setAttribute('updated_at', $timestamps['updated_at']);
+        }
+
+        // Save without triggering timestamps
+        $entity->saveQuietly();
+
+        // Re-enable timestamps for future operations
+        $entity->timestamps = true;
+
+        return $entity;
     }
 }

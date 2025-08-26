@@ -6,13 +6,25 @@ use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Models\Anamnesis;
 use App\Models\Department;
+use DateTimeInterface;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 
+/**
+ * Import leads from SugarCRM database with anamnesis data
+ *
+ * This command imports leads and their associated anamnesis data from SugarCRM.
+ * It uses the following relationships:
+ * - leads_contacts_c: Links leads to persons
+ * - leads_pcrm_anamnesepreventie_1_c: Links leads to anamnesis
+ * - pcrm_anamnetie_contacts_c: Links anamnesis to persons
+ */
 class ImportLeadsFromSugarCRM extends Command
 {
     /**
@@ -23,6 +35,7 @@ class ImportLeadsFromSugarCRM extends Command
     protected $signature = 'import:leads
                             {--connection=sugarcrm : Database connection name}
                             {--limit=100 : Number of records to import}
+                            {--lead-ids=* : Specific lead IDs to import (ignores limit)}
                             {--dry-run : Show what would be imported without actually importing}';
 
     /**
@@ -39,175 +52,183 @@ class ImportLeadsFromSugarCRM extends Command
     {
         $connection = $this->option('connection');
         $limit = (int) $this->option('limit');
+        $leadIds = $this->option('lead-ids');
         $dryRun = $this->option('dry-run');
 
         $this->info('Starting lead import from SugarCRM...');
         $this->info("Connection: {$connection}");
-        $this->info("Limit: {$limit}");
+        if (! empty($leadIds)) {
+            $this->info('Lead IDs: '.implode(', ', $leadIds));
+        } else {
+            $this->info("Limit: {$limit}");
+        }
         $this->info('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
-        try {
-            // Test connection
-            $this->info('Testing database connection...');
-            DB::connection($connection)->getPdo();
-            $this->info('✓ Database connection successful');
+        // Test connection
+        $this->info('Testing database connection...');
+        DB::connection($connection)->getPdo();
+        $this->info('✓ Database connection successful');
 
-            // Get records from SugarCRM
-            $records = DB::connection($connection)
-                ->table('leads as l')
-                ->join('leads_cstm as lc', 'l.id', '=', 'lc.id_c')
-                ->leftJoin('email_addr_bean_rel as eabr', function ($join) {
-                    $join->on('eabr.bean_id', '=', 'l.id')
-                        ->where('eabr.bean_module', '=', 'Leads')
-                        ->where('eabr.deleted', '=', 0)
-                        ->where('eabr.primary_address', '=', 1);
-                })
-                ->leftJoin('email_addresses as ea', function ($join) {
-                    $join->on('ea.id', '=', 'eabr.email_address_id')
-                        ->where('ea.deleted', '=', 0);
-                })
-                ->select([
-                    'l.*',
-                    'lc.gender_c',
-                    'lc.hart_erfelijk_c',
-                    'lc.vaat_erfelijk_c',
-                    'lc.tumoren_erfelijk_c',
-                    'lc.smoking_c',
-                    'lc.heart_problems_c',
-                    'lc.rugklachten_c',
-                    'lc.diabetes_c',
-                    'lc.spijverteringsklachten_c',
-                    'lc.risico_hartinfarct_c',
-                    'lc.workflow_status_c',
-                    'lc.kanaal_c',
-                    'lc.soort_aanvraag_c',
-                    'lc.meisjesnaam_c',
-                    'lc.partner_birthdate_c',
-                    'lc.partner_gender_c',
-                    'lc.lengte_c',
-                    'lc.gewicht_c',
-                    'lc.op_een_factuur_c',
-                    'lc.anamnese_c',
-                    'lc.partner_anamnese_c',
-                    'lc.metalen_c',
-                    'lc.medicijnen_c',
-                    'lc.glaucoom_c',
-                    'lc.claustrofobie_c',
-                    'lc.dormicum_c',
-                    'lc.opmerking_c',
-                    'lc.partner_medicijnen_c',
-                    'lc.partner_smoking_c',
-                    'lc.partner_diabetes_c',
-                    'lc.partner_vaat_erfelijk_c',
-                    'lc.partner_gewicht_c',
-                    'lc.partner_metalen_c',
-                    'lc.partner_tumoren_erfelijk_c',
-                    'lc.partner_glaucoom_c',
-                    'lc.partner_meisjesnaam_c',
-                    'lc.partner_lengte_c',
-                    'lc.partner_first_name_c',
-                    'lc.partner_heart_problems_c',
-                    'lc.partner_rugklachten_c',
-                    'lc.partner_last_name_c',
-                    'lc.partner_dormicum_c',
-                    'lc.partner_claustrofobie_c',
-                    'lc.partner_spijsverteringsklach_c',
-                    'lc.partner_hart_erfelijk_c',
-                    'lc.partner_salutation_c',
-                    'lc.partner_opmerking_c',
-                    'lc.partner_risico_hartinfarct_c',
-                    'lc.ms_sinds_c',
-                    'lc.ms_type_c',
-                    'lc.spreektalen_c',
-                    'lc.straat_c',
-                    'lc.huisnummer_c',
-                    'lc.huisnr_toevoeging_c',
-                    'lc.reden_afvoeren_c',
-                    'lc.nieuwsbrief_vraag_c',
-                    'lc.reset_wfl_status_c',
-                    'lc.particulier_c',
-                    'lc.roepnaam_c',
-                    'lc.voorletters_c',
-                    'lc.leeftijd_c',
-                    'lc.allergie_c',
-                    'lc.opm_allergie_c',
-                    'lc.hart_operatie_c',
-                    'lc.opm_hart_operatie_c',
-                    'lc.implantaat_c',
-                    'lc.opm_implantaat_c',
-                    'lc.tussenvoegsel_c',
-                    'lc.interes_info_c',
-                    'lc.operaties_c',
-                    'lc.opm_operaties_c',
-                    'lc.opm_advies_c',
-                    'lc.ms_sinds_jaar_c',
-                    'lc.rolstoel_c',
-                    'lc.tillift_c',
-                    'lc.metformine_c',
-                    'lc.jodiumallergie_c',
-                    'lc.nierproblemen_c',
-                    'lc.schildklierprobl_c',
-                    'lc.stents_c',
-                    'lc.spasmen_c',
-                    'lc.bloedverdunners_c',
-                    'lc.opm_bloedverdunners_c',
-                    'lc.decubitus_c',
-                    'lc.opm_decubitus_c',
-                    'lc.allergie_km_c',
-                    'lc.narcose_problemen_c',
-                    'lc.opm_metalen_c',
-                    'lc.opm_medicijnen_c',
-                    'lc.opm_glaucoom_c',
-                    'lc.opm_erf_hart_c',
-                    'lc.opm_erf_vaat_c',
-                    'lc.opm_erf_tumoren_c',
-                    'lc.opm_rugklachten_c',
-                    'lc.opm_hartklachten_c',
-                    'lc.opm_roken_c',
-                    'lc.opm_diabetes_c',
-                    'lc.opm_spijsverterering_c',
-                    'ea.email_address as email',
-                ])
-                ->where('l.deleted', 0)
+        // Get records from SugarCRM
+        $sql = DB::connection($connection)
+            ->table('leads as l')
+            ->join('leads_cstm as lc', 'l.id', '=', 'lc.id_c')
+            ->leftJoin('email_addr_bean_rel as eabr', function ($join) {
+                $join->on('eabr.bean_id', '=', 'l.id')
+                    ->where('eabr.bean_module', '=', 'Leads')
+                    ->where('eabr.deleted', '=', 0);
+            })
+            ->leftJoin('email_addresses as ea', function ($join) {
+                $join->on('ea.id', '=', 'eabr.email_address_id')
+                    ->where('ea.deleted', '=', 0);
+            })
+            ->select([
+                'l.*',
+                DB::raw('MAX(l.date_entered) as lead_date_entered'),
+                DB::raw('MAX(l.date_modified) as lead_date_modified'),
+                'lc.gender_c',
+                'lc.workflow_status_c',
+                'lc.kanaal_c',
+                'lc.soort_aanvraag_c',
+                'lc.meisjesnaam_c',
+                'lc.partner_birthdate_c',
+                'lc.partner_gender_c',
+                'lc.lengte_c',
+                'lc.gewicht_c',
+                'lc.op_een_factuur_c',
+                'lc.anamnese_c',
+                'lc.partner_anamnese_c',
+                'lc.metalen_c',
+                'lc.medicijnen_c',
+                'lc.glaucoom_c',
+                'lc.claustrofobie_c',
+                'lc.opmerking_c',
+                'lc.partner_medicijnen_c',
+                'lc.partner_smoking_c',
+                'lc.partner_diabetes_c',
+                'lc.partner_vaat_erfelijk_c',
+                'lc.partner_gewicht_c',
+                'lc.partner_metalen_c',
+                'lc.partner_tumoren_erfelijk_c',
+                'lc.partner_glaucoom_c',
+                'lc.partner_meisjesnaam_c',
+                'lc.partner_lengte_c',
+                'lc.partner_first_name_c',
+                'lc.partner_heart_problems_c',
+                'lc.partner_rugklachten_c',
+                'lc.partner_last_name_c',
+                'lc.partner_dormicum_c',
+                'lc.partner_claustrofobie_c',
+                'lc.partner_spijsverteringsklach_c',
+                'lc.partner_hart_erfelijk_c',
+                'lc.partner_salutation_c',
+                'lc.partner_opmerking_c',
+                'lc.partner_risico_hartinfarct_c',
+                'lc.ms_sinds_c',
+                'lc.ms_type_c',
+                'lc.spreektalen_c',
+                'lc.straat_c',
+                'lc.huisnummer_c',
+                'lc.huisnr_toevoeging_c',
+                'lc.reden_afvoeren_c',
+                'lc.nieuwsbrief_vraag_c',
+                'lc.reset_wfl_status_c',
+                'lc.particulier_c',
+                'lc.roepnaam_c',
+                'lc.voorletters_c',
+                'lc.leeftijd_c',
+                'lc.allergie_c',
+                'lc.opm_allergie_c',
+                'lc.hart_operatie_c',
+                'lc.opm_hart_operatie_c',
+                'lc.implantaat_c',
+                'lc.opm_implantaat_c',
+                'lc.tussenvoegsel_c',
+                'lc.interes_info_c',
+                'lc.operaties_c',
+                'lc.reden_afvoeren_c',
+                'lc.opm_erf_tumoren_c',
+                DB::raw('MAX(CASE WHEN eabr.primary_address = 1 THEN ea.email_address END) as email_primary'),
+                DB::raw('MIN(CASE WHEN eabr.primary_address = 0 THEN ea.email_address END) as email_any'),
+            ])
+            ->where('l.deleted', 0)
+            ->where('soort_aanvraag_c', '!=', 'ccsvi'); // Exclude 'ccsvi'
+
+        // If specific lead IDs are provided, filter by them and ignore limit
+        if (! empty($leadIds)) {
+            $sql->whereIn('l.id', $leadIds);
+        } else {
+            $sql->groupBy('l.id')
                 ->orderBy('l.date_entered', 'desc') // Nieuwste eerst
-                ->limit($limit)
-                ->get();
-
-            $this->info('Found '.$records->count().' records to import');
-
-            if ($dryRun) {
-                $this->showDryRunResults($records);
-
-                return;
-            }
-
-            $this->importRecords($records);
-
-        } catch (Exception $e) {
-            $this->error('Error: '.$e->getMessage());
-            Log::error('SugarCRM lead import failed', [
-                'error'      => $e->getMessage(),
-                'connection' => $connection,
-            ]);
-
-            return 1;
+                ->limit($limit);
         }
+
+        $this->info($sql->toRawSql());
+        $records = $sql->get();
+
+        $this->info('Found '.$records->count().' records to import');
+
+        $leadByPersons = $this->extractPerson($records);
+        $leadByPersonsByAnamnesis = $this->extractAnamenesis($leadByPersons);
+        if ($dryRun) {
+            $this->showDryRunResults($records, $leadByPersonsByAnamnesis);
+
+            return;
+        }
+
+        $this->importRecords($records, $leadByPersonsByAnamnesis);
+
     }
 
     /**
      * Show dry run results
      */
-    private function showDryRunResults($records): void
+    private function showDryRunResults($records, $leadByPersonsByAnamnesis): void
     {
         $this->info("\n=== DRY RUN RESULTS ===");
 
-        $headers = ['External ID', 'First Name', 'Last Name', 'Email', 'Phone', 'Status', 'Workflow Status', 'Stage ID', 'Department', 'Channel', 'Type', 'Source', 'Date Entered', 'Person Match'];
+        $headers = [
+            'External ID',
+            'First Name',
+            'Last Name',
+            'Email',
+            'Phone',
+            'Status',
+            'Workflow Status',
+            'Stage ID',
+            'Department',
+            'Channel',
+            'Type',
+            'Source',
+            'Date Entered',
+            'Rel Person IDs',
+            'Person Match',
+            'Rel Anamnesis IDs',
+            'Rel Anamnesis Count',
+        ];
         $rows = [];
 
         foreach ($records as $record) {
-            // Try to find matching person
-            $person = $this->findMatchingPerson($record);
-            $personMatch = $person ? "✓ {$person->name}" : '✗ Not found';
+            // Extract related persons and anamnesis from mapping built earlier
+            $related = $leadByPersonsByAnamnesis[$record->id] ?? [];
+            $relatedPersonIds = array_keys($related);
+
+            // Try to find matching person using first related person ID
+            $person = null;
+            $personMatch = '✗ Not found';
+            if (! empty($relatedPersonIds)) {
+                $firstPersonId = $relatedPersonIds[0];
+                $person = Person::where('external_id', '=', $firstPersonId)->first();
+                $personMatch = $person ? "✓ {$person->name}" : "✗ Person {$firstPersonId} not found";
+            }
+
+            // Flatten anamnesis ids per related person
+            $relatedAnamnesisIds = [];
+            $relatedAnamnesisCount = 0;
+            foreach ($related as $perPersonAnamneses) {
+                $relatedAnamnesisIds = array_merge($relatedAnamnesisIds, array_keys($perPersonAnamneses));
+                $relatedAnamnesisCount += count($perPersonAnamneses);
+            }
 
             $rows[] = [
                 $record->id ?? 'N/A',
@@ -223,7 +244,10 @@ class ImportLeadsFromSugarCRM extends Command
                 $this->mapType($record),
                 $this->mapSource($record),
                 $record->date_entered ?? 'N/A',
+                empty($relatedPersonIds) ? '—' : implode(',', $relatedPersonIds),
                 $personMatch,
+                empty($relatedAnamnesisIds) ? '—' : implode(',', $relatedAnamnesisIds),
+                $relatedAnamnesisCount,
             ];
         }
 
@@ -234,7 +258,7 @@ class ImportLeadsFromSugarCRM extends Command
     /**
      * Import records
      */
-    private function importRecords($records): void
+    private function importRecords($records, $leadByPersonsByAnamnesis): void
     {
         $bar = $this->output->createProgressBar($records->count());
         $bar->start();
@@ -255,66 +279,97 @@ class ImportLeadsFromSugarCRM extends Command
                     continue;
                 }
 
-                // Find matching person
-                $person = $this->findMatchingPerson($record);
-                if (! $person) {
+                // Find matching persons
+                $persons = $this->findMatchingPerson($record, $leadByPersonsByAnamnesis);
+                $related = $leadByPersonsByAnamnesis[$record->id] ?? [];
+                $expectedPersonIds = array_keys($related);
+
+                if (empty($persons)) {
                     $personNotFound++;
-                    $this->error("\nPerson not found for lead: {$record->first_name} {$record->last_name} (ID: {$record->id})");
+                    $this->error("\nPerson not found for lead: {$record->first_name} {$record->last_name} (LEAD ID: {$record->id}) (person ids: ".(empty($expectedPersonIds) ? 'none' : implode(',', $expectedPersonIds)).')');
+                    $bar->advance();
+
+                    continue;
+                }
+
+                // Check if all expected persons were found
+                $foundPersonIds = array_map(fn ($p) => $p->external_id, $persons);
+                $missingPersonIds = array_diff($expectedPersonIds, $foundPersonIds);
+
+                if (! empty($missingPersonIds)) {
+                    $personNotFound++;
+                    $this->error("\nNot all persons found for lead: {$record->first_name} {$record->last_name} (LEAD ID: {$record->id})");
+                    $this->error('Expected persons: '.implode(', ', $expectedPersonIds));
+                    $this->error('Found persons: '.implode(', ', $foundPersonIds));
+                    $this->error('Missing persons: '.implode(', ', $missingPersonIds));
+                    $this->error('Skipping lead import - all persons must be found first.');
                     $bar->advance();
 
                     continue;
                 }
 
                 // Debug: Check person data
-                $this->info("Creating lead for person: {$person->name} (ID: {$person->id})");
+                $this->info('Creating lead for persons: '.implode(', ', array_map(fn ($p) => $p->name.' (#'.$p->id.')', $persons)));
 
-                // Create lead
-                $lead = Lead::create([
-                    'title'                  => $record->first_name.' '.$record->last_name,
-                    'external_id'            => $record->id,
-                    'description'            => $record->description ?? '',
-                    'emails'                 => $this->formatEmails($record),
-                    'phones'                 => $this->formatPhones($record),
-                    'lead_value'             => 0,
-                    'status'                 => $this->mapStatus($record->status),
-                    // person_id removed - now using many-to-many relationship
-                    'lead_pipeline_id'       => PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value,
-                    'lead_pipeline_stage_id' => $this->mapStage($record),
-                    'salutation'             => $record->salutation,
-                    'first_name'             => $record->first_name,
-                    'last_name'              => $record->last_name,
-                    'lastname_prefix'        => $record->tussenvoegsel_c ?? '',
-                    'married_name'           => $record->meisjesnaam_c ?? '',
-                    'initials'               => $record->voorletters_c ?? '',
-                    'date_of_birth'          => $record->birthdate,
-                    'gender'                 => $record->gender_c,
-                    'department_id'          => $this->mapDepartment($record),
-                    'lead_channel_id'        => $this->mapChannel($record),
-                    'lead_type_id'           => $this->mapType($record),
-                    'lead_source_id'         => $this->mapSource($record),
-                    'created_at'             => $record->date_entered ?? now(),
-                    'updated_at'             => $record->date_modified ?? now(),
-                ]);
+                // Use database transaction to ensure all-or-nothing import
+                DB::transaction(function () use ($record, $persons, $leadByPersonsByAnamnesis, &$lead) {
+                    // Create lead with proper timestamps
+                    $lead = $this->createEntityWithTimestamps(Lead::class, [
+                        'external_id'            => $record->id,
+                        'description'            => $record->description ?? '',
+                        'emails'                 => $this->formatEmails($record),
+                        'phones'                 => $this->formatPhones($record),
+                        'lead_value'             => 0,
+                        'status'                 => $this->mapStatus($record->status),
+                        'lead_pipeline_id'       => $this->mapPipeline($record, $this->mapDepartment($record)),
+                        'lead_pipeline_stage_id' => $this->mapStage($record),
+                        'salutation'             => $record->salutation,
+                        'first_name'             => $record->first_name,
+                        'last_name'              => $record->last_name,
+                        'lastname_prefix'        => $record->tussenvoegsel_c ?? '',
+                        'married_name'           => $record->meisjesnaam_c ?? '',
+                        'initials'               => $record->voorletters_c ?? '',
+                        'date_of_birth'          => $record->birthdate,
+                        'gender'                 => $this->mapGender($record->gender_c ?? null),
+                        'department_id'          => $this->mapDepartment($record),
+                        'lead_channel_id'        => $this->mapChannel($record),
+                        'lead_type_id'           => $this->mapType($record),
+                        'lead_source_id'         => $this->mapSource($record),
+                        'lost_reason'            => $record->reden_afvoeren_c ?? null,
+                    ], [
+                        'created_at' => $this->parseSugarDate($record->lead_date_entered ?? $record->date_entered),
+                        'updated_at' => $this->parseSugarDate($record->lead_date_modified ?? $record->date_modified),
+                    ]);
 
-                // Attach person to lead using new many-to-many relationship
-                if ($person && $person->id) {
-                    $lead->attachPersons([$person->id]);
+                    // Attach persons to lead using many-to-many relationship
+                    $personIdsToAttach = array_values(array_filter(array_map(fn ($p) => $p->id ?? null, $persons)));
+                    if (! empty($personIdsToAttach)) {
+                        $this->info('Attached persons ['.implode(', ', $personIdsToAttach).'] to lead ID '.$lead->id);
+                        $lead->attachPersons($personIdsToAttach);
 
-                    // Update anamnesis with SugarCRM data (anamnesis created by attachPersons)
-                    $this->updateAnamnesis($lead, $record, $person->id);
-                }
-
-                // Debug: Check if lead has persons relation
-                $this->info('Lead created with person attached: '.($lead->persons->count() > 0 ? $lead->persons->first()->name : 'NONE'));
+                        // Update anamnesis per person (anamnesis created by attachPersons)
+                        foreach ($persons as $p) {
+                            $perPersonAnamneses = $leadByPersonsByAnamnesis[$lead->external_id][$p->external_id] ?? [];
+                            // Pick the first anamnesis object if available
+                            $anamnesisValues = array_values($perPersonAnamneses);
+                            $firstAnamnesisObj = $anamnesisValues[0] ?? null;
+                            if ($firstAnamnesisObj) {
+                                $this->updateAnamnesis($lead, $record, $p->id, $firstAnamnesisObj);
+                            }
+                        }
+                    }
+                });
 
                 $imported++;
                 $bar->advance();
 
             } catch (Exception $e) {
                 $errors++;
+                $this->error("\nFailed to import lead {$record->id}: ".$e->getMessage());
                 Log::error('Failed to import lead', [
                     'record_id' => $record->id ?? 'unknown',
                     'error'     => $e->getMessage(),
+                    'trace'     => $e->getTraceAsString(),
                 ]);
                 $bar->advance();
             }
@@ -330,40 +385,34 @@ class ImportLeadsFromSugarCRM extends Command
     }
 
     /**
-     * Find matching person by email, phone or name
+     * Find matching persons for a lead (may be multiple).
+     *
+     * @return Person[]
      */
-    private function findMatchingPerson($record)
+    private function findMatchingPerson($record, array $leadByPersonsByAnamnesis): array
     {
-        $email = $this->extractEmail($record);
+        $related = $leadByPersonsByAnamnesis[$record->id] ?? [];
+        $relatedPersonIds = array_keys($related);
 
-        // First try to match by email
-        if ($email) {
-            $person = Person::where('emails', 'like', '%'.$email.'%')->first();
-            if ($person) {
-                return $person;
-            }
+        if (empty($relatedPersonIds)) {
+            return [];
         }
 
-        // Then try to match by phone
-        if ($record->phone_work) {
-            $person = Person::where('phones', 'like', '%'.$record->phone_work.'%')
-                ->first();
-            if ($person) {
-                return $person;
-            }
+        $this->info('Looking for persons with external_ids: '.implode(', ', $relatedPersonIds));
+
+        $persons = Person::whereIn('external_id', $relatedPersonIds)->get()->all();
+
+        $this->info('Found '.count($persons).' persons: '.implode(', ', array_map(fn ($p) => $p->name.' (ext_id: '.$p->external_id.')', $persons)));
+
+        // Check if any persons were not found and warn
+        $foundPersonIds = array_map(fn ($p) => $p->external_id, $persons);
+        $missingPersonIds = array_diff($relatedPersonIds, $foundPersonIds);
+
+        if (! empty($missingPersonIds)) {
+            $this->warn('⚠ Warning: The following persons were not found in the database and will be skipped: '.implode(', ', $missingPersonIds));
         }
 
-        // Finally try to match by name
-        if ($record->first_name && $record->last_name) {
-            $person = Person::where('first_name', $record->first_name)
-                ->where('last_name', $record->last_name)
-                ->first();
-            if ($person) {
-                return $person;
-            }
-        }
-
-        return null;
+        return $persons;
     }
 
     /**
@@ -371,8 +420,8 @@ class ImportLeadsFromSugarCRM extends Command
      */
     private function extractEmail($record)
     {
-        // Check if there's an email field or we need to join with email tables
-        return $record->email ?? null;
+        // Prefer primary email; fallback to any non-primary if present
+        return $record->email_primary ?? $record->email_any ?? null;
     }
 
     /**
@@ -381,13 +430,23 @@ class ImportLeadsFromSugarCRM extends Command
     private function formatEmails($record): array
     {
         $emails = [];
-        $email = $this->extractEmail($record);
 
-        if ($email) {
+        $primary = $record->email_primary ?? null;
+        $any = $record->email_any ?? null;
+
+        if ($primary) {
             $emails[] = [
                 'label'      => 'work',
-                'value'      => $email,
+                'value'      => $primary,
                 'is_default' => true,
+            ];
+        }
+
+        if ($any && $any !== $primary) {
+            $emails[] = [
+                'label'      => 'work',
+                'value'      => $any,
+                'is_default' => false,
             ];
         }
 
@@ -489,59 +548,78 @@ class ImportLeadsFromSugarCRM extends Command
     }
 
     /**
-     * Create anamnesis data for the lead
+     * Create/update anamnesis data for the lead-person using SugarCRM anamnesis object
      */
-    private function updateAnamnesis($lead, $record, int $personId): void
+    private function updateAnamnesis($lead, $record, int $personId, object $amamnesisData): void
     {
         // Find the anamnesis created by attachPersons
         $anamnesis = Anamnesis::where('lead_id', $lead->id)
             ->where('person_id', $personId)
             ->firstOrFail();
 
-        // Update with SugarCRM data
-        $anamnesis->update([
-            'description'               => $record->anamnese_c ?? '',
-            'height'                    => $record->lengte_c,
-            'weight'                    => $record->gewicht_c,
-            'metals'                    => (bool) $record->metalen_c,
-            'metals_notes'              => $record->opm_metalen_c,
-            'medications'               => (bool) $record->medicijnen_c,
-            'medications_notes'         => $record->opm_medicijnen_c,
-            'glaucoma'                  => (bool) $record->glaucoom_c,
-            'glaucoma_notes'            => $record->opm_glaucoom_c,
-            'claustrophobia'            => (bool) $record->claustrofobie_c,
-            'dormicum'                  => (bool) $record->dormicum_c,
-            'heart_surgery'             => (bool) $record->hart_operatie_c,
-            'heart_surgery_notes'       => $record->opm_hart_operatie_c,
-            'implant'                   => (bool) $record->implantaat_c,
-            'implant_notes'             => $record->opm_implantaat_c,
-            'surgeries'                 => (bool) $record->operaties_c,
-            'surgeries_notes'           => $record->opm_operaties_c,
-            'remarks'                   => $record->opmerking_c,
-            'hereditary_heart'          => (bool) $record->hart_erfelijk_c,
-            'hereditary_heart_notes'    => $record->opm_erf_hart_c,
-            'hereditary_vascular'       => (bool) $record->vaat_erfelijk_c,
-            'hereditary_vascular_notes' => $record->opm_erf_vaat_c,
-            'hereditary_tumors'         => (bool) $record->tumoren_erfelijk_c,
-            'hereditary_tumors_notes'   => $record->opm_erf_tumoren_c,
-            'allergies'                 => (bool) $record->allergie_c,
-            'allergies_notes'           => $record->opm_allergie_c,
-            'back_problems'             => (bool) $record->rugklachten_c,
-            'back_problems_notes'       => $record->opm_rugklachten_c,
-            'heart_problems'            => (bool) $record->heart_problems_c,
-            'heart_problems_notes'      => $record->opm_hartklachten_c,
-            'smoking'                   => (bool) $record->smoking_c,
-            'smoking_notes'             => $record->opm_roken_c,
-            'diabetes'                  => (bool) $record->diabetes_c,
-            'diabetes_notes'            => $record->opm_diabetes_c,
-            'digestive_problems'        => (bool) $record->spijverteringsklachten_c,
-            'digestive_problems_notes'  => $record->opm_spijsverterering_c,
-            'heart_attack_risk'         => $record->risico_hartinfarct_c,
-            'advice_notes'              => $record->opm_advies_c,
-            'active'                    => true,
-            'created_at'                => $record->date_entered ?? now(),
-            'updated_at'                => $record->date_modified ?? now(),
-        ]);
+        // Update with SugarCRM data and proper timestamps
+        $updateData = [
+            'description'                => $amamnesisData->description ?? '',
+            'height'                     => $amamnesisData->lengte ?? null,
+            'weight'                     => $amamnesisData->gewicht ?? null,
+            'metals'                     => (bool) ($amamnesisData->metalen ?? false),
+            'metals_notes'               => $amamnesisData->opm_metalen_c ?? null,
+            'medications'                => (bool) ($amamnesisData->medicijnen ?? false),
+            'medications_notes'          => $amamnesisData->opm_medicijnen_c ?? null,
+            'glaucoma'                   => (bool) ($amamnesisData->glaucoom ?? false),
+            'glaucoma_notes'             => $amamnesisData->opm_glaucoom_c ?? null,
+            'claustrophobia'             => (bool) ($amamnesisData->claustrofobie ?? false),
+            'dormicum'                   => (bool) ($amamnesisData->dormicum ?? false),
+            'heart_surgery'              => (bool) ($amamnesisData->hart_operatie_c ?? false),
+            'heart_surgery_notes'        => $amamnesisData->opm_hart_operatie_c ?? null,
+            'implant'                    => (bool) ($amamnesisData->implantaat_c ?? false),
+            'implant_notes'              => $amamnesisData->opm_implantaat_c ?? null,
+            'surgeries'                  => (bool) ($amamnesisData->operaties_c ?? false),
+            'surgeries_notes'            => $amamnesisData->opm_operaties_c ?? null,
+            'remarks'                    => $amamnesisData->opmerking ?? null,
+            'hereditary_heart'           => (bool) ($amamnesisData->hart_erfelijk ?? false),
+            'hereditary_heart_notes'     => $amamnesisData->opm_erf_hart_c ?? null,
+            'hereditary_vascular'        => (bool) ($amamnesisData->vaat_erfelijk ?? false),
+            'hereditary_vascular_notes'  => $amamnesisData->opm_erf_vaat_c ?? null,
+            'hereditary_tumors'          => (bool) ($amamnesisData->tumoren_erfelijk ?? false),
+            'hereditary_tumors_notes'    => $amamnesisData->opm_erf_tumoren_c ?? null,
+            'allergies'                  => (bool) ($amamnesisData->allergie_c ?? false),
+            'allergies_notes'            => $amamnesisData->opm_allergie_c ?? null,
+            'back_problems'              => (bool) ($amamnesisData->rugklachten ?? false),
+            'back_problems_notes'        => $amamnesisData->opm_rugklachten_c ?? null,
+            'heart_problems'             => (bool) ($amamnesisData->heart_problems ?? false),
+            'heart_problems_notes'       => $amamnesisData->opm_hartklachten_c ?? null,
+            'smoking'                    => (bool) ($amamnesisData->smoking ?? false),
+            'smoking_notes'              => $amamnesisData->opm_roken_c ?? null,
+            'diabetes'                   => (bool) ($amamnesisData->diabetes ?? false),
+            'diabetes_notes'             => $amamnesisData->opm_diabetes_c ?? null,
+            'digestive_problems'         => (bool) ($amamnesisData->spijverteringsklachten_c ?? false),
+            'digestive_problems_notes'   => $amamnesisData->opm_spijsverterering_c ?? null,
+            'heart_attack_risk'          => $amamnesisData->risico_hartinfarct ?? null,
+            'advice_notes'               => $amamnesisData->opm_advies_c ?? null,
+            'active'                     => true,
+            'digestive_complaints'       => (bool) ($anamnesis->spijsverteringsklachten ?? false),
+            'digestive_complaints_notes' => $anamnesis->opm_spijsvertering_c ?? null,
+            'comment_clinic'             => $amamnesisData->anamnese ?? null,
+        ];
+
+        // Update with proper timestamps
+        $anamnesis->timestamps = false;
+        $anamnesis->fill($updateData);
+
+        // Set custom timestamps
+        $createdAtParsed = $this->parseSugarDate($amamnesisData->date_entered);
+        $updatedAtParsed = $this->parseSugarDate($amamnesisData->date_modified);
+
+        if ($createdAtParsed) {
+            $anamnesis->setAttribute('created_at', $createdAtParsed);
+        }
+        if ($updatedAtParsed) {
+            $anamnesis->setAttribute('updated_at', $updatedAtParsed);
+        }
+
+        $anamnesis->saveQuietly();
+        $anamnesis->timestamps = true;
     }
 
     /**
@@ -602,7 +680,7 @@ class ImportLeadsFromSugarCRM extends Command
         $soortLower = strtolower(trim($soortAanvraag));
 
         // Hernia department indicators
-        $herniaIndicators = ['hernia', 'liesbreuk', 'operatie'];
+        $herniaIndicators = ['operatie'];
         foreach ($herniaIndicators as $indicator) {
             if (str_contains($kanaalLower, $indicator) || str_contains($soortLower, $indicator)) {
                 return Department::findHerniaId();
@@ -661,5 +739,243 @@ class ImportLeadsFromSugarCRM extends Command
         $leadSourceLower = strtolower(trim($leadSource));
 
         return $sourceMap[$leadSourceLower] ?? 32; // Default to Anders (ID: 32)
+    }
+
+    private function mapGender(?string $sugarGender): ?string
+    {
+        if (! $sugarGender) {
+            return null;
+        }
+        $g = strtolower(trim($sugarGender));
+
+        return match ($g) {
+            'male', 'm' => 'male',
+            'female', 'f' => 'female',
+            default => null,
+        };
+    }
+
+    private function parseSugarDate($value): ?string
+    {
+        if (! $value) {
+            return null;
+        }
+        try {
+            // Accept Carbon, DateTimeInterface, or string
+            if ($value instanceof DateTimeInterface) {
+                return Carbon::instance($value)->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s');
+            }
+
+            return Carbon::parse((string) $value, 'UTC')
+                ->setTimezone(config('app.timezone'))
+                ->format('Y-m-d H:i:s');
+        } catch (Throwable $e) {
+            return null;
+        }
+    }
+
+    private function extractPerson(mixed $records): array
+    {
+        // Bulk fetch person IDs for given lead IDs from SugarCRM relation table
+        $leadIds = collect($records)->pluck('id')->all();
+
+        if (empty($leadIds)) {
+            return [];
+        }
+
+        $connection = $this->option('connection');
+
+        $sql = DB::connection($connection)
+            ->table('leads_contacts_c')
+            ->select('leads_c7104eads_ida as lead_id', 'leads_cbb5dacts_idb as person_id')
+            ->whereIn('leads_c7104eads_ida', $leadIds)
+            ->where('deleted', 0);
+        $this->info($sql->toRawSql());
+        $relations = $sql->get();
+
+        $this->info('extractPerson: Found '.$relations->count().' relations');
+
+        // Map lead_id => [person_id1, person_id2, ...] to support multiple persons per lead
+        $map = [];
+        foreach ($relations as $rel) {
+            if (! isset($map[$rel->lead_id])) {
+                $map[$rel->lead_id] = [];
+            }
+            // Only add if this person_id is not already in the array
+            if (! in_array($rel->person_id, $map[$rel->lead_id])) {
+                $map[$rel->lead_id][] = $rel->person_id;
+            }
+        }
+
+        // Debug: Show unique person counts per lead
+        foreach ($map as $leadId => $personIds) {
+            $uniquePersonIds = array_unique($personIds);
+            $this->info("Lead {$leadId}: ".count($personIds).' total relations, '.count($uniquePersonIds).' unique persons: '.implode(', ', $uniquePersonIds));
+        }
+
+        return $map;
+    }
+
+    /**
+     * @param  array  $leadByPersons  [lead_id => [person_id1, person_id2, ...]]
+     * @return array [lead_id => [person_id => anamnesis_data]]
+     */
+    private function extractAnamenesis(array $leadByPersons): array
+    {
+        if (empty($leadByPersons)) {
+            return [];
+        }
+
+        $connection = $this->option('connection');
+        $leadIds = array_keys($leadByPersons);
+        $personIds = array_merge(...array_values($leadByPersons));
+
+        // Fetch anamnesis relations for given lead and person IDs
+        $sql = DB::connection($connection)
+            ->table('leads_pcrm_anamnesepreventie_1_c as lead_anamnesis')
+            ->join('pcrm_anamnetie_contacts_c as anamnesis_person', function ($join) use ($personIds) {
+                $join->on(
+                    'anamnesis_person.pcrm_anamn171deventie_idb',
+                    '=',
+                    'lead_anamnesis.leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb'
+                )
+                    ->where('anamnesis_person.deleted', '=', 0)
+                    ->whereIn('anamnesis_person.pcrm_anamn0b6eontacts_ida', $personIds);
+            })
+            ->join('pcrm_anamnesepreventie as anamnesis', 'anamnesis.id', '=', 'lead_anamnesis.leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb')
+            ->join('pcrm_anamnesepreventie_cstm as anamnesis_cstm', 'anamnesis_cstm.id_c', '=', 'anamnesis.id')
+            ->select([
+                'lead_anamnesis.leads_pcrm_anamnesepreventie_1leads_ida as lead_id',
+                'anamnesis_person.pcrm_anamn0b6eontacts_ida as person_id',
+                'anamnesis.id as anamnesis_id',
+                // Add all relevant anamnesis properties below
+                'anamnesis.name',
+                'anamnesis.date_entered',
+                'anamnesis.date_modified',
+                'anamnesis.modified_user_id',
+                'anamnesis.created_by',
+                'anamnesis.description',
+                'anamnesis.deleted',
+                'anamnesis.team_id',
+                'anamnesis.team_set_id',
+                'anamnesis.assigned_user_id',
+                'anamnesis.anamnese',
+                'anamnesis.lengte',
+                'anamnesis.gewicht',
+                'anamnesis.metalen',
+                'anamnesis.medicijnen',
+                'anamnesis.glaucoom',
+                'anamnesis.claustrofobie',
+                'anamnesis.dormicum',
+                'anamnesis.opmerking',
+                'anamnesis.hart_erfelijk',
+                'anamnesis.vaat_erfelijk',
+                'anamnesis.tumoren_erfelijk',
+                'anamnesis.rugklachten',
+                'anamnesis.heart_problems',
+                'anamnesis.smoking',
+                'anamnesis.diabetes',
+                'anamnesis.spijsverteringsklachten',
+                'anamnesis.risico_hartinfarct',
+                'anamnesis.anamnese_datum',
+                'anamnesis_cstm.opm_metalen_c',
+                'anamnesis_cstm.opm_medicijnen_c',
+                'anamnesis_cstm.opm_glaucoom_c',
+                'anamnesis_cstm.opm_erf_hart_c',
+                'anamnesis_cstm.opm_erf_vaat_c',
+                'anamnesis_cstm.opm_erf_tumor_c',
+                'anamnesis_cstm.opm_rugklachten_c',
+                'anamnesis_cstm.opm_hartklachten_c',
+                'anamnesis_cstm.opm_roken_c',
+                'anamnesis_cstm.opm_diabetes_c',
+                'anamnesis_cstm.opm_spijsvertering_c',
+                'anamnesis_cstm.operaties_c',
+                'anamnesis_cstm.opm_operaties_c',
+                'anamnesis_cstm.opm_advies_c',
+                'anamnesis_cstm.hart_operatie_c',
+                'anamnesis_cstm.allergie_c',
+                'anamnesis_cstm.implantaat_c',
+                'anamnesis_cstm.opm_allergie_c',
+                'anamnesis_cstm.opm_hart_operatie_c',
+                'anamnesis_cstm.opm_implantaat_c',
+                'anamnesis_cstm.aos_products_id_c',
+                'anamnesis_cstm.diagnose_c',
+                'anamnesis_cstm.operatieopname_c',
+            ])
+            ->whereIn('lead_anamnesis.leads_pcrm_anamnesepreventie_1leads_ida', $leadIds)
+            ->where('anamnesis.status', '=', 'active');
+
+        $this->info($sql->toRawSql());
+        $relations = $sql->get();
+
+        $this->info('extractAnamenesis: Found '.$relations->count().' relations');
+
+        $result = [];
+        foreach ($relations as $rel) {
+            if (! isset($result[$rel->lead_id])) {
+                $result[$rel->lead_id] = [];
+            }
+            if (! isset($result[$rel->lead_id][$rel->person_id])) {
+                $result[$rel->lead_id][$rel->person_id] = [];
+            }
+            // Only add if this anamnesis_id doesn't already exist for this person
+            if (! isset($result[$rel->lead_id][$rel->person_id][$rel->anamnesis_id])) {
+                $result[$rel->lead_id][$rel->person_id][$rel->anamnesis_id] = $rel;
+            }
+        }
+
+        $this->info(
+            'extractAnamenesis: Found '.$relations->count().' relations, returning '.count($result).' unique lead-person-anamnesis mappings. '.
+            'Unique persons per lead: '.implode(', ', array_map(
+                fn ($persons) => count($persons),
+                $result
+            )).'. '.
+            'Anamnesis counts per person: '.implode(', ', array_map(
+                fn ($persons) => implode('|', array_map(fn ($anamneses) => count($anamneses), $persons)),
+                $result
+            ))
+        );
+
+        return $result;
+    }
+
+    private function mapPipeline($record, int $departmentId): int
+    {
+        if ($departmentId == Department::findHerniaId()) {
+            return PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
+        }
+
+        return PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
+    }
+
+    /**
+     * Create an entity with proper timestamps from SugarCRM data
+     *
+     * @param  string  $modelClass  The model class to create
+     * @param  array  $data  The entity data
+     * @param  array  $timestamps  The timestamps to set (created_at, updated_at)
+     * @return mixed The created entity
+     */
+    private function createEntityWithTimestamps(string $modelClass, array $data, array $timestamps = [])
+    {
+        // Create entity without timestamps to avoid auto-override
+        $entity = new $modelClass($data);
+        $entity->timestamps = false;
+
+        // Set custom timestamps if provided
+        if (! empty($timestamps['created_at'])) {
+            $entity->setAttribute('created_at', $timestamps['created_at']);
+        }
+        if (! empty($timestamps['updated_at'])) {
+            $entity->setAttribute('updated_at', $timestamps['updated_at']);
+        }
+
+        // Save without triggering timestamps
+        $entity->saveQuietly();
+
+        // Re-enable timestamps for future operations
+        $entity->timestamps = true;
+
+        return $entity;
     }
 }

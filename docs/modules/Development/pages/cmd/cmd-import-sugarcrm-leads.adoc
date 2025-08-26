@@ -115,6 +115,9 @@ sail artisan import:leads --dry-run
 # Import 50 leads (standaard: 100)
 sail artisan import:leads --limit=50
 
+# Import specifieke lead IDs
+sail artisan import:leads --lead-ids=abc123 def456 ghi789
+
 # Import met andere database connectie
 sail artisan import:leads --connection=sugarcrm_prod
 ----
@@ -132,6 +135,10 @@ sail artisan import:leads --connection=sugarcrm_prod
 |`--limit`
 |Aantal leads om te importeren
 |`100`
+
+|`--lead-ids`
+|Specifieke lead IDs om te importeren (negeert limit)
+|`-`
 
 |`--dry-run`
 |Test de import zonder daadwerkelijk data op te slaan

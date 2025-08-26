@@ -10,12 +10,12 @@ class Department extends Model
 {
     use HasFactory;
 
-    public static function findHerniaId(): string
+    public static function findHerniaId(): int
     {
         return Department::query()->where('name', 'Hernia')->firstOrFail()->id;
     }
 
-    public static function findPrivateScanId(): string
+    public static function findPrivateScanId(): int
     {
         return Department::query()->where('name', 'Privatescan')->firstOrFail()->id;
     }

@@ -76,6 +76,16 @@
                 </div>
                 @endif
 
+                <!-- Lost Reason -->
+                @if(!empty($lead->lost_reason))
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Verliesreden</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {{ $lead->lost_reason }}
+                    </div>
+                </div>
+                @endif
+
                 <!-- Contact Persons (if linked) -->
                 @if($lead->persons && $lead->persons->count() > 0)
                 <div class="mb-4">

@@ -63,7 +63,6 @@ TABLE(PipelineStage, "pipeline_stage") {
 
 TABLE(Lead, "lead") {
   PRIMARY_KEY(id): bigint
-  FOREIGN_KEY(person_id): bigint
   FOREIGN_KEY(user_id): bigint
   FOREIGN_KEY(lead_source_id): bigint
   FOREIGN_KEY(lead_type_id): bigint
@@ -229,7 +228,7 @@ PipelineStage "1" -- "n" Activity
 
 Lead "1" -- "1" Order
 Lead "0..1" -- "n" Activity
-Lead "0..1" --> "1" ContactPerson : "assigned to"
+Lead "n" -- "n" ContactPerson : "lead_persons"
 Order "1" --> "1" ContactPerson : "for"
 Order "1" --> "1" User
 Activity "1" --> "1" User
@@ -245,8 +244,8 @@ Product "n" -- "0.1" ProductGroup
 OrderItem "n" -- "1" Order
 OrderItem "1" -- "1" Product
 
-Anamnesis "1" -- "1" Lead
-Anamnesis "0..1" -- "1" User
+Anamnesis "n" -- "1" Lead
+Anamnesis "n" -- "1" ContactPerson
 
 note right of Pipeline
   Verkoopfunnel met geordende fasen voor lead.

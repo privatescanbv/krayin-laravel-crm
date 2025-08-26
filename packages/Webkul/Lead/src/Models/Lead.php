@@ -135,6 +135,19 @@ class Lead extends Model implements LeadContract
     }
 
     /**
+     * Get the anamnesis records associated with the lead.
+     */
+    public function getAnamnesisAttribute()
+    {
+        try {
+            return Anamnesis::where('lead_id', $this->id)->get();
+        } catch (Exception $e) {
+            Log::warning('Could not load anamnesis for lead', ['lead_id' => $this->id, 'error' => $e->getMessage()]);
+            return collect();
+        }
+    }
+
+    /**
      * Attach persons to this lead.
      */
     public function attachPersons(array $personIds)

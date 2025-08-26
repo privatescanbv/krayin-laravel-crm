@@ -6,13 +6,9 @@ use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Models\Anamnesis;
 use App\Models\Department;
-use DateTimeInterface;
 use Exception;
-use Illuminate\Console\Command;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Throwable;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 
@@ -25,7 +21,7 @@ use Webkul\Lead\Models\Lead;
  * - leads_pcrm_anamnesepreventie_1_c: Links leads to anamnesis
  * - pcrm_anamnetie_contacts_c: Links anamnesis to persons
  */
-class ImportLeadsFromSugarCRM extends Command
+class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 {
     /**
      * The name and signature of the console command.
@@ -65,9 +61,7 @@ class ImportLeadsFromSugarCRM extends Command
         $this->info('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
         // Test connection
-        $this->info('Testing database connection...');
-        DB::connection($connection)->getPdo();
-        $this->info('✓ Database connection successful');
+        $this->testConnection($connection);
 
         // Get records from SugarCRM
         $sql = DB::connection($connection)
@@ -755,25 +749,6 @@ class ImportLeadsFromSugarCRM extends Command
         };
     }
 
-    private function parseSugarDate($value): ?string
-    {
-        if (! $value) {
-            return null;
-        }
-        try {
-            // Accept Carbon, DateTimeInterface, or string
-            if ($value instanceof DateTimeInterface) {
-                return Carbon::instance($value)->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s');
-            }
-
-            return Carbon::parse((string) $value, 'UTC')
-                ->setTimezone(config('app.timezone'))
-                ->format('Y-m-d H:i:s');
-        } catch (Throwable $e) {
-            return null;
-        }
-    }
-
     private function extractPerson(mixed $records): array
     {
         // Bulk fetch person IDs for given lead IDs from SugarCRM relation table
@@ -946,36 +921,5 @@ class ImportLeadsFromSugarCRM extends Command
         }
 
         return PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
-    }
-
-    /**
-     * Create an entity with proper timestamps from SugarCRM data
-     *
-     * @param  string  $modelClass  The model class to create
-     * @param  array  $data  The entity data
-     * @param  array  $timestamps  The timestamps to set (created_at, updated_at)
-     * @return mixed The created entity
-     */
-    private function createEntityWithTimestamps(string $modelClass, array $data, array $timestamps = [])
-    {
-        // Create entity without timestamps to avoid auto-override
-        $entity = new $modelClass($data);
-        $entity->timestamps = false;
-
-        // Set custom timestamps if provided
-        if (! empty($timestamps['created_at'])) {
-            $entity->setAttribute('created_at', $timestamps['created_at']);
-        }
-        if (! empty($timestamps['updated_at'])) {
-            $entity->setAttribute('updated_at', $timestamps['updated_at']);
-        }
-
-        // Save without triggering timestamps
-        $entity->saveQuietly();
-
-        // Re-enable timestamps for future operations
-        $entity->timestamps = true;
-
-        return $entity;
     }
 }

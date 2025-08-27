@@ -34,6 +34,7 @@ class PersonDataGrid extends DataGrid
                 ) as person_name"),
                 'persons.emails',
                 'persons.phones',
+                'persons.date_of_birth',
                 'organizations.name as organization',
                 'organizations.id as organization_id'
             )
@@ -112,6 +113,25 @@ class PersonDataGrid extends DataGrid
                     'value' => 'name',
                 ],
             ],
+        ]);
+
+        $this->addColumn([
+            'index'      => 'date_of_birth',
+            'label'      => 'Leeftijd',
+            'type'       => 'string',
+            'sortable'   => true,
+            'filterable' => false,
+            'searchable' => false,
+            'closure'    => function ($row) {
+                if (!$row->date_of_birth) {
+                    return '-';
+                }
+                
+                $birthDate = \Carbon\Carbon::parse($row->date_of_birth);
+                $age = $birthDate->age;
+                
+                return $age . ' jaar';
+            },
         ]);
     }
 

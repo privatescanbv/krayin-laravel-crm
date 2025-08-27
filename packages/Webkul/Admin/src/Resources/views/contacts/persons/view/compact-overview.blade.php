@@ -30,6 +30,16 @@
                 </div>
                 @endif
 
+                <!-- Age -->
+                @if($person->age)
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Leeftijd</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {{ $person->age }} jaar
+                    </div>
+                </div>
+                @endif
+
                                 <!-- Organization -->
                 @if($person->organization)
                 <div class="mb-4">

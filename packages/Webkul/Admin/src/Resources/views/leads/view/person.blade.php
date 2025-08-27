@@ -29,7 +29,13 @@
                                         {{ strtoupper(substr($person->name, 0, 1)) }}
                                     </div>
                                     <div>
-                                        <h5 class="font-semibold dark:text-white">{{ $person->name }}</h5>
+                                        <h5 class="font-semibold dark:text-white">{{ $person->name }}  (
+                                            @if ($person->age)
+                                                {{ $person->age }}
+                                            @else
+                                                -
+                                            @endif
+                                        )</h5>
                                         @if ($person->organization)
                                             <p class="text-sm text-gray-600 dark:text-gray-400">{{ $person->organization->name }}</p>
                                         @endif

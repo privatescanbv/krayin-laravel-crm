@@ -235,14 +235,14 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
         'deleted'                    => 0,
     ]);
     DB::connection('sugarcrm')->table('leads_cstm')->insert([
-        'id_c'                => $leadId,
-        'workflow_status_c'   => 'nieuweaanvraag',
-        'kanaal_c'            => 'website',
-        'soort_aanvraag_c'    => 'preventie',
-        'gender_c'            => 'male',
-        'meisjesnaam_c'       => 'Jansen',
-        'aang_tussenv_c'      => 'de',
-        'primary_huisnr_c'        => '123',
+        'id_c'                        => $leadId,
+        'workflow_status_c'           => 'nieuweaanvraag',
+        'kanaal_c'                    => 'website',
+        'soort_aanvraag_c'            => 'preventie',
+        'gender_c'                    => 'male',
+        'meisjesnaam_c'               => 'Jansen',
+        'aang_tussenv_c'              => 'de',
+        'primary_huisnr_c'            => '123',
         'primary_huisnr_toevoeging_c' => 'A',
     ]);
     // Email primary

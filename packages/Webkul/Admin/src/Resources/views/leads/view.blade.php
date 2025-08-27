@@ -61,8 +61,8 @@
                                     Potential duplicate found ({{ $lead->getPotentialDuplicatesCount() }} similar lead{{ $lead->getPotentialDuplicatesCount() > 1 ? 's' : '' }})
                                 </span>
                             </div>
-                            <a 
-                                href="{{ route('admin.leads.duplicates.index', $lead->id) }}" 
+                            <a
+                                href="{{ route('admin.leads.duplicates.index', $lead->id) }}"
                                 class="rounded bg-orange-600 px-3 py-1 text-xs text-white hover:bg-orange-700"
                             >
                                 Merge Duplicates

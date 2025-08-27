@@ -20,6 +20,7 @@ use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\EmailProxy;
 use Webkul\Lead\Contracts\Lead as LeadContract;
+use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Quote\Models\QuoteProxy;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
@@ -410,45 +411,6 @@ class Lead extends Model implements LeadContract
         return $today->diffInDays($dueDate, false);
     }
 
-    /**
-     * Check if this lead has potential duplicates.
-     */
-    public function hasPotentialDuplicates(): bool
-    {
-        try {
-            return app('Webkul\Lead\Repositories\LeadRepository')->hasPotentialDuplicates($this);
-        } catch (\Exception $e) {
-            Log::error('Error checking for potential duplicates: ' . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Get potential duplicate leads.
-     */
-    public function getPotentialDuplicates()
-    {
-        try {
-            return app('Webkul\Lead\Repositories\LeadRepository')->findPotentialDuplicates($this);
-        } catch (\Exception $e) {
-            Log::error('Error getting potential duplicates: ' . $e->getMessage());
-            return collect();
-        }
-    }
-
-    /**
-     * Get the count of potential duplicates.
-     */
-    public function getPotentialDuplicatesCount(): int
-    {
-        try {
-            return $this->getPotentialDuplicates()->count();
-        } catch (\Exception $e) {
-            Log::error('Error counting potential duplicates: ' . $e->getMessage());
-            return 0;
-        }
-    }
-
     public function getNameAttribute($value): string
     {
         $parts = [];
@@ -535,5 +497,20 @@ class Lead extends Model implements LeadContract
     public function hasMultiplePersons(): bool
     {
         return $this->persons_count > 1;
+    }
+
+    public function hasPotentialDuplicates() : bool
+    {
+        return  $this->getPotentialDuplicatesCount() > 0;
+    }
+
+    public function getPotentialDuplicatesCount() : int
+    {
+        // Only check for duplicates if the lead has basic required data
+        if (!$this->id || !$this->name) {
+            return 0;
+        }
+
+        return app(LeadRepository::class)->findNumberPotentialDuplicates($this);
     }
 }

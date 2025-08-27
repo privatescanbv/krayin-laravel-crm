@@ -6,7 +6,9 @@ use App\Enums\LeadPipelineStageDefaults;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Enums\WebhookType;
+use App\Services\LeadDuplicateCacheService;
 use App\Services\WebhookService;
+use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -76,6 +78,9 @@ class LeadObserver
         if (! $willUpdatePipeline) {
             $this->sendWebhook($lead, 'LeadObserver@created');
         }
+
+        // Invalidate duplicate cache for new lead
+        $this->invalidateDuplicateCache($lead);
     }
 
     /**
@@ -106,6 +111,9 @@ class LeadObserver
 
         // Log activities for fixed fields
         $this->logFixedFieldsActivity($lead);
+
+        // Invalidate duplicate cache when lead is updated
+        $this->invalidateDuplicateCache($lead);
     }
 
     private function updatePipelineState(Lead $lead): void
@@ -213,6 +221,19 @@ class LeadObserver
                     'lead_id' => $lead->id,
                 ]);
             }
+        }
+    }
+
+    /**
+     * Invalidate duplicate cache for a lead and related leads.
+     */
+    private function invalidateDuplicateCache(Lead $lead): void
+    {
+        try {
+            $cacheService = app(LeadDuplicateCacheService::class);
+            $cacheService->invalidateLeadCache($lead->id);
+        } catch (Exception $e) {
+            Log::warning('Failed to invalidate duplicate cache for lead '.$lead->id.': '.$e->getMessage());
         }
     }
 }

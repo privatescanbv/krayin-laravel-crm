@@ -232,4 +232,16 @@ class Person extends Model implements PersonContract
         // If no default is found, return the first phone's value
         return $this->phones[0]['value'] ?? null;
     }
+
+    /**
+     * Calculate and return the age of the person based on date_of_birth
+     */
+    public function getAgeAttribute(): ?int
+    {
+        if (!$this->date_of_birth) {
+            return null;
+        }
+
+        return $this->date_of_birth->age;
+    }
 }

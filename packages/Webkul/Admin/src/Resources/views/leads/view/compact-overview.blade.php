@@ -101,6 +101,9 @@
                                 class="text-sm font-medium text-brandColor hover:underline"
                             >
                                 {{ $person->name }}
+                                @if($person->age)
+                                    <span class="text-xs font-normal text-gray-500">({{ $person->age }} jaar)</span>
+                                @endif
                                 <span class="icon-external-link text-xs ml-1"></span>
                             </a>
                             @if($person->organization)

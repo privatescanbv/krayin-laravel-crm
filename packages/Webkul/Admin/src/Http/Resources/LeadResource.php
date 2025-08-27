@@ -16,7 +16,7 @@ class LeadResource extends JsonResource
      */
     public function toArray($request)
     {
-        // Lightweight payload for kanban: avoid heavy relations and duplicate checks
+        // Lightweight payload for kanban: include essential fields but avoid heavy duplicate checks
         if ($request->query('kanban')) {
             return [
                 'id'                   => $this->id,
@@ -33,7 +33,10 @@ class LeadResource extends JsonResource
                 'rotten_days'          => $this->rotten_days,
                 'created_at'           => $this->created_at?->format('Y-m-d H:i:s'),
 
-                // Minimal stage data needed for UI checks
+                // Essential relationships for kanban display
+                'persons'              => PersonResource::collection($this->persons ?? []),
+                'persons_count'        => $this->persons_count ?? 0,
+                'has_multiple_persons' => $this->hasMultiplePersons(),
                 'stage'                => $this->stage ? new StageResource($this->stage) : null,
 
                 // Computed/lightweight attributes
@@ -46,6 +49,10 @@ class LeadResource extends JsonResource
                 // Optional counters (keep cheap defaults if not precomputed)
                 'open_activities_count'=> $this->open_activities_count ?? 0,
                 'unread_emails_count'  => $this->unread_emails_count ?? 0,
+
+                // Disable expensive duplicate checks for kanban performance
+                'has_duplicates'       => false, // Skip expensive duplicate detection
+                'duplicates_count'     => 0,     // Skip expensive duplicate counting
             ];
         }
 

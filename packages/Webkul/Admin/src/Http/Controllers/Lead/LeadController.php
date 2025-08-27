@@ -152,9 +152,10 @@ class LeadController extends Controller
             $data[$stage->sort_order] = (new StageResource($stage))->jsonSerialize();
 
             // Load relationships - including persons for kanban display
-            // For kanban, trim heavy relations to reduce payload and latency
+            // For kanban, include essential relations but avoid heavy ones
             $with = [
                 'stage',
+                'persons.organization', // Needed for kanban display
             ];
 
             $perPage = (int) request()->query('limit', 10);

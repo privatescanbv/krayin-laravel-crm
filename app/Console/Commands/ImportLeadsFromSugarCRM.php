@@ -124,8 +124,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 'lc.ms_type_c',
                 'lc.spreektalen_c',
                 'lc.straat_c',
-                'lc.huisnummer_c',
-                'lc.huisnr_toevoeging_c',
+                'lc.primary_huisnr_c',
+                'lc.primary_huisnr_toevoeging_c',
                 'lc.reden_afvoeren_c',
                 'lc.nieuwsbrief_vraag_c',
                 'lc.reset_wfl_status_c',
@@ -144,8 +144,6 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 'lc.operaties_c',
                 'lc.reden_afvoeren_c',
                 'lc.opm_erf_tumoren_c',
-                'lc.huisnummer_c',
-                'lc.huisnr_toevoeging_c',
                 DB::raw('MAX(CASE WHEN eabr.primary_address = 1 THEN ea.email_address END) as email_primary'),
                 DB::raw('MIN(CASE WHEN eabr.primary_address = 0 THEN ea.email_address END) as email_any'),
             ])
@@ -265,6 +263,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $skipped = 0;
         $errors = 0;
         $personNotFound = 0;
+        $skippedAlreadyExisting = 0;
+        $skippedNoRelatedPersons = 0;
+        $skippedNotAllPersonsFound = 0;
 
         foreach ($records as $record) {
             try {
@@ -272,6 +273,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 $existingLead = Lead::where('external_id', $record->id)->first();
                 if ($existingLead) {
                     $skipped++;
+                    $skippedAlreadyExisting++;
+                    $this->info("Skipping existing lead with external_id={$record->id} (already imported as #{$existingLead->id})");
                     $bar->advance();
 
                     continue;
@@ -284,6 +287,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
                 if (empty($persons)) {
                     $personNotFound++;
+                    $skipped++;
+                    $skippedNoRelatedPersons++;
                     $this->error("\nPerson not found for lead: {$record->first_name} {$record->last_name} (LEAD ID: {$record->id}) (person ids: ".(empty($expectedPersonIds) ? 'none' : implode(',', $expectedPersonIds)).')');
                     $bar->advance();
 
@@ -296,6 +301,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
                 if (! empty($missingPersonIds)) {
                     $personNotFound++;
+                    $skipped++;
+                    $skippedNotAllPersonsFound++;
                     $this->error("\nNot all persons found for lead: {$record->first_name} {$record->last_name} (LEAD ID: {$record->id})");
                     $this->error('Expected persons: '.implode(', ', $expectedPersonIds));
                     $this->error('Found persons: '.implode(', ', $foundPersonIds));
@@ -340,13 +347,15 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'updated_at' => $this->parseSugarDate($record->lead_date_modified ?? $record->date_modified),
                     ]);
 
+                    // primariy key huisnummer
+
                     // Create address for lead if present in SugarCRM
-                    if (! empty($record->primary_address_postalcode) && ! empty($record->huisnummer_c)) {
+                    if (! empty($record->primary_address_postalcode) && ! empty($record->primary_huisnr_c)) {
                         Address::create([
                             'lead_id'             => $lead->id,
                             'street'              => $record->primary_address_street ?? null,
-                            'house_number'        => $record->huisnummer_c,
-                            'house_number_suffix' => $record->huisnr_toevoeging_c ?? null,
+                            'house_number'        => $record->primary_huisnr_c,
+                            'house_number_suffix' => $record->primary_huisnr_toevoeging_c ?? null,
                             'postal_code'         => $record->primary_address_postalcode ?? null,
                             'state'               => $record->primary_address_state ?? null,
                             'city'                => $record->primary_address_city ?? null,
@@ -395,6 +404,13 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $this->info("⚠ Skipped: {$skipped}");
         $this->info("✗ Person not found: {$personNotFound}");
         $this->info("✗ Errors: {$errors}");
+
+        // Detailed skip breakdown
+        $this->line('');
+        $this->info('Skip breakdown:');
+        $this->info("- Already existing (external_id present): {$skippedAlreadyExisting}");
+        $this->info("- No related persons found: {$skippedNoRelatedPersons}");
+        $this->info("- Not all related persons found: {$skippedNotAllPersonsFound}");
     }
 
     /**

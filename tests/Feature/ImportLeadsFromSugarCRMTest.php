@@ -99,8 +99,8 @@ beforeEach(function () {
         $table->string('ms_type_c')->nullable();
         $table->string('spreektalen_c')->nullable();
         $table->string('straat_c')->nullable();
-        $table->string('huisnummer_c')->nullable();
-        $table->string('huisnr_toevoeging_c')->nullable();
+        $table->string('primary_huisnr_c')->nullable();
+        $table->string('primary_huisnr_toevoeging_c')->nullable();
         $table->string('nieuwsbrief_vraag_c')->nullable();
         $table->string('reset_wfl_status_c')->nullable();
         $table->string('particulier_c')->nullable();
@@ -242,8 +242,8 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
         'gender_c'            => 'male',
         'meisjesnaam_c'       => 'Jansen',
         'aang_tussenv_c'      => 'de',
-        'huisnummer_c'        => '123',
-        'huisnr_toevoeging_c' => 'A',
+        'primary_huisnr_c'        => '123',
+        'primary_huisnr_toevoeging_c' => 'A',
     ]);
     // Email primary
     DB::connection('sugarcrm')->table('email_addresses')->insert([

@@ -41,6 +41,8 @@ include::cmd/cmd-import-sugarcrm-leads.adoc[]
 
 include::cmd/cmd-create-leads.adoc[]
 
+include::cmd/cmd-lead-duplicate-cache.adoc[]
+
 === Server installatie
 
 ==== Github docker login
@@ -102,3 +104,36 @@ sail artisan inbound-emails:process
 ----
 
 Note: Op de test omgeving is dit geautomatiseerd via een cronjob die elke minuut draait.
+
+==== Cronjobs
+
+Het systeem heeft verschillende geautomatiseerde taken die via Laravel's scheduler draaien:
+
+===== Actieve Cronjobs
+
+* **`inbound-emails:process`** - Elke 5 minuten
+- Verwerkt inkomende emails vanuit de mailbox
+- Zet emails om naar activities en leads
+
+* **`activities:release-overdue`** - Elk uur
+- Maakt achterstallige activities vrij voor andere gebruikers
+- Voorkomt dat taken vast blijven zitten bij gebruikers
+
+* **`leads:refresh-duplicate-cache --clear`** - Elk uur
+- Ververst de lead duplicate detection cache
+- Zorgt voor optimale performance van het kanban board
+- Automatische fallback naar directe queries bij problemen
+
+===== Scheduler Status
+
+[source,bash]
+----
+# Bekijk alle geplande taken
+php artisan schedule:list
+
+# Test scheduler handmatig
+php artisan schedule:run
+
+# Specifieke taak uitvoeren
+php artisan leads:refresh-duplicate-cache --clear
+----

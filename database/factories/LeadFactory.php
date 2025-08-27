@@ -33,7 +33,7 @@ class LeadFactory extends Factory
     {
         // Get or create required related models
         $person = null; // Person is optional for leads
-        $user = User::first() ?? WebkulUserFactory::new()->create();
+        $user = User::first() ?? User::factory()->create();
         $source = Source::first() ?? Source::create(['name' => 'Website']);
         $type = Type::first() ?? Type::create(['name' => 'New Lead']);
 

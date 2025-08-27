@@ -2,7 +2,7 @@
 
 namespace Webkul\Lead\Repositories;
 
-use App\Models\Anamnesis;
+use App\Services\LeadDuplicateCacheService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Container\Container;
@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use App\Models\Address;
-use InvalidArgumentException;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Repositories\PersonRepository;
@@ -58,6 +57,14 @@ class LeadRepository extends Repository
     )
     {
         parent::__construct($container);
+    }
+
+    /**
+     * Get the cache service instance.
+     */
+    protected function getCacheService(): LeadDuplicateCacheService
+    {
+        return app(LeadDuplicateCacheService::class);
     }
 
     /**
@@ -370,11 +377,37 @@ class LeadRepository extends Repository
 
     /**
      * Find potential duplicate leads based on email, phone, and name similarity.
+     * Uses caching for improved performance.
      * Filters out leads that are:
      * - Created more than 2 weeks apart
      * - In 'Won' status
      */
     public function findPotentialDuplicates($lead): Collection
+    {
+        try {
+            // Use cache service for performance optimization
+            $cacheService = $this->getCacheService();
+            return $cacheService->getCachedDuplicatesWithData($lead->id);
+        } catch (Exception $e) {
+            Log::warning('Cache service failed, falling back to direct computation: ' . $e->getMessage());
+            return $this->findPotentialDuplicatesDirectly($lead);
+        }
+    }
+
+    /**
+     * @param $lead
+     * @return int number of duplicates found, are cached for performance
+     */
+    public function findNumberPotentialDuplicates($lead): int {
+        $cacheService = $this->getCacheService();
+        return $cacheService->getCachedDuplicates($lead->id)->count();
+    }
+
+    /**
+     * Direct computation of potential duplicates (fallback method).
+     * This is the original implementation used when cache fails.
+     */
+    public function findPotentialDuplicatesDirectly($lead): Collection
     {
         $duplicates = collect();
 
@@ -402,7 +435,7 @@ class LeadRepository extends Repository
 
     /**
      * Apply time and status filters to potential duplicates.
-     * 
+     *
      * @param Lead $lead The lead to check duplicates for
      * @param Collection $duplicates Collection of potential duplicate leads
      * @return Collection Filtered collection of duplicates
@@ -421,18 +454,24 @@ class LeadRepository extends Repository
 
             // Filter out leads created more than 2 weeks apart
             $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
-            
+
             return $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
         });
     }
 
     /**
      * Check if a lead has potential duplicates.
-     *
+     * Uses cache for improved performance.
      */
     public function hasPotentialDuplicates(Lead $lead): bool
     {
-        return $this->findPotentialDuplicates($lead)->isNotEmpty();
+        try {
+            $cacheService = $this->getCacheService();
+            return $cacheService->hasCachedDuplicates($lead->id);
+        } catch (Exception $e) {
+            Log::warning('Cache service failed for hasPotentialDuplicates, falling back: ' . $e->getMessage());
+            return $this->findPotentialDuplicatesDirectly($lead)->isNotEmpty();
+        }
     }
 
     /**
@@ -620,6 +659,14 @@ class LeadRepository extends Repository
 
             DB::commit();
 
+            // Update cache after successful merge
+            try {
+                $cacheService = $this->getCacheService();
+                $cacheService->handleLeadMerge($primaryLeadId, $duplicateLeadIds);
+            } catch (Exception $e) {
+                Log::warning('Failed to update cache after lead merge: ' . $e->getMessage());
+            }
+
             return $primaryLead->fresh();
 
         } catch (Exception $e) {
@@ -803,7 +850,7 @@ class LeadRepository extends Repository
                     try {
                         $query = LeadModel::with(['stage', 'pipeline', 'user'])
                             ->where('id', '!=', $lead->id);
-                            
+
                         if (DB::getDriverName() === 'sqlite') {
                             $query->where($fieldName, 'LIKE', '%"' . $item['value'] . '"%');
                         } else {

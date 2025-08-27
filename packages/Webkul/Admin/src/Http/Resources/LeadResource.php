@@ -5,9 +5,18 @@ namespace Webkul\Admin\Http\Resources;
 use Exception;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Log;
+use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Repositories\LeadRepository;
 
 class LeadResource extends JsonResource
 {
+    private readonly LeadRepository $leadRepository;
+    public function __construct(Lead $lead)
+    {
+        parent::__construct($lead);
+        $this->leadRepository = app(LeadRepository::class);
+    }
+
     /**
      * Transform the resource into an array.
      *
@@ -16,6 +25,7 @@ class LeadResource extends JsonResource
      */
     public function toArray($request)
     {
+        $duplicatesCount = $this->getPotentialDuplicatesCount();
         return [
             'id'                   => $this->id,
             'name'                 => $this->name,
@@ -61,8 +71,8 @@ class LeadResource extends JsonResource
             'open_activities_count'=> $this->open_activities_count ?? 0,
             'unread_emails_count'  => $this->unread_emails_count ?? 0,
             'days_until_due_date'  => $this->days_until_due_date,
-            'has_duplicates'       => $this->getSafeDuplicateStatus(),
-            'duplicates_count'     => $this->getSafeDuplicateCount(),
+            'has_duplicates'       => $duplicatesCount > 0,
+            'duplicates_count'     => $duplicatesCount,
 
             // IDs for relationships
             'user_id'              => $this->user_id,
@@ -77,41 +87,5 @@ class LeadResource extends JsonResource
             'created_by'           => $this->created_by,
             'updated_by'           => $this->updated_by,
         ];
-    }
-
-    /**
-     * Safely get duplicate status without causing errors.
-     */
-    private function getSafeDuplicateStatus(): bool
-    {
-        try {
-            // Only check for duplicates if the lead has basic required data
-            if (!$this->id || !$this->name) {
-                return false;
-            }
-
-            return $this->hasPotentialDuplicates();
-        } catch (Exception $e) {
-            Log::warning('Error checking duplicate status in LeadResource: ' . $e->getMessage());
-            return false;
-        }
-    }
-
-    /**
-     * Safely get duplicate count without causing errors.
-     */
-    private function getSafeDuplicateCount(): int
-    {
-        try {
-            // Only check for duplicates if the lead has basic required data
-            if (!$this->id || !$this->name) {
-                return 0;
-            }
-
-            return $this->getPotentialDuplicatesCount();
-        } catch (\Exception $e) {
-            Log::warning('Error getting duplicate count in LeadResource: ' . $e->getMessage());
-            return 0;
-        }
     }
 }

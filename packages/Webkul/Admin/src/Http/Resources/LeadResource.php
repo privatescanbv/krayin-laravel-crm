@@ -16,6 +16,39 @@ class LeadResource extends JsonResource
      */
     public function toArray($request)
     {
+        // Lightweight payload for kanban: avoid heavy relations and duplicate checks
+        if ($request->query('kanban')) {
+            return [
+                'id'                   => $this->id,
+                'name'                 => $this->name,
+                'first_name'           => $this->first_name,
+                'last_name'            => $this->last_name,
+                'lastname_prefix'      => $this->lastname_prefix,
+                'married_name'         => $this->married_name,
+                'married_name_prefix'  => $this->married_name_prefix,
+                'status'               => $this->status,
+                'lost_reason'          => $this->lost_reason,
+                'expected_close_date'  => $this->expected_close_date?->format('Y-m-d'),
+                'closed_at'            => $this->closed_at?->format('Y-m-d H:i:s'),
+                'rotten_days'          => $this->rotten_days,
+                'created_at'           => $this->created_at?->format('Y-m-d H:i:s'),
+
+                // Minimal stage data needed for UI checks
+                'stage'                => $this->stage ? new StageResource($this->stage) : null,
+
+                // Computed/lightweight attributes
+                'days_until_due_date'  => $this->days_until_due_date,
+
+                // IDs for relationships (used for navigation and updates)
+                'lead_pipeline_id'     => $this->lead_pipeline_id,
+                'lead_pipeline_stage_id'=> $this->lead_pipeline_stage_id,
+
+                // Optional counters (keep cheap defaults if not precomputed)
+                'open_activities_count'=> $this->open_activities_count ?? 0,
+                'unread_emails_count'  => $this->unread_emails_count ?? 0,
+            ];
+        }
+
         return [
             'id'                   => $this->id,
             'name'                 => $this->name,

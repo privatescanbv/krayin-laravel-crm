@@ -152,18 +152,15 @@ class LeadController extends Controller
             $data[$stage->sort_order] = (new StageResource($stage))->jsonSerialize();
 
             // Load relationships - including persons for kanban display
+            // For kanban, trim heavy relations to reduce payload and latency
+            $with = [
+                'stage',
+            ];
+
+            $perPage = (int) request()->query('limit', 10);
+
             $data[$stage->sort_order]['leads'] = [
-                'data' => LeadResource::collection($paginator = $query->with([
-                    'tags',
-                    'type',
-                    'source',
-                    'user',
-                    'organization',
-                    'pipeline',
-                    'pipeline.stages',
-                    'stage',
-                    'attribute_values',
-                ])->paginate(10)),
+                'data' => LeadResource::collection($paginator = $query->with($with)->paginate($perPage)),
 
                 'meta' => [
                     'current_page' => $paginator->currentPage(),
@@ -176,7 +173,8 @@ class LeadController extends Controller
             ];
         }
 
-        return response()->json($data);
+        // Mark response as kanban to enable lightweight resource shape
+        return response()->json($data)->withHeaders(['X-Leads-View' => 'kanban']);
 
         } catch (Exception $e) {
             Log::error('Error in leads.get endpoint', [

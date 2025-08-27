@@ -442,6 +442,7 @@
                                 ...params,
 
                                 ...requestedParams,
+                                kanban: 1,
                             }
                         })
                         .then(response => {

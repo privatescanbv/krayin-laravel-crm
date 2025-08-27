@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
+use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\Department;
 use Exception;
@@ -85,6 +86,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 'lc.kanaal_c',
                 'lc.soort_aanvraag_c',
                 'lc.meisjesnaam_c',
+                'lc.aang_tussenv_c',
                 'lc.partner_birthdate_c',
                 'lc.partner_gender_c',
                 'lc.lengte_c',
@@ -142,6 +144,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 'lc.operaties_c',
                 'lc.reden_afvoeren_c',
                 'lc.opm_erf_tumoren_c',
+                'lc.huisnummer_c',
+                'lc.huisnr_toevoeging_c',
                 DB::raw('MAX(CASE WHEN eabr.primary_address = 1 THEN ea.email_address END) as email_primary'),
                 DB::raw('MIN(CASE WHEN eabr.primary_address = 0 THEN ea.email_address END) as email_any'),
             ])
@@ -322,6 +326,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'last_name'              => $record->last_name,
                         'lastname_prefix'        => $record->tussenvoegsel_c ?? '',
                         'married_name'           => $record->meisjesnaam_c ?? '',
+                        'married_name_prefix'    => $record->aang_tussenv_c ?? null,
                         'initials'               => $record->voorletters_c ?? '',
                         'date_of_birth'          => $record->birthdate,
                         'gender'                 => $this->mapGenderFromSugar($record->gender_c ?? null),
@@ -334,6 +339,20 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'created_at' => $this->parseSugarDate($record->lead_date_entered ?? $record->date_entered),
                         'updated_at' => $this->parseSugarDate($record->lead_date_modified ?? $record->date_modified),
                     ]);
+
+                    // Create address for lead if present in SugarCRM
+                    if (! empty($record->primary_address_postalcode) && ! empty($record->huisnummer_c)) {
+                        Address::create([
+                            'lead_id'             => $lead->id,
+                            'street'              => $record->primary_address_street ?? null,
+                            'house_number'        => $record->huisnummer_c,
+                            'house_number_suffix' => $record->huisnr_toevoeging_c ?? null,
+                            'postal_code'         => $record->primary_address_postalcode ?? null,
+                            'state'               => $record->primary_address_state ?? null,
+                            'city'                => $record->primary_address_city ?? null,
+                            'country'             => $record->primary_address_country ?? null,
+                        ]);
+                    }
 
                     // Attach persons to lead using many-to-many relationship
                     $personIdsToAttach = array_values(array_filter(array_map(fn ($p) => $p->id ?? null, $persons)));

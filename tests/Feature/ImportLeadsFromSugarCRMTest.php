@@ -39,6 +39,11 @@ beforeEach(function () {
         $table->string('phone_work')->nullable();
         $table->string('phone_mobile')->nullable();
         $table->string('phone_home')->nullable();
+        $table->string('primary_address_street')->nullable();
+        $table->string('primary_address_city')->nullable();
+        $table->string('primary_address_state')->nullable();
+        $table->string('primary_address_postalcode')->nullable();
+        $table->string('primary_address_country')->nullable();
         $table->dateTime('date_entered')->nullable();
         $table->dateTime('date_modified')->nullable();
         $table->string('status')->nullable();
@@ -55,6 +60,7 @@ beforeEach(function () {
         $table->string('kanaal_c')->nullable();
         $table->string('soort_aanvraag_c')->nullable();
         $table->string('meisjesnaam_c')->nullable();
+        $table->string('aang_tussenv_c')->nullable();
         $table->string('lengte_c')->nullable();
         $table->string('gewicht_c')->nullable();
         $table->string('tussenvoegsel_c')->nullable();
@@ -215,20 +221,29 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
     // Insert sugarcrm lead and related data
     $leadId = 'lead-001';
     DB::connection('sugarcrm')->table('leads')->insert([
-        'id'            => $leadId,
-        'first_name'    => 'Lead',
-        'last_name'     => 'Tester',
-        'status'        => 'New',
-        'date_entered'  => '2025-06-11 13:41:07', // treated as UTC in code
-        'date_modified' => '2025-06-12 10:00:00',
-        'deleted'       => 0,
+        'id'                         => $leadId,
+        'first_name'                 => 'Lead',
+        'last_name'                  => 'Tester',
+        'status'                     => 'New',
+        'primary_address_street'     => 'Leadstraat',
+        'primary_address_city'       => 'Utrecht',
+        'primary_address_state'      => 'UT',
+        'primary_address_postalcode' => '3500AB',
+        'primary_address_country'    => 'NL',
+        'date_entered'               => '2025-06-11 13:41:07', // treated as UTC in code
+        'date_modified'              => '2025-06-12 10:00:00',
+        'deleted'                    => 0,
     ]);
     DB::connection('sugarcrm')->table('leads_cstm')->insert([
-        'id_c'              => $leadId,
-        'workflow_status_c' => 'nieuweaanvraag',
-        'kanaal_c'          => 'website',
-        'soort_aanvraag_c'  => 'preventie',
-        'gender_c'          => 'male',
+        'id_c'                => $leadId,
+        'workflow_status_c'   => 'nieuweaanvraag',
+        'kanaal_c'            => 'website',
+        'soort_aanvraag_c'    => 'preventie',
+        'gender_c'            => 'male',
+        'meisjesnaam_c'       => 'Jansen',
+        'aang_tussenv_c'      => 'de',
+        'huisnummer_c'        => '123',
+        'huisnr_toevoeging_c' => 'A',
     ]);
     // Email primary
     DB::connection('sugarcrm')->table('email_addresses')->insert([
@@ -278,10 +293,25 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
     $lead = Lead::where('external_id', $leadId)->first();
     expect($lead)->not->toBeNull();
 
+    // Personal fields assertions
+    expect($lead->married_name)->toBe('Jansen')
+        ->and($lead->married_name_prefix)->toBe('de');
+
     $expected = Carbon::parse('2025-06-11 13:41:07', 'UTC')
         ->setTimezone(config('app.timezone'))
         ->format('Y-m-d H:i:s');
     expect($lead->created_at->format('Y-m-d H:i:s'))->toBe($expected);
+
+    // Address created and mapped
+    $address = \App\Models\Address::where('lead_id', $lead->id)->first();
+    expect($address)->not->toBeNull()
+        ->and($address->street)->toBe('Leadstraat')
+        ->and($address->house_number)->toBe('123')
+        ->and($address->house_number_suffix)->toBe('A')
+        ->and($address->postal_code)->toBe('3500AB')
+        ->and($address->city)->toBe('Utrecht')
+        ->and($address->state)->toBe('UT')
+        ->and($address->country)->toBe('NL');
 });
 
 test('imports lead with multiple persons correctly', function () {

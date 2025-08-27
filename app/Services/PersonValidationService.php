@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Enums\PersonGender;
+use App\Enums\PersonSalutation;
 use App\Validators\ContactArrayValidator;
 use App\Validators\DateValidator;
+use Illuminate\Validation\Rules\Enum;
 use Webkul\Core\Contracts\Validations\EmailValidator;
 use Webkul\Core\Contracts\Validations\PhoneValidator;
 
@@ -20,12 +23,12 @@ class PersonValidationService
             'last_name'  => 'required|string|max:255',
 
             // Optional personal fields
-            'salutation'          => 'nullable|string|max:50',
+            'salutation'          => ['nullable', new Enum(PersonSalutation::class)],
             'initials'            => 'nullable|string|max:50',
             'lastname_prefix'     => 'nullable|string|max:50',
             'married_name'        => 'nullable|string|max:255',
             'married_name_prefix' => 'nullable|string|max:50',
-            'gender'              => 'nullable|string|in:Man,Vrouw,Anders',
+            'gender'              => ['nullable', new Enum(PersonGender::class)],
             'date_of_birth'       => ['nullable', new DateValidator],
             'job_title'           => 'nullable|string|max:255',
 

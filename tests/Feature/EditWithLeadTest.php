@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\PersonGender;
+use App\Enums\PersonSalutation;
 use App\Models\Address;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
@@ -41,7 +43,7 @@ test('can access edit with lead page with all fields', function () {
     $data = createPipelineDataEditWithLead();
 
     $person = Person::factory()->create([
-        'salutation'          => 'Mr.',
+        'salutation'          => PersonSalutation::Mevr->value,
         'first_name'          => 'John',
         'last_name'           => 'Doe',
         'lastname_prefix'     => 'van',
@@ -51,7 +53,7 @@ test('can access edit with lead page with all fields', function () {
         'emails'              => [['value' => 'john@example.com', 'label' => 'Work']],
         'phones'              => [['value' => '123456789', 'label' => 'Mobile']],
         'date_of_birth'       => '1990-01-01',
-        'gender'              => 'male',
+        'gender'              => PersonGender::Man->value,
         'user_id'             => test()->user->id,
     ]);
 
@@ -68,7 +70,7 @@ test('can access edit with lead page with all fields', function () {
     ]);
 
     $lead = Lead::factory()->create([
-        'salutation'             => 'Dr.',
+        'salutation'             => PersonSalutation::Dhr->value,
         'first_name'             => 'John',
         'last_name'              => 'Smith',
         'lastname_prefix'        => 'de',
@@ -78,7 +80,7 @@ test('can access edit with lead page with all fields', function () {
         'emails'                 => [['value' => 'john.smith@example.com', 'label' => 'Work']],
         'phones'                 => [['value' => '987654321', 'label' => 'Mobile']],
         'date_of_birth'          => '1985-05-15',
-        'gender'                 => 'male',
+        'gender'                 => PersonGender::Man->value,
         'lead_value'             => 5000.00,
         'description'            => 'Test lead description',
         'lost_reason'            => null,
@@ -112,7 +114,8 @@ test('can access edit with lead page with all fields', function () {
     $response->assertViewHas('fieldDifferences');
 
     // Check that all different fields are shown
-    $response->assertSee('Dr.'); // Different salutation
+    $response->assertSee(PersonSalutation::Dhr->value); // Different salutation
+    $response->assertSee('Smith'); // Different last name
     $response->assertSee('Smith'); // Different last name
     $response->assertSee('de'); // Different lastname_prefix
     $response->assertSee('Williams'); // Different married_name
@@ -239,7 +242,7 @@ test('can update person with multiple lead fields including new fields', functio
     $data = createPipelineDataEditWithLead();
 
     $person = Person::factory()->create([
-        'salutation'          => 'Mr.',
+        'salutation'          => PersonSalutation::Dhr->value,
         'first_name'          => 'John',
         'last_name'           => 'Doe',
         'lastname_prefix'     => 'van',
@@ -249,12 +252,12 @@ test('can update person with multiple lead fields including new fields', functio
         'emails'              => [['value' => 'john@example.com', 'label' => 'Work']],
         'phones'              => [['value' => '123456789', 'label' => 'Mobile']],
         'date_of_birth'       => '1990-01-01',
-        'gender'              => 'male',
+        'gender'              => PersonGender::Man->value,
         'user_id'             => test()->user->id,
     ]);
 
     $lead = Lead::factory()->create([
-        'salutation'             => 'Dr.',
+        'salutation'             => PersonSalutation::Dhr->value,
         'first_name'             => 'John',
         'last_name'              => 'Smith',
         'lastname_prefix'        => 'de',
@@ -264,7 +267,7 @@ test('can update person with multiple lead fields including new fields', functio
         'emails'                 => [['value' => 'john.smith@example.com', 'label' => 'Work']],
         'phones'                 => [['value' => '987654321', 'label' => 'Mobile']],
         'date_of_birth'          => '1985-05-15',
-        'gender'                 => 'female',
+        'gender'                 => PersonGender::Female->value,
         'lead_value'             => 7500.00,
         'description'            => 'Updated lead description',
         'lost_reason'            => 'Competition',
@@ -293,7 +296,7 @@ test('can update person with multiple lead fields including new fields', functio
                 'gender'              => '1',
             ],
             'lead_updates' => [
-                'salutation'          => 'Dr.',
+                'salutation'          => PersonSalutation::Dhr->value,
                 'last_name'           => 'Smith',
                 'lastname_prefix'     => 'de',
                 'married_name'        => 'Williams',
@@ -302,7 +305,7 @@ test('can update person with multiple lead fields including new fields', functio
                 'emails'              => 'john.smith@example.com',
                 'phones'              => '987654321',
                 'date_of_birth'       => '1985-05-15',
-                'gender'              => 'female',
+                'gender'              => PersonGender::Female->value,
             ],
         ]);
 
@@ -310,7 +313,7 @@ test('can update person with multiple lead fields including new fields', functio
 
     // Verify person was updated with all new values
     $person->refresh();
-    expect($person->salutation)->toBe('Dr.');
+    expect($person->salutation)->toBe(PersonSalutation::Dhr);
     expect($person->last_name)->toBe('Smith');
     expect($person->lastname_prefix)->toBe('de');
     expect($person->married_name)->toBe('Williams');
@@ -319,7 +322,7 @@ test('can update person with multiple lead fields including new fields', functio
     expect($person->emails[0]['value'])->toBe('john.smith@example.com');
     expect($person->phones[0]['value'])->toBe('987654321');
     expect($person->date_of_birth->format('Y-m-d'))->toBe('1985-05-15');
-    expect($person->gender)->toBe('female');
+    expect($person->gender)->toBe(PersonGender::Female);
 });
 
 test('address is replaced when person already has address', function () {

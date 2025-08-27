@@ -51,8 +51,10 @@ beforeEach(function () {
         $table->string('id_c')->primary();
         $table->string('gender_c')->nullable();
         $table->string('meisjesnaam_c')->nullable();
+        $table->string('aang_tussenv_c')->nullable();
         $table->string('roepnaam_c')->nullable();
         $table->string('voorletters_c')->nullable();
+        $table->string('tussenvoegsel_c')->nullable();
         $table->string('primary_huisnr_c')->nullable();
         $table->string('primary_huisnr_toevoeging_c')->nullable();
     });
@@ -93,11 +95,14 @@ test('imports person with emails, phones and address from sugarcrm sqlite stub',
     ]);
 
     DB::connection('sugarcrm')->table('contacts_cstm')->insert([
-        'id_c'                        => $contactId,
-        'gender_c'                    => 'female',
-        'voorletters_c'               => 'A.',
-        'primary_huisnr_c'            => '12',
-        'primary_huisnr_toevoeging_c' => 'B',
+        'id_c'                              => $contactId,
+        'gender_c'                          => 'female',
+        'voorletters_c'                     => 'A.',
+        'tussenvoegsel_c'                   => 'van',
+        'meisjesnaam_c'                     => 'Jansen',
+        'aang_tussenv_c'                    => 'de',
+        'primary_huisnr_c'                  => '12',
+        'primary_huisnr_toevoeging_c'       => 'B',
     ]);
 
     DB::connection('sugarcrm')->table('email_addresses')->insert([
@@ -123,7 +128,11 @@ test('imports person with emails, phones and address from sugarcrm sqlite stub',
     $person = Person::where('external_id', $contactId)->first();
     expect($person)->not->toBeNull()
         ->and($person->first_name)->toBe('Anna')
-        ->and($person->gender)->toBe('female')
+        ->and((string) $person->gender->value)->toBe('Vrouw')
+        ->and((string) $person->salutation->value)->toBe('Mevr.')
+        ->and($person->lastname_prefix)->toBe('van')
+        ->and($person->married_name)->toBe('Jansen')
+        ->and($person->married_name_prefix)->toBe('de')
         ->and($person->phones)->toBeArray()
         ->and(collect($person->phones)->pluck('value'))->toContain('010-123', '06-456')
         ->and($person->emails)->toBeArray()

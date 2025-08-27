@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\PersonGender;
+use App\Enums\PersonSalutation;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -80,5 +82,37 @@ abstract class AbstractSugarCRMImport extends Command
     {
         $this->error("\n{$message}");
         Log::error($message, $context);
+    }
+
+    /**
+     * Map Sugar gender string to PersonGender enum.
+     */
+    protected function mapGenderFromSugar(?string $sugarGender): ?PersonGender
+    {
+        if (! $sugarGender) {
+            return null;
+        }
+
+        return match (strtolower(trim($sugarGender))) {
+            'male', 'm' => PersonGender::Man,
+            'female', 'f' => PersonGender::Female,
+            default => null,
+        };
+    }
+
+    /**
+     * Derive salutation from PersonGender enum.
+     */
+    protected function mapSalutationFromGender(?PersonGender $gender): ?PersonSalutation
+    {
+        if (! $gender) {
+            return null;
+        }
+
+        return match ($gender) {
+            PersonGender::Man    => PersonSalutation::Dhr,
+            PersonGender::Female => PersonSalutation::Mevr,
+            default              => null,
+        };
     }
 }

@@ -23,26 +23,7 @@
                 <div class="mb-4">
                     <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Naam</div>
                     <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        @php
-                            $nameParts = array_filter([
-                                $lead->salutation,
-                                $lead->initials,
-                                $lead->first_name,
-                                $lead->lastname_prefix,
-                                $lead->last_name
-                            ]);
-                            
-                            // Add married name in parentheses if it exists
-                            if ($lead->married_name) {
-                                $marriedNamePart = $lead->married_name_prefix 
-                                    ? "({$lead->married_name_prefix} {$lead->married_name})"
-                                    : "({$lead->married_name})";
-                                $nameParts[] = $marriedNamePart;
-                            }
-                            
-                            $fullName = implode(' ', $nameParts);
-                        @endphp
-                        {{ $fullName ?: ($lead->first_name . ' ' . $lead->last_name) }}
+                        {{ $lead->name }}
                     </div>
                 </div>
 
@@ -85,32 +66,6 @@
                     </div>
                 </div>
                 @endif
-
-                <!-- Contact Persons (if linked) -->
-                @if($lead->persons && $lead->persons->count() > 0)
-                <div class="mb-4">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                        Contactpersonen ({{ $lead->persons->count() }})
-                    </div>
-                    <div class="space-y-1">
-                        @foreach($lead->persons as $person)
-                        <div>
-                            <a 
-                                href="{{ route('admin.contacts.persons.view', $person->id) }}" 
-                                target="_blank"
-                                class="text-sm font-medium text-brandColor hover:underline"
-                            >
-                                {{ $person->name }}
-                                <span class="icon-external-link text-xs ml-1"></span>
-                            </a>
-                            @if($person->organization)
-                                                                 <div class="text-xs text-gray-500 ml-2">{{ $person->organization->name }}</div>
-                             @endif
-                         </div>
-                         @endforeach
-                     </div>
-                 </div>
-                 @endif
 
                  <!-- Lead Organization (for billing) -->
                  @if($lead->organization)

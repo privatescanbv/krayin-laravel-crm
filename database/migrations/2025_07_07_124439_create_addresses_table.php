@@ -11,13 +11,13 @@ return new class extends Migration
     {
         Schema::create('addresses', function (Blueprint $table) {
             $table->id();
-            $table->string('street');
+            $table->string('street')->nullable();
             $table->string('house_number');
             $table->string('postal_code');
             $table->string('house_number_suffix')->nullable(); // Addition (apartment, unit, floor)
             $table->string('state')->nullable(); // Optional state or province
-            $table->string('city');
-            $table->string('country');
+            $table->string('city')->nullable();
+            $table->string('country')->nullable();
 
             // Foreign key for Lead (nullable since not all addresses belong to leads)
             $table->unsignedInteger('lead_id')->nullable();

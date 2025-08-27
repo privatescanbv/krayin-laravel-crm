@@ -9,15 +9,25 @@
                 Aanhef
             </x-admin::form.control-group.label>
 
+            @php
+                $current = old('salutation', $entity->salutation?->value); // 'mr' | 'mrs' | null
+            @endphp
+            @php
+                if ($current === null || $current === '') {
+                    $current = $entity->salutation?->value;
+                }
+            @endphp
             <x-admin::form.control-group.control
                 type="select"
                 name="salutation"
-                :value="$entity->salutation ?? ''"
+                value="{{ $current }}"
                 :label="trans('Aanhef')"
             >
-                <option value="">Selecteer aanhef</option>
-                <option value="Dhr." {{ ($entity->salutation ?? '') == 'Dhr.' ? 'selected' : '' }}>Dhr.</option>
-                <option value="Mevr." {{ ($entity->salutation ?? '') == 'Mevr.' ? 'selected' : '' }}>Mevr.</option>
+                <option value="">{{ __('Selecteer aanhef') }}</option>
+
+                @foreach (App\Enums\PersonSalutation::cases() as $case)
+                    <option value="{{ $case->value }}">{{ $case->label() }}</option>
+                @endforeach
             </x-admin::form.control-group.control>
 
             <x-admin::form.control-group.error control-name="salutation"/>
@@ -162,16 +172,23 @@
             Geslacht
         </x-admin::form.control-group.label>
 
+        @php
+            $currentGender = old('gender');
+            if ($currentGender === null || $currentGender === '') {
+                $currentGender = $entity->gender?->value;
+            }
+        @endphp
         <x-admin::form.control-group.control
             type="select"
             name="gender"
-            :value="$entity->gender ?? ''"
+            value="{{ $currentGender }}"
             :label="trans('Geslacht')"
         >
-            <option value="">Selecteer geslacht</option>
-            <option value="Man" {{ ($entity->gender ?? '') == 'Man' ? 'selected' : '' }}>Man</option>
-            <option value="Vrouw" {{ ($entity->gender ?? '') == 'Vrouw' ? 'selected' : '' }}>Vrouw</option>
-            <option value="Anders" {{ ($entity->gender ?? '') == 'Anders' ? 'selected' : '' }}>Anders</option>
+            <option value="">{{ __('Selecteer geslacht') }}</option>
+
+            @foreach (App\Enums\PersonGender::cases() as $case)
+                <option value="{{ $case->value }}">{{ $case->label() }}</option>
+            @endforeach
         </x-admin::form.control-group.control>
 
         <x-admin::form.control-group.error control-name="gender"/>

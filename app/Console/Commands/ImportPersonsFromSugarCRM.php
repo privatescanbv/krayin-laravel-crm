@@ -89,6 +89,8 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                     'cm.meisjesnaam_c',
                     'cm.roepnaam_c',
                     'cm.voorletters_c',
+                    'cm.tussenvoegsel_c',
+                    'cm.aang_tussenv_c',
                     'cm.primary_huisnr_c',
                     'cm.primary_huisnr_toevoeging_c',
                     DB::raw('MAX(CASE WHEN eabr.primary_address = 1 THEN ea.email_address END) as email_primary'),
@@ -143,7 +145,7 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
         $invalidCount = 0;
 
         foreach ($records as $record) {
-            $isValid = ! empty($record->id) && ! empty($record->first_name) && ! empty($record->last_name);
+            $isValid = ! empty($record->id) && ! empty($record->last_name);
             if ($isValid) {
                 $validCount++;
             } else {
@@ -182,14 +184,18 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
         $imported = 0;
         $skipped = 0;
         $errors = 0;
+        $skippedMissingRequired = 0;
+        $skippedAlreadyExisting = 0;
+        $firstErrors = [];
 
         $attributeValueRepo = app(AttributeValueRepository::class);
         foreach ($records as $record) {
             try {
-                // Validate required fields
-                if (empty($record->id) || empty($record->first_name) || empty($record->last_name)) {
+                // Validate required fields (lot first names are empty in SugarCRM)
+                if (empty($record->id) || empty($record->last_name)) {
                     $this->warn("Skipping record with missing required fields: ID={$record->id}, First Name={$record->first_name}, Last Name={$record->last_name}");
                     $skipped++;
+                    $skippedMissingRequired++;
                     $bar->advance();
 
                     continue;
@@ -199,6 +205,8 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                 $existingPerson = Person::where('external_id', $record->id)->first();
                 if ($existingPerson) {
                     $skipped++;
+                    $skippedAlreadyExisting++;
+                    $this->info("Skipping existing person with external_id={$record->id} (already imported as #{$existingPerson->id})");
                     $bar->advance();
 
                     continue;
@@ -225,38 +233,34 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                     $emails[] = ['label' => 'work', 'value' => $record->email_any, 'is_default' => true];
                 }
 
+                $gender = $this->mapGenderFromSugar($record->gender_c ?? null);
+
                 $person = $this->createEntityWithTimestamps(Person::class, [
-                    'external_id'     => $record->id,
-                    'emails'          => $emails,
-                    'phones'          => $phones,
-                    'initials'        => $record->voorletters_c ?? '',
-                    'first_name'      => $record->first_name ?? '',
-                    'last_name'       => $record->last_name ?? '',
-                    'lastname_prefix' => $record->tussenvoegsel_c ?? '',
-                    'maiden_name'     => $record->meisjesnaam_c ?? '',
-                    'gender'          => $this->mapGender($record->gender_c ?? null),
-                    'date_of_birth'   => $record->birthdate ?? null,
+                    'external_id'         => $record->id,
+                    'emails'              => $emails,
+                    'phones'              => $phones,
+                    'initials'            => $record->voorletters_c ?? '',
+                    'salutation'          => $this->mapSalutationFromGender($gender),
+                    'first_name'          => $record->first_name ?? '',
+                    'last_name'           => $record->last_name ?? '',
+                    'lastname_prefix'     => $record->tussenvoegsel_c ?? '',
+                    'married_name'        => $record->meisjesnaam_c ?? '',
+                    'married_name_prefix' => $record->aang_tussenv_c ?? null,
+                    'gender'              => $gender,
+                    'date_of_birth'       => $record->birthdate ?? null,
                 ], [
                     'created_at' => $this->parseSugarDate($record->date_entered),
                     'updated_at' => $this->parseSugarDate($record->date_modified),
                 ]);
 
                 // Create/update primary address for person if present
-                $hasAnyAddress = $record->primary_address_street
-                    || $record->primary_huisnr_c
-                    || $record->primary_address_postalcode
-                    || $record->primary_address_city
-                    || $record->primary_address_state
-                    || $record->primary_address_country
-                    || $record->primary_huisnr_toevoeging_c;
-
-                if ($hasAnyAddress) {
+                if ($record->primary_huisnr_c && $record->primary_address_postalcode) {
                     Address::create([
                         'person_id'           => $person->id,
                         'street'              => $record->primary_address_street ?? null,
-                        'house_number'        => $record->primary_huisnr_c ?? null,
+                        'house_number'        => $record->primary_huisnr_c,
                         'house_number_suffix' => $record->primary_huisnr_toevoeging_c ?? null,
-                        'postal_code'         => $record->primary_address_postalcode ?? null,
+                        'postal_code'         => $record->primary_address_postalcode,
                         'state'               => $record->primary_address_state ?? null,
                         'city'                => $record->primary_address_city ?? null,
                         'country'             => $record->primary_address_country ?? null,
@@ -277,6 +281,12 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                     'record_id' => $record->id ?? 'unknown',
                     'error'     => $e->getMessage(),
                 ]);
+                if (count($firstErrors) < 5) {
+                    $firstErrors[] = [
+                        'id'      => $record->id ?? 'unknown',
+                        'message' => $e->getMessage(),
+                    ];
+                }
                 $bar->advance();
             }
         }
@@ -286,19 +296,18 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
         $this->info("✓ Imported: {$imported}");
         $this->info("⚠ Skipped: {$skipped}");
         $this->info("✗ Errors: {$errors}");
-    }
-
-    private function mapGender(?string $sugarGender): ?string
-    {
-        if (! $sugarGender) {
-            return null;
+        $this->line('');
+        $this->info('Skip breakdown:');
+        $this->info("- Missing required fields: {$skippedMissingRequired}");
+        $this->info("- Already existing (external_id present): {$skippedAlreadyExisting}");
+        if (! empty($firstErrors)) {
+            $this->line('');
+            $this->warn('First errors:');
+            foreach ($firstErrors as $err) {
+                $this->warn("  - ID={$err['id']}: {$err['message']}");
+            }
         }
-        $g = strtolower(trim($sugarGender));
-
-        return match ($g) {
-            'male', 'm' => 'male',
-            'female', 'f' => 'female',
-            default => null,
-        };
     }
+
+    // mapping now provided by AbstractSugarCRMImport: mapGenderFromSugar, mapSalutationFromGender
 }

@@ -194,7 +194,7 @@
                                     <!-- Card Footer -->
                                     <div
                                         class="flex items-center justify-between mt-2 pt-2 border-t border-gray-200 dark:border-gray-600"
-                                        v-if="(element.open_activities_count && element.open_activities_count > 0) || (element.unread_emails_count && element.unread_emails_count > 0)"
+                                        v-if="element.has_duplicates || (element.open_activities_count && element.open_activities_count > 0) || (element.unread_emails_count && element.unread_emails_count > 0)"
                                     >
                                         <div class="flex items-center gap-3">
                                             <!-- Open Activities Count -->

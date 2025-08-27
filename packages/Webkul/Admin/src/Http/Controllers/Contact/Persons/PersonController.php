@@ -79,6 +79,14 @@ class PersonController extends Controller
         $data = $request->all();
         $data['entity_type'] = 'persons';
 
+        // Normalize enum-like fields to strings for persistence
+        if (isset($data['salutation']) && $data['salutation'] instanceof \BackedEnum) {
+            $data['salutation'] = $data['salutation']->value;
+        }
+        if (isset($data['gender']) && $data['gender'] instanceof \BackedEnum) {
+            $data['gender'] = $data['gender']->value;
+        }
+
         // Filter out entity field if present
         if (isset($data['entity'])) {
             unset($data['entity']);
@@ -196,6 +204,14 @@ class PersonController extends Controller
 
         $data = $request->all();
         $data['entity_type'] = 'persons';
+
+        // Normalize enum-like fields to strings for persistence
+        if (isset($data['salutation']) && $data['salutation'] instanceof \BackedEnum) {
+            $data['salutation'] = $data['salutation']->value;
+        }
+        if (isset($data['gender']) && $data['gender'] instanceof \BackedEnum) {
+            $data['gender'] = $data['gender']->value;
+        }
 
         // Filter out entity field if present
         if (isset($data['entity'])) {
@@ -1196,9 +1212,22 @@ class PersonController extends Controller
      */
     private function valuesAreDifferent($value1, $value2): bool
     {
-        // Handle null/empty comparisons
-        $value1 = $value1 === null ? '' : $value1;
-        $value2 = $value2 === null ? '' : $value2;
+        // Unwrap enums to their backing values
+        if ($value1 instanceof \BackedEnum) {
+            $value1 = $value1->value;
+        }
+        if ($value2 instanceof \BackedEnum) {
+            $value2 = $value2->value;
+        }
+
+        // If either is an array, compare directly (no trim)
+        if (is_array($value1) || is_array($value2)) {
+            return $value1 !== $value2;
+        }
+
+        // Normalize nulls to empty strings and cast scalars to string
+        $value1 = $value1 === null ? '' : (string) $value1;
+        $value2 = $value2 === null ? '' : (string) $value2;
 
         return trim($value1) !== trim($value2);
     }

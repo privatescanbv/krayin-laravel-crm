@@ -2,6 +2,8 @@
 
 namespace Webkul\Contact\Models;
 
+use App\Enums\PersonGender;
+use App\Enums\PersonSalutation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -42,6 +44,8 @@ class Person extends Model implements PersonContract
         'emails'          => 'array',
         'phones'          => 'array',
         'date_of_birth'   => 'date',
+        'gender'          => PersonGender::class,
+        'salutation'      => PersonSalutation::class,
     ];
 
     /**
@@ -69,6 +73,42 @@ class Person extends Model implements PersonContract
         'created_by',
         'updated_by',
     ];
+
+    /**
+     * Normalize gender assignment to allow empty strings and enums.
+     */
+    public function setGenderAttribute($value): void
+    {
+        if ($value === '' || $value === null) {
+            $this->attributes['gender'] = null;
+            return;
+        }
+
+        if ($value instanceof \BackedEnum) {
+            $this->attributes['gender'] = $value->value;
+            return;
+        }
+
+        $this->attributes['gender'] = $value;
+    }
+
+    /**
+     * Normalize salutation assignment to allow empty strings and enums.
+     */
+    public function setSalutationAttribute($value): void
+    {
+        if ($value === '' || $value === null) {
+            $this->attributes['salutation'] = null;
+            return;
+        }
+
+        if ($value instanceof \BackedEnum) {
+            $this->attributes['salutation'] = $value->value;
+            return;
+        }
+
+        $this->attributes['salutation'] = $value;
+    }
 
     /**
      * Get the user that owns the lead.

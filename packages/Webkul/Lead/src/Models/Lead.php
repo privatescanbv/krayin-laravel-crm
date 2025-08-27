@@ -2,6 +2,8 @@
 
 namespace Webkul\Lead\Models;
 
+use App\Enums\PersonGender;
+use App\Enums\PersonSalutation;
 use App\Models\Anamnesis;
 use App\Models\Department;
 use Carbon\Carbon;
@@ -35,6 +37,8 @@ class Lead extends Model implements LeadContract
         'emails'              => 'array',
         'phones'              => 'array',
         'combine_order'       => 'boolean',
+        'gender'              => PersonGender::class,
+        'salutation'          => PersonSalutation::class,
     ];
 
     /**
@@ -84,6 +88,42 @@ class Lead extends Model implements LeadContract
         'created_by',
         'updated_by',
     ];
+
+    /**
+     * Normalize gender assignment to allow empty strings and enums.
+     */
+    public function setGenderAttribute($value): void
+    {
+        if ($value === '' || $value === null) {
+            $this->attributes['gender'] = null;
+            return;
+        }
+
+        if ($value instanceof \BackedEnum) {
+            $this->attributes['gender'] = $value->value;
+            return;
+        }
+
+        $this->attributes['gender'] = $value;
+    }
+
+    /**
+     * Normalize salutation assignment to allow empty strings and enums.
+     */
+    public function setSalutationAttribute($value): void
+    {
+        if ($value === '' || $value === null) {
+            $this->attributes['salutation'] = null;
+            return;
+        }
+
+        if ($value instanceof \BackedEnum) {
+            $this->attributes['salutation'] = $value->value;
+            return;
+        }
+
+        $this->attributes['salutation'] = $value;
+    }
 
     /**
      * Create a new factory instance for the model.

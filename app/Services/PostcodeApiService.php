@@ -11,7 +11,7 @@ class PostcodeApiService
     {
         $apiToken = config('services.postcodeapi.token');
         $apiUrl = config('services.postcodeapi.url');
-        if (is_null(config('services.postcodeapi.token'))) {
+        if (is_null($apiToken)) {
             Log::error('Could not execute address lookup, missing env key POSTCODEAPI_TOKEN');
 
             return response()->json(['error' => 'Internal Server Error'], 500);
@@ -22,7 +22,7 @@ class PostcodeApiService
             $number = 29;
         }
         $response = Http::withHeaders([
-            'X-Api-Key' => config('services.postcodeapi.token'),
+            'X-Api-Key' => $apiToken,
         ])->get("{$apiUrl}{$postcode}/{$number}");
 
         if ($response->successful()) {

@@ -33,8 +33,8 @@ class PersonResource extends JsonResource
             'married_name_prefix' => $this->married_name_prefix,
             'initials'        => $this->initials,
             'date_of_birth'   => $this->date_of_birth ? $this->date_of_birth->format('Y-m-d') : null,
-            'gender'          => $this->gender,
-            'salutation'      => $this->salutation,
+            'gender'          => $this->gender?->value,
+            'salutation'      => $this->salutation?->value,
             'created_at'      => $this->created_at,
             'updated_at'      => $this->updated_at,
         ];

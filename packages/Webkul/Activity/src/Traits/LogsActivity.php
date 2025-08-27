@@ -171,11 +171,13 @@ trait LogsActivity
      */
     protected static function decodeValueIfJson($value)
     {
-        if (
-            ! is_array($value)
-            && json_decode($value, true)
-        ) {
-            $value = json_decode($value, true);
+        // Only attempt json_decode on strings
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $value = $decoded;
+            }
         }
 
         if (! is_array($value)) {

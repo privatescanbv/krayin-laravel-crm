@@ -463,8 +463,51 @@ class LeadController extends Controller
     {
         $this->validate(request(), [
             'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
+            'lost_reason' => 'nullable|string',
+            'closed_at' => 'nullable|date',
         ]);
-        return $this->updateStageId($leadId, request()->input('lead_pipeline_stage_id'));
+
+        $data = [
+            'lead_pipeline_stage_id' => request()->input('lead_pipeline_stage_id'),
+        ];
+
+        // Add optional fields if provided
+        if (request()->has('lost_reason')) {
+            $data['lost_reason'] = request()->input('lost_reason');
+        }
+
+        if (request()->has('closed_at')) {
+            $data['closed_at'] = request()->input('closed_at');
+        }
+
+        return $this->updateStageWithData($leadId, $data);
+    }
+
+    /**
+     * Update the lead stage with additional data.
+     */
+    public function updateStageWithData(int $leadId, array $data): JsonResponse
+    {
+        $lead = $this->leadRepository->findOrFail($leadId);
+
+        //validate if the stage exists in the pipeline
+        $lead->pipeline->stages()
+            ->where('id', $data['lead_pipeline_stage_id'])
+            ->firstOrFail();
+
+        Event::dispatch('lead.update.before', $leadId);
+
+        $lead = $this->leadRepository->update(
+            array_merge($data, ['entity_type' => 'leads']),
+            $leadId,
+            array_keys($data)
+        );
+
+        Event::dispatch('lead.update.after', $lead);
+
+        return response()->json([
+            'message' => trans('admin::app.leads.update-success'),
+        ]);
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Address;
 use Database\Seeders\TestSeeder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Schema\Blueprint;
@@ -303,7 +304,7 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
     expect($lead->created_at->format('Y-m-d H:i:s'))->toBe($expected);
 
     // Address created and mapped
-    $address = \App\Models\Address::where('lead_id', $lead->id)->first();
+    $address = Address::where('lead_id', $lead->id)->first();
     expect($address)->not->toBeNull()
         ->and($address->street)->toBe('Leadstraat')
         ->and($address->house_number)->toBe('123')

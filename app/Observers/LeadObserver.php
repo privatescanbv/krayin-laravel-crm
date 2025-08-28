@@ -50,6 +50,16 @@ class LeadObserver
                     throw new HttpException(422, 'Contactpersoon is verplicht in de status "Klant adviseren"');
                 }
             }
+
+            // If changing to 'lost' stage, check if lost_reason is provided
+            if ($newStageCode === 'lost') {
+                if (empty($lead->lost_reason)) {
+                    Log::warning('Cannot update lead: missing lost_reason for lost stage', [
+                        'lead_id' => $lead->id,
+                    ]);
+                    throw new HttpException(422, 'Reden van verlies is verplicht bij status "Verloren"');
+                }
+            }
         }
     }
 

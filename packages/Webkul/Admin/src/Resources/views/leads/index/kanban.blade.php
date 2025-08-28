@@ -276,8 +276,80 @@
 
                 {!! view_render_event('admin.leads.index.kanban.content.after') !!}
             </div>
+
+            <!-- Lost Stage Modal -->
+            <x-admin::modal ref="lostStageModal">
+                <x-slot:header>
+                    <h3 class="text-base font-semibold dark:text-white">
+                        Meer details nodig
+                    </h3>
+                </x-slot>
+
+                <x-slot:content>
+                    <div v-if="currentStageUpdate">
+                        <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                            Lead "<strong>@{{ getLeadName(currentStageUpdate.lead) }}</strong>" wordt verplaatst naar status "Verloren"
+                        </p>
+
+                        <!-- Lost Reason -->
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>
+                                Reden van verlies
+                            </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="textarea"
+                                name="lost_reason"
+                                v-model="currentStageUpdate.lost_reason"
+                                placeholder="Vul de reden van verlies in..."
+                                required
+                            />
+                        </x-admin::form.control-group>
+
+                        <!-- Closed At -->
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>
+                                Gesloten op
+                            </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                name="closed_at"
+                                v-model="currentStageUpdate.closed_at"
+                                placeholder="dd-mm-yyyy"
+                                required
+                            />
+                        </x-admin::form.control-group>
+                    </div>
+                    <div v-else>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">
+                            Laden...
+                        </p>
+                    </div>
+                </x-slot>
+
+                <x-slot:footer>
+                    <button
+                        type="button"
+                        class="secondary-button mr-2"
+                        @click="cancelLostStage"
+                    >
+                        Annuleren
+                    </button>
+
+                    <button
+                        type="button"
+                        class="primary-button"
+                        @click="handleLostStageSubmit"
+                    >
+                        Opslaan
+                    </button>
+                </x-slot>
+            </x-admin::modal>
         </template>
     </script>
+
+
 
     <script type="module">
         document.addEventListener('DOMContentLoaded', function() {
@@ -312,6 +384,7 @@
                     },
                     hideWonLost: true,
                     wonLostLabel: 'Toon gewonnen/verloren',
+                    currentStageUpdate: null,
                 };
             },
 
@@ -556,20 +629,103 @@
                         return;
                     }
 
-                    stage.lead_value = 0;
+                    // Check if moving to lost stage
+                    if (stage.code === 'lost') {
+                        this.showLostModal(stage, event.added.element);
+                        return;
+                    }
 
+                    // Update stage counters for non-lost stages
+                    stage.lead_value = 0;
                     this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage.sort_order].leads.meta.total + 1;
 
+                    this.updateLeadStage(event.added.element.id, stage.id);
+                },
+
+                /**
+                 * Show modal for lost stage with required fields
+                 */
+                showLostModal(stage, lead) {
+                    this.currentStageUpdate = {
+                        stage: stage,
+                        lead: lead,
+                        lost_reason: '',
+                        closed_at: new Date().toLocaleDateString('nl-NL')
+                    };
+
+                    // Use nextTick to ensure the modal is rendered before opening
+                    this.$nextTick(() => {
+                        this.$refs.lostStageModal.open();
+                    });
+                },
+
+                /**
+                 * Handle form submission for lost stage
+                 */
+                handleLostStageSubmit() {
+                    if (!this.currentStageUpdate.lost_reason.trim()) {
+                        this.$emitter.emit('add-flash', { type: 'error', message: 'Reden van verlies is verplicht' });
+                        return;
+                    }
+
+                    this.updateLeadStage(
+                        this.currentStageUpdate.lead.id, 
+                        this.currentStageUpdate.stage.id,
+                        {
+                            lost_reason: this.currentStageUpdate.lost_reason,
+                            closed_at: this.currentStageUpdate.closed_at
+                        }
+                    );
+
+                    if (this.$refs.lostStageModal) {
+                        this.$refs.lostStageModal.close();
+                    }
+                    this.currentStageUpdate = null;
+                },
+
+                /**
+                 * Update lead stage with optional additional data
+                 */
+                updateLeadStage(leadId, stageId, additionalData = {}) {
+                    const data = {
+                        'lead_pipeline_stage_id': stageId,
+                        ...additionalData
+                    };
+
                     this.$axios
-                        .put("{{ route('admin.leads.stage.update', 'replace') }}".replace('replace', event.added.element.id), {
-                            'lead_pipeline_stage_id': stage.id
-                        })
+                        .put("{{ route('admin.leads.stage.update', 'replace') }}".replace('replace', leadId), data)
                         .then(response => {
                             this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                            
+                            // Update stage counters after successful update
+                            const stage = this.stages.find(s => s.id === stageId);
+                            if (stage) {
+                                stage.lead_value = 0;
+                                this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage.sort_order].leads.meta.total + 1;
+                            }
                         })
                         .catch(error => {
                             this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
                         });
+                },
+
+                /**
+                 * Get lead name for display
+                 */
+                getLeadName(lead) {
+                    const firstName = lead.first_name || '';
+                    const lastName = lead.last_name || '';
+                    return (firstName + ' ' + lastName).trim() || 'Onbekende lead';
+                },
+
+                /**
+                 * Cancel lost stage modal
+                 */
+                cancelLostStage() {
+                    if (this.$refs.lostStageModal) {
+                        this.$refs.lostStageModal.close();
+                    }
+                    this.currentStageUpdate = null;
                 },
 
                 /**

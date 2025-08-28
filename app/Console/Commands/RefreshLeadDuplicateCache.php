@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Services\LeadDuplicateCacheService;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class RefreshLeadDuplicateCache extends Command
 {
@@ -137,7 +138,7 @@ class RefreshLeadDuplicateCache extends Command
     private function incrementalCacheRefresh(): void
     {
         // Get leads modified in the last 24 hours
-        $recentLeads = \DB::table('leads')
+        $recentLeads = DB::table('leads')
             ->where('updated_at', '>=', now()->subDay())
             ->pluck('id');
 

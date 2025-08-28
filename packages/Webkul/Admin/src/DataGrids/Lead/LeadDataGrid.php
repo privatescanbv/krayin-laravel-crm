@@ -141,14 +141,7 @@ class LeadDataGrid extends DataGrid
             'filterable_options' => $this->sourceRepository->all(['name as label', 'id as value'])->toArray(),
         ]);
 
-        $this->addColumn([
-            'index'      => 'lead_value',
-            'label'      => trans('admin::app.leads.index.datagrid.lead-value'),
-            'type'       => 'string',
-            'sortable'   => true,
-            'searchable' => false,
-            'filterable' => true,
-        ]);
+        // Removed lead_value column from table view per request
 
         $this->addColumn([
             'index'              => 'lead_type_name',

@@ -207,6 +207,11 @@
 
                     this.nextStage = stage;
 
+                    // Default 'Gesloten op' (closed_at) to today in d-m-YYYY (nl-NL) only if empty
+                    if (this.nextStage.code === 'lost' && !this.nextStage.closed_at) {
+                        this.nextStage.closed_at = new Date().toLocaleDateString('nl-NL');
+                    }
+
                     this.$refs.stageUpdateModal.open();
                 },
 

@@ -311,6 +311,7 @@
                         '#DCFCE7': '#16A34A',
                     },
                     hideWonLost: true,
+                    wonLostLabel: 'Toon gewonnen/verloren',
                 };
             },
 
@@ -322,11 +323,7 @@
 
             mounted () {
                 this.boot();
-
-                // Register global function for button access
-                window.toggleWonLost = () => {
-                    this.toggleWonLost();
-                };
+                this.setWonLostButtonText();
             },
 
             methods: {
@@ -379,6 +376,8 @@
                                 this.hideWonLost = currentKanban.hideWonLost;
                             }
 
+                            this.setWonLostButtonText();
+
                             this.get()
                                 .then(response => {
                                     for (let [sortOrder, data] of Object.entries(response.data)) {
@@ -395,6 +394,7 @@
                             for (let [sortOrder, data] of Object.entries(response.data)) {
                                 this.stageLeads[sortOrder] = data;
                             }
+                            this.setWonLostButtonText();
                         });
                 },
 
@@ -697,10 +697,7 @@
                     this.updateKanbans();
 
                     // Update button text
-                    const buttonText = document.getElementById('toggle-won-lost-text');
-                    if (buttonText) {
-                        buttonText.textContent = this.hideWonLost ? 'Toon gewonnen/verloren' : 'Verberg gewonnen/verloren';
-                    }
+                    this.setWonLostButtonText();
 
                     // Clear existing data and refetch with new exclude_won_lost parameter
                     this.stageLeads = {};
@@ -717,11 +714,15 @@
                             this.updateKanbans();
 
                             // Update button text back
-                            const buttonText = document.getElementById('toggle-won-lost-text');
-                            if (buttonText) {
-                                buttonText.textContent = this.hideWonLost ? 'Toon gewonnen/verloren' : 'Verberg gewonnen/verloren';
-                            }
+                            this.setWonLostButtonText();
                         });
+                },
+
+                /**
+                 * Sync toggle button label with state.
+                 */
+                setWonLostButtonText() {
+                    this.wonLostLabel = this.hideWonLost ? 'Toon gewonnen/verloren' : 'Verberg gewonnen/verloren';
                 },
             }
         });

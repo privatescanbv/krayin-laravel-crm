@@ -141,6 +141,7 @@ return [
                     'call' => 'Bellen',
                     'meeting' => 'Vergadering',
                     'lunch' => 'Lunch',
+                    'internal-task' => 'Interne taak',
                     'save-btn' => 'Activiteit opslaan',
                     'participants' => [
                         'title' => 'Deelnemers',
@@ -192,8 +193,8 @@ return [
                         'description' => 'Geen notities gevonden. Je kunt notities toevoegen via de Notitie-knop in het linker paneel.',
                     ],
                     'calls' => [
-                        'title' => 'Geen telefoontjes gevonden',
-                        'description' => 'Geen telefoontjes gevonden. Je kunt telefoontjes toevoegen via de Activiteit-knop in het linker paneel en kies het type Bellen.',
+                        'title' => 'Geen gesprekken gevonden',
+                        'description' => 'Geen gesprekken gevonden. Je kunt gesprekken toevoegen via de Activiteit-knop in het linker paneel en kies het type Bellen.',
                     ],
                     'meetings' => [
                         'title' => 'Geen vergaderingen gevonden',
@@ -551,7 +552,7 @@ return [
                 'activities' => [
                     'index' => [
                         'all' => 'Alles',
-                        'calls' => 'Telefoontjes',
+                        'calls' => 'Gesprekken',
                         'meetings' => 'Vergaderingen',
                         'tasks' => 'Taken',
                         'lunches' => 'Lunches',

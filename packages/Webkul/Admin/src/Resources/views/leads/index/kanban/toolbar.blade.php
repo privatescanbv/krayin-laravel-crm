@@ -20,9 +20,9 @@
         <button
             type="button"
             class="secondary-button whitespace-nowrap"
-            onclick="window.toggleWonLost && window.toggleWonLost()"
+            @click="$root.$refs.leadsKanban && $root.$refs.leadsKanban.toggleWonLost()"
         >
-            <span id="toggle-won-lost-text">Toon gewonnen/verloren</span>
+            <span>@{{ $root.$refs.leadsKanban ? $root.$refs.leadsKanban.wonLostLabel : 'Toon gewonnen/verloren' }}</span>
         </button>
 
         <div class="z-10 hidden w-full divide-y divide-gray-100 rounded bg-white shadow dark:bg-gray-900"></div>

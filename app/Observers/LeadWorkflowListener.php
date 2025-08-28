@@ -16,6 +16,14 @@ class LeadWorkflowListener
      */
     public function handle(Lead $lead): void
     {
+        // Skip workflow processing if webhooks are disabled (e.g., during imports)
+        if (!config('webhook.enabled', true)) {
+            Log::info('LeadWorkflowListener: Skipping - webhooks are disabled (likely during import)', [
+                'lead_id' => $lead->id,
+            ]);
+            return;
+        }
+
         // Refresh the lead to get the latest data from database
         $lead->refresh();
 

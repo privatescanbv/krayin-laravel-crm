@@ -8,25 +8,21 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
         Schema::table('leads', function (Blueprint $table) {
-            $table->date('expected_close_date')->nullable();
+            $table->dropColumn('expected_close_date');
         });
     }
 
     /**
      * Reverse the migrations.
-     *
-     * @return void
      */
-    public function down()
+    public function down(): void
     {
         Schema::table('leads', function (Blueprint $table) {
-            $table->dropColumn('expected_close_date');
+            $table->date('expected_close_date')->nullable();
         });
     }
 };

@@ -21,7 +21,6 @@ async function generateLead(adminPage) {
     await adminPage.fill('input[name="title"]', leadTitle);
     await adminPage.fill('textarea[name="description"]', leadDescription);
     await adminPage.locator('select[name="lead_source_id"]').selectOption("1");
-    await adminPage.fill('input[name="expected_close_date"]', leadDate);
     await adminPage.locator('select[name="lead_type_id"]').selectOption("1");
     await adminPage.locator('select[name="user_id"]').selectOption("1");
     await adminPage.fill('input[name="lead_value"]', '1000');

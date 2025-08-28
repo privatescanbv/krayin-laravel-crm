@@ -135,16 +135,11 @@
                             <!-- afdeling and other custom fields -->
                             <x-admin::attributes
                                 :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                    ['code', 'NOTIN', ['lead_value', 'lead_type_id', 'lead_source_id', 'expected_close_date', 'user_id', 'lead_pipeline_id', 'lead_pipeline_stage_id', 'lead_channel_id']],
+                                    ['code', 'NOTIN', ['lead_value', 'lead_type_id', 'lead_source_id', 'user_id', 'lead_pipeline_id', 'lead_pipeline_stage_id', 'lead_channel_id']],
                                     'entity_type' => 'leads',
                                     'quick_add'   => 1
                                 ])"
-                                :custom-validations="[
-                                    'expected_close_date' => [
-                                        'date_format:d-m-Y',
-                                        'after:' .  Carbon::yesterday()->format('Y-m-d')
-                                    ],
-                                ]"
+                                :custom-validations="[]"
                                 :entity="$lead"
                             />
 
@@ -270,12 +265,7 @@
                                             'entity_type' => 'leads',
                                             'quick_add'   => 1
                                         ])"
-                                        :custom-validations="[
-                                            'expected_close_date' => [
-                                                'date_format:d-m-Y',
-                                                'after:' .  Carbon::yesterday()->format('Y-m-d')
-                                            ],
-                                        ]"
+                                        :custom-validations="[]"
                                         :entity="$lead"
                                     />
                                 </div>
@@ -283,16 +273,11 @@
                                 <div class="w-full">
                                     <x-admin::attributes
                                         :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                            ['code', 'IN', ['expected_close_date', 'user_id']],
+                                            ['code', 'IN', ['user_id']],
                                             'entity_type' => 'leads',
                                             'quick_add'   => 1
                                         ])"
-                                        :custom-validations="[
-                                            'expected_close_date' => [
-                                                'date_format:d-m-Y',
-                                                'after:' .  Carbon::yesterday()->format('Y-m-d')
-                                            ],
-                                        ]"
+                                        :custom-validations="[]"
                                         :entity="$lead"
                                     />
                                 </div>

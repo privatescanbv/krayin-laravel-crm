@@ -33,7 +33,6 @@ class Lead extends Model implements LeadContract
 
     protected $casts = [
         'closed_at'           => 'datetime',
-        'expected_close_date' => 'date',
         'date_of_birth'       => 'date',
         'emails'              => 'array',
         'phones'              => 'array',
@@ -64,7 +63,6 @@ class Lead extends Model implements LeadContract
         'lead_value',
         'status',
         'lost_reason',
-        'expected_close_date',
         'closed_at',
         'user_id',
         'lead_source_id',
@@ -396,20 +394,7 @@ class Lead extends Model implements LeadContract
         return $this->emails()->where('is_read', 0)->count();
     }
 
-    /**
-     * Get the remaining days until due date (expected_close_date).
-     */
-    public function getDaysUntilDueDateAttribute(): ?int
-    {
-        if (!$this->expected_close_date) {
-            return null;
-        }
 
-        $today = Carbon::today();
-        $dueDate = Carbon::parse($this->expected_close_date);
-
-        return $today->diffInDays($dueDate, false);
-    }
 
     public function getNameAttribute($value): string
     {

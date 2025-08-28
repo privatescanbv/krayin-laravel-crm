@@ -39,7 +39,6 @@ class LeadRepository extends Repository
         'lead_pipeline_stage_id',
         'created_at',
         'closed_at',
-        'expected_close_date',
     ];
 
     /**
@@ -161,10 +160,6 @@ class LeadRepository extends Repository
             $personsToAttach = array_merge($personsToAttach, array_filter($data['person_ids']));
         }
 
-        if (empty($data['expected_close_date'])) {
-            $data['expected_close_date'] = null;
-        }
-
         // Handle empty organization_id
         if (empty($data['organization_id']) || !is_numeric($data['organization_id'])) {
             $data['organization_id'] = null;
@@ -264,10 +259,6 @@ class LeadRepository extends Repository
             } else {
                 $data['closed_at'] = null;
             }
-        }
-
-        if (empty($data['expected_close_date'])) {
-            $data['expected_close_date'] = null;
         }
 
         // Handle empty organization_id

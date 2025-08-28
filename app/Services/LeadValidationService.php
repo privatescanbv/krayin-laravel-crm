@@ -39,7 +39,6 @@ class LeadValidationService
 
             // Lead specific fields
             'lead_value'          => 'nullable|numeric|min:0',
-            'expected_close_date' => 'nullable|date|after:yesterday',
             'lead_source_id'      => 'nullable|numeric|exists:lead_sources,id',
             'lead_channel_id'     => 'nullable|numeric|exists:lead_channels,id',
             'lead_type_id'        => 'nullable|numeric|exists:lead_types,id',

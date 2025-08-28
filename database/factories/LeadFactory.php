@@ -62,7 +62,6 @@ class LeadFactory extends Factory
             'lead_value'             => $this->faker->randomFloat(2, 100, 10000),
             'status'                 => $this->faker->boolean(),
             'lost_reason'            => $this->faker->optional()->sentence(),
-            'expected_close_date'    => $this->faker->optional()->dateTimeBetween('now', '+3 months'),
             'closed_at'              => $this->faker->optional()->dateTimeBetween('-1 month', 'now'),
             'user_id'                => $user->id,
             'lead_source_id'         => $source->id,
@@ -165,17 +164,5 @@ class LeadFactory extends Factory
         });
     }
 
-    /**
-     * Indicate that the lead is expected to close soon.
-     *
-     * @return Factory
-     */
-    public function closingSoon()
-    {
-        return $this->state(function (array $attributes) {
-            return [
-                'expected_close_date' => $this->faker->dateTimeBetween('now', '+1 week'),
-            ];
-        });
-    }
+
 }

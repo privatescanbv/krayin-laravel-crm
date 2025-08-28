@@ -72,7 +72,7 @@ TABLE(Lead, "lead") {
   FOREIGN_KEY(department_id): bigint
   status: string
   lost_reason: text
-  expected_close_date: date
+
   closed_at: datetime
   emails: json
   phones: json

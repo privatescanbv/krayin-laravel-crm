@@ -364,7 +364,7 @@
                             { field: 'status', label: 'Status', type: 'stage' }, // Special handling for status as stage name
                             { field: 'description', label: 'Beschrijving', type: 'simple', cssClass: 'text-sm text-center break-words max-w-xs' },
                             { field: 'lost_reason', label: 'Reden verlies', type: 'simple' },
-                            { field: 'expected_close_date', label: 'Verwachte sluitingsdatum', type: 'simple' },
+
                         ]
                     };
                 },

@@ -38,7 +38,6 @@ class Importer extends AbstractImporter
         'lead_type_id',
         'lead_pipeline_id',
         'lead_pipeline_stage_id',
-        'expected_close_date',
         'product',
     ];
 

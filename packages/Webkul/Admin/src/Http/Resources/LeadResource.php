@@ -33,7 +33,6 @@ class LeadResource extends JsonResource
             'lead_value'           => $this->lead_value,
             'status'               => $this->status,
             'lost_reason'          => $this->lost_reason,
-            'expected_close_date'  => $this->expected_close_date?->format('Y-m-d'),
             'closed_at'            => $this->closed_at?->format('Y-m-d H:i:s'),
             'rotten_days'          => $this->rotten_days,
             'created_at'           => $this->created_at?->format('Y-m-d H:i:s'),

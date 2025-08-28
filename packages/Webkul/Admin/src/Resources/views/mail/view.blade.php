@@ -1102,15 +1102,12 @@
                                                     <div class="w-1/2">
                                                         <x-admin::attributes
                                                             :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                                                ['code', 'IN', ['expected_close_date']],
+                                                                ['code', 'IN', []],
                                                                 'entity_type' => 'leads',
                                                                 'quick_add'   => 1
                                                             ])"
                                                             :custom-validations="[
-                                                                'expected_close_date' => [
-                                                                    'date_format:d-m-Y',
-                                                                    'after:' .  \Carbon\Carbon::yesterday()->format('Y-m-d')
-                                                                ],
+
                                                             ]"
                                                         />
                                                     </div>

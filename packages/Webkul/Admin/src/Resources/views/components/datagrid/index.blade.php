@@ -286,7 +286,12 @@
                  * @returns {void}
                  */
                 changePage(newPage) {
-                    this.applied.pagination.page = newPage;
+                    const lastPage = this.available?.meta?.last_page ?? 1;
+                    let targetPage = Number(newPage) || 1;
+                    if (targetPage < 1) targetPage = 1;
+                    if (targetPage > lastPage) targetPage = lastPage;
+
+                    this.applied.pagination.page = targetPage;
 
                     this.get();
                 },

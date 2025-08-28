@@ -29,6 +29,26 @@
 
                 {!! view_render_event('admin.contact.persons.view.tags.before', ['person' => $person]) !!}
 
+                <!-- Duplicate Detection -->
+                @if (($duplicateCount ?? 0) > 0)
+                    <div class="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="icon-warning text-orange-600"></span>
+                                <span class="text-sm font-medium text-orange-800 dark:text-orange-200">
+                                    Potentiële duplicaten gevonden ({{ $duplicateCount }} similar persons{{ $duplicateCount > 1 ? 's' : '' }})
+                                </span>
+                            </div>
+                            <a
+                                href="{{ route('admin.contacts.persons.duplicates.index', $person->id) }}"
+                                class="rounded bg-orange-600 px-3 py-1 text-xs text-white hover:bg-orange-700"
+                            >
+                                Duplicaten samenvoegen
+                            </a>
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Tags -->
                 <x-admin::tags
                     :attach-endpoint="route('admin.contacts.persons.tags.attach', $person->id)"

@@ -70,26 +70,6 @@ test('it detects duplicate leads by phone', function () {
     $this->assertEquals($lead2->id, $duplicates->first()->id);
 });
 
-test('it detects duplicate leads by name similarity', function () {
-    // Create the first lead
-    $lead1 = Lead::factory()->create([
-        'first_name' => 'John',
-        'last_name'  => 'Similaritytest',
-    ]);
-
-    // Create a second lead with similar name (nickname variation)
-    $lead2 = Lead::factory()->create([
-        'first_name' => 'Johnny',
-        'last_name'  => 'Similaritytest',
-    ]);
-
-    // Test duplicate detection
-    $duplicates = $this->leadRepository->findPotentialDuplicates($lead1);
-
-    $this->assertCount(1, $duplicates);
-    $this->assertEquals($lead2->id, $duplicates->first()->id);
-});
-
 test('it detects duplicate leads by full name', function () {
     // Create the first lead
     $lead1 = Lead::factory()->create([

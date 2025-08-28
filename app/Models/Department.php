@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\Departments;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,12 +13,12 @@ class Department extends Model
 
     public static function findHerniaId(): int
     {
-        return Department::query()->where('name', 'Hernia')->firstOrFail()->id;
+        return Department::query()->where('name', Departments::HERNIA->value)->firstOrFail()->id;
     }
 
     public static function findPrivateScanId(): int
     {
-        return Department::query()->where('name', 'Privatescan')->firstOrFail()->id;
+        return Department::query()->where('name', Departments::PRIVATESCAN->value)->firstOrFail()->id;
     }
 
     /**

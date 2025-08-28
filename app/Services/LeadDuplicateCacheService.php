@@ -8,47 +8,29 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Webkul\Lead\Repositories\LeadRepository;
 
-class LeadDuplicateCacheService
+class LeadDuplicateCacheService extends AbstractDuplicateCacheService
 {
-    private const CACHE_KEY_PREFIX = 'lead_duplicates:';
-
     private const CACHE_TTL = 3600; // 1 hour (shorter for testing)
 
     public function __construct(
         private LeadRepository $leadRepository
-    ) {}
+    ) {
+        parent::__construct('lead_duplicates:', self::CACHE_TTL);
+    }
 
     /**
      * Get cached duplicates for a lead.
      */
     public function getCachedDuplicates(int $leadId): Collection
     {
-        $cacheKey = $this->getCacheKey($leadId);
+        return $this->rememberIdsUsing($leadId, function (int $id) {
+            $lead = $this->leadRepository->find($id);
+            if (! $lead) {
+                return collect();
+            }
 
-        try {
-            return Cache::remember($cacheKey, self::CACHE_TTL, function () use ($leadId) {
-                try {
-                    $lead = $this->leadRepository->find($leadId);
-                    if (! $lead) {
-                        return collect();
-                    }
-
-                    // Use direct method to avoid circular dependency
-                    $duplicates = $this->leadRepository->findPotentialDuplicatesDirectly($lead);
-
-                    // Return only IDs to save memory
-                    return $duplicates->pluck('id');
-                } catch (Exception $e) {
-                    Log::warning("Error caching duplicates for lead {$leadId}: ".$e->getMessage());
-
-                    return collect();
-                }
-            });
-        } catch (Exception $e) {
-            Log::warning("Cache error for lead {$leadId}: ".$e->getMessage());
-
-            return collect();
-        }
+            return $this->leadRepository->findPotentialDuplicatesDirectly($lead)->pluck('id');
+        });
     }
 
     /**
@@ -79,7 +61,7 @@ class LeadDuplicateCacheService
      */
     public function hasCachedDuplicates(int $leadId): bool
     {
-        return $this->getCachedDuplicates($leadId)->isNotEmpty();
+        return $this->hasCachedIds($leadId);
     }
 
     /**
@@ -87,8 +69,7 @@ class LeadDuplicateCacheService
      */
     public function invalidateLeadCache(int $leadId): void
     {
-        $cacheKey = $this->getCacheKey($leadId);
-        Cache::forget($cacheKey);
+        $this->invalidateId($leadId);
     }
 
     /**
@@ -97,11 +78,7 @@ class LeadDuplicateCacheService
     public function handleLeadMerge(int $primaryLeadId, array $mergedLeadIds): void
     {
         // Just invalidate all involved leads
-        $this->invalidateLeadCache($primaryLeadId);
-
-        foreach ($mergedLeadIds as $leadId) {
-            $this->invalidateLeadCache($leadId);
-        }
+        $this->handleMerge($primaryLeadId, $mergedLeadIds);
     }
 
     /**
@@ -109,8 +86,14 @@ class LeadDuplicateCacheService
      */
     public function refreshLeadCache(int $leadId): void
     {
-        $this->invalidateLeadCache($leadId);
-        $this->getCachedDuplicates($leadId); // Rebuild
+        $this->refreshId($leadId, function (int $id) {
+            $lead = $this->leadRepository->find($id);
+            if (! $lead) {
+                return collect();
+            }
+
+            return $this->leadRepository->findPotentialDuplicatesDirectly($lead)->pluck('id');
+        });
     }
 
     /**
@@ -122,7 +105,7 @@ class LeadDuplicateCacheService
 
         return [
             'total_leads'     => $totalLeads,
-            'cache_ttl_hours' => self::CACHE_TTL / 3600,
+            'cache_ttl_hours' => $this->cacheTtlSeconds / 3600,
             'cache_backend'   => config('cache.default'),
         ];
     }
@@ -139,8 +122,5 @@ class LeadDuplicateCacheService
     /**
      * Generate cache key.
      */
-    private function getCacheKey(int $leadId): string
-    {
-        return self::CACHE_KEY_PREFIX.$leadId;
-    }
+    // getCacheKey is inherited
 }

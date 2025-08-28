@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\Departments;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -11,7 +12,7 @@ class DepartmentSeeder extends BaseSeeder
     {
         $this->truncateTables(['departments']);
         $now = Carbon::now();
-        $departments = ['Hernia', 'Privatescan'];
+        $departments = Departments::allValues();
         $rows = [];
         foreach ($departments as $i => $name) {
             $rows[] = [

@@ -3,6 +3,7 @@
 namespace Webkul\Lead\Repositories;
 
 use App\Services\LeadDuplicateCacheService;
+use App\Services\Concerns\JsonDuplicateMatcher;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Container\Container;
@@ -20,6 +21,7 @@ use Webkul\Lead\Models\Lead as LeadModel;
 
 class LeadRepository extends Repository
 {
+    use JsonDuplicateMatcher;
     /**
      * Searchable fields.
      */
@@ -404,15 +406,15 @@ class LeadRepository extends Repository
 
         try {
             // Check for email duplicates
-            $emailDuplicates = $this->findEmailDuplicates($lead);
+            $emailDuplicates = $this->findDuplicatesByJsonField($lead, 'emails');
             $duplicates = $duplicates->merge($emailDuplicates);
 
             // Check for phone duplicates
-            $phoneDuplicates = $this->findPhoneDuplicates($lead);
+            $phoneDuplicates = $this->findDuplicatesByJsonField($lead, 'phones');
             $duplicates = $duplicates->merge($phoneDuplicates);
 
             // Check for name similarity
-            $nameDuplicates = $this->findNameDuplicates($lead);
+            $nameDuplicates = $this->findDuplicatesByName($lead);
             $duplicates = $duplicates->merge($nameDuplicates);
 
         } catch (Exception $e) {
@@ -463,100 +465,6 @@ class LeadRepository extends Repository
             Log::warning('Cache service failed for hasPotentialDuplicates, falling back: ' . $e->getMessage());
             return $this->findPotentialDuplicatesDirectly($lead)->isNotEmpty();
         }
-    }
-
-    /**
-     * Find duplicate leads based on email addresses.
-     *
-     * @param Lead $lead
-     * @return Collection
-     */
-    private function findEmailDuplicates($lead): Collection
-    {
-        return $this->findJsonFieldDuplicates($lead, 'emails');
-    }
-
-    /**
-     * Find duplicate leads based on phone numbers.
-     *
-     * @param Lead $lead
-     * @return Collection
-     */
-    private function findPhoneDuplicates($lead): Collection
-    {
-        return $this->findJsonFieldDuplicates($lead, 'phones');
-    }
-
-    /**
-     * Find duplicate leads based on name similarity.
-     * - first_name + last_name exact match
-     * - last_name + married_name exact match or the other way around
-     */
-    private function findNameDuplicates(Lead $lead): Collection
-    {
-        if (empty($lead->first_name) && empty($lead->last_name)) {
-            return collect();
-        }
-
-        try {
-            $query = LeadModel::with(['stage', 'pipeline', 'user'])
-                ->where('id', '!=', $lead->id);
-
-            // Build name matching conditions
-            $this->addNameMatchConditions($query, $lead);
-
-            return $query->get();
-        } catch (Exception $e) {
-            Log::error('Error searching for name duplicates: ' . $e->getMessage());
-            return collect();
-        }
-    }
-
-    /**
-     * Get name variations for similarity matching.
-     */
-    private function getNameVariations(String $name): array
-    {
-        $variations = [$name];
-
-        // Common nickname variations
-        $nicknameMap = [
-            'John' => ['Johnny', 'Jon', 'Jack'],
-            'Johnny' => ['John', 'Jon'],
-            'Jon' => ['John', 'Johnny'],
-            'Jack' => ['John', 'Jackson'],
-            'William' => ['Will', 'Bill', 'Billy'],
-            'Will' => ['William', 'Bill'],
-            'Bill' => ['William', 'Will', 'Billy'],
-            'Billy' => ['William', 'Bill'],
-            'Robert' => ['Bob', 'Rob', 'Bobby'],
-            'Bob' => ['Robert', 'Bobby'],
-            'Rob' => ['Robert', 'Bobby'],
-            'Bobby' => ['Robert', 'Bob'],
-            'Richard' => ['Rick', 'Dick', 'Rich'],
-            'Rick' => ['Richard', 'Rich'],
-            'Rich' => ['Richard', 'Rick'],
-            'Michael' => ['Mike', 'Mickey'],
-            'Mike' => ['Michael', 'Mickey'],
-            'Mickey' => ['Michael', 'Mike'],
-            'David' => ['Dave', 'Davey'],
-            'Dave' => ['David', 'Davey'],
-            'Davey' => ['David', 'Dave'],
-            'Christopher' => ['Chris', 'Christie'],
-            'Chris' => ['Christopher', 'Christie'],
-            'Christie' => ['Christopher', 'Chris'],
-            'Elizabeth' => ['Liz', 'Beth', 'Betty', 'Lizzy'],
-            'Liz' => ['Elizabeth', 'Beth', 'Betty'],
-            'Beth' => ['Elizabeth', 'Liz', 'Betty'],
-            'Betty' => ['Elizabeth', 'Liz', 'Beth'],
-            'Lizzy' => ['Elizabeth', 'Liz'],
-        ];
-
-        if (isset($nicknameMap[$name])) {
-            $variations = array_merge($variations, $nicknameMap[$name]);
-        }
-
-        return array_unique($variations);
     }
 
     /**
@@ -842,11 +750,8 @@ class LeadRepository extends Repository
                         $query = LeadModel::with(['stage', 'pipeline', 'user'])
                             ->where('id', '!=', $lead->id);
 
-                        if (DB::getDriverName() === 'sqlite') {
-                            $query->where($fieldName, 'LIKE', '%"' . $item['value'] . '"%');
-                        } else {
-                            $query->whereJsonContains($fieldName, [['value' => $item['value']]]);
-                        }
+                        // Use shared matcher for robust cross-driver matching
+                        $query = $this->applyJsonValueMatch($query, $fieldName, (string) $item['value']);
 
                         $duplicates = $duplicates->merge($query->get());
                     } catch (Exception $e) {
@@ -859,47 +764,4 @@ class LeadRepository extends Repository
         return $duplicates;
     }
 
-    /**
-     * Add name matching conditions to query.
-     */
-    private function addNameMatchConditions($query, Lead $lead): void
-    {
-        $first = trim((string) ($lead->first_name ?? ''));
-        $last  = trim((string) ($lead->last_name ?? ''));
-        $married = trim((string) ($lead->married_name ?? ''));
-
-        // Only add constraints when we actually have a condition. Otherwise, force no matches.
-        if ($first !== '' && $last !== '') {
-            $query->where(function ($q) use ($lead, $first) {
-                // Exact match for full name
-                $q->orWhere(function ($subQuery) use ($lead) {
-                    $subQuery->where('first_name', $lead->first_name)
-                        ->where('last_name', $lead->last_name);
-                });
-
-                // Nickname variations
-                $firstNameVariations = $this->getNameVariations($first);
-                if (count($firstNameVariations) > 1) {
-                    $q->orWhere(function ($subQuery) use ($lead, $firstNameVariations) {
-                        $subQuery->whereIn('first_name', $firstNameVariations)
-                            ->where('last_name', $lead->last_name);
-                    });
-                }
-            });
-
-            // Married name confusion checks
-            if ($married !== '') {
-                $query->orWhere(function ($subQuery) use ($lead) {
-                    $subQuery->where('first_name', $lead->first_name)
-                        ->where('married_name', $lead->last_name);
-                })->orWhere(function ($subQuery) use ($lead) {
-                    $subQuery->where('first_name', $lead->first_name)
-                        ->where('last_name', $lead->married_name);
-                });
-            }
-        } else {
-            // Insufficient name data for reliable matching: ensure we do not match on names at all
-            $query->whereRaw('1 = 0');
-        }
-    }
 }

@@ -2,6 +2,7 @@
 
 namespace Webkul\Installer\Database\Seeders\Lead;
 
+use App\Enums\Departments;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Enums\PipelineType;
@@ -40,7 +41,7 @@ class PipelineSeeder extends BaseSeeder
         DB::table('lead_pipelines')->insert([
             [
                 'id' => $privateSanPipelineId,
-                'name' => 'Privatescan',
+                'name' => Departments::PRIVATESCAN->value,
                 'is_default' => 1,
                 'type' => PipelineType::LEAD,
                 'created_at' => $now,
@@ -48,7 +49,7 @@ class PipelineSeeder extends BaseSeeder
             ],
             [
                 'id' => $herniaPipelineId,
-                'name' => 'Hernia',
+                'name' => Departments::HERNIA->value,
                 'is_default' => 0,
                 'type' => PipelineType::LEAD,
                 'created_at' => $now,
@@ -64,7 +65,7 @@ class PipelineSeeder extends BaseSeeder
             ],
             [
                 'id' => $herniaWorkflowPipelineId,
-                'name' => 'Hernia',
+                'name' => 'Herniapoli',
                 'is_default' => 0,
                 'type' => PipelineType::BACKOFFICE,
                 'created_at' => $now,
@@ -144,6 +145,13 @@ class PipelineSeeder extends BaseSeeder
                 'id' => ++$stageId,
                 'code' => 'klant-adviseren-zonder-mri-hernia',
                 'name' => 'Klant adviseren zonder MRI',
+                'probability' => 100,
+                'sort_order' => $stageId,
+                'lead_pipeline_id' => $herniaPipelineId,
+            ], [
+                'id' => ++$stageId,
+                'code' => 'mri-verkocht-privatescan',
+                'name' => 'Wachten MRI beelden privatescan',
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaPipelineId,

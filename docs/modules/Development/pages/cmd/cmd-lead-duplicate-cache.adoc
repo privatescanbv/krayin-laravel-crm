@@ -7,23 +7,23 @@ Deze commands beheren de cache voor lead duplicate detection, wat de performance
 Het lead duplicate cache systeem versnelt de `findPotentialDuplicates` functionaliteit door resultaten te cachen. Dit zorgt voor 10x+ snellere laadtijden op het kanban board.
 
 ==== Commands
-===== leads:refresh-duplicate-cache
+===== duplicates:refresh-cache
 
-Hoofdcommand voor cache management en cronjob.
+Hoofdcommand voor cache management (leads én persons) en cronjob.
 
 [source,bash]
 ----
-# Incrementele refresh (standaard)
-php artisan leads:refresh-duplicate-cache
+# Incrementele refresh (standaard) voor beide caches
+php artisan duplicates:refresh-cache
 
 # Cache statistieken
-php artisan leads:refresh-duplicate-cache --stats
+php artisan duplicates:refresh-cache --stats
 
 # Cache wissen
-php artisan leads:refresh-duplicate-cache --clear
+php artisan duplicates:refresh-cache --clear
 
 # Volledige rebuild
-php artisan leads:refresh-duplicate-cache --full
+php artisan duplicates:refresh-cache --full
 ----
 
 **Parameters:**

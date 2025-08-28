@@ -4,6 +4,9 @@ namespace App\Services;
 
 trait DuplicateReasonHelpers
 {
+    /**
+     * Extract values from a JSON field or array.
+     */
     private function extractValues($field): array
     {
         if (is_string($field)) {
@@ -26,6 +29,9 @@ trait DuplicateReasonHelpers
         return array_values(array_unique($values));
     }
 
+    /**
+     * Normalize phone number for comparison.
+     */
     private function normalizePhone(string $phone): string
     {
         $digits = preg_replace('/[^0-9]/', '', $phone);

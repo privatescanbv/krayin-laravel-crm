@@ -176,7 +176,14 @@ class PersonController extends Controller
             $query->orderBy('updated_at', 'desc');
         }]);
 
-        return view('admin::contacts.persons.view', compact('person'));
+        // Precompute duplicate count (direct detection ensures indicator shows even if cache cold)
+        $duplicateCount = $this->personRepository->findPotentialDuplicates($person)->count();
+
+
+        return view('admin::contacts.persons.view', [
+            'person'          => $person,
+            'duplicateCount'  => $duplicateCount,
+        ]);
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Services\PersonDuplicateCacheService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Repositories\ActivityRepository;
@@ -13,7 +14,8 @@ class PersonObserver
      * Create a new observer instance.
      */
     public function __construct(
-        protected ActivityRepository $activityRepository
+        protected ActivityRepository $activityRepository,
+        protected PersonDuplicateCacheService $duplicateCacheService
     ) {}
 
     /**
@@ -25,6 +27,10 @@ class PersonObserver
         if (is_null($person->created_by) && auth()->check()) {
             DB::table('persons')->where('id', $person->id)->update(['created_by' => auth()->id()]);
         }
+
+        // Invalidate duplicate cache for this person
+        $this->duplicateCacheService->invalidatePersonCache($person->id);
+
         Log::info('CREATE person', [
             'person_id' => $person->id,
             'name'      => $person->name,
@@ -40,8 +46,24 @@ class PersonObserver
         if (auth()->check()) {
             DB::table('persons')->where('id', $person->id)->update(['updated_by' => auth()->id()]);
         }
+
+        // Invalidate duplicate cache for this person if relevant fields changed
+        $duplicateRelevantFields = ['first_name', 'last_name', 'married_name', 'emails', 'phones'];
+        if ($person->wasChanged($duplicateRelevantFields)) {
+            $this->duplicateCacheService->invalidatePersonCache($person->id);
+        }
+
         // Log activities for fixed fields
         $this->logFixedFieldsActivity($person);
+    }
+
+    /**
+     * Handle the Person "deleted" event.
+     */
+    public function deleted(Person $person): void
+    {
+        // Invalidate duplicate cache for this person
+        $this->duplicateCacheService->invalidatePersonCache($person->id);
     }
 
     /**

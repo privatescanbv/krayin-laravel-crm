@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Contact\OrganizationController;
 use Webkul\Admin\Http\Controllers\Contact\Persons\ActivityController;
+use Webkul\Admin\Http\Controllers\Contact\Persons\DuplicateController;
 use Webkul\Admin\Http\Controllers\Contact\Persons\PersonController;
 use Webkul\Admin\Http\Controllers\Contact\Persons\TagController;
 
@@ -49,6 +50,19 @@ Route::prefix('contacts')->group(function () {
          */
         Route::controller(ActivityController::class)->prefix('{id}/activities')->group(function () {
             Route::get('', 'index')->name('admin.contacts.persons.activities.index');
+        });
+
+        /**
+         * Duplicate routes.
+         */
+        Route::controller(DuplicateController::class)->prefix('{id}/duplicates')->group(function () {
+            Route::get('', 'index')->name('admin.contacts.persons.duplicates.index');
+            
+            Route::get('check', 'checkDuplicates')->name('admin.contacts.persons.duplicates.check');
+            
+            Route::get('get', 'getDuplicates')->name('admin.contacts.persons.duplicates.get');
+            
+            Route::post('merge', 'merge')->name('admin.contacts.persons.duplicates.merge');
         });
     });
 

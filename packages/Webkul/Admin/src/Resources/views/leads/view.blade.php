@@ -58,14 +58,14 @@
                             <div class="flex items-center gap-2">
                                 <span class="icon-warning text-orange-600"></span>
                                 <span class="text-sm font-medium text-orange-800 dark:text-orange-200">
-                                    Potential duplicate found ({{ $lead->getPotentialDuplicatesCount() }} similar lead{{ $lead->getPotentialDuplicatesCount() > 1 ? 's' : '' }})
+                                    Potentiële duplicaten gevonden ({{ $lead->getPotentialDuplicatesCount() }} leads{{ $lead->getPotentialDuplicatesCount() > 1 ? 's' : '' }})
                                 </span>
                             </div>
                             <a
                                 href="{{ route('admin.leads.duplicates.index', $lead->id) }}"
                                 class="rounded bg-orange-600 px-3 py-1 text-xs text-white hover:bg-orange-700"
                             >
-                                Merge Duplicates
+                                Duplicaten samenvoegen
                             </a>
                         </div>
                     </div>

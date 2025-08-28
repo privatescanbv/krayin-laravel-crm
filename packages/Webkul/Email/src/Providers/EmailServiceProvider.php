@@ -21,7 +21,6 @@ class EmailServiceProvider extends ServiceProvider
 
         $this->app->bind(InboundEmailProcessor::class, function ($app) {
             $driver = config('mail-receiver.default');
-            logger()->info('Mail receiver driver: '.$driver);
 
             if ($driver === 'sendgrid') {
                 return $app->make(SendgridEmailProcessor::class);

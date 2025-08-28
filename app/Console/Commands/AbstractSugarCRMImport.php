@@ -118,9 +118,33 @@ abstract class AbstractSugarCRMImport extends Command
     }
 
     /**
+     * Execute import with automatic webhook management
+     * 
+     * @param bool $dryRun Whether this is a dry run
+     * @param callable $importLogic The import logic to execute
+     * @return mixed The result of the import logic
+     */
+    protected function executeImport(bool $dryRun, callable $importLogic)
+    {
+        // Disable webhooks during import to prevent external notifications
+        if (!$dryRun) {
+            $this->disableWebhooks();
+        }
+
+        try {
+            return $importLogic();
+        } finally {
+            // Always re-enable webhooks after import, even if an error occurred
+            if (!$dryRun) {
+                $this->enableWebhooks();
+            }
+        }
+    }
+
+    /**
      * Disable webhooks during import operations
      */
-    protected function disableWebhooks(): void
+    private function disableWebhooks(): void
     {
         $originalState = config('webhook.enabled', true);
         Config::set('webhook.enabled', false);
@@ -132,7 +156,7 @@ abstract class AbstractSugarCRMImport extends Command
     /**
      * Re-enable webhooks after import operations
      */
-    protected function enableWebhooks(): void
+    private function enableWebhooks(): void
     {
         Config::set('webhook.enabled', true);
         $this->info('🔔 Webhooks re-enabled after import operation');

@@ -51,12 +51,7 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
         }
         $this->info('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
-        // Disable webhooks during import to prevent external notifications
-        if (!$dryRun) {
-            $this->disableWebhooks();
-        }
-
-        try {
+        return $this->executeImport($dryRun, function() use ($connection, $table, $limit, $personIds, $dryRun) {
             // Test connection
             $this->testConnection($connection);
 
@@ -134,12 +129,9 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
             ]);
 
             return 1;
-        } finally {
-            // Always re-enable webhooks after import, even if an error occurred
-            if (!$dryRun) {
-                $this->enableWebhooks();
-            }
-        }
+        });
+        
+        return 0;
     }
 
     /**

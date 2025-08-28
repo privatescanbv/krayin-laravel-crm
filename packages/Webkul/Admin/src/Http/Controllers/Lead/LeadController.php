@@ -136,6 +136,22 @@ class LeadController extends Controller
              * We have to create a new instance of the lead repository every time, which is
              * why we're not using the injected one.
              */
+            // Normalize kanban search params: map `name` to first/last/married_name
+            $search = request()->query('search', '');
+            $searchFields = request()->query('searchFields', '');
+            if ($search && $searchFields && (str_contains($searchFields, 'name') || str_contains($search, 'name:'))) {
+                $matches = [];
+                preg_match_all('/name:([^;]+);?/i', $search, $matches);
+                $term = isset($matches[1][0]) ? trim($matches[1][0]) : '';
+                if ($term !== '') {
+                    request()->merge([
+                        'search' => "first_name:{$term};last_name:{$term};married_name:{$term}",
+                        'searchFields' => 'first_name:like;last_name:like;married_name:like',
+                        'searchJoin' => 'or',
+                    ]);
+                }
+            }
+
             $query = app(LeadRepository::class)
                 ->pushCriteria(app(RequestCriteria::class))
                 ->where([

@@ -133,10 +133,15 @@
                                     </x-admin::form.control-group.label>
 
                                     <x-admin::form.control-group.control
-                                        type="textarea"
+                                        type="select"
                                         name="lost_reason"
                                         v-model="nextStage.lost_reason"
-                                    />
+                                    >
+                                        <option value="">@lang('admin::app.common.select')</option>
+                                        @foreach(\App\Enums\LostReason::cases() as $reason)
+                                            <option value="{{ $reason->value }}">{{ $reason->label() }}</option>
+                                        @endforeach
+                                    </x-admin::form.control-group.control>
                                 </x-admin::form.control-group>
                             </template>
 

@@ -4,6 +4,7 @@ namespace Webkul\Lead\Models;
 
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
+use App\Enums\LostReason;
 use App\Models\Anamnesis;
 use App\Models\Department;
 use Carbon\Carbon;
@@ -39,6 +40,7 @@ class Lead extends Model implements LeadContract
         'combine_order'       => 'boolean',
         'gender'              => PersonGender::class,
         'salutation'          => PersonSalutation::class,
+        // Note: lost_reason is handled by custom accessor/mutator to support legacy values
     ];
 
     /**
@@ -122,6 +124,98 @@ class Lead extends Model implements LeadContract
         }
 
         $this->attributes['salutation'] = $value;
+    }
+
+    /**
+     * Normalize lost_reason assignment to allow empty strings and enums.
+     */
+    public function setLostReasonAttribute($value): void
+    {
+        if ($value === '' || $value === null) {
+            $this->attributes['lost_reason'] = null;
+            return;
+        }
+
+        if ($value instanceof \BackedEnum) {
+            $this->attributes['lost_reason'] = $value->value;
+            return;
+        }
+
+        // Map legacy values to enum values
+        $legacyMapping = [
+            'concurrent' => 'competitor',
+            'Competition' => 'competitor',
+            'Naar Concurrent' => 'competitor',
+            'concurrent' => 'competitor',
+            'Prijs' => 'price',
+            'Price' => 'price',
+            'Afstand' => 'distance',
+            'Distance' => 'distance',
+            'Ziek' => 'ill',
+            'Ill' => 'ill',
+            'Angst' => 'fear',
+            'Fear' => 'fear',
+            'Geen vervoer' => 'noTransport',
+            'No transport' => 'noTransport',
+            'Geen MRI' => 'noMRI',
+            'No MRI' => 'noMRI',
+            'Afval' => 'waste',
+            'Waste' => 'waste',
+            // Add more mappings as needed
+        ];
+
+        if (isset($legacyMapping[$value])) {
+            $this->attributes['lost_reason'] = $legacyMapping[$value];
+            return;
+        }
+
+        $this->attributes['lost_reason'] = $value;
+    }
+
+    /**
+     * Get the lost_reason attribute, handling legacy values.
+     */
+    public function getLostReasonAttribute($value)
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        // Map legacy values to enum values for retrieval
+        $legacyMapping = [
+            'concurrent' => 'competitor',
+            'Competition' => 'competitor',
+            'Naar Concurrent' => 'competitor',
+            'Prijs' => 'price',
+            'Price' => 'price',
+            'Afstand' => 'distance',
+            'Distance' => 'distance',
+            'Ziek' => 'ill',
+            'Ill' => 'ill',
+            'Angst' => 'fear',
+            'Fear' => 'fear',
+            'Geen vervoer' => 'noTransport',
+            'No transport' => 'noTransport',
+            'Geen MRI' => 'noMRI',
+            'No MRI' => 'noMRI',
+            'Afval' => 'waste',
+            'Waste' => 'waste',
+            // Add more mappings as needed
+        ];
+
+        if (isset($legacyMapping[$value])) {
+            $value = $legacyMapping[$value];
+        }
+
+        // Try to create the enum from the value
+        try {
+            return LostReason::from($value);
+        } catch (\ValueError $e) {
+            // If the value doesn't match any enum case, return null or the raw value
+            // For debugging, you might want to log this
+            \Log::warning("Unknown lost_reason value: {$value} for lead {$this->id}");
+            return null;
+        }
     }
 
     /**

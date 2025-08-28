@@ -186,7 +186,7 @@
                                         v-if="element?.stage?.code === 'lost' && element.lost_reason"
                                     >
                                         <span class="font-medium">Verliesreden:</span>
-                                        @{{ element.lost_reason }}
+                                        @{{ element.lost_reason_label || element.lost_reason }}
                                     </div>
 
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.after') !!}
@@ -298,12 +298,16 @@
                             </x-admin::form.control-group.label>
 
                             <x-admin::form.control-group.control
-                                type="textarea"
+                                type="select"
                                 name="lost_reason"
                                 v-model="currentStageUpdate.lost_reason"
-                                placeholder="Vul de reden van verlies in..."
                                 required
-                            />
+                            >
+                                <option value="">Selecteer reden van verlies...</option>
+                                @foreach(\App\Enums\LostReason::cases() as $reason)
+                                    <option value="{{ $reason->value }}">{{ $reason->label() }}</option>
+                                @endforeach
+                            </x-admin::form.control-group.control>
                         </x-admin::form.control-group>
 
                         <!-- Closed At -->

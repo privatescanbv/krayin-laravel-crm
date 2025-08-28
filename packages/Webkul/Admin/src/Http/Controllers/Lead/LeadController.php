@@ -2,6 +2,9 @@
 
 namespace Webkul\Admin\Http\Controllers\Lead;
 
+use App\Enums\LostReason;
+use Illuminate\Validation\Rules\Enum;
+
 use App\Models\Anamnesis;
 use App\Models\Department;
 use Carbon\Carbon;
@@ -463,7 +466,7 @@ class LeadController extends Controller
     {
         $this->validate(request(), [
             'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
-            'lost_reason' => 'nullable|string',
+            'lost_reason' => ['nullable', new Enum(LostReason::class)],
             'closed_at' => 'nullable|date',
         ]);
 

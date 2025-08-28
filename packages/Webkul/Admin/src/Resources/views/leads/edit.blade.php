@@ -411,6 +411,48 @@
 
                     {!! view_render_event('admin.leads.edit.address.after', ['lead' => $lead]) !!}
 
+                    {!! view_render_event('admin.leads.edit.lost_reason.before', ['lead' => $lead]) !!}
+
+                    <!-- Lost Reason Section (only show if has value) -->
+                    @if(!empty($lead->lost_reason))
+                    <div
+                        class="flex flex-col gap-4"
+                        id="lost-reason"
+                    >
+                        <div class="flex flex-col gap-1">
+                            <p class="text-base font-semibold dark:text-white">
+                                Verliesreden
+                            </p>
+                            <p class="text-gray-600 dark:text-gray-300">
+                                Reden waarom deze lead is verloren
+                            </p>
+                        </div>
+
+                        <div class="w-1/2 max-md:w-full">
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    Verliesreden
+                                </x-admin::form.control-group.label>
+                                <x-admin::form.control-group.control
+                                    type="select"
+                                    name="lost_reason"
+                                    value="{{ old('lost_reason', $lead->lost_reason?->value ?? '') }}"
+                                >
+                                    <option value="">-- Selecteer reden --</option>
+                                    @foreach(\App\Enums\LostReason::cases() as $reason)
+                                        <option value="{{ $reason->value }}" {{ (old('lost_reason', $lead->lost_reason?->value ?? '') == $reason->value) ? 'selected' : '' }}>
+                                            {{ $reason->label() }}
+                                        </option>
+                                    @endforeach
+                                </x-admin::form.control-group.control>
+                                <x-admin::form.control-group.error control-name="lost_reason"/>
+                            </x-admin::form.control-group>
+                        </div>
+                    </div>
+                    @endif
+
+                    {!! view_render_event('admin.leads.edit.lost_reason.after', ['lead' => $lead]) !!}
+
                 </div>
 
                 {!! view_render_event('admin.leads.form_controls.after') !!}
@@ -440,6 +482,9 @@ title: "{{ addslashes($lead->name) }}",
                             {id: 'contact-person', label: '@lang('admin::app.leads.edit.contact-person')'},
                             {id: 'personal-fields', label: 'Persoonsgegevens'},
                             {id: 'address', label: 'Adres'},
+                            @if(!empty($lead->lost_reason))
+                            {id: 'lost-reason', label: 'Verliesreden'},
+                            @endif
                             {{--{ id: 'products', label: '@lang('admin::app.leads.edit.products')' }--}}
                         ],
                     };

@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
+use App\Enums\LostReason;
 use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\Department;
@@ -15,6 +16,9 @@ use Webkul\Lead\Models\Lead;
 
 /**
  * Import leads from SugarCRM database with anamnesis data
+ *
+ * known issues
+ * c9d8ee85-4f28-902c-307b-680115bb6b40 heeft niet de status lost, maar wel een lost reason. Daarmee wordt deze lost reason geimporteerd.
  *
  * This command imports leads and their associated anamnesis data from SugarCRM.
  * It uses the following relationships:
@@ -342,7 +346,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'lead_channel_id'        => $this->mapChannel($record),
                         'lead_type_id'           => $this->mapType($record),
                         'lead_source_id'         => $this->mapSource($record),
-                        'lost_reason'            => $record->reden_afvoeren_c ?? null,
+                        'lost_reason'            => $this->mapLostReason($record->reden_afvoeren_c ?? null),
                     ], [
                         'created_at' => $this->parseSugarDate($record->lead_date_entered ?? $record->date_entered),
                         'updated_at' => $this->parseSugarDate($record->lead_date_modified ?? $record->date_modified),
@@ -782,6 +786,47 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             'male', 'm' => 'male',
             'female', 'f' => 'female',
             default => null,
+        };
+    }
+
+    private function mapLostReason(?string $sugarLostReason): ?string
+    {
+        if (! $sugarLostReason) {
+            return null;
+        }
+
+        $reason = strtolower(trim($sugarLostReason));
+
+        // Map SugarCRM values to LostReason enum values
+        return match ($reason) {
+            'concurrent', 'concurent', 'naar concurrent', 'competition' => 'competitor',
+            'prijs', 'price' => 'price',
+            'afstand', 'distance' => 'distance',
+            'ziek', 'ill' => 'ill',
+            'angst', 'fear' => 'fear',
+            'geen vervoer', 'no transport' => 'noTransport',
+            'geen mri', 'no mri', '(nog) geen mri' => 'noMRI',
+            'afval', 'waste' => 'waste',
+            'geen vergoeding verzekeraar', 'no insurance' => 'noInsurance',
+            'puur informatief', 'info', 'informatie' => 'info',
+            'naar prescan', 'prescan' => 'prescan',
+            'niet planbaar', 'not schedulable' => 'notSchedulable',
+            'partner niet akkoord', 'partner declined' => 'partnerDeclined',
+            'niet uitvoerbaar', 'not feasible' => 'notFeasible',
+            'negatief advies privatescan', 'negative advice' => 'negativeAdvice',
+            'geen reactie meer', 'no response' => 'noResponse',
+            'betaalt niet', 'no pay' => 'noPay',
+            'verslapen', 'overslept' => 'overslept',
+            'te laat', 'too late' => 'tooLate',
+            'ontevreden', 'dissatisfied' => 'dissatisfied',
+            'kan in nl zorg terecht', 'alt nl' => 'altNL',
+            'uitstel door omstandigheden', 'postpone circumstances' => 'postponeCircumstances',
+            'alleen nieuwsbriefinschrijving', 'newsletter only' => 'newsletterOnly',
+            'foutief', 'incorrect' => 'incorrect',
+            'data invoer achteraf', 'data entry' => 'dataEntry',
+            'geen reden', 'no reason' => 'noReason',
+            'spoort niet', 'not matching' => 'notMatching',
+            default => null, // Return null for unknown values to avoid errors
         };
     }
 

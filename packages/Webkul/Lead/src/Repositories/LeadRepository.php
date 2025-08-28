@@ -873,34 +873,42 @@ class LeadRepository extends Repository
      */
     private function addNameMatchConditions($query, Lead $lead): void
     {
-        $query->where(function ($q) use ($lead) {
-            // Exact match for full name
-            if (!empty($lead->first_name) && !empty($lead->last_name)) {
+        $first = trim((string) ($lead->first_name ?? ''));
+        $last  = trim((string) ($lead->last_name ?? ''));
+        $married = trim((string) ($lead->married_name ?? ''));
+
+        // Only add constraints when we actually have a condition. Otherwise, force no matches.
+        if ($first !== '' && $last !== '') {
+            $query->where(function ($q) use ($lead, $first) {
+                // Exact match for full name
                 $q->orWhere(function ($subQuery) use ($lead) {
                     $subQuery->where('first_name', $lead->first_name)
                         ->where('last_name', $lead->last_name);
                 });
 
                 // Nickname variations
-                $firstNameVariations = $this->getNameVariations($lead->first_name);
+                $firstNameVariations = $this->getNameVariations($first);
                 if (count($firstNameVariations) > 1) {
                     $q->orWhere(function ($subQuery) use ($lead, $firstNameVariations) {
                         $subQuery->whereIn('first_name', $firstNameVariations)
                             ->where('last_name', $lead->last_name);
                     });
                 }
+            });
 
-                // Married name confusion checks
-                if (!empty($lead->married_name)) {
-                    $q->orWhere(function ($subQuery) use ($lead) {
-                        $subQuery->where('first_name', $lead->first_name)
-                            ->where('married_name', $lead->last_name);
-                    })->orWhere(function ($subQuery) use ($lead) {
-                        $subQuery->where('first_name', $lead->first_name)
-                            ->where('last_name', $lead->married_name);
-                    });
-                }
+            // Married name confusion checks
+            if ($married !== '') {
+                $query->orWhere(function ($subQuery) use ($lead) {
+                    $subQuery->where('first_name', $lead->first_name)
+                        ->where('married_name', $lead->last_name);
+                })->orWhere(function ($subQuery) use ($lead) {
+                    $subQuery->where('first_name', $lead->first_name)
+                        ->where('last_name', $lead->married_name);
+                });
             }
-        });
+        } else {
+            // Insufficient name data for reliable matching: ensure we do not match on names at all
+            $query->whereRaw('1 = 0');
+        }
     }
 }

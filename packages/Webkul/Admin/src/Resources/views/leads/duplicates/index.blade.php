@@ -17,24 +17,7 @@
             </div>
         </div>
 
-        <!-- Primaire Lead Info -->
-        <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <h3 class="mb-3 text-lg font-semibold text-green-600">Primaire Lead</h3>
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div>
-                    <span class="text-sm font-medium text-gray-600">Titel:</span>
-                    <p class="text-sm">{{ $lead->name }}</p>
-                </div>
-                <div>
-                    <span class="text-sm font-medium text-gray-600">Naam:</span>
-                    <p class="text-sm">{{ $lead->first_name }} {{ $lead->last_name }}</p>
-                </div>
-                <div>
-                    <span class="text-sm font-medium text-gray-600">Status:</span>
-                    <p class="text-sm">{{ $lead->stage ? $lead->stage->name : 'N/A' }}</p>
-                </div>
-            </div>
-        </div>
+        
 
         @if($duplicates->count() > 0)
             <!-- Duplicates Management Vue Component -->
@@ -76,7 +59,7 @@
 
         <script type="text/x-template" id="v-duplicates-manager-template">
             <div class="flex flex-col gap-4">
-                <!-- Duplicates List -->
+                <!-- Duplicates Summary Block -->
                 <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                     <div class="border-b border-gray-200 p-4 dark:border-gray-800">
                         <div class="flex items-center gap-2 mb-2">
@@ -89,7 +72,7 @@
                                     <div class="font-medium mb-1">Hoe worden duplicaten gevonden?</div>
                                     <div class="">
                                         • <strong>E-mailadressen:</strong> Exacte match van e-mailadressen<br>
-                                        • <strong>Telefoonnummers:</strong> Exacte match van telefoonnummers<br>
+                                        • <strong>Telefoonnummers:</strong> Exacte match van telefoonnummers (genormaliseerd)<br>
                                         • <strong>Namen:</strong> Voornaam + achternaam combinatie<br>
                                         • <strong>Gehuwde naam:</strong> Wordt ook meegenomen bij naam matching
                                     </div>
@@ -97,7 +80,60 @@
                                 </div>
                             </div>
                         </div>
-                        <p class="text-sm text-gray-600">Selecteer leads om samen te voegen en kies welke veldwaarden behouden blijven.</p>
+                        <p class="text-sm text-gray-600">Controleer de redenen per duplicaat en selecteer welke leads je wilt samenvoegen.</p>
+                    </div>
+
+                    <div class="p-4">
+                        <div class="overflow-x-auto">
+                            <table class="w-full border-collapse table-fixed">
+                                <thead>
+                                    <tr class="border-b border-gray-200 dark:border-gray-700 text-left">
+                                        <th class="p-3 w-16">ID</th>
+                                        <th class="p-3">Naam</th>
+                                        <th class="p-3">Fase</th>
+                                        <th class="p-3">Aangemaakt op</th>
+                                        <th class="p-3">E-mail matches</th>
+                                        <th class="p-3">Telefoon matches</th>
+                                        <th class="p-3">Naam reden</th>
+                                        <th class="p-3 w-24 text-center">Selecteer</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-100 dark:border-gray-800">
+                                        <td class="p-3">@{{ primaryLead.id }}</td>
+                                        <td class="p-3 text-sm">@{{ primaryLead.first_name }} @{{ primaryLead.last_name }}</td>
+                                        <td class="p-3 text-sm">@{{ primaryLead.stage?.name || '-' }}</td>
+                                        <td class="p-3 text-sm">@{{ primaryLead.created_at || '-' }}</td>
+                                        <td class="p-3 text-xs">@{{ (primaryLead.matched_emails || []).join(', ') || '-' }}</td>
+                                        <td class="p-3 text-xs">@{{ (primaryLead.matched_phones || []).join(', ') || '-' }}</td>
+                                        <td class="p-3 text-xs">@{{ primaryLead.name_reason || '-' }}</td>
+                                        <td class="p-3 text-center">
+                                            <input type="checkbox" :checked="selectedLeads.includes(primaryLead.id)" disabled />
+                                        </td>
+                                    </tr>
+                                    <tr v-for="duplicate in duplicates" :key="'dup-row-' + duplicate.id" class="border-b border-gray-100 dark:border-gray-800">
+                                        <td class="p-3">@{{ duplicate.id }}</td>
+                                        <td class="p-3 text-sm">@{{ duplicate.first_name }} @{{ duplicate.last_name }}</td>
+                                        <td class="p-3 text-sm">@{{ duplicate.stage?.name || '-' }}</td>
+                                        <td class="p-3 text-sm">@{{ duplicate.created_at || '-' }}</td>
+                                        <td class="p-3 text-xs">@{{ (duplicate.matched_emails || []).join(', ') || '-' }}</td>
+                                        <td class="p-3 text-xs">@{{ (duplicate.matched_phones || []).join(', ') || '-' }}</td>
+                                        <td class="p-3 text-xs">@{{ duplicate.name_reason || '-' }}</td>
+                                        <td class="p-3 text-center">
+                                            <input type="checkbox" :checked="selectedLeads.includes(duplicate.id)" @change="toggleLeadSelection(duplicate.id)" />
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Field Differences Block -->
+                <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                    <div class="border-b border-gray-200 p-4 dark:border-gray-800">
+                        <h3 class="text-lg font-semibold text-blue-700">Velden met verschillen</h3>
+                        <p class="text-sm text-gray-600">Kies per veld welke waarde behouden moet blijven.</p>
                     </div>
 
                     <div class="p-4">
@@ -456,7 +492,10 @@
 
                         switch (fieldConfig.type) {
                             case 'simple':
-                                const value = lead[fieldConfig.field] || 'N/A';
+                                let value = lead[fieldConfig.field] || 'N/A';
+                                if (fieldConfig.field === 'description' && typeof value === 'string' && value.length > 100) {
+                                    value = value.substring(0, 100) + '…';
+                                }
                                 return `<span class="${cssClass}">${value}</span>`;
 
                             case 'stage':

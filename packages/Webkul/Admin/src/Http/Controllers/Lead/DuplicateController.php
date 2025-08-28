@@ -8,9 +8,11 @@ use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Resources\LeadResource;
 use Webkul\Lead\Repositories\LeadRepository;
+use App\Services\DuplicateReasonHelpers;
 
 class DuplicateController extends Controller
 {
+    use DuplicateReasonHelpers;
     /**
      * Create a new controller instance.
      */
@@ -29,7 +31,27 @@ class DuplicateController extends Controller
 
         // Use LeadResource for consistent data formatting
         $leadData = (new LeadResource($lead))->resolve();
-        $duplicatesData = LeadResource::collection($duplicates)->resolve();
+
+        // Compute per-duplicate match reasons
+        $primaryEmails = $this->extractValues($leadData['emails'] ?? []);
+        $primaryPhones = $this->extractValues($leadData['phones'] ?? []);
+
+        // Populate primary lead signals so UI doesn't show '-'
+        $leadData['matched_emails'] = $primaryEmails;
+        $leadData['matched_phones'] = array_map(fn($p) => $this->normalizePhone($p), $primaryPhones);
+        $leadData['name_reason']    = null; // not applicable for primary itself
+
+        $duplicatesData = [];
+        foreach ($duplicates as $dup) {
+            $dupData = (new LeadResource($dup))->resolve();
+            $reasons = $this->computeReasons($leadData, $dupData, $primaryEmails, $primaryPhones);
+
+            $dupData['matched_emails'] = $reasons['email'];
+            $dupData['matched_phones'] = $reasons['phone'];
+            $dupData['name_reason']    = $reasons['name_reason'];
+
+            $duplicatesData[] = $dupData;
+        }
 
         return view('admin::leads.duplicates.index', [
             'lead' => $lead,

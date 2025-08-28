@@ -11,7 +11,7 @@ class DepartmentSeeder extends BaseSeeder
     {
         $this->truncateTables(['departments']);
         $now = Carbon::now();
-        $departments = ['Hernia', 'Privatescan'];
+        $departments = ['Herniapoli', 'Preventie'];
         $rows = [];
         foreach ($departments as $i => $name) {
             $rows[] = [

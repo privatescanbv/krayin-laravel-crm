@@ -163,6 +163,4 @@ class LeadFactory extends Factory
             ];
         });
     }
-
-
 }

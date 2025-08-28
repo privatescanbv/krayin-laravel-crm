@@ -51,75 +51,75 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
         }
         $this->info('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
-        return $this->executeImport($dryRun, function() use ($connection, $table, $limit, $personIds, $dryRun) {
-            // Test connection
-            $this->testConnection($connection);
+        try {
+            return $this->executeImport($dryRun, function() use ($connection, $table, $limit, $personIds, $dryRun) {
+                // Test connection
+                $this->testConnection($connection);
 
-            // Get records from SugarCRM
-            $sql = DB::connection($connection)
-                ->table($table.' as c')
-                ->join('contacts_cstm as cm', 'c.id', '=', 'cm.id_c')
-                ->leftJoin('email_addr_bean_rel as eabr', function ($join) {
-                    $join->on('eabr.bean_id', '=', 'c.id')
-                        ->where('eabr.bean_module', '=', 'Contacts')
-                        ->where('eabr.deleted', '=', 0);
-                })
-                ->leftJoin('email_addresses as ea', function ($join) {
-                    $join->on('ea.id', '=', 'eabr.email_address_id')
-                        ->where('ea.deleted', '=', 0);
-                })
-                ->select([
-                    'c.id',
-                    'c.first_name',
-                    'c.last_name',
-                    'c.phone_work',
-                    'c.phone_mobile',
-                    'c.phone_home',
-                    'c.phone_other',
-                    'c.birthdate',
-                    'c.date_entered',
-                    'c.date_modified',
-                    // Primary address fields from contacts
-                    'c.primary_address_street',
-                    'c.primary_address_city',
-                    'c.primary_address_state',
-                    'c.primary_address_postalcode',
-                    'c.primary_address_country',
-                    'cm.gender_c',
-                    'cm.meisjesnaam_c',
-                    'cm.roepnaam_c',
-                    'cm.voorletters_c',
-                    'cm.tussenvoegsel_c',
-                    'cm.aang_tussenv_c',
-                    'cm.primary_huisnr_c',
-                    'cm.primary_huisnr_toevoeging_c',
-                    DB::raw('MAX(CASE WHEN eabr.primary_address = 1 THEN ea.email_address END) as email_primary'),
-                    DB::raw('MIN(CASE WHEN eabr.primary_address = 0 THEN ea.email_address END) as email_any'),
-                ])
-                ->where('c.deleted', 0)
-                ->whereNotNull('c.id')
-                ->where('c.id', '!=', '');
+                // Get records from SugarCRM
+                $sql = DB::connection($connection)
+                    ->table($table.' as c')
+                    ->join('contacts_cstm as cm', 'c.id', '=', 'cm.id_c')
+                    ->leftJoin('email_addr_bean_rel as eabr', function ($join) {
+                        $join->on('eabr.bean_id', '=', 'c.id')
+                            ->where('eabr.bean_module', '=', 'Contacts')
+                            ->where('eabr.deleted', '=', 0);
+                    })
+                    ->leftJoin('email_addresses as ea', function ($join) {
+                        $join->on('ea.id', '=', 'eabr.email_address_id')
+                            ->where('ea.deleted', '=', 0);
+                    })
+                    ->select([
+                        'c.id',
+                        'c.first_name',
+                        'c.last_name',
+                        'c.phone_work',
+                        'c.phone_mobile',
+                        'c.phone_home',
+                        'c.phone_other',
+                        'c.birthdate',
+                        'c.date_entered',
+                        'c.date_modified',
+                        // Primary address fields from contacts
+                        'c.primary_address_street',
+                        'c.primary_address_city',
+                        'c.primary_address_state',
+                        'c.primary_address_postalcode',
+                        'c.primary_address_country',
+                        'cm.gender_c',
+                        'cm.meisjesnaam_c',
+                        'cm.roepnaam_c',
+                        'cm.voorletters_c',
+                        'cm.tussenvoegsel_c',
+                        'cm.aang_tussenv_c',
+                        'cm.primary_huisnr_c',
+                        'cm.primary_huisnr_toevoeging_c',
+                        DB::raw('MAX(CASE WHEN eabr.primary_address = 1 THEN ea.email_address END) as email_primary'),
+                        DB::raw('MIN(CASE WHEN eabr.primary_address = 0 THEN ea.email_address END) as email_any'),
+                    ])
+                    ->where('c.deleted', 0)
+                    ->whereNotNull('c.id')
+                    ->where('c.id', '!=', '');
 
-            // If specific person IDs are provided, filter by them and ignore limit
-            if (! empty($personIds)) {
-                $sql->whereIn('c.id', $personIds);
-            } else {
-                $sql->groupBy('c.id')
-                    ->orderBy('c.date_entered', 'desc') // Nieuwste eerst
-                    ->limit($limit);
-            }
-            $records = $sql->get();
+                // If specific person IDs are provided, filter by them and ignore limit
+                if (! empty($personIds)) {
+                    $sql->whereIn('c.id', $personIds);
+                } else {
+                    $sql->groupBy('c.id')
+                        ->orderBy('c.date_entered', 'desc') // Nieuwste eerst
+                        ->limit($limit);
+                }
+                $records = $sql->get();
 
-            $this->info('Found '.$records->count().' records to import');
+                $this->info('Found '.$records->count().' records to import');
 
-            if ($dryRun) {
-                $this->showDryRunResults($records);
+                if ($dryRun) {
+                    $this->showDryRunResults($records);
+                    return;
+                }
 
-                return;
-            }
-
-            $this->importRecords($records);
-
+                $this->importRecords($records);
+            });
         } catch (Exception $e) {
             $this->error('Error: '.$e->getMessage());
             Log::error('SugarCRM import failed', [
@@ -129,9 +129,7 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
             ]);
 
             return 1;
-        });
-        
-        return 0;
+        }
     }
 
     /**

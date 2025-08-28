@@ -15,8 +15,9 @@ class WebhookService
     public function sendWebhook(array $data, WebhookType $webhookType, string $caller = 'unknown'): bool
     {
         // Check if webhooks are globally disabled
-        if (!config('webhook.enabled', true)) {
+        if (! config('webhook.enabled', true)) {
             Log::info('Webhooks are disabled - skipping webhook: '.$webhookType->value.'; from: '.$caller, $data);
+
             return true; // Return true to indicate "successful" skip
         }
 

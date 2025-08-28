@@ -52,7 +52,7 @@ class ManageLeadDuplicateCache extends Command
     private function showStats(): int
     {
         $this->info('🔍 Lead Duplicate Cache Statistics');
-        $this->line('=' . str_repeat('=', 40));
+        $this->line('='.str_repeat('=', 40));
 
         $stats = $this->cacheService->getCacheStats();
 
@@ -61,7 +61,7 @@ class ManageLeadDuplicateCache extends Command
             [
                 ['Total Leads', number_format($stats['total_leads'])],
                 ['Cache Backend', $stats['cache_backend']],
-                ['Cache TTL', $stats['cache_ttl_hours'] . ' hours'],
+                ['Cache TTL', $stats['cache_ttl_hours'].' hours'],
             ]
         );
 

@@ -5,12 +5,14 @@ namespace Webkul\Contact\Repositories;
 use App\Models\Address;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use Validator;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Contracts\Person;
 use Webkul\Core\Eloquent\Repository;
+use Carbon\Carbon;
 
 class PersonRepository extends Repository
 {
@@ -266,5 +268,363 @@ class PersonRepository extends Repository
         }
 
         return $data;
+    }
+
+    /**
+     * Find potential duplicate persons based on email, phone, and name similarity.
+     *
+     * @param Person $person
+     * @return Collection
+     */
+    public function findPotentialDuplicates($person): Collection
+    {
+        try {
+            // Use direct method to avoid circular dependency
+            return $this->findPotentialDuplicatesDirectly($person);
+        } catch (\Exception $e) {
+            Log::error('Error in person duplicate detection: ' . $e->getMessage());
+            return collect();
+        }
+    }
+
+    /**
+     * Check if a person has potential duplicates.
+     *
+     * @param Person $person
+     * @return bool
+     */
+    public function hasPotentialDuplicates($person): bool
+    {
+        try {
+            return $this->findPotentialDuplicatesDirectly($person)->isNotEmpty();
+        } catch (\Exception $e) {
+            Log::error('Error checking person duplicates: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Direct computation of potential duplicates (fallback method).
+     */
+    public function findPotentialDuplicatesDirectly($person): Collection
+    {
+        $duplicates = collect();
+
+        try {
+            // Check for email duplicates
+            $emailDuplicates = $this->findDuplicatesByJsonField($person, 'emails');
+            $duplicates = $duplicates->merge($emailDuplicates);
+
+            // Check for phone duplicates
+            $phoneDuplicates = $this->findDuplicatesByJsonField($person, 'phones');
+            $duplicates = $duplicates->merge($phoneDuplicates);
+
+            // Check for name duplicates
+            $nameDuplicates = $this->findDuplicatesByName($person);
+            $duplicates = $duplicates->merge($nameDuplicates);
+        } catch (\Exception $e) {
+            Log::error('Error in person duplicate detection: ' . $e->getMessage());
+        }
+
+        // Remove duplicates from the collection and apply time/status filters
+        $uniqueDuplicates = $duplicates->unique('id');
+
+        return $this->applyDuplicateFilters($person, $uniqueDuplicates);
+    }
+
+    /**
+     * Apply time and status filters to potential duplicates.
+     *
+     * @param Person $person The person to check duplicates for
+     * @param Collection $duplicates Collection of potential duplicate persons
+     * @return Collection Filtered collection of duplicates
+     */
+    private function applyDuplicateFilters($person, Collection $duplicates): Collection
+    {
+        // Filter out the person itself and apply time-based filtering
+        $twoWeeksAgo = Carbon::now()->subWeeks(2);
+        $twoWeeksLater = Carbon::now()->addWeeks(2);
+
+        return $duplicates->filter(function ($duplicate) use ($person, $twoWeeksAgo, $twoWeeksLater) {
+            // Don't include the person itself
+            if ($duplicate->id === $person->id) {
+                return false;
+            }
+
+            // Apply time-based filtering (persons created within 4 weeks of each other)
+            $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
+            $personCreatedAt = Carbon::parse($person->created_at);
+            
+            return $duplicateCreatedAt->between($personCreatedAt->copy()->subWeeks(2), $personCreatedAt->copy()->addWeeks(2));
+        });
+    }
+
+    /**
+     * Find duplicate persons based on email addresses.
+     */
+    private function findDuplicatesByEmail($person): Collection
+    {
+        return $this->findDuplicatesByJsonField($person, 'emails');
+    }
+
+    /**
+     * Find duplicate persons based on phone numbers.
+     */
+    private function findDuplicatesByPhone($person): Collection
+    {
+        return $this->findDuplicatesByJsonField($person, 'phones');
+    }
+
+    /**
+     * Find duplicate persons based on name similarity.
+     */
+    private function findDuplicatesByName($person): Collection
+    {
+        $duplicates = collect();
+
+        try {
+            $query = $this->model->newQuery()
+                ->where('id', '!=', $person->id);
+
+            // Exact first + last name match
+            if (!empty($person->first_name) && !empty($person->last_name)) {
+                $exactMatches = $query->clone()
+                    ->where('first_name', 'ILIKE', $person->first_name)
+                    ->where('last_name', 'ILIKE', $person->last_name)
+                    ->get();
+                $duplicates = $duplicates->merge($exactMatches);
+            }
+
+            // Married name variations
+            if (!empty($person->married_name)) {
+                $marriedMatches = $query->clone()
+                    ->where('first_name', 'ILIKE', $person->first_name)
+                    ->where(function ($q) use ($person) {
+                        $q->where('last_name', 'ILIKE', $person->married_name)
+                          ->orWhere('married_name', 'ILIKE', $person->last_name);
+                    })
+                    ->get();
+                $duplicates = $duplicates->merge($marriedMatches);
+            }
+        } catch (\Exception $e) {
+            Log::error('Error searching for person name duplicates: ' . $e->getMessage());
+        }
+
+        return $duplicates;
+    }
+
+    /**
+     * Generic helper to find duplicates based on JSON field values.
+     */
+    private function findDuplicatesByJsonField($person, string $fieldName): Collection
+    {
+        $duplicates = collect();
+
+        try {
+            $personFieldValue = $person->{$fieldName};
+            if (empty($personFieldValue)) {
+                return $duplicates;
+            }
+
+            // Handle both array and JSON string formats
+            $personValues = is_array($personFieldValue) ? $personFieldValue : json_decode($personFieldValue, true);
+            if (!is_array($personValues)) {
+                return $duplicates;
+            }
+
+            foreach ($personValues as $item) {
+                $value = is_array($item) ? ($item['value'] ?? '') : $item;
+                if (empty($value)) {
+                    continue;
+                }
+
+                try {
+                    // Use JSON_CONTAINS or JSON_EXTRACT depending on database
+                    $query = $this->model->newQuery()
+                        ->where('id', '!=', $person->id)
+                        ->where(function($q) use ($fieldName, $value) {
+                            // Try JSON_CONTAINS first (MySQL)
+                            try {
+                                $q->whereRaw("JSON_CONTAINS({$fieldName}, ?)", [json_encode([['value' => $value]])]);
+                            } catch (\Exception $e) {
+                                // Fallback to LIKE search on JSON field
+                                $q->where($fieldName, 'LIKE', '%"' . $value . '"%');
+                            }
+                        });
+
+                    $duplicates = $duplicates->merge($query->get());
+                } catch (\Exception $e) {
+                    Log::error("Error searching for {$fieldName} duplicates: " . $e->getMessage());
+                }
+            }
+        } catch (\Exception $e) {
+            Log::error("Error in findDuplicatesByJsonField for {$fieldName}: " . $e->getMessage());
+        }
+
+        return $duplicates;
+    }
+
+    /**
+     * Merge persons functionality.
+     *
+     * @param int $primaryPersonId
+     * @param array $duplicatePersonIds
+     * @param array $fieldMappings
+     * @return Person
+     */
+    public function mergePersons($primaryPersonId, $duplicatePersonIds, $fieldMappings = [])
+    {
+        $primaryPerson = $this->findOrFail($primaryPersonId);
+        $duplicatePersons = $this->findWhereIn('id', $duplicatePersonIds);
+
+        try {
+            \DB::beginTransaction();
+
+            // Apply field mappings to primary person
+            foreach ($fieldMappings as $field => $sourcePersonId) {
+                if ($sourcePersonId != $primaryPersonId) {
+                    $sourcePerson = $duplicatePersons->firstWhere('id', $sourcePersonId);
+                    if ($sourcePerson && !empty($sourcePerson->$field)) {
+                        $primaryPerson->$field = $sourcePerson->$field;
+                    }
+                }
+            }
+
+            // Handle address merging
+            if (isset($fieldMappings['address'])) {
+                $addressSourcePersonId = $fieldMappings['address'];
+                if ($addressSourcePersonId != $primaryPersonId) {
+                    $this->mergeAddress($primaryPerson, $duplicatePersons->firstWhere('id', $addressSourcePersonId));
+                }
+            }
+
+            // Save the updated primary person
+            $primaryPerson->save();
+
+            // Transfer activities and emails from duplicate persons to primary person
+            foreach ($duplicatePersons as $duplicatePerson) {
+                try {
+                    // Add system activity for removed duplicate person
+                    $this->addSystemActivity($primaryPerson, $duplicatePerson);
+                } catch (\Exception $e) {
+                    Log::warning('Error adding system activity for duplicate removal: ' . $e->getMessage());
+                }
+
+                try {
+                    // Transfer emails if they exist
+                    if (method_exists($duplicatePerson, 'emails')) {
+                        $duplicatePerson->emails()->update(['person_id' => $primaryPersonId]);
+                    }
+
+                    // Transfer activities
+                    $duplicatePerson->activities()->sync([]);
+                    $primaryPerson->activities()->attach($duplicatePerson->activities->pluck('id'));
+
+                    // Add merge note to primary person's activities
+                    $this->addMergeNote($primaryPerson, $duplicatePerson);
+                } catch (\Exception $e) {
+                    Log::warning('Error transferring data from duplicate person: ' . $e->getMessage());
+                }
+
+                // Archive the duplicate person (soft delete or mark as archived)
+                $duplicatePerson->delete();
+            }
+
+            \DB::commit();
+
+            // Clear cache for merged persons
+            try {
+                $cacheService = app(\App\Services\PersonDuplicateCacheService::class);
+                $cacheService->handlePersonMerge($primaryPersonId, $duplicatePersonIds);
+            } catch (\Exception $e) {
+                Log::warning('Error clearing person duplicate cache: ' . $e->getMessage());
+            }
+
+            return $primaryPerson;
+        } catch (\Exception $e) {
+            \DB::rollback();
+            Log::error('Error merging persons: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Merge address from duplicate person to primary person.
+     */
+    private function mergeAddress($primaryPerson, $duplicatePerson): void
+    {
+        if (!$duplicatePerson || !$duplicatePerson->address) {
+            return;
+        }
+
+        $duplicateAddress = $duplicatePerson->address;
+        
+        if ($primaryPerson->address) {
+            // Update existing address
+            $primaryPerson->address->update($duplicateAddress->toArray());
+        } else {
+            // Create new address
+            $addressData = $duplicateAddress->toArray();
+            $addressData['person_id'] = $primaryPerson->id;
+            unset($addressData['id'], $addressData['created_at'], $addressData['updated_at']);
+            Address::create($addressData);
+        }
+
+        // Delete the duplicate's address
+        $duplicateAddress->delete();
+    }
+
+    /**
+     * Add system activity for person merge.
+     */
+    private function addSystemActivity($primaryPerson, $duplicatePerson): void
+    {
+        try {
+            $activity = app(\Webkul\Activity\Repositories\ActivityRepository::class)->create([
+                'type' => 'note',
+                'title' => 'Person Merge',
+                'comment' => "Removed duplicate person \"{$duplicatePerson->name}\" (ID: {$duplicatePerson->id}) during merge operation.",
+                'is_done' => true,
+                'user_id' => auth()->id() ?: 1,
+            ]);
+
+            // Link activity to primary person
+            $primaryPerson->activities()->attach($activity->id);
+
+            Log::info('System activity created for person duplicate removal', [
+                'primary_person_id' => $primaryPerson->id,
+                'primary_person_name' => $primaryPerson->name,
+                'removed_duplicate_id' => $duplicatePerson->id,
+                'removed_duplicate_name' => $duplicatePerson->name,
+                'activity_id' => $activity->id,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error creating system activity for person merge: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Add merge note to primary person's activities.
+     *
+     * @param Person $primaryPerson
+     * @param Person $duplicatePerson
+     */
+    private function addMergeNote($primaryPerson, $duplicatePerson)
+    {
+        try {
+            $activity = app(\Webkul\Activity\Repositories\ActivityRepository::class)->create([
+                'type' => 'note',
+                'title' => 'Person Merged',
+                'comment' => "Person #{$duplicatePerson->id} ({$duplicatePerson->name}) was merged into this person.",
+                'is_done' => true,
+                'user_id' => auth()->id() ?: 1,
+            ]);
+
+            // Link activity to primary person
+            $primaryPerson->activities()->attach($activity->id);
+        } catch (\Exception $e) {
+            Log::error('Error adding merge note: ' . $e->getMessage());
+        }
     }
 }

@@ -6,6 +6,7 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\Contact\Repositories\OrganizationRepository;
 use Webkul\DataGrid\DataGrid;
+use App\Services\PersonDuplicateCacheService;
 
 class PersonDataGrid extends DataGrid
 {
@@ -14,7 +15,10 @@ class PersonDataGrid extends DataGrid
      *
      * @return void
      */
-    public function __construct(protected OrganizationRepository $organizationRepository) {}
+    public function __construct(
+        protected OrganizationRepository $organizationRepository,
+        protected PersonDuplicateCacheService $duplicateCacheService
+    ) {}
 
     /**
      * Prepare query builder.
@@ -131,6 +135,25 @@ class PersonDataGrid extends DataGrid
                 $age = $birthDate->age;
                 
                 return $age . ' jaar';
+            },
+        ]);
+
+        $this->addColumn([
+            'index'      => 'has_duplicates',
+            'label'      => 'Duplicaten',
+            'type'       => 'string',
+            'sortable'   => true,
+            'filterable' => true,
+            'searchable' => false,
+            'closure'    => function ($row) {
+                $hasDuplicates = $this->duplicateCacheService->hasCachedDuplicates($row->id);
+                if ($hasDuplicates) {
+                    $duplicateCount = $this->duplicateCacheService->getCachedDuplicates($row->id)->count();
+                    return '<a href="' . route('admin.contacts.persons.duplicates.index', $row->id) . '" class="text-orange-600 hover:text-orange-800" title="' . $duplicateCount . ' duplicaten gevonden">'
+                         . '<span class="icon-users text-lg"></span>'
+                         . '</a>';
+                }
+                return '';
             },
         ]);
     }

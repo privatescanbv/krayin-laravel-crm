@@ -17,6 +17,9 @@ class Kernel extends ConsoleKernel
 
         // Refresh lead duplicate cache every hour (simpler)
         $schedule->command('leads:refresh-cache --clear')->hourly();
+        
+        // Refresh person duplicate cache every hour
+        $schedule->command('persons:refresh-duplicate-cache --clear')->hourly();
     }
 
     /**

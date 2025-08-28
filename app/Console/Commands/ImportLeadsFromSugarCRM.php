@@ -61,11 +61,16 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         }
         $this->info('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
-        // Test connection
-        $this->testConnection($connection);
+        // Disable webhooks during import to prevent external notifications
+        if (!$dryRun) {
+            $this->disableWebhooks();
+        }
 
-        // Get records from SugarCRM
-        $sql = DB::connection($connection)
+            // Test connection
+            $this->testConnection($connection);
+
+            // Get records from SugarCRM
+            $sql = DB::connection($connection)
             ->table('leads as l')
             ->join('leads_cstm as lc', 'l.id', '=', 'lc.id_c')
             ->leftJoin('email_addr_bean_rel as eabr', function ($join) {
@@ -164,16 +169,21 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
         $this->info('Found '.$records->count().' records to import');
 
-        $leadByPersons = $this->extractPerson($records);
-        $leadByPersonsByAnamnesis = $this->extractAnamenesis($leadByPersons);
-        if ($dryRun) {
-            $this->showDryRunResults($records, $leadByPersonsByAnamnesis);
+            $leadByPersons = $this->extractPerson($records);
+            $leadByPersonsByAnamnesis = $this->extractAnamenesis($leadByPersons);
+            if ($dryRun) {
+                $this->showDryRunResults($records, $leadByPersonsByAnamnesis);
+                return;
+            }
 
-            return;
+            $this->importRecords($records, $leadByPersonsByAnamnesis);
+
+        } finally {
+            // Always re-enable webhooks after import, even if an error occurred
+            if (!$dryRun) {
+                $this->enableWebhooks();
+            }
         }
-
-        $this->importRecords($records, $leadByPersonsByAnamnesis);
-
     }
 
     /**

@@ -45,7 +45,10 @@ class Dashboard
     {
         return [
             'total_leads'           => $this->leadReporting->getTotalLeadsProgress(),
+            'won_leads'            => $this->leadReporting->getTotalWonLeadsProgress(),
+            'lost_leads'           => $this->leadReporting->getTotalLostLeadsProgress(),
             'average_leads_per_day' => $this->leadReporting->getAverageLeadsPerDayProgress(),
+            'department_stats'      => $this->leadReporting->getLeadsByDepartmentAndStatus(),
             'total_quotations'      => $this->quoteReporting->getTotalQuotesProgress(),
             'total_persons'         => $this->personReporting->getTotalPersonsProgress(),
             'total_organizations'   => $this->organizationReporting->getTotalOrganizationsProgress(),

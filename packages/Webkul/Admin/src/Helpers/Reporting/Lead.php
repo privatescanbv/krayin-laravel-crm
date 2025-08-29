@@ -137,7 +137,157 @@ class Lead extends AbstractReporting
         return $this->getTotalLeads($startDate, $endDate) / $days;
     }
 
-    // Lead value methods removed - field no longer exists
+    /**
+     * Retrieves won leads count and their progress.
+     */
+    public function getTotalWonLeadsProgress(): array
+    {
+        return [
+            'previous'        => $previous = $this->getTotalWonLeads($this->lastStartDate, $this->lastEndDate),
+            'current'         => $current = $this->getTotalWonLeads($this->startDate, $this->endDate),
+            'formatted_total' => $current,
+            'progress'        => $this->getPercentageChange($previous, $current),
+        ];
+    }
+
+    /**
+     * Retrieves won leads count
+     *
+     * @param  \Carbon\Carbon  $startDate
+     * @param  \Carbon\Carbon  $endDate
+     */
+    public function getTotalWonLeads($startDate, $endDate): int
+    {
+        return $this->leadRepository
+            ->resetModel()
+            ->whereIn('lead_pipeline_stage_id', $this->wonStageIds)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+    }
+
+    /**
+     * Retrieves lost leads count and their progress.
+     */
+    public function getTotalLostLeadsProgress(): array
+    {
+        return [
+            'previous'        => $previous = $this->getTotalLostLeads($this->lastStartDate, $this->lastEndDate),
+            'current'         => $current = $this->getTotalLostLeads($this->startDate, $this->endDate),
+            'formatted_total' => $current,
+            'progress'        => $this->getPercentageChange($previous, $current),
+        ];
+    }
+
+    /**
+     * Retrieves lost leads count
+     *
+     * @param  \Carbon\Carbon  $startDate
+     * @param  \Carbon\Carbon  $endDate
+     */
+    public function getTotalLostLeads($startDate, $endDate): int
+    {
+        return $this->leadRepository
+            ->resetModel()
+            ->whereIn('lead_pipeline_stage_id', $this->lostStageIds)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->count();
+    }
+
+    /**
+     * Retrieves won leads count by department.
+     */
+    public function getWonLeadsByDepartment()
+    {
+        return $this->leadRepository
+            ->resetModel()
+            ->select(
+                'departments.name as department_name',
+                DB::raw('COUNT(*) as total')
+            )
+            ->leftJoin('departments', 'leads.department_id', '=', 'departments.id')
+            ->whereIn('lead_pipeline_stage_id', $this->wonStageIds)
+            ->whereBetween('leads.created_at', [$this->startDate, $this->endDate])
+            ->groupBy('department_id')
+            ->get();
+    }
+
+    /**
+     * Retrieves lost leads count by department.
+     */
+    public function getLostLeadsByDepartment()
+    {
+        return $this->leadRepository
+            ->resetModel()
+            ->select(
+                'departments.name as department_name',
+                DB::raw('COUNT(*) as total')
+            )
+            ->leftJoin('departments', 'leads.department_id', '=', 'departments.id')
+            ->whereIn('lead_pipeline_stage_id', $this->lostStageIds)
+            ->whereBetween('leads.created_at', [$this->startDate, $this->endDate])
+            ->groupBy('department_id')
+            ->get();
+    }
+
+    /**
+     * Retrieves leads count by department and status.
+     */
+    public function getLeadsByDepartmentAndStatus()
+    {
+        return [
+            'herniapoli' => [
+                'won' => $this->getWonLeadsByDepartmentName('Herniapoli'),
+                'lost' => $this->getLostLeadsByDepartmentName('Herniapoli'),
+                'total' => $this->getTotalLeadsByDepartmentName('Herniapoli'),
+            ],
+            'privatescan' => [
+                'won' => $this->getWonLeadsByDepartmentName('Privatescan'),
+                'lost' => $this->getLostLeadsByDepartmentName('Privatescan'),
+                'total' => $this->getTotalLeadsByDepartmentName('Privatescan'),
+            ],
+        ];
+    }
+
+    /**
+     * Get won leads count for specific department
+     */
+    private function getWonLeadsByDepartmentName(string $departmentName): int
+    {
+        return $this->leadRepository
+            ->resetModel()
+            ->leftJoin('departments', 'leads.department_id', '=', 'departments.id')
+            ->whereIn('lead_pipeline_stage_id', $this->wonStageIds)
+            ->where('departments.name', $departmentName)
+            ->whereBetween('leads.created_at', [$this->startDate, $this->endDate])
+            ->count();
+    }
+
+    /**
+     * Get lost leads count for specific department
+     */
+    private function getLostLeadsByDepartmentName(string $departmentName): int
+    {
+        return $this->leadRepository
+            ->resetModel()
+            ->leftJoin('departments', 'leads.department_id', '=', 'departments.id')
+            ->whereIn('lead_pipeline_stage_id', $this->lostStageIds)
+            ->where('departments.name', $departmentName)
+            ->whereBetween('leads.created_at', [$this->startDate, $this->endDate])
+            ->count();
+    }
+
+    /**
+     * Get total leads count for specific department
+     */
+    private function getTotalLeadsByDepartmentName(string $departmentName): int
+    {
+        return $this->leadRepository
+            ->resetModel()
+            ->leftJoin('departments', 'leads.department_id', '=', 'departments.id')
+            ->where('departments.name', $departmentName)
+            ->whereBetween('leads.created_at', [$this->startDate, $this->endDate])
+            ->count();
+    }
 
 
 

@@ -163,8 +163,6 @@ class LeadController extends Controller
                 $query->whereIn('leads.user_id', $userIds);
             }
 
-            $stage->lead_value = 0;
-
             $data[$stage->sort_order] = (new StageResource($stage))->jsonSerialize();
 
             // Load relationships - including persons for kanban display

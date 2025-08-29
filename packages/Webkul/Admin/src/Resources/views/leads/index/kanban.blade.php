@@ -622,8 +622,6 @@
                     }
 
                     if (event.removed) {
-                        stage.lead_value = 0;
-
                         this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage.sort_order].leads.meta.total - 1;
 
                         return;
@@ -636,7 +634,6 @@
                     }
 
                     // Update stage counters for non-lost stages
-                    stage.lead_value = 0;
                     this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage.sort_order].leads.meta.total + 1;
 
                     this.updateLeadStage(event.added.element.id, stage.id);
@@ -700,7 +697,6 @@
                             // Update stage counters after successful update
                             const stage = this.stages.find(s => s.id === stageId);
                             if (stage) {
-                                stage.lead_value = 0;
                                 this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage.sort_order].leads.meta.total + 1;
                             }
                         })

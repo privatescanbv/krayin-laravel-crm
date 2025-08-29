@@ -2223,12 +2223,12 @@ return [
                 'lost' => 'Verloren leads',
             ],
             'revenue-by-sources' => [
-                'title' => 'Omzet per bron',
+                'title' => 'Gewonnen leads per bron',
                 'empty-title' => 'Geen gegevens beschikbaar',
                 'empty-info' => 'Geen gegevens beschikbaar voor de geselecteerde periode',
             ],
             'revenue-by-types' => [
-                'title' => 'Omzet per type',
+                'title' => 'Gewonnen leads per type',
                 'empty-title' => 'Geen gegevens beschikbaar',
                 'empty-info' => 'Geen gegevens beschikbaar voor de geselecteerde periode',
             ],
@@ -2238,7 +2238,7 @@ return [
                 'empty-info' => 'Geen producten beschikbaar voor de geselecteerde periode',
             ],
             'top-persons' => [
-                'title' => 'Top personen',
+                'title' => 'Top personen (gewonnen leads)',
                 'empty-title' => 'Geen personen gevonden',
                 'empty-info' => 'Geen personen beschikbaar voor de geselecteerde periode',
             ],

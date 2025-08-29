@@ -135,7 +135,7 @@
                             <!-- afdeling and other custom fields -->
                             <x-admin::attributes
                                 :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                    ['code', 'NOTIN', ['lead_value', 'lead_type_id', 'lead_source_id', 'user_id', 'lead_pipeline_id', 'lead_pipeline_stage_id', 'lead_channel_id']],
+                                    ['code', 'NOTIN', ['lead_type_id', 'lead_source_id', 'user_id', 'lead_pipeline_id', 'lead_pipeline_stage_id', 'lead_channel_id']],
                                     'entity_type' => 'leads',
                                     'quick_add'   => 1
                                 ])"
@@ -261,7 +261,7 @@
                                 <div class="w-full">
                                     <x-admin::attributes
                                         :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                            ['code', 'IN', ['lead_value', 'lead_type_id', 'lead_source_id']],
+                                            ['code', 'IN', ['lead_type_id', 'lead_source_id']],
                                             'entity_type' => 'leads',
                                             'quick_add'   => 1
                                         ])"

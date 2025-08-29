@@ -60,7 +60,6 @@ class Lead extends Model implements LeadContract
     protected $fillable = [
         'external_id',
         'description',
-        'lead_value',
         'status',
         'lost_reason',
         'closed_at',

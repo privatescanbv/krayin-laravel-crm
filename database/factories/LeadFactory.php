@@ -59,7 +59,6 @@ class LeadFactory extends Factory
 
         return [
             'description'            => $this->faker->paragraph(),
-            'lead_value'             => $this->faker->randomFloat(2, 100, 10000),
             'status'                 => $this->faker->boolean(),
             'lost_reason'            => $this->faker->optional()->sentence(),
             'closed_at'              => $this->faker->optional()->dateTimeBetween('-1 month', 'now'),
@@ -159,7 +158,7 @@ class LeadFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                'lead_value' => $this->faker->randomFloat(2, 5000, 50000),
+                // Lead value field has been removed
             ];
         });
     }

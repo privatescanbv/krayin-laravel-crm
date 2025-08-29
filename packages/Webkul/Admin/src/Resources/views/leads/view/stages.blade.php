@@ -109,20 +109,9 @@
                         <x-slot:content>
                             {!! view_render_event('admin.leads.view.stages.form_controls.modal.content.before', ['lead' => $lead]) !!}
 
-                            <!-- Won Value -->
+                            <!-- Won Value - Removed lead_value field -->
                             <template v-if="nextStage.code == 'won'">
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label>
-                                        @lang('admin::app.leads.view.stages.won-value')
-                                    </x-admin::form.control-group.label>
-
-                                    <x-admin::form.control-group.control
-                                        type="price"
-                                        name="lead_value"
-                                        :value="$lead->lead_value"
-                                        v-model="nextStage.lead_value"
-                                    />
-                                </x-admin::form.control-group>
+                                <!-- Lead value field has been removed -->
                             </template>
 
                             <!-- Lost Reason -->
@@ -221,8 +210,6 @@
                     };
 
                     if (this.nextStage.code == 'won') {
-                        params.lead_value = this.nextStage.lead_value;
-
                         params.closed_at = this.nextStage.closed_at;
                     } else if (this.nextStage.code == 'lost') {
                         params.lost_reason = this.nextStage.lost_reason;

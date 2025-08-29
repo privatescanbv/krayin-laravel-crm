@@ -2299,13 +2299,13 @@ return [
             ],
 
             'revenue-by-sources' => [
-                'title'       => 'Revenue By Sources',
+                'title'       => 'Won Leads By Sources',
                 'empty-title' => 'No Data Available',
                 'empty-info'  => 'No data available for selected interval',
             ],
 
             'revenue-by-types' => [
-                'title'       => 'Revenue By Types',
+                'title'       => 'Won Leads By Types',
                 'empty-title' => 'No Data Available',
                 'empty-info'  => 'No data available for selected interval',
             ],
@@ -2317,7 +2317,7 @@ return [
             ],
 
             'top-persons' => [
-                'title'       => 'Top Persons',
+                'title'       => 'Top Persons (Won Leads)',
                 'empty-title' => 'No Persons Found',
                 'empty-info'  => 'No persons available for selected interval',
             ],

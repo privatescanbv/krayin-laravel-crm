@@ -28,13 +28,13 @@ class Dashboard
     ) {}
 
     /**
-     * Returns the overall revenue statistics.
+     * Returns the overall leads statistics (replacing revenue stats).
      */
     public function getRevenueStats(): array
     {
         return [
-            'total_won_revenue'  => $this->leadReporting->getTotalWonLeadValueProgress(),
-            'total_lost_revenue' => $this->leadReporting->getTotalLostLeadValueProgress(),
+            'total_won_leads'  => $this->leadReporting->getTotalWonLeadsProgress(),
+            'total_lost_leads' => $this->leadReporting->getTotalLostLeadsProgress(),
         ];
     }
 
@@ -45,8 +45,10 @@ class Dashboard
     {
         return [
             'total_leads'           => $this->leadReporting->getTotalLeadsProgress(),
-            'average_lead_value'    => $this->leadReporting->getAverageLeadValueProgress(),
+            'won_leads'            => $this->leadReporting->getTotalWonLeadsProgress(),
+            'lost_leads'           => $this->leadReporting->getTotalLostLeadsProgress(),
             'average_leads_per_day' => $this->leadReporting->getAverageLeadsPerDayProgress(),
+            'department_stats'      => $this->leadReporting->getLeadsByDepartmentAndStatus(),
             'total_quotations'      => $this->quoteReporting->getTotalQuotesProgress(),
             'total_persons'         => $this->personReporting->getTotalPersonsProgress(),
             'total_organizations'   => $this->organizationReporting->getTotalOrganizationsProgress(),
@@ -73,19 +75,19 @@ class Dashboard
     }
 
     /**
-     * Returns leads revenue statistics by sources.
+     * Returns won leads count statistics by sources.
      */
     public function getLeadsStatsBySources(): mixed
     {
-        return $this->leadReporting->getTotalWonLeadValueBySources();
+        return $this->leadReporting->getTotalWonLeadsBySources();
     }
 
     /**
-     * Returns leads revenue statistics by types.
+     * Returns won leads count statistics by types.
      */
     public function getLeadsStatsByTypes(): mixed
     {
-        return $this->leadReporting->getTotalWonLeadValueByTypes();
+        return $this->leadReporting->getTotalWonLeadsByTypes();
     }
 
     /**

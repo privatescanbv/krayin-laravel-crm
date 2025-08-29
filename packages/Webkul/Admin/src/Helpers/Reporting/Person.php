@@ -45,23 +45,26 @@ class Person extends AbstractReporting
     }
 
     /**
-     * Gets top customers by revenue.
+     * Gets top customers by number of won leads.
      *
      * @param  int  $limit
      */
     public function getTopCustomersByRevenue($limit = null): Collection
     {
-        $tablePrefix = DB::getTablePrefix();
+        // Get won stage IDs
+        $wonStageIds = DB::table('lead_pipeline_stages')->where('code', 'won')->pluck('id')->toArray();
 
         $items = $this->personRepository
             ->resetModel()
-            ->leftJoin('leads', 'persons.id', '=', 'leads.person_id')
-            ->select('*', 'persons.id as id')
-            ->addSelect(DB::raw('SUM('.$tablePrefix.'leads.lead_value) as revenue'))
+            ->leftJoin('lead_persons', 'persons.id', '=', 'lead_persons.person_id')
+            ->leftJoin('leads', 'lead_persons.lead_id', '=', 'leads.id')
+            ->select('persons.*', 'persons.id as id')
+            ->addSelect(DB::raw('COUNT(leads.id) as won_leads_count'))
+            ->whereIn('leads.lead_pipeline_stage_id', $wonStageIds)
             ->whereBetween('leads.closed_at', [$this->startDate, $this->endDate])
-            ->having(DB::raw('SUM('.$tablePrefix.'leads.lead_value)'), '>', 0)
-            ->groupBy('person_id')
-            ->orderBy('revenue', 'DESC')
+            ->having('won_leads_count', '>', 0)
+            ->groupBy('persons.id')
+            ->orderBy('won_leads_count', 'DESC')
             ->limit($limit)
             ->get();
 
@@ -70,9 +73,9 @@ class Person extends AbstractReporting
                 'id'                => $item->id,
                 'name'              => $item->name,
                 'emails'            => $item->emails,
-                'phones'   => $item->phones,
-                'revenue'           => $item->revenue,
-                'formatted_revenue' => core()->formatBasePrice($item->revenue),
+                'phones'            => $item->phones,
+                'won_leads_count'   => $item->won_leads_count,
+                'formatted_count'   => $item->won_leads_count . ' gewonnen leads',
             ];
         });
 

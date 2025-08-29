@@ -452,7 +452,6 @@ test('manual search handles exact match correctly', function () {
         'phones'                 => [['value' => '123456789', 'label' => 'Mobile']],
         'date_of_birth'          => '1985-05-15',
         'description'            => null, // Override factory description
-        'lead_value'             => null, // Override factory lead_value
     ]);
 
     // Add matching address to lead for perfect score

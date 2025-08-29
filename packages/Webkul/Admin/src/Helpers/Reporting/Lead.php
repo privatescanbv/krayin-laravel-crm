@@ -325,41 +325,7 @@ class Lead extends AbstractReporting
             ->get();
     }
 
-    /**
-     * Retrieves won leads count over time.
-     */
-    public function getTotalWonLeadsOverTime()
-    {
-        return $this->leadRepository
-            ->resetModel()
-            ->select(
-                DB::raw('DATE(created_at) as date'),
-                DB::raw('COUNT(*) as total')
-            )
-            ->whereIn('lead_pipeline_stage_id', $this->wonStageIds)
-            ->whereBetween('created_at', [$this->startDate, $this->endDate])
-            ->groupBy(DB::raw('DATE(created_at)'))
-            ->orderBy('date')
-            ->get();
-    }
 
-    /**
-     * Retrieves lost leads count over time.
-     */
-    public function getTotalLostLeadsOverTime()
-    {
-        return $this->leadRepository
-            ->resetModel()
-            ->select(
-                DB::raw('DATE(created_at) as date'),
-                DB::raw('COUNT(*) as total')
-            )
-            ->whereIn('lead_pipeline_stage_id', $this->lostStageIds)
-            ->whereBetween('created_at', [$this->startDate, $this->endDate])
-            ->groupBy(DB::raw('DATE(created_at)'))
-            ->orderBy('date')
-            ->get();
-    }
 
 
 

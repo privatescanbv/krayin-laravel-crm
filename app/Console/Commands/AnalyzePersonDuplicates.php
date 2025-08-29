@@ -2,22 +2,18 @@
 
 namespace App\Console\Commands;
 
-use App\Services\DuplicateReasonHelpers;
-use Exception;
-use Illuminate\Console\Command;
+use Illuminate\Support\Collection;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 
-class AnalyzePersonDuplicates extends Command
+class AnalyzePersonDuplicates extends AbstractAnalyzeDuplicates
 {
-    use DuplicateReasonHelpers;
-
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'person:analyze-duplicates {person_id?} {--all} {--csv}';
+    protected $signature = 'person:analyze-duplicates {person_id?} {--all} {--csv} {--limit=50}';
 
     /**
      * The console command description.
@@ -43,13 +39,14 @@ class AnalyzePersonDuplicates extends Command
         $personId = $this->argument('person_id');
         $analyzeAll = $this->option('all');
         $csvOutput = $this->option('csv');
+        $limit = (int) $this->option('limit');
 
         if ($personId) {
-            return $this->analyzeSinglePerson($personId, $csvOutput);
+            return $this->analyzeSingleEntity((int) $personId, $csvOutput, $limit);
         }
 
         if ($analyzeAll) {
-            return $this->analyzeAllPersons($csvOutput);
+            return $this->analyzeAllEntities($csvOutput, $limit, false);
         }
 
         $this->error('Please specify either a person ID or use --all flag');
@@ -57,201 +54,54 @@ class AnalyzePersonDuplicates extends Command
         return 1;
     }
 
-    /**
-     * Analyze a single person for duplicates.
-     */
-    private function analyzeSinglePerson(int $personId, bool $csvOutput = false): int
+    protected function getEntityType(): string
     {
-        try {
-            $person = $this->personRepository->findOrFail($personId);
-        } catch (Exception $e) {
-            $this->error("Person with ID {$personId} not found.");
-
-            return 1;
-        }
-
-        $duplicates = $this->personRepository->findPotentialDuplicates($person);
-
-        if ($duplicates->isEmpty()) {
-            $this->info("No duplicates found for person {$person->id} ({$person->name})");
-
-            return 0;
-        }
-
-        if ($csvOutput) {
-            $this->outputCsv(collect([$person]), $duplicates);
-        } else {
-            $this->outputTable(collect([$person]), $duplicates);
-        }
-
-        return 0;
+        return 'person';
     }
 
-    /**
-     * Analyze all persons for duplicates.
-     */
-    private function analyzeAllPersons(bool $csvOutput = false): int
+    protected function getEntityModel(): string
     {
-        $this->info('Analyzing all persons for duplicates...');
-
-        $personsWithDuplicates = collect();
-        $allDuplicates = collect();
-        $summaryRows = [];
-        $totalDuplicateCount = 0;
-
-        $persons = Person::with(['organization'])->get();
-        $processedCount = 0;
-
-        foreach ($persons as $person) {
-            $duplicates = $this->personRepository->findPotentialDuplicates($person);
-
-            if ($duplicates->isNotEmpty()) {
-                $personsWithDuplicates->push($person);
-                $allDuplicates = $allDuplicates->merge($duplicates);
-
-                $dupCount = $duplicates->count();
-                $totalDuplicateCount += $dupCount;
-                $summaryRows[] = [
-                    $person->id,
-                    $person->name,
-                    $dupCount,
-                ];
-            }
-
-            $processedCount++;
-            if ($processedCount % 100 === 0) {
-                $this->info("Processed {$processedCount} persons...");
-            }
-        }
-
-        if ($personsWithDuplicates->isEmpty()) {
-            $this->info('No duplicate persons found.');
-
-            return 0;
-        }
-
-        $this->info("Found {$personsWithDuplicates->count()} persons with potential duplicates.");
-
-        if ($csvOutput) {
-            $this->outputCsv($personsWithDuplicates, $allDuplicates);
-        } else {
-            $this->outputTable($personsWithDuplicates, $allDuplicates);
-
-            // Summary block: per person duplicate count and total duplicates found
-            $this->line('');
-            $this->info('Summary: Duplicates per person');
-            $this->table([
-                'Person ID',
-                'Name',
-                'Duplicates Found',
-            ], $summaryRows);
-
-            $this->line('');
-            $this->info('Total duplicates found: '.$totalDuplicateCount);
-        }
-
-        return 0;
+        return Person::class;
     }
 
-    /**
-     * Output results as a table.
-     */
-    private function outputTable($persons, $allDuplicates): void
+    protected function getRepositoryClass(): string
     {
-        $tableData = [];
-
-        foreach ($persons as $person) {
-            [$personEmails, $personPhones] = [$this->extractValues($person->emails), $this->extractValues($person->phones)];
-
-            $duplicates = $this->personRepository->findPotentialDuplicates($person);
-
-            // Build primary as array for helper compatibility
-            $primaryArr = [
-                'first_name'   => $person->first_name,
-                'last_name'    => $person->last_name,
-                'married_name' => $person->married_name,
-                'emails'       => $person->emails,
-                'phones'       => $person->phones,
-            ];
-
-            foreach ($duplicates as $dup) {
-                $dupArr = [
-                    'first_name'   => $dup->first_name,
-                    'last_name'    => $dup->last_name,
-                    'married_name' => $dup->married_name,
-                    'emails'       => $dup->emails,
-                    'phones'       => $dup->phones,
-                ];
-
-                $reasons = $this->computeReasons($primaryArr, $dupArr, $personEmails, $personPhones);
-
-                $tableData[] = [
-                    $person->id,
-                    $person->name,
-                    $dup->id,
-                    $dup->name,
-                    implode(', ', $reasons['email'] ?? []),
-                    implode(', ', $reasons['phone'] ?? []),
-                    $reasons['name_reason'] ?? '-',
-                ];
-            }
-        }
-
-        $this->table([
-            'Primary ID',
-            'Primary Name',
-            'Duplicate ID',
-            'Duplicate Name',
-            'Email Matches',
-            'Phone Matches',
-            'Name Reason',
-        ], $tableData);
+        return PersonRepository::class;
     }
 
-    /**
-     * Output results as CSV.
-     */
-    private function outputCsv($persons, $allDuplicates): void
+    protected function getRepository()
     {
-        $this->line('primary_id,primary_name,primary_organization,duplicate_id,duplicate_name,duplicate_organization,email_matches,phone_matches,name_reason');
+        return $this->personRepository;
+    }
 
-        foreach ($persons as $person) {
-            [$personEmails, $personPhones] = [$this->extractValues($person->emails), $this->extractValues($person->phones)];
+    protected function getEntityName($entity): string
+    {
+        return $entity->name;
+    }
 
-            $duplicates = $this->personRepository->findPotentialDuplicates($person);
+    protected function getEntityStage($entity): string
+    {
+        return '-'; // Persons don't have stages
+    }
 
-            $primaryArr = [
-                'first_name'   => $person->first_name,
-                'last_name'    => $person->last_name,
-                'married_name' => $person->married_name,
-                'emails'       => $person->emails,
-                'phones'       => $person->phones,
-            ];
+    protected function getEntityOrganization($entity): string
+    {
+        return optional($entity->organization)->name ?? '';
+    }
 
-            foreach ($duplicates as $dup) {
-                $dupArr = [
-                    'first_name'   => $dup->first_name,
-                    'last_name'    => $dup->last_name,
-                    'married_name' => $dup->married_name,
-                    'emails'       => $dup->emails,
-                    'phones'       => $dup->phones,
-                ];
+    protected function entityToArray($entity): array
+    {
+        return [
+            'first_name'   => $entity->first_name,
+            'last_name'    => $entity->last_name,
+            'married_name' => $entity->married_name,
+            'emails'       => $entity->emails,
+            'phones'       => $entity->phones,
+        ];
+    }
 
-                $reasons = $this->computeReasons($primaryArr, $dupArr, $personEmails, $personPhones);
-
-                $this->line(sprintf(
-                    '%d,"%s","%s",%d,"%s","%s","%s","%s","%s"',
-                    $person->id,
-                    str_replace('"', '""', $person->name),
-                    str_replace('"', '""', $person->organization->name ?? ''),
-                    $dup->id,
-                    str_replace('"', '""', $dup->name),
-                    str_replace('"', '""', $dup->organization->name ?? ''),
-                    implode(', ', $reasons['email'] ?? []),
-                    implode(', ', $reasons['phone'] ?? []),
-                    $reasons['name_reason'] ?? ''
-                ));
-            }
-        }
+    protected function findPotentialDuplicates($entity): Collection
+    {
+        return $this->personRepository->findPotentialDuplicates($entity);
     }
 }

@@ -112,7 +112,7 @@ php artisan cache:lead-duplicates rebuild
 php artisan cache:lead-duplicates test --lead=123
 
 # Check cache hit rate
-php artisan leads:refresh-cache --stats
+php artisan duplicates:refresh-cache --stats
 ----
 
 ===== Memory Issues

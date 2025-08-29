@@ -119,9 +119,9 @@ Het systeem heeft verschillende geautomatiseerde taken die via Laravel's schedul
 - Maakt achterstallige activities vrij voor andere gebruikers
 - Voorkomt dat taken vast blijven zitten bij gebruikers
 
-* **`leads:refresh-duplicate-cache --clear`** - Elk uur
-- Ververst de lead duplicate detection cache
-- Zorgt voor optimale performance van het kanban board
+* **`duplicates:refresh-cache --clear`** - Elk uur
+- Ververst de lead en person duplicate detection cache
+- Zorgt voor optimale performance van het kanban board en person overzicht
 - Automatische fallback naar directe queries bij problemen
 
 ===== Scheduler Status
@@ -135,5 +135,5 @@ php artisan schedule:list
 php artisan schedule:run
 
 # Specifieke taak uitvoeren
-php artisan leads:refresh-duplicate-cache --clear
+php artisan duplicates:refresh-cache --clear
 ----

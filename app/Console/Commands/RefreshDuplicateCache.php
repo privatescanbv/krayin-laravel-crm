@@ -8,6 +8,9 @@ use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Used in cronjob to refresh duplicate detection caches every hour
+ */
 class RefreshDuplicateCache extends Command
 {
     /**

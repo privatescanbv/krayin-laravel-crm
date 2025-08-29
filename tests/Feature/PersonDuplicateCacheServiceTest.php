@@ -28,8 +28,8 @@ test('full rebuild populates cache for all persons and stats reflect coverage', 
         'emails'     => [['value' => 'dup.cache@example.com']],
     ]);
 
-    // Act: run the persons full rebuild command
-    $this->artisan('persons:refresh-duplicate-cache --full')->assertSuccessful();
+    // Act: run the unified duplicate cache refresh command
+    $this->artisan('duplicates:refresh-cache --full')->assertSuccessful();
 
     // Ensure cache in current process as well (some cache drivers in tests are process-local)
     $this->cacheService->refreshPersonCache($p1->id);

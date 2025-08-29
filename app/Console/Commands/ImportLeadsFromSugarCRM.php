@@ -325,7 +325,6 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'description'            => $record->description ?? '',
                         'emails'                 => $this->formatEmails($record),
                         'phones'                 => $this->formatPhones($record),
-                        'lead_value'             => 0,
                         'status'                 => $this->mapStatus($record->status),
                         'lead_pipeline_id'       => $this->mapPipeline($record, $this->mapDepartment($record)),
                         'lead_pipeline_stage_id' => $this->mapStage($record),

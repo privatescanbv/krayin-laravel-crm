@@ -30,7 +30,6 @@ class LeadRepository extends Repository
         'first_name',
         'last_name',
         'married_name',
-        'lead_value',
         'status',
         'user_id',
         'user.name',
@@ -98,7 +97,6 @@ class LeadRepository extends Repository
                 'leads.id as id',
                 'leads.created_at as created_at',
                 DB::raw("CONCAT_WS(' ', ".DB::getTablePrefix()."leads.first_name, ".DB::getTablePrefix()."leads.last_name) as title"),
-                'lead_value',
                 'lead_pipelines.id as lead_pipeline_id',
                 'lead_pipeline_stages.name as status',
                 'lead_pipeline_stages.id as lead_pipeline_stage_id'

@@ -28,7 +28,6 @@ class Importer extends AbstractImporter
     protected array $validColumnNames = [
         'id',
         'description',
-        'lead_value',
         'status',
         'lost_reason',
         'closed_at',

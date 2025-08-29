@@ -289,6 +289,78 @@ class Lead extends AbstractReporting
             ->count();
     }
 
+    /**
+     * Retrieves won leads count by sources.
+     */
+    public function getTotalWonLeadsBySources()
+    {
+        return $this->leadRepository
+            ->resetModel()
+            ->select(
+                'lead_sources.name',
+                DB::raw('COUNT(*) as total')
+            )
+            ->leftJoin('lead_sources', 'leads.lead_source_id', '=', 'lead_sources.id')
+            ->whereIn('lead_pipeline_stage_id', $this->wonStageIds)
+            ->whereBetween('leads.created_at', [$this->startDate, $this->endDate])
+            ->groupBy('lead_source_id')
+            ->get();
+    }
+
+    /**
+     * Retrieves won leads count by types.
+     */
+    public function getTotalWonLeadsByTypes()
+    {
+        return $this->leadRepository
+            ->resetModel()
+            ->select(
+                'lead_types.name',
+                DB::raw('COUNT(*) as total')
+            )
+            ->leftJoin('lead_types', 'leads.lead_type_id', '=', 'lead_types.id')
+            ->whereIn('lead_pipeline_stage_id', $this->wonStageIds)
+            ->whereBetween('leads.created_at', [$this->startDate, $this->endDate])
+            ->groupBy('lead_type_id')
+            ->get();
+    }
+
+    /**
+     * Retrieves won leads count over time.
+     */
+    public function getTotalWonLeadsOverTime()
+    {
+        return $this->leadRepository
+            ->resetModel()
+            ->select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('COUNT(*) as total')
+            )
+            ->whereIn('lead_pipeline_stage_id', $this->wonStageIds)
+            ->whereBetween('created_at', [$this->startDate, $this->endDate])
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->orderBy('date')
+            ->get();
+    }
+
+    /**
+     * Retrieves lost leads count over time.
+     */
+    public function getTotalLostLeadsOverTime()
+    {
+        return $this->leadRepository
+            ->resetModel()
+            ->select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('COUNT(*) as total')
+            )
+            ->whereIn('lead_pipeline_stage_id', $this->lostStageIds)
+            ->whereBetween('created_at', [$this->startDate, $this->endDate])
+            ->groupBy(DB::raw('DATE(created_at)'))
+            ->orderBy('date')
+            ->get();
+    }
+
 
 
 

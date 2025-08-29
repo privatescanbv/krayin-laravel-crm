@@ -27,16 +27,6 @@
                     </div>
                 </div>
 
-                <!-- Lead Value -->
-                @if($lead->lead_value)
-                <div class="mb-4">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Lead waarde</div>
-                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        € {{ number_format($lead->lead_value, 2, ',', '.') }}
-                    </div>
-                </div>
-                @endif
-
                 <!-- Sales Owner -->
                 @if($lead->user)
                 <div class="mb-4">
@@ -46,8 +36,6 @@
                     </div>
                 </div>
                 @endif
-
-
 
                 <!-- Lost Reason -->
                 @if(!empty($lead->lost_reason))

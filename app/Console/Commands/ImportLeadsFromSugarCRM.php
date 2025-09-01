@@ -10,6 +10,7 @@ use App\Models\Department;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -265,18 +266,23 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $this->info('Would import '.count($rows).' leads');
         
         // Show call activities summary
-        $totalCallActivities = array_sum(array_map('count', $callActivities));
-        $this->line('');
-        $this->info("Call Activities Summary:");
-        $this->info("Total call activities found: {$totalCallActivities}");
-        
-        if ($totalCallActivities > 0) {
-            $this->info("Call activities per lead:");
-            foreach ($callActivities as $leadId => $calls) {
-                $leadRecord = collect($records)->firstWhere('id', $leadId);
-                $leadName = $leadRecord ? "{$leadRecord->first_name} {$leadRecord->last_name}" : "Lead {$leadId}";
-                $this->info("  - {$leadName}: " . count($calls) . " calls");
+        if (!empty($callActivities)) {
+            $totalCallActivities = array_sum(array_map('count', $callActivities));
+            $this->line('');
+            $this->info("Call Activities Summary:");
+            $this->info("Total call activities found: {$totalCallActivities}");
+            
+            if ($totalCallActivities > 0) {
+                $this->info("Call activities per lead:");
+                foreach ($callActivities as $leadId => $calls) {
+                    $leadRecord = collect($records)->firstWhere('id', $leadId);
+                    $leadName = $leadRecord ? "{$leadRecord->first_name} {$leadRecord->last_name}" : "Lead {$leadId}";
+                    $this->info("  - {$leadName}: " . count($calls) . " calls");
+                }
             }
+        } else {
+            $this->line('');
+            $this->info("Call Activities Summary: No call activities found or calls table not available");
         }
     }
 
@@ -348,7 +354,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 $this->info('Creating lead for persons: '.implode(', ', array_map(fn ($p) => $p->name.' (#'.$p->id.')', $persons)));
 
                 // Use database transaction to ensure all-or-nothing import
-                DB::transaction(function () use ($record, $persons, $leadByPersonsByAnamnesis, $callActivities, &$lead) {
+                DB::transaction(function () use ($record, $persons, $leadByPersonsByAnamnesis, &$lead) {
                     // Create lead with proper timestamps
                     $lead = $this->createEntityWithTimestamps(Lead::class, [
                         'external_id'            => $record->id,
@@ -410,12 +416,12 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                             }
                         }
                     }
-                    
-                    // Import call activities for this lead
-                    $callStats = $this->importCallActivities($lead, $callActivities);
-                    $callActivitiesImported += $callStats['imported'];
-                    $callActivitiesSkipped += $callStats['skipped'];
                 });
+                
+                // Import call activities for this lead (outside main transaction)
+                $callStats = $this->importCallActivities($lead, $callActivities);
+                $callActivitiesImported += $callStats['imported'];
+                $callActivitiesSkipped += $callStats['skipped'];
 
                 $imported++;
                 $bar->advance();
@@ -1013,46 +1019,58 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
         $connection = $this->option('connection');
 
-        $sql = DB::connection($connection)
-            ->table('calls')
-            ->select([
-                'id',
-                'name',
-                'date_entered',
-                'date_modified',
-                'modified_user_id',
-                'created_by',
-                'description',
-                'deleted',
-                'assigned_user_id',
-                'date_start',
-                'date_end',
-                'parent_type',
-                'status',
-                'direction',
-                'parent_id',
-                'belgroep_c'
-            ])
-            ->whereIn('parent_id', $leadIds)
-            ->where('parent_type', '=', 'Leads')
-            ->where('deleted', '=', 0)
-            ->orderBy('date_entered', 'asc');
-
-        $this->info('Extracting call activities: ' . $sql->toRawSql());
-        $calls = $sql->get();
-
-        $this->info('Found ' . $calls->count() . ' call activities');
-
-        // Group calls by parent_id (lead_id)
-        $result = [];
-        foreach ($calls as $call) {
-            if (!isset($result[$call->parent_id])) {
-                $result[$call->parent_id] = [];
+        try {
+            // Check if calls table exists
+            if (!Schema::connection($connection)->hasTable('calls')) {
+                $this->info('Calls table does not exist in SugarCRM database, skipping call activities import');
+                return [];
             }
-            $result[$call->parent_id][] = $call;
-        }
 
-        return $result;
+            $sql = DB::connection($connection)
+                ->table('calls')
+                ->select([
+                    'id',
+                    'name',
+                    'date_entered',
+                    'date_modified',
+                    'modified_user_id',
+                    'created_by',
+                    'description',
+                    'deleted',
+                    'assigned_user_id',
+                    'date_start',
+                    'date_end',
+                    'parent_type',
+                    'status',
+                    'direction',
+                    'parent_id',
+                    'belgroep_c'
+                ])
+                ->whereIn('parent_id', $leadIds)
+                ->where('parent_type', '=', 'Leads')
+                ->where('deleted', '=', 0)
+                ->orderBy('date_entered', 'asc');
+
+            $this->info('Extracting call activities: ' . $sql->toRawSql());
+            $calls = $sql->get();
+
+            $this->info('Found ' . $calls->count() . ' call activities');
+
+            // Group calls by parent_id (lead_id)
+            $result = [];
+            foreach ($calls as $call) {
+                if (!isset($result[$call->parent_id])) {
+                    $result[$call->parent_id] = [];
+                }
+                $result[$call->parent_id][] = $call;
+            }
+
+            return $result;
+        } catch (Exception $e) {
+            $this->error('Failed to extract call activities: ' . $e->getMessage());
+            $this->info('Continuing import without call activities');
+            return [];
+        }
     }
 
     /**
@@ -1064,53 +1082,62 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
      */
     private function importCallActivities(Lead $lead, array $callActivities): array
     {
-        $leadCallActivities = $callActivities[$lead->external_id] ?? [];
-        
         $imported = 0;
         $skipped = 0;
         
-        if (empty($leadCallActivities)) {
-            return ['imported' => $imported, 'skipped' => $skipped];
-        }
-
-        $this->info("Importing " . count($leadCallActivities) . " call activities for lead {$lead->external_id}");
-
-        foreach ($leadCallActivities as $callData) {
-            // Check if activity already exists by external reference
-            $existingActivity = Activity::where('additional->external_id', $callData->id)->first();
-            if ($existingActivity) {
-                $this->info("Skipping existing call activity with external_id={$callData->id}");
-                $skipped++;
-                continue;
+        try {
+            $leadCallActivities = $callActivities[$lead->external_id] ?? [];
+            
+            if (empty($leadCallActivities)) {
+                return ['imported' => $imported, 'skipped' => $skipped];
             }
 
-            // Create the activity
-            $activityData = [
-                'title' => $callData->name ?? 'Bel activiteit',
-                'type' => 'call',
-                'comment' => $callData->description ?? '',
-                'additional' => [
-                    'external_id' => $callData->id,
-                    'direction' => $callData->direction,
-                    'status' => $callData->status,
-                    'belgroep' => $callData->belgroep_c
-                ],
-                'schedule_from' => $this->parseSugarDate($callData->date_start),
-                'schedule_to' => $this->parseSugarDate($callData->date_end),
-                'is_done' => $this->mapCallStatus($callData->status),
-                'user_id' => 1, // Default user - you may want to map this from assigned_user_id
-                'lead_id' => $lead->id,
-            ];
+            $this->info("Importing " . count($leadCallActivities) . " call activities for lead {$lead->external_id}");
 
-            $timestamps = [
-                'created_at' => $this->parseSugarDate($callData->date_entered),
-                'updated_at' => $this->parseSugarDate($callData->date_modified),
-            ];
+            foreach ($leadCallActivities as $callData) {
+                try {
+                    // Check if activity already exists by external reference
+                    $existingActivity = Activity::where('additional->external_id', $callData->id)->first();
+                    if ($existingActivity) {
+                        $this->info("Skipping existing call activity with external_id={$callData->id}");
+                        $skipped++;
+                        continue;
+                    }
 
-            $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
-            
-            $this->info("✓ Imported call activity: {$callData->name} for lead {$lead->external_id}");
-            $imported++;
+                    // Create the activity
+                    $activityData = [
+                        'title' => $callData->name ?? 'Bel activiteit',
+                        'type' => 'call',
+                        'comment' => $callData->description ?? '',
+                        'additional' => [
+                            'external_id' => $callData->id,
+                            'direction' => $callData->direction,
+                            'status' => $callData->status,
+                            'belgroep' => $callData->belgroep_c
+                        ],
+                        'schedule_from' => $this->parseSugarDate($callData->date_start),
+                        'schedule_to' => $this->parseSugarDate($callData->date_end),
+                        'is_done' => $this->mapCallStatus($callData->status),
+                        'user_id' => 1, // Default user - you may want to map this from assigned_user_id
+                        'lead_id' => $lead->id,
+                    ];
+
+                    $timestamps = [
+                        'created_at' => $this->parseSugarDate($callData->date_entered),
+                        'updated_at' => $this->parseSugarDate($callData->date_modified),
+                    ];
+
+                    $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
+                    
+                    $this->info("✓ Imported call activity: {$callData->name} for lead {$lead->external_id}");
+                    $imported++;
+                } catch (Exception $e) {
+                    $this->error("Failed to import call activity {$callData->id}: " . $e->getMessage());
+                    // Continue with next call activity
+                }
+            }
+        } catch (Exception $e) {
+            $this->error("Failed to import call activities for lead {$lead->external_id}: " . $e->getMessage());
         }
         
         return ['imported' => $imported, 'skipped' => $skipped];

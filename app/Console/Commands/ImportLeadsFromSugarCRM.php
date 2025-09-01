@@ -1122,6 +1122,17 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         continue;
                     }
 
+                    // Get default group from lead's department
+                    $groupId = null;
+                    if ($lead->department) {
+                        $groupId = \App\Models\Department::mapDepartmentToGroupId($lead->department);
+                    }
+                    
+                    // Fallback to first available group if no department group found
+                    if (!$groupId) {
+                        $groupId = \Webkul\User\Models\Group::first()->id;
+                    }
+
                     // Create the activity
                     $activityData = [
                         'title'       => $callData->name ?? 'Bel activiteit',
@@ -1138,6 +1149,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'is_done'       => $this->mapCallStatus($callData->status),
                         'user_id'       => $this->mapAssignedUser($callData->assigned_user_id),
                         'lead_id'       => $lead->id,
+                        'group_id'      => $groupId,
                     ];
 
                     $timestamps = [

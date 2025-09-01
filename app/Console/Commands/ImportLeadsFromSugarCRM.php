@@ -1133,7 +1133,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'schedule_from' => $this->parseSugarDate($callData->date_start),
                         'schedule_to'   => $this->parseSugarDate($callData->date_end),
                         'is_done'       => $this->mapCallStatus($callData->status),
-                        'user_id'       => User::first()?->id ?? 1, // Use first available user
+                        'user_id'       => $this->mapAssignedUser($callData->assigned_user_id),
                         'lead_id'       => $lead->id,
                     ];
 
@@ -1170,5 +1170,35 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $completedStatuses = ['held', 'completed', 'done', 'finished'];
 
         return in_array(strtolower(trim($status)), $completedStatuses);
+    }
+
+    /**
+     * Map assigned user ID from SugarCRM to existing user by external_id
+     *
+     * @param  string|null  $assignedUserId  The SugarCRM user ID
+     * @return int The user ID to assign, fallback to first available user
+     */
+    private function mapAssignedUser(?string $assignedUserId): int
+    {
+        // If no assigned user ID provided, use first available user as fallback
+        if (empty($assignedUserId)) {
+            return User::first()?->id ?? 1;
+        }
+
+        // Look up user by external_id
+        $user = User::where('external_id', $assignedUserId)->first();
+
+        if ($user) {
+            $this->info("Mapped assigned user {$assignedUserId} to user: {$user->name} (ID: {$user->id})");
+            return $user->id;
+        }
+
+        // Fallback to first available user if no match found
+        $fallbackUser = User::first();
+        $fallbackUserId = $fallbackUser?->id ?? 1;
+        
+        $this->warn("Could not find user with external_id {$assignedUserId}, using fallback user ID: {$fallbackUserId}");
+        
+        return $fallbackUserId;
     }
 }

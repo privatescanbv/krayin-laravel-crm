@@ -204,4 +204,15 @@ class ActivityRepository extends Repository
 
         return $queryBuilder->count() ? true : false;
     }
+
+    /**
+     * Find activity by ID with participants and their user relationships loaded.
+     *
+     * @param  int  $id
+     * @return \Webkul\Activity\Contracts\Activity
+     */
+    public function findOrFailWithParticipants($id)
+    {
+        return $this->with(['participants.user', 'participants.person'])->findOrFail($id);
+    }
 }

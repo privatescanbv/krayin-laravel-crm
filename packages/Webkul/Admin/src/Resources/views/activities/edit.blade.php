@@ -120,25 +120,12 @@
                             @lang('admin::app.activities.edit.participants')
                         </x-admin::form.control-group.label>
 
-                        <!-- Participants Multi lookup Vue Component -->
-                        <v-multi-lookup-component :only-users="true">
-                            <div
-                                class="relative rounded border border-gray-200 px-2 py-1 hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:hover:border-gray-400 dark:focus:border-gray-400"
-                                role="button"
-                            >
-                                <ul class="flex flex-wrap items-center gap-1">
-                                    <li>
-                                        <input
-                                            type="text"
-                                            class="w-full px-1 py-1 dark:bg-gray-900 dark:text-gray-300"
-                                            placeholder="@lang('admin::app.activities.edit.participants')"
-                                        />
-                                    </li>
-                                </ul>
-
-                                <span class="icon-down-arrow absolute top-1.5 text-2xl ltr:right-1.5 rtl:left-1.5"></span>
-                            </div>
-                        </v-multi-lookup-component>
+                        <x-admin::activities.actions.activity.participants 
+                            :participants="[
+                                'users' => $activity->participants->where('user_id', '!=', null)->pluck('user')->toArray(),
+                                'persons' => $activity->participants->where('person_id', '!=', null)->pluck('person')->toArray()
+                            ]"
+                        />
                     </x-admin::form.control-group>
                     <!-- Group -->
                     <x-admin::form.control-group>
@@ -461,11 +448,20 @@
                 },
 
                 created() {
-                    @json($activity->participants).forEach(participant => {
+                    const participants = @json($activity->participants);
+                    console.log('Participants data:', participants);
+                    
+                    participants.forEach(participant => {
+                        console.log('Processing participant:', participant);
                         if (participant.user) {
+                            console.log('Adding user:', participant.user);
                             this.addedParticipants.users.push(participant.user);
+                        } else {
+                            console.log('No user data for participant:', participant);
                         }
                     });
+                    
+                    console.log('Final addedParticipants:', this.addedParticipants);
                 },
 
                 methods: {

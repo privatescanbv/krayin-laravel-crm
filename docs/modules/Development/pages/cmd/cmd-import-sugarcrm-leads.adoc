@@ -1,6 +1,6 @@
 === SugarCRM Lead Import
 
-Deze functie importeert leads uit een SugarCRM database naar Krayin CRM, inclusief anamnese gegevens, call activities en pipeline mapping.
+Deze functie importeert leads uit een SugarCRM database naar Krayin CRM, inclusief anamnese gegevens, call activities, email activities en pipeline mapping.
 
 ==== Configuratie
 
@@ -65,7 +65,33 @@ De import functie verwacht de volgende tabellen in de SugarCRM database:
 * `operaties_c` - Operaties (0/1)
 * Plus alle `opm_*_c` velden voor opmerkingen
 
-**Email tabellen (optioneel):**
+**Email Activities tabellen (optioneel):**
+
+* `emails` - Email activiteiten hoofdtabel
+** `id` - Unieke ID
+** `name` - Email onderwerp/subject
+** `date_sent` - Verzend datum
+** `type` - Email type (out, in, etc.)
+** `status` - Email status (sent, draft, etc.)
+** `flagged` - Gemarkeerd als belangrijk (0/1)
+** `message_id` - Unieke message ID
+** `parent_type` - Moet 'Leads' zijn voor koppeling
+** `parent_id` - Koppeling naar leads.id
+** `deleted` - Verwijderd (0/1)
+
+* `emails_text` - Email content tabel
+** `email_id` - Koppeling naar emails.id
+** `description` - Plain text email body
+** `description_html` - HTML email body
+** `raw_source` - Ruwe email source
+
+* `emails_beans` - Junction tabel voor email-module koppeling
+** `email_id` - Koppeling naar emails.id
+** `bean_id` - Koppeling naar lead ID
+** `bean_module` - Moet 'Leads' zijn
+** `deleted` - Verwijderd (0/1)
+
+**Email adressen tabellen (optioneel voor lead email adressen):**
 
 * `email_addr_bean_rel` - Email koppeling
 * `email_addresses` - Email adressen
@@ -168,18 +194,24 @@ sail artisan import:leads --connection=sugarcrm_prod
 [source,text]
 ----
 === DRY RUN RESULTS ===
-┌──────────────┬────────────┬───────────┬─────────────┬────────────┬──────────┬─────────────────┬──────────┬─────────────┬──────────────┬──────────────┐
-│ ID           │ First Name │ Last Name │ Email       │ Phone      │ Status   │ Workflow Status │ Stage ID │ Date Entered│ Person Match │ Call Activities │
-├──────────────┼────────────┼───────────┼─────────────┼────────────┼──────────┼─────────────────┼──────────┼─────────────┼──────────────┼──────────────┤
-│ abc-123-def  │ Jan        │ Jansen    │ jan@test.nl │ 0612345678 │ New      │ nieuweaanvraag  │ 1        │ 2024-01-15  │ ✓ Jan Jansen │ 3 calls       │
-│ def-456-ghi  │ Marie      │ Bakker    │ N/A         │ 0687654321 │ Assigned │ adviseren       │ 2        │ 2024-01-14  │ ✗ Not found  │ —             │
-└──────────────┴────────────┴───────────┴─────────────┴────────────┴──────────┴─────────────────┴──────────┴─────────────┴──────────────┴──────────────┘
+┌──────────────┬────────────┬───────────┬─────────────┬────────────┬──────────┬─────────────────┬──────────┬─────────────┬──────────────┬──────────────┬──────────────────┐
+│ ID           │ First Name │ Last Name │ Email       │ Phone      │ Status   │ Workflow Status │ Stage ID │ Date Entered│ Person Match │ Call Activities │ Email Activities │
+├──────────────┼────────────┼───────────┼─────────────┼────────────┼──────────┼─────────────────┼──────────┼─────────────┼──────────────┼──────────────┼──────────────────┤
+│ abc-123-def  │ Jan        │ Jansen    │ jan@test.nl │ 0612345678 │ New      │ nieuweaanvraag  │ 1        │ 2024-01-15  │ ✓ Jan Jansen │ 3 calls       │ 2 emails         │
+│ def-456-ghi  │ Marie      │ Bakker    │ N/A         │ 0687654321 │ Assigned │ adviseren       │ 2        │ 2024-01-14  │ ✗ Not found  │ —             │ 1 emails         │
+└──────────────┴────────────┴───────────┴─────────────┴────────────┴──────────┴─────────────────┴──────────┴─────────────┴──────────────┴──────────────┴──────────────────┘
 Would import 2 leads
 
 Call Activities Summary:
 Total call activities found: 3
 Call activities per lead:
   - Jan Jansen: 3 calls
+
+Email Activities Summary:
+Total email activities found: 3
+Email activities per lead:
+  - Jan Jansen: 2 emails
+  - Marie Bakker: 1 emails
 ----
 
 ===== Import Output
@@ -204,6 +236,10 @@ Import completed!
 Call Activities:
 ✓ Call activities imported: 127
 ⚠ Call activities skipped: 8
+
+Email Activities:
+✓ Email activities imported: 89
+⚠ Email activities skipped: 3
 ----
 
 ==== Person Matching
@@ -261,6 +297,53 @@ Call activities worden automatisch geïmporteerd als **Activity** records van he
 
 **Belangrijk:** Call activities worden alleen geïmporteerd voor leads die succesvol zijn geïmporteerd. Als een lead wordt overgeslagen, worden de bijbehorende call activities ook overgeslagen.
 
+==== Email Activities
+
+Email activities worden automatisch geïmporteerd als **Activity** records van het type `email`:
+
+===== Status Mapping
+
+[cols="2,2,1"]
+|===
+|SugarCRM Status |Krayin Status |Is Done
+
+|`sent`, `archived`, `delivered`
+|Afgerond
+|`true`
+
+|Alle andere statussen (bijv. `draft`, `pending`)
+|Niet afgerond
+|`false`
+|===
+
+===== Geïmporteerde Gegevens
+
+* **Titel** - `emails.name` (email subject)
+* **Beschrijving** - Geformatteerde email content:
+** Subject: [email onderwerp]
+** Body: [email inhoud, HTML tags gestript]
+* **Verzend tijd** - `emails.date_sent`
+* **Status** - Gemapped naar `is_done` boolean
+* **Custom data** - Opgeslagen in JSON veld:
+** `message_id` - Unieke message ID
+** `email_type` - Email type (out, in, etc.)
+** `status` - Originele SugarCRM status
+** `flagged` - Of email gemarkeerd is als belangrijk
+** `reply_to_status` - Reply status
+** `intent` - Email intentie/doel
+** `mailbox_id` - Mailbox identificatie
+** `parent_type` - Originele parent type
+** `parent_id` - Originele parent ID
+
+===== Email Content Verwerking
+
+* **HTML Stripping** - HTML tags worden automatisch verwijderd voor plain text opslag
+* **Lengte Beperking** - Email content wordt beperkt tot 1000 karakters om lange comments te voorkomen
+* **Content Prioriteit** - HTML content heeft voorrang over plain text, fallback naar description veld
+* **Subject Integratie** - Email subject wordt geïntegreerd in de comment voor volledigheid
+
+**Belangrijk:** Email activities worden alleen geïmporteerd voor leads die succesvol zijn geïmporteerd. Als een lead wordt overgeslagen, worden de bijbehorende email activities ook overgeslagen.
+
 ==== Belangrijke Opmerkingen
 
 * **Vereiste:** Personen moeten al geïmporteerd zijn voordat leads kunnen worden geïmporteerd
@@ -269,6 +352,8 @@ Call activities worden automatisch geïmporteerd als **Activity** records van he
 * **Duplicaten:** Leads met dezelfde titel worden overgeslagen
 * **Pipeline:** Alle leads gaan naar Privatescan pipeline (ID: 1)
 * **Anamnese ID:** SugarCRM lead ID wordt gebruikt als anamnese ID
+* **Activities:** Zowel call als email activities worden automatisch geïmporteerd indien tabellen beschikbaar zijn
+* **Activity Duplicaten:** Activities met dezelfde `external_id` worden overgeslagen
 
 ==== Troubleshooting
 
@@ -308,6 +393,22 @@ SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry
 ----
 
 *Oplossing:* SugarCRM lead ID bestaat al in anamnesis tabel. Controleer op duplicaten of gebruik andere ID strategie.
+
+**Email Activities Import Failed**
+[source,text]
+----
+Emails table does not exist in SugarCRM database, skipping email activities import
+----
+
+*Oplossing:* Email tabellen (`emails`, `emails_text`, `emails_beans`) bestaan niet in de SugarCRM database. Dit is optioneel - de lead import zal doorgaan zonder email activities.
+
+**Email Content Too Long**
+[source,text]
+----
+Data too long for column 'comment'
+----
+
+*Oplossing:* Email content wordt automatisch beperkt tot 1000 karakters. Als dit probleem optreedt, controleer de database schema voor de `comment` kolom lengte.
 
 ===== Debug Tips
 

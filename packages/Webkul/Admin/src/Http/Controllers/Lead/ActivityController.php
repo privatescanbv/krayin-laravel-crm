@@ -59,7 +59,7 @@ class ActivityController extends Controller
             'comment' => 'required_if:type,note',
             'description' => 'nullable|string',
             'user_id' => 'nullable|exists:users,id',
-            'group_id' => 'required|exists:groups,id', // Required for user activities on leads
+            'group_id' => 'nullable|exists:groups,id', // Will be auto-determined if not provided
             'schedule_from' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
             'schedule_to' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
             'file' => 'required_if:type,file',
@@ -83,8 +83,27 @@ class ActivityController extends Controller
             } catch (\Exception $e) {
                 return response()->json([
                     'message' => 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.',
+                    'debug' => [
+                        'lead_id' => $lead->id,
+                        'department_id' => $lead->department_id,
+                        'department_name' => $lead->department->name ?? null,
+                        'error' => $e->getMessage(),
+                    ],
+                    'errors' => [
+                        'group_id' => ['Kan geen groep bepalen vanuit lead department.']
+                    ]
                 ], 422);
             }
+        }
+
+        // Ensure we have a group_id after auto-determination
+        if (!$groupId) {
+            return response()->json([
+                'message' => 'Groep is verplicht voor activiteiten van leads.',
+                'errors' => [
+                    'group_id' => ['Groep is verplicht voor activiteiten van leads.']
+                ]
+            ], 422);
         }
 
         $activity = $this->activityRepository->create(array_merge($data, [

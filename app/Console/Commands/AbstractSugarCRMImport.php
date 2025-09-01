@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
+use DateTimeInterface;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
@@ -23,12 +24,13 @@ abstract class AbstractSugarCRMImport extends Command
         }
         try {
             // Accept Carbon, DateTimeInterface, or string
-            if ($value instanceof \DateTimeInterface) {
+            if ($value instanceof DateTimeInterface) {
                 return Carbon::instance($value)->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s');
             }
 
-            return Carbon::parse((string) $value, 'UTC')
-                ->setTimezone(config('app.timezone'))
+            // Parse SugarCRM date assuming it's already in the application timezone
+            // SugarCRM dates appear to be stored in local time, not UTC
+            return Carbon::parse((string) $value, config('app.timezone'))
                 ->format('Y-m-d H:i:s');
         } catch (Throwable $e) {
             return null;

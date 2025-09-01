@@ -66,6 +66,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         }
         $this->info('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
+        // user import needs to be run first
+        $this->ensureUserImportRan();
+
         return $this->executeImport($dryRun, function () use ($connection, $limit, $leadIds, $dryRun) {
             // Test connection
             $this->testConnection($connection);
@@ -1111,7 +1114,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             foreach ($leadCallActivities as $callData) {
                 try {
                     // Check if activity already exists by external reference
-                    $existingActivity = Activity::where('additional->external_id', $callData->id)->first();
+                    $existingActivity = Activity::where('external_id', $callData->id)->first();
                     if ($existingActivity) {
                         $this->info("Skipping existing call activity with external_id={$callData->id}");
                         $skipped++;
@@ -1121,11 +1124,11 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
                     // Create the activity
                     $activityData = [
-                        'title'      => $callData->name ?? 'Bel activiteit',
-                        'type'       => 'call',
-                        'comment'    => $callData->description ?? '',
-                        'additional' => [
-                            'external_id' => $callData->id,
+                        'title'       => $callData->name ?? 'Bel activiteit',
+                        'type'        => 'call',
+                        'comment'     => $callData->description ?? '',
+                        'external_id' => $callData->id,
+                        'additional'  => [
                             'direction'   => $callData->direction,
                             'status'      => $callData->status,
                             'belgroep'    => $callData->belgroep_c,
@@ -1133,7 +1136,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'schedule_from' => $this->parseSugarDate($callData->date_start),
                         'schedule_to'   => $this->parseSugarDate($callData->date_end),
                         'is_done'       => $this->mapCallStatus($callData->status),
-                        'user_id'       => User::first()?->id ?? 1, // Use first available user
+                        'user_id'       => $this->mapAssignedUser($callData->assigned_user_id),
                         'lead_id'       => $lead->id,
                     ];
 
@@ -1170,5 +1173,37 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $completedStatuses = ['held', 'completed', 'done', 'finished'];
 
         return in_array(strtolower(trim($status)), $completedStatuses);
+    }
+
+    /**
+     * Map assigned user ID from SugarCRM to existing user by external_id
+     *
+     * @param  string|null  $assignedUserId  The SugarCRM user ID
+     * @return int|null The user ID to assign
+     *
+     * @throws Exception when user could not be found by external_id
+     */
+    private function mapAssignedUser(?string $assignedUserId): ?int
+    {
+        if (empty($assignedUserId)) {
+            return null;
+        }
+        // Look up user by external_id
+        $user = User::where('external_id', $assignedUserId)->first();
+        if (is_null($user)) {
+            throw new Exception('User not found by external_id: '.$assignedUserId);
+        }
+
+        $this->info("Mapped assigned user {$assignedUserId} to user: {$user->name} (ID: {$user->id})");
+
+        return $user->id;
+    }
+
+    /**
+     * @throws Exception when external users are missing
+     */
+    private function ensureUserImportRan(): void
+    {
+        User::whereNotNull('external_id')->count() > 0 or throw new Exception('No users with external_id found, please run the user import first');
     }
 }

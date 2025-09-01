@@ -183,7 +183,16 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
         if ($existingUser) {
             // Update existing user
             $existingUser->update($userData);
-            $this->info("Updated user: {$userData['name']} ({$userData['email']})");
+            $this->info("Updated user by external_id: {$userData['name']} ({$userData['email']})");
+            return 'updated';
+        }
+
+        // Check if user exists by exact name match
+        $existingUserByName = User::where('name', $userData['name'])->first();
+        if ($existingUserByName) {
+            // Synchronize the existing user with SugarCRM data
+            $existingUserByName->update($userData);
+            $this->info("Synchronized existing user by name: {$userData['name']} ({$userData['email']})");
             return 'updated';
         }
 

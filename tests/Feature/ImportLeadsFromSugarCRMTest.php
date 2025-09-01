@@ -242,6 +242,9 @@ beforeEach(function () {
 });
 
 test('imports lead created_at parsed correctly from sugarcrm', function () {
+    // Create user with external_id (required for import)
+    $user = User::factory()->create(['external_id' => 'user-001']);
+    
     // Create app person that will be linked to lead via anamnesis relation
     $personExternalId = 'person-001';
     $appPerson = Person::factory()->create(['external_id' => $personExternalId]);
@@ -343,6 +346,9 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
 });
 
 test('imports lead with multiple persons correctly', function () {
+    // Create user with external_id (required for import)
+    $user = User::factory()->create(['external_id' => 'user-multi-001']);
+    
     // Create app persons that will be linked to lead
     $person1ExternalId = 'person-multi-001';
     $person2ExternalId = 'person-multi-002';
@@ -497,8 +503,8 @@ test('imports lead with multiple persons correctly', function () {
 });
 
 test('imports call activities from sugarcrm', function () {
-    // Create user for activities
-    $user = User::factory()->create();
+    // Create user for activities with external_id (required for import)
+    $user = User::factory()->create(['external_id' => 'user-call-001']);
 
     // Create app person that will be linked to lead
     $personExternalId = 'person-001';

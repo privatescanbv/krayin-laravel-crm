@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Schema;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
+use Webkul\User\Models\User;
 
 beforeEach(function () {
     $this->seed(TestSeeder::class);
@@ -497,8 +498,8 @@ test('imports lead with multiple persons correctly', function () {
 
 test('imports call activities from sugarcrm', function () {
     // Create user for activities
-    $user = \Webkul\User\Models\User::factory()->create();
-    
+    $user = User::factory()->create();
+
     // Create app person that will be linked to lead
     $personExternalId = 'person-001';
     $appPerson = Person::factory()->create(['external_id' => $personExternalId]);
@@ -509,97 +510,97 @@ test('imports call activities from sugarcrm', function () {
 
     // Insert SugarCRM lead data
     DB::connection('sugarcrm')->table('leads')->insert([
-        'id' => $leadId,
-        'first_name' => 'John',
-        'last_name' => 'Doe',
-        'phone_work' => '+31612345678',
-        'date_entered' => '2024-01-15 10:00:00',
+        'id'            => $leadId,
+        'first_name'    => 'John',
+        'last_name'     => 'Doe',
+        'phone_work'    => '+31612345678',
+        'date_entered'  => '2024-01-15 10:00:00',
         'date_modified' => '2024-01-15 11:00:00',
-        'status' => 'New',
-        'deleted' => 0,
+        'status'        => 'New',
+        'deleted'       => 0,
     ]);
 
     // Insert custom fields
     DB::connection('sugarcrm')->table('leads_cstm')->insert([
-        'id_c' => $leadId,
+        'id_c'              => $leadId,
         'workflow_status_c' => 'nieuweaanvraag',
-        'kanaal_c' => 'website',
-        'soort_aanvraag_c' => 'preventie',
+        'kanaal_c'          => 'website',
+        'soort_aanvraag_c'  => 'preventie',
     ]);
 
     // Link lead to person
     DB::connection('sugarcrm')->table('leads_contacts_c')->insert([
         'leads_c7104eads_ida' => $leadId,
         'leads_cbb5dacts_idb' => $personExternalId,
-        'deleted' => 0,
+        'deleted'             => 0,
     ]);
 
     // Create anamnesis records and relations (required for import logic)
     $anamnesisId = 'an-001';
     DB::connection('sugarcrm')->table('pcrm_anamnesepreventie')->insert([
-        'id' => $anamnesisId,
-        'name' => 'Test anamnesis',
-        'status' => 'active',
-        'date_entered' => '2024-01-15 10:00:00',
+        'id'            => $anamnesisId,
+        'name'          => 'Test anamnesis',
+        'status'        => 'active',
+        'date_entered'  => '2024-01-15 10:00:00',
         'date_modified' => '2024-01-15 11:00:00',
-        'deleted' => 0,
+        'deleted'       => 0,
     ]);
     DB::connection('sugarcrm')->table('pcrm_anamnesepreventie_cstm')->insert([
         'id_c' => $anamnesisId,
     ]);
     // Link lead to anamnesis
     DB::connection('sugarcrm')->table('leads_pcrm_anamnesepreventie_1_c')->insert([
-        'leads_pcrm_anamnesepreventie_1leads_ida' => $leadId,
+        'leads_pcrm_anamnesepreventie_1leads_ida'                  => $leadId,
         'leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb' => $anamnesisId,
-        'deleted' => 0,
+        'deleted'                                                  => 0,
     ]);
     // Link anamnesis to person
     DB::connection('sugarcrm')->table('pcrm_anamnetie_contacts_c')->insert([
         'pcrm_anamn171deventie_idb' => $anamnesisId,
         'pcrm_anamn0b6eontacts_ida' => $personExternalId,
-        'deleted' => 0,
+        'deleted'                   => 0,
     ]);
 
     // Insert call activities
     DB::connection('sugarcrm')->table('calls')->insert([
         [
-            'id' => $callId1,
-            'name' => 'Intake gesprek',
-            'date_entered' => '2024-01-16 09:00:00',
+            'id'            => $callId1,
+            'name'          => 'Intake gesprek',
+            'date_entered'  => '2024-01-16 09:00:00',
             'date_modified' => '2024-01-16 09:30:00',
-            'description' => 'Eerste intake gesprek met klant',
-            'deleted' => 0,
-            'date_start' => '2024-01-16 14:00:00',
-            'date_end' => '2024-01-16 14:30:00',
-            'parent_type' => 'Leads',
-            'status' => 'held',
-            'direction' => 'outbound',
-            'parent_id' => $leadId,
+            'description'   => 'Eerste intake gesprek met klant',
+            'deleted'       => 0,
+            'date_start'    => '2024-01-16 14:00:00',
+            'date_end'      => '2024-01-16 14:30:00',
+            'parent_type'   => 'Leads',
+            'status'        => 'held',
+            'direction'     => 'outbound',
+            'parent_id'     => $leadId,
         ],
         [
-            'id' => $callId2,
-            'name' => 'Follow-up call',
-            'date_entered' => '2024-01-17 10:00:00',
+            'id'            => $callId2,
+            'name'          => 'Follow-up call',
+            'date_entered'  => '2024-01-17 10:00:00',
             'date_modified' => '2024-01-17 10:15:00',
-            'description' => 'Follow-up gesprek',
-            'deleted' => 0,
-            'date_start' => '2024-01-17 15:00:00',
-            'date_end' => '2024-01-17 15:15:00',
-            'parent_type' => 'Leads',
-            'status' => 'planned',
-            'direction' => 'outbound',
-            'parent_id' => $leadId,
+            'description'   => 'Follow-up gesprek',
+            'deleted'       => 0,
+            'date_start'    => '2024-01-17 15:00:00',
+            'date_end'      => '2024-01-17 15:15:00',
+            'parent_type'   => 'Leads',
+            'status'        => 'planned',
+            'direction'     => 'outbound',
+            'parent_id'     => $leadId,
         ],
     ]);
 
     // Insert call custom fields
     DB::connection('sugarcrm')->table('calls_cstm')->insert([
         [
-            'id_c' => $callId1,
+            'id_c'       => $callId1,
             'belgroep_c' => 'intake',
         ],
         [
-            'id_c' => $callId2,
+            'id_c'       => $callId2,
             'belgroep_c' => 'follow-up',
         ],
     ]);
@@ -607,7 +608,7 @@ test('imports call activities from sugarcrm', function () {
     // Run import
     $exit = Artisan::call('import:leads', [
         '--connection' => 'sugarcrm',
-        '--limit' => 1,
+        '--limit'      => 1,
     ]);
     expect($exit)->toBe(0);
 
@@ -620,7 +621,7 @@ test('imports call activities from sugarcrm', function () {
     expect($callActivities)->toHaveCount(2);
 
     // Check first call activity - use different approach for JSON querying
-    $activity1 = $callActivities->filter(function($activity) use ($callId1) {
+    $activity1 = $callActivities->filter(function ($activity) use ($callId1) {
         return isset($activity->additional['external_id']) && $activity->additional['external_id'] === $callId1;
     })->first();
     expect($activity1)->not->toBeNull()
@@ -633,7 +634,7 @@ test('imports call activities from sugarcrm', function () {
         ->and($activity1->additional['belgroep'])->toBe('intake');
 
     // Check second call activity - use different approach for JSON querying
-    $activity2 = $callActivities->filter(function($activity) use ($callId2) {
+    $activity2 = $callActivities->filter(function ($activity) use ($callId2) {
         return isset($activity->additional['external_id']) && $activity->additional['external_id'] === $callId2;
     })->first();
     expect($activity2)->not->toBeNull()

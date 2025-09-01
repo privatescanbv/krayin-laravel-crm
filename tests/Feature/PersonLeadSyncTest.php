@@ -1,6 +1,9 @@
 <?php
 
+use App\Enums\Departments;
 use App\Models\Address;
+use App\Models\Department;
+use Database\Seeders\TestSeeder;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Lead\Models\Lead;
@@ -10,6 +13,7 @@ use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\User\Models\User;
 
 beforeEach(function () {
+    $this->seed(TestSeeder::class);
     test()->personRepository = app(PersonRepository::class);
     test()->leadRepository = app(LeadRepository::class);
 
@@ -48,10 +52,12 @@ test('can access edit with lead page', function () {
         'user_id'    => test()->user->id,
     ]);
 
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
+        'department_id'          => $department->id,
     ]);
 
     // Attach the person to the lead
@@ -73,10 +79,12 @@ test('can access edit with lead page', function () {
 test('manual search returns no results when no person_id provided', function () {
     $data = createPipelineData();
 
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
+        'department_id'          => $department->id,
     ]);
 
     $response = test()
@@ -142,10 +150,12 @@ test('can update person with lead data', function () {
         'user_id'    => test()->user->id,
     ]);
 
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
+        'department_id'          => $department->id,
     ]);
 
     test()
@@ -220,10 +230,12 @@ test('handles validation errors gracefully', function () {
         'user_id' => test()->user->id,
     ]);
 
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
+        'department_id'          => $department->id,
     ]);
 
     // Test with invalid person ID
@@ -250,10 +262,12 @@ test('returns correct field differences', function () {
         'user_id'       => test()->user->id,
     ]);
 
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
+        'department_id'          => $department->id,
     ]);
 
     $response = test()
@@ -276,10 +290,12 @@ test('handles malformed date gracefully', function () {
         'user_id'       => test()->user->id,
     ]);
 
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
+        'department_id'          => $department->id,
     ]);
 
     // Refresh person to get the malformed date
@@ -304,10 +320,12 @@ test('handles null date values correctly', function () {
         'user_id'       => test()->user->id,
     ]);
 
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
+        'department_id'          => $department->id,
     ]);
 
     $response = test()
@@ -435,10 +453,12 @@ test('manual search handles exact match correctly', function () {
         'user_id'     => test()->user->id,
     ]);
 
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,
+        'department_id'          => $department->id,
         // Set lead personal fields to exactly match the person - override ALL fields
         'first_name'             => 'John',
         'last_name'              => 'Doe',

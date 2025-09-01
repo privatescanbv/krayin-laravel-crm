@@ -6,10 +6,20 @@ use App\Enums\Departments;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Webkul\User\Models\Group;
 
 class Department extends Model
 {
     use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'name',
+    ];
 
     public static function findHerniaId(): int
     {
@@ -31,7 +41,7 @@ class Department extends Model
      *
      * @throws Exception with unexpect database data.
      */
-    public static function mapGroupToDepartmentId(array $groupNames): string
+    public static function mapGroupToDepartmentId(array $groupNames): int
     {
         if (empty($groupNames)) {
             return self::findPrivateScanId();
@@ -70,5 +80,44 @@ class Department extends Model
             }
         }
         throw new Exception('Group not found');
+    }
+
+    /**
+     * Get group_id for a lead based on its department.
+     * Uses the department_id relationship for efficient mapping.
+     *
+     * @param  \Webkul\Lead\Models\Lead  $lead  The lead to get group_id for
+     * @return int The group ID
+     *
+     * @throws Exception if lead has no department or no group found
+     */
+    public static function getGroupIdForLead($lead): int
+    {
+        if (! $lead) {
+            throw new Exception('Lead cannot be null');
+        }
+
+        if (! $lead->department_id) {
+            throw new Exception("Lead {$lead->id} has no department_id");
+        }
+
+        // Find group by department_id for efficient lookup
+        $group = Group::query()
+            ->where('department_id', $lead->department_id)
+            ->first();
+
+        if (! $group) {
+            throw new Exception("No group found for department_id: {$lead->department_id} (lead: {$lead->id})");
+        }
+
+        return $group->id;
+    }
+
+    /**
+     * Get the groups that belong to this department.
+     */
+    public function groups()
+    {
+        return $this->hasMany(Group::class, 'department_id');
     }
 }

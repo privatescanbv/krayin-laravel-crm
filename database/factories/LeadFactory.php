@@ -2,7 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Enums\Departments;
 use App\Models\Address;
+use App\Models\Department;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -57,6 +59,12 @@ class LeadFactory extends Factory
             ]);
         }
 
+        // Get or create default department
+        $department = Department::where('name', Departments::PRIVATESCAN->value)->first();
+        if (! $department) {
+            $department = Department::create(['name' => Departments::PRIVATESCAN->value]);
+        }
+
         return [
             'description'            => $this->faker->paragraph(),
             'status'                 => $this->faker->boolean(),
@@ -67,6 +75,7 @@ class LeadFactory extends Factory
             'lead_type_id'           => $type->id,
             'lead_pipeline_id'       => $pipeline->id,
             'lead_pipeline_stage_id' => $stage->id,
+            'department_id'          => $department->id, // Always set department_id
             'combine_order'          => true, // Default true
             // Personal fields - minimal defaults, can be overridden
             'first_name'             => $this->faker->firstName(),

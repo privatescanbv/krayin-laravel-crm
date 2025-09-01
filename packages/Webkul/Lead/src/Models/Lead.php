@@ -497,4 +497,16 @@ class Lead extends Model implements LeadContract
 
         return app(LeadRepository::class)->findNumberPotentialDuplicates($this);
     }
+
+    /**
+     * Get the default group_id based on department relationship.
+     * Uses the Department mapping function.
+     * 
+     * @return int The group ID
+     * @throws Exception if department mapping fails
+     */
+    public function getDefaultGroupId(): int
+    {
+        return Department::getGroupIdForLead($this);
+    }
 }

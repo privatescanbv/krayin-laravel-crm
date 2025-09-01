@@ -63,6 +63,8 @@ class Activity extends Model implements ActivityContract
         'external_id',
     ];
 
+
+
     /**
      * Get the user that owns the activity.
      */

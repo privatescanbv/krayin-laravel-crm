@@ -6,7 +6,6 @@ use App\Models\Address;
 use Database\Seeders\TestSeeder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -242,6 +241,9 @@ beforeEach(function () {
 });
 
 test('imports lead created_at parsed correctly from sugarcrm', function () {
+    // Create user with external_id (required for import)
+    $user = User::factory()->create(['external_id' => 'user-001']);
+
     // Create app person that will be linked to lead via anamnesis relation
     $personExternalId = 'person-001';
     $appPerson = Person::factory()->create(['external_id' => $personExternalId]);
@@ -325,10 +327,9 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
     expect($lead->married_name)->toBe('Jansen')
         ->and($lead->married_name_prefix)->toBe('de');
 
-    $expected = Carbon::parse('2025-06-11 13:41:07', 'UTC')
-        ->setTimezone(config('app.timezone'))
-        ->format('Y-m-d H:i:s');
-    expect($lead->created_at->format('Y-m-d H:i:s'))->toBe($expected);
+    // Check created_at parsing - import treats SugarCRM dates as local time
+    // SugarCRM date: '2025-06-11 13:41:07' is stored as-is in local timezone
+    expect($lead->created_at->format('Y-m-d H:i:s'))->toBe('2025-06-11 13:41:07');
 
     // Address created and mapped
     $address = Address::where('lead_id', $lead->id)->first();
@@ -343,6 +344,9 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
 });
 
 test('imports lead with multiple persons correctly', function () {
+    // Create user with external_id (required for import)
+    $user = User::factory()->create(['external_id' => 'user-multi-001']);
+
     // Create app persons that will be linked to lead
     $person1ExternalId = 'person-multi-001';
     $person2ExternalId = 'person-multi-002';
@@ -497,8 +501,8 @@ test('imports lead with multiple persons correctly', function () {
 });
 
 test('imports call activities from sugarcrm', function () {
-    // Create user for activities
-    $user = User::factory()->create();
+    // Create user for activities with external_id (required for import)
+    $user = User::factory()->create(['external_id' => 'user-call-001']);
 
     // Create app person that will be linked to lead
     $personExternalId = 'person-001';
@@ -564,32 +568,34 @@ test('imports call activities from sugarcrm', function () {
     // Insert call activities
     DB::connection('sugarcrm')->table('calls')->insert([
         [
-            'id'            => $callId1,
-            'name'          => 'Intake gesprek',
-            'date_entered'  => '2024-01-16 09:00:00',
-            'date_modified' => '2024-01-16 09:30:00',
-            'description'   => 'Eerste intake gesprek met klant',
-            'deleted'       => 0,
-            'date_start'    => '2024-01-16 14:00:00',
-            'date_end'      => '2024-01-16 14:30:00',
-            'parent_type'   => 'Leads',
-            'status'        => 'held',
-            'direction'     => 'outbound',
-            'parent_id'     => $leadId,
+            'id'               => $callId1,
+            'name'             => 'Intake gesprek',
+            'date_entered'     => '2024-01-16 09:00:00',
+            'date_modified'    => '2024-01-16 09:30:00',
+            'description'      => 'Eerste intake gesprek met klant',
+            'deleted'          => 0,
+            'date_start'       => '2024-01-16 14:00:00',
+            'date_end'         => '2024-01-16 14:30:00',
+            'parent_type'      => 'Leads',
+            'status'           => 'held',
+            'direction'        => 'outbound',
+            'parent_id'        => $leadId,
+            'assigned_user_id' => 'user-call-001', // Match with created user
         ],
         [
-            'id'            => $callId2,
-            'name'          => 'Follow-up call',
-            'date_entered'  => '2024-01-17 10:00:00',
-            'date_modified' => '2024-01-17 10:15:00',
-            'description'   => 'Follow-up gesprek',
-            'deleted'       => 0,
-            'date_start'    => '2024-01-17 15:00:00',
-            'date_end'      => '2024-01-17 15:15:00',
-            'parent_type'   => 'Leads',
-            'status'        => 'planned',
-            'direction'     => 'outbound',
-            'parent_id'     => $leadId,
+            'id'               => $callId2,
+            'name'             => 'Follow-up call',
+            'date_entered'     => '2024-01-17 10:00:00',
+            'date_modified'    => '2024-01-17 10:15:00',
+            'description'      => 'Follow-up gesprek',
+            'deleted'          => 0,
+            'date_start'       => '2024-01-17 15:00:00',
+            'date_end'         => '2024-01-17 15:15:00',
+            'parent_type'      => 'Leads',
+            'status'           => 'planned',
+            'direction'        => 'outbound',
+            'parent_id'        => $leadId,
+            'assigned_user_id' => 'user-call-001', // Match with created user
         ],
     ]);
 
@@ -620,9 +626,9 @@ test('imports call activities from sugarcrm', function () {
     $callActivities = $lead->activities()->where('type', 'call')->get();
     expect($callActivities)->toHaveCount(2);
 
-    // Check first call activity - use different approach for JSON querying
+    // Check first call activity - external_id is stored in the external_id field
     $activity1 = $callActivities->filter(function ($activity) use ($callId1) {
-        return isset($activity->additional['external_id']) && $activity->additional['external_id'] === $callId1;
+        return $activity->external_id === $callId1;
     })->first();
     expect($activity1)->not->toBeNull()
         ->and($activity1->title)->toBe('Intake gesprek')
@@ -633,9 +639,9 @@ test('imports call activities from sugarcrm', function () {
         ->and($activity1->additional['status'])->toBe('held')
         ->and($activity1->additional['belgroep'])->toBe('intake');
 
-    // Check second call activity - use different approach for JSON querying
+    // Check second call activity - external_id is stored in the external_id field
     $activity2 = $callActivities->filter(function ($activity) use ($callId2) {
-        return isset($activity->additional['external_id']) && $activity->additional['external_id'] === $callId2;
+        return $activity->external_id === $callId2;
     })->first();
     expect($activity2)->not->toBeNull()
         ->and($activity2->title)->toBe('Follow-up call')

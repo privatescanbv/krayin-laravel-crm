@@ -28,6 +28,12 @@ function makeUser(array $attrs = []): User
 
 function makeActivity(array $attrs = []): Activity
 {
+    // Ensure we have a default group_id if not provided
+    if (! isset($attrs['group_id'])) {
+        $defaultGroup = Group::first() ?? Group::create(['name' => 'Default Group']);
+        $attrs['group_id'] = $defaultGroup->id;
+    }
+
     return Activity::create(array_merge([
         'type'          => 'task',
         'title'         => 'Test Activity',

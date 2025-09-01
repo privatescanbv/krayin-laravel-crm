@@ -29,6 +29,27 @@ class ActivityController extends Controller
     }
 
     /**
+     * Get the default group for a lead based on its department.
+     */
+    public function getDefaultGroup(int $id)
+    {
+        $lead = $this->leadRepository->findOrFail($id);
+        
+        try {
+            $groupId = \App\Models\Department::getGroupIdForLead($lead);
+            
+            return response()->json([
+                'group_id' => $groupId,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'group_id' => null,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
      * Store a newly created activity in storage.
      */
     public function store(Request $request, int $id)
@@ -38,7 +59,7 @@ class ActivityController extends Controller
             'comment' => 'required_if:type,note',
             'description' => 'nullable|string',
             'user_id' => 'nullable|exists:users,id',
-            'group_id' => 'nullable|exists:groups,id',
+            'group_id' => 'nullable|exists:groups,id', // Will be auto-determined if not provided
             'schedule_from' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
             'schedule_to' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
             'file' => 'required_if:type,file',
@@ -47,19 +68,36 @@ class ActivityController extends Controller
 
         // Convert empty strings to null for foreign key constraints
         $data = $request->all();
-        foreach (['user_id', 'group_id'] as $field) {
+        foreach (['user_id'] as $field) {
             if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
                 $data[$field] = null;
             }
         }
 
-        // Auto-assign group if not specified but user has a group
+        // Set group_id from lead's department if not provided (required for lead activities)
         $groupId = $data['group_id'] ?? null;
-        if (!$groupId && isset($data['user_id']) && $data['user_id']) {
-            $user = User::find($data['user_id']);
-            if ($user && $user->groups()->count() > 0) {
-                $groupId = $user->groups()->first()->id;
+        if (!$groupId || $groupId === '') {
+            $lead = $this->leadRepository->findOrFail($id);
+            try {
+                $groupId = \App\Models\Department::getGroupIdForLead($lead);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'message' => 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.',
+                    'errors' => [
+                        'group_id' => ['Kan geen groep bepalen vanuit lead department.']
+                    ]
+                ], 422);
             }
+        }
+
+        // Ensure we have a group_id after auto-determination
+        if (!$groupId) {
+            return response()->json([
+                'message' => 'Groep is verplicht voor activiteiten van leads.',
+                'errors' => [
+                    'group_id' => ['Groep is verplicht voor activiteiten van leads.']
+                ]
+            ], 422);
         }
 
         $activity = $this->activityRepository->create(array_merge($data, [

@@ -2,9 +2,12 @@
 
 namespace Tests\Unit;
 
+use App\Enums\Departments;
 use App\Enums\PipelineStageDefaultKeys;
+use App\Models\Department;
 use App\Observers\LeadObserver;
 use App\Services\WebhookService;
+use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
@@ -23,6 +26,7 @@ class LeadWebhookTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seed(TestSeeder::class);
 
         $this->webhookCallCount = 0;
 
@@ -109,11 +113,14 @@ class LeadWebhookTest extends TestCase
 
     private function createTestLead(): Lead
     {
+        $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
+
         return Lead::factory()->create([
             'first_name'             => 'John',
             'last_name'              => 'Doe',
             'lead_pipeline_id'       => 1,
             'lead_pipeline_stage_id' => 1,
+            'department_id'          => $department->id,
         ]);
     }
 

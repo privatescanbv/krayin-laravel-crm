@@ -28,9 +28,16 @@ trait LogsActivity
                         : null,
                 ];
 
-                // Add lead_id if this is a Lead model
+                // Add lead_id and optionally set group_id if this is a Lead model
                 if (method_exists($model, 'getTable') && $model->getTable() === 'leads') {
                     $activityData['lead_id'] = $model->id;
+
+                    // Try to get group_id from lead's department (optional for system activities)
+                    try {
+                        $activityData['group_id'] = \App\Models\Department::getGroupIdForLead($model);
+                    } catch (\Exception $e) {
+                        // System activities don't require group_id, so ignore error
+                    }
                 }
 
                 $activity = app(ActivityRepository::class)->create($activityData);
@@ -102,11 +109,25 @@ trait LogsActivity
                 'user_id'    => auth()->id(),
             ];
 
-            // Add lead_id if this is a Lead model or if the entity is a Lead model
+            // Add lead_id and optionally set group_id if this is a Lead model
             if (method_exists($model, 'getTable') && $model->getTable() === 'leads') {
                 $activityData['lead_id'] = $model->id;
+
+                // Try to get group_id from lead's department (optional for system activities)
+                try {
+                    $activityData['group_id'] = \App\Models\Department::getGroupIdForLead($model);
+                } catch (\Exception $e) {
+                    // System activities don't require group_id, so ignore error
+                }
             } elseif ($model instanceof AttributeValue && method_exists($model->entity, 'getTable') && $model->entity->getTable() === 'leads') {
                 $activityData['lead_id'] = $model->entity->id;
+
+                // Try to get group_id from lead's department (optional for system activities)
+                try {
+                    $activityData['group_id'] = \App\Models\Department::getGroupIdForLead($model->entity);
+                } catch (\Exception $e) {
+                    // System activities don't require group_id, so ignore error
+                }
             }
 
             $activity = app(ActivityRepository::class)->create($activityData);

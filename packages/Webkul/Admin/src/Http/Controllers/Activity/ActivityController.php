@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Controllers\Activity;
 
 use App\Enums\WebhookType;
+use App\Models\Department;
 use App\Services\WebhookService;
 use Carbon\Carbon;
 use Exception;
@@ -21,6 +22,7 @@ use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\MassUpdateRequest;
 use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
+use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\User\Repositories\GroupRepository;
 
 class ActivityController extends Controller
@@ -132,22 +134,18 @@ class ActivityController extends Controller
 
         // Auto-assign group if not specified but user has a group
         $data = request()->all();
-        
+
         // Convert empty strings to null for foreign key constraints
         foreach (['lead_id', 'group_id', 'user_id'] as $field) {
             if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
                 $data[$field] = null;
             }
         }
-        
-        if (!isset($data['group_id']) || !$data['group_id']) {
-            $userId = $data['user_id'] ?? auth()->guard('user')->id();
-            if ($userId) {
-                $user = \Webkul\User\Models\User::find($userId);
-                if ($user && $user->groups()->count() > 0) {
-                    $data['group_id'] = $user->groups()->first()->id;
-                }
-            }
+
+        // Ensure group_id is set for lead activities
+        $result = $this->ensureGroupIdForLeadActivity($data);
+        if ($result !== null) {
+            return $result; // Return error response if group_id could not be determined
         }
 
         $activity = $this->activityRepository->create(array_merge($data, [
@@ -212,11 +210,11 @@ class ActivityController extends Controller
     {
         // Get the current activity to check permissions
         $activity = $this->activityRepository->findOrFail($id);
-        
+
         // Check if user_id is being changed and if user has permission
         if (request()->has('user_id') && request('user_id') != $activity->user_id) {
             $currentUser = auth()->guard('user')->user();
-            
+
             // Only allow user_id change if:
             // 1. Current user is the assigned user, OR
             // 2. Current user has takeover permission
@@ -226,7 +224,7 @@ class ActivityController extends Controller
                         'message' => 'Je hebt geen rechten om de toewijzing van deze activiteit te wijzigen.',
                     ], 403);
                 }
-                
+
                 session()->flash('error', 'Je hebt geen rechten om de toewijzing van deze activiteit te wijzigen.');
                 return redirect()->back();
             }
@@ -235,14 +233,14 @@ class ActivityController extends Controller
         Event::dispatch('activity.update.before', $id);
 
         $data = request()->all();
-        
+
         // Convert empty strings to null for foreign key constraints
         foreach (['lead_id', 'group_id', 'user_id'] as $field) {
             if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
                 $data[$field] = null;
             }
         }
-        
+
         $activity = $this->activityRepository->update($data, $id);
 
         // Send webhook if activity is marked as done
@@ -377,5 +375,34 @@ class ActivityController extends Controller
                 'message' => trans('admin::app.activities.mass-delete-failed'),
             ], 400);
         }
+    }
+
+    /**
+     * Ensure group_id is set for lead activities by auto-determining from lead's department.
+     *
+     * @param array $data Activity data (passed by reference)
+     * @return \Illuminate\Http\JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse|null
+     */
+    private function ensureGroupIdForLeadActivity(array &$data)
+    {
+        // If lead_id is provided, group_id is required
+        if (!empty($data['lead_id'])) {
+            if (!isset($data['group_id']) || !$data['group_id']) {
+                $lead = app(LeadRepository::class)->findOrFail($data['lead_id']);
+                try {
+                    $data['group_id'] = Department::getGroupIdForLead($lead);
+                } catch (Exception $e) {
+                    if (request()->ajax()) {
+                        return response()->json([
+                            'message' => 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.',
+                        ], 422);
+                    }
+                    session()->flash('error', 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.');
+                    return redirect()->back();
+                }
+            }
+        }
+
+        return null; // Success - no error response needed
     }
 }

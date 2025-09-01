@@ -34,7 +34,6 @@ Route::middleware('api.key')->group(function () {
 
         // Lead activities
         Route::post('{id}/activities', [ActivityController::class, 'store'])->name('admin.leads.activities.store');
-        Route::get('{id}/default-group', [ActivityController::class, 'getDefaultGroup'])->name('admin.leads.default-group');
         Route::get('{id}/activities', [ActivityController::class, 'index']);
     });
 

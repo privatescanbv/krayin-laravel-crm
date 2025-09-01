@@ -27,6 +27,14 @@
                     </div>
                 </div>
 
+                <!-- Description -->
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Omschrijving</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {{ $lead->description ?? '-' }}
+                    </div>
+                </div>
+
                 <!-- Sales Owner -->
                 @if($lead->user)
                 <div class="mb-4">

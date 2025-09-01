@@ -1122,25 +1122,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         continue;
                     }
 
-                    // Determine group_id using Department mapping function
+                    // Get group_id from lead's department (will throw exception if invalid)
                     $groupId = \App\Models\Department::getGroupIdForLead($lead);
-                    
-                    // Fallback: if no group from department, use default Privatescan group
-                    if (!$groupId) {
-                        try {
-                            $groupId = \App\Models\Department::mapDepartmentToGroupId('Privatescan');
-                        } catch (\Exception $e) {
-                            // Final fallback: get first available group
-                            $firstGroup = \Webkul\User\Models\Group::first();
-                            $groupId = $firstGroup?->id;
-                        }
-                    }
-
-                    if (!$groupId) {
-                        $this->error("Cannot determine group_id for call activity {$callData->id} - skipping");
-                        $skipped++;
-                        continue;
-                    }
 
                     // Create the activity
                     $activityData = [

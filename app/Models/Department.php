@@ -74,27 +74,30 @@ class Department extends Model
 
     /**
      * Map department name to group ID.
-     * This maps a department to its corresponding group.
+     * Uses the Departments enum to validate and map to corresponding group.
      *
      * @param  string  $departmentName  The name of the department
-     * @return int|null The group ID or null if not found
+     * @return int The group ID
+     * @throws Exception if department or group not found
      */
-    public static function mapDepartmentToGroupId(string $departmentName): ?int
+    public static function mapDepartmentToGroupId(string $departmentName): int
     {
-        try {
-            // Direct mapping: department name should match group name
-            $group = \Webkul\User\Models\Group::query()
-                ->where('name', $departmentName)
-                ->first();
-
-            return $group?->id;
-        } catch (Exception $e) {
-            \Illuminate\Support\Facades\Log::warning('Error mapping department to group', [
-                'department_name' => $departmentName,
-                'error' => $e->getMessage(),
-            ]);
-            return null;
+        // Validate that department name exists in enum
+        $validDepartments = Departments::allValues();
+        if (!in_array($departmentName, $validDepartments)) {
+            throw new Exception("Invalid department name: {$departmentName}. Must be one of: " . implode(', ', $validDepartments));
         }
+
+        // Direct mapping: department name should match group name
+        $group = \Webkul\User\Models\Group::query()
+            ->where('name', $departmentName)
+            ->first();
+
+        if (!$group) {
+            throw new Exception("Group not found for department: {$departmentName}");
+        }
+
+        return $group->id;
     }
 
     /**
@@ -102,12 +105,17 @@ class Department extends Model
      * Maps the lead's department to the corresponding group_id.
      *
      * @param  \Webkul\Lead\Models\Lead  $lead  The lead to get group_id for
-     * @return int|null The group ID or null if not found
+     * @return int The group ID
+     * @throws Exception if lead has no department or mapping fails
      */
-    public static function getGroupIdForLead($lead): ?int
+    public static function getGroupIdForLead($lead): int
     {
-        if (!$lead || !$lead->department_id) {
-            return null;
+        if (!$lead) {
+            throw new Exception("Lead cannot be null");
+        }
+
+        if (!$lead->department_id) {
+            throw new Exception("Lead {$lead->id} has no department_id");
         }
 
         // Load the department if not already loaded
@@ -116,7 +124,7 @@ class Department extends Model
         }
 
         if (!$lead->department) {
-            return null;
+            throw new Exception("Lead {$lead->id} department not found for department_id: {$lead->department_id}");
         }
 
         return self::mapDepartmentToGroupId($lead->department->name);

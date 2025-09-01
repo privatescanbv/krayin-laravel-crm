@@ -53,39 +53,11 @@ class ActivityController extends Controller
             }
         }
 
-        // Set default group_id from lead's department if not provided
+        // Set group_id from lead's department if not provided
         $groupId = $data['group_id'] ?? null;
         if (!$groupId || $groupId === '') {
-            $lead = $this->leadRepository->find($id);
-            if ($lead) {
-                $groupId = \App\Models\Department::getGroupIdForLead($lead);
-                
-                // Fallback: if lead doesn't have department, try user's group
-                if (!$groupId && isset($data['user_id']) && $data['user_id']) {
-                    $user = User::find($data['user_id']);
-                    if ($user && $user->groups()->count() > 0) {
-                        $groupId = $user->groups()->first()->id;
-                    }
-                }
-                
-                // Final fallback: use default Privatescan group
-                if (!$groupId) {
-                    try {
-                        $groupId = \App\Models\Department::mapDepartmentToGroupId('Privatescan');
-                    } catch (\Exception $e) {
-                        // Ultimate fallback: get first available group
-                        $firstGroup = \Webkul\User\Models\Group::first();
-                        $groupId = $firstGroup?->id;
-                    }
-                }
-            }
-        }
-
-        // Ensure we have a group_id before creating the activity
-        if (!$groupId) {
-            return response()->json([
-                'message' => 'Kan geen standaard groep bepalen voor deze activiteit. Selecteer handmatig een groep.',
-            ], 422);
+            $lead = $this->leadRepository->findOrFail($id);
+            $groupId = \App\Models\Department::getGroupIdForLead($lead);
         }
 
         $activity = $this->activityRepository->create(array_merge($data, [

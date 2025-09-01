@@ -501,8 +501,11 @@ class Lead extends Model implements LeadContract
     /**
      * Get the default group_id based on department relationship.
      * Uses the Department mapping function.
+     * 
+     * @return int The group ID
+     * @throws Exception if department mapping fails
      */
-    public function getDefaultGroupId(): ?int
+    public function getDefaultGroupId(): int
     {
         return Department::getGroupIdForLead($this);
     }

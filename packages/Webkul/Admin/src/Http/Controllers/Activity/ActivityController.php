@@ -141,47 +141,11 @@ class ActivityController extends Controller
         }
         
         if (!isset($data['group_id']) || !$data['group_id']) {
-            // First try to get group from lead's department if lead_id is provided
+            // Get group from lead's department if lead_id is provided
             if (!empty($data['lead_id'])) {
-                $lead = app(\Webkul\Lead\Repositories\LeadRepository::class)->find($data['lead_id']);
-                if ($lead) {
-                    $data['group_id'] = \App\Models\Department::getGroupIdForLead($lead);
-                }
+                $lead = app(\Webkul\Lead\Repositories\LeadRepository::class)->findOrFail($data['lead_id']);
+                $data['group_id'] = \App\Models\Department::getGroupIdForLead($lead);
             }
-            
-            // Fallback: if no group from lead, try user's group
-            if (!isset($data['group_id']) || !$data['group_id']) {
-                $userId = $data['user_id'] ?? auth()->guard('user')->id();
-                if ($userId) {
-                    $user = \Webkul\User\Models\User::find($userId);
-                    if ($user && $user->groups()->count() > 0) {
-                        $data['group_id'] = $user->groups()->first()->id;
-                    }
-                }
-            }
-            
-            // Final fallback: use default Privatescan group
-            if (!isset($data['group_id']) || !$data['group_id']) {
-                try {
-                    $data['group_id'] = \App\Models\Department::mapDepartmentToGroupId('Privatescan');
-                } catch (\Exception $e) {
-                    // Ultimate fallback: get first available group
-                    $firstGroup = \Webkul\User\Models\Group::first();
-                    $data['group_id'] = $firstGroup?->id;
-                }
-            }
-        }
-
-        // Ensure we have a group_id before creating the activity
-        if (!isset($data['group_id']) || !$data['group_id']) {
-            if (request()->ajax()) {
-                return response()->json([
-                    'message' => 'Kan geen standaard groep bepalen voor deze activiteit. Selecteer handmatig een groep.',
-                ], 422);
-            }
-
-            session()->flash('error', 'Kan geen standaard groep bepalen voor deze activiteit. Selecteer handmatig een groep.');
-            return redirect()->back();
         }
 
         $activity = $this->activityRepository->create(array_merge($data, [

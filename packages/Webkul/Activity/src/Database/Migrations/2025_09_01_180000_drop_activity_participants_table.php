@@ -13,6 +13,16 @@ return new class extends Migration
      */
     public function up()
     {
+        Schema::dropIfExists('activity_participants');
+    }
+
+    /**
+     * Reverse the migrations.
+     *
+     * @return void
+     */
+    public function down()
+    {
         Schema::create('activity_participants', function (Blueprint $table) {
             $table->increments('id');
 
@@ -25,15 +35,5 @@ return new class extends Migration
             $table->integer('person_id')->nullable()->unsigned();
             $table->foreign('person_id')->references('id')->on('persons')->onDelete('cascade');
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
-    {
-        Schema::dropIfExists('activity_participants');
     }
 };

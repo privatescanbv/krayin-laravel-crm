@@ -378,8 +378,8 @@ class PersonController extends Controller
                     $person->match_score_percentage = round($score, 1);
 
                     // Debug: Log which persons are being scored
-                    if (app()->environment('testing')) {
-                        \Log::info('Person being scored', [
+                    if ($this->enableLogging) {
+                        Log::info('Person being scored', [
                             'person_id' => $person->id,
                             'person_name' => $person->name,
                             'person_first_name' => $person->first_name,
@@ -482,8 +482,8 @@ class PersonController extends Controller
         $score += $nameScore * 0.85 * 100;
 
         // Debug logging for tests - always log for person ID 1 in tests
-        if (app()->environment('testing') && ($person->id == 1 || $lead->id == 1)) {
-            \Log::info('Match Score Debug', [
+        if ($this->enableLogging && ($person->id == 1 || $lead->id == 1)) {
+            Log::info('Match Score Debug', [
                 'lead_id' => $lead->id,
                 'person_id' => $person->id,
                 'nameScore' => $nameScore,
@@ -509,7 +509,7 @@ class PersonController extends Controller
         }
 
         // Debug score after empty fields fix
-        if (app()->environment('testing') && $person->id == 1) {
+        if ($this->enableLogging && $person->id == 1) {
             \Log::info('Score After Empty Fields Fix', [
                 'nameScore' => $nameScore,
                 'emailScore' => $emailScore,
@@ -619,8 +619,8 @@ class PersonController extends Controller
         $totalMatchRatio = $totalMatches / $totalPossibleMatches;
 
         // Debug name matching for person ID 1
-        if (app()->environment('testing') && $person->id == 1) {
-            \Log::info('Name Match Debug', [
+        if ($this->enableLogging&& $person->id == 1) {
+            Log::info('Name Match Debug', [
                 'totalMatches' => $totalMatches,
                 'totalPossibleMatches' => $totalPossibleMatches,
                 'importantMatches' => $importantMatches,
@@ -683,8 +683,8 @@ class PersonController extends Controller
         $personPhones = $this->extractPhones($person);
 
         // Debug phone extraction for person ID 1
-        if (app()->environment('testing') && $person->id == 1) {
-            \Log::info('Phone Match Debug', [
+        if ($this->enableLogging&& $person->id == 1) {
+            Log::info('Phone Match Debug', [
                 'lead_id' => $lead->id,
                 'person_id' => $person->id,
                 'leadPhones' => $leadPhones,
@@ -722,8 +722,8 @@ class PersonController extends Controller
         $personAddress = $this->extractAddressData($person);
 
         // Debug address extraction for person ID 1
-        if (app()->environment('testing') && $person->id == 1) {
-            \Log::info('Address Match Debug', [
+        if ($this->enableLogging&& $person->id == 1) {
+            Log::info('Address Match Debug', [
                 'lead_id' => $lead->id,
                 'person_id' => $person->id,
                 'leadAddress' => $leadAddress,

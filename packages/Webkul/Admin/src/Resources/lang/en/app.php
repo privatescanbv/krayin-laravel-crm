@@ -1799,6 +1799,8 @@ return [
         'edit-title' => 'Edit Activity',
         'group' => 'User group',
         'select-group' => 'Select user group',
+        'assign-to' => 'Assign to',
+        'select-user' => 'Select user',
         'delete-success' => 'Activity deleted successfully.',
         'mass-delete-success' => 'Selected activities deleted successfully.',
     ],

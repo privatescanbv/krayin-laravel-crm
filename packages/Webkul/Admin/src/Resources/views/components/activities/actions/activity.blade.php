@@ -126,13 +126,29 @@
                                 <x-admin::form.control-group.error control-name="comment" />
                             </x-admin::form.control-group>
 
-                            <!-- Participants -->
+
+
+                            <!-- User Assignment -->
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label>
-                                    @lang('admin::app.components.activities.actions.activity.participants.title')
+                                    @lang('admin::app.activities.assign-to')
                                 </x-admin::form.control-group.label>
 
-                                <x-admin::activities.actions.activity.participants />
+                                <x-admin::form.control-group.control
+                                    type="select"
+                                    name="user_id"
+                                    :value="old('user_id', auth()->guard('user')->id())"
+                                >
+                                    <option value="">{{ __('admin::app.activities.select-user') }}</option>
+                                    @foreach (app(Webkul\User\Repositories\UserRepository::class)->findWhere(['status' => 1]) as $user)
+                                        <option
+                                            value="{{ $user->id }}"
+                                            {{ auth()->guard('user')->id() == $user->id ? 'selected' : '' }}
+                                        >
+                                            {{ $user->name }}
+                                        </option>
+                                    @endforeach
+                                </x-admin::form.control-group.control>
                             </x-admin::form.control-group>
 
                             <!-- Group -->
@@ -188,17 +204,17 @@
                                 </x-admin::form.control-group>
                             </div>
 
-                            <!-- Location -->
-                            <x-admin::form.control-group class="!mb-0">
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.components.activities.actions.activity.location')
-                                </x-admin::form.control-group.label>
+{{--                            <!-- Location -->--}}
+{{--                            <x-admin::form.control-group class="!mb-0">--}}
+{{--                                <x-admin::form.control-group.label>--}}
+{{--                                    @lang('admin::app.components.activities.actions.activity.location')--}}
+{{--                                </x-admin::form.control-group.label>--}}
 
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    name="location"
-                                />
-                            </x-admin::form.control-group>
+{{--                                <x-admin::form.control-group.control--}}
+{{--                                    type="text"--}}
+{{--                                    name="location"--}}
+{{--                                />--}}
+{{--                            </x-admin::form.control-group>--}}
 
                             {!! view_render_event('admin.components.activities.actions.activity.form_controls.modal.content.controls.after') !!}
                         </x-slot>

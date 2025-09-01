@@ -111,7 +111,7 @@ class ActivityController extends Controller
             $isOverlapping = $this->activityRepository->isDurationOverlapping(
                 request()->input('schedule_from'),
                 request()->input('schedule_to'),
-                request()->input('participants'),
+                null, // No participants check needed
                 request()->input('id')
             );
 
@@ -132,6 +132,14 @@ class ActivityController extends Controller
 
         // Auto-assign group if not specified but user has a group
         $data = request()->all();
+        
+        // Convert empty strings to null for foreign key constraints
+        foreach (['lead_id', 'group_id', 'user_id'] as $field) {
+            if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
+                $data[$field] = null;
+            }
+        }
+        
         if (!isset($data['group_id']) || !$data['group_id']) {
             $userId = $data['user_id'] ?? auth()->guard('user')->id();
             if ($userId) {
@@ -202,21 +210,40 @@ class ActivityController extends Controller
      */
     public function update($id): RedirectResponse|JsonResponse
     {
+        // Get the current activity to check permissions
+        $activity = $this->activityRepository->findOrFail($id);
+        
+        // Check if user_id is being changed and if user has permission
+        if (request()->has('user_id') && request('user_id') != $activity->user_id) {
+            $currentUser = auth()->guard('user')->user();
+            
+            // Only allow user_id change if:
+            // 1. Current user is the assigned user, OR
+            // 2. Current user has takeover permission
+            if ($activity->user_id && $activity->user_id != $currentUser->id && !$currentUser->hasPermission('activities.takeover')) {
+                if (request()->ajax()) {
+                    return response()->json([
+                        'message' => 'Je hebt geen rechten om de toewijzing van deze activiteit te wijzigen.',
+                    ], 403);
+                }
+                
+                session()->flash('error', 'Je hebt geen rechten om de toewijzing van deze activiteit te wijzigen.');
+                return redirect()->back();
+            }
+        }
+
         Event::dispatch('activity.update.before', $id);
 
         $data = request()->all();
-        $activity = $this->activityRepository->update($data, $id);
-
-        /**
-         * We will not use `empty` directly here because `lead_id` can be a blank string
-         * from the activity form. However, on the activity view page, we are only updating the
-         * `is_done` field, so `lead_id` will not be present in that case.
-         */
-        if (isset($data['lead_id'])) {
-            // Convert empty string to null for foreign key constraint
-            $activity->lead_id = (!empty($data['lead_id']) && $data['lead_id'] !== '') ? $data['lead_id'] : null;
-            $activity->save();
+        
+        // Convert empty strings to null for foreign key constraints
+        foreach (['lead_id', 'group_id', 'user_id'] as $field) {
+            if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
+                $data[$field] = null;
+            }
         }
+        
+        $activity = $this->activityRepository->update($data, $id);
 
         // Send webhook if activity is marked as done
         if (isset($data['is_done']) && $data['is_done']) {

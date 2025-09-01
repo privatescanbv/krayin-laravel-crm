@@ -1025,36 +1025,41 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $connection = $this->option('connection');
 
         try {
-            // Check if calls table exists
+            // Check if calls tables exist
             if (!Schema::connection($connection)->hasTable('calls')) {
                 $this->info('Calls table does not exist in SugarCRM database, skipping call activities import');
                 return [];
             }
+            if (!Schema::connection($connection)->hasTable('calls_cstm')) {
+                $this->info('Calls_cstm table does not exist in SugarCRM database, skipping call activities import');
+                return [];
+            }
 
             $sql = DB::connection($connection)
-                ->table('calls')
+                ->table('calls as c')
+                ->join('calls_cstm as cc', 'c.id', '=', 'cc.id_c')
                 ->select([
-                    'id',
-                    'name',
-                    'date_entered',
-                    'date_modified',
-                    'modified_user_id',
-                    'created_by',
-                    'description',
-                    'deleted',
-                    'assigned_user_id',
-                    'date_start',
-                    'date_end',
-                    'parent_type',
-                    'status',
-                    'direction',
-                    'parent_id',
-                    'belgroep_c'
+                    'c.id',
+                    'c.name',
+                    'c.date_entered',
+                    'c.date_modified',
+                    'c.modified_user_id',
+                    'c.created_by',
+                    'c.description',
+                    'c.deleted',
+                    'c.assigned_user_id',
+                    'c.date_start',
+                    'c.date_end',
+                    'c.parent_type',
+                    'c.status',
+                    'c.direction',
+                    'c.parent_id',
+                    'cc.belgroep_c'
                 ])
-                ->whereIn('parent_id', $leadIds)
-                ->where('parent_type', '=', 'Leads')
-                ->where('deleted', '=', 0)
-                ->orderBy('date_entered', 'asc');
+                ->whereIn('c.parent_id', $leadIds)
+                ->where('c.parent_type', '=', 'Leads')
+                ->where('c.deleted', '=', 0)
+                ->orderBy('c.date_entered', 'asc');
 
             $this->info('Extracting call activities: ' . $sql->toRawSql());
             $calls = $sql->get();

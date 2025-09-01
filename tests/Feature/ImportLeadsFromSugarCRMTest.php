@@ -27,7 +27,7 @@ beforeEach(function () {
     // Drop if exist
     foreach ([
         'email_addr_bean_rel', 'email_addresses', 'leads_cstm', 'leads', 'leads_contacts_c',
-        'leads_pcrm_anamnesepreventie_1_c', 'pcrm_anamnetie_contacts_c', 'pcrm_anamnesepreventie', 'pcrm_anamnesepreventie_cstm', 'calls',
+        'leads_pcrm_anamnesepreventie_1_c', 'pcrm_anamnetie_contacts_c', 'pcrm_anamnesepreventie', 'pcrm_anamnesepreventie_cstm', 'calls', 'calls_cstm',
     ] as $tbl) {
         if (Schema::connection('sugarcrm')->hasTable($tbl)) {
             Schema::connection('sugarcrm')->drop($tbl);
@@ -231,6 +231,11 @@ beforeEach(function () {
         $table->string('status')->nullable();
         $table->string('direction')->nullable();
         $table->string('parent_id')->nullable();
+    });
+
+    // Create calls_cstm table for custom fields
+    Schema::connection('sugarcrm')->create('calls_cstm', function (Blueprint $table) {
+        $table->string('id_c')->primary();
         $table->string('belgroep_c')->nullable();
     });
 });
@@ -567,7 +572,6 @@ test('imports call activities from sugarcrm', function () {
             'status' => 'held',
             'direction' => 'outbound',
             'parent_id' => $leadId,
-            'belgroep_c' => 'intake',
         ],
         [
             'id' => $callId2,
@@ -582,6 +586,17 @@ test('imports call activities from sugarcrm', function () {
             'status' => 'planned',
             'direction' => 'outbound',
             'parent_id' => $leadId,
+        ],
+    ]);
+
+    // Insert call custom fields
+    DB::connection('sugarcrm')->table('calls_cstm')->insert([
+        [
+            'id_c' => $callId1,
+            'belgroep_c' => 'intake',
+        ],
+        [
+            'id_c' => $callId2,
             'belgroep_c' => 'follow-up',
         ],
     ]);
@@ -599,12 +614,6 @@ test('imports call activities from sugarcrm', function () {
 
     // Verify call activities were imported
     $activities = $lead->activities()->where('type', 'call')->get();
-    
-    // Debug: Let's see what we actually get
-    dump('Total activities for lead:', $lead->activities()->count());
-    dump('Call activities for lead:', $activities->count());
-    dump('All activities:', $lead->activities()->get()->toArray());
-    
     expect($activities)->toHaveCount(2);
 
     // Check first call activity - use different approach for JSON querying

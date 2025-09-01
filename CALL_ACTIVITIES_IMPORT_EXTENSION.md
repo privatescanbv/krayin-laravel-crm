@@ -99,8 +99,9 @@ A new test case `imports call activities from sugarcrm` has been added to verify
 
 ## Database Structure
 
-### SugarCRM calls table (source)
+### SugarCRM calls tables (source)
 ```sql
+-- Main calls table
 CREATE TABLE calls (
   id char(36) PRIMARY KEY,
   name varchar(50),
@@ -116,10 +117,17 @@ CREATE TABLE calls (
   parent_type varchar(255),
   status varchar(100),
   direction varchar(100),
-  parent_id char(36),
+  parent_id char(36)
+);
+
+-- Custom fields table
+CREATE TABLE calls_cstm (
+  id_c char(36) PRIMARY KEY,
   belgroep_c varchar(100)
 );
 ```
+
+**Note**: The import uses an INNER JOIN between `calls` and `calls_cstm` on `calls.id = calls_cstm.id_c` to retrieve custom fields.
 
 ### Target activities table (destination)
 The activities are imported into the existing `activities` table with:

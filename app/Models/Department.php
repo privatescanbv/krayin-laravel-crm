@@ -6,18 +6,11 @@ use App\Enums\Departments;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Webkul\User\Models\Group;
 
 class Department extends Model
 {
     use HasFactory;
-
-    /**
-     * Get the groups that belong to this department.
-     */
-    public function groups()
-    {
-        return $this->hasMany(\Webkul\User\Models\Group::class, 'department_id');
-    }
 
     public static function findHerniaId(): int
     {
@@ -86,27 +79,36 @@ class Department extends Model
      *
      * @param  \Webkul\Lead\Models\Lead  $lead  The lead to get group_id for
      * @return int The group ID
+     *
      * @throws Exception if lead has no department or no group found
      */
     public static function getGroupIdForLead($lead): int
     {
-        if (!$lead) {
-            throw new Exception("Lead cannot be null");
+        if (! $lead) {
+            throw new Exception('Lead cannot be null');
         }
 
-        if (!$lead->department_id) {
+        if (! $lead->department_id) {
             throw new Exception("Lead {$lead->id} has no department_id");
         }
 
         // Find group by department_id for efficient lookup
-        $group = \Webkul\User\Models\Group::query()
+        $group = Group::query()
             ->where('department_id', $lead->department_id)
             ->first();
 
-        if (!$group) {
+        if (! $group) {
             throw new Exception("No group found for department_id: {$lead->department_id} (lead: {$lead->id})");
         }
 
         return $group->id;
+    }
+
+    /**
+     * Get the groups that belong to this department.
+     */
+    public function groups()
+    {
+        return $this->hasMany(Group::class, 'department_id');
     }
 }

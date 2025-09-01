@@ -11,7 +11,7 @@ return new class extends Migration
     {
         // Create mapping based on enum values and group names
         $mappings = [
-            'Hernia' => Departments::HERNIA->value,        // Group "Hernia" -> Department "Herniapoli"
+            'Hernia'      => Departments::HERNIA->value,        // Group "Hernia" -> Department "Herniapoli"
             'Privatescan' => Departments::PRIVATESCAN->value, // Group "Privatescan" -> Department "Privatescan"
         ];
 

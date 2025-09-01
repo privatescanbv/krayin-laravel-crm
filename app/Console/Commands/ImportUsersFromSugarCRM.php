@@ -1,0 +1,286 @@
+<?php
+
+namespace App\Console\Commands;
+
+use Exception;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Webkul\User\Models\User;
+
+class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'import:users
+                            {--connection=sugarcrm : Database connection name}
+                            {--table=users : Source table name}
+                            {--limit=100 : Number of records to import}
+                            {--user-ids=* : Specific user IDs to import (ignores limit)}
+                            {--dry-run : Show what would be imported without actually importing}';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Import users from SugarCRM database';
+
+    /**
+     * Execute the console command.
+     */
+    public function handle()
+    {
+        $connection = $this->option('connection');
+        $table = $this->option('table');
+        $limit = (int) $this->option('limit');
+        $userIds = $this->option('user-ids');
+        $dryRun = $this->option('dry-run');
+
+        $this->info('Starting user import from SugarCRM...');
+        $this->info("Connection: {$connection}");
+        $this->info("Table: {$table}");
+        if (! empty($userIds)) {
+            $this->info('User IDs: '.implode(', ', $userIds));
+        } else {
+            $this->info("Limit: {$limit}");
+        }
+        $this->info('Dry run: '.($dryRun ? 'Yes' : 'No'));
+
+        try {
+            return $this->executeImport($dryRun, function () use ($connection, $table, $limit, $userIds, $dryRun) {
+                // Test connection
+                $this->testConnection($connection);
+
+                // Get records from SugarCRM
+                $query = DB::connection($connection)
+                    ->table($table)
+                    ->select([
+                        'id',
+                        'user_name',
+                        'first_name',
+                        'last_name',
+                        'status',
+                        'title',
+                        'department',
+                        'phone_home',
+                        'phone_mobile',
+                        'phone_work',
+                        'phone_other',
+                        'phone_fax',
+                        'address_street',
+                        'address_city',
+                        'address_state',
+                        'address_country',
+                        'address_postalcode',
+                        'date_entered',
+                        'date_modified',
+                        'created_by',
+                        'modified_user_id',
+                        'is_admin',
+                        'description',
+                        'employee_status',
+                        'portal_only',
+                        'show_on_employees',
+                    ])
+                    ->where('deleted', 0); // Filter out deleted users
+
+                // Apply filtering if specific user IDs are provided
+                if (! empty($userIds)) {
+                    $query->whereIn('id', $userIds);
+                } else {
+                    $query->limit($limit);
+                }
+
+                $sugarUsers = $query->get();
+
+                $this->info("Found {$sugarUsers->count()} users to import");
+
+                if ($sugarUsers->isEmpty()) {
+                    $this->warn('No users found to import.');
+                    return;
+                }
+
+                $importedCount = 0;
+                $updatedCount = 0;
+                $skippedCount = 0;
+                $errorCount = 0;
+
+                foreach ($sugarUsers as $sugarUser) {
+                    try {
+                        $result = $this->importUser($sugarUser, $dryRun);
+                        
+                        switch ($result) {
+                            case 'imported':
+                                $importedCount++;
+                                break;
+                            case 'updated':
+                                $updatedCount++;
+                                break;
+                            case 'skipped':
+                                $skippedCount++;
+                                break;
+                        }
+                    } catch (Exception $e) {
+                        $errorCount++;
+                        $this->logError("Error importing user {$sugarUser->id}: {$e->getMessage()}", [
+                            'sugar_user_id' => $sugarUser->id,
+                            'user_name' => $sugarUser->user_name,
+                            'exception' => $e,
+                        ]);
+                    }
+                }
+
+                // Show summary
+                $this->info("\n" . str_repeat('=', 50));
+                $this->info('IMPORT SUMMARY');
+                $this->info(str_repeat('=', 50));
+                $this->info("Users imported: {$importedCount}");
+                $this->info("Users updated: {$updatedCount}");
+                $this->info("Users skipped: {$skippedCount}");
+                $this->info("Errors: {$errorCount}");
+                $this->info("Total processed: " . ($importedCount + $updatedCount + $skippedCount + $errorCount));
+            });
+        } catch (Exception $e) {
+            $this->logError('Import failed: ' . $e->getMessage(), ['exception' => $e]);
+            return 1;
+        }
+    }
+
+    /**
+     * Import a single user from SugarCRM
+     *
+     * @param object $sugarUser The SugarCRM user record
+     * @param bool $dryRun Whether this is a dry run
+     * @return string 'imported', 'updated', or 'skipped'
+     */
+    private function importUser($sugarUser, bool $dryRun): string
+    {
+        // Map SugarCRM data to our user structure
+        $userData = $this->mapUserData($sugarUser);
+
+        if ($dryRun) {
+            $this->info("DRY RUN: Would import user: {$userData['name']} ({$userData['email']})");
+            return 'imported';
+        }
+
+        // Check if user already exists by external_id
+        $existingUser = User::where('external_id', $sugarUser->id)->first();
+
+        if ($existingUser) {
+            // Update existing user
+            $existingUser->update($userData);
+            $this->info("Updated user: {$userData['name']} ({$userData['email']})");
+            return 'updated';
+        }
+
+        // Check if user exists by email (to prevent duplicates)
+        $existingUserByEmail = User::where('email', $userData['email'])->first();
+        if ($existingUserByEmail) {
+            // Update the existing user with external_id
+            $existingUserByEmail->update($userData);
+            $this->info("Linked existing user by email: {$userData['name']} ({$userData['email']})");
+            return 'updated';
+        }
+
+        // Create new user with timestamps from SugarCRM
+        $timestamps = [
+            'created_at' => $this->parseSugarDate($sugarUser->date_entered),
+            'updated_at' => $this->parseSugarDate($sugarUser->date_modified),
+        ];
+
+        $user = $this->createEntityWithTimestamps(User::class, $userData, $timestamps);
+
+        $this->info("Imported user: {$userData['name']} ({$userData['email']})");
+        return 'imported';
+    }
+
+    /**
+     * Map SugarCRM user data to our user structure
+     *
+     * @param object $sugarUser The SugarCRM user record
+     * @return array The mapped user data
+     */
+    private function mapUserData($sugarUser): array
+    {
+        // Build full name from first_name and last_name
+        $name = trim(($sugarUser->first_name ?? '') . ' ' . ($sugarUser->last_name ?? ''));
+        if (empty($name)) {
+            $name = $sugarUser->user_name ?? 'Unknown User';
+        }
+
+        // Generate email if not available (using user_name as base)
+        $email = $this->generateEmailFromUserName($sugarUser->user_name);
+
+        // Map status - 'Active' in SugarCRM means active (status = 1)
+        $status = (strtolower($sugarUser->status ?? '') === 'active') ? 1 : 0;
+
+        return [
+            'external_id' => $sugarUser->id,
+            'name' => $name,
+            'email' => $email,
+            'status' => $status,
+            'role_id' => $this->determineRoleId($sugarUser),
+            'view_permission' => $this->determineViewPermission($sugarUser),
+            // Generate a random password since we don't import passwords from SugarCRM
+            'password' => bcrypt(\Illuminate\Support\Str::random(16)),
+        ];
+    }
+
+    /**
+     * Generate email from username
+     *
+     * @param string|null $userName
+     * @return string
+     */
+    private function generateEmailFromUserName(?string $userName): string
+    {
+        if (empty($userName)) {
+            return 'user' . time() . '@imported.local';
+        }
+
+        // If username already looks like an email, use it
+        if (filter_var($userName, FILTER_VALIDATE_EMAIL)) {
+            return $userName;
+        }
+
+        // Otherwise, create email from username
+        return $userName . '@imported.local';
+    }
+
+    /**
+     * Determine role ID based on SugarCRM user data
+     *
+     * @param object $sugarUser
+     * @return int
+     */
+    private function determineRoleId($sugarUser): int
+    {
+        // If is_admin is set to 1, assign admin role (role_id = 1)
+        if (isset($sugarUser->is_admin) && $sugarUser->is_admin == 1) {
+            return 1; // Admin role
+        }
+
+        // Default to regular user role
+        return 2; // Assuming role_id 2 is for regular users
+    }
+
+    /**
+     * Determine view permission based on SugarCRM user data
+     *
+     * @param object $sugarUser
+     * @return string
+     */
+    private function determineViewPermission($sugarUser): string
+    {
+        // If is_admin is set to 1, give global permission
+        if (isset($sugarUser->is_admin) && $sugarUser->is_admin == 1) {
+            return 'global';
+        }
+
+        // Default to individual permission
+        return 'individual';
+    }
+}

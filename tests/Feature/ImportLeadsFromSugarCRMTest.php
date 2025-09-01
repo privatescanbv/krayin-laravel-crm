@@ -16,6 +16,8 @@ use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\User;
 
+require_once __DIR__ . '/../TestHelpers.php';
+
 beforeEach(function () {
     $this->seed(TestSeeder::class);
 
@@ -502,6 +504,9 @@ test('imports lead with multiple persons correctly', function () {
 });
 
 test('imports call activities from sugarcrm', function () {
+    // Ensure departments and groups exist
+    ensureDepartmentsAndGroups();
+    
     // Create user for activities with external_id (required for import)
     $user = User::factory()->create(['external_id' => 'user-call-001']);
 

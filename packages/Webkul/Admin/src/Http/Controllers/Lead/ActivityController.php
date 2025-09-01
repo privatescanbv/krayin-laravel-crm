@@ -58,7 +58,7 @@ class ActivityController extends Controller
         if (!$groupId || $groupId === '') {
             $lead = $this->leadRepository->find($id);
             if ($lead) {
-                $groupId = $lead->getDefaultGroupId();
+                $groupId = \App\Models\Department::getGroupIdForLead($lead);
                 
                 // Fallback: if lead doesn't have department, try user's group
                 if (!$groupId && isset($data['user_id']) && $data['user_id']) {

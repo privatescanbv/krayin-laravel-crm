@@ -1122,8 +1122,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         continue;
                     }
 
-                    // Determine group_id with fallback logic
-                    $groupId = $lead->getDefaultGroupId();
+                    // Determine group_id using Department mapping function
+                    $groupId = \App\Models\Department::getGroupIdForLead($lead);
                     
                     // Fallback: if no group from department, use default Privatescan group
                     if (!$groupId) {

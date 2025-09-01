@@ -96,4 +96,29 @@ class Department extends Model
             return null;
         }
     }
+
+    /**
+     * Get group_id for a lead based on its department.
+     * Maps the lead's department to the corresponding group_id.
+     *
+     * @param  \Webkul\Lead\Models\Lead  $lead  The lead to get group_id for
+     * @return int|null The group ID or null if not found
+     */
+    public static function getGroupIdForLead($lead): ?int
+    {
+        if (!$lead || !$lead->department_id) {
+            return null;
+        }
+
+        // Load the department if not already loaded
+        if (!$lead->relationLoaded('department')) {
+            $lead->load('department');
+        }
+
+        if (!$lead->department) {
+            return null;
+        }
+
+        return self::mapDepartmentToGroupId($lead->department->name);
+    }
 }

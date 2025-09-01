@@ -504,21 +504,6 @@ class Lead extends Model implements LeadContract
      */
     public function getDefaultGroupId(): ?int
     {
-        if (!$this->department) {
-            return null;
-        }
-
-        try {
-            // Use the Department mapping function to get group_id from department name
-            return Department::mapDepartmentToGroupId($this->department->name);
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::warning('Could not determine default group_id for lead', [
-                'lead_id' => $this->id,
-                'department_id' => $this->department_id,
-                'department_name' => $this->department->name ?? null,
-                'error' => $e->getMessage(),
-            ]);
-            return null;
-        }
+        return Department::getGroupIdForLead($this);
     }
 }

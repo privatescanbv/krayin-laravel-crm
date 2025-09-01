@@ -145,7 +145,7 @@ class ActivityController extends Controller
             if (!empty($data['lead_id'])) {
                 $lead = app(\Webkul\Lead\Repositories\LeadRepository::class)->find($data['lead_id']);
                 if ($lead) {
-                    $data['group_id'] = $lead->getDefaultGroupId();
+                    $data['group_id'] = \App\Models\Department::getGroupIdForLead($lead);
                 }
             }
             
@@ -157,6 +157,17 @@ class ActivityController extends Controller
                     if ($user && $user->groups()->count() > 0) {
                         $data['group_id'] = $user->groups()->first()->id;
                     }
+                }
+            }
+            
+            // Final fallback: use default Privatescan group
+            if (!isset($data['group_id']) || !$data['group_id']) {
+                try {
+                    $data['group_id'] = \App\Models\Department::mapDepartmentToGroupId('Privatescan');
+                } catch (\Exception $e) {
+                    // Ultimate fallback: get first available group
+                    $firstGroup = \Webkul\User\Models\Group::first();
+                    $data['group_id'] = $firstGroup?->id;
                 }
             }
         }

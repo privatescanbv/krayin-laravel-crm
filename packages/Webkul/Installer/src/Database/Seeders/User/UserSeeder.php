@@ -99,8 +99,8 @@ class UserSeeder extends Seeder
                 'email'           => 'lars@privatescan.nl',
                 'password'        => '8A4Z5jc%d3Ad',
                 'status'          => 1,
-                'role_id'         => 1,
-                'view_permission' => 'global',
+                'role_id'         => 2, // Medewerker Afdeling role
+                'view_permission' => 'group', // Restricted to group view
                 'group_id'        => $groupHerniaId,
             ],
             [

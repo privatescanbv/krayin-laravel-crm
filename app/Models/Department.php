@@ -109,37 +109,4 @@ class Department extends Model
 
         return $group->id;
     }
-
-    /**
-     * Map department name to group ID.
-     * Uses the Departments enum to validate and map to corresponding group.
-     *
-     * @param  string  $departmentName  The name of the department
-     * @return int The group ID
-     * @throws Exception if department or group not found
-     */
-    public static function mapDepartmentToGroupId(string $departmentName): int
-    {
-        // Validate that department name exists in enum
-        $validDepartments = Departments::allValues();
-        if (!in_array($departmentName, $validDepartments)) {
-            throw new Exception("Invalid department name: {$departmentName}. Must be one of: " . implode(', ', $validDepartments));
-        }
-
-        // Find department first, then get its group
-        $department = self::query()->where('name', $departmentName)->first();
-        if (!$department) {
-            throw new Exception("Department not found: {$departmentName}");
-        }
-
-        $group = \Webkul\User\Models\Group::query()
-            ->where('department_id', $department->id)
-            ->first();
-
-        if (!$group) {
-            throw new Exception("No group found for department: {$departmentName}");
-        }
-
-        return $group->id;
-    }
 }

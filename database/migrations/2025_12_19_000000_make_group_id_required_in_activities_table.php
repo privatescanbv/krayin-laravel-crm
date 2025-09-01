@@ -14,9 +14,15 @@ return new class extends Migration
      */
     public function up()
     {
-        // Make the group_id column NOT NULL
         Schema::table('activities', function (Blueprint $table) {
+            // First drop the existing foreign key constraint
+            $table->dropForeign(['group_id']);
+            
+            // Make the column NOT NULL
             $table->unsignedInteger('group_id')->nullable(false)->change();
+            
+            // Re-add the foreign key constraint with CASCADE instead of SET NULL
+            $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
         });
     }
 
@@ -28,7 +34,14 @@ return new class extends Migration
     public function down()
     {
         Schema::table('activities', function (Blueprint $table) {
+            // Drop the foreign key constraint
+            $table->dropForeign(['group_id']);
+            
+            // Make the column nullable again
             $table->unsignedInteger('group_id')->nullable()->change();
+            
+            // Re-add the original foreign key constraint with SET NULL
+            $table->foreign('group_id')->references('id')->on('groups')->onDelete('set null');
         });
     }
 };

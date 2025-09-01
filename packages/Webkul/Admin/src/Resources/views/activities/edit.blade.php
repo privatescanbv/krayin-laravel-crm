@@ -138,6 +138,7 @@
                                         - User ID: {{ $participant->user_id ?? 'null' }}
                                         - Person ID: {{ $participant->person_id ?? 'null' }}
                                         - User Name: {{ $participant->user ? $participant->user->name : 'N/A' }}
+                                        - User Status: {{ $participant->user ? $participant->user->status : 'N/A' }}
                                         - Person Name: {{ $participant->person ? $participant->person->name : 'N/A' }}
                                     </div>
                                 @endforeach
@@ -148,16 +149,21 @@
 
                         <!-- Actual Participants Display -->
                         <div class="border border-gray-200 rounded p-3 dark:border-gray-800">
-                            @if($activity->participants->where('user_id', '!=', null)->count() > 0)
+                            @php
+                                $activeUserParticipants = $activity->participants
+                                    ->filter(function($p) { 
+                                        return $p->user_id != null && $p->user && $p->user->status == 1; 
+                                    });
+                            @endphp
+                            
+                            @if($activeUserParticipants->count() > 0)
                                 <div class="flex flex-wrap gap-2 mb-3">
                                     <span class="text-sm text-gray-600 dark:text-gray-400">Huidige deelnemers:</span>
-                                    @foreach($activity->participants->where('user_id', '!=', null) as $participant)
-                                        @if($participant->user)
-                                            <span class="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                                {{ $participant->user->name }}
-                                                <input type="hidden" name="participants[users][]" value="{{ $participant->user->id }}">
-                                            </span>
-                                        @endif
+                                    @foreach($activeUserParticipants as $participant)
+                                        <span class="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                            {{ $participant->user->name }}
+                                            <input type="hidden" name="participants[users][]" value="{{ $participant->user->id }}">
+                                        </span>
                                     @endforeach
                                 </div>
                             @endif

@@ -154,7 +154,7 @@ class UserController extends Controller
     {
         $users = $this->userRepository
             ->pushCriteria(app(RequestCriteria::class))
-            ->all();
+            ->findWhere(['status' => 1]); // Only active users
 
         return UserResource::collection($users);
     }

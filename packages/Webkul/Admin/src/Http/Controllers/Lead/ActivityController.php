@@ -83,12 +83,6 @@ class ActivityController extends Controller
             } catch (\Exception $e) {
                 return response()->json([
                     'message' => 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.',
-                    'debug' => [
-                        'lead_id' => $lead->id,
-                        'department_id' => $lead->department_id,
-                        'department_name' => $lead->department->name ?? null,
-                        'error' => $e->getMessage(),
-                    ],
                     'errors' => [
                         'group_id' => ['Kan geen groep bepalen vanuit lead department.']
                     ]

@@ -142,22 +142,10 @@ class ActivityController extends Controller
             }
         }
 
-        // If lead_id is provided, group_id is required
-        if (!empty($data['lead_id'])) {
-            if (!isset($data['group_id']) || !$data['group_id']) {
-                $lead = app(LeadRepository::class)->findOrFail($data['lead_id']);
-                try {
-                    $data['group_id'] = Department::getGroupIdForLead($lead);
-                } catch (Exception $e) {
-                    if (request()->ajax()) {
-                        return response()->json([
-                            'message' => 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.',
-                        ], 422);
-                    }
-                    session()->flash('error', 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.');
-                    return redirect()->back();
-                }
-            }
+        // Ensure group_id is set for lead activities
+        $result = $this->ensureGroupIdForLeadActivity($data);
+        if ($result !== null) {
+            return $result; // Return error response if group_id could not be determined
         }
 
         $activity = $this->activityRepository->create(array_merge($data, [
@@ -387,5 +375,34 @@ class ActivityController extends Controller
                 'message' => trans('admin::app.activities.mass-delete-failed'),
             ], 400);
         }
+    }
+
+    /**
+     * Ensure group_id is set for lead activities by auto-determining from lead's department.
+     *
+     * @param array $data Activity data (passed by reference)
+     * @return \Illuminate\Http\JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse|null
+     */
+    private function ensureGroupIdForLeadActivity(array &$data)
+    {
+        // If lead_id is provided, group_id is required
+        if (!empty($data['lead_id'])) {
+            if (!isset($data['group_id']) || !$data['group_id']) {
+                $lead = app(\Webkul\Lead\Repositories\LeadRepository::class)->findOrFail($data['lead_id']);
+                try {
+                    $data['group_id'] = \App\Models\Department::getGroupIdForLead($lead);
+                } catch (\Exception $e) {
+                    if (request()->ajax()) {
+                        return response()->json([
+                            'message' => 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.',
+                        ], 422);
+                    }
+                    session()->flash('error', 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.');
+                    return redirect()->back();
+                }
+            }
+        }
+
+        return null; // Success - no error response needed
     }
 }

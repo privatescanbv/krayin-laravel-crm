@@ -23,6 +23,14 @@ Logs:
 
 Of in PHPStorm
 
+=== Migratie script opschonen
+
+Na verloop van tijd zal het aantal migratie files groeien. Dit kan ervoor zorgen dat het opzetten van een nieuwe omgeving lang duurt. Laravel biedt de mogelijkheid om de huidige database structuur te dumpen naar een sql file en alle migratie files te verwijderen.
+
+1. run sail artisan schema:dump --prune
+2. doe git add op de nieuw dump file (zie in database de sql file).
+3. Check in met git (als het goed is zijn alle migratie files ook verwijderd).
+
 === Migratie instructies
 
 Zet sugarcrm database op de server, vanuit hier te importeren. (gezien de server nog geen connectie kan maken met de sugarcrm server)

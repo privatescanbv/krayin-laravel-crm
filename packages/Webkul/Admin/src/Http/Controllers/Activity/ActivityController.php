@@ -132,6 +132,14 @@ class ActivityController extends Controller
 
         // Auto-assign group if not specified but user has a group
         $data = request()->all();
+        
+        // Convert empty strings to null for foreign key constraints
+        foreach (['lead_id', 'group_id', 'user_id'] as $field) {
+            if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
+                $data[$field] = null;
+            }
+        }
+        
         if (!isset($data['group_id']) || !$data['group_id']) {
             $userId = $data['user_id'] ?? auth()->guard('user')->id();
             if ($userId) {
@@ -227,18 +235,15 @@ class ActivityController extends Controller
         Event::dispatch('activity.update.before', $id);
 
         $data = request()->all();
-        $activity = $this->activityRepository->update($data, $id);
-
-        /**
-         * We will not use `empty` directly here because `lead_id` can be a blank string
-         * from the activity form. However, on the activity view page, we are only updating the
-         * `is_done` field, so `lead_id` will not be present in that case.
-         */
-        if (isset($data['lead_id'])) {
-            // Convert empty string to null for foreign key constraint
-            $activity->lead_id = (!empty($data['lead_id']) && $data['lead_id'] !== '') ? $data['lead_id'] : null;
-            $activity->save();
+        
+        // Convert empty strings to null for foreign key constraints
+        foreach (['lead_id', 'group_id', 'user_id'] as $field) {
+            if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
+                $data[$field] = null;
+            }
         }
+        
+        $activity = $this->activityRepository->update($data, $id);
 
         // Send webhook if activity is marked as done
         if (isset($data['is_done']) && $data['is_done']) {

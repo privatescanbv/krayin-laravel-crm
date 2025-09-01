@@ -111,7 +111,7 @@ class ActivityController extends Controller
             $isOverlapping = $this->activityRepository->isDurationOverlapping(
                 request()->input('schedule_from'),
                 request()->input('schedule_to'),
-                request()->input('participants'),
+                null, // No participants check needed
                 request()->input('id')
             );
 
@@ -165,7 +165,7 @@ class ActivityController extends Controller
      */
     public function edit(int $id): View
     {
-        $activity = $this->activityRepository->with(['user', 'participants.user'])->findOrFail($id);
+        $activity = $this->activityRepository->findOrFail($id);
 
         $groups = app(GroupRepository::class)->all();
 

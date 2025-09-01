@@ -114,49 +114,7 @@
                         <x-admin::form.control-group.error control-name="comment" />
                     </x-admin::form.control-group>
 
-                    <!-- Participants -->
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>
-                            @lang('admin::app.activities.edit.participants')
-                        </x-admin::form.control-group.label>
 
-                        <!-- Participants Display -->
-                        <div class="border border-gray-200 rounded p-3 dark:border-gray-800">
-                            <!-- Show current assigned user as participant -->
-                            @if($activity->user_id && $activity->user && $activity->user->status == 1)
-                                <div class="flex flex-wrap gap-2 mb-3">
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">Huidige deelnemer:</span>
-                                    <span class="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                        {{ $activity->user->name }}
-                                        <input type="hidden" name="participants[users][]" value="{{ $activity->user->id }}">
-                                    </span>
-                                </div>
-                            @endif
-                            
-                            <!-- Show additional participants from participants table (if any) -->
-                            @php
-                                $additionalParticipants = $activity->participants
-                                    ->filter(function($p) { 
-                                        return $p->user_id != null && $p->user && $p->user->status == 1 && $p->user_id != $activity->user_id; 
-                                    });
-                            @endphp
-                            
-                            @if($additionalParticipants->count() > 0)
-                                <div class="flex flex-wrap gap-2 mb-3">
-                                    <span class="text-sm text-gray-600 dark:text-gray-400">Extra deelnemers:</span>
-                                    @foreach($additionalParticipants as $participant)
-                                        <span class="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-1 text-sm text-green-800 dark:bg-green-900 dark:text-green-200">
-                                            {{ $participant->user->name }}
-                                            <input type="hidden" name="participants[users][]" value="{{ $participant->user->id }}">
-                                        </span>
-                                    @endforeach
-                                </div>
-                            @endif
-                            
-                            <!-- Component for adding new participants (active users only) -->
-                            <x-admin::activities.actions.activity.participants />
-                        </div>
-                    </x-admin::form.control-group>
                     <!-- Group -->
                     <x-admin::form.control-group>
                         <x-admin::form.control-group.label>

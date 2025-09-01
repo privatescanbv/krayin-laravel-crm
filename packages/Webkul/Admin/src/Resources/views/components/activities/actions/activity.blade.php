@@ -126,14 +126,7 @@
                                 <x-admin::form.control-group.error control-name="comment" />
                             </x-admin::form.control-group>
 
-                            <!-- Participants -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
-                                    @lang('admin::app.components.activities.actions.activity.participants.title')
-                                </x-admin::form.control-group.label>
 
-                                <x-admin::activities.actions.activity.participants />
-                            </x-admin::form.control-group>
 
                             <!-- Group -->
                             <x-admin::form.control-group>

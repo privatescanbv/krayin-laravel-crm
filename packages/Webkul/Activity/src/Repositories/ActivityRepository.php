@@ -48,21 +48,7 @@ class ActivityRepository extends Repository
             ]);
         }
 
-        if (! isset($data['participants'])) {
-            return $activity;
-        }
-
-        foreach ($data['participants']['users'] ?? [] as $userId) {
-            $activity->participants()->create([
-                'user_id' => $userId,
-            ]);
-        }
-
-        foreach ($data['participants']['persons'] ?? [] as $personId) {
-            $activity->participants()->create([
-                'person_id' => $personId,
-            ]);
-        }
+        // Participants functionality removed - using only user_id for assignment
 
         return $activity;
     }
@@ -83,39 +69,7 @@ class ActivityRepository extends Repository
 
         $activity = parent::update($data, $id);
 
-        if (isset($data['participants'])) {
-            $activity->participants()->delete();
-
-            foreach ($data['participants']['users'] ?? [] as $userId) {
-                /**
-                 * In some cases, the component exists in an HTML form, and traditional HTML does not send an empty array.
-                 * Therefore, we need to check for an empty string.
-                 * This scenario occurs only when all participants are removed.
-                 */
-                if (empty($userId)) {
-                    break;
-                }
-
-                $activity->participants()->create([
-                    'user_id' => $userId,
-                ]);
-            }
-
-            foreach ($data['participants']['persons'] ?? [] as $personId) {
-                /**
-                 * In some cases, the component exists in an HTML form, and traditional HTML does not send an empty array.
-                 * Therefore, we need to check for an empty string.
-                 * This scenario occurs only when all participants are removed.
-                 */
-                if (empty($personId)) {
-                    break;
-                }
-
-                $activity->participants()->create([
-                    'person_id' => $personId,
-                ]);
-            }
-        }
+        // Participants functionality removed - using only user_id for assignment
 
         return $activity;
     }
@@ -173,8 +127,8 @@ class ActivityRepository extends Repository
      */
     public function isDurationOverlapping($startFrom, $endFrom, $participants, $id)
     {
-        $queryBuilder = $this->leftJoin('activity_participants', 'activities.id', '=', 'activity_participants.activity_id')
-            ->where(function ($query) use ($startFrom, $endFrom) {
+        // Simplified overlap detection - only check assigned user conflicts
+        $queryBuilder = $this->where(function ($query) use ($startFrom, $endFrom) {
                 $query->where([
                     ['activities.schedule_from', '<=', $startFrom],
                     ['activities.schedule_to', '>=', $startFrom],
@@ -183,20 +137,7 @@ class ActivityRepository extends Repository
                     ['activities.schedule_from', '<=', $endFrom],
                 ]);
             })
-            ->where(function ($query) use ($participants) {
-                if (is_null($participants)) {
-                    return;
-                }
-
-                if (isset($participants['users'])) {
-                    $query->orWhereIn('activity_participants.user_id', $participants['users']);
-                }
-
-                if (isset($participants['persons'])) {
-                    $query->orWhereIn('activity_participants.person_id', $participants['persons']);
-                }
-            })
-            ->groupBy('activities.id');
+            ->whereNotNull('user_id'); // Only check activities with assigned users
 
         if (! is_null($id)) {
             $queryBuilder->where('activities.id', '!=', $id);
@@ -205,14 +146,5 @@ class ActivityRepository extends Repository
         return $queryBuilder->count() ? true : false;
     }
 
-    /**
-     * Find activity by ID with participants and their user relationships loaded.
-     *
-     * @param  int  $id
-     * @return \Webkul\Activity\Contracts\Activity
-     */
-    public function findOrFailWithParticipants($id)
-    {
-        return $this->with(['participants.user', 'participants.person'])->findOrFail($id);
-    }
+
 }

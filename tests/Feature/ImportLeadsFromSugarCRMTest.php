@@ -496,6 +496,9 @@ test('imports lead with multiple persons correctly', function () {
 });
 
 test('imports call activities from sugarcrm', function () {
+    // Create user for activities
+    $user = \Webkul\User\Models\User::factory()->create();
+    
     // Create app person that will be linked to lead
     $personExternalId = 'person-001';
     $appPerson = Person::factory()->create(['external_id' => $personExternalId]);
@@ -613,11 +616,29 @@ test('imports call activities from sugarcrm', function () {
     expect($lead)->not->toBeNull();
 
     // Verify call activities were imported
-    $activities = $lead->activities()->where('type', 'call')->get();
-    expect($activities)->toHaveCount(2);
+    $allActivities = $lead->activities()->get();
+    $callActivities = $lead->activities()->where('type', 'call')->get();
+    
+    // Debug: Let's see what we actually have
+    dump('Lead ID:', $lead->id);
+    dump('Lead external_id:', $lead->external_id);
+    dump('Total activities:', $allActivities->count());
+    dump('Call activities:', $callActivities->count());
+    
+    if ($allActivities->count() > 0) {
+        dump('Activity types:', $allActivities->pluck('type')->toArray());
+        dump('Activity lead_ids:', $allActivities->pluck('lead_id')->toArray());
+        dump('First activity data:', $allActivities->first()->toArray());
+    }
+    
+    // Also check if there are any activities in the database at all
+    $totalActivitiesInDb = \Webkul\Activity\Models\Activity::count();
+    dump('Total activities in database:', $totalActivitiesInDb);
+    
+    expect($callActivities)->toHaveCount(2);
 
     // Check first call activity - use different approach for JSON querying
-    $activity1 = $activities->filter(function($activity) use ($callId1) {
+    $activity1 = $callActivities->filter(function($activity) use ($callId1) {
         return isset($activity->additional['external_id']) && $activity->additional['external_id'] === $callId1;
     })->first();
     expect($activity1)->not->toBeNull()
@@ -630,7 +651,7 @@ test('imports call activities from sugarcrm', function () {
         ->and($activity1->additional['belgroep'])->toBe('intake');
 
     // Check second call activity - use different approach for JSON querying
-    $activity2 = $activities->filter(function($activity) use ($callId2) {
+    $activity2 = $callActivities->filter(function($activity) use ($callId2) {
         return isset($activity->additional['external_id']) && $activity->additional['external_id'] === $callId2;
     })->first();
     expect($activity2)->not->toBeNull()

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Schema;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
+use Webkul\User\Models\User;
 
 /**
  * Import leads from SugarCRM database with anamnesis data and call activities
@@ -1128,7 +1129,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'schedule_from' => $this->parseSugarDate($callData->date_start),
                         'schedule_to' => $this->parseSugarDate($callData->date_end),
                         'is_done' => $this->mapCallStatus($callData->status),
-                        'user_id' => 1, // Default user - you may want to map this from assigned_user_id
+                        'user_id' => \Webkul\User\Models\User::first()?->id ?? 1, // Use first available user
                         'lead_id' => $lead->id,
                     ];
 
@@ -1137,9 +1138,10 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'updated_at' => $this->parseSugarDate($callData->date_modified),
                     ];
 
-                    $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
+                    $activity = $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
                     
-                    $this->info("✓ Imported call activity: {$callData->name} for lead {$lead->external_id}");
+                    // Verify the activity is properly linked
+                    $this->info("✓ Imported call activity: {$callData->name} for lead {$lead->external_id} (Activity ID: {$activity->id}, Lead ID: {$activity->lead_id})");
                     $imported++;
                 } catch (Exception $e) {
                     $this->error("Failed to import call activity {$callData->id}: " . $e->getMessage());

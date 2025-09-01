@@ -31,7 +31,7 @@ class Department extends Model
      *
      * @throws Exception with unexpect database data.
      */
-    public static function mapGroupToDepartmentId(array $groupNames): string
+    public static function mapGroupToDepartmentId(array $groupNames): int
     {
         if (empty($groupNames)) {
             return self::findPrivateScanId();
@@ -70,5 +70,30 @@ class Department extends Model
             }
         }
         throw new Exception('Group not found');
+    }
+
+    /**
+     * Map department name to group ID.
+     * This maps a department to its corresponding group.
+     *
+     * @param  string  $departmentName  The name of the department
+     * @return int|null The group ID or null if not found
+     */
+    public static function mapDepartmentToGroupId(string $departmentName): ?int
+    {
+        try {
+            // Direct mapping: department name should match group name
+            $group = \Webkul\User\Models\Group::query()
+                ->where('name', $departmentName)
+                ->first();
+
+            return $group?->id;
+        } catch (Exception $e) {
+            \Illuminate\Support\Facades\Log::warning('Error mapping department to group', [
+                'department_name' => $departmentName,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
     }
 }

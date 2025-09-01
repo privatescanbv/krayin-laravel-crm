@@ -47,19 +47,34 @@ class ActivityController extends Controller
 
         // Convert empty strings to null for foreign key constraints
         $data = $request->all();
-        foreach (['user_id', 'group_id'] as $field) {
+        foreach (['user_id'] as $field) {
             if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
                 $data[$field] = null;
             }
         }
 
-        // Auto-assign group if not specified but user has a group
+        // Set default group_id from lead's department if not provided
         $groupId = $data['group_id'] ?? null;
-        if (!$groupId && isset($data['user_id']) && $data['user_id']) {
-            $user = User::find($data['user_id']);
-            if ($user && $user->groups()->count() > 0) {
-                $groupId = $user->groups()->first()->id;
+        if (!$groupId || $groupId === '') {
+            $lead = $this->leadRepository->find($id);
+            if ($lead) {
+                $groupId = $lead->getDefaultGroupId();
+                
+                // Fallback: if lead doesn't have department, try user's group
+                if (!$groupId && isset($data['user_id']) && $data['user_id']) {
+                    $user = User::find($data['user_id']);
+                    if ($user && $user->groups()->count() > 0) {
+                        $groupId = $user->groups()->first()->id;
+                    }
+                }
             }
+        }
+
+        // Ensure we have a group_id before creating the activity
+        if (!$groupId) {
+            return response()->json([
+                'message' => 'Kan geen standaard groep bepalen voor deze activiteit. Selecteer handmatig een groep.',
+            ], 422);
         }
 
         $activity = $this->activityRepository->create(array_merge($data, [

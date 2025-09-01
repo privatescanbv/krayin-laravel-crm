@@ -141,13 +141,36 @@ class ActivityController extends Controller
         }
         
         if (!isset($data['group_id']) || !$data['group_id']) {
-            $userId = $data['user_id'] ?? auth()->guard('user')->id();
-            if ($userId) {
-                $user = \Webkul\User\Models\User::find($userId);
-                if ($user && $user->groups()->count() > 0) {
-                    $data['group_id'] = $user->groups()->first()->id;
+            // First try to get group from lead's department if lead_id is provided
+            if (!empty($data['lead_id'])) {
+                $lead = app(\Webkul\Lead\Repositories\LeadRepository::class)->find($data['lead_id']);
+                if ($lead) {
+                    $data['group_id'] = $lead->getDefaultGroupId();
                 }
             }
+            
+            // Fallback: if no group from lead, try user's group
+            if (!isset($data['group_id']) || !$data['group_id']) {
+                $userId = $data['user_id'] ?? auth()->guard('user')->id();
+                if ($userId) {
+                    $user = \Webkul\User\Models\User::find($userId);
+                    if ($user && $user->groups()->count() > 0) {
+                        $data['group_id'] = $user->groups()->first()->id;
+                    }
+                }
+            }
+        }
+
+        // Ensure we have a group_id before creating the activity
+        if (!isset($data['group_id']) || !$data['group_id']) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'message' => 'Kan geen standaard groep bepalen voor deze activiteit. Selecteer handmatig een groep.',
+                ], 422);
+            }
+
+            session()->flash('error', 'Kan geen standaard groep bepalen voor deze activiteit. Selecteer handmatig een groep.');
+            return redirect()->back();
         }
 
         $activity = $this->activityRepository->create(array_merge($data, [

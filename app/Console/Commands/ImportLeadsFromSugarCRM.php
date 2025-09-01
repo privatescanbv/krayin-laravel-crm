@@ -1138,6 +1138,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'is_done'       => $this->mapCallStatus($callData->status),
                         'user_id'       => $this->mapAssignedUser($callData->assigned_user_id),
                         'lead_id'       => $lead->id,
+                        'group_id'      => $lead->getDefaultGroupId(), // Set default group_id from lead's department
                     ];
 
                     $timestamps = [

@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Controllers\Activity;
 
 use App\Enums\WebhookType;
+use App\Models\Department;
 use App\Services\WebhookService;
 use Carbon\Carbon;
 use Exception;
@@ -21,6 +22,7 @@ use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\MassUpdateRequest;
 use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
+use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\User\Repositories\GroupRepository;
 
 class ActivityController extends Controller
@@ -132,19 +134,19 @@ class ActivityController extends Controller
 
         // Auto-assign group if not specified but user has a group
         $data = request()->all();
-        
+
         // Convert empty strings to null for foreign key constraints
         foreach (['lead_id', 'group_id', 'user_id'] as $field) {
             if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
                 $data[$field] = null;
             }
         }
-        
+
         if (!isset($data['group_id']) || !$data['group_id']) {
             // Get group from lead's department if lead_id is provided
             if (!empty($data['lead_id'])) {
-                $lead = app(\Webkul\Lead\Repositories\LeadRepository::class)->findOrFail($data['lead_id']);
-                $data['group_id'] = \App\Models\Department::getGroupIdForLead($lead);
+                $lead = app(LeadRepository::class)->findOrFail($data['lead_id']);
+                $data['group_id'] = Department::getGroupIdForLead($lead);
             }
         }
 
@@ -210,11 +212,11 @@ class ActivityController extends Controller
     {
         // Get the current activity to check permissions
         $activity = $this->activityRepository->findOrFail($id);
-        
+
         // Check if user_id is being changed and if user has permission
         if (request()->has('user_id') && request('user_id') != $activity->user_id) {
             $currentUser = auth()->guard('user')->user();
-            
+
             // Only allow user_id change if:
             // 1. Current user is the assigned user, OR
             // 2. Current user has takeover permission
@@ -224,7 +226,7 @@ class ActivityController extends Controller
                         'message' => 'Je hebt geen rechten om de toewijzing van deze activiteit te wijzigen.',
                     ], 403);
                 }
-                
+
                 session()->flash('error', 'Je hebt geen rechten om de toewijzing van deze activiteit te wijzigen.');
                 return redirect()->back();
             }
@@ -233,14 +235,14 @@ class ActivityController extends Controller
         Event::dispatch('activity.update.before', $id);
 
         $data = request()->all();
-        
+
         // Convert empty strings to null for foreign key constraints
         foreach (['lead_id', 'group_id', 'user_id'] as $field) {
             if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
                 $data[$field] = null;
             }
         }
-        
+
         $activity = $this->activityRepository->update($data, $id);
 
         // Send webhook if activity is marked as done

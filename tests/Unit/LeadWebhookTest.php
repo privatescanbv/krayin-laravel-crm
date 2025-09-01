@@ -12,7 +12,7 @@ use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
 
-require_once __DIR__ . '/../TestHelpers.php';
+require_once __DIR__.'/../TestHelpers.php';
 
 class LeadWebhookTest extends TestCase
 {
@@ -113,9 +113,9 @@ class LeadWebhookTest extends TestCase
     {
         // Ensure departments and groups exist
         ensureDepartmentsAndGroups();
-        
+
         $department = getPrivatescanDepartment();
-        
+
         return Lead::factory()->create([
             'first_name'             => 'John',
             'last_name'              => 'Doe',

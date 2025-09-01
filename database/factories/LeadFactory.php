@@ -59,7 +59,7 @@ class LeadFactory extends Factory
 
         // Get or create default department
         $department = \App\Models\Department::where('name', \App\Enums\Departments::PRIVATESCAN->value)->first();
-        if (!$department) {
+        if (! $department) {
             $department = \App\Models\Department::create(['name' => \App\Enums\Departments::PRIVATESCAN->value]);
         }
 

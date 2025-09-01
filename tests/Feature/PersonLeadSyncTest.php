@@ -9,7 +9,7 @@ use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\User\Models\User;
 
-require_once __DIR__ . '/../TestHelpers.php';
+require_once __DIR__.'/../TestHelpers.php';
 
 beforeEach(function () {
     test()->personRepository = app(PersonRepository::class);

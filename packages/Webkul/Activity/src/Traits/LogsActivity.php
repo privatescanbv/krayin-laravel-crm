@@ -31,7 +31,7 @@ trait LogsActivity
                 // Add lead_id and optionally set group_id if this is a Lead model
                 if (method_exists($model, 'getTable') && $model->getTable() === 'leads') {
                     $activityData['lead_id'] = $model->id;
-                    
+
                     // Try to get group_id from lead's department (optional for system activities)
                     try {
                         $activityData['group_id'] = \App\Models\Department::getGroupIdForLead($model);
@@ -112,7 +112,7 @@ trait LogsActivity
             // Add lead_id and optionally set group_id if this is a Lead model
             if (method_exists($model, 'getTable') && $model->getTable() === 'leads') {
                 $activityData['lead_id'] = $model->id;
-                
+
                 // Try to get group_id from lead's department (optional for system activities)
                 try {
                     $activityData['group_id'] = \App\Models\Department::getGroupIdForLead($model);
@@ -121,7 +121,7 @@ trait LogsActivity
                 }
             } elseif ($model instanceof AttributeValue && method_exists($model->entity, 'getTable') && $model->entity->getTable() === 'leads') {
                 $activityData['lead_id'] = $model->entity->id;
-                
+
                 // Try to get group_id from lead's department (optional for system activities)
                 try {
                     $activityData['group_id'] = \App\Models\Department::getGroupIdForLead($model->entity);

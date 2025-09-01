@@ -5,7 +5,7 @@ namespace Tests\Feature;
 use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\User;
 
-require_once __DIR__ . '/../TestHelpers.php';
+require_once __DIR__.'/../TestHelpers.php';
 
 beforeEach(function () {
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
@@ -14,7 +14,7 @@ beforeEach(function () {
 test('test fields with storing activities', function () {
     // Arrange
     ensureDepartmentsAndGroups(); // Make sure departments and groups exist
-    
+
     $user = User::factory()->create();
     $department = getPrivatescanDepartment();
     $lead = Lead::factory()->create([

@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('groups', function (Blueprint $table) {
-            $table->unsignedInteger('department_id')->nullable();
+            $table->unsignedBigInteger('department_id')->nullable();
             $table->foreign('department_id')->references('id')->on('departments')->onDelete('set null');
         });
     }

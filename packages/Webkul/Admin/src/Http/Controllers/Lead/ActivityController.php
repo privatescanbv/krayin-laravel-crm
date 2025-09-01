@@ -67,6 +67,17 @@ class ActivityController extends Controller
                         $groupId = $user->groups()->first()->id;
                     }
                 }
+                
+                // Final fallback: use default Privatescan group
+                if (!$groupId) {
+                    try {
+                        $groupId = \App\Models\Department::mapDepartmentToGroupId('Privatescan');
+                    } catch (\Exception $e) {
+                        // Ultimate fallback: get first available group
+                        $firstGroup = \Webkul\User\Models\Group::first();
+                        $groupId = $firstGroup?->id;
+                    }
+                }
             }
         }
 

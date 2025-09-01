@@ -63,14 +63,7 @@ class Activity extends Model implements ActivityContract
         'external_id',
     ];
 
-    /**
-     * The attributes that are required.
-     *
-     * @var array
-     */
-    protected $rules = [
-        'group_id' => 'required|exists:groups,id',
-    ];
+
 
     /**
      * Get the user that owns the activity.

@@ -10,8 +10,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('activities', function (Blueprint $table) {
-            $table->unsignedInteger('group_id'); // Required field, no nullable()
-            $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
+            $table->unsignedBigInteger('group_id')->nullable(); // Optional field
+            $table->foreign('group_id')->references('id')->on('groups')->onDelete('set null');
         });
     }
 

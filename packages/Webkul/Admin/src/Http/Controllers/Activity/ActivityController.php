@@ -142,11 +142,21 @@ class ActivityController extends Controller
             }
         }
 
-        if (!isset($data['group_id']) || !$data['group_id']) {
-            // Get group from lead's department if lead_id is provided
-            if (!empty($data['lead_id'])) {
-                $lead = app(LeadRepository::class)->findOrFail($data['lead_id']);
-                $data['group_id'] = Department::getGroupIdForLead($lead);
+        // If lead_id is provided, group_id is required
+        if (!empty($data['lead_id'])) {
+            if (!isset($data['group_id']) || !$data['group_id']) {
+                $lead = app(\Webkul\Lead\Repositories\LeadRepository::class)->findOrFail($data['lead_id']);
+                try {
+                    $data['group_id'] = \App\Models\Department::getGroupIdForLead($lead);
+                } catch (\Exception $e) {
+                    if (request()->ajax()) {
+                        return response()->json([
+                            'message' => 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.',
+                        ], 422);
+                    }
+                    session()->flash('error', 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.');
+                    return redirect()->back();
+                }
             }
         }
 

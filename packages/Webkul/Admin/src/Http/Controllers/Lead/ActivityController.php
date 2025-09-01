@@ -59,7 +59,7 @@ class ActivityController extends Controller
             'comment' => 'required_if:type,note',
             'description' => 'nullable|string',
             'user_id' => 'nullable|exists:users,id',
-            'group_id' => 'nullable|exists:groups,id',
+            'group_id' => 'required|exists:groups,id', // Required for user activities on leads
             'schedule_from' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
             'schedule_to' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
             'file' => 'required_if:type,file',
@@ -74,11 +74,17 @@ class ActivityController extends Controller
             }
         }
 
-        // Set group_id from lead's department if not provided
+        // Set group_id from lead's department if not provided (required for lead activities)
         $groupId = $data['group_id'] ?? null;
         if (!$groupId || $groupId === '') {
             $lead = $this->leadRepository->findOrFail($id);
-            $groupId = \App\Models\Department::getGroupIdForLead($lead);
+            try {
+                $groupId = \App\Models\Department::getGroupIdForLead($lead);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'message' => 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.',
+                ], 422);
+            }
         }
 
         $activity = $this->activityRepository->create(array_merge($data, [

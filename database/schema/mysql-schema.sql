@@ -22,14 +22,14 @@ CREATE TABLE `activities` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `location` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `group_id` int unsigned DEFAULT NULL,
+  `group_id` int unsigned NOT NULL,
   `lead_id` int unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `activities_user_id_foreign` (`user_id`),
   KEY `activities_group_id_foreign` (`group_id`),
   KEY `activities_lead_id_foreign` (`lead_id`),
   KEY `activities_external_id_index` (`external_id`),
-  CONSTRAINT `activities_group_id_foreign` FOREIGN KEY (`group_id`) REFERENCES `groups` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `activities_group_id_foreign` FOREIGN KEY (`group_id`) REFERENCES `groups` (`id`) ON DELETE CASCADE,
   CONSTRAINT `activities_lead_id_foreign` FOREIGN KEY (`lead_id`) REFERENCES `leads` (`id`) ON DELETE SET NULL,
   CONSTRAINT `activities_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

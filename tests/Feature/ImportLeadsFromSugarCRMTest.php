@@ -328,10 +328,27 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
     expect($lead->married_name)->toBe('Jansen')
         ->and($lead->married_name_prefix)->toBe('de');
 
-    $expected = Carbon::parse('2025-06-11 13:41:07', 'UTC')
+    // Check if timezone conversion is working correctly
+    // SugarCRM date: '2025-06-11 13:41:07' (treated as UTC)
+    // Should be converted to app timezone
+    $inputDate = '2025-06-11 13:41:07';
+    $expected = Carbon::parse($inputDate, 'UTC')
         ->setTimezone(config('app.timezone'))
         ->format('Y-m-d H:i:s');
-    expect($lead->created_at->format('Y-m-d H:i:s'))->toBe($expected);
+    
+    // Debug: show what we expect vs what we get
+    $actual = $lead->created_at->format('Y-m-d H:i:s');
+    if ($expected !== $actual) {
+        dump([
+            'input_date' => $inputDate,
+            'app_timezone' => config('app.timezone'),
+            'expected' => $expected,
+            'actual' => $actual,
+            'lead_created_at' => $lead->created_at,
+        ]);
+    }
+    
+    expect($actual)->toBe($expected);
 
     // Address created and mapped
     $address = Address::where('lead_id', $lead->id)->first();

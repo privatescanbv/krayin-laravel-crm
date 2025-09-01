@@ -9,7 +9,6 @@ use Webkul\Activity\Services\ViewService;
 use Webkul\Admin\Traits\ProvideDropdownOptions;
 use Webkul\DataGrid\DataGrid;
 use Webkul\Lead\Models\Lead;
-use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Contact\Models\Person;
 use Webkul\User\Repositories\UserRepository;
 use Webkul\User\Repositories\GroupRepository;

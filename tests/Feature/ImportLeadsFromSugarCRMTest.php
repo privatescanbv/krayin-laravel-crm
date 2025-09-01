@@ -28,6 +28,7 @@ beforeEach(function () {
     foreach ([
         'email_addr_bean_rel', 'email_addresses', 'leads_cstm', 'leads', 'leads_contacts_c',
         'leads_pcrm_anamnesepreventie_1_c', 'pcrm_anamnetie_contacts_c', 'pcrm_anamnesepreventie', 'pcrm_anamnesepreventie_cstm', 'calls', 'calls_cstm',
+        'emails', 'emails_text', 'emails_beans',
     ] as $tbl) {
         if (Schema::connection('sugarcrm')->hasTable($tbl)) {
             Schema::connection('sugarcrm')->drop($tbl);
@@ -237,6 +238,46 @@ beforeEach(function () {
     Schema::connection('sugarcrm')->create('calls_cstm', function (Blueprint $table) {
         $table->string('id_c')->primary();
         $table->string('belgroep_c')->nullable();
+    });
+
+    // Create emails table
+    Schema::connection('sugarcrm')->create('emails', function (Blueprint $table) {
+        $table->string('id')->primary();
+        $table->string('name')->nullable(); // subject
+        $table->dateTime('date_entered')->nullable();
+        $table->dateTime('date_modified')->nullable();
+        $table->string('assigned_user_id')->nullable();
+        $table->string('created_by')->nullable();
+        $table->boolean('deleted')->default(0);
+        $table->dateTime('date_sent')->nullable();
+        $table->string('message_id')->nullable();
+        $table->string('type')->nullable();
+        $table->string('status')->nullable();
+        $table->boolean('flagged')->default(0);
+        $table->string('reply_to_status')->nullable();
+        $table->string('intent')->nullable();
+        $table->string('mailbox_id')->nullable();
+        $table->string('parent_type')->nullable();
+        $table->string('parent_id')->nullable();
+    });
+
+    // Create emails_text table
+    Schema::connection('sugarcrm')->create('emails_text', function (Blueprint $table) {
+        $table->string('email_id')->primary();
+        $table->text('description')->nullable(); // plain text body
+        $table->text('description_html')->nullable(); // html body
+        $table->text('raw_source')->nullable();
+    });
+
+    // Create emails_beans table (junction table)
+    Schema::connection('sugarcrm')->create('emails_beans', function (Blueprint $table) {
+        $table->string('id')->primary();
+        $table->string('email_id');
+        $table->string('bean_id');
+        $table->string('bean_module');
+        $table->text('campaign_data')->nullable();
+        $table->dateTime('date_modified')->nullable();
+        $table->boolean('deleted')->default(0);
     });
 });
 
@@ -651,4 +692,217 @@ test('imports call activities from sugarcrm', function () {
         ->and($activity2->additional['direction'])->toBe('outbound')
         ->and($activity2->additional['status'])->toBe('planned')
         ->and($activity2->additional['belgroep'])->toBe('follow-up');
+});
+
+test('imports email activities from sugarcrm', function () {
+    // Create user with external_id (required for import)
+    $user = User::factory()->create(['external_id' => 'user-001']);
+
+    // Create app person that will be linked to lead via anamnesis relation
+    $person = Person::factory()->create([
+        'external_id' => 'person-001',
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+    ]);
+
+    // Insert lead data in SugarCRM
+    $leadId = 'lead-001';
+    $personId = 'person-001';
+    $anamnesisId = 'anamnesis-001';
+
+    DB::connection('sugarcrm')->table('leads')->insert([
+        'id' => $leadId,
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'status' => 'New',
+        'date_entered' => '2024-01-01 10:00:00',
+        'date_modified' => '2024-01-01 11:00:00',
+        'deleted' => 0,
+    ]);
+
+    DB::connection('sugarcrm')->table('leads_cstm')->insert([
+        'id_c' => $leadId,
+        'workflow_status_c' => 'nieuweaanvraag',
+        'kanaal_c' => 'website',
+        'soort_aanvraag_c' => 'preventie',
+        'gender_c' => 'male',
+    ]);
+
+    // Insert person-lead relation
+    DB::connection('sugarcrm')->table('leads_contacts_c')->insert([
+        'id' => 'rel-001',
+        'leads_c7104eads_ida' => $leadId,
+        'leads_cbb5dacts_idb' => $personId,
+        'deleted' => 0,
+    ]);
+
+    // Insert anamnesis data
+    DB::connection('sugarcrm')->table('pcrm_anamnesepreventie')->insert([
+        'id' => $anamnesisId,
+        'name' => 'Test Anamnesis',
+        'status' => 'active',
+        'date_entered' => '2024-01-01 09:00:00',
+        'date_modified' => '2024-01-01 09:30:00',
+        'anamnese' => 'Test anamnesis data',
+        'lengte' => 180,
+        'gewicht' => 75,
+        'metalen' => 1,
+        'medicijnen' => 0,
+        'glaucoom' => 0,
+        'claustrofobie' => 1,
+        'deleted' => 0,
+    ]);
+
+    DB::connection('sugarcrm')->table('pcrm_anamnesepreventie_cstm')->insert([
+        'id_c' => $anamnesisId,
+        'opm_metalen_c' => 'Heeft metalen implantaat',
+        'hart_operatie_c' => 0,
+        'allergie_c' => 1,
+        'opm_allergie_c' => 'Allergisch voor pinda\'s',
+    ]);
+
+    // Insert anamnesis relations
+    DB::connection('sugarcrm')->table('leads_pcrm_anamnesepreventie_1_c')->insert([
+        'id' => 'lead-anam-001',
+        'leads_pcrm_anamnesepreventie_1leads_ida' => $leadId,
+        'leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb' => $anamnesisId,
+        'deleted' => 0,
+    ]);
+
+    DB::connection('sugarcrm')->table('pcrm_anamnetie_contacts_c')->insert([
+        'id' => 'anam-person-001',
+        'pcrm_anamn171deventie_idb' => $anamnesisId,
+        'pcrm_anamn0b6eontacts_ida' => $personId,
+        'deleted' => 0,
+    ]);
+
+    // Insert email data
+    $emailId1 = 'email-001';
+    $emailId2 = 'email-002';
+
+    DB::connection('sugarcrm')->table('emails')->insert([
+        [
+            'id' => $emailId1,
+            'name' => 'Welkom bij onze diensten',
+            'date_entered' => '2024-01-01 12:00:00',
+            'date_modified' => '2024-01-01 12:00:00',
+            'assigned_user_id' => 'user-001',
+            'created_by' => 'user-001',
+            'deleted' => 0,
+            'date_sent' => '2024-01-01 12:00:00',
+            'message_id' => 'msg-001@example.com',
+            'type' => 'out',
+            'status' => 'sent',
+            'flagged' => 0,
+            'reply_to_status' => null,
+            'intent' => 'welcome',
+            'mailbox_id' => 'mailbox-001',
+            'parent_type' => 'Leads',
+            'parent_id' => $leadId,
+        ],
+        [
+            'id' => $emailId2,
+            'name' => 'Opvolging afspraak',
+            'date_entered' => '2024-01-02 14:00:00',
+            'date_modified' => '2024-01-02 14:00:00',
+            'assigned_user_id' => 'user-001',
+            'created_by' => 'user-001',
+            'deleted' => 0,
+            'date_sent' => '2024-01-02 14:00:00',
+            'message_id' => 'msg-002@example.com',
+            'type' => 'out',
+            'status' => 'sent',
+            'flagged' => 1,
+            'reply_to_status' => null,
+            'intent' => 'follow_up',
+            'mailbox_id' => 'mailbox-001',
+            'parent_type' => 'Leads',
+            'parent_id' => $leadId,
+        ],
+    ]);
+
+    // Insert email text content
+    DB::connection('sugarcrm')->table('emails_text')->insert([
+        [
+            'email_id' => $emailId1,
+            'description' => 'Welkom bij onze diensten. We kijken ernaar uit om u te helpen.',
+            'description_html' => '<p>Welkom bij onze diensten. We kijken ernaar uit om u te helpen.</p>',
+            'raw_source' => 'Raw email content here...',
+        ],
+        [
+            'email_id' => $emailId2,
+            'description' => 'Dit is een opvolging van uw afspraak.',
+            'description_html' => '<p>Dit is een <strong>opvolging</strong> van uw afspraak.</p>',
+            'raw_source' => 'Raw follow-up email content...',
+        ],
+    ]);
+
+    // Insert email-bean relations
+    DB::connection('sugarcrm')->table('emails_beans')->insert([
+        [
+            'id' => 'email-bean-001',
+            'email_id' => $emailId1,
+            'bean_id' => $leadId,
+            'bean_module' => 'Leads',
+            'campaign_data' => null,
+            'date_modified' => '2024-01-01 12:00:00',
+            'deleted' => 0,
+        ],
+        [
+            'id' => 'email-bean-002',
+            'email_id' => $emailId2,
+            'bean_id' => $leadId,
+            'bean_module' => 'Leads',
+            'campaign_data' => null,
+            'date_modified' => '2024-01-02 14:00:00',
+            'deleted' => 0,
+        ],
+    ]);
+
+    // Run import
+    Artisan::call('import:leads', [
+        '--connection' => 'sugarcrm',
+        '--limit' => 10,
+        '--lead-ids' => [$leadId],
+    ]);
+
+    // Verify lead was imported
+    $lead = Lead::where('external_id', $leadId)->first();
+    expect($lead)->not->toBeNull();
+
+    // Verify email activities were imported
+    $emailActivities = Activity::where('lead_id', $lead->id)
+        ->where('type', 'email')
+        ->orderBy('created_at')
+        ->get();
+
+    expect($emailActivities)->toHaveCount(2);
+
+    // Check first email activity
+    $activity1 = $emailActivities[0];
+    expect($activity1->title)->toBe('Welkom bij onze diensten')
+        ->and($activity1->type)->toBe('email')
+        ->and($activity1->external_id)->toBe($emailId1)
+        ->and($activity1->comment)->toContain('Subject: Welkom bij onze diensten')
+        ->and($activity1->comment)->toContain('Body: Welkom bij onze diensten. We kijken ernaar uit om u te helpen.')
+        ->and($activity1->is_done)->toBe(true) // 'sent' status should map to done
+        ->and($activity1->additional['message_id'])->toBe('msg-001@example.com')
+        ->and($activity1->additional['email_type'])->toBe('out')
+        ->and($activity1->additional['status'])->toBe('sent')
+        ->and($activity1->additional['flagged'])->toBe(false)
+        ->and($activity1->additional['intent'])->toBe('welcome');
+
+    // Check second email activity
+    $activity2 = $emailActivities[1];
+    expect($activity2->title)->toBe('Opvolging afspraak')
+        ->and($activity2->type)->toBe('email')
+        ->and($activity2->external_id)->toBe($emailId2)
+        ->and($activity2->comment)->toContain('Subject: Opvolging afspraak')
+        ->and($activity2->comment)->toContain('Body: Dit is een opvolging van uw afspraak.')
+        ->and($activity2->is_done)->toBe(true) // 'sent' status should map to done
+        ->and($activity2->additional['message_id'])->toBe('msg-002@example.com')
+        ->and($activity2->additional['email_type'])->toBe('out')
+        ->and($activity2->additional['status'])->toBe('sent')
+        ->and($activity2->additional['flagged'])->toBe(true)
+        ->and($activity2->additional['intent'])->toBe('follow_up');
 });

@@ -38,6 +38,7 @@ class Activity extends Model implements ActivityContract
         'schedule_from' => 'datetime',
         'schedule_to'   => 'datetime',
         'assigned_at'   => 'datetime',
+        'additional'    => 'array',
     ];
 
     /**

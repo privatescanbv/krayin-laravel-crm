@@ -599,10 +599,18 @@ test('imports call activities from sugarcrm', function () {
 
     // Verify call activities were imported
     $activities = $lead->activities()->where('type', 'call')->get();
+    
+    // Debug: Let's see what we actually get
+    dump('Total activities for lead:', $lead->activities()->count());
+    dump('Call activities for lead:', $activities->count());
+    dump('All activities:', $lead->activities()->get()->toArray());
+    
     expect($activities)->toHaveCount(2);
 
-    // Check first call activity
-    $activity1 = $activities->where('additional->external_id', $callId1)->first();
+    // Check first call activity - use different approach for JSON querying
+    $activity1 = $activities->filter(function($activity) use ($callId1) {
+        return isset($activity->additional['external_id']) && $activity->additional['external_id'] === $callId1;
+    })->first();
     expect($activity1)->not->toBeNull()
         ->and($activity1->title)->toBe('Intake gesprek')
         ->and($activity1->type)->toBe('call')
@@ -612,8 +620,10 @@ test('imports call activities from sugarcrm', function () {
         ->and($activity1->additional['status'])->toBe('held')
         ->and($activity1->additional['belgroep'])->toBe('intake');
 
-    // Check second call activity
-    $activity2 = $activities->where('additional->external_id', $callId2)->first();
+    // Check second call activity - use different approach for JSON querying
+    $activity2 = $activities->filter(function($activity) use ($callId2) {
+        return isset($activity->additional['external_id']) && $activity->additional['external_id'] === $callId2;
+    })->first();
     expect($activity2)->not->toBeNull()
         ->and($activity2->title)->toBe('Follow-up call')
         ->and($activity2->type)->toBe('call')

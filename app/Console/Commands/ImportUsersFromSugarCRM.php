@@ -4,19 +4,11 @@ namespace App\Console\Commands;
 
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Webkul\User\Models\User;
 use Webkul\User\Models\Role;
+use Webkul\User\Models\User;
 
 class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
 {
-    /**
-     * The default role ID to assign to imported users
-     *
-     * @var int
-     */
-    private $defaultRoleId;
-
     /**
      * The name and signature of the console command.
      *
@@ -35,6 +27,13 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
      * @var string
      */
     protected $description = 'Import users from SugarCRM database';
+
+    /**
+     * The default role ID to assign to imported users
+     *
+     * @var int
+     */
+    private $defaultRoleId;
 
     /**
      * Execute the console command.
@@ -111,6 +110,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
 
                 if ($sugarUsers->isEmpty()) {
                     $this->warn('No users found to import.');
+
                     return;
                 }
 
@@ -122,7 +122,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
                 foreach ($sugarUsers as $sugarUser) {
                     try {
                         $result = $this->importUser($sugarUser, $dryRun);
-                        
+
                         switch ($result) {
                             case 'imported':
                                 $importedCount++;
@@ -138,24 +138,25 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
                         $errorCount++;
                         $this->logError("Error importing user {$sugarUser->id}: {$e->getMessage()}", [
                             'sugar_user_id' => $sugarUser->id,
-                            'user_name' => $sugarUser->user_name,
-                            'exception' => $e,
+                            'user_name'     => $sugarUser->user_name,
+                            'exception'     => $e,
                         ]);
                     }
                 }
 
                 // Show summary
-                $this->info("\n" . str_repeat('=', 50));
+                $this->info("\n".str_repeat('=', 50));
                 $this->info('IMPORT SUMMARY');
                 $this->info(str_repeat('=', 50));
                 $this->info("Users imported: {$importedCount}");
                 $this->info("Users updated: {$updatedCount}");
                 $this->info("Users skipped: {$skippedCount}");
                 $this->info("Errors: {$errorCount}");
-                $this->info("Total processed: " . ($importedCount + $updatedCount + $skippedCount + $errorCount));
+                $this->info('Total processed: '.($importedCount + $updatedCount + $skippedCount + $errorCount));
             });
         } catch (Exception $e) {
-            $this->logError('Import failed: ' . $e->getMessage(), ['exception' => $e]);
+            $this->logError('Import failed: '.$e->getMessage(), ['exception' => $e]);
+
             return 1;
         }
     }
@@ -163,8 +164,8 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
     /**
      * Import a single user from SugarCRM
      *
-     * @param object $sugarUser The SugarCRM user record
-     * @param bool $dryRun Whether this is a dry run
+     * @param  object  $sugarUser  The SugarCRM user record
+     * @param  bool  $dryRun  Whether this is a dry run
      * @return string 'imported', 'updated', or 'skipped'
      */
     private function importUser($sugarUser, bool $dryRun): string
@@ -174,6 +175,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
 
         if ($dryRun) {
             $this->info("DRY RUN: Would import user: {$userData['name']} ({$userData['email']})");
+
             return 'imported';
         }
 
@@ -184,6 +186,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
             // Update existing user
             $existingUser->update($userData);
             $this->info("Updated user by external_id: {$userData['name']} ({$userData['email']})");
+
             return 'updated';
         }
 
@@ -193,6 +196,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
             // Synchronize the existing user with SugarCRM data
             $existingUserByName->update($userData);
             $this->info("Synchronized existing user by name: {$userData['name']} ({$userData['email']})");
+
             return 'updated';
         }
 
@@ -202,6 +206,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
             // Update the existing user with external_id
             $existingUserByEmail->update($userData);
             $this->info("Linked existing user by email: {$userData['name']} ({$userData['email']})");
+
             return 'updated';
         }
 
@@ -214,19 +219,20 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
         $user = $this->createEntityWithTimestamps(User::class, $userData, $timestamps);
 
         $this->info("Imported user: {$userData['name']} ({$userData['email']})");
+
         return 'imported';
     }
 
     /**
      * Map SugarCRM user data to our user structure
      *
-     * @param object $sugarUser The SugarCRM user record
+     * @param  object  $sugarUser  The SugarCRM user record
      * @return array The mapped user data
      */
     private function mapUserData($sugarUser): array
     {
         // Build full name from first_name and last_name
-        $name = trim(($sugarUser->first_name ?? '') . ' ' . ($sugarUser->last_name ?? ''));
+        $name = trim(($sugarUser->first_name ?? '').' '.($sugarUser->last_name ?? ''));
         if (empty($name)) {
             $name = $sugarUser->user_name ?? 'Unknown User';
         }
@@ -238,11 +244,11 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
         $status = (strtolower($sugarUser->status ?? '') === 'active') ? 1 : 0;
 
         return [
-            'external_id' => $sugarUser->id,
-            'name' => $name,
-            'email' => $email,
-            'status' => $status,
-            'role_id' => $this->determineRoleId($sugarUser),
+            'external_id'     => $sugarUser->id,
+            'name'            => $name,
+            'email'           => $email,
+            'status'          => $status,
+            'role_id'         => $this->determineRoleId($sugarUser),
             'view_permission' => $this->determineViewPermission($sugarUser),
             // Generate a random password since we don't import passwords from SugarCRM
             'password' => bcrypt(\Illuminate\Support\Str::random(16)),
@@ -251,14 +257,11 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
 
     /**
      * Generate email from username
-     *
-     * @param string|null $userName
-     * @return string
      */
     private function generateEmailFromUserName(?string $userName): string
     {
         if (empty($userName)) {
-            return 'user' . time() . '@imported.local';
+            return 'user'.time().'@imported.local';
         }
 
         // If username already looks like an email, use it
@@ -267,7 +270,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
         }
 
         // Otherwise, create email from username
-        return $userName . '@imported.local';
+        return $userName.'@imported.local';
     }
 
     /**
@@ -278,8 +281,8 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
     private function initializeDefaultRole(): void
     {
         $role = Role::where('name', 'Beheerder')->first();
-        
-        if (!$role) {
+
+        if (! $role) {
             throw new Exception('Role "Beheerder" not found. Please ensure the role exists in the database.');
         }
 
@@ -290,8 +293,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
     /**
      * Determine role ID based on SugarCRM user data
      *
-     * @param object $sugarUser
-     * @return int
+     * @param  object  $sugarUser
      */
     private function determineRoleId($sugarUser): int
     {
@@ -303,8 +305,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
     /**
      * Determine view permission based on SugarCRM user data
      *
-     * @param object $sugarUser
-     * @return string
+     * @param  object  $sugarUser
      */
     private function determineViewPermission($sugarUser): string
     {

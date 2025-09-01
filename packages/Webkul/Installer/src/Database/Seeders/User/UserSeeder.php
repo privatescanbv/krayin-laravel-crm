@@ -68,7 +68,7 @@ class UserSeeder extends Seeder
                 'group_id'        => null, // Admin has no specific group
             ],
             [
-                'name'            => 'Linda',
+                'name'            => 'Linda Meijer',
                 'email'           => 'linda@privatescan.nl',
                 'password'        => '8AAZ5jc%e&3d',
                 'status'          => 1,
@@ -77,7 +77,7 @@ class UserSeeder extends Seeder
                 'group_id'        => null,
             ],
             [
-                'name'            => 'Petra',
+                'name'            => 'Petra Nijhof',
                 'email'           => 'petra@privatescan.nl',
                 'password'        => '8BBZ5jc%e&Ad',
                 'status'          => 1,
@@ -86,7 +86,7 @@ class UserSeeder extends Seeder
                 'group_id'        => $groupPrivatescanId,
             ],
             [
-                'name'            => 'Wout',
+                'name'            => 'Wout Lansink',
                 'email'           => 'wout@privatescan.nl',
                 'password'        => '8EEZ5jc%e&Ad',
                 'status'          => 1,
@@ -95,7 +95,7 @@ class UserSeeder extends Seeder
                 'group_id'        => $groupHerniaId,
             ],
             [
-                'name'            => 'Lars',
+                'name'            => 'Lars Kamphuis',
                 'email'           => 'lars@privatescan.nl',
                 'password'        => '8A4Z5jc%d3Ad',
                 'status'          => 1,
@@ -104,7 +104,7 @@ class UserSeeder extends Seeder
                 'group_id'        => $groupHerniaId,
             ],
             [
-                'name'            => 'Frank',
+                'name'            => 'Frank Hefti',
                 'email'           => 'frank@privatescan.nl',
                 'password'        => '8A115dc@d3Ad',
                 'status'          => 1,

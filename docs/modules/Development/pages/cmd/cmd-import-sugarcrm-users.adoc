@@ -1,0 +1,240 @@
+=== SugarCRM User Import
+
+Deze functie importeert gebruikers uit een SugarCRM database naar Krayin CRM.
+
+==== Configuratie
+
+===== Database Connectie
+
+Voeg de volgende variabelen toe aan je `.env` bestand:
+
+[source,env]
+----
+# SugarCRM Database Connectie
+SUGARCRM_DB_HOST=127.0.0.1
+SUGARCRM_DB_PORT=3306
+SUGARCRM_DB_DATABASE=sugarcrm
+SUGARCRM_DB_USERNAME=your_username
+SUGARCRM_DB_PASSWORD=your_password
+SUGARCRM_DB_PREFIX=
+----
+
+===== SugarCRM Tabel Structuur
+
+De import functie verwacht de volgende kolommen in de SugarCRM `users` tabel:
+
+* `id` - Unieke ID (wordt external_id)
+* `user_name` - Gebruikersnaam
+* `first_name` - Voornaam
+* `last_name` - Achternaam
+* `status` - Status ('Active' = actief)
+* `title` - Functietitel
+* `department` - Afdeling
+* `phone_home` - Thuis telefoon
+* `phone_mobile` - Mobiele telefoon
+* `phone_work` - Werk telefoon
+* `phone_other` - Overig telefoon
+* `phone_fax` - Fax nummer
+* `address_street` - Straat adres
+* `address_city` - Stad
+* `address_state` - Provincie/Staat
+* `address_country` - Land
+* `address_postalcode` - Postcode
+* `date_entered` - Aanmaakdatum
+* `date_modified` - Wijzigingsdatum
+* `created_by` - Aangemaakt door
+* `modified_user_id` - Gewijzigd door
+* `is_admin` - Admin rechten (0/1)
+* `description` - Beschrijving
+* `employee_status` - Werknemer status
+* `portal_only` - Alleen portal toegang (0/1)
+* `show_on_employees` - Tonen in werknemerslijst (0/1)
+* `deleted` - Verwijderd (0/1)
+
+==== Gebruik
+
+===== Basis Import
+
+[source,bash]
+----
+# Import 100 gebruikers (standaard)
+sail artisan import:users
+
+# Import specifiek aantal gebruikers
+sail artisan import:users --limit=50
+
+# Import specifieke user IDs
+sail artisan import:users --user-ids=abc123 def456 ghi789
+
+# Dry run - toon wat geïmporteerd zou worden
+sail artisan import:users --dry-run
+
+# Import van andere database connectie
+sail artisan import:users --connection=sugarcrm_prod
+----
+
+===== Parameters
+
+[cols="1,3"]
+|===
+|Parameter |Beschrijving
+
+|`--connection`
+|Database connectie naam (standaard: sugarcrm)
+
+|`--table`
+|Bron tabel naam (standaard: users)
+
+|`--limit`
+|Aantal gebruikers om te importeren (standaard: 100)
+
+|`--user-ids`
+|Specifieke user IDs om te importeren (negeert limit)
+
+|`--dry-run`
+|Test de import zonder daadwerkelijk data op te slaan
+|===
+
+===== Voorbeeld Output
+
+[source,text]
+----
+Starting user import from SugarCRM...
+Connection: sugarcrm
+Table: users
+Limit: 100
+Dry run: No
+✓ Database connection successful
+Using role: Beheerder (ID: 1)
+Found 45 users to import
+Synchronized existing user by name: Mark Bulthuis (mark.bulthuis@imported.local)
+Imported user: Linda de Vries (linda.devries@imported.local)
+Updated user by external_id: John Smith (john.smith@imported.local)
+==================================================
+IMPORT SUMMARY
+==================================================
+Users imported: 15
+Users updated: 25
+Users skipped: 3
+Errors: 2
+Total processed: 45
+----
+
+==== Synchronisatie Logica
+
+De import functie controleert op bestaande gebruikers in de volgende volgorde:
+
+1. **External ID Match**: `external_id` = SugarCRM user ID
+   - Synchroniseert bestaande gebruiker met SugarCRM data
+   
+2. **Exacte Naam Match**: `name` = volledige naam uit SugarCRM
+   - Synchroniseert bestaande gebruiker en voegt `external_id` toe
+   
+3. **Email Match**: `email` = gegenereerd email adres
+   - Koppelt bestaande gebruiker en voegt `external_id` toe
+   
+4. **Nieuwe Gebruiker**: Geen match gevonden
+   - Maakt nieuwe gebruiker aan
+
+==== Data Mapping
+
+===== Veld Mapping
+
+[cols="1,1,2"]
+|===
+|SugarCRM Veld |Krayin Veld |Opmerkingen
+
+|`id`
+|`external_id`
+|Voor synchronisatie
+
+|`first_name` + `last_name`
+|`name`
+|Samengevoegd tot volledige naam
+
+|`user_name`
+|`email`
+|Gebruikt als basis voor email generatie
+
+|`status`
+|`status`
+|'Active' wordt 1, anders 0
+
+|`date_entered`
+|`created_at`
+|Originele timestamp behouden
+
+|`date_modified`
+|`updated_at`
+|Originele timestamp behouden
+|===
+
+===== Rol Toewijzing
+
+* Alle geïmporteerde gebruikers krijgen de rol **"Beheerder"**
+* Gebruikers krijgen **"global"** view permission
+* Automatische wachtwoord generatie (16 willekeurige karakters)
+
+===== Email Generatie
+
+* Als `user_name` een geldig email adres is: gebruik als email
+* Anders: `{user_name}@imported.local`
+* Bij lege `user_name`: `user{timestamp}@imported.local`
+
+==== Belangrijke Opmerkingen
+
+* **Filtering**: Alleen gebruikers met `deleted = 0` worden geïmporteerd
+* **Rol Vereist**: De rol "Beheerder" moet bestaan in de database
+* **Synchronisatie**: Bestaande gebruikers worden bijgewerkt met SugarCRM data
+* **Wachtwoorden**: Originele wachtwoorden worden NIET geïmporteerd om veiligheidsredenen
+* **Timestamps**: Originele aanmaak- en wijzigingsdatums worden behouden
+
+==== Troubleshooting
+
+===== Veelvoorkomende Problemen
+
+**Rol Niet Gevonden**
+[source,text]
+----
+Role "Beheerder" not found. Please ensure the role exists in the database.
+----
+
+*Oplossing*: Controleer of de rol "Beheerder" bestaat in de `roles` tabel.
+
+**Foreign Key Constraint Violation**
+[source,text]
+----
+SQLSTATE[23000]: Integrity constraint violation: 1452 Cannot add or update a child row: a foreign key constraint fails
+----
+
+*Oplossing*: Controleer of alle referentie tabellen (roles) correct zijn gevuld.
+
+**Database Connectie Fout**
+[source,text]
+----
+SQLSTATE[HY000] [2002] Connection refused
+----
+
+*Oplossing*: Controleer of de SugarCRM database toegankelijk is en de credentials correct zijn.
+
+**Geen Data Gevonden**
+[source,text]
+----
+No users found to import.
+----
+
+*Oplossing*: Controleer of de `users` tabel bestaat en actieve gebruikers bevat (`deleted = 0`).
+
+===== Debug Opties
+
+[source,bash]
+----
+# Dry run om te zien wat geïmporteerd zou worden
+sail artisan import:users --dry-run --limit=10
+
+# Specifieke gebruiker testen
+sail artisan import:users --user-ids=specific-user-id --dry-run
+
+# Kleine batch voor testing
+sail artisan import:users --limit=5
+----

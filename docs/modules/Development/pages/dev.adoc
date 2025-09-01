@@ -39,6 +39,8 @@ include::cmd/cmd-import-sugarcrm-contacts.adoc[]
 
 include::cmd/cmd-import-sugarcrm-leads.adoc[]
 
+include::cmd/cmd-import-sugarcrm-users.adoc[]
+
 include::cmd/cmd-create-leads.adoc[]
 
 include::cmd/cmd-lead-duplicate-cache.adoc[]

@@ -12,6 +12,8 @@ use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
 
+require_once __DIR__ . '/../TestHelpers.php';
+
 class LeadWebhookTest extends TestCase
 {
     use RefreshDatabase;
@@ -109,11 +111,17 @@ class LeadWebhookTest extends TestCase
 
     private function createTestLead(): Lead
     {
+        // Ensure departments and groups exist
+        ensureDepartmentsAndGroups();
+        
+        $department = getPrivatescanDepartment();
+        
         return Lead::factory()->create([
             'first_name'             => 'John',
             'last_name'              => 'Doe',
             'lead_pipeline_id'       => 1,
             'lead_pipeline_stage_id' => 1,
+            'department_id'          => $department->id,
         ]);
     }
 

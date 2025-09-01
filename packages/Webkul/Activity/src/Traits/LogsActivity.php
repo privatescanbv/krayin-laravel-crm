@@ -36,14 +36,20 @@ trait LogsActivity
                     try {
                         $activityData['group_id'] = \App\Models\Department::getGroupIdForLead($model);
                     } catch (\Exception $e) {
-                        // Fallback: get first available group
+                        // Fallback: get first available group or create one
                         $firstGroup = \Webkul\User\Models\Group::first();
-                        $activityData['group_id'] = $firstGroup?->id;
+                        if (!$firstGroup) {
+                            $firstGroup = \Webkul\User\Models\Group::create(['name' => 'Default Group']);
+                        }
+                        $activityData['group_id'] = $firstGroup->id;
                     }
                 } else {
-                    // For non-lead models, use first available group as fallback
+                    // For non-lead models, use first available group as fallback or create one
                     $firstGroup = \Webkul\User\Models\Group::first();
-                    $activityData['group_id'] = $firstGroup?->id;
+                    if (!$firstGroup) {
+                        $firstGroup = \Webkul\User\Models\Group::create(['name' => 'Default Group']);
+                    }
+                    $activityData['group_id'] = $firstGroup->id;
                 }
 
                 $activity = app(ActivityRepository::class)->create($activityData);
@@ -123,9 +129,12 @@ trait LogsActivity
                 try {
                     $activityData['group_id'] = \App\Models\Department::getGroupIdForLead($model);
                 } catch (\Exception $e) {
-                    // Fallback: get first available group
+                    // Fallback: get first available group or create one
                     $firstGroup = \Webkul\User\Models\Group::first();
-                    $activityData['group_id'] = $firstGroup?->id;
+                    if (!$firstGroup) {
+                        $firstGroup = \Webkul\User\Models\Group::create(['name' => 'Default Group']);
+                    }
+                    $activityData['group_id'] = $firstGroup->id;
                 }
             } elseif ($model instanceof AttributeValue && method_exists($model->entity, 'getTable') && $model->entity->getTable() === 'leads') {
                 $activityData['lead_id'] = $model->entity->id;
@@ -134,14 +143,20 @@ trait LogsActivity
                 try {
                     $activityData['group_id'] = \App\Models\Department::getGroupIdForLead($model->entity);
                 } catch (\Exception $e) {
-                    // Fallback: get first available group
+                    // Fallback: get first available group or create one
                     $firstGroup = \Webkul\User\Models\Group::first();
-                    $activityData['group_id'] = $firstGroup?->id;
+                    if (!$firstGroup) {
+                        $firstGroup = \Webkul\User\Models\Group::create(['name' => 'Default Group']);
+                    }
+                    $activityData['group_id'] = $firstGroup->id;
                 }
             } else {
-                // For non-lead models, use first available group as fallback
+                // For non-lead models, use first available group as fallback or create one
                 $firstGroup = \Webkul\User\Models\Group::first();
-                $activityData['group_id'] = $firstGroup?->id;
+                if (!$firstGroup) {
+                    $firstGroup = \Webkul\User\Models\Group::create(['name' => 'Default Group']);
+                }
+                $activityData['group_id'] = $firstGroup->id;
             }
 
             $activity = app(ActivityRepository::class)->create($activityData);

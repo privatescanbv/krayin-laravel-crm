@@ -34,6 +34,7 @@ function makeActivity(array $attrs = []): Activity
         'schedule_from' => now()->format('Y-m-d H:i:s'),
         'schedule_to'   => now()->addHour()->format('Y-m-d H:i:s'),
         'is_done'       => 0,
+        'group_id'      => 1, // Required field
     ], $attrs));
 }
 

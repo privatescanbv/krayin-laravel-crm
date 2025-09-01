@@ -493,12 +493,20 @@ class PersonRepository extends Repository
     private function addMergeNote($primaryPerson, $duplicatePerson): void
     {
         try {
+            // Get default group for system activities
+            $userId = auth()->id() ?: 1;
+            $user = \Webkul\User\Models\User::find($userId);
+            $groupId = $user && $user->groups()->count() > 0 
+                ? $user->groups()->first()->id 
+                : \Webkul\User\Models\Group::first()->id;
+
             $activity = app(ActivityRepository::class)->create([
                 'type' => 'note',
                 'title' => 'Person Merged',
                 'comment' => "Person #{$duplicatePerson->id} ({$duplicatePerson->name}) was merged into this person.",
                 'is_done' => true,
-                'user_id' => auth()->id() ?: 1,
+                'user_id' => $userId,
+                'group_id' => $groupId,
             ]);
 
             // Link activity to primary person

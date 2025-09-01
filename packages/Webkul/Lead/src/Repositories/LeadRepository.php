@@ -629,13 +629,31 @@ class LeadRepository extends Repository
     private
     function addSystemActivity($primaryLead, $duplicateLead): void
     {
+        // Get default group for system activities - prefer lead's department group
+        $userId = auth()->id() ?? 1;
+        $groupId = null;
+        
+        // First try to get group from lead's department
+        if ($primaryLead->department) {
+            $groupId = \App\Models\Department::mapDepartmentToGroupId($primaryLead->department);
+        }
+        
+        // Fallback to user's group or first available group
+        if (!$groupId) {
+            $user = \Webkul\User\Models\User::find($userId);
+            $groupId = $user && $user->groups()->count() > 0 
+                ? $user->groups()->first()->id 
+                : \Webkul\User\Models\Group::first()->id;
+        }
+
         // Create a system activity for audit purposes
         $activityData = [
             'title' => 'System: Duplicate Lead Removed',
             'comment' => "Removed duplicate lead \"{$duplicateLead->title}\" (ID: {$duplicateLead->id}) during merge operation.",
             'type' => 'system',
             'is_done' => 1,
-            'user_id' => auth()->id() ?? 1,
+            'user_id' => $userId,
+            'group_id' => $groupId,
         ];
 
         $activity = app('Webkul\Activity\Repositories\ActivityRepository')->create(array_merge($activityData, [
@@ -661,13 +679,31 @@ class LeadRepository extends Repository
     private
     function addMergeNote($primaryLead, $duplicateLead)
     {
+        // Get default group for system activities - prefer lead's department group
+        $userId = auth()->id() ?? 1;
+        $groupId = null;
+        
+        // First try to get group from lead's department
+        if ($primaryLead->department) {
+            $groupId = \App\Models\Department::mapDepartmentToGroupId($primaryLead->department);
+        }
+        
+        // Fallback to user's group or first available group
+        if (!$groupId) {
+            $user = \Webkul\User\Models\User::find($userId);
+            $groupId = $user && $user->groups()->count() > 0 
+                ? $user->groups()->first()->id 
+                : \Webkul\User\Models\Group::first()->id;
+        }
+
         // Create an activity note about the merge
         $activityData = [
             'title' => 'Lead Merged',
             'comment' => "Lead #{$duplicateLead->id} ({$duplicateLead->title}) was merged into this lead.",
             'type' => 'note',
             'is_done' => 1,
-            'user_id' => auth()->id() ?? 1,
+            'user_id' => $userId,
+            'group_id' => $groupId,
         ];
 
         $activity = app('Webkul\Activity\Repositories\ActivityRepository')->create(array_merge($activityData, [

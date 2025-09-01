@@ -29,6 +29,27 @@ class ActivityController extends Controller
     }
 
     /**
+     * Get the default group for a lead based on its department.
+     */
+    public function getDefaultGroup(int $id)
+    {
+        $lead = $this->leadRepository->findOrFail($id);
+        
+        try {
+            $groupId = \App\Models\Department::getGroupIdForLead($lead);
+            
+            return response()->json([
+                'group_id' => $groupId,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'group_id' => null,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
      * Store a newly created activity in storage.
      */
     public function store(Request $request, int $id)

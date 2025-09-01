@@ -160,7 +160,7 @@
                                 <x-admin::form.control-group.control
                                     type="select"
                                     name="group_id"
-                                    :value="old('group_id')"
+                                    v-model="selectedGroupId"
                                 >
                                     <option value="">{{ __('admin::app.activities.select-group') }}</option>
                                     @foreach (app(Webkul\User\Repositories\GroupRepository::class)->all() as $group)
@@ -276,7 +276,16 @@
                             label: "{{ trans('admin::app.components.activities.actions.activity.internal-task') }}",
                             value: 'task'
                         },
-                    ]
+                    ],
+
+                    selectedGroupId: null
+                }
+            },
+
+            mounted() {
+                // Auto-select group based on lead's department
+                if (this.entity && this.entityControlName === 'lead_id' && this.entity.department_id) {
+                    this.setDefaultGroupFromDepartment();
                 }
             },
 
@@ -285,10 +294,29 @@
                     this.$refs.activityModal.open();
                 },
 
+                setDefaultGroupFromDepartment() {
+                    // Fetch the default group for this lead's department
+                    this.$axios.get(`/admin/leads/${this.entity.id}/default-group`)
+                        .then(response => {
+                            if (response.data.group_id) {
+                                this.selectedGroupId = response.data.group_id;
+                            }
+                        })
+                        .catch(error => {
+                            console.warn('Could not fetch default group for lead:', error);
+                        });
+                },
+
                 save(params) {
                     this.isStoring = true;
 
-                    this.$axios.post("{{ route('admin.activities.store') }}", params)
+                    // Use lead-specific route if this is for a lead
+                    let url = "{{ route('admin.activities.store') }}";
+                    if (this.entityControlName === 'lead_id' && this.entity.id) {
+                        url = `/admin/leads/${this.entity.id}/activities`;
+                    }
+
+                    this.$axios.post(url, params)
                         .then (response => {
                             this.isStoring = false;
 

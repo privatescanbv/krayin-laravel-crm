@@ -130,10 +130,7 @@ De import functie controleert op bestaande gebruikers in de volgende volgorde:
 2. **Exacte Naam Match**: `name` = volledige naam uit SugarCRM
    - Synchroniseert bestaande gebruiker en voegt `external_id` toe
    
-3. **Email Match**: `email` = gegenereerd email adres
-   - Koppelt bestaande gebruiker en voegt `external_id` toe
-   
-4. **Nieuwe Gebruiker**: Geen match gevonden
+3. **Nieuwe Gebruiker**: Geen match gevonden
    - Maakt nieuwe gebruiker aan
 
 ==== Data Mapping

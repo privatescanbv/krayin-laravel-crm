@@ -200,16 +200,6 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
             return 'updated';
         }
 
-        // Check if user exists by email (to prevent duplicates)
-        $existingUserByEmail = User::where('email', $userData['email'])->first();
-        if ($existingUserByEmail) {
-            // Update the existing user with external_id
-            $existingUserByEmail->update($userData);
-            $this->info("Linked existing user by email: {$userData['name']} ({$userData['email']})");
-
-            return 'updated';
-        }
-
         // Create new user with timestamps from SugarCRM
         $timestamps = [
             'created_at' => $this->parseSugarDate($sugarUser->date_entered),

@@ -6,9 +6,17 @@ use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Webkul\User\Models\User;
+use Webkul\User\Models\Role;
 
 class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
 {
+    /**
+     * The default role ID to assign to imported users
+     *
+     * @var int
+     */
+    private $defaultRoleId;
+
     /**
      * The name and signature of the console command.
      *
@@ -53,6 +61,9 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
             return $this->executeImport($dryRun, function () use ($connection, $table, $limit, $userIds, $dryRun) {
                 // Test connection
                 $this->testConnection($connection);
+
+                // Look up the default role ID
+                $this->initializeDefaultRole();
 
                 // Get records from SugarCRM
                 $query = DB::connection($connection)
@@ -251,6 +262,23 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
     }
 
     /**
+     * Initialize the default role ID by looking up the 'Beheerder' role
+     *
+     * @throws Exception
+     */
+    private function initializeDefaultRole(): void
+    {
+        $role = Role::where('name', 'Beheerder')->first();
+        
+        if (!$role) {
+            throw new Exception('Role "Beheerder" not found. Please ensure the role exists in the database.');
+        }
+
+        $this->defaultRoleId = $role->id;
+        $this->info("Using role: {$role->name} (ID: {$role->id})");
+    }
+
+    /**
      * Determine role ID based on SugarCRM user data
      *
      * @param object $sugarUser
@@ -258,13 +286,9 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
      */
     private function determineRoleId($sugarUser): int
     {
-        // If is_admin is set to 1, assign admin role (role_id = 1)
-        if (isset($sugarUser->is_admin) && $sugarUser->is_admin == 1) {
-            return 1; // Admin role
-        }
-
-        // Default to regular user role
-        return 2; // Assuming role_id 2 is for regular users
+        // For now, all users get the default 'Beheerder' role
+        // This can be modified later based on requirements
+        return $this->defaultRoleId;
     }
 
     /**
@@ -275,12 +299,8 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
      */
     private function determineViewPermission($sugarUser): string
     {
-        // If is_admin is set to 1, give global permission
-        if (isset($sugarUser->is_admin) && $sugarUser->is_admin == 1) {
-            return 'global';
-        }
-
-        // Default to individual permission
-        return 'individual';
+        // For now, all users get global permission with the 'Beheerder' role
+        // This can be modified later based on requirements
+        return 'global';
     }
 }

@@ -1,6 +1,6 @@
 === SugarCRM Lead Import
 
-Deze functie importeert leads uit een SugarCRM database naar Krayin CRM, inclusief anamnese gegevens en pipeline mapping.
+Deze functie importeert leads uit een SugarCRM database naar Krayin CRM, inclusief anamnese gegevens, call activities en pipeline mapping.
 
 ==== Configuratie
 
@@ -69,6 +69,24 @@ De import functie verwacht de volgende tabellen in de SugarCRM database:
 
 * `email_addr_bean_rel` - Email koppeling
 * `email_addresses` - Email adressen
+
+**Call Activities tabellen (optioneel):**
+
+* `calls` - Bel activiteiten hoofdtabel
+** `id` - Unieke ID
+** `name` - Titel van de bel activiteit
+** `description` - Beschrijving
+** `date_start` - Start tijd
+** `date_end` - Eind tijd
+** `parent_type` - Moet 'Leads' zijn voor koppeling
+** `parent_id` - Koppeling naar leads.id
+** `status` - Status (held, planned, etc.)
+** `direction` - Richting (inbound, outbound)
+** `deleted` - Verwijderd (0/1)
+
+* `calls_cstm` - Custom velden voor bel activiteiten
+** `id_c` - Koppeling naar calls.id
+** `belgroep_c` - Bel groep classificatie
 
 ==== Pipeline Mapping
 
@@ -150,13 +168,18 @@ sail artisan import:leads --connection=sugarcrm_prod
 [source,text]
 ----
 === DRY RUN RESULTS ===
-┌──────────────┬────────────┬───────────┬─────────────┬────────────┬──────────┬─────────────────┬──────────┬─────────────┬──────────────┐
-│ ID           │ First Name │ Last Name │ Email       │ Phone      │ Status   │ Workflow Status │ Stage ID │ Date Entered│ Person Match │
-├──────────────┼────────────┼───────────┼─────────────┼────────────┼──────────┼─────────────────┼──────────┼─────────────┼──────────────┤
-│ abc-123-def  │ Jan        │ Jansen    │ jan@test.nl │ 0612345678 │ New      │ nieuweaanvraag  │ 1        │ 2024-01-15  │ ✓ Jan Jansen │
-│ def-456-ghi  │ Marie      │ Bakker    │ N/A         │ 0687654321 │ Assigned │ adviseren       │ 2        │ 2024-01-14  │ ✗ Not found  │
-└──────────────┴────────────┴───────────┴─────────────┴────────────┴──────────┴─────────────────┴──────────┴─────────────┴──────────────┘
+┌──────────────┬────────────┬───────────┬─────────────┬────────────┬──────────┬─────────────────┬──────────┬─────────────┬──────────────┬──────────────┐
+│ ID           │ First Name │ Last Name │ Email       │ Phone      │ Status   │ Workflow Status │ Stage ID │ Date Entered│ Person Match │ Call Activities │
+├──────────────┼────────────┼───────────┼─────────────┼────────────┼──────────┼─────────────────┼──────────┼─────────────┼──────────────┼──────────────┤
+│ abc-123-def  │ Jan        │ Jansen    │ jan@test.nl │ 0612345678 │ New      │ nieuweaanvraag  │ 1        │ 2024-01-15  │ ✓ Jan Jansen │ 3 calls       │
+│ def-456-ghi  │ Marie      │ Bakker    │ N/A         │ 0687654321 │ Assigned │ adviseren       │ 2        │ 2024-01-14  │ ✗ Not found  │ —             │
+└──────────────┴────────────┴───────────┴─────────────┴────────────┴──────────┴─────────────────┴──────────┴─────────────┴──────────────┴──────────────┘
 Would import 2 leads
+
+Call Activities Summary:
+Total call activities found: 3
+Call activities per lead:
+  - Jan Jansen: 3 calls
 ----
 
 ===== Import Output
@@ -177,6 +200,10 @@ Import completed!
 ⚠ Skipped: 2
 ✗ Person not found: 3
 ✗ Errors: 0
+
+Call Activities:
+✓ Call activities imported: 127
+⚠ Call activities skipped: 8
 ----
 
 ==== Person Matching
@@ -199,6 +226,40 @@ Alle anamnese gegevens uit `leads_cstm` worden automatisch geïmporteerd naar de
 * **Allergieën en medicijnen** - Met details
 * **Fysieke gegevens** - Lengte, gewicht
 * **Opmerkingen** - Alle `opm_*_c` velden
+
+==== Call Activities
+
+Call activities worden automatisch geïmporteerd als **Activity** records van het type `call`:
+
+===== Status Mapping
+
+[cols="2,2,1"]
+|===
+|SugarCRM Status |Krayin Status |Is Done
+
+|`held`, `completed`, `done`, `finished`
+|Afgerond
+|`true`
+
+|Alle andere statussen (bijv. `planned`)
+|Niet afgerond
+|`false`
+|===
+
+===== Geïmporteerde Gegevens
+
+* **Titel** - `calls.name`
+* **Beschrijving** - `calls.description` 
+* **Start tijd** - `calls.date_start`
+* **Eind tijd** - `calls.date_end`
+* **Status** - Gemapped naar `is_done` boolean
+* **Custom data** - Opgeslagen in JSON veld:
+** `external_id` - Originele SugarCRM call ID
+** `direction` - Gesprek richting (inbound/outbound)
+** `status` - Originele SugarCRM status
+** `belgroep` - Bel groep uit `calls_cstm.belgroep_c`
+
+**Belangrijk:** Call activities worden alleen geïmporteerd voor leads die succesvol zijn geïmporteerd. Als een lead wordt overgeslagen, worden de bijbehorende call activities ook overgeslagen.
 
 ==== Belangrijke Opmerkingen
 

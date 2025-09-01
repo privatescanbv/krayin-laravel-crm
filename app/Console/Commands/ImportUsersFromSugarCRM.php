@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Exception;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Webkul\User\Models\Role;
 use Webkul\User\Models\User;
 
@@ -241,7 +242,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
             'role_id'         => $this->determineRoleId($sugarUser),
             'view_permission' => $this->determineViewPermission($sugarUser),
             // Generate a random password since we don't import passwords from SugarCRM
-            'password' => bcrypt(\Illuminate\Support\Str::random(16)),
+            'password' => bcrypt(Str::random(16)),
         ];
     }
 

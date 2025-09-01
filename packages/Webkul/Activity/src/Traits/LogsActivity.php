@@ -55,13 +55,15 @@ trait LogsActivity
                 // ALWAYS set group_id
                 $activityData['group_id'] = $groupId;
 
-                // Only create activity if we have a valid group_id
-                if (isset($activityData['group_id']) && $activityData['group_id']) {
-                    $activity = app(ActivityRepository::class)->create($activityData);
-                } else {
-                    // Skip activity creation if no valid group_id
-                    return;
-                }
+                // Debug: always log the activity data
+                \Log::info('LogsActivity: creating activity in created', [
+                    'activityData' => $activityData,
+                    'groupId' => $groupId,
+                    'model' => get_class($model),
+                    'model_id' => $model->id ?? 'unknown'
+                ]);
+
+                $activity = app(ActivityRepository::class)->create($activityData);
 
                 // Only attach via pivot table if not a Lead model
                 if (!(method_exists($model, 'getTable') && $model->getTable() === 'leads')) {
@@ -166,13 +168,15 @@ trait LogsActivity
             // ALWAYS set group_id
             $activityData['group_id'] = $groupId;
 
-            // Only create activity if we have a valid group_id
-            if (isset($activityData['group_id']) && $activityData['group_id']) {
-                $activity = app(ActivityRepository::class)->create($activityData);
-            } else {
-                // Skip activity creation if no valid group_id
-                continue;
-            }
+            // Debug: always log the activity data
+            \Log::info('LogsActivity: creating activity in updated', [
+                'activityData' => $activityData,
+                'groupId' => $groupId,
+                'model' => get_class($model),
+                'model_id' => $model->id ?? 'unknown'
+            ]);
+
+            $activity = app(ActivityRepository::class)->create($activityData);
 
             if ($model instanceof AttributeValue) {
                 // Only attach via pivot table if the entity is not a Lead model

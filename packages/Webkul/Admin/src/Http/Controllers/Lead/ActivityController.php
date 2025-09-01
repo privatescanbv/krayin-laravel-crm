@@ -59,11 +59,7 @@ class ActivityController extends Controller
             // First try to get group from lead's department
             $lead = $this->leadRepository->find($id);
             if ($lead && $lead->department) {
-                // Find group with same name as department
-                $group = \Webkul\User\Models\Group::where('name', $lead->department->name)->first();
-                if ($group) {
-                    $groupId = $group->id;
-                }
+                $groupId = \App\Models\Department::mapDepartmentToGroupId($lead->department);
             }
             
             // If no group found from department, try user's group as fallback

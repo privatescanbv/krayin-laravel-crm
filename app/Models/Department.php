@@ -71,4 +71,37 @@ class Department extends Model
         }
         throw new Exception('Group not found');
     }
+
+    /**
+     * Map department to group ID based on business logic.
+     * This is the reverse of mapGroupToDepartmentId.
+     *
+     * @param  Department  $department
+     * @return int|null
+     */
+    public static function mapDepartmentToGroupId(Department $department): ?int
+    {
+        // Direct mapping: department name to group name
+        $group = \Webkul\User\Models\Group::where('name', $department->name)->first();
+        
+        if ($group) {
+            return $group->id;
+        }
+
+        // Fallback mappings based on business logic
+        $departmentToGroupMap = [
+            'Hernia' => 'hernia',
+            'Privatescan' => 'privatescan',
+            // Add more mappings as needed
+        ];
+
+        if (isset($departmentToGroupMap[$department->name])) {
+            $group = \Webkul\User\Models\Group::where('name', $departmentToGroupMap[$department->name])->first();
+            if ($group) {
+                return $group->id;
+            }
+        }
+
+        return null;
+    }
 }

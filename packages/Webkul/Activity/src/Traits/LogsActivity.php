@@ -25,10 +25,7 @@ trait LogsActivity
                 
                 // If this is a Lead model, try to get group from lead's department
                 if (method_exists($model, 'getTable') && $model->getTable() === 'leads' && $model->department) {
-                    $group = \Webkul\User\Models\Group::where('name', $model->department->name)->first();
-                    if ($group) {
-                        $groupId = $group->id;
-                    }
+                    $groupId = \App\Models\Department::mapDepartmentToGroupId($model->department);
                 }
                 
                 // Fallback to user's group or first available group
@@ -104,6 +101,28 @@ trait LogsActivity
 
             $attributeCode = $model->attribute?->name ?: $attributeCode;
 
+            // Get default group for system activities
+            $userId = auth()->id();
+            $groupId = null;
+            
+            // Get the actual entity for group determination
+            $entity = $model instanceof AttributeValue ? $model->entity : $model;
+            
+            // If this is a Lead model, try to get group from lead's department
+            if (method_exists($entity, 'getTable') && $entity->getTable() === 'leads' && $entity->department) {
+                $groupId = \App\Models\Department::mapDepartmentToGroupId($entity->department);
+            }
+            
+            // Fallback to user's group or first available group
+            if (!$groupId && $userId) {
+                $user = \Webkul\User\Models\User::find($userId);
+                $groupId = $user && $user->groups()->count() > 0 
+                    ? $user->groups()->first()->id 
+                    : \Webkul\User\Models\Group::first()->id;
+            } elseif (!$groupId) {
+                $groupId = \Webkul\User\Models\Group::first()->id;
+            }
+
             // Check if this is a Lead model and use the new direct relationship
             $activityData = [
                 'type'       => 'system',
@@ -120,7 +139,8 @@ trait LogsActivity
                         'label' => static::getAttributeLabel($attributeData['old'], $model->attribute),
                     ],
                 ]),
-                'user_id'    => auth()->id(),
+                'user_id'    => $userId,
+                'group_id'   => $groupId,
             ];
 
             // Add lead_id if this is a Lead model or if the entity is a Lead model

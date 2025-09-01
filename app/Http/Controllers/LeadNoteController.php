@@ -32,10 +32,7 @@ class LeadNoteController extends Controller
         // Get default group from lead's department or fallback
         $groupId = null;
         if ($lead->department) {
-            $group = \Webkul\User\Models\Group::where('name', $lead->department->name)->first();
-            if ($group) {
-                $groupId = $group->id;
-            }
+            $groupId = \App\Models\Department::mapDepartmentToGroupId($lead->department);
         }
         
         // Fallback to first available group if no department group found

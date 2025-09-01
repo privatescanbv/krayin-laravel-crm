@@ -146,10 +146,9 @@ class ActivityController extends Controller
             if (isset($data['lead_id']) && $data['lead_id']) {
                 $lead = \Webkul\Lead\Models\Lead::find($data['lead_id']);
                 if ($lead && $lead->department) {
-                    // Find group with same name as department
-                    $group = \Webkul\User\Models\Group::where('name', $lead->department->name)->first();
-                    if ($group) {
-                        $data['group_id'] = $group->id;
+                    $groupId = \App\Models\Department::mapDepartmentToGroupId($lead->department);
+                    if ($groupId) {
+                        $data['group_id'] = $groupId;
                     }
                 }
             }

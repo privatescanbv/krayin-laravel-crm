@@ -218,10 +218,7 @@ class LeadObserver
                 
                 // First try to get group from lead's department
                 if ($lead->department) {
-                    $group = \Webkul\User\Models\Group::where('name', $lead->department->name)->first();
-                    if ($group) {
-                        $groupId = $group->id;
-                    }
+                    $groupId = \App\Models\Department::mapDepartmentToGroupId($lead->department);
                 }
                 
                 // Fallback to user's group or first available group

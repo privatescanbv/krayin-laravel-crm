@@ -627,9 +627,9 @@ test('imports call activities from sugarcrm', function () {
     $callActivities = $lead->activities()->where('type', 'call')->get();
     expect($callActivities)->toHaveCount(2);
 
-    // Check first call activity - use different approach for JSON querying
+    // Check first call activity - external_id is stored in the external_id field
     $activity1 = $callActivities->filter(function ($activity) use ($callId1) {
-        return isset($activity->additional['external_id']) && $activity->additional['external_id'] === $callId1;
+        return $activity->external_id === $callId1;
     })->first();
     expect($activity1)->not->toBeNull()
         ->and($activity1->title)->toBe('Intake gesprek')
@@ -640,9 +640,9 @@ test('imports call activities from sugarcrm', function () {
         ->and($activity1->additional['status'])->toBe('held')
         ->and($activity1->additional['belgroep'])->toBe('intake');
 
-    // Check second call activity - use different approach for JSON querying
+    // Check second call activity - external_id is stored in the external_id field
     $activity2 = $callActivities->filter(function ($activity) use ($callId2) {
-        return isset($activity->additional['external_id']) && $activity->additional['external_id'] === $callId2;
+        return $activity->external_id === $callId2;
     })->first();
     expect($activity2)->not->toBeNull()
         ->and($activity2->title)->toBe('Follow-up call')

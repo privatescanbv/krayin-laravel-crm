@@ -24,15 +24,16 @@ class ActivityAssignmentController extends Controller
      */
     public function assign(int $id): JsonResponse
     {
-        $activity = $this->activityRepository->findOrFail($id);
+        $activity = $this->activityRepository->with('user')->findOrFail($id);
         
         // Check if activity is already assigned
         if ($activity->user_id) {
             $canTakeover = auth()->guard('user')->user()->hasPermission('activities.takeover');
+            $userName = $activity->user ? $activity->user->name : 'Onbekende gebruiker';
             
             return response()->json([
-                'message' => 'Deze activiteit is al toegekend aan ' . $activity->user->name . '.',
-                'assigned_user' => $activity->user->name,
+                'message' => 'Deze activiteit is al toegekend aan ' . $userName . '.',
+                'assigned_user' => $userName,
                 'can_takeover' => $canTakeover,
                 'activity_id' => $id,
             ], 409); // 409 Conflict
@@ -61,7 +62,7 @@ class ActivityAssignmentController extends Controller
             ], 403);
         }
         
-        $activity = $this->activityRepository->findOrFail($id);
+        $activity = $this->activityRepository->with('user')->findOrFail($id);
         
         $previousUser = $activity->user ? $activity->user->name : null;
         
@@ -85,7 +86,7 @@ class ActivityAssignmentController extends Controller
      */
     public function unassign(int $id): JsonResponse
     {
-        $activity = $this->activityRepository->findOrFail($id);
+        $activity = $this->activityRepository->with('user')->findOrFail($id);
         $currentUser = auth()->guard('user')->user();
         
         // Check if activity is assigned to current user
@@ -95,7 +96,7 @@ class ActivityAssignmentController extends Controller
             ], 403);
         }
         
-        $previousUser = $activity->user->name;
+        $previousUser = $activity->user ? $activity->user->name : 'Onbekende gebruiker';
         
         $activity->update([
             'user_id' => null,

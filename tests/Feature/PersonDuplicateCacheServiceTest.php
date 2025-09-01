@@ -29,7 +29,7 @@ test('full rebuild populates cache for all persons and stats reflect coverage', 
     ]);
 
     // Act: run the persons full rebuild command
-    $this->artisan('persons:refresh-duplicate-cache --full')->assertSuccessful();
+    $this->artisan('duplicates:refresh-cache --full')->assertSuccessful();
 
     // Ensure cache in current process as well (some cache drivers in tests are process-local)
     $this->cacheService->refreshPersonCache($p1->id);

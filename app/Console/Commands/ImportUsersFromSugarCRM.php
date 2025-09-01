@@ -184,9 +184,12 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
         $existingUser = User::where('external_id', $sugarUser->id)->first();
 
         if ($existingUser) {
+            // don't update password and email for existing users
+            unset($userData['password']);
+            unset($userData['email']);
             // Update existing user
             $existingUser->update($userData);
-            $this->info("Updated user by external_id: {$userData['name']} ({$userData['email']})");
+            $this->info("Updated user by external_id: {$userData['name']}");
 
             return 'updated';
         }
@@ -194,9 +197,12 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
         // Check if user exists by exact name match
         $existingUserByName = User::where('name', $userData['name'])->first();
         if ($existingUserByName) {
+            // don't update password and email for existing users
+            unset($userData['password']);
+            unset($userData['email']);
             // Synchronize the existing user with SugarCRM data
             $existingUserByName->update($userData);
-            $this->info("Synchronized existing user by name: {$userData['name']} ({$userData['email']})");
+            $this->info("Synchronized existing user by name: {$userData['name']}");
 
             return 'updated';
         }
@@ -207,9 +213,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
             'updated_at' => $this->parseSugarDate($sugarUser->date_modified),
         ];
 
-        $user = $this->createEntityWithTimestamps(User::class, $userData, $timestamps);
-
-        $this->info("Imported user: {$userData['name']} ({$userData['email']})");
+        $this->createEntityWithTimestamps(User::class, $userData, $timestamps);
 
         return 'imported';
     }

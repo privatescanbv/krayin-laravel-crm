@@ -753,10 +753,14 @@
                                 </div>
                             </div>
 
-                            <!-- Lead Title -->
-                            <p class="text-xs font-medium">
-                                @{{ email.lead.title }}
-                            </p>
+                            <!-- Lead Name (clickable to lead view) -->
+                            <a
+                                :href="'{{ route('admin.leads.view', ':id') }}'.replace(':id', email.lead_id)"
+                                target="_blank"
+                                class="text-xs font-medium text-brandColor hover:underline"
+                            >
+                                @{{ email.lead.name ?? email.lead.title }}
+                            </a>
 
                             <!-- Lead Additional Information -->
                             <div

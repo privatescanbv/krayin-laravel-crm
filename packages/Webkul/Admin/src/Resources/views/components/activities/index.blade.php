@@ -97,7 +97,11 @@
                                         >
                                             <a
                                                 class="flex flex-wrap items-center gap-1 font-medium dark:text-white hover:underline cursor-pointer"
-                                                :href="'{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity.id)"
+                                                :href="
+                                                    activity.type == 'email'
+                                                    ? '{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceId']) }}'.replace('replaceId', activity.id)
+                                                    : '{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity.id)
+                                                "
                                             >
                                                 @{{ activity.title }}
 
@@ -144,7 +148,7 @@
                                         >
                                             <a
                                                 :href="
-                                                    activity.type == 'email'
+                                                    file.is_email_attachment
                                                     ? `{{ route('admin.mail.attachment_download', 'replaceID') }}`.replace('replaceID', file.id)
                                                     : `{{ route('admin.activities.file_download', 'replaceID') }}`.replace('replaceID', file.id)
                                                 "

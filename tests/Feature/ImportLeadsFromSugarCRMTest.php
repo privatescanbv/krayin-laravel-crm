@@ -10,8 +10,10 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
+use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\User;
 
@@ -28,6 +30,7 @@ beforeEach(function () {
     foreach ([
         'email_addr_bean_rel', 'email_addresses', 'leads_cstm', 'leads', 'leads_contacts_c',
         'leads_pcrm_anamnesepreventie_1_c', 'pcrm_anamnetie_contacts_c', 'pcrm_anamnesepreventie', 'pcrm_anamnesepreventie_cstm', 'calls', 'calls_cstm',
+        'emails', 'emails_text', 'emails_beans', 'notes',
     ] as $tbl) {
         if (Schema::connection('sugarcrm')->hasTable($tbl)) {
             Schema::connection('sugarcrm')->drop($tbl);
@@ -136,19 +139,26 @@ beforeEach(function () {
         $table->integer('deleted')->default(0);
     });
 
+    Schema::connection('sugarcrm')->dropIfExists('leads_contacts_c');
     Schema::connection('sugarcrm')->create('leads_contacts_c', function (Blueprint $table) {
+        $table->string('id')->primary(); // primary key
         $table->string('leads_c7104eads_ida'); // lead id
         $table->string('leads_cbb5dacts_idb'); // person id
         $table->integer('deleted')->default(0);
     });
 
     // Minimal anamnesis relation tables (empty ok)
+    Schema::connection('sugarcrm')->dropIfExists('leads_pcrm_anamnesepreventie_1_c');
     Schema::connection('sugarcrm')->create('leads_pcrm_anamnesepreventie_1_c', function (Blueprint $table) {
+        $table->string('id')->primary(); // primary key
         $table->string('leads_pcrm_anamnesepreventie_1leads_ida')->nullable();
         $table->string('leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb')->nullable();
         $table->integer('deleted')->default(0);
     });
+
+    Schema::connection('sugarcrm')->dropIfExists('pcrm_anamnetie_contacts_c');
     Schema::connection('sugarcrm')->create('pcrm_anamnetie_contacts_c', function (Blueprint $table) {
+        $table->string('id')->primary(); // primary key
         $table->string('pcrm_anamn171deventie_idb')->nullable();
         $table->string('pcrm_anamn0b6eontacts_ida')->nullable();
         $table->integer('deleted')->default(0);
@@ -238,6 +248,68 @@ beforeEach(function () {
         $table->string('id_c')->primary();
         $table->string('belgroep_c')->nullable();
     });
+
+    // Create emails table
+    Schema::connection('sugarcrm')->create('emails', function (Blueprint $table) {
+        $table->string('id')->primary();
+        $table->string('name')->nullable(); // subject
+        $table->dateTime('date_entered')->nullable();
+        $table->dateTime('date_modified')->nullable();
+        $table->string('assigned_user_id')->nullable();
+        $table->string('created_by')->nullable();
+        $table->boolean('deleted')->default(0);
+        $table->dateTime('date_sent')->nullable();
+        $table->string('message_id')->nullable();
+        $table->string('type')->nullable();
+        $table->string('status')->nullable();
+        $table->boolean('flagged')->default(0);
+        $table->string('reply_to_status')->nullable();
+        $table->string('intent')->nullable();
+        $table->string('mailbox_id')->nullable();
+        $table->string('parent_type')->nullable();
+        $table->string('parent_id')->nullable();
+    });
+
+    // Create emails_text table
+    Schema::connection('sugarcrm')->create('emails_text', function (Blueprint $table) {
+        $table->string('email_id')->primary();
+        $table->text('description')->nullable(); // plain text body
+        $table->text('description_html')->nullable(); // html body
+        $table->text('raw_source')->nullable();
+    });
+
+    // Create emails_beans table (junction table)
+    Schema::connection('sugarcrm')->create('emails_beans', function (Blueprint $table) {
+        $table->string('id')->primary();
+        $table->string('email_id');
+        $table->string('bean_id');
+        $table->string('bean_module');
+        $table->text('campaign_data')->nullable();
+        $table->dateTime('date_modified')->nullable();
+        $table->boolean('deleted')->default(0);
+    });
+
+    // Create notes table for attachments
+    Schema::connection('sugarcrm')->create('notes', function (Blueprint $table) {
+        $table->string('id')->primary();
+        $table->string('name')->nullable();
+        $table->string('filename')->nullable();
+        $table->string('file_mime_type')->nullable();
+        $table->text('description')->nullable();
+        $table->dateTime('date_entered')->nullable();
+        $table->dateTime('date_modified')->nullable();
+        $table->string('created_by')->nullable();
+        $table->string('assigned_user_id')->nullable();
+        $table->string('team_id')->nullable();
+        $table->string('team_set_id')->nullable();
+        $table->string('modified_user_id')->nullable();
+        $table->string('contact_id')->nullable();
+        $table->boolean('portal_flag')->default(0);
+        $table->boolean('embed_flag')->default(0);
+        $table->boolean('deleted')->default(0);
+        $table->string('parent_id')->nullable();
+        $table->string('parent_type')->nullable();
+    });
 });
 
 test('imports lead created_at parsed correctly from sugarcrm', function () {
@@ -297,18 +369,21 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
     ]);
     // Link lead to anamnesis
     DB::connection('sugarcrm')->table('leads_pcrm_anamnesepreventie_1_c')->insert([
+        'id'                                                       => 'lead-anam-001',
         'leads_pcrm_anamnesepreventie_1leads_ida'                  => $leadId,
         'leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb' => $anamnesisId,
         'deleted'                                                  => 0,
     ]);
     // Link anamnesis to person
     DB::connection('sugarcrm')->table('pcrm_anamnetie_contacts_c')->insert([
+        'id'                        => 'anam-person-001',
         'pcrm_anamn171deventie_idb' => $anamnesisId,
         'pcrm_anamn0b6eontacts_ida' => $personExternalId,
         'deleted'                   => 0,
     ]);
     // Also add simple lead->person mapping used to filter personIds in extractAnamenesis
     DB::connection('sugarcrm')->table('leads_contacts_c')->insert([
+        'id'                  => 'lead-contact-001',
         'leads_c7104eads_ida' => $leadId,
         'leads_cbb5dacts_idb' => $personExternalId,
         'deleted'             => 0,
@@ -321,15 +396,10 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
     expect($exit)->toBe(0);
 
     $lead = Lead::where('external_id', $leadId)->first();
-    expect($lead)->not->toBeNull();
-
-    // Personal fields assertions
-    expect($lead->married_name)->toBe('Jansen')
-        ->and($lead->married_name_prefix)->toBe('de');
-
-    // Check created_at parsing - import treats SugarCRM dates as local time
-    // SugarCRM date: '2025-06-11 13:41:07' is stored as-is in local timezone
-    expect($lead->created_at->format('Y-m-d H:i:s'))->toBe('2025-06-11 13:41:07');
+    expect($lead)->not->toBeNull()
+        ->and($lead->married_name)->toBe('Jansen')
+        ->and($lead->married_name_prefix)->toBe('de')
+        ->and($lead->created_at->format('Y-m-d H:i:s'))->toBe('2025-06-11 13:41:07');
 
     // Address created and mapped
     $address = Address::where('lead_id', $lead->id)->first();
@@ -419,11 +489,13 @@ test('imports lead with multiple persons correctly', function () {
     // Link lead to both anamnesis records
     DB::connection('sugarcrm')->table('leads_pcrm_anamnesepreventie_1_c')->insert([
         [
+            'id'                                                       => 'lead-anam-001',
             'leads_pcrm_anamnesepreventie_1leads_ida'                  => $leadId,
             'leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb' => $anamnesis1Id,
             'deleted'                                                  => 0,
         ],
         [
+            'id'                                                       => 'lead-anam-002',
             'leads_pcrm_anamnesepreventie_1leads_ida'                  => $leadId,
             'leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb' => $anamnesis2Id,
             'deleted'                                                  => 0,
@@ -433,11 +505,13 @@ test('imports lead with multiple persons correctly', function () {
     // Link anamnesis to persons
     DB::connection('sugarcrm')->table('pcrm_anamnetie_contacts_c')->insert([
         [
+            'id'                        => 'anam-person-001',
             'pcrm_anamn171deventie_idb' => $anamnesis1Id,
             'pcrm_anamn0b6eontacts_ida' => $person1ExternalId,
             'deleted'                   => 0,
         ],
         [
+            'id'                        => 'anam-person-002',
             'pcrm_anamn171deventie_idb' => $anamnesis2Id,
             'pcrm_anamn0b6eontacts_ida' => $person2ExternalId,
             'deleted'                   => 0,
@@ -447,11 +521,13 @@ test('imports lead with multiple persons correctly', function () {
     // Add lead->person mappings for both persons
     DB::connection('sugarcrm')->table('leads_contacts_c')->insert([
         [
+            'id'                  => 'lead-contact-001',
             'leads_c7104eads_ida' => $leadId,
             'leads_cbb5dacts_idb' => $person1ExternalId,
             'deleted'             => 0,
         ],
         [
+            'id'                  => 'lead-contact-002',
             'leads_c7104eads_ida' => $leadId,
             'leads_cbb5dacts_idb' => $person2ExternalId,
             'deleted'             => 0,
@@ -534,6 +610,7 @@ test('imports call activities from sugarcrm', function () {
 
     // Link lead to person
     DB::connection('sugarcrm')->table('leads_contacts_c')->insert([
+        'id'                  => 'lead-contact-001',
         'leads_c7104eads_ida' => $leadId,
         'leads_cbb5dacts_idb' => $personExternalId,
         'deleted'             => 0,
@@ -554,12 +631,14 @@ test('imports call activities from sugarcrm', function () {
     ]);
     // Link lead to anamnesis
     DB::connection('sugarcrm')->table('leads_pcrm_anamnesepreventie_1_c')->insert([
+        'id'                                                       => 'lead-anam-001',
         'leads_pcrm_anamnesepreventie_1leads_ida'                  => $leadId,
         'leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb' => $anamnesisId,
         'deleted'                                                  => 0,
     ]);
     // Link anamnesis to person
     DB::connection('sugarcrm')->table('pcrm_anamnetie_contacts_c')->insert([
+        'id'                        => 'anam-person-001',
         'pcrm_anamn171deventie_idb' => $anamnesisId,
         'pcrm_anamn0b6eontacts_ida' => $personExternalId,
         'deleted'                   => 0,
@@ -651,4 +730,292 @@ test('imports call activities from sugarcrm', function () {
         ->and($activity2->additional['direction'])->toBe('outbound')
         ->and($activity2->additional['status'])->toBe('planned')
         ->and($activity2->additional['belgroep'])->toBe('follow-up');
+});
+
+test('imports email activities from sugarcrm', function () {
+    // Create user with external_id (required for import)
+    $user = User::factory()->create(['external_id' => 'user-001']);
+
+    // Create app person that will be linked to lead via anamnesis relation
+    $person = Person::factory()->create([
+        'external_id' => 'person-001',
+        'first_name'  => 'John',
+        'last_name'   => 'Doe',
+    ]);
+
+    // Insert lead data in SugarCRM
+    $leadId = 'lead-001';
+    $personId = 'person-001';
+    $anamnesisId = 'anamnesis-001';
+
+    DB::connection('sugarcrm')->table('leads')->insert([
+        'id'            => $leadId,
+        'first_name'    => 'John',
+        'last_name'     => 'Doe',
+        'status'        => 'New',
+        'date_entered'  => '2024-01-01 10:00:00',
+        'date_modified' => '2024-01-01 11:00:00',
+        'deleted'       => 0,
+    ]);
+
+    DB::connection('sugarcrm')->table('leads_cstm')->insert([
+        'id_c'              => $leadId,
+        'workflow_status_c' => 'nieuweaanvraag',
+        'kanaal_c'          => 'website',
+        'soort_aanvraag_c'  => 'preventie',
+        'gender_c'          => 'male',
+    ]);
+
+    // Insert person-lead relation
+    DB::connection('sugarcrm')->table('leads_contacts_c')->insert([
+        'id'                  => 'rel-001',
+        'leads_c7104eads_ida' => $leadId,
+        'leads_cbb5dacts_idb' => $personId,
+        'deleted'             => 0,
+    ]);
+
+    // Insert anamnesis data
+    DB::connection('sugarcrm')->table('pcrm_anamnesepreventie')->insert([
+        'id'            => $anamnesisId,
+        'name'          => 'Test Anamnesis',
+        'status'        => 'active',
+        'date_entered'  => '2024-01-01 09:00:00',
+        'date_modified' => '2024-01-01 09:30:00',
+        'anamnese'      => 'Test anamnesis data',
+        'lengte'        => 180,
+        'gewicht'       => 75,
+        'metalen'       => 1,
+        'medicijnen'    => 0,
+        'glaucoom'      => 0,
+        'claustrofobie' => 1,
+        'deleted'       => 0,
+    ]);
+
+    DB::connection('sugarcrm')->table('pcrm_anamnesepreventie_cstm')->insert([
+        'id_c'            => $anamnesisId,
+        'opm_metalen_c'   => 'Heeft metalen implantaat',
+        'hart_operatie_c' => 0,
+        'allergie_c'      => 1,
+        'opm_allergie_c'  => 'Allergisch voor pinda\'s',
+    ]);
+
+    // Insert anamnesis relations
+    DB::connection('sugarcrm')->table('leads_pcrm_anamnesepreventie_1_c')->insert([
+        'id'                                                       => 'lead-anam-001',
+        'leads_pcrm_anamnesepreventie_1leads_ida'                  => $leadId,
+        'leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb' => $anamnesisId,
+        'deleted'                                                  => 0,
+    ]);
+
+    DB::connection('sugarcrm')->table('pcrm_anamnetie_contacts_c')->insert([
+        'id'                        => 'anam-person-001',
+        'pcrm_anamn171deventie_idb' => $anamnesisId,
+        'pcrm_anamn0b6eontacts_ida' => $personId,
+        'deleted'                   => 0,
+    ]);
+
+    // Insert email data
+    $emailId1 = 'email-001';
+    $emailId2 = 'email-002';
+
+    DB::connection('sugarcrm')->table('emails')->insert([
+        [
+            'id'               => $emailId1,
+            'name'             => 'Welkom bij onze diensten',
+            'date_entered'     => '2024-01-01 12:00:00',
+            'date_modified'    => '2024-01-01 12:00:00',
+            'assigned_user_id' => 'user-001',
+            'created_by'       => 'user-001',
+            'deleted'          => 0,
+            'date_sent'        => '2024-01-01 12:00:00',
+            'message_id'       => 'msg-001@example.com',
+            'type'             => 'out',
+            'status'           => 'sent',
+            'flagged'          => 0,
+            'reply_to_status'  => null,
+            'intent'           => 'welcome',
+            'mailbox_id'       => 'mailbox-001',
+            'parent_type'      => 'Leads',
+            'parent_id'        => $leadId,
+        ],
+        [
+            'id'               => $emailId2,
+            'name'             => 'Opvolging afspraak',
+            'date_entered'     => '2024-01-02 14:00:00',
+            'date_modified'    => '2024-01-02 14:00:00',
+            'assigned_user_id' => 'user-001',
+            'created_by'       => 'user-001',
+            'deleted'          => 0,
+            'date_sent'        => '2024-01-02 14:00:00',
+            'message_id'       => 'msg-002@example.com',
+            'type'             => 'out',
+            'status'           => 'sent',
+            'flagged'          => 1,
+            'reply_to_status'  => null,
+            'intent'           => 'follow_up',
+            'mailbox_id'       => 'mailbox-001',
+            'parent_type'      => 'Leads',
+            'parent_id'        => $leadId,
+        ],
+    ]);
+
+    // Insert email text content
+    DB::connection('sugarcrm')->table('emails_text')->insert([
+        [
+            'email_id'         => $emailId1,
+            'description'      => 'Welkom bij onze diensten. We kijken ernaar uit om u te helpen.',
+            'description_html' => '<p>Welkom bij onze diensten. We kijken ernaar uit om u te helpen.</p>',
+            'raw_source'       => 'Raw email content here...',
+        ],
+        [
+            'email_id'         => $emailId2,
+            'description'      => 'Dit is een opvolging van uw afspraak.',
+            'description_html' => '<p>Dit is een <strong>opvolging</strong> van uw afspraak.</p>',
+            'raw_source'       => 'Raw follow-up email content...',
+        ],
+    ]);
+
+    // Insert email-bean relations
+    DB::connection('sugarcrm')->table('emails_beans')->insert([
+        [
+            'id'            => 'email-bean-001',
+            'email_id'      => $emailId1,
+            'bean_id'       => $leadId,
+            'bean_module'   => 'Leads',
+            'campaign_data' => null,
+            'date_modified' => '2024-01-01 12:00:00',
+            'deleted'       => 0,
+        ],
+        [
+            'id'            => 'email-bean-002',
+            'email_id'      => $emailId2,
+            'bean_id'       => $leadId,
+            'bean_module'   => 'Leads',
+            'campaign_data' => null,
+            'date_modified' => '2024-01-02 14:00:00',
+            'deleted'       => 0,
+        ],
+    ]);
+
+    // Insert email attachments (notes)
+    $attachmentId1 = 'attachment-001';
+    $attachmentId2 = 'attachment-002';
+    $attachmentId3 = 'attachment-003';
+
+    DB::connection('sugarcrm')->table('notes')->insert([
+        [
+            'id'               => $attachmentId1,
+            'name'             => 'Brochure attachment',
+            'filename'         => 'brochure.pdf',
+            'file_mime_type'   => 'application/pdf',
+            'description'      => 'Company brochure attachment',
+
+            'date_entered'     => '2024-01-01 12:01:00',
+            'date_modified'    => '2024-01-01 12:01:00',
+            'created_by'       => 'user-001',
+            'assigned_user_id' => 'user-001',
+            'deleted'          => 0,
+            'parent_id'        => $emailId1,
+            'parent_type'      => 'Emails',
+        ],
+        [
+            'id'               => $attachmentId2,
+            'name'             => 'Follow-up document',
+            'filename'         => 'follow_up.docx',
+            'file_mime_type'   => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'description'      => 'Follow-up document attachment',
+
+            'date_entered'     => '2024-01-02 14:01:00',
+            'date_modified'    => '2024-01-02 14:01:00',
+            'created_by'       => 'user-001',
+            'assigned_user_id' => 'user-001',
+            'deleted'          => 0,
+            'parent_id'        => $emailId2,
+            'parent_type'      => 'Emails',
+        ],
+        [
+            'id'               => $attachmentId3,
+            'name'             => 'Additional info',
+            'filename'         => 'info.txt',
+            'file_mime_type'   => 'text/plain',
+            'description'      => 'Additional information file',
+
+            'date_entered'     => '2024-01-02 14:02:00',
+            'date_modified'    => '2024-01-02 14:02:00',
+            'created_by'       => 'user-001',
+            'assigned_user_id' => 'user-001',
+            'deleted'          => 0,
+            'parent_id'        => $emailId2,
+            'parent_type'      => 'Emails',
+        ],
+    ]);
+
+    // Run import
+    Artisan::call('import:leads', [
+        '--connection' => 'sugarcrm',
+        '--limit'      => 10,
+        '--lead-ids'   => [$leadId],
+    ]);
+
+    // Verify lead was imported
+    $lead = Lead::where('external_id', $leadId)->first();
+    expect($lead)->not->toBeNull();
+
+    // Verify emails were imported as Email records (not activities)
+    $emails = Email::where('lead_id', $lead->id)
+        ->orderBy('created_at')
+        ->get();
+
+    expect($emails)->toHaveCount(2);
+
+    // Check first email
+    $email1 = $emails[0];
+    expect($email1->subject)->toBe('Welkom bij onze diensten')
+        ->and($email1->unique_id)->toBe($emailId1)
+        ->and($email1->message_id)->toBe('msg-001@example.com')
+        ->and($email1->lead_id)->toBe($lead->id)
+        ->and($email1->source)->toBe('web');
+
+    // Check second email
+    $email2 = $emails[1];
+    expect($email2->subject)->toBe('Opvolging afspraak')
+        ->and($email2->unique_id)->toBe($emailId2)
+        ->and($email2->message_id)->toBe('msg-002@example.com')
+        ->and($email2->lead_id)->toBe($lead->id)
+        ->and($email2->source)->toBe('web')
+        ->and($email1->tags()->where('name', 'import')->exists())->toBe(true)
+        ->and($email2->tags()->where('name', 'import')->exists())->toBe(true);
+
+    // Verify import tag was attached
+
+    // Verify email attachments were imported as Email attachments
+    $email1Attachments = $email1->attachments()->get();
+    expect($email1Attachments)->toHaveCount(1);
+
+    $attachment1 = $email1Attachments[0];
+    expect($attachment1->name)->toBe('brochure.pdf')
+        ->and($attachment1->content_type)->toBe('application/pdf')
+        ->and($attachment1->path)->toContain($attachmentId1);
+
+    $email2Attachments = $email2->attachments()->get();
+    expect($email2Attachments)->toHaveCount(2);
+
+    $attachment2 = $email2Attachments->firstWhere('name', 'follow_up.docx');
+    expect($attachment2)->not->toBeNull()
+        ->and($attachment2->name)->toBe('follow_up.docx')
+        ->and($attachment2->content_type)->toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+
+    $attachment3 = $email2Attachments->firstWhere('name', 'info.txt');
+    expect($attachment3)->not->toBeNull()
+        ->and($attachment3->name)->toBe('info.txt')
+        ->and($attachment3->content_type)->toBe('text/plain')
+        ->and(Storage::exists($attachment1->path))->toBe(true)
+        ->and(Storage::exists($attachment2->path))->toBe(true)
+        ->and(Storage::exists($attachment3->path))->toBe(true);
+
+    // Verify file content (placeholder files)
+    $file1Content = Storage::get($attachment1->path);
+    expect($file1Content)->toContain('PDF-1.4 PLACEHOLDER')
+        ->and($file1Content)->toContain('brochure.pdf')
+        ->and($file1Content)->toContain('application/pdf');
 });

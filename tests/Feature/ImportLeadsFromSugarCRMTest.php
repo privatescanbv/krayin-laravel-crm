@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 
@@ -26,7 +27,7 @@ beforeEach(function () {
     // Drop if exist
     foreach ([
         'email_addr_bean_rel', 'email_addresses', 'leads_cstm', 'leads', 'leads_contacts_c',
-        'leads_pcrm_anamnesepreventie_1_c', 'pcrm_anamnetie_contacts_c', 'pcrm_anamnesepreventie', 'pcrm_anamnesepreventie_cstm',
+        'leads_pcrm_anamnesepreventie_1_c', 'pcrm_anamnetie_contacts_c', 'pcrm_anamnesepreventie', 'pcrm_anamnesepreventie_cstm', 'calls',
     ] as $tbl) {
         if (Schema::connection('sugarcrm')->hasTable($tbl)) {
             Schema::connection('sugarcrm')->drop($tbl);
@@ -211,6 +212,26 @@ beforeEach(function () {
         $table->string('aos_products_id_c')->nullable();
         $table->text('diagnose_c')->nullable();
         $table->integer('operatieopname_c')->nullable();
+    });
+
+    // Create calls table for call activities
+    Schema::connection('sugarcrm')->create('calls', function (Blueprint $table) {
+        $table->string('id')->primary();
+        $table->string('name')->nullable();
+        $table->dateTime('date_entered')->nullable();
+        $table->dateTime('date_modified')->nullable();
+        $table->string('modified_user_id')->nullable();
+        $table->string('created_by')->nullable();
+        $table->text('description')->nullable();
+        $table->integer('deleted')->default(0);
+        $table->string('assigned_user_id')->nullable();
+        $table->dateTime('date_start')->nullable();
+        $table->dateTime('date_end')->nullable();
+        $table->string('parent_type')->nullable();
+        $table->string('status')->nullable();
+        $table->string('direction')->nullable();
+        $table->string('parent_id')->nullable();
+        $table->string('belgroep_c')->nullable();
     });
 });
 
@@ -467,4 +488,112 @@ test('imports lead with multiple persons correctly', function () {
         ->and($anamnesis2->weight)->toBe(75)
         ->and($anamnesis2->metals)->toBe(true)
         ->and($anamnesis2->medications)->toBe(false);
+});
+
+test('imports call activities from sugarcrm', function () {
+    // Create app person that will be linked to lead
+    $personExternalId = 'person-001';
+    $appPerson = Person::factory()->create(['external_id' => $personExternalId]);
+
+    $leadId = 'lead-001';
+    $callId1 = 'call-001';
+    $callId2 = 'call-002';
+
+    // Insert SugarCRM lead data
+    DB::connection('sugarcrm')->table('leads')->insert([
+        'id' => $leadId,
+        'first_name' => 'John',
+        'last_name' => 'Doe',
+        'phone_work' => '+31612345678',
+        'date_entered' => '2024-01-15 10:00:00',
+        'date_modified' => '2024-01-15 11:00:00',
+        'status' => 'New',
+        'deleted' => 0,
+    ]);
+
+    // Insert custom fields
+    DB::connection('sugarcrm')->table('leads_cstm')->insert([
+        'id_c' => $leadId,
+        'workflow_status_c' => 'nieuweaanvraag',
+        'kanaal_c' => 'website',
+        'soort_aanvraag_c' => 'preventie',
+    ]);
+
+    // Link lead to person
+    DB::connection('sugarcrm')->table('leads_contacts_c')->insert([
+        'leads_c7104eads_ida' => $leadId,
+        'leads_cbb5dacts_idb' => $personExternalId,
+        'deleted' => 0,
+    ]);
+
+    // Insert call activities
+    DB::connection('sugarcrm')->table('calls')->insert([
+        [
+            'id' => $callId1,
+            'name' => 'Intake gesprek',
+            'date_entered' => '2024-01-16 09:00:00',
+            'date_modified' => '2024-01-16 09:30:00',
+            'description' => 'Eerste intake gesprek met klant',
+            'deleted' => 0,
+            'date_start' => '2024-01-16 14:00:00',
+            'date_end' => '2024-01-16 14:30:00',
+            'parent_type' => 'Leads',
+            'status' => 'held',
+            'direction' => 'outbound',
+            'parent_id' => $leadId,
+            'belgroep_c' => 'intake',
+        ],
+        [
+            'id' => $callId2,
+            'name' => 'Follow-up call',
+            'date_entered' => '2024-01-17 10:00:00',
+            'date_modified' => '2024-01-17 10:15:00',
+            'description' => 'Follow-up gesprek',
+            'deleted' => 0,
+            'date_start' => '2024-01-17 15:00:00',
+            'date_end' => '2024-01-17 15:15:00',
+            'parent_type' => 'Leads',
+            'status' => 'planned',
+            'direction' => 'outbound',
+            'parent_id' => $leadId,
+            'belgroep_c' => 'follow-up',
+        ],
+    ]);
+
+    // Run import
+    $exit = Artisan::call('import:leads', [
+        '--connection' => 'sugarcrm',
+        '--limit' => 1,
+    ]);
+    expect($exit)->toBe(0);
+
+    // Verify lead was imported
+    $lead = Lead::where('external_id', $leadId)->first();
+    expect($lead)->not->toBeNull();
+
+    // Verify call activities were imported
+    $activities = $lead->activities()->where('type', 'call')->get();
+    expect($activities)->toHaveCount(2);
+
+    // Check first call activity
+    $activity1 = $activities->where('additional->external_id', $callId1)->first();
+    expect($activity1)->not->toBeNull()
+        ->and($activity1->title)->toBe('Intake gesprek')
+        ->and($activity1->type)->toBe('call')
+        ->and($activity1->comment)->toBe('Eerste intake gesprek met klant')
+        ->and($activity1->is_done)->toBe(true) // 'held' status should map to done
+        ->and($activity1->additional['direction'])->toBe('outbound')
+        ->and($activity1->additional['status'])->toBe('held')
+        ->and($activity1->additional['belgroep'])->toBe('intake');
+
+    // Check second call activity
+    $activity2 = $activities->where('additional->external_id', $callId2)->first();
+    expect($activity2)->not->toBeNull()
+        ->and($activity2->title)->toBe('Follow-up call')
+        ->and($activity2->type)->toBe('call')
+        ->and($activity2->comment)->toBe('Follow-up gesprek')
+        ->and($activity2->is_done)->toBe(false) // 'planned' status should map to not done
+        ->and($activity2->additional['direction'])->toBe('outbound')
+        ->and($activity2->additional['status'])->toBe('planned')
+        ->and($activity2->additional['belgroep'])->toBe('follow-up');
 });

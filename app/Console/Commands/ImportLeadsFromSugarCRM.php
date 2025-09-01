@@ -10,17 +10,20 @@ use App\Models\Department;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 
 /**
- * Import leads from SugarCRM database with anamnesis data
+ * Import leads from SugarCRM database with anamnesis data and call activities
  *
- * This command imports leads and their associated anamnesis data from SugarCRM.
+ * This command imports leads and their associated anamnesis data from SugarCRM,
+ * as well as call activities related to those leads.
  * It uses the following relationships:
  * - leads_contacts_c: Links leads to persons
  * - leads_pcrm_anamnesepreventie_1_c: Links leads to anamnesis
  * - pcrm_anamnetie_contacts_c: Links anamnesis to persons
+ * - calls table: Contains call activities where parent_type = 'Leads'
  */
 class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 {
@@ -40,7 +43,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
      *
      * @var string
      */
-    protected $description = 'Import leads from SugarCRM database with anamnesis data';
+    protected $description = 'Import leads from SugarCRM database with anamnesis data and call activities';
 
     /**
      * Execute the console command.
@@ -167,20 +170,24 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
             $leadByPersons = $this->extractPerson($records);
             $leadByPersonsByAnamnesis = $this->extractAnamenesis($leadByPersons);
+            
+            // Extract call activities for the leads
+            $callActivities = $this->extractCallActivities($records);
+            
             if ($dryRun) {
-                $this->showDryRunResults($records, $leadByPersonsByAnamnesis);
+                $this->showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities);
 
                 return;
             }
 
-            $this->importRecords($records, $leadByPersonsByAnamnesis);
+            $this->importRecords($records, $leadByPersonsByAnamnesis, $callActivities);
         });
     }
 
     /**
      * Show dry run results
      */
-    private function showDryRunResults($records, $leadByPersonsByAnamnesis): void
+    private function showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities = []): void
     {
         $this->info("\n=== DRY RUN RESULTS ===");
 
@@ -202,6 +209,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             'Person Match',
             'Rel Anamnesis IDs',
             'Rel Anamnesis Count',
+            'Call Activities',
         ];
         $rows = [];
 
@@ -227,6 +235,10 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 $relatedAnamnesisCount += count($perPersonAnamneses);
             }
 
+            // Get call activities for this lead
+            $leadCallActivities = $callActivities[$record->id] ?? [];
+            $callActivitiesInfo = empty($leadCallActivities) ? '—' : count($leadCallActivities) . ' calls';
+
             $rows[] = [
                 $record->id ?? 'N/A',
                 $record->first_name ?? 'N/A',
@@ -245,17 +257,33 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 $personMatch,
                 empty($relatedAnamnesisIds) ? '—' : implode(',', $relatedAnamnesisIds),
                 $relatedAnamnesisCount,
+                $callActivitiesInfo,
             ];
         }
 
         $this->table($headers, $rows);
         $this->info('Would import '.count($rows).' leads');
+        
+        // Show call activities summary
+        $totalCallActivities = array_sum(array_map('count', $callActivities));
+        $this->line('');
+        $this->info("Call Activities Summary:");
+        $this->info("Total call activities found: {$totalCallActivities}");
+        
+        if ($totalCallActivities > 0) {
+            $this->info("Call activities per lead:");
+            foreach ($callActivities as $leadId => $calls) {
+                $leadRecord = collect($records)->firstWhere('id', $leadId);
+                $leadName = $leadRecord ? "{$leadRecord->first_name} {$leadRecord->last_name}" : "Lead {$leadId}";
+                $this->info("  - {$leadName}: " . count($calls) . " calls");
+            }
+        }
     }
 
     /**
      * Import records
      */
-    private function importRecords($records, $leadByPersonsByAnamnesis): void
+    private function importRecords($records, $leadByPersonsByAnamnesis, $callActivities = []): void
     {
         $bar = $this->output->createProgressBar($records->count());
         $bar->start();
@@ -267,6 +295,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $skippedAlreadyExisting = 0;
         $skippedNoRelatedPersons = 0;
         $skippedNotAllPersonsFound = 0;
+        $callActivitiesImported = 0;
+        $callActivitiesSkipped = 0;
 
         foreach ($records as $record) {
             try {
@@ -318,7 +348,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 $this->info('Creating lead for persons: '.implode(', ', array_map(fn ($p) => $p->name.' (#'.$p->id.')', $persons)));
 
                 // Use database transaction to ensure all-or-nothing import
-                DB::transaction(function () use ($record, $persons, $leadByPersonsByAnamnesis, &$lead) {
+                DB::transaction(function () use ($record, $persons, $leadByPersonsByAnamnesis, $callActivities, &$lead) {
                     // Create lead with proper timestamps
                     $lead = $this->createEntityWithTimestamps(Lead::class, [
                         'external_id'            => $record->id,
@@ -380,6 +410,11 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                             }
                         }
                     }
+                    
+                    // Import call activities for this lead
+                    $callStats = $this->importCallActivities($lead, $callActivities);
+                    $callActivitiesImported += $callStats['imported'];
+                    $callActivitiesSkipped += $callStats['skipped'];
                 });
 
                 $imported++;
@@ -404,6 +439,10 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $this->info("⚠ Skipped: {$skipped}");
         $this->info("✗ Person not found: {$personNotFound}");
         $this->info("✗ Errors: {$errors}");
+        $this->line('');
+        $this->info('Call Activities:');
+        $this->info("✓ Call activities imported: {$callActivitiesImported}");
+        $this->info("⚠ Call activities skipped: {$callActivitiesSkipped}");
 
         // Detailed skip breakdown
         $this->line('');
@@ -956,5 +995,140 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         }
 
         return PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
+    }
+
+    /**
+     * Extract call activities from SugarCRM for the given leads
+     * 
+     * @param mixed $records The lead records
+     * @return array [lead_id => [call_data1, call_data2, ...]]
+     */
+    private function extractCallActivities($records): array
+    {
+        $leadIds = collect($records)->pluck('id')->all();
+        
+        if (empty($leadIds)) {
+            return [];
+        }
+
+        $connection = $this->option('connection');
+
+        $sql = DB::connection($connection)
+            ->table('calls')
+            ->select([
+                'id',
+                'name',
+                'date_entered',
+                'date_modified',
+                'modified_user_id',
+                'created_by',
+                'description',
+                'deleted',
+                'assigned_user_id',
+                'date_start',
+                'date_end',
+                'parent_type',
+                'status',
+                'direction',
+                'parent_id',
+                'belgroep_c'
+            ])
+            ->whereIn('parent_id', $leadIds)
+            ->where('parent_type', '=', 'Leads')
+            ->where('deleted', '=', 0)
+            ->orderBy('date_entered', 'asc');
+
+        $this->info('Extracting call activities: ' . $sql->toRawSql());
+        $calls = $sql->get();
+
+        $this->info('Found ' . $calls->count() . ' call activities');
+
+        // Group calls by parent_id (lead_id)
+        $result = [];
+        foreach ($calls as $call) {
+            if (!isset($result[$call->parent_id])) {
+                $result[$call->parent_id] = [];
+            }
+            $result[$call->parent_id][] = $call;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Import call activities for a lead
+     * 
+     * @param Lead $lead The lead to import activities for
+     * @param array $callActivities All call activities grouped by lead ID
+     * @return array Statistics about imported and skipped activities
+     */
+    private function importCallActivities(Lead $lead, array $callActivities): array
+    {
+        $leadCallActivities = $callActivities[$lead->external_id] ?? [];
+        
+        $imported = 0;
+        $skipped = 0;
+        
+        if (empty($leadCallActivities)) {
+            return ['imported' => $imported, 'skipped' => $skipped];
+        }
+
+        $this->info("Importing " . count($leadCallActivities) . " call activities for lead {$lead->external_id}");
+
+        foreach ($leadCallActivities as $callData) {
+            // Check if activity already exists by external reference
+            $existingActivity = Activity::where('additional->external_id', $callData->id)->first();
+            if ($existingActivity) {
+                $this->info("Skipping existing call activity with external_id={$callData->id}");
+                $skipped++;
+                continue;
+            }
+
+            // Create the activity
+            $activityData = [
+                'title' => $callData->name ?? 'Bel activiteit',
+                'type' => 'call',
+                'comment' => $callData->description ?? '',
+                'additional' => [
+                    'external_id' => $callData->id,
+                    'direction' => $callData->direction,
+                    'status' => $callData->status,
+                    'belgroep' => $callData->belgroep_c
+                ],
+                'schedule_from' => $this->parseSugarDate($callData->date_start),
+                'schedule_to' => $this->parseSugarDate($callData->date_end),
+                'is_done' => $this->mapCallStatus($callData->status),
+                'user_id' => 1, // Default user - you may want to map this from assigned_user_id
+                'lead_id' => $lead->id,
+            ];
+
+            $timestamps = [
+                'created_at' => $this->parseSugarDate($callData->date_entered),
+                'updated_at' => $this->parseSugarDate($callData->date_modified),
+            ];
+
+            $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
+            
+            $this->info("✓ Imported call activity: {$callData->name} for lead {$lead->external_id}");
+            $imported++;
+        }
+        
+        return ['imported' => $imported, 'skipped' => $skipped];
+    }
+
+    /**
+     * Map call status to is_done boolean
+     * 
+     * @param string|null $status
+     * @return bool
+     */
+    private function mapCallStatus(?string $status): bool
+    {
+        if (!$status) {
+            return false;
+        }
+
+        $completedStatuses = ['held', 'completed', 'done', 'finished'];
+        return in_array(strtolower(trim($status)), $completedStatuses);
     }
 }

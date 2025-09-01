@@ -64,7 +64,7 @@ class ActivityDataGrid extends DataGrid
                     ELSE NULL
                 END as entity_id')
             )
-            ->leftJoin('activity_participants', 'activities.id', '=', 'activity_participants.activity_id')
+
             ->leftJoin('leads', 'activities.lead_id', '=', 'leads.id')
             ->leftJoin('users', 'activities.user_id', '=', 'users.id')
             ->leftJoin('groups', 'activities.group_id', '=', 'groups.id')
@@ -80,7 +80,6 @@ class ActivityDataGrid extends DataGrid
                 $query->where(function ($query) {
                     if ($userIds = bouncer()->getAuthorizedUserIds()) {
                         $query->whereIn('activities.user_id', $userIds)
-                            ->orWhereIn('activity_participants.user_id', $userIds)
                             ->orWhere(function ($query) use ($userIds) {
                                 $query->whereNotNull('activities.group_id')
                                     ->whereExists(function ($query) use ($userIds) {

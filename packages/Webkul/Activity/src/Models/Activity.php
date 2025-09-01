@@ -70,13 +70,7 @@ class Activity extends Model implements ActivityContract
         return $this->belongsTo(UserProxy::modelClass());
     }
 
-    /**
-     * The participants that belong to the activity.
-     */
-    public function participants()
-    {
-        return $this->hasMany(ParticipantProxy::modelClass());
-    }
+
 
     /**
      * Get the file associated with the activity.

@@ -90,7 +90,6 @@ class ActivityRepository extends Repository
             'users.name as user_name',
         )
             ->addSelect(DB::raw('IF(activities.is_done, "done", "") as class'))
-            ->leftJoin('activity_participants', 'activities.id', '=', 'activity_participants.activity_id')
             ->leftJoin('users', 'activities.user_id', '=', 'users.id')
             ->leftJoin('groups', 'activities.group_id', '=', 'groups.id')
             ->whereIn('type', ['call', 'task', 'lunch'])
@@ -98,7 +97,6 @@ class ActivityRepository extends Repository
             ->where(function ($query) {
                 if ($userIds = bouncer()->getAuthorizedUserIds()) {
                     $query->whereIn('activities.user_id', $userIds)
-                        ->orWhereIn('activity_participants.user_id', $userIds)
                         ->orWhereHas('group', function ($query) use ($userIds) {
                             $query->whereHas('users', function ($query) use ($userIds) {
                                 $query->whereIn('users.id', $userIds);

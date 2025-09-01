@@ -54,8 +54,8 @@ class ActivityController extends Controller
         }
 
         // Auto-assign group if not specified but user has a group
-        $groupId = $data['group_id'];
-        if (!$groupId && $data['user_id']) {
+        $groupId = $data['group_id'] ?? null;
+        if (!$groupId && isset($data['user_id']) && $data['user_id']) {
             $user = User::find($data['user_id']);
             if ($user && $user->groups()->count() > 0) {
                 $groupId = $user->groups()->first()->id;
@@ -64,7 +64,7 @@ class ActivityController extends Controller
 
         $activity = $this->activityRepository->create(array_merge($data, [
             'is_done' => $request->type == 'note' ? 1 : 0,
-            'user_id' => $data['user_id'],
+            'user_id' => $data['user_id'] ?? null,
             'group_id' => $groupId,
             'lead_id' => $id,
         ]));

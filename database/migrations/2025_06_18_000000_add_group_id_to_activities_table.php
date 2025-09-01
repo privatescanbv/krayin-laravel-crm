@@ -9,10 +9,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('activities', function (Blueprint $table) {
-            $table->unsignedBigInteger('group_id')->nullable(); // Optional field
-            $table->foreign('group_id')->references('id')->on('groups')->onDelete('set null');
-        });
+        // This migration is replaced by 2025_01_22_000003_fix_group_id_column_type_in_activities_table.php
+        // Skip to avoid conflicts
     }
 
     public function down(): void

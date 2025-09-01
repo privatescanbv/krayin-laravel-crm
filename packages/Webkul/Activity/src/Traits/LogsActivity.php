@@ -52,7 +52,13 @@ trait LogsActivity
                     $activityData['group_id'] = $firstGroup->id;
                 }
 
-                $activity = app(ActivityRepository::class)->create($activityData);
+                // Only create activity if we have a valid group_id
+                if (isset($activityData['group_id']) && $activityData['group_id']) {
+                    $activity = app(ActivityRepository::class)->create($activityData);
+                } else {
+                    // Skip activity creation if no valid group_id
+                    return;
+                }
 
                 // Only attach via pivot table if not a Lead model
                 if (!(method_exists($model, 'getTable') && $model->getTable() === 'leads')) {
@@ -159,7 +165,13 @@ trait LogsActivity
                 $activityData['group_id'] = $firstGroup->id;
             }
 
-            $activity = app(ActivityRepository::class)->create($activityData);
+            // Only create activity if we have a valid group_id
+            if (isset($activityData['group_id']) && $activityData['group_id']) {
+                $activity = app(ActivityRepository::class)->create($activityData);
+            } else {
+                // Skip activity creation if no valid group_id
+                continue;
+            }
 
             if ($model instanceof AttributeValue) {
                 // Only attach via pivot table if the entity is not a Lead model

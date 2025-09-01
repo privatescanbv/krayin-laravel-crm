@@ -2,21 +2,19 @@
 
 namespace Tests\Feature;
 
+use Database\Seeders\TestSeeder;
 use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\User;
 
-require_once __DIR__.'/../TestHelpers.php';
-
 beforeEach(function () {
+    $this->seed(TestSeeder::class);
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
 });
 
 test('test fields with storing activities', function () {
     // Arrange
-    ensureDepartmentsAndGroups(); // Make sure departments and groups exist
-
     $user = User::factory()->create();
-    $department = getPrivatescanDepartment();
+    $department = \App\Models\Department::where('name', \App\Enums\Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'created_by'    => $user->id,
         'department_id' => $department->id,

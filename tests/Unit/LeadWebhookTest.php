@@ -5,14 +5,13 @@ namespace Tests\Unit;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Observers\LeadObserver;
 use App\Services\WebhookService;
+use Database\Seeders\TestSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Tests\TestCase;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
-
-require_once __DIR__.'/../TestHelpers.php';
 
 class LeadWebhookTest extends TestCase
 {
@@ -25,6 +24,7 @@ class LeadWebhookTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->seed(TestSeeder::class);
 
         $this->webhookCallCount = 0;
 
@@ -109,13 +109,10 @@ class LeadWebhookTest extends TestCase
         return $mock;
     }
 
-    private function createTestLead(): Lead
+        private function createTestLead(): Lead
     {
-        // Ensure departments and groups exist
-        ensureDepartmentsAndGroups();
-
-        $department = getPrivatescanDepartment();
-
+        $department = \App\Models\Department::where('name', \App\Enums\Departments::PRIVATESCAN->value)->firstOrFail();
+        
         return Lead::factory()->create([
             'first_name'             => 'John',
             'last_name'              => 'Doe',

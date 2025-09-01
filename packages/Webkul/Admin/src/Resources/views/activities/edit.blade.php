@@ -284,23 +284,23 @@
                                 <x-admin::form.control-group.error control-name="type" />
                             </x-admin::form.control-group>
 
-{{--                            <!-- Location -->--}}
-{{--                            <x-admin::form.control-group class="!mb-0">--}}
-{{--                                <x-admin::form.control-group.label>--}}
-{{--                                    @lang('admin::app.activities.edit.location')--}}
-{{--                                </x-admin::form.control-group.label>--}}
+                            <!-- Location -->
+                            <x-admin::form.control-group class="!mb-0">
+                                <x-admin::form.control-group.label>
+                                    @lang('admin::app.activities.edit.location')
+                                </x-admin::form.control-group.label>
 
-{{--                                <x-admin::form.control-group.control--}}
-{{--                                    type="text"--}}
-{{--                                    name="location"--}}
-{{--                                    id="location"--}}
-{{--                                    :value="old('location') ?? $activity->location"--}}
-{{--                                    :label="trans('admin::app.activities.edit.location')"--}}
-{{--                                    :placeholder="trans('admin::app.activities.edit.location')"--}}
-{{--                                />--}}
+                                <x-admin::form.control-group.control
+                                    type="text"
+                                    name="location"
+                                    id="location"
+                                    :value="old('location') ?? $activity->location"
+                                    :label="trans('admin::app.activities.edit.location')"
+                                    :placeholder="trans('admin::app.activities.edit.location')"
+                                />
 
-{{--                                <x-admin::form.control-group.error control-name="location" />--}}
-{{--                            </x-admin::form.control-group>--}}
+                                <x-admin::form.control-group.error control-name="location" />
+                            </x-admin::form.control-group>
                         </x-slot>
                     </x-admin::accordion>
 

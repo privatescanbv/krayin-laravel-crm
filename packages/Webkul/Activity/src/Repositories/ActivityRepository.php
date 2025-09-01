@@ -145,6 +145,4 @@ class ActivityRepository extends Repository
 
         return $queryBuilder->count() ? true : false;
     }
-
-
 }

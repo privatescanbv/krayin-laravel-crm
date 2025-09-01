@@ -28,8 +28,9 @@ abstract class AbstractSugarCRMImport extends Command
                 return Carbon::instance($value)->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s');
             }
 
-            return Carbon::parse((string) $value, 'UTC')
-                ->setTimezone(config('app.timezone'))
+            // Parse SugarCRM date assuming it's already in the application timezone
+            // SugarCRM dates appear to be stored in local time, not UTC
+            return Carbon::parse((string) $value, config('app.timezone'))
                 ->format('Y-m-d H:i:s');
         } catch (Throwable $e) {
             return null;

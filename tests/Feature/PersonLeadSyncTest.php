@@ -1,6 +1,8 @@
 <?php
 
+use App\Enums\Departments;
 use App\Models\Address;
+use App\Models\Department;
 use Database\Seeders\TestSeeder;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
@@ -50,7 +52,7 @@ test('can access edit with lead page', function () {
         'user_id'    => test()->user->id,
     ]);
 
-    $department = \App\Models\Department::where('name', \App\Enums\Departments::PRIVATESCAN->value)->firstOrFail();
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
@@ -77,7 +79,7 @@ test('can access edit with lead page', function () {
 test('manual search returns no results when no person_id provided', function () {
     $data = createPipelineData();
 
-    $department = \App\Models\Department::where('name', \App\Enums\Departments::PRIVATESCAN->value)->firstOrFail();
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
@@ -148,7 +150,7 @@ test('can update person with lead data', function () {
         'user_id'    => test()->user->id,
     ]);
 
-    $department = \App\Models\Department::where('name', \App\Enums\Departments::PRIVATESCAN->value)->firstOrFail();
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
@@ -228,7 +230,7 @@ test('handles validation errors gracefully', function () {
         'user_id' => test()->user->id,
     ]);
 
-    $department = \App\Models\Department::where('name', \App\Enums\Departments::PRIVATESCAN->value)->firstOrFail();
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
@@ -260,7 +262,7 @@ test('returns correct field differences', function () {
         'user_id'       => test()->user->id,
     ]);
 
-    $department = \App\Models\Department::where('name', \App\Enums\Departments::PRIVATESCAN->value)->firstOrFail();
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
@@ -288,7 +290,7 @@ test('handles malformed date gracefully', function () {
         'user_id'       => test()->user->id,
     ]);
 
-    $department = \App\Models\Department::where('name', \App\Enums\Departments::PRIVATESCAN->value)->firstOrFail();
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
@@ -318,7 +320,7 @@ test('handles null date values correctly', function () {
         'user_id'       => test()->user->id,
     ]);
 
-    $department = \App\Models\Department::where('name', \App\Enums\Departments::PRIVATESCAN->value)->firstOrFail();
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
@@ -451,7 +453,7 @@ test('manual search handles exact match correctly', function () {
         'user_id'     => test()->user->id,
     ]);
 
-    $department = \App\Models\Department::where('name', \App\Enums\Departments::PRIVATESCAN->value)->firstOrFail();
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],

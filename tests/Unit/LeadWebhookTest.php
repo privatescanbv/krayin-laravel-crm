@@ -2,7 +2,9 @@
 
 namespace Tests\Unit;
 
+use App\Enums\Departments;
 use App\Enums\PipelineStageDefaultKeys;
+use App\Models\Department;
 use App\Observers\LeadObserver;
 use App\Services\WebhookService;
 use Database\Seeders\TestSeeder;
@@ -111,7 +113,7 @@ class LeadWebhookTest extends TestCase
 
     private function createTestLead(): Lead
     {
-        $department = \App\Models\Department::where('name', \App\Enums\Departments::PRIVATESCAN->value)->firstOrFail();
+        $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
 
         return Lead::factory()->create([
             'first_name'             => 'John',

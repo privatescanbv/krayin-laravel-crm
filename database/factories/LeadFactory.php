@@ -2,7 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Enums\Departments;
 use App\Models\Address;
+use App\Models\Department;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -58,9 +60,9 @@ class LeadFactory extends Factory
         }
 
         // Get or create default department
-        $department = \App\Models\Department::where('name', \App\Enums\Departments::PRIVATESCAN->value)->first();
+        $department = Department::where('name', Departments::PRIVATESCAN->value)->first();
         if (! $department) {
-            $department = \App\Models\Department::create(['name' => \App\Enums\Departments::PRIVATESCAN->value]);
+            $department = Department::create(['name' => Departments::PRIVATESCAN->value]);
         }
 
         return [

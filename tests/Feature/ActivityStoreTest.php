@@ -2,8 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Enums\Departments;
+use App\Models\Department;
 use Database\Seeders\TestSeeder;
 use Webkul\Lead\Models\Lead;
+use Webkul\User\Models\Group;
 use Webkul\User\Models\User;
 
 beforeEach(function () {
@@ -14,7 +17,7 @@ beforeEach(function () {
 test('test fields with storing activities', function () {
     // Arrange
     $user = User::factory()->create();
-    $department = \App\Models\Department::where('name', \App\Enums\Departments::PRIVATESCAN->value)->firstOrFail();
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
         'created_by'    => $user->id,
         'department_id' => $department->id,
@@ -22,7 +25,7 @@ test('test fields with storing activities', function () {
     $this->actingAs($user, 'user');
 
     // Get the group that should be auto-selected based on lead's department
-    $expectedGroup = \Webkul\User\Models\Group::where('department_id', $department->id)->firstOrFail();
+    $expectedGroup = Group::where('department_id', $department->id)->firstOrFail();
 
     $activityData = [
         'title'         => 'Test activity',

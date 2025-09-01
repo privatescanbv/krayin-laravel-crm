@@ -1123,7 +1123,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     }
 
                     // Get group_id from lead's department (will throw exception if invalid)
-                    $groupId = \App\Models\Department::getGroupIdForLead($lead);
+                    $groupId = Department::getGroupIdForLead($lead);
 
                     // Create the activity
                     $activityData = [

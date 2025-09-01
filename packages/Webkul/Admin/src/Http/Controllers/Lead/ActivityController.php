@@ -45,18 +45,26 @@ class ActivityController extends Controller
         ]);
         $request['comment'] = $request->description;
 
+        // Convert empty strings to null for foreign key constraints
+        $data = $request->all();
+        foreach (['user_id', 'group_id'] as $field) {
+            if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
+                $data[$field] = null;
+            }
+        }
+
         // Auto-assign group if not specified but user has a group
-        $groupId = $request->group_id;
-        if (!$groupId && $request->user_id) {
-            $user = User::find($request->user_id);
+        $groupId = $data['group_id'];
+        if (!$groupId && $data['user_id']) {
+            $user = User::find($data['user_id']);
             if ($user && $user->groups()->count() > 0) {
                 $groupId = $user->groups()->first()->id;
             }
         }
 
-        $activity = $this->activityRepository->create(array_merge($request->all(), [
+        $activity = $this->activityRepository->create(array_merge($data, [
             'is_done' => $request->type == 'note' ? 1 : 0,
-            'user_id' => $request->user_id,
+            'user_id' => $data['user_id'],
             'group_id' => $groupId,
             'lead_id' => $id,
         ]));
@@ -95,7 +103,12 @@ class ActivityController extends Controller
             ->get();
 
         // Get the first user as fallback for API requests
-        $user = auth()->guard('user')->user() ?? User::query()->first();
+        $user = auth()->guard('user')->user() ?? User::query()->where('status', 1)->first();
+        
+        // If no user is available, return activities without email mapping
+        if (!$user) {
+            return $activities;
+        }
 
         return $activities->concat($emails->map(function ($email) use ($user) {
             return (object)[
@@ -109,7 +122,7 @@ class ActivityController extends Controller
                 'schedule_to' => null,
                 'user' => $user,
                 'group' => null,
-                'participants' => [],
+
                 'location' => null,
                 'additional' => [
                     'folders' => json_decode($email->folders),

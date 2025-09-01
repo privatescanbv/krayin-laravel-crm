@@ -120,21 +120,42 @@
                             @lang('admin::app.activities.edit.participants')
                         </x-admin::form.control-group.label>
 
-                        <!-- Participants Display -->
-                        <div class="border border-gray-200 rounded p-3 dark:border-gray-800">
+                        <!-- Debug: Show what data we have -->
+                        <div class="border border-gray-200 rounded p-3 dark:border-gray-800 mb-4">
+                            <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                Debug info:
+                                <br>Activity ID: {{ $activity->id }}
+                                <br>Activity User ID: {{ $activity->user_id }}
+                                <br>Activity User Name: {{ $activity->user ? $activity->user->name : 'N/A' }}
+                                <br>Participants Count: {{ $activity->participants->count() }}
+                            </div>
+                            
                             @if($activity->participants->count() > 0)
+                                <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">Participants:</div>
+                                @foreach($activity->participants as $participant)
+                                    <div class="text-sm text-gray-600 dark:text-gray-400">
+                                        - Participant ID: {{ $participant->id }}
+                                        - User ID: {{ $participant->user_id ?? 'null' }}
+                                        - Person ID: {{ $participant->person_id ?? 'null' }}
+                                        - User Name: {{ $participant->user ? $participant->user->name : 'N/A' }}
+                                        - Person Name: {{ $participant->person ? $participant->person->name : 'N/A' }}
+                                    </div>
+                                @endforeach
+                            @else
+                                <div class="text-sm text-gray-600 dark:text-gray-400">No participants found</div>
+                            @endif
+                        </div>
+
+                        <!-- Actual Participants Display -->
+                        <div class="border border-gray-200 rounded p-3 dark:border-gray-800">
+                            @if($activity->participants->where('user_id', '!=', null)->count() > 0)
                                 <div class="flex flex-wrap gap-2 mb-3">
-                                    @foreach($activity->participants as $participant)
+                                    <span class="text-sm text-gray-600 dark:text-gray-400">Huidige deelnemers:</span>
+                                    @foreach($activity->participants->where('user_id', '!=', null) as $participant)
                                         @if($participant->user)
                                             <span class="inline-flex items-center gap-1 rounded-md bg-blue-100 px-2 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                                                 {{ $participant->user->name }}
                                                 <input type="hidden" name="participants[users][]" value="{{ $participant->user->id }}">
-                                            </span>
-                                        @endif
-                                        @if($participant->person)
-                                            <span class="inline-flex items-center gap-1 rounded-md bg-green-100 px-2 py-1 text-sm text-green-800 dark:bg-green-900 dark:text-green-200">
-                                                {{ $participant->person->name }}
-                                                <input type="hidden" name="participants[persons][]" value="{{ $participant->person->id }}">
                                             </span>
                                         @endif
                                     @endforeach

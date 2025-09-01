@@ -2,6 +2,8 @@
 
 namespace Webkul\Installer\Database\Seeders\User;
 
+use App\Enums\Departments;
+use App\Models\Department;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Webkul\User\Models\Group;
@@ -25,17 +27,23 @@ class UserSeeder extends Seeder
         $groupPrivatescanId = 1;
         $groupHerniaId = 2;
 
-        // Define groups
+        // Get department IDs
+        $herniaDepartment = Department::where('name', Departments::HERNIA->value)->first();
+        $privatescanDepartment = Department::where('name', Departments::PRIVATESCAN->value)->first();
+
+        // Define groups with department relationships
         $groups = [
             [
-                'id'          => $groupHerniaId,
-                'name'        => 'Hernia',
-                'description' => 'Hernia team',
+                'id'            => $groupHerniaId,
+                'name'          => 'Hernia',
+                'description'   => 'Hernia team',
+                'department_id' => $herniaDepartment?->id,
             ],
             [
-                'id'          => $groupPrivatescanId,
-                'name'        => 'Privatescan',
-                'description' => 'Privatescan team',
+                'id'            => $groupPrivatescanId,
+                'name'          => 'Privatescan',
+                'description'   => 'Privatescan team',
+                'department_id' => $privatescanDepartment?->id,
             ],
         ];
 

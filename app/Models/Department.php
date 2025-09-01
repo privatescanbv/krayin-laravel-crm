@@ -11,6 +11,14 @@ class Department extends Model
 {
     use HasFactory;
 
+    /**
+     * Get the groups that belong to this department.
+     */
+    public function groups()
+    {
+        return $this->hasMany(\Webkul\User\Models\Group::class, 'department_id');
+    }
+
     public static function findHerniaId(): int
     {
         return Department::query()->where('name', Departments::HERNIA->value)->firstOrFail()->id;
@@ -73,6 +81,36 @@ class Department extends Model
     }
 
     /**
+     * Get group_id for a lead based on its department.
+     * Uses the department_id relationship for efficient mapping.
+     *
+     * @param  \Webkul\Lead\Models\Lead  $lead  The lead to get group_id for
+     * @return int The group ID
+     * @throws Exception if lead has no department or no group found
+     */
+    public static function getGroupIdForLead($lead): int
+    {
+        if (!$lead) {
+            throw new Exception("Lead cannot be null");
+        }
+
+        if (!$lead->department_id) {
+            throw new Exception("Lead {$lead->id} has no department_id");
+        }
+
+        // Find group by department_id for efficient lookup
+        $group = \Webkul\User\Models\Group::query()
+            ->where('department_id', $lead->department_id)
+            ->first();
+
+        if (!$group) {
+            throw new Exception("No group found for department_id: {$lead->department_id} (lead: {$lead->id})");
+        }
+
+        return $group->id;
+    }
+
+    /**
      * Map department name to group ID.
      * Uses the Departments enum to validate and map to corresponding group.
      *
@@ -88,45 +126,20 @@ class Department extends Model
             throw new Exception("Invalid department name: {$departmentName}. Must be one of: " . implode(', ', $validDepartments));
         }
 
-        // Direct mapping: department name should match group name
+        // Find department first, then get its group
+        $department = self::query()->where('name', $departmentName)->first();
+        if (!$department) {
+            throw new Exception("Department not found: {$departmentName}");
+        }
+
         $group = \Webkul\User\Models\Group::query()
-            ->where('name', $departmentName)
+            ->where('department_id', $department->id)
             ->first();
 
         if (!$group) {
-            throw new Exception("Group not found for department: {$departmentName}");
+            throw new Exception("No group found for department: {$departmentName}");
         }
 
         return $group->id;
-    }
-
-    /**
-     * Get group_id for a lead based on its department.
-     * Maps the lead's department to the corresponding group_id.
-     *
-     * @param  \Webkul\Lead\Models\Lead  $lead  The lead to get group_id for
-     * @return int The group ID
-     * @throws Exception if lead has no department or mapping fails
-     */
-    public static function getGroupIdForLead($lead): int
-    {
-        if (!$lead) {
-            throw new Exception("Lead cannot be null");
-        }
-
-        if (!$lead->department_id) {
-            throw new Exception("Lead {$lead->id} has no department_id");
-        }
-
-        // Load the department if not already loaded
-        if (!$lead->relationLoaded('department')) {
-            $lead->load('department');
-        }
-
-        if (!$lead->department) {
-            throw new Exception("Lead {$lead->id} department not found for department_id: {$lead->department_id}");
-        }
-
-        return self::mapDepartmentToGroupId($lead->department->name);
     }
 }

@@ -15,6 +15,7 @@ class Group extends Model implements GroupContract
     protected $fillable = [
         'name',
         'description',
+        'department_id',
     ];
 
     /**
@@ -23,5 +24,13 @@ class Group extends Model implements GroupContract
     public function users()
     {
         return $this->belongsToMany(UserProxy::modelClass(), 'user_groups');
+    }
+
+    /**
+     * The department that this group belongs to.
+     */
+    public function department()
+    {
+        return $this->belongsTo(\App\Models\Department::class, 'department_id');
     }
 }

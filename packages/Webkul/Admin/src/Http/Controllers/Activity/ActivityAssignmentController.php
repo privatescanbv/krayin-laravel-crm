@@ -24,7 +24,7 @@ class ActivityAssignmentController extends Controller
      */
     public function assign(int $id): JsonResponse
     {
-        $activity = $this->activityRepository->with('user')->findOrFail($id);
+        $activity = $this->activityRepository->findOrFail($id);
         
         // Check if activity is already assigned
         if ($activity->user_id) {
@@ -47,7 +47,7 @@ class ActivityAssignmentController extends Controller
         
         return response()->json([
             'message' => 'Activiteit succesvol toegekend.',
-            'data' => new ActivityResource($activity->fresh()),
+            'data' => new ActivityResource($activity->fresh(['user'])),
         ]);
     }
 
@@ -62,7 +62,7 @@ class ActivityAssignmentController extends Controller
             ], 403);
         }
         
-        $activity = $this->activityRepository->with('user')->findOrFail($id);
+        $activity = $this->activityRepository->findOrFail($id);
         
         $previousUser = $activity->user ? $activity->user->name : null;
         
@@ -77,7 +77,7 @@ class ActivityAssignmentController extends Controller
         
         return response()->json([
             'message' => $message,
-            'data' => new ActivityResource($activity->fresh()),
+            'data' => new ActivityResource($activity->fresh(['user'])),
         ]);
     }
 
@@ -86,7 +86,7 @@ class ActivityAssignmentController extends Controller
      */
     public function unassign(int $id): JsonResponse
     {
-        $activity = $this->activityRepository->with('user')->findOrFail($id);
+        $activity = $this->activityRepository->findOrFail($id);
         $currentUser = auth()->guard('user')->user();
         
         // Check if activity is assigned to current user
@@ -105,7 +105,7 @@ class ActivityAssignmentController extends Controller
         
         return response()->json([
             'message' => "Activiteit ontkoppeld. {$previousUser} kan de activiteit niet meer zien.",
-            'data' => new ActivityResource($activity->fresh()),
+            'data' => new ActivityResource($activity->fresh(['user'])),
         ]);
     }
 }

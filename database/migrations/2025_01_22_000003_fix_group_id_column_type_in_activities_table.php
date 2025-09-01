@@ -28,14 +28,14 @@ return new class extends Migration
                 });
                 
                 Schema::table('activities', function (Blueprint $table) {
-                    $table->unsignedBigInteger('group_id')->nullable();
+                    $table->unsignedInteger('group_id')->nullable();
                     $table->foreign('group_id')->references('id')->on('groups')->onDelete('set null');
                 });
             }
         } else {
             // Column doesn't exist, create it
             Schema::table('activities', function (Blueprint $table) {
-                $table->unsignedBigInteger('group_id')->nullable();
+                $table->unsignedInteger('group_id')->nullable();
                 $table->foreign('group_id')->references('id')->on('groups')->onDelete('set null');
             });
         }

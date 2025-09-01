@@ -1,4 +1,8 @@
 #!/bin/bash
 
-sail artisan migrate:fresh --seed && sail artisan import:persons --limit=1500 && sail artisan import:leads --limit=50
+./vendor/bin/sail artisan migrate:fresh --seed &&
+./vendor/bin/sail artisan import:users &&
+./vendor/bin/sail artisan import:persons --limit=1500 &&
+./vendor/bin/sail artisan import:leads --limit=50
+
 

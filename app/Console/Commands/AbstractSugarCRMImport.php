@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
+use DateTimeInterface;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
@@ -23,7 +24,7 @@ abstract class AbstractSugarCRMImport extends Command
         }
         try {
             // Accept Carbon, DateTimeInterface, or string
-            if ($value instanceof \DateTimeInterface) {
+            if ($value instanceof DateTimeInterface) {
                 return Carbon::instance($value)->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s');
             }
 

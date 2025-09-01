@@ -66,6 +66,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         }
         $this->info('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
+        // user import needs to be run first
+        $this->ensureUserImportRan();
+
         return $this->executeImport($dryRun, function () use ($connection, $limit, $leadIds, $dryRun) {
             // Test connection
             $this->testConnection($connection);
@@ -1121,11 +1124,11 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
                     // Create the activity
                     $activityData = [
-                        'title'      => $callData->name ?? 'Bel activiteit',
-                        'type'       => 'call',
-                        'comment'    => $callData->description ?? '',
+                        'title'       => $callData->name ?? 'Bel activiteit',
+                        'type'        => 'call',
+                        'comment'     => $callData->description ?? '',
                         'external_id' => $callData->id,
-                        'additional' => [
+                        'additional'  => [
                             'direction'   => $callData->direction,
                             'status'      => $callData->status,
                             'belgroep'    => $callData->belgroep_c,
@@ -1176,29 +1179,31 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
      * Map assigned user ID from SugarCRM to existing user by external_id
      *
      * @param  string|null  $assignedUserId  The SugarCRM user ID
-     * @return int The user ID to assign, fallback to first available user
+     * @return int|null The user ID to assign
+     *
+     * @throws Exception when user could not be found by external_id
      */
-    private function mapAssignedUser(?string $assignedUserId): int
+    private function mapAssignedUser(?string $assignedUserId): ?int
     {
-        // If no assigned user ID provided, use first available user as fallback
         if (empty($assignedUserId)) {
-            return User::first()?->id ?? 1;
+            return null;
         }
-
         // Look up user by external_id
         $user = User::where('external_id', $assignedUserId)->first();
-
-        if ($user) {
-            $this->info("Mapped assigned user {$assignedUserId} to user: {$user->name} (ID: {$user->id})");
-            return $user->id;
+        if (is_null($user)) {
+            throw new Exception('User not found by external_id: '.$assignedUserId);
         }
 
-        // Fallback to first available user if no match found
-        $fallbackUser = User::first();
-        $fallbackUserId = $fallbackUser?->id ?? 1;
-        
-        $this->warn("Could not find user with external_id {$assignedUserId}, using fallback user ID: {$fallbackUserId}");
-        
-        return $fallbackUserId;
+        $this->info("Mapped assigned user {$assignedUserId} to user: {$user->name} (ID: {$user->id})");
+
+        return $user->id;
+    }
+
+    /**
+     * @throws Exception when external users are missing
+     */
+    private function ensureUserImportRan(): void
+    {
+        User::whereNotNull('external_id')->count() > 0 or throw new Exception('No users with external_id found, please run the user import first');
     }
 }

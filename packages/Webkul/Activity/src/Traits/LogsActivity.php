@@ -28,29 +28,32 @@ trait LogsActivity
                         : null,
                 ];
 
-                // Add lead_id and group_id if this is a Lead model
+                // ALWAYS ensure we have a group_id - this is now required
+                $groupId = null;
+                
+                // Add lead_id and try to get group_id from lead if this is a Lead model
                 if (method_exists($model, 'getTable') && $model->getTable() === 'leads') {
                     $activityData['lead_id'] = $model->id;
                     
-                    // Get group_id from lead's department
+                    // Try to get group_id from lead's department
                     try {
-                        $activityData['group_id'] = \App\Models\Department::getGroupIdForLead($model);
+                        $groupId = \App\Models\Department::getGroupIdForLead($model);
                     } catch (\Exception $e) {
-                        // Fallback: get first available group or create one
-                        $firstGroup = \Webkul\User\Models\Group::first();
-                        if (!$firstGroup) {
-                            $firstGroup = \Webkul\User\Models\Group::create(['name' => 'Default Group']);
-                        }
-                        $activityData['group_id'] = $firstGroup->id;
+                        // Ignore error and fall through to fallback
                     }
-                } else {
-                    // For non-lead models, use first available group as fallback or create one
+                }
+                
+                // If we don't have a group_id yet, use fallback
+                if (!$groupId) {
                     $firstGroup = \Webkul\User\Models\Group::first();
                     if (!$firstGroup) {
                         $firstGroup = \Webkul\User\Models\Group::create(['name' => 'Default Group']);
                     }
-                    $activityData['group_id'] = $firstGroup->id;
+                    $groupId = $firstGroup->id;
                 }
+                
+                // ALWAYS set group_id
+                $activityData['group_id'] = $groupId;
 
                 // Only create activity if we have a valid group_id
                 if (isset($activityData['group_id']) && $activityData['group_id']) {
@@ -127,43 +130,41 @@ trait LogsActivity
                 'user_id'    => auth()->id(),
             ];
 
-            // Add lead_id and group_id if this is a Lead model or if the entity is a Lead model
+            // ALWAYS ensure we have a group_id - this is now required
+            $groupId = null;
+            
+            // Add lead_id and try to get group_id from lead if this is a Lead model
             if (method_exists($model, 'getTable') && $model->getTable() === 'leads') {
                 $activityData['lead_id'] = $model->id;
                 
-                // Get group_id from lead's department
+                // Try to get group_id from lead's department
                 try {
-                    $activityData['group_id'] = \App\Models\Department::getGroupIdForLead($model);
+                    $groupId = \App\Models\Department::getGroupIdForLead($model);
                 } catch (\Exception $e) {
-                    // Fallback: get first available group or create one
-                    $firstGroup = \Webkul\User\Models\Group::first();
-                    if (!$firstGroup) {
-                        $firstGroup = \Webkul\User\Models\Group::create(['name' => 'Default Group']);
-                    }
-                    $activityData['group_id'] = $firstGroup->id;
+                    // Ignore error and fall through to fallback
                 }
             } elseif ($model instanceof AttributeValue && method_exists($model->entity, 'getTable') && $model->entity->getTable() === 'leads') {
                 $activityData['lead_id'] = $model->entity->id;
                 
-                // Get group_id from lead's department
+                // Try to get group_id from lead's department
                 try {
-                    $activityData['group_id'] = \App\Models\Department::getGroupIdForLead($model->entity);
+                    $groupId = \App\Models\Department::getGroupIdForLead($model->entity);
                 } catch (\Exception $e) {
-                    // Fallback: get first available group or create one
-                    $firstGroup = \Webkul\User\Models\Group::first();
-                    if (!$firstGroup) {
-                        $firstGroup = \Webkul\User\Models\Group::create(['name' => 'Default Group']);
-                    }
-                    $activityData['group_id'] = $firstGroup->id;
+                    // Ignore error and fall through to fallback
                 }
-            } else {
-                // For non-lead models, use first available group as fallback or create one
+            }
+            
+            // If we don't have a group_id yet, use fallback
+            if (!$groupId) {
                 $firstGroup = \Webkul\User\Models\Group::first();
                 if (!$firstGroup) {
                     $firstGroup = \Webkul\User\Models\Group::create(['name' => 'Default Group']);
                 }
-                $activityData['group_id'] = $firstGroup->id;
+                $groupId = $firstGroup->id;
             }
+            
+            // ALWAYS set group_id
+            $activityData['group_id'] = $groupId;
 
             // Only create activity if we have a valid group_id
             if (isset($activityData['group_id']) && $activityData['group_id']) {

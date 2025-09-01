@@ -15,8 +15,8 @@ return new class extends Migration
     public function up()
     {
         Schema::table('activities', function (Blueprint $table) {
-            // First drop the existing foreign key constraint
-            $table->dropForeign(['group_id']);
+            // First drop the existing foreign key constraint using the exact name
+            $table->dropForeign('activities_group_id_foreign');
             
             // Make the column NOT NULL
             $table->unsignedInteger('group_id')->nullable(false)->change();
@@ -34,8 +34,8 @@ return new class extends Migration
     public function down()
     {
         Schema::table('activities', function (Blueprint $table) {
-            // Drop the foreign key constraint
-            $table->dropForeign(['group_id']);
+            // Drop the foreign key constraint using exact name
+            $table->dropForeign('activities_group_id_foreign');
             
             // Make the column nullable again
             $table->unsignedInteger('group_id')->nullable()->change();

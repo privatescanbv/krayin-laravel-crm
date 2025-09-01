@@ -6,6 +6,7 @@ use App\Enums\Departments;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Webkul\User\Models\Group;
 
 class Department extends Model
 {
@@ -34,18 +35,14 @@ class Department extends Model
     public static function mapGroupToDepartmentId(array $groupNames): string
     {
         if (empty($groupNames)) {
-            return self::findPrivateScanId();
+            throw new Exception("Could not map group to department, group names is empty");
         }
         // Convert group names to lowercase for case-insensitive comparison
         $lowerGroupNames = array_map('strtolower', $groupNames);
 
         // Priority logic: if user has both hernia and privatescan, choose privatescan
-        if (in_array('privatescan', $lowerGroupNames)) {
-            try {
-                return self::findPrivateScanId();
-            } catch (Exception $e) {
-                // If Privatescan department not found, continue to other mappings
-            }
+        if (in_array(strtolower(Departments::PRIVATESCAN->value), $lowerGroupNames)) {
+            return self::findPrivateScanId();
         }
 
         // Map other groups to departments
@@ -82,8 +79,8 @@ class Department extends Model
     public static function mapDepartmentToGroupId(Department $department): ?int
     {
         // Direct mapping: department name to group name
-        $group = \Webkul\User\Models\Group::where('name', $department->name)->first();
-        
+        $group = Group::where('name', $department->name)->first();
+
         if ($group) {
             return $group->id;
         }
@@ -96,7 +93,7 @@ class Department extends Model
         ];
 
         if (isset($departmentToGroupMap[$department->name])) {
-            $group = \Webkul\User\Models\Group::where('name', $departmentToGroupMap[$department->name])->first();
+            $group = Group::where('name', $departmentToGroupMap[$department->name])->first();
             if ($group) {
                 return $group->id;
             }

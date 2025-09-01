@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Schema;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
+use Webkul\User\Models\Group;
 use Webkul\User\Models\User;
 
 /**
@@ -1125,12 +1126,11 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     // Get default group from lead's department
                     $groupId = null;
                     if ($lead->department) {
-                        $groupId = \App\Models\Department::mapDepartmentToGroupId($lead->department);
+                        $groupId = Department::mapDepartmentToGroupId($lead->department);
                     }
-                    
-                    // Fallback to first available group if no department group found
+
                     if (!$groupId) {
-                        $groupId = \Webkul\User\Models\Group::first()->id;
+                        throw new Exception('Could not determine group_id for lead department '.$lead->department);
                     }
 
                     // Create the activity

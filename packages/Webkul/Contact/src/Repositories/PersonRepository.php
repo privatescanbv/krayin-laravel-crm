@@ -18,6 +18,8 @@ use Webkul\Contact\Contracts\Person;
 use Webkul\Core\Eloquent\Repository;
 use Carbon\Carbon;
 use App\Services\Concerns\JsonDuplicateMatcher;
+use Webkul\User\Models\Group;
+use Webkul\User\Models\User;
 
 class PersonRepository extends Repository
 {
@@ -454,10 +456,10 @@ class PersonRepository extends Repository
         try {
             // Get default group for system activities
             $userId = auth()->id() ?: 1;
-            $user = \Webkul\User\Models\User::find($userId);
-            $groupId = $user && $user->groups()->count() > 0 
-                ? $user->groups()->first()->id 
-                : \Webkul\User\Models\Group::first()->id;
+            $user = User::find($userId);
+            $groupId = $user && $user->groups()->count() > 0
+                ? $user->groups()->first()->id
+                : Group::first()->id;
 
             $activity = app(ActivityRepository::class)->create([
                 'type' => 'note',
@@ -495,10 +497,10 @@ class PersonRepository extends Repository
         try {
             // Get default group for system activities
             $userId = auth()->id() ?: 1;
-            $user = \Webkul\User\Models\User::find($userId);
-            $groupId = $user && $user->groups()->count() > 0 
-                ? $user->groups()->first()->id 
-                : \Webkul\User\Models\Group::first()->id;
+            $user = User::find($userId);
+            $groupId = $user && $user->groups()->count() > 0
+                ? $user->groups()->first()->id
+                : Group::first()->id;
 
             $activity = app(ActivityRepository::class)->create([
                 'type' => 'note',

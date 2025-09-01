@@ -27,6 +27,8 @@ class User extends Authenticatable implements UserContract
         'api_token',
         'role_id',
         'status',
+        'external_id',
+        'view_permission',
     ];
 
     /**

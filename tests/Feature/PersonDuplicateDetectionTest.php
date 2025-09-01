@@ -37,7 +37,7 @@ test('it detects duplicate persons by email', function () {
 });
 
 test('it detects duplicate persons by email with value-only structure', function () {
-    $p1 = \Webkul\Contact\Models\Person::factory()->create([
+    $p1 = Person::factory()->create([
         'first_name' => 'ValueOnly',
         'last_name'  => 'Email',
         'emails'     => [
@@ -45,7 +45,7 @@ test('it detects duplicate persons by email with value-only structure', function
         ],
     ]);
 
-    $p2 = \Webkul\Contact\Models\Person::factory()->create([
+    $p2 = Person::factory()->create([
         'first_name' => 'Other',
         'last_name'  => 'Person',
         'emails'     => [

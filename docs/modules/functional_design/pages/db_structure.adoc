@@ -11,7 +11,11 @@ TABLE(User, "user") {
   PRIMARY_KEY(id): bigint
   name: string
   email: string
-  lastname: string
+  password: string
+  email_verified_at: datetime
+  remember_token: string
+  created_by: bigint
+  updated_by: bigint
 }
 
 TABLE(Role, "role") {
@@ -26,25 +30,42 @@ TABLE(Group, "group") {
   PRIMARY_KEY(id): bigint
   name: string
   description: string
+  department_id: bigint
 }
 
-TABLE(ContactPerson, "person") {
+TABLE(Department, "department") {
   PRIMARY_KEY(id): bigint
-  FOREIGN_KEY(user_id): bigint
+  name: string
+}
+
+TABLE(Person, "person") {
+  PRIMARY_KEY(id): bigint
+  user_id: bigint
+  organization_id: bigint
+  unique_id: string
+  external_id: string
   salutation: string
   first_name: string
-  lastname_prefix: string
   last_name: string
-  married_name_prefix: string
+  lastname_prefix: string
   married_name: string
+  married_name_prefix: string
   initials: string
   date_of_birth: date
   gender: string
+  job_title: string
   emails: json
   phones: json
-  FOREIGN_KEY(address_id): bigint
-  FOREIGN_KEY(created_by): bigint
-  FOREIGN_KEY(updated_by): bigint
+  created_by: bigint
+  updated_by: bigint
+}
+
+TABLE(Organization, "organization") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  description: text
+  created_by: bigint
+  updated_by: bigint
 }
 
 TABLE(Pipeline, "pipeline") {
@@ -54,7 +75,7 @@ TABLE(Pipeline, "pipeline") {
   type: enum // (PipelineType: "lead", "backoffice")
 }
 
-TABLE(PipelineStage, "pipeline_stage") {
+TABLE(Stage, "pipeline_stage") {
   PRIMARY_KEY(id): bigint
   FOREIGN_KEY(pipeline_id): bigint
   name: string
@@ -63,28 +84,40 @@ TABLE(PipelineStage, "pipeline_stage") {
 
 TABLE(Lead, "lead") {
   PRIMARY_KEY(id): bigint
-  FOREIGN_KEY(user_id): bigint
-  FOREIGN_KEY(lead_source_id): bigint
-  FOREIGN_KEY(lead_type_id): bigint
-  FOREIGN_KEY(lead_pipeline_id): bigint
-  FOREIGN_KEY(lead_pipeline_stage_id): bigint
-  FOREIGN_KEY(lead_channel_id): bigint
-  FOREIGN_KEY(department_id): bigint
+  external_id: string
+  description: text
   status: string
   lost_reason: text
-
   closed_at: datetime
+  user_id: bigint
+  lead_source_id: bigint
+  lead_type_id: bigint
+  lead_pipeline_id: bigint
+  lead_pipeline_stage_id: bigint
+  lead_channel_id: bigint
+  department_id: bigint
+  organization_id: bigint
+  salutation: string
+  first_name: string
+  last_name: string
+  lastname_prefix: string
+  married_name: string
+  married_name_prefix: string
+  initials: string
+  date_of_birth: date
+  gender: string
   emails: json
   phones: json
-  FOREIGN_KEY(address_id): bigint
-  FOREIGN_KEY(created_by): bigint
-  FOREIGN_KEY(updated_by): bigint
+  combine_order: boolean
+  created_by: bigint
+  updated_by: bigint
 }
 
 TABLE(Address, "address") {
   PRIMARY_KEY(id): bigint
   FOREIGN_KEY(lead_id): bigint
   FOREIGN_KEY(person_id): bigint
+  FOREIGN_KEY(organization_id): bigint
   street: string
   house_number: string
   house_number_suffix: string
@@ -92,20 +125,28 @@ TABLE(Address, "address") {
   state: string
   city: string
   country: string
+  created_by: bigint
+  updated_by: bigint
 }
 
-TABLE(Order, "quote (order)") {
+TABLE(Quote, "quote (order)") {
   PRIMARY_KEY(id): bigint
-  FOREIGN_KEY(lead_id): bigint
-  FOREIGN_KEY(pipeline_stage_id): bigint
-  FOREIGN_KEY(user_id): bigint
-  FOREIGN_KEY(contact_person_id): bigint
-  total_amount: decimal
-  status: enum
-  create_user_id: bigint
+  subject: string
+  description: text
+  billing_address: json
+  shipping_address: json
+  discount_percent: decimal
+  discount_amount: decimal
+  tax_amount: decimal
+  adjustment_amount: decimal
+  sub_total: decimal
+  grand_total: decimal
+  expired_at: datetime
+  user_id: bigint
+  person_id: bigint
 }
 
-TABLE(OrderItem, "quote_items") {
+TABLE(QuoteItem, "quote_items") {
     PRIMARY_KEY(id): bigint
     name: string
     quantity: int
@@ -116,32 +157,36 @@ TABLE(OrderItem, "quote_items") {
     tax_amount: int
     total: float
     FOREIGN_KEY(product_id): bigint
-    FOREIGN_KEY(quote_id): bigint,
+    FOREIGN_KEY(quote_id): bigint
 }
 
 TABLE(Product, "product") {
   PRIMARY_KEY(id): bigint
   name: string
-  description: string
-  price: float
-  FOREIGN_KEY(created_by): bigint
-  FOREIGN_KEY(updated_by): bigint
+  description: text
+  price: decimal
+  sku: string
+  created_by: bigint
+  updated_by: bigint
 }
 
 TABLE(ProductGroup, "product_groups") {
   PRIMARY_KEY(id): bigint
   name: string
-  description: string
-  FOREIGN_KEY(created_by): bigint
-  FOREIGN_KEY(updated_by): bigint
+  description: text
+  created_by: bigint
+  updated_by: bigint
 }
 
-TABLE(Backoffice, "backoffice") {
+TABLE(WorkflowLead, "workflow_lead (backoffice)") {
   PRIMARY_KEY(id): bigint
   name: string
   description: text
   FOREIGN_KEY(pipeline_stage_id): bigint
-  FOREIGN_KEY(owner_user_id): bigint
+  FOREIGN_KEY(lead_id): bigint
+  FOREIGN_KEY(quote_id): bigint
+  FOREIGN_KEY(user_id): bigint
+  workflow_type: enum
 }
 
 TABLE(Activity, "activity") {
@@ -154,12 +199,15 @@ TABLE(Activity, "activity") {
   schedule_from: datetime
   schedule_to: datetime
   is_done: boolean
+  assigned_at: datetime
+  external_id: string
   FOREIGN_KEY(user_id): bigint
   FOREIGN_KEY(group_id): bigint
+  FOREIGN_KEY(lead_id): bigint
 }
 
 TABLE(Anamnesis, "anamnesis") {
-  PRIMARY_KEY(id): bigint
+  PRIMARY_KEY(id): char(36)
   name: varchar(255)
   date_entered: datetime
   date_modified: datetime
@@ -171,81 +219,129 @@ TABLE(Anamnesis, "anamnesis") {
   team_set_id: char(36)
   assigned_user_id: char(36)
   comment_clinic: text
-  lengte: int(255)
-  gewicht: int(255)
-  metalen: tinyint(1)
-  opm_metalen_c: text
-  medicijnen: tinyint(1)
-  opm_medicijnen_c: text
-  glaucoom: tinyint(1)
-  opm_glaucoom_c: text
-  claustrofobie: tinyint(1)
+  height: int
+  weight: int
+  metals: tinyint(1)
+  metals_notes: text
+  medications: tinyint(1)
+  medications_notes: text
+  glaucoma: tinyint(1)
+  glaucoma_notes: text
+  claustrophobia: tinyint(1)
   dormicum: tinyint(1)
-  hart_operatie_c: tinyint(1)
-  opm_hart_operatie_c: text
-  implantaat_c: tinyint(1)
-  opm_implantaat_c: text
-  operaties_c: tinyint(1)
-  opm_operaties_c: text
-  opmerking: varchar(255)
-  hart_erfelijk: tinyint(1)
-  opm_erf_hart_c: text
-  vaat_erfelijk: tinyint(1)
-  opm_erf_vaat_c: text
-  tumoren_erfelijk: tinyint(1)
-  opm_erf_tumor_c: text
-  allergie_c: tinyint(1)
-  opm_allergie_c: text
-  rugklachten: tinyint(1)
-  opm_rugklachten_c: text
+  heart_surgery: tinyint(1)
+  heart_surgery_notes: text
+  implant: tinyint(1)
+  implant_notes: text
+  surgeries: tinyint(1)
+  surgeries_notes: text
+  remarks: varchar(255)
+  hereditary_heart: tinyint(1)
+  hereditary_heart_notes: text
+  hereditary_vascular: tinyint(1)
+  hereditary_vascular_notes: text
+  hereditary_tumors: tinyint(1)
+  hereditary_tumors_notes: text
+  allergies: tinyint(1)
+  allergies_notes: text
+  back_problems: tinyint(1)
+  back_problems_notes: text
   heart_problems: tinyint(1)
-  opm_hartklachten_c: text
+  heart_problems_notes: text
   smoking: tinyint(1)
-  opm_roken_c: text
+  smoking_notes: text
   diabetes: tinyint(1)
-  opm_diabetes_c: text
-  spijsverteringsklachten: tinyint(1)
-  opm_spijsvertering_c: text
-  risico_hartinfarct: text // MultiSelect
-  actief: tinyint(1)
-  opm_advies_c: text
-  FOREIGN_KEY(user_id): bigint
+  diabetes_notes: text
+  digestive_problems: tinyint(1)
+  digestive_problems_notes: text
+  heart_attack_risk: text
+  active: tinyint(1)
+  advice_notes: text
   FOREIGN_KEY(lead_id): bigint
+  FOREIGN_KEY(person_id): bigint
 }
 
+TABLE(LeadSource, "lead_source") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  description: text
+}
+
+TABLE(LeadType, "lead_type") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  description: text
+}
+
+TABLE(LeadChannel, "lead_channel") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  description: text
+}
+
+TABLE(LeadPerson, "lead_persons") {
+  PRIMARY_KEY(lead_id): bigint
+  PRIMARY_KEY(person_id): bigint
+}
+
+// Relationships
 User "1" -- "n" Lead
-User "1" -- "n" Order
-User "1" -- "n" Backoffice
+User "1" -- "n" Quote
+User "1" -- "n" WorkflowLead
 User "1" -- "n" Activity
 User "n" -- "0..1" Group
 User "n" -- "1" Role
 
-Pipeline "1" -- "n" PipelineStage
-PipelineStage "1" -- "n" Lead
-PipelineStage "1" -- "n" Order
-PipelineStage "1" -- "n" Backoffice
-PipelineStage "1" -- "n" Activity
+Department "1" -- "n" Group
+Group "n" -- "1" Department
 
-Lead "1" -- "1" Order
+Pipeline "1" -- "n" Stage
+Stage "1" -- "n" Lead
+Stage "1" -- "n" Quote
+Stage "1" -- "n" WorkflowLead
+Stage "1" -- "n" Activity
+
+Lead "1" -- "n" Quote
 Lead "0..1" -- "n" Activity
-Lead "n" -- "n" ContactPerson : "lead_persons"
-Order "1" --> "1" ContactPerson : "for"
-Order "1" --> "1" User
-Activity "1" --> "1" User
-Backoffice "1" -- "n" Activity
-Backoffice "0..1" -- "1" Order
-Backoffice "0..1" -- "n" Lead
-Backoffice "0..1" -- "1" ContactPerson
-ContactPerson "1" -- "1" User
-Address "0..1" -- "1" Lead
-Address "0..1" -- "1" ContactPerson
+Lead "n" -- "n" Person : "lead_persons"
+Lead "1" -- "0..1" Organization
+Lead "1" -- "0..1" Address
 
-Product "n" -- "0.1" ProductGroup
-OrderItem "n" -- "1" Order
-OrderItem "1" -- "1" Product
+Quote "1" --> "1" Person : "for"
+Quote "1" --> "1" User
+Quote "1" -- "n" QuoteItem
+
+Activity "1" --> "1" User
+Activity "0..1" --> "1" Group
+Activity "0..1" --> "1" Lead
+
+WorkflowLead "1" -- "n" Activity
+WorkflowLead "0..1" -- "1" Quote
+WorkflowLead "0..1" -- "1" Lead
+WorkflowLead "1" --> "1" User
+
+Person "1" -- "0..1" User
+Person "1" -- "0..1" Organization
+Person "1" -- "0..1" Address
+Person "n" -- "n" Lead : "lead_persons"
+
+Organization "1" -- "0..1" Address
+
+Address "0..1" -- "1" Lead
+Address "0..1" -- "1" Person
+Address "0..1" -- "1" Organization
+
+Product "n" -- "0..1" ProductGroup
+QuoteItem "n" -- "1" Quote
+QuoteItem "1" -- "1" Product
 
 Anamnesis "n" -- "1" Lead
-Anamnesis "n" -- "1" ContactPerson
+Anamnesis "n" -- "1" Person
+
+Lead "1" -- "1" LeadSource
+Lead "1" -- "1" LeadType
+Lead "1" -- "1" LeadChannel
+Lead "1" -- "1" Department
 
 note right of Pipeline
   Verkoopfunnel met geordende fasen voor lead.
@@ -256,32 +352,58 @@ note right of Pipeline
 end note
 
 note right of Lead
-  Potentiële klant, optioneel gekoppeld aan een gebruiker en contactpersoon.
-  Pipeline\-fasen ("nieuw", "in behandeling", "afgehandeld").
+  Potentiële klant, optioneel gekoppeld aan een gebruiker, contactpersoon en organisatie.
+  Pipeline-fasen ("nieuw", "in behandeling", "afgehandeld").
+  Ondersteunt nu persoonlijke velden en externe ID's.
 end note
 
-note right of Order
+note right of Quote
   Afgesloten deal, gekoppeld aan een lead, gebruiker en contactpersoon.
+  Ondersteunt nu factuur- en verzendadressen.
 end note
 
-note right of Backoffice
- Automatiseringsflow gekoppeld aan een pipeline\-fase.
+note right of WorkflowLead
+  Automatiseringsflow gekoppeld aan een pipeline-fase.
+  Vervangt de oude "Backoffice" entiteit.
 end note
 
 note right of Activity
-  Telefoongesprek \| Taak of geautomatiseerde stap in een Backoffice, optioneel toegewezen aan een gebruiker.
+  Telefoongesprek | Taak of geautomatiseerde stap in een WorkflowLead, optioneel toegewezen aan een gebruiker of groep.
+  Kan nu direct gekoppeld zijn aan een lead.
 end note
 
-note right of ContactPerson
-  Externe contactpersoon betrokken bij leads of orders, geen gebruiker in het systeem.
+note right of Person
+  Externe contactpersoon betrokken bij leads of quotes, kan gekoppeld zijn aan een gebruiker of organisatie.
+  Ondersteunt nu uitgebreide persoonlijke informatie.
+end note
+
+note right of Organization
+  Bedrijfsentiteit waaraan personen en leads gekoppeld kunnen zijn.
+end note
+
+note right of Address
+  Adresinformatie die gekoppeld kan zijn aan leads, personen of organisaties.
+  Ondersteunt nu meerdere entiteitstypen.
+end note
+
+note right of Department
+  Afdelingen voor het organiseren van gebruikers en leads.
+  Hernia en Privatescan zijn de belangrijkste afdelingen.
 end note
 
 note right of Anamnesis
-  Medische geschiedenis gerelateerd aan een lead, gekoppeld aan een gebruiker. (anamnese)
+  Medische geschiedenis gerelateerd aan een lead of persoon, gekoppeld aan een gebruiker. (anamnese)
+  Uitgebreide medische velden toegevoegd.
+end note
+
 note as N1
-  TODO:
-  - kliniek
-  - order items kunnen inplannen
+  Belangrijke wijzigingen:
+  - Address ondersteunt nu organization_id
+  - Lead heeft nieuwe velden en relaties
+  - WorkflowLead vervangt Backoffice
+  - Department entiteit toegevoegd
+  - LeadPerson koppeltabel voor many-to-many relatie
+  - Anamnesis heeft uitgebreide medische velden
 end note
 
 @enduml

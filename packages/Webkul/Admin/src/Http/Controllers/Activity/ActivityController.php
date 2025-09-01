@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Controllers\Activity;
 
 use App\Enums\WebhookType;
+use App\Models\Department;
 use App\Services\WebhookService;
 use Carbon\Carbon;
 use Exception;
@@ -102,6 +103,7 @@ class ActivityController extends Controller
             'schedule_from' => 'required_unless:type,note,file',
             'schedule_to'   => 'required_unless:type,note,file',
             'file'          => 'required_if:type,file',
+            'group_id'      => 'required|exists:groups,id',
         ]);
 
         if (request('type') === 'meeting') {
@@ -130,22 +132,44 @@ class ActivityController extends Controller
 
         Event::dispatch('activity.create.before');
 
-        // Auto-assign group if not specified but user has a group
         $data = request()->all();
         
         // Convert empty strings to null for foreign key constraints
-        foreach (['lead_id', 'group_id', 'user_id'] as $field) {
+        foreach (['lead_id', 'user_id'] as $field) {
             if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
                 $data[$field] = null;
             }
         }
         
+        // Ensure group_id is always set - it's now required
         if (!isset($data['group_id']) || !$data['group_id']) {
-            $userId = $data['user_id'] ?? auth()->guard('user')->id();
-            if ($userId) {
-                $user = \Webkul\User\Models\User::find($userId);
-                if ($user && $user->groups()->count() > 0) {
-                    $data['group_id'] = $user->groups()->first()->id;
+            // First try to get group from lead's department
+            if (isset($data['lead_id']) && $data['lead_id']) {
+                $lead = \Webkul\Lead\Models\Lead::find($data['lead_id']);
+                if ($lead) {
+                    $groupId = Department::getGroupIdForLead($lead);
+                    if ($groupId) {
+                        $data['group_id'] = $groupId;
+                    }
+                }
+            }
+            
+            // If still no group, try to get from user's groups
+            if (!isset($data['group_id']) || !$data['group_id']) {
+                $userId = $data['user_id'] ?? auth()->guard('user')->id();
+                if ($userId) {
+                    $user = \Webkul\User\Models\User::find($userId);
+                    if ($user && $user->groups()->count() > 0) {
+                        $data['group_id'] = $user->groups()->first()->id;
+                    }
+                }
+            }
+            
+            // If still no group, get the first available group as fallback
+            if (!isset($data['group_id']) || !$data['group_id']) {
+                $firstGroup = \Webkul\User\Models\Group::first();
+                if ($firstGroup) {
+                    $data['group_id'] = $firstGroup->id;
                 }
             }
         }
@@ -210,6 +234,10 @@ class ActivityController extends Controller
      */
     public function update($id): RedirectResponse|JsonResponse
     {
+        $this->validate(request(), [
+            'group_id' => 'required|exists:groups,id',
+        ]);
+
         // Get the current activity to check permissions
         $activity = $this->activityRepository->findOrFail($id);
         
@@ -236,8 +264,8 @@ class ActivityController extends Controller
 
         $data = request()->all();
         
-        // Convert empty strings to null for foreign key constraints
-        foreach (['lead_id', 'group_id', 'user_id'] as $field) {
+        // Convert empty strings to null for foreign key constraints (except group_id which is now required)
+        foreach (['lead_id', 'user_id'] as $field) {
             if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
                 $data[$field] = null;
             }

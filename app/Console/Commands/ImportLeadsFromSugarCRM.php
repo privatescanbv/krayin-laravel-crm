@@ -1138,6 +1138,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'is_done'       => $this->mapCallStatus($callData->status),
                         'user_id'       => $this->mapAssignedUser($callData->assigned_user_id),
                         'lead_id'       => $lead->id,
+                        'group_id'      => Department::getGroupIdForLead($lead) ?? \Webkul\User\Models\Group::first()?->id,
                     ];
 
                     $timestamps = [

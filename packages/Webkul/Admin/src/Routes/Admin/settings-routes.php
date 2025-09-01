@@ -44,6 +44,10 @@ Route::prefix('settings')->group(function () {
         Route::put('edit/{id}', 'update')->name('admin.settings.groups.update');
 
         Route::delete('{id}', 'destroy')->name('admin.settings.groups.delete');
+        
+        // API routes for groups
+        Route::get('api', 'apiIndex')->name('admin.api.groups.index');
+        Route::get('api/by-department-id/{departmentId}', 'findByDepartmentId')->name('admin.api.groups.by_department_id');
     });
 
     /**
@@ -169,6 +173,9 @@ Route::prefix('settings')->group(function () {
         Route::post('mass-update', 'massUpdate')->name('admin.settings.users.mass_update');
 
         Route::post('mass-destroy', 'massDestroy')->name('admin.settings.users.mass_delete');
+        
+        // API routes for users
+        Route::get('api/{id}/groups', 'getUserGroups')->name('admin.api.users.groups');
     });
 
     /**

@@ -138,4 +138,32 @@ class GroupController extends Controller
             ], 404);
         }
     }
+
+    /**
+     * Find group by department ID.
+     */
+    public function findByDepartmentId(int $departmentId): JsonResponse
+    {
+        $groupId = \App\Models\Department::mapDepartmentToGroupId($departmentId);
+        
+        if ($groupId) {
+            $group = Group::find($groupId);
+            if ($group) {
+                return response()->json($group);
+            }
+        }
+        
+        return response()->json([
+            'message' => 'Group not found for department ID ' . $departmentId,
+        ], 404);
+    }
+
+    /**
+     * Get all groups.
+     */
+    public function apiIndex(): JsonResponse
+    {
+        $groups = $this->groupRepository->all();
+        return response()->json($groups);
+    }
 }

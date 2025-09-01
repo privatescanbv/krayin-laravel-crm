@@ -153,7 +153,7 @@
 
                             <!-- Group -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label>
+                                <x-admin::form.control-group.label class="required">
                                     @lang('admin::app.activities.group')
                                 </x-admin::form.control-group.label>
 
@@ -161,12 +161,16 @@
                                     type="select"
                                     name="group_id"
                                     :value="old('group_id')"
+                                    rules="required"
+                                    v-model="selectedGroupId"
                                 >
                                     <option value="">{{ __('admin::app.activities.select-group') }}</option>
                                     @foreach (app(Webkul\User\Repositories\GroupRepository::class)->all() as $group)
                                         <option value="{{ $group->id }}">{{ $group->name }}</option>
                                     @endforeach
                                 </x-admin::form.control-group.control>
+
+                                <x-admin::form.control-group.error control-name="group_id" />
                             </x-admin::form.control-group>
 
                             <!-- Schedule Date -->
@@ -268,6 +272,8 @@
                         value: 'call'
                     },
 
+                    selectedGroupId: null,
+
                     availableTypes: [
                         {
                             label: "{{ trans('admin::app.components.activities.actions.activity.call') }}",
@@ -280,13 +286,63 @@
                 }
             },
 
+            mounted() {
+                this.setDefaultGroupId();
+            },
+
             methods: {
                 openModal(type) {
                     this.$refs.activityModal.open();
                 },
 
+                setDefaultGroupId() {
+                    // If entity is a lead with department_id, try to map to group
+                    if (this.entity && this.entity.department_id) {
+                        // Make an API call to get the group for this department
+                        this.$axios.get(`/admin/settings/groups/api/by-department-id/${this.entity.department_id}`)
+                            .then(response => {
+                                if (response.data && response.data.id) {
+                                    this.selectedGroupId = response.data.id;
+                                }
+                            })
+                            .catch(() => {
+                                // Fallback to user's first group
+                                this.setUserDefaultGroup();
+                            });
+                    } else {
+                        this.setUserDefaultGroup();
+                    }
+                },
+
+                setUserDefaultGroup() {
+                    // Fallback: get current user's first group
+                    const currentUserId = {{ auth()->guard('user')->id() ?? 'null' }};
+                    if (currentUserId) {
+                        this.$axios.get(`/admin/settings/users/api/${currentUserId}/groups`)
+                            .then(response => {
+                                if (response.data && response.data.length > 0) {
+                                    this.selectedGroupId = response.data[0].id;
+                                }
+                            })
+                            .catch(() => {
+                                // Final fallback: get first available group
+                                this.$axios.get('/admin/settings/groups/api')
+                                    .then(response => {
+                                        if (response.data && response.data.length > 0) {
+                                            this.selectedGroupId = response.data[0].id;
+                                        }
+                                    });
+                            });
+                    }
+                },
+
                 save(params) {
                     this.isStoring = true;
+
+                    // Ensure group_id is included in params
+                    if (this.selectedGroupId) {
+                        params.group_id = this.selectedGroupId;
+                    }
 
                     this.$axios.post("{{ route('admin.activities.store') }}", params)
                         .then (response => {

@@ -257,4 +257,13 @@ class UserController extends Controller
             'message' => trans('admin::app.settings.users.index.mass-delete-success'),
         ]);
     }
+
+    /**
+     * Get user's groups.
+     */
+    public function getUserGroups(int $id): JsonResponse
+    {
+        $user = $this->userRepository->with('groups')->findOrFail($id);
+        return response()->json($user->groups);
+    }
 }

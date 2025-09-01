@@ -6,6 +6,7 @@ use App\Enums\Departments;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Webkul\User\Models\Group;
 
 class Department extends Model
 {
@@ -70,5 +71,48 @@ class Department extends Model
             }
         }
         throw new Exception('Group not found');
+    }
+
+    /**
+     * Map department to group ID based on Department enum.
+     * This creates the reverse mapping from department to group.
+     *
+     * @param int $departmentId The department ID
+     * @return int|null The corresponding group ID
+     */
+    public static function mapDepartmentToGroupId(int $departmentId): ?int
+    {
+        $department = self::find($departmentId);
+        
+        if (!$department) {
+            return null;
+        }
+
+        // Map department names to group names (they should match)
+        $departmentToGroupMap = [
+            Departments::HERNIA->value => 'Hernia',
+            Departments::PRIVATESCAN->value => 'Privatescan',
+        ];
+
+        $groupName = $departmentToGroupMap[$department->name] ?? $department->name;
+
+        $group = Group::where('name', $groupName)->first();
+        
+        return $group?->id;
+    }
+
+    /**
+     * Get the group ID for a lead based on its department.
+     *
+     * @param \Webkul\Lead\Models\Lead $lead
+     * @return int|null
+     */
+    public static function getGroupIdForLead($lead): ?int
+    {
+        if (!$lead->department_id) {
+            return null;
+        }
+
+        return self::mapDepartmentToGroupId($lead->department_id);
     }
 }

@@ -128,6 +128,29 @@
 
 
 
+                            <!-- User Assignment -->
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    @lang('admin::app.activities.assign-to')
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="select"
+                                    name="user_id"
+                                    :value="old('user_id', auth()->guard('user')->id())"
+                                >
+                                    <option value="">{{ __('admin::app.activities.select-user') }}</option>
+                                    @foreach (app(Webkul\User\Repositories\UserRepository::class)->findWhere(['status' => 1]) as $user)
+                                        <option 
+                                            value="{{ $user->id }}"
+                                            {{ auth()->guard('user')->id() == $user->id ? 'selected' : '' }}
+                                        >
+                                            {{ $user->name }}
+                                        </option>
+                                    @endforeach
+                                </x-admin::form.control-group.control>
+                            </x-admin::form.control-group>
+
                             <!-- Group -->
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label>

@@ -1741,6 +1741,8 @@ return [
         'edit-title' => 'Activiteit bewerken',
         'group' => 'Gebruikersgroep',
         'select-group' => 'Selecteer gebruikersgroep',
+        'assign-to' => 'Toewijzen aan',
+        'select-user' => 'Selecteer gebruiker',
         'delete-success' => 'Activiteit succesvol verwijderd.',
         'mass-delete-success' => 'Geselecteerde activiteiten succesvol verwijderd.',
     ],

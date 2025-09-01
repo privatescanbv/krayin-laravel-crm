@@ -60,6 +60,7 @@ class Activity extends Model implements ActivityContract
         'assigned_at',
         'group_id',
         'lead_id',
+        'external_id',
     ];
 
     /**

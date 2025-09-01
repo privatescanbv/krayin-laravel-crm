@@ -1111,7 +1111,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             foreach ($leadCallActivities as $callData) {
                 try {
                     // Check if activity already exists by external reference
-                    $existingActivity = Activity::where('additional->external_id', $callData->id)->first();
+                    $existingActivity = Activity::where('external_id', $callData->id)->first();
                     if ($existingActivity) {
                         $this->info("Skipping existing call activity with external_id={$callData->id}");
                         $skipped++;
@@ -1124,8 +1124,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'title'      => $callData->name ?? 'Bel activiteit',
                         'type'       => 'call',
                         'comment'    => $callData->description ?? '',
+                        'external_id' => $callData->id,
                         'additional' => [
-                            'external_id' => $callData->id,
                             'direction'   => $callData->direction,
                             'status'      => $callData->status,
                             'belgroep'    => $callData->belgroep_c,

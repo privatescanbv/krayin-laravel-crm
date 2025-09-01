@@ -109,10 +109,10 @@ class LeadWebhookTest extends TestCase
         return $mock;
     }
 
-        private function createTestLead(): Lead
+    private function createTestLead(): Lead
     {
         $department = \App\Models\Department::where('name', \App\Enums\Departments::PRIVATESCAN->value)->firstOrFail();
-        
+
         return Lead::factory()->create([
             'first_name'             => 'John',
             'last_name'              => 'Doe',

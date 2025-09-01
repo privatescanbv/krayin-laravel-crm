@@ -6,7 +6,6 @@ use App\Models\Address;
 use Database\Seeders\TestSeeder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -244,7 +243,7 @@ beforeEach(function () {
 test('imports lead created_at parsed correctly from sugarcrm', function () {
     // Create user with external_id (required for import)
     $user = User::factory()->create(['external_id' => 'user-001']);
-    
+
     // Create app person that will be linked to lead via anamnesis relation
     $personExternalId = 'person-001';
     $appPerson = Person::factory()->create(['external_id' => $personExternalId]);
@@ -347,7 +346,7 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
 test('imports lead with multiple persons correctly', function () {
     // Create user with external_id (required for import)
     $user = User::factory()->create(['external_id' => 'user-multi-001']);
-    
+
     // Create app persons that will be linked to lead
     $person1ExternalId = 'person-multi-001';
     $person2ExternalId = 'person-multi-002';

@@ -23,7 +23,7 @@ test('test fields with storing activities', function () {
 
     // Get the group that should be auto-selected based on lead's department
     $expectedGroup = \Webkul\User\Models\Group::where('department_id', $department->id)->firstOrFail();
-    
+
     $activityData = [
         'title'         => 'Test activity',
         'description'   => 'This is a test activity description.',

@@ -21,7 +21,7 @@ class TestSeeder extends BaseSeeder
             TypeSeeder::class,
             SourceSeeder::class,
         ], $parameters);
-        
+
         // Ensure departments and groups are properly linked for testing
         $this->ensureDepartmentsAndGroups();
     }
@@ -39,7 +39,7 @@ class TestSeeder extends BaseSeeder
 
         // Create groups linked to departments
         $groupMappings = [
-            'Hernia' => $departments[Departments::HERNIA->value]->id,
+            'Hernia'      => $departments[Departments::HERNIA->value]->id,
             'Privatescan' => $departments[Departments::PRIVATESCAN->value]->id,
         ];
 

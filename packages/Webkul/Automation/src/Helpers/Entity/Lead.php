@@ -221,12 +221,33 @@ class Lead extends AbstractEntity
                     break;
 
                 case 'add_note_as_activity':
+                    // Get default group from lead's department or user's group
+                    $userId = auth()->guard('user')->user()->id;
+                    $groupId = null;
+                    
+                    // First try to get group from lead's department
+                    if ($lead->department) {
+                        $group = \Webkul\User\Models\Group::where('name', $lead->department->name)->first();
+                        if ($group) {
+                            $groupId = $group->id;
+                        }
+                    }
+                    
+                    // Fallback to user's group or first available group
+                    if (!$groupId) {
+                        $user = \Webkul\User\Models\User::find($userId);
+                        $groupId = $user && $user->groups()->count() > 0 
+                            ? $user->groups()->first()->id 
+                            : \Webkul\User\Models\Group::first()->id;
+                    }
+
                     $activity = $this->activityRepository->create([
                         'type'    => 'note',
                         'comment' => $action['value'],
                         'is_done' => 1,
-                        'user_id' => auth()->guard('user')->user()->id,
+                        'user_id' => $userId,
                         'lead_id' => $lead->id,
+                        'group_id' => $groupId,
                     ]);
 
                     break;

@@ -212,6 +212,26 @@ class LeadObserver
 
                 $fieldLabel = $fieldLabels[$field];
 
+                // Get default group for system activities - prefer lead's department group
+                $userId = auth()->id() ?? 1;
+                $groupId = null;
+                
+                // First try to get group from lead's department
+                if ($lead->department) {
+                    $group = \Webkul\User\Models\Group::where('name', $lead->department->name)->first();
+                    if ($group) {
+                        $groupId = $group->id;
+                    }
+                }
+                
+                // Fallback to user's group or first available group
+                if (!$groupId) {
+                    $user = \Webkul\User\Models\User::find($userId);
+                    $groupId = $user && $user->groups()->count() > 0 
+                        ? $user->groups()->first()->id 
+                        : \Webkul\User\Models\Group::first()->id;
+                }
+
                 $activity = $this->activityRepository->create([
                     'type'       => 'system',
                     'title'      => "$fieldLabel gewijzigd",
@@ -227,7 +247,8 @@ class LeadObserver
                             'label' => $oldValue ?: '-',
                         ],
                     ]),
-                    'user_id' => auth()->id() ?? 1,
+                    'user_id' => $userId,
+                    'group_id' => $groupId,
                     'lead_id' => $lead->id,
                 ]);
             }

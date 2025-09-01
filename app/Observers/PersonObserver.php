@@ -116,6 +116,13 @@ class PersonObserver
                     $newValue = $newValue ?: '-';
                 }
 
+                // Get default group for system activities
+                $userId = auth()->id() ?? 1;
+                $user = \Webkul\User\Models\User::find($userId);
+                $groupId = $user && $user->groups()->count() > 0 
+                    ? $user->groups()->first()->id 
+                    : \Webkul\User\Models\Group::first()->id;
+
                 $activity = $this->activityRepository->create([
                     'type'       => 'system',
                     'title'      => "$fieldLabel gewijzigd",
@@ -131,7 +138,8 @@ class PersonObserver
                             'label' => $oldValue,
                         ],
                     ]),
-                    'user_id' => auth()->id() ?? 1,
+                    'user_id' => $userId,
+                    'group_id' => $groupId,
                 ]);
 
                 $person->activities()->attach($activity->id);

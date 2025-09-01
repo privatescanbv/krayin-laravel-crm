@@ -29,12 +29,27 @@ class LeadNoteController extends Controller
 
         $lead = $this->leadRepository->findOrFail($leadId);
 
+        // Get default group from lead's department or fallback
+        $groupId = null;
+        if ($lead->department) {
+            $group = \Webkul\User\Models\Group::where('name', $lead->department->name)->first();
+            if ($group) {
+                $groupId = $group->id;
+            }
+        }
+        
+        // Fallback to first available group if no department group found
+        if (!$groupId) {
+            $groupId = \Webkul\User\Models\Group::first()->id;
+        }
+
         $activity = $this->activityRepository->create([
             'type'    => 'note',
             'comment' => request('comment'),
             'is_done' => 1,
             'user_id' => 1, // TODO: Replace with actual user ID when auth is implemented
             'lead_id' => $leadId,
+            'group_id' => $groupId,
         ]);
 
         return response()->json([

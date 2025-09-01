@@ -19,13 +19,34 @@ trait LogsActivity
             }
 
             if (! $model instanceof AttributeValue) {
+                // Get default group for system activities
+                $userId = auth()->check() ? auth()->id() : null;
+                $groupId = null;
+                
+                // If this is a Lead model, try to get group from lead's department
+                if (method_exists($model, 'getTable') && $model->getTable() === 'leads' && $model->department) {
+                    $group = \Webkul\User\Models\Group::where('name', $model->department->name)->first();
+                    if ($group) {
+                        $groupId = $group->id;
+                    }
+                }
+                
+                // Fallback to user's group or first available group
+                if (!$groupId && $userId) {
+                    $user = \Webkul\User\Models\User::find($userId);
+                    $groupId = $user && $user->groups()->count() > 0 
+                        ? $user->groups()->first()->id 
+                        : \Webkul\User\Models\Group::first()->id;
+                } elseif (!$groupId) {
+                    $groupId = \Webkul\User\Models\Group::first()->id;
+                }
+
                 $activityData = [
                     'type'    => 'system',
                     'title'   => trans('admin::app.activities.created'),
                     'is_done' => 1,
-                    'user_id' => auth()->check()
-                        ? auth()->id()
-                        : null,
+                    'user_id' => $userId,
+                    'group_id' => $groupId,
                 ];
 
                 // Add lead_id if this is a Lead model

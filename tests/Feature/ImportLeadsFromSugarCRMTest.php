@@ -616,25 +616,7 @@ test('imports call activities from sugarcrm', function () {
     expect($lead)->not->toBeNull();
 
     // Verify call activities were imported
-    $allActivities = $lead->activities()->get();
     $callActivities = $lead->activities()->where('type', 'call')->get();
-    
-    // Debug: Let's see what we actually have
-    dump('Lead ID:', $lead->id);
-    dump('Lead external_id:', $lead->external_id);
-    dump('Total activities:', $allActivities->count());
-    dump('Call activities:', $callActivities->count());
-    
-    if ($allActivities->count() > 0) {
-        dump('Activity types:', $allActivities->pluck('type')->toArray());
-        dump('Activity lead_ids:', $allActivities->pluck('lead_id')->toArray());
-        dump('First activity data:', $allActivities->first()->toArray());
-    }
-    
-    // Also check if there are any activities in the database at all
-    $totalActivitiesInDb = \Webkul\Activity\Models\Activity::count();
-    dump('Total activities in database:', $totalActivitiesInDb);
-    
     expect($callActivities)->toHaveCount(2);
 
     // Check first call activity - use different approach for JSON querying

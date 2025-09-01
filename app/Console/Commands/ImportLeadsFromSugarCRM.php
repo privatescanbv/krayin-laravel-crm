@@ -1140,8 +1140,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
                     $activity = $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
                     
-                    // Verify the activity is properly linked
-                    $this->info("✓ Imported call activity: {$callData->name} for lead {$lead->external_id} (Activity ID: {$activity->id}, Lead ID: {$activity->lead_id})");
+                    $this->info("✓ Imported call activity: {$callData->name} for lead {$lead->external_id}");
                     $imported++;
                 } catch (Exception $e) {
                     $this->error("Failed to import call activity {$callData->id}: " . $e->getMessage());

@@ -102,6 +102,7 @@ class ActivityController extends Controller
             'schedule_from' => 'required_unless:type,note,file',
             'schedule_to'   => 'required_unless:type,note,file',
             'file'          => 'required_if:type,file',
+            'group_id'      => 'required|exists:groups,id',
         ]);
 
         if (request('type') === 'meeting') {
@@ -130,7 +131,7 @@ class ActivityController extends Controller
 
         Event::dispatch('activity.create.before');
 
-        // Auto-assign group if not specified but user has a group
+        // Auto-assign group based on lead's department or user's group
         $data = request()->all();
         
         // Convert empty strings to null for foreign key constraints
@@ -141,11 +142,26 @@ class ActivityController extends Controller
         }
         
         if (!isset($data['group_id']) || !$data['group_id']) {
-            $userId = $data['user_id'] ?? auth()->guard('user')->id();
-            if ($userId) {
-                $user = \Webkul\User\Models\User::find($userId);
-                if ($user && $user->groups()->count() > 0) {
-                    $data['group_id'] = $user->groups()->first()->id;
+            // First try to get group from lead's department if lead_id is provided
+            if (isset($data['lead_id']) && $data['lead_id']) {
+                $lead = \Webkul\Lead\Models\Lead::find($data['lead_id']);
+                if ($lead && $lead->department) {
+                    // Find group with same name as department
+                    $group = \Webkul\User\Models\Group::where('name', $lead->department->name)->first();
+                    if ($group) {
+                        $data['group_id'] = $group->id;
+                    }
+                }
+            }
+            
+            // If no group found from lead department, try user's group as fallback
+            if (!isset($data['group_id']) || !$data['group_id']) {
+                $userId = $data['user_id'] ?? auth()->guard('user')->id();
+                if ($userId) {
+                    $user = \Webkul\User\Models\User::find($userId);
+                    if ($user && $user->groups()->count() > 0) {
+                        $data['group_id'] = $user->groups()->first()->id;
+                    }
                 }
             }
         }
@@ -210,6 +226,15 @@ class ActivityController extends Controller
      */
     public function update($id): RedirectResponse|JsonResponse
     {
+        $this->validate(request(), [
+            'type'          => 'required',
+            'comment'       => 'required_if:type,note',
+            'schedule_from' => 'required_unless:type,note,file',
+            'schedule_to'   => 'required_unless:type,note,file',
+            'file'          => 'required_if:type,file',
+            'group_id'      => 'required|exists:groups,id',
+        ]);
+
         // Get the current activity to check permissions
         $activity = $this->activityRepository->findOrFail($id);
         

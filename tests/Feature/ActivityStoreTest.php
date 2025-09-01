@@ -24,6 +24,7 @@ test('test fields with storing activities', function () {
         'type'          => 'task',
         'schedule_from' => now()->format('Y-m-d H:i:s'),
         'schedule_to'   => now()->addHour()->format('Y-m-d H:i:s'),
+        'group_id'      => 1, // Required field
     ];
 
     // Act

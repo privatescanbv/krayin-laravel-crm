@@ -145,7 +145,7 @@
 
                     <!-- Group -->
                     <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>
+                        <x-admin::form.control-group.label class="required">
                             {{ __('admin::app.activities.group') }}
                         </x-admin::form.control-group.label>
 
@@ -153,6 +153,7 @@
                             type="select"
                             name="group_id"
                             :value="old('group_id', $activity->group_id)"
+                            rules="required"
                         >
                             <option value="">{{ __('admin::app.activities.select-group') }}</option>
                             @foreach ($groups as $group)
@@ -161,6 +162,8 @@
                                 </option>
                             @endforeach
                         </x-admin::form.control-group.control>
+
+                        <x-admin::form.control-group.error control-name="group_id" />
                     </x-admin::form.control-group>
 
                     <!-- Related Entity Information -->

@@ -38,7 +38,7 @@ class ActivityController extends Controller
             'comment' => 'required_if:type,note',
             'description' => 'nullable|string',
             'user_id' => 'nullable|exists:users,id',
-            'group_id' => 'nullable|exists:groups,id',
+            'group_id' => 'required|exists:groups,id',
             'schedule_from' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
             'schedule_to' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
             'file' => 'required_if:type,file',
@@ -53,12 +53,25 @@ class ActivityController extends Controller
             }
         }
 
-        // Auto-assign group if not specified but user has a group
+        // Auto-assign group based on lead's department or user's group
         $groupId = $data['group_id'] ?? null;
-        if (!$groupId && isset($data['user_id']) && $data['user_id']) {
-            $user = User::find($data['user_id']);
-            if ($user && $user->groups()->count() > 0) {
-                $groupId = $user->groups()->first()->id;
+        if (!$groupId) {
+            // First try to get group from lead's department
+            $lead = $this->leadRepository->find($id);
+            if ($lead && $lead->department) {
+                // Find group with same name as department
+                $group = \Webkul\User\Models\Group::where('name', $lead->department->name)->first();
+                if ($group) {
+                    $groupId = $group->id;
+                }
+            }
+            
+            // If no group found from department, try user's group as fallback
+            if (!$groupId && isset($data['user_id']) && $data['user_id']) {
+                $user = User::find($data['user_id']);
+                if ($user && $user->groups()->count() > 0) {
+                    $groupId = $user->groups()->first()->id;
+                }
             }
         }
 

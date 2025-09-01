@@ -526,6 +526,32 @@ test('imports call activities from sugarcrm', function () {
         'deleted' => 0,
     ]);
 
+    // Create anamnesis records and relations (required for import logic)
+    $anamnesisId = 'an-001';
+    DB::connection('sugarcrm')->table('pcrm_anamnesepreventie')->insert([
+        'id' => $anamnesisId,
+        'name' => 'Test anamnesis',
+        'status' => 'active',
+        'date_entered' => '2024-01-15 10:00:00',
+        'date_modified' => '2024-01-15 11:00:00',
+        'deleted' => 0,
+    ]);
+    DB::connection('sugarcrm')->table('pcrm_anamnesepreventie_cstm')->insert([
+        'id_c' => $anamnesisId,
+    ]);
+    // Link lead to anamnesis
+    DB::connection('sugarcrm')->table('leads_pcrm_anamnesepreventie_1_c')->insert([
+        'leads_pcrm_anamnesepreventie_1leads_ida' => $leadId,
+        'leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb' => $anamnesisId,
+        'deleted' => 0,
+    ]);
+    // Link anamnesis to person
+    DB::connection('sugarcrm')->table('pcrm_anamnetie_contacts_c')->insert([
+        'pcrm_anamn171deventie_idb' => $anamnesisId,
+        'pcrm_anamn0b6eontacts_ida' => $personExternalId,
+        'deleted' => 0,
+    ]);
+
     // Insert call activities
     DB::connection('sugarcrm')->table('calls')->insert([
         [

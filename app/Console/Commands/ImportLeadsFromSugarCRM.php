@@ -419,9 +419,14 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 });
                 
                 // Import call activities for this lead (outside main transaction)
-                $callStats = $this->importCallActivities($lead, $callActivities);
-                $callActivitiesImported += $callStats['imported'];
-                $callActivitiesSkipped += $callStats['skipped'];
+                try {
+                    $callStats = $this->importCallActivities($lead, $callActivities);
+                    $callActivitiesImported += $callStats['imported'];
+                    $callActivitiesSkipped += $callStats['skipped'];
+                } catch (Exception $e) {
+                    $this->error("Failed to import call activities for lead {$lead->external_id}: " . $e->getMessage());
+                    // Continue with next lead
+                }
 
                 $imported++;
                 $bar->advance();

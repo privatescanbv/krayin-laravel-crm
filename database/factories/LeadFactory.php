@@ -57,6 +57,12 @@ class LeadFactory extends Factory
             ]);
         }
 
+        // Get or create default department
+        $department = \App\Models\Department::where('name', \App\Enums\Departments::PRIVATESCAN->value)->first();
+        if (!$department) {
+            $department = \App\Models\Department::create(['name' => \App\Enums\Departments::PRIVATESCAN->value]);
+        }
+
         return [
             'description'            => $this->faker->paragraph(),
             'status'                 => $this->faker->boolean(),
@@ -67,6 +73,7 @@ class LeadFactory extends Factory
             'lead_type_id'           => $type->id,
             'lead_pipeline_id'       => $pipeline->id,
             'lead_pipeline_stage_id' => $stage->id,
+            'department_id'          => $department->id, // Always set department_id
             'combine_order'          => true, // Default true
             // Personal fields - minimal defaults, can be overridden
             'first_name'             => $this->faker->firstName(),

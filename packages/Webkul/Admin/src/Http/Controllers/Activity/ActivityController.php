@@ -165,7 +165,7 @@ class ActivityController extends Controller
      */
     public function edit(int $id): View
     {
-        $activity = $this->activityRepository->findOrFail($id);
+        $activity = $this->activityRepository->with(['participants.user'])->findOrFail($id);
 
         $groups = app(GroupRepository::class)->all();
 

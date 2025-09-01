@@ -26,18 +26,6 @@
                 </div>
 
                 <div class="flex items-center gap-x-2.5">
-                    <!-- Takeover Button -->
-                    @if($activity->user_id && $activity->user_id != auth()->guard('user')->id() && $canTakeover)
-                        <button
-                            type="button"
-                            class="secondary-button bg-orange-500 hover:bg-orange-600 text-white"
-                            onclick="takeoverActivity({{ $activity->id }})"
-                            title="Overnemen van {{ $activity->user ? $activity->user->name : 'onbekend' }}"
-                        >
-                            Overnemen
-                        </button>
-                    @endif
-
                     <!-- Create button for person -->
                     <div class="flex items-center gap-x-2.5">
                         {!! view_render_event('admin.activities.edit.save_button.before') !!}
@@ -114,6 +102,46 @@
                         <x-admin::form.control-group.error control-name="comment" />
                     </x-admin::form.control-group>
 
+                    <!-- Toegewezen aan -->
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            @lang('admin::app.activities.assign-to')
+                        </x-admin::form.control-group.label>
+
+                        <div class="flex items-center gap-2">
+                            <x-admin::form.control-group.control
+                                type="select"
+                                name="user_id"
+                                :value="old('user_id', $activity->user_id)"
+                                class="flex-1"
+                                :disabled="$activity->user_id && $activity->user_id != auth()->guard('user')->id() && !$canTakeover"
+                            >
+                                <option value="">{{ __('admin::app.activities.select-user') }}</option>
+                                @foreach (app(Webkul\User\Repositories\UserRepository::class)->findWhere(['status' => 1]) as $user)
+                                    <option 
+                                        value="{{ $user->id }}"
+                                        {{ $activity->user_id == $user->id ? 'selected' : '' }}
+                                    >
+                                        {{ $user->name }}
+                                    </option>
+                                @endforeach
+                            </x-admin::form.control-group.control>
+
+                            <!-- Takeover Button -->
+                            @if($activity->user_id && $activity->user_id != auth()->guard('user')->id() && $canTakeover)
+                                <button
+                                    type="button"
+                                    class="secondary-button bg-orange-500 hover:bg-orange-600 text-white whitespace-nowrap"
+                                    onclick="takeoverActivity({{ $activity->id }})"
+                                    title="Overnemen van {{ $activity->user ? $activity->user->name : 'onbekend' }}"
+                                >
+                                    Overnemen
+                                </button>
+                            @endif
+                        </div>
+
+                        <x-admin::form.control-group.error control-name="user_id" />
+                    </x-admin::form.control-group>
 
                     <!-- Group -->
                     <x-admin::form.control-group>
@@ -311,14 +339,59 @@
                         throw new Error(errorData.message || 'Er is een fout opgetreden bij het overnemen van de activiteit.');
                     }
 
-                    // Success - show message and redirect
-                    window.location.reload();
+                    // Success - update the user_id dropdown and hide takeover button
+                    const responseData = await response.json();
+                    const currentUserId = {{ auth()->guard('user')->id() ?? 'null' }};
+                    
+                    // Update the user_id dropdown
+                    const userSelect = document.querySelector('select[name="user_id"]');
+                    if (userSelect) {
+                        userSelect.value = currentUserId;
+                        userSelect.disabled = false; // Enable the field since user now owns it
+                    }
+                    
+                    // Hide the takeover button
+                    const takeoverButton = document.querySelector('button[onclick*="takeoverActivity"]');
+                    if (takeoverButton) {
+                        takeoverButton.style.display = 'none';
+                    }
+                    
+                    // Show success message
+                    if (responseData.message) {
+                        // You can implement a flash message system here if available
+                        alert(responseData.message);
+                    }
 
                 } catch (error) {
                     // Show error message
                     alert(error.message);
                 }
             };
+
+            /**
+             * Handle user assignment dropdown change
+             */
+            document.addEventListener('DOMContentLoaded', function() {
+                const userSelect = document.querySelector('select[name="user_id"]');
+                const takeoverButton = document.querySelector('button[onclick*="takeoverActivity"]');
+                const currentUserId = {{ auth()->guard('user')->id() ?? 'null' }};
+                const canTakeover = {{ $canTakeover ? 'true' : 'false' }};
+                
+                if (userSelect) {
+                    userSelect.addEventListener('change', function() {
+                        const selectedUserId = parseInt(this.value);
+                        
+                        // Show/hide takeover button based on selection and permissions
+                        if (takeoverButton) {
+                            if (selectedUserId && selectedUserId !== currentUserId && canTakeover) {
+                                takeoverButton.style.display = 'inline-block';
+                            } else {
+                                takeoverButton.style.display = 'none';
+                            }
+                        }
+                    });
+                }
+            });
         </script>
     @endPushOnce
 </x-admin::layouts>

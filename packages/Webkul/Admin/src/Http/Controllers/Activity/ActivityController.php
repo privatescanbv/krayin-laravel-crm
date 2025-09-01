@@ -202,6 +202,28 @@ class ActivityController extends Controller
      */
     public function update($id): RedirectResponse|JsonResponse
     {
+        // Get the current activity to check permissions
+        $activity = $this->activityRepository->findOrFail($id);
+        
+        // Check if user_id is being changed and if user has permission
+        if (request()->has('user_id') && request('user_id') != $activity->user_id) {
+            $currentUser = auth()->guard('user')->user();
+            
+            // Only allow user_id change if:
+            // 1. Current user is the assigned user, OR
+            // 2. Current user has takeover permission
+            if ($activity->user_id && $activity->user_id != $currentUser->id && !$currentUser->hasPermission('activities.takeover')) {
+                if (request()->ajax()) {
+                    return response()->json([
+                        'message' => 'Je hebt geen rechten om de toewijzing van deze activiteit te wijzigen.',
+                    ], 403);
+                }
+                
+                session()->flash('error', 'Je hebt geen rechten om de toewijzing van deze activiteit te wijzigen.');
+                return redirect()->back();
+            }
+        }
+
         Event::dispatch('activity.update.before', $id);
 
         $data = request()->all();

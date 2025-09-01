@@ -12,6 +12,23 @@ class Department extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'name',
+    ];
+
+    /**
+     * Get the groups that belong to this department.
+     */
+    public function groups()
+    {
+        return $this->hasMany(\Webkul\User\Models\Group::class, 'department_id');
+    }
+
     public static function findHerniaId(): int
     {
         return Department::query()->where('name', Departments::HERNIA->value)->firstOrFail()->id;

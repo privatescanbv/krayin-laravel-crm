@@ -285,27 +285,42 @@ class AttachmentImporter
             // Get SugarCRM host from database connection config
             $config = config("database.connections.{$this->connection}");
             $sugarCrmHost = $config['host'] ?? null;
+            $sugarCrmPort = $config['port'] ?? 80;
             
             if (!$sugarCrmHost) {
                 $this->command->warn("No SugarCRM host configured for file download");
                 return null;
             }
 
-            // Build SugarCRM download URL
-            $downloadUrl = "http://{$sugarCrmHost}/index.php?entryPoint=download&id={$attachmentData->id}&type=Notes";
+            // Build SugarCRM download URL using the direct download entrypoint
+            // Format: http://host:port/index.php?entryPoint=download&id=<NOTE_ID>&type=Notes
+            $baseUrl = "http://{$sugarCrmHost}";
+            if ($sugarCrmPort && $sugarCrmPort != 80) {
+                $baseUrl .= ":{$sugarCrmPort}";
+            }
+            $downloadUrl = "{$baseUrl}/index.php?entryPoint=download&id={$attachmentData->id}&type=Notes";
             
-            $this->command->info("Downloading file content from: {$downloadUrl}");
+            $this->command->info("Downloading {$attachmentData->filename} from SugarCRM: {$downloadUrl}");
 
             // Use cURL to download the file content
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, $downloadUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For development
+            curl_setopt($ch, CURLOPT_TIMEOUT, 60); // Increased timeout for large files
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Krayin CRM Import Bot');
+            
+            // Add basic auth if configured
+            if (!empty($config['username']) && !empty($config['password'])) {
+                curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+                curl_setopt($ch, CURLOPT_USERPWD, $config['username'] . ':' . $config['password']);
+            }
             
             $fileContent = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
             $error = curl_error($ch);
             curl_close($ch);
 
@@ -315,16 +330,22 @@ class AttachmentImporter
             }
 
             if ($httpCode !== 200) {
-                $this->command->warn("HTTP error {$httpCode} downloading {$attachmentData->filename}");
+                $this->command->warn("HTTP {$httpCode} downloading {$attachmentData->filename} - may require authentication");
                 return null;
             }
 
-            if (empty($fileContent)) {
-                $this->command->warn("Empty file content for {$attachmentData->filename}");
+            if (empty($fileContent) || strlen($fileContent) < 10) {
+                $this->command->warn("Empty or invalid file content for {$attachmentData->filename}");
                 return null;
             }
 
-            $this->command->info("✓ Downloaded {$attachmentData->filename} (" . strlen($fileContent) . " bytes)");
+            // Validate that we got actual file content, not an error page
+            if (str_contains($fileContent, '<html>') && str_contains($fileContent, 'error')) {
+                $this->command->warn("Received error page instead of file content for {$attachmentData->filename}");
+                return null;
+            }
+
+            $this->command->info("✓ Downloaded {$attachmentData->filename} (" . number_format(strlen($fileContent)) . " bytes, {$contentType})");
             return $fileContent;
 
         } catch (Exception $e) {

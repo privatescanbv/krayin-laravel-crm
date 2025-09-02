@@ -7,6 +7,8 @@ use App\Enums\PipelineStageDefaultKeys;
 use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\Department;
+use App\Services\Importers\SugarCRM\ActivityImporter;
+use App\Services\Importers\SugarCRM\AttachmentImporter;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -31,6 +33,9 @@ use Webkul\User\Models\User;
  */
 class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 {
+    protected ActivityImporter $activityImporter;
+    protected AttachmentImporter $attachmentImporter;
+
     /**
      * The name and signature of the console command.
      *
@@ -67,6 +72,10 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             $this->info("Limit: {$limit}");
         }
         $this->info('Dry run: '.($dryRun ? 'Yes' : 'No'));
+
+        // Initialize importers
+        $this->activityImporter = new ActivityImporter($this, $connection);
+        $this->attachmentImporter = new AttachmentImporter($this, $connection);
 
         // user import needs to be run first
         $this->ensureUserImportRan();
@@ -179,13 +188,13 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             $leadByPersonsByAnamnesis = $this->extractAnamenesis($leadByPersons);
 
             // Extract call activities for the leads
-            $callActivities = $this->extractCallActivities($records);
+            $callActivities = $this->activityImporter->extractCallActivities($records);
             
             // Extract email activities for the leads
-            $emailActivities = $this->extractEmailActivities($records);
+            $emailActivities = $this->activityImporter->extractEmailActivities($records);
             
             // Extract email attachments for the leads
-            $emailAttachments = $this->extractEmailAttachments($records);
+            $emailAttachments = $this->attachmentImporter->extractEmailAttachments($records);
 
             if ($dryRun) {
                 $this->showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $emailAttachments);
@@ -488,7 +497,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
                 // Import call activities for this lead (outside main transaction)
                 try {
-                    $callStats = $this->importCallActivities($lead, $callActivities);
+                    $callStats = $this->activityImporter->importCallActivities($lead, $callActivities);
                     $callActivitiesImported += $callStats['imported'];
                     $callActivitiesSkipped += $callStats['skipped'];
                 } catch (Exception $e) {
@@ -498,7 +507,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 
                 // Import email activities for this lead (outside main transaction)
                 try {
-                    $emailStats = $this->importEmailActivities($lead, $emailActivities);
+                    $emailStats = $this->activityImporter->importEmailActivities($lead, $emailActivities);
                     $emailActivitiesImported += $emailStats['imported'];
                     $emailActivitiesSkipped += $emailStats['skipped'];
                 } catch (Exception $e) {
@@ -508,7 +517,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 
                 // Import email attachments for this lead (outside main transaction)
                 try {
-                    $attachmentStats = $this->importEmailAttachments($lead, $emailAttachments, $emailActivities);
+                    $attachmentStats = $this->attachmentImporter->importEmailAttachments($lead, $emailAttachments, $emailActivities);
                     $emailAttachmentsImported += $attachmentStats['imported'];
                     $emailAttachmentsSkipped += $attachmentStats['skipped'];
                 } catch (Exception $e) {
@@ -1106,596 +1115,25 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         return PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
     }
 
-    /**
-     * Extract call activities from SugarCRM for the given leads
-     *
-     * @param  mixed  $records  The lead records
-     * @return array [lead_id => [call_data1, call_data2, ...]]
-     */
-    private function extractCallActivities($records): array
-    {
-        $leadIds = collect($records)->pluck('id')->all();
 
-        if (empty($leadIds)) {
-            return [];
-        }
 
-        $connection = $this->option('connection');
 
-        try {
-            // Check if calls tables exist
-            if (! Schema::connection($connection)->hasTable('calls')) {
-                $this->info('Calls table does not exist in SugarCRM database, skipping call activities import');
 
-                return [];
-            }
-            if (! Schema::connection($connection)->hasTable('calls_cstm')) {
-                $this->info('Calls_cstm table does not exist in SugarCRM database, skipping call activities import');
 
-                return [];
-            }
 
-            $sql = DB::connection($connection)
-                ->table('calls as c')
-                ->join('calls_cstm as cc', 'c.id', '=', 'cc.id_c')
-                ->select([
-                    'c.id',
-                    'c.name',
-                    'c.date_entered',
-                    'c.date_modified',
-                    'c.modified_user_id',
-                    'c.created_by',
-                    'c.description',
-                    'c.deleted',
-                    'c.assigned_user_id',
-                    'c.date_start',
-                    'c.date_end',
-                    'c.parent_type',
-                    'c.status',
-                    'c.direction',
-                    'c.parent_id',
-                    'cc.belgroep_c',
-                ])
-                ->whereIn('c.parent_id', $leadIds)
-                ->where('c.parent_type', '=', 'Leads')
-                ->where('c.deleted', '=', 0)
-                ->orderBy('c.date_entered', 'asc');
 
-            $this->info('Extracting call activities: '.$sql->toRawSql());
-            $calls = $sql->get();
 
-            $this->info('Found '.$calls->count().' call activities');
 
-            // Group calls by parent_id (lead_id)
-            $result = [];
-            foreach ($calls as $call) {
-                if (! isset($result[$call->parent_id])) {
-                    $result[$call->parent_id] = [];
-                }
-                $result[$call->parent_id][] = $call;
-            }
 
-            return $result;
-        } catch (Exception $e) {
-            $this->error('Failed to extract call activities: '.$e->getMessage());
-            $this->info('Continuing import without call activities');
 
-            return [];
-        }
-    }
 
-    /**
-     * Extract email activities from SugarCRM for the given leads
-     *
-     * @param  mixed  $records  The lead records
-     * @return array [lead_id => [email_data1, email_data2, ...]]
-     */
-    private function extractEmailActivities($records): array
-    {
-        $leadIds = collect($records)->pluck('id')->all();
 
-        if (empty($leadIds)) {
-            return [];
-        }
 
-        $connection = $this->option('connection');
 
-        try {
-            // Check if email tables exist
-            if (! Schema::connection($connection)->hasTable('emails')) {
-                $this->info('Emails table does not exist in SugarCRM database, skipping email activities import');
 
-                return [];
-            }
-            if (! Schema::connection($connection)->hasTable('emails_text')) {
-                $this->info('Emails_text table does not exist in SugarCRM database, skipping email activities import');
 
-                return [];
-            }
-            if (! Schema::connection($connection)->hasTable('emails_beans')) {
-                $this->info('Emails_beans table does not exist in SugarCRM database, skipping email activities import');
 
-                return [];
-            }
 
-            $sql = DB::connection($connection)
-                ->table('emails as e')
-                ->join('emails_text as et', 'e.id', '=', 'et.email_id')
-                ->join('emails_beans as eb', 'e.id', '=', 'eb.email_id')
-                ->select([
-                    'e.id',
-                    'e.name as subject',
-                    'e.date_entered',
-                    'e.date_modified',
-                    'e.assigned_user_id',
-                    'e.created_by',
-                    'e.deleted',
-                    'e.date_sent',
-                    'e.message_id',
-                    'e.type',
-                    'e.status',
-                    'e.flagged',
-                    'e.reply_to_status',
-                    'e.intent',
-                    'e.mailbox_id',
-                    'e.parent_type',
-                    'e.parent_id',
-                    'et.description',
-                    'et.description_html',
-                    'et.raw_source',
-                    'eb.bean_id',
-                    'eb.bean_module',
-                ])
-                ->whereIn('eb.bean_id', $leadIds)
-                ->where('eb.bean_module', '=', 'Leads')
-                ->where('e.deleted', '=', 0)
-                ->where('eb.deleted', '=', 0)
-                ->orderBy('e.date_sent', 'asc');
-
-            $this->info('Extracting email activities: '.$sql->toRawSql());
-            $emails = $sql->get();
-
-            $this->info('Found '.$emails->count().' email activities');
-
-            // Group emails by bean_id (lead_id)
-            $result = [];
-            foreach ($emails as $email) {
-                if (! isset($result[$email->bean_id])) {
-                    $result[$email->bean_id] = [];
-                }
-                $result[$email->bean_id][] = $email;
-            }
-
-            return $result;
-        } catch (Exception $e) {
-            $this->error('Failed to extract email activities: '.$e->getMessage());
-            $this->info('Continuing import without email activities');
-
-            return [];
-        }
-    }
-
-    /**
-     * Extract email attachments from SugarCRM for the given leads
-     *
-     * @param  mixed  $records  The lead records
-     * @return array [lead_id => [attachment_data1, attachment_data2, ...]]
-     */
-    private function extractEmailAttachments($records): array
-    {
-        $leadIds = collect($records)->pluck('id')->all();
-
-        if (empty($leadIds)) {
-            return [];
-        }
-
-        $connection = $this->option('connection');
-
-        try {
-            // Check if notes table exists
-            if (! Schema::connection($connection)->hasTable('notes')) {
-                $this->info('Notes table does not exist in SugarCRM database, skipping email attachments import');
-
-                return [];
-            }
-
-            // First, get all email IDs that belong to our leads
-            $emailIds = DB::connection($connection)
-                ->table('emails_beans as eb')
-                ->join('emails as e', 'e.id', '=', 'eb.email_id')
-                ->whereIn('eb.bean_id', $leadIds)
-                ->where('eb.bean_module', '=', 'Leads')
-                ->where('e.deleted', '=', 0)
-                ->where('eb.deleted', '=', 0)
-                ->pluck('e.id')
-                ->all();
-
-            if (empty($emailIds)) {
-                $this->info('No emails found for leads, skipping email attachments import');
-                return [];
-            }
-
-            // Now get attachments (notes) for these emails
-            $sql = DB::connection($connection)
-                ->table('notes as n')
-                ->join('emails_beans as eb', function ($join) {
-                    $join->on('eb.email_id', '=', 'n.parent_id')
-                        ->where('n.parent_type', '=', 'Emails')
-                        ->where('eb.bean_module', '=', 'Leads')
-                        ->where('eb.deleted', '=', 0);
-                })
-                ->select([
-                    'n.id',
-                    'n.name',
-                    'n.filename',
-                    'n.file_mime_type',
-                    'n.description',
-                    'n.date_entered',
-                    'n.date_modified',
-                    'n.created_by',
-                    'n.assigned_user_id',
-                    'n.deleted',
-                    'n.parent_id as email_id',
-                    'n.parent_type',
-                    'eb.bean_id as lead_id',
-                ])
-                ->whereIn('n.parent_id', $emailIds)
-                ->where('n.parent_type', '=', 'Emails')
-                ->where('n.deleted', '=', 0)
-                ->whereNotNull('n.filename') // Only notes with files
-                ->orderBy('n.date_entered', 'asc');
-
-            $this->info('Extracting email attachments: '.$sql->toRawSql());
-            $attachments = $sql->get();
-
-            $this->info('Found '.$attachments->count().' email attachments');
-
-            // Group attachments by lead_id
-            $result = [];
-            foreach ($attachments as $attachment) {
-                if (! isset($result[$attachment->lead_id])) {
-                    $result[$attachment->lead_id] = [];
-                }
-                $result[$attachment->lead_id][] = $attachment;
-            }
-
-            return $result;
-        } catch (Exception $e) {
-            $this->error('Failed to extract email attachments: '.$e->getMessage());
-            $this->info('Continuing import without email attachments');
-
-            return [];
-        }
-    }
-
-    /**
-     * Import call activities for a lead
-     *
-     * @param  Lead  $lead  The lead to import activities for
-     * @param  array  $callActivities  All call activities grouped by lead ID
-     * @return array Statistics about imported and skipped activities
-     */
-    private function importCallActivities(Lead $lead, array $callActivities): array
-    {
-        $imported = 0;
-        $skipped = 0;
-
-        try {
-            $leadCallActivities = $callActivities[$lead->external_id] ?? [];
-
-            if (empty($leadCallActivities)) {
-                return ['imported' => $imported, 'skipped' => $skipped];
-            }
-
-            $this->info('Importing '.count($leadCallActivities)." call activities for lead {$lead->external_id}");
-
-            foreach ($leadCallActivities as $callData) {
-                try {
-                    // Check if activity already exists by external reference
-                    $existingActivity = Activity::where('external_id', $callData->id)->first();
-                    if ($existingActivity) {
-                        $this->info("Skipping existing call activity with external_id={$callData->id}");
-                        $skipped++;
-
-                        continue;
-                    }
-
-                    // Get group_id from lead's department (will throw exception if invalid)
-                    $groupId = Department::getGroupIdForLead($lead);
-
-                    // Create the activity
-                    $activityData = [
-                        'title'       => $callData->name ?? 'Bel activiteit',
-                        'type'        => 'call',
-                        'comment'     => $callData->description ?? '',
-                        'external_id' => $callData->id,
-                        'additional'  => [
-                            'direction'   => $callData->direction,
-                            'status'      => $callData->status,
-                            'belgroep'    => $callData->belgroep_c,
-                        ],
-                        'schedule_from' => $this->parseSugarDate($callData->date_start),
-                        'schedule_to'   => $this->parseSugarDate($callData->date_end),
-                        'is_done'       => $this->mapCallStatus($callData->status),
-                        'user_id'       => $this->mapAssignedUser($callData->assigned_user_id),
-                        'lead_id'       => $lead->id,
-                        'group_id'      => $groupId,
-                    ];
-
-                    $timestamps = [
-                        'created_at' => $this->parseSugarDate($callData->date_entered),
-                        'updated_at' => $this->parseSugarDate($callData->date_modified),
-                    ];
-
-                    $activity = $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
-
-                    $this->info("✓ Imported call activity: {$callData->name} for lead {$lead->external_id}");
-                    $imported++;
-                } catch (Exception $e) {
-                    $this->error("Failed to import call activity {$callData->id}: ".$e->getMessage());
-                    // Continue with next call activity
-                }
-            }
-        } catch (Exception $e) {
-            $this->error("Failed to import call activities for lead {$lead->external_id}: ".$e->getMessage());
-        }
-
-        return ['imported' => $imported, 'skipped' => $skipped];
-    }
-
-    /**
-     * Import email activities for a lead
-     *
-     * @param  Lead  $lead  The lead to import activities for
-     * @param  array  $emailActivities  All email activities grouped by lead ID
-     * @return array Statistics about imported and skipped activities
-     */
-    private function importEmailActivities(Lead $lead, array $emailActivities): array
-    {
-        $imported = 0;
-        $skipped = 0;
-
-        try {
-            $leadEmailActivities = $emailActivities[$lead->external_id] ?? [];
-
-            if (empty($leadEmailActivities)) {
-                return ['imported' => $imported, 'skipped' => $skipped];
-            }
-
-            $this->info('Importing '.count($leadEmailActivities)." email activities for lead {$lead->external_id}");
-
-            foreach ($leadEmailActivities as $emailData) {
-                try {
-                    // Check if activity already exists by external reference
-                    $existingActivity = Activity::where('external_id', $emailData->id)->first();
-                    if ($existingActivity) {
-                        $this->info("Skipping existing email activity with external_id={$emailData->id}");
-                        $skipped++;
-
-                        continue;
-                    }
-
-                    // Get group_id from lead's department (will throw exception if invalid)
-                    $groupId = Department::getGroupIdForLead($lead);
-
-                    // Create the activity
-                    $activityData = [
-                        'title'       => $emailData->subject ?? 'Email activiteit',
-                        'type'        => 'email',
-                        'comment'     => $this->formatEmailContent($emailData),
-                        'external_id' => $emailData->id,
-                        'additional'  => [
-                            'message_id'       => $emailData->message_id,
-                            'email_type'       => $emailData->type,
-                            'status'           => $emailData->status,
-                            'flagged'          => (bool) $emailData->flagged,
-                            'reply_to_status'  => $emailData->reply_to_status,
-                            'intent'           => $emailData->intent,
-                            'mailbox_id'       => $emailData->mailbox_id,
-                            'parent_type'      => $emailData->parent_type,
-                            'parent_id'        => $emailData->parent_id,
-                        ],
-                        'schedule_from' => $this->parseSugarDate($emailData->date_sent),
-                        'schedule_to'   => $this->parseSugarDate($emailData->date_sent),
-                        'is_done'       => $this->mapEmailStatus($emailData->status),
-                        'user_id'       => $this->mapAssignedUser($emailData->assigned_user_id),
-                        'lead_id'       => $lead->id,
-                        'group_id'      => $groupId,
-                    ];
-
-                    $timestamps = [
-                        'created_at' => $this->parseSugarDate($emailData->date_entered),
-                        'updated_at' => $this->parseSugarDate($emailData->date_modified),
-                    ];
-
-                    $activity = $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
-
-                    $this->info("✓ Imported email activity: {$emailData->subject} for lead {$lead->external_id}");
-                    $imported++;
-                } catch (Exception $e) {
-                    $this->error("Failed to import email activity {$emailData->id}: ".$e->getMessage());
-                    // Continue with next email activity
-                }
-            }
-        } catch (Exception $e) {
-            $this->error("Failed to import email activities for lead {$lead->external_id}: ".$e->getMessage());
-        }
-
-        return ['imported' => $imported, 'skipped' => $skipped];
-    }
-
-    /**
-     * Format email content for activity comment
-     */
-    private function formatEmailContent($emailData): string
-    {
-        $content = [];
-        
-        if (!empty($emailData->subject)) {
-            $content[] = "Subject: {$emailData->subject}";
-        }
-        
-        // Prefer HTML content, fallback to plain text
-        $body = $emailData->description_html ?? $emailData->description ?? '';
-        if (!empty($body)) {
-            // Strip HTML tags for plain text storage in comment
-            $plainBody = strip_tags($body);
-            // Limit length to prevent extremely long comments
-            if (strlen($plainBody) > 1000) {
-                $plainBody = substr($plainBody, 0, 1000) . '...';
-            }
-            $content[] = "Body: {$plainBody}";
-        }
-        
-        return implode("\n\n", $content);
-    }
-
-    /**
-     * Map email status to is_done boolean
-     */
-    private function mapEmailStatus(?string $status): bool
-    {
-        if (! $status) {
-            return false;
-        }
-
-        // Email is considered "done" if it's sent or archived
-        $completedStatuses = ['sent', 'archived', 'delivered'];
-
-        return in_array(strtolower(trim($status)), $completedStatuses);
-    }
-
-    /**
-     * Import email attachments for a lead
-     *
-     * @param  Lead  $lead  The lead to import attachments for
-     * @param  array  $emailAttachments  All email attachments grouped by lead ID
-     * @param  array  $emailActivities  Email activities to map attachments to
-     * @return array Statistics about imported and skipped attachments
-     */
-    private function importEmailAttachments(Lead $lead, array $emailAttachments, array $emailActivities): array
-    {
-        $imported = 0;
-        $skipped = 0;
-
-        try {
-            $leadEmailAttachments = $emailAttachments[$lead->external_id] ?? [];
-
-            if (empty($leadEmailAttachments)) {
-                return ['imported' => $imported, 'skipped' => $skipped];
-            }
-
-            $this->info('Importing '.count($leadEmailAttachments)." email attachments for lead {$lead->external_id}");
-
-            // Get email activities for this lead to map attachments to
-            $leadEmailActivities = $emailActivities[$lead->external_id] ?? [];
-            $emailActivityMap = [];
-            foreach ($leadEmailActivities as $emailActivity) {
-                $emailActivityMap[$emailActivity->id] = $emailActivity;
-            }
-
-            foreach ($leadEmailAttachments as $attachmentData) {
-                try {
-                    // Find the corresponding email activity
-                    $emailActivity = $emailActivityMap[$attachmentData->email_id] ?? null;
-                    if (!$emailActivity) {
-                        $this->warn("Email activity not found for attachment {$attachmentData->id}, email_id: {$attachmentData->email_id}");
-                        $skipped++;
-                        continue;
-                    }
-
-                    // Find the imported Activity record by external_id
-                    $activity = Activity::where('external_id', $attachmentData->email_id)
-                        ->where('lead_id', $lead->id)
-                        ->where('type', 'email')
-                        ->first();
-
-                    if (!$activity) {
-                        $this->warn("Activity record not found for email {$attachmentData->email_id}");
-                        $skipped++;
-                        continue;
-                    }
-
-                    // Check if attachment already exists by external reference
-                    $existingFile = $activity->files()
-                        ->where('name', $attachmentData->filename)
-                        ->where('path', 'LIKE', "%{$attachmentData->id}%")
-                        ->first();
-
-                    if ($existingFile) {
-                        $this->info("Skipping existing email attachment: {$attachmentData->filename}");
-                        $skipped++;
-                        continue;
-                    }
-
-                    // Create file path based on attachment data
-                    $fileExtension = pathinfo($attachmentData->filename, PATHINFO_EXTENSION);
-                    $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $attachmentData->filename);
-                    $filePath = "email_attachments/{$lead->external_id}/{$attachmentData->email_id}/{$attachmentData->id}_{$safeName}";
-
-                    // Create the file record
-                    $fileData = [
-                        'name' => $attachmentData->filename,
-                        'path' => $filePath,
-                        'activity_id' => $activity->id,
-                    ];
-
-                    $file = $this->createEntityWithTimestamps(\Webkul\Activity\Models\File::class, $fileData, [
-                        'created_at' => $this->parseSugarDate($attachmentData->date_entered),
-                        'updated_at' => $this->parseSugarDate($attachmentData->date_modified),
-                    ]);
-
-                    $this->info("✓ Imported email attachment: {$attachmentData->filename} for email activity {$activity->id}");
-                    $imported++;
-                } catch (Exception $e) {
-                    $this->error("Failed to import email attachment {$attachmentData->id}: ".$e->getMessage());
-                    // Continue with next attachment
-                }
-            }
-        } catch (Exception $e) {
-            $this->error("Failed to import email attachments for lead {$lead->external_id}: ".$e->getMessage());
-        }
-
-        return ['imported' => $imported, 'skipped' => $skipped];
-    }
-
-    /**
-     * Map call status to is_done boolean
-     */
-    private function mapCallStatus(?string $status): bool
-    {
-        if (! $status) {
-            return false;
-        }
-
-        $completedStatuses = ['held', 'completed', 'done', 'finished'];
-
-        return in_array(strtolower(trim($status)), $completedStatuses);
-    }
-
-    /**
-     * Map assigned user ID from SugarCRM to existing user by external_id
-     *
-     * @param  string|null  $assignedUserId  The SugarCRM user ID
-     * @return int|null The user ID to assign
-     *
-     * @throws Exception when user could not be found by external_id
-     */
-    private function mapAssignedUser(?string $assignedUserId): ?int
-    {
-        if (empty($assignedUserId)) {
-            return null;
-        }
-        // Look up user by external_id
-        $user = User::where('external_id', $assignedUserId)->first();
-        if (is_null($user)) {
-            throw new Exception('User not found by external_id: '.$assignedUserId);
-        }
-
-        $this->info("Mapped assigned user {$assignedUserId} to user: {$user->name} (ID: {$user->id})");
-
-        return $user->id;
-    }
 
     /**
      * @throws Exception when external users are missing

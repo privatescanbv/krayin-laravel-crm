@@ -190,7 +190,7 @@ class AttachmentImporter
 
                     // Create placeholder file content if no content is available from SugarCRM
                     $fileContent = $this->createPlaceholderContent($attachmentData);
-                    
+
                     // Store the file in Laravel storage
                     Storage::put($filePath, $fileContent);
 
@@ -280,19 +280,19 @@ class AttachmentImporter
     private function createPlaceholderContent($attachmentData): string
     {
         // If we have actual file content from SugarCRM, use it
-        if (!empty($attachmentData->file_content)) {
+        if (! empty($attachmentData->file_content)) {
             return base64_decode($attachmentData->file_content);
         }
 
         // Otherwise create a placeholder file with metadata
         $placeholderContent = "=== EMAIL ATTACHMENT PLACEHOLDER ===\n\n";
         $placeholderContent .= "This file was imported from SugarCRM but the original content was not available.\n\n";
-        $placeholderContent .= "Original Filename: " . ($attachmentData->filename ?? 'Unknown') . "\n";
-        $placeholderContent .= "MIME Type: " . ($attachmentData->file_mime_type ?? 'Unknown') . "\n";
-        $placeholderContent .= "Description: " . ($attachmentData->description ?? 'No description') . "\n";
-        $placeholderContent .= "SugarCRM ID: " . ($attachmentData->id ?? 'Unknown') . "\n";
-        $placeholderContent .= "Email ID: " . ($attachmentData->email_id ?? 'Unknown') . "\n";
-        $placeholderContent .= "Date Created: " . ($attachmentData->date_entered ?? 'Unknown') . "\n\n";
+        $placeholderContent .= 'Original Filename: '.($attachmentData->filename ?? 'Unknown')."\n";
+        $placeholderContent .= 'MIME Type: '.($attachmentData->file_mime_type ?? 'Unknown')."\n";
+        $placeholderContent .= 'Description: '.($attachmentData->description ?? 'No description')."\n";
+        $placeholderContent .= 'SugarCRM ID: '.($attachmentData->id ?? 'Unknown')."\n";
+        $placeholderContent .= 'Email ID: '.($attachmentData->email_id ?? 'Unknown')."\n";
+        $placeholderContent .= 'Date Created: '.($attachmentData->date_entered ?? 'Unknown')."\n\n";
         $placeholderContent .= "To restore the original file content, you would need to:\n";
         $placeholderContent .= "1. Export the original file from SugarCRM\n";
         $placeholderContent .= "2. Upload it manually to this activity\n\n";

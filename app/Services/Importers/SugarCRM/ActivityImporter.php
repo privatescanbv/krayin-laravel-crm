@@ -5,6 +5,7 @@ namespace App\Services\Importers\SugarCRM;
 use App\Models\Department;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Webkul\Activity\Models\Activity;
@@ -434,12 +435,12 @@ class ActivityImporter
         try {
             // Accept Carbon, DateTimeInterface, or string
             if ($value instanceof \DateTimeInterface) {
-                return \Illuminate\Support\Carbon::instance($value)->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s');
+                return Carbon::instance($value)->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s');
             }
 
             // Parse SugarCRM date assuming it's already in the application timezone
             // SugarCRM dates appear to be stored in local time, not UTC
-            return \Illuminate\Support\Carbon::parse((string) $value, config('app.timezone'))
+            return Carbon::parse((string) $value, config('app.timezone'))
                 ->format('Y-m-d H:i:s');
         } catch (\Throwable $e) {
             return null;

@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Models\File;
+use Webkul\Email\Models\Attachment;
 use Webkul\Lead\Models\Lead;
 
 class AttachmentImporter
@@ -258,6 +259,88 @@ class AttachmentImporter
         } catch (Exception $e) {
             $this->command->error("Failed to import email attachments for lead {$lead->external_id}: ".$e->getMessage());
             throw new Exception('Email attachments import failed: '.$e->getMessage(), 0, $e);
+        }
+
+        return ['imported' => $imported, 'skipped' => $skipped];
+    }
+
+    /**
+     * Import email attachments as Email attachments instead of Activity files
+     *
+     * @param  Lead  $lead  The lead to import attachments for
+     * @param  array  $emailAttachments  All email attachments grouped by lead ID
+     * @param  array  $importedEmailIds  Mapping of SugarCRM email ID to Krayin email ID
+     * @return array Statistics about imported and skipped attachments
+     */
+    public function importEmailAttachmentsAsEmailAttachments(Lead $lead, array $emailAttachments, array $importedEmailIds): array
+    {
+        $imported = 0;
+        $skipped = 0;
+
+        try {
+            $leadEmailAttachments = $emailAttachments[$lead->external_id] ?? [];
+
+            if (empty($leadEmailAttachments)) {
+                return ['imported' => $imported, 'skipped' => $skipped];
+            }
+
+            $this->command->info('Importing '.count($leadEmailAttachments)." email attachments for lead {$lead->external_id}");
+
+            foreach ($leadEmailAttachments as $attachmentData) {
+                try {
+                    // Find the corresponding Krayin email ID
+                    $krayinEmailId = $importedEmailIds[$attachmentData->email_id] ?? null;
+                    if (!$krayinEmailId) {
+                        $this->command->warn("Krayin email not found for attachment {$attachmentData->id}, SugarCRM email_id: {$attachmentData->email_id}");
+                        $skipped++;
+                        continue;
+                    }
+
+                    // Check if attachment already exists
+                    $existingAttachment = Attachment::where('email_id', $krayinEmailId)
+                        ->where('name', $attachmentData->filename)
+                        ->first();
+
+                    if ($existingAttachment) {
+                        $this->command->info("Skipping existing email attachment: {$attachmentData->filename}");
+                        $skipped++;
+                        continue;
+                    }
+
+                    // Create file path based on attachment data
+                    $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $attachmentData->filename);
+                    $finalFilename = $this->ensureProperExtension($safeName, $attachmentData->file_mime_type);
+                    $filePath = "emails/{$krayinEmailId}/{$attachmentData->id}_{$finalFilename}";
+
+                    // Create placeholder file content based on mime type
+                    $fileContent = $this->createPlaceholderContent($attachmentData);
+
+                    // Store the file in Laravel storage
+                    Storage::put($filePath, $fileContent);
+
+                    // Create the email attachment record
+                    $attachmentRecord = [
+                        'name'         => $attachmentData->filename,
+                        'path'         => $filePath,
+                        'size'         => strlen($fileContent),
+                        'content_type' => $attachmentData->file_mime_type ?? 'application/octet-stream',
+                        'email_id'     => $krayinEmailId,
+                    ];
+
+                    $attachment = $this->createEntityWithTimestamps(Attachment::class, $attachmentRecord, [
+                        'created_at' => $this->parseSugarDate($attachmentData->date_entered),
+                        'updated_at' => $this->parseSugarDate($attachmentData->date_modified),
+                    ]);
+
+                    $this->command->info("✓ Imported email attachment: {$attachmentData->filename} for email {$krayinEmailId}");
+                    $imported++;
+                } catch (Exception $e) {
+                    $this->command->error("Failed to import email attachment {$attachmentData->id}: ".$e->getMessage());
+                    // Continue with next attachment
+                }
+            }
+        } catch (Exception $e) {
+            $this->command->error("Failed to import email attachments for lead {$lead->external_id}: ".$e->getMessage());
         }
 
         return ['imported' => $imported, 'skipped' => $skipped];

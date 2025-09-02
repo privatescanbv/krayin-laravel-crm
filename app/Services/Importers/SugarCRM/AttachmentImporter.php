@@ -84,6 +84,8 @@ class AttachmentImporter
                     'n.contact_id',
                     'n.portal_flag',
                     'n.embed_flag',
+                    // Try to get file content if the column exists
+                    DB::raw('(CASE WHEN EXISTS(SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = "notes" AND COLUMN_NAME = "file_content") THEN n.file_content ELSE NULL END) as file_content'),
                 ])
                 ->whereIn('n.parent_id', $emailIds)
                 ->where('n.parent_type', '=', 'Emails')
@@ -181,8 +183,14 @@ class AttachmentImporter
                     $finalFilename = $this->ensureProperExtension($safeName, $attachmentData->file_mime_type);
                     $filePath = "emails/{$krayinEmailId}/{$attachmentData->id}_{$finalFilename}";
 
-                    // Create appropriate file content (avoid corrupting binary files)
-                    $fileContent = $this->createValidFileContent($attachmentData);
+                    // Try to get original file content from SugarCRM
+                    $fileContent = $this->getOriginalFileContent($attachmentData);
+                    
+                    if ($fileContent === null) {
+                        $this->command->warn("No file content available for {$attachmentData->filename}, skipping file creation");
+                        $skipped++;
+                        continue;
+                    }
 
                     // Store the file in Laravel storage
                     Storage::put($filePath, $fileContent);
@@ -267,6 +275,47 @@ class AttachmentImporter
         $entity->timestamps = true;
 
         return $entity;
+    }
+
+    /**
+     * Try to get original file content from SugarCRM
+     */
+    private function getOriginalFileContent($attachmentData): ?string
+    {
+        // Check if we have file content in the notes record
+        if (!empty($attachmentData->file_content)) {
+            // File content might be base64 encoded
+            $decoded = base64_decode($attachmentData->file_content, true);
+            if ($decoded !== false) {
+                return $decoded;
+            }
+            // If not base64, return as-is
+            return $attachmentData->file_content;
+        }
+
+        // Try to find file in SugarCRM upload directory structure
+        $possiblePaths = [
+            // Common SugarCRM upload paths
+            "upload/{$attachmentData->id}",
+            "upload/{$attachmentData->id}_{$attachmentData->filename}",
+            "cache/upload/{$attachmentData->id}",
+            "custom/upload/{$attachmentData->id}",
+        ];
+
+        foreach ($possiblePaths as $path) {
+            try {
+                // Try to read from SugarCRM connection if it supports file reading
+                $fullPath = database_path("sugarcrm_files/{$path}");
+                if (file_exists($fullPath)) {
+                    return file_get_contents($fullPath);
+                }
+            } catch (Exception $e) {
+                // Continue to next path
+            }
+        }
+
+        // No file content found
+        return null;
     }
 
     /**

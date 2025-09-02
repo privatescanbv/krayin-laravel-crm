@@ -468,13 +468,14 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 // Use database transaction to ensure all-or-nothing import
                 DB::transaction(function () use ($record, $persons, $leadByPersonsByAnamnesis, &$lead) {
                     // Create lead with proper timestamps
+                    $departmentId = $this->mapDepartment($record);
                     $lead = $this->createEntityWithTimestamps(Lead::class, [
                         'external_id'            => $record->id,
                         'description'            => $record->description ?? '',
                         'emails'                 => $this->formatEmails($record),
                         'phones'                 => $this->formatPhones($record),
                         'status'                 => $this->mapStatus($record->status),
-                        'lead_pipeline_id'       => $this->mapPipeline($record, $this->mapDepartment($record)),
+                        'lead_pipeline_id'       => $this->mapPipeline($record, $departmentId),
                         'lead_pipeline_stage_id' => $this->mapStage($record),
                         'salutation'             => $this->mapSalutationFromGender($this->mapGenderFromSugar($record->gender_c ?? null)),
                         'first_name'             => $record->first_name,
@@ -485,12 +486,12 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'initials'               => $record->voorletters_c ?? '',
                         'date_of_birth'          => $record->birthdate,
                         'gender'                 => $this->mapGenderFromSugar($record->gender_c ?? null),
-                        'department_id'          => $this->mapDepartment($record),
+                        'department_id'          => $departmentId,
                         'lead_channel_id'        => $this->mapChannel($record),
                         'lead_type_id'           => $this->mapType($record),
                         'lead_source_id'         => $this->mapSource($record),
                         'lost_reason'            => $record->reden_afvoeren_c ?? null,
-                        'user_id'                => $this->mapUser($this->mapDepartment($record)),
+                        'user_id'                => $this->mapUser($departmentId),
                     ], [
                         'created_at' => $this->parseSugarDate($record->lead_date_entered ?? $record->date_entered),
                         'updated_at' => $this->parseSugarDate($record->lead_date_modified ?? $record->date_modified),
@@ -1182,7 +1183,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             $users = User::whereHas('groups', function($query) {
                 $query->where('name', 'hernia');
             })->pluck('id')->toArray();
-            
+
             if (!empty($users)) {
                 // Return a random user from the hernia group, or the first one
                 return $users[0];
@@ -1192,13 +1193,13 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             $users = User::whereHas('groups', function($query) {
                 $query->where('name', 'privatescan');
             })->pluck('id')->toArray();
-            
+
             if (!empty($users)) {
                 // Return a random user from the privatescan group, or the first one
                 return $users[0];
             }
         }
-        
+
         // Fallback to user ID 1 if no appropriate users found
         return 1;
     }

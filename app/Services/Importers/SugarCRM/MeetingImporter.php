@@ -180,6 +180,11 @@ class MeetingImporter
 
     /**
      * Map meeting status to is_done boolean
+     * 
+     * SugarCRM meeting status values:
+     * - "Held": Meeting was held (completed) -> is_done = true
+     * - "Not Held": Meeting was not held -> is_done = false  
+     * - "Planned": Meeting is planned/scheduled -> is_done = false
      */
     private function mapMeetingStatus(?string $status): bool
     {
@@ -187,10 +192,9 @@ class MeetingImporter
             return false;
         }
 
-        // Meeting is considered "done" if it's held or completed
-        $completedStatuses = ['held', 'completed', 'done', 'finished'];
-
-        return in_array(strtolower(trim($status)), $completedStatuses);
+        // Only "Held" status means the meeting is done/completed
+        // Handle case-insensitive matching for SugarCRM data
+        return strtolower(trim($status)) === 'held';
     }
 
     /**

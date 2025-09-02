@@ -1040,6 +1040,7 @@ test('imports meeting activities from sugarcrm', function () {
     $leadId = 'lead-meeting-001';
     $meetingId1 = 'meeting-001';
     $meetingId2 = 'meeting-002';
+    $meetingId3 = 'meeting-003';
 
     // Insert SugarCRM lead data
     DB::connection('sugarcrm')->table('leads')->insert([
@@ -1111,7 +1112,7 @@ test('imports meeting activities from sugarcrm', function () {
             'date_start'       => '2024-02-16 14:00:00',
             'date_end'         => '2024-02-16 15:30:00',
             'parent_type'      => 'Leads',
-            'status'           => 'held',
+            'status'           => 'Held',
             'parent_id'        => $leadId,
             'reminder_time'    => 900, // 15 minutes
             'assigned_user_id' => 'user-meeting-001',
@@ -1128,9 +1129,26 @@ test('imports meeting activities from sugarcrm', function () {
             'date_start'       => '2024-02-20 15:00:00',
             'date_end'         => '2024-02-20 15:45:00',
             'parent_type'      => 'Leads',
-            'status'           => 'planned',
+            'status'           => 'Planned',
             'parent_id'        => $leadId,
             'reminder_time'    => 1800, // 30 minutes
+            'assigned_user_id' => 'user-meeting-001',
+        ],
+        [
+            'id'               => $meetingId3,
+            'name'             => 'Afgesproken maar niet gehouden',
+            'date_entered'     => '2024-02-25 11:00:00',
+            'date_modified'    => '2024-02-25 11:15:00',
+            'description'      => 'Meeting was gepland maar niet gehouden',
+            'deleted'          => 0,
+            'duration_hours'   => 1,
+            'duration_minutes' => 0,
+            'date_start'       => '2024-02-25 16:00:00',
+            'date_end'         => '2024-02-25 17:00:00',
+            'parent_type'      => 'Leads',
+            'status'           => 'Not Held',
+            'parent_id'        => $leadId,
+            'reminder_time'    => 600, // 10 minutes
             'assigned_user_id' => 'user-meeting-001',
         ],
     ]);
@@ -1148,7 +1166,7 @@ test('imports meeting activities from sugarcrm', function () {
 
     // Verify meeting activities were imported
     $meetingActivities = $lead->activities()->where('type', 'meeting')->get();
-    expect($meetingActivities)->toHaveCount(2);
+    expect($meetingActivities)->toHaveCount(3);
 
     // Check first meeting activity
     $activity1 = $meetingActivities->filter(function ($activity) use ($meetingId1) {
@@ -1158,8 +1176,8 @@ test('imports meeting activities from sugarcrm', function () {
         ->and($activity1->title)->toBe('Consultatie afspraak')
         ->and($activity1->type)->toBe('meeting')
         ->and($activity1->comment)->toBe('Eerste consultatie met de klant')
-        ->and($activity1->is_done)->toBe(true) // 'held' status should map to done
-        ->and($activity1->additional['status'])->toBe('held')
+        ->and($activity1->is_done)->toBe(true) // 'Held' status should map to done
+        ->and($activity1->additional['status'])->toBe('Held')
         ->and($activity1->additional['duration_hours'])->toBe(1)
         ->and($activity1->additional['duration_minutes'])->toBe(30)
         ->and($activity1->additional['duration_total_minutes'])->toBe(90) // 1*60 + 30
@@ -1174,13 +1192,29 @@ test('imports meeting activities from sugarcrm', function () {
         ->and($activity2->title)->toBe('Resultaten bespreking')
         ->and($activity2->type)->toBe('meeting')
         ->and($activity2->comment)->toBe('Bespreking van de resultaten')
-        ->and($activity2->is_done)->toBe(false) // 'planned' status should map to not done
-        ->and($activity2->additional['status'])->toBe('planned')
+        ->and($activity2->is_done)->toBe(false) // 'Planned' status should map to not done
+        ->and($activity2->additional['status'])->toBe('Planned')
         ->and($activity2->additional['duration_hours'])->toBe(0)
         ->and($activity2->additional['duration_minutes'])->toBe(45)
         ->and($activity2->additional['duration_total_minutes'])->toBe(45) // 0*60 + 45
         ->and($activity2->additional['reminder_time'])->toBe(1800)
         ->and($activity2->user_id)->toBe($user->id);
+
+    // Check third meeting activity with "Not Held" status
+    $activity3 = $meetingActivities->filter(function ($activity) use ($meetingId3) {
+        return $activity->external_id === $meetingId3;
+    })->first();
+    expect($activity3)->not->toBeNull()
+        ->and($activity3->title)->toBe('Afgesproken maar niet gehouden')
+        ->and($activity3->type)->toBe('meeting')
+        ->and($activity3->comment)->toBe('Meeting was gepland maar niet gehouden')
+        ->and($activity3->is_done)->toBe(false) // 'Not Held' status should map to not done
+        ->and($activity3->additional['status'])->toBe('Not Held')
+        ->and($activity3->additional['duration_hours'])->toBe(1)
+        ->and($activity3->additional['duration_minutes'])->toBe(0)
+        ->and($activity3->additional['duration_total_minutes'])->toBe(60) // 1*60 + 0
+        ->and($activity3->additional['reminder_time'])->toBe(600)
+        ->and($activity3->user_id)->toBe($user->id);
 
     // Verify timestamps are properly preserved
     expect($activity1->created_at->format('Y-m-d H:i:s'))->toBe('2024-02-16 09:00:00')
@@ -1189,10 +1223,16 @@ test('imports meeting activities from sugarcrm', function () {
     expect($activity2->created_at->format('Y-m-d H:i:s'))->toBe('2024-02-20 10:00:00')
         ->and($activity2->updated_at->format('Y-m-d H:i:s'))->toBe('2024-02-20 10:15:00');
 
+    expect($activity3->created_at->format('Y-m-d H:i:s'))->toBe('2024-02-25 11:00:00')
+        ->and($activity3->updated_at->format('Y-m-d H:i:s'))->toBe('2024-02-25 11:15:00');
+
     // Verify schedule dates are properly mapped
     expect($activity1->schedule_from->format('Y-m-d H:i:s'))->toBe('2024-02-16 14:00:00')
         ->and($activity1->schedule_to->format('Y-m-d H:i:s'))->toBe('2024-02-16 15:30:00');
 
     expect($activity2->schedule_from->format('Y-m-d H:i:s'))->toBe('2024-02-20 15:00:00')
         ->and($activity2->schedule_to->format('Y-m-d H:i:s'))->toBe('2024-02-20 15:45:00');
+
+    expect($activity3->schedule_from->format('Y-m-d H:i:s'))->toBe('2024-02-25 16:00:00')
+        ->and($activity3->schedule_to->format('Y-m-d H:i:s'))->toBe('2024-02-25 17:00:00');
 });

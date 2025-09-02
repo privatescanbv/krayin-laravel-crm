@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -294,6 +295,7 @@ beforeEach(function () {
         $table->string('filename')->nullable();
         $table->string('file_mime_type')->nullable();
         $table->text('description')->nullable();
+        $table->longText('file_content')->nullable(); // Base64 encoded file content
         $table->dateTime('date_entered')->nullable();
         $table->dateTime('date_modified')->nullable();
         $table->string('created_by')->nullable();
@@ -906,6 +908,7 @@ test('imports email activities from sugarcrm', function () {
             'filename'         => 'brochure.pdf',
             'file_mime_type'   => 'application/pdf',
             'description'      => 'Company brochure attachment',
+            'file_content'     => base64_encode('PDF content placeholder for brochure.pdf'),
             'date_entered'     => '2024-01-01 12:01:00',
             'date_modified'    => '2024-01-01 12:01:00',
             'created_by'       => 'user-001',
@@ -920,6 +923,7 @@ test('imports email activities from sugarcrm', function () {
             'filename'         => 'follow_up.docx',
             'file_mime_type'   => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
             'description'      => 'Follow-up document attachment',
+            'file_content'     => base64_encode('DOCX content placeholder for follow_up.docx'),
             'date_entered'     => '2024-01-02 14:01:00',
             'date_modified'    => '2024-01-02 14:01:00',
             'created_by'       => 'user-001',
@@ -934,6 +938,7 @@ test('imports email activities from sugarcrm', function () {
             'filename'         => 'info.txt',
             'file_mime_type'   => 'text/plain',
             'description'      => 'Additional information file',
+            'file_content'     => base64_encode('This is additional information content from the text file.'),
             'date_entered'     => '2024-01-02 14:02:00',
             'date_modified'    => '2024-01-02 14:02:00',
             'created_by'       => 'user-001',
@@ -1014,4 +1019,16 @@ test('imports email activities from sugarcrm', function () {
         ->and($file3->name)->toBe('info.txt')
         ->and($file3->path)->toContain($attachmentId3)
         ->and($file3->path)->toContain('info.txt');
+
+    // Verify that files are actually stored in the filesystem
+    expect(Storage::exists($file1->path))->toBe(true);
+    expect(Storage::exists($file2->path))->toBe(true);
+    expect(Storage::exists($file3->path))->toBe(true);
+
+    // Verify file content
+    $file1Content = Storage::get($file1->path);
+    expect($file1Content)->toContain('PDF content placeholder for brochure.pdf');
+
+    $file3Content = Storage::get($file3->path);
+    expect($file3Content)->toContain('This is additional information content from the text file.');
 });

@@ -7,6 +7,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Models\File;
 use Webkul\Lead\Models\Lead;
@@ -85,6 +86,8 @@ class AttachmentImporter
                     'n.parent_id as email_id',
                     'n.parent_type',
                     'eb.bean_id as lead_id',
+                    // Try to get file content if available
+                    DB::raw('CASE WHEN EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = "notes" AND column_name = "file_content") THEN n.file_content ELSE NULL END as file_content'),
                 ])
                 ->whereIn('n.parent_id', $emailIds)
                 ->where('n.parent_type', '=', 'Emails')
@@ -185,6 +188,12 @@ class AttachmentImporter
                     $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $attachmentData->filename);
                     $filePath = "email_attachments/{$lead->external_id}/{$attachmentData->email_id}/{$attachmentData->id}_{$safeName}";
 
+                    // Create placeholder file content if no content is available from SugarCRM
+                    $fileContent = $this->createPlaceholderContent($attachmentData);
+                    
+                    // Store the file in Laravel storage
+                    Storage::put($filePath, $fileContent);
+
                     // Create the file record
                     $fileData = [
                         'name'        => $attachmentData->filename,
@@ -263,5 +272,32 @@ class AttachmentImporter
         $entity->timestamps = true;
 
         return $entity;
+    }
+
+    /**
+     * Create placeholder content for attachment when original content is not available
+     */
+    private function createPlaceholderContent($attachmentData): string
+    {
+        // If we have actual file content from SugarCRM, use it
+        if (!empty($attachmentData->file_content)) {
+            return base64_decode($attachmentData->file_content);
+        }
+
+        // Otherwise create a placeholder file with metadata
+        $placeholderContent = "=== EMAIL ATTACHMENT PLACEHOLDER ===\n\n";
+        $placeholderContent .= "This file was imported from SugarCRM but the original content was not available.\n\n";
+        $placeholderContent .= "Original Filename: " . ($attachmentData->filename ?? 'Unknown') . "\n";
+        $placeholderContent .= "MIME Type: " . ($attachmentData->file_mime_type ?? 'Unknown') . "\n";
+        $placeholderContent .= "Description: " . ($attachmentData->description ?? 'No description') . "\n";
+        $placeholderContent .= "SugarCRM ID: " . ($attachmentData->id ?? 'Unknown') . "\n";
+        $placeholderContent .= "Email ID: " . ($attachmentData->email_id ?? 'Unknown') . "\n";
+        $placeholderContent .= "Date Created: " . ($attachmentData->date_entered ?? 'Unknown') . "\n\n";
+        $placeholderContent .= "To restore the original file content, you would need to:\n";
+        $placeholderContent .= "1. Export the original file from SugarCRM\n";
+        $placeholderContent .= "2. Upload it manually to this activity\n\n";
+        $placeholderContent .= "=== END PLACEHOLDER ===\n";
+
+        return $placeholderContent;
     }
 }

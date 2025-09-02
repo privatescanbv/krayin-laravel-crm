@@ -23,6 +23,8 @@ services:
       - traefik.http.middlewares.forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
       - traefik.http.middlewares.forward-headers.headers.customrequestheaders.X-Forwarded-Host=newcrm.dev.privatescan.nl
       - traefik.docker.network=mb_traefik
+    volumes:
+      - '/home/mbulthuis/upload:/var/www/html/upload_sugarcrm'
     networks:
       - sail
       - mb_traefik

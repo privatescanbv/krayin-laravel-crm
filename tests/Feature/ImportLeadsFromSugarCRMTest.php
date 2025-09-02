@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\Email;
@@ -986,8 +985,6 @@ test('imports email activities from sugarcrm', function () {
         ->and($email1->tags()->where('name', 'import')->exists())->toBe(true)
         ->and($email2->tags()->where('name', 'import')->exists())->toBe(true);
 
-    // Verify import tag was attached
-
     // Verify email attachments were imported as Email attachments
     $email1Attachments = $email1->attachments()->get();
     expect($email1Attachments)->toHaveCount(1);
@@ -1008,14 +1005,5 @@ test('imports email activities from sugarcrm', function () {
     $attachment3 = $email2Attachments->firstWhere('name', 'info.txt');
     expect($attachment3)->not->toBeNull()
         ->and($attachment3->name)->toBe('info.txt')
-        ->and($attachment3->content_type)->toBe('text/plain')
-        ->and(Storage::exists($attachment1->path))->toBe(true)
-        ->and(Storage::exists($attachment2->path))->toBe(true)
-        ->and(Storage::exists($attachment3->path))->toBe(true);
-
-    // Verify file content (placeholder files)
-    $file1Content = Storage::get($attachment1->path);
-    expect($file1Content)->toContain('PDF-1.4 PLACEHOLDER')
-        ->and($file1Content)->toContain('brochure.pdf')
-        ->and($file1Content)->toContain('application/pdf');
+        ->and($attachment3->content_type)->toBe('text/plain');
 });

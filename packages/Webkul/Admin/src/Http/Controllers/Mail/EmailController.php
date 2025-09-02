@@ -123,7 +123,7 @@ class EmailController extends Controller
                 $this->emailRepository->update([
                     'folders' => ['sent'],
                 ], $email->id);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
             }
         }
 
@@ -174,7 +174,7 @@ class EmailController extends Controller
                 $this->emailRepository->update([
                     'folders' => ['inbox', 'sent'],
                 ], $email->id);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
             }
         }
 
@@ -227,9 +227,9 @@ class EmailController extends Controller
         try {
             // Use the friendly name from the database for the download filename
             $downloadName = $attachment->name ?: basename($attachment->path);
-            
+
             return Storage::download($attachment->path, $downloadName);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             session()->flash('error', $e->getMessage());
 
             return redirect()->back();
@@ -299,7 +299,7 @@ class EmailController extends Controller
             }
 
             return redirect()->route('admin.mail.index', ['route' => 'inbox']);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             if (request()->ajax()) {
                 return response()->json([
                     'message' => trans('admin::app.mail.delete-failed'),
@@ -335,7 +335,7 @@ class EmailController extends Controller
             return response()->json([
                 'message' => trans('admin::app.mail.delete-success'),
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'message' => trans('admin::app.mail.delete-success'),
             ]);

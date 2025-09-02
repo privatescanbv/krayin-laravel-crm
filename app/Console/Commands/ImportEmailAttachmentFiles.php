@@ -2,13 +2,14 @@
 
 namespace App\Console\Commands;
 
+use Exception;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Email\Models\Attachment;
 
 /**
  * Import actual email attachment files from upload_sugarcrm to Krayin storage
- * 
+ *
  * This command reads email_attachments records and copies the actual files
  * from upload_sugarcrm/{attachment_id} to the Krayin storage path specified in the path field.
  */
@@ -41,28 +42,27 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
         $attachmentIds = $this->option('attachment-ids');
 
         $this->info('Starting email attachment files import...');
-        $this->info('Dry run: ' . ($dryRun ? 'Yes' : 'No'));
+        $this->info('Dry run: '.($dryRun ? 'Yes' : 'No'));
         if ($limit) {
             $this->info("Limit: {$limit}");
         }
-        if (!empty($attachmentIds)) {
-            $this->info('Attachment IDs: ' . implode(', ', $attachmentIds));
+        if (! empty($attachmentIds)) {
+            $this->info('Attachment IDs: '.implode(', ', $attachmentIds));
         }
 
-        return $this->executeImport($dryRun, function () use ($limit, $attachmentIds, $dryRun) {
-            // Check if upload_sugarcrm directory exists
+        return $this->executeImport($dryRun, function () use ($limit, $attachmentIds, $dryRun) {// Check if upload_sugarcrm directory exists
             $uploadDir = base_path('upload_sugarcrm');
-            if (!File::exists($uploadDir)) {
-                throw new \Exception("Upload directory does not exist: {$uploadDir}");
+            if (! File::exists($uploadDir)) {
+                throw new Exception("Upload directory does not exist: {$uploadDir}");
             }
 
             // Get email attachments to process
             $query = Attachment::query();
-            
-            if (!empty($attachmentIds)) {
+
+            if (! empty($attachmentIds)) {
                 $query->whereIn('id', $attachmentIds);
             }
-            
+
             if ($limit) {
                 $query->limit((int) $limit);
             }
@@ -71,6 +71,7 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
 
             if ($attachments->isEmpty()) {
                 $this->info('No email attachments found to process');
+
                 return;
             }
 
@@ -78,6 +79,7 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
 
             if ($dryRun) {
                 $this->showDryRunResults($attachments, $uploadDir);
+
                 return;
             }
 
@@ -101,9 +103,9 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
             'Source Exists',
             'Target Path',
             'Target Exists',
-            'Action'
+            'Action',
         ];
-        
+
         $rows = [];
 
         foreach ($attachments as $attachment) {
@@ -113,11 +115,11 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
             $targetExists = Storage::exists($targetPath);
 
             $action = 'Skip';
-            if ($sourceExists && !$targetExists) {
+            if ($sourceExists && ! $targetExists) {
                 $action = 'Copy';
             } elseif ($sourceExists && $targetExists) {
                 $action = 'Skip (exists)';
-            } elseif (!$sourceExists) {
+            } elseif (! $sourceExists) {
                 $action = 'Skip (no source)';
             }
 
@@ -130,13 +132,13 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
                 $sourceExists ? '✓' : '✗',
                 $targetPath,
                 $targetExists ? '✓' : '✗',
-                $action
+                $action,
             ];
         }
 
         $this->table($headers, $rows);
 
-        $copyCount = count(array_filter($rows, fn($row) => $row[8] === 'Copy'));
+        $copyCount = count(array_filter($rows, fn ($row) => $row[8] === 'Copy'));
         $skipCount = count($rows) - $copyCount;
 
         $this->info("Would copy: {$copyCount} files");
@@ -161,10 +163,11 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
                 $targetPath = $this->getTargetPath($attachment);
 
                 // Check if source file exists
-                if (!File::exists($sourceFile)) {
+                if (! File::exists($sourceFile)) {
                     $this->warn("\nSource file not found: {$sourceFile}");
                     $skipped++;
                     $bar->advance();
+
                     continue;
                 }
 
@@ -173,12 +176,13 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
                     $this->info("\nTarget file already exists: {$targetPath}");
                     $skipped++;
                     $bar->advance();
+
                     continue;
                 }
 
                 // Create target directory if it doesn't exist
                 $targetDir = dirname($targetPath);
-                if (!Storage::exists($targetDir)) {
+                if (! Storage::exists($targetDir)) {
                     Storage::makeDirectory($targetDir);
                 }
 
@@ -189,8 +193,8 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
                 $this->info("\n✓ Copied: {$sourceFile} → {$targetPath}");
                 $copied++;
 
-            } catch (\Exception $e) {
-                $this->error("\nFailed to copy attachment {$attachment->id}: " . $e->getMessage());
+            } catch (Exception $e) {
+                $this->error("\nFailed to copy attachment {$attachment->id}: ".$e->getMessage());
                 $errors++;
             }
 
@@ -215,8 +219,8 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
         // Extract attachment ID from path: emails/{email_id}/{attachment_id}
         $pathParts = explode('/', $attachment->path);
         $attachmentId = end($pathParts); // Last part is the attachment ID
-        
-        return $uploadDir . '/' . $attachmentId;
+
+        return $uploadDir.'/'.$attachmentId;
     }
 
     /**

@@ -349,8 +349,6 @@ class ActivityImporter
         return ['imported' => $imported, 'skipped' => $skipped];
     }
 
-
-
     /**
      * Import email activities as Email records with import tag
      *
@@ -401,7 +399,7 @@ class ActivityImporter
                         'name'         => $emailData->subject ?? 'Email',
                         'user_type'    => 'person',
                         'is_read'      => 1,
-                        'folders'      => ['inbox'],
+                        'folders'      => ['imported'], // Don't show in inbox, only visible from lead view
                         'from'         => ['name' => 'SugarCRM Import', 'email' => 'import@sugarcrm.local'],
                         'sender'       => ['name' => 'SugarCRM Import', 'email' => 'import@sugarcrm.local'],
                         'reply_to'     => [],

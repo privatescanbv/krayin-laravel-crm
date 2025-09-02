@@ -138,6 +138,7 @@ beforeEach(function () {
     });
 
     Schema::connection('sugarcrm')->create('leads_contacts_c', function (Blueprint $table) {
+        $table->string('id')->primary(); // primary key
         $table->string('leads_c7104eads_ida'); // lead id
         $table->string('leads_cbb5dacts_idb'); // person id
         $table->integer('deleted')->default(0);
@@ -145,11 +146,13 @@ beforeEach(function () {
 
     // Minimal anamnesis relation tables (empty ok)
     Schema::connection('sugarcrm')->create('leads_pcrm_anamnesepreventie_1_c', function (Blueprint $table) {
+        $table->string('id')->primary(); // primary key
         $table->string('leads_pcrm_anamnesepreventie_1leads_ida')->nullable();
         $table->string('leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb')->nullable();
         $table->integer('deleted')->default(0);
     });
     Schema::connection('sugarcrm')->create('pcrm_anamnetie_contacts_c', function (Blueprint $table) {
+        $table->string('id')->primary(); // primary key
         $table->string('pcrm_anamn171deventie_idb')->nullable();
         $table->string('pcrm_anamn0b6eontacts_ida')->nullable();
         $table->integer('deleted')->default(0);
@@ -354,18 +357,21 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
     ]);
     // Link lead to anamnesis
     DB::connection('sugarcrm')->table('leads_pcrm_anamnesepreventie_1_c')->insert([
+        'id' => 'lead-anam-001',
         'leads_pcrm_anamnesepreventie_1leads_ida'                  => $leadId,
         'leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb' => $anamnesisId,
         'deleted'                                                  => 0,
     ]);
     // Link anamnesis to person
     DB::connection('sugarcrm')->table('pcrm_anamnetie_contacts_c')->insert([
+        'id' => 'anam-person-001',
         'pcrm_anamn171deventie_idb' => $anamnesisId,
         'pcrm_anamn0b6eontacts_ida' => $personExternalId,
         'deleted'                   => 0,
     ]);
     // Also add simple lead->person mapping used to filter personIds in extractAnamenesis
     DB::connection('sugarcrm')->table('leads_contacts_c')->insert([
+        'id' => 'lead-contact-001',
         'leads_c7104eads_ida' => $leadId,
         'leads_cbb5dacts_idb' => $personExternalId,
         'deleted'             => 0,
@@ -476,11 +482,13 @@ test('imports lead with multiple persons correctly', function () {
     // Link lead to both anamnesis records
     DB::connection('sugarcrm')->table('leads_pcrm_anamnesepreventie_1_c')->insert([
         [
+            'id' => 'lead-anam-001',
             'leads_pcrm_anamnesepreventie_1leads_ida'                  => $leadId,
             'leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb' => $anamnesis1Id,
             'deleted'                                                  => 0,
         ],
         [
+            'id' => 'lead-anam-002',
             'leads_pcrm_anamnesepreventie_1leads_ida'                  => $leadId,
             'leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb' => $anamnesis2Id,
             'deleted'                                                  => 0,
@@ -490,11 +498,13 @@ test('imports lead with multiple persons correctly', function () {
     // Link anamnesis to persons
     DB::connection('sugarcrm')->table('pcrm_anamnetie_contacts_c')->insert([
         [
+            'id' => 'anam-person-001',
             'pcrm_anamn171deventie_idb' => $anamnesis1Id,
             'pcrm_anamn0b6eontacts_ida' => $person1ExternalId,
             'deleted'                   => 0,
         ],
         [
+            'id' => 'anam-person-002',
             'pcrm_anamn171deventie_idb' => $anamnesis2Id,
             'pcrm_anamn0b6eontacts_ida' => $person2ExternalId,
             'deleted'                   => 0,
@@ -504,11 +514,13 @@ test('imports lead with multiple persons correctly', function () {
     // Add lead->person mappings for both persons
     DB::connection('sugarcrm')->table('leads_contacts_c')->insert([
         [
+            'id' => 'lead-contact-001',
             'leads_c7104eads_ida' => $leadId,
             'leads_cbb5dacts_idb' => $person1ExternalId,
             'deleted'             => 0,
         ],
         [
+            'id' => 'lead-contact-002',
             'leads_c7104eads_ida' => $leadId,
             'leads_cbb5dacts_idb' => $person2ExternalId,
             'deleted'             => 0,
@@ -591,6 +603,7 @@ test('imports call activities from sugarcrm', function () {
 
     // Link lead to person
     DB::connection('sugarcrm')->table('leads_contacts_c')->insert([
+        'id' => 'lead-contact-001',
         'leads_c7104eads_ida' => $leadId,
         'leads_cbb5dacts_idb' => $personExternalId,
         'deleted'             => 0,
@@ -611,12 +624,14 @@ test('imports call activities from sugarcrm', function () {
     ]);
     // Link lead to anamnesis
     DB::connection('sugarcrm')->table('leads_pcrm_anamnesepreventie_1_c')->insert([
+        'id' => 'lead-anam-001',
         'leads_pcrm_anamnesepreventie_1leads_ida'                  => $leadId,
         'leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb' => $anamnesisId,
         'deleted'                                                  => 0,
     ]);
     // Link anamnesis to person
     DB::connection('sugarcrm')->table('pcrm_anamnetie_contacts_c')->insert([
+        'id' => 'anam-person-001',
         'pcrm_anamn171deventie_idb' => $anamnesisId,
         'pcrm_anamn0b6eontacts_ida' => $personExternalId,
         'deleted'                   => 0,

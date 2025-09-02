@@ -220,9 +220,12 @@ class AttachmentImporter
 
                     // Create file path based on attachment data
                     $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $attachmentData->filename);
-                    $filePath = "email_attachments/{$lead->external_id}/{$attachmentData->email_id}/{$attachmentData->id}_{$safeName}";
+                    
+                    // Ensure proper file extension based on mime type if missing
+                    $finalFilename = $this->ensureProperExtension($safeName, $attachmentData->file_mime_type);
+                    $filePath = "email_attachments/{$lead->external_id}/{$attachmentData->email_id}/{$attachmentData->id}_{$finalFilename}";
 
-                    // Create placeholder file content if no content is available from SugarCRM
+                    // Create placeholder file content based on mime type
                     $fileContent = $this->createPlaceholderContent($attachmentData);
 
                     // Store the file in Laravel storage
@@ -318,10 +321,105 @@ class AttachmentImporter
      */
     private function createPlaceholderContent($attachmentData): string
     {
+        $mimeType = $attachmentData->file_mime_type ?? 'unknown';
+        
+        // Create content based on mime type
+        if (str_starts_with($mimeType, 'text/')) {
+            return $this->createTextPlaceholder($attachmentData);
+        } elseif ($mimeType === 'application/pdf') {
+            return $this->createPdfPlaceholder($attachmentData);
+        } elseif (str_contains($mimeType, 'document') || str_contains($mimeType, 'word')) {
+            return $this->createDocumentPlaceholder($attachmentData);
+        } else {
+            return $this->createBinaryPlaceholder($attachmentData);
+        }
+    }
+
+    /**
+     * Create placeholder for text files
+     */
+    private function createTextPlaceholder($attachmentData): string
+    {
+        $content = "EMAIL ATTACHMENT PLACEHOLDER\n";
+        $content .= "========================\n\n";
+        $content .= "This text file was imported from SugarCRM.\n";
+        $content .= "Original content was not available during import.\n\n";
+        $content .= "File Details:\n";
+        $content .= "- Filename: " . ($attachmentData->filename ?? 'Unknown') . "\n";
+        $content .= "- Type: " . ($attachmentData->file_mime_type ?? 'Unknown') . "\n";
+        $content .= "- Description: " . ($attachmentData->description ?? 'No description') . "\n";
+        $content .= "- SugarCRM Note ID: " . ($attachmentData->id ?? 'Unknown') . "\n";
+        $content .= "- Email ID: " . ($attachmentData->email_id ?? 'Unknown') . "\n";
+        $content .= "- Created: " . ($attachmentData->date_entered ?? 'Unknown') . "\n\n";
+        $content .= "To restore original content:\n";
+        $content .= "1. Export from SugarCRM\n";
+        $content .= "2. Replace this placeholder file\n";
+        
+        return $content;
+    }
+
+    /**
+     * Create placeholder for PDF files  
+     */
+    private function createPdfPlaceholder($attachmentData): string
+    {
+        // Create a simple PDF-like placeholder
+        $content = "%PDF-1.4 PLACEHOLDER\n";
+        $content .= "% This is a placeholder for a PDF file imported from SugarCRM\n";
+        $content .= "% Original PDF content was not available during import\n\n";
+        $content .= "FILE INFORMATION:\n";
+        $content .= "Filename: " . ($attachmentData->filename ?? 'Unknown') . "\n";
+        $content .= "MIME Type: " . ($attachmentData->file_mime_type ?? 'Unknown') . "\n";
+        $content .= "Description: " . ($attachmentData->description ?? 'No description') . "\n";
+        $content .= "SugarCRM Note ID: " . ($attachmentData->id ?? 'Unknown') . "\n";
+        $content .= "Email ID: " . ($attachmentData->email_id ?? 'Unknown') . "\n";
+        $content .= "Created: " . ($attachmentData->date_entered ?? 'Unknown') . "\n\n";
+        $content .= "TO RESTORE ORIGINAL PDF:\n";
+        $content .= "1. Export the original PDF from SugarCRM\n";
+        $content .= "2. Upload it to this activity in Krayin CRM\n";
+        
+        return $content;
+    }
+
+    /**
+     * Create placeholder for document files
+     */
+    private function createDocumentPlaceholder($attachmentData): string
+    {
+        $content = "EMAIL ATTACHMENT PLACEHOLDER - DOCUMENT FILE\n";
+        $content .= "==========================================\n\n";
+        $content .= "This document was imported from SugarCRM but the original content was not available.\n\n";
+        $content .= "DOCUMENT INFORMATION:\n";
+        $content .= "- Original Filename: " . ($attachmentData->filename ?? 'Unknown') . "\n";
+        $content .= "- MIME Type: " . ($attachmentData->file_mime_type ?? 'Unknown') . "\n";
+        $content .= "- Description: " . ($attachmentData->description ?? 'No description') . "\n";
+        $content .= "- SugarCRM Note ID: " . ($attachmentData->id ?? 'Unknown') . "\n";
+        $content .= "- Email ID: " . ($attachmentData->email_id ?? 'Unknown') . "\n";
+        $content .= "- Date Created: " . ($attachmentData->date_entered ?? 'Unknown') . "\n\n";
+        
+        if (str_contains($attachmentData->file_mime_type ?? '', 'word')) {
+            $content .= "This appears to be a Microsoft Word document.\n";
+        } elseif (str_contains($attachmentData->file_mime_type ?? '', 'document')) {
+            $content .= "This appears to be an Office document.\n";
+        }
+        
+        $content .= "\nTO RESTORE ORIGINAL DOCUMENT:\n";
+        $content .= "1. Locate and export the original file from SugarCRM\n";
+        $content .= "2. Upload the original file to this activity in Krayin CRM\n";
+        
+        return $content;
+    }
+
+    /**
+     * Create placeholder for binary/unknown files
+     */
+    private function createBinaryPlaceholder($attachmentData): string
+    {
         // SugarCRM doesn't store file content in the notes table
         // Create a placeholder file with metadata
         $placeholderContent = "=== EMAIL ATTACHMENT PLACEHOLDER ===\n\n";
-        $placeholderContent .= "This file was imported from SugarCRM but the original content was not available.\n\n";
+        $placeholderContent .= "This file was imported from SugarCRM but the original content was not available.\n";
+        $placeholderContent .= "SugarCRM stores file content separately from the notes table metadata.\n\n";
         $placeholderContent .= 'Original Filename: '.($attachmentData->filename ?? 'Unknown')."\n";
         $placeholderContent .= 'MIME Type: '.($attachmentData->file_mime_type ?? 'Unknown')."\n";
         $placeholderContent .= 'Description: '.($attachmentData->description ?? 'No description')."\n";
@@ -337,5 +435,54 @@ class AttachmentImporter
         $placeholderContent .= "=== END PLACEHOLDER ===\n";
 
         return $placeholderContent;
+    }
+
+    /**
+     * Ensure proper file extension based on mime type
+     */
+    private function ensureProperExtension(string $filename, ?string $mimeType): string
+    {
+        // If no mime type, return filename as-is
+        if (empty($mimeType)) {
+            return $filename;
+        }
+
+        // Check if filename already has an extension
+        $currentExtension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        
+        // Map mime types to extensions
+        $mimeToExtension = [
+            'application/pdf' => 'pdf',
+            'application/msword' => 'doc',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
+            'application/vnd.ms-excel' => 'xls',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
+            'application/vnd.ms-powerpoint' => 'ppt',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'pptx',
+            'text/plain' => 'txt',
+            'text/html' => 'html',
+            'text/csv' => 'csv',
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/gif' => 'gif',
+            'application/zip' => 'zip',
+            'application/octet-stream' => null, // Keep original extension for binary files
+        ];
+
+        $expectedExtension = $mimeToExtension[$mimeType] ?? null;
+        
+        // If we have an expected extension and the file doesn't have it (or has wrong one)
+        if ($expectedExtension && $currentExtension !== $expectedExtension) {
+            // If filename has no extension, add the correct one
+            if (empty($currentExtension)) {
+                return $filename . '.' . $expectedExtension;
+            }
+            // If filename has wrong extension, replace it
+            $nameWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
+            return $nameWithoutExt . '.' . $expectedExtension;
+        }
+
+        // For application/octet-stream or unknown types, keep original filename
+        return $filename;
     }
 }

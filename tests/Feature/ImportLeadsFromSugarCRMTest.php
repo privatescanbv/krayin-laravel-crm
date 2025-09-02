@@ -29,7 +29,7 @@ beforeEach(function () {
     foreach ([
         'email_addr_bean_rel', 'email_addresses', 'leads_cstm', 'leads', 'leads_contacts_c',
         'leads_pcrm_anamnesepreventie_1_c', 'pcrm_anamnetie_contacts_c', 'pcrm_anamnesepreventie', 'pcrm_anamnesepreventie_cstm', 'calls', 'calls_cstm',
-        'emails', 'emails_text', 'emails_beans', 'notes',
+        'meetings', 'emails', 'emails_text', 'emails_beans', 'notes',
     ] as $tbl) {
         if (Schema::connection('sugarcrm')->hasTable($tbl)) {
             Schema::connection('sugarcrm')->drop($tbl);
@@ -246,6 +246,27 @@ beforeEach(function () {
     Schema::connection('sugarcrm')->create('calls_cstm', function (Blueprint $table) {
         $table->string('id_c')->primary();
         $table->string('belgroep_c')->nullable();
+    });
+
+    // Create meetings table for meeting activities
+    Schema::connection('sugarcrm')->create('meetings', function (Blueprint $table) {
+        $table->string('id')->primary();
+        $table->string('name')->nullable();
+        $table->dateTime('date_entered')->nullable();
+        $table->dateTime('date_modified')->nullable();
+        $table->string('modified_user_id')->nullable();
+        $table->string('created_by')->nullable();
+        $table->text('description')->nullable();
+        $table->integer('deleted')->default(0);
+        $table->string('assigned_user_id')->nullable();
+        $table->integer('duration_hours')->nullable();
+        $table->integer('duration_minutes')->nullable();
+        $table->dateTime('date_start')->nullable();
+        $table->dateTime('date_end')->nullable();
+        $table->string('parent_type')->nullable();
+        $table->string('status')->nullable();
+        $table->string('parent_id')->nullable();
+        $table->integer('reminder_time')->nullable();
     });
 
     // Create emails table
@@ -1006,4 +1027,212 @@ test('imports email activities from sugarcrm', function () {
     expect($attachment3)->not->toBeNull()
         ->and($attachment3->name)->toBe('info.txt')
         ->and($attachment3->content_type)->toBe('text/plain');
+});
+
+test('imports meeting activities from sugarcrm', function () {
+    // Create user for activities with external_id (required for import)
+    $user = User::factory()->create(['external_id' => 'user-meeting-001']);
+
+    // Create app person that will be linked to lead
+    $personExternalId = 'person-meeting-001';
+    $appPerson = Person::factory()->create(['external_id' => $personExternalId]);
+
+    $leadId = 'lead-meeting-001';
+    $meetingId1 = 'meeting-001';
+    $meetingId2 = 'meeting-002';
+    $meetingId3 = 'meeting-003';
+
+    // Insert SugarCRM lead data
+    DB::connection('sugarcrm')->table('leads')->insert([
+        'id'            => $leadId,
+        'first_name'    => 'Jane',
+        'last_name'     => 'Smith',
+        'phone_work'    => '+31612345679',
+        'date_entered'  => '2024-02-15 10:00:00',
+        'date_modified' => '2024-02-15 11:00:00',
+        'status'        => 'New',
+        'deleted'       => 0,
+    ]);
+
+    // Insert custom fields
+    DB::connection('sugarcrm')->table('leads_cstm')->insert([
+        'id_c'              => $leadId,
+        'workflow_status_c' => 'nieuweaanvraag',
+        'kanaal_c'          => 'telefoon',
+        'soort_aanvraag_c'  => 'gericht',
+    ]);
+
+    // Link lead to person
+    DB::connection('sugarcrm')->table('leads_contacts_c')->insert([
+        'id'                  => 'lead-contact-meeting-001',
+        'leads_c7104eads_ida' => $leadId,
+        'leads_cbb5dacts_idb' => $personExternalId,
+        'deleted'             => 0,
+    ]);
+
+    // Create anamnesis records and relations (required for import logic)
+    $anamnesisId = 'an-meeting-001';
+    DB::connection('sugarcrm')->table('pcrm_anamnesepreventie')->insert([
+        'id'            => $anamnesisId,
+        'name'          => 'Test meeting anamnesis',
+        'status'        => 'active',
+        'date_entered'  => '2024-02-15 10:00:00',
+        'date_modified' => '2024-02-15 11:00:00',
+        'deleted'       => 0,
+    ]);
+    DB::connection('sugarcrm')->table('pcrm_anamnesepreventie_cstm')->insert([
+        'id_c' => $anamnesisId,
+    ]);
+    // Link lead to anamnesis
+    DB::connection('sugarcrm')->table('leads_pcrm_anamnesepreventie_1_c')->insert([
+        'id'                                                       => 'lead-anam-meeting-001',
+        'leads_pcrm_anamnesepreventie_1leads_ida'                  => $leadId,
+        'leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb' => $anamnesisId,
+        'deleted'                                                  => 0,
+    ]);
+    // Link anamnesis to person
+    DB::connection('sugarcrm')->table('pcrm_anamnetie_contacts_c')->insert([
+        'id'                        => 'anam-person-meeting-001',
+        'pcrm_anamn171deventie_idb' => $anamnesisId,
+        'pcrm_anamn0b6eontacts_ida' => $personExternalId,
+        'deleted'                   => 0,
+    ]);
+
+    // Insert meeting activities
+    DB::connection('sugarcrm')->table('meetings')->insert([
+        [
+            'id'               => $meetingId1,
+            'name'             => 'Consultatie afspraak',
+            'date_entered'     => '2024-02-16 09:00:00',
+            'date_modified'    => '2024-02-16 09:30:00',
+            'description'      => 'Eerste consultatie met de klant',
+            'deleted'          => 0,
+            'duration_hours'   => 1,
+            'duration_minutes' => 30,
+            'date_start'       => '2024-02-16 14:00:00',
+            'date_end'         => '2024-02-16 15:30:00',
+            'parent_type'      => 'Leads',
+            'status'           => 'Held',
+            'parent_id'        => $leadId,
+            'reminder_time'    => 900, // 15 minutes
+            'assigned_user_id' => 'user-meeting-001',
+        ],
+        [
+            'id'               => $meetingId2,
+            'name'             => 'Resultaten bespreking',
+            'date_entered'     => '2024-02-20 10:00:00',
+            'date_modified'    => '2024-02-20 10:15:00',
+            'description'      => 'Bespreking van de resultaten',
+            'deleted'          => 0,
+            'duration_hours'   => 0,
+            'duration_minutes' => 45,
+            'date_start'       => '2024-02-20 15:00:00',
+            'date_end'         => '2024-02-20 15:45:00',
+            'parent_type'      => 'Leads',
+            'status'           => 'Planned',
+            'parent_id'        => $leadId,
+            'reminder_time'    => 1800, // 30 minutes
+            'assigned_user_id' => 'user-meeting-001',
+        ],
+        [
+            'id'               => $meetingId3,
+            'name'             => 'Afgesproken maar niet gehouden',
+            'date_entered'     => '2024-02-25 11:00:00',
+            'date_modified'    => '2024-02-25 11:15:00',
+            'description'      => 'Meeting was gepland maar niet gehouden',
+            'deleted'          => 0,
+            'duration_hours'   => 1,
+            'duration_minutes' => 0,
+            'date_start'       => '2024-02-25 16:00:00',
+            'date_end'         => '2024-02-25 17:00:00',
+            'parent_type'      => 'Leads',
+            'status'           => 'Not Held',
+            'parent_id'        => $leadId,
+            'reminder_time'    => 600, // 10 minutes
+            'assigned_user_id' => 'user-meeting-001',
+        ],
+    ]);
+
+    // Run import
+    $exit = Artisan::call('import:leads', [
+        '--connection' => 'sugarcrm',
+        '--limit'      => 1,
+    ]);
+    expect($exit)->toBe(0);
+
+    // Verify lead was imported
+    $lead = Lead::where('external_id', $leadId)->first();
+    expect($lead)->not->toBeNull();
+
+    // Verify meeting activities were imported
+    $meetingActivities = $lead->activities()->where('type', 'meeting')->get();
+    expect($meetingActivities)->toHaveCount(3);
+
+    // Check first meeting activity
+    $activity1 = $meetingActivities->filter(function ($activity) use ($meetingId1) {
+        return $activity->external_id === $meetingId1;
+    })->first();
+    expect($activity1)->not->toBeNull()
+        ->and($activity1->title)->toBe('Consultatie afspraak')
+        ->and($activity1->type)->toBe('meeting')
+        ->and($activity1->comment)->toBe('Eerste consultatie met de klant')
+        ->and($activity1->is_done)->toBe(true) // 'Held' status should map to done
+        ->and($activity1->additional['status'])->toBe('Held')
+        ->and($activity1->additional['duration_hours'])->toBe(1)
+        ->and($activity1->additional['duration_minutes'])->toBe(30)
+        ->and($activity1->additional['duration_total_minutes'])->toBe(90) // 1*60 + 30
+        ->and($activity1->additional['reminder_time'])->toBe(900)
+        ->and($activity1->user_id)->toBe($user->id);
+
+    // Check second meeting activity
+    $activity2 = $meetingActivities->filter(function ($activity) use ($meetingId2) {
+        return $activity->external_id === $meetingId2;
+    })->first();
+    expect($activity2)->not->toBeNull()
+        ->and($activity2->title)->toBe('Resultaten bespreking')
+        ->and($activity2->type)->toBe('meeting')
+        ->and($activity2->comment)->toBe('Bespreking van de resultaten')
+        ->and($activity2->is_done)->toBe(false) // 'Planned' status should map to not done
+        ->and($activity2->additional['status'])->toBe('Planned')
+        ->and($activity2->additional['duration_hours'])->toBe(0)
+        ->and($activity2->additional['duration_minutes'])->toBe(45)
+        ->and($activity2->additional['duration_total_minutes'])->toBe(45) // 0*60 + 45
+        ->and($activity2->additional['reminder_time'])->toBe(1800)
+        ->and($activity2->user_id)->toBe($user->id);
+
+    // Check third meeting activity with "Not Held" status
+    $activity3 = $meetingActivities->filter(function ($activity) use ($meetingId3) {
+        return $activity->external_id === $meetingId3;
+    })->first();
+    expect($activity3)->not->toBeNull()
+        ->and($activity3->title)->toBe('Afgesproken maar niet gehouden')
+        ->and($activity3->type)->toBe('meeting')
+        ->and($activity3->comment)->toBe('Meeting was gepland maar niet gehouden')
+        ->and($activity3->is_done)->toBe(false) // 'Not Held' status should map to not done
+        ->and($activity3->additional['status'])->toBe('Not Held')
+        ->and($activity3->additional['duration_hours'])->toBe(1)
+        ->and($activity3->additional['duration_minutes'])->toBe(0)
+        ->and($activity3->additional['duration_total_minutes'])->toBe(60) // 1*60 + 0
+        ->and($activity3->additional['reminder_time'])->toBe(600)
+        ->and($activity3->user_id)->toBe($user->id);
+
+    // Verify timestamps are properly preserved
+    expect($activity1->created_at->format('Y-m-d H:i:s'))->toBe('2024-02-16 09:00:00')
+        ->and($activity1->updated_at->format('Y-m-d H:i:s'))->toBe('2024-02-16 09:30:00');
+
+    expect($activity2->created_at->format('Y-m-d H:i:s'))->toBe('2024-02-20 10:00:00')
+        ->and($activity2->updated_at->format('Y-m-d H:i:s'))->toBe('2024-02-20 10:15:00');
+
+    expect($activity3->created_at->format('Y-m-d H:i:s'))->toBe('2024-02-25 11:00:00')
+        ->and($activity3->updated_at->format('Y-m-d H:i:s'))->toBe('2024-02-25 11:15:00');
+
+    // Verify schedule dates are properly mapped
+    expect($activity1->schedule_from->format('Y-m-d H:i:s'))->toBe('2024-02-16 14:00:00')
+        ->and($activity1->schedule_to->format('Y-m-d H:i:s'))->toBe('2024-02-16 15:30:00');
+
+    expect($activity2->schedule_from->format('Y-m-d H:i:s'))->toBe('2024-02-20 15:00:00')
+        ->and($activity2->schedule_to->format('Y-m-d H:i:s'))->toBe('2024-02-20 15:45:00');
+
+    expect($activity3->schedule_from->format('Y-m-d H:i:s'))->toBe('2024-02-25 16:00:00')
+        ->and($activity3->schedule_to->format('Y-m-d H:i:s'))->toBe('2024-02-25 17:00:00');
 });

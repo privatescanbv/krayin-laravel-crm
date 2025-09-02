@@ -50,6 +50,7 @@ Route::controller(LeadController::class)->prefix('leads')->group(function () {
 
     Route::controller(ActivityController::class)->prefix('{id}/activities')->group(function () {
         Route::get('', 'index')->name('admin.leads.activities.index');
+        Route::post('', 'store')->name('admin.leads.activities.store');
     });
 
     Route::controller(TagController::class)->prefix('{id}/tags')->group(function () {

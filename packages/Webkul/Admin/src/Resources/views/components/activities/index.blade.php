@@ -359,6 +359,9 @@
                             name: 'call',
                             label: "{{ trans('admin::app.components.activities.index.calls') }}",
                         }, {
+                            name: 'meeting',
+                            label: "{{ trans('admin::app.components.activities.index.meetings') }}",
+                        }, {
                             name: 'task',
                             label: "{{ trans('admin::app.components.activities.index.internal-task') }}",
                         }, {

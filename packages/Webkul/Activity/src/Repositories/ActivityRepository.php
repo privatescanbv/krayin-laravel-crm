@@ -92,7 +92,7 @@ class ActivityRepository extends Repository
             ->addSelect(DB::raw('IF(activities.is_done, "done", "") as class'))
             ->leftJoin('users', 'activities.user_id', '=', 'users.id')
             ->leftJoin('groups', 'activities.group_id', '=', 'groups.id')
-            ->whereIn('type', ['call', 'task', 'lunch'])
+            ->whereIn('type', ['call', 'meeting', 'task', 'lunch'])
             ->whereBetween('activities.schedule_from', $dateRange)
             ->where(function ($query) {
                 if ($userIds = bouncer()->getAuthorizedUserIds()) {

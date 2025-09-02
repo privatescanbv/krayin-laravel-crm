@@ -45,6 +45,8 @@ class AttachmentImporter
 
                 return [];
             }
+            
+            $this->command->info('Notes table exists, proceeding with email attachments extraction');
 
             // First, get all email IDs that belong to our leads
             $emailIds = DB::connection($this->connection)
@@ -57,6 +59,8 @@ class AttachmentImporter
                 ->pluck('e.id')
                 ->all();
 
+            $this->command->info('Found ' . count($emailIds) . ' emails for ' . count($leadIds) . ' leads');
+            
             if (empty($emailIds)) {
                 $this->command->info('No emails found for leads, skipping email attachments import');
 
@@ -91,6 +95,9 @@ class AttachmentImporter
             $attachments = $sql->get();
 
             $this->command->info('Found '.$attachments->count().' email attachments');
+            
+            // Debug: Show email IDs we're looking for
+            $this->command->info('Looking for attachments for email IDs: ' . implode(', ', $emailIds));
 
             // Get email-bean mappings to determine lead_id for each attachment
             $emailBeanMap = DB::connection($this->connection)
@@ -145,11 +152,19 @@ class AttachmentImporter
             }
 
             $this->command->info('Importing '.count($leadEmailAttachments)." email attachments for lead {$lead->external_id}");
+            
+            // Debug: Show what attachments we found
+            foreach ($leadEmailAttachments as $att) {
+                $this->command->info("  - Attachment: {$att->filename} (email_id: {$att->email_id}, attachment_id: {$att->id})");
+            }
 
             // Get email activities for this lead to map attachments to
             $leadEmailActivities = $emailActivities[$lead->external_id] ?? [];
+            $this->command->info("Found " . count($leadEmailActivities) . " email activities for lead {$lead->external_id}");
+            
             $emailActivityMap = [];
             foreach ($leadEmailActivities as $emailActivity) {
+                $this->command->info("  - Email Activity: {$emailActivity->id} (subject: {$emailActivity->subject})");
                 $emailActivityMap[$emailActivity->id] = $emailActivity;
             }
 
@@ -172,8 +187,16 @@ class AttachmentImporter
 
                     if (! $activity) {
                         $this->command->warn("Activity record not found for email {$attachmentData->email_id}");
+                        $this->command->warn("Looking for: external_id={$attachmentData->email_id}, lead_id={$lead->id}, type=email");
+                        
+                        // Debug: Show what activities DO exist for this lead
+                        $existingActivities = Activity::where('lead_id', $lead->id)->get();
+                        $this->command->info("Existing activities for lead {$lead->id}:");
+                        foreach ($existingActivities as $act) {
+                            $this->command->info("  - {$act->type}: {$act->title} (external_id: {$act->external_id})");
+                        }
+                        
                         $skipped++;
-
                         continue;
                     }
 

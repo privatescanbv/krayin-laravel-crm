@@ -33,12 +33,35 @@ Na verloop van tijd zal het aantal migratie files groeien. Dit kan ervoor zorgen
 
 === Migratie instructies
 
-Zet sugarcrm database op de server, vanuit hier te importeren. (gezien de server nog geen connectie kan maken met de sugarcrm server)
+==== Samenvatting
 
-1. maak mysql dump (doe ik via phpstorm)
-2. scp sugarcrm_privatesuite9_local-2025_07_23_12_25_32-dump.sql mbulthuis@178.251.28.76:/home/mbulthuis
-3. https://phpmyadmin.dev.privatescan.nl ->  maak database aan met naam `sugarcrm_privatesuite9`
-4. sudo docker exec -i mysql mysql -u root -p[DB_PASSWORD] scrm_privatesuite9 -h 127.0.0.1 -P 3306 < ./sugarcrm_privatesuite9_local-2025_07_23_12_25_32-dump.sql
+Je dient een mysql dump te maken vanuit de oude server, export met Filezilla te downloaden naar de Citrix omgeving, dan kopiëren van Citrix omgeving naar lokaal. Van lokaal met scp naar de nieuwe server en dan importeren in de mysql docker.
+
+Beter is rechtstreeks van de oude server naar de nieuwe met scp, maar er zijn nog firewall issues.
+
+==== Stappen plan om een nieuwe prod suite CRM dataset klaar te zetten
+
+1. **MySQL dump vanuit SSH sessie oude server**
+   - Run `./export_...sh` (note: bestand staat in /home/mbulthuis)
+
+2. **Copy file naar ./tmp op de server**
+
+3. **Open Filezilla en copy file naar Citrix omgeving**
+
+4. **Copy naar lokaal**
+   - Voor Mac: werkt alleen als je in Safari zit met plugin
+
+5. **SCP naar nieuwe server iChosting**
+   - `scp [filename] mbulthuis@178.251.28.76:/home/mbulthuis`
+
+6. **Uitpakken**
+   - `gunzip -c scrm_privatesuite9_2025-09-02_1620.sql.gz > scrm_privatesuite9_2025-09-02_1620.sql`
+
+7. **Database aanmaken** [optioneel, alleen eerste keer]
+   - https://phpmyadmin.dev.privatescan.nl -> maak database aan met naam `sugarcrm_privatesuite9`
+
+8. **Importeren in MySQL docker**
+   - `sudo docker exec -i mysql mysql -u root -p[DB_PASSWORD] scrm_privatesuite9 -h 127.0.0.1 -P 3306 < ./scrm_privatesuite9_2025-09-02_1620.sql`
 
 
 === Commands

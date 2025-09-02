@@ -148,7 +148,7 @@
                                         >
                                             <a
                                                 :href="
-                                                    file.is_email_attachment
+                                                    (file.is_email_attachment || activity.type === 'email')
                                                     ? `{{ route('admin.mail.attachment_download', 'replaceID') }}`.replace('replaceID', file.id)
                                                     : `{{ route('admin.activities.file_download', 'replaceID') }}`.replace('replaceID', file.id)
                                                 "

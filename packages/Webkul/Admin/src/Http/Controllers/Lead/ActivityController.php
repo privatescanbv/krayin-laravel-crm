@@ -179,7 +179,7 @@ class ActivityController extends Controller
                         'created_at' => $attachment->created_at,
                         'updated_at' => $attachment->updated_at,
                     ];
-                }),
+                })->toArray(),
                 'created_at' => $email->created_at,
                 'updated_at' => $email->updated_at,
             ];

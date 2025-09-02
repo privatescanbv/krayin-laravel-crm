@@ -4,6 +4,7 @@ namespace App\Services\Importers\SugarCRM;
 
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -95,8 +96,6 @@ class AttachmentImporter
 
             $this->command->info('Found '.$attachments->count().' email attachments');
 
-
-
             // Get email-bean mappings to determine lead_id for each attachment
             $emailBeanMap = DB::connection($this->connection)
                 ->table('emails_beans')
@@ -121,7 +120,7 @@ class AttachmentImporter
             }
 
             return $result;
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             $this->command->error('SQL Error while extracting email attachments: '.$e->getMessage());
             $this->command->error('SQL: '.$e->getSql());
             $this->command->error('Bindings: '.json_encode($e->getBindings()));
@@ -130,124 +129,6 @@ class AttachmentImporter
             $this->command->error('Failed to extract email attachments: '.$e->getMessage());
             throw new Exception('Email attachments extraction failed: '.$e->getMessage(), 0, $e);
         }
-    }
-
-    /**
-     * Import email attachments for a lead
-     *
-     * @param  Lead  $lead  The lead to import attachments for
-     * @param  array  $emailAttachments  All email attachments grouped by lead ID
-     * @param  array  $emailActivities  Email activities to map attachments to
-     * @return array Statistics about imported and skipped attachments
-     */
-    public function importEmailAttachments(Lead $lead, array $emailAttachments, array $emailActivities): array
-    {
-        $imported = 0;
-        $skipped = 0;
-
-        try {
-            $leadEmailAttachments = $emailAttachments[$lead->external_id] ?? [];
-
-            if (empty($leadEmailAttachments)) {
-                return ['imported' => $imported, 'skipped' => $skipped];
-            }
-
-            $this->command->info('Importing '.count($leadEmailAttachments)." email attachments for lead {$lead->external_id}");
-
-            // Debug: Show what attachments we found
-            foreach ($leadEmailAttachments as $att) {
-                $this->command->info("  - Attachment: {$att->filename} (email_id: {$att->email_id}, attachment_id: {$att->id})");
-            }
-
-            // Get email activities for this lead to map attachments to
-            $leadEmailActivities = $emailActivities[$lead->external_id] ?? [];
-            $this->command->info('Found '.count($leadEmailActivities)." email activities for lead {$lead->external_id}");
-
-            $emailActivityMap = [];
-            foreach ($leadEmailActivities as $emailActivity) {
-                $this->command->info("  - Email Activity: {$emailActivity->id} (subject: {$emailActivity->subject})");
-                $emailActivityMap[$emailActivity->id] = $emailActivity;
-            }
-
-            foreach ($leadEmailAttachments as $attachmentData) {
-                try {
-                    // Find the corresponding email activity
-                    $emailActivity = $emailActivityMap[$attachmentData->email_id] ?? null;
-                    if (! $emailActivity) {
-                        $this->command->warn("Email activity not found for attachment {$attachmentData->id}, email_id: {$attachmentData->email_id}");
-                        $skipped++;
-
-                        continue;
-                    }
-
-                    // Find the imported Activity record by external_id
-                    $activity = Activity::where('external_id', $attachmentData->email_id)
-                        ->where('lead_id', $lead->id)
-                        ->where('type', 'email')
-                        ->first();
-
-                    if (! $activity) {
-                        $this->command->warn("Activity record not found for email {$attachmentData->email_id}");
-                        $skipped++;
-
-                        continue;
-                    }
-
-                    // Check if attachment already exists by external reference
-                    $existingFile = $activity->files()
-                        ->where('name', $attachmentData->filename)
-                        ->where('path', 'LIKE', "%{$attachmentData->id}%")
-                        ->first();
-
-                    if ($existingFile) {
-                        $this->command->info("Skipping existing email attachment: {$attachmentData->filename}");
-                        $skipped++;
-
-                        continue;
-                    }
-
-                    // Create file path based on attachment data
-                    $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $attachmentData->filename);
-
-                    // Ensure proper file extension based on mime type if missing
-                    $finalFilename = $this->ensureProperExtension($safeName, $attachmentData->file_mime_type);
-                    $filePath = "email_attachments/{$lead->external_id}/{$attachmentData->email_id}/{$attachmentData->id}_{$finalFilename}";
-
-                    // Create placeholder file content based on mime type
-                    $fileContent = $this->createPlaceholderContent($attachmentData);
-
-                    // Store the file in Laravel storage
-                    Storage::put($filePath, $fileContent);
-
-                    // Create the file record
-                    $fileData = [
-                        'name'        => $attachmentData->filename,
-                        'path'        => $filePath,
-                        'activity_id' => $activity->id,
-                    ];
-
-                    $file = $this->createEntityWithTimestamps(File::class, $fileData, [
-                        'created_at' => $this->parseSugarDate($attachmentData->date_entered),
-                        'updated_at' => $this->parseSugarDate($attachmentData->date_modified),
-                    ]);
-
-                    $this->command->info("✓ Imported email attachment: {$attachmentData->filename} for email activity {$activity->id}");
-                    $imported++;
-                } catch (Exception $e) {
-                    $this->command->error("Failed to import email attachment {$attachmentData->id}: ".$e->getMessage());
-                    // Continue with next attachment
-                }
-            }
-        } catch (\Illuminate\Database\QueryException $e) {
-            $this->command->error("SQL Error while importing email attachments for lead {$lead->external_id}: ".$e->getMessage());
-            $this->command->error('SQL: '.$e->getSql());
-            throw new Exception('Email attachments import failed due to SQL error: '.$e->getMessage(), 0, $e);
-        } catch (Exception $e) {
-            $this->command->error("Failed to import email attachments for lead {$lead->external_id}: ".$e->getMessage());
-            throw new Exception('Email attachments import failed: '.$e->getMessage(), 0, $e);
-        }
-
-        return ['imported' => $imported, 'skipped' => $skipped];
     }
 
     /**
@@ -394,12 +275,12 @@ class AttachmentImporter
     private function createValidFileContent($attachmentData): string
     {
         $mimeType = $attachmentData->file_mime_type ?? 'unknown';
-        
+
         // For text files, create readable placeholder
         if (str_starts_with($mimeType, 'text/')) {
             return $this->createTextPlaceholder($attachmentData);
         }
-        
+
         // For binary files, create minimal valid file or just metadata
         return $this->createBinaryFileStub($attachmentData);
     }
@@ -581,12 +462,12 @@ class AttachmentImporter
     private function createBinaryFileStub($attachmentData): string
     {
         $mimeType = $attachmentData->file_mime_type ?? 'unknown';
-        
+
         // For PDF files, create a minimal valid PDF
         if ($mimeType === 'application/pdf') {
             return $this->createMinimalPdf($attachmentData);
         }
-        
+
         // For other binary files, create a text file with metadata
         // This prevents corruption while still providing downloadable content
         $content = "IMPORTED ATTACHMENT METADATA\n";
@@ -604,7 +485,7 @@ class AttachmentImporter
         $content .= "2. Export/download the original file from SugarCRM\n";
         $content .= "3. Replace this placeholder file manually\n\n";
         $content .= "Note: This is a text file containing metadata, not the original " . ($attachmentData->file_mime_type ?? 'unknown') . " file.\n";
-        
+
         return $content;
     }
 
@@ -621,7 +502,7 @@ class AttachmentImporter
         $pdf .= "/Pages 2 0 R\n";
         $pdf .= ">>\n";
         $pdf .= "endobj\n\n";
-        
+
         $pdf .= "2 0 obj\n";
         $pdf .= "<<\n";
         $pdf .= "/Type /Pages\n";
@@ -629,7 +510,7 @@ class AttachmentImporter
         $pdf .= "/Count 1\n";
         $pdf .= ">>\n";
         $pdf .= "endobj\n\n";
-        
+
         $pdf .= "3 0 obj\n";
         $pdf .= "<<\n";
         $pdf .= "/Type /Page\n";
@@ -638,14 +519,14 @@ class AttachmentImporter
         $pdf .= "/Contents 4 0 R\n";
         $pdf .= ">>\n";
         $pdf .= "endobj\n\n";
-        
+
         $content = "IMPORTED FROM SUGARCRM\\n\\n";
         $content .= "Original filename: " . ($attachmentData->filename ?? 'Unknown') . "\\n";
         $content .= "SugarCRM Note ID: " . ($attachmentData->id ?? 'Unknown') . "\\n";
         $content .= "Email ID: " . ($attachmentData->email_id ?? 'Unknown') . "\\n\\n";
         $content .= "This PDF was imported from SugarCRM but the original content was not available.\\n";
         $content .= "To restore: Export original from SugarCRM and replace this file.";
-        
+
         $pdf .= "4 0 obj\n";
         $pdf .= "<<\n";
         $pdf .= "/Length " . strlen($content) . "\n";
@@ -658,7 +539,7 @@ class AttachmentImporter
         $pdf .= "ET\n";
         $pdf .= "endstream\n";
         $pdf .= "endobj\n\n";
-        
+
         $pdf .= "xref\n";
         $pdf .= "0 5\n";
         $pdf .= "0000000000 65535 f \n";
@@ -674,7 +555,7 @@ class AttachmentImporter
         $pdf .= "startxref\n";
         $pdf .= "492\n";
         $pdf .= "%%EOF\n";
-        
+
         return $pdf;
     }
 }

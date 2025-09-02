@@ -9,6 +9,7 @@ use App\Validators\DateValidator;
 use Illuminate\Validation\Rules\Enum;
 use Webkul\Core\Contracts\Validations\EmailValidator;
 use Webkul\Core\Contracts\Validations\PhoneValidator;
+use Webkul\Lead\Models\Stage;
 
 class LeadValidationService
 {
@@ -38,25 +39,25 @@ class LeadValidationService
             'phones.*.label' => 'nullable|string|max:50',
 
             // Lead specific fields
-            'lead_value'          => 'nullable|numeric|min:0',
-            'lead_source_id'      => 'nullable|numeric|exists:lead_sources,id',
-            'lead_channel_id'     => 'nullable|numeric|exists:lead_channels,id',
-            'lead_type_id'        => 'nullable|numeric|exists:lead_types,id',
-            'department_id'       => 'required|numeric|exists:departments,id',
-            'user_id'             => 'nullable|numeric|exists:users,id',
-            'lead_pipeline_id'    => 'nullable|numeric|exists:lead_pipelines,id',
+            'lead_value'             => 'nullable|numeric|min:0',
+            'lead_source_id'         => 'nullable|numeric|exists:lead_sources,id',
+            'lead_channel_id'        => 'nullable|numeric|exists:lead_channels,id',
+            'lead_type_id'           => 'nullable|numeric|exists:lead_types,id',
+            'department_id'          => 'required|numeric|exists:departments,id',
+            'user_id'                => 'nullable|numeric|exists:users,id',
+            'lead_pipeline_id'       => 'nullable|numeric|exists:lead_pipelines,id',
             'lead_pipeline_stage_id' => [
                 'nullable',
                 'numeric',
                 'exists:lead_pipeline_stages,id',
                 function ($attribute, $value, $fail) {
                     if ($value && request('lead_pipeline_id')) {
-                        $stage = \Webkul\Lead\Models\Stage::find($value);
+                        $stage = Stage::find($value);
                         if ($stage && $stage->lead_pipeline_id != request('lead_pipeline_id')) {
                             $fail('The selected stage does not belong to the specified pipeline.');
                         }
                     }
-                }
+                },
             ],
 
             // Person relationships (multiple persons supported)

@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Stage;
 use Webkul\User\Models\User;
 
 /**
@@ -750,25 +751,27 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
         // Determine the correct first stage based on pipeline
         $firstStageId = $this->getFirstStageForPipeline($pipelineId);
-        
+
         // For now, we'll use the first stage of the appropriate pipeline
         // TODO: In the future, we could map specific workflow statuses to specific stages per pipeline
-        
+
         // Check lead status first (higher priority)
         if ($leadStatus) {
             $leadStatusLower = strtolower($leadStatus);
             if ($leadStatusLower === 'converted') {
                 // Find won stage for this pipeline
-                $wonStage = \Webkul\Lead\Models\Stage::where('lead_pipeline_id', $pipelineId)
+                $wonStage = Stage::where('lead_pipeline_id', $pipelineId)
                     ->where('code', 'like', '%won%')
                     ->first();
+
                 return $wonStage ? $wonStage->id : $firstStageId;
             }
             if (in_array($leadStatusLower, ['dead', 'recycled'])) {
                 // Find lost stage for this pipeline
-                $lostStage = \Webkul\Lead\Models\Stage::where('lead_pipeline_id', $pipelineId)
+                $lostStage = Stage::where('lead_pipeline_id', $pipelineId)
                     ->where('code', 'like', '%lost%')
                     ->first();
+
                 return $lostStage ? $lostStage->id : $firstStageId;
             }
         }
@@ -790,10 +793,10 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 return PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value;
             default:
                 // For other pipelines, find the first stage
-                $firstStage = \Webkul\Lead\Models\Stage::where('lead_pipeline_id', $pipelineId)
+                $firstStage = Stage::where('lead_pipeline_id', $pipelineId)
                     ->orderBy('sort_order')
                     ->first();
-                
+
                 return $firstStage ? $firstStage->id : PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_PRIVATESCAN_ID->value;
         }
     }
@@ -1196,21 +1199,21 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         // Get users from the appropriate group based on department
         if ($departmentId == Department::findHerniaId()) {
             // Find users in the 'hernia' group
-            $users = User::whereHas('groups', function($query) {
+            $users = User::whereHas('groups', function ($query) {
                 $query->where('name', 'hernia');
             })->pluck('id')->toArray();
 
-            if (!empty($users)) {
+            if (! empty($users)) {
                 // Return a random user from the hernia group, or the first one
                 return $users[0];
             }
         } else {
             // Find users in the 'privatescan' group
-            $users = User::whereHas('groups', function($query) {
+            $users = User::whereHas('groups', function ($query) {
                 $query->where('name', 'privatescan');
             })->pluck('id')->toArray();
 
-            if (!empty($users)) {
+            if (! empty($users)) {
                 // Return a random user from the privatescan group, or the first one
                 return $users[0];
             }

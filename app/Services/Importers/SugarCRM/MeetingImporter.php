@@ -5,6 +5,7 @@ namespace App\Services\Importers\SugarCRM;
 use App\Models\Department;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -87,7 +88,7 @@ class MeetingImporter
             }
 
             return $result;
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             $this->command->error('SQL Error while extracting meeting activities: '.$e->getMessage());
             $this->command->error('SQL: '.$e->getSql());
             throw new Exception('Meeting activities extraction failed due to SQL error: '.$e->getMessage(), 0, $e);
@@ -142,11 +143,11 @@ class MeetingImporter
                         'comment'     => $meetingData->description ?? '',
                         'external_id' => $meetingData->id,
                         'additional'  => [
-                            'status'           => $meetingData->status,
-                            'duration_hours'   => $meetingData->duration_hours,
-                            'duration_minutes' => $meetingData->duration_minutes,
+                            'status'                 => $meetingData->status,
+                            'duration_hours'         => $meetingData->duration_hours,
+                            'duration_minutes'       => $meetingData->duration_minutes,
                             'duration_total_minutes' => $durationMinutes,
-                            'reminder_time'    => $meetingData->reminder_time,
+                            'reminder_time'          => $meetingData->reminder_time,
                         ],
                         'schedule_from' => $this->parseSugarDate($meetingData->date_start),
                         'schedule_to'   => $this->parseSugarDate($meetingData->date_end),

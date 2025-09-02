@@ -965,79 +965,63 @@ test('imports email activities from sugarcrm', function () {
     $lead = Lead::where('external_id', $leadId)->first();
     expect($lead)->not->toBeNull();
 
-    // Verify email activities were imported
-    $emailActivities = Activity::where('lead_id', $lead->id)
-        ->where('type', 'email')
+    // Verify emails were imported as Email records (not activities)
+    $emails = Email::where('lead_id', $lead->id)
         ->orderBy('created_at')
         ->get();
 
-    expect($emailActivities)->toHaveCount(2);
+    expect($emails)->toHaveCount(2);
 
-    // Check first email activity
-    $activity1 = $emailActivities[0];
-    expect($activity1->title)->toBe('Welkom bij onze diensten')
-        ->and($activity1->type)->toBe('email')
-        ->and($activity1->external_id)->toBe($emailId1)
-        ->and($activity1->comment)->toContain('Subject: Welkom bij onze diensten')
-        ->and($activity1->comment)->toContain('Body: Welkom bij onze diensten. We kijken ernaar uit om u te helpen.')
-        ->and($activity1->is_done)->toBe(true) // 'sent' status should map to done
-        ->and($activity1->additional['message_id'])->toBe('msg-001@example.com')
-        ->and($activity1->additional['email_type'])->toBe('out')
-        ->and($activity1->additional['status'])->toBe('sent')
-        ->and($activity1->additional['flagged'])->toBe(false)
-        ->and($activity1->additional['intent'])->toBe('welcome');
+    // Check first email
+    $email1 = $emails[0];
+    expect($email1->subject)->toBe('Welkom bij onze diensten')
+        ->and($email1->unique_id)->toBe($emailId1)
+        ->and($email1->message_id)->toBe('msg-001@example.com')
+        ->and($email1->lead_id)->toBe($lead->id)
+        ->and($email1->source)->toBe('imported');
 
-    // Check second email activity
-    $activity2 = $emailActivities[1];
-    expect($activity2->title)->toBe('Opvolging afspraak')
-        ->and($activity2->type)->toBe('email')
-        ->and($activity2->external_id)->toBe($emailId2)
-        ->and($activity2->comment)->toContain('Subject: Opvolging afspraak')
-        ->and($activity2->comment)->toContain('Body: Dit is een opvolging van uw afspraak.')
-        ->and($activity2->is_done)->toBe(true) // 'sent' status should map to done
-        ->and($activity2->additional['message_id'])->toBe('msg-002@example.com')
-        ->and($activity2->additional['email_type'])->toBe('out')
-        ->and($activity2->additional['status'])->toBe('sent')
-        ->and($activity2->additional['flagged'])->toBe(true)
-        ->and($activity2->additional['intent'])->toBe('follow_up');
+    // Check second email
+    $email2 = $emails[1];
+    expect($email2->subject)->toBe('Opvolging afspraak')
+        ->and($email2->unique_id)->toBe($emailId2)
+        ->and($email2->message_id)->toBe('msg-002@example.com')
+        ->and($email2->lead_id)->toBe($lead->id)
+        ->and($email2->source)->toBe('imported');
 
-    // Verify email attachments were imported
-    $activity1Files = $activity1->files()->get();
-    expect($activity1Files)->toHaveCount(1);
+    // Verify import tag was attached
+    expect($email1->tags()->where('name', 'import')->exists())->toBe(true);
+    expect($email2->tags()->where('name', 'import')->exists())->toBe(true);
 
-    $file1 = $activity1Files[0];
-    expect($file1->name)->toBe('brochure.pdf')
-        ->and($file1->path)->toContain($attachmentId1)
-        ->and($file1->path)->toContain('brochure.pdf');
+    // Verify email attachments were imported as Email attachments
+    $email1Attachments = $email1->attachments()->get();
+    expect($email1Attachments)->toHaveCount(1);
 
-    $activity2Files = $activity2->files()->get();
-    expect($activity2Files)->toHaveCount(2);
+    $attachment1 = $email1Attachments[0];
+    expect($attachment1->name)->toBe('brochure.pdf')
+        ->and($attachment1->content_type)->toBe('application/pdf')
+        ->and($attachment1->path)->toContain($attachmentId1);
 
-    $file2 = $activity2Files->firstWhere('name', 'follow_up.docx');
-    expect($file2)->not->toBeNull()
-        ->and($file2->name)->toBe('follow_up.docx')
-        ->and($file2->path)->toContain($attachmentId2)
-        ->and($file2->path)->toContain('follow_up.docx');
+    $email2Attachments = $email2->attachments()->get();
+    expect($email2Attachments)->toHaveCount(2);
 
-    $file3 = $activity2Files->firstWhere('name', 'info.txt');
-    expect($file3)->not->toBeNull()
-        ->and($file3->name)->toBe('info.txt')
-        ->and($file3->path)->toContain($attachmentId3)
-        ->and($file3->path)->toContain('info.txt');
+    $attachment2 = $email2Attachments->firstWhere('name', 'follow_up.docx');
+    expect($attachment2)->not->toBeNull()
+        ->and($attachment2->name)->toBe('follow_up.docx')
+        ->and($attachment2->content_type)->toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+
+    $attachment3 = $email2Attachments->firstWhere('name', 'info.txt');
+    expect($attachment3)->not->toBeNull()
+        ->and($attachment3->name)->toBe('info.txt')
+        ->and($attachment3->content_type)->toBe('text/plain');
 
     // Verify that files are actually stored in the filesystem
-    expect(Storage::exists($file1->path))->toBe(true);
-    expect(Storage::exists($file2->path))->toBe(true);
-    expect(Storage::exists($file3->path))->toBe(true);
+    expect(Storage::exists($attachment1->path))->toBe(true);
+    expect(Storage::exists($attachment2->path))->toBe(true);
+    expect(Storage::exists($attachment3->path))->toBe(true);
 
     // Verify file content (placeholder files)
-    $file1Content = Storage::get($file1->path);
-    expect($file1Content)->toContain('PDF-1.4 PLACEHOLDER') // PDF files have special format
+    $file1Content = Storage::get($attachment1->path);
+    expect($file1Content)->toContain('PDF-1.4 PLACEHOLDER')
         ->and($file1Content)->toContain('brochure.pdf')
         ->and($file1Content)->toContain('application/pdf');
-
-    $file3Content = Storage::get($file3->path);
-    expect($file3Content)->toContain('EMAIL ATTACHMENT PLACEHOLDER') // Text files use standard format
-        ->and($file3Content)->toContain('info.txt')
-        ->and($file3Content)->toContain('text/plain');
 });

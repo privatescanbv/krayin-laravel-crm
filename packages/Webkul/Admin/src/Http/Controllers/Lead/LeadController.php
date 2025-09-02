@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Lead;
 
+use App\Enums\PipelineDefaultKeys;
 use App\Models\Anamnesis;
 use App\Models\Department;
 use Carbon\Carbon;
@@ -104,7 +105,7 @@ class LeadController extends Controller
             }
 
             if (!$pipeline) {
-                \Log::error('No pipeline found for leads.get endpoint', [
+                Log::error('No pipeline found for leads.get endpoint', [
                     'pipeline_id' => request()->query('pipeline_id'),
                     'request_params' => request()->all()
                 ]);
@@ -117,12 +118,12 @@ class LeadController extends Controller
 
         // Check if we should exclude won/lost stages for performance optimization
         $excludeWonLost = filter_var(request()->query('exclude_won_lost', false), FILTER_VALIDATE_BOOLEAN);
-        
-        if ($stageId = request()->query('pipeline_stage_id')) {
+
+        if (request()->query('pipeline_stage_id')) {
             $stages = $pipeline->stages->where('id', request()->query('pipeline_stage_id'));
         } else {
             $stages = $pipeline->stages;
-            
+
             // Filter out won/lost stages if requested to improve performance
             if ($excludeWonLost) {
                 $stages = $stages->filter(function ($stage) {
@@ -217,8 +218,23 @@ class LeadController extends Controller
         $user = auth()->user();
         $userGroupNames = $user->groups->pluck('name')->toArray();
         $defaultDepartmentId = Department::mapGroupToDepartmentId($userGroupNames);
+
+        // Determine pipeline and stage based on request parameters
+        $pipelineData = $this->determinePipelineForLead(
+            request('pipeline_id'),
+            request('stage_id'),
+            $defaultDepartmentId
+        );
+
+        $pipeline = $pipelineData['pipeline'];
+        $defaultStageId = $pipelineData['stage_id'];
+        $defaultDepartmentId = $pipelineData['department_id'];
+
         return view('admin::leads.create', [
-            'defaultDepartmentId' => $defaultDepartmentId
+            'defaultDepartmentId' => $defaultDepartmentId,
+            'defaultPipelineId' => $pipeline->id ?? null,
+            'defaultStageId' => $defaultStageId,
+            'departmentOptions' => Department::pluck('name', 'id')->toArray()
         ]);
     }
 
@@ -292,9 +308,28 @@ class LeadController extends Controller
             if (isset($data['lead_pipeline_stage_id'])) {
                 $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
 
+                // If pipeline_id is also provided, validate that stage belongs to pipeline
+                if (isset($data['lead_pipeline_id']) && $stage->lead_pipeline_id != $data['lead_pipeline_id']) {
+                    throw new \InvalidArgumentException('The selected stage does not belong to the specified pipeline.');
+                }
+
                 $data['lead_pipeline_id'] = $stage->lead_pipeline_id;
             } else {
-                $pipeline = $this->pipelineRepository->getDefaultPipeline();
+                // Determine pipeline based on department_id if provided
+                $pipeline = null;
+
+                if (isset($data['department_id'])) {
+                    if ($data['department_id'] == Department::findHerniaId()) {
+                        $pipeline = $this->pipelineRepository->find(PipelineDefaultKeys::PIPELINE_HERNIA_ID->value);
+                    } elseif ($data['department_id'] == Department::findPrivateScanId()) {
+                        $pipeline = $this->pipelineRepository->find(PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value);
+                    }
+                }
+
+                // Fall back to default pipeline if not found
+                if (!$pipeline) {
+                    $pipeline = $this->pipelineRepository->getDefaultPipeline();
+                }
 
                 $stage = $pipeline->stages()->first();
 
@@ -390,9 +425,28 @@ class LeadController extends Controller
             if (isset($data['lead_pipeline_stage_id'])) {
                 $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
 
+                // If pipeline_id is also provided, validate that stage belongs to pipeline
+                if (isset($data['lead_pipeline_id']) && $stage->lead_pipeline_id != $data['lead_pipeline_id']) {
+                    throw new \InvalidArgumentException('The selected stage does not belong to the specified pipeline.');
+                }
+
                 $data['lead_pipeline_id'] = $stage->lead_pipeline_id;
             } else {
-                $pipeline = $this->pipelineRepository->getDefaultPipeline();
+                // Determine pipeline based on department_id if provided
+                $pipeline = null;
+
+                if (isset($data['department_id'])) {
+                    if ($data['department_id'] == Department::findHerniaId()) {
+                        $pipeline = $this->pipelineRepository->find(PipelineDefaultKeys::PIPELINE_HERNIA_ID->value);
+                    } elseif ($data['department_id'] == Department::findPrivateScanId()) {
+                        $pipeline = $this->pipelineRepository->find(PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value);
+                    }
+                }
+
+                // Fall back to default pipeline if not found
+                if (!$pipeline) {
+                    $pipeline = $this->pipelineRepository->getDefaultPipeline();
+                }
 
                 $stage = $pipeline->stages()->first();
 
@@ -1055,5 +1109,68 @@ class LeadController extends Controller
                 'success' => false
             ], 500);
         }
+    }
+
+    /**
+     * Determine the appropriate pipeline and stage for a lead based on request parameters
+     *
+     * @param int|null $pipelineId Pipeline ID from request
+     * @param int|null $stageId Stage ID from request
+     * @param int $defaultDepartmentId Default department ID based on user groups
+     * @return array Array containing pipeline, stage_id, and department_id
+     */
+    private function determinePipelineForLead(?int $pipelineId, ?int $stageId, int $defaultDepartmentId): array
+    {
+        $pipeline = null;
+        $defaultStageId = null;
+
+        // First check if pipeline_id is provided in request
+        if ($pipelineId) {
+            $pipeline = $this->pipelineRepository->find($pipelineId);
+        }
+
+        // If stage_id is provided, get pipeline from stage
+        if (!$pipeline && $stageId) {
+            $stage = $this->stageRepository->find($stageId);
+            if ($stage) {
+                $pipeline = $stage->pipeline;
+                $defaultStageId = $stage->id;
+            }
+        }
+
+        // If no pipeline found yet, determine based on user department
+        if (!$pipeline) {
+            // Map department to pipeline
+            if ($defaultDepartmentId == Department::findHerniaId()) {
+                $pipeline = $this->pipelineRepository->find(PipelineDefaultKeys::PIPELINE_HERNIA_ID->value);
+            } else {
+                $pipeline = $this->pipelineRepository->find(PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value);
+            }
+        }
+
+        // If still no pipeline, fall back to default
+        if (!$pipeline) {
+            $pipeline = $this->pipelineRepository->getDefaultPipeline();
+        }
+
+        // Get first stage if no specific stage was requested
+        if (!$defaultStageId && $pipeline) {
+            $defaultStageId = $pipeline->stages()->first()->id ?? null;
+        }
+
+        // Override department_id based on the determined pipeline
+        if ($pipeline) {
+            if ($pipeline->id == PipelineDefaultKeys::PIPELINE_HERNIA_ID->value) {
+                $defaultDepartmentId = Department::findHerniaId();
+            } elseif ($pipeline->id == PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value) {
+                $defaultDepartmentId = Department::findPrivateScanId();
+            }
+        }
+
+        return [
+            'pipeline' => $pipeline,
+            'stage_id' => $defaultStageId,
+            'department_id' => $defaultDepartmentId
+        ];
     }
 }

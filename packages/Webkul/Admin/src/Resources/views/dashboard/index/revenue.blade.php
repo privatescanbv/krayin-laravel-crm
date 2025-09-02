@@ -32,20 +32,20 @@
 
                             <div class="flex gap-2">
                                 <p class="text-xl font-bold text-green-600">
-                                    @{{ report.statistics.total_won_revenue.formatted_total }}
+                                    @{{ report?.statistics?.total_won_revenue?.formatted_total || '0' }}
                                 </p>
 
                                 <div class="flex items-center gap-0.5">
                                     <span
                                         class="text-base !font-semibold text-green-500"
-                                        :class="[report.statistics.total_won_revenue.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-green-500 dark:!text-green-500']"
+                                        :class="[report?.statistics?.total_won_revenue?.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-green-500 dark:!text-green-500']"
                                     ></span>
 
                                     <p
                                         class="text-xs font-semibold text-green-500"
-                                        :class="[report.statistics.total_won_revenue.progress < 0 ?  'text-red-500' : 'text-green-500']"
+                                        :class="[report?.statistics?.total_won_revenue?.progress < 0 ?  'text-red-500' : 'text-green-500']"
                                     >
-                                        @{{ Math.abs(report.statistics.total_won_revenue.progress.toFixed(2)) }}%
+                                        @{{ Math.abs((report?.statistics?.total_won_revenue?.progress || 0).toFixed(2)) }}%
                                     </p>
                                 </div>
                             </div>
@@ -59,20 +59,20 @@
 
                             <div class="flex gap-2">
                                 <p class="text-xl font-bold text-red-500">
-                                    @{{ report.statistics.total_lost_revenue.formatted_total }}
+                                    @{{ report?.statistics?.total_lost_revenue?.formatted_total || '0' }}
                                 </p>
 
                                 <div class="flex items-center gap-0.5">
                                     <span
                                         class="text-base !font-semibold text-green-500"
-                                        :class="[report.statistics.total_lost_revenue.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-green-500 dark:!text-green-500']"
+                                        :class="[report?.statistics?.total_lost_revenue?.progress < 0 ? 'icon-stats-down text-red-500 dark:!text-red-500' : 'icon-stats-up text-green-500 dark:!text-green-500']"
                                     ></span>
 
                                     <p
                                         class="text-xs font-semibold text-green-500"
                                         :class="[report.statistics.total_lost_revenue.progress < 0 ?  'text-red-500' : 'text-green-500']"
                                     >
-                                        @{{ Math.abs(report.statistics.total_lost_revenue.progress.toFixed(2)) }}%
+                                        @{{ Math.abs((report?.statistics?.total_lost_revenue?.progress || 0).toFixed(2)) }}%
                                     </p>
                                 </div>
                             </div>
@@ -153,6 +153,22 @@
                 },
 
                 prepare() {
+                    // Check if report data is available
+                    if (!this.report || !this.report.statistics) {
+                        return;
+                    }
+
+                    // Check if required revenue data exists
+                    if (!this.report.statistics.total_won_revenue || !this.report.statistics.total_lost_revenue) {
+                        return;
+                    }
+
+                    // Check if current values exist
+                    if (typeof this.report.statistics.total_won_revenue.current === 'undefined' || 
+                        typeof this.report.statistics.total_lost_revenue.current === 'undefined') {
+                        return;
+                    }
+
                     if (this.chart) {
                         this.chart.destroy();
                     }

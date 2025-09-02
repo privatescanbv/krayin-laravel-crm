@@ -45,6 +45,13 @@
                 let options = this.setOptions();
 
                 this.activate(options);
+
+                // Set initial value if provided
+                this.$nextTick(() => {
+                    if (this.value) {
+                        this.setDate(this.value);
+                    }
+                });
             },
 
             methods: {
@@ -57,8 +64,9 @@
                         minDate: this.minDate ?? '',
                         maxDate: this.maxDate ?? '',
                         altFormat: "d-m-Y",
-                        dateFormat: "d-m-Y",
+                        dateFormat: "Y-m-d",
                         weekNumbers: true,
+                        defaultDate: this.value || null,
 
                         onChange: function(selectedDates, dateStr, instance) {
                             self.$emit("onChange", dateStr);
@@ -70,6 +78,12 @@
                     let element = this.$el.getElementsByTagName("input")[0];
 
                     this.datepicker = new Flatpickr(element, options);
+                },
+
+                setDate: function(date) {
+                    if (this.datepicker && date) {
+                        this.datepicker.setDate(date);
+                    }
                 },
 
                 clear: function() {

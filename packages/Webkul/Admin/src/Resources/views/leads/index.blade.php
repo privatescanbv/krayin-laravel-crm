@@ -37,7 +37,7 @@
             <div class="flex items-center gap-x-2.5">
                 @if (bouncer()->hasPermission('leads.create'))
                     <a
-                        href="{{ route('admin.leads.create') }}"
+                        href="{{ route('admin.leads.create') }}{{ request('pipeline_id') ? '?pipeline_id=' . request('pipeline_id') : '' }}"
                         class="primary-button"
                     >
                         @lang('admin::app.leads.index.create-btn')

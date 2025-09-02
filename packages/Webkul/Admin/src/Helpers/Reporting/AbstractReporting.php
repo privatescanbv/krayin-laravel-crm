@@ -36,8 +36,13 @@ abstract class AbstractReporting
     public function __construct()
     {
         $this->setStartDate(request()->date('start'));
-
         $this->setEndDate(request()->date('end'));
+        
+        // Ensure we have a valid date range (start < end)
+        if ($this->startDate->equalTo($this->endDate)) {
+            // If dates are the same, adjust end date to be 1 day after start
+            $this->endDate = $this->startDate->clone()->addDays(30)->endOfDay();
+        }
     }
 
     /**
@@ -104,7 +109,18 @@ abstract class AbstractReporting
             $this->setEndDate(request()->date('end'));
         }
 
-        $this->lastStartDate = $this->startDate->clone()->subDays($this->startDate->diffInDays($this->endDate));
+        // Calculate the duration of the current period
+        $periodDuration = $this->startDate->diffInDays($this->endDate);
+
+        // If start and end are the same date, use a default 30-day period
+        if ($periodDuration === 0) {
+            $periodDuration = 30;
+        }
+
+        // Ensure we have at least 1 day difference
+        $periodDuration = max(1, $periodDuration);
+
+        $this->lastStartDate = $this->startDate->clone()->subDays($periodDuration);
     }
 
     /**
@@ -112,7 +128,18 @@ abstract class AbstractReporting
      */
     private function setLastEndDate(): void
     {
-        $this->lastEndDate = $this->startDate->clone();
+        // Calculate the duration of the current period
+        $periodDuration = $this->startDate->diffInDays($this->endDate);
+
+        // If start and end are the same date, use a default 30-day period
+        if ($periodDuration === 0) {
+            $periodDuration = 30;
+        }
+
+        // Ensure we have at least 1 day difference
+        $periodDuration = max(1, $periodDuration);
+
+        $this->lastEndDate = $this->startDate->clone()->subDays($periodDuration);
     }
 
     /**

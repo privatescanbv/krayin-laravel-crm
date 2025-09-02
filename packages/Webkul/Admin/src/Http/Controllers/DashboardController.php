@@ -13,7 +13,6 @@ class DashboardController extends Controller
      */
     protected $typeFunctions = [
         'over-all'             => 'getOverAllStats',
-        'revenue-stats'        => 'getRevenueStats',
         'total-leads'          => 'getTotalLeadsStats',
         'revenue-by-sources'   => 'getLeadsStatsBySources',
         'revenue-by-types'     => 'getLeadsStatsByTypes',

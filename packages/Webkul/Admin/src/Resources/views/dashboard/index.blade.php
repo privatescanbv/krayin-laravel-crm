@@ -41,9 +41,6 @@
         {!! view_render_event('admin.dashboard.index.content.left.before') !!}
 
         <div class="flex flex-1 flex-col gap-4 max-xl:flex-auto">
-            <!-- Revenue Stats -->
-            @include('admin::dashboard.index.revenue')
-
             <!-- Over All Stats -->
             @include('admin::dashboard.index.over-all')
 
@@ -143,6 +140,10 @@
                             end: "{{ $endDate->format('Y-m-d') }}",
                         }
                     }
+                },
+
+                mounted() {
+                    // Component initialized
                 },
 
                 watch: {

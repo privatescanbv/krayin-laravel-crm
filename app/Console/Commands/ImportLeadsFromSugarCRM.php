@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Stage;
 use Webkul\User\Models\User;
 
 /**
@@ -468,14 +469,15 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 // Use database transaction to ensure all-or-nothing import
                 DB::transaction(function () use ($record, $persons, $leadByPersonsByAnamnesis, &$lead) {
                     // Create lead with proper timestamps
+                    $departmentId = $this->mapDepartment($record);
                     $lead = $this->createEntityWithTimestamps(Lead::class, [
                         'external_id'            => $record->id,
                         'description'            => $record->description ?? '',
                         'emails'                 => $this->formatEmails($record),
                         'phones'                 => $this->formatPhones($record),
                         'status'                 => $this->mapStatus($record->status),
-                        'lead_pipeline_id'       => $this->mapPipeline($record, $this->mapDepartment($record)),
-                        'lead_pipeline_stage_id' => $this->mapStage($record),
+                        'lead_pipeline_id'       => $this->mapPipeline($record, $departmentId),
+                        'lead_pipeline_stage_id' => $this->mapStage($record, $this->mapPipeline($record, $this->mapDepartment($record))),
                         'salutation'             => $this->mapSalutationFromGender($this->mapGenderFromSugar($record->gender_c ?? null)),
                         'first_name'             => $record->first_name,
                         'last_name'              => $record->last_name,
@@ -485,11 +487,12 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'initials'               => $record->voorletters_c ?? '',
                         'date_of_birth'          => $record->birthdate,
                         'gender'                 => $this->mapGenderFromSugar($record->gender_c ?? null),
-                        'department_id'          => $this->mapDepartment($record),
+                        'department_id'          => $departmentId,
                         'lead_channel_id'        => $this->mapChannel($record),
                         'lead_type_id'           => $this->mapType($record),
                         'lead_source_id'         => $this->mapSource($record),
                         'lost_reason'            => $record->reden_afvoeren_c ?? null,
+                        'user_id'                => $this->mapUser($departmentId),
                     ], [
                         'created_at' => $this->parseSugarDate($record->lead_date_entered ?? $record->date_entered),
                         'updated_at' => $this->parseSugarDate($record->lead_date_modified ?? $record->date_modified),
@@ -740,44 +743,62 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
     /**
      * Map SugarCRM workflow status to pipeline stage
      */
-    private function mapStage($record): int
+    private function mapStage($record, int $pipelineId): int
     {
         // Get workflow status from Sugar CRM
         $workflowStatus = $record->workflow_status_c ?? 'nieuweaanvraag';
         $leadStatus = $record->status ?? '';
 
-        // Map Sugar CRM workflow statuses to pipeline stages
-        $stageMap = [
-            'nieuweaanvraag'     => 1, // nieuwe-aanvraag-kwalificeren
-            'nieuwe-aanvraag'    => 1, // nieuwe-aanvraag-kwalificeren
-            'kwalificeren'       => 1, // nieuwe-aanvraag-kwalificeren
-            'adviseren'          => 2, // klant-adviseren-start
-            'klant-adviseren'    => 2, // klant-adviseren-start
-            'adviseren-start'    => 2, // klant-adviseren-start
-            'opvolgen'           => 3, // klant-adviseren-opvolgen
-            'adviseren-opvolgen' => 3, // klant-adviseren-opvolgen
-            'won'                => 4, // won
-            'converted'          => 4, // won
-            'lost'               => 5, // lost
-            'dead'               => 5, // lost
-        ];
+        // Determine the correct first stage based on pipeline
+        $firstStageId = $this->getFirstStageForPipeline($pipelineId);
+
+        // For now, we'll use the first stage of the appropriate pipeline
+        // TODO: In the future, we could map specific workflow statuses to specific stages per pipeline
 
         // Check lead status first (higher priority)
         if ($leadStatus) {
             $leadStatusLower = strtolower($leadStatus);
             if ($leadStatusLower === 'converted') {
-                return 4; // won stage
+                // Find won stage for this pipeline
+                $wonStage = Stage::where('lead_pipeline_id', $pipelineId)
+                    ->where('code', 'like', '%won%')
+                    ->first();
+
+                return $wonStage ? $wonStage->id : $firstStageId;
             }
             if (in_array($leadStatusLower, ['dead', 'recycled'])) {
-                return 5; // lost stage
+                // Find lost stage for this pipeline
+                $lostStage = Stage::where('lead_pipeline_id', $pipelineId)
+                    ->where('code', 'like', '%lost%')
+                    ->first();
+
+                return $lostStage ? $lostStage->id : $firstStageId;
             }
         }
 
-        // Map workflow status
-        $workflowStatusLower = strtolower($workflowStatus);
+        // For now, return the first stage of the pipeline
+        // In the future, we could implement more sophisticated mapping based on workflow_status
+        return $firstStageId;
+    }
 
-        // Return mapped stage or default to first stage
-        return $stageMap[$workflowStatusLower] ?? PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_PRIVATESCAN_ID->value;
+    /**
+     * Get the first stage ID for a given pipeline
+     */
+    private function getFirstStageForPipeline(int $pipelineId): int
+    {
+        switch ($pipelineId) {
+            case PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value:
+                return PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_PRIVATESCAN_ID->value;
+            case PipelineDefaultKeys::PIPELINE_HERNIA_ID->value:
+                return PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value;
+            default:
+                // For other pipelines, find the first stage
+                $firstStage = Stage::where('lead_pipeline_id', $pipelineId)
+                    ->orderBy('sort_order')
+                    ->first();
+
+                return $firstStage ? $firstStage->id : PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_PRIVATESCAN_ID->value;
+        }
     }
 
     /**
@@ -1168,5 +1189,37 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
     private function ensureUserImportRan(): void
     {
         User::whereNotNull('external_id')->count() > 0 or throw new Exception('No users with external_id found, please run the user import first');
+    }
+
+    /**
+     * Map department to appropriate user_id for lead assignment
+     */
+    private function mapUser(int $departmentId): int
+    {
+        // Get users from the appropriate group based on department
+        if ($departmentId == Department::findHerniaId()) {
+            // Find users in the 'hernia' group
+            $users = User::whereHas('groups', function ($query) {
+                $query->where('name', 'hernia');
+            })->pluck('id')->toArray();
+
+            if (! empty($users)) {
+                // Return a random user from the hernia group, or the first one
+                return $users[0];
+            }
+        } else {
+            // Find users in the 'privatescan' group
+            $users = User::whereHas('groups', function ($query) {
+                $query->where('name', 'privatescan');
+            })->pluck('id')->toArray();
+
+            if (! empty($users)) {
+                // Return a random user from the privatescan group, or the first one
+                return $users[0];
+            }
+        }
+
+        // Fallback to user ID 1 if no appropriate users found
+        return 1;
     }
 }

@@ -759,7 +759,7 @@
                                 target="_blank"
                                 class="text-xs font-medium text-brandColor hover:underline"
                             >
-                                @{{ email.lead.name ?? email.lead.title }}
+                                @{{ email.lead.name }}
                             </a>
 
                             <!-- Lead Additional Information -->

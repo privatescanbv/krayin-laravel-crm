@@ -290,9 +290,10 @@ class AttachmentImporter
                 try {
                     // Find the corresponding Krayin email ID
                     $krayinEmailId = $importedEmailIds[$attachmentData->email_id] ?? null;
-                    if (!$krayinEmailId) {
+                    if (! $krayinEmailId) {
                         $this->command->warn("Krayin email not found for attachment {$attachmentData->id}, SugarCRM email_id: {$attachmentData->email_id}");
                         $skipped++;
+
                         continue;
                     }
 
@@ -304,6 +305,7 @@ class AttachmentImporter
                     if ($existingAttachment) {
                         $this->command->info("Skipping existing email attachment: {$attachmentData->filename}");
                         $skipped++;
+
                         continue;
                     }
 

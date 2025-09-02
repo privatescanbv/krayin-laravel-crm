@@ -188,7 +188,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
             // Extract call activities for the leads
             $callActivities = $this->activityImporter->extractCallActivities($records);
-            
+
             // Extract emails for the leads (to be imported as Email records)
             $emailActivities = $this->activityImporter->extractEmailActivities($records);
 
@@ -509,9 +509,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     $emailStats = $this->activityImporter->importEmailsAsEmailRecords($lead, $emailActivities);
                     $emailActivitiesImported += $emailStats['imported'];
                     $emailActivitiesSkipped += $emailStats['skipped'];
-                    
+
                     // Import email attachments for imported emails
-                    if (!empty($emailStats['email_ids'])) {
+                    if (! empty($emailStats['email_ids'])) {
                         $attachmentStats = $this->attachmentImporter->importEmailAttachmentsAsEmailAttachments($lead, $emailAttachments, $emailStats['email_ids']);
                         $emailAttachmentsImported += $attachmentStats['imported'];
                         $emailAttachmentsSkipped += $attachmentStats['skipped'];

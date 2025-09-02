@@ -4,6 +4,7 @@ namespace App\Services\Importers\SugarCRM;
 
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Webkul\Activity\Models\Activity;
@@ -13,6 +14,7 @@ use Webkul\Lead\Models\Lead;
 class AttachmentImporter
 {
     protected Command $command;
+
     protected string $connection;
 
     public function __construct(Command $command, string $connection)
@@ -56,6 +58,7 @@ class AttachmentImporter
 
             if (empty($emailIds)) {
                 $this->command->info('No emails found for leads, skipping email attachments import');
+
                 return [];
             }
 
@@ -145,9 +148,10 @@ class AttachmentImporter
                 try {
                     // Find the corresponding email activity
                     $emailActivity = $emailActivityMap[$attachmentData->email_id] ?? null;
-                    if (!$emailActivity) {
+                    if (! $emailActivity) {
                         $this->command->warn("Email activity not found for attachment {$attachmentData->id}, email_id: {$attachmentData->email_id}");
                         $skipped++;
+
                         continue;
                     }
 
@@ -157,9 +161,10 @@ class AttachmentImporter
                         ->where('type', 'email')
                         ->first();
 
-                    if (!$activity) {
+                    if (! $activity) {
                         $this->command->warn("Activity record not found for email {$attachmentData->email_id}");
                         $skipped++;
+
                         continue;
                     }
 
@@ -172,6 +177,7 @@ class AttachmentImporter
                     if ($existingFile) {
                         $this->command->info("Skipping existing email attachment: {$attachmentData->filename}");
                         $skipped++;
+
                         continue;
                     }
 
@@ -181,8 +187,8 @@ class AttachmentImporter
 
                     // Create the file record
                     $fileData = [
-                        'name' => $attachmentData->filename,
-                        'path' => $filePath,
+                        'name'        => $attachmentData->filename,
+                        'path'        => $filePath,
                         'activity_id' => $activity->id,
                     ];
 
@@ -216,12 +222,12 @@ class AttachmentImporter
         try {
             // Accept Carbon, DateTimeInterface, or string
             if ($value instanceof \DateTimeInterface) {
-                return \Illuminate\Support\Carbon::instance($value)->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s');
+                return Carbon::instance($value)->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s');
             }
 
             // Parse SugarCRM date assuming it's already in the application timezone
             // SugarCRM dates appear to be stored in local time, not UTC
-            return \Illuminate\Support\Carbon::parse((string) $value, config('app.timezone'))
+            return Carbon::parse((string) $value, config('app.timezone'))
                 ->format('Y-m-d H:i:s');
         } catch (\Throwable $e) {
             return null;

@@ -12,8 +12,6 @@ use App\Services\Importers\SugarCRM\AttachmentImporter;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
-use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\User;
@@ -34,6 +32,7 @@ use Webkul\User\Models\User;
 class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 {
     protected ActivityImporter $activityImporter;
+
     protected AttachmentImporter $attachmentImporter;
 
     /**
@@ -189,10 +188,10 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
             // Extract call activities for the leads
             $callActivities = $this->activityImporter->extractCallActivities($records);
-            
+
             // Extract email activities for the leads
             $emailActivities = $this->activityImporter->extractEmailActivities($records);
-            
+
             // Extract email attachments for the leads
             $emailAttachments = $this->attachmentImporter->extractEmailAttachments($records);
 
@@ -262,11 +261,11 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             // Get call activities for this lead
             $leadCallActivities = $callActivities[$record->id] ?? [];
             $callActivitiesInfo = empty($leadCallActivities) ? '—' : count($leadCallActivities).' calls';
-            
+
             // Get email activities for this lead
             $leadEmailActivities = $emailActivities[$record->id] ?? [];
             $emailActivitiesInfo = empty($leadEmailActivities) ? '—' : count($leadEmailActivities).' emails';
-            
+
             // Get email attachments for this lead
             $leadEmailAttachments = $emailAttachments[$record->id] ?? [];
             $emailAttachmentsInfo = empty($leadEmailAttachments) ? '—' : count($leadEmailAttachments).' files';
@@ -317,7 +316,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             $this->line('');
             $this->info('Call Activities Summary: No call activities found or calls table not available');
         }
-        
+
         // Show email activities summary
         if (! empty($emailActivities)) {
             $totalEmailActivities = array_sum(array_map('count', $emailActivities));
@@ -337,7 +336,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             $this->line('');
             $this->info('Email Activities Summary: No email activities found or emails table not available');
         }
-        
+
         // Show email attachments summary
         if (! empty($emailAttachments)) {
             $totalEmailAttachments = array_sum(array_map('count', $emailAttachments));
@@ -504,7 +503,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     $this->error("Failed to import call activities for lead {$lead->external_id}: ".$e->getMessage());
                     // Continue with next lead
                 }
-                
+
                 // Import email activities for this lead (outside main transaction)
                 try {
                     $emailStats = $this->activityImporter->importEmailActivities($lead, $emailActivities);
@@ -514,7 +513,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     $this->error("Failed to import email activities for lead {$lead->external_id}: ".$e->getMessage());
                     // Continue with next lead
                 }
-                
+
                 // Import email attachments for this lead (outside main transaction)
                 try {
                     $attachmentStats = $this->attachmentImporter->importEmailAttachments($lead, $emailAttachments, $emailActivities);
@@ -551,12 +550,12 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $this->info('Call Activities:');
         $this->info("✓ Call activities imported: {$callActivitiesImported}");
         $this->info("⚠ Call activities skipped: {$callActivitiesSkipped}");
-        
+
         $this->line('');
         $this->info('Email Activities:');
         $this->info("✓ Email activities imported: {$emailActivitiesImported}");
         $this->info("⚠ Email activities skipped: {$emailActivitiesSkipped}");
-        
+
         $this->line('');
         $this->info('Email Attachments:');
         $this->info("✓ Email attachments imported: {$emailAttachmentsImported}");
@@ -1114,26 +1113,6 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
         return PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     /**
      * @throws Exception when external users are missing

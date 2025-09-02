@@ -14,6 +14,7 @@ use Webkul\User\Models\User;
 class ActivityImporter
 {
     protected Command $command;
+
     protected string $connection;
 
     public function __construct(Command $command, string $connection)
@@ -349,23 +350,23 @@ class ActivityImporter
     private function formatEmailContent($emailData): string
     {
         $content = [];
-        
-        if (!empty($emailData->subject)) {
+
+        if (! empty($emailData->subject)) {
             $content[] = "Subject: {$emailData->subject}";
         }
-        
+
         // Prefer HTML content, fallback to plain text
         $body = $emailData->description_html ?? $emailData->description ?? '';
-        if (!empty($body)) {
+        if (! empty($body)) {
             // Strip HTML tags for plain text storage in comment
             $plainBody = strip_tags($body);
             // Limit length to prevent extremely long comments
             if (strlen($plainBody) > 1000) {
-                $plainBody = substr($plainBody, 0, 1000) . '...';
+                $plainBody = substr($plainBody, 0, 1000).'...';
             }
             $content[] = "Body: {$plainBody}";
         }
-        
+
         return implode("\n\n", $content);
     }
 

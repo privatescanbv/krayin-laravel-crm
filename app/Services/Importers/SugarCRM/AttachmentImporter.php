@@ -8,9 +8,6 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
-use Illuminate\Support\Facades\Storage;
-use Webkul\Activity\Models\Activity;
-use Webkul\Activity\Models\File;
 use Webkul\Email\Models\Attachment;
 use Webkul\Lead\Models\Lead;
 
@@ -89,7 +86,7 @@ class AttachmentImporter
                 ->whereIn('n.parent_id', $emailIds)
                 ->where('n.parent_type', '=', 'Emails')
                 ->where('n.deleted', '=', 0)
-                ->whereNotNull('n.filename') // Only notes with files
+                ->whereRaw("n.name NOT LIKE 'image00%'")
                 ->orderBy('n.date_entered', 'asc');
 
             $this->command->info('Extracting email attachments: '.$sql->toRawSql());
@@ -182,23 +179,13 @@ class AttachmentImporter
                     $finalFilename = $this->ensureProperExtension($safeName, $attachmentData->file_mime_type);
                     $filePath = "emails/{$krayinEmailId}/{$attachmentData->id}_{$finalFilename}";
 
-                    // Try to get original file content from SugarCRM
-                    $fileContent = $this->getOriginalFileContent($attachmentData);
-                    
-                    if ($fileContent === null) {
-                        $this->command->warn("No file content available for {$attachmentData->filename}, skipping file creation");
-                        $skipped++;
-                        continue;
-                    }
-
-                    // Store the file in Laravel storage
-                    Storage::put($filePath, $fileContent);
+                    // do not donwload the file, will be done later by another process
 
                     // Create the email attachment record
                     $attachmentRecord = [
                         'name'         => $attachmentData->filename,
                         'path'         => $filePath,
-                        'size'         => strlen($fileContent),
+                        'size'         => 1,
                         'content_type' => $attachmentData->file_mime_type ?? 'application/octet-stream',
                         'email_id'     => $krayinEmailId,
                     ];
@@ -277,221 +264,6 @@ class AttachmentImporter
     }
 
     /**
-     * Try to get original file content from SugarCRM download endpoint
-     */
-    private function getOriginalFileContent($attachmentData): ?string
-    {
-        try {
-            // Get SugarCRM host from database connection config
-            $config = config("database.connections.{$this->connection}");
-            $sugarCrmHost = $config['host'] ?? null;
-            $sugarCrmPort = $config['port'] ?? 80;
-            
-            if (!$sugarCrmHost) {
-                $this->command->warn("No SugarCRM host configured for file download");
-                return null;
-            }
-
-            // Build SugarCRM download URL using the direct download entrypoint
-            // Format: http://host:port/index.php?entryPoint=download&id=<NOTE_ID>&type=Notes
-            $baseUrl = "http://{$sugarCrmHost}";
-            if ($sugarCrmPort && $sugarCrmPort != 80) {
-                $baseUrl .= ":{$sugarCrmPort}";
-            }
-            $downloadUrl = "{$baseUrl}/index.php?entryPoint=download&id={$attachmentData->id}&type=Notes";
-            
-            $this->command->info("Downloading {$attachmentData->filename} from SugarCRM: {$downloadUrl}");
-
-            // Use cURL to download the file content
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $downloadUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 60); // Increased timeout for large files
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-            curl_setopt($ch, CURLOPT_USERAGENT, 'Krayin CRM Import Bot');
-            
-            // Add basic auth if configured
-            if (!empty($config['username']) && !empty($config['password'])) {
-                curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-                curl_setopt($ch, CURLOPT_USERPWD, $config['username'] . ':' . $config['password']);
-            }
-            
-            $fileContent = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-            $error = curl_error($ch);
-            curl_close($ch);
-
-            if ($error) {
-                $this->command->warn("cURL error downloading {$attachmentData->filename}: {$error}");
-                return null;
-            }
-
-            if ($httpCode !== 200) {
-                $this->command->warn("HTTP {$httpCode} downloading {$attachmentData->filename} - may require authentication");
-                return null;
-            }
-
-            if (empty($fileContent) || strlen($fileContent) < 10) {
-                $this->command->warn("Empty or invalid file content for {$attachmentData->filename}");
-                return null;
-            }
-
-            // Validate that we got actual file content, not an error page
-            if (str_contains($fileContent, '<html>') && str_contains($fileContent, 'error')) {
-                $this->command->warn("Received error page instead of file content for {$attachmentData->filename}");
-                return null;
-            }
-
-            $this->command->info("✓ Downloaded {$attachmentData->filename} (" . number_format(strlen($fileContent)) . " bytes, {$contentType})");
-            return $fileContent;
-
-        } catch (Exception $e) {
-            $this->command->warn("Failed to download {$attachmentData->filename}: " . $e->getMessage());
-            return null;
-        }
-    }
-
-    /**
-     * Create valid file content that won't corrupt binary files
-     */
-    private function createValidFileContent($attachmentData): string
-    {
-        $mimeType = $attachmentData->file_mime_type ?? 'unknown';
-
-        // For text files, create readable placeholder
-        if (str_starts_with($mimeType, 'text/')) {
-            return $this->createTextPlaceholder($attachmentData);
-        }
-
-        // For binary files, create minimal valid file or just metadata
-        return $this->createBinaryFileStub($attachmentData);
-    }
-
-    /**
-     * Create placeholder content for attachment when original content is not available
-     */
-    private function createPlaceholderContent($attachmentData): string
-    {
-        $mimeType = $attachmentData->file_mime_type ?? 'unknown';
-
-        // Create content based on mime type
-        if (str_starts_with($mimeType, 'text/')) {
-            return $this->createTextPlaceholder($attachmentData);
-        } elseif ($mimeType === 'application/pdf') {
-            return $this->createPdfPlaceholder($attachmentData);
-        } elseif (str_contains($mimeType, 'document') || str_contains($mimeType, 'word')) {
-            return $this->createDocumentPlaceholder($attachmentData);
-        } else {
-            return $this->createBinaryPlaceholder($attachmentData);
-        }
-    }
-
-    /**
-     * Create placeholder for text files
-     */
-    private function createTextPlaceholder($attachmentData): string
-    {
-        $content = "EMAIL ATTACHMENT PLACEHOLDER\n";
-        $content .= "========================\n\n";
-        $content .= "This text file was imported from SugarCRM.\n";
-        $content .= "Original content was not available during import.\n\n";
-        $content .= "File Details:\n";
-        $content .= '- Filename: '.($attachmentData->filename ?? 'Unknown')."\n";
-        $content .= '- Type: '.($attachmentData->file_mime_type ?? 'Unknown')."\n";
-        $content .= '- Description: '.($attachmentData->description ?? 'No description')."\n";
-        $content .= '- SugarCRM Note ID: '.($attachmentData->id ?? 'Unknown')."\n";
-        $content .= '- Email ID: '.($attachmentData->email_id ?? 'Unknown')."\n";
-        $content .= '- Created: '.($attachmentData->date_entered ?? 'Unknown')."\n\n";
-        $content .= "To restore original content:\n";
-        $content .= "1. Export from SugarCRM\n";
-        $content .= "2. Replace this placeholder file\n";
-
-        return $content;
-    }
-
-    /**
-     * Create placeholder for PDF files
-     */
-    private function createPdfPlaceholder($attachmentData): string
-    {
-        // Create a simple PDF-like placeholder
-        $content = "%PDF-1.4 PLACEHOLDER\n";
-        $content .= "% This is a placeholder for a PDF file imported from SugarCRM\n";
-        $content .= "% Original PDF content was not available during import\n\n";
-        $content .= "FILE INFORMATION:\n";
-        $content .= 'Filename: '.($attachmentData->filename ?? 'Unknown')."\n";
-        $content .= 'MIME Type: '.($attachmentData->file_mime_type ?? 'Unknown')."\n";
-        $content .= 'Description: '.($attachmentData->description ?? 'No description')."\n";
-        $content .= 'SugarCRM Note ID: '.($attachmentData->id ?? 'Unknown')."\n";
-        $content .= 'Email ID: '.($attachmentData->email_id ?? 'Unknown')."\n";
-        $content .= 'Created: '.($attachmentData->date_entered ?? 'Unknown')."\n\n";
-        $content .= "TO RESTORE ORIGINAL PDF:\n";
-        $content .= "1. Export the original PDF from SugarCRM\n";
-        $content .= "2. Upload it to this activity in Krayin CRM\n";
-
-        return $content;
-    }
-
-    /**
-     * Create placeholder for document files
-     */
-    private function createDocumentPlaceholder($attachmentData): string
-    {
-        $content = "EMAIL ATTACHMENT PLACEHOLDER - DOCUMENT FILE\n";
-        $content .= "==========================================\n\n";
-        $content .= "This document was imported from SugarCRM but the original content was not available.\n\n";
-        $content .= "DOCUMENT INFORMATION:\n";
-        $content .= '- Original Filename: '.($attachmentData->filename ?? 'Unknown')."\n";
-        $content .= '- MIME Type: '.($attachmentData->file_mime_type ?? 'Unknown')."\n";
-        $content .= '- Description: '.($attachmentData->description ?? 'No description')."\n";
-        $content .= '- SugarCRM Note ID: '.($attachmentData->id ?? 'Unknown')."\n";
-        $content .= '- Email ID: '.($attachmentData->email_id ?? 'Unknown')."\n";
-        $content .= '- Date Created: '.($attachmentData->date_entered ?? 'Unknown')."\n\n";
-
-        if (str_contains($attachmentData->file_mime_type ?? '', 'word')) {
-            $content .= "This appears to be a Microsoft Word document.\n";
-        } elseif (str_contains($attachmentData->file_mime_type ?? '', 'document')) {
-            $content .= "This appears to be an Office document.\n";
-        }
-
-        $content .= "\nTO RESTORE ORIGINAL DOCUMENT:\n";
-        $content .= "1. Locate and export the original file from SugarCRM\n";
-        $content .= "2. Upload the original file to this activity in Krayin CRM\n";
-
-        return $content;
-    }
-
-    /**
-     * Create placeholder for binary/unknown files
-     */
-    private function createBinaryPlaceholder($attachmentData): string
-    {
-        // SugarCRM doesn't store file content in the notes table
-        // Create a placeholder file with metadata
-        $placeholderContent = "=== EMAIL ATTACHMENT PLACEHOLDER ===\n\n";
-        $placeholderContent .= "This file was imported from SugarCRM but the original content was not available.\n";
-        $placeholderContent .= "SugarCRM stores file content separately from the notes table metadata.\n\n";
-        $placeholderContent .= 'Original Filename: '.($attachmentData->filename ?? 'Unknown')."\n";
-        $placeholderContent .= 'MIME Type: '.($attachmentData->file_mime_type ?? 'Unknown')."\n";
-        $placeholderContent .= 'Description: '.($attachmentData->description ?? 'No description')."\n";
-        $placeholderContent .= 'SugarCRM Note ID: '.($attachmentData->id ?? 'Unknown')."\n";
-        $placeholderContent .= 'Email ID: '.($attachmentData->email_id ?? 'Unknown')."\n";
-        $placeholderContent .= 'Date Created: '.($attachmentData->date_entered ?? 'Unknown')."\n";
-        $placeholderContent .= 'Contact ID: '.($attachmentData->contact_id ?? 'None')."\n";
-        $placeholderContent .= 'Portal Flag: '.($attachmentData->portal_flag ?? 'None')."\n";
-        $placeholderContent .= 'Embed Flag: '.($attachmentData->embed_flag ?? 'None')."\n\n";
-        $placeholderContent .= "To restore the original file content, you would need to:\n";
-        $placeholderContent .= "1. Export the original file from SugarCRM\n";
-        $placeholderContent .= "2. Upload it manually to this activity\n\n";
-        $placeholderContent .= "=== END PLACEHOLDER ===\n";
-
-        return $placeholderContent;
-    }
-
-    /**
      * Ensure proper file extension based on mime type
      */
     private function ensureProperExtension(string $filename, ?string $mimeType): string
@@ -559,17 +331,17 @@ class AttachmentImporter
         $content .= "============================\n\n";
         $content .= "This file was imported from SugarCRM but the original binary content was not available.\n\n";
         $content .= "File Information:\n";
-        $content .= "- Original Filename: " . ($attachmentData->filename ?? 'Unknown') . "\n";
-        $content .= "- MIME Type: " . ($attachmentData->file_mime_type ?? 'Unknown') . "\n";
-        $content .= "- Description: " . ($attachmentData->description ?? 'No description') . "\n";
-        $content .= "- SugarCRM Note ID: " . ($attachmentData->id ?? 'Unknown') . "\n";
-        $content .= "- Email ID: " . ($attachmentData->email_id ?? 'Unknown') . "\n";
-        $content .= "- Date Created: " . ($attachmentData->date_entered ?? 'Unknown') . "\n\n";
+        $content .= '- Original Filename: '.($attachmentData->filename ?? 'Unknown')."\n";
+        $content .= '- MIME Type: '.($attachmentData->file_mime_type ?? 'Unknown')."\n";
+        $content .= '- Description: '.($attachmentData->description ?? 'No description')."\n";
+        $content .= '- SugarCRM Note ID: '.($attachmentData->id ?? 'Unknown')."\n";
+        $content .= '- Email ID: '.($attachmentData->email_id ?? 'Unknown')."\n";
+        $content .= '- Date Created: '.($attachmentData->date_entered ?? 'Unknown')."\n\n";
         $content .= "To get the original file:\n";
-        $content .= "1. Locate the file in SugarCRM using Note ID: " . ($attachmentData->id ?? 'Unknown') . "\n";
+        $content .= '1. Locate the file in SugarCRM using Note ID: '.($attachmentData->id ?? 'Unknown')."\n";
         $content .= "2. Export/download the original file from SugarCRM\n";
         $content .= "3. Replace this placeholder file manually\n\n";
-        $content .= "Note: This is a text file containing metadata, not the original " . ($attachmentData->file_mime_type ?? 'unknown') . " file.\n";
+        $content .= 'Note: This is a text file containing metadata, not the original '.($attachmentData->file_mime_type ?? 'unknown')." file.\n";
 
         return $content;
     }
@@ -605,16 +377,16 @@ class AttachmentImporter
         $pdf .= ">>\n";
         $pdf .= "endobj\n\n";
 
-        $content = "IMPORTED FROM SUGARCRM\\n\\n";
-        $content .= "Original filename: " . ($attachmentData->filename ?? 'Unknown') . "\\n";
-        $content .= "SugarCRM Note ID: " . ($attachmentData->id ?? 'Unknown') . "\\n";
-        $content .= "Email ID: " . ($attachmentData->email_id ?? 'Unknown') . "\\n\\n";
-        $content .= "This PDF was imported from SugarCRM but the original content was not available.\\n";
-        $content .= "To restore: Export original from SugarCRM and replace this file.";
+        $content = 'IMPORTED FROM SUGARCRM\\n\\n';
+        $content .= 'Original filename: '.($attachmentData->filename ?? 'Unknown').'\\n';
+        $content .= 'SugarCRM Note ID: '.($attachmentData->id ?? 'Unknown').'\\n';
+        $content .= 'Email ID: '.($attachmentData->email_id ?? 'Unknown').'\\n\\n';
+        $content .= 'This PDF was imported from SugarCRM but the original content was not available.\\n';
+        $content .= 'To restore: Export original from SugarCRM and replace this file.';
 
         $pdf .= "4 0 obj\n";
         $pdf .= "<<\n";
-        $pdf .= "/Length " . strlen($content) . "\n";
+        $pdf .= '/Length '.strlen($content)."\n";
         $pdf .= ">>\n";
         $pdf .= "stream\n";
         $pdf .= "BT\n";

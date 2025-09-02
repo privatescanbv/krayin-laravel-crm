@@ -213,9 +213,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
             'updated_at' => $this->parseSugarDate($sugarUser->date_modified),
         ];
 
-        $user = $this->createEntityWithTimestamps(User::class, $userData, $timestamps);
-
-        $this->info("Imported user: {$userData['name']} ({$userData['email']})");
+        $this->createEntityWithTimestamps(User::class, $userData, $timestamps);
 
         return 'imported';
     }

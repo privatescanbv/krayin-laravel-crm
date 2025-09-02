@@ -1032,12 +1032,12 @@ test('imports email activities from sugarcrm', function () {
 
     // Verify file content (placeholder files)
     $file1Content = Storage::get($file1->path);
-    expect($file1Content)->toContain('EMAIL ATTACHMENT PLACEHOLDER')
+    expect($file1Content)->toContain('PDF-1.4 PLACEHOLDER') // PDF files have special format
         ->and($file1Content)->toContain('brochure.pdf')
         ->and($file1Content)->toContain('application/pdf');
 
     $file3Content = Storage::get($file3->path);
-    expect($file3Content)->toContain('EMAIL ATTACHMENT PLACEHOLDER')
+    expect($file3Content)->toContain('EMAIL ATTACHMENT PLACEHOLDER') // Text files use standard format
         ->and($file3Content)->toContain('info.txt')
         ->and($file3Content)->toContain('text/plain');
 });

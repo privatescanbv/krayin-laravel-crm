@@ -27,7 +27,7 @@ class ActivityResource extends JsonResource
             'user'            => $this->user ? new UserResource($this->user) : null,
             'user_id'         => $this->user_id ?? null,
             'lead_id'         => $this->lead_id ?? null,
-            'files'           => ActivityFileResource::collection($this->files),
+            'files'           => is_array($this->files) ? $this->files : ActivityFileResource::collection($this->files),
             'location'        => $this->location,
             'created_at'      => $this->created_at,
             'updated_at'      => $this->updated_at,

@@ -47,6 +47,8 @@ include::cmd/cmd-import-sugarcrm-contacts.adoc[]
 
 include::cmd/cmd-import-sugarcrm-leads.adoc[]
 
+include::cmd/cmd-import-email-attachment-files.adoc[]
+
 include::cmd/cmd-import-sugarcrm-users.adoc[]
 
 include::cmd/cmd-create-leads.adoc[]

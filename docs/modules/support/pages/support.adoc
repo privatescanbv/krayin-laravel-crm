@@ -1,3 +1,18 @@
+=== Migratie plan
+
+1. run reset_prod.sh (import van data, verwijderd alle bestaande)
+2. Zet de bestanden voor email bijlage klaar
+2b. Zorg dat de bestanden van suitecrm folder upload op de nieuwe server staan in folder /home/mbulthuis/upload
+    Voer een scp uit:
+scp /var/www/html/privatesuite/upload/37c10db2-a63d-7226-1f86-67eea4779991 \
+/var/www/html/privatesuite/upload/58529127-b500-aeda-da0d-67eea47a0b53 \
+/var/www/html/privatesuite/upload/2d920118-1784-5cfb-a3e3-67eea41567ba \
+/var/www/html/privatesuite/upload/b224ae58-5794-fb05-8e14-67eea43a7e2f \
+mbulthuis@178.251.28.76:/home/apps/migration/upload/
+2b. sail artisan import:email-attachment-files
+2c. verwijderen de oude upload files.
+
+
 === Calamiteitenplan
 
 Het calamiteitenplan beschrijft wie in geval van nood bereikbaar is, op welke manier, en waarvoor zij verantwoordelijk zijn. Dit biedt duidelijkheid en handelingssnelheid bij technische of operationele incidenten.

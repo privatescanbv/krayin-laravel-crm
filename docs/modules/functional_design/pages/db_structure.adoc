@@ -3,6 +3,7 @@ De applicatie gebruikt de volgende hoofdtabellen met hun relaties:
 [plantuml, 'classdiagram', svg]
 ....
 @startuml
+allowmixing
 !define TABLE(name,desc) class name as "desc" << (T,#FFAAAA) >>
 !define PRIMARY_KEY(x) <b>x</b>
 !define FOREIGN_KEY(x) <i>x</i>

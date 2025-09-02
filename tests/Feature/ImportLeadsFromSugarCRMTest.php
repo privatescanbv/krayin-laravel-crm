@@ -137,6 +137,7 @@ beforeEach(function () {
         $table->integer('deleted')->default(0);
     });
 
+    Schema::connection('sugarcrm')->dropIfExists('leads_contacts_c');
     Schema::connection('sugarcrm')->create('leads_contacts_c', function (Blueprint $table) {
         $table->string('id')->primary(); // primary key
         $table->string('leads_c7104eads_ida'); // lead id
@@ -145,12 +146,15 @@ beforeEach(function () {
     });
 
     // Minimal anamnesis relation tables (empty ok)
+    Schema::connection('sugarcrm')->dropIfExists('leads_pcrm_anamnesepreventie_1_c');
     Schema::connection('sugarcrm')->create('leads_pcrm_anamnesepreventie_1_c', function (Blueprint $table) {
         $table->string('id')->primary(); // primary key
         $table->string('leads_pcrm_anamnesepreventie_1leads_ida')->nullable();
         $table->string('leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb')->nullable();
         $table->integer('deleted')->default(0);
     });
+    
+    Schema::connection('sugarcrm')->dropIfExists('pcrm_anamnetie_contacts_c');
     Schema::connection('sugarcrm')->create('pcrm_anamnetie_contacts_c', function (Blueprint $table) {
         $table->string('id')->primary(); // primary key
         $table->string('pcrm_anamn171deventie_idb')->nullable();

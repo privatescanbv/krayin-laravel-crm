@@ -45,7 +45,7 @@ class AttachmentImporter
 
                 return [];
             }
-            
+
             $this->command->info('Notes table exists, proceeding with email attachments extraction');
 
             // First, get all email IDs that belong to our leads
@@ -59,8 +59,8 @@ class AttachmentImporter
                 ->pluck('e.id')
                 ->all();
 
-            $this->command->info('Found ' . count($emailIds) . ' emails for ' . count($leadIds) . ' leads');
-            
+            $this->command->info('Found '.count($emailIds).' emails for '.count($leadIds).' leads');
+
             if (empty($emailIds)) {
                 $this->command->info('No emails found for leads, skipping email attachments import');
 
@@ -97,9 +97,9 @@ class AttachmentImporter
             $attachments = $sql->get();
 
             $this->command->info('Found '.$attachments->count().' email attachments');
-            
+
             // Debug: Show email IDs we're looking for
-            $this->command->info('Looking for attachments for email IDs: ' . implode(', ', $emailIds));
+            $this->command->info('Looking for attachments for email IDs: '.implode(', ', $emailIds));
 
             // Get email-bean mappings to determine lead_id for each attachment
             $emailBeanMap = DB::connection($this->connection)
@@ -157,7 +157,7 @@ class AttachmentImporter
             }
 
             $this->command->info('Importing '.count($leadEmailAttachments)." email attachments for lead {$lead->external_id}");
-            
+
             // Debug: Show what attachments we found
             foreach ($leadEmailAttachments as $att) {
                 $this->command->info("  - Attachment: {$att->filename} (email_id: {$att->email_id}, attachment_id: {$att->id})");
@@ -165,8 +165,8 @@ class AttachmentImporter
 
             // Get email activities for this lead to map attachments to
             $leadEmailActivities = $emailActivities[$lead->external_id] ?? [];
-            $this->command->info("Found " . count($leadEmailActivities) . " email activities for lead {$lead->external_id}");
-            
+            $this->command->info('Found '.count($leadEmailActivities)." email activities for lead {$lead->external_id}");
+
             $emailActivityMap = [];
             foreach ($leadEmailActivities as $emailActivity) {
                 $this->command->info("  - Email Activity: {$emailActivity->id} (subject: {$emailActivity->subject})");
@@ -193,15 +193,16 @@ class AttachmentImporter
                     if (! $activity) {
                         $this->command->warn("Activity record not found for email {$attachmentData->email_id}");
                         $this->command->warn("Looking for: external_id={$attachmentData->email_id}, lead_id={$lead->id}, type=email");
-                        
+
                         // Debug: Show what activities DO exist for this lead
                         $existingActivities = Activity::where('lead_id', $lead->id)->get();
                         $this->command->info("Existing activities for lead {$lead->id}:");
                         foreach ($existingActivities as $act) {
                             $this->command->info("  - {$act->type}: {$act->title} (external_id: {$act->external_id})");
                         }
-                        
+
                         $skipped++;
+
                         continue;
                     }
 
@@ -220,7 +221,7 @@ class AttachmentImporter
 
                     // Create file path based on attachment data
                     $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $attachmentData->filename);
-                    
+
                     // Ensure proper file extension based on mime type if missing
                     $finalFilename = $this->ensureProperExtension($safeName, $attachmentData->file_mime_type);
                     $filePath = "email_attachments/{$lead->external_id}/{$attachmentData->email_id}/{$attachmentData->id}_{$finalFilename}";
@@ -253,10 +254,10 @@ class AttachmentImporter
         } catch (\Illuminate\Database\QueryException $e) {
             $this->command->error("SQL Error while importing email attachments for lead {$lead->external_id}: ".$e->getMessage());
             $this->command->error('SQL: '.$e->getSql());
-            throw new Exception("Email attachments import failed due to SQL error: ".$e->getMessage(), 0, $e);
+            throw new Exception('Email attachments import failed due to SQL error: '.$e->getMessage(), 0, $e);
         } catch (Exception $e) {
             $this->command->error("Failed to import email attachments for lead {$lead->external_id}: ".$e->getMessage());
-            throw new Exception("Email attachments import failed: ".$e->getMessage(), 0, $e);
+            throw new Exception('Email attachments import failed: '.$e->getMessage(), 0, $e);
         }
 
         return ['imported' => $imported, 'skipped' => $skipped];
@@ -322,7 +323,7 @@ class AttachmentImporter
     private function createPlaceholderContent($attachmentData): string
     {
         $mimeType = $attachmentData->file_mime_type ?? 'unknown';
-        
+
         // Create content based on mime type
         if (str_starts_with($mimeType, 'text/')) {
             return $this->createTextPlaceholder($attachmentData);
@@ -345,21 +346,21 @@ class AttachmentImporter
         $content .= "This text file was imported from SugarCRM.\n";
         $content .= "Original content was not available during import.\n\n";
         $content .= "File Details:\n";
-        $content .= "- Filename: " . ($attachmentData->filename ?? 'Unknown') . "\n";
-        $content .= "- Type: " . ($attachmentData->file_mime_type ?? 'Unknown') . "\n";
-        $content .= "- Description: " . ($attachmentData->description ?? 'No description') . "\n";
-        $content .= "- SugarCRM Note ID: " . ($attachmentData->id ?? 'Unknown') . "\n";
-        $content .= "- Email ID: " . ($attachmentData->email_id ?? 'Unknown') . "\n";
-        $content .= "- Created: " . ($attachmentData->date_entered ?? 'Unknown') . "\n\n";
+        $content .= '- Filename: '.($attachmentData->filename ?? 'Unknown')."\n";
+        $content .= '- Type: '.($attachmentData->file_mime_type ?? 'Unknown')."\n";
+        $content .= '- Description: '.($attachmentData->description ?? 'No description')."\n";
+        $content .= '- SugarCRM Note ID: '.($attachmentData->id ?? 'Unknown')."\n";
+        $content .= '- Email ID: '.($attachmentData->email_id ?? 'Unknown')."\n";
+        $content .= '- Created: '.($attachmentData->date_entered ?? 'Unknown')."\n\n";
         $content .= "To restore original content:\n";
         $content .= "1. Export from SugarCRM\n";
         $content .= "2. Replace this placeholder file\n";
-        
+
         return $content;
     }
 
     /**
-     * Create placeholder for PDF files  
+     * Create placeholder for PDF files
      */
     private function createPdfPlaceholder($attachmentData): string
     {
@@ -368,16 +369,16 @@ class AttachmentImporter
         $content .= "% This is a placeholder for a PDF file imported from SugarCRM\n";
         $content .= "% Original PDF content was not available during import\n\n";
         $content .= "FILE INFORMATION:\n";
-        $content .= "Filename: " . ($attachmentData->filename ?? 'Unknown') . "\n";
-        $content .= "MIME Type: " . ($attachmentData->file_mime_type ?? 'Unknown') . "\n";
-        $content .= "Description: " . ($attachmentData->description ?? 'No description') . "\n";
-        $content .= "SugarCRM Note ID: " . ($attachmentData->id ?? 'Unknown') . "\n";
-        $content .= "Email ID: " . ($attachmentData->email_id ?? 'Unknown') . "\n";
-        $content .= "Created: " . ($attachmentData->date_entered ?? 'Unknown') . "\n\n";
+        $content .= 'Filename: '.($attachmentData->filename ?? 'Unknown')."\n";
+        $content .= 'MIME Type: '.($attachmentData->file_mime_type ?? 'Unknown')."\n";
+        $content .= 'Description: '.($attachmentData->description ?? 'No description')."\n";
+        $content .= 'SugarCRM Note ID: '.($attachmentData->id ?? 'Unknown')."\n";
+        $content .= 'Email ID: '.($attachmentData->email_id ?? 'Unknown')."\n";
+        $content .= 'Created: '.($attachmentData->date_entered ?? 'Unknown')."\n\n";
         $content .= "TO RESTORE ORIGINAL PDF:\n";
         $content .= "1. Export the original PDF from SugarCRM\n";
         $content .= "2. Upload it to this activity in Krayin CRM\n";
-        
+
         return $content;
     }
 
@@ -390,23 +391,23 @@ class AttachmentImporter
         $content .= "==========================================\n\n";
         $content .= "This document was imported from SugarCRM but the original content was not available.\n\n";
         $content .= "DOCUMENT INFORMATION:\n";
-        $content .= "- Original Filename: " . ($attachmentData->filename ?? 'Unknown') . "\n";
-        $content .= "- MIME Type: " . ($attachmentData->file_mime_type ?? 'Unknown') . "\n";
-        $content .= "- Description: " . ($attachmentData->description ?? 'No description') . "\n";
-        $content .= "- SugarCRM Note ID: " . ($attachmentData->id ?? 'Unknown') . "\n";
-        $content .= "- Email ID: " . ($attachmentData->email_id ?? 'Unknown') . "\n";
-        $content .= "- Date Created: " . ($attachmentData->date_entered ?? 'Unknown') . "\n\n";
-        
+        $content .= '- Original Filename: '.($attachmentData->filename ?? 'Unknown')."\n";
+        $content .= '- MIME Type: '.($attachmentData->file_mime_type ?? 'Unknown')."\n";
+        $content .= '- Description: '.($attachmentData->description ?? 'No description')."\n";
+        $content .= '- SugarCRM Note ID: '.($attachmentData->id ?? 'Unknown')."\n";
+        $content .= '- Email ID: '.($attachmentData->email_id ?? 'Unknown')."\n";
+        $content .= '- Date Created: '.($attachmentData->date_entered ?? 'Unknown')."\n\n";
+
         if (str_contains($attachmentData->file_mime_type ?? '', 'word')) {
             $content .= "This appears to be a Microsoft Word document.\n";
         } elseif (str_contains($attachmentData->file_mime_type ?? '', 'document')) {
             $content .= "This appears to be an Office document.\n";
         }
-        
+
         $content .= "\nTO RESTORE ORIGINAL DOCUMENT:\n";
         $content .= "1. Locate and export the original file from SugarCRM\n";
         $content .= "2. Upload the original file to this activity in Krayin CRM\n";
-        
+
         return $content;
     }
 
@@ -449,37 +450,38 @@ class AttachmentImporter
 
         // Check if filename already has an extension
         $currentExtension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        
+
         // Map mime types to extensions
         $mimeToExtension = [
-            'application/pdf' => 'pdf',
-            'application/msword' => 'doc',
-            'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => 'docx',
-            'application/vnd.ms-excel' => 'xls',
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' => 'xlsx',
-            'application/vnd.ms-powerpoint' => 'ppt',
+            'application/pdf'                                                           => 'pdf',
+            'application/msword'                                                        => 'doc',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'   => 'docx',
+            'application/vnd.ms-excel'                                                  => 'xls',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'         => 'xlsx',
+            'application/vnd.ms-powerpoint'                                             => 'ppt',
             'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'pptx',
-            'text/plain' => 'txt',
-            'text/html' => 'html',
-            'text/csv' => 'csv',
-            'image/jpeg' => 'jpg',
-            'image/png' => 'png',
-            'image/gif' => 'gif',
-            'application/zip' => 'zip',
-            'application/octet-stream' => null, // Keep original extension for binary files
+            'text/plain'                                                                => 'txt',
+            'text/html'                                                                 => 'html',
+            'text/csv'                                                                  => 'csv',
+            'image/jpeg'                                                                => 'jpg',
+            'image/png'                                                                 => 'png',
+            'image/gif'                                                                 => 'gif',
+            'application/zip'                                                           => 'zip',
+            'application/octet-stream'                                                  => null, // Keep original extension for binary files
         ];
 
         $expectedExtension = $mimeToExtension[$mimeType] ?? null;
-        
+
         // If we have an expected extension and the file doesn't have it (or has wrong one)
         if ($expectedExtension && $currentExtension !== $expectedExtension) {
             // If filename has no extension, add the correct one
             if (empty($currentExtension)) {
-                return $filename . '.' . $expectedExtension;
+                return $filename.'.'.$expectedExtension;
             }
             // If filename has wrong extension, replace it
             $nameWithoutExt = pathinfo($filename, PATHINFO_FILENAME);
-            return $nameWithoutExt . '.' . $expectedExtension;
+
+            return $nameWithoutExt.'.'.$expectedExtension;
         }
 
         // For application/octet-stream or unknown types, keep original filename

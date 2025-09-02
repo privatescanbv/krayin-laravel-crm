@@ -180,10 +180,10 @@ class MeetingImporter
 
     /**
      * Map meeting status to is_done boolean
-     * 
+     *
      * SugarCRM meeting status values:
      * - "Held": Meeting was held (completed) -> is_done = true
-     * - "Not Held": Meeting was not held -> is_done = false  
+     * - "Not Held": Meeting was not held -> is_done = false
      * - "Planned": Meeting is planned/scheduled -> is_done = false
      */
     private function mapMeetingStatus(?string $status): bool

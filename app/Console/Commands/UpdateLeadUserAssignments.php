@@ -52,7 +52,7 @@ class UpdateLeadUserAssignments extends Command
                 $userId = $this->mapUserForLead($lead);
                 
                 if ($dryRun) {
-                    $this->line("Would assign lead {$lead->id} (department: {$lead->department->name ?? 'none'}) to user {$userId}");
+                    $this->line("Would assign lead {$lead->id} (department: " . ($lead->department ? $lead->department->name : 'none') . ") to user {$userId}");
                 } else {
                     $lead->update(['user_id' => $userId]);
                     $this->line("Assigned lead {$lead->id} to user {$userId}");

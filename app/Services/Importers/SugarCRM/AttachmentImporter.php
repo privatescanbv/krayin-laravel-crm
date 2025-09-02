@@ -300,8 +300,8 @@ class AttachmentImporter
                     $finalFilename = $this->ensureProperExtension($safeName, $attachmentData->file_mime_type);
                     $filePath = "emails/{$krayinEmailId}/{$attachmentData->id}_{$finalFilename}";
 
-                    // Create placeholder file content based on mime type
-                    $fileContent = $this->createPlaceholderContent($attachmentData);
+                    // Create appropriate file content (avoid corrupting binary files)
+                    $fileContent = $this->createValidFileContent($attachmentData);
 
                     // Store the file in Laravel storage
                     Storage::put($filePath, $fileContent);
@@ -386,6 +386,22 @@ class AttachmentImporter
         $entity->timestamps = true;
 
         return $entity;
+    }
+
+    /**
+     * Create valid file content that won't corrupt binary files
+     */
+    private function createValidFileContent($attachmentData): string
+    {
+        $mimeType = $attachmentData->file_mime_type ?? 'unknown';
+        
+        // For text files, create readable placeholder
+        if (str_starts_with($mimeType, 'text/')) {
+            return $this->createTextPlaceholder($attachmentData);
+        }
+        
+        // For binary files, create minimal valid file or just metadata
+        return $this->createBinaryFileStub($attachmentData);
     }
 
     /**
@@ -557,5 +573,108 @@ class AttachmentImporter
 
         // For application/octet-stream or unknown types, keep original filename
         return $filename;
+    }
+
+    /**
+     * Create a minimal binary file stub that won't corrupt the file
+     */
+    private function createBinaryFileStub($attachmentData): string
+    {
+        $mimeType = $attachmentData->file_mime_type ?? 'unknown';
+        
+        // For PDF files, create a minimal valid PDF
+        if ($mimeType === 'application/pdf') {
+            return $this->createMinimalPdf($attachmentData);
+        }
+        
+        // For other binary files, create a text file with metadata
+        // This prevents corruption while still providing downloadable content
+        $content = "IMPORTED ATTACHMENT METADATA\n";
+        $content .= "============================\n\n";
+        $content .= "This file was imported from SugarCRM but the original binary content was not available.\n\n";
+        $content .= "File Information:\n";
+        $content .= "- Original Filename: " . ($attachmentData->filename ?? 'Unknown') . "\n";
+        $content .= "- MIME Type: " . ($attachmentData->file_mime_type ?? 'Unknown') . "\n";
+        $content .= "- Description: " . ($attachmentData->description ?? 'No description') . "\n";
+        $content .= "- SugarCRM Note ID: " . ($attachmentData->id ?? 'Unknown') . "\n";
+        $content .= "- Email ID: " . ($attachmentData->email_id ?? 'Unknown') . "\n";
+        $content .= "- Date Created: " . ($attachmentData->date_entered ?? 'Unknown') . "\n\n";
+        $content .= "To get the original file:\n";
+        $content .= "1. Locate the file in SugarCRM using Note ID: " . ($attachmentData->id ?? 'Unknown') . "\n";
+        $content .= "2. Export/download the original file from SugarCRM\n";
+        $content .= "3. Replace this placeholder file manually\n\n";
+        $content .= "Note: This is a text file containing metadata, not the original " . ($attachmentData->file_mime_type ?? 'unknown') . " file.\n";
+        
+        return $content;
+    }
+
+    /**
+     * Create a minimal valid PDF file
+     */
+    private function createMinimalPdf($attachmentData): string
+    {
+        // Create a minimal but valid PDF structure
+        $pdf = "%PDF-1.4\n";
+        $pdf .= "1 0 obj\n";
+        $pdf .= "<<\n";
+        $pdf .= "/Type /Catalog\n";
+        $pdf .= "/Pages 2 0 R\n";
+        $pdf .= ">>\n";
+        $pdf .= "endobj\n\n";
+        
+        $pdf .= "2 0 obj\n";
+        $pdf .= "<<\n";
+        $pdf .= "/Type /Pages\n";
+        $pdf .= "/Kids [3 0 R]\n";
+        $pdf .= "/Count 1\n";
+        $pdf .= ">>\n";
+        $pdf .= "endobj\n\n";
+        
+        $pdf .= "3 0 obj\n";
+        $pdf .= "<<\n";
+        $pdf .= "/Type /Page\n";
+        $pdf .= "/Parent 2 0 R\n";
+        $pdf .= "/MediaBox [0 0 612 792]\n";
+        $pdf .= "/Contents 4 0 R\n";
+        $pdf .= ">>\n";
+        $pdf .= "endobj\n\n";
+        
+        $content = "IMPORTED FROM SUGARCRM\\n\\n";
+        $content .= "Original filename: " . ($attachmentData->filename ?? 'Unknown') . "\\n";
+        $content .= "SugarCRM Note ID: " . ($attachmentData->id ?? 'Unknown') . "\\n";
+        $content .= "Email ID: " . ($attachmentData->email_id ?? 'Unknown') . "\\n\\n";
+        $content .= "This PDF was imported from SugarCRM but the original content was not available.\\n";
+        $content .= "To restore: Export original from SugarCRM and replace this file.";
+        
+        $pdf .= "4 0 obj\n";
+        $pdf .= "<<\n";
+        $pdf .= "/Length " . strlen($content) . "\n";
+        $pdf .= ">>\n";
+        $pdf .= "stream\n";
+        $pdf .= "BT\n";
+        $pdf .= "/F1 12 Tf\n";
+        $pdf .= "50 750 Td\n";
+        $pdf .= "($content) Tj\n";
+        $pdf .= "ET\n";
+        $pdf .= "endstream\n";
+        $pdf .= "endobj\n\n";
+        
+        $pdf .= "xref\n";
+        $pdf .= "0 5\n";
+        $pdf .= "0000000000 65535 f \n";
+        $pdf .= "0000000009 00000 n \n";
+        $pdf .= "0000000074 00000 n \n";
+        $pdf .= "0000000120 00000 n \n";
+        $pdf .= "0000000179 00000 n \n";
+        $pdf .= "trailer\n";
+        $pdf .= "<<\n";
+        $pdf .= "/Size 5\n";
+        $pdf .= "/Root 1 0 R\n";
+        $pdf .= ">>\n";
+        $pdf .= "startxref\n";
+        $pdf .= "492\n";
+        $pdf .= "%%EOF\n";
+        
+        return $pdf;
     }
 }

@@ -533,8 +533,14 @@ class ActivityImporter
                         'is_read'      => 1,
                         'folders'      => ['inbox'],
                         'from'         => ['name' => 'SugarCRM Import', 'email' => 'import@sugarcrm.local'],
+                        'sender'       => ['name' => 'SugarCRM Import', 'email' => 'import@sugarcrm.local'],
+                        'reply_to'     => [],
+                        'cc'           => [],
+                        'bcc'          => [],
+                        'reply'        => $emailContent,
                         'unique_id'    => $emailData->id,
                         'message_id'   => $emailData->message_id,
+                        'parent_id'    => null, // Main email, not a reply
                         'lead_id'      => $lead->id,
                     ];
 

@@ -217,8 +217,49 @@ class LeadController extends Controller
         $user = auth()->user();
         $userGroupNames = $user->groups->pluck('name')->toArray();
         $defaultDepartmentId = Department::mapGroupToDepartmentId($userGroupNames);
+        
+        // Determine the pipeline based on URL parameters or user department
+        $pipeline = null;
+        $defaultStageId = null;
+        
+        // First check if pipeline_id is provided in URL
+        if (request('pipeline_id')) {
+            $pipeline = $this->pipelineRepository->find(request('pipeline_id'));
+        }
+        
+        // If stage_id is provided, get pipeline from stage
+        if (!$pipeline && request('stage_id')) {
+            $stage = $this->stageRepository->find(request('stage_id'));
+            if ($stage) {
+                $pipeline = $stage->pipeline;
+                $defaultStageId = $stage->id;
+            }
+        }
+        
+        // If no pipeline found yet, determine based on user department
+        if (!$pipeline) {
+            // Map department to pipeline
+            if ($defaultDepartmentId == Department::findHerniaId()) {
+                $pipeline = $this->pipelineRepository->find(\App\Enums\PipelineDefaultKeys::PIPELINE_HERNIA_ID->value);
+            } else {
+                $pipeline = $this->pipelineRepository->find(\App\Enums\PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value);
+            }
+        }
+        
+        // If still no pipeline, fall back to default
+        if (!$pipeline) {
+            $pipeline = $this->pipelineRepository->getDefaultPipeline();
+        }
+        
+        // Get first stage if no specific stage was requested
+        if (!$defaultStageId && $pipeline) {
+            $defaultStageId = $pipeline->stages()->first()->id ?? null;
+        }
+        
         return view('admin::leads.create', [
-            'defaultDepartmentId' => $defaultDepartmentId
+            'defaultDepartmentId' => $defaultDepartmentId,
+            'defaultPipelineId' => $pipeline->id ?? null,
+            'defaultStageId' => $defaultStageId
         ]);
     }
 
@@ -294,7 +335,21 @@ class LeadController extends Controller
 
                 $data['lead_pipeline_id'] = $stage->lead_pipeline_id;
             } else {
-                $pipeline = $this->pipelineRepository->getDefaultPipeline();
+                // Determine pipeline based on department_id if provided
+                $pipeline = null;
+                
+                if (isset($data['department_id'])) {
+                    if ($data['department_id'] == Department::findHerniaId()) {
+                        $pipeline = $this->pipelineRepository->find(\App\Enums\PipelineDefaultKeys::PIPELINE_HERNIA_ID->value);
+                    } elseif ($data['department_id'] == Department::findPrivateScanId()) {
+                        $pipeline = $this->pipelineRepository->find(\App\Enums\PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value);
+                    }
+                }
+                
+                // Fall back to default pipeline if not found
+                if (!$pipeline) {
+                    $pipeline = $this->pipelineRepository->getDefaultPipeline();
+                }
 
                 $stage = $pipeline->stages()->first();
 
@@ -392,7 +447,21 @@ class LeadController extends Controller
 
                 $data['lead_pipeline_id'] = $stage->lead_pipeline_id;
             } else {
-                $pipeline = $this->pipelineRepository->getDefaultPipeline();
+                // Determine pipeline based on department_id if provided
+                $pipeline = null;
+                
+                if (isset($data['department_id'])) {
+                    if ($data['department_id'] == Department::findHerniaId()) {
+                        $pipeline = $this->pipelineRepository->find(\App\Enums\PipelineDefaultKeys::PIPELINE_HERNIA_ID->value);
+                    } elseif ($data['department_id'] == Department::findPrivateScanId()) {
+                        $pipeline = $this->pipelineRepository->find(\App\Enums\PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value);
+                    }
+                }
+                
+                // Fall back to default pipeline if not found
+                if (!$pipeline) {
+                    $pipeline = $this->pipelineRepository->getDefaultPipeline();
+                }
 
                 $stage = $pipeline->stages()->first();
 

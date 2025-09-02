@@ -486,6 +486,8 @@
                         lead_channel_id: '1', // Default: Telefoon
                         lead_source_id: 32, // Default: Anders
                         department_id: '{{ $defaultDepartmentId ?? "" }}', // Set based on user groups
+                        lead_pipeline_id: '{{ $defaultPipelineId ?? "" }}', // Set based on department or URL param
+                        lead_pipeline_stage_id: '{{ $defaultStageId ?? "" }}', // Set based on pipeline or URL param
                         combine_order: 1,
                             lead_type_id: '1', // Default: Preventie
                             // Personal fields for matching

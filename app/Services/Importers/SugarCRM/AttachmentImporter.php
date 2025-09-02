@@ -71,19 +71,19 @@ class AttachmentImporter
             $sql = DB::connection($this->connection)
                 ->table('notes as n')
                 ->select([
-                    'n.id',
-                    'n.name',
-                    'n.filename',
-                    'n.file_mime_type',
-                    'n.description',
-                    'n.date_entered',
-                    'n.date_modified',
-                    'n.created_by',
-                    'n.assigned_user_id',
-                    'n.deleted',
-                    'n.parent_id as email_id',
-                    'n.parent_type',
-                    'n.file_content',
+                    DB::raw('n.id as id'),
+                    DB::raw('n.name as name'),
+                    DB::raw('n.filename as filename'),
+                    DB::raw('n.file_mime_type as file_mime_type'),
+                    DB::raw('n.description as description'),
+                    DB::raw('n.date_entered as date_entered'),
+                    DB::raw('n.date_modified as date_modified'),
+                    DB::raw('n.created_by as created_by'),
+                    DB::raw('n.assigned_user_id as assigned_user_id'),
+                    DB::raw('n.deleted as deleted'),
+                    DB::raw('n.parent_id as email_id'),
+                    DB::raw('n.parent_type as parent_type'),
+                    DB::raw('n.file_content as file_content'),
                 ])
                 ->whereIn('n.parent_id', $emailIds)
                 ->where('n.parent_type', '=', 'Emails')
@@ -123,11 +123,14 @@ class AttachmentImporter
             }
 
             return $result;
+        } catch (\Illuminate\Database\QueryException $e) {
+            $this->command->error('SQL Error while extracting email attachments: '.$e->getMessage());
+            $this->command->error('SQL: '.$e->getSql());
+            $this->command->error('Bindings: '.json_encode($e->getBindings()));
+            throw new Exception('Email attachments extraction failed due to SQL error: '.$e->getMessage(), 0, $e);
         } catch (Exception $e) {
             $this->command->error('Failed to extract email attachments: '.$e->getMessage());
-            $this->command->info('Continuing import without email attachments');
-
-            return [];
+            throw new Exception('Email attachments extraction failed: '.$e->getMessage(), 0, $e);
         }
     }
 
@@ -242,8 +245,13 @@ class AttachmentImporter
                     // Continue with next attachment
                 }
             }
+        } catch (\Illuminate\Database\QueryException $e) {
+            $this->command->error("SQL Error while importing email attachments for lead {$lead->external_id}: ".$e->getMessage());
+            $this->command->error('SQL: '.$e->getSql());
+            throw new Exception("Email attachments import failed due to SQL error: ".$e->getMessage(), 0, $e);
         } catch (Exception $e) {
             $this->command->error("Failed to import email attachments for lead {$lead->external_id}: ".$e->getMessage());
+            throw new Exception("Email attachments import failed: ".$e->getMessage(), 0, $e);
         }
 
         return ['imported' => $imported, 'skipped' => $skipped];

@@ -92,11 +92,13 @@ class ActivityImporter
             }
 
             return $result;
+        } catch (\Illuminate\Database\QueryException $e) {
+            $this->command->error('SQL Error while extracting call activities: '.$e->getMessage());
+            $this->command->error('SQL: '.$e->getSql());
+            throw new Exception('Call activities extraction failed due to SQL error: '.$e->getMessage(), 0, $e);
         } catch (Exception $e) {
             $this->command->error('Failed to extract call activities: '.$e->getMessage());
-            $this->command->info('Continuing import without call activities');
-
-            return [];
+            throw new Exception('Call activities extraction failed: '.$e->getMessage(), 0, $e);
         }
     }
 

@@ -9,6 +9,7 @@ use App\Models\Anamnesis;
 use App\Models\Department;
 use App\Services\Importers\SugarCRM\ActivityImporter;
 use App\Services\Importers\SugarCRM\AttachmentImporter;
+use App\Services\Importers\SugarCRM\MeetingImporter;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -17,15 +18,16 @@ use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\User;
 
 /**
- * Import leads from SugarCRM database with anamnesis data, call activities, email activities and email attachments
+ * Import leads from SugarCRM database with anamnesis data, call activities, email activities, meeting activities and email attachments
  *
  * This command imports leads and their associated anamnesis data from SugarCRM,
- * as well as call activities, email activities and email attachments related to those leads.
+ * as well as call activities, email activities, meeting activities and email attachments related to those leads.
  * It uses the following relationships:
  * - leads_contacts_c: Links leads to persons
  * - leads_pcrm_anamnesepreventie_1_c: Links leads to anamnesis
  * - pcrm_anamnetie_contacts_c: Links anamnesis to persons
  * - calls table: Contains call activities where parent_type = 'Leads'
+ * - meetings table: Contains meeting activities where parent_type = 'Leads'
  * - emails, emails_text, emails_beans: Contains emails linked to leads via bean_module = 'Leads'
  * - notes table: Contains email attachments linked to emails via parent_id where parent_type = 'Emails'
  */
@@ -34,6 +36,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
     protected ActivityImporter $activityImporter;
 
     protected AttachmentImporter $attachmentImporter;
+
+    protected MeetingImporter $meetingImporter;
 
     /**
      * The name and signature of the console command.
@@ -51,7 +55,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
      *
      * @var string
      */
-    protected $description = 'Import leads from SugarCRM database with anamnesis data, call activities, email activities and email attachments';
+    protected $description = 'Import leads from SugarCRM database with anamnesis data, call activities, email activities, meeting activities and email attachments';
 
     /**
      * Execute the console command.
@@ -75,6 +79,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         // Initialize importers
         $this->activityImporter = new ActivityImporter($this, $connection);
         $this->attachmentImporter = new AttachmentImporter($this, $connection);
+        $this->meetingImporter = new MeetingImporter($this, $connection);
 
         // user import needs to be run first
         $this->ensureUserImportRan();
@@ -192,23 +197,26 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             // Extract emails for the leads (to be imported as Email records)
             $emailActivities = $this->activityImporter->extractEmailActivities($records);
 
+            // Extract meeting activities for the leads
+            $meetingActivities = $this->meetingImporter->extractMeetingActivities($records);
+
             // Extract email attachments for the leads
             $emailAttachments = $this->attachmentImporter->extractEmailAttachments($records);
 
             if ($dryRun) {
-                $this->showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $emailAttachments);
+                $this->showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
 
                 return;
             }
 
-            $this->importRecords($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $emailAttachments);
+            $this->importRecords($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
         });
     }
 
     /**
      * Show dry run results
      */
-    private function showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities = [], $emailActivities = [], $emailAttachments = []): void
+    private function showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities = [], $emailActivities = [], $meetingActivities = [], $emailAttachments = []): void
     {
         $this->info("\n=== DRY RUN RESULTS ===");
 
@@ -232,6 +240,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             'Rel Anamnesis Count',
             'Call Activities',
             'Email Activities',
+            'Meeting Activities',
             'Email Attachments',
         ];
         $rows = [];
@@ -266,6 +275,10 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             $leadEmailActivities = $emailActivities[$record->id] ?? [];
             $emailActivitiesInfo = empty($leadEmailActivities) ? '—' : count($leadEmailActivities).' emails';
 
+            // Get meeting activities for this lead
+            $leadMeetingActivities = $meetingActivities[$record->id] ?? [];
+            $meetingActivitiesInfo = empty($leadMeetingActivities) ? '—' : count($leadMeetingActivities).' meetings';
+
             // Get email attachments for this lead
             $leadEmailAttachments = $emailAttachments[$record->id] ?? [];
             $emailAttachmentsInfo = empty($leadEmailAttachments) ? '—' : count($leadEmailAttachments).' files';
@@ -290,6 +303,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 $relatedAnamnesisCount,
                 $callActivitiesInfo,
                 $emailActivitiesInfo,
+                $meetingActivitiesInfo,
                 $emailAttachmentsInfo,
             ];
         }
@@ -337,6 +351,26 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             $this->info('Email Activities Summary: No email activities found or emails table not available');
         }
 
+        // Show meeting activities summary
+        if (! empty($meetingActivities)) {
+            $totalMeetingActivities = array_sum(array_map('count', $meetingActivities));
+            $this->line('');
+            $this->info('Meeting Activities Summary:');
+            $this->info("Total meeting activities found: {$totalMeetingActivities}");
+
+            if ($totalMeetingActivities > 0) {
+                $this->info('Meeting activities per lead:');
+                foreach ($meetingActivities as $leadId => $meetings) {
+                    $leadRecord = collect($records)->firstWhere('id', $leadId);
+                    $leadName = $leadRecord ? "{$leadRecord->first_name} {$leadRecord->last_name}" : "Lead {$leadId}";
+                    $this->info("  - {$leadName}: ".count($meetings).' meetings');
+                }
+            }
+        } else {
+            $this->line('');
+            $this->info('Meeting Activities Summary: No meeting activities found or meetings table not available');
+        }
+
         // Show email attachments summary
         if (! empty($emailAttachments)) {
             $totalEmailAttachments = array_sum(array_map('count', $emailAttachments));
@@ -361,7 +395,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
     /**
      * Import records
      */
-    private function importRecords($records, $leadByPersonsByAnamnesis, $callActivities = [], $emailActivities = [], $emailAttachments = []): void
+    private function importRecords($records, $leadByPersonsByAnamnesis, $callActivities = [], $emailActivities = [], $meetingActivities = [], $emailAttachments = []): void
     {
         $bar = $this->output->createProgressBar($records->count());
         $bar->start();
@@ -377,6 +411,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $callActivitiesSkipped = 0;
         $emailActivitiesImported = 0;
         $emailActivitiesSkipped = 0;
+        $meetingActivitiesImported = 0;
+        $meetingActivitiesSkipped = 0;
         $emailAttachmentsImported = 0;
         $emailAttachmentsSkipped = 0;
 
@@ -521,6 +557,16 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     // Continue with next lead
                 }
 
+                // Import meeting activities for this lead (outside main transaction)
+                try {
+                    $meetingStats = $this->meetingImporter->importMeetingActivities($lead, $meetingActivities);
+                    $meetingActivitiesImported += $meetingStats['imported'];
+                    $meetingActivitiesSkipped += $meetingStats['skipped'];
+                } catch (Exception $e) {
+                    $this->error("Failed to import meeting activities for lead {$lead->external_id}: ".$e->getMessage());
+                    // Continue with next lead
+                }
+
                 $imported++;
                 $bar->advance();
 
@@ -552,6 +598,11 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $this->info('Email Activities:');
         $this->info("✓ Email activities imported: {$emailActivitiesImported}");
         $this->info("⚠ Email activities skipped: {$emailActivitiesSkipped}");
+
+        $this->line('');
+        $this->info('Meeting Activities:');
+        $this->info("✓ Meeting activities imported: {$meetingActivitiesImported}");
+        $this->info("⚠ Meeting activities skipped: {$meetingActivitiesSkipped}");
 
         $this->line('');
         $this->info('Email Attachments:');

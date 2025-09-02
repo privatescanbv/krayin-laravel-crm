@@ -343,6 +343,11 @@ class LeadController extends Controller
             if (isset($data['lead_pipeline_stage_id'])) {
                 $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
 
+                // If pipeline_id is also provided, validate that stage belongs to pipeline
+                if (isset($data['lead_pipeline_id']) && $stage->lead_pipeline_id != $data['lead_pipeline_id']) {
+                    throw new \InvalidArgumentException('The selected stage does not belong to the specified pipeline.');
+                }
+
                 $data['lead_pipeline_id'] = $stage->lead_pipeline_id;
             } else {
                 // Determine pipeline based on department_id if provided
@@ -454,6 +459,11 @@ class LeadController extends Controller
 
             if (isset($data['lead_pipeline_stage_id'])) {
                 $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
+
+                // If pipeline_id is also provided, validate that stage belongs to pipeline
+                if (isset($data['lead_pipeline_id']) && $stage->lead_pipeline_id != $data['lead_pipeline_id']) {
+                    throw new \InvalidArgumentException('The selected stage does not belong to the specified pipeline.');
+                }
 
                 $data['lead_pipeline_id'] = $stage->lead_pipeline_id;
             } else {

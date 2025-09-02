@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Webkul\Email\Models\Attachment;
@@ -13,7 +12,7 @@ use Webkul\Email\Models\Attachment;
  * This command reads email_attachments records and copies the actual files
  * from upload_sugarcrm/{attachment_id} to the Krayin storage path specified in the path field.
  */
-class ImportEmailAttachmentFiles extends Command
+class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
 {
     /**
      * The name and signature of the console command.
@@ -50,39 +49,40 @@ class ImportEmailAttachmentFiles extends Command
             $this->info('Attachment IDs: ' . implode(', ', $attachmentIds));
         }
 
-        // Check if upload_sugarcrm directory exists
-        $uploadDir = base_path('upload_sugarcrm');
-        if (!File::exists($uploadDir)) {
-            $this->error("Upload directory does not exist: {$uploadDir}");
-            return 1;
-        }
+        return $this->executeImport($dryRun, function () use ($limit, $attachmentIds, $dryRun) {
+            // Check if upload_sugarcrm directory exists
+            $uploadDir = base_path('upload_sugarcrm');
+            if (!File::exists($uploadDir)) {
+                throw new \Exception("Upload directory does not exist: {$uploadDir}");
+            }
 
-        // Get email attachments to process
-        $query = Attachment::query();
-        
-        if (!empty($attachmentIds)) {
-            $query->whereIn('id', $attachmentIds);
-        }
-        
-        if ($limit) {
-            $query->limit((int) $limit);
-        }
+            // Get email attachments to process
+            $query = Attachment::query();
+            
+            if (!empty($attachmentIds)) {
+                $query->whereIn('id', $attachmentIds);
+            }
+            
+            if ($limit) {
+                $query->limit((int) $limit);
+            }
 
-        $attachments = $query->get();
+            $attachments = $query->get();
 
-        if ($attachments->isEmpty()) {
-            $this->info('No email attachments found to process');
-            return 0;
-        }
+            if ($attachments->isEmpty()) {
+                $this->info('No email attachments found to process');
+                return;
+            }
 
-        $this->info("Found {$attachments->count()} email attachments to process");
+            $this->info("Found {$attachments->count()} email attachments to process");
 
-        if ($dryRun) {
-            $this->showDryRunResults($attachments, $uploadDir);
-            return 0;
-        }
+            if ($dryRun) {
+                $this->showDryRunResults($attachments, $uploadDir);
+                return;
+            }
 
-        return $this->processAttachments($attachments, $uploadDir);
+            $this->processAttachments($attachments, $uploadDir);
+        });
     }
 
     /**

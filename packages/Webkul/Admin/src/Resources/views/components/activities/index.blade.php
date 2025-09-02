@@ -97,11 +97,7 @@
                                         >
                                             <a
                                                 class="flex flex-wrap items-center gap-1 font-medium dark:text-white hover:underline cursor-pointer"
-                                                :href="
-                                                    activity.type == 'email' && activity.email_id
-                                                    ? '{{ route('admin.mail.view', 'replaceId') }}'.replace('replaceId', activity.email_id)
-                                                    : '{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity.id)
-                                                "
+                                                :href="'{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity.id)"
                                             >
                                                 @{{ activity.title }}
 

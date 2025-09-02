@@ -256,10 +256,20 @@ class LeadController extends Controller
             $defaultStageId = $pipeline->stages()->first()->id ?? null;
         }
         
+        // Override department_id based on the determined pipeline
+        if ($pipeline) {
+            if ($pipeline->id == \App\Enums\PipelineDefaultKeys::PIPELINE_HERNIA_ID->value) {
+                $defaultDepartmentId = Department::findHerniaId();
+            } elseif ($pipeline->id == \App\Enums\PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value) {
+                $defaultDepartmentId = Department::findPrivateScanId();
+            }
+        }
+        
         return view('admin::leads.create', [
             'defaultDepartmentId' => $defaultDepartmentId,
             'defaultPipelineId' => $pipeline->id ?? null,
-            'defaultStageId' => $defaultStageId
+            'defaultStageId' => $defaultStageId,
+            'departmentOptions' => Department::pluck('name', 'id')->toArray()
         ]);
     }
 

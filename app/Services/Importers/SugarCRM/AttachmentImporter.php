@@ -177,7 +177,7 @@ class AttachmentImporter
                     // Create file path based on attachment data
                     $safeName = preg_replace('/[^a-zA-Z0-9._-]/', '_', $attachmentData->filename);
                     $finalFilename = $this->ensureProperExtension($safeName, $attachmentData->file_mime_type);
-                    $filePath = "emails/{$krayinEmailId}/{$attachmentData->id}_{$finalFilename}";
+                    $filePath = "emails/{$krayinEmailId}/{$attachmentData->id}";
 
                     // do not donwload the file, will be done later by another process
 

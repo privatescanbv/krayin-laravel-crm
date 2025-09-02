@@ -71,19 +71,21 @@ class AttachmentImporter
             $sql = DB::connection($this->connection)
                 ->table('notes as n')
                 ->select([
-                    DB::raw('n.id as id'),
-                    DB::raw('n.name as name'),
-                    DB::raw('n.filename as filename'),
-                    DB::raw('n.file_mime_type as file_mime_type'),
-                    DB::raw('n.description as description'),
-                    DB::raw('n.date_entered as date_entered'),
-                    DB::raw('n.date_modified as date_modified'),
-                    DB::raw('n.created_by as created_by'),
-                    DB::raw('n.assigned_user_id as assigned_user_id'),
-                    DB::raw('n.deleted as deleted'),
-                    DB::raw('n.parent_id as email_id'),
-                    DB::raw('n.parent_type as parent_type'),
-                    DB::raw('n.file_content as file_content'),
+                    'n.id',
+                    'n.name',
+                    'n.filename',
+                    'n.file_mime_type',
+                    'n.description',
+                    'n.date_entered',
+                    'n.date_modified',
+                    'n.created_by',
+                    'n.assigned_user_id',
+                    'n.deleted',
+                    'n.parent_id as email_id',
+                    'n.parent_type',
+                    'n.contact_id',
+                    'n.portal_flag',
+                    'n.embed_flag',
                 ])
                 ->whereIn('n.parent_id', $emailIds)
                 ->where('n.parent_type', '=', 'Emails')
@@ -316,20 +318,19 @@ class AttachmentImporter
      */
     private function createPlaceholderContent($attachmentData): string
     {
-        // If we have actual file content from SugarCRM, use it
-        if (! empty($attachmentData->file_content)) {
-            return base64_decode($attachmentData->file_content);
-        }
-
-        // Otherwise create a placeholder file with metadata
+        // SugarCRM doesn't store file content in the notes table
+        // Create a placeholder file with metadata
         $placeholderContent = "=== EMAIL ATTACHMENT PLACEHOLDER ===\n\n";
         $placeholderContent .= "This file was imported from SugarCRM but the original content was not available.\n\n";
         $placeholderContent .= 'Original Filename: '.($attachmentData->filename ?? 'Unknown')."\n";
         $placeholderContent .= 'MIME Type: '.($attachmentData->file_mime_type ?? 'Unknown')."\n";
         $placeholderContent .= 'Description: '.($attachmentData->description ?? 'No description')."\n";
-        $placeholderContent .= 'SugarCRM ID: '.($attachmentData->id ?? 'Unknown')."\n";
+        $placeholderContent .= 'SugarCRM Note ID: '.($attachmentData->id ?? 'Unknown')."\n";
         $placeholderContent .= 'Email ID: '.($attachmentData->email_id ?? 'Unknown')."\n";
-        $placeholderContent .= 'Date Created: '.($attachmentData->date_entered ?? 'Unknown')."\n\n";
+        $placeholderContent .= 'Date Created: '.($attachmentData->date_entered ?? 'Unknown')."\n";
+        $placeholderContent .= 'Contact ID: '.($attachmentData->contact_id ?? 'None')."\n";
+        $placeholderContent .= 'Portal Flag: '.($attachmentData->portal_flag ?? 'None')."\n";
+        $placeholderContent .= 'Embed Flag: '.($attachmentData->embed_flag ?? 'None')."\n\n";
         $placeholderContent .= "To restore the original file content, you would need to:\n";
         $placeholderContent .= "1. Export the original file from SugarCRM\n";
         $placeholderContent .= "2. Upload it manually to this activity\n\n";

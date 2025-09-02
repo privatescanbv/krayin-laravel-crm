@@ -1,6 +1,6 @@
 === SugarCRM Lead Import
 
-Deze functie importeert leads uit een SugarCRM database naar Krayin CRM, inclusief anamnese gegevens, call activities, email activities, email bijlagen en pipeline mapping.
+Deze functie importeert leads uit een SugarCRM database naar Krayin CRM, inclusief anamnese gegevens, call activities, emails, email bijlagen en pipeline mapping.
 
 ==== Configuratie
 
@@ -319,9 +319,9 @@ Call activities worden automatisch geïmporteerd als **Activity** records van he
 
 **Belangrijk:** Call activities worden alleen geïmporteerd voor leads die succesvol zijn geïmporteerd. Als een lead wordt overgeslagen, worden de bijbehorende call activities ook overgeslagen.
 
-==== Email Activities
+==== Emails
 
-Email activities worden automatisch geïmporteerd als **Activity** records van het type `email`:
+Emails worden automatisch geïmporteerd als **Email** records in de emails tabel:
 
 ===== Status Mapping
 

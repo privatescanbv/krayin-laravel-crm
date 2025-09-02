@@ -47,8 +47,6 @@ class AttachmentImporter
                 return [];
             }
 
-            $this->command->info('Notes table exists, proceeding with email attachments extraction');
-
             // First, get all email IDs that belong to our leads
             $emailIds = DB::connection($this->connection)
                 ->table('emails_beans as eb')
@@ -59,8 +57,6 @@ class AttachmentImporter
                 ->where('eb.deleted', '=', 0)
                 ->pluck('e.id')
                 ->all();
-
-            $this->command->info('Found '.count($emailIds).' emails for '.count($leadIds).' leads');
 
             if (empty($emailIds)) {
                 $this->command->info('No emails found for leads, skipping email attachments import');
@@ -99,8 +95,7 @@ class AttachmentImporter
 
             $this->command->info('Found '.$attachments->count().' email attachments');
 
-            // Debug: Show email IDs we're looking for
-            $this->command->info('Looking for attachments for email IDs: '.implode(', ', $emailIds));
+
 
             // Get email-bean mappings to determine lead_id for each attachment
             $emailBeanMap = DB::connection($this->connection)
@@ -193,15 +188,6 @@ class AttachmentImporter
 
                     if (! $activity) {
                         $this->command->warn("Activity record not found for email {$attachmentData->email_id}");
-                        $this->command->warn("Looking for: external_id={$attachmentData->email_id}, lead_id={$lead->id}, type=email");
-
-                        // Debug: Show what activities DO exist for this lead
-                        $existingActivities = Activity::where('lead_id', $lead->id)->get();
-                        $this->command->info("Existing activities for lead {$lead->id}:");
-                        foreach ($existingActivities as $act) {
-                            $this->command->info("  - {$act->type}: {$act->title} (external_id: {$act->external_id})");
-                        }
-
                         $skipped++;
 
                         continue;

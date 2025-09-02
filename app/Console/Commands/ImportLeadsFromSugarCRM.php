@@ -26,7 +26,7 @@ use Webkul\User\Models\User;
  * - leads_pcrm_anamnesepreventie_1_c: Links leads to anamnesis
  * - pcrm_anamnetie_contacts_c: Links anamnesis to persons
  * - calls table: Contains call activities where parent_type = 'Leads'
- * - emails, emails_text, emails_beans: Contains email activities linked to leads via bean_module = 'Leads'
+ * - emails, emails_text, emails_beans: Contains emails linked to leads via bean_module = 'Leads'
  * - notes table: Contains email attachments linked to emails via parent_id where parent_type = 'Emails'
  */
 class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport

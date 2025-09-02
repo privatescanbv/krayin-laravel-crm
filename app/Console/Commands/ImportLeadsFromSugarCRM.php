@@ -490,6 +490,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'lead_type_id'           => $this->mapType($record),
                         'lead_source_id'         => $this->mapSource($record),
                         'lost_reason'            => $record->reden_afvoeren_c ?? null,
+                        'user_id'                => $this->mapUser($this->mapDepartment($record)),
                     ], [
                         'created_at' => $this->parseSugarDate($record->lead_date_entered ?? $record->date_entered),
                         'updated_at' => $this->parseSugarDate($record->lead_date_modified ?? $record->date_modified),
@@ -1168,5 +1169,37 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
     private function ensureUserImportRan(): void
     {
         User::whereNotNull('external_id')->count() > 0 or throw new Exception('No users with external_id found, please run the user import first');
+    }
+
+    /**
+     * Map department to appropriate user_id for lead assignment
+     */
+    private function mapUser(int $departmentId): int
+    {
+        // Get users from the appropriate group based on department
+        if ($departmentId == Department::findHerniaId()) {
+            // Find users in the 'hernia' group
+            $users = User::whereHas('groups', function($query) {
+                $query->where('name', 'hernia');
+            })->pluck('id')->toArray();
+            
+            if (!empty($users)) {
+                // Return a random user from the hernia group, or the first one
+                return $users[0];
+            }
+        } else {
+            // Find users in the 'privatescan' group
+            $users = User::whereHas('groups', function($query) {
+                $query->where('name', 'privatescan');
+            })->pluck('id')->toArray();
+            
+            if (!empty($users)) {
+                // Return a random user from the privatescan group, or the first one
+                return $users[0];
+            }
+        }
+        
+        // Fallback to user ID 1 if no appropriate users found
+        return 1;
     }
 }

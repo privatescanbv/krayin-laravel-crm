@@ -272,6 +272,9 @@
                         {
                             label: "{{ trans('admin::app.components.activities.actions.activity.call') }}",
                             value: 'call'
+                        },{
+                            label: "{{ trans('admin::app.components.activities.actions.activity.meeting') }}",
+                            value: 'meeting'
                         }, {
                             label: "{{ trans('admin::app.components.activities.actions.activity.internal-task') }}",
                             value: 'task'

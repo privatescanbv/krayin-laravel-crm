@@ -28,7 +28,7 @@ beforeEach(function () {
     foreach ([
         'email_addr_bean_rel', 'email_addresses', 'leads_cstm', 'leads', 'leads_contacts_c',
         'leads_pcrm_anamnesepreventie_1_c', 'pcrm_anamnetie_contacts_c', 'pcrm_anamnesepreventie', 'pcrm_anamnesepreventie_cstm', 'calls', 'calls_cstm',
-        'emails', 'emails_text', 'emails_beans',
+        'emails', 'emails_text', 'emails_beans', 'notes',
     ] as $tbl) {
         if (Schema::connection('sugarcrm')->hasTable($tbl)) {
             Schema::connection('sugarcrm')->drop($tbl);
@@ -278,6 +278,22 @@ beforeEach(function () {
         $table->text('campaign_data')->nullable();
         $table->dateTime('date_modified')->nullable();
         $table->boolean('deleted')->default(0);
+    });
+
+    // Create notes table for attachments
+    Schema::connection('sugarcrm')->create('notes', function (Blueprint $table) {
+        $table->string('id')->primary();
+        $table->string('name')->nullable();
+        $table->string('filename')->nullable();
+        $table->string('file_mime_type')->nullable();
+        $table->text('description')->nullable();
+        $table->dateTime('date_entered')->nullable();
+        $table->dateTime('date_modified')->nullable();
+        $table->string('created_by')->nullable();
+        $table->string('assigned_user_id')->nullable();
+        $table->boolean('deleted')->default(0);
+        $table->string('parent_id')->nullable();
+        $table->string('parent_type')->nullable();
     });
 });
 
@@ -859,6 +875,56 @@ test('imports email activities from sugarcrm', function () {
         ],
     ]);
 
+    // Insert email attachments (notes)
+    $attachmentId1 = 'attachment-001';
+    $attachmentId2 = 'attachment-002';
+    $attachmentId3 = 'attachment-003';
+
+    DB::connection('sugarcrm')->table('notes')->insert([
+        [
+            'id' => $attachmentId1,
+            'name' => 'Brochure attachment',
+            'filename' => 'brochure.pdf',
+            'file_mime_type' => 'application/pdf',
+            'description' => 'Company brochure attachment',
+            'date_entered' => '2024-01-01 12:01:00',
+            'date_modified' => '2024-01-01 12:01:00',
+            'created_by' => 'user-001',
+            'assigned_user_id' => 'user-001',
+            'deleted' => 0,
+            'parent_id' => $emailId1,
+            'parent_type' => 'Emails',
+        ],
+        [
+            'id' => $attachmentId2,
+            'name' => 'Follow-up document',
+            'filename' => 'follow_up.docx',
+            'file_mime_type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'description' => 'Follow-up document attachment',
+            'date_entered' => '2024-01-02 14:01:00',
+            'date_modified' => '2024-01-02 14:01:00',
+            'created_by' => 'user-001',
+            'assigned_user_id' => 'user-001',
+            'deleted' => 0,
+            'parent_id' => $emailId2,
+            'parent_type' => 'Emails',
+        ],
+        [
+            'id' => $attachmentId3,
+            'name' => 'Additional info',
+            'filename' => 'info.txt',
+            'file_mime_type' => 'text/plain',
+            'description' => 'Additional information file',
+            'date_entered' => '2024-01-02 14:02:00',
+            'date_modified' => '2024-01-02 14:02:00',
+            'created_by' => 'user-001',
+            'assigned_user_id' => 'user-001',
+            'deleted' => 0,
+            'parent_id' => $emailId2,
+            'parent_type' => 'Emails',
+        ],
+    ]);
+
     // Run import
     Artisan::call('import:leads', [
         '--connection' => 'sugarcrm',
@@ -905,4 +971,28 @@ test('imports email activities from sugarcrm', function () {
         ->and($activity2->additional['status'])->toBe('sent')
         ->and($activity2->additional['flagged'])->toBe(true)
         ->and($activity2->additional['intent'])->toBe('follow_up');
+
+    // Verify email attachments were imported
+    $activity1Files = $activity1->files()->get();
+    expect($activity1Files)->toHaveCount(1);
+    
+    $file1 = $activity1Files[0];
+    expect($file1->name)->toBe('brochure.pdf')
+        ->and($file1->path)->toContain($attachmentId1)
+        ->and($file1->path)->toContain('brochure.pdf');
+
+    $activity2Files = $activity2->files()->get();
+    expect($activity2Files)->toHaveCount(2);
+    
+    $file2 = $activity2Files->firstWhere('name', 'follow_up.docx');
+    expect($file2)->not->toBeNull()
+        ->and($file2->name)->toBe('follow_up.docx')
+        ->and($file2->path)->toContain($attachmentId2)
+        ->and($file2->path)->toContain('follow_up.docx');
+    
+    $file3 = $activity2Files->firstWhere('name', 'info.txt');
+    expect($file3)->not->toBeNull()
+        ->and($file3->name)->toBe('info.txt')
+        ->and($file3->path)->toContain($attachmentId3)
+        ->and($file3->path)->toContain('info.txt');
 });

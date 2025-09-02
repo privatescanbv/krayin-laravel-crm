@@ -175,6 +175,7 @@ class ActivityController extends Controller
                         'name' => $attachment->name,
                         'path' => $attachment->path,
                         'url' => $attachment->url,
+                        'is_email_attachment' => true, // Flag to identify email attachments
                         'created_at' => $attachment->created_at,
                         'updated_at' => $attachment->updated_at,
                     ];

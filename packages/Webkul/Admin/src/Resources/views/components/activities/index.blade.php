@@ -147,7 +147,11 @@
                                             v-if="activity.files.length"
                                         >
                                             <a
-                                                :href="`{{ route('admin.activities.file_download', 'replaceID') }}`.replace('replaceID', file.id)"
+                                                :href="
+                                                    file.is_email_attachment
+                                                    ? `{{ route('admin.mail.attachment_download', 'replaceID') }}`.replace('replaceID', file.id)
+                                                    : `{{ route('admin.activities.file_download', 'replaceID') }}`.replace('replaceID', file.id)
+                                                "
                                                 class="flex cursor-pointer items-center gap-1 rounded-md p-1.5"
                                                 target="_blank"
                                                 v-for="(file, index) in activity.files"

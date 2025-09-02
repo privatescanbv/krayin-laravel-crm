@@ -395,7 +395,7 @@ class ActivityImporter
                     // Create the email record
                     $emailRecord = [
                         'subject'      => $emailData->subject ?? 'Email',
-                        'source'       => 'imported',
+                        'source'       => 'web',
                         'name'         => $emailData->subject ?? 'Email',
                         'user_type'    => 'person',
                         'is_read'      => 1,
@@ -443,11 +443,6 @@ class ActivityImporter
     private function formatEmailContent($emailData): string
     {
         $content = [];
-
-        if (! empty($emailData->subject)) {
-            $content[] = "Subject: {$emailData->subject}";
-        }
-
         // Prefer HTML content, fallback to plain text
         $body = $emailData->description_html ?? $emailData->description ?? '';
         if (! empty($body)) {
@@ -457,7 +452,7 @@ class ActivityImporter
             if (strlen($plainBody) > 1000) {
                 $plainBody = substr($plainBody, 0, 1000).'...';
             }
-            $content[] = "Body: {$plainBody}";
+            $content[] = $plainBody;
         }
 
         return implode("\n\n", $content);

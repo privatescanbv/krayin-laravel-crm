@@ -396,15 +396,10 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
     expect($exit)->toBe(0);
 
     $lead = Lead::where('external_id', $leadId)->first();
-    expect($lead)->not->toBeNull();
-
-    // Personal fields assertions
-    expect($lead->married_name)->toBe('Jansen')
-        ->and($lead->married_name_prefix)->toBe('de');
-
-    // Check created_at parsing - import treats SugarCRM dates as local time
-    // SugarCRM date: '2025-06-11 13:41:07' is stored as-is in local timezone
-    expect($lead->created_at->format('Y-m-d H:i:s'))->toBe('2025-06-11 13:41:07');
+    expect($lead)->not->toBeNull()
+        ->and($lead->married_name)->toBe('Jansen')
+        ->and($lead->married_name_prefix)->toBe('de')
+        ->and($lead->created_at->format('Y-m-d H:i:s'))->toBe('2025-06-11 13:41:07');
 
     // Address created and mapped
     $address = Address::where('lead_id', $lead->id)->first();
@@ -979,7 +974,7 @@ test('imports email activities from sugarcrm', function () {
         ->and($email1->unique_id)->toBe($emailId1)
         ->and($email1->message_id)->toBe('msg-001@example.com')
         ->and($email1->lead_id)->toBe($lead->id)
-        ->and($email1->source)->toBe('imported');
+        ->and($email1->source)->toBe('web');
 
     // Check second email
     $email2 = $emails[1];
@@ -987,11 +982,11 @@ test('imports email activities from sugarcrm', function () {
         ->and($email2->unique_id)->toBe($emailId2)
         ->and($email2->message_id)->toBe('msg-002@example.com')
         ->and($email2->lead_id)->toBe($lead->id)
-        ->and($email2->source)->toBe('imported');
+        ->and($email2->source)->toBe('web')
+        ->and($email1->tags()->where('name', 'import')->exists())->toBe(true)
+        ->and($email2->tags()->where('name', 'import')->exists())->toBe(true);
 
     // Verify import tag was attached
-    expect($email1->tags()->where('name', 'import')->exists())->toBe(true);
-    expect($email2->tags()->where('name', 'import')->exists())->toBe(true);
 
     // Verify email attachments were imported as Email attachments
     $email1Attachments = $email1->attachments()->get();
@@ -1013,12 +1008,10 @@ test('imports email activities from sugarcrm', function () {
     $attachment3 = $email2Attachments->firstWhere('name', 'info.txt');
     expect($attachment3)->not->toBeNull()
         ->and($attachment3->name)->toBe('info.txt')
-        ->and($attachment3->content_type)->toBe('text/plain');
-
-    // Verify that files are actually stored in the filesystem
-    expect(Storage::exists($attachment1->path))->toBe(true);
-    expect(Storage::exists($attachment2->path))->toBe(true);
-    expect(Storage::exists($attachment3->path))->toBe(true);
+        ->and($attachment3->content_type)->toBe('text/plain')
+        ->and(Storage::exists($attachment1->path))->toBe(true)
+        ->and(Storage::exists($attachment2->path))->toBe(true)
+        ->and(Storage::exists($attachment3->path))->toBe(true);
 
     // Verify file content (placeholder files)
     $file1Content = Storage::get($attachment1->path);

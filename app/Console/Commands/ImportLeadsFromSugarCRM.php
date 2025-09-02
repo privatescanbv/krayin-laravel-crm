@@ -188,8 +188,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
             // Extract call activities for the leads
             $callActivities = $this->activityImporter->extractCallActivities($records);
-
-            // Extract email activities for the leads
+            
+            // Extract emails for the leads (to be imported as Email records)
             $emailActivities = $this->activityImporter->extractEmailActivities($records);
 
             // Extract email attachments for the leads

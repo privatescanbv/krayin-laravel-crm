@@ -84,8 +84,7 @@ class AttachmentImporter
                     'n.contact_id',
                     'n.portal_flag',
                     'n.embed_flag',
-                    // Try to get file content if the column exists
-                    DB::raw('(CASE WHEN EXISTS(SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = "notes" AND COLUMN_NAME = "file_content") THEN n.file_content ELSE NULL END) as file_content'),
+
                 ])
                 ->whereIn('n.parent_id', $emailIds)
                 ->where('n.parent_type', '=', 'Emails')
@@ -278,44 +277,60 @@ class AttachmentImporter
     }
 
     /**
-     * Try to get original file content from SugarCRM
+     * Try to get original file content from SugarCRM download endpoint
      */
     private function getOriginalFileContent($attachmentData): ?string
     {
-        // Check if we have file content in the notes record
-        if (!empty($attachmentData->file_content)) {
-            // File content might be base64 encoded
-            $decoded = base64_decode($attachmentData->file_content, true);
-            if ($decoded !== false) {
-                return $decoded;
+        try {
+            // Get SugarCRM host from database connection config
+            $config = config("database.connections.{$this->connection}");
+            $sugarCrmHost = $config['host'] ?? null;
+            
+            if (!$sugarCrmHost) {
+                $this->command->warn("No SugarCRM host configured for file download");
+                return null;
             }
-            // If not base64, return as-is
-            return $attachmentData->file_content;
-        }
 
-        // Try to find file in SugarCRM upload directory structure
-        $possiblePaths = [
-            // Common SugarCRM upload paths
-            "upload/{$attachmentData->id}",
-            "upload/{$attachmentData->id}_{$attachmentData->filename}",
-            "cache/upload/{$attachmentData->id}",
-            "custom/upload/{$attachmentData->id}",
-        ];
+            // Build SugarCRM download URL
+            $downloadUrl = "http://{$sugarCrmHost}/index.php?entryPoint=download&id={$attachmentData->id}&type=Notes";
+            
+            $this->command->info("Downloading file content from: {$downloadUrl}");
 
-        foreach ($possiblePaths as $path) {
-            try {
-                // Try to read from SugarCRM connection if it supports file reading
-                $fullPath = database_path("sugarcrm_files/{$path}");
-                if (file_exists($fullPath)) {
-                    return file_get_contents($fullPath);
-                }
-            } catch (Exception $e) {
-                // Continue to next path
+            // Use cURL to download the file content
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $downloadUrl);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // For development
+            
+            $fileContent = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error = curl_error($ch);
+            curl_close($ch);
+
+            if ($error) {
+                $this->command->warn("cURL error downloading {$attachmentData->filename}: {$error}");
+                return null;
             }
-        }
 
-        // No file content found
-        return null;
+            if ($httpCode !== 200) {
+                $this->command->warn("HTTP error {$httpCode} downloading {$attachmentData->filename}");
+                return null;
+            }
+
+            if (empty($fileContent)) {
+                $this->command->warn("Empty file content for {$attachmentData->filename}");
+                return null;
+            }
+
+            $this->command->info("✓ Downloaded {$attachmentData->filename} (" . strlen($fileContent) . " bytes)");
+            return $fileContent;
+
+        } catch (Exception $e) {
+            $this->command->warn("Failed to download {$attachmentData->filename}: " . $e->getMessage());
+            return null;
+        }
     }
 
     /**

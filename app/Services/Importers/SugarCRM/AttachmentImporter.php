@@ -66,12 +66,6 @@ class AttachmentImporter
             // Now get attachments (notes) for these emails
             $sql = DB::connection($this->connection)
                 ->table('notes as n')
-                ->join('emails_beans as eb', function ($join) {
-                    $join->on('eb.email_id', '=', 'n.parent_id')
-                        ->where('n.parent_type', '=', 'Emails')
-                        ->where('eb.bean_module', '=', 'Leads')
-                        ->where('eb.deleted', '=', 0);
-                })
                 ->select([
                     'n.id',
                     'n.name',
@@ -85,9 +79,7 @@ class AttachmentImporter
                     'n.deleted',
                     'n.parent_id as email_id',
                     'n.parent_type',
-                    'eb.bean_id as lead_id',
-                    // Try to get file content if available
-                    DB::raw('CASE WHEN EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = "notes" AND column_name = "file_content") THEN n.file_content ELSE NULL END as file_content'),
+                    'n.file_content',
                 ])
                 ->whereIn('n.parent_id', $emailIds)
                 ->where('n.parent_type', '=', 'Emails')
@@ -100,13 +92,27 @@ class AttachmentImporter
 
             $this->command->info('Found '.$attachments->count().' email attachments');
 
+            // Get email-bean mappings to determine lead_id for each attachment
+            $emailBeanMap = DB::connection($this->connection)
+                ->table('emails_beans')
+                ->whereIn('email_id', $emailIds)
+                ->where('bean_module', '=', 'Leads')
+                ->where('deleted', '=', 0)
+                ->pluck('bean_id', 'email_id')
+                ->all();
+
             // Group attachments by lead_id
             $result = [];
             foreach ($attachments as $attachment) {
-                if (! isset($result[$attachment->lead_id])) {
-                    $result[$attachment->lead_id] = [];
+                $leadId = $emailBeanMap[$attachment->email_id] ?? null;
+                if ($leadId) {
+                    if (! isset($result[$leadId])) {
+                        $result[$leadId] = [];
+                    }
+                    // Add lead_id to attachment data for later use
+                    $attachment->lead_id = $leadId;
+                    $result[$leadId][] = $attachment;
                 }
-                $result[$attachment->lead_id][] = $attachment;
             }
 
             return $result;

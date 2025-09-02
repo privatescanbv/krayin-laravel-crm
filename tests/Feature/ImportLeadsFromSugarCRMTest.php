@@ -996,8 +996,16 @@ test('imports email activities from sugarcrm', function () {
         ->and($activity2->additional['flagged'])->toBe(true)
         ->and($activity2->additional['intent'])->toBe('follow_up');
 
+    // Debug: Check what activities were created
+    $allActivities = Activity::where('lead_id', $lead->id)->get();
+    dump("Total activities: " . $allActivities->count());
+    foreach ($allActivities as $act) {
+        dump("Activity: {$act->type} - {$act->title} - external_id: {$act->external_id}");
+    }
+
     // Verify email attachments were imported
     $activity1Files = $activity1->files()->get();
+    dump("Activity1 files count: " . $activity1Files->count());
     expect($activity1Files)->toHaveCount(1);
 
     $file1 = $activity1Files[0];

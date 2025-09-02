@@ -505,20 +505,27 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 }
 
                 // Import email activities for this lead (outside main transaction)
+                $emailRecordIds = [];
                 try {
                     $emailStats = $this->activityImporter->importEmailActivities($lead, $emailActivities);
                     $emailActivitiesImported += $emailStats['imported'];
                     $emailActivitiesSkipped += $emailStats['skipped'];
+                    
+                    // Also create Email records for attachments (hybrid approach)
+                    $emailRecordStats = $this->activityImporter->importEmailsAsEmailRecords($lead, $emailActivities);
+                    $emailRecordIds = $emailRecordStats['email_ids'] ?? [];
                 } catch (Exception $e) {
                     $this->error("Failed to import email activities for lead {$lead->external_id}: ".$e->getMessage());
                     // Continue with next lead
                 }
-
-                // Import email attachments for this lead (outside main transaction)
+                
+                // Import email attachments as Email attachments (outside main transaction)
                 try {
-                    $attachmentStats = $this->attachmentImporter->importEmailAttachments($lead, $emailAttachments, $emailActivities);
-                    $emailAttachmentsImported += $attachmentStats['imported'];
-                    $emailAttachmentsSkipped += $attachmentStats['skipped'];
+                    if (!empty($emailRecordIds)) {
+                        $attachmentStats = $this->attachmentImporter->importEmailAttachmentsAsEmailAttachments($lead, $emailAttachments, $emailRecordIds);
+                        $emailAttachmentsImported += $attachmentStats['imported'];
+                        $emailAttachmentsSkipped += $attachmentStats['skipped'];
+                    }
                 } catch (Exception $e) {
                     $this->error("Failed to import email attachments for lead {$lead->external_id}: ".$e->getMessage());
                     // Continue with next lead

@@ -21,16 +21,25 @@ class PipelineCookieService
      */
     public function getLastSelectedPipelineId(): ?int
     {
-        $pipelineId = request()->cookie(self::COOKIE_NAME);
-        
-        if (!$pipelineId) {
+        try {
+            $pipelineId = request()->cookie(self::COOKIE_NAME);
+            
+            if (!$pipelineId || !is_numeric($pipelineId)) {
+                return null;
+            }
+
+            // Validate that the pipeline still exists
+            $pipeline = $this->pipelineRepository->find((int) $pipelineId);
+            
+            return $pipeline ? (int) $pipelineId : null;
+        } catch (\Exception $e) {
+            // Log error but don't break the application
+            \Illuminate\Support\Facades\Log::warning('Error in getLastSelectedPipelineId', [
+                'error' => $e->getMessage(),
+                'pipelineId' => $pipelineId ?? 'null'
+            ]);
             return null;
         }
-
-        // Validate that the pipeline still exists
-        $pipeline = $this->pipelineRepository->find($pipelineId);
-        
-        return $pipeline ? (int) $pipelineId : null;
     }
 
     /**
@@ -41,43 +50,66 @@ class PipelineCookieService
      */
     public function setLastSelectedPipelineId(int $pipelineId)
     {
-        // Validate that the pipeline exists before setting cookie
-        $pipeline = $this->pipelineRepository->find($pipelineId);
-        
-        if (!$pipeline) {
+        try {
+            // Validate that the pipeline exists before setting cookie
+            $pipeline = $this->pipelineRepository->find($pipelineId);
+            
+            if (!$pipeline) {
+                return null;
+            }
+
+            return Cookie::queue(
+                Cookie::make(
+                    self::COOKIE_NAME,
+                    $pipelineId,
+                    self::COOKIE_DURATION,
+                    '/',
+                    null,
+                    false, // secure (set to true for HTTPS)
+                    true   // httpOnly
+                )
+            );
+        } catch (\Exception $e) {
+            // Log error but don't break the application
+            \Illuminate\Support\Facades\Log::warning('Error in setLastSelectedPipelineId', [
+                'error' => $e->getMessage(),
+                'pipelineId' => $pipelineId
+            ]);
             return null;
         }
-
-        return Cookie::queue(
-            Cookie::make(
-                self::COOKIE_NAME,
-                $pipelineId,
-                self::COOKIE_DURATION,
-                '/',
-                null,
-                false, // secure (set to true for HTTPS)
-                true   // httpOnly
-            )
-        );
     }
 
     /**
      * Get the effective pipeline ID considering URL parameter and cookie
      *
-     * @param int|null $requestPipelineId Pipeline ID from request parameter
+     * @param string|int|null $requestPipelineId Pipeline ID from request parameter
      * @return int|null
      */
-    public function getEffectivePipelineId(?int $requestPipelineId = null): ?int
+    public function getEffectivePipelineId($requestPipelineId = null): ?int
     {
-        // URL parameter takes precedence over cookie
-        if ($requestPipelineId) {
-            // Set cookie to remember this choice
-            $this->setLastSelectedPipelineId($requestPipelineId);
-            return $requestPipelineId;
-        }
+        try {
+            // Convert string to int if needed
+            if ($requestPipelineId !== null) {
+                $requestPipelineId = is_numeric($requestPipelineId) ? (int) $requestPipelineId : null;
+            }
 
-        // Fall back to cookie value
-        return $this->getLastSelectedPipelineId();
+            // URL parameter takes precedence over cookie
+            if ($requestPipelineId) {
+                // Set cookie to remember this choice
+                $this->setLastSelectedPipelineId($requestPipelineId);
+                return $requestPipelineId;
+            }
+
+            // Fall back to cookie value
+            return $this->getLastSelectedPipelineId();
+        } catch (\Exception $e) {
+            // Log error but don't break the application
+            \Illuminate\Support\Facades\Log::warning('Error in getEffectivePipelineId', [
+                'error' => $e->getMessage(),
+                'requestPipelineId' => $requestPipelineId
+            ]);
+            return null;
+        }
     }
 
     /**

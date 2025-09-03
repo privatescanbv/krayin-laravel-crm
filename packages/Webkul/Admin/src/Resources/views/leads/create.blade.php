@@ -611,8 +611,12 @@
                                 message: 'Lead succesvol aangemaakt!'
                             });
 
-                            // Redirect to leads index
-                            window.location.href = '{{ route('admin.leads.index') }}';
+                            // Redirect to leads index with pipeline preservation
+                            const pipelineId = this.getCookieValue('last_selected_pipeline_id');
+                            const url = pipelineId 
+                                ? '{{ route('admin.leads.index') }}?pipeline_id=' + pipelineId
+                                : '{{ route('admin.leads.index') }}';
+                            window.location.href = url;
 
                         } catch (error) {
                             console.error('Error submitting form:', error);
@@ -793,6 +797,16 @@
                         } else {
                             return 'bg-red-500';
                         }
+                    },
+
+                    /**
+                     * Helper method to get cookie value
+                     */
+                    getCookieValue(name) {
+                        const value = `; ${document.cookie}`;
+                        const parts = value.split(`; ${name}=`);
+                        if (parts.length === 2) return parts.pop().split(';').shift();
+                        return null;
                     }
                 }
             });

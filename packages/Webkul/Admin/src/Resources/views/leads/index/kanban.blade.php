@@ -391,6 +391,14 @@
             computed: {
                 totalStagesAmount() {
                     return 0;
+                },
+
+                /**
+                 * Generate unique src identifier including pipeline for localStorage
+                 */
+                src() {
+                    const pipelineId = "{{ request('pipeline_id') ?? '' }}";
+                    return `{{ route('admin.leads.index') }}${pipelineId ? '?pipeline_id=' + pipelineId : ''}`;
                 }
             },
 

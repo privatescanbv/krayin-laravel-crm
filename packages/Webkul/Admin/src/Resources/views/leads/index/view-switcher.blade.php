@@ -41,6 +41,7 @@
                         'view_type'   => request('view_type')
                     ]) }}"
                     class="block px-3 py-2.5 pl-4 text-gray-600 transition-all hover:bg-gray-100 dark:hover:bg-gray-950 dark:text-gray-300 {{ $pipeline->id == $tempPipeline->id ? 'bg-gray-100 dark:bg-gray-950' : '' }}"
+                    onclick="setPipelineCookie({{ $tempPipeline->id }})"
                 >
                     {{ $tempPipeline->name }}
                 </a>
@@ -71,7 +72,7 @@
         @if (request('view_type'))
             <a
                 class="flex"
-                href="{{ route('admin.leads.index') }}"
+                href="{{ route('admin.leads.index', request('pipeline_id') ? ['pipeline_id' => request('pipeline_id')] : []) }}"
             >
                 <span class="icon-kanban p-2 text-2xl"></span>
             </a>
@@ -81,7 +82,7 @@
             <span class="icon-kanban rounded-md bg-white p-2 text-2xl dark:bg-gray-900"></span>
 
             <a
-                href="{{ route('admin.leads.index', ['view_type' => 'table']) }}"
+                href="{{ route('admin.leads.index', array_merge(['view_type' => 'table'], request('pipeline_id') ? ['pipeline_id' => request('pipeline_id')] : [])) }}"
                 class="flex"
             >
                 <span class="icon-list p-2 text-2xl"></span>
@@ -93,3 +94,17 @@
 </div>
 
 {!! view_render_event('admin.leads.index.view_switcher.after') !!}
+
+@pushOnce('scripts')
+<script>
+    /**
+     * Set pipeline cookie when user selects a pipeline
+     */
+    function setPipelineCookie(pipelineId) {
+        // Set cookie for 30 days
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (30 * 24 * 60 * 60 * 1000));
+        document.cookie = `last_selected_pipeline_id=${pipelineId}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
+    }
+</script>
+@endPushOnce

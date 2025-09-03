@@ -391,6 +391,14 @@
             computed: {
                 totalStagesAmount() {
                     return 0;
+                },
+
+                /**
+                 * Generate unique src identifier including pipeline for localStorage
+                 */
+                src() {
+                    const pipelineId = "{{ request('pipeline_id') ?? '' }}";
+                    return `{{ route('admin.leads.index') }}${pipelineId ? '?pipeline_id=' + pipelineId : ''}`;
                 }
             },
 
@@ -453,9 +461,15 @@
 
                             this.get()
                                 .then(response => {
-                                    for (let [sortOrder, data] of Object.entries(response.data)) {
-                                        this.stageLeads[sortOrder] = data;
+                                    if (response && response.data) {
+                                        for (let [sortOrder, data] of Object.entries(response.data)) {
+                                            this.stageLeads[sortOrder] = data;
+                                        }
                                     }
+                                })
+                                .catch(error => {
+                                    console.error('Error loading kanban data:', error);
+                                    this.isLoading = false;
                                 });
 
                             return;
@@ -464,10 +478,16 @@
 
                     this.get()
                         .then(response => {
-                            for (let [sortOrder, data] of Object.entries(response.data)) {
-                                this.stageLeads[sortOrder] = data;
+                            if (response && response.data) {
+                                for (let [sortOrder, data] of Object.entries(response.data)) {
+                                    this.stageLeads[sortOrder] = data;
+                                }
                             }
                             this.setWonLostButtonText();
+                        })
+                        .catch(error => {
+                            console.error('Error loading kanban data:', error);
+                            this.isLoading = false;
                         });
                 },
 
@@ -546,8 +566,10 @@
                     this.stageLeads = {};
                     this.get()
                         .then(response => {
-                            for (let [sortOrder, data] of Object.entries(response.data)) {
-                                this.stageLeads[sortOrder] = data;
+                            if (response && response.data) {
+                                for (let [sortOrder, data] of Object.entries(response.data)) {
+                                    this.stageLeads[sortOrder] = data;
+                                }
                             }
                         })
                         .catch(error => {
@@ -572,8 +594,10 @@
                     this.stageLeads = {};
                     this.get()
                         .then(response => {
-                            for (let [sortOrder, data] of Object.entries(response.data)) {
-                                this.stageLeads[sortOrder] = data;
+                            if (response && response.data) {
+                                for (let [sortOrder, data] of Object.entries(response.data)) {
+                                    this.stageLeads[sortOrder] = data;
+                                }
                             }
                         })
                         .catch(error => {
@@ -597,13 +621,15 @@
 
                     this.get(paramsWithExclude)
                         .then(response => {
-                            for (let [sortOrder, data] of Object.entries(response.data)) {
-                                if (! this.stageLeads[sortOrder]) {
-                                    this.stageLeads[sortOrder] = data;
-                                } else {
-                                    this.stageLeads[sortOrder].leads.data = this.stageLeads[sortOrder].leads.data.concat(data.leads.data);
+                            if (response && response.data) {
+                                for (let [sortOrder, data] of Object.entries(response.data)) {
+                                    if (! this.stageLeads[sortOrder]) {
+                                        this.stageLeads[sortOrder] = data;
+                                    } else {
+                                        this.stageLeads[sortOrder].leads.data = this.stageLeads[sortOrder].leads.data.concat(data.leads.data);
 
-                                    this.stageLeads[sortOrder].leads.meta = data.leads.meta;
+                                        this.stageLeads[sortOrder].leads.meta = data.leads.meta;
+                                    }
                                 }
                             }
                         });
@@ -855,8 +881,10 @@
                     this.stageLeads = {};
                     this.get()
                         .then(response => {
-                            for (let [sortOrder, data] of Object.entries(response.data)) {
-                                this.stageLeads[sortOrder] = data;
+                            if (response && response.data) {
+                                for (let [sortOrder, data] of Object.entries(response.data)) {
+                                    this.stageLeads[sortOrder] = data;
+                                }
                             }
                         })
                         .catch(error => {

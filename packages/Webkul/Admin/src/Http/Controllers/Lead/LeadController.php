@@ -38,6 +38,7 @@ use Webkul\Tag\Repositories\TagRepository;
 use Webkul\User\Repositories\UserRepository;
 use InvalidArgumentException;
 use App\Services\LeadValidationService;
+use App\Services\PipelineCookieService;
 
 class LeadController extends Controller
 {
@@ -65,7 +66,8 @@ class LeadController extends Controller
         protected StageRepository     $stageRepository,
         protected LeadRepository      $leadRepository,
         protected ProductRepository   $productRepository,
-        protected PersonRepository    $personRepository
+        protected PersonRepository    $personRepository,
+        protected PipelineCookieService $pipelineCookieService
     )
     {
         request()->request->add(['entity_type' => 'leads']);
@@ -80,10 +82,20 @@ class LeadController extends Controller
             return datagrid(LeadDataGrid::class)->process();
         }
 
-        if (request('pipeline_id')) {
-            $pipeline = $this->pipelineRepository->find(request('pipeline_id'));
-        } else {
+        // Get effective pipeline ID (URL parameter takes precedence over cookie)
+        $effectivePipelineId = $this->pipelineCookieService->getEffectivePipelineId(request('pipeline_id'));
+        
+        if ($effectivePipelineId) {
+            $pipeline = $this->pipelineRepository->find($effectivePipelineId);
+        }
+        
+        // Fall back to default pipeline if no valid pipeline found
+        if (!isset($pipeline) || !$pipeline) {
             $pipeline = $this->pipelineRepository->getDefaultPipeline();
+            // Set cookie for default pipeline
+            if ($pipeline) {
+                $this->pipelineCookieService->setLastSelectedPipelineId($pipeline->id);
+            }
         }
 
         return view('admin::leads.index', [
@@ -98,9 +110,15 @@ class LeadController extends Controller
     public function get(): JsonResponse
     {
         try {
-            if (request()->query('pipeline_id')) {
-                $pipeline = $this->pipelineRepository->find(request()->query('pipeline_id'));
-            } else {
+            // Get effective pipeline ID (URL parameter takes precedence over cookie)
+            $effectivePipelineId = $this->pipelineCookieService->getEffectivePipelineId(request()->query('pipeline_id'));
+            
+            if ($effectivePipelineId) {
+                $pipeline = $this->pipelineRepository->find($effectivePipelineId);
+            }
+            
+            // Fall back to default pipeline if no valid pipeline found
+            if (!isset($pipeline) || !$pipeline) {
                 $pipeline = $this->pipelineRepository->getDefaultPipeline();
             }
 
@@ -219,9 +237,12 @@ class LeadController extends Controller
         $userGroupNames = $user->groups->pluck('name')->toArray();
         $defaultDepartmentId = Department::mapGroupToDepartmentId($userGroupNames);
 
-        // Determine pipeline and stage based on request parameters
+        // Get effective pipeline ID (URL parameter takes precedence over cookie)
+        $effectivePipelineId = $this->pipelineCookieService->getEffectivePipelineId(request('pipeline_id'));
+        
+        // Determine pipeline and stage based on request parameters and cookie
         $pipelineData = $this->determinePipelineForLead(
-            request('pipeline_id'),
+            $effectivePipelineId,
             request('stage_id'),
             $defaultDepartmentId
         );
@@ -253,6 +274,8 @@ class LeadController extends Controller
 
                 session()->flash('success', trans('admin::app.leads.create-success'));
 
+                // Set cookie to remember pipeline selection
+                $this->pipelineCookieService->setLastSelectedPipelineId($leadPipelineId);
                 return redirect()->route('admin.leads.index', ['pipeline_id' => $leadPipelineId]);
             } catch (InvalidArgumentException $e) {
                 if (request()->ajax()) {
@@ -380,7 +403,10 @@ class LeadController extends Controller
             $userIds
             && !in_array($lead->user_id, $userIds)
         ) {
-            return redirect()->route('admin.leads.index');
+            // Get last selected pipeline from cookie to preserve selection
+            $lastPipelineId = $this->pipelineCookieService->getLastSelectedPipelineId();
+            $routeParams = $lastPipelineId ? ['pipeline_id' => $lastPipelineId] : [];
+            return redirect()->route('admin.leads.index', $routeParams);
         }
 
         return view('admin::leads.view', compact('lead'));
@@ -470,6 +496,8 @@ class LeadController extends Controller
             if (request()->has('closed_at')) {
                 return redirect()->back();
             } else {
+                // Set cookie to remember pipeline selection
+                $this->pipelineCookieService->setLastSelectedPipelineId($data['lead_pipeline_id']);
                 return redirect()->route('admin.leads.index', ['pipeline_id' => $data['lead_pipeline_id']]);
             }
         } catch (InvalidArgumentException $e) {

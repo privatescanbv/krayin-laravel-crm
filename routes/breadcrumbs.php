@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\PipelineCookieService;
 use Diglactic\Breadcrumbs\Breadcrumbs;
 use Diglactic\Breadcrumbs\Generator as BreadcrumbTrail;
 
@@ -11,7 +12,17 @@ Breadcrumbs::for('dashboard', function (BreadcrumbTrail $trail) {
 // Dashboard > Leads
 Breadcrumbs::for('leads', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');
-    $trail->push(trans('admin::app.layouts.leads'), route('admin.leads.index'));
+
+    // Get last selected pipeline from cookie to preserve selection
+    $pipelineCookieService = app(PipelineCookieService::class);
+    $lastPipelineId = $pipelineCookieService->getLastSelectedPipelineId();
+
+    $routeParams = [];
+    if ($lastPipelineId) {
+        $routeParams['pipeline_id'] = $lastPipelineId;
+    }
+
+    $trail->push(trans('admin::app.layouts.leads'), route('admin.leads.index', $routeParams));
 });
 
 // Dashboard > Leads > Create

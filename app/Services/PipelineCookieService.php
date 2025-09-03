@@ -8,6 +8,7 @@ use Webkul\Lead\Repositories\PipelineRepository;
 class PipelineCookieService
 {
     const COOKIE_NAME = 'last_selected_pipeline_id';
+
     const COOKIE_DURATION = 60 * 24 * 30; // 30 days in minutes
 
     public function __construct(
@@ -16,28 +17,27 @@ class PipelineCookieService
 
     /**
      * Get the last selected pipeline ID from cookie
-     *
-     * @return int|null
      */
     public function getLastSelectedPipelineId(): ?int
     {
         try {
             $pipelineId = request()->cookie(self::COOKIE_NAME);
-            
-            if (!$pipelineId || !is_numeric($pipelineId)) {
+
+            if (! $pipelineId || ! is_numeric($pipelineId)) {
                 return null;
             }
 
             // Validate that the pipeline still exists
             $pipeline = $this->pipelineRepository->find((int) $pipelineId);
-            
+
             return $pipeline ? (int) $pipelineId : null;
         } catch (\Exception $e) {
             // Log error but don't break the application
             \Illuminate\Support\Facades\Log::warning('Error in getLastSelectedPipelineId', [
-                'error' => $e->getMessage(),
-                'pipelineId' => $pipelineId ?? 'null'
+                'error'      => $e->getMessage(),
+                'pipelineId' => $pipelineId ?? 'null',
             ]);
+
             return null;
         }
     }
@@ -45,7 +45,6 @@ class PipelineCookieService
     /**
      * Set the last selected pipeline ID in cookie
      *
-     * @param int $pipelineId
      * @return \Illuminate\Cookie\CookieJar
      */
     public function setLastSelectedPipelineId(int $pipelineId)
@@ -53,8 +52,8 @@ class PipelineCookieService
         try {
             // Validate that the pipeline exists before setting cookie
             $pipeline = $this->pipelineRepository->find($pipelineId);
-            
-            if (!$pipeline) {
+
+            if (! $pipeline) {
                 return null;
             }
 
@@ -72,9 +71,10 @@ class PipelineCookieService
         } catch (\Exception $e) {
             // Log error but don't break the application
             \Illuminate\Support\Facades\Log::warning('Error in setLastSelectedPipelineId', [
-                'error' => $e->getMessage(),
-                'pipelineId' => $pipelineId
+                'error'      => $e->getMessage(),
+                'pipelineId' => $pipelineId,
             ]);
+
             return null;
         }
     }
@@ -82,8 +82,7 @@ class PipelineCookieService
     /**
      * Get the effective pipeline ID considering URL parameter and cookie
      *
-     * @param string|int|null $requestPipelineId Pipeline ID from request parameter
-     * @return int|null
+     * @param  string|int|null  $requestPipelineId  Pipeline ID from request parameter
      */
     public function getEffectivePipelineId($requestPipelineId = null): ?int
     {
@@ -97,6 +96,7 @@ class PipelineCookieService
             if ($requestPipelineId) {
                 // Set cookie to remember this choice
                 $this->setLastSelectedPipelineId($requestPipelineId);
+
                 return $requestPipelineId;
             }
 
@@ -105,17 +105,16 @@ class PipelineCookieService
         } catch (\Exception $e) {
             // Log error but don't break the application
             \Illuminate\Support\Facades\Log::warning('Error in getEffectivePipelineId', [
-                'error' => $e->getMessage(),
-                'requestPipelineId' => $requestPipelineId
+                'error'             => $e->getMessage(),
+                'requestPipelineId' => $requestPipelineId,
             ]);
+
             return null;
         }
     }
 
     /**
      * Clear the pipeline cookie
-     *
-     * @return void
      */
     public function clearPipelineCookie(): void
     {

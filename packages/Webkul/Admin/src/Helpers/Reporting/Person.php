@@ -45,14 +45,15 @@ class Person extends AbstractReporting
     }
 
     /**
-     * Gets top customers by number of won leads.
+     * Returns top customers by revenue.
      *
      * @param  int  $limit
+     * @return \Illuminate\Support\Collection
      */
     public function getTopCustomersByRevenue($limit = null): Collection
     {
-        // Get won stage IDs
-        $wonStageIds = DB::table('lead_pipeline_stages')->where('code', 'won')->pluck('id')->toArray();
+        // Get all won stage IDs (including won-hernia, etc.)
+        $wonStageIds = DB::table('lead_pipeline_stages')->where('code', 'like', '%won%')->pluck('id')->toArray();
 
         $items = $this->personRepository
             ->resetModel()

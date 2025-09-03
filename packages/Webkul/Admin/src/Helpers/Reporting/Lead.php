@@ -39,9 +39,11 @@ class Lead extends AbstractReporting
     ) {
         $this->allStageIds = $this->stageRepository->pluck('id')->toArray();
 
-        $this->wonStageIds = $this->stageRepository->where('code', 'won')->pluck('id')->toArray();
+        // Find all won stages (including won-hernia, etc.)
+        $this->wonStageIds = $this->stageRepository->where('code', 'like', '%won%')->pluck('id')->toArray();
 
-        $this->lostStageIds = $this->stageRepository->where('code', 'lost')->pluck('id')->toArray();
+        // Find all lost stages (including lost-hernia, etc.)
+        $this->lostStageIds = $this->stageRepository->where('code', 'like', '%lost%')->pluck('id')->toArray();
 
         parent::__construct();
     }

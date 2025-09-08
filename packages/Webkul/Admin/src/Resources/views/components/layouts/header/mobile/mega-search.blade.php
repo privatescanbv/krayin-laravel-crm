@@ -128,11 +128,11 @@
                                             <!-- Details -->
                                             <div class="grid place-content-start gap-1.5">
                                                 <p class="text-base font-semibold text-gray-600 dark:text-gray-300">
-                                                    @{{ lead.title }}
+                                                    @{{ lead.name }}
                                                 </p>
 
                                                 <p class="text-gray-500">
-                                                    @{{ lead.description }}
+                                                    @{{ lead.updated_at }}
                                                 </p>
                                             </div>
                                         </div>
@@ -143,7 +143,7 @@
                             <div class="flex border-t p-3 dark:border-gray-800">
                                 <template v-if="searchedResults.leads.length">
                                     <a
-                                        :href="'{{ route('admin.leads.index') }}?search=:query'.replace(':query', searchTerm)"
+                                        :href="`${'{{ route('admin.leads.index') }}'}?search=${encodeURIComponent(params.search)}&searchFields=${encodeURIComponent(params.searchFields)}&searchJoin=or`"
                                         class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
                                     >
                                         @{{ `@lang('admin::app.components.layouts.header.mega-search.explore-all-matching-leads')`.replace(':query', searchTerm).replace(':count', searchedResults.leads.length) }}
@@ -212,57 +212,6 @@
                             </div>
                         </template>
                     </template>
-
-                    <template v-if="activeTab == 'quotes'">
-                        <template v-if="isLoading">
-                            <x-admin::shimmer.header.mega-search.quotes />
-                        </template>
-
-                        <template v-else>
-                            <div class="grid max-h-[400px] overflow-y-auto">
-                                <template v-for="quote in searchedResults.quotes">
-                                    <a
-                                        :href="'{{ route('admin.quotes.edit', ':id') }}'.replace(':id', quote.id)"
-                                        class="flex cursor-pointer justify-between gap-2.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-950"
-                                    >
-                                        <!-- Left Information -->
-                                        <div class="flex gap-2.5">
-                                            <!-- Details -->
-                                            <div class="grid place-content-start gap-1.5">
-                                                <p class="text-base font-semibold text-gray-600 dark:text-gray-300">
-                                                    @{{ quote.subject }}
-                                                </p>
-
-                                                <p class="text-gray-500">
-                                                    @{{ quote.description }}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </a>
-                                </template>
-                            </div>
-
-                            <div class="flex border-t p-3 dark:border-gray-800">
-                                <template v-if="searchedResults.quotes.length">
-                                    <a
-                                        :href="'{{ route('admin.quotes.index') }}?search=:query'.replace(':query', searchTerm)"
-                                        class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
-                                    >
-                                        @{{ `@lang('admin::app.components.layouts.header.mega-search.explore-all-matching-quotes')`.replace(':query', searchTerm).replace(':count', searchedResults.quotes.length) }}
-                                    </a>
-                                </template>
-
-                                <template v-else>
-                                    <a
-                                        href="{{ route('admin.quotes.index') }}"
-                                        class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
-                                    >
-                                        @lang('admin::app.components.layouts.header.mega-search.explore-all-quotes')
-                                    </a>
-                                </template>
-                            </div>
-                        </template>
-                    </template>
                 </div>
             </div>
         </div>
@@ -288,41 +237,20 @@
                             endpoint: "{{ route('admin.leads.search') }}",
                             query_params: [
                                 {
-                                    search: 'title',
-                                    searchFields: 'title:like',
+                                    search: 'name',
+                                    searchFields: 'first_name:like;last_name:like;married_name:like',
                                 },
                                 {
                                     search: 'user.name',
                                     searchFields: 'user.name:like',
                                 },
                                 {
-                                    search: 'person.name',
-                                    searchFields: 'person.name:like',
-                                },
-                            ],
-                        },
-
-                        quotes: {
-                            key: 'quotes',
-                            title: "@lang('admin::app.components.layouts.header.mega-search.tabs.quotes')",
-                            is_active: false,
-                            endpoint: "{{ route('admin.quotes.search') }}",
-                            query_params: [
-                                {
-                                    search: 'subject',
-                                    searchFields: 'subject:like',
+                                    search: 'email',
+                                    searchFields: 'emails:like',
                                 },
                                 {
-                                    search: 'description',
-                                    searchFields: 'description:like',
-                                },
-                                {
-                                    search: 'user.name',
-                                    searchFields: 'user.name:like',
-                                },
-                                {
-                                    search: 'person.name',
-                                    searchFields: 'person.name:like',
+                                    search: 'phone',
+                                    searchFields: 'phones:like',
                                 },
                             ],
                         },
@@ -356,19 +284,19 @@
                             query_params: [
                                 {
                                     search: 'name',
-                                    searchFields: 'name:like',
-                                },
-                                {
-                                    search: 'job_title',
-                                    searchFields: 'job_title:like',
-                                },
-                                {
-                                    search: 'user.name',
-                                    searchFields: 'user.name:like',
+                                    searchFields: 'first_name:like;last_name:like;married_name:like',
                                 },
                                 {
                                     search: 'organization.name',
                                     searchFields: 'organization.name:like',
+                                },
+                                {
+                                    search: 'email',
+                                    searchFields: 'emails:like',
+                                },
+                                {
+                                    search: 'phone',
+                                    searchFields: 'phones:like',
                                 },
                             ],
                         },
@@ -380,7 +308,6 @@
 
                     searchedResults: {
                         leads: [],
-                        quotes: [],
                         products: [],
                         persons: []
                     },

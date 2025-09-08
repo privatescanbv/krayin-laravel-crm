@@ -84,11 +84,11 @@ class LeadController extends Controller
 
         // Get effective pipeline ID (URL parameter takes precedence over cookie)
         $effectivePipelineId = $this->pipelineCookieService->getEffectivePipelineId(request('pipeline_id'));
-        
+
         if ($effectivePipelineId) {
             $pipeline = $this->pipelineRepository->find($effectivePipelineId);
         }
-        
+
         // Fall back to default pipeline if no valid pipeline found
         if (!isset($pipeline) || !$pipeline) {
             $pipeline = $this->pipelineRepository->getDefaultPipeline();
@@ -112,11 +112,11 @@ class LeadController extends Controller
         try {
             // Get effective pipeline ID (URL parameter takes precedence over cookie)
             $effectivePipelineId = $this->pipelineCookieService->getEffectivePipelineId(request()->query('pipeline_id'));
-            
+
             if ($effectivePipelineId) {
                 $pipeline = $this->pipelineRepository->find($effectivePipelineId);
             }
-            
+
             // Fall back to default pipeline if no valid pipeline found
             if (!isset($pipeline) || !$pipeline) {
                 $pipeline = $this->pipelineRepository->getDefaultPipeline();
@@ -239,7 +239,7 @@ class LeadController extends Controller
 
         // Get effective pipeline ID (URL parameter takes precedence over cookie)
         $effectivePipelineId = $this->pipelineCookieService->getEffectivePipelineId(request('pipeline_id'));
-        
+
         // Determine pipeline and stage based on request parameters and cookie
         $pipelineData = $this->determinePipelineForLead(
             $effectivePipelineId,
@@ -522,7 +522,7 @@ class LeadController extends Controller
 
         $attributes = $this->attributeRepository->findWhere([
             'entity_type' => 'leads',
-            ['code', 'NOTIN', ['title', 'description']],
+            ['code', 'NOTIN', ['description']],
         ]);
 
         Event::dispatch('lead.update.before', $id);
@@ -623,8 +623,84 @@ class LeadController extends Controller
     /**
      * Search person results.
      */
-    public function search(): AnonymousResourceCollection
+    public function search(): AnonymousResourceCollection|JsonResponse
     {
+        // Normalize legacy search params: map `name` to first/last/married_name, preserve other tokens (e.g. user.name)
+        $search = request()->query('search', '');
+        $searchFields = request()->query('searchFields', '');
+
+        if ($search && str_contains($search, 'name:')) {
+            preg_match('/name:([^;]+);?/i', $search, $m);
+            $term = isset($m[1]) ? trim($m[1]) : '';
+            if ($term !== '') {
+                // Remove name:* from search tokens
+                $tokens = array_values(array_filter(array_map('trim', explode(';', $search))));
+                $tokens = array_values(array_filter($tokens, fn($t) => !str_starts_with($t, 'name:')));
+                // Append expanded fields
+                array_push($tokens, 'first_name:' . $term, 'last_name:' . $term, 'married_name:' . $term);
+                $newSearch = implode(';', $tokens) . ';';
+
+                // Build searchFields: remove name:like; ensure :like for expanded fields, keep others
+                $sfParts = array_values(array_filter(array_map('trim', explode(';', (string) $searchFields))));
+                $sfParts = array_values(array_filter($sfParts, fn($p) => !str_starts_with($p, 'name:')));
+                $need = ['first_name', 'last_name', 'married_name'];
+                $existing = array_map(fn($p) => explode(':', $p)[0] ?? $p, $sfParts);
+                foreach ($need as $nf) {
+                    if (!in_array($nf, $existing, true)) {
+                        $sfParts[] = $nf . ':like';
+                    }
+                }
+                $newSearchFields = implode(';', $sfParts) . ';';
+
+                // Force OR join so tokens are combined permissively
+                request()->merge([
+                    'search' => $newSearch,
+                    'searchFields' => $newSearchFields,
+                    'searchJoin' => 'or',
+                ]);
+            }
+        }
+
+        // Normalize convenience tokens for email/phone to underlying JSON columns
+        $search = request()->query('search', '');
+        if ($search && (str_contains($search, 'email:') || str_contains($search, 'phone:'))) {
+            $tokens = array_values(array_filter(array_map('trim', explode(';', $search))));
+            $normalized = [];
+            foreach ($tokens as $tok) {
+                if (str_starts_with($tok, 'email:')) {
+                    $term = substr($tok, strlen('email:'));
+                    // map to emails column
+                    $normalized[] = 'emails:' . $term;
+                } elseif (str_starts_with($tok, 'phone:')) {
+                    $term = substr($tok, strlen('phone:'));
+                    // map to phones column
+                    $normalized[] = 'phones:' . $term;
+                } else {
+                    $normalized[] = $tok;
+                }
+            }
+            request()->merge(['search' => implode(';', $normalized) . ';']);
+            // ensure like conditions exist for emails/phones in searchFields if present
+            $sf = request()->query('searchFields', '');
+            if ($sf) {
+                $parts = array_values(array_filter(array_map('trim', explode(';', $sf))));
+                $fields = array_map(fn($p) => explode(':', $p)[0] ?? $p, $parts);
+                foreach (['emails', 'phones'] as $f) {
+                    if (!in_array($f, $fields, true)) {
+                        $parts[] = $f . ':like';
+                    }
+                }
+                request()->merge(['searchFields' => implode(';', $parts) . ';']);
+            }
+            // Always OR join for convenience tokens
+            request()->merge(['searchJoin' => 'or']);
+        }
+
+        // Validate requested search fields against repository's searchable fields
+        if ($resp = $this->validateSearchFieldsAgainstAllowed($this->leadRepository->getFieldsSearchable())) {
+            return $resp;
+        }
+
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $results = $this->leadRepository
                 ->pushCriteria(app(RequestCriteria::class))
@@ -636,6 +712,43 @@ class LeadController extends Controller
         }
 
         return LeadResource::collection($results);
+    }
+
+    /**
+     * Validate requested search fields against repository definitions.
+     * Returns JsonResponse(400) on invalid, otherwise null.
+     */
+    private function validateSearchFieldsAgainstAllowed(array $fieldsSearchable): ?JsonResponse
+    {
+        $requestedFieldsParam = request()->query('searchFields', '');
+        if (empty($requestedFieldsParam)) {
+            return null;
+        }
+
+        $requestedFields = array_filter(explode(';', $requestedFieldsParam));
+        $requestedFieldNames = array_map(function ($f) {
+            $parts = explode(':', $f);
+            return $parts[0] ?? $f;
+        }, $requestedFields);
+
+        $allowed = [];
+        foreach ($fieldsSearchable as $key => $value) {
+            $allowed[] = is_int($key) ? $value : $key;
+        }
+
+        foreach ($requestedFieldNames as $field) {
+            if ($field === '') {
+                continue;
+            }
+            if (!in_array($field, $allowed, true)) {
+                return response()->json([
+                    'message' => 'Invalid search field',
+                    'field' => $field,
+                ], 400);
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -655,7 +768,7 @@ class LeadController extends Controller
             return response()->json([
                 'message' => trans('admin::app.leads.destroy-success'),
             ]);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return response()->json([
                 'message' => trans('admin::app.leads.destroy-failed'),
             ], 400);

@@ -362,6 +362,7 @@ return [
             'header' => [
                 'mega-search' => [
                     'title' => 'Mega Zoeken',
+                    'last-updated' => 'Laatst bijgewerkt',
 
                     'tabs' => [
                         'leads' => 'Leads',
@@ -1856,6 +1857,11 @@ return [
     ],
 
    'leads' => [
+       'common' => [
+           'organization' => [
+               'title' => 'Organisatie',
+           ],
+       ],
        'create-success' => 'Lead succesvol aangemaakt.',
        'update-success' => 'Leads succesvol bijgewerkt.',
        'update-failed' => 'Leads kunnen niet worden verwijderd.',

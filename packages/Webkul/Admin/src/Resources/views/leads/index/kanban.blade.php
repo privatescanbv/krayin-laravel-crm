@@ -506,6 +506,25 @@
                         exclude_won_lost: this.hideWonLost, // Performance optimization: exclude won/lost stages when hidden
                     };
 
+                    // Carry search params from URL (so Mega Search deep-linking preserves filters)
+                    try {
+                        const urlParams = new URLSearchParams(window.location.search);
+                        const qsSearch = urlParams.get('search');
+                        const qsSearchFields = urlParams.get('searchFields');
+                        const qsJoin = urlParams.get('searchJoin');
+                        if (qsSearch) params.search = qsSearch;
+                        if (qsSearchFields) params.searchFields = qsSearchFields;
+                        if (qsJoin) params.searchJoin = qsJoin;
+                        // If a search is present via deep-link, include won/lost to match mega search results
+                        if (qsSearch) {
+                            this.hideWonLost = false;
+                            params.exclude_won_lost = false;
+                            this.setWonLostButtonText();
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse search params from URL:', e);
+                    }
+
                     this.applied.filters.columns.forEach((column) => {
                         if (column.index === 'all') {
                             if (! column.value.length) {

@@ -287,6 +287,23 @@ class Lead extends Model implements LeadContract
     }
 
     /**
+     * Persons related to this lead (many-to-many via lead_persons).
+     */
+    public function persons()
+    {
+        return $this->belongsToMany(Person::class, 'lead_persons', 'lead_id', 'person_id');
+    }
+
+    /**
+     * Legacy alias to support filters like person.name used by RequestCriteria.
+     * Returns the same relation as persons().
+     */
+    public function person()
+    {
+        return $this->persons();
+    }
+
+    /**
      * Get the address that belongs to the lead.
      */
     public function address()

@@ -303,8 +303,67 @@ class PersonController extends Controller
     /**
      * Search person results.
      */
-    public function search(): JsonResource
+    public function search(): JsonResource|JsonResponse
     {
+        // Validate requested search fields
+        if ($resp = $this->validateSearchFieldsAgainstAllowed($this->personRepository->getFieldsSearchable())) {
+            return $resp;
+        }
+
+        // Normalize convenience tokens email:/phone: to underlying JSON columns and apply stricter matching
+        $rawSearch = (string) request()->query('search', '');
+        if ($rawSearch && (str_contains($rawSearch, 'email:') || str_contains($rawSearch, 'phone:'))) {
+            $tokens = array_values(array_filter(array_map('trim', explode(';', $rawSearch))));
+            $emailTerms = [];
+            $phoneTerms = [];
+            $kept = [];
+            foreach ($tokens as $tok) {
+                if (str_starts_with($tok, 'email:')) {
+                    $emailTerms[] = substr($tok, strlen('email:'));
+                } elseif (str_starts_with($tok, 'phone:')) {
+                    $phoneTerms[] = substr($tok, strlen('phone:'));
+                } else {
+                    $kept[] = $tok;
+                }
+            }
+
+            // Rebuild search without convenience tokens (they will be applied via scopeQuery)
+            request()->merge(['search' => ($kept ? implode(';', $kept) . ';' : '')]);
+
+            // Ensure searchFields include like for json columns if needed
+            $sf = (string) request()->query('searchFields', '');
+            $parts = array_values(array_filter(array_map('trim', explode(';', $sf))));
+            $fields = array_map(fn($p) => explode(':', $p)[0] ?? $p, $parts);
+            foreach (['emails', 'phones'] as $f) {
+                if (!in_array($f, $fields, true)) {
+                    $parts[] = $f . ':like';
+                }
+            }
+            if (!empty($parts)) {
+                request()->merge(['searchFields' => implode(';', $parts) . ';']);
+            }
+
+            // Apply stricter JSON matching via scopeQuery to limit false positives
+            if (!empty($emailTerms) || !empty($phoneTerms)) {
+                $this->personRepository->scopeQuery(function ($q) use ($emailTerms, $phoneTerms) {
+                    return $q->where(function ($qb) use ($emailTerms, $phoneTerms) {
+                        foreach ($emailTerms as $term) {
+                            $like = '%"value":"%' . str_replace(['%', '_'], ['\\%', '\\_'], $term) . '%"%';
+                            $qb->orWhere('emails', 'like', $like)
+                               ->orWhere('emails', 'like', '%' . $term . '%'); // fallback
+                        }
+                        foreach ($phoneTerms as $term) {
+                            $like = '%"value":"%' . str_replace(['%', '_'], ['\\%', '\\_'], $term) . '%"%';
+                            $qb->orWhere('phones', 'like', $like)
+                               ->orWhere('phones', 'like', '%' . $term . '%'); // fallback
+                        }
+                    });
+                });
+            }
+            // Prefer OR join semantics
+            request()->merge(['searchJoin' => 'or']);
+        }
+
         // Map incoming lookup term to RequestCriteria expectations (Contactpersoon zoeken)
         $searchTerm = trim((string) (request('search') ?? request('query') ?? request('term') ?? ''));
 
@@ -410,6 +469,43 @@ class PersonController extends Controller
         }
 
         return PersonResource::collection($persons);
+    }
+
+    /**
+     * Validate requested search fields against repository definitions.
+     * Returns JsonResponse(400) on invalid, otherwise null.
+     */
+    private function validateSearchFieldsAgainstAllowed(array $fieldsSearchable): ?JsonResponse
+    {
+        $requestedFieldsParam = request()->query('searchFields', '');
+        if (empty($requestedFieldsParam)) {
+            return null;
+        }
+
+        $requestedFields = array_filter(explode(';', $requestedFieldsParam));
+        $requestedFieldNames = array_map(function ($f) {
+            $parts = explode(':', $f);
+            return $parts[0] ?? $f;
+        }, $requestedFields);
+
+        $allowed = [];
+        foreach ($fieldsSearchable as $key => $value) {
+            $allowed[] = is_int($key) ? $value : $key;
+        }
+
+        foreach ($requestedFieldNames as $field) {
+            if ($field === '') {
+                continue;
+            }
+            if (!in_array($field, $allowed, true)) {
+                return response()->json([
+                    'message' => 'Invalid search field',
+                    'field' => $field,
+                ], 400);
+            }
+        }
+
+        return null;
     }
 
     /**

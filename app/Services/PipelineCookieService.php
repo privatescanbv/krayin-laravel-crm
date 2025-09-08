@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Log;
 use Webkul\Lead\Repositories\PipelineRepository;
 
 class PipelineCookieService
@@ -31,9 +33,9 @@ class PipelineCookieService
             $pipeline = $this->pipelineRepository->find((int) $pipelineId);
 
             return $pipeline ? (int) $pipelineId : null;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Log error but don't break the application
-            \Illuminate\Support\Facades\Log::warning('Error in getLastSelectedPipelineId', [
+            Log::warning('Error in getLastSelectedPipelineId', [
                 'error'      => $e->getMessage(),
                 'pipelineId' => $pipelineId ?? 'null',
             ]);
@@ -68,9 +70,9 @@ class PipelineCookieService
                     true   // httpOnly
                 )
             );
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Log error but don't break the application
-            \Illuminate\Support\Facades\Log::warning('Error in setLastSelectedPipelineId', [
+            Log::warning('Error in setLastSelectedPipelineId', [
                 'error'      => $e->getMessage(),
                 'pipelineId' => $pipelineId,
             ]);
@@ -102,9 +104,9 @@ class PipelineCookieService
 
             // Fall back to cookie value
             return $this->getLastSelectedPipelineId();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Log error but don't break the application
-            \Illuminate\Support\Facades\Log::warning('Error in getEffectivePipelineId', [
+            Log::warning('Error in getEffectivePipelineId', [
                 'error'             => $e->getMessage(),
                 'requestPipelineId' => $requestPipelineId,
             ]);

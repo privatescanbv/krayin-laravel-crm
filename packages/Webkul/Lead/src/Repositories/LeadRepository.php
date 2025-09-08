@@ -33,7 +33,12 @@ class LeadRepository extends Repository
         'status',
         'user_id',
         'user.name',
+        // Support both singular and plural relation keys for backward compatibility
+        'person.name',
         'persons.name',
+        // Searchable JSON/text columns
+        'emails',
+        'phones',
         'lead_source_id',
         'lead_type_id',
         'lead_pipeline_id',

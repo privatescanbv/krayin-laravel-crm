@@ -39,6 +39,7 @@ use Webkul\User\Repositories\UserRepository;
 use InvalidArgumentException;
 use App\Services\LeadValidationService;
 use App\Services\PipelineCookieService;
+use App\Services\LeadStatusTransitionValidator;
 
 class LeadController extends Controller
 {
@@ -575,6 +576,20 @@ class LeadController extends Controller
             ->where('id', $data['lead_pipeline_stage_id'])
             ->firstOrFail();
 
+        // Validate status transition if stage is being changed
+        if (isset($data['lead_pipeline_stage_id']) && 
+            $data['lead_pipeline_stage_id'] != $lead->lead_pipeline_stage_id) {
+            
+            try {
+                LeadStatusTransitionValidator::validateTransition($lead, $data['lead_pipeline_stage_id']);
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                return response()->json([
+                    'message' => 'Status transitie validatie gefaald',
+                    'errors' => $e->errors(),
+                ], 422);
+            }
+        }
+
         Event::dispatch('lead.update.before', $leadId);
 
         $lead = $this->leadRepository->update(
@@ -601,6 +616,16 @@ class LeadController extends Controller
         $lead->pipeline->stages()
             ->where('id', $nextPipelineStageId)
             ->firstOrFail();
+
+        // Validate status transition
+        try {
+            LeadStatusTransitionValidator::validateTransition($lead, (int)$nextPipelineStageId);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'message' => 'Status transitie validatie gefaald',
+                'errors' => $e->errors(),
+            ], 422);
+        }
 
         Event::dispatch('lead.update.before', $leadId);
 

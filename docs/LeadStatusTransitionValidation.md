@@ -1,0 +1,234 @@
+# Lead Status Transition Validation
+
+Dit document beschrijft het validatiemechanisme voor status transities in het Lead systeem.
+
+## Overzicht
+
+Het systeem maakt het mogelijk om validatieregels te definiëren die worden uitgevoerd wanneer een lead van de ene status naar de andere wordt verplaatst. Dit voorkomt dat leads in onjuiste staten terechtkomen en zorgt voor data-integriteit.
+
+## Architectuur
+
+### 1. LeadStatusTransitionValidator Service
+
+De `LeadStatusTransitionValidator` service beheert alle validatieregels voor status transities.
+
+**Locatie:** `app/Services/LeadStatusTransitionValidator.php`
+
+**Belangrijkste methoden:**
+- `validateTransition(Lead $lead, int $newStageId)` - Valideert een status transitie
+- `addTransitionRule(string $fromStageCode, string $toStageCode, array $rules)` - Voegt een validatieregel toe
+- `removeTransitionRule(string $fromStageCode, string $toStageCode)` - Verwijdert een validatieregel
+
+### 2. Lead Model Integration
+
+Het `Lead` model is uitgebreid met validatie:
+- `update()` methode controleert automatisch status transities
+- `updateStage()` methode voor directe stage updates met validatie
+
+### 3. PipelineSeeder Configuration
+
+Validatieregels worden geconfigureerd in de `PipelineSeeder` via de `configureStatusTransitionValidations()` methode.
+
+## Configuratie
+
+### Basis Configuratie
+
+Validatieregels worden gedefinieerd in de `PipelineSeeder`:
+
+```php
+private function configureStatusTransitionValidations(): void
+{
+    // Voorbeeld: Minimaal 1 persoon vereist
+    LeadStatusTransitionValidator::addTransitionRule(
+        'klant-adviseren-start',
+        'klant-adviseren-opvolgen',
+        [
+            'min_persons' => 1,
+            'message' => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
+        ]
+    );
+}
+```
+
+### Ondersteunde Validatie Types
+
+#### 1. Minimum Aantal Personen
+```php
+[
+    'min_persons' => 1,
+    'message' => 'Minimaal 1 persoon vereist.',
+]
+```
+
+#### 2. Verplichte Velden
+```php
+[
+    'required_fields' => ['first_name', 'last_name', 'emails'],
+    'message' => 'Naam en email zijn verplicht.',
+]
+```
+
+#### 3. Custom Validatie
+```php
+[
+    'custom_validation' => function($lead) {
+        $errors = [];
+        if (!$lead->quotes()->count()) {
+            $errors[] = 'Er moet minimaal 1 offerte zijn.';
+        }
+        return $errors;
+    },
+    'message' => 'Custom validatie fout.',
+]
+```
+
+## Gebruik
+
+### Automatische Validatie
+
+Validatie gebeurt automatisch bij:
+- `$lead->update(['lead_pipeline_stage_id' => $newStageId])`
+- `$lead->updateStage($newStageId)`
+- API calls via `LeadController`
+
+### Handmatige Validatie
+
+```php
+use App\Services\LeadStatusTransitionValidator;
+
+try {
+    LeadStatusTransitionValidator::validateTransition($lead, $newStageId);
+    // Transitie is geldig
+} catch (\Illuminate\Validation\ValidationException $e) {
+    // Transitie is ongeldig
+    $errors = $e->errors();
+}
+```
+
+### Runtime Configuratie
+
+```php
+// Voeg een regel toe
+LeadStatusTransitionValidator::addTransitionRule(
+    'from-stage',
+    'to-stage',
+    ['min_persons' => 2]
+);
+
+// Verwijder een regel
+LeadStatusTransitionValidator::removeTransitionRule(
+    'from-stage',
+    'to-stage'
+);
+
+// Controleer of een regel bestaat
+$hasRule = LeadStatusTransitionValidator::hasTransitionRule(
+    'from-stage',
+    'to-stage'
+);
+```
+
+## Voorbeelden
+
+### Voorbeeld 1: Minimaal 1 Persoon
+
+```php
+LeadStatusTransitionValidator::addTransitionRule(
+    'klant-adviseren-start',
+    'klant-adviseren-opvolgen',
+    [
+        'min_persons' => 1,
+        'message' => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
+    ]
+);
+```
+
+### Voorbeeld 2: Verplichte Velden
+
+```php
+LeadStatusTransitionValidator::addTransitionRule(
+    'nieuwe-aanvraag-kwalificeren',
+    'klant-adviseren-start',
+    [
+        'required_fields' => ['first_name', 'last_name', 'emails'],
+        'message' => 'Voor de status "Klant adviseren" zijn naam en email verplicht.',
+    ]
+);
+```
+
+### Voorbeeld 3: Custom Validatie
+
+```php
+LeadStatusTransitionValidator::addTransitionRule(
+    'klant-adviseren-opvolgen',
+    'won',
+    [
+        'custom_validation' => function($lead) {
+            $errors = [];
+            if (!$lead->quotes()->count()) {
+                $errors[] = 'Er moet minimaal 1 offerte zijn voor deze lead.';
+            }
+            if (!$lead->user_id) {
+                $errors[] = 'Er moet een verantwoordelijke gebruiker zijn toegewezen.';
+            }
+            return $errors;
+        },
+        'message' => 'Voor het winnen van een lead zijn offertes en een verantwoordelijke vereist.',
+    ]
+);
+```
+
+## Error Handling
+
+Wanneer een validatie faalt, wordt een `ValidationException` gegooid met de volgende structuur:
+
+```php
+[
+    'status_transition' => [
+        'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
+        // ... andere foutmeldingen
+    ]
+]
+```
+
+## Testing
+
+Tests zijn beschikbaar in `tests/Feature/LeadStatusTransitionValidationTest.php`:
+
+```bash
+php artisan test tests/Feature/LeadStatusTransitionValidationTest.php
+```
+
+## Best Practices
+
+1. **Definieer regels in PipelineSeeder**: Houd validatieregels gecentraliseerd
+2. **Gebruik duidelijke foutmeldingen**: Help gebruikers begrijpen wat er mis is
+3. **Test je validaties**: Zorg voor uitgebreide test coverage
+4. **Documenteer complexe regels**: Leg custom validaties uit in comments
+5. **Performance**: Houd custom validaties licht - vermijd zware database queries
+
+## Uitbreiding
+
+Het systeem is ontworpen om eenvoudig uit te breiden:
+
+1. **Nieuwe validatie types**: Voeg nieuwe validatie opties toe aan `LeadStatusTransitionValidator`
+2. **Conditional validaties**: Gebruik custom validatie voor complexe logica
+3. **Integration met workflows**: Koppel validaties aan workflow events
+4. **UI feedback**: Toon validatiefouten in de frontend
+
+## Troubleshooting
+
+### Validatie werkt niet
+- Controleer of de regel correct is gedefinieerd in `PipelineSeeder`
+- Verificeer dat de stage codes exact overeenkomen
+- Check of de seeder is uitgevoerd
+
+### Performance issues
+- Optimaliseer custom validaties
+- Overweeg caching voor zware validaties
+- Monitor database queries in custom validaties
+
+### Foutmeldingen
+- Controleer de `message` configuratie
+- Verificeer dat alle benodigde data beschikbaar is
+- Check de lead relaties (persons, quotes, etc.)

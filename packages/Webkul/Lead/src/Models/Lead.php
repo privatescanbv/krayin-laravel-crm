@@ -26,6 +26,7 @@ use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
 use Database\Factories\LeadFactory;
 use App\Models\Address;
+use App\Services\LeadStatusTransitionValidator;
 
 class Lead extends Model implements LeadContract
 {
@@ -525,5 +526,41 @@ class Lead extends Model implements LeadContract
     public function getDefaultGroupId(): int
     {
         return Department::getGroupIdForLead($this);
+    }
+
+    /**
+     * Override the update method to validate status transitions.
+     * 
+     * @param array $attributes
+     * @param array $options
+     * @return bool
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function update(array $attributes = [], array $options = [])
+    {
+        // Check if lead_pipeline_stage_id is being updated
+        if (isset($attributes['lead_pipeline_stage_id']) && 
+            $attributes['lead_pipeline_stage_id'] != $this->lead_pipeline_stage_id) {
+            
+            // Validate the status transition
+            LeadStatusTransitionValidator::validateTransition($this, $attributes['lead_pipeline_stage_id']);
+        }
+
+        return parent::update($attributes, $options);
+    }
+
+    /**
+     * Update the lead's stage with validation.
+     * 
+     * @param int $newStageId
+     * @return bool
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function updateStage(int $newStageId): bool
+    {
+        // Validate the status transition
+        LeadStatusTransitionValidator::validateTransition($this, $newStageId);
+        
+        return $this->update(['lead_pipeline_stage_id' => $newStageId]);
     }
 }

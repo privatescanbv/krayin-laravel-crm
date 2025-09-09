@@ -48,18 +48,13 @@
         const url = '{{ route('admin.activities.call-statuses.store', $activity->id) }}';
         const csrfToken = '{{ csrf_token() }}';
         
-        console.log('[call-status] Setting up event delegation');
-        
-        // Use event delegation - listen on document for clicks on our button
+        // Use event delegation to handle button clicks
         document.addEventListener('click', async function(e) {
-            // Check if the clicked element is our submit button
             if (e.target && e.target.id === 'call-status-submit') {
-                console.log('[call-status] Button clicked via delegation!', e.target);
                 e.preventDefault();
                 e.stopPropagation();
                 
                 const form = document.getElementById('call-status-form');
-                console.log('[call-status] form found:', !!form);
                 if (!form) {
                     alert('Form niet gevonden');
                     return;
@@ -67,7 +62,6 @@
                 
                 const statusEl = form.querySelector('[name="status"]');
                 const omschrEl = form.querySelector('[name="omschrijving"]');
-                console.log('[call-status] elements found:', { statusEl: !!statusEl, omschrEl: !!omschrEl });
                 if (!statusEl || !omschrEl) {
                     alert('Form velden niet gevonden');
                     return;
@@ -75,8 +69,6 @@
 
                 const status = statusEl.value;
                 const omschrijving = omschrEl.value;
-
-                console.log('[call-status] Sending request:', { status, omschrijving, url });
 
                 try {
                     const res = await fetch(url, {
@@ -91,17 +83,16 @@
                         body: JSON.stringify({ status, omschrijving })
                     });
 
-                    console.log('[call-status] Response status:', res.status, res.statusText);
-
                     if (!res.ok) {
                         let message = 'Toevoegen mislukt';
-                        try { const err = await res.json(); message = err.message || message; } catch (_) {}
-                        console.log('[call-status] Error response:', message);
+                        try { 
+                            const err = await res.json(); 
+                            message = err.message || message; 
+                        } catch (_) {}
                         throw new Error(message);
                     }
 
                     const data = await res.json();
-                    console.log('[call-status] Success response:', data);
                     const list = document.getElementById('call-status-list');
                     if (!list) {
                         alert('Lijst container niet gevonden');
@@ -109,17 +100,31 @@
                     }
                     
                     const item = data.data;
-                    const createdAt = item.created_at ? new Date(item.created_at).toLocaleString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+                    const createdAt = item.created_at ? 
+                        new Date(item.created_at).toLocaleString('nl-NL', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            year: 'numeric', 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                        }) : '';
 
                     const wrapper = document.createElement('div');
                     wrapper.className = 'rounded border p-2 text-sm dark:border-gray-700';
-                    wrapper.innerHTML = '<div class="flex items-center justify-between"><span class="font-medium">' + item.status + '</span><span class="text-xs text-gray-500">' + createdAt + '</span></div>' + (item.omschrijving ? '<div class="mt-1 text-gray-700 dark:text-gray-300">' + item.omschrijving + '</div>' : '');
+                    wrapper.innerHTML = 
+                        '<div class="flex items-center justify-between">' +
+                            '<span class="font-medium">' + item.status + '</span>' +
+                            '<span class="text-xs text-gray-500">' + createdAt + '</span>' +
+                        '</div>' +
+                        (item.omschrijving ? 
+                            '<div class="mt-1 text-gray-700 dark:text-gray-300">' + item.omschrijving + '</div>' : 
+                            ''
+                        );
+                    
                     list.prepend(wrapper);
-
                     form.reset();
-                    console.log('[call-status] Form reset, call status added successfully');
                 } catch (e) {
-                    console.error('[call-status] Error:', e);
+                    console.error('Call status error:', e);
                     alert(e.message);
                 }
             }

@@ -44,23 +44,15 @@
 
 @push('scripts')
 <script>
-    (function initCallStatus() {
+    document.addEventListener('DOMContentLoaded', function() {
         const url = '{{ route('admin.activities.call-statuses.store', $activity->id) }}';
         const csrfToken = '{{ csrf_token() }}';
         
-        const bind = () => {
-            const submitBtn = document.getElementById('call-status-submit');
-            console.log('[call-status] bind executed, submitBtn:', !!submitBtn, submitBtn);
-            if (!submitBtn) {
-                throw new Error('[call-status] submit button not found');
-            }
-
-            // Remove any existing listeners first
-            const newBtn = submitBtn.cloneNode(true);
-            submitBtn.parentNode.replaceChild(newBtn, submitBtn);
-
-            console.log('[call-status] adding click listener to new button');
-            newBtn.addEventListener('click', async (e) => {
+        const submitBtn = document.getElementById('call-status-submit');
+        console.log('[call-status] DOMContentLoaded, submitBtn:', !!submitBtn);
+        
+        if (submitBtn) {
+            submitBtn.addEventListener('click', async function(e) {
                 console.log('[call-status] button clicked', e);
                 e.preventDefault();
                 e.stopPropagation();
@@ -68,16 +60,16 @@
                 const form = document.getElementById('call-status-form');
                 console.log('[call-status] form found:', !!form);
                 if (!form) {
-                    throw new Error('[call-status] form element not found');
+                    alert('Form niet gevonden');
+                    return;
                 }
+                
                 const statusEl = form.querySelector('[name="status"]');
                 const omschrEl = form.querySelector('[name="omschrijving"]');
                 console.log('[call-status] elements found:', { statusEl: !!statusEl, omschrEl: !!omschrEl });
-                if (!statusEl) {
-                    throw new Error('[call-status] status select not found');
-                }
-                if (!omschrEl) {
-                    throw new Error('[call-status] omschrijving textarea not found');
+                if (!statusEl || !omschrEl) {
+                    alert('Form velden niet gevonden');
+                    return;
                 }
 
                 const status = statusEl.value;
@@ -105,8 +97,10 @@
                     const data = await res.json();
                     const list = document.getElementById('call-status-list');
                     if (!list) {
-                        throw new Error('[call-status] list container not found');
+                        alert('Lijst container niet gevonden');
+                        return;
                     }
+                    
                     const item = data.data;
                     const createdAt = item.created_at ? new Date(item.created_at).toLocaleString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
 
@@ -121,25 +115,7 @@
                     alert(e.message);
                 }
             });
-        };
-
-        // Try multiple approaches to ensure binding works
-        const tryBind = () => {
-            try {
-                bind();
-            } catch (e) {
-                console.error('[call-status] bind failed:', e);
-                // Retry after a short delay
-                setTimeout(tryBind, 100);
-            }
-        };
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', tryBind);
-        } else {
-            // Add a small delay to ensure DOM is fully ready
-            setTimeout(tryBind, 50);
         }
-    })();
+    });
 </script>
 @endpush

@@ -159,31 +159,6 @@ class ActivityDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index' => 'is_done',
-            'label' => trans('admin::app.activities.index.datagrid.is_done'),
-            'type' => 'string',
-            'dropdown_options' => $this->getBooleanDropdownOptions('yes_no'),
-            'searchable' => false,
-            'filterable' => true,
-            'filterable_type'  => 'dropdown', // <-- gewone dropdown, niet searchable
-            'filterable_options' => [
-                [
-                    'label' => 'Alles',
-                    'value' => '',
-                ],
-                [
-                    'label' => 'Afgerond',
-                    'value' => '1',
-                ],
-                [
-                    'label' => 'Open',
-                    'value' => '0',
-                ],
-            ],
-            'closure' => fn($row) => view('admin::activities.datagrid.is-done', compact('row'))->render(),
-        ]);
-
-        $this->addColumn([
             'index'      => 'title',
             'label'      => trans('admin::app.activities.index.datagrid.title'),
             'type'       => 'string',
@@ -417,35 +392,5 @@ class ActivityDataGrid extends DataGrid
             'condition' => fn ($row) => $row->user_id == $currentUserId,
         ]);
     }
-
-    /**
-     * Prepare mass actions.
-     */
-    public function prepareMassActions(): void
-    {
-
-        $this->addMassAction([
-            'icon'   => 'icon-delete',
-            'title'  => trans('admin::app.activities.index.datagrid.mass-delete'),
-            'method' => 'POST',
-            'url'    => route('admin.activities.mass_delete'),
-        ]);
-
-        $this->addMassAction([
-            'title'   => trans('admin::app.activities.index.datagrid.mass-update'),
-            'url'     => route('admin.activities.mass_update'),
-            'method'  => 'POST',
-            'options' => [
-                [
-                    'label' => trans('admin::app.activities.index.datagrid.done'),
-                    'value' => 1,
-                ], [
-                    'label' => trans('admin::app.activities.index.datagrid.not-done'),
-                    'value' => 0,
-                ],
-            ],
-        ]);
-    }
-
 
 }

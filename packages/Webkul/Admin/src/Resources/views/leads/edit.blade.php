@@ -238,6 +238,38 @@
                                 </div>
                             </div>
 
+                            <!-- MRI STATUS -->
+                            <div class="mb-0.5">
+                                <x-admin::form.control-group class="w-40">
+                                    <x-admin::form.control-group.label>
+                                        MRI
+                                    </x-admin::form.control-group.label>
+
+                                    @php
+                                        $current = old('mri_status', $lead->mri_status?->value); // 'mr' | 'mrs' | null
+                                    @endphp
+                                    @php
+                                        if ($current === null || $current === '') {
+                                            $current = $lead->mri_status?->value;
+                                        }
+                                    @endphp
+                                    <x-admin::form.control-group.control
+                                        type="select"
+                                        name="mri_status"
+                                        value="{{ $current }}"
+                                        :label="MRI"
+                                    >
+                                        <option value="">{{ __('Selecteer MRI status') }}</option>
+
+                                        @foreach (App\Enums\MRIStatus::cases() as $case)
+                                            <option value="{{ $case->value }}">{{ $case->label() }}</option>
+                                        @endforeach
+                                    </x-admin::form.control-group.control>
+
+                                    <x-admin::form.control-group.error control-name="mri_status"/>
+                                </x-admin::form.control-group>
+                            </div>
+
                             <!-- Combine Order Setting -->
                             <div class="mb-0.5">
                                 <x-admin::form.control-group>

@@ -104,7 +104,7 @@
                                                 :href="'{{ route('admin.workflow-leads.create') }}' + '?pipeline_stage_id=' + stage.id"
                                                 class="secondary-button"
                                             >
-                                                Create Workflow Lead
+                                                Sales order aanmaken
                                             </a>
                                         @endif
                                     </div>

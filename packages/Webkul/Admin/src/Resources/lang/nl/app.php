@@ -2334,7 +2334,7 @@ return [
         'data_transfer_info' => 'Beheer instellingen voor gegevensoverdracht van personen, producten en leads in de CRM',
         'product-groups' => 'Productgroepen',
         'products' => 'Producten',
-        'workflow-leads' => 'Backoffice',
+        'workflow-leads' => 'Sales',
     ],
 
     'user' => [

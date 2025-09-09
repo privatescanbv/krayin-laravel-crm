@@ -35,13 +35,13 @@ class UserSeeder extends Seeder
         $groups = [
             [
                 'id'            => $groupHerniaId,
-                'name'          => 'Hernia',
+                'name'          => Departments::HERNIA->value,
                 'description'   => 'Hernia team',
                 'department_id' => $herniaDepartment?->id,
             ],
             [
                 'id'            => $groupPrivatescanId,
-                'name'          => 'Privatescan',
+                'name'          => Departments::PRIVATESCAN->value,
                 'description'   => 'Privatescan team',
                 'department_id' => $privatescanDepartment?->id,
             ],

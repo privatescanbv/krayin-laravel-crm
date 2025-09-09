@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\MRIStatus;
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
 use App\Validators\ContactArrayValidator;
@@ -23,6 +24,7 @@ class LeadValidationService
             'last_name'           => 'required|string|max:255',
             'description'         => 'nullable|string',
             'salutation'          => ['nullable', new Enum(PersonSalutation::class)],
+            'mri_status'          => ['nullable', new Enum(MRIStatus::class)],
             'initials'            => 'nullable|string|max:50',
             'lastname_prefix'     => 'nullable|string|max:50',
             'married_name'        => 'nullable|string|max:255',

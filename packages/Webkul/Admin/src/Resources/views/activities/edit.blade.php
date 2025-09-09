@@ -255,23 +255,15 @@
                                     @lang('admin::app.activities.edit.type')
                                 </x-admin::form.control-group.label>
 
-                                <x-admin::form.control-group.control
-                                    type="select"
-                                    name="type"
-                                    id="type"
-                                    :value="old('type') ?? ($activity->type?->value ?? $activity->type)"
-                                    rules="required"
-                                    :label="trans('admin::app.activities.edit.type')"
-                                    :placeholder="trans('admin::app.activities.edit.type')"
-                                >
-                                    @foreach (App\Enums\ActivityType::cases() as $case)
-                                        @if ($case !== App\Enums\ActivityType::SYSTEM)
-                                            <option value="{{ $case->value }}">
-                                                @lang('admin::app.activities.edit.' . $case->value)
-                                            </option>
-                                        @endif
-                                    @endforeach
-                                </x-admin::form.control-group.control>
+                                @php
+                                    $currentTypeValue = old('type') ?? ($activity->type?->value ?? $activity->type);
+                                    $currentTypeLabel = trans('admin::app.activities.edit.' . $currentTypeValue);
+                                @endphp
+
+                                <div class="flex items-center justify-between rounded-md border px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:text-gray-200">
+                                    <span>{{ $currentTypeLabel }}</span>
+                                </div>
+                                <input type="hidden" name="type" value="{{ $currentTypeValue }}" />
 
                                 <x-admin::form.control-group.error control-name="type" />
                             </x-admin::form.control-group>

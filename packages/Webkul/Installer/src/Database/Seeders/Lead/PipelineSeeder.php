@@ -253,15 +253,15 @@ class PipelineSeeder extends BaseSeeder
         // Andere voorbeelden kunnen hier worden toegevoegd:
         
         // Voorbeeld: Validatie voor nieuwe-aanvraag-kwalificeren -> klant-adviseren-start
-        // Lead moet naam en email hebben
-        // LeadStatusTransitionValidator::addTransitionRule(
-        //     'nieuwe-aanvraag-kwalificeren',
-        //     'klant-adviseren-start',
-        //     [
-        //         'required_fields' => ['first_name', 'last_name', 'emails'],
-        //         'message' => 'Voor de status "Klant adviseren" zijn naam en email verplicht.',
-        //     ]
-        // );
+        // Lead moet naam hebben
+        LeadStatusTransitionValidator::addTransitionRule(
+            'nieuwe-aanvraag-kwalificeren',
+            'klant-adviseren-start',
+            [
+                'required_fields' => ['first_name', 'last_name'],
+                'message' => 'Voor de status "Klant adviseren" zijn voor- en achternaam verplicht.',
+            ]
+        );
 
         // Voorbeeld: Custom validatie voor won status
         // LeadStatusTransitionValidator::addTransitionRule(

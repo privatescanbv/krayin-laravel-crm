@@ -38,7 +38,7 @@
                 <select name="status" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
                     <option value="">Selecteer status...</option>
                     @foreach (CallStatus::cases() as $status)
-                        <option value="{{ $status->value }}">{{ $status->label() }}</option>
+                        <option value="{{ $status->value }}" {{ $status->value === 'spoken' ? 'selected' : '' }}>{{ $status->label() }}</option>
                     @endforeach
                 </select>
             </div>

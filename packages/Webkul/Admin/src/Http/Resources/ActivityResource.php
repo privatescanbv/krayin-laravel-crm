@@ -58,7 +58,7 @@ class ActivityResource extends JsonResource
                     'status' => is_string($cs->status) ? $cs->status : ($cs->status?->value ?? null),
                     'omschrijving' => $cs->omschrijving,
                     'created_at' => $cs->created_at,
-                    'created_by' => $cs->creator?->name,
+                    'creator' => $cs->creator ? ['name' => $cs->creator->name] : null,
                 ];
             });
         }

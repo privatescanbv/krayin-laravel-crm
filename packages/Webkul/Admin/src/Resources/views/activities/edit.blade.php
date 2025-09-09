@@ -85,22 +85,24 @@
                     </x-admin::form.control-group>
 
                     <!-- Comment -->
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>
-                            @lang('admin::app.activities.edit.comment')
-                        </x-admin::form.control-group.label>
+                    @if ($activity->type !== 'call')
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>
+                                @lang('admin::app.activities.edit.comment')
+                            </x-admin::form.control-group.label>
 
-                        <x-admin::form.control-group.control
-                            type="textarea"
-                            name="comment"
-                            id="comment"
-                            :value="old('comment') ?? $activity->comment"
-                            :label="trans('admin::app.activities.edit.comment')"
-                            :placeholder="trans('admin::app.activities.edit.comment')"
-                        />
+                            <x-admin::form.control-group.control
+                                type="textarea"
+                                name="comment"
+                                id="comment"
+                                :value="old('comment') ?? $activity->comment"
+                                :label="trans('admin::app.activities.edit.comment')"
+                                :placeholder="trans('admin::app.activities.edit.comment')"
+                            />
 
-                        <x-admin::form.control-group.error control-name="comment" />
-                    </x-admin::form.control-group>
+                            <x-admin::form.control-group.error control-name="comment" />
+                        </x-admin::form.control-group>
+                    @endif
 
                     <!-- Toegewezen aan -->
                     <x-admin::form.control-group>

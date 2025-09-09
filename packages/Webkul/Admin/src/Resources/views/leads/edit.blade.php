@@ -238,6 +238,29 @@
                                 </div>
                             </div>
 
+                            <!-- MRI STATUS -->
+                            <div class="mb-0.5">
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label>
+                                        MRI status
+                                    </x-admin::form.control-group.label>
+                                    <x-admin::form.control-group.control
+                                        type="select"
+                                        name="mri_status"
+                                        value="{{ old('mri_status', $lead->mri_status?->value ?? '') }}"
+                                    >
+                                        <option value="">-- Kies MRI status --</option>
+                                        <option value="None" {{ old('mri_status', $lead->mri_status?->value ?? '') === 'None' ? 'selected' : '' }}>Geen MRI-scan</option>
+                                        <option value="HasRecent" {{ old('mri_status', $lead->mri_status?->value ?? '') === 'HasRecent' ? 'selected' : '' }}>Heeft recente MRI (aangegeven in diagnose formulier)</option>
+                                        <option value="WantsViaUs" {{ old('mri_status', $lead->mri_status?->value ?? '') === 'WantsViaUs' ? 'selected' : '' }}>Wenst MRI via ons</option>
+                                        <option value="GetsViaUs" {{ old('mri_status', $lead->mri_status?->value ?? '') === 'GetsViaUs' ? 'selected' : '' }}>Krijgt een MRI via ons</option>
+                                        <option value="SendsExternal" {{ old('mri_status', $lead->mri_status?->value ?? '') === 'SendsExternal' ? 'selected' : '' }}>Stuurt extern gemaakte MRI op naar ons</option>
+                                        <option value="Received" {{ old('mri_status', $lead->mri_status?->value ?? '') === 'Received' ? 'selected' : '' }}>MRI beelden zijn binnen</option>
+                                    </x-admin::form.control-group.control>
+                                    <x-admin::form.control-group.error control-name="mri_status"/>
+                                </x-admin::form.control-group>
+                            </div>
+
                             <!-- Combine Order Setting -->
                             <div class="mb-0.5">
                                 <x-admin::form.control-group>

@@ -153,6 +153,14 @@
                     <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">Lead informatie</div>
 
                     <div class="grid grid-cols-2 gap-4">
+                        <!-- MRI Status -->
+                        <div class="mb-3">
+                            <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">MRI status</div>
+                            <div class="text-sm text-gray-900 dark:text-gray-100">
+                                {{ $lead->mri_status?->label() ?? 'Onbekend' }}
+                            </div>
+                        </div>
+
                         <!-- Lead Source -->
                         <div class="mb-3">
                             <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Bron</div>

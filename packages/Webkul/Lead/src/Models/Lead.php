@@ -3,6 +3,7 @@
 namespace Webkul\Lead\Models;
 
 use App\Enums\PersonGender;
+use App\Enums\LeadMriStatus;
 use App\Enums\PersonSalutation;
 use App\Models\Anamnesis;
 use App\Models\Department;
@@ -39,6 +40,7 @@ class Lead extends Model implements LeadContract
         'combine_order'       => 'boolean',
         'gender'              => PersonGender::class,
         'salutation'          => PersonSalutation::class,
+        'mri_status'          => LeadMriStatus::class,
     ];
 
     /**
@@ -85,6 +87,7 @@ class Lead extends Model implements LeadContract
         'combine_order',
         'created_by',
         'updated_by',
+        'mri_status',
     ];
 
     /**
@@ -121,6 +124,24 @@ class Lead extends Model implements LeadContract
         }
 
         $this->attributes['salutation'] = $value;
+    }
+
+    /**
+     * Normalize MRI status assignment to allow empty strings and enums.
+     */
+    public function setMriStatusAttribute($value): void
+    {
+        if ($value === '' || $value === null) {
+            $this->attributes['mri_status'] = null;
+            return;
+        }
+
+        if ($value instanceof \BackedEnum) {
+            $this->attributes['mri_status'] = $value->value;
+            return;
+        }
+
+        $this->attributes['mri_status'] = $value;
     }
 
     /**

@@ -26,7 +26,6 @@ class ActivityDataGrid extends DataGrid
             ->distinct()
             ->select(
                 'activities.*',
-                DB::raw('COALESCE(activities.status, "new") as status'),
                 'leads.lead_pipeline_id',
                 'users.id as assigned_user_id',
                 'users.name as created_by',
@@ -309,8 +308,7 @@ class ActivityDataGrid extends DataGrid
                     'new' => '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full dark:bg-green-900 dark:text-green-300">Nieuw</span>',
                     'on_hold' => '<span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full dark:bg-yellow-900 dark:text-yellow-300">On hold</span>',
                 ];
-                $status = $row->status ?? 'new'; // Fallback to 'new' if status column doesn't exist yet
-                return $statusLabels[$status] ?? $status;
+                return $statusLabels[$row->status] ?? $row->status;
             },
         ]);
 

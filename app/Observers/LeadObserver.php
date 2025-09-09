@@ -6,6 +6,7 @@ use App\Enums\LeadPipelineStageDefaults;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Enums\WebhookType;
+use App\Models\Department;
 use App\Services\LeadDuplicateCacheService;
 use App\Services\WebhookService;
 use Exception;
@@ -81,7 +82,7 @@ class LeadObserver
         // Check if pipeline will be updated to avoid duplicate webhooks
         $willUpdatePipeline = $this->willPipelineBeUpdated($lead);
 
-        $this->updatePipelineState($lead);
+        $this->setDefaultPipelineState($lead);
 
         // Only send webhook if pipeline wasn't updated (to avoid duplicate)
         // The updated observer will handle the webhook if pipeline changed
@@ -103,7 +104,6 @@ class LeadObserver
             DB::table('leads')->where('id', $lead->id)->update(['updated_by' => auth()->id()]);
         }
 
-        $this->updatePipelineState($lead);
         // Send webhook if stage has changed and the stage is actually different
         if ($lead->isDirty('lead_pipeline_stage_id') && $lead->lead_pipeline_stage_id !== $lead->getOriginal('lead_pipeline_stage_id') && $lead->stage) {
 
@@ -126,17 +126,16 @@ class LeadObserver
         $this->invalidateDuplicateCache($lead);
     }
 
-    private function updatePipelineState(Lead $lead): void
+    private function setDefaultPipelineState(Lead $lead): void
     {
         if (is_null($lead->department)) {
+            logger()->error('lead has no department, cannot set default pipeline', [
+                'lead_id' => $lead->id,
+            ]);
+
             return;
         }
-        $leadPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
-        $leadPipelineStageId = PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_PRIVATESCAN_ID->value;
-        if ($lead->department->name == 'Hernia') {
-            $leadPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
-            $leadPipelineStageId = PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value;
-        }
+        [$leadPipelineId, $leadPipelineStageId] = $this->getPipelineLineByDepartment($lead->department);
         if ($lead->lead_pipeline_id != $leadPipelineId) {
             $lead = $this->leadRepository->findOrFail($lead->id);
             logger()->info('lead pipeline updated');
@@ -145,6 +144,18 @@ class LeadObserver
                 'lead_pipeline_stage_id' => $leadPipelineStageId,
             ]);
         }
+    }
+
+    private function getPipelineLineByDepartment(Department $department): array
+    {
+        $leadPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
+        $leadPipelineStageId = PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_PRIVATESCAN_ID->value;
+        if ($department->name == 'Hernia') {
+            $leadPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
+            $leadPipelineStageId = PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value;
+        }
+
+        return [$leadPipelineId, $leadPipelineStageId];
     }
 
     /**

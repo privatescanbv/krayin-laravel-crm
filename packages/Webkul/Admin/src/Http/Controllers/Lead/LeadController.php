@@ -577,12 +577,12 @@ class LeadController extends Controller
             ->firstOrFail();
 
         // Validate status transition if stage is being changed
-        if (isset($data['lead_pipeline_stage_id']) && 
+        if (isset($data['lead_pipeline_stage_id']) &&
             $data['lead_pipeline_stage_id'] != $lead->lead_pipeline_stage_id) {
-            
+
             try {
                 LeadStatusTransitionValidator::validateTransition($lead, $data['lead_pipeline_stage_id']);
-            } catch (\Illuminate\Validation\ValidationException $e) {
+            } catch (ValidationException $e) {
                 return response()->json([
                     'message' => 'Status transitie validatie gefaald',
                     'errors' => $e->errors(),
@@ -620,7 +620,7 @@ class LeadController extends Controller
         // Validate status transition
         try {
             LeadStatusTransitionValidator::validateTransition($lead, (int)$nextPipelineStageId);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Status transitie validatie gefaald',
                 'errors' => $e->errors(),

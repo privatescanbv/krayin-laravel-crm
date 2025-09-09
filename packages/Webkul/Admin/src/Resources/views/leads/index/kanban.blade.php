@@ -745,7 +745,6 @@
                         'lead_pipeline_stage_id': stageId,
                         ...additionalData
                     };
-
                     this.$axios
                         .put("{{ route('admin.leads.stage.update', 'replace') }}".replace('replace', leadId), data)
                         .then(response => {

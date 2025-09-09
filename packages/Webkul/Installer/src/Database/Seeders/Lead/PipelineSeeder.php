@@ -9,7 +9,6 @@ use App\Enums\PipelineType;
 use Carbon\Carbon;
 use Database\Seeders\BaseSeeder;
 use Exception;
-use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Webkul\Lead\Models\Stage;
 use App\Services\LeadStatusTransitionValidator;
@@ -234,7 +233,7 @@ class PipelineSeeder extends BaseSeeder
 
     /**
      * Configure status transition validations.
-     * 
+     *
      * @return void
      */
     private function configureStatusTransitionValidations(): void
@@ -251,7 +250,7 @@ class PipelineSeeder extends BaseSeeder
         );
 
         // Andere voorbeelden kunnen hier worden toegevoegd:
-        
+
         // Voorbeeld: Validatie voor nieuwe-aanvraag-kwalificeren -> klant-adviseren-start
         // Lead moet naam hebben
         LeadStatusTransitionValidator::addTransitionRule(

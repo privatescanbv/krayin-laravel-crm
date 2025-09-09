@@ -157,17 +157,7 @@
                         <div class="mb-3">
                             <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">MRI status</div>
                             <div class="text-sm text-gray-900 dark:text-gray-100">
-                                @php
-                                    $labels = [
-                                        'None' => 'Geen MRI-scan',
-                                        'HasRecent' => 'Heeft recente MRI (aangegeven in diagnose formulier)',
-                                        'WantsViaUs' => 'Wenst MRI via ons',
-                                        'GetsViaUs' => 'Krijgt een MRI via ons',
-                                        'SendsExternal' => 'Stuurt extern gemaakte MRI op naar ons',
-                                        'Received' => 'MRI beelden zijn binnen',
-                                    ];
-                                @endphp
-                                {{ $labels[$lead->mri_status] ?? 'Onbekend' }}
+                                {{ $lead->mriStatusLabel ?? 'Onbekend' }}
                             </div>
                         </div>
 

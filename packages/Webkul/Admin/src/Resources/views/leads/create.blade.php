@@ -425,25 +425,49 @@
                                             </x-admin::form.control-group>
                                         </div>
                                     </div>
+                                    <div class="flex gap-4 mb-4">
+                                        <div class="flex-1">
+                                            @php
+                                                $channelOptions = [];
+                                                foreach (App\Enums\MRIStatus::cases() as $case) {
+                                                    $channelOptions[$case->value] = $case->label();
+                                                }
+                                            @endphp
+                                            <x-admin::form.control-group>
+                                                <x-admin::form.control-group.label>
+                                                    MRI Status
+                                                </x-admin::form.control-group.label>
+                                                <x-admin::form.control-group.control
+                                                    type="select"
+                                                    name="mri_status"
+                                                    v-model="formData.mri_status_id"
+                                                >
+                                                    <option value="">-- Selecteer MRI status --</option>
+                                                    @foreach ($channelOptions as $id => $name)
+                                                        <option value="{{ $id }}">{{ $name }}</option>
+                                                    @endforeach
+                                                </x-admin::form.control-group.control>
 
-                                    <!-- Combine Order Setting -->
-                                    <div class="mb-4">
-                                        <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label>
-                                                Orders combineren
-                                            </x-admin::form.control-group.label>
-                                            <x-admin::form.control-group.control
-                                                type="select"
-                                                name="combine_order"
-                                                v-model="formData.combine_order"
-                                            >
-                                                <option value="1">Ja</option>
-                                                <option value="0">Nee</option>
-                                            </x-admin::form.control-group.control>
-                                            <x-admin::form.control-group.error control-name="combine_order"/>
-                                        </x-admin::form.control-group>
+                                            </x-admin::form.control-group>
+                                        </div>
+                                        <!-- Combine Order Setting -->
+                                        <div class="flex-1">
+                                            <x-admin::form.control-group>
+                                                <x-admin::form.control-group.label>
+                                                    Orders combineren
+                                                </x-admin::form.control-group.label>
+                                                <x-admin::form.control-group.control
+                                                    type="select"
+                                                    name="combine_order"
+                                                    v-model="formData.combine_order"
+                                                >
+                                                    <option value="1">Ja</option>
+                                                    <option value="0">Nee</option>
+                                                </x-admin::form.control-group.control>
+                                                <x-admin::form.control-group.error control-name="combine_order"/>
+                                            </x-admin::form.control-group>
+                                        </div>
                                     </div>
-
                                     <!-- Other attributes -->
                                     <div class="flex gap-4 max-sm:flex-wrap">
                                         <div class="w-full">
@@ -489,6 +513,7 @@
                         lead_pipeline_id: '{{ $defaultPipelineId ?? "" }}', // Set based on department or URL param
                         lead_pipeline_stage_id: '{{ $defaultStageId ?? "" }}', // Set based on pipeline or URL param
                         combine_order: 1,
+                             mri_status_id: '',
                             lead_type_id: '1', // Default: Preventie
                             // Personal fields for matching
                             first_name: '',
@@ -613,7 +638,7 @@
 
                             // Redirect to leads index with pipeline preservation
                             const pipelineId = this.getCookieValue('last_selected_pipeline_id');
-                            const url = pipelineId 
+                            const url = pipelineId
                                 ? '{{ route('admin.leads.index') }}?pipeline_id=' + pipelineId
                                 : '{{ route('admin.leads.index') }}';
                             window.location.href = url;

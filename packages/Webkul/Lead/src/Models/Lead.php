@@ -2,10 +2,12 @@
 
 namespace Webkul\Lead\Models;
 
+use App\Enums\MRIStatus;
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
 use App\Models\Anamnesis;
 use App\Models\Department;
+use BackedEnum;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -39,7 +41,7 @@ class Lead extends Model implements LeadContract
         'combine_order'       => 'boolean',
         'gender'              => PersonGender::class,
         'salutation'          => PersonSalutation::class,
-        // 'mri_status' is stored as plain string
+        'mri_status'          => MRIStatus::class,
     ];
 
     /**
@@ -117,7 +119,7 @@ class Lead extends Model implements LeadContract
             return;
         }
 
-        if ($value instanceof \BackedEnum) {
+        if ($value instanceof BackedEnum) {
             $this->attributes['salutation'] = $value->value;
             return;
         }
@@ -135,12 +137,16 @@ class Lead extends Model implements LeadContract
             return;
         }
 
-        if ($value instanceof \BackedEnum) {
+        if ($value instanceof BackedEnum) {
             $this->attributes['mri_status'] = $value->value;
             return;
         }
 
         $this->attributes['mri_status'] = $value;
+    }
+
+    public function getMRIStatusLabelAttribute(): string {
+        return $this->mri_status->label() ?? '-';
     }
 
     /**
@@ -538,7 +544,7 @@ class Lead extends Model implements LeadContract
     /**
      * Get the default group_id based on department relationship.
      * Uses the Department mapping function.
-     * 
+     *
      * @return int The group ID
      * @throws Exception if department mapping fails
      */

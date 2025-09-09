@@ -14,7 +14,7 @@ class ActivityResource extends JsonResource
      */
     public function toArray($request)
     {
-        return [
+        $data = [
             'id'              => $this->id,
             'parent_id'       => $this->parent_id ?? null,
             'title'           => $this->title,
@@ -33,5 +33,36 @@ class ActivityResource extends JsonResource
             'created_at'      => $this->created_at,
             'updated_at'      => $this->updated_at,
         ];
+
+        // Append call status summary/details for call activities
+        $typeValue = $this->type?->value ?? $this->type;
+        if ($typeValue === 'call') {
+            $items = $this->whenLoaded('callStatuses') ? $this->callStatuses : $this->callStatuses()->get();
+
+            $summary = [
+                'not_reachable' => 0,
+                'voicemail_left' => 0,
+                'spoken' => 0,
+            ];
+
+            foreach ($items as $cs) {
+                $key = is_string($cs->status) ? $cs->status : ($cs->status?->value ?? null);
+                if ($key && isset($summary[$key])) {
+                    $summary[$key]++;
+                }
+            }
+
+            $data['call_status_summary'] = $summary;
+            $data['call_statuses'] = $items->sortBy('created_at')->values()->map(function ($cs) {
+                return [
+                    'status' => is_string($cs->status) ? $cs->status : ($cs->status?->value ?? null),
+                    'omschrijving' => $cs->omschrijving,
+                    'created_at' => $cs->created_at,
+                    'created_by' => $cs->creator?->name,
+                ];
+            });
+        }
+
+        return $data;
     }
 }

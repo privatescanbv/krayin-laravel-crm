@@ -1,6 +1,6 @@
 <x-admin::layouts>
     <x-slot:title>
-        Create Workflow Lead
+        Sales order aanmaken
     </x-slot>
 
     <!-- Header -->
@@ -10,7 +10,7 @@
             <x-admin::breadcrumbs name="workflow-leads.create" />
 
             <div class="text-xl font-bold dark:text-white">
-                Create Workflow Lead
+                Sales order aanmaken
             </div>
         </div>
     </div>
@@ -63,7 +63,7 @@
                         type="submit"
                         class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
-                        Create Workflow Lead
+                        Sales order aanmaken
                     </button>
                 </div>
             </form>

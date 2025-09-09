@@ -1,6 +1,6 @@
 <x-admin::layouts>
     <x-slot:title>
-        Backoffice
+        Sales order
     </x-slot>
 
     <!-- Header -->
@@ -34,7 +34,7 @@
                         href="{{ route('admin.workflow-leads.create') }}"
                         class="primary-button"
                     >
-                        Create Workflow Lead
+                        Sales order aanmaken
                     </a>
                 @endif
             </div>

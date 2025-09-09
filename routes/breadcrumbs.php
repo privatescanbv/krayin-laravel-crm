@@ -498,7 +498,7 @@ Breadcrumbs::for('dashboard.account.edit', function (BreadcrumbTrail $trail, $us
 // Dashboard > Workflow Leads
 Breadcrumbs::for('workflow-leads', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');
-    $trail->push('Workflow Leads', route('admin.workflow-leads.index'));
+    $trail->push('Sales order', route('admin.workflow-leads.index'));
 });
 
 // Dashboard > Workflow Leads > Create

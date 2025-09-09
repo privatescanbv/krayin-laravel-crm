@@ -554,7 +554,7 @@ return [
     ],
     [
         'key'   => 'workflow-leads',
-        'name'  => 'Workflow Leads',
+        'name'  => 'Sales order',
         'route' => 'admin.workflow-leads.index',
         'sort'  => 99, // of een andere gewenste volgorde
     ], [

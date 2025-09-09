@@ -44,24 +44,17 @@
 
 @push('scripts')
 <script>
-    let callStatusButtonBound = false;
-    
-    function bindCallStatusButton() {
-        if (callStatusButtonBound) {
-            console.log('[call-status] Button already bound, skipping');
-            return true;
-        }
+    document.addEventListener('DOMContentLoaded', function() {
         const url = '{{ route('admin.activities.call-statuses.store', $activity->id) }}';
         const csrfToken = '{{ csrf_token() }}';
         
-        const submitBtn = document.getElementById('call-status-submit');
-        console.log('[call-status] Looking for button:', !!submitBtn, submitBtn);
+        console.log('[call-status] Setting up event delegation');
         
-        if (submitBtn) {
-            console.log('[call-status] Adding click listener to button:', submitBtn);
-            
-            submitBtn.addEventListener('click', async function(e) {
-                console.log('[call-status] CLICK event fired!', e);
+        // Use event delegation - listen on document for clicks on our button
+        document.addEventListener('click', async function(e) {
+            // Check if the clicked element is our submit button
+            if (e.target && e.target.id === 'call-status-submit') {
+                console.log('[call-status] Button clicked via delegation!', e.target);
                 e.preventDefault();
                 e.stopPropagation();
                 
@@ -129,37 +122,8 @@
                     console.error('[call-status] Error:', e);
                     alert(e.message);
                 }
-            });
-            
-            callStatusButtonBound = true;
-            console.log('[call-status] Button successfully bound');
-            return true; // Successfully bound
-        }
-        return false; // Button not found
-    }
-
-    // Try to bind immediately on DOMContentLoaded
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('[call-status] DOMContentLoaded');
-        if (!bindCallStatusButton()) {
-            console.log('[call-status] Button not found on DOMContentLoaded, will retry');
-        }
+            }
+        });
     });
-
-    // Retry binding after delays to catch replaced buttons
-    setTimeout(() => {
-        console.log('[call-status] Retry 1 (500ms)');
-        bindCallStatusButton();
-    }, 500);
-
-    setTimeout(() => {
-        console.log('[call-status] Retry 2 (1000ms)');
-        bindCallStatusButton();
-    }, 1000);
-
-    setTimeout(() => {
-        console.log('[call-status] Retry 3 (2000ms)');
-        bindCallStatusButton();
-    }, 2000);
 </script>
 @endpush

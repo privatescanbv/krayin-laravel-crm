@@ -200,7 +200,11 @@ class ActivityController extends Controller
         $user = auth()->guard('user')->user();
         $canTakeover = $user->hasPermission('activities.takeover');
 
-        return view('admin::activities.edit', compact('activity', 'groups', 'lookUpEntityData', 'relatedEntity', 'relatedEntityName', 'canTakeover'));
+        $callStatuses = \App\Models\CallStatus::where('activity_id', $activity->id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('admin::activities.edit', compact('activity', 'groups', 'lookUpEntityData', 'relatedEntity', 'relatedEntityName', 'canTakeover', 'callStatuses'));
     }
 
     /**

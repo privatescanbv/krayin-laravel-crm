@@ -116,6 +116,14 @@ class Activity extends Model implements ActivityContract
     }
 
     /**
+     * Call statuses linked to this activity.
+     */
+    public function callStatuses()
+    {
+        return $this->hasMany(\App\Models\CallStatus::class, 'activity_id');
+    }
+
+    /**
      * Get the group that is assigned to this activity.
      */
     public function group()

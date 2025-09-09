@@ -288,6 +288,10 @@
                     </x-admin::accordion>
 
                     {!! view_render_event('admin.activities.edit.accordion.general.after') !!}
+
+                    @if ($activity->type === 'call')
+                        @include('admin::components.activities.call-status', ['activity' => $activity, 'callStatuses' => $callStatuses ?? []])
+                    @endif
                 </div>
             </div>
         </div>

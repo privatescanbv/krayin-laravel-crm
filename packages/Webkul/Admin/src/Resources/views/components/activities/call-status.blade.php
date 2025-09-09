@@ -44,17 +44,16 @@
 
 @push('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    function bindCallStatusButton() {
         const url = '{{ route('admin.activities.call-statuses.store', $activity->id) }}';
         const csrfToken = '{{ csrf_token() }}';
         
         const submitBtn = document.getElementById('call-status-submit');
-        console.log('[call-status] DOMContentLoaded, submitBtn:', !!submitBtn);
+        console.log('[call-status] Looking for button:', !!submitBtn, submitBtn);
         
         if (submitBtn) {
             console.log('[call-status] Adding click listener to button:', submitBtn);
             
-            // Try both click and mousedown events
             submitBtn.addEventListener('click', async function(e) {
                 console.log('[call-status] CLICK event fired!', e);
                 e.preventDefault();
@@ -119,17 +118,33 @@
                 }
             });
             
-            // Also try mousedown as backup
-            submitBtn.addEventListener('mousedown', function(e) {
-                console.log('[call-status] MOUSEDOWN event fired!', e);
-            });
-            
-            // Check if button is still the same after a delay
-            setTimeout(() => {
-                const btnAfterDelay = document.getElementById('call-status-submit');
-                console.log('[call-status] Button after delay:', btnAfterDelay === submitBtn, btnAfterDelay);
-            }, 1000);
+            return true; // Successfully bound
+        }
+        return false; // Button not found
+    }
+
+    // Try to bind immediately on DOMContentLoaded
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('[call-status] DOMContentLoaded');
+        if (!bindCallStatusButton()) {
+            console.log('[call-status] Button not found on DOMContentLoaded, will retry');
         }
     });
+
+    // Retry binding after delays to catch replaced buttons
+    setTimeout(() => {
+        console.log('[call-status] Retry 1 (500ms)');
+        bindCallStatusButton();
+    }, 500);
+
+    setTimeout(() => {
+        console.log('[call-status] Retry 2 (1000ms)');
+        bindCallStatusButton();
+    }, 1000);
+
+    setTimeout(() => {
+        console.log('[call-status] Retry 3 (2000ms)');
+        bindCallStatusButton();
+    }, 2000);
 </script>
 @endpush

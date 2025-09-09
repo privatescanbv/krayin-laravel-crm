@@ -25,6 +25,7 @@ class CallStatusController extends Controller
         $validated = $request->validate([
             'status' => 'required|in:' . implode(',', array_map(fn($c) => $c->value, CallStatusEnum::cases())),
             'omschrijving' => 'nullable|string',
+            'reschedule_days' => 'nullable|integer|min:1|max:20',
         ]);
 
         $callStatus = CallStatus::create([
@@ -33,8 +34,26 @@ class CallStatusController extends Controller
             'omschrijving' => $validated['omschrijving'] ?? null,
         ]);
 
+        // Reschedule activity if requested
+        if (!empty($validated['reschedule_days'])) {
+            $activity = \Webkul\Activity\Models\Activity::find($activityId);
+            if ($activity) {
+                $days = (int) $validated['reschedule_days'];
+                
+                // Update schedule_from and schedule_to by adding the specified days
+                if ($activity->schedule_from) {
+                    $activity->schedule_from = $activity->schedule_from->addDays($days);
+                }
+                if ($activity->schedule_to) {
+                    $activity->schedule_to = $activity->schedule_to->addDays($days);
+                }
+                
+                $activity->save();
+            }
+        }
+
         return response()->json([
-            'message' => 'Call status toegevoegd',
+            'message' => 'Call status toegevoegd' . (!empty($validated['reschedule_days']) ? ' en taak verplaatst' : ''),
             'data' => $callStatus,
         ]);
     }

@@ -224,6 +224,36 @@ trait ProvideDropdownOptions
     }
 
     /**
+     * Get activity status dropdown options.
+     */
+    public function getActivityStatusDropdownOptions(): array
+    {
+        return [
+            [
+                'label'    => trans('admin::app.common.select-status'),
+                'value'    => '',
+                'disabled' => true,
+                'selected' => true,
+            ], [
+                'label'    => 'In behandeling',
+                'value'    => 'in_progress',
+                'disabled' => false,
+                'selected' => false,
+            ], [
+                'label'    => 'Nieuw',
+                'value'    => 'new',
+                'disabled' => false,
+                'selected' => false,
+            ], [
+                'label'    => 'On hold',
+                'value'    => 'on_hold',
+                'disabled' => false,
+                'selected' => false,
+            ],
+        ];
+    }
+
+    /**
      * Get attribute type dropdown options.
      */
     public function getAttributeTypeDropdownOptions(): array

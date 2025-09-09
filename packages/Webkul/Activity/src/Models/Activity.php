@@ -5,6 +5,7 @@ namespace Webkul\Activity\Models;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Activity\Contracts\Activity as ActivityContract;
 use App\Enums\ActivityType;
+use App\Enums\ActivityStatus;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\Lead\Models\LeadProxy;
 use Webkul\Product\Models\ProductProxy;
@@ -42,6 +43,7 @@ class Activity extends Model implements ActivityContract
         'additional'    => 'array',
         'is_done'      => 'boolean',
         'type'         => ActivityType::class,
+        'status'       => ActivityStatus::class,
     ];
 
     /**

@@ -55,6 +55,19 @@
                 ></textarea>
             </div>
 
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Taak verplaatsen
+                </label>
+                <select name="reschedule_days" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                    <option value="">Geen verplaatsing</option>
+                    @for($i = 1; $i <= 20; $i++)
+                        <option value="{{ $i }}" {{ $i == 7 ? 'selected' : '' }}>{{ $i }} {{ $i == 1 ? 'dag' : 'dagen' }}</option>
+                    @endfor
+                </select>
+                <p class="text-xs text-gray-500 mt-1">Verplaats de taak met het geselecteerde aantal dagen</p>
+            </div>
+
             <button type="button" id="call-status-submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                 <i class="icon-plus mr-2"></i>Belstatus toevoegen
             </button>
@@ -82,13 +95,15 @@
                 
                 const statusEl = form.querySelector('[name="status"]');
                 const omschrEl = form.querySelector('[name="omschrijving"]');
-                if (!statusEl || !omschrEl) {
+                const rescheduleEl = form.querySelector('[name="reschedule_days"]');
+                if (!statusEl || !omschrEl || !rescheduleEl) {
                     alert('Form velden niet gevonden');
                     return;
                 }
 
                 const status = statusEl.value;
                 const omschrijving = omschrEl.value;
+                const rescheduleDays = rescheduleEl.value;
 
                 if (!status) {
                     alert('Selecteer een status');
@@ -105,7 +120,7 @@
                             'Content-Type': 'application/json',
                         },
                         credentials: 'same-origin',
-                        body: JSON.stringify({ status, omschrijving })
+                        body: JSON.stringify({ status, omschrijving, reschedule_days: rescheduleDays })
                     });
 
                     if (!res.ok) {

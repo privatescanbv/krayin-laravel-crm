@@ -48,13 +48,26 @@
         const bind = () => {
             const submitBtn = document.getElementById('call-status-submit');
             console.log('[call-status] bind executed, submitBtn:', !!submitBtn);
-            if (!submitBtn) return;
+            if (!submitBtn) {
+                throw new Error('[call-status] submit button not found');
+            }
 
             submitBtn.addEventListener('click', async () => {
                 const form = document.getElementById('call-status-form');
-                if (!form) return;
-                const status = form.querySelector('[name="status"]').value;
-                const omschrijving = form.querySelector('[name="omschrijving"]').value;
+                if (!form) {
+                    throw new Error('[call-status] form element not found');
+                }
+                const statusEl = form.querySelector('[name="status"]');
+                const omschrEl = form.querySelector('[name="omschrijving"]');
+                if (!statusEl) {
+                    throw new Error('[call-status] status select not found');
+                }
+                if (!omschrEl) {
+                    throw new Error('[call-status] omschrijving textarea not found');
+                }
+
+                const status = statusEl.value;
+                const omschrijving = omschrEl.value;
 
                 try {
                     const res = await fetch(`{{ route('admin.activities.call-statuses.store', $activity->id) }}`, {
@@ -77,22 +90,26 @@
 
                     const data = await res.json();
                     const list = document.getElementById('call-status-list');
+                    if (!list) {
+                        throw new Error('[call-status] list container not found');
+                    }
                     const item = data.data;
                     const createdAt = item.created_at ? new Date(item.created_at).toLocaleString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
 
                     const wrapper = document.createElement('div');
                     wrapper.className = 'rounded border p-2 text-sm dark:border-gray-700';
                     wrapper.innerHTML = `
-                        <div class="flex items-center justify-between">
-                            <span class="font-medium">${item.status}</span>
-                            <span class="text-xs text-gray-500">${createdAt}</span>
+                        <div class=\"flex items-center justify-between\">
+                            <span class=\"font-medium\">${item.status}</span>
+                            <span class=\"text-xs text-gray-500\">${createdAt}</span>
                         </div>
                         ${item.omschrijving ? `<div class=\"mt-1 text-gray-700 dark:text-gray-300\">${item.omschrijving}</div>` : ''}
                     `;
-                    if (list) list.prepend(wrapper);
+                    list.prepend(wrapper);
 
                     form.reset();
                 } catch (e) {
+                    console.error(e);
                     alert(e.message);
                 }
             });

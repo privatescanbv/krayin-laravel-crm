@@ -325,35 +325,25 @@ class ActivityDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'days_until_deadline',
-            'label'      => 'Dagen tot deadline',
+            'label'      => 'Deadline',
             'type'       => 'integer',
             'sortable'   => true,
             'searchable' => false,
             'filterable' => true,
+            'width'      => '120px',
             'closure'    => function ($row) {
                 $days = $row->days_until_deadline;
 
-                // Determine time hint from schedule_to (HH:MM)
-                $timeHint = '';
-                if (! empty($row->schedule_to)) {
-                    $time = @date('H:i', strtotime($row->schedule_to));
-                    if ($time && $time !== '00:00') {
-                        $timeHint = '<br/>voor ' . $time;
-                    }
-                }
-
                 if ($days === null) {
-                    return 'N/A';
+                    return '<span class="text-gray-500">N/A</span>';
                 } elseif ($days < 0) {
-                    // Overdue: keep current wording; omit time as deadline already passed
-                    return '<span class="text-red-600 font-semibold">' . abs($days) . ' dagen over tijd</span>';
+                    return '<span class="text-red-600 font-semibold">-' . abs($days) . 'd</span>';
                 } elseif ($days == 0) {
-                    // Today: explicitly show time if available
-                    return '<span class="text-orange-600 font-semibold">Vandaag' . ($timeHint ?: '') . '</span>';
+                    return '<span class="text-orange-600 font-semibold">Vandaag</span>';
                 } elseif ($days <= 3) {
-                    return '<span class="text-yellow-600 font-semibold">' . $days . ' dagen</span>' . ($timeHint ?: '');
+                    return '<span class="text-yellow-600 font-semibold">' . $days . 'd</span>';
                 } else {
-                    return '<span class="text-green-600">' . $days . ' dagen</span>' . ($timeHint ?: '');
+                    return '<span class="text-green-600">' . $days . 'd</span>';
                 }
             },
         ]);
@@ -393,6 +383,18 @@ class ActivityDataGrid extends DataGrid
             'method' => 'POST',
             'url'    => fn ($row) => route('admin.activities.unassign', $row->id),
             'condition' => fn ($row) => $row->user_id == $currentUserId,
+        ]);
+    }
+
+    /**
+     * Prepare mass actions.
+     */
+    public function prepareMassActions(): void
+    {
+        $this->addMassAction([
+            'title'  => trans('admin::app.activities.index.datagrid.delete'),
+            'url'    => route('admin.activities.mass_delete'),
+            'method' => 'POST',
         ]);
     }
 

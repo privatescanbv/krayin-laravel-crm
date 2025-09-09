@@ -2,7 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Activity;
 
-use App\Enums\CallStatus;
+use App\Enums\CallStatus as CallStatusEnum;
 use App\Models\CallStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,7 +23,7 @@ class CallStatusController extends Controller
     public function store(Request $request, int $activityId): JsonResponse
     {
         $validated = $request->validate([
-            'status' => 'required|in:' . implode(',', array_map(fn($c) => $c->value, CallStatus::cases())),
+            'status' => 'required|in:' . implode(',', array_map(fn($c) => $c->value, CallStatusEnum::cases())),
             'omschrijving' => 'nullable|string',
         ]);
 

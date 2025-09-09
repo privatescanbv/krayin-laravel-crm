@@ -137,6 +137,31 @@
                                             v-safe-html="activity.comment"
                                         ></p>
 
+                                        <!-- Call status summary/details -->
+                                        <template v-if="activity.type === 'call' && activity.call_status_summary">
+                                            <div class="mt-1 text-sm">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800">Niet bereikt: @{{ activity.call_status_summary.not_reachable }}</span>
+                                                    <span class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800">Voicemail: @{{ activity.call_status_summary.voicemail_left }}</span>
+                                                    <span class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800">Gesproken: @{{ activity.call_status_summary.spoken }}</span>
+                                                    <button type="button" class="text-blue-600 hover:underline" @click="activity.__showCallDetails = !activity.__showCallDetails">@{{ activity.__showCallDetails ? 'Verberg' : 'Details' }}</button>
+                                                </div>
+                                                <div v-if="activity.__showCallDetails && activity.call_statuses?.length" class="mt-2 border rounded p-2 dark:border-gray-800">
+                                                    <div v-for="cs in activity.call_statuses" :key="cs.created_at" class="text-xs py-1 border-b last:border-b-0 dark:border-gray-800">
+                                                        <div class="flex justify-between items-center">
+                                                            <div class="flex items-center gap-2">
+                                                                <call-status-icon :status="cs.status" size="w-4 h-4"></call-status-icon>
+                                                                <span class="font-medium">@{{ getCallStatusLabel(cs.status) }}</span>
+                                                            </div>
+                                                            <span>@{{ $admin.formatDate(cs.created_at, 'd MMM yyyy, h:mm', timezone) }}</span>
+                                                        </div>
+                                                        <div v-if="cs.omschrijving" class="text-gray-600 dark:text-gray-300">@{{ cs.omschrijving }}</div>
+                                                        <div v-if="cs.creator" class="text-gray-500">door @{{ cs.creator.name }}</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+
                                         {!! view_render_event('admin.components.activities.content.activity.item.description.after') !!}
 
                                         {!! view_render_event('admin.components.activities.content.activity.item.attachments.before') !!}
@@ -577,6 +602,15 @@
                                 });
                         }
                     });
+                },
+
+                getCallStatusLabel(status) {
+                    const labels = {
+                        'not_reachable': 'Niet kunnen bereiken',
+                        'voicemail_left': 'Voicemail ingesproken',
+                        'spoken': 'Gesproken'
+                    };
+                    return labels[status] || status;
                 },
             },
         });

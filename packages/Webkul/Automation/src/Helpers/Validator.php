@@ -76,7 +76,16 @@ class Validator
             return $value;
         }
 
-        return $value ? explode(',', $value) : [];
+        // Normalize enums and non-string values before explode
+        if ($value instanceof \BackedEnum) {
+            $value = $value->value;
+        }
+
+        if (is_array($value)) {
+            return $value;
+        }
+
+        return $value ? explode(',', (string) $value) : [];
     }
 
     /**

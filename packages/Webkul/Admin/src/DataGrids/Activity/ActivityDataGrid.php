@@ -133,6 +133,8 @@ class ActivityDataGrid extends DataGrid
 
         $this->addFilter('id', 'activities.id');
         $this->addFilter('title', 'activities.title');
+        $this->addFilter('type', 'activities.type');
+        $this->addFilter('status', 'activities.status');
         $this->addFilter('is_done', 'activities.is_done');
         $this->addFilter('created_by', 'users.name');
         $this->addFilter('assigned_user_id', 'users.name');
@@ -280,13 +282,36 @@ class ActivityDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'type',
-            'label'      => trans('admin::app.activities.index.datagrid.type'),
-            'type'       => 'string',
-            'searchable' => false,
-            'filterable' => false,
-            'sortable'   => true,
-            'closure'    => fn ($row) => trans('admin::app.activities.index.datagrid.'.$row->type),
+            'index'              => 'type',
+            'label'              => trans('admin::app.activities.index.datagrid.type'),
+            'type'               => 'string',
+            'searchable'         => false,
+            'filterable'         => true,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => $this->getActivityTypeDropdownOptions(),
+            'sortable'           => true,
+            'closure'            => fn ($row) => trans('admin::app.activities.edit.'.$row->type),
+        ]);
+
+        $this->addColumn([
+            'index'              => 'status',
+            'label'              => 'Status',
+            'type'               => 'string',
+            'searchable'         => false,
+            'filterable'         => true,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => $this->getActivityStatusDropdownOptions(),
+            'sortable'           => true,
+            'closure'            => function ($row) {
+                $statusLabels = [
+                    'in_progress' => '<span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900 dark:text-blue-300">In behandeling</span>',
+                    'active' => '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full dark:bg-green-900 dark:text-green-300">Actief</span>',
+                    'on_hold' => '<span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full dark:bg-yellow-900 dark:text-yellow-300">On hold</span>',
+                    'expired' => '<span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full dark:bg-red-900 dark:text-red-300">Verlopen</span>',
+                ];
+                $status = $row->status === 'new' ? 'active' : ($row->status ?? 'active');
+                return $statusLabels[$status] ?? $status;
+            },
         ]);
 
         $this->addColumn([
@@ -322,35 +347,25 @@ class ActivityDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'days_until_deadline',
-            'label'      => 'Dagen tot deadline',
+            'label'      => 'Deadline',
             'type'       => 'integer',
             'sortable'   => true,
             'searchable' => false,
             'filterable' => true,
+            'width'      => '120px',
             'closure'    => function ($row) {
                 $days = $row->days_until_deadline;
 
-                // Determine time hint from schedule_to (HH:MM)
-                $timeHint = '';
-                if (! empty($row->schedule_to)) {
-                    $time = @date('H:i', strtotime($row->schedule_to));
-                    if ($time && $time !== '00:00') {
-                        $timeHint = '<br/>voor ' . $time;
-                    }
-                }
-
                 if ($days === null) {
-                    return 'N/A';
+                    return '<span class="text-gray-500">N/A</span>';
                 } elseif ($days < 0) {
-                    // Overdue: keep current wording; omit time as deadline already passed
-                    return '<span class="text-red-600 font-semibold">' . abs($days) . ' dagen over tijd</span>';
+                    return '<span class="text-red-600 font-semibold">-' . abs($days) . 'd</span>';
                 } elseif ($days == 0) {
-                    // Today: explicitly show time if available
-                    return '<span class="text-orange-600 font-semibold">Vandaag' . ($timeHint ?: '') . '</span>';
+                    return '<span class="text-orange-600 font-semibold">Vandaag</span>';
                 } elseif ($days <= 3) {
-                    return '<span class="text-yellow-600 font-semibold">' . $days . ' dagen</span>' . ($timeHint ?: '');
+                    return '<span class="text-yellow-600 font-semibold">' . $days . 'd</span>';
                 } else {
-                    return '<span class="text-green-600">' . $days . ' dagen</span>' . ($timeHint ?: '');
+                    return '<span class="text-green-600">' . $days . 'd</span>';
                 }
             },
         ]);
@@ -390,6 +405,18 @@ class ActivityDataGrid extends DataGrid
             'method' => 'POST',
             'url'    => fn ($row) => route('admin.activities.unassign', $row->id),
             'condition' => fn ($row) => $row->user_id == $currentUserId,
+        ]);
+    }
+
+    /**
+     * Prepare mass actions.
+     */
+    public function prepareMassActions(): void
+    {
+        $this->addMassAction([
+            'title'  => trans('admin::app.activities.index.datagrid.delete'),
+            'url'    => route('admin.activities.mass_delete'),
+            'method' => 'POST',
         ]);
     }
 

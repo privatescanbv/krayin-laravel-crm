@@ -4,6 +4,9 @@ namespace Webkul\Activity\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Activity\Contracts\Activity as ActivityContract;
+use App\Enums\ActivityType;
+use App\Enums\ActivityStatus;
+use App\Casts\ActivityStatusCast;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\Lead\Models\LeadProxy;
 use Webkul\Product\Models\ProductProxy;
@@ -40,6 +43,8 @@ class Activity extends Model implements ActivityContract
         'assigned_at'   => 'datetime',
         'additional'    => 'array',
         'is_done'      => 'boolean',
+        'type'         => ActivityType::class,
+        'status'       => ActivityStatus::class,
     ];
 
     /**
@@ -56,6 +61,7 @@ class Activity extends Model implements ActivityContract
         'schedule_from',
         'schedule_to',
         'is_done',
+        'status',
         'user_id',
         'assigned_at',
         'group_id',
@@ -113,6 +119,14 @@ class Activity extends Model implements ActivityContract
     public function warehouses()
     {
         return $this->belongsToMany(WarehouseProxy::modelClass(), 'warehouse_activities');
+    }
+
+    /**
+     * Call statuses linked to this activity.
+     */
+    public function callStatuses()
+    {
+        return $this->hasMany(\App\Models\CallStatus::class, 'activity_id');
     }
 
     /**

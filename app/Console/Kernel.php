@@ -15,6 +15,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('inbound-emails:process')->everyFiveMinutes();
         $schedule->command('activities:release-overdue')->hourly();
 
+        // Keep activity statuses in sync each hour
+        $schedule->command('activities:sync-statuses')->hourly();
+
         // Refresh duplicate caches (leads & persons) every hour
         $schedule->command('duplicates:refresh-cache --clear')->hourly();
     }

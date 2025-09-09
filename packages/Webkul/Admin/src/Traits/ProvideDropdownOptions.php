@@ -194,24 +194,61 @@ trait ProvideDropdownOptions
     }
 
     /**
-     * Get activity type dropdown options.
+     * Get activity type dropdown options (only user-selectable types).
      */
     public function getActivityTypeDropdownOptions(): array
     {
-        return [
+        $options = [
             [
                 'label'    => trans('admin::app.common.select-type'),
                 'value'    => '',
                 'disabled' => true,
                 'selected' => true,
+            ]
+        ];
+
+        // Only include user-selectable activity types
+        foreach (\App\Enums\ActivityType::userSelectable() as $type) {
+            $options[] = [
+                'label'    => trans('admin::app.activities.edit.' . $type->value),
+                'value'    => $type->value,
+                'disabled' => false,
+                'selected' => false,
+            ];
+        }
+
+        return $options;
+    }
+
+    /**
+     * Get activity status dropdown options.
+     */
+    public function getActivityStatusDropdownOptions(): array
+    {
+        return [
+            [
+                'label'    => trans('admin::app.common.select-status'),
+                'value'    => '',
+                'disabled' => true,
+                'selected' => true,
             ], [
-                'label'    => trans('admin::app.common.select-call'),
-                'value'    => 'call',
+                'label'    => 'In behandeling',
+                'value'    => 'in_progress',
                 'disabled' => false,
                 'selected' => false,
             ], [
-                'label'    => trans('admin::app.common.select-task'),
-                'value'    => 'task',
+                'label'    => 'Actief',
+                'value'    => 'active',
+                'disabled' => false,
+                'selected' => false,
+            ], [
+                'label'    => 'On hold',
+                'value'    => 'on_hold',
+                'disabled' => false,
+                'selected' => false,
+            ], [
+                'label'    => 'Verlopen',
+                'value'    => 'expired',
                 'disabled' => false,
                 'selected' => false,
             ],

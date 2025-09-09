@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Activity\ActivityController;
 use Webkul\Admin\Http\Controllers\Activity\ActivityAssignmentController;
+use Webkul\Admin\Http\Controllers\Activity\CallStatusController;
 
 Route::controller(ActivityController::class)->prefix('activities')->group(function () {
     Route::get('', 'index')->name('admin.activities.index');
@@ -34,4 +35,9 @@ Route::controller(ActivityAssignmentController::class)->prefix('activities')->gr
         ->middleware('bouncer.permission:activities.takeover');
         
     Route::post('{id}/unassign', 'unassign')->name('admin.activities.unassign');
+});
+
+Route::controller(CallStatusController::class)->prefix('activities/{activityId}/call-statuses')->group(function () {
+    Route::get('', 'index')->name('admin.activities.call-statuses.index');
+    Route::post('', 'store')->name('admin.activities.call-statuses.store');
 });

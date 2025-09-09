@@ -27,6 +27,62 @@
                     </div>
                 </div>
 
+                <!-- Contact Information -->
+                <div class="mb-4">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Contactgegevens</div>
+                    <div class="text-sm">
+                        <!-- Email Addresses -->
+                        @if($lead->emails && is_array($lead->emails) && count($lead->emails) > 0)
+                            @php
+                                $defaultEmail = collect($lead->emails)->firstWhere('is_default', true)
+                                               ?? collect($lead->emails)->first();
+                                $otherEmails = collect($lead->emails)->reject(function($email) use ($defaultEmail) {
+                                    return $email['value'] === $defaultEmail['value'];
+                                });
+                            @endphp
+
+                            <div class="text-gray-900 dark:text-gray-100">
+                                {{ $defaultEmail['value'] }}
+                            </div>
+
+                            @if($otherEmails->count() > 0)
+                                <div class="text-xs text-gray-500 dark:text-gray-400 italic ml-2">
+                                    @foreach($otherEmails as $email)
+                                        {{ $email['value'] }}@if(!$loop->last), @endif
+                                    @endforeach
+                                </div>
+                            @endif
+                        @else
+                            <div class="text-gray-500 dark:text-gray-400 italic">Geen e-mailadres</div>
+                        @endif
+
+                        <!-- Phone Numbers -->
+                        @if($lead->phones && is_array($lead->phones) && count($lead->phones) > 0)
+                            @php
+                                $defaultPhone = collect($lead->phones)->firstWhere('is_default', true)
+                                               ?? collect($lead->phones)->first();
+                                $otherPhones = collect($lead->phones)->reject(function($phone) use ($defaultPhone) {
+                                    return $phone['value'] === $defaultPhone['value'];
+                                });
+                            @endphp
+
+                            <div class="text-gray-900 dark:text-gray-100 mt-1">
+                                {{ $defaultPhone['value'] }}
+                            </div>
+
+                            @if($otherPhones->count() > 0)
+                                <div class="text-xs text-gray-500 dark:text-gray-400 italic ml-2">
+                                    @foreach($otherPhones as $phone)
+                                        {{ $phone['value'] }}@if(!$loop->last), @endif
+                                    @endforeach
+                                </div>
+                            @endif
+                        @else
+                            <div class="text-gray-500 dark:text-gray-400 italic mt-1">Geen telefoonnummer</div>
+                        @endif
+                    </div>
+                </div>
+
                 <!-- Description -->
                 <div class="mb-4">
                     <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Omschrijving</div>
@@ -87,63 +143,7 @@
                                 <span class="icon-location text-sm"></span>
                             </a>
                         @else
-                            <span class="text-gray-500 dark:text-gray-400 italic">Geen adres</span>
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Contact Information -->
-                <div class="mb-4">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Contactgegevens</div>
-                    <div class="text-sm">
-                        <!-- Email Addresses -->
-                        @if($lead->emails && is_array($lead->emails) && count($lead->emails) > 0)
-                            @php
-                                $defaultEmail = collect($lead->emails)->firstWhere('is_default', true)
-                                               ?? collect($lead->emails)->first();
-                                $otherEmails = collect($lead->emails)->reject(function($email) use ($defaultEmail) {
-                                    return $email['value'] === $defaultEmail['value'];
-                                });
-                            @endphp
-
-                            <div class="text-gray-900 dark:text-gray-100">
-                                {{ $defaultEmail['value'] }}
-                            </div>
-
-                            @if($otherEmails->count() > 0)
-                                <div class="text-xs text-gray-500 dark:text-gray-400 italic ml-2">
-                                    @foreach($otherEmails as $email)
-                                        {{ $email['value'] }}@if(!$loop->last), @endif
-                                    @endforeach
-                                </div>
-                            @endif
-                        @else
-                            <div class="text-gray-500 dark:text-gray-400 italic">Geen e-mailadres</div>
-                        @endif
-
-                        <!-- Phone Numbers -->
-                        @if($lead->phones && is_array($lead->phones) && count($lead->phones) > 0)
-                            @php
-                                $defaultPhone = collect($lead->phones)->firstWhere('is_default', true)
-                                               ?? collect($lead->phones)->first();
-                                $otherPhones = collect($lead->phones)->reject(function($phone) use ($defaultPhone) {
-                                    return $phone['value'] === $defaultPhone['value'];
-                                });
-                            @endphp
-
-                            <div class="text-gray-900 dark:text-gray-100 mt-1">
-                                {{ $defaultPhone['value'] }}
-                            </div>
-
-                            @if($otherPhones->count() > 0)
-                                <div class="text-xs text-gray-500 dark:text-gray-400 italic ml-2">
-                                    @foreach($otherPhones as $phone)
-                                        {{ $phone['value'] }}@if(!$loop->last), @endif
-                                    @endforeach
-                                </div>
-                            @endif
-                        @else
-                            <div class="text-gray-500 dark:text-gray-400 italic mt-1">Geen telefoonnummer</div>
+                            <span class="text-gray-500 dark:text-gray-400 italic">-</span>
                         @endif
                     </div>
                 </div>

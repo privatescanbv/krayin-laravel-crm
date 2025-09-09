@@ -264,21 +264,17 @@
                     isStoring: false,
 
                     selectedType: {
-                        label: "{{ trans('admin::app.components.activities.actions.activity.call') }}",
+                        label: "{{ trans('admin::app.activities.edit.call') }}",
                         value: 'call'
                     },
 
                     availableTypes: [
+                        @foreach(\App\Enums\ActivityType::userSelectable() as $type)
                         {
-                            label: "{{ trans('admin::app.components.activities.actions.activity.call') }}",
-                            value: 'call'
-                        },{
-                            label: "{{ trans('admin::app.components.activities.actions.activity.meeting') }}",
-                            value: 'meeting'
-                        }, {
-                            label: "{{ trans('admin::app.components.activities.actions.activity.internal-task') }}",
-                            value: 'task'
+                            label: "{{ trans('admin::app.activities.edit.' . $type->value) }}",
+                            value: '{{ $type->value }}'
                         },
+                        @endforeach
                     ],
 
                     selectedGroupId: null

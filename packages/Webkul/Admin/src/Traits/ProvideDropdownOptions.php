@@ -194,33 +194,30 @@ trait ProvideDropdownOptions
     }
 
     /**
-     * Get activity type dropdown options.
+     * Get activity type dropdown options (only user-selectable types).
      */
     public function getActivityTypeDropdownOptions(): array
     {
-        return [
+        $options = [
             [
                 'label'    => trans('admin::app.common.select-type'),
                 'value'    => '',
                 'disabled' => true,
                 'selected' => true,
-            ], [
-                'label'    => trans('admin::app.activities.edit.call'),
-                'value'    => 'call',
-                'disabled' => false,
-                'selected' => false,
-            ], [
-                'label'    => trans('admin::app.activities.edit.meeting'),
-                'value'    => 'meeting',
-                'disabled' => false,
-                'selected' => false,
-            ], [
-                'label'    => trans('admin::app.activities.edit.task'),
-                'value'    => 'task',
-                'disabled' => false,
-                'selected' => false,
-            ],
+            ]
         ];
+
+        // Only include user-selectable activity types
+        foreach (\App\Enums\ActivityType::userSelectable() as $type) {
+            $options[] = [
+                'label'    => trans('admin::app.activities.edit.' . $type->value),
+                'value'    => $type->value,
+                'disabled' => false,
+                'selected' => false,
+            ];
+        }
+
+        return $options;
     }
 
     /**

@@ -80,7 +80,8 @@
                 const omschrijving = omschrEl.value;
 
                 try {
-                    const res = await fetch(`{{ route('admin.activities.call-statuses.store', $activity->id) }}`, {
+                    const url = '{{ route('admin.activities.call-statuses.store', $activity->id) }}';
+                    const res = await fetch(url, {
                         method: 'POST',
                         headers: {
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',

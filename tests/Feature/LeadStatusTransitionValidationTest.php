@@ -2,12 +2,16 @@
 
 use App\Services\LeadStatusTransitionValidator;
 use Illuminate\Validation\ValidationException;
+use Webkul\User\Models\User;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Stage;
 
 beforeEach(function () {
+    // Ensure an authenticated user exists to satisfy activity/user FKs
+    test()->user = User::factory()->active()->create();
+    actingAs(test()->user);
     // Create a test pipeline
     test()->pipeline = Pipeline::create([
         'name'       => 'Test Pipeline',
@@ -38,6 +42,7 @@ beforeEach(function () {
         'last_name'              => 'Doe',
         'lead_pipeline_id'       => test()->pipeline->id,
         'lead_pipeline_stage_id' => test()->startStage->id,
+        'user_id'                => test()->user->id,
     ]);
 
     // Configure the validation rules

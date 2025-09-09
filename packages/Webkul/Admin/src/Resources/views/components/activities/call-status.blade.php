@@ -44,52 +44,62 @@
 
 @pushOnce('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const submitBtn = document.getElementById('call-status-submit');
-        if (!submitBtn) return;
+    (function initCallStatus() {
+        const bind = () => {
+            const submitBtn = document.getElementById('call-status-submit');
+            if (!submitBtn) return;
 
-        submitBtn.addEventListener('click', async () => {
-            const form = document.getElementById('call-status-form');
-            const status = form.querySelector('[name="status"]').value;
-            const omschrijving = form.querySelector('[name="omschrijving"]').value;
+            submitBtn.addEventListener('click', async () => {
+                const form = document.getElementById('call-status-form');
+                if (!form) return;
+                const status = form.querySelector('[name="status"]').value;
+                const omschrijving = form.querySelector('[name="omschrijving"]').value;
 
-            try {
-                const res = await fetch(`{{ route('admin.activities.call-statuses.store', $activity->id) }}`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ status, omschrijving })
-                });
+                try {
+                    const res = await fetch(`{{ route('admin.activities.call-statuses.store', $activity->id) }}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ status, omschrijving })
+                    });
 
-                if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.message || 'Toevoegen mislukt');
+                    if (!res.ok) {
+                        let message = 'Toevoegen mislukt';
+                        try { const err = await res.json(); message = err.message || message; } catch (_) {}
+                        throw new Error(message);
+                    }
+
+                    const data = await res.json();
+                    const list = document.getElementById('call-status-list');
+                    const item = data.data;
+                    const createdAt = item.created_at ? new Date(item.created_at).toLocaleString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'rounded border p-2 text-sm dark:border-gray-700';
+                    wrapper.innerHTML = `
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium">${item.status}</span>
+                            <span class="text-xs text-gray-500">${createdAt}</span>
+                        </div>
+                        ${item.omschrijving ? `<div class=\"mt-1 text-gray-700 dark:text-gray-300\">${item.omschrijving}</div>` : ''}
+                    `;
+                    if (list) list.prepend(wrapper);
+
+                    form.reset();
+                } catch (e) {
+                    alert(e.message);
                 }
+            });
+        };
 
-                const data = await res.json();
-                const list = document.getElementById('call-status-list');
-                const item = data.data;
-                const createdAt = new Date(item.created_at).toLocaleString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-                const wrapper = document.createElement('div');
-                wrapper.className = 'rounded border p-2 text-sm dark:border-gray-700';
-                wrapper.innerHTML = `
-                    <div class="flex items-center justify-between">
-                        <span class="font-medium">${item.status}</span>
-                        <span class="text-xs text-gray-500">${createdAt}</span>
-                    </div>
-                    ${item.omschrijving ? `<div class="mt-1 text-gray-700 dark:text-gray-300">${item.omschrijving}</div>` : ''}
-                `;
-                list.prepend(wrapper);
-
-                form.reset();
-            } catch (e) {
-                alert(e.message);
-            }
-        });
-    });
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', bind);
+        } else {
+            bind();
+        }
+    })();
 </script>
 @endPushOnce

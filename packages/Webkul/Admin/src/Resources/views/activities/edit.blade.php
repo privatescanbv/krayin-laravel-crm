@@ -264,15 +264,15 @@
                                     :label="trans('admin::app.activities.edit.type')"
                                     :placeholder="trans('admin::app.activities.edit.type')"
                                 >
-                                    <option value="{{ \App\Enums\ActivityType::CALL->value }}">
+                                    <option value="call">
                                         @lang('admin::app.activities.edit.call')
                                     </option>
 
-                                    <option value="{{ \App\Enums\ActivityType::MEETING->value }}">
+                                    <option value="meeting">
                                         @lang('admin::app.activities.edit.meeting')
                                     </option>
 
-                                    <option value="{{ \App\Enums\ActivityType::TASK->value }}">
+                                    <option value="task">
                                         @lang('admin::app.activities.edit.task')
                                     </option>
                                 </x-admin::form.control-group.control>

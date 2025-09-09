@@ -1236,3 +1236,223 @@ test('imports meeting activities from sugarcrm', function () {
     expect($activity3->schedule_from->format('Y-m-d H:i:s'))->toBe('2024-02-25 16:00:00')
         ->and($activity3->schedule_to->format('Y-m-d H:i:s'))->toBe('2024-02-25 17:00:00');
 });
+
+test('imports lead with operatie soort_aanvraag to hernia pipeline', function () {
+    // Create user with external_id (required for import)
+    $user = User::factory()->create(['external_id' => 'user-hernia-001']);
+
+    // Create app person that will be linked to lead via anamnesis relation
+    $personExternalId = 'person-hernia-001';
+    $appPerson = Person::factory()->create(['external_id' => $personExternalId]);
+
+    // Insert sugarcrm lead with operatie soort_aanvraag
+    $leadId = 'lead-hernia-001';
+    DB::connection('sugarcrm')->table('leads')->insert([
+        'id'                         => $leadId,
+        'first_name'                 => 'Hernia',
+        'last_name'                  => 'Patient',
+        'status'                     => 'New',
+        'primary_address_street'     => 'Herniastraat',
+        'primary_address_city'       => 'Amsterdam',
+        'primary_address_state'      => 'NH',
+        'primary_address_postalcode' => '1000AB',
+        'primary_address_country'    => 'NL',
+        'date_entered'               => '2025-06-11 13:41:07',
+        'date_modified'              => '2025-06-12 10:00:00',
+        'deleted'                    => 0,
+    ]);
+    DB::connection('sugarcrm')->table('leads_cstm')->insert([
+        'id_c'                        => $leadId,
+        'workflow_status_c'           => 'nieuweaanvraag',
+        'kanaal_c'                    => 'website',
+        'soort_aanvraag_c'            => 'operatie', // This should map to hernia pipeline
+        'gender_c'                    => 'male',
+        'meisjesnaam_c'               => 'Jansen',
+        'aang_tussenv_c'              => 'de',
+        'primary_huisnr_c'            => '456',
+        'primary_huisnr_toevoeging_c' => 'B',
+    ]);
+    // Email primary
+    DB::connection('sugarcrm')->table('email_addresses')->insert([
+        ['id' => 'e-hernia-1', 'email_address' => 'hernia.patient@example.com', 'deleted' => 0],
+    ]);
+    DB::connection('sugarcrm')->table('email_addr_bean_rel')->insert([
+        ['email_address_id' => 'e-hernia-1', 'bean_id' => $leadId, 'bean_module' => 'Leads', 'primary_address' => 1, 'deleted' => 0],
+    ]);
+    // Create anamnesis records and relations to ensure mapping works
+    $anamnesisId = 'an-hernia-001';
+    DB::connection('sugarcrm')->table('pcrm_anamnesepreventie')->insert([
+        'id'            => $anamnesisId,
+        'name'          => 'Hernia anamnesis',
+        'status'        => 'active',
+        'date_entered'  => now(),
+        'date_modified' => now(),
+        'deleted'       => 0,
+    ]);
+    DB::connection('sugarcrm')->table('pcrm_anamnesepreventie_cstm')->insert([
+        'id_c' => $anamnesisId,
+    ]);
+    // Link lead to anamnesis
+    DB::connection('sugarcrm')->table('leads_pcrm_anamnesepreventie_1_c')->insert([
+        'id'                                                       => 'lead-anam-hernia-001',
+        'leads_pcrm_anamnesepreventie_1leads_ida'                  => $leadId,
+        'leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb' => $anamnesisId,
+        'deleted'                                                  => 0,
+    ]);
+    // Link anamnesis to person
+    DB::connection('sugarcrm')->table('pcrm_anamnetie_contacts_c')->insert([
+        'id'                        => 'anam-person-hernia-001',
+        'pcrm_anamn171deventie_idb' => $anamnesisId,
+        'pcrm_anamn0b6eontacts_ida' => $personExternalId,
+        'deleted'                   => 0,
+    ]);
+    // Also add simple lead->person mapping used to filter personIds in extractAnamenesis
+    DB::connection('sugarcrm')->table('leads_contacts_c')->insert([
+        'id'                  => 'lead-contact-hernia-001',
+        'leads_c7104eads_ida' => $leadId,
+        'leads_cbb5dacts_idb' => $personExternalId,
+        'deleted'             => 0,
+    ]);
+
+    $exit = Artisan::call('import:leads', [
+        '--connection' => 'sugarcrm',
+        '--limit'      => 1,
+    ]);
+    expect($exit)->toBe(0);
+
+    $lead = Lead::where('external_id', $leadId)->first();
+    expect($lead)->not->toBeNull()
+        ->and($lead->first_name)->toBe('Hernia')
+        ->and($lead->last_name)->toBe('Patient')
+        ->and($lead->married_name)->toBe('Jansen')
+        ->and($lead->married_name_prefix)->toBe('de')
+        ->and($lead->created_at->format('Y-m-d H:i:s'))->toBe('2025-06-11 13:41:07');
+
+    // Verify the lead is assigned to the hernia pipeline (not privatescan)
+    expect($lead->lead_pipeline_id)->toBe(\App\Enums\PipelineDefaultKeys::PIPELINE_HERNIA_ID->value)
+        ->and($lead->department_id)->toBe(\App\Models\Department::findHerniaId());
+
+    // Verify the lead is assigned to the first stage of the hernia pipeline
+    expect($lead->lead_pipeline_stage_id)->toBe(\App\Enums\PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value);
+
+    // Address created and mapped
+    $address = Address::where('lead_id', $lead->id)->first();
+    expect($address)->not->toBeNull()
+        ->and($address->street)->toBe('Herniastraat')
+        ->and($address->house_number)->toBe('456')
+        ->and($address->house_number_suffix)->toBe('B')
+        ->and($address->postal_code)->toBe('1000AB')
+        ->and($address->city)->toBe('Amsterdam')
+        ->and($address->state)->toBe('NH')
+        ->and($address->country)->toBe('NL');
+});
+
+test('imports lead with preventie soort_aanvraag to privatescan pipeline', function () {
+    // Create user with external_id (required for import)
+    $user = User::factory()->create(['external_id' => 'user-privatescan-001']);
+
+    // Create app person that will be linked to lead via anamnesis relation
+    $personExternalId = 'person-privatescan-001';
+    $appPerson = Person::factory()->create(['external_id' => $personExternalId]);
+
+    // Insert sugarcrm lead with preventie soort_aanvraag
+    $leadId = 'lead-privatescan-001';
+    DB::connection('sugarcrm')->table('leads')->insert([
+        'id'                         => $leadId,
+        'first_name'                 => 'Preventie',
+        'last_name'                  => 'Patient',
+        'status'                     => 'New',
+        'primary_address_street'     => 'Preventiestraat',
+        'primary_address_city'       => 'Rotterdam',
+        'primary_address_state'      => 'ZH',
+        'primary_address_postalcode' => '3000CD',
+        'primary_address_country'    => 'NL',
+        'date_entered'               => '2025-06-11 13:41:07',
+        'date_modified'              => '2025-06-12 10:00:00',
+        'deleted'                    => 0,
+    ]);
+    DB::connection('sugarcrm')->table('leads_cstm')->insert([
+        'id_c'                        => $leadId,
+        'workflow_status_c'           => 'nieuweaanvraag',
+        'kanaal_c'                    => 'website',
+        'soort_aanvraag_c'            => 'preventie', // This should map to privatescan pipeline
+        'gender_c'                    => 'female',
+        'meisjesnaam_c'               => 'de Vries',
+        'aang_tussenv_c'              => 'van',
+        'primary_huisnr_c'            => '789',
+        'primary_huisnr_toevoeging_c' => 'C',
+    ]);
+    // Email primary
+    DB::connection('sugarcrm')->table('email_addresses')->insert([
+        ['id' => 'e-privatescan-1', 'email_address' => 'preventie.patient@example.com', 'deleted' => 0],
+    ]);
+    DB::connection('sugarcrm')->table('email_addr_bean_rel')->insert([
+        ['email_address_id' => 'e-privatescan-1', 'bean_id' => $leadId, 'bean_module' => 'Leads', 'primary_address' => 1, 'deleted' => 0],
+    ]);
+    // Create anamnesis records and relations to ensure mapping works
+    $anamnesisId = 'an-privatescan-001';
+    DB::connection('sugarcrm')->table('pcrm_anamnesepreventie')->insert([
+        'id'            => $anamnesisId,
+        'name'          => 'Preventie anamnesis',
+        'status'        => 'active',
+        'date_entered'  => now(),
+        'date_modified' => now(),
+        'deleted'       => 0,
+    ]);
+    DB::connection('sugarcrm')->table('pcrm_anamnesepreventie_cstm')->insert([
+        'id_c' => $anamnesisId,
+    ]);
+    // Link lead to anamnesis
+    DB::connection('sugarcrm')->table('leads_pcrm_anamnesepreventie_1_c')->insert([
+        'id'                                                       => 'lead-anam-privatescan-001',
+        'leads_pcrm_anamnesepreventie_1leads_ida'                  => $leadId,
+        'leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb' => $anamnesisId,
+        'deleted'                                                  => 0,
+    ]);
+    // Link anamnesis to person
+    DB::connection('sugarcrm')->table('pcrm_anamnetie_contacts_c')->insert([
+        'id'                        => 'anam-person-privatescan-001',
+        'pcrm_anamn171deventie_idb' => $anamnesisId,
+        'pcrm_anamn0b6eontacts_ida' => $personExternalId,
+        'deleted'                   => 0,
+    ]);
+    // Also add simple lead->person mapping used to filter personIds in extractAnamenesis
+    DB::connection('sugarcrm')->table('leads_contacts_c')->insert([
+        'id'                  => 'lead-contact-privatescan-001',
+        'leads_c7104eads_ida' => $leadId,
+        'leads_cbb5dacts_idb' => $personExternalId,
+        'deleted'             => 0,
+    ]);
+
+    $exit = Artisan::call('import:leads', [
+        '--connection' => 'sugarcrm',
+        '--limit'      => 1,
+    ]);
+    expect($exit)->toBe(0);
+
+    $lead = Lead::where('external_id', $leadId)->first();
+    expect($lead)->not->toBeNull()
+        ->and($lead->first_name)->toBe('Preventie')
+        ->and($lead->last_name)->toBe('Patient')
+        ->and($lead->married_name)->toBe('de Vries')
+        ->and($lead->married_name_prefix)->toBe('van')
+        ->and($lead->created_at->format('Y-m-d H:i:s'))->toBe('2025-06-11 13:41:07');
+
+    // Verify the lead is assigned to the privatescan pipeline (not hernia)
+    expect($lead->lead_pipeline_id)->toBe(\App\Enums\PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value)
+        ->and($lead->department_id)->toBe(\App\Models\Department::findPrivateScanId());
+
+    // Verify the lead is assigned to the first stage of the privatescan pipeline
+    expect($lead->lead_pipeline_stage_id)->toBe(\App\Enums\PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_PRIVATESCAN_ID->value);
+
+    // Address created and mapped
+    $address = Address::where('lead_id', $lead->id)->first();
+    expect($address)->not->toBeNull()
+        ->and($address->street)->toBe('Preventiestraat')
+        ->and($address->house_number)->toBe('789')
+        ->and($address->house_number_suffix)->toBe('C')
+        ->and($address->postal_code)->toBe('3000CD')
+        ->and($address->city)->toBe('Rotterdam')
+        ->and($address->state)->toBe('ZH')
+        ->and($address->country)->toBe('NL');
+});

@@ -922,23 +922,18 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
     }
 
     /**
-     * Map department based on SugarCRM kanaal or soort_aanvraag
+     * Map department based on SugarCRM soort_aanvraag (consistent with API controller logic)
      */
     private function mapDepartment($record): int
     {
-        $kanaal = $record->kanaal_c ?? '';
         $soortAanvraag = $record->soort_aanvraag_c ?? '';
 
-        // Map based on channel/type to determine department
-        $kanaalLower = strtolower(trim($kanaal));
+        // Map based on soort_aanvraag to determine department (consistent with API controller)
         $soortLower = strtolower(trim($soortAanvraag));
 
-        // Hernia department indicators
-        $herniaIndicators = ['operatie'];
-        foreach ($herniaIndicators as $indicator) {
-            if (str_contains($kanaalLower, $indicator) || str_contains($soortLower, $indicator)) {
-                return Department::findHerniaId();
-            }
+        // Check if soort_aanvraag is "operatie" (maps to type ID 3 which is "Operatie")
+        if ($soortLower === 'operatie') {
+            return Department::findHerniaId();
         }
 
         // Default to Privatescan department

@@ -12,7 +12,7 @@ return new class extends Migration
     {
         Schema::create('call_statuses', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('activity_id');
+            $table->unsignedInteger('activity_id');
             $table->string('status');
             $table->text('omschrijving')->nullable();
             $table->timestamps();

@@ -265,9 +265,11 @@
                                     :placeholder="trans('admin::app.activities.edit.type')"
                                 >
                                     @foreach (App\Enums\ActivityType::cases() as $case)
-                                        <option value="{{ $case->value }}">
-                                            @lang('admin::app.activities.edit.' . $case->value)
-                                        </option>
+                                        @if ($case !== App\Enums\ActivityType::SYSTEM)
+                                            <option value="{{ $case->value }}">
+                                                @lang('admin::app.activities.edit.' . $case->value)
+                                            </option>
+                                        @endif
                                     @endforeach
                                 </x-admin::form.control-group.control>
 

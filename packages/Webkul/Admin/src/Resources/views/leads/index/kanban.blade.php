@@ -738,12 +738,6 @@
                         .put("{{ route('admin.leads.stage.update', 'replace') }}".replace('replace', leadId), data)
                         .then(response => {
                             this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
-                            
-                            // Update stage counters after successful update
-                            const stage = this.stages.find(s => s.id === stageId);
-                            if (stage) {
-                                this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage.sort_order].leads.meta.total + 1;
-                            }
                         })
                         .catch(error => {
                             this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });

@@ -69,7 +69,7 @@ beforeEach(function () {
 test('it blocks transition when no persons are attached', function () {
     // Lead has no persons attached
     expect(test()->lead->persons_count)->toBe(0)
-        ->and(fn() => LeadStatusTransitionValidator::validateTransition(test()->lead, test()->followUpStage->id))
+        ->and(fn () => LeadStatusTransitionValidator::validateTransition(test()->lead, test()->followUpStage->id))
         ->toThrow(ValidationException::class);
 
     // Attempt to transition should fail
@@ -134,7 +134,7 @@ test('it ignores validation for transitions without rules', function () {
 test('it works with lead model update method', function () {
     // Lead has no persons attached
     expect(test()->lead->persons_count)->toBe(0)
-        ->and(fn() => test()->lead->update(['lead_pipeline_stage_id' => test()->followUpStage->id]))
+        ->and(fn () => test()->lead->update(['lead_pipeline_stage_id' => test()->followUpStage->id]))
         ->toThrow(ValidationException::class);
 
     // Attempt to update stage should fail
@@ -143,7 +143,7 @@ test('it works with lead model update method', function () {
 test('it works with lead model update stage method', function () {
     // Lead has no persons attached
     expect(test()->lead->persons_count)->toBe(0)
-        ->and(fn() => test()->lead->updateStage(test()->followUpStage->id))
+        ->and(fn () => test()->lead->updateStage(test()->followUpStage->id))
         ->toThrow(ValidationException::class);
 
     // Attempt to update stage should fail

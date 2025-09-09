@@ -1,14 +1,14 @@
-# Lead Status Transition Validation
+### Lead Status Transition Validation
 
 Dit document beschrijft het validatiemechanisme voor status transities in het Lead systeem.
 
-## Overzicht
+#### Overzicht
 
 Het systeem maakt het mogelijk om validatieregels te definiëren die worden uitgevoerd wanneer een lead van de ene status naar de andere wordt verplaatst. Dit voorkomt dat leads in onjuiste staten terechtkomen en zorgt voor data-integriteit.
 
-## Architectuur
+#### Architectuur
 
-### 1. LeadStatusTransitionValidator Service
+##### 1. LeadStatusTransitionValidator Service
 
 De `LeadStatusTransitionValidator` service beheert alle validatieregels voor status transities.
 
@@ -19,19 +19,19 @@ De `LeadStatusTransitionValidator` service beheert alle validatieregels voor sta
 - `addTransitionRule(string $fromStageCode, string $toStageCode, array $rules)` - Voegt een validatieregel toe
 - `removeTransitionRule(string $fromStageCode, string $toStageCode)` - Verwijdert een validatieregel
 
-### 2. Lead Model Integration
+##### 2. Lead Model Integration
 
 Het `Lead` model is uitgebreid met validatie:
 - `update()` methode controleert automatisch status transities
 - `updateStage()` methode voor directe stage updates met validatie
 
-### 3. PipelineSeeder Configuration
+##### 3. PipelineSeeder Configuration
 
 Validatieregels worden geconfigureerd in de `PipelineSeeder` via de `configureStatusTransitionValidations()` methode.
 
-## Configuratie
+#### Configuratie
 
-### Basis Configuratie
+##### Basis Configuratie
 
 Validatieregels worden gedefinieerd in de `PipelineSeeder`:
 
@@ -50,9 +50,9 @@ private function configureStatusTransitionValidations(): void
 }
 ```
 
-### Ondersteunde Validatie Types
+##### Ondersteunde Validatie Types
 
-#### 1. Minimum Aantal Personen
+###### 1. Minimum Aantal Personen
 ```php
 [
     'min_persons' => 1,
@@ -60,7 +60,7 @@ private function configureStatusTransitionValidations(): void
 ]
 ```
 
-#### 2. Verplichte Velden
+###### 2. Verplichte Velden
 ```php
 [
     'required_fields' => ['first_name', 'last_name', 'emails'],
@@ -68,7 +68,7 @@ private function configureStatusTransitionValidations(): void
 ]
 ```
 
-#### 3. Custom Validatie
+###### 3. Custom Validatie
 ```php
 [
     'custom_validation' => function($lead) {
@@ -82,16 +82,16 @@ private function configureStatusTransitionValidations(): void
 ]
 ```
 
-## Gebruik
+#### Gebruik
 
-### Automatische Validatie
+##### Automatische Validatie
 
 Validatie gebeurt automatisch bij:
 - `$lead->update(['lead_pipeline_stage_id' => $newStageId])`
 - `$lead->updateStage($newStageId)`
 - API calls via `LeadController`
 
-### Handmatige Validatie
+##### Handmatige Validatie
 
 ```php
 use App\Services\LeadStatusTransitionValidator;
@@ -105,7 +105,7 @@ try {
 }
 ```
 
-### Runtime Configuratie
+##### Runtime Configuratie
 
 ```php
 // Voeg een regel toe
@@ -128,9 +128,9 @@ $hasRule = LeadStatusTransitionValidator::hasTransitionRule(
 );
 ```
 
-## Voorbeelden
+#### Voorbeelden
 
-### Voorbeeld 1: Minimaal 1 Persoon
+##### Voorbeeld 1: Minimaal 1 Persoon
 
 ```php
 LeadStatusTransitionValidator::addTransitionRule(
@@ -143,7 +143,7 @@ LeadStatusTransitionValidator::addTransitionRule(
 );
 ```
 
-### Voorbeeld 2: Verplichte Velden
+##### Voorbeeld 2: Verplichte Velden
 
 ```php
 LeadStatusTransitionValidator::addTransitionRule(
@@ -156,7 +156,7 @@ LeadStatusTransitionValidator::addTransitionRule(
 );
 ```
 
-### Voorbeeld 3: Custom Validatie
+##### Voorbeeld 3: Custom Validatie
 
 ```php
 LeadStatusTransitionValidator::addTransitionRule(
@@ -178,7 +178,7 @@ LeadStatusTransitionValidator::addTransitionRule(
 );
 ```
 
-## Error Handling
+#### Error Handling
 
 Wanneer een validatie faalt, wordt een `ValidationException` gegooid met de volgende structuur:
 
@@ -191,7 +191,7 @@ Wanneer een validatie faalt, wordt een `ValidationException` gegooid met de volg
 ]
 ```
 
-## Testing
+#### Testing
 
 Tests zijn beschikbaar in `tests/Feature/LeadStatusTransitionValidationTest.php`:
 
@@ -199,7 +199,7 @@ Tests zijn beschikbaar in `tests/Feature/LeadStatusTransitionValidationTest.php`
 php artisan test tests/Feature/LeadStatusTransitionValidationTest.php
 ```
 
-## Best Practices
+#### Best Practices
 
 1. **Definieer regels in PipelineSeeder**: Houd validatieregels gecentraliseerd
 2. **Gebruik duidelijke foutmeldingen**: Help gebruikers begrijpen wat er mis is
@@ -207,7 +207,7 @@ php artisan test tests/Feature/LeadStatusTransitionValidationTest.php
 4. **Documenteer complexe regels**: Leg custom validaties uit in comments
 5. **Performance**: Houd custom validaties licht - vermijd zware database queries
 
-## Uitbreiding
+#### Uitbreiding
 
 Het systeem is ontworpen om eenvoudig uit te breiden:
 
@@ -216,19 +216,19 @@ Het systeem is ontworpen om eenvoudig uit te breiden:
 3. **Integration met workflows**: Koppel validaties aan workflow events
 4. **UI feedback**: Toon validatiefouten in de frontend
 
-## Troubleshooting
+#### Troubleshooting
 
-### Validatie werkt niet
+##### Validatie werkt niet
 - Controleer of de regel correct is gedefinieerd in `PipelineSeeder`
 - Verificeer dat de stage codes exact overeenkomen
 - Check of de seeder is uitgevoerd
 
-### Performance issues
+##### Performance issues
 - Optimaliseer custom validaties
 - Overweeg caching voor zware validaties
 - Monitor database queries in custom validaties
 
-### Foutmeldingen
+##### Foutmeldingen
 - Controleer de `message` configuratie
 - Verificeer dat alle benodigde data beschikbaar is
 - Check de lead relaties (persons, quotes, etc.)

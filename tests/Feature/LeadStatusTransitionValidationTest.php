@@ -124,6 +124,7 @@ test('it ignores validation for transitions without rules', function () {
 
     // Transition should succeed even without persons
     LeadStatusTransitionValidator::validateTransition(test()->lead, $otherStage->id);
+    expect(true)->toBeTrue();
 });
 
 test('it works with lead model update method', function () {

@@ -39,7 +39,10 @@ class LeadStatusTransitionValidator
      */
     public static function validateTransition(Lead $lead, int $newStageId): void
     {
-        $currentStage = $lead->stage;
+        // Avoid relying on a potentially stale Eloquent relation; read current stage by ID
+        $currentStage = $lead->lead_pipeline_stage_id
+            ? Stage::find($lead->lead_pipeline_stage_id)
+            : null;
         $newStage = Stage::findOrFail($newStageId);
         
         if (!$currentStage) {

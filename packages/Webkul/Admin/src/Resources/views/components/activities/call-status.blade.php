@@ -59,6 +59,7 @@
             const newBtn = submitBtn.cloneNode(true);
             submitBtn.parentNode.replaceChild(newBtn, submitBtn);
 
+            console.log('[call-status] adding click listener to new button');
             newBtn.addEventListener('click', async (e) => {
                 console.log('[call-status] button clicked', e);
                 e.preventDefault();
@@ -122,10 +123,22 @@
             });
         };
 
+        // Try multiple approaches to ensure binding works
+        const tryBind = () => {
+            try {
+                bind();
+            } catch (e) {
+                console.error('[call-status] bind failed:', e);
+                // Retry after a short delay
+                setTimeout(tryBind, 100);
+            }
+        };
+
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', bind);
+            document.addEventListener('DOMContentLoaded', tryBind);
         } else {
-            bind();
+            // Add a small delay to ensure DOM is fully ready
+            setTimeout(tryBind, 50);
         }
     })();
 </script>

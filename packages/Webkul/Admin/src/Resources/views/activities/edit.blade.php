@@ -30,6 +30,16 @@
                     <div class="flex items-center gap-x-2.5">
                         {!! view_render_event('admin.activities.edit.save_button.before') !!}
 
+                        <!-- Afronden Button -->
+                        <button
+                            type="submit"
+                            name="is_done"
+                            value="1"
+                            class="secondary-button"
+                        >
+                            Afronden
+                        </button>
+
                         <!-- Save Button -->
                         <button
                             type="submit"
@@ -85,7 +95,7 @@
                     </x-admin::form.control-group>
 
                     <!-- Comment -->
-                    @if ($activity->type !== 'call')
+                    @if ($activity->type !== \App\Enums\ActivityType::CALL)
                         <x-admin::form.control-group>
                             <x-admin::form.control-group.label>
                                 @lang('admin::app.activities.edit.comment')
@@ -201,23 +211,7 @@
 
 
 
-                    <!-- is_done Checkbox -->
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>
-                            @lang('admin::app.activities.edit.is_done')
-                        </x-admin::form.control-group.label>
-                        <input
-                            type="checkbox"
-                            name="is_done"
-                            id="is_done"
-                            value="1"
-                            {{ old('is_done', $activity->is_done) ? 'checked' : '' }}
-                            class="rounded border-gray-300 text-brandColor shadow-sm focus:border-brandColor focus:ring focus:ring-brandColor focus:ring-opacity-50"
-                        />
-                        <label for="is_done" class="ml-2 text-sm text-gray-700 dark:text-gray-200">
-                            @lang('admin::app.activities.edit.is_done-label')
-                        </label>
-                    </x-admin::form.control-group>
+                    <!-- is_done Checkbox removed in favor of Afronden button -->
 
                     {!! view_render_event('admin.activities.edit.form_controls.after') !!}
                 </div>
@@ -265,20 +259,20 @@
                                     type="select"
                                     name="type"
                                     id="type"
-                                    :value="old('type') ?? $activity->type"
+                                    :value="old('type') ?? ($activity->type?->value ?? $activity->type)"
                                     rules="required"
                                     :label="trans('admin::app.activities.edit.type')"
                                     :placeholder="trans('admin::app.activities.edit.type')"
                                 >
-                                    <option value="call">
+                                    <option value="{{ \App\Enums\ActivityType::CALL->value }}">
                                         @lang('admin::app.activities.edit.call')
                                     </option>
 
-                                    <option value="meeting">
+                                    <option value="{{ \App\Enums\ActivityType::MEETING->value }}">
                                         @lang('admin::app.activities.edit.meeting')
                                     </option>
 
-                                    <option value="task">
+                                    <option value="{{ \App\Enums\ActivityType::TASK->value }}">
                                         @lang('admin::app.activities.edit.task')
                                     </option>
                                 </x-admin::form.control-group.control>
@@ -291,7 +285,7 @@
 
                     {!! view_render_event('admin.activities.edit.accordion.general.after') !!}
 
-                    @if ($activity->type === 'call')
+                    @if ($activity->type === \App\Enums\ActivityType::CALL)
                         @include('admin::components.activities.call-status', ['activity' => $activity, 'callStatuses' => $callStatuses ?? []])
                     @endif
                 </div>

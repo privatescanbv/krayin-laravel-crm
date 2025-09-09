@@ -146,7 +146,7 @@ class Lead extends Model implements LeadContract
     }
 
     public function getMRIStatusLabelAttribute(): string {
-        return $this->mri_status->label() ?? '-';
+        return $this->mri_status?->label() ?? '-';
     }
 
     /**

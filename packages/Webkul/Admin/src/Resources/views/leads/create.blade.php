@@ -429,7 +429,7 @@
                                         <div class="flex-1">
                                             @php
                                                 $mriOptions = [];
-                                                foreach (App\Enums\LeadMriStatus::cases() as $case) {
+                                                foreach (App\Enums\MRIStatus::cases() as $case) {
                                                     $mriOptions[$case->value] = $case->label();
                                                 }
                                             @endphp
@@ -636,11 +636,11 @@
                             });
 
                             // Redirect to leads index with pipeline preservation
-                            const pipelineId = this.getCookieValue('last_selected_pipeline_id');
-                            const url = pipelineId
-                                ? '{{ route('admin.leads.index') }}?pipeline_id=' + pipelineId
-                                : '{{ route('admin.leads.index') }}';
-                            window.location.href = url;
+                            {{--const pipelineId = getCookieValue('last_selected_pipeline_id');--}}
+                            {{--const url = pipelineId--}}
+                            {{--    ? '{{ route('admin.leads.index') }}?pipeline_id=' + pipelineId--}}
+                            {{--    : '{{ route('admin.leads.index') }}';--}}
+                            window.location.href = '{{ route('admin.leads.index') }}';
 
                         } catch (error) {
                             console.error('Error submitting form:', error);

@@ -264,17 +264,11 @@
                                     :label="trans('admin::app.activities.edit.type')"
                                     :placeholder="trans('admin::app.activities.edit.type')"
                                 >
-                                    <option value="call">
-                                        @lang('admin::app.activities.edit.call')
-                                    </option>
-
-                                    <option value="meeting">
-                                        @lang('admin::app.activities.edit.meeting')
-                                    </option>
-
-                                    <option value="task">
-                                        @lang('admin::app.activities.edit.task')
-                                    </option>
+                                    @foreach (App\Enums\ActivityType::cases() as $case)
+                                        <option value="{{ $case->value }}">
+                                            @lang('admin::app.activities.edit.' . $case->value)
+                                        </option>
+                                    @endforeach
                                 </x-admin::form.control-group.control>
 
                                 <x-admin::form.control-group.error control-name="type" />

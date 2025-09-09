@@ -31,7 +31,7 @@ class ViewService
             ],
             'hernia' => [
                 'key' => 'hernia',
-                'label' => 'Hernia',
+                'label' => 'Herniapoli',
                 'description' => 'Activiteiten van afdeling Hernia',
                 'is_default' => false,
                 'filters' => $this->getHerniaFilters(),

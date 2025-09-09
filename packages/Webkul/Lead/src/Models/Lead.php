@@ -3,7 +3,6 @@
 namespace Webkul\Lead\Models;
 
 use App\Enums\PersonGender;
-use App\Enums\LeadMriStatus;
 use App\Enums\PersonSalutation;
 use App\Models\Anamnesis;
 use App\Models\Department;
@@ -40,7 +39,7 @@ class Lead extends Model implements LeadContract
         'combine_order'       => 'boolean',
         'gender'              => PersonGender::class,
         'salutation'          => PersonSalutation::class,
-        'mri_status'          => LeadMriStatus::class,
+        // 'mri_status' is stored as plain string
     ];
 
     /**

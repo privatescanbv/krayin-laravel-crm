@@ -428,9 +428,9 @@
                                     <div class="flex gap-4 mb-4">
                                         <div class="flex-1">
                                             @php
-                                                $channelOptions = [];
-                                                foreach (App\Enums\MRIStatus::cases() as $case) {
-                                                    $channelOptions[$case->value] = $case->label();
+                                                $mriOptions = [];
+                                                foreach (App\Enums\LeadMriStatus::cases() as $case) {
+                                                    $mriOptions[$case->value] = $case->label();
                                                 }
                                             @endphp
                                             <x-admin::form.control-group>
@@ -440,14 +440,13 @@
                                                 <x-admin::form.control-group.control
                                                     type="select"
                                                     name="mri_status"
-                                                    v-model="formData.mri_status_id"
+                                                    v-model="formData.mri_status"
                                                 >
                                                     <option value="">-- Selecteer MRI status --</option>
-                                                    @foreach ($channelOptions as $id => $name)
+                                                    @foreach ($mriOptions as $id => $name)
                                                         <option value="{{ $id }}">{{ $name }}</option>
                                                     @endforeach
                                                 </x-admin::form.control-group.control>
-
                                             </x-admin::form.control-group>
                                         </div>
                                         <!-- Combine Order Setting -->
@@ -505,7 +504,7 @@
                         selectedPersons: [],
                         persons: [],
                         isSubmitting: false,
-                                                                                         formData: {
+                        formData: {
                         description: '',
                         lead_channel_id: '1', // Default: Telefoon
                         lead_source_id: 32, // Default: Anders
@@ -513,7 +512,7 @@
                         lead_pipeline_id: '{{ $defaultPipelineId ?? "" }}', // Set based on department or URL param
                         lead_pipeline_stage_id: '{{ $defaultStageId ?? "" }}', // Set based on pipeline or URL param
                         combine_order: 1,
-                             mri_status_id: '',
+                        mri_status: '',
                             lead_type_id: '1', // Default: Preventie
                             // Personal fields for matching
                             first_name: '',

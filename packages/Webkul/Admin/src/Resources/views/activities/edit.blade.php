@@ -59,6 +59,44 @@
                 <div class="box-shadow flex-1 gap-2 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 max-xl:flex-auto">
                     {!! view_render_event('admin.activities.edit.form_controls.before') !!}
 
+                    <!-- Title -->
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label class="required">
+                            @lang('admin::app.activities.edit.title')
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="text"
+                            name="title"
+                            id="title"
+                            rules="required"
+                            :value="old('title') ?? $activity->title"
+                            :label="trans('admin::app.activities.edit.title')"
+                            :placeholder="trans('admin::app.activities.edit.title')"
+                        />
+
+                        <x-admin::form.control-group.error control-name="title" />
+                    </x-admin::form.control-group>
+
+                    <!-- Type -->
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label class="required">
+                            @lang('admin::app.activities.edit.type')
+                        </x-admin::form.control-group.label>
+
+                        @php
+                            $currentTypeValue = old('type') ?? ($activity->type?->value ?? $activity->type);
+                            $currentTypeLabel = trans('admin::app.activities.edit.' . $currentTypeValue);
+                        @endphp
+
+                        <div class="flex items-center justify-between rounded-md border px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:text-gray-200">
+                            <span>{{ $currentTypeLabel }}</span>
+                        </div>
+                        <input type="hidden" name="type" value="{{ $currentTypeValue }}" />
+
+                        <x-admin::form.control-group.error control-name="type" />
+                    </x-admin::form.control-group>
+
                     <!-- Schedule Date -->
                     <x-admin::form.control-group>
                         <div class="flex gap-2 max-sm:flex-wrap">
@@ -218,61 +256,6 @@
 
                 <!-- Right sub-component -->
                 <div class="w-[360px] max-w-full gap-2 max-xl:w-full">
-                    {!! view_render_event('admin.activities.edit.accordion.general.before') !!}
-
-                    <x-admin::accordion>
-                        <x-slot:header>
-                            <div class="flex items-center justify-between">
-                                <p class="p-2.5 text-base font-semibold text-gray-800 dark:text-white">
-                                    @lang('admin::app.activities.edit.general')
-                                </p>
-                            </div>
-                        </x-slot>
-
-                        <x-slot:content>
-                            <!-- Title -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.activities.edit.title')
-                                </x-admin::form.control-group.label>
-
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    name="title"
-                                    id="title"
-                                    rules="required"
-                                    :value="old('title') ?? $activity->title"
-                                    :label="trans('admin::app.activities.edit.title')"
-                                    :placeholder="trans('admin::app.activities.edit.title')"
-                                />
-
-                                <x-admin::form.control-group.error control-name="title" />
-                            </x-admin::form.control-group>
-
-                            <!-- Edit Type -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.activities.edit.type')
-                                </x-admin::form.control-group.label>
-
-                                @php
-                                    $currentTypeValue = old('type') ?? ($activity->type?->value ?? $activity->type);
-                                    $currentTypeLabel = trans('admin::app.activities.edit.' . $currentTypeValue);
-                                @endphp
-
-                                <div class="flex items-center justify-between rounded-md border px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:text-gray-200">
-                                    <span>{{ $currentTypeLabel }}</span>
-                                </div>
-                                <input type="hidden" name="type" value="{{ $currentTypeValue }}" />
-
-                                <x-admin::form.control-group.error control-name="type" />
-                            </x-admin::form.control-group>
-
-                        </x-slot>
-                    </x-admin::accordion>
-
-                    {!! view_render_event('admin.activities.edit.accordion.general.after') !!}
-
                     @if ($activity->type === \App\Enums\ActivityType::CALL)
                         @include('admin::components.activities.call-status', ['activity' => $activity, 'callStatuses' => $callStatuses ?? []])
                     @endif

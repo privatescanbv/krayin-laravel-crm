@@ -133,6 +133,7 @@ class ActivityDataGrid extends DataGrid
 
         $this->addFilter('id', 'activities.id');
         $this->addFilter('title', 'activities.title');
+        $this->addFilter('type', 'activities.type');
         $this->addFilter('is_done', 'activities.is_done');
         $this->addFilter('created_by', 'users.name');
         $this->addFilter('assigned_user_id', 'users.name');
@@ -280,13 +281,15 @@ class ActivityDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'type',
-            'label'      => trans('admin::app.activities.index.datagrid.type'),
-            'type'       => 'string',
-            'searchable' => false,
-            'filterable' => false,
-            'sortable'   => true,
-            'closure'    => fn ($row) => trans('admin::app.activities.index.datagrid.'.$row->type),
+            'index'              => 'type',
+            'label'              => trans('admin::app.activities.index.datagrid.type'),
+            'type'               => 'string',
+            'searchable'         => false,
+            'filterable'         => true,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => $this->getActivityTypeDropdownOptions(),
+            'sortable'           => true,
+            'closure'            => fn ($row) => trans('admin::app.activities.edit.'.$row->type),
         ]);
 
         $this->addColumn([

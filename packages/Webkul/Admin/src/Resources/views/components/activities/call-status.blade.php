@@ -44,7 +44,13 @@
 
 @push('scripts')
 <script>
+    let callStatusButtonBound = false;
+    
     function bindCallStatusButton() {
+        if (callStatusButtonBound) {
+            console.log('[call-status] Button already bound, skipping');
+            return true;
+        }
         const url = '{{ route('admin.activities.call-statuses.store', $activity->id) }}';
         const csrfToken = '{{ csrf_token() }}';
         
@@ -77,6 +83,8 @@
                 const status = statusEl.value;
                 const omschrijving = omschrEl.value;
 
+                console.log('[call-status] Sending request:', { status, omschrijving, url });
+
                 try {
                     const res = await fetch(url, {
                         method: 'POST',
@@ -90,13 +98,17 @@
                         body: JSON.stringify({ status, omschrijving })
                     });
 
+                    console.log('[call-status] Response status:', res.status, res.statusText);
+
                     if (!res.ok) {
                         let message = 'Toevoegen mislukt';
                         try { const err = await res.json(); message = err.message || message; } catch (_) {}
+                        console.log('[call-status] Error response:', message);
                         throw new Error(message);
                     }
 
                     const data = await res.json();
+                    console.log('[call-status] Success response:', data);
                     const list = document.getElementById('call-status-list');
                     if (!list) {
                         alert('Lijst container niet gevonden');
@@ -112,12 +124,15 @@
                     list.prepend(wrapper);
 
                     form.reset();
+                    console.log('[call-status] Form reset, call status added successfully');
                 } catch (e) {
-                    console.error(e);
+                    console.error('[call-status] Error:', e);
                     alert(e.message);
                 }
             });
             
+            callStatusButtonBound = true;
+            console.log('[call-status] Button successfully bound');
             return true; // Successfully bound
         }
         return false; // Button not found

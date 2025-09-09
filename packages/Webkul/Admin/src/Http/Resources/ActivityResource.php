@@ -37,7 +37,7 @@ class ActivityResource extends JsonResource
         // Append call status summary/details for call activities
         $typeValue = $this->type?->value ?? $this->type;
         if ($typeValue === 'call') {
-            $items = $this->whenLoaded('callStatuses') ? $this->callStatuses : $this->callStatuses()->get();
+            $items = $this->whenLoaded('callStatuses') ? $this->callStatuses : $this->callStatuses()->with('creator')->get();
 
             $summary = [
                 'not_reachable' => 0,

@@ -149,11 +149,11 @@
                                                 <div v-if="activity.__showCallDetails && activity.call_statuses?.length" class="mt-2 border rounded p-2 dark:border-gray-800">
                                                     <div v-for="cs in activity.call_statuses" :key="cs.created_at" class="text-xs py-1 border-b last:border-b-0 dark:border-gray-800">
                                                         <div class="flex justify-between">
-                                                            <span class="font-medium">@{{ cs.status }}</span>
+                                                            <span class="font-medium">@{{ getCallStatusLabel(cs.status) }}</span>
                                                             <span>@{{ $admin.formatDate(cs.created_at, 'd MMM yyyy, h:mm', timezone) }}</span>
                                                         </div>
                                                         <div v-if="cs.omschrijving" class="text-gray-600 dark:text-gray-300">@{{ cs.omschrijving }}</div>
-                                                        <div v-if="cs.created_by" class="text-gray-500">door @{{ cs.created_by }}</div>
+                                                        <div v-if="cs.creator" class="text-gray-500">door @{{ cs.creator.name }}</div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -599,6 +599,15 @@
                                 });
                         }
                     });
+                },
+
+                getCallStatusLabel(status) {
+                    const labels = {
+                        'not_reachable': 'Niet kunnen bereiken',
+                        'voicemail_left': 'Voicemail ingesproken',
+                        'spoken': 'Gesproken'
+                    };
+                    return labels[status] || status;
                 },
             },
         });

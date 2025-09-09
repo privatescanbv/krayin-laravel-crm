@@ -201,6 +201,7 @@ class ActivityController extends Controller
         $canTakeover = $user->hasPermission('activities.takeover');
 
         $callStatuses = \App\Models\CallStatus::where('activity_id', $activity->id)
+            ->with('creator')
             ->orderByDesc('created_at')
             ->get();
 

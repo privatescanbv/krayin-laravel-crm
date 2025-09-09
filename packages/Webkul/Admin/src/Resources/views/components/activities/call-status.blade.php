@@ -1,5 +1,5 @@
 @php
-    use App\Enums\CallStatusEnum;
+    use App\Enums\CallStatus;
 @endphp
 
 <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
@@ -11,11 +11,14 @@
         @forelse(($callStatuses ?? []) as $item)
             <div class="rounded border p-2 text-sm dark:border-gray-700">
                 <div class="flex items-center justify-between">
-                    <span class="font-medium">{{ __($item->status->name) }}</span>
+                    <span class="font-medium">{{ $item->status->label() }}</span>
                     <span class="text-xs text-gray-500">{{ $item->created_at?->format('d-m-Y H:i') }}</span>
                 </div>
                 @if($item->omschrijving)
                     <div class="mt-1 text-gray-700 dark:text-gray-300">{{ $item->omschrijving }}</div>
+                @endif
+                @if($item->creator)
+                    <div class="mt-1 text-xs text-gray-500">Toegevoegd door: {{ $item->creator->name }}</div>
                 @endif
             </div>
         @empty
@@ -27,9 +30,9 @@
         <div>
             <label class="block text-sm font-medium mb-1">Status</label>
             <select name="status" class="w-full rounded-md border px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-900">
-                <option value="{{ CallStatusEnum::NOT_REACHABLE->value }}">Niet kunnen bereiken</option>
-                <option value="{{ CallStatusEnum::VOICEMAIL_LEFT->value }}">Voicemail ingesproken</option>
-                <option value="{{ CallStatusEnum::SPOKEN->value }}">Gesproken</option>
+                @foreach (CallStatus::cases() as $status)
+                    <option value="{{ $status->value }}">{{ $status->label() }}</option>
+                @endforeach
             </select>
         </div>
 
@@ -109,15 +112,25 @@
                             minute: '2-digit' 
                         }) : '';
 
+                    const statusLabels = {
+                        'not_reachable': 'Niet kunnen bereiken',
+                        'voicemail_left': 'Voicemail ingesproken',
+                        'spoken': 'Gesproken'
+                    };
+                    
                     const wrapper = document.createElement('div');
                     wrapper.className = 'rounded border p-2 text-sm dark:border-gray-700';
                     wrapper.innerHTML = 
                         '<div class="flex items-center justify-between">' +
-                            '<span class="font-medium">' + item.status + '</span>' +
+                            '<span class="font-medium">' + (statusLabels[item.status] || item.status) + '</span>' +
                             '<span class="text-xs text-gray-500">' + createdAt + '</span>' +
                         '</div>' +
                         (item.omschrijving ? 
                             '<div class="mt-1 text-gray-700 dark:text-gray-300">' + item.omschrijving + '</div>' : 
+                            ''
+                        ) +
+                        (item.creator ? 
+                            '<div class="mt-1 text-xs text-gray-500">Toegevoegd door: ' + item.creator.name + '</div>' : 
                             ''
                         );
                     

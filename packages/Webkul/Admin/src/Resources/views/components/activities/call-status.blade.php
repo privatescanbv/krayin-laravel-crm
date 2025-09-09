@@ -47,22 +47,28 @@
     (function initCallStatus() {
         const bind = () => {
             const submitBtn = document.getElementById('call-status-submit');
-            console.log('[call-status] bind executed, submitBtn:', !!submitBtn);
+            console.log('[call-status] bind executed, submitBtn:', !!submitBtn, submitBtn);
             if (!submitBtn) {
                 throw new Error('[call-status] submit button not found');
             }
 
-            submitBtn.addEventListener('click', async (e) => {
+            // Remove any existing listeners first
+            const newBtn = submitBtn.cloneNode(true);
+            submitBtn.parentNode.replaceChild(newBtn, submitBtn);
+
+            newBtn.addEventListener('click', async (e) => {
                 console.log('[call-status] button clicked', e);
                 e.preventDefault();
                 e.stopPropagation();
                 
                 const form = document.getElementById('call-status-form');
+                console.log('[call-status] form found:', !!form);
                 if (!form) {
                     throw new Error('[call-status] form element not found');
                 }
                 const statusEl = form.querySelector('[name="status"]');
                 const omschrEl = form.querySelector('[name="omschrijving"]');
+                console.log('[call-status] elements found:', { statusEl: !!statusEl, omschrEl: !!omschrEl });
                 if (!statusEl) {
                     throw new Error('[call-status] status select not found');
                 }

@@ -26,23 +26,40 @@
         @endforelse
     </div>
 
-    <form id="call-status-form" class="mt-4 space-y-2">
-        <div>
-            <label class="block text-sm font-medium mb-1">Status</label>
-            <select name="status" class="w-full rounded-md border px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-900">
-                @foreach (CallStatus::cases() as $status)
-                    <option value="{{ $status->value }}">{{ $status->label() }}</option>
-                @endforeach
-            </select>
-        </div>
+    <!-- Add new call status form -->
+    <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+        <h4 class="text-sm font-semibold text-gray-800 dark:text-white mb-3">Nieuwe belstatus toevoegen</h4>
+        
+        <form id="call-status-form" class="space-y-3">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Status <span class="text-red-500">*</span>
+                </label>
+                <select name="status" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                    <option value="">Selecteer status...</option>
+                    @foreach (CallStatus::cases() as $status)
+                        <option value="{{ $status->value }}">{{ $status->label() }}</option>
+                    @endforeach
+                </select>
+            </div>
 
-        <div>
-            <label class="block text-sm font-medium mb-1">Omschrijving</label>
-            <textarea name="omschrijving" rows="2" class="w-full rounded-md border px-3 py-2 text-sm dark:border-gray-800 dark:bg-gray-900" placeholder="Korte notitie"></textarea>
-        </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Omschrijving
+                </label>
+                <textarea 
+                    name="omschrijving" 
+                    rows="3" 
+                    class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white" 
+                    placeholder="Optionele notitie over de belstatus..."
+                ></textarea>
+            </div>
 
-        <button type="button" id="call-status-submit" class="primary-button w-full">Toevoegen</button>
-    </form>
+            <button type="button" id="call-status-submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <i class="icon-plus mr-2"></i>Belstatus toevoegen
+            </button>
+        </form>
+    </div>
 </div>
 
 @push('scripts')
@@ -72,6 +89,11 @@
 
                 const status = statusEl.value;
                 const omschrijving = omschrEl.value;
+
+                if (!status) {
+                    alert('Selecteer een status');
+                    return;
+                }
 
                 try {
                     const res = await fetch(url, {

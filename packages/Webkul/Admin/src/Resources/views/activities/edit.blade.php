@@ -54,9 +54,9 @@
             </div>
 
             <!-- Form Content -->
-            <div class="flex gap-2.5 max-xl:flex-wrap-reverse">
+            <div class="flex gap-2.5 max-lg:flex-wrap-reverse">
                 <!-- Left sub-component -->
-                <div class="box-shadow flex-1 gap-2 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 max-xl:flex-auto">
+                <div class="box-shadow flex-1 gap-2 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 max-lg:flex-auto">
                     {!! view_render_event('admin.activities.edit.form_controls.before') !!}
 
                     <!-- Title -->
@@ -255,7 +255,7 @@
                 </div>
 
                 <!-- Right sub-component -->
-                <div class="w-[360px] max-w-full gap-2 max-xl:w-full">
+                <div class="w-[360px] max-w-full gap-2 max-lg:w-full">
                     @if ($activity->type === \App\Enums\ActivityType::CALL)
                         @include('admin::components.activities.call-status', ['activity' => $activity, 'callStatuses' => $callStatuses ?? []])
                     @endif

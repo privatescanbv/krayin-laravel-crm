@@ -52,7 +52,11 @@
                 throw new Error('[call-status] submit button not found');
             }
 
-            submitBtn.addEventListener('click', async () => {
+            submitBtn.addEventListener('click', async (e) => {
+                console.log('[call-status] button clicked', e);
+                e.preventDefault();
+                e.stopPropagation();
+                
                 const form = document.getElementById('call-status-form');
                 if (!form) {
                     throw new Error('[call-status] form element not found');

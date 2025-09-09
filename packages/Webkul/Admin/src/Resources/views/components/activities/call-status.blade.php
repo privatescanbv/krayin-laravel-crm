@@ -52,8 +52,11 @@
         console.log('[call-status] DOMContentLoaded, submitBtn:', !!submitBtn);
         
         if (submitBtn) {
+            console.log('[call-status] Adding click listener to button:', submitBtn);
+            
+            // Try both click and mousedown events
             submitBtn.addEventListener('click', async function(e) {
-                console.log('[call-status] button clicked', e);
+                console.log('[call-status] CLICK event fired!', e);
                 e.preventDefault();
                 e.stopPropagation();
                 
@@ -115,6 +118,17 @@
                     alert(e.message);
                 }
             });
+            
+            // Also try mousedown as backup
+            submitBtn.addEventListener('mousedown', function(e) {
+                console.log('[call-status] MOUSEDOWN event fired!', e);
+            });
+            
+            // Check if button is still the same after a delay
+            setTimeout(() => {
+                const btnAfterDelay = document.getElementById('call-status-submit');
+                console.log('[call-status] Button after delay:', btnAfterDelay === submitBtn, btnAfterDelay);
+            }, 1000);
         }
     });
 </script>

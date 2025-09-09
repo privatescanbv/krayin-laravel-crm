@@ -45,6 +45,9 @@
 @push('scripts')
 <script>
     (function initCallStatus() {
+        const url = '{{ route('admin.activities.call-statuses.store', $activity->id) }}';
+        const csrfToken = '{{ csrf_token() }}';
+        
         const bind = () => {
             const submitBtn = document.getElementById('call-status-submit');
             console.log('[call-status] bind executed, submitBtn:', !!submitBtn, submitBtn);
@@ -80,11 +83,10 @@
                 const omschrijving = omschrEl.value;
 
                 try {
-                    const url = '{{ route('admin.activities.call-statuses.store', $activity->id) }}';
                     const res = await fetch(url, {
                         method: 'POST',
                         headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                            'X-CSRF-TOKEN': csrfToken,
                             'X-Requested-With': 'XMLHttpRequest',
                             'Accept': 'application/json',
                             'Content-Type': 'application/json',
@@ -109,13 +111,7 @@
 
                     const wrapper = document.createElement('div');
                     wrapper.className = 'rounded border p-2 text-sm dark:border-gray-700';
-                    wrapper.innerHTML = `
-                        <div class="flex items-center justify-between">
-                            <span class="font-medium">${item.status}</span>
-                            <span class="text-xs text-gray-500">${createdAt}</span>
-                        </div>
-                        ${item.omschrijving ? `<div class="mt-1 text-gray-700 dark:text-gray-300">${item.omschrijving}</div>` : ''}
-                    `;
+                    wrapper.innerHTML = '<div class="flex items-center justify-between"><span class="font-medium">' + item.status + '</span><span class="text-xs text-gray-500">' + createdAt + '</span></div>' + (item.omschrijving ? '<div class="mt-1 text-gray-700 dark:text-gray-300">' + item.omschrijving + '</div>' : '');
                     list.prepend(wrapper);
 
                     form.reset();

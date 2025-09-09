@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-use App\Enums\CallStatus;
+use App\Enums\CallStatus as CallStatusEnum;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Webkul\Activity\Models\Activity;
 
 class CallStatus extends Model
 {
@@ -22,17 +23,17 @@ class CallStatus extends Model
     ];
 
     protected $casts = [
-        'status' => CallStatus::class,
+        'status' => CallStatusEnum::class,
     ];
 
     public function activity(): BelongsTo
     {
-        return $this->belongsTo(\Webkul\Activity\Models\Activity::class, 'activity_id');
+        return $this->belongsTo(Activity::class, 'activity_id');
     }
 
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(\Webkul\User\Models\User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 }
 

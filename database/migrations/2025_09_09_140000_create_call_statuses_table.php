@@ -11,16 +11,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('call_statuses', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedInteger('activity_id');
+            $table->increments('id');
             $table->string('status');
             $table->text('omschrijving')->nullable();
             $table->timestamps();
 
-            $table->foreign('activity_id')
-                ->references('id')
-                ->on('activities')
-                ->onDelete('cascade');
+            $table->integer('activity_id')->unsigned();
+            $table->foreign('activity_id')->references('id')->on('activities')->onDelete('cascade');
 
             AuditTrailMigrationHelper::addAuditTrailColumns($table);
         });
@@ -28,10 +25,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('call_statuses', function (Blueprint $table) {
-            AuditTrailMigrationHelper::dropAuditTrailColumnsIfExists($table, 'call_statuses');
-        });
-
         Schema::dropIfExists('call_statuses');
     }
 };

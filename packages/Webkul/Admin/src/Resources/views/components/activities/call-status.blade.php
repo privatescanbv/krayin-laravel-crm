@@ -42,11 +42,12 @@
     </form>
 </div>
 
-@pushOnce('scripts')
+@push('scripts')
 <script>
     (function initCallStatus() {
         const bind = () => {
             const submitBtn = document.getElementById('call-status-submit');
+            console.log('[call-status] bind executed, submitBtn:', !!submitBtn);
             if (!submitBtn) return;
 
             submitBtn.addEventListener('click', async () => {
@@ -104,4 +105,4 @@
         }
     })();
 </script>
-@endPushOnce
+@endpush

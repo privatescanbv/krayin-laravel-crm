@@ -99,11 +99,11 @@
                     const wrapper = document.createElement('div');
                     wrapper.className = 'rounded border p-2 text-sm dark:border-gray-700';
                     wrapper.innerHTML = `
-                        <div class=\"flex items-center justify-between\">
-                            <span class=\"font-medium\">${item.status}</span>
-                            <span class=\"text-xs text-gray-500\">${createdAt}</span>
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium">${item.status}</span>
+                            <span class="text-xs text-gray-500">${createdAt}</span>
                         </div>
-                        ${item.omschrijving ? `<div class=\"mt-1 text-gray-700 dark:text-gray-300\">${item.omschrijving}</div>` : ''}
+                        ${item.omschrijving ? `<div class="mt-1 text-gray-700 dark:text-gray-300">${item.omschrijving}</div>` : ''}
                     `;
                     list.prepend(wrapper);
 

@@ -10,9 +10,7 @@
             </x-admin::form.control-group.label>
 
             @php
-                $current = old('salutation', $entity->salutation?->value); // 'mr' | 'mrs' | null
-            @endphp
-            @php
+                $current = old('salutation', $entity->salutation?->value);
                 if ($current === null || $current === '') {
                     $current = $entity->salutation?->value;
                 }
@@ -45,7 +43,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="initials"
-                @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.initials" @else :value="$entity->initials ?? ''" @endif
+                @if(!empty($bindModel)) v-model="{{ $bindModel }}.initials" @else value="{{ $entity->initials ?? '' }}" @endif
                 label="{{ __('Initialen') }}"
                 placeholder="J.A."
             />
@@ -62,7 +60,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="first_name"
-                @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.first_name" @else :value="$entity->first_name ?? ''" @endif
+                @if(!empty($bindModel)) v-model="{{ $bindModel }}.first_name" @else value="{{ $entity->first_name ?? '' }}" @endif
                 label="{{ __('Voornaam') }}"
                 placeholder="Voornaam"
                 rules="required"
@@ -83,7 +81,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="lastname_prefix"
-                @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.lastname_prefix" @else :value="$entity->lastname_prefix ?? ''" @endif
+                @if(!empty($bindModel)) v-model="{{ $bindModel }}.lastname_prefix" @else value="{{ $entity->lastname_prefix ?? '' }}" @endif
                 label="{{ __('Tussenvoegsel') }}"
                 placeholder="van, de, den, etc."
                 class="w-24"
@@ -101,7 +99,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="last_name"
-                @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.last_name" @else :value="$entity->last_name ?? ''" @endif
+                @if(!empty($bindModel)) v-model="{{ $bindModel }}.last_name" @else value="{{ $entity->last_name ?? '' }}" @endif
                 label="@lang('admin::app.leads.merge.field-last-name-birth')"
                 placeholder="@lang('admin::app.leads.merge.field-last-name-birth')"
                 rules="required"
@@ -123,7 +121,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="married_name_prefix"
-                @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.married_name_prefix" @else :value="$entity->married_name_prefix ?? ''" @endif
+                @if(!empty($bindModel)) v-model="{{ $bindModel }}.married_name_prefix" @else value="{{ $entity->married_name_prefix ?? '' }}" @endif
                 label="{{ __('Married name prefix') }}"
                 placeholder="van, de, den, etc."
                 class="w-24"
@@ -141,7 +139,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="married_name"
-                @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.married_name" @else :value="$entity->married_name ?? ''" @endif
+                @if(!empty($bindModel)) v-model="{{ $bindModel }}.married_name" @else value="{{ $entity->married_name ?? '' }}" @endif
                 label="{{ __('Married name') }}"
             />
 
@@ -159,7 +157,7 @@
         <x-admin::form.control-group.control
             type="date"
             name="date_of_birth"
-            :value="$entity && $entity->date_of_birth ? $entity->date_of_birth->format('Y-m-d') : ''"
+            value="{{ $entity && $entity->date_of_birth ? $entity->date_of_birth->format('Y-m-d') : '' }}"
             label="{{ __('Geboortedatum') }}"
         />
 

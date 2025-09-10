@@ -252,11 +252,58 @@ class LeadController extends Controller
         $defaultStageId = $pipelineData['stage_id'];
         $defaultDepartmentId = $pipelineData['department_id'];
 
+        // Preselect person if provided via query param
+        $prefilledPersons = [];
+        $prefilledLeadPerson = null;
+        $personId = (int) request('person_id');
+        if ($personId) {
+            try {
+                $person = $this->personRepository->find($personId);
+                if ($person) {
+                    $prefilledPersons[] = [
+                        'id' => $person->id,
+                        'name' => $person->name,
+                        'first_name' => $person->first_name,
+                        'last_name' => $person->last_name,
+                        'lastname_prefix' => $person->lastname_prefix,
+                        'married_name' => $person->married_name,
+                        'married_name_prefix' => $person->married_name_prefix,
+                        'initials' => $person->initials,
+                        'emails' => is_array($person->emails) ? $person->emails : [],
+                        'phones' => is_array($person->phones) ? $person->phones : [],
+                        'organization' => $person->organization ? [
+                            'id' => $person->organization->id,
+                            'name' => $person->organization->name,
+                        ] : null,
+                    ];
+
+                    // Prefill full personal fields for step 2
+                    $prefilledLeadPerson = [
+                        'salutation' => $person->salutation,
+                        'initials' => $person->initials,
+                        'first_name' => $person->first_name,
+                        'lastname_prefix' => $person->lastname_prefix,
+                        'last_name' => $person->last_name,
+                        'married_name_prefix' => $person->married_name_prefix,
+                        'married_name' => $person->married_name,
+                        'date_of_birth' => $person->date_of_birth,
+                        'gender' => $person->gender,
+                        'emails' => is_array($person->emails) ? $person->emails : [],
+                        'phones' => is_array($person->phones) ? $person->phones : [],
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Ignore if person not found
+            }
+        }
+
         return view('admin::leads.create', [
             'defaultDepartmentId' => $defaultDepartmentId,
             'defaultPipelineId' => $pipeline->id ?? null,
             'defaultStageId' => $defaultStageId,
-            'departmentOptions' => Department::pluck('name', 'id')->toArray()
+            'departmentOptions' => Department::pluck('name', 'id')->toArray(),
+            'prefilledPersons' => $prefilledPersons,
+            'prefilledLeadPerson' => $prefilledLeadPerson,
         ]);
     }
 
@@ -303,8 +350,24 @@ class LeadController extends Controller
 
             $data = $request->all();
 
-            // Handle empty date fields
-            if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
+            // Normalize empty strings and placeholders to null for foreign keys and enums
+            foreach (['user_id', 'organization_id', 'lead_channel_id', 'lead_source_id', 'lead_type_id'] as $nullableKey) {
+                if (array_key_exists($nullableKey, $data)) {
+                    if ($data[$nullableKey] === '' || $data[$nullableKey] === '?' || $data[$nullableKey] === null) {
+                        $data[$nullableKey] = null;
+                    }
+                }
+            }
+            foreach (['salutation', 'gender', 'mri_status'] as $enumKey) {
+                if (array_key_exists($enumKey, $data)) {
+                    if ($data[$enumKey] === '' || $data[$enumKey] === '?') {
+                        $data[$enumKey] = null;
+                    }
+                }
+            }
+
+            // Handle empty date field
+            if (array_key_exists('date_of_birth', $data) && ($data['date_of_birth'] === '' || $data['date_of_birth'] === null)) {
                 $data['date_of_birth'] = null;
             }
 
@@ -425,8 +488,8 @@ class LeadController extends Controller
 
             $data = $request->all();
 
-            // Handle empty date fields
-            if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
+            // Handle empty date field
+            if (array_key_exists('date_of_birth', $data) && ($data['date_of_birth'] === '' || $data['date_of_birth'] === null)) {
                 $data['date_of_birth'] = null;
             }
 

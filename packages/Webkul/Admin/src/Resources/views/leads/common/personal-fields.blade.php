@@ -10,9 +10,7 @@
             </x-admin::form.control-group.label>
 
             @php
-                $current = old('salutation', $entity->salutation?->value); // 'mr' | 'mrs' | null
-            @endphp
-            @php
+                $current = old('salutation', $entity->salutation?->value);
                 if ($current === null || $current === '') {
                     $current = $entity->salutation?->value;
                 }
@@ -21,7 +19,7 @@
                 type="select"
                 name="salutation"
                 value="{{ $current }}"
-                :label="trans('Aanhef')"
+                label="{{ __('Aanhef') }}"
             >
                 <option value="">{{ __('Selecteer aanhef') }}</option>
 
@@ -45,8 +43,8 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="initials"
-                :value="$entity->initials ?? ''"
-                :label="trans('Initialen')"
+                value="{{ $entity->initials ?? '' }}"
+                label="{{ __('Initialen') }}"
                 placeholder="J.A."
             />
 
@@ -62,8 +60,8 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="first_name"
-                :value="$entity->first_name ?? ''"
-                :label="trans('Voornaam')"
+                value="{{ $entity->first_name ?? '' }}"
+                label="{{ __('Voornaam') }}"
                 placeholder="Voornaam"
                 rules="required"
             />
@@ -83,8 +81,8 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="lastname_prefix"
-                :value="$entity->lastname_prefix ?? ''"
-                :label="trans('Tussenvoegsel')"
+                value="{{ $entity->lastname_prefix ?? '' }}"
+                label="{{ __('Tussenvoegsel') }}"
                 placeholder="van, de, den, etc."
                 class="w-24"
             />
@@ -101,8 +99,8 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="last_name"
-                :value="$entity->last_name ?? ''"
-                :label="trans('admin::app.leads.merge.field-last-name-birth')"
+                value="{{ $entity->last_name ?? '' }}"
+                label="@lang('admin::app.leads.merge.field-last-name-birth')"
                 placeholder="@lang('admin::app.leads.merge.field-last-name-birth')"
                 rules="required"
             />
@@ -123,8 +121,8 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="married_name_prefix"
-                :value="$entity->married_name_prefix ?? ''"
-                :label="trans('Married name prefix')"
+                value="{{ $entity->married_name_prefix ?? '' }}"
+                label="{{ __('Married name prefix') }}"
                 placeholder="van, de, den, etc."
                 class="w-24"
             />
@@ -141,8 +139,8 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="married_name"
-                :value="$entity->married_name ?? ''"
-                :label="trans('Married name')"
+                value="{{ $entity->married_name ?? '' }}"
+                label="{{ __('Married name') }}"
             />
 
             <x-admin::form.control-group.error control-name="married_name"/>
@@ -159,8 +157,8 @@
         <x-admin::form.control-group.control
             type="date"
             name="date_of_birth"
-            :value="$entity && $entity->date_of_birth ? $entity->date_of_birth->format('d-m-Y') : ''"
-            :label="trans('Geboortedatum')"
+            value="{{ $entity && $entity->date_of_birth ? $entity->date_of_birth->format('Y-m-d') : '' }}"
+            label="{{ __('Geboortedatum') }}"
         />
 
         <x-admin::form.control-group.error control-name="date_of_birth"/>
@@ -182,7 +180,7 @@
             type="select"
             name="gender"
             value="{{ $currentGender }}"
-            :label="trans('Geslacht')"
+            label="{{ __('Geslacht') }}"
         >
             <option value="">{{ __('Selecteer geslacht') }}</option>
 

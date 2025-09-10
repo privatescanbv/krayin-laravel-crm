@@ -263,13 +263,13 @@
                         this.suggestions = [];
                         return;
                     }
-
+                    
                     this.searchTimeout = setTimeout(() => {
                         this.fetchSuggestions(this.search);
                     }, 300);
                 },
 
-                                 async fetchSuggestions(query) {
+                async fetchSuggestions(query) {
                      this.isSearching = true;
                      try {
                          const params = { query };
@@ -303,20 +303,26 @@
                      }
                  },
 
-                                                 addPerson(person) {
+                addPerson(person) {
                     if (!this.isPersonSelected(person.id)) {
-                        this.selectedPersons.push(person);
+                        const enriched = Object.assign({}, person);
+                        if ((!enriched.first_name || !enriched.last_name) && enriched.name) {
+                            const parts = String(enriched.name).trim().split(/\s+/);
+                            enriched.first_name = enriched.first_name || (parts[0] || '');
+                            enriched.last_name = enriched.last_name || (parts.slice(1).join(' ') || '');
+                        }
+                        if (!Array.isArray(enriched.emails)) { enriched.emails = []; }
+                        if (!Array.isArray(enriched.phones)) { enriched.phones = []; }
+                        this.selectedPersons.push(enriched);
                         
                         // Clear search and suggestions after adding
                         this.search = '';
                         this.suggestions = [];
                         
-                        // Emit event for parent components to listen to
-                        this.$emit('person-added', person);
-                        this.$emit('persons-updated', this.selectedPersons);
-                        
-                        // Also call the lead form component directly if available
-                        if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
+                        // Notify parent safely
+                        if (typeof window.handlePersonsUpdated === 'function') {
+                            window.handlePersonsUpdated(this.selectedPersons);
+                        } else if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
                             window.leadFormComponent.persons = this.selectedPersons;
                             window.leadFormComponent.updateFormDataFromPersons();
                         }
@@ -384,7 +390,7 @@
                     }
                 },
 
-                                 async createPersonFromLead() {
+                async createPersonFromLead() {
                      if (!this.lead || this.isCreatingPerson) {
                          return;
                      }
@@ -409,7 +415,7 @@
                              married_name: this.lead.married_name || '',
                              married_name_prefix: this.lead.married_name_prefix || '',
                              initials: this.lead.initials || '',
-                             date_of_birth: this.lead.date_of_birth || '',
+                             date_of_birth: this.formatDateToDutch(this.lead.date_of_birth),
                              gender: this.lead.gender || '',
                              salutation: this.lead.salutation || '',
                              emails: this.lead.emails || [],
@@ -539,6 +545,34 @@
                     } else {
                         return 'bg-red-500';
                     }
+                },
+
+                formatDateToDutch(value) {
+                    if (!value) {
+                        return '';
+                    }
+                    // Already in dd-mm-yyyy
+                    if (/^\d{2}-\d{2}-\d{4}$/.test(value)) {
+                        return value;
+                    }
+                    // ISO 8601 -> take date part
+                    const isoDate = (String(value).match(/^(\d{4}-\d{2}-\d{2})/) || [])[1];
+                    const datePart = isoDate || String(value);
+                    const m = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                    if (m) {
+                        return `${m[3]}-${m[2]}-${m[1]}`;
+                    }
+                    // Fallback parse
+                    try {
+                        const d = new Date(value);
+                        if (!isNaN(d.getTime())) {
+                            const dd = String(d.getDate()).padStart(2, '0');
+                            const mm = String(d.getMonth() + 1).padStart(2, '0');
+                            const yyyy = d.getFullYear();
+                            return `${dd}-${mm}-${yyyy}`;
+                        }
+                    } catch (e) {}
+                    return '';
                 }
             }
         });

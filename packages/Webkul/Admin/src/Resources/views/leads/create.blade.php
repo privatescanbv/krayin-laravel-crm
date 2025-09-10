@@ -1,4 +1,4 @@
-@php use App\Models\Department;use Webkul\Lead\Models\Channel;use Webkul\Lead\Models\Source;use Webkul\Lead\Models\Type; @endphp
+@php use App\Models\Department; @endphp
 <x-admin::layouts>
     <x-slot:title>
         @lang('admin::app.leads.create.title')
@@ -7,7 +7,7 @@
     {!! view_render_event('admin.leads.create.form.before') !!}
 
     <!-- Two-Step Lead Form -->
-    <v-two-step-lead-form></v-two-step-lead-form>
+    <v-two-step-lead-form :initial-persons='@json($prefilledPersons ?? [])' :initial-lead-person='@json($prefilledLeadPerson ?? null)'></v-two-step-lead-form>
 
     {!! view_render_event('admin.leads.create.form.after') !!}
 
@@ -19,7 +19,7 @@
                         Contactpersonen (@{{ persons.length }})
                     </h3>
                     <button
-                        @click="addPerson"
+                        v-on:click="addPerson"
                         type="button"
                         class="secondary-button"
                     >
@@ -75,7 +75,7 @@
                                     ::name="`person_ids[${index}]`"
                                     :label="'Naam'"
                                     placeholder="Zoek persoon..."
-                                    @on-selected="(selectedPerson) => updatePerson(index, selectedPerson)"
+                                    v-on:on-selected="onLookupSelected(index, $event)"
                                     :can-add-new="true"
                                 />
                             </div>
@@ -96,7 +96,7 @@
 
                             <!-- Remove Person -->
                             <button
-                                @click="removePerson(index)"
+                                v-on:click="removePerson(index)"
                                 type="button"
                                 class="text-red-600 hover:text-red-800 p-1"
                                 title="Verwijder persoon"
@@ -131,7 +131,7 @@
         </script>
 
         <script type="text/x-template" id="v-two-step-lead-form-template">
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-4" v-cloak>
                 <!-- Header -->
                 <div
                     class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
@@ -144,7 +144,7 @@
 
                     <div class="flex items-center gap-x-2.5" v-show="currentStep === 2">
                         <button
-                            @click="goToStep(1)"
+                            v-on:click="goToStep(1)"
                             type="button"
                             class="secondary-button"
                         >
@@ -152,7 +152,7 @@
                         </button>
 
                         <button
-                            @click="submitForm"
+                            v-on:click="submitForm"
                             type="button"
                             class="primary-button"
                             :disabled="isSubmitting"
@@ -204,12 +204,12 @@
 
                         <!-- Multi Contact Matcher (based on original contactmatcher) -->
                         <div>
-                            @include('admin::leads.common.multi-contactmatcher', ['lead' => (object)['id' => null], 'persons' => []])
+                            @include('admin::leads.common.multi-contactmatcher', ['lead' => (object)['id' => null], 'persons' => ($prefilledPersons ?? [])])
                         </div>
 
                         <div class="flex justify-end pt-4">
                             <button
-                                @click="goToStep(2)"
+                                v-on:click="goToStep(2)"
                                 type="button"
                                 class="primary-button"
                             >
@@ -220,12 +220,10 @@
                 </div>
 
                 <!-- Step 2: Full Lead Form -->
-                <div v-show="currentStep === 2">
+                <div v-show="currentStep === 2" style="display: none;">
                     <form @submit.prevent="submitForm" ref="leadForm">
                         @csrf
-                        @if (request('stage_id'))
-                            <input type="hidden" name="lead_pipeline_stage_id" value="{{ request('stage_id') }}"/>
-                        @endif
+                        <input type="hidden" name="lead_pipeline_stage_id" value="{{ request('stage_id') }}"/>
 
 
 
@@ -240,7 +238,7 @@
                                 </p>
 
                                 <!-- Show selected persons info if available -->
-                                <div v-if="persons.length > 0 && persons.some(p => p.id || p.name)"
+                                <div v-if="hasSelectedPersons"
                                      class="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
                                     <div class="flex items-center gap-2">
                                         <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor"
@@ -249,9 +247,7 @@
                                                   d="M5 13l4 4L19 7"></path>
                                         </svg>
                                         <span class="font-medium text-green-800">Contactpersonen gekoppeld:</span>
-                                        <span class="text-green-700">
-                                            @{{ persons.filter(p => p.id || p.name).map(p => p.name).join(', ') }}
-                                        </span>
+                                        <span class="text-green-700">@{{ joinedPersonNames }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -277,66 +273,24 @@
                                         </x-admin::form.control-group>
                                     </div>
 
-                                    <!-- Personal Fields (for matching) -->
+                                    <!-- Personal Fields (full, same as edit) -->
                                     <div class="flex flex-col gap-4 mb-4">
-                                        <p class="text-base font-semibold dark:text-white">Lead persoon gegevens (voor matching)</p>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">
-                                            Deze gegevens worden gebruikt om te matchen met bestaande personen
-                                        </p>
-
-                                        <!-- Name Fields -->
-                                        <div class="flex gap-4">
-                                            <x-admin::form.control-group class="flex-1">
-                                                <x-admin::form.control-group.label class="required">Voornaam</x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="text"
-                                                    name="first_name"
-                                                    v-model="formData.first_name"
-                                                    placeholder="Voornaam"
-                                                    rules="required"
-                                                />
-                                                <x-admin::form.control-group.error control-name="first_name"/>
-                                            </x-admin::form.control-group>
-
-                                            <x-admin::form.control-group class="flex-1">
-                                                <x-admin::form.control-group.label class="required">Achternaam</x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="text"
-                                                    name="last_name"
-                                                    v-model="formData.last_name"
-                                                    placeholder="Achternaam"
-                                                    rules="required"
-                                                />
-                                                <x-admin::form.control-group.error control-name="last_name"/>
-                                            </x-admin::form.control-group>
-                                        </div>
-
-                                        <!-- Contact Fields -->
-                                        <div class="flex gap-4">
-                                            <x-admin::form.control-group class="flex-1">
-                                                <x-admin::form.control-group.label>E-mail</x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="email"
-                                                    name="emails[0][value]"
-                                                    v-model="formData.email"
-                                                    placeholder="email@example.com"
-                                                />
-                                                <input type="hidden" name="emails[0][label]" value="work">
-                                                <input type="hidden" name="emails[0][is_default]" value="1">
-                                            </x-admin::form.control-group>
-
-                                            <x-admin::form.control-group class="flex-1">
-                                                <x-admin::form.control-group.label>Telefoon</x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="text"
-                                                    name="phones[0][value]"
-                                                    v-model="formData.phone"
-                                                    placeholder="+31 6 12345678"
-                                                />
-                                                <input type="hidden" name="phones[0][label]" value="work">
-                                                <input type="hidden" name="phones[0][is_default]" value="1">
-                                            </x-admin::form.control-group>
-                                        </div>
+                                        <p class="text-base font-semibold dark:text-white">Persoonsgegevens</p>
+                                        @php
+                                            $__defaults = [
+                                                'salutation' => null,
+                                                'initials' => null,
+                                                'first_name' => null,
+                                                'lastname_prefix' => null,
+                                                'last_name' => null,
+                                                'married_name_prefix' => null,
+                                                'married_name' => null,
+                                                'date_of_birth' => null,
+                                                'gender' => null,
+                                            ];
+                                            $__entityPrefill = (object) array_merge($__defaults, ($prefilledLeadPerson ?? []));
+                                        @endphp
+                                        @include('admin::leads.common.personal-fields', ['entity' => $__entityPrefill, 'bindModel' => 'formData'])
                                     </div>
 
                                     <!-- Organization Section -->
@@ -349,136 +303,31 @@
                                         @include('admin::leads.common.organization', ['organization' => null])
                                     </div>
 
-                                    <!-- Channel and Source -->
-                                    <div class="flex gap-4 mb-4">
-                                        <div class="flex-1">
-                                            @php $channelOptions = Channel::query()->pluck('name', 'id')->toArray(); @endphp
-                                            <x-admin::form.control-group>
-                                                <x-admin::form.control-group.label>Kanaal
-                                                </x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="select"
-                                                    name="lead_channel_id"
-                                                    v-model="formData.lead_channel_id"
-                                                >
-                                                    <option value="">-- Kies kanaal --</option>
-                                                    @foreach ($channelOptions as $id => $name)
-                                                        <option value="{{ $id }}">{{ $name }}</option>
-                                                    @endforeach
-                                                </x-admin::form.control-group.control>
-                                            </x-admin::form.control-group>
-                                        </div>
-                                        <div class="flex-1">
-                                            @php $sourceOptions = Source::query()->pluck('name', 'id')->toArray(); @endphp
-                                            <x-admin::form.control-group>
-                                                <x-admin::form.control-group.label>Bron
-                                                </x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="select"
-                                                    name="lead_source_id"
-                                                    v-model="formData.lead_source_id"
-                                                >
-                                                    <option value="">-- Kies bron --</option>
-                                                    @foreach ($sourceOptions as $id => $name)
-                                                        <option value="{{ $id }}">{{ $name }}</option>
-                                                    @endforeach
-                                                </x-admin::form.control-group.control>
-                                            </x-admin::form.control-group>
-                                        </div>
-                                    </div>
-
-                                    <!-- Department and Type -->
-                                    <div class="flex gap-4 mb-4">
-                                        <div class="flex-1">
-                                            @php $departmentOptions = Department::query()->pluck('name', 'id')->toArray(); @endphp
-                                            <x-admin::form.control-group>
-                                                <x-admin::form.control-group.label class="required">Afdeling
-                                                </x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="select"
-                                                    name="department_id"
-                                                    v-model="formData.department_id"
-                                                    rules="required"
-                                                >
-                                                    <option value="">-- Kies afdeling --</option>
-                                                    @foreach ($departmentOptions as $id => $name)
-                                                        <option value="{{ $id }}">{{ $name }}</option>
-                                                    @endforeach
-                                                </x-admin::form.control-group.control>
-                                            </x-admin::form.control-group>
-                                        </div>
-                                        <div class="flex-1">
-                                            @php $typeOptions = Type::query()->pluck('name', 'id')->toArray(); @endphp
-                                            <x-admin::form.control-group>
-                                                <x-admin::form.control-group.label>Type
-                                                </x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="select"
-                                                    name="lead_type_id"
-                                                    v-model="formData.lead_type_id"
-                                                >
-                                                    <option value="">-- Kies type --</option>
-                                                    @foreach ($typeOptions as $id => $name)
-                                                        <option value="{{ $id }}">{{ $name }}</option>
-                                                    @endforeach
-                                                </x-admin::form.control-group.control>
-                                            </x-admin::form.control-group>
-                                        </div>
-                                    </div>
-                                    <div class="flex gap-4 mb-4">
-                                        <div class="flex-1">
-                                            @php
-                                                $mriOptions = [];
-                                                foreach (App\Enums\MRIStatus::cases() as $case) {
-                                                    $mriOptions[$case->value] = $case->label();
-                                                }
-                                            @endphp
-                                            <x-admin::form.control-group>
-                                                <x-admin::form.control-group.label>
-                                                    MRI Status
-                                                </x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="select"
-                                                    name="mri_status"
-                                                    v-model="formData.mri_status"
-                                                >
-                                                    <option value="">-- Selecteer MRI status --</option>
-                                                    @foreach ($mriOptions as $id => $name)
-                                                        <option value="{{ $id }}">{{ $name }}</option>
-                                                    @endforeach
-                                                </x-admin::form.control-group.control>
-                                            </x-admin::form.control-group>
-                                        </div>
-                                        <!-- Combine Order Setting -->
-                                        <div class="flex-1">
-                                            <x-admin::form.control-group>
-                                                <x-admin::form.control-group.label>
-                                                    Orders combineren
-                                                </x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="select"
-                                                    name="combine_order"
-                                                    v-model="formData.combine_order"
-                                                >
-                                                    <option value="1">Ja</option>
-                                                    <option value="0">Nee</option>
-                                                </x-admin::form.control-group.control>
-                                                <x-admin::form.control-group.error control-name="combine_order"/>
-                                            </x-admin::form.control-group>
-                                        </div>
-                                    </div>
+                                    @include('admin::leads.common.sections.channel-to-owner', [
+                                        'entity' => null,
+                                        'defaults' => [
+                                            'department_id' => $defaultDepartmentId ?? '',
+                                            'combine_order' => 1,
+                                            'lead_channel_id' => '1',
+                                            'lead_source_id' => 32,
+                                        ],
+                                        'useVueModel' => false,
+                                    ])
                                     <!-- Other attributes -->
                                     <div class="flex gap-4 max-sm:flex-wrap">
                                         <div class="w-full">
-                                            <x-admin::attributes
-                                                :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                                    ['code', 'IN', ['user_id']],
-                                                    'entity_type' => 'leads',
-                                                    'quick_add'   => 1
-                                                ])"
-                                                :custom-validations="[]"
-                                            />
+                                            <!-- Additional quick add lead attrs can be added here if needed -->
                                         </div>
+                                    </div>
+
+                                    <!-- Emails -->
+                                    <div class="mt-4">
+                                        @include('admin::leads.common.sections.emails', ['name' => 'emails', 'value' => old('emails', $prefilledLeadPerson['emails'] ?? [])])
+                                    </div>
+
+                                    <!-- Phones -->
+                                    <div class="mt-4">
+                                        @include('admin::leads.common.sections.phones', ['name' => 'phones', 'value' => old('phones', $prefilledLeadPerson['phones'] ?? [])])
                                     </div>
 
                                     <!-- Address -->
@@ -498,11 +347,22 @@
             app.component('v-two-step-lead-form', {
                 template: '#v-two-step-lead-form-template',
 
+                props: {
+                    initialPersons: {
+                        type: Array,
+                        default: () => []
+                    },
+                    initialLeadPerson: {
+                        type: Object,
+                        default: null
+                    }
+                },
+
                 data() {
                     return {
                         currentStep: 1,
                         selectedPersons: [],
-                        persons: [],
+                        persons: [...this.initialPersons],
                         isSubmitting: false,
                         formData: {
                         description: '',
@@ -515,11 +375,18 @@
                         mri_status: '',
                             lead_type_id: '1', // Default: Preventie
                             // Personal fields for matching
-                            first_name: '',
-                            last_name: '',
+                            salutation: this.initialLeadPerson?.salutation?.value || '',
+                            initials: this.initialLeadPerson?.initials || '',
+                            first_name: this.initialLeadPerson?.first_name || '',
+                            lastname_prefix: this.initialLeadPerson?.lastname_prefix || '',
+                            last_name: this.initialLeadPerson?.last_name || '',
+                            married_name_prefix: this.initialLeadPerson?.married_name_prefix || '',
+                            married_name: this.initialLeadPerson?.married_name || '',
                             email: '',
                             phone: '',
-                        }
+                        },
+                        hasSelectedPersons: false,
+                        joinedPersonNames: ''
                     };
                 },
 
@@ -530,25 +397,41 @@
                     // Set up global reference to this component for cross-component communication
                     window.leadFormComponent = this;
 
-                    // Initialize with empty person if needed
-                    if (this.persons.length === 0) {
-                        this.persons.push({
-                            id: null,
-                            name: '',
-                            match_percentage: null,
-                            organization: null
-                        });
+                    // If prefilled persons exist, sync into the matcher and prefill fields
+                    if (this.persons.length > 0) {
+                        // Prefill emails/phones if available
+                        const p = this.persons[0];
+                        if (!this.formData.email && p.emails && p.emails.length) {
+                            this.formData.email = p.emails[0].value || '';
+                        }
+                        if (!this.formData.phone && p.phones && p.phones.length) {
+                            this.formData.phone = p.phones[0].value || '';
+                        }
+                        // Ensure we start on step 1 regardless of prefill
+                        this.currentStep = 1;
+                        this.updateSelectedPersonsSummary();
+                        this.$nextTick(() => this.syncPersonalFieldsToForm());
+                    } else {
+                        // Initialize with one empty slot for ease of use
+                        this.persons.push({ id: null, name: '', match_percentage: null, organization: null });
                     }
                 },
 
                 methods: {
+                    onLookupSelected(index, selectedPerson) {
+                        this.updatePerson(index, selectedPerson);
+                    },
                     goToStep(step) {
                         this.currentStep = step;
 
                         // If going to step 2 and we have selected persons, populate address from first person
-                        if (step === 2 && this.persons.length > 0 && this.persons[0].address) {
+                        if (step === 2) {
                             this.$nextTick(() => {
-                                this.populateAddressFields(this.persons[0].address);
+                                if (this.persons.length > 0 && this.persons[0].address) {
+                                    this.populateAddressFields(this.persons[0].address);
+                                }
+                                // Ensure personal fields are synced when entering step 2
+                                this.syncPersonalFieldsToForm();
                             });
                         }
                     },
@@ -565,6 +448,21 @@
                             if (firstPerson.first_name || firstPerson.last_name) {
                                 this.formData.first_name = firstPerson.first_name || '';
                                 this.formData.last_name = firstPerson.last_name || '';
+                            } else if (firstPerson.name && (!this.formData.first_name || !this.formData.last_name)) {
+                                const parts = String(firstPerson.name).trim().split(/\s+/);
+                                this.formData.first_name = this.formData.first_name || (parts[0] || '');
+                                this.formData.last_name = this.formData.last_name || (parts.slice(1).join(' ') || '');
+                            }
+
+                            // Also populate other personal fields if available and form fields are empty
+                            if (!this.formData.initials && firstPerson.initials) {
+                                this.formData.initials = firstPerson.initials;
+                            }
+                            if (!this.formData.married_name_prefix && firstPerson.married_name_prefix) {
+                                this.formData.married_name_prefix = firstPerson.married_name_prefix;
+                            }
+                            if (!this.formData.married_name && firstPerson.married_name) {
+                                this.formData.married_name = firstPerson.married_name;
                             }
 
                             // Also populate email and phone if available and form fields are empty
@@ -575,9 +473,35 @@
                             if (!this.formData.phone && firstPerson.phones && firstPerson.phones.length > 0) {
                                 this.formData.phone = firstPerson.phones[0].value || '';
                             }
+                            this.updateSelectedPersonsSummary();
+                            this.$nextTick(() => this.syncPersonalFieldsToForm());
                         } else {
                             // If no persons selected, keep the fields as they are to allow manual entry
+                            this.hasSelectedPersons = false;
+                            this.joinedPersonNames = '';
                         }
+                    },
+                    updateSelectedPersonsSummary() {
+                        const list = (this.persons || []).filter(p => p && (p.id || p.name));
+                        this.hasSelectedPersons = list.length > 0;
+                        this.joinedPersonNames = list.map(p => p.name).join(', ');
+                    },
+                    syncPersonalFieldsToForm() {
+                        if (!this.$refs.leadForm) return;
+                        const firstPerson = (this.persons && this.persons[0]) || {};
+                        const fields = {
+                            first_name: this.formData.first_name || firstPerson.first_name || '',
+                            last_name: this.formData.last_name || firstPerson.last_name || '',
+                            lastname_prefix: this.formData.lastname_prefix || firstPerson.lastname_prefix || ''
+                        };
+                        Object.keys(fields).forEach(name => {
+                            const input = this.$refs.leadForm.querySelector(`[name="${name}"]`);
+                            if (input) {
+                                input.value = fields[name] || '';
+                                input.dispatchEvent(new Event('input', { bubbles: true }));
+                                input.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        });
                     },
 
 
@@ -839,6 +763,7 @@
 
     @pushOnce('styles')
         <style>
+            [v-cloak] { display: none; }
             html {
                 scroll-behavior: smooth;
             }

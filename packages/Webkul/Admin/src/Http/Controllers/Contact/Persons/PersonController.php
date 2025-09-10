@@ -171,6 +171,26 @@ class PersonController extends Controller
     {
         $person = $this->personRepository->with(['address', 'organization'])->findOrFail($id);
 
+        // Fetch and sort leads: newest first, won/lost to bottom
+        try {
+            $leadIds = DB::table('lead_persons')->where('person_id', $person->id)->pluck('lead_id');
+            $leads = $leadIds->isEmpty()
+                ? collect()
+                : Lead::with('stage')->whereIn('id', $leadIds)->get();
+
+            $sortedLeads = $leads
+                ->sortBy(function($lead) {
+                    $wonLostCodes = ['won', 'lost', 'won-hernia', 'lost-hernia'];
+                    $isWonLost = $lead->stage && in_array($lead->stage->code, $wonLostCodes, true) ? 1 : 0;
+                    $updatedTs = $lead->updated_at ? $lead->updated_at->getTimestamp() : 0;
+                    return [$isWonLost, -$updatedTs];
+                })
+                ->values();
+        } catch (Exception $e) {
+            Log::error('Could not load/sort leads for person', ['person_id' => $person->id, 'error' => $e->getMessage()]);
+            $sortedLeads = collect();
+        }
+
         // Load anamnesis sorted by newest first
         $person->load(['anamnesis' => function($query) {
             $query->orderBy('updated_at', 'desc');
@@ -183,6 +203,7 @@ class PersonController extends Controller
         return view('admin::contacts.persons.view', [
             'person'          => $person,
             'duplicateCount'  => $duplicateCount,
+            'sortedLeads'     => $sortedLeads,
         ]);
     }
 

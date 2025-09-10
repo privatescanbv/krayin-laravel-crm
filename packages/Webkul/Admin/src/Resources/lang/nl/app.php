@@ -1857,11 +1857,6 @@ return [
     ],
 
    'leads' => [
-       'common' => [
-           'organization' => [
-               'title' => 'Organisatie',
-           ],
-       ],
        'create-success' => 'Lead succesvol aangemaakt.',
        'update-success' => 'Leads succesvol bijgewerkt.',
        'update-failed' => 'Leads kunnen niet worden verwijderd.',
@@ -1980,6 +1975,10 @@ return [
        ],
 
        'common' => [
+
+           'organization' => [
+               'title' => 'Organisatie',
+           ],
            'contact' => [
                'name' => 'Naam',
                'email' => 'E-mail',

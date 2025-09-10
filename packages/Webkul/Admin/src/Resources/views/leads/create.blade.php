@@ -448,6 +448,23 @@
                                                     @endforeach
                                                 </x-admin::form.control-group.control>
                                             </x-admin::form.control-group>
+
+                                            <!-- Diagnoseformulier aanwezig? -->
+                                            <x-admin::form.control-group class="mt-2">
+                                                <x-admin::form.control-group.label>
+                                                    Diagnoseformulier aanwezig?
+                                                </x-admin::form.control-group.label>
+                                                <div class="flex items-center gap-2">
+                                                    <input type="hidden" name="has_diagnosis_form" value="0" />
+                                                    <input
+                                                        type="checkbox"
+                                                        name="has_diagnosis_form"
+                                                        value="1"
+                                                        class="cursor-pointer"
+                                                    />
+                                                    <span class="text-sm text-gray-600 dark:text-gray-300">Ja</span>
+                                                </div>
+                                            </x-admin::form.control-group>
                                         </div>
                                         <!-- Combine Order Setting -->
                                         <div class="flex-1">

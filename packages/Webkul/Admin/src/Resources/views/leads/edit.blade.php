@@ -238,7 +238,7 @@
                                 </div>
                             </div>
 
-                            <!-- MRI STATUS -->
+                            <!-- MRI STATUS + Diagnoseformulier -->
                             <div class="mb-0.5">
                                 <x-admin::form.control-group class="w-40">
                                     <x-admin::form.control-group.label>
@@ -246,7 +246,7 @@
                                     </x-admin::form.control-group.label>
 
                                     @php
-                                        $current = old('mri_status', $lead->mri_status?->value); // 'mr' | 'mrs' | null
+                                        $current = old('mri_status', $lead->mri_status?->value);
                                     @endphp
                                     @php
                                         if ($current === null || $current === '') {
@@ -267,6 +267,23 @@
                                     </x-admin::form.control-group.control>
 
                                     <x-admin::form.control-group.error control-name="mri_status"/>
+                                </x-admin::form.control-group>
+
+                                <x-admin::form.control-group class="w-40 mt-2">
+                                    <x-admin::form.control-group.label>
+                                        Diagnoseformulier aanwezig?
+                                    </x-admin::form.control-group.label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="hidden" name="has_diagnosis_form" value="0" />
+                                        <input
+                                            type="checkbox"
+                                            name="has_diagnosis_form"
+                                            value="1"
+                                            class="cursor-pointer"
+                                            {{ old('has_diagnosis_form', $lead->has_diagnosis_form ? '1' : '0') == '1' ? 'checked' : '' }}
+                                        />
+                                        <span class="text-sm text-gray-600 dark:text-gray-300">Ja</span>
+                                    </div>
                                 </x-admin::form.control-group>
                             </div>
 

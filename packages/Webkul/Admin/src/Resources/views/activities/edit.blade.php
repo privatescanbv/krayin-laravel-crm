@@ -34,10 +34,10 @@
                             $baseClasses = 'px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer';
                             $inactiveClasses = 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700';
                             $activeMap = [
-                                'in_progress' => 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-800',
-                                'active' => 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-800',
-                                'on_hold' => 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-800',
-                                'expired' => 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900 dark:text-red-300 dark:border-red-800',
+                                'in_progress' => 'bg-blue-100 text-blue-800 border-blue-400 ring-2 ring-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700 dark:ring-blue-700',
+                                'active' => 'bg-green-100 text-green-800 border-green-400 ring-2 ring-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-700 dark:ring-green-700',
+                                'on_hold' => 'bg-yellow-100 text-yellow-800 border-yellow-400 ring-2 ring-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-700 dark:ring-yellow-700',
+                                'expired' => 'bg-red-100 text-red-800 border-red-400 ring-2 ring-red-300 dark:bg-red-900 dark:text-red-300 dark:border-red-700 dark:ring-red-700',
                             ];
                             $options = ['in_progress','active','on_hold','expired'];
                         @endphp
@@ -472,11 +472,13 @@
                             const message  = body && body.message ? body.message : 'Status bijwerken mislukt';
                             if (computed) {
                                 container.querySelectorAll('button.status-btn').forEach(b => {
+                                    b.classList.remove('ring-2');
                                     b.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + inactive;
                                 });
                                 const compBtn = container.querySelector('button.status-btn[data-status="' + computed + '"]');
                                 if (compBtn) {
                                     compBtn.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + (map[computed] || '');
+                                    compBtn.classList.add('ring-2');
                                 }
                             }
                             alert(message);
@@ -485,11 +487,13 @@
 
                         const newStatus = (body && body.status) ? body.status : status;
                         container.querySelectorAll('button.status-btn').forEach(b => {
+                            b.classList.remove('ring-2');
                             b.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + inactive;
                         });
                         const activeBtn = container.querySelector('button.status-btn[data-status="' + newStatus + '"]');
                         if (activeBtn) {
                             activeBtn.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + (map[newStatus] || '');
+                            activeBtn.classList.add('ring-2');
                         }
                     } catch (err) {
                         console.error('[activity-status:global] error', err);

@@ -189,19 +189,25 @@
                                             </a>
                                         </div>
 
-                                        <!-- Linked Email -->
+                                        <!-- Linked Emails -->
                                         <div
-                                            class="flex items-center gap-2 mt-2"
-                                            v-if="activity.email_id"
+                                            class="flex flex-col gap-1 mt-2"
+                                            v-if="activity.emails && activity.emails.length > 0"
                                         >
-                                            <span class="icon-mail text-green-600"></span>
-                                            <a
-                                                :href="`{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceID']) }}`.replace('replaceID', activity.email_id)"
-                                                class="text-sm text-green-600 hover:underline"
-                                                target="_blank"
+                                            <div
+                                                class="flex items-center gap-2"
+                                                v-for="email in activity.emails"
+                                                :key="email.id"
                                             >
-                                                Gekoppelde E-Mail bekijken
-                                            </a>
+                                                <span class="icon-mail text-green-600"></span>
+                                                <a
+                                                    :href="`{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceID']) }}`.replace('replaceID', email.id)"
+                                                    class="text-sm text-green-600 hover:underline"
+                                                    target="_blank"
+                                                >
+                                                    {{ email.subject || 'E-Mail bekijken' }}
+                                                </a>
+                                            </div>
                                         </div>
 
                                         {!! view_render_event('admin.components.activities.content.activity.item.attachments.after') !!}

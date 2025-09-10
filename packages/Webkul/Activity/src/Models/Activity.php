@@ -67,7 +67,6 @@ class Activity extends Model implements ActivityContract
         'assigned_at',
         'group_id',
         'lead_id',
-        'email_id',
         'external_id',
     ];
 
@@ -100,11 +99,11 @@ class Activity extends Model implements ActivityContract
     }
 
     /**
-     * Get the email associated with the activity.
+     * Get the emails associated with the activity.
      */
-    public function email()
+    public function emails()
     {
-        return $this->belongsTo(EmailProxy::modelClass());
+        return $this->hasMany(EmailProxy::modelClass(), 'activity_id');
     }
 
     /**

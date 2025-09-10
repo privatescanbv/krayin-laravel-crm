@@ -361,7 +361,7 @@ Quote "1" -- "n" QuoteItem
 Activity "1" --> "1" User
 Activity "0..1" --> "1" Group
 Activity "0..1" --> "1" Lead
-Activity "0..*" --> "1" Email
+Activity "1" -- "0..*" Email
 
 WorkflowLead "1" -- "n" Activity
 WorkflowLead "0..1" -- "1" Quote
@@ -394,7 +394,7 @@ Lead "1" -- "1" Department
 Email "1" --> "1" Person
 Email "0..1" --> "1" Email : "parent"
 Email "0..1" --> "1" Lead
-Email "1" -- "0..*" Activity
+Email "0..1" --> "1" Activity
 
 note right of Pipeline
   Verkoopfunnel met geordende fasen voor lead.
@@ -422,7 +422,7 @@ end note
 
 note right of Activity
   Telefoongesprek | Taak of geautomatiseerde stap in een WorkflowLead, optioneel toegewezen aan een gebruiker of groep.
-  Kan nu direct gekoppeld zijn aan een lead en een e-mail.
+  Kan nu direct gekoppeld zijn aan een lead en meerdere e-mails.
 end note
 
 note right of Person
@@ -452,7 +452,7 @@ end note
 note right of Email
   E-mail communicatie gekoppeld aan leads, personen en activiteiten.
   Ondersteunt e-mail threads via parent_id relatie.
-  Kan gekoppeld zijn aan nul of meer activiteiten (0..*).
+  Kan gekoppeld zijn aan nul of één activiteit (0..1).
 end note
 
 note as N1

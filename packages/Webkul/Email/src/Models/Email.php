@@ -65,6 +65,7 @@ class Email extends Model implements EmailContract
         'person_id',
         'parent_id',
         'lead_id',
+        'activity_id',
         'created_at',
         'updated_at',
     ];
@@ -118,11 +119,11 @@ class Email extends Model implements EmailContract
     }
 
     /**
-     * Get the activities associated with this email.
+     * Get the activity associated with this email.
      */
-    public function activities()
+    public function activity()
     {
-        return $this->hasMany(\Webkul\Activity\Models\Activity::class, 'email_id');
+        return $this->belongsTo(\Webkul\Activity\Models\Activity::class, 'activity_id');
     }
 
     /**

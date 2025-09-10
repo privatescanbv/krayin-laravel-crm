@@ -325,40 +325,14 @@
                     {!! view_render_event('admin.leads.edit.emails.before', ['lead' => $lead]) !!}
 
                     <!-- Emails Section -->
-                    <div
-                        class="flex flex-col gap-4"
-                        id="emails"
-                    >
-                        <div class="flex flex-col gap-1">
-                            <p class="text-base font-semibold dark:text-white">
-                                @lang('admin::app.leads.common.emails.title')
-                            </p>
-                        </div>
-
-                        <div class="w-1/2 max-md:w-full">
-                            @include('admin::components.emails', ['name' => 'emails', 'value' => $lead->emails ?? []])
-                        </div>
-                    </div>
+                    @include('admin::leads.common.sections.emails', ['name' => 'emails', 'value' => ($lead->emails ?? [])])
 
                     {!! view_render_event('admin.leads.edit.emails.after', ['lead' => $lead]) !!}
 
                     {!! view_render_event('admin.leads.edit.phones.before', ['lead' => $lead]) !!}
 
                     <!-- Phones Section -->
-                    <div
-                        class="flex flex-col gap-4"
-                        id="phones"
-                    >
-                        <div class="flex flex-col gap-1">
-                            <p class="text-base font-semibold dark:text-white">
-                                Telefoonnummers
-                            </p>
-                        </div>
-
-                        <div class="w-1/2 max-md:w-full">
-                            @include('admin::components.phones', ['name' => 'phones', 'value' => $lead->phones ?? []])
-                        </div>
-                    </div>
+                    @include('admin::leads.common.sections.phones', ['name' => 'phones', 'value' => ($lead->phones ?? [])])
 
                     {!! view_render_event('admin.leads.edit.phones.after', ['lead' => $lead]) !!}
 

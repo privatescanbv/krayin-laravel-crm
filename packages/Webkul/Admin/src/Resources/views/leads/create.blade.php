@@ -426,13 +426,13 @@
                                     </div>
 
                                     <!-- Emails -->
-                                    <div class="mt-4 w-1/2 max-md:w-full">
-                                        @include('admin::components.emails', ['name' => 'emails', 'value' => old('emails', $prefilledLeadPerson['emails'] ?? [])])
+                                    <div class="mt-4">
+                                        @include('admin::leads.common.sections.emails', ['name' => 'emails', 'value' => old('emails', $prefilledLeadPerson['emails'] ?? [])])
                                     </div>
 
                                     <!-- Phones -->
-                                    <div class="mt-4 w-1/2 max-md:w-full">
-                                        @include('admin::components.phones', ['name' => 'phones', 'value' => old('phones', $prefilledLeadPerson['phones'] ?? [])])
+                                    <div class="mt-4">
+                                        @include('admin::leads.common.sections.phones', ['name' => 'phones', 'value' => old('phones', $prefilledLeadPerson['phones'] ?? [])])
                                     </div>
 
                                     <!-- Address -->

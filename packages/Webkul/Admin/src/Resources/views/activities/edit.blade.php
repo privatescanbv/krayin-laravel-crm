@@ -51,6 +51,58 @@
                                 </button>
                             @endforeach
                         </div>
+                        <script>
+                            // Fallback inline binder (executes immediately in header)
+                            (function(){
+                                const container = document.getElementById('activity-status-buttons');
+                                if (!container) return;
+                                const url = container.getAttribute('data-update-url');
+                                const csrf = container.getAttribute('data-csrf');
+                                console.debug('[activity-status-inline] bound. url:', url);
+                                document.addEventListener('click', async function(e){
+                                    const btn = e.target && e.target.closest ? e.target.closest('button.status-btn') : null;
+                                    if (!btn || !container.contains(btn)) return;
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    const status = btn.getAttribute('data-status');
+                                    console.debug('[activity-status-inline] click', status);
+                                    try {
+                                        const params = new URLSearchParams();
+                                        params.append('_method', 'PUT');
+                                        params.append('status', status);
+                                        const res = await fetch(url, {
+                                            method: 'POST',
+                                            headers: {
+                                                'X-CSRF-TOKEN': csrf,
+                                                'X-Requested-With': 'XMLHttpRequest',
+                                                'Accept': 'application/json',
+                                                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                                            },
+                                            body: params.toString()
+                                        });
+                                        if (!res.ok) {
+                                            let message = 'Status bijwerken mislukt';
+                                            try { const data = await res.json(); if (data && data.message) message = data.message; } catch(_){}
+                                            throw new Error(message);
+                                        }
+                                        const inactive = 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700';
+                                        const map = {
+                                            in_progress: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-800',
+                                            active: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-800',
+                                            on_hold: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-800',
+                                            expired: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900 dark:text-red-300 dark:border-red-800',
+                                        };
+                                        container.querySelectorAll('button.status-btn').forEach(b => {
+                                            b.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + inactive;
+                                        });
+                                        btn.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + (map[status] || '');
+                                    } catch(err) {
+                                        console.error('[activity-status-inline] error', err);
+                                        alert(err.message || 'Kon status niet bijwerken');
+                                    }
+                                });
+                            })();
+                        </script>
                     </div>
                 </div>
 

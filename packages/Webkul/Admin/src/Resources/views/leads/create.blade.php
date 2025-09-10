@@ -131,7 +131,7 @@
         </script>
 
         <script type="text/x-template" id="v-two-step-lead-form-template">
-            <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-4" v-cloak>
                 <!-- Header -->
                 <div
                     class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
@@ -220,7 +220,7 @@
                 </div>
 
                 <!-- Step 2: Full Lead Form -->
-                <div v-show="currentStep === 2">
+                <div v-show="currentStep === 2" style="display: none;">
                     <form @submit.prevent="submitForm" ref="leadForm">
                         @csrf
                         @if (request('stage_id'))
@@ -715,6 +715,7 @@
 
     @pushOnce('styles')
         <style>
+            [v-cloak] { display: none; }
             html {
                 scroll-behavior: smooth;
             }

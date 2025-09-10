@@ -45,7 +45,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="initials"
-                :value="$entity->initials ?? ''"
+                @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.initials" @else :value="$entity->initials ?? ''" @endif
                 :label="trans('Initialen')"
                 placeholder="J.A."
             />
@@ -62,7 +62,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="first_name"
-                :value="$entity->first_name ?? ''"
+                @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.first_name" @else :value="$entity->first_name ?? ''" @endif
                 :label="trans('Voornaam')"
                 placeholder="Voornaam"
                 rules="required"
@@ -83,7 +83,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="lastname_prefix"
-                :value="$entity->lastname_prefix ?? ''"
+                @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.lastname_prefix" @else :value="$entity->lastname_prefix ?? ''" @endif
                 :label="trans('Tussenvoegsel')"
                 placeholder="van, de, den, etc."
                 class="w-24"
@@ -101,7 +101,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="last_name"
-                :value="$entity->last_name ?? ''"
+                @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.last_name" @else :value="$entity->last_name ?? ''" @endif
                 :label="trans('admin::app.leads.merge.field-last-name-birth')"
                 placeholder="@lang('admin::app.leads.merge.field-last-name-birth')"
                 rules="required"
@@ -123,7 +123,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="married_name_prefix"
-                :value="$entity->married_name_prefix ?? ''"
+                @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.married_name_prefix" @else :value="$entity->married_name_prefix ?? ''" @endif
                 :label="trans('Married name prefix')"
                 placeholder="van, de, den, etc."
                 class="w-24"
@@ -141,7 +141,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="married_name"
-                :value="$entity->married_name ?? ''"
+                @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.married_name" @else :value="$entity->married_name ?? ''" @endif
                 :label="trans('Married name')"
             />
 

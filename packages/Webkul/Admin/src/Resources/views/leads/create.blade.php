@@ -290,7 +290,7 @@
                                             ];
                                             $__entityPrefill = (object) array_merge($__defaults, ($prefilledLeadPerson ?? []));
                                         @endphp
-                                        @include('admin::leads.common.personal-fields', ['entity' => $__entityPrefill])
+                                        @include('admin::leads.common.personal-fields', ['entity' => $__entityPrefill, 'bindModel' => 'formData'])
                                     </div>
 
                                     <!-- Organization Section -->

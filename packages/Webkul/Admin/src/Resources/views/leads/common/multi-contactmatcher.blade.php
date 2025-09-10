@@ -74,7 +74,7 @@
                 <div class="flex items-center justify-between mb-2">
                     <span class="font-semibold text-sm">Gekoppelde contactpersonen ({{ selectedPersons.length }})</span>
                     <button
-                        @click="clearAllPersons"
+                        v-on:click="clearAllPersons"
                         v-if="selectedPersons.length > 0"
                         class="text-red-600 hover:text-red-800 text-xs"
                     >
@@ -138,7 +138,7 @@
                                 </div>
                             </div>
                             <button
-                                @click="removePerson(index)"
+                                v-on:click="removePerson(index)"
                                 class="text-red-600 hover:text-red-800 p-1"
                                 title="Verwijder persoon"
                             >
@@ -169,7 +169,7 @@
                          </div>
                      </div>
                      <button
-                         @click="createPersonFromLead"
+                         v-on:click="createPersonFromLead"
                          :disabled="isCreatingPerson"
                          class="text-yellow-600 hover:text-yellow-800 bg-yellow-100 hover:bg-yellow-200 px-3 py-1 rounded text-sm"
                          :class="{ 'opacity-50 cursor-not-allowed': isCreatingPerson }"
@@ -203,10 +203,10 @@
 
                                  <!-- Suggesties -->
                  <ul v-if="suggestions.length" class="border rounded bg-white shadow mb-2 max-h-60 overflow-y-auto">
-                                           <li
+                     <li
                           v-for="person in suggestions"
                           :key="person.id"
-                          @click="addPerson(person)"
+                          v-on:click="addPerson(person)"
                           class="px-3 py-2 cursor-pointer hover:bg-gray-100 border-b last:border-b-0"
                       >
                           <div class="flex items-center justify-between">
@@ -243,7 +243,7 @@
                      <div class="text-center">
                          <div class="text-sm text-blue-700 mb-2">Geen bestaande contactpersonen gevonden voor "{{ search }}"</div>
                          <button
-                             @click="createNewPerson"
+                             v-on:click="createNewPerson"
                              class="text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-3 py-1 rounded text-sm"
                          >
                              Nieuwe persoon aanmaken: "{{ search }}"

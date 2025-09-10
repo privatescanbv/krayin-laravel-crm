@@ -27,28 +27,6 @@
         </div>
     </div>
 
-    <script>
-        window.handlePersonsUpdated = function(updated) {
-            if (window.leadFormComponent) {
-                window.leadFormComponent.persons = updated;
-                if (typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
-                    window.leadFormComponent.updateFormDataFromPersons();
-                }
-            }
-        };
-        window.handlePersonAdded = function(p) {
-            if (window.leadFormComponent) {
-                if (!Array.isArray(window.leadFormComponent.persons)) {
-                    window.leadFormComponent.persons = [];
-                }
-                window.leadFormComponent.persons.push(p);
-                if (typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
-                    window.leadFormComponent.updateFormDataFromPersons();
-                }
-            }
-        };
-    </script>
-
     <v-multi-contact-matcher
         :lead='@json($lead ?? new stdClass())'
         :existing-persons='@json($persons ?? [])'

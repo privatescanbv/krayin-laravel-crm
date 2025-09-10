@@ -95,8 +95,24 @@
                 }
             };
             applyDefaults();
-            statusEl?.addEventListener('change', applyDefaults);
+            // Direct listener (in case the element stays the same)
+            statusEl && statusEl.addEventListener('change', applyDefaults);
         }
+
+        // Delegated listener to handle dynamic DOM replacements
+        document.addEventListener('change', function(e) {
+            const target = e.target;
+            if (!target || target.name !== 'status') return;
+            const formEl = target.closest('#call-status-form');
+            if (!formEl) return;
+            const resEl = formEl.querySelector('[name="reschedule_days"]');
+            if (!resEl) return;
+            if (target.value === 'spoken') {
+                resEl.value = '';
+            } else if (!resEl.value) {
+                resEl.value = '7';
+            }
+        });
 
         // Use event delegation to handle button clicks
         document.addEventListener('click', async function(e) {

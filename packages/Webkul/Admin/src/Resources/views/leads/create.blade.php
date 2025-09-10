@@ -280,7 +280,21 @@
                                     <!-- Personal Fields (full, same as edit) -->
                                     <div class="flex flex-col gap-4 mb-4">
                                         <p class="text-base font-semibold dark:text-white">Persoonsgegevens</p>
-                                        @include('admin::leads.common.personal-fields', ['entity' => (object)($prefilledLeadPerson ?? [])])
+                                        @php
+                                            $__defaults = [
+                                                'salutation' => null,
+                                                'initials' => null,
+                                                'first_name' => null,
+                                                'lastname_prefix' => null,
+                                                'last_name' => null,
+                                                'married_name_prefix' => null,
+                                                'married_name' => null,
+                                                'date_of_birth' => null,
+                                                'gender' => null,
+                                            ];
+                                            $__entityPrefill = (object) array_merge($__defaults, ($prefilledLeadPerson ?? []));
+                                        @endphp
+                                        @include('admin::leads.common.personal-fields', ['entity' => $__entityPrefill])
                                     </div>
 
                                     <!-- Organization Section -->

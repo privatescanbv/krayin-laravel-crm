@@ -7,6 +7,7 @@ use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\User;
+use Webkul\User\Models\UserDefaultValue;
 
 class AuditTrailServiceProvider extends ServiceProvider
 {
@@ -16,6 +17,7 @@ class AuditTrailServiceProvider extends ServiceProvider
     private const FULL_AUDIT_MODELS = [
         Organization::class,
         User::class,
+        UserDefaultValue::class,
     ];
 
     /**
@@ -116,6 +118,8 @@ class AuditTrailServiceProvider extends ServiceProvider
             $this->addOrganizationFillable($modelClass);
         } elseif ($modelClass === User::class) {
             $this->addUserFillable($modelClass);
+        } elseif ($modelClass === UserDefaultValue::class) {
+            $this->addUserDefaultValueFillable($modelClass);
         }
     }
 
@@ -146,6 +150,22 @@ class AuditTrailServiceProvider extends ServiceProvider
             {
                 return function () {
                     return ['name', 'email', 'image', 'password', 'api_token', 'role_id', 'status', 'created_by', 'updated_by'];
+                };
+            }
+        });
+    }
+
+    /**
+     * Add fillable fields to UserDefaultValue model
+     */
+    private function addUserDefaultValueFillable(string $modelClass): void
+    {
+        $modelClass::mixin(new class
+        {
+            public function getFillable()
+            {
+                return function () {
+                    return ['user_id', 'key', 'value', 'created_by', 'updated_by'];
                 };
             }
         });

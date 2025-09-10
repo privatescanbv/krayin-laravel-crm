@@ -7,7 +7,7 @@
     {!! view_render_event('admin.leads.create.form.before') !!}
 
     <!-- Two-Step Lead Form -->
-    <v-two-step-lead-form></v-two-step-lead-form>
+    <v-two-step-lead-form :initial-persons='@json($prefilledPersons ?? [])'></v-two-step-lead-form>
 
     {!! view_render_event('admin.leads.create.form.after') !!}
 
@@ -498,11 +498,18 @@
             app.component('v-two-step-lead-form', {
                 template: '#v-two-step-lead-form-template',
 
+                props: {
+                    initialPersons: {
+                        type: Array,
+                        default: () => []
+                    }
+                },
+
                 data() {
                     return {
                         currentStep: 1,
                         selectedPersons: [],
-                        persons: [],
+                        persons: [...this.initialPersons],
                         isSubmitting: false,
                         formData: {
                         description: '',
@@ -530,14 +537,12 @@
                     // Set up global reference to this component for cross-component communication
                     window.leadFormComponent = this;
 
-                    // Initialize with empty person if needed
-                    if (this.persons.length === 0) {
-                        this.persons.push({
-                            id: null,
-                            name: '',
-                            match_percentage: null,
-                            organization: null
-                        });
+                    // If prefilled persons exist, sync into the matcher and prefill fields
+                    if (this.persons.length > 0) {
+                        this.updateFormDataFromPersons();
+                    } else {
+                        // Initialize with one empty slot for ease of use
+                        this.persons.push({ id: null, name: '', match_percentage: null, organization: null });
                     }
                 },
 

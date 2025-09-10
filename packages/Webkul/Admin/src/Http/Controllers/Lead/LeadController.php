@@ -252,11 +252,35 @@ class LeadController extends Controller
         $defaultStageId = $pipelineData['stage_id'];
         $defaultDepartmentId = $pipelineData['department_id'];
 
+        // Preselect person if provided via query param
+        $prefilledPersons = [];
+        $personId = (int) request('person_id');
+        if ($personId) {
+            try {
+                $person = $this->personRepository->find($personId);
+                if ($person) {
+                    $prefilledPersons[] = [
+                        'id' => $person->id,
+                        'name' => $person->name,
+                        'emails' => is_array($person->emails) ? $person->emails : [],
+                        'phones' => is_array($person->phones) ? $person->phones : [],
+                        'organization' => $person->organization ? [
+                            'id' => $person->organization->id,
+                            'name' => $person->organization->name,
+                        ] : null,
+                    ];
+                }
+            } catch (\Exception $e) {
+                // Ignore if person not found
+            }
+        }
+
         return view('admin::leads.create', [
             'defaultDepartmentId' => $defaultDepartmentId,
             'defaultPipelineId' => $pipeline->id ?? null,
             'defaultStageId' => $defaultStageId,
-            'departmentOptions' => Department::pluck('name', 'id')->toArray()
+            'departmentOptions' => Department::pluck('name', 'id')->toArray(),
+            'prefilledPersons' => $prefilledPersons,
         ]);
     }
 

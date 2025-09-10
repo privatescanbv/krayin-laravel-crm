@@ -102,6 +102,17 @@
                         entity-control-name="person_id"
                     />
 
+                    @if (bouncer()->hasPermission('leads.create'))
+                        <a
+                            href="{{ route('admin.leads.create') }}?person_id={{ $person->id }}"
+                            class="primary-button"
+                            title="Nieuwe lead voor deze persoon"
+                        >
+                            <i class="icon-plus text-xs"></i>
+                            Nieuwe lead
+                        </a>
+                    @endif
+
                     {!! view_render_event('admin.contact.persons.view.actions.after', ['person' => $person]) !!}
                 </div>
             </div>

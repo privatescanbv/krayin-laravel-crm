@@ -30,6 +30,8 @@
     <v-multi-contact-matcher
         :lead='@json($lead ?? new stdClass())'
         :existing-persons='@json($persons ?? [])'
+        @persons-updated="(updated) => { if (window.leadFormComponent) { window.leadFormComponent.persons = updated; window.leadFormComponent.updateFormDataFromPersons(); } }"
+        @person-added="(p) => { if (window.leadFormComponent) { window.leadFormComponent.persons = $event; window.leadFormComponent.updateFormDataFromPersons(); } }"
     ></v-multi-contact-matcher>
 </div>
 

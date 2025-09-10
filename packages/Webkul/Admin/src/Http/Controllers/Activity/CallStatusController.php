@@ -7,6 +7,7 @@ use App\Models\CallStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Webkul\Admin\Http\Controllers\Controller;
+use App\Services\ActivityStatusService;
 
 class CallStatusController extends Controller
 {
@@ -58,6 +59,13 @@ class CallStatusController extends Controller
                 }
                 
                 $activity->save();
+
+                // Recompute status after reschedule
+                $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, $activity->status);
+                if ($computed->value !== ($activity->status?->value ?? null)) {
+                    $activity->status = $computed;
+                    $activity->save();
+                }
             }
         }
 

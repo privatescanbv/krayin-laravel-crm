@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Helpers\AuditTrailMigrationHelper;
 
 return new class extends Migration
 {
@@ -18,6 +19,9 @@ return new class extends Migration
             $table->string('value')->nullable();
             $table->timestamps();
 
+            // Audit trail
+            AuditTrailMigrationHelper::addAuditTrailColumns($table);
+
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->unique(['user_id', 'key']);
         });
@@ -28,6 +32,13 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::table('user_default_values', function (Blueprint $table) {
+            // Drop audit trail columns and FKs first if present
+            if (\Illuminate\Support\Facades\Schema::hasTable('user_default_values')) {
+                \App\Helpers\AuditTrailMigrationHelper::dropAuditTrailColumnsIfExists($table, 'user_default_values');
+            }
+        });
+
         Schema::dropIfExists('user_default_values');
     }
 };

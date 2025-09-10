@@ -419,7 +419,7 @@
                              married_name: this.lead.married_name || '',
                              married_name_prefix: this.lead.married_name_prefix || '',
                              initials: this.lead.initials || '',
-                             date_of_birth: this.lead.date_of_birth || '',
+                             date_of_birth: this.formatDateToDutch(this.lead.date_of_birth),
                              gender: this.lead.gender || '',
                              salutation: this.lead.salutation || '',
                              emails: this.lead.emails || [],
@@ -549,6 +549,34 @@
                     } else {
                         return 'bg-red-500';
                     }
+                },
+
+                formatDateToDutch(value) {
+                    if (!value) {
+                        return '';
+                    }
+                    // Already in dd-mm-yyyy
+                    if (/^\d{2}-\d{2}-\d{4}$/.test(value)) {
+                        return value;
+                    }
+                    // ISO 8601 -> take date part
+                    const isoDate = (String(value).match(/^(\d{4}-\d{2}-\d{2})/) || [])[1];
+                    const datePart = isoDate || String(value);
+                    const m = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+                    if (m) {
+                        return `${m[3]}-${m[2]}-${m[1]}`;
+                    }
+                    // Fallback parse
+                    try {
+                        const d = new Date(value);
+                        if (!isNaN(d.getTime())) {
+                            const dd = String(d.getDate()).padStart(2, '0');
+                            const mm = String(d.getMonth() + 1).padStart(2, '0');
+                            const yyyy = d.getFullYear();
+                            return `${dd}-${mm}-${yyyy}`;
+                        }
+                    } catch (e) {}
+                    return '';
                 }
             }
         });

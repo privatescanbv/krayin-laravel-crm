@@ -4,7 +4,7 @@
     <div class="panel-header mb-3">
         <h3 class="text-lg font-semibold text-blue-800">Contactpersonen Koppelen</h3>
         <p class="text-sm text-blue-600">Zoek en koppel meerdere bestaande contactpersonen of maak nieuwe aan</p>
-        
+
         <div class="mt-2 text-xs text-blue-500">
             <div class="flex items-center gap-1">
                 <strong>Matching criteria:</strong>
@@ -81,10 +81,10 @@
                         Alles verwijderen
                     </button>
                 </div>
-                
+
                 <div v-if="selectedPersons.length > 0" class="space-y-2">
-                    <div 
-                        v-for="(person, index) in selectedPersons" 
+                    <div
+                        v-for="(person, index) in selectedPersons"
                         :key="person.id"
                         class="p-2 border rounded bg-green-50 border-green-200"
                     >
@@ -109,7 +109,7 @@
                                 <div class="flex items-center gap-2 mt-1 text-sm text-gray-600">
                                     <span v-if="person.emails && person.emails.length">{{ person.emails[0].value }}</span>
                                     <span v-if="person.phones && person.phones.length">{{ person.phones[0].value }}</span>
-                                    
+
                                     <!-- Match score indicator -->
                                     <div v-if="person.match_score_percentage !== null" class="flex items-center gap-1">
                                         <span class="text-xs text-gray-500">Match:</span>
@@ -149,7 +149,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                                  <div v-if="selectedPersons.length === 0" class="p-3 border rounded bg-gray-50 border-gray-200 text-center text-gray-500">
                      Geen contactpersonen gekoppeld
                  </div>
@@ -182,7 +182,7 @@
              <!-- Zoeken naar nieuwe personen -->
              <div class="mb-4">
                 <label class="block font-semibold mb-1">Contactpersoon zoeken</label>
-                
+
                 <!-- Zoekveld -->
                 <div class="relative">
                     <input
@@ -237,7 +237,7 @@
                          </div>
                      </li>
                  </ul>
-                 
+
                  <!-- Geen resultaten - optie om nieuwe persoon aan te maken -->
                  <div v-if="search.length >= 2 && !isSearching && suggestions.length === 0" class="p-3 border rounded bg-blue-50 border-blue-200">
                      <div class="text-center">
@@ -253,12 +253,12 @@
              </div>
 
             <!-- Hidden form fields -->
-            <input 
-                v-for="(person, index) in selectedPersons" 
+            <input
+                v-for="(person, index) in selectedPersons"
                 :key="person.id"
-                type="hidden" 
-                :name="'person_ids[' + index + ']'" 
-                :value="person.id" 
+                type="hidden"
+                :name="'person_ids[' + index + ']'"
+                :value="person.id"
             />
         </div>
     </script>
@@ -288,7 +288,7 @@
             methods: {
                 onSearch() {
                     clearTimeout(this.searchTimeout);
-                    
+
                     if (this.search.length < 2) {
                         this.suggestions = [];
                         return;
@@ -303,7 +303,7 @@
                      this.isSearching = true;
                      try {
                          const params = { query };
-                         
+
                          // Add lead_id for match score calculation if available
                          if (this.lead && this.lead.id) {
                              params.lead_id = this.lead.id;
@@ -315,10 +315,10 @@
 
                          // Filter out already selected persons from suggestions
                          const allSuggestions = response.data.data || [];
-                         this.suggestions = allSuggestions.filter(person => 
+                         this.suggestions = allSuggestions.filter(person =>
                              !this.isPersonSelected(person.id)
                          );
-                         
+
 
                      } catch (e) {
                          console.error('Zoekopdracht mislukt:', e);
@@ -336,15 +336,15 @@
                                                  addPerson(person) {
                     if (!this.isPersonSelected(person.id)) {
                         this.selectedPersons.push(person);
-                        
+
                         // Clear search and suggestions after adding
                         this.search = '';
                         this.suggestions = [];
-                        
+
                         // Emit event for parent components to listen to
                         this.$emit('person-added', person);
                         this.$emit('persons-updated', this.selectedPersons);
-                        
+
                         // Also call the lead form component directly if available
                         if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
                             window.leadFormComponent.persons = this.selectedPersons;
@@ -355,19 +355,19 @@
 
                 removePerson(index) {
                     const person = this.selectedPersons[index];
-                    
+
                     if (confirm(`Weet je zeker dat je ${person.name} wilt ontkoppelen?`)) {
                         // If this is an existing person on an existing lead, call detach API
                         if (this.lead && this.lead.id && person.id) {
                             this.detachPersonFromLead(person.id);
                         }
-                        
+
                         this.selectedPersons.splice(index, 1);
-                        
+
                         // Emit event for parent components to listen to
                         this.$emit('person-removed', person);
                         this.$emit('persons-updated', this.selectedPersons);
-                        
+
                         // Also call the lead form component directly if available
                         if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
                             window.leadFormComponent.persons = this.selectedPersons;
@@ -379,10 +379,10 @@
                 clearAllPersons() {
                     if (confirm('Weet je zeker dat je alle contactpersonen wilt ontkoppelen?')) {
                         this.selectedPersons = [];
-                        
+
                         // Emit event for parent components to listen to
                         this.$emit('persons-updated', this.selectedPersons);
-                        
+
                         // Also call the lead form component directly if available
                         if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
                             window.leadFormComponent.persons = this.selectedPersons;
@@ -397,11 +397,11 @@
 
                 async calculateExistingMatchScores() {
                     if (!this.lead || !this.lead.id || this.selectedPersons.length === 0) return;
-                    
+
                     try {
                         const response = await axios.get(`/admin/contacts/persons/searchByLead/${this.lead.id}`);
                         const personsWithScores = response.data.data || [];
-                        
+
                         // Update match scores for existing persons
                         this.selectedPersons.forEach((person, index) => {
                             const personWithScore = personsWithScores.find(p => p.id === person.id);
@@ -431,44 +431,29 @@
                      this.isCreatingPerson = true;
 
                      try {
-                         const personData = {
-                             entity_type: 'persons',
-                             first_name: this.lead.first_name || '',
-                             last_name: this.lead.last_name || '',
-                             lastname_prefix: this.lead.lastname_prefix || '',
-                             married_name: this.lead.married_name || '',
-                             married_name_prefix: this.lead.married_name_prefix || '',
-                             initials: this.lead.initials || '',
-                             date_of_birth: this.lead.date_of_birth || '',
-                             gender: this.lead.gender || '',
-                             salutation: this.lead.salutation || '',
-                             emails: this.lead.emails || [],
-                             phones: this.lead.phones || []
-                         };
-
-                         const response = await axios.post('/admin/contacts/persons/create', personData);
+                         -
 
                                                  if (response.data && response.data.data) {
                             const newPerson = response.data.data;
-                            
+
                             // Add to selected persons
                             this.selectedPersons.push(newPerson);
-                            
+
                             // Emit event for parent components to listen to
                             this.$emit('person-added', newPerson);
                             this.$emit('persons-updated', this.selectedPersons);
-                            
+
                             // Also call the lead form component directly if available
                             if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
                                 window.leadFormComponent.persons = this.selectedPersons;
                                 window.leadFormComponent.updateFormDataFromPersons();
                             }
-                            
+
                             alert('Contactpersoon succesvol aangemaakt en gekoppeld aan deze lead.');
                         }
                      } catch (error) {
                          console.error('Fout bij aanmaken contactpersoon:', error);
-                         
+
                          let errorMessage = 'Er is een fout opgetreden bij het aanmaken van de contactpersoon.';
                          if (error.response?.data?.message) {
                              errorMessage = error.response.data.message;
@@ -476,7 +461,7 @@
                              const errors = Object.values(error.response.data.errors).flat();
                              errorMessage = errors.join(', ');
                          }
-                         
+
                          alert(errorMessage);
                      } finally {
                          this.isCreatingPerson = false;
@@ -508,29 +493,29 @@
 
                                                  if (response.data && response.data.data) {
                             const newPerson = response.data.data;
-                            
+
                             // Add to selected persons
                             this.selectedPersons.push(newPerson);
-                            
+
                             // Clear search
                             this.search = '';
                             this.suggestions = [];
-                            
+
                             // Emit event for parent components to listen to
                             this.$emit('person-added', newPerson);
                             this.$emit('persons-updated', this.selectedPersons);
-                            
+
                             // Also call the lead form component directly if available
                             if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
                                 window.leadFormComponent.persons = this.selectedPersons;
                                 window.leadFormComponent.updateFormDataFromPersons();
                             }
-                            
+
                             alert(`Nieuwe contactpersoon "${newPerson.name}" succesvol aangemaakt en gekoppeld.`);
                         }
                      } catch (error) {
                          console.error('Fout bij aanmaken nieuwe contactpersoon:', error);
-                         
+
                          let errorMessage = 'Er is een fout opgetreden bij het aanmaken van de nieuwe contactpersoon.';
                          if (error.response?.data?.message) {
                              errorMessage = error.response.data.message;
@@ -538,7 +523,7 @@
                              const errors = Object.values(error.response.data.errors).flat();
                              errorMessage = errors.join(', ');
                          }
-                         
+
                          alert(errorMessage);
                      } finally {
                          this.isCreatingPerson = false;

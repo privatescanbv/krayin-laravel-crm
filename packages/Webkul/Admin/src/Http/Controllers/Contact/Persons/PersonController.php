@@ -173,10 +173,10 @@ class PersonController extends Controller
 
         // Fetch and sort leads: newest first, won/lost to bottom
         try {
-            $leadIds = \DB::table('lead_persons')->where('person_id', $person->id)->pluck('lead_id');
+            $leadIds = DB::table('lead_persons')->where('person_id', $person->id)->pluck('lead_id');
             $leads = $leadIds->isEmpty()
                 ? collect()
-                : \Webkul\Lead\Models\Lead::with('stage')->whereIn('id', $leadIds)->get();
+                : Lead::with('stage')->whereIn('id', $leadIds)->get();
 
             $sortedLeads = $leads
                 ->sortBy(function($lead) {
@@ -186,8 +186,8 @@ class PersonController extends Controller
                     return [$isWonLost, -$updatedTs];
                 })
                 ->values();
-        } catch (\Exception $e) {
-            \Log::warning('Could not load/sort leads for person', ['person_id' => $person->id, 'error' => $e->getMessage()]);
+        } catch (Exception $e) {
+            Log::error('Could not load/sort leads for person', ['person_id' => $person->id, 'error' => $e->getMessage()]);
             $sortedLeads = collect();
         }
 

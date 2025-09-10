@@ -291,16 +291,11 @@
                          
 
                      } catch (e) {
-                         console.error('Zoekopdracht mislukt:', e);
-                         console.log('Error details:', {
-                             'status': e.response?.status,
-                             'statusText': e.response?.statusText,
-                             'data': e.response?.data
-                         });
-                         this.suggestions = [];
-                     } finally {
-                         this.isSearching = false;
-                     }
+                        console.warn('Zoekopdracht mislukt:', e?.response?.status, e?.response?.statusText);
+                        this.suggestions = [];
+                    } finally {
+                        this.isSearching = false;
+                    }
                  },
 
                 addPerson(person) {

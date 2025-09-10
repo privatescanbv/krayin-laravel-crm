@@ -13,16 +13,11 @@ return new class extends Migration
      */
     public function up()
     {
-        // First, add activity_id to emails table
+        // Add activity_id to emails table for the correct relationship
+        // Email belongs to one Activity (0..1), Activity has many Emails (0..*)
         Schema::table('emails', function (Blueprint $table) {
             $table->unsignedInteger('activity_id')->nullable()->after('lead_id');
             $table->foreign('activity_id')->references('id')->on('activities')->onDelete('set null');
-        });
-
-        // Then, remove email_id from activities table
-        Schema::table('activities', function (Blueprint $table) {
-            $table->dropForeign(['email_id']);
-            $table->dropColumn('email_id');
         });
     }
 
@@ -33,13 +28,7 @@ return new class extends Migration
      */
     public function down()
     {
-        // First, add email_id back to activities table
-        Schema::table('activities', function (Blueprint $table) {
-            $table->unsignedInteger('email_id')->nullable()->after('lead_id');
-            $table->foreign('email_id')->references('id')->on('emails')->onDelete('set null');
-        });
-
-        // Then, remove activity_id from emails table
+        // Remove activity_id from emails table
         Schema::table('emails', function (Blueprint $table) {
             $table->dropForeign(['activity_id']);
             $table->dropColumn('activity_id');

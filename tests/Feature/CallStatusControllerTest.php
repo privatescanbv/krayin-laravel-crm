@@ -16,11 +16,21 @@ class CallStatusControllerTest extends TestCase
     /** @test */
     public function spoken_does_not_reschedule_activity()
     {
+        $roleId = DB::table('roles')->insertGetId([
+            'name' => 'Tester',
+            'description' => 'Test role',
+            'permission_type' => 'all',
+            'permissions' => json_encode([]),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $userId = DB::table('users')->insertGetId([
             'name' => 'Test User',
             'email' => 'test@example.com',
             'password' => bcrypt('secret'),
             'status' => 1,
+            'role_id' => $roleId,
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -49,11 +59,21 @@ class CallStatusControllerTest extends TestCase
     /** @test */
     public function not_spoken_defaults_to_7_days_when_empty()
     {
+        $roleId = DB::table('roles')->insertGetId([
+            'name' => 'Tester 2',
+            'description' => 'Test role 2',
+            'permission_type' => 'all',
+            'permissions' => json_encode([]),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
         $userId = DB::table('users')->insertGetId([
             'name' => 'Test User 2',
             'email' => 'test2@example.com',
             'password' => bcrypt('secret'),
             'status' => 1,
+            'role_id' => $roleId,
             'created_at' => now(),
             'updated_at' => now(),
         ]);

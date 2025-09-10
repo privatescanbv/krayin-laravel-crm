@@ -34,8 +34,8 @@ return new class extends Migration
     {
         Schema::table('user_default_values', function (Blueprint $table) {
             // Drop audit trail columns and FKs first if present
-            if (\Illuminate\Support\Facades\Schema::hasTable('user_default_values')) {
-                \App\Helpers\AuditTrailMigrationHelper::dropAuditTrailColumnsIfExists($table, 'user_default_values');
+            if (Schema::hasTable('user_default_values')) {
+                AuditTrailMigrationHelper::dropAuditTrailColumnsIfExists($table, 'user_default_values');
             }
         });
 

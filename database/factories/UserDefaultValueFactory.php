@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Webkul\User\Models\UserDefaultValue;
 use Webkul\User\Models\User;
+use Webkul\User\Models\UserDefaultValue;
 
 class UserDefaultValueFactory extends Factory
 {
@@ -23,4 +23,3 @@ class UserDefaultValueFactory extends Factory
         ];
     }
 }
-

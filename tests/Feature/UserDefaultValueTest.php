@@ -43,4 +43,3 @@ it('updates existing default value for same key per user', function () {
     expect($updated->id)->toBe($first->id)
         ->and($updated->value)->toBe('3');
 });
-

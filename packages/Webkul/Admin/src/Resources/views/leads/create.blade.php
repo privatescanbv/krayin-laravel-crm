@@ -443,6 +443,10 @@
                             if (firstPerson.first_name || firstPerson.last_name) {
                                 this.formData.first_name = firstPerson.first_name || '';
                                 this.formData.last_name = firstPerson.last_name || '';
+                            } else if (firstPerson.name && (!this.formData.first_name || !this.formData.last_name)) {
+                                const parts = String(firstPerson.name).trim().split(/\s+/);
+                                this.formData.first_name = this.formData.first_name || (parts[0] || '');
+                                this.formData.last_name = this.formData.last_name || (parts.slice(1).join(' ') || '');
                             }
 
                             // Also populate email and phone if available and form fields are empty

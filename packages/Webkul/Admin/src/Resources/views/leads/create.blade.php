@@ -293,124 +293,18 @@
                                         @include('admin::leads.common.organization', ['organization' => null])
                                     </div>
 
-                                    <!-- Channel and Source -->
-                                    <div class="flex gap-4 mb-4">
-                                        <div class="flex-1">
-                                            @php $channelOptions = Channel::query()->pluck('name', 'id')->toArray(); @endphp
-                                            <x-admin::form.control-group>
-                                                <x-admin::form.control-group.label>Kanaal
-                                                </x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="select"
-                                                    name="lead_channel_id"
-                                                    v-model="formData.lead_channel_id"
-                                                >
-                                                    <option value="">-- Kies kanaal --</option>
-                                                    @foreach ($channelOptions as $id => $name)
-                                                        <option value="{{ $id }}">{{ $name }}</option>
-                                                    @endforeach
-                                                </x-admin::form.control-group.control>
-                                            </x-admin::form.control-group>
-                                        </div>
-                                        <div class="flex-1">
-                                            @php $sourceOptions = Source::query()->pluck('name', 'id')->toArray(); @endphp
-                                            <x-admin::form.control-group>
-                                                <x-admin::form.control-group.label>Bron
-                                                </x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="select"
-                                                    name="lead_source_id"
-                                                    v-model="formData.lead_source_id"
-                                                >
-                                                    <option value="">-- Kies bron --</option>
-                                                    @foreach ($sourceOptions as $id => $name)
-                                                        <option value="{{ $id }}">{{ $name }}</option>
-                                                    @endforeach
-                                                </x-admin::form.control-group.control>
-                                            </x-admin::form.control-group>
-                                        </div>
-                                    </div>
-
-                                    <!-- Department and Type -->
-                                    <div class="flex gap-4 mb-4">
-                                        <div class="flex-1">
-                                            @php $departmentOptions = Department::query()->pluck('name', 'id')->toArray(); @endphp
-                                            <x-admin::form.control-group>
-                                                <x-admin::form.control-group.label class="required">Afdeling
-                                                </x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="select"
-                                                    name="department_id"
-                                                    v-model="formData.department_id"
-                                                    rules="required"
-                                                >
-                                                    <option value="">-- Kies afdeling --</option>
-                                                    @foreach ($departmentOptions as $id => $name)
-                                                        <option value="{{ $id }}">{{ $name }}</option>
-                                                    @endforeach
-                                                </x-admin::form.control-group.control>
-                                            </x-admin::form.control-group>
-                                        </div>
-                                        <div class="flex-1">
-                                            @php $typeOptions = Type::query()->pluck('name', 'id')->toArray(); @endphp
-                                            <x-admin::form.control-group>
-                                                <x-admin::form.control-group.label>Type
-                                                </x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="select"
-                                                    name="lead_type_id"
-                                                    v-model="formData.lead_type_id"
-                                                >
-                                                    <option value="">-- Kies type --</option>
-                                                    @foreach ($typeOptions as $id => $name)
-                                                        <option value="{{ $id }}">{{ $name }}</option>
-                                                    @endforeach
-                                                </x-admin::form.control-group.control>
-                                            </x-admin::form.control-group>
-                                        </div>
-                                    </div>
-                                    <div class="flex gap-4 mb-4">
-                                        <div class="flex-1">
-                                            @php
-                                                $mriOptions = [];
-                                                foreach (App\Enums\MRIStatus::cases() as $case) {
-                                                    $mriOptions[$case->value] = $case->label();
-                                                }
-                                            @endphp
-                                            <x-admin::form.control-group>
-                                                <x-admin::form.control-group.label>
-                                                    MRI Status
-                                                </x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="select"
-                                                    name="mri_status"
-                                                    v-model="formData.mri_status"
-                                                >
-                                                    <option value="">-- Selecteer MRI status --</option>
-                                                    @foreach ($mriOptions as $id => $name)
-                                                        <option value="{{ $id }}">{{ $name }}</option>
-                                                    @endforeach
-                                                </x-admin::form.control-group.control>
-                                            </x-admin::form.control-group>
-                                        </div>
-                                        <!-- Combine Order Setting -->
-                                        <div class="flex-1">
-                                            <x-admin::form.control-group>
-                                                <x-admin::form.control-group.label>
-                                                    Orders combineren
-                                                </x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="select"
-                                                    name="combine_order"
-                                                    v-model="formData.combine_order"
-                                                >
-                                                    <option value="1">Ja</option>
-                                                    <option value="0">Nee</option>
-                                                </x-admin::form.control-group.control>
-                                                <x-admin::form.control-group.error control-name="combine_order"/>
-                                            </x-admin::form.control-group>
-                                        </div>
-                                    </div>
+                                    @include('admin::leads.common.sections.channel-to-owner', [
+                                        'entity' => null,
+                                        'defaults' => [
+                                            'department_id' => $defaultDepartmentId ?? '',
+                                            'lead_pipeline_id' => $defaultPipelineId ?? '',
+                                            'lead_pipeline_stage_id' => $defaultStageId ?? '',
+                                            'combine_order' => 1,
+                                            'lead_channel_id' => '1',
+                                            'lead_source_id' => 32,
+                                        ],
+                                        'useVueModel' => true,
+                                    ])
                                     <!-- Other attributes -->
                                     <div class="flex gap-4 max-sm:flex-wrap">
                                         <div class="w-full">

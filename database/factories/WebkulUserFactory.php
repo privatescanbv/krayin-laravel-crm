@@ -37,7 +37,7 @@ class WebkulUserFactory extends Factory
             'name'     => $this->faker->name,
             'email'    => $this->faker->unique()->safeEmail,
             'password' => bcrypt('password'), // Default password
-            'status'   => $this->faker->boolean(80), // 80% chance of being active
+            'status'   => true, // Always active in factory to avoid flaky tests
             'role_id'  => $role->id,
         ];
     }

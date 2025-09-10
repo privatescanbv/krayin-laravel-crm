@@ -366,9 +366,26 @@ class LeadController extends Controller
                 }
             }
 
-            // Handle empty date fields
-            if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
-                $data['date_of_birth'] = null;
+            // Handle empty/normalize date fields
+            if (array_key_exists('date_of_birth', $data)) {
+                if ($data['date_of_birth'] === '' || $data['date_of_birth'] === null) {
+                    $data['date_of_birth'] = null;
+                } else {
+                    // Normalize from HTML date (Y-m-d) to d-m-Y expected by validator
+                    // Accept both Y-m-d and d-m-Y inputs
+                    try {
+                        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $data['date_of_birth'])) {
+                            $data['date_of_birth'] = \Carbon\Carbon::createFromFormat('Y-m-d', $data['date_of_birth'])->format('d-m-Y');
+                        } elseif (preg_match('/^\d{2}-\d{2}-\d{4}$/', $data['date_of_birth'])) {
+                            // already correct format
+                        } else {
+                            // try a best-effort parse and reformat
+                            $data['date_of_birth'] = \Carbon\Carbon::parse($data['date_of_birth'])->format('d-m-Y');
+                        }
+                    } catch (\Exception $e) {
+                        // leave as-is; validator will catch
+                    }
+                }
             }
 
             // Normaliseer is_default naar boolean voor phones
@@ -488,9 +505,23 @@ class LeadController extends Controller
 
             $data = $request->all();
 
-            // Handle empty date fields
-            if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
-                $data['date_of_birth'] = null;
+            // Handle empty/normalize date fields
+            if (array_key_exists('date_of_birth', $data)) {
+                if ($data['date_of_birth'] === '' || $data['date_of_birth'] === null) {
+                    $data['date_of_birth'] = null;
+                } else {
+                    try {
+                        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $data['date_of_birth'])) {
+                            $data['date_of_birth'] = \Carbon\Carbon::createFromFormat('Y-m-d', $data['date_of_birth'])->format('d-m-Y');
+                        } elseif (preg_match('/^\d{2}-\d{2}-\d{4}$/', $data['date_of_birth'])) {
+                            // already correct format
+                        } else {
+                            $data['date_of_birth'] = \Carbon\Carbon::parse($data['date_of_birth'])->format('d-m-Y');
+                        }
+                    } catch (\Exception $e) {
+                        // leave as-is; validator will catch
+                    }
+                }
             }
 
             // Normaliseer is_default naar boolean voor phones

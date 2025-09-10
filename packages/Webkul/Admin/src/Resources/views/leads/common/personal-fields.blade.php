@@ -157,10 +157,9 @@
         </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.control
-            type="text"
+            type="date"
             name="date_of_birth"
-            :value="$entity && $entity->date_of_birth ? $entity->date_of_birth->format('d-m-Y') : ''"
-            placeholder="dd-mm-jjjj"
+            :value="$entity && $entity->date_of_birth ? $entity->date_of_birth->format('Y-m-d') : ''"
             :label="trans('Geboortedatum')"
         />
 

@@ -410,6 +410,7 @@
                         // Ensure we start on step 1 regardless of prefill
                         this.currentStep = 1;
                         this.updateSelectedPersonsSummary();
+                        this.$nextTick(() => this.syncPersonalFieldsToForm());
                     } else {
                         // Initialize with one empty slot for ease of use
                         this.persons.push({ id: null, name: '', match_percentage: null, organization: null });
@@ -458,6 +459,7 @@
                                 this.formData.phone = firstPerson.phones[0].value || '';
                             }
                             this.updateSelectedPersonsSummary();
+                            this.$nextTick(() => this.syncPersonalFieldsToForm());
                         } else {
                             // If no persons selected, keep the fields as they are to allow manual entry
                             this.hasSelectedPersons = false;
@@ -468,6 +470,23 @@
                         const list = (this.persons || []).filter(p => p && (p.id || p.name));
                         this.hasSelectedPersons = list.length > 0;
                         this.joinedPersonNames = list.map(p => p.name).join(', ');
+                    },
+                    syncPersonalFieldsToForm() {
+                        if (!this.$refs.leadForm) return;
+                        const firstPerson = (this.persons && this.persons[0]) || {};
+                        const fields = {
+                            first_name: this.formData.first_name || firstPerson.first_name || '',
+                            last_name: this.formData.last_name || firstPerson.last_name || '',
+                            lastname_prefix: this.formData.lastname_prefix || firstPerson.lastname_prefix || ''
+                        };
+                        Object.keys(fields).forEach(name => {
+                            const input = this.$refs.leadForm.querySelector(`[name="${name}"]`);
+                            if (input) {
+                                input.value = fields[name] || '';
+                                input.dispatchEvent(new Event('input', { bubbles: true }));
+                                input.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        });
                     },
 
 

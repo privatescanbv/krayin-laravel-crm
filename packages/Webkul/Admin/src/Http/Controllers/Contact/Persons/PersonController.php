@@ -171,13 +171,14 @@ class PersonController extends Controller
     {
         $person = $this->personRepository->with(['address', 'organization'])->findOrFail($id);
 
-        // Load leads with stage and sort: newest first, won/lost to bottom
-        $person->load(['leads' => function($query) {
-            $query->with('stage');
-        }]);
+        // Fetch and sort leads: newest first, won/lost to bottom
+        try {
+            $leadIds = \DB::table('lead_persons')->where('person_id', $person->id)->pluck('lead_id');
+            $leads = $leadIds->isEmpty()
+                ? collect()
+                : \Webkul\Lead\Models\Lead::with('stage')->whereIn('id', $leadIds)->get();
 
-        if ($person->relationLoaded('leads')) {
-            $sortedLeads = $person->leads
+            $sortedLeads = $leads
                 ->sortBy(function($lead) {
                     $wonLostCodes = ['won', 'lost', 'won-hernia', 'lost-hernia'];
                     $isWonLost = $lead->stage && in_array($lead->stage->code, $wonLostCodes, true) ? 1 : 0;
@@ -185,8 +186,9 @@ class PersonController extends Controller
                     return [$isWonLost, -$updatedTs];
                 })
                 ->values();
-
-            $person->setRelation('leads', $sortedLeads);
+        } catch (\Exception $e) {
+            \Log::warning('Could not load/sort leads for person', ['person_id' => $person->id, 'error' => $e->getMessage()]);
+            $sortedLeads = collect();
         }
 
         // Load anamnesis sorted by newest first
@@ -201,6 +203,7 @@ class PersonController extends Controller
         return view('admin::contacts.persons.view', [
             'person'          => $person,
             'duplicateCount'  => $duplicateCount,
+            'sortedLeads'     => $sortedLeads,
         ]);
     }
 

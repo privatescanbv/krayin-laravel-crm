@@ -127,7 +127,7 @@
 
             <!-- Gekoppelde Leads -->
             <div class="border-b border-gray-200 dark:border-gray-800">
-                <x-admin::leads :leads="$person->leads" />
+                <x-admin::leads :leads="$sortedLeads ?? $person->leads" />
             </div>
 
             <!-- Footer with creation and modification dates -->

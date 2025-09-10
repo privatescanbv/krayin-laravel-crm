@@ -207,6 +207,17 @@ TABLE(Activity, "activity") {
   FOREIGN_KEY(lead_id): bigint
 }
 
+TABLE(CallStatus, "call_status") {
+  PRIMARY_KEY(id): bigint
+  FOREIGN_KEY(activity_id): bigint
+  status: enum // (CallStatus: "not_reachable", "voicemail_left", "spoken")
+  omschrijving: text
+  created_at: datetime
+  updated_at: datetime
+  created_by: bigint
+  updated_by: bigint
+}
+
 TABLE(Anamnesis, "anamnesis") {
   PRIMARY_KEY(id): char(36)
   name: varchar(255)
@@ -290,6 +301,7 @@ User "1" -- "n" Lead
 User "1" -- "n" Quote
 User "1" -- "n" WorkflowLead
 User "1" -- "n" Activity
+User "1" -- "n" CallStatus
 User "n" -- "0..1" Group
 User "n" -- "1" Role
 
@@ -304,6 +316,7 @@ Stage "1" -- "n" Activity
 
 Lead "1" -- "n" Quote
 Lead "0..1" -- "n" Activity
+Activity "1" -- "n" CallStatus
 Lead "n" -- "n" Person : "lead_persons"
 Lead "1" -- "0..1" Organization
 Lead "1" -- "0..1" Address

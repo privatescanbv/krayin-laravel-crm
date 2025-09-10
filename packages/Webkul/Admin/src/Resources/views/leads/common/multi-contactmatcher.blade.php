@@ -30,8 +30,6 @@
     <v-multi-contact-matcher
         :lead='@json($lead ?? new stdClass())'
         :existing-persons='@json($persons ?? [])'
-        @persons-updated="(updated) => { if (window.leadFormComponent) { window.leadFormComponent.persons = updated; window.leadFormComponent.updateFormDataFromPersons(); } }"
-        @person-added="(p) => { if (window.leadFormComponent) { if (!Array.isArray(window.leadFormComponent.persons)) { window.leadFormComponent.persons = []; } window.leadFormComponent.persons.push(p); window.leadFormComponent.updateFormDataFromPersons(); } }"
     ></v-multi-contact-matcher>
 </div>
 
@@ -321,12 +319,10 @@
                         this.search = '';
                         this.suggestions = [];
                         
-                        // Emit event for parent components to listen to
-                        this.$emit('person-added', enriched);
-                        this.$emit('persons-updated', this.selectedPersons);
-                        
-                        // Also call the lead form component directly if available
-                        if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
+                        // Notify parent safely
+                        if (typeof window.handlePersonsUpdated === 'function') {
+                            window.handlePersonsUpdated(this.selectedPersons);
+                        } else if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
                             window.leadFormComponent.persons = this.selectedPersons;
                             window.leadFormComponent.updateFormDataFromPersons();
                         }

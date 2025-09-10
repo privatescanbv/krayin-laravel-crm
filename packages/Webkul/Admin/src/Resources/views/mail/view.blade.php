@@ -1190,6 +1190,53 @@
                         :tag-text-color="tagTextColor"
                     ></v-lead-lookup>
                 @endif
+
+                <!-- Activity Link -->
+                @if ($email->activities && $email->activities->count() > 0)
+                    <label class="font-semibold text-gray-800 dark:text-gray-300">
+                        Gekoppelde Activiteiten
+                    </label>
+                    
+                    <div class="flex flex-col gap-2">
+                        @foreach ($email->activities as $activity)
+                            <div class="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                                        @switch($activity->type)
+                                            @case('call')
+                                                <span class="icon-call text-sm"></span>
+                                                @break
+                                            @case('meeting')
+                                                <span class="icon-activity text-sm"></span>
+                                                @break
+                                            @case('task')
+                                                <span class="icon-activity text-sm"></span>
+                                                @break
+                                            @default
+                                                <span class="icon-activity text-sm"></span>
+                                        @endswitch
+                                    </div>
+                                    <div>
+                                        <div class="font-medium text-gray-900 dark:text-gray-100">
+                                            {{ $activity->title }}
+                                        </div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                                            {{ ucfirst($activity->type) }} - {{ $activity->created_at->format('d-m-Y H:i') }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <a
+                                    href="{{ route('admin.activities.edit', $activity->id) }}"
+                                    target="_blank"
+                                    class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                                    title="Activiteit bekijken"
+                                >
+                                    <span class="icon-right-arrow text-sm"></span>
+                                </a>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
 
             <!-- Create Contact Modal -->

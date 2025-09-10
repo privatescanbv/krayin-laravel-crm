@@ -1,4 +1,4 @@
-@php use App\Models\Department;use Webkul\Lead\Models\Channel;use Webkul\Lead\Models\Source;use Webkul\Lead\Models\Type; @endphp
+@php use App\Models\Department; @endphp
 <x-admin::layouts>
     <x-slot:title>
         @lang('admin::app.leads.create.title')
@@ -297,8 +297,6 @@
                                         'entity' => null,
                                         'defaults' => [
                                             'department_id' => $defaultDepartmentId ?? '',
-                                            'lead_pipeline_id' => $defaultPipelineId ?? '',
-                                            'lead_pipeline_stage_id' => $defaultStageId ?? '',
                                             'combine_order' => 1,
                                             'lead_channel_id' => '1',
                                             'lead_source_id' => 32,

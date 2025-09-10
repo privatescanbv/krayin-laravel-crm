@@ -154,6 +154,9 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
             'reference_ids' => $references,
             'created_at'    => $this->convertToDesiredTimezone($message->date->toDate()),
             'parent_id'     => $parentEmail?->id,
+            'activity_id'   => $parentEmail?->activity_id, // Inherit activity_id from parent email
+            'lead_id'       => $parentEmail?->lead_id,     // Inherit lead_id from parent email
+            'person_id'     => $parentEmail?->person_id,   // Inherit person_id from parent email
         ]);
 
         if ($message->hasAttachments()) {

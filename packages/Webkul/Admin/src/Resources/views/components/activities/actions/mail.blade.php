@@ -8,6 +8,7 @@
     {!! view_render_event('admin.components.activities.actions.mail.create_btn.before') !!}
 
     <button
+        type="button"
         class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-green-200 font-medium text-green-900 transition-all hover:border-green-400"
         @click="$refs.mailActionComponent.openModal('mail')"
     >
@@ -25,6 +26,7 @@
         ref="mailActionComponent"
         :entity="{{ json_encode($entity) }}"
         entity-control-name="{{ $entityControlName }}"
+        :activity-id="{{ isset($activity) ? (int) $activity->id : 'null' }}"
     ></v-mail-activity>
 
     {!! view_render_event('admin.components.activities.actions.mail.after') !!}
@@ -238,6 +240,12 @@
                     type: String,
                     required: true,
                     default: ''
+                },
+
+                activityId: {
+                    type: [Number, null],
+                    required: false,
+                    default: null,
                 }
             },
 
@@ -251,9 +259,44 @@
                 }
             },
 
+            mounted() {
+                // Listen for email dialog events from call status
+                window.addEventListener('open-email-dialog', (event) => {
+                    this.openModalWithEmail(event.detail.defaultEmail, event.detail.activityId);
+                });
+            },
+
             methods: {
                 openModal(type) {
                     this.$refs.mailActivityModal.open();
+                },
+
+                openModalWithEmail(defaultEmail, activityId) {
+                    this.$refs.mailActivityModal.open();
+                    
+                    // Pre-fill the email field
+                    setTimeout(() => {
+                        const emailField = this.$refs.mailActionForm.querySelector('[name="reply_to"]');
+                        if (emailField && defaultEmail) {
+                            // Set the email value
+                            emailField.value = defaultEmail;
+                            // Trigger change event to update any tags input
+                            emailField.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+
+                        // Inject activity_id hidden input if provided
+                        const formEl = this.$refs.mailActionForm;
+                        if (formEl && (activityId || this.activityId)) {
+                            let hidden = formEl.querySelector('input[name="activity_id"]');
+                            if (!hidden) {
+                                hidden = document.createElement('input');
+                                hidden.type = 'hidden';
+                                hidden.name = 'activity_id';
+                                formEl.appendChild(hidden);
+                            }
+                            hidden.value = activityId || this.activityId;
+                        }
+                    }, 100);
                 },
 
                 save(params, { resetForm, setErrors  }) {

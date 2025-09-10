@@ -147,6 +147,15 @@ Alle communicatie met patiënten zal voortaan uitsluitend via het CRM verlopen. 
 
 Medewerkers dienen *geen e-mails met patiënten meer te versturen via Outlook*. E-mails die buiten het CRM worden verstuurd, zijn niet zichtbaar in het systeem en kunnen daardoor niet worden meegenomen in het dossier of in workflow-automatisering. Dit kan technisch niet worden afgedwongen, maar het is van belang dat medewerkers dit actief naleven.
 
+==== E-mail koppeling aan activiteiten
+
+Activiteiten kunnen nu direct gekoppeld worden aan e-mails, vergelijkbaar met hoe e-mails gekoppeld zijn aan leads. Dit biedt de volgende functionaliteiten:
+
+* *E-mail kolom in activiteiten overzicht*: Alle activiteitstypen tonen een kolom "Gekoppelde E-Mail" waarin wordt aangegeven of er een e-mail gekoppeld is aan de activiteit
+* *E-mail link in activiteiten tijdlijn*: In de lead view wordt bij activiteiten met een gekoppelde e-mail een link getoond om de e-mail te bekijken
+* *Automatische e-mail dialoog bij belstatus*: Bij het toevoegen van een belstatus kan een checkbox "E-Mail versturen?" worden aangevinkt, waarna automatisch een e-mail dialoog wordt geopend met het standaard e-mailadres van de lead of gekoppelde persoon
+* *E-mail prioritering*: Het systeem zoekt eerst naar e-mailadressen van gekoppelde personen, en valt terug op het e-mailadres van de lead zelf indien geen persoon gekoppeld is
+
 ==== Randvoorwaarden voor e-mail via het CRM
 
 Om e-mail via het CRM een volwaardig alternatief te maken voor Outlook, worden de volgende eisen gesteld:

@@ -212,6 +212,31 @@ TABLE(Activity, "activity") {
   FOREIGN_KEY(user_id): bigint
   FOREIGN_KEY(group_id): bigint
   FOREIGN_KEY(lead_id): bigint
+  FOREIGN_KEY(email_id): bigint
+}
+
+TABLE(Email, "email") {
+  PRIMARY_KEY(id): bigint
+  subject: string
+  source: string
+  name: string
+  user_type: string
+  is_read: boolean
+  folders: json
+  from: json
+  sender: json
+  reply_to: json
+  cc: json
+  bcc: json
+  unique_id: string
+  message_id: string
+  reference_ids: json
+  reply: text
+  FOREIGN_KEY(person_id): bigint
+  FOREIGN_KEY(parent_id): bigint
+  FOREIGN_KEY(lead_id): bigint
+  created_at: datetime
+  updated_at: datetime
 }
 
 TABLE(CallStatus, "call_status") {
@@ -336,6 +361,7 @@ Quote "1" -- "n" QuoteItem
 Activity "1" --> "1" User
 Activity "0..1" --> "1" Group
 Activity "0..1" --> "1" Lead
+Activity "1" -- "0..*" Email
 
 WorkflowLead "1" -- "n" Activity
 WorkflowLead "0..1" -- "1" Quote
@@ -365,6 +391,11 @@ Lead "1" -- "1" LeadType
 Lead "1" -- "1" LeadChannel
 Lead "1" -- "1" Department
 
+Email "1" --> "1" Person
+Email "0..1" --> "1" Email : "parent"
+Email "0..1" --> "1" Lead
+Email "0..1" --> "1" Activity
+
 note right of Pipeline
   Verkoopfunnel met geordende fasen voor lead.
   Initiële records:
@@ -391,7 +422,7 @@ end note
 
 note right of Activity
   Telefoongesprek | Taak of geautomatiseerde stap in een WorkflowLead, optioneel toegewezen aan een gebruiker of groep.
-  Kan nu direct gekoppeld zijn aan een lead.
+  Kan nu direct gekoppeld zijn aan een lead en meerdere e-mails.
 end note
 
 note right of Person
@@ -416,6 +447,12 @@ end note
 note right of Anamnesis
   Medische geschiedenis gerelateerd aan een lead of persoon, gekoppeld aan een gebruiker. (anamnese)
   Uitgebreide medische velden toegevoegd.
+end note
+
+note right of Email
+  E-mail communicatie gekoppeld aan leads, personen en activiteiten.
+  Ondersteunt e-mail threads via parent_id relatie.
+  Kan gekoppeld zijn aan nul of één activiteit (0..1).
 end note
 
 note as N1

@@ -28,6 +28,36 @@ class ActivityResource extends JsonResource
             'user'            => $this->user ? new UserResource($this->user) : null,
             'user_id'         => $this->user_id ?? null,
             'lead_id'         => $this->lead_id ?? null,
+            // Emails: support both Eloquent models (relationLoaded) and stdClass/arrays used for email-activities
+            'emails'          => (function () {
+                try {
+                    // If this is an Eloquent model and relation is loaded
+                    if ($this->resource instanceof \Illuminate\Database\Eloquent\Model && $this->relationLoaded('emails')) {
+                        return $this->emails->map(function ($email) {
+                            return [
+                                'id' => $email->id,
+                                'subject' => $email->subject,
+                                'created_at' => $email->created_at,
+                            ];
+                        });
+                    }
+                } catch (\Throwable $e) {
+                    // Fallback handled below
+                }
+
+                // If emails are present as a plain property/array
+                if (is_object($this->resource) && isset($this->resource->emails) && is_iterable($this->resource->emails)) {
+                    return collect($this->resource->emails)->map(function ($email) {
+                        return [
+                            'id' => is_object($email) ? ($email->id ?? null) : ($email['id'] ?? null),
+                            'subject' => is_object($email) ? ($email->subject ?? null) : ($email['subject'] ?? null),
+                            'created_at' => is_object($email) ? ($email->created_at ?? null) : ($email['created_at'] ?? null),
+                        ];
+                    });
+                }
+
+                return [];
+            })(),
             'files'           => is_array($this->files) ? $this->files : ActivityFileResource::collection($this->files),
             'location'        => $this->location,
             'created_at'      => $this->created_at,

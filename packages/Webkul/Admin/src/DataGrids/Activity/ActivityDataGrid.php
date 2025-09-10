@@ -364,6 +364,34 @@ class ActivityDataGrid extends DataGrid
             'sortable'   => false,
             'visibility' => false,
         ]);
+
+        $this->addColumn([
+            'index'      => 'email_id',
+            'label'      => 'Gekoppelde E-Mail',
+            'type'       => 'string',
+            'sortable'   => true,
+            'searchable' => false,
+            'filterable' => true,
+            'width'      => '150px',
+            'closure'    => function ($row) {
+                if (!$row->email_id) {
+                    return '<span class="text-gray-500">Geen</span>';
+                }
+
+                try {
+                    $email = \Webkul\Email\Models\Email::find($row->email_id);
+                    if ($email) {
+                        $route = route('admin.mail.view', ['route' => 'inbox', 'id' => $email->id]);
+                        $subject = $email->subject ?: 'Geen onderwerp';
+                        return "<a class='text-brandColor hover:underline' href='{$route}' target='_blank' title='{$subject}'>E-Mail</a>";
+                    }
+                } catch (Throwable $e) {
+                    // Log error but don't break the page
+                }
+
+                return '<span class="text-gray-500">Onbekend</span>';
+            },
+        ]);
     }
 
     /**

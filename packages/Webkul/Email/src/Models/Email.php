@@ -65,6 +65,7 @@ class Email extends Model implements EmailContract
         'person_id',
         'parent_id',
         'lead_id',
+        'activity_id',
         'created_at',
         'updated_at',
     ];
@@ -115,6 +116,14 @@ class Email extends Model implements EmailContract
     public function attachments()
     {
         return $this->hasMany(AttachmentProxy::modelClass(), 'email_id');
+    }
+
+    /**
+     * Get the activity associated with this email.
+     */
+    public function activity()
+    {
+        return $this->belongsTo(\Webkul\Activity\Models\Activity::class, 'activity_id');
     }
 
     /**

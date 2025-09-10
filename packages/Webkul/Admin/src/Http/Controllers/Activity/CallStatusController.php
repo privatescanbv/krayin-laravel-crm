@@ -28,6 +28,7 @@ class CallStatusController extends Controller
             'status' => 'required|in:' . implode(',', array_map(fn($c) => $c->value, CallStatusEnum::cases())),
             'omschrijving' => 'nullable|string',
             'reschedule_days' => 'nullable|integer|min:1|max:20',
+            'send_email' => 'nullable|boolean',
         ]);
 
         // Backend defaults: spoken => no move; others => 7 days if empty
@@ -74,10 +75,53 @@ class CallStatusController extends Controller
             }
         }
 
-        return response()->json([
+        $response = [
             'message' => 'Call status toegevoegd' . (!empty($validated['reschedule_days']) ? ' en taak verplaatst' : ''),
             'data' => $callStatus,
-        ]);
+        ];
+
+        // If email should be sent, return additional data for frontend to handle
+        if (!empty($validated['send_email'])) {
+            // Fetch activity; rely on lazy-loading with null checks in helper to avoid BelongsToMany on missing lead
+            $activity = Activity::findOrFail($activityId);
+            $defaultEmail = $this->getDefaultEmailForActivity($activity);
+            
+            $response['send_email'] = true;
+            $response['default_email'] = $defaultEmail;
+            $response['activity_id'] = $activityId;
+        }
+
+        return response()->json($response);
+    }
+
+    /**
+     * Get the default email address for an activity.
+     * First tries to get email from associated persons, then from the lead itself.
+     */
+    private function getDefaultEmailForActivity(Activity $activity): ?string
+    {
+        // First try to get email from associated persons
+        if ($activity->lead && $activity->lead->persons && $activity->lead->persons->isNotEmpty()) {
+            foreach ($activity->lead->persons as $person) {
+                if (!empty($person->emails)) {
+                    // Find default email or first email
+                    foreach ($person->emails as $email) {
+                        if (isset($email['is_default']) && ($email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1')) {
+                            return $email['value'] ?? null;
+                        }
+                    }
+                    // If no default found, return first email
+                    return $person->emails[0]['value'] ?? null;
+                }
+            }
+        }
+
+        // If no person email found, try lead's email
+        if ($activity->lead) {
+            return $activity->lead->findDefaultEmail();
+        }
+
+        return null;
     }
 }
 

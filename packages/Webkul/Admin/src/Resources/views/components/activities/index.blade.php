@@ -162,6 +162,41 @@
                                             </div>
                                         </template>
 
+                                        <!-- Email summary/details -->
+                                        <template v-if="activity.emails && activity.emails.length > 0">
+                                            <div class="mt-1 text-sm">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="px-2 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300">
+                                                        <span class="icon-mail text-xs mr-1"></span>
+                                                        @{{ activity.emails.length }} @{{ activity.emails.length === 1 ? 'e-mail' : 'e-mails' }}
+                                                    </span>
+                                                    <button type="button" class="text-blue-600 hover:underline" @click="activity.__showEmailDetails = !activity.__showEmailDetails">@{{ activity.__showEmailDetails ? 'Verberg' : 'Details' }}</button>
+                                                </div>
+                                                <div v-if="activity.__showEmailDetails && activity.emails?.length" class="mt-2 border rounded p-2 dark:border-gray-800">
+                                                    <div v-for="email in activity.emails" :key="email.id" class="text-xs py-1 border-b last:border-b-0 dark:border-gray-800">
+                                                        <div class="flex justify-between items-center">
+                                                            <div class="flex items-center gap-2">
+                                                                <span class="icon-mail text-blue-600 text-xs"></span>
+                                                                <span class="font-medium truncate max-w-[200px]" :title="email.subject || 'Geen onderwerp'">
+                                                                    @{{ email.subject || 'Geen onderwerp' }}
+                                                                </span>
+                                                            </div>
+                                                            <span>@{{ $admin.formatDate(email.created_at, 'd MMM yyyy, h:mm', timezone) }}</span>
+                                                        </div>
+                                                        <div class="flex items-center gap-2 mt-1">
+                                                            <a
+                                                                :href="`{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceID']) }}`.replace('replaceID', email.id)"
+                                                                class="text-blue-600 hover:underline text-xs"
+                                                                target="_blank"
+                                                            >
+                                                                E-mail bekijken
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+
                                         {!! view_render_event('admin.components.activities.content.activity.item.description.after') !!}
 
                                         {!! view_render_event('admin.components.activities.content.activity.item.attachments.before') !!}
@@ -187,6 +222,27 @@
                                                     @{{ file.name }}
                                                 </span>
                                             </a>
+                                        </div>
+
+                                        <!-- Linked Emails -->
+                                        <div
+                                            class="flex flex-col gap-1 mt-2"
+                                            v-if="activity.emails && activity.emails.length > 0"
+                                        >
+                                            <div
+                                                class="flex items-center gap-2"
+                                                v-for="email in activity.emails"
+                                                :key="email.id"
+                                            >
+                                                <span class="icon-mail text-green-600"></span>
+                                                <a
+                                                    :href="`{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceID']) }}`.replace('replaceID', email.id)"
+                                                    class="text-sm text-green-600 hover:underline"
+                                                    target="_blank"
+                                                >
+                                                    @{{ email.subject || 'E-Mail bekijken' }}
+                                                </a>
+                                            </div>
                                         </div>
 
                                         {!! view_render_event('admin.components.activities.content.activity.item.attachments.after') !!}

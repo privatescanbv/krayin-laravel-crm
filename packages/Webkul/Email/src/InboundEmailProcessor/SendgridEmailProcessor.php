@@ -113,6 +113,9 @@ class SendgridEmailProcessor implements InboundEmailProcessor
             $email = $this->emailRepository->create(array_merge($headers, [
                 'reply'         => $this->htmlFilter->process($reply, ''),
                 'parent_id'     => $parentEmail->id,
+                'activity_id'   => $parentEmail->activity_id, // Inherit activity_id from parent email
+                'lead_id'       => $parentEmail->lead_id,     // Inherit lead_id from parent email
+                'person_id'     => $parentEmail->person_id,   // Inherit person_id from parent email
                 'user_type'     => 'person',
             ]));
 

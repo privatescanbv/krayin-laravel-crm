@@ -75,7 +75,7 @@
                                     ::name="`person_ids[${index}]`"
                                     :label="'Naam'"
                                     placeholder="Zoek persoon..."
-                                    v-on:on-selected="(selectedPerson) => updatePerson(index, selectedPerson)"
+                                    v-on:on-selected="onLookupSelected(index, $event)"
                                     :can-add-new="true"
                                 />
                             </div>
@@ -419,6 +419,9 @@
                 },
 
                 methods: {
+                    onLookupSelected(index, selectedPerson) {
+                        this.updatePerson(index, selectedPerson);
+                    },
                     goToStep(step) {
                         this.currentStep = step;
 

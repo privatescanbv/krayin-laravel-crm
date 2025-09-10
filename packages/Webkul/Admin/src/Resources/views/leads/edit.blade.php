@@ -163,18 +163,6 @@
                                         :entity="$lead"
                                     />
                                 </div>
-
-                                <div class="w-full">
-                                    <x-admin::attributes
-                                        :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                            ['code', 'IN', ['user_id']],
-                                            'entity_type' => 'leads',
-                                            'quick_add'   => 1
-                                        ])"
-                                        :custom-validations="[]"
-                                        :entity="$lead"
-                                    />
-                                </div>
                             </div>
 
                             {!! view_render_event('admin.leads.edit.lead_details.attributes.after', ['lead' => $lead]) !!}

@@ -308,14 +308,7 @@
                                     <!-- Other attributes -->
                                     <div class="flex gap-4 max-sm:flex-wrap">
                                         <div class="w-full">
-                                            <x-admin::attributes
-                                                :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                                    ['code', 'IN', ['user_id']],
-                                                    'entity_type' => 'leads',
-                                                    'quick_add'   => 1
-                                                ])"
-                                                :custom-validations="[]"
-                                            />
+                                            <!-- Additional quick add lead attrs can be added here if needed -->
                                         </div>
                                     </div>
 

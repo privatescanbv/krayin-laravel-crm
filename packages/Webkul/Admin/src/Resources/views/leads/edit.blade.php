@@ -257,7 +257,7 @@
                                         type="select"
                                         name="mri_status"
                                         value="{{ $current }}"
-                                        :label="MRI"
+                                        :label="'MRI'"
                                     >
                                         <option value="">{{ __('Selecteer MRI status') }}</option>
 

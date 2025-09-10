@@ -19,9 +19,27 @@
                         :entity="$activity"
                     />
 
-                    <!-- Page Title -->
-                    <div class="text-xl font-bold dark:text-gray-300">
+                    <!-- Page Title + Status Badge -->
+                    <div class="text-xl font-bold dark:text-gray-300 flex items-center gap-2">
                         @lang('admin::app.activities.edit.title')
+
+                        @php
+                            $status = is_string($activity->status) ? $activity->status : ($activity->status?->value ?? 'new');
+                            $statusLabels = [
+                                'in_progress' => 'In behandeling',
+                                'new' => 'Nieuw',
+                                'on_hold' => 'On hold',
+                            ];
+                            $statusClasses = [
+                                'in_progress' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
+                                'new' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+                                'on_hold' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+                            ];
+                        @endphp
+
+                        <span class="ml-2 px-2 py-1 text-xs font-medium rounded-full {{ $statusClasses[$status] ?? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300' }}">
+                            {{ $statusLabels[$status] ?? $status }}
+                        </span>
                     </div>
                 </div>
 

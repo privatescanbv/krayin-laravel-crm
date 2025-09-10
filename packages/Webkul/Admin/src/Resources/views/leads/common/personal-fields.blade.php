@@ -21,7 +21,7 @@
                 type="select"
                 name="salutation"
                 value="{{ $current }}"
-                :label="trans('Aanhef')"
+                label="{{ __('Aanhef') }}"
             >
                 <option value="">{{ __('Selecteer aanhef') }}</option>
 
@@ -46,7 +46,7 @@
                 type="text"
                 name="initials"
                 @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.initials" @else :value="$entity->initials ?? ''" @endif
-                :label="trans('Initialen')"
+                label="{{ __('Initialen') }}"
                 placeholder="J.A."
             />
 
@@ -63,7 +63,7 @@
                 type="text"
                 name="first_name"
                 @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.first_name" @else :value="$entity->first_name ?? ''" @endif
-                :label="trans('Voornaam')"
+                label="{{ __('Voornaam') }}"
                 placeholder="Voornaam"
                 rules="required"
             />
@@ -84,7 +84,7 @@
                 type="text"
                 name="lastname_prefix"
                 @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.lastname_prefix" @else :value="$entity->lastname_prefix ?? ''" @endif
-                :label="trans('Tussenvoegsel')"
+                label="{{ __('Tussenvoegsel') }}"
                 placeholder="van, de, den, etc."
                 class="w-24"
             />
@@ -102,7 +102,7 @@
                 type="text"
                 name="last_name"
                 @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.last_name" @else :value="$entity->last_name ?? ''" @endif
-                :label="trans('admin::app.leads.merge.field-last-name-birth')"
+                label="@lang('admin::app.leads.merge.field-last-name-birth')"
                 placeholder="@lang('admin::app.leads.merge.field-last-name-birth')"
                 rules="required"
             />
@@ -124,7 +124,7 @@
                 type="text"
                 name="married_name_prefix"
                 @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.married_name_prefix" @else :value="$entity->married_name_prefix ?? ''" @endif
-                :label="trans('Married name prefix')"
+                label="{{ __('Married name prefix') }}"
                 placeholder="van, de, den, etc."
                 class="w-24"
             />
@@ -142,7 +142,7 @@
                 type="text"
                 name="married_name"
                 @if(isset($bindModel) && $bindModel) v-model="{{ $bindModel }}.married_name" @else :value="$entity->married_name ?? ''" @endif
-                :label="trans('Married name')"
+                label="{{ __('Married name') }}"
             />
 
             <x-admin::form.control-group.error control-name="married_name"/>
@@ -160,7 +160,7 @@
             type="date"
             name="date_of_birth"
             :value="$entity && $entity->date_of_birth ? $entity->date_of_birth->format('Y-m-d') : ''"
-            :label="trans('Geboortedatum')"
+            label="{{ __('Geboortedatum') }}"
         />
 
         <x-admin::form.control-group.error control-name="date_of_birth"/>
@@ -182,7 +182,7 @@
             type="select"
             name="gender"
             value="{{ $currentGender }}"
-            :label="trans('Geslacht')"
+            label="{{ __('Geslacht') }}"
         >
             <option value="">{{ __('Selecteer geslacht') }}</option>
 

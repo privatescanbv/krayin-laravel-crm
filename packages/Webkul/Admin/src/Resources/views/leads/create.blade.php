@@ -204,7 +204,7 @@
 
                         <!-- Multi Contact Matcher (based on original contactmatcher) -->
                         <div>
-                            @include('admin::leads.common.multi-contactmatcher', ['lead' => (object)['id' => null], 'persons' => []])
+                            @include('admin::leads.common.multi-contactmatcher', ['lead' => (object)['id' => null], 'persons' => ($prefilledPersons ?? [])])
                         </div>
 
                         <div class="flex justify-end pt-4">

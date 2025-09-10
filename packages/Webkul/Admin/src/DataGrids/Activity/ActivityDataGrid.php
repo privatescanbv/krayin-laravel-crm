@@ -123,11 +123,12 @@ class ActivityDataGrid extends DataGrid
         }
 
         // Default sorting: urgent tasks first, then newest
-        if (!request()->has('sort')) {
+        // Only skip when an actual sort column is provided (front-end may send empty sort object)
+        $requestedSort = request()->input('sort');
+        if (!is_array($requestedSort) || empty($requestedSort['column'])) {
             $queryBuilder->orderByRaw('
                 CASE WHEN days_until_deadline IS NULL THEN 1 ELSE 0 END,
-                days_until_deadline ASC,
-                activities.created_at DESC
+                days_until_deadline ASC
             ');
         }
 
@@ -170,6 +171,18 @@ class ActivityDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
+            'index'              => 'type',
+            'label'              => trans('admin::app.activities.index.datagrid.type'),
+            'type'               => 'string',
+            'searchable'         => false,
+            'filterable'         => true,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => $this->getActivityTypeDropdownOptions(),
+            'sortable'           => true,
+            'closure'            => fn ($row) => trans('admin::app.activities.edit.'.$row->type),
+        ]);
+
+        $this->addColumn([
             'index'              => 'assigned_user_id',
             'label'              => trans('admin::app.activities.index.datagrid.assigned_to'),
             'type'               => 'string',
@@ -188,26 +201,6 @@ class ActivityDataGrid extends DataGrid
                 $route = urldecode(route('admin.settings.users.index', ['id[eq]' => $row->assigned_user_id]));
 
                 return "<a class='text-brandColor hover:underline' href='".$route."'>".$row->created_by.'</a>';
-            },
-        ]);
-
-        $this->addColumn([
-            'index'              => 'group',
-            'label'              => trans('admin::app.activities.index.datagrid.group'),
-            'type'               => 'string',
-            'searchable'         => false,
-            'sortable'           => true,
-            'filterable'         => true,
-            'filterable_type'    => 'searchable_dropdown',
-            'filterable_options' => [
-                'repository' => GroupRepository::class,
-                'column'     => [
-                    'label' => 'name',
-                    'value' => 'name',
-                ],
-            ],
-            'closure' => function ($row) {
-                return $row->group_name ?? 'N/A';
             },
         ]);
 
@@ -281,17 +274,6 @@ class ActivityDataGrid extends DataGrid
             },
         ]);
 
-        $this->addColumn([
-            'index'              => 'type',
-            'label'              => trans('admin::app.activities.index.datagrid.type'),
-            'type'               => 'string',
-            'searchable'         => false,
-            'filterable'         => true,
-            'filterable_type'    => 'dropdown',
-            'filterable_options' => $this->getActivityTypeDropdownOptions(),
-            'sortable'           => true,
-            'closure'            => fn ($row) => trans('admin::app.activities.edit.'.$row->type),
-        ]);
 
         $this->addColumn([
             'index'              => 'status',
@@ -312,16 +294,6 @@ class ActivityDataGrid extends DataGrid
                 $status = $row->status === 'new' ? 'active' : ($row->status ?? 'active');
                 return $statusLabels[$status] ?? $status;
             },
-        ]);
-
-        $this->addColumn([
-            'index'      => 'created_at',
-            'label'      => trans('admin::app.activities.index.datagrid.created_at'),
-            'type'       => 'date',
-            'sortable'   => true,
-            'searchable' => true,
-            'filterable' => true,
-            'closure'    => fn ($row) => core()->formatDate($row->created_at, 'd M Y'),
         ]);
 
         $this->addColumn([

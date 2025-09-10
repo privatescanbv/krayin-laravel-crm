@@ -133,7 +133,7 @@
                     </x-admin::form.control-group>
 
                     <!-- Comment -->
-                    @if ($activity->type !== \App\Enums\ActivityType::CALL)
+                    @if ($activity->type !== \App\Enums\ActivityType::CALL || !empty($activity->comment))
                         <x-admin::form.control-group>
                             <x-admin::form.control-group.label>
                                 @lang('admin::app.activities.edit.comment')

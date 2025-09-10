@@ -163,6 +163,11 @@ class UserSeeder extends Seeder
                 'lead.lead_source_id'  => '6',
             ];
 
+            // Override for Mark Bulthuis
+            if ($user->email === 'mark.bulthuis@privatescan.nl') {
+                $defaultSettings['lead.department_id'] = '1';
+            }
+
             foreach ($defaultSettings as $key => $value) {
                 UserDefaultValue::updateOrCreate(
                     [

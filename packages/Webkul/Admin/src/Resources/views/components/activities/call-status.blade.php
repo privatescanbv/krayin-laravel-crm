@@ -62,7 +62,7 @@
                 <select name="reschedule_days" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
                     <option value="">Geen verplaatsing</option>
                     @for($i = 1; $i <= 20; $i++)
-                        <option value="{{ $i }}" {{ $i == 7 ? 'selected' : '' }}>{{ $i }} {{ $i == 1 ? 'dag' : 'dagen' }}</option>
+                        <option value="{{ $i }}">{{ $i }} {{ $i == 1 ? 'dag' : 'dagen' }}</option>
                     @endfor
                 </select>
                 <p class="text-xs text-gray-500 mt-1">Verplaats de taak met het geselecteerde aantal dagen</p>
@@ -81,6 +81,23 @@
         const url = '{{ route('admin.activities.call-statuses.store', $activity->id) }}';
         const csrfToken = '{{ csrf_token() }}';
         
+        // Initialize defaults on load and when status changes
+        const form = document.getElementById('call-status-form');
+        if (form) {
+            const statusEl = form.querySelector('[name="status"]');
+            const rescheduleEl = form.querySelector('[name="reschedule_days"]');
+            const applyDefaults = () => {
+                if (!statusEl || !rescheduleEl) return;
+                if (statusEl.value === 'spoken') {
+                    rescheduleEl.value = '';
+                } else if (!rescheduleEl.value) {
+                    rescheduleEl.value = '7';
+                }
+            };
+            applyDefaults();
+            statusEl?.addEventListener('change', applyDefaults);
+        }
+
         // Use event delegation to handle button clicks
         document.addEventListener('click', async function(e) {
             if (e.target && e.target.id === 'call-status-submit') {
@@ -103,7 +120,16 @@
 
                 const status = statusEl.value;
                 const omschrijving = omschrEl.value;
-                const rescheduleDays = rescheduleEl.value;
+                let rescheduleDays = rescheduleEl.value;
+
+                // Defaults: spoken => no move, others => 7 days
+                if (status === 'spoken') {
+                    rescheduleDays = '';
+                    rescheduleEl.value = '';
+                } else if (!rescheduleDays) {
+                    rescheduleDays = '7';
+                    rescheduleEl.value = '7';
+                }
 
                 if (!status) {
                     alert('Selecteer een status');

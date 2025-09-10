@@ -21,6 +21,7 @@ use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\MassUpdateRequest;
 use Webkul\Admin\Http\Resources\ActivityResource;
+use App\Services\ActivityStatusService;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\User\Repositories\GroupRepository;
@@ -152,6 +153,13 @@ class ActivityController extends Controller
             'is_done' => request('type') == 'note' ? 1 : 0,
         ]));
 
+        // Auto status sync after create
+        $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, $activity->status);
+        if ($computed->value !== ($activity->status?->value ?? null)) {
+            $activity->status = $computed;
+            $activity->save();
+        }
+
         Event::dispatch('activity.create.after', $activity);
 
         if (request()->ajax()) {
@@ -247,6 +255,13 @@ class ActivityController extends Controller
         }
 
         $activity = $this->activityRepository->update($data, $id);
+
+        // Auto status sync after update
+        $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, $activity->status);
+        if ($computed->value !== ($activity->status?->value ?? null)) {
+            $activity->status = $computed;
+            $activity->save();
+        }
 
         // Send webhook if activity is marked as done
         if (isset($data['is_done']) && $data['is_done']) {

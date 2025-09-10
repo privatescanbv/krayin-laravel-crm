@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('activities', function (Blueprint $table) {
-            $table->string('status')->default('new')->after('type');
+            $table->string('status')->default('active')->after('type');
         });
     }
 

@@ -60,6 +60,7 @@ class Activity extends Model implements ActivityContract
         'schedule_from',
         'schedule_to',
         'is_done',
+        'status',
         'user_id',
         'assigned_at',
         'group_id',

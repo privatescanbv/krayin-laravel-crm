@@ -19,27 +19,47 @@
                         :entity="$activity"
                     />
 
-                    <!-- Page Title + Status Badge -->
-                    <div class="text-xl font-bold dark:text-gray-300 flex items-center gap-2">
+                    <!-- Page Title + Inline Status Control -->
+                    <div class="text-xl font-bold dark:text-gray-300 flex items-center gap-3">
                         @lang('admin::app.activities.edit.title')
 
                         @php
-                            $status = is_string($activity->status) ? $activity->status : ($activity->status?->value ?? 'new');
+                            $status = is_string($activity->status) ? $activity->status : ($activity->status?->value ?? 'active');
                             $statusLabels = [
                                 'in_progress' => 'In behandeling',
-                                'new' => 'Nieuw',
+                                'active' => 'Actief',
                                 'on_hold' => 'On hold',
+                                'expired' => 'Verlopen',
                             ];
                             $statusClasses = [
                                 'in_progress' => 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300',
-                                'new' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
+                                'active' => 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300',
                                 'on_hold' => 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300',
+                                'expired' => 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300',
                             ];
                         @endphp
 
-                        <span class="ml-2 px-2 py-1 text-xs font-medium rounded-full {{ $statusClasses[$status] ?? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300' }}">
-                            {{ $statusLabels[$status] ?? $status }}
-                        </span>
+                        <x-admin::dropdown>
+                            <x-slot:toggle>
+                                <span class="cursor-pointer ml-1 px-2 py-1 text-xs font-medium rounded-full {{ $statusClasses[$status] ?? 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300' }}">
+                                    {{ $statusLabels[$status] ?? $status }}
+                                </span>
+                            </x-slot:toggle>
+
+                            <x-slot:menu>
+                                @foreach (['in_progress','active','on_hold','expired'] as $opt)
+                                    <x-admin::dropdown.menu.item @click="() => { document.getElementById('status-inline-form-value').value='{{ $opt }}'; document.getElementById('status-inline-form').submit(); }">
+                                        {{ $statusLabels[$opt] }}
+                                    </x-admin::dropdown.menu.item>
+                                @endforeach
+                            </x-slot:menu>
+                        </x-admin::dropdown>
+
+                        <form id="status-inline-form" method="POST" action="{{ route('admin.activities.update', $activity->id) }}" class="hidden">
+                            @csrf
+                            @method('PUT')
+                            <input type="hidden" name="status" id="status-inline-form-value" value="{{ $status }}" />
+                        </form>
                     </div>
                 </div>
 

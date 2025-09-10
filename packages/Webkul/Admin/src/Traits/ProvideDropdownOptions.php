@@ -237,13 +237,18 @@ trait ProvideDropdownOptions
                 'disabled' => false,
                 'selected' => false,
             ], [
-                'label'    => 'Nieuw',
-                'value'    => 'new',
+                'label'    => 'Actief',
+                'value'    => 'active',
                 'disabled' => false,
                 'selected' => false,
             ], [
                 'label'    => 'On hold',
                 'value'    => 'on_hold',
+                'disabled' => false,
+                'selected' => false,
+            ], [
+                'label'    => 'Verlopen',
+                'value'    => 'expired',
                 'disabled' => false,
                 'selected' => false,
             ],

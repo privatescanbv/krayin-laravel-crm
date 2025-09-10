@@ -305,10 +305,12 @@ class ActivityDataGrid extends DataGrid
             'closure'            => function ($row) {
                 $statusLabels = [
                     'in_progress' => '<span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900 dark:text-blue-300">In behandeling</span>',
-                    'new' => '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full dark:bg-green-900 dark:text-green-300">Nieuw</span>',
+                    'active' => '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full dark:bg-green-900 dark:text-green-300">Actief</span>',
                     'on_hold' => '<span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full dark:bg-yellow-900 dark:text-yellow-300">On hold</span>',
+                    'expired' => '<span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full dark:bg-red-900 dark:text-red-300">Verlopen</span>',
                 ];
-                return $statusLabels[$row->status] ?? $row->status;
+                $status = $row->status === 'new' ? 'active' : ($row->status ?? 'active');
+                return $statusLabels[$status] ?? $status;
             },
         ]);
 

@@ -454,6 +454,17 @@
                                 this.formData.last_name = this.formData.last_name || (parts.slice(1).join(' ') || '');
                             }
 
+                            // Also populate other personal fields if available and form fields are empty
+                            if (!this.formData.initials && firstPerson.initials) {
+                                this.formData.initials = firstPerson.initials;
+                            }
+                            if (!this.formData.married_name_prefix && firstPerson.married_name_prefix) {
+                                this.formData.married_name_prefix = firstPerson.married_name_prefix;
+                            }
+                            if (!this.formData.married_name && firstPerson.married_name) {
+                                this.formData.married_name = firstPerson.married_name;
+                            }
+
                             // Also populate email and phone if available and form fields are empty
                             if (!this.formData.email && firstPerson.emails && firstPerson.emails.length > 0) {
                                 this.formData.email = firstPerson.emails[0].value || '';

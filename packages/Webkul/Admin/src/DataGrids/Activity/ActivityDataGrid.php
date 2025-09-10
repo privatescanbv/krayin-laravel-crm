@@ -34,6 +34,7 @@ class ActivityDataGrid extends DataGrid
                 'persons.name as person_name',
                 'products.name as product_name',
                 'warehouses.name as warehouse_name',
+                'emails.subject as email_subject',
                 // Cross-DB days until deadline: use different SQL per driver
                 DB::raw((function () {
                     $driver = DB::connection()->getDriverName();
@@ -67,6 +68,7 @@ class ActivityDataGrid extends DataGrid
             ->leftJoin('leads', 'activities.lead_id', '=', 'leads.id')
             ->leftJoin('users', 'activities.user_id', '=', 'users.id')
             ->leftJoin('groups', 'activities.group_id', '=', 'groups.id')
+            ->leftJoin('emails', 'activities.email_id', '=', 'emails.id')
             // Joins to fetch display names for related entities
             ->leftJoin('person_activities', 'activities.id', '=', 'person_activities.activity_id')
             ->leftJoin('persons', 'person_activities.person_id', '=', 'persons.id')
@@ -90,7 +92,7 @@ class ActivityDataGrid extends DataGrid
                             });
                     }
                 });
-            })->groupBy('activities.id', 'leads.id', 'users.id', 'groups.id');
+            })->groupBy('activities.id', 'leads.id', 'users.id', 'groups.id', 'emails.id');
 
         // Apply view filters - use default view if none specified
         $viewService = app(ViewService::class);
@@ -339,6 +341,34 @@ class ActivityDataGrid extends DataGrid
                 } else {
                     return '<span class="text-green-600">' . $days . 'd</span>';
                 }
+            },
+        ]);
+
+        $this->addColumn([
+            'index'      => 'email_id',
+            'label'      => 'Gekoppelde E-Mail',
+            'type'       => 'string',
+            'sortable'   => true,
+            'searchable' => false,
+            'filterable' => true,
+            'width'      => '150px',
+            'closure'    => function ($row) {
+                if (!$row->email_id) {
+                    return '<span class="text-gray-500">Geen</span>';
+                }
+
+                try {
+                    $email = \Webkul\Email\Models\Email::find($row->email_id);
+                    if ($email) {
+                        $route = route('admin.mail.view', ['route' => 'inbox', 'id' => $email->id]);
+                        $subject = $email->subject ?: 'Geen onderwerp';
+                        return "<a class='text-brandColor hover:underline' href='{$route}' target='_blank' title='{$subject}'>E-Mail</a>";
+                    }
+                } catch (Throwable $e) {
+                    // Log error but don't break the page
+                }
+
+                return '<span class="text-gray-500">Onbekend</span>';
             },
         ]);
     }

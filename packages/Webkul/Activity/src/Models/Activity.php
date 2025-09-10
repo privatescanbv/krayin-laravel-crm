@@ -8,6 +8,7 @@ use App\Enums\ActivityType;
 use App\Enums\ActivityStatus;
 use App\Casts\ActivityStatusCast;
 use Webkul\Contact\Models\PersonProxy;
+use Webkul\Email\Models\EmailProxy;
 use Webkul\Lead\Models\LeadProxy;
 use Webkul\Product\Models\ProductProxy;
 use Webkul\User\Models\Group;
@@ -66,6 +67,7 @@ class Activity extends Model implements ActivityContract
         'assigned_at',
         'group_id',
         'lead_id',
+        'email_id',
         'external_id',
     ];
 
@@ -95,6 +97,14 @@ class Activity extends Model implements ActivityContract
     public function lead()
     {
         return $this->belongsTo(LeadProxy::modelClass());
+    }
+
+    /**
+     * Get the email associated with the activity.
+     */
+    public function email()
+    {
+        return $this->belongsTo(EmailProxy::modelClass());
     }
 
     /**

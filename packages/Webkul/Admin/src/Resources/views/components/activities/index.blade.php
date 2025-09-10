@@ -189,6 +189,21 @@
                                             </a>
                                         </div>
 
+                                        <!-- Linked Email -->
+                                        <div
+                                            class="flex items-center gap-2 mt-2"
+                                            v-if="activity.email_id"
+                                        >
+                                            <span class="icon-mail text-green-600"></span>
+                                            <a
+                                                :href="`{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceID']) }}`.replace('replaceID', activity.email_id)"
+                                                class="text-sm text-green-600 hover:underline"
+                                                target="_blank"
+                                            >
+                                                Gekoppelde E-Mail bekijken
+                                            </a>
+                                        </div>
+
                                         {!! view_render_event('admin.components.activities.content.activity.item.attachments.after') !!}
 
                                         {!! view_render_event('admin.components.activities.content.activity.item.time_and_user.before') !!}

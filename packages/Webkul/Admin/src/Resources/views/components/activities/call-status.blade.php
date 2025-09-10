@@ -74,6 +74,14 @@
                 <p class="text-xs text-gray-500 mt-1">Verplaats de taak met het geselecteerde aantal dagen</p>
             </div>
 
+            <div>
+                <label class="flex items-center">
+                    <input type="checkbox" name="send_email" value="1" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800">
+                    <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">E-Mail versturen?</span>
+                </label>
+                <p class="text-xs text-gray-500 mt-1">Na het toevoegen van de belstatus wordt een e-mail dialoog geopend</p>
+            </div>
+
             <button type="button" id="call-status-submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                 <i class="icon-plus mr-2"></i>Belstatus toevoegen
             </button>
@@ -134,6 +142,7 @@
                 const statusEl = form.querySelector('[name="status"]');
                 const omschrEl = form.querySelector('[name="omschrijving"]');
                 const rescheduleEl = form.querySelector('[name="reschedule_days"]');
+                const sendEmailEl = form.querySelector('[name="send_email"]');
                 if (!statusEl || !omschrEl || !rescheduleEl) {
                     alert('Form velden niet gevonden');
                     return;
@@ -142,6 +151,7 @@
                 const status = statusEl.value;
                 const omschrijving = omschrEl.value;
                 let rescheduleDays = rescheduleEl.value;
+                const sendEmail = sendEmailEl ? sendEmailEl.checked : false;
 
                 // Defaults: spoken => no move, others => 7 days
                 if (status === 'spoken') {
@@ -167,7 +177,7 @@
                             'Content-Type': 'application/json',
                         },
                         credentials: 'same-origin',
-                        body: JSON.stringify({ status, omschrijving, reschedule_days: rescheduleDays })
+                        body: JSON.stringify({ status, omschrijving, reschedule_days: rescheduleDays, send_email: sendEmail })
                     });
 
                     if (!res.ok) {
@@ -220,6 +230,17 @@
 
                     list.prepend(wrapper);
                     form.reset();
+
+                    // If email should be sent, trigger email dialog
+                    if (data.send_email && data.default_email) {
+                        // Trigger email dialog with default email
+                        window.dispatchEvent(new CustomEvent('open-email-dialog', {
+                            detail: {
+                                defaultEmail: data.default_email,
+                                activityId: data.activity_id
+                            }
+                        }));
+                    }
                 } catch (e) {
                     console.error('Call status error:', e);
                     alert(e.message);

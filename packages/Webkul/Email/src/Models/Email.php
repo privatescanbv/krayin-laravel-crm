@@ -118,6 +118,14 @@ class Email extends Model implements EmailContract
     }
 
     /**
+     * Get the activities associated with this email.
+     */
+    public function activities()
+    {
+        return $this->hasMany(\Webkul\Activity\Models\Activity::class, 'email_id');
+    }
+
+    /**
      * Get the time ago.
      */
     public function getTimeAgoAttribute(): string

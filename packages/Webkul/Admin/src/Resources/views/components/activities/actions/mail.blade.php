@@ -251,9 +251,31 @@
                 }
             },
 
+            mounted() {
+                // Listen for email dialog events from call status
+                window.addEventListener('open-email-dialog', (event) => {
+                    this.openModalWithEmail(event.detail.defaultEmail, event.detail.activityId);
+                });
+            },
+
             methods: {
                 openModal(type) {
                     this.$refs.mailActivityModal.open();
+                },
+
+                openModalWithEmail(defaultEmail, activityId) {
+                    this.$refs.mailActivityModal.open();
+                    
+                    // Pre-fill the email field
+                    setTimeout(() => {
+                        const emailField = this.$refs.mailActionForm.querySelector('[name="reply_to"]');
+                        if (emailField && defaultEmail) {
+                            // Set the email value
+                            emailField.value = defaultEmail;
+                            // Trigger change event to update any tags input
+                            emailField.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                    }, 100);
                 },
 
                 save(params, { resetForm, setErrors  }) {

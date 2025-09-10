@@ -187,7 +187,7 @@
                 <div class="relative">
                     <input
                         v-model="search"
-                        @input="onSearch"
+                        v-on:input="onSearch"
                         placeholder="Zoek op naam, e-mail, telefoon..."
                         class="input w-full mb-2"
                         autocomplete="off"

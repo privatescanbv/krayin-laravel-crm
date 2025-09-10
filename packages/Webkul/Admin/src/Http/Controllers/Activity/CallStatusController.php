@@ -83,11 +83,19 @@ class CallStatusController extends Controller
         // If email should be sent, return additional data for frontend to handle
         if (!empty($validated['send_email'])) {
             $activity = Activity::with('lead.persons')->find($activityId);
-            $defaultEmail = $this->getDefaultEmailForActivity($activity);
             
-            $response['send_email'] = true;
-            $response['default_email'] = $defaultEmail;
-            $response['activity_id'] = $activityId;
+            if ($activity) {
+                $defaultEmail = $this->getDefaultEmailForActivity($activity);
+                
+                $response['send_email'] = true;
+                $response['default_email'] = $defaultEmail;
+                $response['activity_id'] = $activityId;
+            } else {
+                // Activity not found, still allow email sending but without default email
+                $response['send_email'] = true;
+                $response['default_email'] = null;
+                $response['activity_id'] = $activityId;
+            }
         }
 
         return response()->json($response);
@@ -97,10 +105,14 @@ class CallStatusController extends Controller
      * Get the default email address for an activity.
      * First tries to get email from associated persons, then from the lead itself.
      */
-    private function getDefaultEmailForActivity(Activity $activity): ?string
+    private function getDefaultEmailForActivity(?Activity $activity): ?string
     {
+        if (!$activity) {
+            return null;
+        }
+
         // First try to get email from associated persons
-        if ($activity->lead && $activity->lead->persons->isNotEmpty()) {
+        if ($activity->lead && $activity->lead->persons && $activity->lead->persons->isNotEmpty()) {
             foreach ($activity->lead->persons as $person) {
                 if (!empty($person->emails)) {
                     // Find default email or first email

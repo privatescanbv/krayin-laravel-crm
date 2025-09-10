@@ -42,21 +42,15 @@
                             $options = ['in_progress','active','on_hold','expired'];
                         @endphp
 
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2" id="activity-status-buttons" data-update-url="{{ route('admin.activities.update', $activity->id) }}" data-csrf="{{ csrf_token() }}">
                             @foreach ($options as $opt)
                                 <button type="button"
-                                        class="{{ $baseClasses }} {{ $status === $opt ? ($activeMap[$opt] ?? '') : $inactiveClasses }}"
-                                        onclick="(function(){ var f=document.getElementById('status-inline-form'); if(!f){return;} document.getElementById('status-inline-form-value').value='{{ $opt }}'; f.submit(); })()">
+                                        data-status="{{ $opt }}"
+                                        class="status-btn {{ $baseClasses }} {{ $status === $opt ? ($activeMap[$opt] ?? '') : $inactiveClasses }}">
                                     {{ $statusLabels[$opt] }}
                                 </button>
                             @endforeach
                         </div>
-
-                        <form id="status-inline-form" method="POST" action="{{ route('admin.activities.update', $activity->id) }}" class="hidden">
-                            @csrf
-                            @method('PUT')
-                            <input type="hidden" name="status" id="status-inline-form-value" value="{{ $status }}" />
-                        </form>
                     </div>
                 </div>
 
@@ -380,6 +374,54 @@
                         }
                     });
                 }
+            });
+        </script>
+
+        <script>
+            // Inline status update without leaving the page
+            document.addEventListener('DOMContentLoaded', function() {
+                const container = document.getElementById('activity-status-buttons');
+                if (!container) return;
+
+                const url = container.getAttribute('data-update-url');
+                const csrf = container.getAttribute('data-csrf');
+
+                container.addEventListener('click', async function(e) {
+                    const btn = e.target.closest('button.status-btn');
+                    if (!btn) return;
+                    const status = btn.getAttribute('data-status');
+                    try {
+                        const res = await fetch(url, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': csrf,
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'Accept': 'application/json',
+                            },
+                            body: new URLSearchParams({ _method: 'PUT', status })
+                        });
+
+                        if (!res.ok) {
+                            throw new Error('Status bijwerken mislukt');
+                        }
+
+                        const inactive = 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700';
+                        const map = {
+                            in_progress: 'bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-800',
+                            active: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-800',
+                            on_hold: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-800',
+                            expired: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900 dark:text-red-300 dark:border-red-800',
+                        };
+
+                        container.querySelectorAll('button.status-btn').forEach(b => {
+                            b.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + inactive;
+                        });
+                        btn.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + (map[status] || '');
+                    } catch (err) {
+                        console.error(err);
+                        alert(err.message || 'Kon status niet bijwerken');
+                    }
+                });
             });
         </script>
     @endPushOnce

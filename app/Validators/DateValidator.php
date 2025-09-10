@@ -20,15 +20,21 @@ class DateValidator implements Rule
             return true; // Allow empty values
         }
 
-        // Check if the value matches the d-m-Y format
-        if (! preg_match('/^(0?[1-9]|[12]\d|3[01])-(0?[1-9]|1[0-2])-\d{4}$/', $value)) {
-            return false;
+        // Accept either NL (d-m-Y) or HTML date (Y-m-d) input
+        $isDutchFormat = preg_match('/^(0?[1-9]|[12]\d|3[01])-(0?[1-9]|1[0-2])-\d{4}$/', $value) === 1;
+        $isHtmlFormat  = preg_match('/^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/', $value) === 1;
+
+        if ($isDutchFormat) {
+            $date = DateTime::createFromFormat('d-m-Y', $value);
+            return $date && $date->format('d-m-Y') === $value;
         }
 
-        // Parse the date to check if it's a valid date
-        $date = DateTime::createFromFormat('d-m-Y', $value);
+        if ($isHtmlFormat) {
+            $date = DateTime::createFromFormat('Y-m-d', $value);
+            return $date && $date->format('Y-m-d') === $value;
+        }
 
-        return $date && $date->format('d-m-Y') === $value;
+        return false;
     }
 
     /**

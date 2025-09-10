@@ -240,7 +240,7 @@
                                 </p>
 
                                 <!-- Show selected persons info if available -->
-                                <div v-if="persons.length > 0 && persons.some(p => p.id || p.name)"
+                                <div v-if="hasSelectedPersons"
                                      class="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
                                     <div class="flex items-center gap-2">
                                         <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor"
@@ -249,9 +249,7 @@
                                                   d="M5 13l4 4L19 7"></path>
                                         </svg>
                                         <span class="font-medium text-green-800">Contactpersonen gekoppeld:</span>
-                                        <span class="text-green-700">
-                                            @{{ persons.filter(p => p.id || p.name).map(p => p.name).join(', ') }}
-                                        </span>
+                                        <span class="text-green-700">@{{ joinedPersonNames }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -388,7 +386,9 @@
                             married_name: this.initialLeadPerson?.married_name || '',
                             email: '',
                             phone: '',
-                        }
+                        },
+                        hasSelectedPersons: false,
+                        joinedPersonNames: ''
                     };
                 },
 
@@ -411,6 +411,7 @@
                         }
                         // Ensure we start on step 1 regardless of prefill
                         this.currentStep = 1;
+                        this.updateSelectedPersonsSummary();
                     } else {
                         // Initialize with one empty slot for ease of use
                         this.persons.push({ id: null, name: '', match_percentage: null, organization: null });
@@ -451,9 +452,17 @@
                             if (!this.formData.phone && firstPerson.phones && firstPerson.phones.length > 0) {
                                 this.formData.phone = firstPerson.phones[0].value || '';
                             }
+                            this.updateSelectedPersonsSummary();
                         } else {
                             // If no persons selected, keep the fields as they are to allow manual entry
+                            this.hasSelectedPersons = false;
+                            this.joinedPersonNames = '';
                         }
+                    },
+                    updateSelectedPersonsSummary() {
+                        const list = (this.persons || []).filter(p => p && (p.id || p.name));
+                        this.hasSelectedPersons = list.length > 0;
+                        this.joinedPersonNames = list.map(p => p.name).join(', ');
                     },
 
 

@@ -19,7 +19,7 @@
                         Contactpersonen (@{{ persons.length }})
                     </h3>
                     <button
-                        @click="addPerson"
+                        v-on:click="addPerson"
                         type="button"
                         class="secondary-button"
                     >
@@ -75,7 +75,7 @@
                                     ::name="`person_ids[${index}]`"
                                     :label="'Naam'"
                                     placeholder="Zoek persoon..."
-                                    @on-selected="(selectedPerson) => updatePerson(index, selectedPerson)"
+                                    v-on:on-selected="(selectedPerson) => updatePerson(index, selectedPerson)"
                                     :can-add-new="true"
                                 />
                             </div>
@@ -96,7 +96,7 @@
 
                             <!-- Remove Person -->
                             <button
-                                @click="removePerson(index)"
+                                v-on:click="removePerson(index)"
                                 type="button"
                                 class="text-red-600 hover:text-red-800 p-1"
                                 title="Verwijder persoon"
@@ -144,7 +144,7 @@
 
                     <div class="flex items-center gap-x-2.5" v-show="currentStep === 2">
                         <button
-                            @click="goToStep(1)"
+                            v-on:click="goToStep(1)"
                             type="button"
                             class="secondary-button"
                         >
@@ -152,7 +152,7 @@
                         </button>
 
                         <button
-                            @click="submitForm"
+                            v-on:click="submitForm"
                             type="button"
                             class="primary-button"
                             :disabled="isSubmitting"
@@ -209,7 +209,7 @@
 
                         <div class="flex justify-end pt-4">
                             <button
-                                @click="goToStep(2)"
+                                v-on:click="goToStep(2)"
                                 type="button"
                                 class="primary-button"
                             >

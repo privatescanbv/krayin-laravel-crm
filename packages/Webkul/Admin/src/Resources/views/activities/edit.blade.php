@@ -42,6 +42,81 @@
                             $options = ['in_progress','active','on_hold','expired'];
                         @endphp
 
+                        <script>
+                            // Define global handler early so inline onclick works immediately
+                            (function(){
+                                var container = document.getElementById('activity-status-buttons');
+                                // If container not yet in DOM, re-run after microtask
+                                if (!container) {
+                                    setTimeout(arguments.callee, 0);
+                                    return;
+                                }
+                                var url = container.getAttribute('data-update-url');
+                                var csrf = container.getAttribute('data-csrf');
+                                var inactive = 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700';
+                                var map = {
+                                    in_progress: 'bg-blue-100 text-blue-800 border-blue-400 ring-2 ring-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700 dark:ring-blue-700',
+                                    active: 'bg-green-100 text-green-800 border-green-400 ring-2 ring-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-700 dark:ring-green-700',
+                                    on_hold: 'bg-yellow-100 text-yellow-800 border-yellow-400 ring-2 ring-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-700 dark:ring-yellow-700',
+                                    expired: 'bg-red-100 text-red-800 border-red-400 ring-2 ring-red-300 dark:bg-red-900 dark:text-red-300 dark:border-red-700 dark:ring-red-700'
+                                };
+                                window.updateActivityStatus = async function(status) {
+                                    try {
+                                        console.debug('[activity-status:inline] click', status);
+                                        // optimistic UI
+                                        container.querySelectorAll('button.status-btn').forEach(function(b){
+                                            b.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + inactive;
+                                        });
+                                        var btn = container.querySelector('button.status-btn[data-status="' + status + '"]');
+                                        if (btn) {
+                                            btn.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + (map[status] || '');
+                                        }
+
+                                        var params = new URLSearchParams();
+                                        params.append('_method', 'PUT');
+                                        params.append('status', status);
+                                        var res = await fetch(url, {
+                                            method: 'POST',
+                                            headers: {
+                                                'X-CSRF-TOKEN': csrf,
+                                                'X-Requested-With': 'XMLHttpRequest',
+                                                'Accept': 'application/json',
+                                                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+                                            },
+                                            body: params.toString()
+                                        });
+                                        var body = {};
+                                        try { body = await res.json(); } catch(_) {}
+                                        if (!res.ok) {
+                                            var computed = body && body.status ? body.status : null;
+                                            var message  = body && body.message ? body.message : 'Status bijwerken mislukt';
+                                            if (computed) {
+                                                container.querySelectorAll('button.status-btn').forEach(function(b){
+                                                    b.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + inactive;
+                                                });
+                                                var cb = container.querySelector('button.status-btn[data-status="' + computed + '"]');
+                                                if (cb) {
+                                                    cb.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + (map[computed] || '');
+                                                }
+                                            }
+                                            alert(message);
+                                            return;
+                                        }
+                                        var newStatus = (body && body.status) ? body.status : status;
+                                        container.querySelectorAll('button.status-btn').forEach(function(b){
+                                            b.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + inactive;
+                                        });
+                                        var ab = container.querySelector('button.status-btn[data-status="' + newStatus + '"]');
+                                        if (ab) {
+                                            ab.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + (map[newStatus] || '');
+                                        }
+                                    } catch (err) {
+                                        console.error('[activity-status:inline] error', err);
+                                        alert(err.message || 'Kon status niet bijwerken');
+                                    }
+                                }
+                            })();
+                        </script>
                         <div class="flex items-center gap-2" id="activity-status-buttons" data-update-url="{{ route('admin.activities.update', $activity->id) }}" data-csrf="{{ csrf_token() }}">
                             @foreach ($options as $opt)
                                 <button type="button"

@@ -134,9 +134,9 @@ class User extends Authenticatable implements UserContract
     /**
      * User settings key-value pairs.
      */
-    public function settings()
+    public function defaultValues()
     {
-        return $this->hasMany(UserSetting::class);
+        return $this->hasMany(UserDefaultValue::class);
     }
 
     /**

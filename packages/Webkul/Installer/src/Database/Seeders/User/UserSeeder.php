@@ -8,7 +8,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Webkul\User\Models\Group;
 use Webkul\User\Models\User;
-use Webkul\User\Models\UserSetting;
+use Webkul\User\Models\UserDefaultValue;
 
 class UserSeeder extends Seeder
 {
@@ -156,7 +156,7 @@ class UserSeeder extends Seeder
                 );
             }
 
-            // Seed default user settings
+            // Seed default user default values
             $defaultSettings = [
                 'lead.department_id'   => '2',
                 'lead.lead_channel_id' => '1',
@@ -164,7 +164,7 @@ class UserSeeder extends Seeder
             ];
 
             foreach ($defaultSettings as $key => $value) {
-                UserSetting::updateOrCreate(
+                UserDefaultValue::updateOrCreate(
                     [
                         'user_id' => $user->id,
                         'key'     => $key,

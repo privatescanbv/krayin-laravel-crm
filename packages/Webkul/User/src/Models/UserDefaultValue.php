@@ -4,9 +4,9 @@ namespace Webkul\User\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class UserSetting extends Model
+class UserDefaultValue extends Model
 {
-    protected $table = 'user_settings';
+    protected $table = 'user_default_values';
 
     protected $fillable = [
         'user_id',

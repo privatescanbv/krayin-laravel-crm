@@ -171,6 +171,24 @@ class PersonController extends Controller
     {
         $person = $this->personRepository->with(['address', 'organization'])->findOrFail($id);
 
+        // Load leads with stage and sort: newest first, won/lost to bottom
+        $person->load(['leads' => function($query) {
+            $query->with('stage');
+        }]);
+
+        if ($person->relationLoaded('leads')) {
+            $sortedLeads = $person->leads
+                ->sortBy(function($lead) {
+                    $wonLostCodes = ['won', 'lost', 'won-hernia', 'lost-hernia'];
+                    $isWonLost = $lead->stage && in_array($lead->stage->code, $wonLostCodes, true) ? 1 : 0;
+                    $updatedTs = $lead->updated_at ? $lead->updated_at->getTimestamp() : 0;
+                    return [$isWonLost, -$updatedTs];
+                })
+                ->values();
+
+            $person->setRelation('leads', $sortedLeads);
+        }
+
         // Load anamnesis sorted by newest first
         $person->load(['anamnesis' => function($query) {
             $query->orderBy('updated_at', 'desc');

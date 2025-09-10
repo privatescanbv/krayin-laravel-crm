@@ -28,6 +28,15 @@ class CallStatusController extends Controller
             'reschedule_days' => 'nullable|integer|min:1|max:20',
         ]);
 
+        // Backend defaults: spoken => no move; others => 7 days if empty
+        if (($validated['status'] ?? null) === CallStatusEnum::SPOKEN->value) {
+            $validated['reschedule_days'] = $request->filled('reschedule_days') ? (string) $validated['reschedule_days'] : '';
+        } else {
+            if (!$request->filled('reschedule_days')) {
+                $validated['reschedule_days'] = '7';
+            }
+        }
+
         $callStatus = CallStatus::create([
             'activity_id' => $activityId,
             'status' => $validated['status'],

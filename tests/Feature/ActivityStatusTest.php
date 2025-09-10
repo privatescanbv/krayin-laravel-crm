@@ -25,17 +25,6 @@ class ActivityStatusTest extends TestCase
     }
 
     /** @test */
-    public function it_maps_legacy_new_status_to_active()
-    {
-        $activity = Activity::create([
-            'title' => 'Legacy status',
-            'type' => 'task',
-            'status' => 'new',
-            'schedule_from' => Carbon::now()->subDay(),
-            'schedule_to' => Carbon::now()->addDay(),
-        ]);
-
-        $this->assertEquals('active', $activity->status->value);
-    }
+    // Legacy mapping test removed; data will be reset and code not retained.
 }
 

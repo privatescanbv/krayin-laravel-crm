@@ -44,7 +44,7 @@ class Activity extends Model implements ActivityContract
         'additional'    => 'array',
         'is_done'      => 'boolean',
         'type'         => ActivityType::class,
-        'status'       => ActivityStatusCast::class,
+        'status'       => ActivityStatus::class,
     ];
 
     /**

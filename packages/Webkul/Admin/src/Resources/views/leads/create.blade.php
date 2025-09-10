@@ -425,9 +425,13 @@
                         this.currentStep = step;
 
                         // If going to step 2 and we have selected persons, populate address from first person
-                        if (step === 2 && this.persons.length > 0 && this.persons[0].address) {
+                        if (step === 2) {
                             this.$nextTick(() => {
-                                this.populateAddressFields(this.persons[0].address);
+                                if (this.persons.length > 0 && this.persons[0].address) {
+                                    this.populateAddressFields(this.persons[0].address);
+                                }
+                                // Ensure personal fields are synced when entering step 2
+                                this.syncPersonalFieldsToForm();
                             });
                         }
                     },

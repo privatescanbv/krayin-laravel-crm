@@ -22,21 +22,24 @@ class DateValidator implements Rule
 
         // Accept either NL (d-m-Y) or HTML date (Y-m-d) input, optionally with time (Y-m-d H:i:s)
         $isDutchFormat = preg_match('/^(0?[1-9]|[12]\d|3[01])-(0?[1-9]|1[0-2])-\d{4}$/', $value) === 1;
-        $isHtmlFormat  = preg_match('/^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/', $value) === 1;
+        $isHtmlFormat = preg_match('/^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/', $value) === 1;
         $isHtmlWithTime = preg_match('/^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])\s+\d{2}:\d{2}:\d{2}$/', $value) === 1;
 
         if ($isDutchFormat) {
             $date = DateTime::createFromFormat('d-m-Y', $value);
+
             return $date && $date->format('d-m-Y') === $value;
         }
 
         if ($isHtmlFormat) {
             $date = DateTime::createFromFormat('Y-m-d', $value);
+
             return $date && $date->format('Y-m-d') === $value;
         }
 
         if ($isHtmlWithTime) {
             $date = DateTime::createFromFormat('Y-m-d H:i:s', $value);
+
             return $date && $date->format('Y-m-d H:i:s') === $value;
         }
 

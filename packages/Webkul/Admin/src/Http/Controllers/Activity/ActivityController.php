@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Activity;
 
+use App\Enums\ActivityStatus;
 use App\Enums\WebhookType;
 use App\Models\Department;
 use App\Services\WebhookService;

@@ -17,6 +17,7 @@ use Webkul\Admin\Notifications\User\Create as UserCreatedNotification;
 use Webkul\User\Repositories\GroupRepository;
 use Webkul\User\Repositories\RoleRepository;
 use Webkul\User\Repositories\UserRepository;
+use Webkul\User\Models\UserDefaultValue;
 
 class UserController extends Controller
 {
@@ -78,6 +79,25 @@ class UserController extends Controller
 
         $admin->groups()->sync(request('groups') ?? []);
 
+        // Save user default values if provided
+        $settings = request('user_default_values', request('user_settings', []));
+        if (is_array($settings)) {
+            foreach ($settings as $key => $value) {
+                if ($key === '' || $key === null) {
+                    continue;
+                }
+                UserDefaultValue::updateOrCreate(
+                    [
+                        'user_id' => $admin->id,
+                        'key'     => (string) $key,
+                    ],
+                    [
+                        'value' => isset($value) ? (string) $value : null,
+                    ]
+                );
+            }
+        }
+
         try {
             Mail::queue(new UserCreatedNotification($admin));
         } catch (\Exception $e) {
@@ -97,10 +117,19 @@ class UserController extends Controller
      */
     public function edit(int $id): View|JsonResponse
     {
-        $admin = $this->userRepository->with(['role', 'groups'])->findOrFail($id);
+        $admin = $this->userRepository->with(['role', 'groups', 'defaultValues'])->findOrFail($id);
+
+        // Transform default values to a key=>value map for simpler frontend binding
+        $settingsMap = [];
+        foreach ($admin->defaultValues as $setting) {
+            $settingsMap[$setting->key] = $setting->value;
+        }
+
+        $data = $admin->toArray();
+        $data['user_default_values'] = $settingsMap;
 
         return new JsonResponse([
-            'data'   => $admin,
+            'data'   => $data,
         ]);
     }
 
@@ -138,6 +167,25 @@ class UserController extends Controller
         $admin->save();
 
         $admin->groups()->sync(request()->input('groups') ?? []);
+
+        // Save user default values if provided
+        $settings = request('user_default_values', request('user_settings', []));
+        if (is_array($settings)) {
+            foreach ($settings as $key => $value) {
+                if ($key === '' || $key === null) {
+                    continue;
+                }
+                UserDefaultValue::updateOrCreate(
+                    [
+                        'user_id' => $admin->id,
+                        'key'     => (string) $key,
+                    ],
+                    [
+                        'value' => isset($value) ? (string) $value : null,
+                    ]
+                );
+            }
+        }
 
         Event::dispatch('settings.user.update.after', $admin);
 

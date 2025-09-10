@@ -8,6 +8,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Webkul\User\Models\Group;
 use Webkul\User\Models\User;
+use Webkul\User\Models\UserDefaultValue;
 
 class UserSeeder extends Seeder
 {
@@ -151,6 +152,30 @@ class UserSeeder extends Seeder
                     [
                         'user_id'  => $user->id,
                         'group_id' => $groupId,
+                    ]
+                );
+            }
+
+            // Seed default user default values
+            $defaultSettings = [
+                'lead.department_id'   => '2',
+                'lead.lead_channel_id' => '1',
+                'lead.lead_source_id'  => '6',
+            ];
+
+            // Override for Mark Bulthuis
+            if ($user->email === 'mark.bulthuis@privatescan.nl') {
+                $defaultSettings['lead.department_id'] = '1';
+            }
+
+            foreach ($defaultSettings as $key => $value) {
+                UserDefaultValue::updateOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'key'     => $key,
+                    ],
+                    [
+                        'value' => $value,
                     ]
                 );
             }

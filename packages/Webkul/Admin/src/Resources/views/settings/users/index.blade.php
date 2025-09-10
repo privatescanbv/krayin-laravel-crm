@@ -448,6 +448,55 @@
                             </x-admin::form.control-group>
                                 
                             {!! view_render_event('admin.settings.users.index.form.status.after') !!}
+
+                            <!-- User Default Field Values -->
+                            <div class="mt-4 rounded border border-gray-200 p-4 dark:border-gray-800">
+                                <div class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200">Default veld waarden</div>
+
+                                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                    <x-admin::form.control-group>
+                                        <x-admin::form.control-group.label>
+                                            lead.department_id
+                                        </x-admin::form.control-group.label>
+
+                                        <x-admin::form.control-group.control
+                                            type="text"
+                                            name="user_default_values[lead.department_id]"
+                                            v-model="user.user_default_values['lead.department_id']"
+                                            :label="'lead.department_id'"
+                                            :placeholder="'2'"
+                                        />
+                                    </x-admin::form.control-group>
+
+                                    <x-admin::form.control-group>
+                                        <x-admin::form.control-group.label>
+                                            lead.lead_channel_id
+                                        </x-admin::form.control-group.label>
+
+                                        <x-admin::form.control-group.control
+                                            type="text"
+                                            name="user_default_values[lead.lead_channel_id]"
+                                            v-model="user.user_default_values['lead.lead_channel_id']"
+                                            :label="'lead.lead_channel_id'"
+                                            :placeholder="'1'"
+                                        />
+                                    </x-admin::form.control-group>
+
+                                    <x-admin::form.control-group>
+                                        <x-admin::form.control-group.label>
+                                            lead.lead_source_id
+                                        </x-admin::form.control-group.label>
+
+                                        <x-admin::form.control-group.control
+                                            type="text"
+                                            name="user_default_values[lead.lead_source_id]"
+                                            v-model="user.user_default_values['lead.lead_source_id']"
+                                            :label="'lead.lead_source_id'"
+                                            :placeholder="'6'"
+                                        />
+                                    </x-admin::form.control-group>
+                                </div>
+                            </div>
                         </x-slot>
 
                         <!-- Modal Footer -->
@@ -484,7 +533,7 @@
 
                         groups:  @json($groups),
 
-                        user: {},
+                        user: { user_default_values: {} },
                     };
                 },
 
@@ -512,6 +561,7 @@
                     openModal() {
                         this.user = {
                             groups: [],
+                            user_default_values: {},
                         };
 
                         this.$refs.userUpdateAndCreateModal.toggle();

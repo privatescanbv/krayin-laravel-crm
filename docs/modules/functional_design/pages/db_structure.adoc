@@ -19,6 +19,13 @@ TABLE(User, "user") {
   updated_by: bigint
 }
 
+TABLE(UserDefaultValue, "user_default_values") {
+  PRIMARY_KEY(id): bigint
+  FOREIGN_KEY(user_id): bigint
+  key: string
+  value: string
+}
+
 TABLE(Role, "role") {
   PRIMARY_KEY(id): bigint
   name: string
@@ -302,6 +309,7 @@ User "1" -- "n" Quote
 User "1" -- "n" WorkflowLead
 User "1" -- "n" Activity
 User "1" -- "n" CallStatus
+User "1" -- "n" UserDefaultValue
 User "n" -- "0..1" Group
 User "n" -- "1" Role
 

@@ -161,6 +161,21 @@
                             </div>
                         </div>
 
+                        <!-- Diagnoseformulier aanwezig -->
+                        <div class="mb-3">
+                            <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Diagnoseformulier</div>
+                            <div class="text-sm text-gray-900 dark:text-gray-100">
+                                @if($lead->has_diagnosis_form)
+                                    <span class="inline-flex items-center gap-1 text-green-700">
+                                        <span class="icon-attachment text-xs"></span>
+                                        Aanwezig
+                                    </span>
+                                @else
+                                    <span class="text-gray-500">Niet aanwezig</span>
+                                @endif
+                            </div>
+                        </div>
+
                         <!-- Lead Source -->
                         <div class="mb-3">
                             <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Bron</div>

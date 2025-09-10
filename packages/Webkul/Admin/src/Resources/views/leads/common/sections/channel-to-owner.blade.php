@@ -29,9 +29,9 @@
                     Kanaal
                 </x-admin::form.control-group.label>
                 <x-admin::form.control-group.control
-                    type="select"
-                    name="lead_channel_id"
-                    value="{{ $val('lead_channel_id', '') }}"
+                        type="select"
+                        name="lead_channel_id"
+                        value="{{ $val('lead_channel_id', '') }}"
                 >
                     <option value="">-- Kies kanaal --</option>
                     @foreach ($channelOptions as $id => $name)
@@ -46,9 +46,9 @@
                     Bron
                 </x-admin::form.control-group.label>
                 <x-admin::form.control-group.control
-                    type="select"
-                    name="lead_source_id"
-                    value="{{ $val('lead_source_id', '') }}"
+                        type="select"
+                        name="lead_source_id"
+                        value="{{ $val('lead_source_id', '') }}"
                 >
                     <option value="">-- Kies bron --</option>
                     @foreach ($sourceOptions as $id => $name)
@@ -67,10 +67,10 @@
                     Afdeling
                 </x-admin::form.control-group.label>
                 <x-admin::form.control-group.control
-                    type="select"
-                    name="department_id"
-                    rules="required"
-                    value="{{ $val('department_id', '') }}"
+                        type="select"
+                        name="department_id"
+                        rules="required"
+                        value="{{ $val('department_id', '') }}"
                 >
                     <option value="">-- Kies afdeling --</option>
                     @foreach ($departmentOptions as $id => $name)
@@ -85,9 +85,9 @@
                     Type
                 </x-admin::form.control-group.label>
                 <x-admin::form.control-group.control
-                    type="select"
-                    name="lead_type_id"
-                    value="{{ $val('lead_type_id', '') }}"
+                        type="select"
+                        name="lead_type_id"
+                        value="{{ $val('lead_type_id', '') }}"
                 >
                     <option value="">-- Kies type --</option>
                     @foreach ($typeOptions as $id => $name)
@@ -109,9 +109,9 @@
                     MRI Status
                 </x-admin::form.control-group.label>
                 <x-admin::form.control-group.control
-                    type="select"
-                    name="mri_status"
-                    value="{{ $currentMRI }}"
+                        type="select"
+                        name="mri_status"
+                        value="{{ $currentMRI }}"
                 >
                     <option value="">-- Selecteer MRI status --</option>
                     @foreach (App\Enums\MRIStatus::cases() as $case)
@@ -126,9 +126,9 @@
                     Orders combineren
                 </x-admin::form.control-group.label>
                 <x-admin::form.control-group.control
-                    type="select"
-                    name="combine_order"
-                    value="{{ (string)($val('combine_order', 1)) }}"
+                        type="select"
+                        name="combine_order"
+                        value="{{ (string)($val('combine_order', 1)) }}"
                 >
                     <option value="1" {{ ((string)$val('combine_order', 1) === '1') ? 'selected' : '' }}>Ja</option>
                     <option value="0" {{ ((string)$val('combine_order', 1) === '0') ? 'selected' : '' }}>Nee</option>
@@ -136,28 +136,47 @@
             </x-admin::form.control-group>
         </div>
     </div>
-
-    <!-- Owner -->
-    <div class="mb-2">
-        @php
-            $userOptions = \Webkul\User\Models\User::query()->pluck('name', 'id')->toArray();
-            $currentUserId = $val('user_id');
-        @endphp
-        <x-admin::form.control-group>
+    <div class="flex gap-4 mb-4">
+        <div class="flex-1">
+        <!-- Diagnoseformulier aanwezig? -->
+        <x-admin::form.control-group class="mt-2">
             <x-admin::form.control-group.label>
-                Toegewezen gebruiker
+                Diagnoseformulier aanwezig?
             </x-admin::form.control-group.label>
-            <x-admin::form.control-group.control
-                type="select"
-                name="user_id"
-                value="{{ $currentUserId }}"
-            >
-                <option value="">-- Kies gebruiker --</option>
-                @foreach ($userOptions as $id => $name)
-                    <option value="{{ $id }}" {{ ($currentUserId == $id) ? 'selected' : '' }}>{{ $name }}</option>
-                @endforeach
-            </x-admin::form.control-group.control>
+            <div class="flex items-center gap-2">
+                <input type="hidden" name="has_diagnosis_form" value="0"/>
+                <input
+                        type="checkbox"
+                        name="has_diagnosis_form"
+                        value="1"
+                        class="cursor-pointer"
+                />
+                <span class="text-sm text-gray-600 dark:text-gray-300">Ja</span>
+            </div>
         </x-admin::form.control-group>
+        </div>
+        <!-- Owner -->
+        <div class="flex-1">
+            @php
+                $userOptions = \Webkul\User\Models\User::query()->pluck('name', 'id')->toArray();
+                $currentUserId = $val('user_id');
+            @endphp
+            <x-admin::form.control-group>
+                <x-admin::form.control-group.label>
+                    Toegewezen gebruiker
+                </x-admin::form.control-group.label>
+                <x-admin::form.control-group.control
+                        type="select"
+                        name="user_id"
+                        value="{{ $currentUserId }}"
+                >
+                    <option value="">-- Kies gebruiker --</option>
+                    @foreach ($userOptions as $id => $name)
+                        <option value="{{ $id }}" {{ ($currentUserId == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                    @endforeach
+                </x-admin::form.control-group.control>
+            </x-admin::form.control-group>
+        </div>
     </div>
 </div>
 

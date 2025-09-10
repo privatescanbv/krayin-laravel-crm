@@ -194,7 +194,7 @@
                                     <!-- Card Footer -->
                                     <div
                                         class="flex items-center justify-between mt-2 pt-2 border-t border-gray-200 dark:border-gray-600"
-                                        v-if="element.has_duplicates || (element.open_activities_count && element.open_activities_count > 0) || (element.unread_emails_count && element.unread_emails_count > 0) || element.mri_status"
+                                        v-if="element.has_duplicates || (element.open_activities_count && element.open_activities_count > 0) || (element.unread_emails_count && element.unread_emails_count > 0) || element.mri_status || element.has_diagnosis_form"
                                     >
                                         <div class="flex items-center gap-3">
                                             <!-- Open Activities Count -->
@@ -262,6 +262,18 @@
                                             >
                                                 @{{ Math.abs(element.days_until_due_date) }}d over
                                             </span>
+
+                                            <!-- Diagnosis Form Icon bottom-right (to the left of MRI) -->
+                                            <div v-if="element.has_diagnosis_form"
+                                                 class="absolute -bottom-1 right-4 group">
+                                                <span class="icon-attachment text-xs"></span>
+                                                <div class="absolute -top-1 right-5 hidden w-max flex-col items-center group-hover:flex">
+                                                    <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                        Diagnoseformulier aanwezig
+                                                    </span>
+                                                    <div class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                </div>
+                                            </div>
 
                                             <!-- MRI Status Icon bottom-right -->
                                             <div v-if="element.mri_status"

@@ -381,28 +381,44 @@
             // Inline status update without leaving the page
             document.addEventListener('DOMContentLoaded', function() {
                 const container = document.getElementById('activity-status-buttons');
-                if (!container) return;
+                if (!container) {
+                    console.warn('[activity-status] container not found');
+                    return;
+                }
 
                 const url = container.getAttribute('data-update-url');
                 const csrf = container.getAttribute('data-csrf');
+                console.debug('[activity-status] ready. url:', url);
 
-                container.addEventListener('click', async function(e) {
-                    const btn = e.target.closest('button.status-btn');
-                    if (!btn) return;
+                // Delegate on document to survive DOM updates
+                document.addEventListener('click', async function(e) {
+                    const btn = e.target.closest && e.target.closest('button.status-btn');
+                    if (!btn || !document.body.contains(btn)) return;
+                    if (!container.contains(btn)) return;
+                    e.preventDefault();
+                    e.stopPropagation();
                     const status = btn.getAttribute('data-status');
+                    console.debug('[activity-status] click ->', status);
                     try {
+                        const params = new URLSearchParams();
+                        params.append('_method', 'PUT');
+                        params.append('status', status);
+
                         const res = await fetch(url, {
                             method: 'POST',
                             headers: {
                                 'X-CSRF-TOKEN': csrf,
                                 'X-Requested-With': 'XMLHttpRequest',
                                 'Accept': 'application/json',
+                                'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
                             },
-                            body: new URLSearchParams({ _method: 'PUT', status })
+                            body: params.toString()
                         });
 
                         if (!res.ok) {
-                            throw new Error('Status bijwerken mislukt');
+                            let message = 'Status bijwerken mislukt';
+                            try { const data = await res.json(); if (data && data.message) message = data.message; } catch (_) {}
+                            throw new Error(message);
                         }
 
                         const inactive = 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700';
@@ -418,7 +434,7 @@
                         });
                         btn.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + (map[status] || '');
                     } catch (err) {
-                        console.error(err);
+                        console.error('[activity-status] error', err);
                         alert(err.message || 'Kon status niet bijwerken');
                     }
                 });

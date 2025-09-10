@@ -409,6 +409,8 @@
                         if (!this.formData.phone && p.phones && p.phones.length) {
                             this.formData.phone = p.phones[0].value || '';
                         }
+                        // Ensure we start on step 1 regardless of prefill
+                        this.currentStep = 1;
                     } else {
                         // Initialize with one empty slot for ease of use
                         this.persons.push({ id: null, name: '', match_percentage: null, organization: null });

@@ -27,6 +27,34 @@
         </div>
     </div>
 
+    <script>
+        (function(){
+            if (typeof window.handlePersonsUpdated !== 'function') {
+                window.handlePersonsUpdated = function(updated) {
+                    if (window.leadFormComponent) {
+                        window.leadFormComponent.persons = updated;
+                        if (typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
+                            window.leadFormComponent.updateFormDataFromPersons();
+                        }
+                    }
+                };
+            }
+            if (typeof window.handlePersonAdded !== 'function') {
+                window.handlePersonAdded = function(p) {
+                    if (window.leadFormComponent) {
+                        if (!Array.isArray(window.leadFormComponent.persons)) {
+                            window.leadFormComponent.persons = [];
+                        }
+                        window.leadFormComponent.persons.push(p);
+                        if (typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
+                            window.leadFormComponent.updateFormDataFromPersons();
+                        }
+                    }
+                };
+            }
+        })();
+    </script>
+
     <v-multi-contact-matcher
         :lead='@json($lead ?? new stdClass())'
         :existing-persons='@json($persons ?? [])'

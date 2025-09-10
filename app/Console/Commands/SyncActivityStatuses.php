@@ -9,6 +9,7 @@ use Webkul\Activity\Models\Activity;
 class SyncActivityStatuses extends Command
 {
     protected $signature = 'activities:sync-statuses';
+
     protected $description = 'Synchronize activity statuses based on schedule dates';
 
     public function handle(): int
@@ -24,7 +25,7 @@ class SyncActivityStatuses extends Command
         });
 
         $this->info('Activity statuses synced.');
+
         return Command::SUCCESS;
     }
 }
-

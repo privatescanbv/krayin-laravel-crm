@@ -16,7 +16,7 @@ class ActivityStatusService
         }
 
         // If both dates missing, default active
-        if (!$from && !$to) {
+        if (! $from && ! $to) {
             return ActivityStatus::ACTIVE;
         }
 
@@ -35,4 +35,3 @@ class ActivityStatusService
         return ActivityStatus::ACTIVE;
     }
 }
-

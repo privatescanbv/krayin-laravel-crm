@@ -148,8 +148,11 @@
                                                 </div>
                                                 <div v-if="activity.__showCallDetails && activity.call_statuses?.length" class="mt-2 border rounded p-2 dark:border-gray-800">
                                                     <div v-for="cs in activity.call_statuses" :key="cs.created_at" class="text-xs py-1 border-b last:border-b-0 dark:border-gray-800">
-                                                        <div class="flex justify-between">
-                                                            <span class="font-medium">@{{ getCallStatusLabel(cs.status) }}</span>
+                                                        <div class="flex justify-between items-center">
+                                                            <div class="flex items-center gap-2">
+                                                                <call-status-icon :status="cs.status" size="w-4 h-4"></call-status-icon>
+                                                                <span class="font-medium">@{{ getCallStatusLabel(cs.status) }}</span>
+                                                            </div>
                                                             <span>@{{ $admin.formatDate(cs.created_at, 'd MMM yyyy, h:mm', timezone) }}</span>
                                                         </div>
                                                         <div v-if="cs.omschrijving" class="text-gray-600 dark:text-gray-300">@{{ cs.omschrijving }}</div>

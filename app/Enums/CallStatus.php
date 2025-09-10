@@ -10,11 +10,10 @@ enum CallStatus: string
 
     public function label(): string
     {
-        return match($this) {
-            self::NOT_REACHABLE => 'Niet kunnen bereiken',
+        return match ($this) {
+            self::NOT_REACHABLE  => 'Niet kunnen bereiken',
             self::VOICEMAIL_LEFT => 'Voicemail ingesproken',
-            self::SPOKEN => 'Gesproken',
+            self::SPOKEN         => 'Gesproken',
         };
     }
 }
-

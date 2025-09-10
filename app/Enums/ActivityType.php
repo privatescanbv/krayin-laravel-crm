@@ -14,7 +14,7 @@ enum ActivityType: string
      */
     public static function userSelectable(): array
     {
-        return array_filter(self::cases(), fn($case) => $case !== self::SYSTEM);
+        return array_filter(self::cases(), fn ($case) => $case !== self::SYSTEM);
     }
 
     /**
@@ -25,4 +25,3 @@ enum ActivityType: string
         return $this !== self::SYSTEM;
     }
 }
-

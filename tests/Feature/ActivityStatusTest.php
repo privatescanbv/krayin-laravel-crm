@@ -7,7 +7,6 @@ use App\Services\ActivityStatusService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
-use Webkul\Activity\Models\Activity;
 
 class ActivityStatusTest extends TestCase
 {
@@ -27,4 +26,3 @@ class ActivityStatusTest extends TestCase
     /** @test */
     // Legacy mapping test removed; data will be reset and code not retained.
 }
-

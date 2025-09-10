@@ -11,11 +11,11 @@ enum ActivityStatus: string
 
     public function label(): string
     {
-        return match($this) {
-            self::ACTIVE => 'Actief',
+        return match ($this) {
+            self::ACTIVE      => 'Actief',
             self::IN_PROGRESS => 'In behandeling',
-            self::ON_HOLD => 'On hold',
-            self::EXPIRED => 'Verlopen',
+            self::ON_HOLD     => 'On hold',
+            self::EXPIRED     => 'Verlopen',
         };
     }
 }

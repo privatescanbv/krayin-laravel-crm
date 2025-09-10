@@ -40,6 +40,7 @@ use InvalidArgumentException;
 use App\Services\LeadValidationService;
 use App\Services\PipelineCookieService;
 use App\Services\LeadStatusTransitionValidator;
+use App\Services\UserDefaultValueService;
 
 class LeadController extends Controller
 {
@@ -68,7 +69,8 @@ class LeadController extends Controller
         protected LeadRepository      $leadRepository,
         protected ProductRepository   $productRepository,
         protected PersonRepository    $personRepository,
-        protected PipelineCookieService $pipelineCookieService
+        protected PipelineCookieService $pipelineCookieService,
+        protected UserDefaultValueService $userDefaultValueService
     )
     {
         request()->request->add(['entity_type' => 'leads']);
@@ -238,6 +240,9 @@ class LeadController extends Controller
         $userGroupNames = $user->groups->pluck('name')->toArray();
         $defaultDepartmentId = Department::mapGroupToDepartmentId($userGroupNames);
 
+        // Get user default values for lead fields
+        $userDefaults = $this->userDefaultValueService->getLeadDefaults($user->id);
+
         // Get effective pipeline ID (URL parameter takes precedence over cookie)
         $effectivePipelineId = $this->pipelineCookieService->getEffectivePipelineId(request('pipeline_id'));
 
@@ -304,6 +309,7 @@ class LeadController extends Controller
             'departmentOptions' => Department::pluck('name', 'id')->toArray(),
             'prefilledPersons' => $prefilledPersons,
             'prefilledLeadPerson' => $prefilledLeadPerson,
+            'userDefaults' => $userDefaults,
         ]);
     }
 

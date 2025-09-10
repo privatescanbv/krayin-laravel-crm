@@ -7,7 +7,7 @@
     {!! view_render_event('admin.leads.create.form.before') !!}
 
     <!-- Two-Step Lead Form -->
-    <v-two-step-lead-form :initial-persons='@json($prefilledPersons ?? [])' :initial-lead-person='@json($prefilledLeadPerson ?? null)'></v-two-step-lead-form>
+    <v-two-step-lead-form :initial-persons='@json($prefilledPersons ?? [])' :initial-lead-person='@json($prefilledLeadPerson ?? null)' :user-defaults='@json($userDefaults ?? {})'></v-two-step-lead-form>
 
     {!! view_render_event('admin.leads.create.form.after') !!}
 
@@ -306,10 +306,10 @@
                                     @include('admin::leads.common.sections.channel-to-owner', [
                                         'entity' => null,
                                         'defaults' => [
-                                            'department_id' => $defaultDepartmentId ?? '',
+                                            'department_id' => $userDefaults['department_id'] ?? $defaultDepartmentId ?? '',
                                             'combine_order' => 1,
-                                            'lead_channel_id' => '1',
-                                            'lead_source_id' => 32,
+                                            'lead_channel_id' => $userDefaults['lead_channel_id'] ?? '1',
+                                            'lead_source_id' => $userDefaults['lead_source_id'] ?? 32,
                                         ],
                                         'useVueModel' => false,
                                     ])
@@ -355,6 +355,10 @@
                     initialLeadPerson: {
                         type: Object,
                         default: null
+                    },
+                    userDefaults: {
+                        type: Object,
+                        default: () => ({})
                     }
                 },
 
@@ -366,24 +370,24 @@
                         isSubmitting: false,
                         formData: {
                         description: '',
-                        lead_channel_id: '1', // Default: Telefoon
-                        lead_source_id: 32, // Default: Anders
-                        department_id: '{{ $defaultDepartmentId ?? "" }}', // Set based on pipeline or user groups
+                        lead_channel_id: this.userDefaults.lead_channel_id || '1', // Default: Telefoon
+                        lead_source_id: this.userDefaults.lead_source_id || 32, // Default: Anders
+                        department_id: this.userDefaults.department_id || '{{ $defaultDepartmentId ?? "" }}', // Set based on pipeline or user groups
                         lead_pipeline_id: '{{ $defaultPipelineId ?? "" }}', // Set based on department or URL param
                         lead_pipeline_stage_id: '{{ $defaultStageId ?? "" }}', // Set based on pipeline or URL param
                         combine_order: 1,
-                        mri_status: '',
-                            lead_type_id: '1', // Default: Preventie
+                        mri_status: this.userDefaults.mri_status || '',
+                            lead_type_id: this.userDefaults.lead_type_id || '1', // Default: Preventie
                             // Personal fields for matching
-                            salutation: this.initialLeadPerson?.salutation?.value || '',
-                            initials: this.initialLeadPerson?.initials || '',
-                            first_name: this.initialLeadPerson?.first_name || '',
-                            lastname_prefix: this.initialLeadPerson?.lastname_prefix || '',
-                            last_name: this.initialLeadPerson?.last_name || '',
-                            married_name_prefix: this.initialLeadPerson?.married_name_prefix || '',
-                            married_name: this.initialLeadPerson?.married_name || '',
-                            email: '',
-                            phone: '',
+                            salutation: this.initialLeadPerson?.salutation?.value || this.userDefaults.salutation || '',
+                            initials: this.initialLeadPerson?.initials || this.userDefaults.initials || '',
+                            first_name: this.initialLeadPerson?.first_name || this.userDefaults.first_name || '',
+                            lastname_prefix: this.initialLeadPerson?.lastname_prefix || this.userDefaults.lastname_prefix || '',
+                            last_name: this.initialLeadPerson?.last_name || this.userDefaults.last_name || '',
+                            married_name_prefix: this.initialLeadPerson?.married_name_prefix || this.userDefaults.married_name_prefix || '',
+                            married_name: this.initialLeadPerson?.married_name || this.userDefaults.married_name || '',
+                            email: this.userDefaults.email || '',
+                            phone: this.userDefaults.phone || '',
                         },
                         hasSelectedPersons: false,
                         joinedPersonNames: ''

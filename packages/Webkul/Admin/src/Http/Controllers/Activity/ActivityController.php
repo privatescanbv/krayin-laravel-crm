@@ -254,13 +254,58 @@ class ActivityController extends Controller
             }
         }
 
+        $requestedStatus = isset($data['status']) ? (string) $data['status'] : null;
+
         $activity = $this->activityRepository->update($data, $id);
 
         // Auto status sync after update
         $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, $activity->status);
-        if ($computed->value !== ($activity->status?->value ?? null)) {
-            $activity->status = $computed;
-            $activity->save();
+
+        // If a status was explicitly requested, enforce rules:
+        // - in_progress: always allowed
+        // - others: must match computed, otherwise reject for AJAX and keep computed
+        if ($requestedStatus !== null) {
+            if ($requestedStatus === ActivityStatus::IN_PROGRESS->value) {
+                if (($activity->status?->value ?? null) !== $requestedStatus) {
+                    $activity->status = ActivityStatus::IN_PROGRESS;
+                    $activity->save();
+                }
+            } else {
+                if ($computed->value !== $requestedStatus) {
+                    // Revert to computed status if user attempted invalid status
+                    if (($activity->status?->value ?? null) !== $computed->value) {
+                        $activity->status = $computed;
+                        $activity->save();
+                    }
+
+                    if (request()->ajax()) {
+                        $labels = [
+                            ActivityStatus::ACTIVE->value => 'Actief',
+                            ActivityStatus::IN_PROGRESS->value => 'In behandeling',
+                            ActivityStatus::ON_HOLD->value => 'On hold',
+                            ActivityStatus::EXPIRED->value => 'Verlopen',
+                        ];
+
+                        return response()->json([
+                            'message' => 'Deze status is niet mogelijk voor de huidige datumrange.',
+                            'status'  => $computed->value,
+                            'status_label' => $labels[$computed->value] ?? $computed->value,
+                        ], 422);
+                    }
+                } else {
+                    // Requested equals computed: ensure saved
+                    if (($activity->status?->value ?? null) !== $computed->value) {
+                        $activity->status = $computed;
+                        $activity->save();
+                    }
+                }
+            }
+        } else {
+            // No explicit status requested, just sync to computed if needed
+            if ($computed->value !== ($activity->status?->value ?? null)) {
+                $activity->status = $computed;
+                $activity->save();
+            }
         }
 
         // Send webhook if activity is marked as done
@@ -286,6 +331,7 @@ class ActivityController extends Controller
             return response()->json([
                 'data'    => new ActivityResource($activity),
                 'message' => trans('admin::app.activities.update-success'),
+                'status'  => $activity->status?->value,
             ]);
         }
 

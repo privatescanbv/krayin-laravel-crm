@@ -464,18 +464,32 @@
                             body: params.toString()
                         });
 
+                        const body = await (async () => { try { return await res.json(); } catch (_) { return {}; } })();
+
                         if (!res.ok) {
-                            let message = 'Status bijwerken mislukt';
-                            try { const data = await res.json(); if (data && data.message) message = data.message; } catch (_) {}
-                            throw new Error(message);
+                            // Server-side validation: update UI to computed status and show message
+                            const computed = body && body.status ? body.status : null;
+                            const message  = body && body.message ? body.message : 'Status bijwerken mislukt';
+                            if (computed) {
+                                container.querySelectorAll('button.status-btn').forEach(b => {
+                                    b.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + inactive;
+                                });
+                                const compBtn = container.querySelector('button.status-btn[data-status="' + computed + '"]');
+                                if (compBtn) {
+                                    compBtn.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + (map[computed] || '');
+                                }
+                            }
+                            alert(message);
+                            return;
                         }
 
+                        const newStatus = (body && body.status) ? body.status : status;
                         container.querySelectorAll('button.status-btn').forEach(b => {
                             b.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + inactive;
                         });
-                        const activeBtn = container.querySelector('button.status-btn[data-status="' + status + '"]');
+                        const activeBtn = container.querySelector('button.status-btn[data-status="' + newStatus + '"]');
                         if (activeBtn) {
-                            activeBtn.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + (map[status] || '');
+                            activeBtn.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + (map[newStatus] || '');
                         }
                     } catch (err) {
                         console.error('[activity-status:global] error', err);

@@ -125,10 +125,13 @@ import VueCal from "./plugins/vue-cal";
 import Debounce from "./directives/debounce";
 import DOMPurify from "./directives/dompurify";
 import ToolTip from "./directives/tooltip";
+import CallStatusIcon from "./components/CallStatusIcon.vue";
 
 app.directive("debounce", Debounce);
 app.directive("safe-html", DOMPurify);
 app.directive("tooltip", ToolTip);
+
+app.component("CallStatusIcon", CallStatusIcon);
 
 export default app;
 

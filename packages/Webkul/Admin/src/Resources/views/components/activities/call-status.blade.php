@@ -11,7 +11,13 @@
         @forelse(($callStatuses ?? []) as $item)
             <div class="rounded border p-2 text-sm dark:border-gray-700">
                 <div class="flex items-center justify-between">
-                    <span class="font-medium">{{ $item->status->label() }}</span>
+                    <div class="flex items-center gap-2">
+                        <call-status-icon
+                            status="{{ $item->status->value }}"
+                            size="w-4 h-4"
+                        ></call-status-icon>
+                        <span class="font-medium">{{ $item->status->label() }}</span>
+                    </div>
                     <span class="text-xs text-gray-500">{{ $item->created_at?->format('d-m-Y H:i') }}</span>
                 </div>
                 @if($item->omschrijving)
@@ -29,7 +35,7 @@
     <!-- Add new call status form -->
     <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
         <h4 class="text-sm font-semibold text-gray-800 dark:text-white mb-3">Nieuwe belstatus toevoegen</h4>
-        
+
         <form id="call-status-form" class="space-y-3">
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -47,10 +53,10 @@
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Omschrijving
                 </label>
-                <textarea 
-                    name="omschrijving" 
-                    rows="3" 
-                    class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white" 
+                <textarea
+                    name="omschrijving"
+                    rows="3"
+                    class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                     placeholder="Optionele notitie over de belstatus..."
                 ></textarea>
             </div>
@@ -80,8 +86,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const url = '{{ route('admin.activities.call-statuses.store', $activity->id) }}';
         const csrfToken = '{{ csrf_token() }}';
-        
-        // Initialize defaults on load and when status changes
+// Initialize defaults on load and when status changes
         const form = document.getElementById('call-status-form');
         if (form) {
             const statusEl = form.querySelector('[name="status"]');
@@ -119,13 +124,13 @@
             if (e.target && e.target.id === 'call-status-submit') {
                 e.preventDefault();
                 e.stopPropagation();
-                
+
                 const form = document.getElementById('call-status-form');
                 if (!form) {
                     alert('Form niet gevonden');
                     return;
                 }
-                
+
                 const statusEl = form.querySelector('[name="status"]');
                 const omschrEl = form.querySelector('[name="omschrijving"]');
                 const rescheduleEl = form.querySelector('[name="reschedule_days"]');
@@ -167,9 +172,9 @@
 
                     if (!res.ok) {
                         let message = 'Toevoegen mislukt';
-                        try { 
-                            const err = await res.json(); 
-                            message = err.message || message; 
+                        try {
+                            const err = await res.json();
+                            message = err.message || message;
                         } catch (_) {}
                         throw new Error(message);
                     }
@@ -180,15 +185,15 @@
                         alert('Lijst container niet gevonden');
                         return;
                     }
-                    
+
                     const item = data.data;
-                    const createdAt = item.created_at ? 
-                        new Date(item.created_at).toLocaleString('nl-NL', { 
-                            day: '2-digit', 
-                            month: '2-digit', 
-                            year: 'numeric', 
-                            hour: '2-digit', 
-                            minute: '2-digit' 
+                    const createdAt = item.created_at ?
+                        new Date(item.created_at).toLocaleString('nl-NL', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
                         }) : '';
 
                     const statusLabels = {
@@ -196,23 +201,23 @@
                         'voicemail_left': 'Voicemail ingesproken',
                         'spoken': 'Gesproken'
                     };
-                    
+
                     const wrapper = document.createElement('div');
                     wrapper.className = 'rounded border p-2 text-sm dark:border-gray-700';
-                    wrapper.innerHTML = 
+                    wrapper.innerHTML =
                         '<div class="flex items-center justify-between">' +
                             '<span class="font-medium">' + (statusLabels[item.status] || item.status) + '</span>' +
                             '<span class="text-xs text-gray-500">' + createdAt + '</span>' +
                         '</div>' +
-                        (item.omschrijving ? 
-                            '<div class="mt-1 text-gray-700 dark:text-gray-300">' + item.omschrijving + '</div>' : 
+                        (item.omschrijving ?
+                            '<div class="mt-1 text-gray-700 dark:text-gray-300">' + item.omschrijving + '</div>' :
                             ''
                         ) +
-                        (item.creator ? 
-                            '<div class="mt-1 text-xs text-gray-500">Toegevoegd door: ' + item.creator.name + '</div>' : 
+                        (item.creator ?
+                            '<div class="mt-1 text-xs text-gray-500">Toegevoegd door: ' + item.creator.name + '</div>' :
                             ''
                         );
-                    
+
                     list.prepend(wrapper);
                     form.reset();
                 } catch (e) {

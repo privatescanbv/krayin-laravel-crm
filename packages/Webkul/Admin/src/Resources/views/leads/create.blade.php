@@ -303,7 +303,7 @@
                                             'lead_channel_id' => '1',
                                             'lead_source_id' => 32,
                                         ],
-                                        'useVueModel' => true,
+                                        'useVueModel' => false,
                                     ])
                                     <!-- Other attributes -->
                                     <div class="flex gap-4 max-sm:flex-wrap">

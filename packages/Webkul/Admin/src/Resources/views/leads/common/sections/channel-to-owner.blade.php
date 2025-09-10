@@ -10,7 +10,6 @@
 
     $entity = $entity ?? null;
     $defaults = $defaults ?? [];
-    $useVueModel = $useVueModel ?? false;
 
     $val = function(string $key, $fallback = null) use ($entity, $defaults) {
         $old = old($key);
@@ -32,7 +31,6 @@
                 <x-admin::form.control-group.control
                     type="select"
                     name="lead_channel_id"
-                    {!! $useVueModel ? 'v-model="formData.lead_channel_id"' : '' !!}
                     value="{{ $val('lead_channel_id', '') }}"
                 >
                     <option value="">-- Kies kanaal --</option>
@@ -50,7 +48,6 @@
                 <x-admin::form.control-group.control
                     type="select"
                     name="lead_source_id"
-                    {!! $useVueModel ? 'v-model="formData.lead_source_id"' : '' !!}
                     value="{{ $val('lead_source_id', '') }}"
                 >
                     <option value="">-- Kies bron --</option>
@@ -72,7 +69,6 @@
                 <x-admin::form.control-group.control
                     type="select"
                     name="department_id"
-                    {!! $useVueModel ? 'v-model="formData.department_id"' : '' !!}
                     rules="required"
                     value="{{ $val('department_id', '') }}"
                 >
@@ -91,7 +87,6 @@
                 <x-admin::form.control-group.control
                     type="select"
                     name="lead_type_id"
-                    {!! $useVueModel ? 'v-model="formData.lead_type_id"' : '' !!}
                     value="{{ $val('lead_type_id', '') }}"
                 >
                     <option value="">-- Kies type --</option>
@@ -116,7 +111,6 @@
                 <x-admin::form.control-group.control
                     type="select"
                     name="mri_status"
-                    {!! $useVueModel ? 'v-model="formData.mri_status"' : '' !!}
                     value="{{ $currentMRI }}"
                 >
                     <option value="">-- Selecteer MRI status --</option>
@@ -134,7 +128,6 @@
                 <x-admin::form.control-group.control
                     type="select"
                     name="combine_order"
-                    {!! $useVueModel ? 'v-model="formData.combine_order"' : '' !!}
                     value="{{ (string)($val('combine_order', 1)) }}"
                 >
                     <option value="1" {{ ((string)$val('combine_order', 1) === '1') ? 'selected' : '' }}>Ja</option>

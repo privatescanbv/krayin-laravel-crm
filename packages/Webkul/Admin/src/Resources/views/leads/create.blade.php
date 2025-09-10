@@ -7,7 +7,7 @@
     {!! view_render_event('admin.leads.create.form.before') !!}
 
     <!-- Two-Step Lead Form -->
-    <v-two-step-lead-form :initial-persons='@json($prefilledPersons ?? [])'></v-two-step-lead-form>
+    <v-two-step-lead-form :initial-persons='@json($prefilledPersons ?? [])' :initial-lead-person='@json($prefilledLeadPerson ?? null)'></v-two-step-lead-form>
 
     {!! view_render_event('admin.leads.create.form.after') !!}
 
@@ -277,66 +277,10 @@
                                         </x-admin::form.control-group>
                                     </div>
 
-                                    <!-- Personal Fields (for matching) -->
+                                    <!-- Personal Fields (full, same as edit) -->
                                     <div class="flex flex-col gap-4 mb-4">
-                                        <p class="text-base font-semibold dark:text-white">Lead persoon gegevens (voor matching)</p>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">
-                                            Deze gegevens worden gebruikt om te matchen met bestaande personen
-                                        </p>
-
-                                        <!-- Name Fields -->
-                                        <div class="flex gap-4">
-                                            <x-admin::form.control-group class="flex-1">
-                                                <x-admin::form.control-group.label class="required">Voornaam</x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="text"
-                                                    name="first_name"
-                                                    v-model="formData.first_name"
-                                                    placeholder="Voornaam"
-                                                    rules="required"
-                                                />
-                                                <x-admin::form.control-group.error control-name="first_name"/>
-                                            </x-admin::form.control-group>
-
-                                            <x-admin::form.control-group class="flex-1">
-                                                <x-admin::form.control-group.label class="required">Achternaam</x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="text"
-                                                    name="last_name"
-                                                    v-model="formData.last_name"
-                                                    placeholder="Achternaam"
-                                                    rules="required"
-                                                />
-                                                <x-admin::form.control-group.error control-name="last_name"/>
-                                            </x-admin::form.control-group>
-                                        </div>
-
-                                        <!-- Contact Fields -->
-                                        <div class="flex gap-4">
-                                            <x-admin::form.control-group class="flex-1">
-                                                <x-admin::form.control-group.label>E-mail</x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="email"
-                                                    name="emails[0][value]"
-                                                    v-model="formData.email"
-                                                    placeholder="email@example.com"
-                                                />
-                                                <input type="hidden" name="emails[0][label]" value="work">
-                                                <input type="hidden" name="emails[0][is_default]" value="1">
-                                            </x-admin::form.control-group>
-
-                                            <x-admin::form.control-group class="flex-1">
-                                                <x-admin::form.control-group.label>Telefoon</x-admin::form.control-group.label>
-                                                <x-admin::form.control-group.control
-                                                    type="text"
-                                                    name="phones[0][value]"
-                                                    v-model="formData.phone"
-                                                    placeholder="+31 6 12345678"
-                                                />
-                                                <input type="hidden" name="phones[0][label]" value="work">
-                                                <input type="hidden" name="phones[0][is_default]" value="1">
-                                            </x-admin::form.control-group>
-                                        </div>
+                                        <p class="text-base font-semibold dark:text-white">Persoonsgegevens</p>
+                                        @include('admin::leads.common.personal-fields', ['entity' => (object)($prefilledLeadPerson ?? [])])
                                     </div>
 
                                     <!-- Organization Section -->
@@ -481,6 +425,16 @@
                                         </div>
                                     </div>
 
+                                    <!-- Emails -->
+                                    <div class="mt-4 w-1/2 max-md:w-full">
+                                        @include('admin::components.emails', ['name' => 'emails', 'value' => old('emails', $prefilledLeadPerson['emails'] ?? [])])
+                                    </div>
+
+                                    <!-- Phones -->
+                                    <div class="mt-4 w-1/2 max-md:w-full">
+                                        @include('admin::components.phones', ['name' => 'phones', 'value' => old('phones', $prefilledLeadPerson['phones'] ?? [])])
+                                    </div>
+
                                     <!-- Address -->
                                     <div class="mt-4">
                                         @include('admin::components.address', ['entity' => null])
@@ -502,6 +456,10 @@
                     initialPersons: {
                         type: Array,
                         default: () => []
+                    },
+                    initialLeadPerson: {
+                        type: Object,
+                        default: null
                     }
                 },
 
@@ -522,8 +480,13 @@
                         mri_status: '',
                             lead_type_id: '1', // Default: Preventie
                             // Personal fields for matching
-                            first_name: '',
-                            last_name: '',
+                            salutation: this.initialLeadPerson?.salutation?.value || '',
+                            initials: this.initialLeadPerson?.initials || '',
+                            first_name: this.initialLeadPerson?.first_name || '',
+                            lastname_prefix: this.initialLeadPerson?.lastname_prefix || '',
+                            last_name: this.initialLeadPerson?.last_name || '',
+                            married_name_prefix: this.initialLeadPerson?.married_name_prefix || '',
+                            married_name: this.initialLeadPerson?.married_name || '',
                             email: '',
                             phone: '',
                         }
@@ -539,7 +502,14 @@
 
                     // If prefilled persons exist, sync into the matcher and prefill fields
                     if (this.persons.length > 0) {
-                        this.updateFormDataFromPersons();
+                        // Prefill emails/phones if available
+                        const p = this.persons[0];
+                        if (!this.formData.email && p.emails && p.emails.length) {
+                            this.formData.email = p.emails[0].value || '';
+                        }
+                        if (!this.formData.phone && p.phones && p.phones.length) {
+                            this.formData.phone = p.phones[0].value || '';
+                        }
                     } else {
                         // Initialize with one empty slot for ease of use
                         this.persons.push({ id: null, name: '', match_percentage: null, organization: null });

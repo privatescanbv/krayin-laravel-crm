@@ -254,6 +254,7 @@ class LeadController extends Controller
 
         // Preselect person if provided via query param
         $prefilledPersons = [];
+        $prefilledLeadPerson = null;
         $personId = (int) request('person_id');
         if ($personId) {
             try {
@@ -262,12 +263,33 @@ class LeadController extends Controller
                     $prefilledPersons[] = [
                         'id' => $person->id,
                         'name' => $person->name,
+                        'first_name' => $person->first_name,
+                        'last_name' => $person->last_name,
+                        'lastname_prefix' => $person->lastname_prefix,
+                        'married_name' => $person->married_name,
+                        'married_name_prefix' => $person->married_name_prefix,
+                        'initials' => $person->initials,
                         'emails' => is_array($person->emails) ? $person->emails : [],
                         'phones' => is_array($person->phones) ? $person->phones : [],
                         'organization' => $person->organization ? [
                             'id' => $person->organization->id,
                             'name' => $person->organization->name,
                         ] : null,
+                    ];
+
+                    // Prefill full personal fields for step 2
+                    $prefilledLeadPerson = [
+                        'salutation' => $person->salutation,
+                        'initials' => $person->initials,
+                        'first_name' => $person->first_name,
+                        'lastname_prefix' => $person->lastname_prefix,
+                        'last_name' => $person->last_name,
+                        'married_name_prefix' => $person->married_name_prefix,
+                        'married_name' => $person->married_name,
+                        'date_of_birth' => $person->date_of_birth,
+                        'gender' => $person->gender,
+                        'emails' => is_array($person->emails) ? $person->emails : [],
+                        'phones' => is_array($person->phones) ? $person->phones : [],
                     ];
                 }
             } catch (\Exception $e) {
@@ -281,6 +303,7 @@ class LeadController extends Controller
             'defaultStageId' => $defaultStageId,
             'departmentOptions' => Department::pluck('name', 'id')->toArray(),
             'prefilledPersons' => $prefilledPersons,
+            'prefilledLeadPerson' => $prefilledLeadPerson,
         ]);
     }
 

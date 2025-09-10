@@ -32,7 +32,7 @@
                 <x-admin::form.control-group.control
                     type="select"
                     name="lead_channel_id"
-                    @if($useVueModel) v-model="formData.lead_channel_id" @endif
+                    v-model="formData.lead_channel_id"
                     value="{{ $val('lead_channel_id', '') }}"
                 >
                     <option value="">-- Kies kanaal --</option>
@@ -50,7 +50,7 @@
                 <x-admin::form.control-group.control
                     type="select"
                     name="lead_source_id"
-                    @if($useVueModel) v-model="formData.lead_source_id" @endif
+                    v-model="formData.lead_source_id"
                     value="{{ $val('lead_source_id', '') }}"
                 >
                     <option value="">-- Kies bron --</option>
@@ -72,7 +72,7 @@
                 <x-admin::form.control-group.control
                     type="select"
                     name="department_id"
-                    @if($useVueModel) v-model="formData.department_id" @endif
+                    v-model="formData.department_id"
                     rules="required"
                     value="{{ $val('department_id', '') }}"
                 >
@@ -91,7 +91,7 @@
                 <x-admin::form.control-group.control
                     type="select"
                     name="lead_type_id"
-                    @if($useVueModel) v-model="formData.lead_type_id" @endif
+                    v-model="formData.lead_type_id"
                     value="{{ $val('lead_type_id', '') }}"
                 >
                     <option value="">-- Kies type --</option>
@@ -116,7 +116,7 @@
                 <x-admin::form.control-group.control
                     type="select"
                     name="mri_status"
-                    @if($useVueModel) v-model="formData.mri_status" @endif
+                    v-model="formData.mri_status"
                     value="{{ $currentMRI }}"
                 >
                     <option value="">-- Selecteer MRI status --</option>
@@ -134,7 +134,7 @@
                 <x-admin::form.control-group.control
                     type="select"
                     name="combine_order"
-                    @if($useVueModel) v-model="formData.combine_order" @endif
+                    v-model="formData.combine_order"
                     value="{{ (string)($val('combine_order', 1)) }}"
                 >
                     <option value="1" {{ ((string)$val('combine_order', 1) === '1') ? 'selected' : '' }}>Ja</option>

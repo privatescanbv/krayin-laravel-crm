@@ -391,9 +391,6 @@
                 },
 
                 mounted() {
-                    // Initialize global variable for persons data
-                    window.leadFormPersons = this.persons;
-
                     // Set up global reference to this component for cross-component communication
                     window.leadFormComponent = this;
 

@@ -265,13 +265,13 @@
                         this.suggestions = [];
                         return;
                     }
-
+                    
                     this.searchTimeout = setTimeout(() => {
                         this.fetchSuggestions(this.search);
                     }, 300);
                 },
 
-                                 async fetchSuggestions(query) {
+                async fetchSuggestions(query) {
                      this.isSearching = true;
                      try {
                          const params = { query };
@@ -305,16 +305,24 @@
                      }
                  },
 
-                                                 addPerson(person) {
+                addPerson(person) {
                     if (!this.isPersonSelected(person.id)) {
-                        this.selectedPersons.push(person);
+                        const enriched = Object.assign({}, person);
+                        if ((!enriched.first_name || !enriched.last_name) && enriched.name) {
+                            const parts = String(enriched.name).trim().split(/\s+/);
+                            enriched.first_name = enriched.first_name || (parts[0] || '');
+                            enriched.last_name = enriched.last_name || (parts.slice(1).join(' ') || '');
+                        }
+                        if (!Array.isArray(enriched.emails)) { enriched.emails = []; }
+                        if (!Array.isArray(enriched.phones)) { enriched.phones = []; }
+                        this.selectedPersons.push(enriched);
                         
                         // Clear search and suggestions after adding
                         this.search = '';
                         this.suggestions = [];
                         
                         // Emit event for parent components to listen to
-                        this.$emit('person-added', person);
+                        this.$emit('person-added', enriched);
                         this.$emit('persons-updated', this.selectedPersons);
                         
                         // Also call the lead form component directly if available
@@ -386,7 +394,7 @@
                     }
                 },
 
-                                 async createPersonFromLead() {
+                async createPersonFromLead() {
                      if (!this.lead || this.isCreatingPerson) {
                          return;
                      }

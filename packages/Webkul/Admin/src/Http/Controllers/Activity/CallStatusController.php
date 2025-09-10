@@ -6,6 +6,7 @@ use App\Enums\CallStatus as CallStatusEnum;
 use App\Models\CallStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Webkul\Activity\Models\Activity;
 use Webkul\Admin\Http\Controllers\Controller;
 use App\Services\ActivityStatusService;
 
@@ -46,18 +47,22 @@ class CallStatusController extends Controller
 
         // Reschedule activity if requested
         if (!empty($validated['reschedule_days'])) {
-            $activity = \Webkul\Activity\Models\Activity::find($activityId);
+            $activity = Activity::find($activityId);
             if ($activity) {
                 $days = (int) $validated['reschedule_days'];
-                
-                // Update schedule_from and schedule_to by adding the specified days
-                if ($activity->schedule_from) {
-                    $activity->schedule_from = $activity->schedule_from->addDays($days);
-                }
-                if ($activity->schedule_to) {
-                    $activity->schedule_to = $activity->schedule_to->addDays($days);
-                }
-                
+
+               // Update schedule_from to today plus the specified days
+               $originalFrom = $activity->schedule_from;
+               $originalTo = $activity->schedule_to;
+
+               if ($originalFrom) {
+                   $diff = $originalTo && $originalFrom ? $originalTo->diffInDays($originalFrom) : 0;
+                   $activity->schedule_from = now()->addDays($days);
+                   if ($originalTo) {
+                       $activity->schedule_to = $activity->schedule_from->copy()->addDays($diff);
+                   }
+               }
+
                 $activity->save();
 
                 // Recompute status after reschedule

@@ -16,7 +16,7 @@ enum ActivityType: string
      */
     public static function userSelectable(): array
     {
-        return array_filter(self::cases(), fn ($case) => !in_array($case, [self::SYSTEM, self::NOTE, self::FILE], true));
+        return array_filter(self::cases(), fn ($case) => ! in_array($case, [self::SYSTEM, self::NOTE, self::FILE], true));
     }
 
     /**
@@ -24,6 +24,6 @@ enum ActivityType: string
      */
     public function isUserSelectable(): bool
     {
-        return !in_array($this, [self::SYSTEM, self::NOTE, self::FILE], true);
+        return ! in_array($this, [self::SYSTEM, self::NOTE, self::FILE], true);
     }
 }

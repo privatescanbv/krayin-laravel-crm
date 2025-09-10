@@ -223,9 +223,7 @@
                 <div v-show="currentStep === 2" style="display: none;">
                     <form @submit.prevent="submitForm" ref="leadForm">
                         @csrf
-                        @if (request('stage_id'))
-                            <input type="hidden" name="lead_pipeline_stage_id" value="{{ request('stage_id') }}"/>
-                        @endif
+                        <input type="hidden" name="lead_pipeline_stage_id" value="{{ request('stage_id') }}"/>
 
 
 

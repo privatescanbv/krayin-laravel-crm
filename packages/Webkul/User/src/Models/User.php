@@ -132,6 +132,14 @@ class User extends Authenticatable implements UserContract
     }
 
     /**
+     * User settings key-value pairs.
+     */
+    public function settings()
+    {
+        return $this->hasMany(UserSetting::class);
+    }
+
+    /**
      * Create a new factory instance for the model.
      *
      * @return \Illuminate\Database\Eloquent\Factories\Factory

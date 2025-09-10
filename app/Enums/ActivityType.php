@@ -8,13 +8,15 @@ enum ActivityType: string
     case MEETING = 'meeting';
     case TASK = 'task';
     case SYSTEM = 'system';
+    case NOTE = 'note';
+    case FILE = 'file';
 
     /**
      * Get all user-selectable activity types (excludes SYSTEM)
      */
     public static function userSelectable(): array
     {
-        return array_filter(self::cases(), fn ($case) => $case !== self::SYSTEM);
+        return array_filter(self::cases(), fn ($case) => !in_array($case, [self::SYSTEM, self::NOTE, self::FILE], true));
     }
 
     /**
@@ -22,6 +24,6 @@ enum ActivityType: string
      */
     public function isUserSelectable(): bool
     {
-        return $this !== self::SYSTEM;
+        return !in_array($this, [self::SYSTEM, self::NOTE, self::FILE], true);
     }
 }

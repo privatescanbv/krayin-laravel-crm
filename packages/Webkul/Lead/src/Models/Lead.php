@@ -43,6 +43,7 @@ class Lead extends Model implements LeadContract
         'gender'              => PersonGender::class,
         'salutation'          => PersonSalutation::class,
         'mri_status'          => MRIStatus::class,
+        'has_diagnosis_form'  => 'boolean',
     ];
 
     /**
@@ -90,6 +91,7 @@ class Lead extends Model implements LeadContract
         'created_by',
         'updated_by',
         'mri_status',
+        'has_diagnosis_form',
     ];
 
     /**

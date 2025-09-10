@@ -33,6 +33,7 @@ class LeadResource extends JsonResource
             'status'               => $this->status,
             'mri_status'           => $this->mri_status,
             'mri_status_label'     => $this->mri_status?->label() ?? null,
+            'has_diagnosis_form'   => (bool) ($this->has_diagnosis_form ?? false),
             'lost_reason'          => $this->lost_reason,
             'closed_at'            => $this->closed_at?->format('Y-m-d H:i:s'),
             'rotten_days'          => $this->rotten_days,

@@ -4,6 +4,7 @@ namespace Webkul\Activity\Repositories;
 
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
+use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Services\ViewService;
 use Webkul\Core\Eloquent\Repository;
 
@@ -142,5 +143,11 @@ class ActivityRepository extends Repository
         }
 
         return $queryBuilder->count() ? true : false;
+    }
+
+    public function unassign(Activity $activity): void
+    {
+        $activity->update(['user_id' => null]);
+        $activity->save();
     }
 }

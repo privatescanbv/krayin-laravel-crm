@@ -97,6 +97,21 @@ class ActivityController extends Controller
     }
 
     /**
+     * Display the specified activity in view mode.
+     */
+    public function view(int $id): View
+    {
+        $activity = $this->activityRepository->with('emails', 'lead')->findOrFail($id);
+
+        $callStatuses = \App\Models\CallStatus::where('activity_id', $activity->id)
+            ->with('creator')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('admin::activities.view', compact('activity', 'callStatuses'));
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(): RedirectResponse|JsonResponse
@@ -360,6 +375,18 @@ class ActivityController extends Controller
         }
 
         session()->flash('success', trans('admin::app.activities.update-success'));
+
+        // After completing, redirect to related lead view if available
+        $shouldRedirectToLead = false;
+        if (isset($data['is_done']) && $data['is_done']) {
+            $shouldRedirectToLead = true;
+        } elseif ($requestedStatus !== null && $requestedStatus === ActivityStatus::DONE->value) {
+            $shouldRedirectToLead = true;
+        }
+
+        if ($shouldRedirectToLead && $activity->lead_id) {
+            return redirect()->route('admin.leads.view', $activity->lead_id);
+        }
 
         return redirect()->route('admin.activities.index');
     }

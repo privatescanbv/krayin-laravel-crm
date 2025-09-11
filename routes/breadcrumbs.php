@@ -91,6 +91,12 @@ Breadcrumbs::for('activities.edit', function (BreadcrumbTrail $trail, $activity)
     $trail->push(trans('admin::app.activities.edit.title'), route('admin.activities.edit', $activity->id));
 });
 
+// Dashboard > activities > View Activity
+Breadcrumbs::for('activities.view', function (BreadcrumbTrail $trail, $activity) {
+    $trail->parent('activities');
+    $trail->push('#'.$activity->id, route('admin.activities.view', $activity->id));
+});
+
 // Dashboard > Contacts
 Breadcrumbs::for('contacts', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');

@@ -7,7 +7,7 @@ return [
                 'description'         => 'Beschrijving',
                 'expected-close-date' => 'Verwachte sluitingsdatum',
                 'lead-value'          => 'Lead waarde',
-                'sales-owner'         => 'Verkoop eigenaar',
+                'sales-owner'         => 'Toegewezen aan',
                 'source'              => 'Bron',
                 'title'               => 'Titel',
                 'type'                => 'Type',
@@ -20,13 +20,13 @@ return [
                 'emails'          => 'E-mails',
                 'name'            => 'Naam',
                 'organization'    => 'Organisatie',
-                'sales-owner'     => 'Verkoop eigenaar',
+                'sales-owner'     => 'Toegewezen aan',
             ],
 
             'organizations' => [
                 'address'     => 'Adres',
                 'name'        => 'Naam',
-                'sales-owner' => 'Verkoop eigenaar',
+                'sales-owner' => 'Toegewezen aan',
             ],
 
             'products' => [
@@ -46,7 +46,7 @@ return [
                 'expired-at'        => 'Verlopen op',
                 'grand-total'       => 'Totaalbedrag',
                 'person'            => 'Persoon',
-                'sales-owner'       => 'Verkoop eigenaar',
+                'sales-owner'       => 'Toegewezen aan',
                 'shipping-address'  => 'Verzendadres',
                 'sub-total'         => 'Subtotaal',
                 'subject'           => 'Onderwerp',

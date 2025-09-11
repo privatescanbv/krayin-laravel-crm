@@ -7,11 +7,17 @@ use App\Models\CallStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Webkul\Activity\Models\Activity;
+use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Controller;
 use App\Services\ActivityStatusService;
 
 class CallStatusController extends Controller
 {
+
+    public function __construct(private readonly ActivityRepository $activityRepository)
+    {
+    }
+
     public function index(int $activityId): JsonResponse
     {
         $items = CallStatus::where('activity_id', $activityId)
@@ -45,13 +51,11 @@ class CallStatusController extends Controller
             'status' => $validated['status'],
             'omschrijving' => $validated['omschrijving'] ?? null,
         ]);
-
+        $activity = $this->activityRepository->findOrFail($activityId);
         // Reschedule activity if requested
         if (!empty($validated['reschedule_days'])) {
-            $activity = Activity::find($activityId);
-            if ($activity) {
-                $days = (int) $validated['reschedule_days'];
 
+               $days = (int) $validated['reschedule_days'];
                // Update schedule_from to today plus the specified days
                $originalFrom = $activity->schedule_from;
                $originalTo = $activity->schedule_to;
@@ -63,7 +67,6 @@ class CallStatusController extends Controller
                        $activity->schedule_to = $activity->schedule_from->copy()->addDays($diff);
                    }
                }
-
                 $activity->save();
 
                 // Recompute status after reschedule
@@ -72,8 +75,8 @@ class CallStatusController extends Controller
                     $activity->status = $computed;
                     $activity->save();
                 }
-            }
         }
+        $this->activityRepository->unassign($activity);
 
         $response = [
             'message' => 'Call status toegevoegd' . (!empty($validated['reschedule_days']) ? ' en taak verplaatst' : ''),
@@ -85,7 +88,7 @@ class CallStatusController extends Controller
             // Fetch activity; rely on lazy-loading with null checks in helper to avoid BelongsToMany on missing lead
             $activity = Activity::findOrFail($activityId);
             $defaultEmail = $this->getDefaultEmailForActivity($activity);
-            
+
             $response['send_email'] = true;
             $response['default_email'] = $defaultEmail;
             $response['activity_id'] = $activityId;

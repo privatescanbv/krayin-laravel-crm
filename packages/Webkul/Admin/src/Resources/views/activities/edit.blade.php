@@ -187,10 +187,11 @@
                     <div class="flex items-center gap-x-2.5">
                         {!! view_render_event('admin.activities.edit.save_button.before') !!}
 
-                        <!-- Afronden Button -->
+                        <!-- Afronden Button submits dedicated hidden form to avoid detached listeners -->
                         <button
                             type="submit"
                             id="activity-complete-button"
+                            form="activity-complete-form"
                             class="secondary-button"
                         >
                             Afronden
@@ -420,6 +421,14 @@
         </div>
     </x-admin::form>
 
+    <!-- Hidden form used by Afronden button -->
+    <form id="activity-complete-form" action="{{ route('admin.activities.update', $activity->id) }}" method="POST" class="hidden">
+        @csrf
+        <input type="hidden" name="_method" value="PUT" />
+        <input type="hidden" name="is_done" value="1" />
+        <input type="hidden" name="status" value="done" />
+    </form>
+
     {!! view_render_event('admin.activities.edit.form.after') !!}
 
     @pushOnce('scripts')
@@ -504,37 +513,7 @@
             });
         </script>
 
-        <script>
-            // Ensure 'Afronden' submits is_done=1 and status=done
-            (function(){
-                document.addEventListener('DOMContentLoaded', function(){
-                    var completeBtn = document.getElementById('activity-complete-button');
-                    if (!completeBtn) throw new Error('No activity-complete-button found');
-                    console.log('Binding afronden button' + completeBtn);
-                    completeBtn.addEventListener('click', function(){
-                        try {
-                            throw new Error('click');
-                            var form = completeBtn.closest('form');
-                            if (!form) throw new Error('No form found');
-                            var existingDone = form.querySelector('input[name="is_done"][type="hidden"]');
-                            if (existingDone) existingDone.remove();
-                            var existingStatus = form.querySelector('input[name="status"][type="hidden"]');
-                            if (existingStatus) existingStatus.remove();
-                            var h1 = document.createElement('input');
-                            h1.type = 'hidden';
-                            h1.name = 'is_done';
-                            h1.value = '1';
-                            form.appendChild(h1);
-                            var h2 = document.createElement('input');
-                            h2.type = 'hidden';
-                            h2.name = 'status';
-                            h2.value = 'done';
-                            form.appendChild(h2);
-                        } catch (e) {console.error('Error: ' + e.message)}
-                    }, { capture: true });
-                });
-            })();
-        </script>
+        
 
         <script>
             // Inline status update without leaving the page (global function + immediate bind)

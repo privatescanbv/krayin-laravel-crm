@@ -186,7 +186,7 @@
                                     <!-- Card Footer -->
                                     <div
                                         class="flex items-center justify-between mt-2 pt-2 border-t border-gray-200 dark:border-gray-600"
-                                        v-if="element.has_duplicates || (element.open_activities_count && element.open_activities_count > 0) || (element.unread_emails_count && element.unread_emails_count > 0) || element.mri_status || element.has_diagnosis_form"
+                                        v-if="element.has_duplicates || element.open_activities_count === 0 || (element.open_activities_count && element.open_activities_count > 0) || (element.unread_emails_count && element.unread_emails_count > 0) || element.mri_status || element.has_diagnosis_form"
                                     >
                                         <div class="flex items-center gap-3">
                                             <!-- Open Activities Count -->
@@ -222,6 +222,20 @@
                                                 <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
                                                     <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
                                                         Mogelijke duplicate gevonden (@{{ element.duplicates_count }} gelijkenissen)
+                                                    </span>
+                                                    <div class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- No Open Activities Warning -->
+                                            <div
+                                                class="group relative flex items-center gap-1"
+                                                v-if="element.open_activities_count === 0"
+                                            >
+                                                <span class="icon-warning cursor-default text-xs text-red-600"></span>
+                                                <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
+                                                    <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                        Geen open activiteiten
                                                     </span>
                                                     <div class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                                 </div>

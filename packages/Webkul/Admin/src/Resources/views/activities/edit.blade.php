@@ -441,7 +441,14 @@
                                             <div class="flex items-start justify-between">
                                                 <div class="flex-1">
                                                     <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                                        {{ $email->subject ?: 'Geen onderwerp' }}
+                                                        <a
+                                                            href="{{ route('admin.mail.view', ['route' => 'inbox', 'id' => $email->id]) }}"
+                                                            target="_blank"
+                                                            class="hover:underline"
+                                                            title="E-mail bekijken"
+                                                        >
+                                                            {{ $email->subject ?: 'Geen onderwerp' }}
+                                                        </a>
                                                     </h4>
                                                     <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                                         {{ $email->created_at->format('d-m-Y H:i') }}

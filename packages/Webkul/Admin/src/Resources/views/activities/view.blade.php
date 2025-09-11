@@ -14,9 +14,21 @@
                     />
                 </div>
 
-                <h3 class="text-lg font-bold dark:text-white">
-                    {{ $activity->title ?: __('admin::app.activities.edit.title') }}
-                </h3>
+                <div class="flex items-center justify-between gap-2">
+                    <h3 class="text-lg font-bold dark:text-white">
+                        {{ $activity->title ?: __('admin::app.activities.edit.title') }}
+                    </h3>
+                    @if (bouncer()->hasPermission('activities.delete'))
+                        <form method="POST" action="{{ route('admin.activities.delete', $activity->id) }}" onsubmit="return confirm('Weet je zeker dat je deze activiteit wilt verwijderen?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="flex items-center gap-1 text-red-600 hover:text-red-700 text-sm">
+                                <span class="icon-delete"></span>
+                                <span>Verwijderen</span>
+                            </button>
+                        </form>
+                    @endif
+                </div>
 
                 <!-- Actions (same as lead, except file add) executed on related lead via popup -->
                 <div id="activity-view-actions" class="mt-2 flex flex-wrap gap-2">

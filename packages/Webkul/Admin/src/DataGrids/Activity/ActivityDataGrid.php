@@ -371,6 +371,15 @@ class ActivityDataGrid extends DataGrid
      */
     public function prepareActions(): void
     {
+        // View action (eye icon)
+        $this->addAction([
+            'index'  => 'view',
+            'icon'   => 'icon-eye',
+            'title'  => trans('admin::app.datagrid.view'),
+            'method' => 'GET',
+            'url'    => fn ($row) => route('admin.activities.view', $row->id),
+        ]);
+
         if (bouncer()->hasPermission('activities.edit')) {
             $this->addAction([
                 'index'  => 'edit',
@@ -381,15 +390,7 @@ class ActivityDataGrid extends DataGrid
             ]);
         }
 
-        if (bouncer()->hasPermission('activities.delete')) {
-            $this->addAction([
-                'index'  => 'delete',
-                'icon'   => 'icon-delete',
-                'title'  => trans('admin::app.activities.index.datagrid.update'),
-                'method' => 'DELETE',
-                'url'    => fn ($row) => route('admin.activities.delete', $row->id),
-            ]);
-        }
+        // Remove delete action from datagrid as requested
 
         // Add unassign action for activities assigned to current user
         $currentUserId = auth()->guard('user')->id();

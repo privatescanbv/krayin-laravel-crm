@@ -141,7 +141,7 @@ class ViewService
             [
                 'column' => 'group',
                 'operator' => 'eq',
-                'value' => 'Hernia',
+                'value' => 'Herniapoli',
             ],
             [
                 'column' => 'is_done',

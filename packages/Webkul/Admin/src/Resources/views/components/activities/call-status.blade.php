@@ -163,9 +163,10 @@
             }
         });
 
-        // Use event delegation to handle button clicks
+        // Use event delegation to handle button clicks, including clicks on nested icons
         document.addEventListener('click', async function(e) {
-            if (e.target && e.target.id === 'call-status-submit') {
+            const submitBtn = e.target && (e.target.id === 'call-status-submit' ? e.target : (e.target.closest ? e.target.closest('#call-status-submit') : null));
+            if (submitBtn) {
                 e.preventDefault();
                 e.stopPropagation();
 

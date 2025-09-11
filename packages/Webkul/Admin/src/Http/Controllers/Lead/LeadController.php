@@ -236,7 +236,7 @@ class LeadController extends Controller
     public function create(): View
     {
         // Get current user's groups to determine default department
-        $user = auth()->user();
+        $user = auth()->guard('user')->user() ?? auth()->user();
         $userGroupNames = $user->groups->pluck('name')->toArray();
         $defaultDepartmentId = Department::mapGroupToDepartmentId($userGroupNames);
 

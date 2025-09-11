@@ -66,7 +66,7 @@
                 <p class="text-[11px] text-gray-500 mt-1">Na het toevoegen van de belstatus wordt een e-mail dialoog geopend</p>
             </div>
 
-            <button type="button" id="call-status-submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+            <button type="button" id="call-status-submit" onclick="window.__handleCallStatusSubmit && window.__handleCallStatusSubmit(event)" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                 <i class="icon-plus mr-2"></i>Toevoegen
             </button>
         </form>
@@ -102,6 +102,96 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Define robust global handler so inline onclick always works even if DOM is re-rendered
+        window.__handleCallStatusSubmit = async function(e) {
+            try {
+                if (e) { e.preventDefault && e.preventDefault(); e.stopPropagation && e.stopPropagation(); }
+
+                const form = document.getElementById('call-status-form');
+                if (!form) {
+                    alert('Form niet gevonden');
+                    return false;
+                }
+
+                const statusEl = form.querySelector('[name="status"]');
+                const omschrEl = form.querySelector('[name="omschrijving"]');
+                const rescheduleEl = form.querySelector('[name="reschedule_days"]');
+                const sendEmailEl = form.querySelector('[name="send_email"]');
+                if (!statusEl || !omschrEl || !rescheduleEl) {
+                    alert('Form velden niet gevonden');
+                    return false;
+                }
+
+                const status = statusEl.value;
+                const omschrijving = omschrEl.value;
+                let rescheduleDays = rescheduleEl.value;
+                const sendEmail = sendEmailEl ? sendEmailEl.checked : false;
+
+                if (status === 'spoken') {
+                    rescheduleDays = '';
+                    rescheduleEl.value = '';
+                } else if (!rescheduleDays) {
+                    rescheduleDays = '7';
+                    rescheduleEl.value = '7';
+                }
+
+                if (!status) {
+                    alert('Selecteer een status');
+                    return false;
+                }
+
+                const res = await fetch('{{ route('admin.activities.call-statuses.store', $activity->id) }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ status, omschrijving, reschedule_days: rescheduleDays, send_email: sendEmail })
+                });
+
+                if (!res.ok) {
+                    let message = 'Toevoegen mislukt';
+                    try { const err = await res.json(); message = err.message || message; } catch (_) {}
+                    throw new Error(message);
+                }
+
+                const data = await res.json();
+                const list = document.getElementById('call-status-list');
+                if (!list) {
+                    alert('Lijst container niet gevonden');
+                    return false;
+                }
+
+                const item = data.data;
+                const createdAt = item.created_at ? new Date(item.created_at).toLocaleString('nl-NL', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+                const statusLabels = { 'not_reachable': 'Niet kunnen bereiken', 'voicemail_left': 'Voicemail ingesproken', 'spoken': 'Gesproken' };
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'rounded border p-2 text-sm dark:border-gray-700';
+                wrapper.innerHTML =
+                    '<div class="flex items-center justify-between">' +
+                        '<span class="font-medium">' + (statusLabels[item.status] || item.status) + '</span>' +
+                        '<span class="text-xs text-gray-500">' + createdAt + '</span>' +
+                    '</div>' +
+                    (item.omschrijving ? '<div class="mt-1 text-gray-700 dark:text-gray-300">' + item.omschrijving + '</div>' : '') +
+                    (item.creator ? '<div class="mt-1 text-xs text-gray-500">Toegevoegd door: ' + item.creator.name + '</div>' : '');
+
+                list.prepend(wrapper);
+                form.reset();
+
+                if (data.send_email) {
+                    window.dispatchEvent(new CustomEvent('open-email-dialog', { detail: { defaultEmail: data.default_email || null, activityId: data.activity_id } }));
+                }
+                return false;
+            } catch (e2) {
+                console.error('Call status error:', e2);
+                alert(e2.message || 'Onbekende fout');
+                return false;
+            }
+        };
         // Collapsible form toggle
         const toggleBtn = document.getElementById('toggle-call-status-form');
         const toggleIcon = document.getElementById('toggle-call-status-form-icon');

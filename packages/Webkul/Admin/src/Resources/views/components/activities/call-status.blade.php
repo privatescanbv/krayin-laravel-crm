@@ -201,7 +201,7 @@
             statusEl && statusEl.addEventListener('change', applyDefaults);
         }
 
-        // Delegated listener to handle dynamic DOM replacements
+        // Delegated listener to handle dynamic DOM replacements for status change
         document.addEventListener('change', function(e) {
             const target = e.target;
             if (!target || target.name !== 'status') return;
@@ -215,127 +215,7 @@
                 resEl.value = '7';
             }
         });
-
-        // Use event delegation to handle button clicks, including clicks on nested icons
-        document.addEventListener('click', async function(e) {
-            const submitBtn = e.target && (e.target.id === 'call-status-submit' ? e.target : (e.target.closest ? e.target.closest('#call-status-submit') : null));
-            if (submitBtn) {
-                e.preventDefault();
-                e.stopPropagation();
-
-                const form = document.getElementById('call-status-form');
-                if (!form) {
-                    alert('Form niet gevonden');
-                    return;
-                }
-
-                const statusEl = form.querySelector('[name="status"]');
-                const omschrEl = form.querySelector('[name="omschrijving"]');
-                const rescheduleEl = form.querySelector('[name="reschedule_days"]');
-                const sendEmailEl = form.querySelector('[name="send_email"]');
-                if (!statusEl || !omschrEl || !rescheduleEl) {
-                    alert('Form velden niet gevonden');
-                    return;
-                }
-
-                const status = statusEl.value;
-                const omschrijving = omschrEl.value;
-                let rescheduleDays = rescheduleEl.value;
-                const sendEmail = sendEmailEl ? sendEmailEl.checked : false;
-
-                // Defaults: spoken => no move, others => 7 days
-                if (status === 'spoken') {
-                    rescheduleDays = '';
-                    rescheduleEl.value = '';
-                } else if (!rescheduleDays) {
-                    rescheduleDays = '7';
-                    rescheduleEl.value = '7';
-                }
-
-                if (!status) {
-                    alert('Selecteer een status');
-                    return;
-                }
-
-                try {
-                    const res = await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json',
-                        },
-                        credentials: 'same-origin',
-                        body: JSON.stringify({ status, omschrijving, reschedule_days: rescheduleDays, send_email: sendEmail })
-                    });
-
-                    if (!res.ok) {
-                        let message = 'Toevoegen mislukt';
-                        try {
-                            const err = await res.json();
-                            message = err.message || message;
-                        } catch (_) {}
-                        throw new Error(message);
-                    }
-
-                    const data = await res.json();
-                    const list = document.getElementById('call-status-list');
-                    if (!list) {
-                        alert('Lijst container niet gevonden');
-                        return;
-                    }
-
-                    const item = data.data;
-                    const createdAt = item.created_at ?
-                        new Date(item.created_at).toLocaleString('nl-NL', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        }) : '';
-
-                    const statusLabels = {
-                        'not_reachable': 'Niet kunnen bereiken',
-                        'voicemail_left': 'Voicemail ingesproken',
-                        'spoken': 'Gesproken'
-                    };
-
-                    const wrapper = document.createElement('div');
-                    wrapper.className = 'rounded border p-2 text-sm dark:border-gray-700';
-                    wrapper.innerHTML =
-                        '<div class="flex items-center justify-between">' +
-                            '<span class="font-medium">' + (statusLabels[item.status] || item.status) + '</span>' +
-                            '<span class="text-xs text-gray-500">' + createdAt + '</span>' +
-                        '</div>' +
-                        (item.omschrijving ?
-                            '<div class="mt-1 text-gray-700 dark:text-gray-300">' + item.omschrijving + '</div>' :
-                            ''
-                        ) +
-                        (item.creator ?
-                            '<div class="mt-1 text-xs text-gray-500">Toegevoegd door: ' + item.creator.name + '</div>' :
-                            ''
-                        );
-
-                    list.prepend(wrapper);
-                    form.reset();
-
-                    // If email should be sent, trigger email dialog (default email may be null)
-                    if (data.send_email) {
-                        window.dispatchEvent(new CustomEvent('open-email-dialog', {
-                            detail: {
-                                defaultEmail: data.default_email || null,
-                                activityId: data.activity_id
-                            }
-                        }));
-                    }
-                } catch (e) {
-                    console.error('Call status error:', e);
-                    alert(e.message);
-                }
-            }
-        });
+        // Click handling is inline via onclick on the submit button to avoid delegation complexity
     });
 </script>
 @endpush

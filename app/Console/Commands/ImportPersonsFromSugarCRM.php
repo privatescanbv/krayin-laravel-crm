@@ -212,19 +212,31 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
 
                     continue;
                 }
-                // Build phones array from available SugarCRM fields
+                // Build phones array from available SugarCRM fields with sanitization
                 $phones = [];
                 if (! empty($record->phone_work)) {
-                    $phones[] = ['label' => 'work', 'value' => $record->phone_work];
+                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_work, 'work');
+                    if ($value !== '') {
+                        $phones[] = ['label' => $label, 'value' => $value, 'is_default' => true];
+                    }
                 }
                 if (! empty($record->phone_mobile)) {
-                    $phones[] = ['label' => 'mobile', 'value' => $record->phone_mobile];
+                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_mobile, 'mobile');
+                    if ($value !== '') {
+                        $phones[] = ['label' => $label, 'value' => $value, 'is_default' => empty($phones)];
+                    }
                 }
                 if (! empty($record->phone_home)) {
-                    $phones[] = ['label' => 'home', 'value' => $record->phone_home];
+                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_home, 'home');
+                    if ($value !== '') {
+                        $phones[] = ['label' => $label, 'value' => $value, 'is_default' => empty($phones)];
+                    }
                 }
                 if (! empty($record->phone_other)) {
-                    $phones[] = ['label' => 'other', 'value' => $record->phone_other];
+                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_other, 'other');
+                    if ($value !== '') {
+                        $phones[] = ['label' => $label, 'value' => $value, 'is_default' => empty($phones)];
+                    }
                 }
 
                 $emails = [];

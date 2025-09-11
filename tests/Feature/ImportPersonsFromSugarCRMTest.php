@@ -189,3 +189,50 @@ test('imports person with primary and secondary emails ordered correctly', funct
         ->and(count($emails))->toBeGreaterThanOrEqual(1)
         ->and($emails[0]['value'])->toBe('bob.primary@example.com');
 });
+
+test('person import strips label text from phone values and infers labels', function () {
+    $contactId = 'contact-phones-001';
+
+    DB::connection('sugarcrm')->table('contacts')->insert([
+        'id'                         => $contactId,
+        'first_name'                 => 'Chris',
+        'last_name'                  => 'Phones',
+        'phone_mobile'               => '+31623234434 (prive)',
+        'phone_work'                 => 'werk +31201234567',
+        'phone_home'                 => '+31851234567 thuis',
+        'date_entered'               => now(),
+        'date_modified'              => now(),
+        'deleted'                    => 0,
+    ]);
+
+    DB::connection('sugarcrm')->table('contacts_cstm')->insert([
+        'id_c' => $contactId,
+    ]);
+
+    $exit = Artisan::call('import:persons', [
+        '--connection' => 'sugarcrm',
+        '--table'      => 'contacts',
+        '--limit'      => 10,
+    ]);
+    expect($exit)->toBe(0);
+
+    $person = Person::where('external_id', $contactId)->first();
+    expect($person)->not->toBeNull();
+
+    $phones = collect($person->phones);
+
+    // Mobile with (prive) becomes label home and value cleaned
+    $mobile = $phones->firstWhere('value', '+31623234434');
+    expect($mobile)->not->toBeNull()
+        ->and($mobile['label'])->toBe('home');
+
+    // Work prefixed becomes work
+    $work = $phones->firstWhere('value', '+31201234567');
+    expect($work)->not->toBeNull()
+        ->and($work['label'])->toBe('work');
+
+    // Home suffixed becomes home
+    $home = $phones->firstWhere('value', '+31851234567');
+    expect($home)->not->toBeNull()
+        ->and($home['label'])->toBe('home');
+});

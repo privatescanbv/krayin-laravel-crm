@@ -163,4 +163,72 @@ abstract class AbstractSugarCRMImport extends Command
         Config::set('webhook.enabled', true);
         $this->info('🔔 Webhooks re-enabled after import operation');
     }
+
+    /**
+     * Sanitize a raw phone input coming from SugarCRM by stripping any textual labels
+     * appended to the number (e.g. "+31612345678 (prive)" or "prive +31612345678").
+     *
+     * Returns an array with [label, value]. The label is derived from any
+     * detected keywords if present; otherwise the provided default label is used.
+     *
+     * Note: This method is intentionally conservative and does NOT normalize local
+     * formats like "010-123" to keep backward compatibility with existing data and tests.
+     */
+    protected function sanitizePhoneAndInferLabel(?string $raw, string $defaultLabel): array
+    {
+        $value = trim((string) ($raw ?? ''));
+        if ($value === '') {
+            return [$defaultLabel, $value];
+        }
+
+        $lower = strtolower($value);
+
+        // Known label keywords and their mapped labels used in our system
+        $labelMap = [
+            'prive'  => 'home',
+            'privé'  => 'home',
+            'werk'   => 'work',
+            'work'   => 'work',
+            'thuis'  => 'home',
+            'home'   => 'home',
+            'mobiel' => 'mobile',
+            'mobile' => 'mobile',
+            'gsm'    => 'mobile',
+            'other'  => 'other',
+            'overig' => 'other',
+        ];
+
+        $detectedLabel = $defaultLabel;
+
+        // 1) Remove parenthesized label fragments like "(prive)" or "(werk)"
+        $value = preg_replace_callback('/\(([^)]*)\)/u', function ($m) use (&$detectedLabel, $labelMap) {
+            $inner = strtolower(trim($m[1] ?? ''));
+            if ($inner !== '' && isset($labelMap[$inner])) {
+                $detectedLabel = $labelMap[$inner];
+            }
+
+            return '';
+        }, $value);
+
+        // 2) Check for label words at start or end and strip them
+        foreach ($labelMap as $keyword => $mapped) {
+            // Start: "prive +31..." or "mobiel 06-..."
+            if (preg_match('/^\s*'.preg_quote($keyword, '/').'\s+/iu', $value)) {
+                $detectedLabel = $mapped;
+                $value = preg_replace('/^\s*'.preg_quote($keyword, '/').'\s+/iu', '', $value);
+            }
+
+            // End: "+31... prive" or "+31... mobiel"
+            if (preg_match('/\s+'.preg_quote($keyword, '/').'\s*$/iu', $value)) {
+                $detectedLabel = $mapped;
+                $value = preg_replace('/\s+'.preg_quote($keyword, '/').'\s*$/iu', '', $value);
+            }
+        }
+
+        // 3) Collapse extra whitespace and trim common trailing punctuation leftover
+        $value = preg_replace('/\s{2,}/u', ' ', $value ?? '');
+        $value = trim($value, " \t\n\r\0\x0B-;:,.");
+
+        return [$detectedLabel, $value];
+    }
 }

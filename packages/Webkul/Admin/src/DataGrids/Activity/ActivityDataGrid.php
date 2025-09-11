@@ -338,6 +338,17 @@ class ActivityDataGrid extends DataGrid
                 }
             },
         ]);
+
+        // Hidden column to support filtering by group via URL params like filters[group][0]=...
+        $this->addColumn([
+            'index'      => 'group',
+            'label'      => 'Groep',
+            'type'       => 'string',
+            'searchable' => false,
+            'filterable' => true,
+            'sortable'   => false,
+            'visibility' => false,
+        ]);
     }
 
     /**

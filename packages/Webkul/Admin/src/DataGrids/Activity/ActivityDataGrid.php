@@ -170,46 +170,7 @@ class ActivityDataGrid extends DataGrid
             'sortable'   => true,
         ]);
 
-        $this->addColumn([
-            'index'              => 'type',
-            'label'              => trans('admin::app.activities.index.datagrid.type'),
-            'type'               => 'string',
-            'searchable'         => false,
-            'filterable'         => true,
-            'filterable_type'    => 'dropdown',
-            'filterable_options' => $this->getActivityTypeDropdownOptions(),
-            'sortable'           => true,
-            'closure'            => fn ($row) => trans('admin::app.activities.edit.'.$row->type),
-        ]);
-
-        $this->addColumn([
-            'index'              => 'assigned_user_id',
-            'label'              => trans('admin::app.activities.index.datagrid.assigned_to'),
-            'type'               => 'string',
-            'searchable'         => false,
-            'sortable'           => true,
-            'filterable'         => true,
-            'filterable_type'    => 'searchable_dropdown',
-            'filterable_options' => [
-                'repository' => UserRepository::class,
-                'column'     => [
-                    'label' => 'name',
-                    'value' => 'name',
-                ],
-            ],
-            'closure'    => function ($row) {
-                $route = urldecode(route('admin.settings.users.index', ['id[eq]' => $row->assigned_user_id]));
-
-                return "<a class='text-brandColor hover:underline' href='".$route."'>".$row->created_by.'</a>';
-            },
-        ]);
-
-        $this->addColumn([
-            'index'   => 'comment',
-            'label'   => trans('admin::app.activities.index.datagrid.comment'),
-            'type'    => 'string',
-        ]);
-
+        // Place "Gerelateerd aan" (entity_type) before "type"
         $this->addColumn([
             'index'              => 'entity_type',
             'label'              => 'Gerelateerd aan',
@@ -273,6 +234,42 @@ class ActivityDataGrid extends DataGrid
                 return "<a class='text-brandColor hover:underline' target='_blank' href='".$route."'>".$label.'</a>';
             },
         ]);
+
+        $this->addColumn([
+            'index'              => 'type',
+            'label'              => trans('admin::app.activities.index.datagrid.type'),
+            'type'               => 'string',
+            'searchable'         => false,
+            'filterable'         => true,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => $this->getActivityTypeDropdownOptions(),
+            'sortable'           => true,
+            'closure'            => fn ($row) => trans('admin::app.activities.edit.'.$row->type),
+        ]);
+
+        $this->addColumn([
+            'index'              => 'assigned_user_id',
+            'label'              => trans('admin::app.activities.index.datagrid.assigned_to'),
+            'type'               => 'string',
+            'searchable'         => false,
+            'sortable'           => true,
+            'filterable'         => true,
+            'filterable_type'    => 'searchable_dropdown',
+            'filterable_options' => [
+                'repository' => UserRepository::class,
+                'column'     => [
+                    'label' => 'name',
+                    'value' => 'name',
+                ],
+            ],
+            'closure'    => function ($row) {
+                $route = urldecode(route('admin.settings.users.index', ['id[eq]' => $row->assigned_user_id]));
+
+                return "<a class='text-brandColor hover:underline' href='".$route."'>".$row->created_by.'</a>';
+            },
+        ]);
+
+        // Removed comment column as requested
 
 
         $this->addColumn([
@@ -385,11 +382,7 @@ class ActivityDataGrid extends DataGrid
      */
     public function prepareMassActions(): void
     {
-        $this->addMassAction([
-            'title'  => trans('admin::app.activities.index.datagrid.delete'),
-            'url'    => route('admin.activities.mass_delete'),
-            'method' => 'POST',
-        ]);
+        // Intentionally left blank: no bulk/mass actions; also hides bulk selection UI
     }
 
 }

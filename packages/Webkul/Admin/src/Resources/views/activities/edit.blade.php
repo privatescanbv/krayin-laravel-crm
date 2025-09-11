@@ -467,6 +467,17 @@
                             </div>
                         </div>
                     @endif
+
+                    <!-- Compose email action (opens same dialog as in lead view) -->
+                    @if ($activity->lead)
+                        <div class="mt-4">
+                            @include('admin::components.activities.actions.mail', [
+                                'entity' => $activity->lead,
+                                'entityControlName' => 'lead_id',
+                                'activity' => $activity,
+                            ])
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>

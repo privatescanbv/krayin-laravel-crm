@@ -231,12 +231,11 @@
                     list.prepend(wrapper);
                     form.reset();
 
-                    // If email should be sent, trigger email dialog
-                    if (data.send_email && data.default_email) {
-                        // Trigger email dialog with default email
+                    // If email should be sent, trigger email dialog (default email may be null)
+                    if (data.send_email) {
                         window.dispatchEvent(new CustomEvent('open-email-dialog', {
                             detail: {
-                                defaultEmail: data.default_email,
+                                defaultEmail: data.default_email || null,
                                 activityId: data.activity_id
                             }
                         }));

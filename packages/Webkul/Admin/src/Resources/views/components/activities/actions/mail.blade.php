@@ -25,6 +25,7 @@
         ref="mailActionComponent"
         :entity="{{ json_encode($entity) }}"
         entity-control-name="{{ $entityControlName }}"
+        :activity-id="{{ isset($activity) ? (int) $activity->id : 'null' }}"
     ></v-mail-activity>
 
     {!! view_render_event('admin.components.activities.actions.mail.after') !!}
@@ -238,6 +239,12 @@
                     type: String,
                     required: true,
                     default: ''
+                },
+
+                activityId: {
+                    type: [Number, null],
+                    required: false,
+                    default: null,
                 }
             },
 
@@ -274,6 +281,19 @@
                             emailField.value = defaultEmail;
                             // Trigger change event to update any tags input
                             emailField.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+
+                        // Inject activity_id hidden input if provided
+                        const formEl = this.$refs.mailActionForm;
+                        if (formEl && (activityId || this.activityId)) {
+                            let hidden = formEl.querySelector('input[name="activity_id"]');
+                            if (!hidden) {
+                                hidden = document.createElement('input');
+                                hidden.type = 'hidden';
+                                hidden.name = 'activity_id';
+                                formEl.appendChild(hidden);
+                            }
+                            hidden.value = activityId || this.activityId;
                         }
                     }, 100);
                 },

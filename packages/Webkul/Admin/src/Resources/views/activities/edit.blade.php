@@ -229,9 +229,9 @@
             </div>
 
             <!-- Form Content -->
-            <div class="flex gap-2.5 max-lg:flex-wrap-reverse">
-                <!-- Left sub-component -->
-                <div class="box-shadow flex-1 gap-2 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 max-lg:flex-auto">
+            <div class="flex">
+                <!-- Single full-width editor -->
+                <div class="box-shadow w-full gap-2 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                     {!! view_render_event('admin.activities.edit.form_controls.before') !!}
 
                     <!-- Title -->
@@ -427,78 +427,6 @@
                     <!-- is_done Checkbox removed in favor of Afronden button -->
 
                     {!! view_render_event('admin.activities.edit.form_controls.after') !!}
-                </div>
-
-                <!-- Right sub-component -->
-                <div class="w-[360px] max-w-full gap-2 max-lg:w-full">
-                    <!-- Linked Emails Section -->
-                    @if($activity->emails && $activity->emails->count() > 0)
-                        <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                            <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                    Gekoppelde E-Mails
-                                </h3>
-                                <span class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ $activity->emails->count() }} {{ $activity->emails->count() === 1 ? 'e-mail' : 'e-mails' }}
-                                </span>
-                            </div>
-                            
-                            <div class="space-y-3">
-                                @foreach($activity->emails as $email)
-                                    <div class="flex items-start gap-3 p-3 rounded-md border border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
-                                        <div class="flex-shrink-0">
-                                            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
-                                                <span class="icon-mail text-sm"></span>
-                                            </div>
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex items-start justify-between">
-                                                <div class="flex-1">
-                                                    <h4 class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                                                        <a
-                                                            href="{{ route('admin.mail.view', ['route' => 'inbox', 'id' => $email->id]) }}"
-                                                            target="_blank"
-                                                            class="hover:underline"
-                                                            title="E-mail bekijken"
-                                                        >
-                                                            {{ $email->subject ?: 'Geen onderwerp' }}
-                                                        </a>
-                                                    </h4>
-                                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                        {{ $email->created_at->format('d-m-Y H:i') }}
-                                                    </p>
-                                                    @if($email->from)
-                                                        <p class="text-xs text-gray-600 dark:text-gray-300 mt-1">
-                                                            Van: {{ is_array($email->from) ? implode(', ', $email->from) : $email->from }}
-                                                        </p>
-                                                    @endif
-                                                </div>
-                                                <a
-                                                    href="{{ route('admin.mail.view', ['route' => 'inbox', 'id' => $email->id]) }}"
-                                                    target="_blank"
-                                                    class="flex-shrink-0 ml-2 flex h-6 w-6 items-center justify-center rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-                                                    title="E-mail bekijken"
-                                                >
-                                                    <span class="icon-right-arrow text-xs"></span>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    @endif
-
-                    <!-- Compose email action (opens same dialog as in lead view) -->
-                    @if ($activity->lead)
-                        <div class="mt-4">
-                            @include('admin::components.activities.actions.mail', [
-                                'entity' => $activity->lead,
-                                'entityControlName' => 'lead_id',
-                                'activity' => $activity,
-                            ])
-                        </div>
-                    @endif
                 </div>
             </div>
         </div>

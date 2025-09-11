@@ -509,11 +509,13 @@
             (function(){
                 document.addEventListener('DOMContentLoaded', function(){
                     var completeBtn = document.getElementById('activity-complete-button');
-                    if (!completeBtn) return;
+                    if (!completeBtn) throw new Error('No activity-complete-button found');
+                    console.log('Binding afronden button' + completeBtn);
                     completeBtn.addEventListener('click', function(){
                         try {
+                            throw new Error('click');
                             var form = completeBtn.closest('form');
-                            if (!form) return;
+                            if (!form) throw new Error('No form found');
                             var existingDone = form.querySelector('input[name="is_done"][type="hidden"]');
                             if (existingDone) existingDone.remove();
                             var existingStatus = form.querySelector('input[name="status"][type="hidden"]');
@@ -528,7 +530,7 @@
                             h2.name = 'status';
                             h2.value = 'done';
                             form.appendChild(h2);
-                        } catch (_) {}
+                        } catch (e) {console.error('Error: ' + e.message)}
                     }, { capture: true });
                 });
             })();

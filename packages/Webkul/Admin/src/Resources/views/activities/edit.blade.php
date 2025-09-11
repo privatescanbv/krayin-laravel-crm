@@ -30,6 +30,7 @@
                                 'active' => 'Actief',
                                 'on_hold' => 'On hold',
                                 'expired' => 'Verlopen',
+                                'done' => 'Afgerond',
                             ];
                             $baseClasses = 'px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer';
                             $inactiveClasses = 'bg-white text-gray-700 border-gray-300 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-700 dark:hover:bg-gray-700';
@@ -38,8 +39,9 @@
                                 'active' => 'bg-green-100 text-green-800 border-green-400 ring-2 ring-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-700 dark:ring-green-700',
                                 'on_hold' => 'bg-yellow-100 text-yellow-800 border-yellow-400 ring-2 ring-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-700 dark:ring-yellow-700',
                                 'expired' => 'bg-red-100 text-red-800 border-red-400 ring-2 ring-red-300 dark:bg-red-900 dark:text-red-300 dark:border-red-700 dark:ring-red-700',
+                                'done' => 'bg-gray-200 text-gray-800 border-gray-400 ring-2 ring-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:ring-gray-600',
                             ];
-                            $options = ['in_progress','active','on_hold','expired'];
+                            $options = ['in_progress','active','on_hold','expired','done'];
                         @endphp
 
                         <script>
@@ -58,7 +60,8 @@
                                     in_progress: 'bg-blue-100 text-blue-800 border-blue-400 ring-2 ring-blue-300 dark:bg-blue-900 dark:text-blue-300 dark:border-blue-700 dark:ring-blue-700',
                                     active: 'bg-green-100 text-green-800 border-green-400 ring-2 ring-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-700 dark:ring-green-700',
                                     on_hold: 'bg-yellow-100 text-yellow-800 border-yellow-400 ring-2 ring-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-700 dark:ring-yellow-700',
-                                    expired: 'bg-red-100 text-red-800 border-red-400 ring-2 ring-red-300 dark:bg-red-900 dark:text-red-300 dark:border-red-700 dark:ring-red-700'
+                                    expired: 'bg-red-100 text-red-800 border-red-400 ring-2 ring-red-300 dark:bg-red-900 dark:text-red-300 dark:border-red-700 dark:ring-red-700',
+                                    done: 'bg-gray-200 text-gray-800 border-gray-400 ring-2 ring-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:ring-gray-600'
                                 };
                                 window.updateActivityStatus = async function(status) {
                                     try {
@@ -167,6 +170,7 @@
                                             active: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-800',
                                             on_hold: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-800',
                                             expired: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900 dark:text-red-300 dark:border-red-800',
+                                            done: 'bg-gray-200 text-gray-800 border-gray-400 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600',
                                         };
                                         container.querySelectorAll('button.status-btn').forEach(b => {
                                             b.className = 'status-btn px-2 py-1 text-xs font-medium rounded-full border transition-colors cursor-pointer ' + inactive;
@@ -187,15 +191,26 @@
                     <div class="flex items-center gap-x-2.5">
                         {!! view_render_event('admin.activities.edit.save_button.before') !!}
 
-                        <!-- Afronden Button -->
-                        <button
-                            type="submit"
-                            name="is_done"
-                            value="1"
-                            class="secondary-button"
-                        >
-                            Afronden
-                        </button>
+                        @if($activity->is_done)
+                            <!-- Heropenen Button submits reopen form -->
+                            <button
+                                type="submit"
+                                form="activity-reopen-form"
+                                class="secondary-button"
+                            >
+                                Heropenen
+                            </button>
+                        @else
+                            <!-- Afronden Button submits dedicated hidden form to avoid detached listeners -->
+                            <button
+                                type="submit"
+                                id="activity-complete-button"
+                                form="activity-complete-form"
+                                class="secondary-button"
+                            >
+                                Afronden
+                            </button>
+                        @endif
 
                         <!-- Save Button -->
                         <button
@@ -421,6 +436,21 @@
         </div>
     </x-admin::form>
 
+    <!-- Hidden form used by Afronden button -->
+    <form id="activity-complete-form" action="{{ route('admin.activities.update', $activity->id) }}" method="POST" class="hidden">
+        @csrf
+        <input type="hidden" name="_method" value="PUT" />
+        <input type="hidden" name="is_done" value="1" />
+        <input type="hidden" name="status" value="done" />
+    </form>
+
+    <!-- Hidden form used by Heropenen button -->
+    <form id="activity-reopen-form" action="{{ route('admin.activities.update', $activity->id) }}" method="POST" class="hidden">
+        @csrf
+        <input type="hidden" name="_method" value="PUT" />
+        <input type="hidden" name="is_done" value="0" />
+    </form>
+
     {!! view_render_event('admin.activities.edit.form.after') !!}
 
     @pushOnce('scripts')
@@ -505,6 +535,8 @@
             });
         </script>
 
+        
+
         <script>
             // Inline status update without leaving the page (global function + immediate bind)
             (function(){
@@ -519,6 +551,7 @@
                     active: 'bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-300 dark:border-green-800',
                     on_hold: 'bg-yellow-100 text-yellow-800 border-yellow-300 dark:bg-yellow-900 dark:text-yellow-300 dark:border-yellow-800',
                     expired: 'bg-red-100 text-red-800 border-red-300 dark:bg-red-900 dark:text-red-300 dark:border-red-800',
+                    done: 'bg-gray-200 text-gray-800 border-gray-400 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600',
                 };
 
                 window.updateActivityStatus = async function(status) {

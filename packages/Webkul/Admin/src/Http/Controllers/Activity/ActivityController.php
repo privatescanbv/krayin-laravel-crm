@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Activity\Repositories\FileRepository;
 use Webkul\Activity\Services\ViewService;
@@ -154,12 +155,8 @@ class ActivityController extends Controller
             'is_done' => request('type') == 'note' ? 1 : 0,
         ]));
 
-        // Auto status sync after create
-        $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, $activity->status);
-        if ($computed->value !== ($activity->status?->value ?? null)) {
-            $activity->status = $computed;
-            $activity->save();
-        }
+        $didChange = $this->updateStatus($this->activity);
+        if($didChange) $this->activity->save();
 
         Event::dispatch('activity.create.after', $activity);
 
@@ -259,32 +256,54 @@ class ActivityController extends Controller
 
         $activity = $this->activityRepository->update($data, $id);
 
-        // Auto status sync after update
-        $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, $activity->status);
+        // Synchronize is_done and status both ways
+        $didChange = false;
 
-        // If a status was explicitly requested, enforce rules:
-        // - in_progress: always allowed
-        // - others: must match computed, otherwise reject for AJAX and keep computed
-        if ($requestedStatus !== null) {
-            if ($requestedStatus === ActivityStatus::IN_PROGRESS->value) {
-                if (($activity->status?->value ?? null) !== $requestedStatus) {
+        // If is_done explicitly provided, take precedence
+        if (array_key_exists('is_done', $data)) {
+            $didChange = $this->updateStatus($activity);
+        } elseif ($requestedStatus !== null) {
+            // TODO refactor this code, simplify
+            // If status explicitly provided
+            if ($requestedStatus === ActivityStatus::DONE->value) {
+                if (!$activity->is_done) {
+                    $activity->is_done = 1;
+                    $didChange = true;
+                }
+                if (($activity->status?->value ?? null) !== ActivityStatus::DONE->value) {
+                    $activity->status = ActivityStatus::DONE;
+                    $didChange = true;
+                }
+            } elseif ($requestedStatus === ActivityStatus::IN_PROGRESS->value) {
+                // In progress is always allowed
+                if ($activity->is_done) {
+                    $activity->is_done = 0;
+                    $didChange = true;
+                }
+                if (($activity->status?->value ?? null) !== ActivityStatus::IN_PROGRESS->value) {
                     $activity->status = ActivityStatus::IN_PROGRESS;
-                    $activity->save();
+                    $didChange = true;
                 }
             } else {
+                // Other statuses must match computed
+                if ($activity->is_done) {
+                    $activity->is_done = 0;
+                    $didChange = true;
+                }
+                $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, $activity->status);
                 if ($computed->value !== $requestedStatus) {
-                    // Revert to computed status if user attempted invalid status
+                    // Reject with computed suggestion
                     if (($activity->status?->value ?? null) !== $computed->value) {
                         $activity->status = $computed;
-                        $activity->save();
+                        $didChange = true;
                     }
-
                     if (request()->ajax()) {
                         $labels = [
                             ActivityStatus::ACTIVE->value => 'Actief',
                             ActivityStatus::IN_PROGRESS->value => 'In behandeling',
                             ActivityStatus::ON_HOLD->value => 'On hold',
                             ActivityStatus::EXPIRED->value => 'Verlopen',
+                            ActivityStatus::DONE->value => 'Afgerond',
                         ];
 
                         return response()->json([
@@ -294,19 +313,23 @@ class ActivityController extends Controller
                         ], 422);
                     }
                 } else {
-                    // Requested equals computed: ensure saved
                     if (($activity->status?->value ?? null) !== $computed->value) {
                         $activity->status = $computed;
-                        $activity->save();
+                        $didChange = true;
                     }
                 }
             }
         } else {
-            // No explicit status requested, just sync to computed if needed
-            if ($computed->value !== ($activity->status?->value ?? null)) {
+            // No explicit flags, keep consistent automatically (respect IN_PROGRESS sticky and DONE sticky via service)
+            $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, $activity->status);
+            if (($activity->status?->value ?? null) !== $computed->value) {
                 $activity->status = $computed;
-                $activity->save();
+                $didChange = true;
             }
+        }
+
+        if ($didChange) {
+            $activity->save();
         }
 
         // Send webhook if activity is marked as done
@@ -471,5 +494,28 @@ class ActivityController extends Controller
         }
 
         return null; // Success - no error response needed
+    }
+
+    /**
+     * @param Activity $activity
+     * @return bool true, if entity has changed and needs saving
+     */
+    private function updateStatus(Activity $activity) :bool
+    {
+        if ($activity->is_done) {
+            if (($activity->status?->value ?? null) !== ActivityStatus::DONE->value) {
+                $activity->status = ActivityStatus::DONE;
+                return true;
+            }
+        } else {
+            // Un-done: compute status based on dates
+            $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, ActivityStatus::ACTIVE);
+            if (($activity->status?->value ?? null) !== $computed->value) {
+                $activity->status = $computed;
+                return true;
+            }
+        }
+        return false;
+
     }
 }

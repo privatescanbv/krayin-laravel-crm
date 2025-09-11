@@ -11,6 +11,11 @@ class ActivityStatusService
     {
         $now = now();
 
+        // Respect explicit DONE: once done, keep done
+        if ($current === ActivityStatus::DONE) {
+            return ActivityStatus::DONE;
+        }
+
         if ($current === ActivityStatus::IN_PROGRESS) {
             return ActivityStatus::IN_PROGRESS;
         }

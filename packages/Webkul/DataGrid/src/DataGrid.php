@@ -340,9 +340,13 @@ abstract class DataGrid
                     }
                 });
             } else {
-                collect($this->columns)
-                    ->first(fn ($column) => $column->getIndex() === $requestedColumn)
-                    ->processFilter($this->queryBuilder, $requestedValues);
+                $column = collect($this->columns)
+                    ->first(fn ($column) => $column->getIndex() === $requestedColumn);
+
+                // Gracefully skip unknown filter keys instead of crashing
+                if ($column) {
+                    $column->processFilter($this->queryBuilder, $requestedValues);
+                }
             }
         }
 

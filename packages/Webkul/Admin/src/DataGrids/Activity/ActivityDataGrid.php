@@ -103,23 +103,26 @@ class ActivityDataGrid extends DataGrid
         // Get view configuration to add filters to the interface
         $viewConfig = $viewService->getView($view);
         if ($viewConfig) {
-            // Apply view filters to the query
+            // Always apply view filters on the query (supports custom filters and OR logic)
             $queryBuilder = $viewService->applyViewFilters($queryBuilder, $view);
 
-            // Add view filters to the request so they appear in the filter interface
-            // Skip adding filters to request for global admins to prevent client-side filtering
-            if (!auth()->guard('user')->user()?->isGlobalAdmin()) {
-                foreach ($viewConfig['filters'] as $filter) {
-                    // Skip custom filters that can't be shown in the interface
-                    if ($filter['operator'] === 'custom') {
-                        continue;
+            // Additionally, mirror simple filters into the datagrid request 'filters' so both paths behave consistently
+            $requestedFilters = request()->input('filters', []);
+            foreach ($viewConfig['filters'] as $filter) {
+                // Only mirror non-custom filters; custom ones are handled server-side only
+                if (($filter['operator'] ?? 'eq') !== 'custom') {
+                    $columnKey = $filter['column'];
+                    $value = $filter['value'];
+                    if (!isset($requestedFilters[$columnKey]) || !is_array($requestedFilters[$columnKey])) {
+                        $requestedFilters[$columnKey] = [];
                     }
-
-                    if (!request()->has($filter['column'])) {
-                        request()->merge([$filter['column'] => $filter['value']]);
+                    // Avoid duplicate entries
+                    if (!in_array($value, $requestedFilters[$columnKey], true)) {
+                        $requestedFilters[$columnKey][] = $value;
                     }
                 }
             }
+            request()->merge(['filters' => $requestedFilters]);
         }
 
         // Default sorting: urgent tasks first, then newest
@@ -245,6 +248,7 @@ class ActivityDataGrid extends DataGrid
             'filterable_options' => $this->getActivityTypeDropdownOptions(),
             'sortable'           => true,
             'closure'            => fn ($row) => trans('admin::app.activities.edit.'.$row->type),
+            'width'              => '20px',
         ]);
 
         $this->addColumn([
@@ -337,6 +341,28 @@ class ActivityDataGrid extends DataGrid
                     return '<span class="text-green-600">' . $days . 'd</span>';
                 }
             },
+        ]);
+
+        // Hidden column to support filtering by group via URL params like filters[group][0]=...
+        $this->addColumn([
+            'index'      => 'group',
+            'label'      => 'Groep',
+            'type'       => 'string',
+            'searchable' => false,
+            'filterable' => true,
+            'sortable'   => false,
+            'visibility' => false,
+        ]);
+
+        // Hidden column to support filtering by is_done via mirrored view filters
+        $this->addColumn([
+            'index'      => 'is_done',
+            'label'      => 'Afgerond',
+            'type'       => 'boolean',
+            'searchable' => false,
+            'filterable' => true,
+            'sortable'   => false,
+            'visibility' => false,
         ]);
     }
 

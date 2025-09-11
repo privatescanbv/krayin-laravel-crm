@@ -7,7 +7,7 @@
     {!! view_render_event('admin.leads.create.form.before') !!}
 
     <!-- Two-Step Lead Form -->
-    <v-two-step-lead-form :initial-persons='@json($prefilledPersons ?? [])' :initial-lead-person='@json($prefilledLeadPerson ?? null)' :user-defaults='@json($userDefaults ?? {})'></v-two-step-lead-form>
+    <v-two-step-lead-form :initial-persons='@json($prefilledPersons ?? [])' :initial-lead-person='@json($prefilledLeadPerson ?? null)' :user-defaults='@json((object) ($userDefaults ?? []))'></v-two-step-lead-form>
 
     {!! view_render_event('admin.leads.create.form.after') !!}
 

@@ -190,8 +190,7 @@
                         <!-- Afronden Button -->
                         <button
                             type="submit"
-                            name="is_done"
-                            value="1"
+                            id="activity-complete-button"
                             class="secondary-button"
                         >
                             Afronden
@@ -503,6 +502,36 @@
                     });
                 }
             });
+        </script>
+
+        <script>
+            // Ensure 'Afronden' submits is_done=1 and status=done
+            (function(){
+                document.addEventListener('DOMContentLoaded', function(){
+                    var completeBtn = document.getElementById('activity-complete-button');
+                    if (!completeBtn) return;
+                    completeBtn.addEventListener('click', function(){
+                        try {
+                            var form = completeBtn.closest('form');
+                            if (!form) return;
+                            var existingDone = form.querySelector('input[name="is_done"][type="hidden"]');
+                            if (existingDone) existingDone.remove();
+                            var existingStatus = form.querySelector('input[name="status"][type="hidden"]');
+                            if (existingStatus) existingStatus.remove();
+                            var h1 = document.createElement('input');
+                            h1.type = 'hidden';
+                            h1.name = 'is_done';
+                            h1.value = '1';
+                            form.appendChild(h1);
+                            var h2 = document.createElement('input');
+                            h2.type = 'hidden';
+                            h2.name = 'status';
+                            h2.value = 'done';
+                            form.appendChild(h2);
+                        } catch (_) {}
+                    }, { capture: true });
+                });
+            })();
         </script>
 
         <script>

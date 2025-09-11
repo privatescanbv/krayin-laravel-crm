@@ -95,32 +95,38 @@
                                             class="flex flex-col gap-1"
                                             v-if="activity.title"
                                         >
-                                            <a
-                                                class="flex flex-wrap items-center gap-1 font-medium dark:text-white hover:underline cursor-pointer"
-                                                :href="
-                                                    activity.type == 'email'
-                                                    ? '{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceId']) }}'.replace('replaceId', activity.id)
-                                                    : '{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity.id)
-                                                "
-                                            >
-                                                @{{ activity.title }}
+                                            <template v-if="activity.type !== 'system'">
+                                                <a
+                                                    class="flex flex-wrap items-center gap-1 font-medium dark:text-white hover:underline cursor-pointer"
+                                                    :href="
+                                                        activity.type == 'email'
+                                                        ? '{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceId']) }}'.replace('replaceId', activity.id)
+                                                        : '{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity.id)
+                                                    "
+                                                >
+                                                    @{{ activity.title }}
 
-                                                <span v-if="activity.is_done === 1" class="ml-2 inline-block bg-green-100 text-green-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">Afgerond</span>
-                                                <span v-else class="ml-2 inline-block bg-yellow-100 text-yellow-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">Open</span>
-                                            </a>
+                                                    <span v-if="activity.is_done === 1" class="ml-2 inline-block bg-green-100 text-green-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">Afgerond</span>
+                                                    <span v-else class="ml-2 inline-block bg-yellow-100 text-yellow-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">Open</span>
+                                                </a>
+                                            </template>
+
+                                            <template v-else>
+                                                <div class="flex flex-wrap items-center gap-1 font-medium dark:text-white">
+                                                    @{{ activity.title }}
+                                                </div>
+                                            </template>
 
                                             <template v-if="activity.type == 'system' && activity.additional">
                                                 <p class="flex items-center gap-1">
-                                                    <span>:</span>
-
                                                     <span class="break-words">
-                                                        @{{ (activity.additional.old.label ? String(activity.additional.old.label).replaceAll('<br>', ' ') : "@lang('admin::app.components.activities.index.empty')") }}
+                                                        @{{ truncate(activity.additional?.old?.label ? String(activity.additional.old.label).replaceAll('<br>', ' ') : "@lang('admin::app.components.activities.index.empty')" , 60) }}
                                                     </span>
 
                                                     <span class="icon-stats-up rotate-90 text-xl"></span>
 
                                                     <span class="break-words">
-                                                        @{{ (activity.additional.new.label ? String(activity.additional.new.label).replaceAll('<br>', ' ') : "@lang('admin::app.components.activities.index.empty')") }}
+                                                        @{{ truncate(activity.additional?.new?.label ? String(activity.additional.new.label).replaceAll('<br>', ' ') : "@lang('admin::app.components.activities.index.empty')" , 60) }}
                                                     </span>
                                                 </p>
                                             </template>
@@ -670,6 +676,17 @@
                         'spoken': 'Gesproken'
                     };
                     return labels[status] || status;
+                },
+
+                truncate(value, maxLength = 60) {
+                    if (!value) {
+                        return '';
+                    }
+                    const text = String(value);
+                    if (text.length <= maxLength) {
+                        return text;
+                    }
+                    return text.slice(0, maxLength - 1) + '…';
                 },
             },
         });

@@ -376,6 +376,18 @@ class ActivityController extends Controller
 
         session()->flash('success', trans('admin::app.activities.update-success'));
 
+        // After completing, redirect to related lead view if available
+        $shouldRedirectToLead = false;
+        if (isset($data['is_done']) && $data['is_done']) {
+            $shouldRedirectToLead = true;
+        } elseif ($requestedStatus !== null && $requestedStatus === ActivityStatus::DONE->value) {
+            $shouldRedirectToLead = true;
+        }
+
+        if ($shouldRedirectToLead && $activity->lead_id) {
+            return redirect()->route('admin.leads.view', $activity->lead_id);
+        }
+
         return redirect()->route('admin.activities.index');
     }
 

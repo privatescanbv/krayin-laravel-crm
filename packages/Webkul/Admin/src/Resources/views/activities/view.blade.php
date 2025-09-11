@@ -30,8 +30,22 @@
                     @endif
                 </div>
 
+                <!-- Status bar (reusable) -->
+                <div class="mt-2">
+                    @include('admin::components.activities.status-bar', ['activity' => $activity, 'hide_help' => true])
+                </div>
+
                 <!-- Actions (same as lead, except file add) executed on related lead via popup -->
                 <div id="activity-view-actions" class="mt-2 flex flex-wrap gap-2">
+                    @if(!$activity->is_done)
+                        <button
+                            type="submit"
+                            form="activity-complete-form"
+                            class="secondary-button"
+                        >
+                            Afronden
+                        </button>
+                    @endif
                     @if ($activity->lead && bouncer()->hasPermission('mail.compose'))
                         <x-admin::activities.actions.mail :entity="$activity->lead" entity-control-name="lead_id" />
                     @endif
@@ -182,5 +196,13 @@
             })();
         </script>
     @endPushOnce
+
+    <!-- Hidden form used by Afronden button in view -->
+    <form id="activity-complete-form" action="{{ route('admin.activities.update', $activity->id) }}" method="POST" class="hidden">
+        @csrf
+        <input type="hidden" name="_method" value="PUT" />
+        <input type="hidden" name="is_done" value="1" />
+        <input type="hidden" name="status" value="done" />
+    </form>
 </x-admin::layouts>
 

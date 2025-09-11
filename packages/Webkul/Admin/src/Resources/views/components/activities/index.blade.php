@@ -240,7 +240,7 @@
                                                     class="text-sm text-green-600 hover:underline"
                                                     target="_blank"
                                                 >
-                                                    {{ email.subject || 'E-Mail bekijken' }}
+                                                    @{{ email.subject || 'E-Mail bekijken' }}
                                                 </a>
                                             </div>
                                         </div>

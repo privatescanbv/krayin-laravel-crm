@@ -132,14 +132,6 @@
                                                    <i class="icon-contact text-xs"></i>
                                                </div>
                                            </div>
-                                           <div v-else-if="element.persons && element.persons.length === 1" class="flex-shrink-0">
-                                               <x-admin::avatar ::name="element.persons[0]?.name" class="w-6 h-6" />
-                                           </div>
-                                           <div v-else-if="element.first_name" class="flex-shrink-0">
-                                           </div>
-                                           <div v-else class="flex-shrink-0">
-                                               <x-admin::avatar ::name="element.name || 'Lead'" class="w-6 h-6" />
-                                           </div>
                                            <div class="flex flex-col gap-0.5 min-w-0">
                                                <span class="text-[11px] font-medium truncate">
                                                    @{{ element.persons && element.persons.length > 0 ? element.persons[0]?.name : (element.first_name ? `${element.first_name} ${element.last_name}` : element.name) }}

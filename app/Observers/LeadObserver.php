@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Repositories\LeadRepository;
 
 /**
@@ -39,7 +40,8 @@ class LeadObserver
     {
         // Check if the stage has changed
         if ($lead->isDirty('lead_pipeline_stage_id')) {
-            $newStageCode = $lead->stage?->code;
+            // Resolve the NEW stage code explicitly from the incoming stage id, as the relation may be stale during updating
+            $newStageCode = Stage::find($lead->lead_pipeline_stage_id)?->code;
 
             // If changing to 'klant_adviseren' stage
             if ($newStageCode === LeadPipelineStageDefaults::ADVICE->value) {
@@ -52,8 +54,8 @@ class LeadObserver
                 }
             }
 
-            // If changing to 'lost' stage, check if lost_reason is provided
-            if ($newStageCode === 'lost') {
+            // If changing to any 'lost' stage (e.g., 'lost', 'lost-hernia'), check if lost_reason is provided
+            if ($newStageCode && str_starts_with($newStageCode, 'lost')) {
                 if (empty($lead->lost_reason)) {
                     Log::warning('Cannot update lead: missing lost_reason for lost stage', [
                         'lead_id' => $lead->id,

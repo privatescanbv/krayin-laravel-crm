@@ -23,9 +23,9 @@
                     class="stage relative flex h-7 cursor-pointer items-center justify-center bg-white pl-7 pr-4 dark:bg-gray-900 ltr:first:rounded-l-lg rtl:first:rounded-r-lg"
                     :class="{
                         '!bg-green-500 text-white dark:text-gray-900 ltr:after:bg-green-500 rtl:before:bg-green-500': currentStage.sort_order >= stage.sort_order,
-                        '!bg-red-500 text-white dark:text-gray-900 ltr:after:bg-red-500 rtl:before:bg-red-500': currentStage.code == 'lost',
+                        '!bg-red-500 text-white dark:text-gray-900 ltr:after:bg-red-500 rtl:before:bg-red-500': currentStage?.code && String(currentStage.code).toLowerCase().startsWith('lost'),
                     }"
-                    v-if="! ['won', 'lost'].includes(stage.code)"
+                    v-if="!(stage?.code && ['won','lost'].some(k => String(stage.code).toLowerCase().startsWith(k)))"
                     @click="update(stage)"
                 >
                     <span class="z-20 whitespace-nowrap text-sm font-medium dark:text-white">
@@ -46,8 +46,8 @@
                     <div
                         class="relative flex h-7 min-w-24 cursor-pointer items-center justify-center rounded-r-lg bg-white pl-7 pr-4 dark:bg-gray-900"
                         :class="{
-                            '!bg-green-500 text-white dark:text-gray-900 after:bg-green-500': ['won', 'lost'].includes(currentStage.code) && currentStage.code == 'won',
-                            '!bg-red-500 text-white dark:text-gray-900 after:bg-red-500': ['won', 'lost'].includes(currentStage.code) && currentStage.code == 'lost',
+                            '!bg-green-500 text-white dark:text-gray-900 after:bg-green-500': (currentStage?.code && String(currentStage.code).toLowerCase().startsWith('won')),
+                            '!bg-red-500 text-white dark:text-gray-900 after:bg-red-500': (currentStage?.code && String(currentStage.code).toLowerCase().startsWith('lost')),
                         }"
                         @click="stageToggler = ! stageToggler"
                     >
@@ -68,13 +68,13 @@
                     {!! view_render_event('admin.leads.view.stages.items.dropdown.menu_item.before', ['lead' => $lead]) !!}
 
                     <x-admin::dropdown.menu.item
-                        @click="openModal(this.stages.find(stage => stage.code == 'won'))"
+                        @click="openModal(this.stages.find(stage => stage?.code && String(stage.code).toLowerCase().startsWith('won')))"
                     >
                         @lang('admin::app.leads.view.stages.won')
                     </x-admin::dropdown.menu.item>
 
                     <x-admin::dropdown.menu.item
-                        @click="openModal(this.stages.find(stage => stage.code == 'lost'))"
+                        @click="openModal(this.stages.find(stage => stage?.code && String(stage.code).toLowerCase().startsWith('lost')))"
                     >
                         @lang('admin::app.leads.view.stages.lost')
                     </x-admin::dropdown.menu.item>
@@ -190,14 +190,18 @@
 
             methods: {
                 openModal(stage) {
-                    if (this.currentStage.code == stage.code) {
+                    if (!stage || !stage.code) {
+                        return;
+                    }
+
+                    if (this.currentStage?.code == stage.code) {
                         return;
                     }
 
                     this.nextStage = stage;
 
-                    // Default 'Gesloten op' (closed_at) to today in d-m-YYYY (nl-NL) only if empty
-                    if (this.nextStage.code === 'lost' && !this.nextStage.closed_at) {
+                    // Default 'Gesloten op' (closed_at) to today in d-m-YYYY (nl-NL) only if empty for any 'lost*' stage
+                    if (this.nextStage?.code && String(this.nextStage.code).toLowerCase().startsWith('lost') && !this.nextStage.closed_at) {
                         this.nextStage.closed_at = new Date().toLocaleDateString('nl-NL');
                     }
 
@@ -209,9 +213,9 @@
                         'lead_pipeline_stage_id': this.nextStage.id
                     };
 
-                    if (this.nextStage.code == 'won') {
+                    if (this.nextStage?.code && String(this.nextStage.code).toLowerCase().startsWith('won')) {
                         params.closed_at = this.nextStage.closed_at;
-                    } else if (this.nextStage.code == 'lost') {
+                    } else if (this.nextStage?.code && String(this.nextStage.code).toLowerCase().startsWith('lost')) {
                         params.lost_reason = this.nextStage.lost_reason;
 
                         params.closed_at = this.nextStage.closed_at;
@@ -221,7 +225,7 @@
                 },
 
                 update(stage, params = null) {
-                    if (this.currentStage.code == stage.code) {
+                    if (this.currentStage?.code == stage.code) {
                         return;
                     }
 

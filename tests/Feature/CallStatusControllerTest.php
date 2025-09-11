@@ -130,7 +130,7 @@ class CallStatusControllerTest extends TestCase
             'first_name' => 'John',
             'last_name'  => 'Doe',
             'emails'     => [
-                ['value' => 'john.doe@example.com', 'is_default' => true]
+                ['value' => 'john.doe@example.com', 'is_default' => true],
             ],
             'user_id'    => $user->id,
         ]);
@@ -153,7 +153,7 @@ class CallStatusControllerTest extends TestCase
 
         $response->assertOk();
         $responseData = $response->json();
-        
+
         $this->assertTrue($responseData['send_email']);
         $this->assertEquals('john.doe@example.com', $responseData['default_email']);
         $this->assertEquals($activity->id, $responseData['activity_id']);
@@ -266,7 +266,7 @@ class CallStatusControllerTest extends TestCase
         $this->assertCount(2, $email->activities);
         $this->assertTrue($email->activities->contains($activity1));
         $this->assertTrue($email->activities->contains($activity2));
-        
+
         $this->assertEquals($email->id, $activity1->email_id);
         $this->assertEquals($email->id, $activity2->email_id);
     }

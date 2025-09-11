@@ -140,6 +140,11 @@
                                         <!-- Call status summary/details -->
                                         <template v-if="activity.type === 'call' && activity.call_status_summary">
                                             <div class="mt-1 text-sm">
+                                                <div v-if="activity.call_statuses?.length" class="mb-1">
+                                                    <span class="font-medium">Laatste belstatus:</span>
+                                                    <span>@{{ getCallStatusLabel(activity.call_statuses[activity.call_statuses.length - 1].status) }}</span>
+                                                    <span class="text-gray-500">(@{{ $admin.formatDate(activity.call_statuses[activity.call_statuses.length - 1].created_at, 'd MMM yyyy, h:mm', timezone) }})</span>
+                                                </div>
                                                 <div class="flex items-center gap-2">
                                                     <span class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800">Niet bereikt: @{{ activity.call_status_summary.not_reachable }}</span>
                                                     <span class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800">Voicemail: @{{ activity.call_status_summary.voicemail_left }}</span>

@@ -697,27 +697,36 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $phones = [];
 
         if ($record->phone_work) {
-            $phones[] = [
-                'label'      => 'work',
-                'value'      => $record->phone_work,
-                'is_default' => true,
-            ];
+            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_work, 'work');
+            if ($value !== '') {
+                $phones[] = [
+                    'label'      => $label,
+                    'value'      => $value,
+                    'is_default' => true,
+                ];
+            }
         }
 
         if ($record->phone_mobile) {
-            $phones[] = [
-                'label'      => 'mobile',
-                'value'      => $record->phone_mobile,
-                'is_default' => false,
-            ];
+            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_mobile, 'mobile');
+            if ($value !== '') {
+                $phones[] = [
+                    'label'      => $label,
+                    'value'      => $value,
+                    'is_default' => empty($phones),
+                ];
+            }
         }
 
         if ($record->phone_home) {
-            $phones[] = [
-                'label'      => 'home',
-                'value'      => $record->phone_home,
-                'is_default' => false,
-            ];
+            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_home, 'home');
+            if ($value !== '') {
+                $phones[] = [
+                    'label'      => $label,
+                    'value'      => $value,
+                    'is_default' => empty($phones),
+                ];
+            }
         }
 
         return $phones;

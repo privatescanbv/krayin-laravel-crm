@@ -614,7 +614,7 @@ test('imports call activities from sugarcrm', function () {
         'id'            => $leadId,
         'first_name'    => 'John',
         'last_name'     => 'Doe',
-        'phone_work'    => '+31612345678',
+        'phone_work'    => '+31612345678 (prive)',
         'date_entered'  => '2024-01-15 10:00:00',
         'date_modified' => '2024-01-15 11:00:00',
         'status'        => 'New',
@@ -721,6 +721,11 @@ test('imports call activities from sugarcrm', function () {
     // Verify lead was imported
     $lead = Lead::where('external_id', $leadId)->first();
     expect($lead)->not->toBeNull();
+    // Ensure phone label inferred and value cleaned
+    $firstPhone = $lead->phones[0] ?? null;
+    expect($firstPhone)->not->toBeNull()
+        ->and($firstPhone['value'])->toBe('+31612345678')
+        ->and(in_array($firstPhone['label'], ['home', 'work', 'mobile', 'other']))->toBeTrue();
 
     // Verify call activities were imported
     $callActivities = $lead->activities()->where('type', 'call')->get();

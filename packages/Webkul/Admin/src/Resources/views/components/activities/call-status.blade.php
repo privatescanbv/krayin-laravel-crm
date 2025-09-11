@@ -9,18 +9,7 @@
 
     <!-- Add new call status form (moved above the list) -->
     <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-3">
-        <button
-            type="button"
-            id="toggle-call-status-form"
-            class="flex w-full items-center justify-between rounded-md bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-100 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
-            aria-expanded="true"
-            aria-controls="call-status-form-wrapper"
-        >
-            <span>Nieuwe belstatus toevoegen</span>
-            <i class="icon-down-arrow text-lg" id="toggle-call-status-form-icon"></i>
-        </button>
-
-        <form id="call-status-form" class="mt-2 hidden space-y-2" aria-hidden="false">
+        <form id="call-status-form" class="mt-2 space-y-2" aria-hidden="false">
             <div>
                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Status <span class="text-red-500">*</span>
@@ -192,32 +181,6 @@
                 return false;
             }
         };
-        // Collapsible form toggle
-        const toggleBtn = document.getElementById('toggle-call-status-form');
-        const toggleIcon = document.getElementById('toggle-call-status-form-icon');
-        const formWrap = document.getElementById('call-status-form');
-        if (toggleBtn && formWrap && toggleIcon) {
-            const setState = (expanded) => {
-                if (expanded) {
-                    formWrap.classList.remove('hidden');
-                    toggleIcon.classList.remove('icon-right-arrow');
-                    toggleIcon.classList.add('icon-down-arrow');
-                    toggleBtn.setAttribute('aria-expanded', 'true');
-                } else {
-                    formWrap.classList.add('hidden');
-                    toggleIcon.classList.remove('icon-down-arrow');
-                    toggleIcon.classList.add('icon-right-arrow');
-                    toggleBtn.setAttribute('aria-expanded', 'false');
-                }
-            };
-            // default collapsed
-            setState(false);
-            toggleBtn.addEventListener('click', () => {
-                const expanded = toggleBtn.getAttribute('aria-expanded') === 'true';
-                setState(!expanded);
-            });
-        }
-
         const url = '{{ route('admin.activities.call-statuses.store', $activity->id) }}';
         const csrfToken = '{{ csrf_token() }}';
 // Initialize defaults on load and when status changes

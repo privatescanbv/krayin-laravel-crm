@@ -144,27 +144,6 @@ abstract class AbstractSugarCRMImport extends Command
     }
 
     /**
-     * Disable webhooks during import operations
-     */
-    private function disableWebhooks(): void
-    {
-        $originalState = config('webhook.enabled', true);
-        Config::set('webhook.enabled', false);
-
-        $this->info('🔕 Webhooks disabled for import operation');
-        $this->info('   Original state: '.($originalState ? 'enabled' : 'disabled'));
-    }
-
-    /**
-     * Re-enable webhooks after import operations
-     */
-    private function enableWebhooks(): void
-    {
-        Config::set('webhook.enabled', true);
-        $this->info('🔔 Webhooks re-enabled after import operation');
-    }
-
-    /**
      * Sanitize a raw phone input coming from SugarCRM by stripping any textual labels
      * appended to the number (e.g. "+31612345678 (prive)" or "prive +31612345678").
      *
@@ -230,5 +209,26 @@ abstract class AbstractSugarCRMImport extends Command
         $value = trim($value, " \t\n\r\0\x0B-;:,.");
 
         return [$detectedLabel, $value];
+    }
+
+    /**
+     * Disable webhooks during import operations
+     */
+    private function disableWebhooks(): void
+    {
+        $originalState = config('webhook.enabled', true);
+        Config::set('webhook.enabled', false);
+
+        $this->info('🔕 Webhooks disabled for import operation');
+        $this->info('   Original state: '.($originalState ? 'enabled' : 'disabled'));
+    }
+
+    /**
+     * Re-enable webhooks after import operations
+     */
+    private function enableWebhooks(): void
+    {
+        Config::set('webhook.enabled', true);
+        $this->info('🔔 Webhooks re-enabled after import operation');
     }
 }

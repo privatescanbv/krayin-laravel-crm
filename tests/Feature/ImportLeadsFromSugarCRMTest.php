@@ -725,7 +725,7 @@ test('imports call activities from sugarcrm', function () {
     $firstPhone = $lead->phones[0] ?? null;
     expect($firstPhone)->not->toBeNull()
         ->and($firstPhone['value'])->toBe('+31612345678')
-        ->and(in_array($firstPhone['label'], ['home','work','mobile','other']))->toBeTrue();
+        ->and(in_array($firstPhone['label'], ['home', 'work', 'mobile', 'other']))->toBeTrue();
 
     // Verify call activities were imported
     $callActivities = $lead->activities()->where('type', 'call')->get();

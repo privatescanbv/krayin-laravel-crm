@@ -54,8 +54,8 @@ class LeadObserver
                 }
             }
 
-            // If changing to 'lost' stage, check if lost_reason is provided
-            if ($newStageCode === 'lost') {
+            // If changing to any 'lost' stage (e.g., 'lost', 'lost-hernia'), check if lost_reason is provided
+            if ($newStageCode && str_starts_with($newStageCode, 'lost')) {
                 if (empty($lead->lost_reason)) {
                     Log::warning('Cannot update lead: missing lost_reason for lost stage', [
                         'lead_id' => $lead->id,

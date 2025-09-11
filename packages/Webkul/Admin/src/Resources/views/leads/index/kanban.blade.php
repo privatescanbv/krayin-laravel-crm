@@ -183,7 +183,7 @@
                                     <!-- Lost Reason (only for lost status) -->
                                     <div
                                         class="text-[10px] text-red-700 dark:text-red-400 mt-1"
-                                        v-if="element?.stage?.code === 'lost' && element.lost_reason"
+                                        v-if="element?.stage?.code && element.stage.code.startsWith('lost') && element.lost_reason"
                                     >
                                         <span class="font-medium">Verliesreden:</span>
                                         @{{ element.lost_reason }}
@@ -696,8 +696,8 @@
                         return;
                     }
 
-                    // Check if moving to lost stage
-                    if (stage.code === 'lost') {
+                    // Check if moving to any lost stage (e.g., 'lost', 'lost-hernia')
+                    if (stage.code && stage.code.startsWith('lost')) {
                         this.showLostModal(stage, event.added.element);
                         return;
                     }

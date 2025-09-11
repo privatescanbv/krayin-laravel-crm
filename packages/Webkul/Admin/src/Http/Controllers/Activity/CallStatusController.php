@@ -82,11 +82,8 @@ class CallStatusController extends Controller
 
         // If email should be sent, return additional data for frontend to handle
         if (!empty($validated['send_email'])) {
-            // Fetch activity first, then conditionally load relations to avoid BelongsToMany errors
+            // Fetch activity; rely on lazy-loading with null checks in helper to avoid BelongsToMany on missing lead
             $activity = Activity::findOrFail($activityId);
-            if ($activity->lead_id) {
-                $activity->load('lead.persons');
-            }
             $defaultEmail = $this->getDefaultEmailForActivity($activity);
             
             $response['send_email'] = true;

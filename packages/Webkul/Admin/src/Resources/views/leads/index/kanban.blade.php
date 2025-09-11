@@ -230,7 +230,12 @@
                                             <!-- No Open Activities Warning -->
                                             <div
                                                 class="group relative flex items-center gap-1"
-                                                v-if="element.open_activities_count === 0"
+                                                v-if="element.open_activities_count === 0 && !(
+                                                    element?.stage?.code && (
+                                                        String(element.stage.code).toLowerCase().startsWith('lost') ||
+                                                        String(element.stage.code).toLowerCase().startsWith('won')
+                                                    )
+                                                )"
                                             >
                                                 <span class="icon-warning cursor-default text-xs text-red-600"></span>
                                                 <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">

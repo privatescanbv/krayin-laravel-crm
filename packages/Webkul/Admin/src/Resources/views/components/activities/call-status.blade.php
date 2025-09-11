@@ -8,15 +8,24 @@
     </div>
 
     <!-- Add new call status form (moved above the list) -->
-    <div class="mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
-        <h4 class="text-sm font-semibold text-gray-800 dark:text-white mb-3">Nieuwe belstatus toevoegen</h4>
+    <div class="mb-4 border-b border-gray-200 dark:border-gray-700 pb-3">
+        <button
+            type="button"
+            id="toggle-call-status-form"
+            class="flex w-full items-center justify-between rounded-md bg-gray-50 px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-gray-100 dark:bg-gray-800 dark:text-white dark:hover:bg-gray-700"
+            aria-expanded="true"
+            aria-controls="call-status-form-wrapper"
+        >
+            <span>Nieuwe belstatus toevoegen</span>
+            <i class="icon-down-arrow text-lg" id="toggle-call-status-form-icon"></i>
+        </button>
 
-        <form id="call-status-form" class="space-y-3">
+        <form id="call-status-form" class="mt-2 hidden space-y-2" aria-hidden="false">
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Status <span class="text-red-500">*</span>
                 </label>
-                <select name="status" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                <select name="status" class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
                     <option value="">Selecteer status...</option>
                     @foreach (CallStatus::cases() as $status)
                         <option value="{{ $status->value }}" {{ $status->value === 'spoken' ? 'selected' : '' }}>{{ $status->label() }}</option>
@@ -25,22 +34,22 @@
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Omschrijving
                 </label>
                 <textarea
                     name="omschrijving"
-                    rows="3"
-                    class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                    rows="2"
+                    class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
                     placeholder="Optionele notitie over de belstatus..."
                 ></textarea>
             </div>
 
             <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Taak verplaatsen
                 </label>
-                <select name="reschedule_days" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
+                <select name="reschedule_days" class="w-full rounded-md border border-gray-300 px-2 py-1.5 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white">
                     <option value="">Geen verplaatsing</option>
                     @for($i = 1; $i <= 20; $i++)
                         <option value="{{ $i }}">{{ $i }} {{ $i == 1 ? 'dag' : 'dagen' }}</option>
@@ -52,13 +61,13 @@
             <div>
                 <label class="flex items-center">
                     <input type="checkbox" name="send_email" value="1" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800">
-                    <span class="ml-2 text-sm font-medium text-gray-700 dark:text-gray-300">E-Mail versturen?</span>
+                    <span class="ml-2 text-xs font-medium text-gray-700 dark:text-gray-300">E-Mail versturen?</span>
                 </label>
-                <p class="text-xs text-gray-500 mt-1">Na het toevoegen van de belstatus wordt een e-mail dialoog geopend</p>
+                <p class="text-[11px] text-gray-500 mt-1">Na het toevoegen van de belstatus wordt een e-mail dialoog geopend</p>
             </div>
 
-            <button type="button" id="call-status-submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                <i class="icon-plus mr-2"></i>Belstatus toevoegen
+            <button type="button" id="call-status-submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-1.5 px-3 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                <i class="icon-plus mr-2"></i>Toevoegen
             </button>
         </form>
     </div>
@@ -93,6 +102,32 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Collapsible form toggle
+        const toggleBtn = document.getElementById('toggle-call-status-form');
+        const toggleIcon = document.getElementById('toggle-call-status-form-icon');
+        const formWrap = document.getElementById('call-status-form');
+        if (toggleBtn && formWrap && toggleIcon) {
+            const setState = (expanded) => {
+                if (expanded) {
+                    formWrap.classList.remove('hidden');
+                    toggleIcon.classList.remove('icon-right-arrow');
+                    toggleIcon.classList.add('icon-down-arrow');
+                    toggleBtn.setAttribute('aria-expanded', 'true');
+                } else {
+                    formWrap.classList.add('hidden');
+                    toggleIcon.classList.remove('icon-down-arrow');
+                    toggleIcon.classList.add('icon-right-arrow');
+                    toggleBtn.setAttribute('aria-expanded', 'false');
+                }
+            };
+            // default collapsed
+            setState(false);
+            toggleBtn.addEventListener('click', () => {
+                const expanded = toggleBtn.getAttribute('aria-expanded') === 'true';
+                setState(!expanded);
+            });
+        }
+
         const url = '{{ route('admin.activities.call-statuses.store', $activity->id) }}';
         const csrfToken = '{{ csrf_token() }}';
 // Initialize defaults on load and when status changes

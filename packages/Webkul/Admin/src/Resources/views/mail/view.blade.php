@@ -1220,7 +1220,7 @@
                                         {{ $email->activity->title }}
                                     </div>
                                     <div class="text-sm text-gray-500 dark:text-gray-400">
-                                        {{ ucfirst($email->activity->type) }} - {{ $email->activity->created_at->format('d-m-Y H:i') }}
+                                        {{ ucfirst(is_string($email->activity->type) ? $email->activity->type : ($email->activity->type?->value ?? '')) }} - {{ $email->activity->created_at->format('d-m-Y H:i') }}
                                     </div>
                                 </div>
                             </div>

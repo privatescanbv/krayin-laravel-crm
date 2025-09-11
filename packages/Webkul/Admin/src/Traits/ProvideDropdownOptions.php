@@ -251,6 +251,11 @@ trait ProvideDropdownOptions
                 'value'    => 'expired',
                 'disabled' => false,
                 'selected' => false,
+            ], [
+                'label'    => 'Afgerond',
+                'value'    => 'done',
+                'disabled' => false,
+                'selected' => false,
             ],
         ];
     }

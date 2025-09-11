@@ -122,10 +122,12 @@
                         </script>
                         <div class="flex items-center gap-2" id="activity-status-buttons" data-update-url="{{ route('admin.activities.update', $activity->id) }}" data-csrf="{{ csrf_token() }}">
                             @foreach ($options as $opt)
+                                @php $isDone = $opt === 'done'; @endphp
                                 <button type="button"
                                         data-status="{{ $opt }}"
-                                        onclick="window.updateActivityStatus && window.updateActivityStatus('{{ $opt }}')"
-                                        class="status-btn {{ $baseClasses }} {{ $status === $opt ? ($activeMap[$opt] ?? '') : $inactiveClasses }}">
+                                        @if(!$isDone) onclick="window.updateActivityStatus && window.updateActivityStatus('{{ $opt }}')" @endif
+                                        @if($isDone) disabled aria-disabled="true" @endif
+                                        class="status-btn {{ $baseClasses }} {{ $status === $opt ? ($activeMap[$opt] ?? '') : $inactiveClasses }} @if($isDone) cursor-not-allowed opacity-80 @endif">
                                     {{ $statusLabels[$opt] }}
                                 </button>
                             @endforeach
@@ -141,6 +143,7 @@
                                 document.addEventListener('click', async function(e){
                                     const btn = e.target && e.target.closest ? e.target.closest('button.status-btn') : null;
                                     if (!btn || !container.contains(btn)) return;
+                                    if (btn.hasAttribute('disabled') || btn.getAttribute('aria-disabled') === 'true') return;
                                     e.preventDefault();
                                     e.stopPropagation();
                                     const status = btn.getAttribute('data-status');

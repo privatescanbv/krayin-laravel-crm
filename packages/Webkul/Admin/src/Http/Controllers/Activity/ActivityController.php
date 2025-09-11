@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Activity\Repositories\FileRepository;
 use Webkul\Activity\Services\ViewService;
@@ -154,18 +155,8 @@ class ActivityController extends Controller
             'is_done' => request('type') == 'note' ? 1 : 0,
         ]));
 
-        // Auto status sync after create
-        if ($activity->is_done) {
-            // When marked done, force DONE status
-            $activity->status = \App\Enums\ActivityStatus::DONE;
-            $activity->save();
-        } else {
-            $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, $activity->status);
-            if ($computed->value !== ($activity->status?->value ?? null)) {
-                $activity->status = $computed;
-                $activity->save();
-            }
-        }
+        $didChange = $this->updateStatus($this->activity);
+        if($didChange) $this->activity->save();
 
         Event::dispatch('activity.create.after', $activity);
 
@@ -270,20 +261,9 @@ class ActivityController extends Controller
 
         // If is_done explicitly provided, take precedence
         if (array_key_exists('is_done', $data)) {
-            if ($activity->is_done) {
-                if (($activity->status?->value ?? null) !== ActivityStatus::DONE->value) {
-                    $activity->status = ActivityStatus::DONE;
-                    $didChange = true;
-                }
-            } else {
-                // Un-done: compute status based on dates
-                $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, $activity->status);
-                if (($activity->status?->value ?? null) !== $computed->value) {
-                    $activity->status = $computed;
-                    $didChange = true;
-                }
-            }
+            $didChange = $this->updateStatus($this->activity);
         } elseif ($requestedStatus !== null) {
+            // TODO refactor this code, simplify
             // If status explicitly provided
             if ($requestedStatus === ActivityStatus::DONE->value) {
                 if (!$activity->is_done) {
@@ -514,5 +494,28 @@ class ActivityController extends Controller
         }
 
         return null; // Success - no error response needed
+    }
+
+    /**
+     * @param Activity $activity
+     * @return bool true, if entity has changed and needs saving
+     */
+    private function updateStatus(Activity $activity) :bool
+    {
+        if ($activity->is_done) {
+            if (($activity->status?->value ?? null) !== ActivityStatus::DONE->value) {
+                $activity->status = ActivityStatus::DONE;
+                return true;
+            }
+        } else {
+            // Un-done: compute status based on dates
+            $computed = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, ActivityStatus::ACTIVE);
+            if (($activity->status?->value ?? null) !== $computed->value) {
+                $activity->status = $computed;
+                return true;
+            }
+        }
+        return false;
+
     }
 }

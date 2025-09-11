@@ -248,6 +248,7 @@ class ActivityDataGrid extends DataGrid
             'filterable_options' => $this->getActivityTypeDropdownOptions(),
             'sortable'           => true,
             'closure'            => fn ($row) => trans('admin::app.activities.edit.'.$row->type),
+            'width'              => '20px',
         ]);
 
         $this->addColumn([

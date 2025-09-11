@@ -7,33 +7,8 @@
         <h3 class="text-base font-semibold text-gray-800 dark:text-white">Belstatus</h3>
     </div>
 
-    <div class="space-y-3" id="call-status-list">
-        @forelse(($callStatuses ?? []) as $item)
-            <div class="rounded border p-2 text-sm dark:border-gray-700">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <call-status-icon
-                            status="{{ $item->status->value }}"
-                            size="w-4 h-4"
-                        ></call-status-icon>
-                        <span class="font-medium">{{ $item->status->label() }}</span>
-                    </div>
-                    <span class="text-xs text-gray-500">{{ $item->created_at?->format('d-m-Y H:i') }}</span>
-                </div>
-                @if($item->omschrijving)
-                    <div class="mt-1 text-gray-700 dark:text-gray-300">{{ $item->omschrijving }}</div>
-                @endif
-                @if($item->creator)
-                    <div class="mt-1 text-xs text-gray-500">Toegevoegd door: {{ $item->creator->name }}</div>
-                @endif
-            </div>
-        @empty
-            <div class="text-sm text-gray-500">Nog geen belstatussen toegevoegd.</div>
-        @endforelse
-    </div>
-
-    <!-- Add new call status form -->
-    <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
+    <!-- Add new call status form (moved above the list) -->
+    <div class="mb-6 border-b border-gray-200 dark:border-gray-700 pb-4">
         <h4 class="text-sm font-semibold text-gray-800 dark:text-white mb-3">Nieuwe belstatus toevoegen</h4>
 
         <form id="call-status-form" class="space-y-3">
@@ -86,6 +61,32 @@
                 <i class="icon-plus mr-2"></i>Belstatus toevoegen
             </button>
         </form>
+    </div>
+
+    <!-- Existing call statuses list -->
+    <div class="space-y-3" id="call-status-list">
+        @forelse(($callStatuses ?? []) as $item)
+            <div class="rounded border p-2 text-sm dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <call-status-icon
+                            status="{{ $item->status->value }}"
+                            size="w-4 h-4"
+                        ></call-status-icon>
+                        <span class="font-medium">{{ $item->status->label() }}</span>
+                    </div>
+                    <span class="text-xs text-gray-500">{{ $item->created_at?->format('d-m-Y H:i') }}</span>
+                </div>
+                @if($item->omschrijving)
+                    <div class="mt-1 text-gray-700 dark:text-gray-300">{{ $item->omschrijving }}</div>
+                @endif
+                @if($item->creator)
+                    <div class="mt-1 text-xs text-gray-500">Toegevoegd door: {{ $item->creator->name }}</div>
+                @endif
+            </div>
+        @empty
+            <div class="text-sm text-gray-500">Nog geen belstatussen toegevoegd.</div>
+        @endforelse
     </div>
 </div>
 

@@ -97,6 +97,21 @@ class ActivityController extends Controller
     }
 
     /**
+     * Display the specified activity in view mode.
+     */
+    public function view(int $id): View
+    {
+        $activity = $this->activityRepository->with('emails', 'lead')->findOrFail($id);
+
+        $callStatuses = \App\Models\CallStatus::where('activity_id', $activity->id)
+            ->with('creator')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('admin::activities.view', compact('activity', 'callStatuses'));
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(): RedirectResponse|JsonResponse

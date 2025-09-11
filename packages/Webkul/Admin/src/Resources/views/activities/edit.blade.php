@@ -431,10 +431,6 @@
 
                 <!-- Right sub-component -->
                 <div class="w-[360px] max-w-full gap-2 max-lg:w-full">
-                    @if ($activity->type === \App\Enums\ActivityType::CALL)
-                        @include('admin::components.activities.call-status', ['activity' => $activity, 'callStatuses' => $callStatuses ?? []])
-                    @endif
-
                     <!-- Linked Emails Section -->
                     @if($activity->emails && $activity->emails->count() > 0)
                         <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">

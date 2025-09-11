@@ -12,6 +12,8 @@ Route::controller(ActivityController::class)->prefix('activities')->group(functi
     
     Route::get('views', 'getViews')->name('admin.activities.views');
 
+    Route::get('view/{id}', 'view')->name('admin.activities.view');
+
     Route::post('create', 'store')->name('admin.activities.store');
 
     Route::get('edit/{id}', 'edit')->name('admin.activities.edit');

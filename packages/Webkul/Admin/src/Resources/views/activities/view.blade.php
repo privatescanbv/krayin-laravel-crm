@@ -67,6 +67,32 @@
                             {{ $activity->lead->name }}
                         </a>
                     </div>
+
+                    @if($activity->lead->phones && is_array($activity->lead->phones) && count($activity->lead->phones) > 0)
+                        @php
+                            $defaultPhone = collect($activity->lead->phones)->firstWhere('is_default', true)
+                                             ?? collect($activity->lead->phones)->first();
+                            $otherPhones = collect($activity->lead->phones)->reject(function($phone) use ($defaultPhone) {
+                                return $defaultPhone && isset($defaultPhone['value']) && ($phone['value'] ?? null) === ($defaultPhone['value'] ?? null);
+                            });
+                        @endphp
+                        <div class="mt-2 space-y-1">
+                            <div class="text-sm">
+                                <span class="font-medium">Telefoons:</span>
+                            </div>
+                            @if($defaultPhone)
+                                <div class="text-sm">
+                                    <span class="font-semibold">{{ $defaultPhone['value'] ?? '' }}</span>
+                                    <span class="ml-2 text-xs text-gray-500">(default)</span>
+                                </div>
+                            @endif
+                            @foreach($otherPhones as $phone)
+                                <div class="text-sm text-gray-700 dark:text-gray-300">
+                                    {{ $phone['value'] ?? '' }}
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
                 @endif
             </div>
 

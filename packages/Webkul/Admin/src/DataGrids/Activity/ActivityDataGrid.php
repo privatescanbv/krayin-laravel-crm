@@ -352,6 +352,17 @@ class ActivityDataGrid extends DataGrid
             'sortable'   => false,
             'visibility' => false,
         ]);
+
+        // Hidden column to support filtering by is_done via mirrored view filters
+        $this->addColumn([
+            'index'      => 'is_done',
+            'label'      => 'Afgerond',
+            'type'       => 'boolean',
+            'searchable' => false,
+            'filterable' => true,
+            'sortable'   => false,
+            'visibility' => false,
+        ]);
     }
 
     /**

@@ -132,14 +132,6 @@
                                                    <i class="icon-contact text-xs"></i>
                                                </div>
                                            </div>
-                                           <div v-else-if="element.persons && element.persons.length === 1" class="flex-shrink-0">
-                                               <x-admin::avatar ::name="element.persons[0]?.name" class="w-6 h-6" />
-                                           </div>
-                                           <div v-else-if="element.first_name" class="flex-shrink-0">
-                                           </div>
-                                           <div v-else class="flex-shrink-0">
-                                               <x-admin::avatar ::name="element.name || 'Lead'" class="w-6 h-6" />
-                                           </div>
                                            <div class="flex flex-col gap-0.5 min-w-0">
                                                <span class="text-[11px] font-medium truncate">
                                                    @{{ element.persons && element.persons.length > 0 ? element.persons[0]?.name : (element.first_name ? `${element.first_name} ${element.last_name}` : element.name) }}
@@ -194,7 +186,7 @@
                                     <!-- Card Footer -->
                                     <div
                                         class="flex items-center justify-between mt-2 pt-2 border-t border-gray-200 dark:border-gray-600"
-                                        v-if="element.has_duplicates || (element.open_activities_count && element.open_activities_count > 0) || (element.unread_emails_count && element.unread_emails_count > 0) || element.mri_status || element.has_diagnosis_form"
+                                        v-if="element.has_duplicates || element.open_activities_count === 0 || (element.open_activities_count && element.open_activities_count > 0) || (element.unread_emails_count && element.unread_emails_count > 0) || element.mri_status || element.has_diagnosis_form"
                                     >
                                         <div class="flex items-center gap-3">
                                             <!-- Open Activities Count -->
@@ -230,6 +222,25 @@
                                                 <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
                                                     <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
                                                         Mogelijke duplicate gevonden (@{{ element.duplicates_count }} gelijkenissen)
+                                                    </span>
+                                                    <div class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
+                                                </div>
+                                            </div>
+
+                                            <!-- No Open Activities Warning -->
+                                            <div
+                                                class="group relative flex items-center gap-1"
+                                                v-if="element.open_activities_count === 0 && !(
+                                                    element?.stage?.code && (
+                                                        String(element.stage.code).toLowerCase().startsWith('lost') ||
+                                                        String(element.stage.code).toLowerCase().startsWith('won')
+                                                    )
+                                                )"
+                                            >
+                                                <span class="icon-warning cursor-default text-xs text-red-600"></span>
+                                                <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
+                                                    <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
+                                                        Geen open activiteiten
                                                     </span>
                                                     <div class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                                 </div>

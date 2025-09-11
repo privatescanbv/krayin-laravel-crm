@@ -140,6 +140,9 @@
                                         <!-- Call status summary/details -->
                                         <template v-if="activity.type === 'call' && activity.call_status_summary">
                                             <div class="mt-1 text-sm">
+                                                <div v-if="activity.call_statuses?.length" class="mb-1">
+                                                    <span class="font-medium flex items-center gap-1">Laatste: <call-status-icon :status="activity.call_statuses[activity.call_statuses.length - 1].status" size="w-4 h-4"></call-status-icon> @{{ getCallStatusLabel(activity.call_statuses[activity.call_statuses.length - 1].status) }} <span class="text-gray-500">(@{{ $admin.formatDate(activity.call_statuses[activity.call_statuses.length - 1].created_at, 'd MMM yyyy, hh:mm', timezone) }})</span></span>
+                                                </div>
                                                 <div class="flex items-center gap-2">
                                                     <span class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800">Niet bereikt: @{{ activity.call_status_summary.not_reachable }}</span>
                                                     <span class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800">Voicemail: @{{ activity.call_status_summary.voicemail_left }}</span>
@@ -153,7 +156,7 @@
                                                                 <call-status-icon :status="cs.status" size="w-4 h-4"></call-status-icon>
                                                                 <span class="font-medium">@{{ getCallStatusLabel(cs.status) }}</span>
                                                             </div>
-                                                            <span>@{{ $admin.formatDate(cs.created_at, 'd MMM yyyy, h:mm', timezone) }}</span>
+                                                            <span>@{{ $admin.formatDate(cs.created_at, 'd MMM yyyy, hh:mm', timezone) }}</span>
                                                         </div>
                                                         <div v-if="cs.omschrijving" class="text-gray-600 dark:text-gray-300">@{{ cs.omschrijving }}</div>
                                                         <div v-if="cs.creator" class="text-gray-500">door @{{ cs.creator.name }}</div>

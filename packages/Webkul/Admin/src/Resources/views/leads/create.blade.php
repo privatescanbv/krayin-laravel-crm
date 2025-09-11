@@ -310,6 +310,7 @@
                                             'combine_order' => 1,
                                             'lead_channel_id' => $userDefaults['lead_channel_id'] ?? '1',
                                             'lead_source_id' => $userDefaults['lead_source_id'] ?? 32,
+                                            'lead_type_id' => $userDefaults['lead_type_id'] ?? 1,
                                         ],
                                         'useVueModel' => false,
                                     ])

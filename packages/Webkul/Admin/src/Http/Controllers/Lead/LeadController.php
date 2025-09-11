@@ -242,6 +242,7 @@ class LeadController extends Controller
 
         // Get user default values for lead fields
         $userDefaults = $this->userDefaultValueService->getLeadDefaults($user->id);
+        logger()->info('User default lead values', ['user_id' => $user->id, 'defaults' => $userDefaults]);
 
         // Get effective pipeline ID (URL parameter takes precedence over cookie)
         $effectivePipelineId = $this->pipelineCookieService->getEffectivePipelineId(request('pipeline_id'));

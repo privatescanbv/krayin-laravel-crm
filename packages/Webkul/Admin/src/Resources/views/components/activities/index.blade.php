@@ -430,7 +430,7 @@
 
                 activeType: {
                     type: String,
-                    default: 'all',
+                    default: 'planned',
                 },
 
                 types: {

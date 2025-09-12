@@ -16,7 +16,10 @@
 
             <!-- Title + Status Bar -->
             <div class="text-xl font-bold dark:text-gray-300 flex items-center justify-between gap-3 w-full">
-                <span>{{ $activity->title ?: __('admin::app.activities.edit.title') }}</span>
+                <div class="flex items-center gap-2">
+                    <x-admin::activities.icon :type="$activity->type" />
+                    <span>{{ $activity->title ?: __('admin::app.activities.edit.title') }}</span>
+                </div>
                 @include('admin::components.activities.status-bar', ['activity' => $activity, 'hide_help' => true])
             </div>
         </div>
@@ -86,22 +89,23 @@
             <div class="p-4">
                 <div class="grid grid-cols-2 gap-4">
 
-                    <div class="mb-3">
-                        <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Bron</div>
-                        <div class="text-sm text-gray-900 dark:text-gray-100">
-                            iets
-                        </div>
-                    </div>
 
                     <div class="mb-3">
                         <div
-                            class="text-xs text-gray-400 dark:text-gray-500 mb-1">@lang('admin::app.activities.edit.type')
-                            :
+                            class="text-xs text-gray-400 dark:text-gray-500 mb-1">@lang('admin::app.activities.edit.type'):
                         </div>
                         <div class="text-sm text-gray-900 dark:text-gray-100">
                             {{ __("admin::app.activities.edit." . ($activity->type?->value ?? $activity->type)) }}
                         </div>
                     </div>
+
+                    <div class="mb-3">
+                        <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Toegewezen aan</div>
+                        <div class="text-sm text-gray-900 dark:text-gray-100">
+                            {{ $activity->user?->name ?? '-' }}
+                        </div>
+                    </div>
+
 
                     <div class="mb-3">
                         <div

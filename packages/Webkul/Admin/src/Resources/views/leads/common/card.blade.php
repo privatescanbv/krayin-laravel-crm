@@ -20,75 +20,99 @@
         </span>
     </div>
 
-    <!-- gegevens -->
-    <dl class="mt-2 grid grid-cols-3 gap-x-3 gap-y-1 text-[13px]">
-        @if($lead->phones && is_array($lead->phones) && count($lead->phones) > 0)
-            @php
-                $defaultPhone = collect($lead->phones)->firstWhere('is_default', true)
-                                 ?? collect($lead->phones)->first();
+    <!-- Default contact info onder naam -->
+    <div class="mt-2 flex items-center gap-4 text-sm">
+        @php
+            $defaultPhone = null;
+            $defaultEmail = null;
+            $otherPhones = collect();
+            $otherEmails = collect();
+            
+            if($lead->phones && is_array($lead->phones) && count($lead->phones) > 0) {
+                $defaultPhone = collect($lead->phones)->firstWhere('is_default', true) ?? collect($lead->phones)->first();
                 $otherPhones = collect($lead->phones)->reject(function($phone) use ($defaultPhone) {
                     return $defaultPhone && isset($defaultPhone['value']) && ($phone['value'] ?? null) === ($defaultPhone['value'] ?? null);
                 });
-            @endphp
-            @if($defaultPhone)
-                <dt class="col-span-1 text-gray-500 dark:text-gray-400">Telefoons:</dt>
-                <dd class="col-span-2 min-w-0">
-                    <a href="tel:{{ $defaultPhone['value'] ?? '' }}"
-                       class="block w-full truncate text-gray-900 dark:text-gray-100 hover:underline">
-                        <span class="font-semibold">{{ $defaultPhone['value'] ?? '' }}</span>
-                        <span class="ml-2 text-xs text-gray-500">(default)</span>
-                    </a>
-                </dd>
-            @endif
-
-            @foreach($otherPhones as $phone)
-                <dt class="col-span-1 text-gray-500 dark:text-gray-400">Overige:</dt>
-                <dd class="col-span-2 min-w-0">
-                    <a href="tel:{{ $phone['value'] ?? '' }}"
-                       class="block w-full truncate text-gray-900 dark:text-gray-100 hover:underline">
-                        <span class="font-semibold">{{ $phone['value'] ?? '' }}</span>
-                    </a>
-                </dd>
-            @endforeach
-
-        @endif
-        <!-- Email Addresses -->
-        @if($lead->emails && is_array($lead->emails) && count($lead->emails) > 0)
-            @php
-                $defaultEmail = collect($lead->emails)->firstWhere('is_default', true)
-                               ?? collect($lead->emails)->first();
+            }
+            
+            if($lead->emails && is_array($lead->emails) && count($lead->emails) > 0) {
+                $defaultEmail = collect($lead->emails)->firstWhere('is_default', true) ?? collect($lead->emails)->first();
                 $otherEmails = collect($lead->emails)->reject(function($email) use ($defaultEmail) {
                     return $email['value'] === $defaultEmail['value'];
                 });
-            @endphp
-            <dt class="col-span-1 text-gray-500 dark:text-gray-400">E-mails:</dt>
-            <dd class="col-span-2 min-w-0">
-                {{ $defaultEmail['value'] }} <span class="ml-2 text-xs text-gray-500">(default)</span>
-            </dd>
+            }
+        @endphp
 
-            @if($otherEmails->count() > 0)
-                <dt class="col-span-1 text-gray-500 dark:text-gray-400">E-mails:</dt>
-                <dd class="col-span-2 min-w-0">
-                    @foreach($otherEmails as $email)
-                        {{ $email['value'] }}@if(!$loop->last)
-                            ,
-                        @endif
-                    @endforeach
-                </dd>
-            @endif
+        @if($defaultPhone)
+            <a href="tel:{{ $defaultPhone['value'] ?? '' }}" 
+               class="flex items-center gap-1.5 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                </svg>
+                {{ $defaultPhone['value'] ?? '' }}
+            </a>
         @endif
 
+        @if($defaultEmail)
+            <a href="mailto:{{ $defaultEmail['value'] ?? '' }}" 
+               class="flex items-center gap-1.5 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                </svg>
+                {{ $defaultEmail['value'] ?? '' }}
+            </a>
+        @endif
+    </div>
 
-        <!-- optioneel: e-mail -->
-        <!--
-<dt class="col-span-1 text-gray-500 dark:text-gray-400">E-mail</dt>
-<dd class="col-span-2 min-w-0">
-<a href="mailto:bart@example.com" class="block w-full truncate text-gray-900 dark:text-gray-100 hover:underline">
-bart@example.com
-        </a>
-      </dd>
--->
-    </dl>
+    <!-- Uitklapbare sectie voor overige contactgegevens -->
+    @if(($otherPhones && $otherPhones->count() > 0) || ($otherEmails && $otherEmails->count() > 0))
+        <div class="mt-3">
+            <button type="button" 
+                    onclick="toggleContactDetails('contact-{{ $lead->id }}')"
+                    class="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                <svg id="icon-contact-{{ $lead->id }}" class="w-3 h-3 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+                Overige contactgegevens
+            </button>
+            
+            <div id="contact-{{ $lead->id }}" class="hidden mt-2 space-y-1 text-xs">
+                @if($otherPhones && $otherPhones->count() > 0)
+                    <div class="pl-5 space-y-1">
+                        @foreach($otherPhones as $phone)
+                            <a href="tel:{{ $phone['value'] ?? '' }}" 
+                               class="flex items-center gap-1.5 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                                </svg>
+                                {{ $phone['value'] ?? '' }}
+                                @if(isset($phone['label']) && $phone['label'])
+                                    <span class="text-gray-400 dark:text-gray-500">({{ $phone['label'] }})</span>
+                                @endif
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
+
+                @if($otherEmails && $otherEmails->count() > 0)
+                    <div class="pl-5 space-y-1">
+                        @foreach($otherEmails as $email)
+                            <a href="mailto:{{ $email['value'] ?? '' }}" 
+                               class="flex items-center gap-1.5 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                                {{ $email['value'] ?? '' }}
+                                @if(isset($email['label']) && $email['label'])
+                                    <span class="text-gray-400 dark:text-gray-500">({{ $email['label'] }})</span>
+                                @endif
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
+    @endif
 
     @if($show_actions ?? true)
         <!-- acties -->
@@ -107,3 +131,18 @@ bart@example.com
         </div>
 @endif
 </div>
+
+<script>
+function toggleContactDetails(contactId) {
+    const element = document.getElementById(contactId);
+    const icon = document.getElementById('icon-' + contactId);
+    
+    if (element.classList.contains('hidden')) {
+        element.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+    } else {
+        element.classList.add('hidden');
+        icon.style.transform = 'rotate(0deg)';
+    }
+}
+</script>

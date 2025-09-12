@@ -21,7 +21,10 @@
 
                     <!-- Page Title + Horizontal Clickable Status List -->
                     <div class="text-xl font-bold dark:text-gray-300 flex items-center justify-between gap-3 w-full">
-                        <span>@lang('admin::app.activities.edit.title')</span>
+                        <div class="flex items-center gap-2">
+                            <x-admin::activities.icon :type="$activity->type" />
+                            <span>@lang('admin::app.activities.edit.title')</span>
+                        </div>
 
                         @php
                             $status = is_string($activity->status) ? $activity->status : ($activity->status?->value ?? 'active');

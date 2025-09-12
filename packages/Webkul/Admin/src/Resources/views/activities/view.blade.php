@@ -3,49 +3,53 @@
         {{ $activity->title ?: __('admin::app.activities.view.title') }}
     </x-slot>
 
-    <div class="relative flex gap-4 max-lg:flex-wrap">
+    <!-- Header Bar (like edit activity) -->
+    <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        <div class="flex flex-col gap-2">
+            <!-- Breadcrumbs -->
+            <x-admin::breadcrumbs
+                name="activities.view"
+                :entity="$activity"
+            />
+
+            <!-- Title + Status Bar -->
+            <div class="text-xl font-bold dark:text-gray-300 flex items-center justify-between gap-3 w-full">
+                <span>{{ $activity->title ?: __('admin::app.activities.edit.title') }}</span>
+                @include('admin::components.activities.status-bar', ['activity' => $activity, 'hide_help' => true])
+            </div>
+        </div>
+
+        <div class="flex items-center gap-x-2.5">
+            @if(!$activity->is_done)
+                <button
+                    type="submit"
+                    form="activity-complete-form"
+                    class="secondary-button"
+                >
+                    Afronden
+                </button>
+            @endif
+
+            @if (bouncer()->hasPermission('activities.delete'))
+                <form method="POST" action="{{ route('admin.activities.delete', $activity->id) }}" onsubmit="return confirm('Weet je zeker dat je deze activiteit wilt verwijderen?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="flex items-center gap-1 text-red-600 hover:text-red-700 text-sm">
+                        <span class="icon-delete"></span>
+                        <span>Verwijderen</span>
+                    </button>
+                </form>
+            @endif
+        </div>
+    </div>
+
+    <!-- Three Column Layout -->
+    <div class="relative flex gap-4 max-lg:flex-wrap mt-4">
         <!-- Left Panel (sticky, like lead view) -->
         <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-            <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
-                <div class="flex items-center justify-between">
-                    <x-admin::breadcrumbs
-                        name="activities.view"
-                        :entity="$activity"
-                    />
-                </div>
-
-                <div class="flex items-center justify-between gap-2">
-                    <h3 class="text-lg font-bold dark:text-white">
-                        {{ $activity->title ?: __('admin::app.activities.edit.title') }}
-                    </h3>
-                    @if (bouncer()->hasPermission('activities.delete'))
-                        <form method="POST" action="{{ route('admin.activities.delete', $activity->id) }}" onsubmit="return confirm('Weet je zeker dat je deze activiteit wilt verwijderen?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="flex items-center gap-1 text-red-600 hover:text-red-700 text-sm">
-                                <span class="icon-delete"></span>
-                                <span>Verwijderen</span>
-                            </button>
-                        </form>
-                    @endif
-                </div>
-
-                <!-- Status bar (reusable) -->
-                <div class="mt-2">
-                    @include('admin::components.activities.status-bar', ['activity' => $activity, 'hide_help' => true])
-                </div>
-
-                <!-- Actions (same as lead, except file add) executed on related lead via popup -->
-                <div id="activity-view-actions" class="mt-2 flex flex-wrap gap-2">
-                    @if(!$activity->is_done)
-                        <button
-                            type="submit"
-                            form="activity-complete-form"
-                            class="secondary-button"
-                        >
-                            Afronden
-                        </button>
-                    @endif
+            <!-- Actions (same as lead, except file add) executed on related lead via popup -->
+            <div class="p-4 border-b border-gray-200 dark:border-gray-800">
+                <div id="activity-view-actions" class="flex flex-wrap gap-2">
                     @if ($activity->lead && bouncer()->hasPermission('mail.compose'))
                         <x-admin::activities.actions.mail :entity="$activity->lead" entity-control-name="lead_id" />
                     @endif

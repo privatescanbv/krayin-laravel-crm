@@ -100,7 +100,7 @@
                                                 :href="
                                                     activity.type == 'email'
                                                     ? '{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceId']) }}'.replace('replaceId', activity.id)
-                                                    : '{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity.id)
+                                                    : '{{ route('admin.activities.view', 'replaceId') }}'.replace('replaceId', activity.id)
                                                 "
                                             >
                                                 @{{ activity.title }}

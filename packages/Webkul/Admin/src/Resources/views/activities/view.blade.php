@@ -20,6 +20,14 @@
         </div>
 
         <div class="flex items-center gap-x-2.5">
+            @if (bouncer()->hasPermission('activities.edit'))
+                <a
+                    href="{{ route('admin.activities.edit', $activity->id) }}"
+                    class="secondary-button"
+                >
+                    Bewerken
+                </a>
+            @endif
             @if(!$activity->is_done)
                 <button
                     type="submit"

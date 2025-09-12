@@ -28,6 +28,17 @@
                     Bewerken
                 </a>
             @endif
+
+            @if (bouncer()->hasPermission('activities.delete'))
+                <form method="POST" action="{{ route('admin.activities.delete', $activity->id) }}" onsubmit="return confirm('Weet je zeker dat je deze activiteit wilt verwijderen?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="flex h-8 w-8 items-center justify-center rounded-md text-red-600 hover:bg-red-50 hover:text-red-700" title="Verwijderen">
+                        <span class="icon-delete"></span>
+                    </button>
+                </form>
+            @endif
+
             @if(!$activity->is_done)
                 <button
                     type="submit"
@@ -36,17 +47,6 @@
                 >
                     Afronden
                 </button>
-            @endif
-
-            @if (bouncer()->hasPermission('activities.delete'))
-                <form method="POST" action="{{ route('admin.activities.delete', $activity->id) }}" onsubmit="return confirm('Weet je zeker dat je deze activiteit wilt verwijderen?');">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="flex items-center gap-1 text-red-600 hover:text-red-700 text-sm">
-                        <span class="icon-delete"></span>
-                        <span>Verwijderen</span>
-                    </button>
-                </form>
             @endif
         </div>
     </div>
@@ -137,11 +137,11 @@
             <!-- Footer with creation and modification dates -->
             <div class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
                 <div class="flex justify-between">
-                    <span>@lang('admin::app.leads.view.created-at'):</span>
+                    <span>Aangemaakt op:</span>
                     <span>{{ $activity->created_at->format('d-m-Y') }}</span>
                 </div>
                 <div class="flex justify-between">
-                    <span>@lang('admin::app.leads.view.updated-at'):</span>
+                    <span>Bijgewerkt op:</span>
                     <span>{{ $activity->updated_at->format('d-m-Y') }}</span>
                 </div>
             </div>

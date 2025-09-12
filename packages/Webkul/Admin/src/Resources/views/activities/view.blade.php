@@ -76,6 +76,16 @@
                         <x-admin::activities.actions.note :entity="$activity->lead" entity-control-name="lead_id"/>
                         <x-admin::activities.actions.activity :entity="$activity->lead" entity-control-name="lead_id"/>
                     @endif
+
+                    @if ($activity->lead && bouncer()->hasPermission('leads.edit'))
+                        <button
+                            type="button"
+                            class="secondary-button"
+                            @click="openLeadAfvoerenModal"
+                        >
+                            Lead afvoeren
+                        </button>
+                    @endif
                 </div>
                 <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Acties worden uitgevoerd op de gekoppelde lead.
@@ -234,6 +244,69 @@
                     }
                 }, {capture: true});
             })();
+
+            // Vue.js component for Lead Afvoeren functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof app !== 'undefined') {
+                    app.mixin({
+                        data() {
+                            return {
+                                leadAfvoerenData: {
+                                    lost_reason: '',
+                                    closed_at: new Date().toISOString().split('T')[0]
+                                },
+                                isSubmitting: false
+                            }
+                        },
+                        methods: {
+                            openLeadAfvoerenModal() {
+                                this.leadAfvoerenData = {
+                                    lost_reason: '',
+                                    closed_at: new Date().toISOString().split('T')[0]
+                                };
+                                this.$refs.leadAfvoerenModal.open();
+                            },
+                            submitLeadAfvoeren() {
+                                if (!this.leadAfvoerenData.lost_reason.trim()) {
+                                    this.$emitter.emit('add-flash', { 
+                                        type: 'error', 
+                                        message: 'Reden van verlies is verplicht' 
+                                    });
+                                    return;
+                                }
+
+                                this.isSubmitting = true;
+
+                                // Submit to the new route
+                                this.$axios.post('{{ route("admin.activities.lead-afvoeren", $activity->id) }}', {
+                                    lost_reason: this.leadAfvoerenData.lost_reason,
+                                    closed_at: this.leadAfvoerenData.closed_at
+                                })
+                                .then(response => {
+                                    this.isSubmitting = false;
+                                    this.$refs.leadAfvoerenModal.close();
+                                    
+                                    this.$emitter.emit('add-flash', { 
+                                        type: 'success', 
+                                        message: response.data.message 
+                                    });
+                                    
+                                    // Redirect to lead view
+                                    window.location.href = '{{ route("admin.leads.view", $activity->lead_id) }}';
+                                })
+                                .catch(error => {
+                                    this.isSubmitting = false;
+                                    
+                                    this.$emitter.emit('add-flash', { 
+                                        type: 'error', 
+                                        message: error.response?.data?.message || 'Er is een fout opgetreden' 
+                                    });
+                                });
+                            }
+                        }
+                    });
+                }
+            });
         </script>
     @endPushOnce
 
@@ -245,5 +318,68 @@
         <input type="hidden" name="is_done" value="1"/>
         <input type="hidden" name="status" value="done"/>
     </form>
+
+    <!-- Lead Afvoeren Modal -->
+    <x-admin::modal ref="leadAfvoerenModal">
+        <x-slot:header>
+            <h3 class="text-base font-semibold dark:text-white">
+                Lead afvoeren
+            </h3>
+        </x-slot>
+
+        <x-slot:content>
+            <div class="mb-4">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Weet je zeker dat je deze lead wilt afvoeren? Dit zal de lead op status "Verloren" zetten en alle opstaande activiteiten afronden.
+                </p>
+            </div>
+
+            <x-admin::form.control-group>
+                <x-admin::form.control-group.label>
+                    Reden van verlies
+                </x-admin::form.control-group.label>
+
+                <x-admin::form.control-group.control
+                    type="textarea"
+                    name="lost_reason"
+                    v-model="leadAfvoerenData.lost_reason"
+                    placeholder="Vul de reden van verlies in..."
+                    required
+                />
+            </x-admin::form.control-group>
+
+            <x-admin::form.control-group>
+                <x-admin::form.control-group.label>
+                    Gesloten op
+                </x-admin::form.control-group.label>
+
+                <x-admin::form.control-group.control
+                    type="date"
+                    name="closed_at"
+                    v-model="leadAfvoerenData.closed_at"
+                />
+            </x-admin::form.control-group>
+        </x-slot>
+
+        <x-slot:footer>
+            <button
+                type="button"
+                class="secondary-button"
+                @click="$refs.leadAfvoerenModal.close()"
+            >
+                Annuleren
+            </button>
+
+            <button
+                type="button"
+                class="primary-button"
+                @click="submitLeadAfvoeren"
+                :disabled="!leadAfvoerenData.lost_reason || isSubmitting"
+            >
+                <span v-if="isSubmitting">Bezig...</span>
+                <span v-else>Lead afvoeren</span>
+            </button>
+        </x-slot>
+    </x-admin::modal>
 </x-admin::layouts>
 

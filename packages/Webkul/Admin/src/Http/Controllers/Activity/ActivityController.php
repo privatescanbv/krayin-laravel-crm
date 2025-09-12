@@ -545,4 +545,77 @@ class ActivityController extends Controller
         return false;
 
     }
+
+    /**
+     * Lead afvoeren - set lead to lost status and complete all open activities
+     */
+    public function leadAfvoeren(int $id): JsonResponse
+    {
+        $this->validate(request(), [
+            'lost_reason' => 'required|string|max:1000',
+            'closed_at' => 'nullable|date',
+        ]);
+
+        $activity = $this->activityRepository->findOrFail($id);
+
+        if (!$activity->lead) {
+            return response()->json([
+                'message' => 'Geen lead gekoppeld aan deze activiteit.',
+            ], 422);
+        }
+
+        $lead = $activity->lead;
+
+        try {
+            // Find the lost stage for this lead's pipeline
+            $lostStage = $lead->pipeline->stages()
+                ->where('code', 'like', 'lost%')
+                ->first();
+
+            if (!$lostStage) {
+                return response()->json([
+                    'message' => 'Geen "Verloren" status gevonden voor deze pipeline.',
+                ], 422);
+            }
+
+            // Update lead to lost status
+            $leadData = [
+                'lead_pipeline_stage_id' => $lostStage->id,
+                'lost_reason' => request('lost_reason'),
+                'closed_at' => request('closed_at') ?: now(),
+            ];
+
+            $lead->update($leadData);
+
+            // Complete all open activities for this lead
+            $this->completeAllOpenActivitiesForLead($lead->id);
+
+            return response()->json([
+                'message' => 'Lead succesvol afgevoerd en alle opstaande activiteiten zijn afgerond.',
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Er is een fout opgetreden bij het afvoeren van de lead: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Complete all open activities for a lead
+     */
+    private function completeAllOpenActivitiesForLead(int $leadId): void
+    {
+        $openActivities = $this->activityRepository
+            ->where('lead_id', $leadId)
+            ->where('is_done', 0)
+            ->get();
+
+        foreach ($openActivities as $activity) {
+            $this->activityRepository->update([
+                'is_done' => 1,
+                'status' => \App\Enums\ActivityStatus::DONE->value,
+            ], $activity->id);
+        }
+    }
 }

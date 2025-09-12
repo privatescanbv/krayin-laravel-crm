@@ -27,6 +27,8 @@ Route::controller(ActivityController::class)->prefix('activities')->group(functi
     Route::post('mass-update', 'massUpdate')->name('admin.activities.mass_update');
 
     Route::post('mass-destroy', 'massDestroy')->name('admin.activities.mass_delete');
+
+    Route::post('{id}/lead-afvoeren', 'leadAfvoeren')->name('admin.activities.lead-afvoeren');
 });
 
 Route::controller(ActivityAssignmentController::class)->prefix('activities')->group(function () {

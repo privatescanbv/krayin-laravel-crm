@@ -443,20 +443,20 @@
                             name: 'note',
                             label: "{{ trans('admin::app.components.activities.index.notes') }}",
                         }, {
+                            name: 'file',
+                            label: "{{ trans('admin::app.components.activities.index.files') }}",
+                        }, {
                             name: 'email',
                             label: "{{ trans('admin::app.components.activities.index.emails') }}",
                         }, {
                             name: 'call',
                             label: "{{ trans('admin::app.components.activities.index.calls') }}",
                         }, {
-                            name: 'meeting',
-                            label: "{{ trans('admin::app.components.activities.index.meetings') }}",
-                        }, {
                             name: 'task',
                             label: "{{ trans('admin::app.components.activities.index.internal-task') }}",
                         }, {
-                            name: 'file',
-                            label: "{{ trans('admin::app.components.activities.index.files') }}",
+                            name: 'meeting',
+                            label: "{{ trans('admin::app.components.activities.index.meetings') }}",
                         }, {
                             name: 'system',
                             label: "{{ trans('admin::app.components.activities.index.change-log') }}",

@@ -28,6 +28,8 @@ Route::controller(LeadController::class)->prefix('leads')->group(function () {
 
     Route::put('stage/edit/{id}', 'updateStage')->name('admin.leads.stage.update');
 
+    Route::put('{id}/lost', 'markAsLost')->name('admin.leads.lost');
+
     Route::get('search', 'search')->name('admin.leads.search');
 
     Route::delete('{id}', 'destroy')->name('admin.leads.delete');

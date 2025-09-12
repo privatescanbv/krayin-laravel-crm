@@ -278,7 +278,7 @@
                                 this.isSubmitting = true;
 
                                 // Submit to the new route
-                                this.$axios.post('{{ route("admin.activities.lead-afvoeren", $activity->id) }}', {
+                                this.$axios.put('{{ route("admin.leads.lost", $activity->lead_id) }}', {
                                     lost_reason: this.leadAfvoerenData.lost_reason,
                                     closed_at: this.leadAfvoerenData.closed_at
                                 })

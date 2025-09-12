@@ -26,19 +26,6 @@
 
         <div class="flex items-center gap-x-2.5">
 
-            @if (bouncer()->hasPermission('activities.delete'))
-                <form method="POST" action="{{ route('admin.activities.delete', $activity->id) }}"
-                      onsubmit="return confirm('Weet je zeker dat je deze activiteit wilt verwijderen?');">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit"
-                            class="flex h-8 w-8 items-center justify-center rounded-md text-red-600 hover:bg-red-50 hover:text-red-700"
-                            title="Verwijderen">
-                        <span class="icon-delete text-2xl"></span>
-                    </button>
-                </form>
-            @endif
-
             @if (bouncer()->hasPermission('activities.edit'))
                 <a
                     href="{{ route('admin.activities.edit', $activity->id) }}"
@@ -46,6 +33,16 @@
                 >
                     <span class="icon-edit text-2xl"></span>
                 </a>
+            @endif
+
+            @if ($activity->lead && bouncer()->hasPermission('leads.edit'))
+                <button
+                    type="button"
+                    class="secondary-button"
+                    @click="openLeadAfvoerenModal"
+                >
+                    Lead afvoeren
+                </button>
             @endif
 
             @if(!$activity->is_done)
@@ -56,6 +53,19 @@
                 >
                     Afronden
                 </button>
+            @endif
+
+            @if (bouncer()->hasPermission('activities.delete'))
+                <form method="POST" action="{{ route('admin.activities.delete', $activity->id) }}"
+                      onsubmit="return confirm('Weet je zeker dat je deze activiteit wilt verwijderen?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit"
+                            class="secondary-button"
+                            title="Verwijderen">
+                        <span class="icon-delete text-2xl"></span>
+                    </button>
+                </form>
             @endif
         </div>
     </div>
@@ -75,16 +85,6 @@
                     @if ($activity->lead && bouncer()->hasPermission('activities.create'))
                         <x-admin::activities.actions.note :entity="$activity->lead" entity-control-name="lead_id"/>
                         <x-admin::activities.actions.activity :entity="$activity->lead" entity-control-name="lead_id"/>
-                    @endif
-
-                    @if ($activity->lead && bouncer()->hasPermission('leads.edit'))
-                        <button
-                            type="button"
-                            class="secondary-button"
-                            @click="openLeadAfvoerenModal"
-                        >
-                            Lead afvoeren
-                        </button>
                     @endif
                 </div>
                 <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">

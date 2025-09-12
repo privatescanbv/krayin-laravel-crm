@@ -884,7 +884,7 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        -1520,
+        -1392,
         1600
       ],
       "id": "e24a9cb7-9077-4075-961f-289b1b4fa630",
@@ -1205,13 +1205,7 @@
     },
     "newLeadStatusId 3": {
       "main": [
-        [
-          {
-            "node": "put lead into next stage",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "department not null": {
@@ -1417,7 +1411,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "7c963b1e-5d37-453d-a440-01bd3d742fcf",
+  "versionId": "96df4957-36af-4ff8-83b6-8141cb979b25",
   "meta": {
     "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },

@@ -545,4 +545,5 @@ class ActivityController extends Controller
         return false;
 
     }
+
 }

@@ -14,12 +14,14 @@
                 :entity="$activity"
             />
 
-            <!-- Title + Status Bar -->
-            <div class="text-xl font-bold dark:text-gray-300 flex items-center justify-between gap-3 w-full">
-                <div class="flex items-center gap-2">
-                    <x-admin::activities.icon :type="$activity->type" />
-                    <span>{{ $activity->title ?: __('admin::app.activities.edit.title') }}</span>
-                </div>
+            <!-- Title -->
+            <div class="text-xl font-bold dark:text-gray-300 flex items-center gap-2">
+                <x-admin::activities.icon :type="$activity->type" />
+                <span>{{ $activity->title ?: __('admin::app.activities.edit.title') }}</span>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="flex items-center">
                 @include('admin::components.activities.status-bar', ['activity' => $activity, 'hide_help' => true])
             </div>
         </div>
@@ -32,13 +34,12 @@
                     @csrf
                     @method('DELETE')
                     <button type="submit"
-                            class="flex h-8 w-8 items-center justify-center rounded-md text-red-600 hover:bg-red-50 hover:text-red-700"
+                            class="secondary-button"
                             title="Verwijderen">
                         <span class="icon-delete text-2xl"></span>
                     </button>
                 </form>
             @endif
-
             @if (bouncer()->hasPermission('activities.edit'))
                 <a
                     href="{{ route('admin.activities.edit', $activity->id) }}"
@@ -46,6 +47,16 @@
                 >
                     <span class="icon-edit text-2xl"></span>
                 </a>
+            @endif
+
+            @if ($activity->lead && bouncer()->hasPermission('leads.edit'))
+                <button
+                    type="button"
+                    class="secondary-button"
+                    @click="openLeadAfvoerenModal"
+                >
+                    Lead afvoeren
+                </button>
             @endif
 
             @if(!$activity->is_done)
@@ -57,6 +68,7 @@
                     Afronden
                 </button>
             @endif
+
         </div>
     </div>
 
@@ -234,6 +246,69 @@
                     }
                 }, {capture: true});
             })();
+
+            // Vue.js component for Lead Afvoeren functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof app !== 'undefined') {
+                    app.mixin({
+                        data() {
+                            return {
+                                leadAfvoerenData: {
+                                    lost_reason: '',
+                                    closed_at: new Date().toISOString().split('T')[0]
+                                },
+                                isSubmitting: false
+                            }
+                        },
+                        methods: {
+                            openLeadAfvoerenModal() {
+                                this.leadAfvoerenData = {
+                                    lost_reason: '',
+                                    closed_at: new Date().toISOString().split('T')[0]
+                                };
+                                this.$refs.leadAfvoerenModal.open();
+                            },
+                            submitLeadAfvoeren() {
+                                if (!this.leadAfvoerenData.lost_reason.trim()) {
+                                    this.$emitter.emit('add-flash', {
+                                        type: 'error',
+                                        message: 'Reden van verlies is verplicht'
+                                    });
+                                    return;
+                                }
+
+                                this.isSubmitting = true;
+
+                                // Submit to the new route
+                                this.$axios.put('{{ route("admin.leads.lost", $activity->lead_id) }}', {
+                                    lost_reason: this.leadAfvoerenData.lost_reason,
+                                    closed_at: this.leadAfvoerenData.closed_at
+                                })
+                                .then(response => {
+                                    this.isSubmitting = false;
+                                    this.$refs.leadAfvoerenModal.close();
+
+                                    this.$emitter.emit('add-flash', {
+                                        type: 'success',
+                                        message: response.data.message
+                                    });
+
+                                    // Redirect to lead view
+                                    window.location.href = '{{ route("admin.leads.view", $activity->lead_id) }}';
+                                })
+                                .catch(error => {
+                                    this.isSubmitting = false;
+
+                                    this.$emitter.emit('add-flash', {
+                                        type: 'error',
+                                        message: error.response?.data?.message || 'Er is een fout opgetreden'
+                                    });
+                                });
+                            }
+                        }
+                    });
+                }
+            });
         </script>
     @endPushOnce
 
@@ -245,5 +320,68 @@
         <input type="hidden" name="is_done" value="1"/>
         <input type="hidden" name="status" value="done"/>
     </form>
+
+    <!-- Lead Afvoeren Modal -->
+    <x-admin::modal ref="leadAfvoerenModal">
+        <x-slot:header>
+            <h3 class="text-base font-semibold dark:text-white">
+                Lead afvoeren
+            </h3>
+        </x-slot>
+
+        <x-slot:content>
+            <div class="mb-4">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Weet je zeker dat je deze lead wilt afvoeren? Dit zal de lead op status "Verloren" zetten en alle opstaande activiteiten afronden.
+                </p>
+            </div>
+
+            <x-admin::form.control-group>
+                <x-admin::form.control-group.label>
+                    Reden van verlies
+                </x-admin::form.control-group.label>
+
+                <x-admin::form.control-group.control
+                    type="textarea"
+                    name="lost_reason"
+                    v-model="leadAfvoerenData.lost_reason"
+                    placeholder="Vul de reden van verlies in..."
+                    required
+                />
+            </x-admin::form.control-group>
+
+            <x-admin::form.control-group>
+                <x-admin::form.control-group.label>
+                    Gesloten op
+                </x-admin::form.control-group.label>
+
+                <x-admin::form.control-group.control
+                    type="date"
+                    name="closed_at"
+                    v-model="leadAfvoerenData.closed_at"
+                />
+            </x-admin::form.control-group>
+        </x-slot>
+
+        <x-slot:footer>
+            <button
+                type="button"
+                class="secondary-button"
+                @click="$refs.leadAfvoerenModal.close()"
+            >
+                Annuleren
+            </button>
+
+            <button
+                type="button"
+                class="primary-button"
+                @click="submitLeadAfvoeren"
+                :disabled="!leadAfvoerenData.lost_reason || isSubmitting"
+            >
+                <span v-if="isSubmitting">Bezig...</span>
+                <span v-else>Lead afvoeren</span>
+            </button>
+        </x-slot>
+    </x-admin::modal>
 </x-admin::layouts>
 

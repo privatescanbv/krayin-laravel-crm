@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Lead;
 
+use App\Enums\ActivityStatus;
 use App\Enums\PipelineDefaultKeys;
 use App\Models\Anamnesis;
 use App\Models\Department;
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\DataGrids\Lead\LeadDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\LeadForm;
@@ -1408,5 +1410,72 @@ class LeadController extends Controller
             'stage_id' => $defaultStageId,
             'department_id' => $defaultDepartmentId
         ];
+    }
+
+    /**
+     * Mark lead as lost and complete all open activities
+     */
+    public function markAsLost(int $id): JsonResponse
+    {
+        $this->validate(request(), [
+            'lost_reason' => 'required|string|max:1000',
+            'closed_at' => 'nullable|date',
+        ]);
+
+        $lead = $this->leadRepository->findOrFail($id);
+
+        try {
+            // Find the lost stage for this lead's pipeline
+            $lostStage = $lead->pipeline->stages()
+                ->where('code', 'like', 'lost%')
+                ->first();
+
+            if (!$lostStage) {
+                return response()->json([
+                    'message' => 'Geen "Verloren" status gevonden voor deze pipeline.',
+                ], 422);
+            }
+
+            // Update lead to lost status
+            $leadData = [
+                'lead_pipeline_stage_id' => $lostStage->id,
+                'lost_reason' => request('lost_reason'),
+                'closed_at' => request('closed_at') ?: now(),
+            ];
+
+            $lead->update($leadData);
+
+            // Complete all open activities for this lead
+            $this->completeAllOpenActivitiesForLead($lead->id);
+
+            return response()->json([
+                'message' => 'Lead succesvol afgevoerd en alle opstaande activiteiten zijn afgerond.',
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'Er is een fout opgetreden bij het afvoeren van de lead: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Complete all open activities for a lead
+     */
+    private function completeAllOpenActivitiesForLead(int $leadId): void
+    {
+        $activityRepository = app(ActivityRepository::class);
+
+        $openActivities = $activityRepository
+            ->where('lead_id', $leadId)
+            ->where('is_done', 0)
+            ->get();
+
+        foreach ($openActivities as $activity) {
+            $activityRepository->update([
+                'is_done' => 1,
+                'status' => ActivityStatus::DONE->value,
+            ], $activity->id);
+        }
     }
 }

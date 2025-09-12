@@ -283,27 +283,34 @@
                                 <x-admin::flat-picker.datetime class="!w-full" ::allow-input="true">
                                     <input
                                         name="schedule_from"
+                                        id="schedule_from"
                                         value="{{ old('schedule_from') ?? $activity->schedule_from }}"
                                         class="flex w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
                                         placeholder="@lang('admin::app.activities.edit.schedule_from')"
+                                        @if($activity->type === \App\Enums\ActivityType::CALL) onchange="updateScheduleToForCall()" @endif
                                     />
                                 </x-admin::flat-picker.datetime>
                             </div>
 
-                            <div class="w-full">
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.activities.edit.schedule_to')
-                                </x-admin::form.control-group.label>
+                            @if($activity->type !== \App\Enums\ActivityType::CALL)
+                                <div class="w-full">
+                                    <x-admin::form.control-group.label class="required">
+                                        @lang('admin::app.activities.edit.schedule_to')
+                                    </x-admin::form.control-group.label>
 
-                                <x-admin::flat-picker.datetime class="!w-full" ::allow-input="true">
-                                    <input
-                                        name="schedule_to"
-                                        value="{{ old('schedule_to') ?? $activity->schedule_to }}"
-                                        class="flex w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
-                                        placeholder="@lang('admin::app.activities.edit.schedule_to')"
-                                    />
-                                </x-admin::flat-picker.datetime>
-                            </div>
+                                    <x-admin::flat-picker.datetime class="!w-full" ::allow-input="true">
+                                        <input
+                                            name="schedule_to"
+                                            value="{{ old('schedule_to') ?? $activity->schedule_to }}"
+                                            class="flex w-full rounded-md border px-3 py-2 text-sm text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+                                            placeholder="@lang('admin::app.activities.edit.schedule_to')"
+                                        />
+                                    </x-admin::flat-picker.datetime>
+                                </div>
+                            @else
+                                <!-- Hidden field for call type - automatically set to schedule_from + 1 hour -->
+                                <input type="hidden" name="schedule_to" id="schedule_to_hidden" value="{{ old('schedule_to') ?? $activity->schedule_to }}" />
+                            @endif
                         </div>
                     </x-admin::form.control-group>
 
@@ -605,6 +612,33 @@
                     }
                 }
             })();
+
+            /**
+             * Update schedule_to for call activities (schedule_from + 1 hour)
+             */
+            window.updateScheduleToForCall = function() {
+                const scheduleFromInput = document.getElementById('schedule_from');
+                const scheduleToHidden = document.getElementById('schedule_to_hidden');
+                
+                if (scheduleFromInput && scheduleToHidden && scheduleFromInput.value) {
+                    try {
+                        const fromDate = new Date(scheduleFromInput.value);
+                        const toDate = new Date(fromDate.getTime() + (60 * 60 * 1000)); // Add 1 hour
+                        
+                        // Format the date for the hidden input (ISO format)
+                        scheduleToHidden.value = toDate.toISOString().slice(0, 16);
+                    } catch (error) {
+                        console.error('Error updating schedule_to for call:', error);
+                    }
+                }
+            };
+
+            // Initialize schedule_to for call activities on page load
+            document.addEventListener('DOMContentLoaded', function() {
+                @if($activity->type === \App\Enums\ActivityType::CALL)
+                    updateScheduleToForCall();
+                @endif
+            });
         </script>
     @endPushOnce
 </x-admin::layouts>

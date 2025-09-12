@@ -117,11 +117,11 @@
             <!-- Footer with creation and modification dates -->
             <div class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
                 <div class="flex justify-between">
-                    <span>@lang('admin::app.common.created-at'):</span>
+                    <span>@lang('admin::app.leads.view.created-at'):</span>
                     <span>{{ $activity->created_at->format('d-m-Y') }}</span>
                 </div>
                 <div class="flex justify-between">
-                    <span>@lang('admin::app.common.updated-at'):</span>
+                    <span>@lang('admin::app.leads.view.updated-at'):</span>
                     <span>{{ $activity->updated_at->format('d-m-Y') }}</span>
                 </div>
             </div>
@@ -137,7 +137,7 @@
                             {!! nl2br(e($activity->comment)) !!}
                         </div>
                     @else
-                        <p class="text-gray-500 dark:text-gray-400">@lang('admin::app.common.no-data-available')</p>
+                        <p class="text-gray-500 dark:text-gray-400">Geen gegevens beschikbaar</p>
                     @endif
 
                     @if($activity->emails && $activity->emails->count() > 0)

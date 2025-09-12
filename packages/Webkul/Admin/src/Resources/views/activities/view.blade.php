@@ -144,9 +144,7 @@
             <div class="flex gap-2.5 max-lg:flex-wrap-reverse">
                 <!-- Main content -->
                 <div class="box-shadow flex-1 gap-2 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 max-lg:flex-auto">
-                    @if (!$activity->comment)
-                        <p class="text-gray-500 dark:text-gray-400">Geen opmerking beschikbaar</p>
-                    @endif
+                    
 
                     @if($activity->emails && $activity->emails->count() > 0)
                         <div class="mt-6">

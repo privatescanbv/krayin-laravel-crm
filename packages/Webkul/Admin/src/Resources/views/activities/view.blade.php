@@ -14,12 +14,14 @@
                 :entity="$activity"
             />
 
-            <!-- Title + Status Bar -->
-            <div class="text-xl font-bold dark:text-gray-300 flex items-center justify-between gap-3 w-full">
-                <div class="flex items-center gap-2">
-                    <x-admin::activities.icon :type="$activity->type" />
-                    <span>{{ $activity->title ?: __('admin::app.activities.edit.title') }}</span>
-                </div>
+            <!-- Title -->
+            <div class="text-xl font-bold dark:text-gray-300 flex items-center gap-2">
+                <x-admin::activities.icon :type="$activity->type" />
+                <span>{{ $activity->title ?: __('admin::app.activities.edit.title') }}</span>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="flex items-center">
                 @include('admin::components.activities.status-bar', ['activity' => $activity, 'hide_help' => true])
             </div>
         </div>

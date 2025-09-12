@@ -28,6 +28,18 @@
 
         <div class="flex items-center gap-x-2.5">
 
+            @if (bouncer()->hasPermission('activities.delete'))
+                <form method="POST" action="{{ route('admin.activities.delete', $activity->id) }}"
+                      onsubmit="return confirm('Weet je zeker dat je deze activiteit wilt verwijderen?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit"
+                            class="secondary-button"
+                            title="Verwijderen">
+                        <span class="icon-delete text-2xl"></span>
+                    </button>
+                </form>
+            @endif
             @if (bouncer()->hasPermission('activities.edit'))
                 <a
                     href="{{ route('admin.activities.edit', $activity->id) }}"
@@ -57,18 +69,6 @@
                 </button>
             @endif
 
-            @if (bouncer()->hasPermission('activities.delete'))
-                <form method="POST" action="{{ route('admin.activities.delete', $activity->id) }}"
-                      onsubmit="return confirm('Weet je zeker dat je deze activiteit wilt verwijderen?');">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit"
-                            class="secondary-button"
-                            title="Verwijderen">
-                        <span class="icon-delete text-2xl"></span>
-                    </button>
-                </form>
-            @endif
         </div>
     </div>
 
@@ -270,9 +270,9 @@
                             },
                             submitLeadAfvoeren() {
                                 if (!this.leadAfvoerenData.lost_reason.trim()) {
-                                    this.$emitter.emit('add-flash', { 
-                                        type: 'error', 
-                                        message: 'Reden van verlies is verplicht' 
+                                    this.$emitter.emit('add-flash', {
+                                        type: 'error',
+                                        message: 'Reden van verlies is verplicht'
                                     });
                                     return;
                                 }
@@ -287,21 +287,21 @@
                                 .then(response => {
                                     this.isSubmitting = false;
                                     this.$refs.leadAfvoerenModal.close();
-                                    
-                                    this.$emitter.emit('add-flash', { 
-                                        type: 'success', 
-                                        message: response.data.message 
+
+                                    this.$emitter.emit('add-flash', {
+                                        type: 'success',
+                                        message: response.data.message
                                     });
-                                    
+
                                     // Redirect to lead view
                                     window.location.href = '{{ route("admin.leads.view", $activity->lead_id) }}';
                                 })
                                 .catch(error => {
                                     this.isSubmitting = false;
-                                    
-                                    this.$emitter.emit('add-flash', { 
-                                        type: 'error', 
-                                        message: error.response?.data?.message || 'Er is een fout opgetreden' 
+
+                                    this.$emitter.emit('add-flash', {
+                                        type: 'error',
+                                        message: error.response?.data?.message || 'Er is een fout opgetreden'
                                     });
                                 });
                             }

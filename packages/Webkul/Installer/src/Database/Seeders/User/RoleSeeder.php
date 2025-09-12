@@ -39,7 +39,7 @@ class RoleSeeder extends Seeder
             'permissions'     => json_encode([
                 'leads',
                 'leads.create',
-                'leads.view', 
+                'leads.view',
                 'leads.edit',
                 'leads.delete',
                 'quotes',
@@ -69,7 +69,6 @@ class RoleSeeder extends Seeder
                 'activities',
                 'activities.create',
                 'activities.edit',
-                'activities.delete',
                 'contacts',
                 'contacts.persons',
                 'contacts.persons.create',

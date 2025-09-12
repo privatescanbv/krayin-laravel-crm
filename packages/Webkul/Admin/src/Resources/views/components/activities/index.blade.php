@@ -437,14 +437,14 @@
                     type: Array,
                     default: [
                         {
-                            name: 'all',
-                            label: "{{ trans('admin::app.components.activities.index.all') }}",
-                        }, {
                             name: 'planned',
                             label: "{{ trans('admin::app.components.activities.index.planned') }}",
                         }, {
                             name: 'note',
                             label: "{{ trans('admin::app.components.activities.index.notes') }}",
+                        }, {
+                            name: 'email',
+                            label: "{{ trans('admin::app.components.activities.index.emails') }}",
                         }, {
                             name: 'call',
                             label: "{{ trans('admin::app.components.activities.index.calls') }}",
@@ -458,11 +458,11 @@
                             name: 'file',
                             label: "{{ trans('admin::app.components.activities.index.files') }}",
                         }, {
-                            name: 'email',
-                            label: "{{ trans('admin::app.components.activities.index.emails') }}",
-                        }, {
                             name: 'system',
                             label: "{{ trans('admin::app.components.activities.index.change-log') }}",
+                        }, {
+                            name: 'all',
+                            label: "{{ trans('admin::app.components.activities.index.all') }}",
                         }
                     ],
                 },

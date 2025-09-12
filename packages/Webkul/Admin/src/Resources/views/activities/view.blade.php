@@ -17,19 +17,7 @@
             <!-- Title + Status Bar -->
             <div class="text-xl font-bold dark:text-gray-300 flex items-center justify-between gap-3 w-full">
                 <div class="flex items-center gap-2">
-                    @php
-                        $activityType = $activity->type?->value ?? $activity->type;
-                        $iconClass = match($activityType) {
-                            'call' => 'icon-call',
-                            'email' => 'icon-mail',
-                            'note' => 'icon-note',
-                            'meeting', 'task' => 'icon-activity',
-                            'file' => 'icon-file',
-                            'system' => 'icon-system-generate',
-                            default => 'icon-activity'
-                        };
-                    @endphp
-                    <span class="{{ $iconClass }} text-lg"></span>
+                    <x-admin::activities.icon :type="$activity->type" />
                     <span>{{ $activity->title ?: __('admin::app.activities.edit.title') }}</span>
                 </div>
                 @include('admin::components.activities.status-bar', ['activity' => $activity, 'hide_help' => true])

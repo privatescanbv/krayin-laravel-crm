@@ -11,7 +11,6 @@ use Webkul\DataGrid\DataGrid;
 use Webkul\Lead\Models\Lead;
 use Webkul\Contact\Models\Person;
 use Webkul\User\Repositories\UserRepository;
-use Webkul\User\Repositories\GroupRepository;
 
 class ActivityDataGrid extends DataGrid
 {
@@ -302,7 +301,7 @@ class ActivityDataGrid extends DataGrid
             'label'      => 'Oppakken vanaf',
             'type'       => 'datetime',
             'sortable'   => true,
-            'searchable' => false,
+            'searchable' => true,
             'filterable' => false,
             'closure'    => function ($row) {
                 if (empty($row->schedule_from)) {
@@ -319,27 +318,23 @@ class ActivityDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'days_until_deadline',
+            'index'      => 'schedule_to',
             'label'      => 'Deadline',
-            'type'       => 'integer',
+            'type'       => 'datetime',
             'sortable'   => true,
-            'searchable' => false,
-            'filterable' => true,
-            'width'      => '120px',
+            'searchable' => true,
+            'filterable' => false,
             'closure'    => function ($row) {
-                $days = $row->days_until_deadline;
-
-                if ($days === null) {
-                    return '<span class="text-gray-500">N/A</span>';
-                } elseif ($days < 0) {
-                    return '<span class="text-red-600 font-semibold">-' . abs($days) . 'd</span>';
-                } elseif ($days == 0) {
-                    return '<span class="text-orange-600 font-semibold">Vandaag</span>';
-                } elseif ($days <= 3) {
-                    return '<span class="text-yellow-600 font-semibold">' . $days . 'd</span>';
-                } else {
-                    return '<span class="text-green-600">' . $days . 'd</span>';
+                if (empty($row->schedule_to)) {
+                    return 'N/A';
                 }
+
+                $timestamp = strtotime($row->schedule_to);
+                if ($timestamp === false) {
+                    return 'N/A';
+                }
+
+                return date('d-m-Y H:i', $timestamp);
             },
         ]);
 

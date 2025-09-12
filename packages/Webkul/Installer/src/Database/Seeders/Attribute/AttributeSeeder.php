@@ -38,20 +38,6 @@ class AttributeSeeder extends Seeder
              * Leads Attributes
              */
            [
-                'code' => 'user_id',
-                'name' => 'Verkoop Eigenaar',
-                'type' => 'select',
-                'entity_type' => 'leads',
-                'lookup_type' => 'users',
-                'validation' => null,
-                'sort_order' => '7',
-                'is_required' => '0',
-                'is_unique' => '0',
-                'quick_add' => '1',
-                'is_user_defined' => '0',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ], [
                 'code' => 'lead_pipeline_id',
                 'name' => trans('installer::app.seeders.attributes.leads.pipeline', [], $defaultLocale),
                 'type' => 'lookup',

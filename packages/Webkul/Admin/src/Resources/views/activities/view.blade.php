@@ -112,6 +112,18 @@
                         </div>
                     @endif
                 @endif
+
+                <!-- Comment section -->
+                @if ($activity->comment)
+                    <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
+                        <div class="text-sm">
+                            <span class="font-medium">Opmerking:</span>
+                        </div>
+                        <div class="mt-2 text-sm text-gray-700 dark:text-gray-300">
+                            {!! nl2br(e($activity->comment)) !!}
+                        </div>
+                    </div>
+                @endif
             </div>
 
             <!-- Footer with creation and modification dates -->
@@ -132,12 +144,8 @@
             <div class="flex gap-2.5 max-lg:flex-wrap-reverse">
                 <!-- Main content -->
                 <div class="box-shadow flex-1 gap-2 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 max-lg:flex-auto">
-                    @if ($activity->comment)
-                        <div class="prose dark:prose-invert max-w-none">
-                            {!! nl2br(e($activity->comment)) !!}
-                        </div>
-                    @else
-                        <p class="text-gray-500 dark:text-gray-400">Geen gegevens beschikbaar</p>
+                    @if (!$activity->comment)
+                        <p class="text-gray-500 dark:text-gray-400">Geen opmerking beschikbaar</p>
                     @endif
 
                     @if($activity->emails && $activity->emails->count() > 0)

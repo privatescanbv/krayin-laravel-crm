@@ -157,7 +157,7 @@
             <x-admin::activities
                 :endpoint="route('admin.leads.activities.index', $lead->id)"
                 :email-detach-endpoint="route('admin.leads.emails.detach', $lead->id)"
-                :activeType="request()->query('from') === 'quotes' ? 'quotes' : 'all'"
+                :activeType="request()->query('from') === 'quotes' ? 'quotes' : 'planned'"
                 :extra-types="[
                     ['name' => 'description', 'label' => trans('admin::app.leads.view.tabs.description')],
                     ['name' => 'products', 'label' => trans('admin::app.leads.view.tabs.products')],

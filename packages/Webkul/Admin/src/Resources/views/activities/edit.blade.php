@@ -21,7 +21,22 @@
 
                     <!-- Page Title + Horizontal Clickable Status List -->
                     <div class="text-xl font-bold dark:text-gray-300 flex items-center justify-between gap-3 w-full">
-                        <span>@lang('admin::app.activities.edit.title')</span>
+                        <div class="flex items-center gap-2">
+                            @php
+                                $activityType = $activity->type?->value ?? $activity->type;
+                                $iconClass = match($activityType) {
+                                    'call' => 'icon-call',
+                                    'email' => 'icon-mail',
+                                    'note' => 'icon-note',
+                                    'meeting', 'task' => 'icon-activity',
+                                    'file' => 'icon-file',
+                                    'system' => 'icon-system-generate',
+                                    default => 'icon-activity'
+                                };
+                            @endphp
+                            <span class="{{ $iconClass }} text-lg"></span>
+                            <span>@lang('admin::app.activities.edit.title')</span>
+                        </div>
 
                         @php
                             $status = is_string($activity->status) ? $activity->status : ($activity->status?->value ?? 'active');

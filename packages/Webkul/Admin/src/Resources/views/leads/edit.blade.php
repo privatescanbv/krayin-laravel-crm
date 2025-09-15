@@ -281,10 +281,10 @@
                                     <div class="flex gap-4">
                                         @php $leadAn = optional($lead->anamnesis)->first(); @endphp
                                         <label class="flex items-center">
-                                            <input type="radio" name="metals" value="1" class="mr-2" {{ (optional($leadAn)->metals) ? 'checked' : '' }} onchange="document.getElementById('lead_metals_notes').style.display='block'"> Ja
+                                            <input type="radio" name="metals" value="1" required class="mr-2" {{ (optional($leadAn)->metals) ? 'checked' : '' }} onchange="document.getElementById('lead_metals_notes').style.display='block'; document.querySelector('input[name=\'metals_notes\']')?.setAttribute('required','required')"> Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="metals" value="0" class="mr-2" {{ (optional($leadAn)->metals===false) ? 'checked' : '' }} onchange="document.getElementById('lead_metals_notes').style.display='none'"> Nee
+                                            <input type="radio" name="metals" value="0" required class="mr-2" {{ (optional($leadAn)->metals===false) ? 'checked' : '' }} onchange="document.getElementById('lead_metals_notes').style.display='none'; document.querySelector('input[name=\'metals_notes\']')?.removeAttribute('required')"> Nee
                                         </label>
                                     </div>
                                     <div id="lead_metals_notes" style="display: {{ (optional($leadAn)->metals) ? 'block' : 'none' }}" class="mt-2">
@@ -306,10 +306,10 @@
                                     </x-admin::form.control-group.label>
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="claustrophobia" value="1" class="mr-2" {{ (optional($leadAn)->claustrophobia) ? 'checked' : '' }}> Ja
+                                            <input type="radio" name="claustrophobia" value="1" required class="mr-2" {{ (optional($leadAn)->claustrophobia) ? 'checked' : '' }}> Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="claustrophobia" value="0" class="mr-2" {{ (optional($leadAn)->claustrophobia===false) ? 'checked' : '' }}> Nee
+                                            <input type="radio" name="claustrophobia" value="0" required class="mr-2" {{ (optional($leadAn)->claustrophobia===false) ? 'checked' : '' }}> Nee
                                         </label>
                                     </div>
                                 </x-admin::form.control-group>
@@ -323,10 +323,10 @@
                                     </x-admin::form.control-group.label>
                                     <div class="flex gap-4">
                                         <label class="flex items-center">
-                                            <input type="radio" name="allergies" value="1" class="mr-2" {{ (optional($leadAn)->allergies) ? 'checked' : '' }} onchange="document.getElementById('lead_allergies_notes').style.display='block'"> Ja
+                                            <input type="radio" name="allergies" value="1" required class="mr-2" {{ (optional($leadAn)->allergies) ? 'checked' : '' }} onchange="document.getElementById('lead_allergies_notes').style.display='block'; document.querySelector('input[name=\'allergies_notes\']')?.setAttribute('required','required')"> Ja
                                         </label>
                                         <label class="flex items-center">
-                                            <input type="radio" name="allergies" value="0" class="mr-2" {{ (optional($leadAn)->allergies===false) ? 'checked' : '' }} onchange="document.getElementById('lead_allergies_notes').style.display='none'"> Nee
+                                            <input type="radio" name="allergies" value="0" required class="mr-2" {{ (optional($leadAn)->allergies===false) ? 'checked' : '' }} onchange="document.getElementById('lead_allergies_notes').style.display='none'; document.querySelector('input[name=\'allergies_notes\']')?.removeAttribute('required')"> Nee
                                         </label>
                                     </div>
                                     <div id="lead_allergies_notes" style="display: {{ (optional($leadAn)->allergies) ? 'block' : 'none' }}" class="mt-2">

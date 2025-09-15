@@ -348,10 +348,10 @@
                                                 </x-admin::form.control-group.label>
                                                 <div class="flex gap-4">
                                                     <label class="flex items-center">
-                                                        <input type="radio" name="metals" value="1" @change="() => $refs.metals_notes_container.style.display='block'" class="mr-2"> Ja
+                                                        <input type="radio" name="metals" value="1" required @change="() => {$refs.metals_notes_container.style.display='block'; const n=$refs.metals_notes_container.querySelector('input[name=\'metals_notes\']'); if(n){n.setAttribute('required','required');}}" class="mr-2"> Ja
                                                     </label>
                                                     <label class="flex items-center">
-                                                        <input type="radio" name="metals" value="0" @change="() => $refs.metals_notes_container.style.display='none'" class="mr-2"> Nee
+                                                        <input type="radio" name="metals" value="0" required @change="() => {$refs.metals_notes_container.style.display='none'; const n=$refs.metals_notes_container.querySelector('input[name=\'metals_notes\']'); if(n){n.removeAttribute('required');}}" class="mr-2"> Nee
                                                     </label>
                                                 </div>
                                                 <div ref="metals_notes_container" style="display: none" class="mt-2">
@@ -372,10 +372,10 @@
                                                 </x-admin::form.control-group.label>
                                                 <div class="flex gap-4">
                                                     <label class="flex items-center">
-                                                        <input type="radio" name="claustrophobia" value="1" class="mr-2"> Ja
+                                                        <input type="radio" name="claustrophobia" value="1" required class="mr-2"> Ja
                                                     </label>
                                                     <label class="flex items-center">
-                                                        <input type="radio" name="claustrophobia" value="0" class="mr-2"> Nee
+                                                        <input type="radio" name="claustrophobia" value="0" required class="mr-2"> Nee
                                                     </label>
                                                 </div>
                                             </x-admin::form.control-group>
@@ -389,10 +389,10 @@
                                                 </x-admin::form.control-group.label>
                                                 <div class="flex gap-4">
                                                     <label class="flex items-center">
-                                                        <input type="radio" name="allergies" value="1" @change="() => $refs.allergies_notes_container.style.display='block'" class="mr-2"> Ja
+                                                        <input type="radio" name="allergies" value="1" required @change="() => {$refs.allergies_notes_container.style.display='block'; const n=$refs.allergies_notes_container.querySelector('input[name=\'allergies_notes\']'); if(n){n.setAttribute('required','required');}}" class="mr-2"> Ja
                                                     </label>
                                                     <label class="flex items-center">
-                                                        <input type="radio" name="allergies" value="0" @change="() => $refs.allergies_notes_container.style.display='none'" class="mr-2"> Nee
+                                                        <input type="radio" name="allergies" value="0" required @change="() => {$refs.allergies_notes_container.style.display='none'; const n=$refs.allergies_notes_container.querySelector('input[name=\'allergies_notes\']'); if(n){n.removeAttribute('required');}}" class="mr-2"> Nee
                                                     </label>
                                                 </div>
                                                 <div ref="allergies_notes_container" style="display: none" class="mt-2">

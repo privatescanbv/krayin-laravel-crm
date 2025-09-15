@@ -89,11 +89,11 @@ class LeadValidationService
             'address.country'             => 'nullable|string|max:255',
 
             // Anamnesis quick questions on lead form
-            'metals'                => 'nullable|boolean',
-            'metals_notes'          => 'nullable|string',
-            'claustrophobia'        => 'nullable|boolean',
-            'allergies'             => 'nullable|boolean',
-            'allergies_notes'       => 'nullable|string',
+            'metals'                => 'required|boolean',
+            'metals_notes'          => 'required_if:metals,1|nullable|string',
+            'claustrophobia'        => 'required|boolean',
+            'allergies'             => 'required|boolean',
+            'allergies_notes'       => 'required_if:allergies,1|nullable|string',
         ];
 
 

@@ -176,11 +176,11 @@
 
         <!-- Right Panel -->
         @if($activity->type == ActivityType::CALL)
-            <div class="flex wfull flex-col gap-4 rounded-lg">
+            <div class="flex w-full flex-1 flex-col gap-4 rounded-lg">
                 <div class="flex gap-2.5 max-lg:flex-wrap-reverse">
                     <!-- Main content -->
                     <div
-                        class="box-shadow flex-1 gap-2 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 max-lg:flex-auto">
+                        class="box-shadow flex-1 min-w-0 gap-2 rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 max-lg:flex-auto">
 
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Gekoppelde
                             E-mails</h3>
@@ -222,7 +222,7 @@
                     </div>
 
                     <!-- Right side column: Call status manager (like edit) -->
-                    <div class="w-[360px] max-w-full gap-2 max-lg:w-full">
+                    <div class="w-[360px] shrink-0 max-w-full gap-2 max-lg:w-full">
                         @if ($activity->type === ActivityType::CALL)
                             @include('admin::components.activities.call-status', ['activity' => $activity, 'callStatuses' => $callStatuses ?? []])
                         @endif

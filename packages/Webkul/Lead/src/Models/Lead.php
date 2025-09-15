@@ -106,7 +106,7 @@ class Lead extends Model implements LeadContract
             return;
         }
 
-        if ($value instanceof \BackedEnum) {
+        if ($value instanceof BackedEnum) {
             $this->attributes['gender'] = $value->value;
             return;
         }
@@ -583,7 +583,7 @@ class Lead extends Model implements LeadContract
 
     /**
      * Override the update method to validate status transitions.
-     * 
+     *
      * @param array $attributes
      * @param array $options
      * @return bool
@@ -592,9 +592,9 @@ class Lead extends Model implements LeadContract
     public function update(array $attributes = [], array $options = [])
     {
         // Check if lead_pipeline_stage_id is being updated
-        if (isset($attributes['lead_pipeline_stage_id']) && 
+        if (isset($attributes['lead_pipeline_stage_id']) &&
             $attributes['lead_pipeline_stage_id'] != $this->lead_pipeline_stage_id) {
-            
+
             // Validate the status transition
             LeadStatusTransitionValidator::validateTransition($this, $attributes['lead_pipeline_stage_id']);
         }
@@ -604,7 +604,7 @@ class Lead extends Model implements LeadContract
 
     /**
      * Update the lead's stage with validation.
-     * 
+     *
      * @param int $newStageId
      * @return bool
      * @throws \Illuminate\Validation\ValidationException
@@ -613,7 +613,7 @@ class Lead extends Model implements LeadContract
     {
         // Validate the status transition
         LeadStatusTransitionValidator::validateTransition($this, $newStageId);
-        
+
         return $this->update(['lead_pipeline_stage_id' => $newStageId]);
     }
 }

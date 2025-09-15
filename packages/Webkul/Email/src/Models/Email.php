@@ -3,6 +3,7 @@
 namespace Webkul\Email\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\Email\Contracts\Email as EmailContract;
 use Webkul\Lead\Models\LeadProxy;
@@ -77,7 +78,7 @@ class Email extends Model implements EmailContract
                 $email->source = 'system';
             }
             if (empty($email->message_id)) {
-                $email->message_id = (string) \Illuminate\Support\Str::uuid();
+                $email->message_id = (string) Str::uuid();
             }
             if (empty($email->user_type)) {
                 $email->user_type = 'user';

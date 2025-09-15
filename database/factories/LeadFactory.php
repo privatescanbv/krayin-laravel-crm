@@ -3,9 +3,9 @@
 namespace Database\Factories;
 
 use App\Enums\Departments;
+use App\Enums\LostReason;
 use App\Models\Address;
 use App\Models\Department;
-use App\Enums\LostReason;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;

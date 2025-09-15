@@ -1,7 +1,7 @@
 <?php
 
-use App\Enums\PersonGender;
 use App\Enums\LostReason;
+use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
 use App\Models\Address;
 use Webkul\Contact\Models\Person;

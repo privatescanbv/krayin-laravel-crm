@@ -84,6 +84,8 @@ services:
       N8N_PORT: 5678
       TZ: 'Europe/Amsterdam'
       N8N_ENCRYPTION_KEY: 'FUC16A-23(<d!io'
+      N8N_RUN_MIGRATIONS: 'true'
+      N8N_RUNNERS_ENABLED: 'true'
     labels:
       - traefik.enable=true
       - traefik.http.routers.n8n.rule=Host(`n8ncrm.dev.privatescan.nl`)

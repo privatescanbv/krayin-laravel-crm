@@ -3,9 +3,9 @@
 namespace Tests\Feature;
 
 use App\Enums\CallStatus as CallStatusEnum;
-use Illuminate\Support\Str;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 use Webkul\Activity\Models\Activity;
 use Webkul\Email\Models\Email;

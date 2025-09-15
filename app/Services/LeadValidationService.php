@@ -20,7 +20,7 @@ class LeadValidationService
      */
     public static function getValidationRules($request = null): array
     {
-        return [
+        $rules = [
             'first_name'          => 'required|string|max:255',
             'last_name'           => 'required|string|max:255',
             'description'         => 'nullable|string',
@@ -87,7 +87,17 @@ class LeadValidationService
             'address.city'                => 'nullable|string|max:255',
             'address.state'               => 'nullable|string|max:255',
             'address.country'             => 'nullable|string|max:255',
+
+            // Anamnesis quick questions on lead form
+            'metals'                => 'required|boolean',
+            'metals_notes'          => 'required_if:metals,1|nullable|string',
+            'claustrophobia'        => 'required|boolean',
+            'allergies'             => 'required|boolean',
+            'allergies_notes'       => 'required_if:allergies,1|nullable|string',
         ];
+
+
+        return $rules;
     }
 
     /**

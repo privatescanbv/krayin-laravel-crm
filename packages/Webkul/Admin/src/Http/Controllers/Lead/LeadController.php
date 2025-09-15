@@ -325,7 +325,11 @@ class LeadController extends Controller
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
 
+        // Validate with custom rules including email/phone requirement
         $this->validate($request, LeadValidationService::getWebValidationRules($request));
+        
+        // Additional validation for at least one email or phone
+        $this->validateAtLeastOneContact($request);
 
             try {
                 [$lead, $leadPipelineId] = $this->storeLead($request);
@@ -440,6 +444,39 @@ class LeadController extends Controller
             }
             $lead = $this->leadRepository->create($data);
 
+            // Persist basic anamnesis answers if provided and if persons attached
+            try {
+                if (!empty($data['persons']) || !empty($data['person_ids'])) {
+                    $anamnesisUpdate = [];
+                    if (array_key_exists('metals', $data)) {
+                        $anamnesisUpdate['metals'] = (bool) $data['metals'];
+                    }
+                    if (!empty($data['metals_notes'])) {
+                        $anamnesisUpdate['metals_notes'] = $data['metals_notes'];
+                    }
+                    if (array_key_exists('claustrophobia', $data)) {
+                        $anamnesisUpdate['claustrophobia'] = (bool) $data['claustrophobia'];
+                    }
+                    if (array_key_exists('allergies', $data)) {
+                        $anamnesisUpdate['allergies'] = (bool) $data['allergies'];
+                    }
+                    if (!empty($data['allergies_notes'])) {
+                        $anamnesisUpdate['allergies_notes'] = $data['allergies_notes'];
+                    }
+
+                    if (!empty($anamnesisUpdate)) {
+                        // Update all related anamnesis for this lead
+                        foreach ($lead->persons as $person) {
+                            \App\Models\Anamnesis::where('lead_id', $lead->id)
+                                ->where('person_id', $person->id)
+                                ->update($anamnesisUpdate);
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Failed to persist anamnesis answers on lead create', ['lead_id' => $lead->id, 'error' => $e->getMessage()]);
+            }
+
             Event::dispatch('lead.create.after', $lead);
 
             return [$lead, $data['lead_pipeline_id']];
@@ -493,6 +530,9 @@ class LeadController extends Controller
     {
         try {
             $this->validate($request, LeadValidationService::getWebValidationRules($request));
+            
+            // Additional validation for at least one email or phone
+            $this->validateAtLeastOneContact($request);
 
             Event::dispatch('lead.update.before', $id);
 
@@ -556,6 +596,36 @@ class LeadController extends Controller
             }
 
             $lead = $this->leadRepository->update($data, $id);
+
+            // Persist basic anamnesis answers if provided
+            try {
+                $anamnesisUpdate = [];
+                if (array_key_exists('metals', $data)) {
+                    $anamnesisUpdate['metals'] = (bool) $data['metals'];
+                }
+                if (!empty($data['metals_notes'])) {
+                    $anamnesisUpdate['metals_notes'] = $data['metals_notes'];
+                }
+                if (array_key_exists('claustrophobia', $data)) {
+                    $anamnesisUpdate['claustrophobia'] = (bool) $data['claustrophobia'];
+                }
+                if (array_key_exists('allergies', $data)) {
+                    $anamnesisUpdate['allergies'] = (bool) $data['allergies'];
+                }
+                if (!empty($data['allergies_notes'])) {
+                    $anamnesisUpdate['allergies_notes'] = $data['allergies_notes'];
+                }
+
+                if (!empty($anamnesisUpdate)) {
+                    foreach ($lead->persons as $person) {
+                        \App\Models\Anamnesis::where('lead_id', $lead->id)
+                            ->where('person_id', $person->id)
+                            ->update($anamnesisUpdate);
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Failed to persist anamnesis answers on lead update', ['lead_id' => $lead->id, 'error' => $e->getMessage()]);
+            }
 
             Event::dispatch('lead.update.after', $lead);
 
@@ -1331,6 +1401,44 @@ class LeadController extends Controller
         ];
 
         return $labelMap[$normalizedLabel] ?? 'work';
+    }
+
+    /**
+     * Validate that at least one email or phone is provided
+     */
+    private function validateAtLeastOneContact($request): void
+    {
+        $data = $request->all();
+
+        $hasEmail = false;
+        if (!empty($data['emails']) && is_array($data['emails'])) {
+            foreach ($data['emails'] as $email) {
+                if (is_array($email) && isset($email['value']) && trim((string) $email['value']) !== '') {
+                    $hasEmail = true;
+                    break;
+                }
+            }
+        }
+
+        $hasPhone = false;
+        if (!empty($data['phones']) && is_array($data['phones'])) {
+            foreach ($data['phones'] as $phone) {
+                if (is_array($phone) && isset($phone['value']) && trim((string) $phone['value']) !== '') {
+                    $hasPhone = true;
+                    break;
+                }
+            }
+        }
+
+        if (!($hasEmail || $hasPhone)) {
+            throw new \Illuminate\Validation\ValidationException(
+                \Illuminate\Support\Facades\Validator::make([], []),
+                response()->json([
+                    'message' => 'Vul ten minste één e-mail of telefoonnummer in.',
+                    'errors' => ['emails' => ['Vul ten minste één e-mail of telefoonnummer in.']]
+                ], 422)
+            );
+        }
     }
 
     /**

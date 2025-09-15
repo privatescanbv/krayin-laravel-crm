@@ -267,6 +267,82 @@
 
                     {!! view_render_event('admin.leads.edit.address.after', ['lead' => $lead]) !!}
 
+                    <!-- Anamnese Section -->
+                    <div class="flex flex-col gap-4" id="anamnesis">
+                        <div class="w-1/2 max-md:w-full">
+                            <p class="text-base font-semibold dark:text-white">Anamnese</p>
+
+                            <!-- Heeft u metalen? -->
+                            <div class="mt-3">
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label>
+                                        Heeft u metalen?
+                                    </x-admin::form.control-group.label>
+                                    <div class="flex gap-4">
+                                        @php $leadAn = optional($lead->anamnesis)->first(); @endphp
+                                        <label class="flex items-center">
+                                            <input type="radio" name="metals" value="1" required class="mr-2" {{ (optional($leadAn)->metals) ? 'checked' : '' }} onchange="document.getElementById('lead_metals_notes').style.display='block'; document.querySelector('input[name=\'metals_notes\']')?.setAttribute('required','required')"> Ja
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="radio" name="metals" value="0" required class="mr-2" {{ (optional($leadAn)->metals===false) ? 'checked' : '' }} onchange="document.getElementById('lead_metals_notes').style.display='none'; document.querySelector('input[name=\'metals_notes\']')?.removeAttribute('required')"> Nee
+                                        </label>
+                                    </div>
+                                    <div id="lead_metals_notes" style="display: {{ (optional($leadAn)->metals) ? 'block' : 'none' }}" class="mt-2">
+                                        <x-admin::form.control-group.control
+                                            type="text"
+                                            name="metals_notes"
+                                            :value="optional($leadAn)->metals_notes"
+                                            placeholder="Toelichting"
+                                        />
+                                    </div>
+                                </x-admin::form.control-group>
+                            </div>
+
+                            <!-- Claustrofobisch? -->
+                            <div class="mt-3">
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label>
+                                        Claustrofobisch?
+                                    </x-admin::form.control-group.label>
+                                    <div class="flex gap-4">
+                                        <label class="flex items-center">
+                                            <input type="radio" name="claustrophobia" value="1" required class="mr-2" {{ (optional($leadAn)->claustrophobia) ? 'checked' : '' }}> Ja
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="radio" name="claustrophobia" value="0" required class="mr-2" {{ (optional($leadAn)->claustrophobia===false) ? 'checked' : '' }}> Nee
+                                        </label>
+                                    </div>
+                                </x-admin::form.control-group>
+                            </div>
+
+                            <!-- Allergieën? -->
+                            <div class="mt-3">
+                                <x-admin::form.control-group>
+                                    <x-admin::form.control-group.label>
+                                        Allergieën?
+                                    </x-admin::form.control-group.label>
+                                    <div class="flex gap-4">
+                                        <label class="flex items-center">
+                                            <input type="radio" name="allergies" value="1" required class="mr-2" {{ (optional($leadAn)->allergies) ? 'checked' : '' }} onchange="document.getElementById('lead_allergies_notes').style.display='block'; document.querySelector('input[name=\'allergies_notes\']')?.setAttribute('required','required')"> Ja
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="radio" name="allergies" value="0" required class="mr-2" {{ (optional($leadAn)->allergies===false) ? 'checked' : '' }} onchange="document.getElementById('lead_allergies_notes').style.display='none'; document.querySelector('input[name=\'allergies_notes\']')?.removeAttribute('required')"> Nee
+                                        </label>
+                                    </div>
+                                    <div id="lead_allergies_notes" style="display: {{ (optional($leadAn)->allergies) ? 'block' : 'none' }}" class="mt-2">
+                                        <x-admin::form.control-group.control
+                                            type="text"
+                                            name="allergies_notes"
+                                            :value="optional($leadAn)->allergies_notes"
+                                            placeholder="Toelichting"
+                                        />
+                                    </div>
+                                </x-admin::form.control-group>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /Anamnese Section -->
+
                 </div>
 
                 {!! view_render_event('admin.leads.form_controls.after') !!}

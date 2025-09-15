@@ -323,18 +323,89 @@
 
                                     <!-- Emails -->
                                     <div class="mt-4">
-                                        @include('admin::leads.common.sections.emails', ['name' => 'emails', 'value' => old('emails', $prefilledLeadPerson['emails'] ?? [])])
+                                        @include('admin::leads.common.sections.emails', ['name' => 'emails', 'value' => old('emails', $prefilledLeadPerson['emails'] ?? []), 'widthClass' => 'w-full'])
                                     </div>
 
                                     <!-- Phones -->
                                     <div class="mt-4">
-                                        @include('admin::leads.common.sections.phones', ['name' => 'phones', 'value' => old('phones', $prefilledLeadPerson['phones'] ?? [])])
+                                        @include('admin::leads.common.sections.phones', ['name' => 'phones', 'value' => old('phones', $prefilledLeadPerson['phones'] ?? []), 'widthClass' => 'w-full'])
                                     </div>
 
                                     <!-- Address -->
                                     <div class="mt-4">
                                         @include('admin::components.address', ['entity' => null])
                                     </div>
+
+                                    <!-- Anamnese -->
+                                    <div class="mt-6">
+                                        <p class="text-base font-semibold dark:text-white">Anamnese</p>
+
+                                        <!-- Heeft u metalen? -->
+                                        <div class="mt-3">
+                                            <x-admin::form.control-group>
+                                                <x-admin::form.control-group.label>
+                                                    Heeft u metalen?
+                                                </x-admin::form.control-group.label>
+                                                <div class="flex gap-4">
+                                                    <label class="flex items-center">
+                                                        <input type="radio" name="metals" value="1" required @change="() => {$refs.metals_notes_container.style.display='block'; const n=$refs.metals_notes_container.querySelector('input[name=\'metals_notes\']'); if(n){n.setAttribute('required','required');}}" class="mr-2"> Ja
+                                                    </label>
+                                                    <label class="flex items-center">
+                                                        <input type="radio" name="metals" value="0" required @change="() => {$refs.metals_notes_container.style.display='none'; const n=$refs.metals_notes_container.querySelector('input[name=\'metals_notes\']'); if(n){n.removeAttribute('required');}}" class="mr-2"> Nee
+                                                    </label>
+                                                </div>
+                                                <div ref="metals_notes_container" style="display: none" class="mt-2">
+                                                    <x-admin::form.control-group.control
+                                                        type="text"
+                                                        name="metals_notes"
+                                                        placeholder="Toelichting"
+                                                    />
+                                                </div>
+                                            </x-admin::form.control-group>
+                                        </div>
+
+                                        <!-- Claustrofobisch? -->
+                                        <div class="mt-3">
+                                            <x-admin::form.control-group>
+                                                <x-admin::form.control-group.label>
+                                                    Claustrofobisch?
+                                                </x-admin::form.control-group.label>
+                                                <div class="flex gap-4">
+                                                    <label class="flex items-center">
+                                                        <input type="radio" name="claustrophobia" value="1" required class="mr-2"> Ja
+                                                    </label>
+                                                    <label class="flex items-center">
+                                                        <input type="radio" name="claustrophobia" value="0" required class="mr-2"> Nee
+                                                    </label>
+                                                </div>
+                                            </x-admin::form.control-group>
+                                        </div>
+
+                                        <!-- Allergieën? bij ja uitleg -->
+                                        <div class="mt-3">
+                                            <x-admin::form.control-group>
+                                                <x-admin::form.control-group.label>
+                                                    Allergieën?
+                                                </x-admin::form.control-group.label>
+                                                <div class="flex gap-4">
+                                                    <label class="flex items-center">
+                                                        <input type="radio" name="allergies" value="1" required @change="() => {$refs.allergies_notes_container.style.display='block'; const n=$refs.allergies_notes_container.querySelector('input[name=\'allergies_notes\']'); if(n){n.setAttribute('required','required');}}" class="mr-2"> Ja
+                                                    </label>
+                                                    <label class="flex items-center">
+                                                        <input type="radio" name="allergies" value="0" required @change="() => {$refs.allergies_notes_container.style.display='none'; const n=$refs.allergies_notes_container.querySelector('input[name=\'allergies_notes\']'); if(n){n.removeAttribute('required');}}" class="mr-2"> Nee
+                                                    </label>
+                                                </div>
+                                                <div ref="allergies_notes_container" style="display: none" class="mt-2">
+                                                    <x-admin::form.control-group.control
+                                                        type="text"
+                                                        name="allergies_notes"
+                                                        placeholder="Toelichting"
+                                                    />
+                                                </div>
+                                            </x-admin::form.control-group>
+                                        </div>
+                                    </div>
+                                    <!-- /Anamnese -->
                                 </div>
                             </div>
                         </div>
@@ -515,8 +586,6 @@
                         if (this.isSubmitting) return;
 
                         // Validate required fields
-
-
                         if (!this.formData.first_name || this.formData.first_name.trim() === '') {
                             this.$emitter.emit('add-flash', {
                                 type: 'error',
@@ -529,6 +598,18 @@
                             this.$emitter.emit('add-flash', {
                                 type: 'error',
                                 message: 'Achternaam is verplicht.'
+                            });
+                            return;
+                        }
+
+                        // Validate at least one email or phone
+                        const hasEmail = this.hasValidEmail();
+                        const hasPhone = this.hasValidPhone();
+                        
+                        if (!hasEmail && !hasPhone) {
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: 'Vul ten minste één e-mail of telefoonnummer in.'
                             });
                             return;
                         }
@@ -617,6 +698,30 @@
                                 input.dispatchEvent(new Event('change', {bubbles: true}));
                             }
                         });
+                    },
+
+                    hasValidEmail() {
+                        if (!this.$refs.leadForm) return false;
+                        
+                        const emailInputs = this.$refs.leadForm.querySelectorAll('input[name^="emails"][name$="[value]"]');
+                        for (let input of emailInputs) {
+                            if (input.value && input.value.trim() !== '') {
+                                return true;
+                            }
+                        }
+                        return false;
+                    },
+
+                    hasValidPhone() {
+                        if (!this.$refs.leadForm) return false;
+                        
+                        const phoneInputs = this.$refs.leadForm.querySelectorAll('input[name^="phones"][name$="[value]"]');
+                        for (let input of phoneInputs) {
+                            if (input.value && input.value.trim() !== '') {
+                                return true;
+                            }
+                        }
+                        return false;
                     }
                 }
             });

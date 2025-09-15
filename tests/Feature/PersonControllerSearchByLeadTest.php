@@ -251,10 +251,10 @@ test('returns results with match scores and sorts by score', function () {
     // Assert results are sorted by score (highest first)
     $scores = $collection->pluck('match_score')->toArray();
     $sortedScores = collect($scores)->sortDesc()->values()->toArray();
-    expect($scores)->toBe($sortedScores);
+    expect($scores)->toBe($sortedScores)
+        ->and($collection->first()->id)->toBe($highMatchPerson->id);
 
     // Assert the high match person has the highest score
-    expect($collection->first()->id)->toBe($highMatchPerson->id);
     // Use a small delta to handle floating point precision issues
     $firstScore = round($collection->first()->match_score, 2);
     $secondScore = round($collection->get(1)->match_score, 2);
@@ -438,22 +438,24 @@ test('match algorithm includes date of birth and address in scoring', function (
     $differentScore = round($collection->get(2)->match_score, 2);
 
     // Perfect match should have higher score than partial match
-    expect($perfectScore)->toBeGreaterThan($partialScore);
+    expect($perfectScore)->toBeGreaterThan($partialScore)
+        ->and($partialScore)->toBeGreaterThan($differentScore)
+        ->and($perfectScore)->toBeGreaterThan(80)
+        ->and($partialScore)->toBeLessThan($perfectScore)
+        ->and($partialScore)->toBeGreaterThan(75)
+        ->and($differentScore)->toBeLessThan($partialScore);
 
     // Partial match should have higher score than different data match
-    expect($partialScore)->toBeGreaterThan($differentScore);
 
     // Verify that the perfect match has a very high score
     // With 85% for names + date_of_birth, 5% for email, 5% for phone, 5% for address
-    expect($perfectScore)->toBeGreaterThan(80); // Should be high due to all matches
+    // Should be high due to all matches
 
     // Verify that partial match (missing date_of_birth and address) has lower score
     // Should have 85% * (name_match_ratio) + 5% + 5% + 0% for address
-    expect($partialScore)->toBeLessThan($perfectScore);
-    expect($partialScore)->toBeGreaterThan(75); // Should still be high due to name, email, phone match
+    // Should still be high due to name, email, phone match
 
     // Verify that different data match has even lower score
-    expect($differentScore)->toBeLessThan($partialScore);
 });
 
 test('address matching works with partial postal code matches', function () {
@@ -551,10 +553,10 @@ test('address matching works with partial postal code matches', function () {
     $differentScore = round($collection->firstWhere('id', $differentAddressPerson->id)->match_score, 2);
 
     // Exact match should be at least as high as partial (equal after normalization)
-    expect($exactScore)->toBeGreaterThanOrEqual($partialScore);
+    expect($exactScore)->toBeGreaterThanOrEqual($partialScore)
+        ->and($partialScore)->toBeGreaterThan($differentScore);
 
     // Partial match should have higher score than different address
-    expect($partialScore)->toBeGreaterThan($differentScore);
 
     // The difference should be relatively small (only 5% weight for address)
     $scoreDifference = $exactScore - $partialScore;

@@ -27,4 +27,3 @@ class PostcodeNormalizer
         return mb_strtoupper($noWhitespace ?? '');
     }
 }
-

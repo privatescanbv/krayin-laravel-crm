@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use App\Support\PostcodeNormalizer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use InvalidArgumentException;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
-use App\Support\PostcodeNormalizer;
 
 class Address extends BaseModel
 {
@@ -152,6 +152,7 @@ class Address extends BaseModel
         if (preg_match('/^([0-9]{4})([A-Z]{2})$/u', $postalCode, $m)) {
             return $m[1].' '.$m[2];
         }
+
         return $postalCode;
     }
 }

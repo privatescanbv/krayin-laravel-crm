@@ -19,6 +19,7 @@ class ActivityResource extends JsonResource
             'parent_id'       => $this->parent_id ?? null,
             'title'           => $this->title,
             'type'            => $this->type?->value ?? $this->type,
+            'status'          => $this->renderStatus(),
             'type_label'      => $this->type?->name ?? null,
             'comment'         => $this->comment,
             'additional'      => is_array($this->resource->additional) ? $this->resource->additional : json_decode($this->resource->additional, true),
@@ -94,5 +95,9 @@ class ActivityResource extends JsonResource
         }
 
         return $data;
+    }
+
+    private function renderStatus():string {
+        return $this->status?->label() ?? ($this->is_done ? 'Afgerond' : 'Open');
     }
 }

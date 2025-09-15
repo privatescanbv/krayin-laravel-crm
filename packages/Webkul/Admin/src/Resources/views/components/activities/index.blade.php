@@ -106,8 +106,8 @@
                                                 >
                                                     @{{ activity.title }}
 
-                                                    <span v-if="activity.is_done == 1 || activity.is_done === true" class="ml-2 inline-block bg-green-100 text-green-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">Afgerond</span>
-                                                    <span v-else class="ml-2 inline-block bg-yellow-100 text-yellow-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">Open</span>
+                                                    <span v-if="activity.is_done == 1 || activity.is_done === true" class="ml-2 inline-block bg-green-100 text-green-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">@{{ activity.status}}</span>
+                                                    <span v-else class="ml-2 inline-block bg-yellow-100 text-yellow-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">@{{ activity.status}}</span>
                                                 </a>
                                             </template>
 

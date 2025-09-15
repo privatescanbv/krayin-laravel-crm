@@ -2,20 +2,18 @@
 
 namespace Webkul\Activity\Models;
 
+use App\Models\CallStatus;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Activity\Contracts\Activity as ActivityContract;
 use App\Enums\ActivityType;
 use App\Enums\ActivityStatus;
-use App\Casts\ActivityStatusCast;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\Email\Models\EmailProxy;
 use Webkul\Lead\Models\LeadProxy;
 use Webkul\Product\Models\ProductProxy;
-use Webkul\User\Models\Group;
 use Webkul\User\Models\GroupProxy;
 use Webkul\User\Models\UserProxy;
 use Webkul\Warehouse\Models\WarehouseProxy;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Activity extends Model implements ActivityContract
 {
@@ -69,8 +67,6 @@ class Activity extends Model implements ActivityContract
         'lead_id',
         'external_id',
     ];
-
-
 
     /**
      * Get the user that owns the activity.
@@ -135,7 +131,7 @@ class Activity extends Model implements ActivityContract
      */
     public function callStatuses()
     {
-        return $this->hasMany(\App\Models\CallStatus::class, 'activity_id');
+        return $this->hasMany(CallStatus::class, 'activity_id');
     }
 
     /**

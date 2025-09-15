@@ -323,12 +323,12 @@
 
                                     <!-- Emails -->
                                     <div class="mt-4">
-                                        @include('admin::leads.common.sections.emails', ['name' => 'emails', 'value' => old('emails', $prefilledLeadPerson['emails'] ?? [])])
+                                        @include('admin::leads.common.sections.emails', ['name' => 'emails', 'value' => old('emails', $prefilledLeadPerson['emails'] ?? []), 'widthClass' => 'w-full'])
                                     </div>
 
                                     <!-- Phones -->
                                     <div class="mt-4">
-                                        @include('admin::leads.common.sections.phones', ['name' => 'phones', 'value' => old('phones', $prefilledLeadPerson['phones'] ?? [])])
+                                        @include('admin::leads.common.sections.phones', ['name' => 'phones', 'value' => old('phones', $prefilledLeadPerson['phones'] ?? []), 'widthClass' => 'w-full'])
                                     </div>
 
                                     <!-- Address -->

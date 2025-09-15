@@ -8,7 +8,7 @@
         </p>
     </div>
 
-    <div class="w-1/2 max-md:w-full">
+    <div class="{{ $widthClass ?? 'w-1/2 max-md:w-full' }}">
         @include('admin::components.emails', ['name' => ($name ?? 'emails'), 'value' => ($value ?? [])])
     </div>
 </div>

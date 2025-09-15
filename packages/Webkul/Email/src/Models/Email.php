@@ -70,6 +70,21 @@ class Email extends Model implements EmailContract
         'updated_at',
     ];
 
+    protected static function booted()
+    {
+        static::creating(function (self $email) {
+            if (empty($email->source)) {
+                $email->source = 'system';
+            }
+            if (empty($email->message_id)) {
+                $email->message_id = (string) \Illuminate\Support\Str::uuid();
+            }
+            if (empty($email->user_type)) {
+                $email->user_type = 'user';
+            }
+        });
+    }
+
     /**
      * Get the parent email.
      */

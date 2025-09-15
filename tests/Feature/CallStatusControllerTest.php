@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\CallStatus as CallStatusEnum;
+use Illuminate\Support\Str;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -191,6 +192,8 @@ class CallStatusControllerTest extends TestCase
             'reply_to'  => ['recipient@example.com'],
             'user_type' => 'user',
             'is_read'   => 0,
+            'source'    => 'test',
+            'message_id'=> (string) Str::uuid(),
         ]);
 
         // Create an activity
@@ -241,6 +244,8 @@ class CallStatusControllerTest extends TestCase
             'reply_to'  => ['recipient@example.com'],
             'user_type' => 'user',
             'is_read'   => 0,
+            'source'    => 'test',
+            'message_id'=> (string) Str::uuid(),
         ]);
 
         // Create multiple activities linked to the same email

@@ -248,6 +248,14 @@ class PipelineSeeder extends BaseSeeder
                 'message' => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
             ]
         );
+        LeadStatusTransitionValidator::addTransitionsRule(
+            ' klant-adviseren-start-hernia',
+            ['klant-adviseren-opvolgen', 'klant-adviseren-will-mri-hernia', 'klant-adviseren-wachten-op-mri-hernia'],
+            [
+                'min_persons' => 1,
+                'message' => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
+            ]
+        );
 
         // Andere voorbeelden kunnen hier worden toegevoegd:
 
@@ -256,6 +264,15 @@ class PipelineSeeder extends BaseSeeder
         LeadStatusTransitionValidator::addTransitionRule(
             'nieuwe-aanvraag-kwalificeren',
             'klant-adviseren-start',
+            [
+                'required_fields' => ['first_name', 'last_name'],
+                'message' => 'Voor de status "Klant adviseren" zijn voor- en achternaam verplicht.',
+            ]
+        );
+
+        LeadStatusTransitionValidator::addTransitionRule(
+            'nieuwe-aanvraag-kwalificeren-hernia',
+            'klant-adviseren-start-hernia',
             [
                 'required_fields' => ['first_name', 'last_name'],
                 'message' => 'Voor de status "Klant adviseren" zijn voor- en achternaam verplicht.',

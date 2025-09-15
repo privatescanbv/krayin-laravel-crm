@@ -97,6 +97,13 @@ class LeadStatusTransitionValidator
         self::$transitionRules[$transitionKey] = $rules;
     }
 
+    public static function addTransitionsRule(string $fromStageCode, array $toStageCodes, array $rules): void
+    {
+        foreach ($toStageCodes as $toStageCode) {
+            self::addTransitionRule($fromStageCode, $toStageCode, $rules);
+        }
+    }
+
     /**
      * Verwijder een transitie validatie regel.
      */

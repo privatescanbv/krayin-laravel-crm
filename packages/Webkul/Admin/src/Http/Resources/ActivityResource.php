@@ -97,7 +97,24 @@ class ActivityResource extends JsonResource
         return $data;
     }
 
-    private function renderStatus():string {
-        return $this->status?->label() ?? ($this->is_done ? 'Afgerond' : 'Open');
+    private function renderStatus(): string
+    {
+        // Safely fetch status from the underlying resource (array|object|model)
+        $status = data_get($this->resource, 'status');
+
+        // If status is an enum/object with a label method
+        if (is_object($status) && method_exists($status, 'label')) {
+            return $status->label();
+        }
+
+        // If status is already a scalar/string value
+        if (is_string($status) && $status !== '') {
+            return $status;
+        }
+
+        // Fallback to is_done when status is not available
+        $isDone = (bool) data_get($this->resource, 'is_done', false);
+
+        return $isDone ? 'Afgerond' : 'Open';
     }
 }

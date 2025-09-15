@@ -2,6 +2,8 @@
 
 namespace Webkul\DataTransfer\Helpers\Importers\Leads;
 
+use App\Enums\LostReason;
+use Illuminate\Validation\Rules\Enum as EnumRule;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Validator;
@@ -167,6 +169,7 @@ class Importer extends AbstractImporter
             'lead_type_id'           => 'required|exists:lead_types,id',
             'lead_pipeline_id'       => 'required|exists:lead_pipelines,id',
             'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
+            'lost_reason'            => ['nullable', new EnumRule(LostReason::class)],
         ]);
 
         if ($validator->fails()) {

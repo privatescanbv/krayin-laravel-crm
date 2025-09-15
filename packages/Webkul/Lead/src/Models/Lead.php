@@ -2,6 +2,7 @@
 
 namespace Webkul\Lead\Models;
 
+use App\Enums\LostReason;
 use App\Enums\MRIStatus;
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
@@ -43,6 +44,7 @@ class Lead extends Model implements LeadContract
         'gender'              => PersonGender::class,
         'salutation'          => PersonSalutation::class,
         'mri_status'          => MRIStatus::class,
+        'lost_reason'         => LostReason::class,
         'has_diagnosis_form'  => 'boolean',
     ];
 
@@ -146,6 +148,29 @@ class Lead extends Model implements LeadContract
         }
 
         $this->attributes['mri_status'] = $value;
+    }
+
+    /**
+     * Normalize lost reason assignment to allow empty strings and enums.
+     */
+    public function setLostReasonAttribute($value): void
+    {
+        if ($value === '' || $value === null) {
+            $this->attributes['lost_reason'] = null;
+            return;
+        }
+
+        if ($value instanceof BackedEnum) {
+            $this->attributes['lost_reason'] = $value->value;
+            return;
+        }
+
+        $this->attributes['lost_reason'] = $value;
+    }
+
+    public function getLostReasonLabelAttribute(): string
+    {
+        return $this->lost_reason?->label() ?? '';
     }
 
     public function getMRIStatusLabelAttribute(): string {

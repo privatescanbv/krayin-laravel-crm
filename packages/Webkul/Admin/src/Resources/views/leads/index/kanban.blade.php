@@ -175,10 +175,10 @@
                                     <!-- Lost Reason (only for lost status) -->
                                     <div
                                         class="text-[10px] text-red-700 dark:text-red-400 mt-1"
-                                        v-if="element?.stage?.code && String(element.stage.code).toLowerCase().startsWith('lost') && element.lost_reason"
+                                        v-if="element?.stage?.code && String(element.stage.code).toLowerCase().startsWith('lost') && element.lost_reason_label"
                                     >
                                         <span class="font-medium">Verliesreden:</span>
-                                        @{{ element.lost_reason }}
+                                        @{{ element.lost_reason_label }}
                                     </div>
 
                                     {!! view_render_event('admin.leads.index.kanban.content.stage.body.card.title.after') !!}
@@ -332,13 +332,17 @@
                                 Reden van verlies
                             </x-admin::form.control-group.label>
 
-                            <x-admin::form.control-group.control
-                                type="textarea"
+                            <select
                                 name="lost_reason"
+                                class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
                                 v-model="currentStageUpdate.lost_reason"
-                                placeholder="Vul de reden van verlies in..."
                                 required
-                            />
+                            >
+                                <option value="">Selecteer reden...</option>
+                                @foreach(\App\Enums\LostReason::cases() as $reason)
+                                    <option value="{{ $reason->value }}">{{ $reason->label() }}</option>
+                                @endforeach
+                            </select>
                         </x-admin::form.control-group>
 
                         <!-- Closed At -->

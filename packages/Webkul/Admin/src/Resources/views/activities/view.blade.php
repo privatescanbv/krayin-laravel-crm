@@ -341,13 +341,17 @@
                     Reden van verlies
                 </x-admin::form.control-group.label>
 
-                <x-admin::form.control-group.control
-                    type="textarea"
+                <select
                     name="lost_reason"
+                    class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
                     v-model="leadAfvoerenData.lost_reason"
-                    placeholder="Vul de reden van verlies in..."
                     required
-                />
+                >
+                    <option value="">Selecteer reden...</option>
+                    @foreach(\App\Enums\LostReason::cases() as $reason)
+                        <option value="{{ $reason->value }}">{{ $reason->label() }}</option>
+                    @endforeach
+                </select>
             </x-admin::form.control-group>
 
             <x-admin::form.control-group>

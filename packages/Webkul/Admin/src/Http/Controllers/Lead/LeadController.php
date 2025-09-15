@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Lead;
 
+use App\Enums\LostReason;
 use App\Enums\ActivityStatus;
 use App\Enums\PipelineDefaultKeys;
 use App\Models\Anamnesis;
@@ -616,7 +617,7 @@ class LeadController extends Controller
     {
         $this->validate(request(), [
             'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
-            'lost_reason' => 'nullable|string',
+            'lost_reason' => ['nullable', new \Illuminate\Validation\Rules\Enum(LostReason::class)],
             'closed_at' => 'nullable|date',
         ]);
 
@@ -1418,7 +1419,7 @@ class LeadController extends Controller
     public function markAsLost(int $id): JsonResponse
     {
         $this->validate(request(), [
-            'lost_reason' => 'required|string|max:1000',
+            'lost_reason' => ['required', new \Illuminate\Validation\Rules\Enum(LostReason::class)],
             'closed_at' => 'nullable|date',
         ]);
 

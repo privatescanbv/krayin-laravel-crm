@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Enums\Departments;
 use App\Models\Address;
 use App\Models\Department;
+use App\Enums\LostReason;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -68,7 +69,7 @@ class LeadFactory extends Factory
         return [
             'description'            => $this->faker->paragraph(),
             'status'                 => $this->faker->boolean(),
-            'lost_reason'            => $this->faker->optional()->sentence(),
+            'lost_reason'            => $this->faker->optional()->randomElement(LostReason::cases())?->value,
             'closed_at'              => $this->faker->optional()->dateTimeBetween('-1 month', 'now'),
             'user_id'                => $user->id,
             'lead_source_id'         => $source->id,

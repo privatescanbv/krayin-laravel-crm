@@ -229,7 +229,7 @@
                     this.update(this.nextStage, params);
                 },
 
-                update(stage, params = null) {
+                async update(stage, params = null) {
                     if (this.currentStage?.code == stage.code) {
                         return;
                     }
@@ -238,24 +238,39 @@
 
                     this.isUpdating = true;
 
-                    this.$axios
-                        .put("{{ route('admin.leads.stage.update', $lead->id) }}", params ?? {
-                            'lead_pipeline_stage_id': stage.id
-                        })
-                        .then ((response) => {
+                    const performUpdate = async (extra = {}) => {
+                        try {
+                            const response = await this.$axios.put("{{ route('admin.leads.stage.update', $lead->id) }}", params ?? {
+                                'lead_pipeline_stage_id': stage.id,
+                                ...extra,
+                            });
                             this.isUpdating = false;
-
                             this.currentStage = stage;
-
                             this.$parent.$refs.activities.get();
-
                             this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
-                        })
-                        .catch ((error) => {
+                        } catch (error) {
                             this.isUpdating = false;
+                            this.$emitter.emit('add-flash', { type: 'error', message: error.response?.data?.message || 'Bijwerken mislukt' });
+                        }
+                    };
 
-                            this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
-                        });
+                    try {
+                        const openCount = Number({{ $lead->open_activities_count ?? $lead->openActivitiesCount ?? 0 }});
+                        if (openCount > 0) {
+                            const agree = window.confirm(`Er staan nog ${openCount} open activiteit(en). Wil je deze afronden en de status wijzigen?`);
+                            if (!agree) {
+                                this.isUpdating = false;
+                                return;
+                            }
+                            await performUpdate({ close_open_activities: true });
+                            return;
+                        }
+
+                        await performUpdate();
+                    } catch (e) {
+                        console.error('Could not update lead stage', e);
+                        this.isUpdating = false;
+                    }
                 },
             },
         });

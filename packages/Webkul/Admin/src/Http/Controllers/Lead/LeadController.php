@@ -634,6 +634,11 @@ class LeadController extends Controller
             $data['closed_at'] = request()->input('closed_at');
         }
 
+        // Optional flag to close open activities when changing stage
+        if (request()->has('close_open_activities')) {
+            $data['close_open_activities'] = (bool) request()->input('close_open_activities');
+        }
+
         return $this->updateStageWithData($leadId, $data);
     }
 
@@ -670,6 +675,19 @@ class LeadController extends Controller
             $leadId,
             array_keys($data)
         );
+
+        // If requested, complete all open activities for this lead after successful update
+        if (!empty($data['close_open_activities'])) {
+            try {
+                $this->completeAllOpenActivitiesForLead($leadId);
+            } catch (\Exception $e) {
+                // Log but don't fail the stage update response
+                \Log::warning('Failed to complete open activities during stage update', [
+                    'lead_id' => $leadId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
 
         Event::dispatch('lead.update.after', $lead);
 

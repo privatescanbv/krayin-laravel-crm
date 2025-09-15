@@ -440,6 +440,39 @@ class LeadController extends Controller
             }
             $lead = $this->leadRepository->create($data);
 
+            // Persist basic anamnesis answers if provided and if persons attached
+            try {
+                if (!empty($data['persons']) || !empty($data['person_ids'])) {
+                    $anamnesisUpdate = [];
+                    if (array_key_exists('metals', $data)) {
+                        $anamnesisUpdate['metals'] = (bool) $data['metals'];
+                    }
+                    if (!empty($data['metals_notes'])) {
+                        $anamnesisUpdate['metals_notes'] = $data['metals_notes'];
+                    }
+                    if (array_key_exists('claustrophobia', $data)) {
+                        $anamnesisUpdate['claustrophobia'] = (bool) $data['claustrophobia'];
+                    }
+                    if (array_key_exists('allergies', $data)) {
+                        $anamnesisUpdate['allergies'] = (bool) $data['allergies'];
+                    }
+                    if (!empty($data['allergies_notes'])) {
+                        $anamnesisUpdate['allergies_notes'] = $data['allergies_notes'];
+                    }
+
+                    if (!empty($anamnesisUpdate)) {
+                        // Update all related anamnesis for this lead
+                        foreach ($lead->persons as $person) {
+                            \App\Models\Anamnesis::where('lead_id', $lead->id)
+                                ->where('person_id', $person->id)
+                                ->update($anamnesisUpdate);
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Failed to persist anamnesis answers on lead create', ['lead_id' => $lead->id, 'error' => $e->getMessage()]);
+            }
+
             Event::dispatch('lead.create.after', $lead);
 
             return [$lead, $data['lead_pipeline_id']];
@@ -556,6 +589,36 @@ class LeadController extends Controller
             }
 
             $lead = $this->leadRepository->update($data, $id);
+
+            // Persist basic anamnesis answers if provided
+            try {
+                $anamnesisUpdate = [];
+                if (array_key_exists('metals', $data)) {
+                    $anamnesisUpdate['metals'] = (bool) $data['metals'];
+                }
+                if (!empty($data['metals_notes'])) {
+                    $anamnesisUpdate['metals_notes'] = $data['metals_notes'];
+                }
+                if (array_key_exists('claustrophobia', $data)) {
+                    $anamnesisUpdate['claustrophobia'] = (bool) $data['claustrophobia'];
+                }
+                if (array_key_exists('allergies', $data)) {
+                    $anamnesisUpdate['allergies'] = (bool) $data['allergies'];
+                }
+                if (!empty($data['allergies_notes'])) {
+                    $anamnesisUpdate['allergies_notes'] = $data['allergies_notes'];
+                }
+
+                if (!empty($anamnesisUpdate)) {
+                    foreach ($lead->persons as $person) {
+                        \App\Models\Anamnesis::where('lead_id', $lead->id)
+                            ->where('person_id', $person->id)
+                            ->update($anamnesisUpdate);
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::warning('Failed to persist anamnesis answers on lead update', ['lead_id' => $lead->id, 'error' => $e->getMessage()]);
+            }
 
             Event::dispatch('lead.update.after', $lead);
 

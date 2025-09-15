@@ -335,6 +335,77 @@
                                     <div class="mt-4">
                                         @include('admin::components.address', ['entity' => null])
                                     </div>
+
+                                    <!-- Anamnese -->
+                                    <div class="mt-6">
+                                        <p class="text-base font-semibold dark:text-white">Anamnese</p>
+
+                                        <!-- Heeft u metalen? -->
+                                        <div class="mt-3">
+                                            <x-admin::form.control-group>
+                                                <x-admin::form.control-group.label>
+                                                    Heeft u metalen?
+                                                </x-admin::form.control-group.label>
+                                                <div class="flex gap-4">
+                                                    <label class="flex items-center">
+                                                        <input type="radio" name="metals" value="1" @change="() => $refs.metals_notes_container.style.display='block'" class="mr-2"> Ja
+                                                    </label>
+                                                    <label class="flex items-center">
+                                                        <input type="radio" name="metals" value="0" @change="() => $refs.metals_notes_container.style.display='none'" class="mr-2"> Nee
+                                                    </label>
+                                                </div>
+                                                <div ref="metals_notes_container" style="display: none" class="mt-2">
+                                                    <x-admin::form.control-group.control
+                                                        type="text"
+                                                        name="metals_notes"
+                                                        placeholder="Toelichting"
+                                                    />
+                                                </div>
+                                            </x-admin::form.control-group>
+                                        </div>
+
+                                        <!-- Claustrofobisch? -->
+                                        <div class="mt-3">
+                                            <x-admin::form.control-group>
+                                                <x-admin::form.control-group.label>
+                                                    Claustrofobisch?
+                                                </x-admin::form.control-group.label>
+                                                <div class="flex gap-4">
+                                                    <label class="flex items-center">
+                                                        <input type="radio" name="claustrophobia" value="1" class="mr-2"> Ja
+                                                    </label>
+                                                    <label class="flex items-center">
+                                                        <input type="radio" name="claustrophobia" value="0" class="mr-2"> Nee
+                                                    </label>
+                                                </div>
+                                            </x-admin::form.control-group>
+                                        </div>
+
+                                        <!-- Allergieën? bij ja uitleg -->
+                                        <div class="mt-3">
+                                            <x-admin::form.control-group>
+                                                <x-admin::form.control-group.label>
+                                                    Allergieën?
+                                                </x-admin::form.control-group.label>
+                                                <div class="flex gap-4">
+                                                    <label class="flex items-center">
+                                                        <input type="radio" name="allergies" value="1" @change="() => $refs.allergies_notes_container.style.display='block'" class="mr-2"> Ja
+                                                    </label>
+                                                    <label class="flex items-center">
+                                                        <input type="radio" name="allergies" value="0" @change="() => $refs.allergies_notes_container.style.display='none'" class="mr-2"> Nee
+                                                    </label>
+                                                </div>
+                                                <div ref="allergies_notes_container" style="display: none" class="mt-2">
+                                                    <x-admin::form.control-group.control
+                                                        type="text"
+                                                        name="allergies_notes"
+                                                        placeholder="Toelichting"
+                                                    />
+                                                </div>
+                                            </x-admin::form.control-group>
+                                        </div>
+                                    </div>
+                                    <!-- /Anamnese -->
                                 </div>
                             </div>
                         </div>

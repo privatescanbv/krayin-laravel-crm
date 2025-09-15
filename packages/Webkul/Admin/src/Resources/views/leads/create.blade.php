@@ -586,8 +586,6 @@
                         if (this.isSubmitting) return;
 
                         // Validate required fields
-
-
                         if (!this.formData.first_name || this.formData.first_name.trim() === '') {
                             this.$emitter.emit('add-flash', {
                                 type: 'error',
@@ -600,6 +598,18 @@
                             this.$emitter.emit('add-flash', {
                                 type: 'error',
                                 message: 'Achternaam is verplicht.'
+                            });
+                            return;
+                        }
+
+                        // Validate at least one email or phone
+                        const hasEmail = this.hasValidEmail();
+                        const hasPhone = this.hasValidPhone();
+                        
+                        if (!hasEmail && !hasPhone) {
+                            this.$emitter.emit('add-flash', {
+                                type: 'error',
+                                message: 'Vul ten minste één e-mail of telefoonnummer in.'
                             });
                             return;
                         }
@@ -688,6 +698,30 @@
                                 input.dispatchEvent(new Event('change', {bubbles: true}));
                             }
                         });
+                    },
+
+                    hasValidEmail() {
+                        if (!this.$refs.leadForm) return false;
+                        
+                        const emailInputs = this.$refs.leadForm.querySelectorAll('input[name^="emails"][name$="[value]"]');
+                        for (let input of emailInputs) {
+                            if (input.value && input.value.trim() !== '') {
+                                return true;
+                            }
+                        }
+                        return false;
+                    },
+
+                    hasValidPhone() {
+                        if (!this.$refs.leadForm) return false;
+                        
+                        const phoneInputs = this.$refs.leadForm.querySelectorAll('input[name^="phones"][name$="[value]"]');
+                        for (let input of phoneInputs) {
+                            if (input.value && input.value.trim() !== '') {
+                                return true;
+                            }
+                        }
+                        return false;
                     }
                 }
             });

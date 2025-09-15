@@ -325,7 +325,11 @@ class LeadController extends Controller
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
 
+        // Validate with custom rules including email/phone requirement
         $this->validate($request, LeadValidationService::getWebValidationRules($request));
+        
+        // Additional validation for at least one email or phone
+        $this->validateAtLeastOneContact($request);
 
             try {
                 [$lead, $leadPipelineId] = $this->storeLead($request);
@@ -526,6 +530,9 @@ class LeadController extends Controller
     {
         try {
             $this->validate($request, LeadValidationService::getWebValidationRules($request));
+            
+            // Additional validation for at least one email or phone
+            $this->validateAtLeastOneContact($request);
 
             Event::dispatch('lead.update.before', $id);
 
@@ -1376,6 +1383,44 @@ class LeadController extends Controller
         ];
 
         return $labelMap[$normalizedLabel] ?? 'work';
+    }
+
+    /**
+     * Validate that at least one email or phone is provided
+     */
+    private function validateAtLeastOneContact($request): void
+    {
+        $data = $request->all();
+
+        $hasEmail = false;
+        if (!empty($data['emails']) && is_array($data['emails'])) {
+            foreach ($data['emails'] as $email) {
+                if (is_array($email) && isset($email['value']) && trim((string) $email['value']) !== '') {
+                    $hasEmail = true;
+                    break;
+                }
+            }
+        }
+
+        $hasPhone = false;
+        if (!empty($data['phones']) && is_array($data['phones'])) {
+            foreach ($data['phones'] as $phone) {
+                if (is_array($phone) && isset($phone['value']) && trim((string) $phone['value']) !== '') {
+                    $hasPhone = true;
+                    break;
+                }
+            }
+        }
+
+        if (!($hasEmail || $hasPhone)) {
+            throw new \Illuminate\Validation\ValidationException(
+                \Illuminate\Support\Facades\Validator::make([], []),
+                response()->json([
+                    'message' => 'Vul ten minste één e-mail of telefoonnummer in.',
+                    'errors' => ['emails' => ['Vul ten minste één e-mail of telefoonnummer in.']]
+                ], 422)
+            );
+        }
     }
 
     /**

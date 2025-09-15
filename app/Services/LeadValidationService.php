@@ -96,33 +96,6 @@ class LeadValidationService
             'allergies_notes'       => 'nullable|string',
         ];
 
-        // Enforce at least one email or phone provided (value present in arrays)
-        // We add a synthetic rule with a closure validator
-        $rules['__at_least_one_contact'] = [function ($attribute, $value, $fail) use ($request) {
-            $data = $request ? $request->all() : request()->all();
-
-            $hasEmail = false;
-            if (!empty($data['emails']) && is_array($data['emails'])) {
-                foreach ($data['emails'] as $email) {
-                    if (is_array($email) && isset($email['value']) && trim((string) $email['value']) !== '') {
-                        $hasEmail = true; break;
-                    }
-                }
-            }
-
-            $hasPhone = false;
-            if (!empty($data['phones']) && is_array($data['phones'])) {
-                foreach ($data['phones'] as $phone) {
-                    if (is_array($phone) && isset($phone['value']) && trim((string) $phone['value']) !== '') {
-                        $hasPhone = true; break;
-                    }
-                }
-            }
-
-            if (!($hasEmail || $hasPhone)) {
-                $fail('Vul ten minste één e-mail of telefoonnummer in.');
-            }
-        }];
 
         return $rules;
     }

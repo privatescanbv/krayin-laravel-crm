@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Throwable;
 
 class ActivityResource extends JsonResource
 {
@@ -42,7 +43,7 @@ class ActivityResource extends JsonResource
                             ];
                         });
                     }
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     // Fallback handled below
                 }
 

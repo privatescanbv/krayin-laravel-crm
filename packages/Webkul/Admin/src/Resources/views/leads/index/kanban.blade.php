@@ -720,7 +720,7 @@
                     // Update stage counters for non-lost stages
                     this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage.sort_order].leads.meta.total + 1;
 
-                    this.updateLeadStage(event.added.element.id, stage.id);
+                    this.updateLeadStageWithChecks(event.added.element, stage);
                 },
 
                 /**
@@ -767,7 +767,7 @@
                 /**
                  * Update lead stage with optional additional data
                  */
-                updateLeadStage(leadId, stageId, additionalData = {}) {
+                async updateLeadStage(leadId, stageId, additionalData = {}) {
                     const data = {
                         'lead_pipeline_stage_id': stageId,
                         ...additionalData
@@ -786,6 +786,36 @@
                         .catch(error => {
                             this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
                         });
+                },
+
+                /**
+                 * Update stage but first confirm if there are open activities
+                 */
+                async updateLeadStageWithChecks(lead, stage) {
+                    try {
+                        const openCount = Number(lead.open_activities_count || 0);
+
+                        if (openCount > 0) {
+                            const confirmClose = await new Promise((resolve) => {
+                                const message = `Er staan nog ${openCount} open activiteit(en) op deze lead. Wil je deze afronden en de status wijzigen?`;
+                                // Use built-in confirm for simplicity; could be replaced by modal later
+                                resolve(window.confirm(message));
+                            });
+
+                            if (!confirmClose) {
+                                // Revert UI count since we optimistically incremented earlier
+                                this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage.sort_order].leads.meta.total - 1;
+                                return;
+                            }
+
+                            await this.updateLeadStage(lead.id, stage.id, { close_open_activities: true });
+                            return;
+                        }
+
+                        await this.updateLeadStage(lead.id, stage.id);
+                    } catch (e) {
+                        // No-op; errors are handled in updateLeadStage
+                    }
                 },
 
                 /**

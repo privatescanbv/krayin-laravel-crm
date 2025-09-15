@@ -73,7 +73,7 @@ class LeadAddressMergeTest extends TestCase
         $this->assertEquals('Test Country', $mergedLead->address->country);
 
         // Verify full_address accessor works
-        $this->assertEquals('Test Street 123 A, 1234AB Test City, Test State, Test Country', $mergedLead->address->full_address);
+        $this->assertEquals('Test Street 123 A, 1234 AB Test City, Test State, Test Country', $mergedLead->address->full_address);
 
         // Verify duplicate lead is deleted
         $this->assertNull(Lead::find($duplicateLead->id));

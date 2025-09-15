@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\PostcodeNormalizer;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use InvalidArgumentException;
 use Webkul\Contact\Models\Person;
@@ -72,6 +73,18 @@ class Address extends BaseModel
             if (count($setFields) > 1) {
                 throw new InvalidArgumentException('Cannot set multiple entity IDs (lead_id, person_id, organization_id)');
             }
+
+            // Normalize and trim incoming address fields
+            foreach (['street', 'house_number', 'house_number_suffix', 'state', 'city', 'country'] as $field) {
+                if (isset($address->{$field}) && is_string($address->{$field})) {
+                    $address->{$field} = trim($address->{$field});
+                }
+            }
+
+            // Normalize postal code globally (trim, uppercase, remove internal spaces)
+            if (isset($address->postal_code)) {
+                $address->postal_code = PostcodeNormalizer::normalize($address->postal_code);
+            }
         });
     }
 
@@ -115,7 +128,8 @@ class Address extends BaseModel
         }
 
         if ($this->postal_code && $this->city) {
-            $cityPart = $this->postal_code.' '.$this->city;
+            $displayPostal = $this->formatPostalCodeForDisplay($this->postal_code);
+            $cityPart = $displayPostal.' '.$this->city;
             if ($this->state) {
                 $cityPart .= ', '.$this->state;
             }
@@ -127,5 +141,18 @@ class Address extends BaseModel
         }
 
         return implode(', ', $parts);
+    }
+
+    /**
+     * Format stored postal codes for display. Keeps global support; only adds a space
+     * for Dutch-style codes like 1234AB -> 1234 AB. Otherwise leaves as-is.
+     */
+    private function formatPostalCodeForDisplay(string $postalCode): string
+    {
+        if (preg_match('/^([0-9]{4})([A-Z]{2})$/u', $postalCode, $m)) {
+            return $m[1].' '.$m[2];
+        }
+
+        return $postalCode;
     }
 }

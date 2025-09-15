@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\CallStatus as CallStatusEnum;
+use Illuminate\Support\Str;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -191,6 +192,8 @@ class CallStatusControllerTest extends TestCase
             'reply_to'  => ['recipient@example.com'],
             'user_type' => 'user',
             'is_read'   => 0,
+            'source'    => 'test',
+            'message_id'=> (string) Str::uuid(),
         ]);
 
         // Create an activity
@@ -200,13 +203,15 @@ class CallStatusControllerTest extends TestCase
             'schedule_from' => now(),
             'schedule_to'   => now()->addDay(),
             'user_id'       => $user->id,
-            'email_id'      => $email->id,
         ]);
 
+        // Link email to activity (email belongs to one activity)
+        $email->activity_id = $activity->id;
+        $email->save();
+
         // Test the relationship
-        $this->assertEquals($email->id, $activity->email_id);
-        $this->assertTrue($activity->email->is($email));
-        $this->assertTrue($email->activities->contains($activity));
+        $this->assertTrue($email->activity->is($activity));
+        $this->assertTrue($activity->emails->contains($email));
     }
 
     /** @test */
@@ -233,41 +238,48 @@ class CallStatusControllerTest extends TestCase
         $user = User::find($userId);
         $this->actingAs($user, 'user');
 
-        // Create an email
-        $email = Email::create([
-            'subject'   => 'Test Email for Activity',
-            'reply'     => 'Test email content for activity',
-            'from'      => ['sender@example.com'],
-            'reply_to'  => ['recipient@example.com'],
-            'user_type' => 'user',
-            'is_read'   => 0,
-        ]);
-
-        // Create multiple activities linked to the same email
-        $activity1 = Activity::create([
-            'title'         => 'Activity 1',
+        // Create an activity
+        $activity = Activity::create([
+            'title'         => 'Activity Container',
             'type'          => 'call',
             'schedule_from' => now(),
             'schedule_to'   => now()->addDay(),
             'user_id'       => $user->id,
-            'email_id'      => $email->id,
         ]);
 
-        $activity2 = Activity::create([
-            'title'         => 'Activity 2',
-            'type'          => 'meeting',
-            'schedule_from' => now()->addDay(),
-            'schedule_to'   => now()->addDays(2),
-            'user_id'       => $user->id,
-            'email_id'      => $email->id,
+        // Create multiple emails linked to the same activity
+        $email1 = Email::create([
+            'subject'    => 'E1',
+            'reply'      => 'Body 1',
+            'from'       => ['sender1@example.com'],
+            'reply_to'   => ['recipient1@example.com'],
+            'user_type'  => 'user',
+            'is_read'    => 0,
+            'source'     => 'test',
+            'message_id' => (string) Str::uuid(),
+            'activity_id'=> $activity->id,
         ]);
+
+        $email2 = Email::create([
+            'subject'    => 'E2',
+            'reply'      => 'Body 2',
+            'from'       => ['sender2@example.com'],
+            'reply_to'   => ['recipient2@example.com'],
+            'user_type'  => 'user',
+            'is_read'    => 0,
+            'source'     => 'test',
+            'message_id' => (string) Str::uuid(),
+            'activity_id'=> $activity->id,
+        ]);
+
+        // Reload relations
+        $activity->load('emails');
 
         // Test relationships
-        $this->assertCount(2, $email->activities);
-        $this->assertTrue($email->activities->contains($activity1));
-        $this->assertTrue($email->activities->contains($activity2));
-
-        $this->assertEquals($email->id, $activity1->email_id);
-        $this->assertEquals($email->id, $activity2->email_id);
+        $this->assertCount(2, $activity->emails);
+        $this->assertTrue($activity->emails->contains($email1));
+        $this->assertTrue($activity->emails->contains($email2));
+        $this->assertTrue($email1->activity->is($activity));
+        $this->assertTrue($email2->activity->is($activity));
     }
 }

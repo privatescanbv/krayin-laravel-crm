@@ -2,6 +2,7 @@
 
 namespace Webkul\Lead\Models;
 
+use App\Enums\LostReason;
 use App\Enums\MRIStatus;
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
@@ -43,6 +44,7 @@ class Lead extends Model implements LeadContract
         'gender'              => PersonGender::class,
         'salutation'          => PersonSalutation::class,
         'mri_status'          => MRIStatus::class,
+        'lost_reason'         => LostReason::class,
         'has_diagnosis_form'  => 'boolean',
     ];
 
@@ -104,7 +106,7 @@ class Lead extends Model implements LeadContract
             return;
         }
 
-        if ($value instanceof \BackedEnum) {
+        if ($value instanceof BackedEnum) {
             $this->attributes['gender'] = $value->value;
             return;
         }
@@ -146,6 +148,29 @@ class Lead extends Model implements LeadContract
         }
 
         $this->attributes['mri_status'] = $value;
+    }
+
+    /**
+     * Normalize lost reason assignment to allow empty strings and enums.
+     */
+    public function setLostReasonAttribute($value): void
+    {
+        if ($value === '' || $value === null) {
+            $this->attributes['lost_reason'] = null;
+            return;
+        }
+
+        if ($value instanceof BackedEnum) {
+            $this->attributes['lost_reason'] = $value->value;
+            return;
+        }
+
+        $this->attributes['lost_reason'] = $value;
+    }
+
+    public function getLostReasonLabelAttribute(): string
+    {
+        return $this->lost_reason?->label() ?? '';
     }
 
     public function getMRIStatusLabelAttribute(): string {
@@ -558,7 +583,7 @@ class Lead extends Model implements LeadContract
 
     /**
      * Override the update method to validate status transitions.
-     * 
+     *
      * @param array $attributes
      * @param array $options
      * @return bool
@@ -567,9 +592,9 @@ class Lead extends Model implements LeadContract
     public function update(array $attributes = [], array $options = [])
     {
         // Check if lead_pipeline_stage_id is being updated
-        if (isset($attributes['lead_pipeline_stage_id']) && 
+        if (isset($attributes['lead_pipeline_stage_id']) &&
             $attributes['lead_pipeline_stage_id'] != $this->lead_pipeline_stage_id) {
-            
+
             // Validate the status transition
             LeadStatusTransitionValidator::validateTransition($this, $attributes['lead_pipeline_stage_id']);
         }
@@ -579,7 +604,7 @@ class Lead extends Model implements LeadContract
 
     /**
      * Update the lead's stage with validation.
-     * 
+     *
      * @param int $newStageId
      * @return bool
      * @throws \Illuminate\Validation\ValidationException
@@ -588,7 +613,7 @@ class Lead extends Model implements LeadContract
     {
         // Validate the status transition
         LeadStatusTransitionValidator::validateTransition($this, $newStageId);
-        
+
         return $this->update(['lead_pipeline_stage_id' => $newStageId]);
     }
 }

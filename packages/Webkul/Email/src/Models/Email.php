@@ -3,6 +3,7 @@
 namespace Webkul\Email\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\Email\Contracts\Email as EmailContract;
 use Webkul\Lead\Models\LeadProxy;
@@ -69,6 +70,21 @@ class Email extends Model implements EmailContract
         'created_at',
         'updated_at',
     ];
+
+    protected static function booted()
+    {
+        static::creating(function (self $email) {
+            if (empty($email->source)) {
+                $email->source = 'system';
+            }
+            if (empty($email->message_id)) {
+                $email->message_id = (string) Str::uuid();
+            }
+            if (empty($email->user_type)) {
+                $email->user_type = 'user';
+            }
+        });
+    }
 
     /**
      * Get the parent email.

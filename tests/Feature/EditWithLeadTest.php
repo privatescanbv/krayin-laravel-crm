@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\LostReason;
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
 use App\Models\Address;
@@ -267,7 +268,7 @@ test('can update person with multiple lead fields including new fields', functio
         'date_of_birth'          => '1985-05-15',
         'gender'                 => PersonGender::Female->value,
         'description'            => 'Updated lead description',
-        'lost_reason'            => 'Competition',
+        'lost_reason'            => LostReason::Competitor->value,
         'lead_pipeline_id'       => $data['pipelineId'],
         'lead_pipeline_stage_id' => $data['stageId'],
         'user_id'                => test()->user->id,

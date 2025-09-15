@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\LostReason;
 use App\Enums\MRIStatus;
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
@@ -41,6 +42,7 @@ class LeadValidationService
             'phones.*.label' => 'nullable|string|max:50',
 
             // Lead specific fields
+            'lost_reason'            => ['nullable', new Enum(LostReason::class)],
             'lead_value'             => 'nullable|numeric|min:0',
             'lead_source_id'         => 'nullable|numeric|exists:lead_sources,id',
             'lead_channel_id'        => 'nullable|numeric|exists:lead_channels,id',

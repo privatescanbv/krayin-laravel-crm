@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\Departments;
+use App\Enums\LostReason;
 use App\Models\Address;
 use App\Models\Department;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -68,7 +69,7 @@ class LeadFactory extends Factory
         return [
             'description'            => $this->faker->paragraph(),
             'status'                 => $this->faker->boolean(),
-            'lost_reason'            => $this->faker->optional()->sentence(),
+            'lost_reason'            => $this->faker->optional()->randomElement(LostReason::cases())?->value,
             'closed_at'              => $this->faker->optional()->dateTimeBetween('-1 month', 'now'),
             'user_id'                => $user->id,
             'lead_source_id'         => $source->id,

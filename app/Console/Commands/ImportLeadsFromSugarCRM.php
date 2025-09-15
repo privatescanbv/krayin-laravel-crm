@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\LostReason;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Models\Address;
@@ -57,6 +58,65 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
      * @var string
      */
     protected $description = 'Import leads from SugarCRM database with anamnesis data, call activities, email activities, meeting activities and email attachments';
+
+    /**
+     * Map SugarCRM reden_afvoeren_c (free text/code) to our LostReason enum value
+     */
+    private static function mapLostReason(?string $sugarReason): ?string
+    {
+        if (! $sugarReason) {
+            return null;
+        }
+
+        $normalized = strtolower(trim($sugarReason));
+
+        $map = [
+            'geen mri'                    => LostReason::NoMRI->value,
+            'geenmri'                     => LostReason::NoMRI->value,
+            'afval'                       => LostReason::Waste->value,
+            'prijs'                       => LostReason::Price->value,
+            'geen vergoeding'             => LostReason::NoInsuranceCoverage->value,
+            'geen vergoeding verzekeraar' => LostReason::NoInsuranceCoverage->value,
+            'afstand'                     => LostReason::Distance->value,
+            'informatief'                 => LostReason::Informative->value,
+            'prescan'                     => LostReason::Prescan->value,
+            'ziek'                        => LostReason::Sick->value,
+            'concurrent'                  => LostReason::Competitor->value,
+            'niet planbaar'               => LostReason::NotSchedulable->value,
+            'geen vervoer'                => LostReason::NoTransport->value,
+            'partner niet akkoord'        => LostReason::PartnerDisagrees->value,
+            'niet uitvoerbaar'            => LostReason::NotFeasible->value,
+            'negatief advies'             => LostReason::NegativeAdvice->value,
+            'geen reactie'                => LostReason::NoResponse->value,
+            'betaalt niet'                => LostReason::DoesNotPay->value,
+            'verslapen'                   => LostReason::Overslept->value,
+            'te laat'                     => LostReason::TooLate->value,
+            'angst'                       => LostReason::Fear->value,
+            'ontevreden'                  => LostReason::Dissatisfied->value,
+            'elders nl standaard'         => LostReason::StandardCareNL->value,
+            'kan in nl zorg terecht'      => LostReason::StandardCareNL->value,
+            'uitstel door omstandigheden' => LostReason::PostponedCircumstances->value,
+            'nieuwsbrief'                 => LostReason::NewsletterOnly->value,
+            'foutief'                     => LostReason::Incorrect->value,
+            'datainvoer'                  => LostReason::DataEntry->value,
+            'geen reden'                  => LostReason::NoReason->value,
+            'spoort niet'                 => LostReason::NotMatching->value,
+        ];
+
+        // direct match by map
+        if (array_key_exists($normalized, $map)) {
+            return $map[$normalized];
+        }
+
+        // attempt to match any enum value or label partially
+        foreach (LostReason::cases() as $case) {
+            if ($normalized === strtolower($case->value) || $normalized === strtolower($case->label())) {
+                return $case->value;
+            }
+        }
+
+        return null; // fallback to null if unknown
+    }
 
     /**
      * Execute the console command.
@@ -491,7 +551,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'lead_channel_id'        => $this->mapChannel($record),
                         'lead_type_id'           => $this->mapType($record),
                         'lead_source_id'         => $this->mapSource($record),
-                        'lost_reason'            => $record->reden_afvoeren_c ?? null,
+                        'lost_reason'            => self::mapLostReason($record->reden_afvoeren_c ?? null),
                         'user_id'                => $this->mapUser($departmentId),
                     ], [
                         'created_at' => $this->parseSugarDate($record->lead_date_entered ?? $record->date_entered),

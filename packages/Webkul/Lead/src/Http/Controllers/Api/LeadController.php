@@ -87,6 +87,13 @@ class LeadController extends Controller
             'department_id' => $departmentId
         ]);
 
+        // Default anamnesis flags to "no" (false) for API if not provided
+        $request->merge([
+            'metals' => $request->has('metals') ? $request->input('metals') : false,
+            'claustrophobia' => $request->has('claustrophobia') ? $request->input('claustrophobia') : false,
+            'allergies' => $request->has('allergies') ? $request->input('allergies') : false,
+        ]);
+
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
 

@@ -238,16 +238,13 @@ class CallStatusControllerTest extends TestCase
         $user = User::find($userId);
         $this->actingAs($user, 'user');
 
-        // Create an email
-        $email = Email::create([
-            'subject'   => 'Test Email for Activity',
-            'reply'     => 'Test email content for activity',
-            'from'      => ['sender@example.com'],
-            'reply_to'  => ['recipient@example.com'],
-            'user_type' => 'user',
-            'is_read'   => 0,
-            'source'    => 'test',
-            'message_id'=> (string) Str::uuid(),
+        // Create an activity
+        $activity = Activity::create([
+            'title'         => 'Activity Container',
+            'type'          => 'call',
+            'schedule_from' => now(),
+            'schedule_to'   => now()->addDay(),
+            'user_id'       => $user->id,
         ]);
 
         // Create multiple emails linked to the same activity

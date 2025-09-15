@@ -100,6 +100,22 @@ class ActivityController extends Controller
             ], 422);
         }
 
+        // Duplicate guard: same title on same lead with is_done = 0 should be rejected
+        $isDuplicate = $this->activityRepository
+            ->where('lead_id', $id)
+            ->where('title', $data['title'] ?? null)
+            ->where('is_done', 0)
+            ->exists();
+
+        if ($isDuplicate) {
+            return response()->json([
+                'message' => 'Duplicate activity: same title exists for this lead and is not done.',
+                'errors' => [
+                    'title' => ['Duplicate for this lead while open (is_done = 0).']
+                ]
+            ], 409);
+        }
+
         $activity = $this->activityRepository->create(array_merge($data, [
             'is_done' => $request->type == 'note' ? 1 : 0,
             'user_id' => $data['user_id'] ?? null,

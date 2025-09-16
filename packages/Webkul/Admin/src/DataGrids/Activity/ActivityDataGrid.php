@@ -204,9 +204,10 @@ class ActivityDataGrid extends DataGrid
                             $lead = Lead::find($row->entity_id);
                             $display = $lead ? ($lead->name ?? ('#'.$row->entity_id)) : ('#'.$row->entity_id);
                         } catch (Throwable $e) {
+                            logger()->warning('Unable to locate lead entity id '.$row->entity_id . ', '. $e->getMessage());
                             $display = '#'.$row->entity_id;
                         }
-                        $label = 'Lead "' . e($display) . '"';
+                        $label = e($display);
                         break;
                     case 'person':
                         $route = route('admin.contacts.persons.view', $row->entity_id);
@@ -215,19 +216,20 @@ class ActivityDataGrid extends DataGrid
                             $person = Person::find($row->entity_id);
                             $display = $person ? $person->name : ('#'.$row->entity_id);
                         } catch (Throwable $e) {
+                            logger()->warning('Unable to locate person entity id '.$row->entity_id . ', '. $e->getMessage());
                             $display = '#'.$row->entity_id;
                         }
-                        $label = 'Persoon "' . e($display) . '"';
+                        $label = e($display);
                         break;
                     case 'product':
                         $route = route('admin.products.view', $row->entity_id);
                         $display = $row->product_name ?: ('#'.$row->entity_id);
-                        $label = 'Product "' . e($display) . '"';
+                        $label = e($display);
                         break;
                     case 'warehouse':
                         $route = route('admin.warehouses.view', $row->entity_id);
                         $display = $row->warehouse_name ?: ('#'.$row->entity_id);
-                        $label = 'Warehouse "' . e($display) . '"';
+                        $label = e($display) . '"';
                         break;
                     default:
                         return "<span class='text-gray-800 dark:text-gray-300'>Onbekend</span>";

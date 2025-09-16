@@ -241,16 +241,16 @@ class PipelineSeeder extends BaseSeeder
         // Voorbeeld: Validatie voor klant-adviseren-start -> klant-adviseren-opvolgen
         // Minimaal 1 persoon moet gekoppeld zijn aan de lead
         LeadStatusTransitionValidator::addTransitionRule(
+            'nieuwe-aanvraag-kwalificeren',
             'klant-adviseren-start',
-            'klant-adviseren-opvolgen',
             [
                 'min_persons' => 1,
                 'message' => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
             ]
         );
         LeadStatusTransitionValidator::addTransitionsRule(
-            ' klant-adviseren-start-hernia',
-            ['klant-adviseren-opvolgen', 'klant-adviseren-will-mri-hernia', 'klant-adviseren-wachten-op-mri-hernia'],
+            'nieuwe-aanvraag-kwalificeren-hernia',
+            ['klant-adviseren-start-hernia', 'klant-adviseren-will-mri-hernia', 'klant-adviseren-wachten-op-mri-hernia'],
             [
                 'min_persons' => 1,
                 'message' => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',

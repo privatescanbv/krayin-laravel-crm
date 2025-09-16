@@ -1,4 +1,4 @@
-{!! view_render_event('admin.leads.create.personal_fields.form_controls.before') !!}
+{{-- {!! view_render_event('admin.leads.create.personal_fields.form_controls.before') !!} --}}
 
 <div class="flex flex-col gap-4">
     <!-- Salutation -->
@@ -10,9 +10,9 @@
             </x-admin::form.control-group.label>
 
             @php
-                $current = old('salutation', $entity->salutation?->value);
+                $current = old('salutation', $entity?->salutation?->value);
                 if ($current === null || $current === '') {
-                    $current = $entity->salutation?->value;
+                    $current = $entity?->salutation?->value;
                 }
             @endphp
             <x-admin::form.control-group.control
@@ -43,7 +43,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="initials"
-                value="{{ $entity->initials ?? '' }}"
+                value="{{ $entity?->initials ?? '' }}"
                 label="{{ __('Initialen') }}"
                 placeholder="J.A."
             />
@@ -60,7 +60,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="first_name"
-                value="{{ $entity->first_name ?? '' }}"
+                value="{{ $entity?->first_name ?? '' }}"
                 label="{{ __('Voornaam') }}"
                 placeholder="Voornaam"
                 rules="required"
@@ -81,7 +81,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="lastname_prefix"
-                value="{{ $entity->lastname_prefix ?? '' }}"
+                value="{{ $entity?->lastname_prefix ?? '' }}"
                 label="{{ __('Tussenvoegsel') }}"
                 placeholder="van, de, den, etc."
                 class="w-24"
@@ -99,7 +99,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="last_name"
-                value="{{ $entity->last_name ?? '' }}"
+                value="{{ $entity?->last_name ?? '' }}"
                 label="@lang('admin::app.leads.merge.field-last-name-birth')"
                 placeholder="@lang('admin::app.leads.merge.field-last-name-birth')"
                 rules="required"
@@ -121,7 +121,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="married_name_prefix"
-                value="{{ $entity->married_name_prefix ?? '' }}"
+                value="{{ $entity?->married_name_prefix ?? '' }}"
                 label="{{ __('Married name prefix') }}"
                 placeholder="van, de, den, etc."
                 class="w-24"
@@ -139,7 +139,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="married_name"
-                value="{{ $entity->married_name ?? '' }}"
+                value="{{ $entity?->married_name ?? '' }}"
                 label="{{ __('Married name') }}"
             />
 
@@ -173,7 +173,7 @@
         @php
             $currentGender = old('gender');
             if ($currentGender === null || $currentGender === '') {
-                $currentGender = $entity->gender?->value;
+                $currentGender = $entity?->gender?->value;
             }
         @endphp
         <x-admin::form.control-group.control
@@ -193,4 +193,4 @@
     </x-admin::form.control-group>
 </div>
 
-{!! view_render_event('admin.leads.create.personal_fields.form_controls.after') !!}
+{{-- {!! view_render_event('admin.leads.create.personal_fields.form_controls.after') !!} --}}

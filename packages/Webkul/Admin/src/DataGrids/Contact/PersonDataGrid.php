@@ -86,7 +86,7 @@ class PersonDataGrid extends DataGrid
             'index'      => 'emails',
             'label'      => trans('admin::app.contacts.persons.index.datagrid.emails'),
             'type'       => 'string',
-            'sortable'   => false,
+            'sortable'   => true,
             'filterable' => true,
             'searchable' => true,
             'closure'    => fn ($row) => collect(json_decode($row->emails, true) ?? [])->pluck('value')->join(', '),
@@ -142,7 +142,7 @@ class PersonDataGrid extends DataGrid
             'index'      => 'has_duplicates',
             'label'      => 'Duplicaten',
             'type'       => 'string',
-            'sortable'   => true,
+            'sortable'   => false,
             'filterable' => true,
             'searchable' => false,
             'closure'    => function ($row) {

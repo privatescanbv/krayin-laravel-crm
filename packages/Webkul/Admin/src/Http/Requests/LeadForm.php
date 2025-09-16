@@ -99,11 +99,16 @@ class LeadForm extends FormRequest
                 }
             }
 
+            // Enforce unique only for non-person attributes; allow duplicates for persons
             if ($attribute->is_unique) {
                 array_push($validations[in_array($attribute->type, ['email', 'phone'])
                     ? $attribute->code.'.*.value'
                     : $attribute->code
                 ], function ($field, $value, $fail) use ($attribute) {
+                    // Skip uniqueness check for person entity_type
+                    if ($attribute->entity_type === 'persons') {
+                        return;
+                    }
                     if (! $this->attributeValueRepository->isValueUnique(
                         $this->id,
                         $attribute->entity_type,
@@ -179,11 +184,16 @@ class LeadForm extends FormRequest
                     }
                 }
 
+                // Do NOT enforce uniqueness for person attributes; duplicates allowed and handled via merge flow
                 if ($attribute->is_unique) {
                     array_push($validations[in_array($attribute->type, ['email', 'phone'])
                         ? $attribute->code.'.*.value'
                         : $attribute->code
                     ], function ($field, $value, $fail) use ($attribute) {
+                        // Skip uniqueness check for person entity_type
+                        if ($attribute->entity_type === 'persons') {
+                            return;
+                        }
                         if (! $this->attributeValueRepository->isValueUnique(
                             request('person.id'),
                             $attribute->entity_type,

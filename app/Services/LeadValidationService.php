@@ -20,7 +20,7 @@ class LeadValidationService
     /**
      * Get the validation rules for Lead creation and updates
      */
-    public static function getValidationRules($request = null): array
+    public static function getValidationRules($request = null, bool $create = true): array
     {
         $rules = [
             'first_name'          => 'required|string|max:255',
@@ -89,14 +89,16 @@ class LeadValidationService
             'address.city'                => 'nullable|string|max:255',
             'address.state'               => 'nullable|string|max:255',
             'address.country'             => 'nullable|string|max:255',
-
-            // Anamnesis quick questions on lead form
-            'metals'                => 'required|boolean',
-            'metals_notes'          => 'required_if:metals,1|nullable|string',
-            'claustrophobia'        => 'required|boolean',
-            'allergies'             => 'required|boolean',
-            'allergies_notes'       => 'required_if:allergies,1|nullable|string',
         ];
+        if ($create) {
+            // Anamnesis quick questions on lead form
+            $rules['metals'] = 'required|boolean';
+            $rules['metals_notes'] = 'required_if:metals,1|nullable|string';
+            $rules['claustrophobia'] = 'required|boolean';
+            $rules['allergies'] = 'required|boolean';
+            $rules['allergies_notes'] = 'required_if:allergies,1|nullable|string';
+        }
+
         // Enforce: at least one contact (email or phone) must be provided
         // Attach as a closure on a guaranteed field so it always runs
         $baseFirstNameRules = is_string($rules['first_name'])
@@ -149,18 +151,15 @@ class LeadValidationService
         $rules['lead_channel_id'] = 'required|numeric|exists:lead_channels,id';
         $rules['lead_type_id'] = 'required|numeric|exists:lead_types,id';
 
-        // Add legacy email field for API compatibility (if needed)
-        // $rules['email'] = 'required|email';
-
         return $rules;
     }
 
     /**
      * Get validation rules for web forms
      */
-    public static function getWebValidationRules($request = null): array
+    public static function getWebValidationRules($request = null, bool $create = true): array
     {
-        return self::getValidationRules($request);
+        return self::getValidationRules($request, $create);
     }
 
     /**

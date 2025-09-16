@@ -295,17 +295,6 @@
                                         @include('admin::leads.common.personal-fields', ['entity' => $__entityPrefill, 'bindModel' => 'formData'])
                                     </div>
 
-                                    @include('admin::leads.common.sections.channel-to-owner', [
-                                        'entity' => null,
-                                        'defaults' => [
-                                            'department_id' => $userDefaults['department_id'] ?? $defaultDepartmentId ?? '',
-                                            'combine_order' => 1,
-                                            'lead_channel_id' => $userDefaults['lead_channel_id'] ?? '1',
-                                            'lead_source_id' => $userDefaults['lead_source_id'] ?? 32,
-                                            'lead_type_id' => $userDefaults['lead_type_id'] ?? 1,
-                                        ],
-                                        'useVueModel' => false,
-                                    ])
                                     <!-- Other attributes -->
                                     <div class="flex gap-4 max-sm:flex-wrap">
                                         <div class="w-full">
@@ -408,6 +397,18 @@
                                         </div>
                                     </div>
                                     <!-- /Anamnese -->
+
+                                    @include('admin::leads.common.sections.channel-to-owner', [
+                                        'entity' => null,
+                                        'defaults' => [
+                                            'department_id' => $userDefaults['department_id'] ?? $defaultDepartmentId ?? '',
+                                            'combine_order' => 1,
+                                            'lead_channel_id' => $userDefaults['lead_channel_id'] ?? '1',
+                                            'lead_source_id' => $userDefaults['lead_source_id'] ?? 32,
+                                            'lead_type_id' => $userDefaults['lead_type_id'] ?? 1,
+                                        ],
+                                        'useVueModel' => false,
+                                    ])
 
                                     <!-- Organization Section -->
                                     <div class="flex flex-col gap-4 mb-4">

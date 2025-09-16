@@ -479,8 +479,8 @@ class LeadController extends Controller
                         }
                     }
                 }
-            } catch (\Exception $e) {
-                \Log::warning('Failed to persist anamnesis answers on lead create', ['lead_id' => $lead->id, 'error' => $e->getMessage()]);
+            } catch (Exception $e) {
+                Log::warning('Failed to persist anamnesis answers on lead create', ['lead_id' => $lead->id, 'error' => $e->getMessage()]);
             }
 
             Event::dispatch('lead.create.after', $lead);
@@ -535,14 +535,11 @@ class LeadController extends Controller
     public function update(LeadForm $request, int $id): RedirectResponse|JsonResponse
     {
         try {
-            $this->validate($request, LeadValidationService::getWebValidationRules($request));
-
+            $this->validate($request, LeadValidationService::getWebValidationRules($request, false));
             // Additional rule now embedded in LeadValidationService rules
-
             Event::dispatch('lead.update.before', $id);
 
             $data = $request->all();
-logger()->info('Updating lead', ['lead_id' => $id, 'data' => $data]);
             // Handle empty date field
             if (array_key_exists('date_of_birth', $data) && ($data['date_of_birth'] === '' || $data['date_of_birth'] === null)) {
                 $data['date_of_birth'] = null;
@@ -605,19 +602,15 @@ logger()->info('Updating lead', ['lead_id' => $id, 'data' => $data]);
             Event::dispatch('lead.update.after', $lead);
 
             if (request()->ajax()) {
-                logger()->info('Lead updated via AJAX', ['lead_id' => $lead->id]);
                 return response()->json([
-                    'message' => trans('admin::app.leads.update-success'),
+                    'message'  => trans('admin::app.leads.update-success'),
+                    'redirect' => route('admin.leads.view', $lead->id),
                 ]);
             }
-            logger()->info('NOT Lead updated via AJAX', ['lead_id' => $lead->id]);
-
 
             session()->flash('success', trans('admin::app.leads.update-success'));
-
-            // Set cookie to remember pipeline selection
-            $this->pipelineCookieService->setLastSelectedPipelineId($data['lead_pipeline_id']);
-            return redirect()->route('admin.leads.index', ['pipeline_id' => $data['lead_pipeline_id']]);
+            // After edit: go to lead view page
+            return redirect()->route('admin.leads.view', $lead->id);
         } catch (InvalidArgumentException $e) {
             if (request()->ajax()) {
                 throw new ValidationException(

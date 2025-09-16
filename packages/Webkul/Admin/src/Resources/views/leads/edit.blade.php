@@ -143,13 +143,6 @@
                                 :entity="$lead"
                             />
 
-
-                            @include('admin::leads.common.sections.channel-to-owner', [
-                                'entity' => $lead,
-                                'defaults' => [],
-                                'useVueModel' => false,
-                            ])
-
                             <!-- Lead Details Other input fields -->
                             <div class="flex gap-4 max-sm:flex-wrap">
                                 <div class="w-full">
@@ -243,6 +236,13 @@
                     </div>
 
                     {!! view_render_event('admin.leads.edit.address.after', ['lead' => $lead]) !!}
+
+                    @include('admin::leads.common.sections.channel-to-owner', [
+                        'entity' => $lead,
+                        'defaults' => [],
+                        'useVueModel' => false,
+                    ])
+
                     {!! view_render_event('admin.leads.edit.organization.before', ['lead' => $lead]) !!}
 
                     <!-- Organization Section -->

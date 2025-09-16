@@ -372,7 +372,7 @@ class ActivityDataGrid extends DataGrid
         $this->addAction([
             'index'  => 'view',
             'icon'   => 'icon-eye',
-            'title'  => trans('admin::app.datagrid.view'),
+            'title'  => trans('admin::app.activities.index.datagrid.view'),
             'method' => 'GET',
             'url'    => fn ($row) => route('admin.activities.view', $row->id),
         ]);

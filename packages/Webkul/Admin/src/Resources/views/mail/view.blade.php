@@ -110,7 +110,75 @@
                         </div>
                     </div>
                 @endif
+
+                
             </div>
+        </script>
+
+        <!-- Activity Lookup Component -->
+        <script type="module">
+            app.component('v-activity-lookup', {
+                props: ['email'],
+                emits: ['link-activity'],
+                data() {
+                    return {
+                        isLoading: false,
+                        activities: [],
+                        searchTerm: '',
+                        selectedItem: {},
+                    };
+                },
+                mounted() {
+                    this.fetchActivities();
+                },
+                watch: {
+                    'email.lead_id': function() {
+                        this.fetchActivities();
+                    },
+                },
+                computed: {
+                    filteredActivities() {
+                        const term = (this.searchTerm || '').toLowerCase();
+                        return this.activities.filter(a => ((a.title || a.name || '')).toLowerCase().includes(term));
+                    }
+                },
+                methods: {
+                    async fetchActivities() {
+                        if (!this.email?.lead_id) return;
+                        this.isLoading = true;
+                        try {
+                            const resp = await this.$axios.get('{{ route('admin.activities.by_lead_open', ['leadId' => ':id']) }}'.replace(':id', this.email.lead_id));
+                            this.activities = resp.data.data || [];
+                        } catch (e) {
+                            this.activities = [];
+                        } finally {
+                            this.isLoading = false;
+                        }
+                    },
+                    select(activity) {
+                        this.selectedItem = activity;
+                        this.$emit('link-activity', activity);
+                    }
+                },
+                template: `
+                    <div>
+                        <div class="relative">
+                            <input type="text" v-model="searchTerm" class="w-full rounded border border-gray-200 px-2.5 py-2 pr-10 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400" placeholder="@lang('admin::app.mail.view.search')" />
+                        </div>
+                        <ul class="max-h-40 divide-y divide-gray-100 overflow-y-auto dark:divide-gray-700 mt-2">
+                            <li v-for="activity in filteredActivities" :key="activity.id" class="flex cursor-pointer gap-2 px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900" @click="select(activity)">
+                                <span class="text-sm">@{{ activity.title || activity.name }}</span>
+                            </li>
+                            <li v-if="!isLoading && filteredActivities.length === 0" class="px-4 py-2 text-gray-800 dark:text-gray-300">
+                                @lang('admin::app.mail.view.no-result-found')
+                            </li>
+                            <li v-if="isLoading" class="px-4 py-2">
+                                <x-admin::spinner />
+                            </li>
+                        </ul>
+                    </div>
+                `
+            });
         </script>
 
         <!-- Email Item Template -->
@@ -530,7 +598,7 @@
                                     <span class="text-[10px] dark:text-gray-300">@{{ email.person.job_title }}</span>
 
                                     <!-- Emails -->
-                                    <template v-for="email in email?.person?.emails.map(item => item.value)">
+                                    <template v-for="email in (Array.isArray(email?.person?.emails) ? email.person.emails.map(item => item.value) : [])">
                                         <a
                                             class="text-brandColor"
                                             :href="`mailto:${email}`"
@@ -540,7 +608,7 @@
                                     </template>
 
                                     <!-- Contact Numbers -->
-                                    <template v-for="contactNumber in email.person?.contact_numbers.map(item => item.value)">
+                                    <template v-for="contactNumber in (Array.isArray(email?.person?.contact_numbers) ? email.person.contact_numbers.map(item => item.value) : [])">
                                         <a
                                             class="text-brandColor"
                                             :href="`tel:${contactNumber}`"
@@ -655,7 +723,7 @@
                                         <span>@{{ person.name }}</span>
 
                                         <div class="flex flex-col gap-1">
-                                            <span class="text-sm">@{{ person.emails.map(item => item.value).join(', ') }}</span>
+                                            <span class="text-sm">@{{ (Array.isArray(person.emails) ? person.emails.map(item => item.value) : []).join(', ') }}</span>
                                         </div>
                                     </div>
                                 </li>
@@ -753,6 +821,12 @@
                                 </div>
                             </div>
 
+                           {{-- Lead card (only rendered server-side, not in Vue template) --}}
+                           {{--
+                           @if ($email->lead)
+                               @include('admin::leads.common.card', ['lead' => $email->lead, 'show_actions' => false])
+                           @endif
+                           --}}
                             <!-- Lead Name (clickable to lead view) -->
                             <a
                                 :href="'{{ route('admin.leads.view', ':id') }}'.replace(':id', email.lead_id)"
@@ -869,11 +943,11 @@
                                         class="flex cursor-pointer gap-2 px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900"
                                         @click="linkLead(lead)"
                                     >
-                                        <x-admin::avatar ::name="lead.title" />
+                                        <x-admin::avatar ::name="lead.name" />
 
                                         <!-- Lead Title -->
                                         <div class="flex flex-col gap-1">
-                                            <span>@{{ lead.title }}</span>
+                                            <span>@{{ lead.name }}</span>
                                         </div>
                                     </li>
 
@@ -1156,18 +1230,20 @@
                     || bouncer()->hasPermission('contacts.persons.edit')
                 )
                     <!-- Link to contact -->
-                    <label class="font-semibold text-gray-800 dark:text-gray-300">
-                        @{{ email?.person ? "@lang('admin::app.mail.view.linked-contact')" : "@lang('admin::app.mail.view.link-to-contact')" }}
-                    </label>
+                    <template v-if="email?.person_id || (!email?.person_id && !email?.lead_id && !email?.activity_id)">
+                        <label class="font-semibold text-gray-800 dark:text-gray-300">
+                            @{{ email?.person ? "@lang('admin::app.mail.view.linked-contact')" : "@lang('admin::app.mail.view.link-to-contact')" }}
+                        </label>
 
-                    <v-contact-lookup
-                        @link-contact="linkContact"
-                        @unlink-contact="unlinkContact"
-                        @open-contact-modal="openContactModal"
-                        :unlinking="unlinking"
-                        :email="email"
-                        :tag-text-color="tagTextColor"
-                    ></v-contact-lookup>
+                        <v-contact-lookup
+                            @link-contact="linkContact"
+                            @unlink-contact="unlinkContact"
+                            @open-contact-modal="openContactModal"
+                            :unlinking="unlinking"
+                            :email="email"
+                            :tag-text-color="tagTextColor"
+                        ></v-contact-lookup>
+                    </template>
                 @endif
 
 
@@ -1181,14 +1257,64 @@
                         @{{ email?.lead ? "@lang('admin::app.mail.view.linked-lead')" : "@lang('admin::app.mail.view.link-to-lead')" }}
                     </label>
 
-                    <v-lead-lookup
-                        @link-lead="linkLead"
-                        @unlink-lead="unlinkLead"
-                        @open-lead-modal="openLeadModal"
-                        :unlinking="unlinking"
-                        :email="email"
-                        :tag-text-color="tagTextColor"
-                    ></v-lead-lookup>
+                    <!-- When a lead is already linked, show a small card with delete -->
+                    <template v-if="email?.lead_id && email?.lead">
+                        <div class="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+                            <div class="flex items-center gap-3">
+                                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                                    <x-admin::avatar ::name="email.lead?.name || email.lead?.title" />
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-900 dark:text-gray-100">
+                                        @{{ email.lead?.name || email.lead?.title }}
+                                    </div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                                        @{{ email.lead?.stage?.name }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <a
+                                    :href="'{{ route('admin.leads.view', ':id') }}'.replace(':id', email.lead_id)"
+                                    target="_blank"
+                                    class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                                    title="Lead bekijken"
+                                >
+                                    <span class="icon-right-arrow text-sm"></span>
+                                </a>
+                                <button
+                                    type="button"
+                                    class="icon-delete flex h-8 w-8 items-center justify-center rounded-md text-2xl hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    title="Koppeling verwijderen"
+                                    @click="unlinkLead()"
+                                ></button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Otherwise, show the lead lookup -->
+                    <template v-else>
+                        <v-lead-lookup
+                            @link-lead="linkLead"
+                            @unlink-lead="unlinkLead"
+                            @open-lead-modal="openLeadModal"
+                            :unlinking="unlinking"
+                            :email="email"
+                            :tag-text-color="tagTextColor"
+                        ></v-lead-lookup>
+                    </template>
+
+                    <!-- Activity Lookup directly under lead block -->
+                    <template v-if="(email?.lead_id || email?.lead) && !email?.activity_id">
+                        <label class="font-semibold text-gray-800 dark:text-gray-300 mt-2">
+                            Koppel aan activiteit
+                        </label>
+
+                        <v-activity-lookup
+                            :email="email"
+                            @link-activity="linkActivity"
+                        ></v-activity-lookup>
+                    </template>
                 @endif
 
                 <!-- Activity Link -->
@@ -1212,14 +1338,22 @@
                                     </div>
                                 </div>
                             </div>
-                            <a
-                                href="{{ route('admin.activities.view', $email->activity->id) }}"
-                                target="_blank"
-                                class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-                                title="Activiteit bekijken"
-                            >
-                                <span class="icon-right-arrow text-sm"></span>
-                            </a>
+                            <div class="flex items-center gap-2">
+                                <a
+                                    href="{{ route('admin.activities.view', $email->activity->id) }}"
+                                    target="_blank"
+                                    class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                                    title="Activiteit bekijken"
+                                >
+                                    <span class="icon-right-arrow text-sm"></span>
+                                </a>
+                                <button
+                                    type="button"
+                                    class="icon-delete flex h-8 w-8 items-center justify-center rounded-md text-2xl hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    title="Koppeling verwijderen"
+                                    @click="unlinkActivity()"
+                                ></button>
+                            </div>
                         </div>
                     </div>
                 @endif
@@ -1472,6 +1606,16 @@
                     if (this.value) {
                         this.selectedItem = this.value;
                     }
+                    // Prefill search with sender email to suggest a match
+                    try {
+                        const raw = this.email?.from || '';
+                        const match = String(raw).match(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/);
+                        if (match && match[0]) {
+                            this.searchTerm = match[0];
+                            this.showPopup = true;
+                            this.$nextTick(() => this.search());
+                        }
+                    } catch (e) {}
                 },
 
                 created() {
@@ -1495,9 +1639,24 @@
                      * @return {Array}
                      */
                     persons() {
-                        return this.searchedResults.filter(item =>
-                            item.name.toLowerCase().includes(this.searchTerm.toLowerCase())
+                        const term = (this.searchTerm || '').toLowerCase();
+                        const results = this.searchedResults.filter(item =>
+                            (item.name || '').toLowerCase().includes(term)
+                            || (Array.isArray(item.emails) && item.emails.some(e => (e.value || '').toLowerCase().includes(term)))
                         );
+                        // If a person matches sender email exactly, move to top
+                        try {
+                            const sender = (this.email?.from || '').toLowerCase();
+                            const senderEmail = (sender.match(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/) || [])[0];
+                            if (senderEmail) {
+                                results.sort((a, b) => {
+                                    const aHas = Array.isArray(a.emails) && a.emails.some(e => (e.value || '').toLowerCase() === senderEmail);
+                                    const bHas = Array.isArray(b.emails) && b.emails.some(e => (e.value || '').toLowerCase() === senderEmail);
+                                    return (aHas === bHas) ? 0 : (aHas ? -1 : 1);
+                                });
+                            }
+                        } catch (e) {}
+                        return results;
                     }
                 },
 
@@ -1636,6 +1795,12 @@
                     if (this.value) {
                         this.selectedItem = this.value;
                     }
+                    // Auto-fetch open leads for selected person when available
+                    try {
+                        if (this.email?.person_id) {
+                            this.search();
+                        }
+                    } catch(e) {}
                 },
 
                 created() {
@@ -1659,9 +1824,27 @@
                      * @return {Array}
                      */
                     leads() {
-                        return this.searchedResults.filter(item =>
-                            item.title.toLowerCase().includes(this.searchTerm.toLowerCase())
+                        const term = (this.searchTerm || '').toLowerCase();
+                        // Filter by name/title
+                        let list = this.searchedResults.filter(item =>
+                            ((item.name || item.title || '')).toLowerCase().includes(term)
                         );
+                        // Exclude won/lost stages
+                        list = list.filter(lead => {
+                            const code = lead?.stage?.code || '';
+                            return !(code.startsWith('won') || code.startsWith('lost'));
+                        });
+                        // If email has a selected person, filter to leads containing that person
+                        const pid = this.$parent?.email?.person_id || this.email?.person_id || null;
+                        if (pid) {
+                            list = list.filter(lead => {
+                                const arr = Array.isArray(lead.persons)
+                                    ? lead.persons
+                                    : (Array.isArray(lead.persons?.data) ? lead.persons.data : []);
+                                return arr.some(p => p.id === pid);
+                            });
+                        }
+                        return list;
                     },
                 },
 
@@ -1708,11 +1891,10 @@
                      * @return {void}
                      */
                     search() {
-                        if (this.searchTerm.length <= 2) {
+                        const pid = this.email?.person_id || null;
+                        if (!pid && this.searchTerm.length <= 2) {
                             this.searchedResults = [];
-
                             this.isSearching = false;
-
                             return;
                         }
 
@@ -1724,13 +1906,19 @@
 
                         this.cancelToken = this.$axios.CancelToken.source();
 
-                        this.$axios.get('{{ route('admin.leads.search') }}', {
+                        const request = pid
+                            ? this.$axios.get('{{ route('admin.leads.open_by_person', ['person' => ':id']) }}'.replace(':id', pid), {
+                                cancelToken: this.cancelToken.token,
+                              })
+                            : this.$axios.get('{{ route('admin.leads.search') }}', {
                                 params: {
                                     ...this.params,
                                     query: this.searchTerm
                                 },
                                 cancelToken: this.cancelToken.token,
-                            })
+                              });
+
+                        request
                             .then(response => {
                                 this.searchedResults = response.data.data;
                             })
@@ -1989,6 +2177,36 @@
                                     })
                                     .catch (error => {})
                                     .finally(() => this.unlinking.lead = false);
+                            },
+                        });
+                    },
+
+                    linkActivity(activity) {
+                        this.email['activity'] = activity;
+                        this.email['activity_id'] = activity.id;
+                        this.$axios.post('{{ route('admin.mail.update', $email->id) }}', {
+                            _method: 'PUT',
+                            activity_id: activity.id,
+                        })
+                            .then (response => {
+                                this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                            })
+                            .catch (error => {});
+                    },
+
+                    unlinkActivity() {
+                        this.$emitter.emit('open-confirm-modal', {
+                            agree: () => {
+                                this.$axios.post('{{ route('admin.mail.update', $email->id) }}', {
+                                    _method: 'PUT',
+                                    activity_id: null,
+                                })
+                                    .then (response => {
+                                        this.email['activity_id'] = null;
+                                        this.email['activity'] = null;
+                                        this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                                    })
+                                    .catch (error => {});
                             },
                         });
                     },

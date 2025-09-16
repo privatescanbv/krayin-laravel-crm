@@ -35,7 +35,7 @@ class PersonActivityEmailsTest extends TestCase
         // Create a person and a lead linked to that person
         $person = Person::factory()->create();
         DB::table('lead_persons')->insert([
-            'lead_id' => ($lead = Lead::factory()->create())->id,
+            'lead_id'   => ($lead = Lead::factory()->create())->id,
             'person_id' => $person->id,
         ]);
 
@@ -82,4 +82,3 @@ class PersonActivityEmailsTest extends TestCase
         $this->assertTrue($hasEmailActivity, 'Expected email activity to be present in person activities index');
     }
 }
-

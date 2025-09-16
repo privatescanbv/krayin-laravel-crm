@@ -74,10 +74,10 @@
                     </template>
 
                     <template v-else>
-                        <div class="row grid grid-cols-[2fr_7fr_.0.3fr] grid-rows-1 items-center border-b px-8 py-4 dark:border-gray-800 max-lg:hidden">
+                        <div class="row grid grid-cols-[2fr_2fr_6fr_.8fr] grid-rows-1 items-center border-b px-8 py-4 dark:border-gray-800 max-lg:hidden">
                             <div
                                 class="flex items-center gap-6"
-                                v-for="(columnGroup, index) in [['name'], ['attachments', 'tags', 'subject', 'reply'], ['created_at']]"
+                                v-for="(columnGroup, index) in [['name'], ['entity_type'], ['subject', 'reply'], ['created_at']]"
                             >
                                 <label
                                     class="flex w-max cursor-pointer select-none items-center gap-2"
@@ -130,7 +130,7 @@
                                 </p>
                             </div>
                         </div>
-                        
+
                         <!-- Mobile Sort/Filter Header -->
                         <div class="hidden border-b bg-gray-50 px-4 py-3 text-black dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 max-lg:block">
                             <div class="flex items-center justify-between">
@@ -157,7 +157,7 @@
                                         </span>
                                     </label>
                                 </div>
-                                
+
                                 <!-- Mobile Sort Dropdown -->
                                 <div v-if="available.columns.some(column => column.sortable)">
                                     <x-admin::dropdown position="bottom-{{ in_array(app()->getLocale(), ['fa', 'ar']) ? 'left' : 'right' }}">
@@ -170,12 +170,12 @@
                                                     <span>
                                                         Sort
                                                     </span>
-                    
+
                                                     <span class="icon-down-arrow text-2xl"></span>
                                                 </button>
                                             </div>
                                         </x-slot>
-                
+
                                         <x-slot:menu>
                                             <x-admin::dropdown.menu.item
                                                 v-for="column in available.columns.filter(column => column.sortable && column.visibility)"
@@ -215,90 +215,63 @@
                         <!-- Desktop Table View -->
                         <div
                             v-for="record in available.records"
-                            class="flex cursor-pointer items-center justify-between border-b px-8 py-4 text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-950 max-lg:hidden"
+                            class="grid grid-cols-[2fr_2fr_6fr_.8fr] items-center border-b px-8 py-4 text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-950 max-lg:hidden cursor-pointer"
                             @click.stop="selectedMail=true; editModal(record.actions.find(action => action.index === 'edit'))"
                         >
-                            <!-- Select Box -->
-                            <div class="flex w-full items-center justify-start gap-[124px]">
-                                <div class="flex items-center gap-6">
-                                    <div class="relative flex items-center">
-                                        <!-- Dot Indicator -->
-                                        <span
-                                            class="absolute right-8 h-1.5 w-1.5 rounded-full bg-sky-600 dark:bg-white"
-                                            v-if="record && (record.is_read === 0 || record.is_read === false || record.is_read === '0')"
-                                        ></span>
-
-                                        <!-- Checkbox Container -->
-                                        <div class="flex items-center gap-2">
-                                            <input
-                                                type="checkbox"
-                                                :name="`mass_action_select_record_${record.id}`"
-                                                :id="`mass_action_select_record_${record.id}`"
-                                                :value="record.id"
-                                                class="peer hidden"
-                                                v-model="applied.massActions.indices"
-                                                @click.stop
-                                            >
-
-                                            <label
-                                                class="icon-checkbox-outline peer-checked:icon-checkbox-select cursor-pointer rounded-md text-2xl !text-gray-500 peer-checked:!text-brandColor dark:!text-gray-300"
-                                                :for="`mass_action_select_record_${record.id}`"
-                                                @click.stop
-                                            ></label>
-                                        </div>
-                                    </div>
-
-                                    <p class="flex items-center gap-2 overflow-hidden text-ellipsis whitespace-nowrap leading-none">
-                                        <x-admin::avatar ::name="record.name ?? record.from" />
-
-                                        @{{ record.name }}
-                                    </p>
+                            <!-- Col 1: Name + checkbox + unread dot -->
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="relative flex items-center">
+                                    <span class="absolute -right-2 h-1.5 w-1.5 rounded-full bg-sky-600 dark:bg-white" v-if="record && (record.is_read === 0 || record.is_read === false || record.is_read === '0')"></span>
+                                    <input
+                                        type="checkbox"
+                                        :name="`mass_action_select_record_${record.id}`"
+                                        :id="`mass_action_select_record_${record.id}`"
+                                        :value="record.id"
+                                        class="peer hidden"
+                                        v-model="applied.massActions.indices"
+                                        @click.stop
+                                    >
+                                    <label
+                                        class="icon-checkbox-outline peer-checked:icon-checkbox-select cursor-pointer rounded-md text-2xl !text-gray-500 peer-checked:!text-brandColor dark:!text-gray-300"
+                                        :for="`mass_action_select_record_${record.id}`"
+                                        @click.stop
+                                    ></label>
                                 </div>
+                                <x-admin::avatar ::name="record.name ?? record.from" />
+                                <span class="truncate">@{{ record.name }}</span>
+                            </div>
 
-                                <div class="flex w-full items-center justify-between gap-4">
-                                    <!-- Content -->
-                                    <div class="flex-frow flex items-center gap-2">
-                                        <!-- Attachments -->
-                                        <p v-html="record.attachments"></p>
+                            <!-- Col 2: Related entity -->
+                            <div class="text-sm text-gray-800 dark:text-gray-300">
+                                <span v-html="record.entity_type"></span>
+                            </div>
 
-                                        <!-- Tags -->
-                                        <span
-                                            class="flex items-center gap-1 rounded-2xl bg-rose-100 px-2 py-1"
-                                            :style="{
-                                                'background-color': tag.color,
-                                                'color': backgroundColors.find(color => color.background === tag.color)?.text
-                                            }"
-                                            v-for="(tag, index) in record.tags"
-                                            v-html="tag.name"
-                                        >
-                                        </span>
-
-                                        <!-- Subject And Reply -->
-                                        <div class="min-w-0 flex-1">
-                                            <!-- Subject -->
-                                            <p
-                                                class="line-clamp-1 text-sm text-gray-900 dark:text-gray-100"
-                                                v-text="record.subject"
-                                            >
-                                            </p>
-
-                                            <!-- Reply (Content) -->
-                                            <p
-                                                class="!font-normal"
-                                                v-html="truncatedReply(record.reply)"
-                                            >
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <!-- Time -->
-                                    <div class="min-w-[80px] flex-shrink-0 text-right">
-                                        <p class="leading-none">@{{ record.created_at }}</p>
-                                    </div>
+                            <!-- Col 3: Subject / preview with tags/attachments -->
+                            <div class="min-w-0" :class="{ 'pl-16': record.parent_id }">
+                                <div class="flex items-center gap-2">
+                                    <p class="line-clamp-1 text-sm text-gray-900 dark:text-gray-100" v-text="record.subject"></p>
+                                    <p v-html="record.attachments"></p>
                                 </div>
+                                <div class="mt-1 flex flex-wrap gap-1">
+                                    <span
+                                        class="flex items-center gap-1 rounded-2xl bg-rose-100 px-2 py-1"
+                                        :style="{
+                                            'background-color': tag.color,
+                                            'color': backgroundColors.find(color => color.background === tag.color)?.text
+                                        }"
+                                        v-for="(tag, index) in record.tags"
+                                        v-html="tag.name"
+                                    ></span>
+                                </div>
+                                <p class="!font-normal" v-html="truncatedReply(record.reply)"></p>
+                            </div>
+
+                            <!-- Col 4: Date -->
+                            <div class="min-w-[80px] text-right">
+                                <p class="leading-none">@{{ record.created_at }}</p>
                             </div>
                         </div>
-                        
+
                         <!-- Mobile Card View -->
                         <div
                             class="hidden border-b px-4 py-4 text-black dark:border-gray-800 dark:text-gray-300 max-lg:block"
@@ -338,17 +311,17 @@
                             <div class="grid gap-2">
                                 <template v-for="column in available.columns">
                                     <div class="flex flex-wrap items-baseline gap-x-2">
-                                        <span 
+                                        <span
                                             :class="{'font-semibold': ! record.is_read}"
-                                            class="text-slate-600 dark:text-gray-300" 
+                                            class="text-slate-600 dark:text-gray-300"
                                             v-html="column.label + ':'"
                                         ></span>
-                                        <span                         
+                                        <span
                                             :class="{
                                                 'font-medium': record.is_read,
                                                 'font-semibold': ! record.is_read
                                             }"
-                                            class="break-words text-slate-900 dark:text-white" 
+                                            class="break-words text-slate-900 dark:text-white"
                                             v-html="record[column.index]"
                                         ></span>
                                     </div>
@@ -553,19 +526,19 @@
         <script type="module">
             app.component('v-mail', {
                 template: '#v-mail-template',
-        
+
                 data() {
                     return {
                         selectedMail: false,
-        
+
                         showCC: false,
-        
+
                         showBCC: false,
-        
+
                         isStoring: false,
-        
+
                         saveAsDraft: 0,
-        
+
                         draft: {
                             id: null,
                             reply_to: [],
@@ -575,7 +548,7 @@
                             reply: '',
                             attachments: [],
                         },
-        
+
                         backgroundColors: [
                             {
                                 label: "@lang('admin::app.components.tags.index.aquarelle-red')",
@@ -605,47 +578,47 @@
                         ],
                     };
                 },
-        
+
                 mounted() {
                     const params = new URLSearchParams(window.location.search);
-        
+
                     if (params.get('openModal')) {
                         this.$refs.toggleComposeModal.toggle();
                     }
                 },
-        
+
                 methods: {
                     removeTinyMCE() {
                         tinymce?.remove?.();
                     },
-                    
+
                     truncatedReply(reply) {
                         const maxLength = 100;
-        
+
                         if (reply.length > maxLength) {
                             return `${reply.substring(0, maxLength)}...`;
                         }
-        
+
                         return reply;
                     },
-        
+
                     toggleModal() {
                         this.draft.reply_to = [];
-        
+
                         this.$refs.toggleComposeModal.toggle();
                     },
-        
+
                     save(params, { resetForm, setErrors  }) {
                         this.isStoring = true;
-        
+
                         let formData = new FormData(this.$refs.mailForm);
-        
+
                         formData.append('is_draft', this.saveAsDraft);
-        
+
                         if (this.draft.id) {
                             formData.append('_method', 'PUT');
                         }
-        
+
                         this.$axios.post(this.draft.id ? "{{ route('admin.mail.update', ':id') }}".replace(':id', this.draft.id) : '{{ route('admin.mail.store') }}', formData, {
                                 headers: {
                                     'Content-Type': 'multipart/form-data',
@@ -653,9 +626,9 @@
                             })
                             .then ((response) => {
                                 this.$refs.datagrid.get();
-        
+
                                 this.$emitter.emit('add-flash', { type: 'success', message: response.data?.message });
-        
+
                                 resetForm();
                             })
                             .catch ((error) => {
@@ -666,13 +639,13 @@
                                 }
                             }).finally(() => {
                                 this.$refs.toggleComposeModal.close();
-        
+
                                 this.isStoring = false;
-        
+
                                 this.resetForm();
                             });
                     },
-        
+
                     editModal(row) {
                         // Als het geen draft is, ga naar de view-pagina
                         if (!row.is_draft) {
@@ -690,7 +663,7 @@
                             })
                             .catch(error => {});
                     },
-        
+
                     resetForm() {
                         this.draft = {
                             id: null,

@@ -868,6 +868,26 @@ class LeadController extends Controller
     }
 
     /**
+     * Return open leads for a given person (exclude won/lost stages).
+     */
+    public function openByPerson(\Webkul\Contact\Models\Person $person): AnonymousResourceCollection
+    {
+        $results = $this->leadRepository
+            ->with(['stage'])
+            ->scopeQuery(function($q) use ($person) {
+                return $q->whereHas('persons', function($qq) use ($person) {
+                        $qq->where('persons.id', $person->id);
+                    })
+                    ->whereHas('stage', function($qq) {
+                        $qq->whereNotIn('code', self::WON_LOST_STAGE_CODES);
+                    });
+            })
+            ->all();
+
+        return LeadResource::collection($results);
+    }
+
+    /**
      * Validate requested search fields against repository definitions.
      * Returns JsonResponse(400) on invalid, otherwise null.
      */

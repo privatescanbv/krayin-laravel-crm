@@ -86,6 +86,22 @@ class ActivityController extends Controller
     }
 
     /**
+     * Return open (is_done = 0) activities for a given lead.
+     */
+    public function openByLead(int $leadId): JsonResponse
+    {
+        $activities = $this->activityRepository
+            ->where('lead_id', $leadId)
+            ->where('is_done', 0)
+            ->orderBy('schedule_from', 'asc')
+            ->get();
+
+        return response()->json([
+            'data' => ActivityResource::collection($activities),
+        ]);
+    }
+
+    /**
      * Get available views.
      */
     public function getViews(): JsonResponse

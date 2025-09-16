@@ -85,3 +85,74 @@ test('reject duplicate open activity by same title on same lead', function () {
     $duplicate->assertStatus(409);
     $duplicate->assertJsonStructure(['message', 'errors' => ['title']]);
 });
+
+test('reject activity when provided group_id does not match lead department', function () {
+    // Arrange
+    $user = User::factory()->create();
+    $privatescanDepartment = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
+    $herniaDepartment = Department::where('name', Departments::HERNIA->value)->firstOrFail();
+
+    $lead = Lead::factory()->create([
+        'created_by'    => $user->id,
+        'department_id' => $privatescanDepartment->id,
+    ]);
+    $this->actingAs($user, 'user');
+
+    // Pick a group from a different department (hernia)
+    $mismatchedGroup = Group::where('department_id', $herniaDepartment->id)->firstOrFail();
+
+    $payload = [
+        'title'         => 'Mismatched Group Activity',
+        'description'   => 'Should be rejected due to mismatched group/department',
+        'type'          => 'task',
+        'schedule_from' => now()->format('Y-m-d H:i:s'),
+        'schedule_to'   => now()->addHour()->format('Y-m-d H:i:s'),
+        'group_id'      => $mismatchedGroup->id,
+    ];
+
+    // Act
+    $response = test()->withHeaders([
+        'X-API-KEY' => 'valid-api-key-123',
+    ])->postJson(route('admin.leads.activities.store', $lead->id), $payload);
+
+    // Assert
+    $response->assertStatus(422);
+    $response->assertJsonStructure(['message', 'errors' => ['group_id']]);
+});
+
+test('accept activity when provided group_id matches lead department', function () {
+    // Arrange
+    $user = User::factory()->create();
+    $privatescanDepartment = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
+
+    $lead = Lead::factory()->create([
+        'created_by'    => $user->id,
+        'department_id' => $privatescanDepartment->id,
+    ]);
+    $this->actingAs($user, 'user');
+
+    // Pick a group from the same department
+    $matchingGroup = Group::where('department_id', $privatescanDepartment->id)->firstOrFail();
+
+    $payload = [
+        'title'         => 'Matching Group Activity',
+        'description'   => 'Should be accepted with matching group/department',
+        'type'          => 'task',
+        'schedule_from' => now()->format('Y-m-d H:i:s'),
+        'schedule_to'   => now()->addHour()->format('Y-m-d H:i:s'),
+        'group_id'      => $matchingGroup->id,
+    ];
+
+    // Act
+    $response = test()->withHeaders([
+        'X-API-KEY' => 'valid-api-key-123',
+    ])->postJson(route('admin.leads.activities.store', $lead->id), $payload);
+
+    // Assert
+    $response->assertStatus(200);
+    $this->assertDatabaseHas('activities', [
+        'title'    => 'Matching Group Activity',
+        'group_id' => $matchingGroup->id,
+        'lead_id'  => $lead->id,
+    ]);
+});

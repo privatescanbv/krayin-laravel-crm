@@ -7,7 +7,7 @@
     </x-admin::form.control-group.label>
 
     <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-        Koppel een organisatie voor facturatie doeleinden (optioneel)
+        <i>Koppel een organisatie voor facturatie doeleinden (optioneel)</i>
     </p>
 
     <x-admin::lookup

@@ -1,4 +1,4 @@
-@php use Carbon\Carbon;use Webkul\Lead\Models\Channel;use Webkul\Lead\Models\Source;use Webkul\Lead\Models\Type;use App\Models\Department; @endphp
+@php use Carbon\Carbon;use Webkul\Lead\Models\Channel;use Webkul\Lead\Models\Source;use Webkul\Lead\Models\Type;use App\Models\Department;use App\Models\User; @endphp
 <x-admin::layouts>
     <!-- Page Title -->
     <x-slot:title>
@@ -13,7 +13,8 @@
         method="PUT"
     >
         @if($errors->has('error'))
-            <div class="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-800 dark:bg-red-900 dark:text-red-200">
+            <div
+                class="mb-4 rounded border border-red-400 bg-red-100 px-4 py-3 text-red-800 dark:bg-red-900 dark:text-red-200">
                 {{ $errors->first('error') }}
             </div>
         @endif
@@ -54,7 +55,6 @@
 
             <input type="hidden" id="lead_pipeline_stage_id" name="lead_pipeline_stage_id"
                    value="{{ $lead->lead_pipeline_stage_id }}"/>
-
 
 
             <!-- Lead Edit Component -->
@@ -209,29 +209,6 @@
 
                     {!! view_render_event('admin.leads.edit.contact_person.after', ['lead' => $lead]) !!}
 
-                    {!! view_render_event('admin.leads.edit.organization.before', ['lead' => $lead]) !!}
-
-                    <!-- Organization Section -->
-                    <div
-                        class="flex flex-col gap-4"
-                        id="organization"
-                    >
-                        <div class="flex flex-col gap-1">
-                            <p class="text-base font-semibold dark:text-white">
-                                Organisatie
-                            </p>
-
-                            <p class="text-gray-600 dark:text-gray-300">
-                                Koppel een organisatie voor facturatie doeleinden
-                            </p>
-                        </div>
-
-                        <!-- Organization Component -->
-                        @include('admin::leads.common.organization', ['organization' => $lead->organization])
-                    </div>
-
-                    {!! view_render_event('admin.leads.edit.organization.after', ['lead' => $lead]) !!}
-
                     {!! view_render_event('admin.leads.edit.personal_fields.before', ['lead' => $lead]) !!}
 
                     <!-- Personal Fields Section -->
@@ -266,6 +243,41 @@
                     </div>
 
                     {!! view_render_event('admin.leads.edit.address.after', ['lead' => $lead]) !!}
+                    {!! view_render_event('admin.leads.edit.organization.before', ['lead' => $lead]) !!}
+
+                    <!-- Organization Section -->
+                    <div
+                        class="flex flex-col gap-4"
+                        id="organization"
+                    >
+                        <!-- Organization Component -->
+                        @include('admin::leads.common.organization', ['organization' => $lead->organization])
+                    </div>
+
+                    {!! view_render_event('admin.leads.edit.organization.after', ['lead' => $lead]) !!}
+                    <!-- Owner -->
+                    <div class="flex-1">
+                        @php
+                            $userOptions = User::query()->pluck('name', 'id')->toArray();
+                            $currentUserId = $lead->user_id;
+                        @endphp
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>
+                                Toegewezen gebruiker
+                            </x-admin::form.control-group.label>
+                            <x-admin::form.control-group.control
+                                type="select"
+                                name="user_id"
+                                value="{{ $currentUserId }}"
+                            >
+                                <option value="">-- Kies gebruiker --</option>
+                                @foreach ($userOptions as $id => $name)
+                                    <option
+                                        value="{{ $id }}" {{ ($currentUserId == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                                @endforeach
+                            </x-admin::form.control-group.control>
+                        </x-admin::form.control-group>
+                    </div>
                 </div>
 
                 {!! view_render_event('admin.leads.form_controls.after') !!}
@@ -282,7 +294,7 @@
 
                         lead: {
                             id: {{ $lead->id }},
-title: "{{ addslashes($lead->name) }}",
+                            title: "{{ addslashes($lead->name) }}",
                             // Simplified lead data to avoid JSON parsing errors
                         },
 

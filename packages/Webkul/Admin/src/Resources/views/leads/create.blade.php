@@ -1,4 +1,4 @@
-@php use App\Models\Department; @endphp
+@php use App\Models\Department;use App\Models\User; @endphp
 <x-admin::layouts>
     <x-slot:title>
         @lang('admin::app.leads.create.title')
@@ -7,7 +7,9 @@
     {!! view_render_event('admin.leads.create.form.before') !!}
 
     <!-- Two-Step Lead Form -->
-    <v-two-step-lead-form :initial-persons='@json($prefilledPersons ?? [])' :initial-lead-person='@json($prefilledLeadPerson ?? null)' :user-defaults='@json((object) ($userDefaults ?? []))'></v-two-step-lead-form>
+    <v-two-step-lead-form :initial-persons='@json($prefilledPersons ?? [])'
+                          :initial-lead-person='@json($prefilledLeadPerson ?? null)'
+                          :user-defaults='@json((object) ($userDefaults ?? []))'></v-two-step-lead-form>
 
     {!! view_render_event('admin.leads.create.form.after') !!}
 
@@ -122,7 +124,8 @@
                 </div>
 
                 <!-- Empty state -->
-                <div v-if="persons.length === 0" class="text-center py-6 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                <div v-if="persons.length === 0"
+                     class="text-center py-6 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
                     <i class="icon-users text-3xl mb-2"></i>
                     <p class="font-medium">Geen contactpersonen gekoppeld</p>
                     <p class="text-sm">Klik op "Toevoegen" om contactpersonen te koppelen</p>
@@ -226,7 +229,6 @@
                         <input type="hidden" name="lead_pipeline_stage_id" value="{{ request('stage_id') }}"/>
 
 
-
                         <div
                             class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-6">
                             <div class="flex flex-col gap-1">
@@ -293,16 +295,6 @@
                                         @include('admin::leads.common.personal-fields', ['entity' => $__entityPrefill, 'bindModel' => 'formData'])
                                     </div>
 
-                                    <!-- Organization Section -->
-                                    <div class="flex flex-col gap-4 mb-4">
-                                        <p class="text-base font-semibold dark:text-white">Organisatie (facturatie)</p>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">
-                                            Koppel een organisatie voor facturatie doeleinden (optioneel)
-                                        </p>
-
-                                        @include('admin::leads.common.organization', ['organization' => null])
-                                    </div>
-
                                     @include('admin::leads.common.sections.channel-to-owner', [
                                         'entity' => null,
                                         'defaults' => [
@@ -337,7 +329,7 @@
                                     </div>
 
                                     <!-- Anamnese -->
-                                    <div class="mt-6">
+                                    <div class="mt-6 pb-[20px]">
                                         <p class="text-base font-semibold dark:text-white">Anamnese</p>
 
                                         <!-- Heeft u metalen? -->
@@ -348,10 +340,14 @@
                                                 </x-admin::form.control-group.label>
                                                 <div class="flex gap-4">
                                                     <label class="flex items-center">
-                                                        <input type="radio" name="metals" value="1" required @change="() => {$refs.metals_notes_container.style.display='block'; const n=$refs.metals_notes_container.querySelector('input[name=\'metals_notes\']'); if(n){n.setAttribute('required','required');}}" class="mr-2"> Ja
+                                                        <input type="radio" name="metals" value="1" required
+                                                               @change="() => {$refs.metals_notes_container.style.display='block'; const n=$refs.metals_notes_container.querySelector('input[name=\'metals_notes\']'); if(n){n.setAttribute('required','required');}}"
+                                                               class="mr-2"> Ja
                                                     </label>
                                                     <label class="flex items-center">
-                                                        <input type="radio" name="metals" value="0" required @change="() => {$refs.metals_notes_container.style.display='none'; const n=$refs.metals_notes_container.querySelector('input[name=\'metals_notes\']'); if(n){n.removeAttribute('required');}}" class="mr-2"> Nee
+                                                        <input type="radio" name="metals" value="0" required
+                                                               @change="() => {$refs.metals_notes_container.style.display='none'; const n=$refs.metals_notes_container.querySelector('input[name=\'metals_notes\']'); if(n){n.removeAttribute('required');}}"
+                                                               class="mr-2"> Nee
                                                     </label>
                                                 </div>
                                                 <div ref="metals_notes_container" style="display: none" class="mt-2">
@@ -372,10 +368,12 @@
                                                 </x-admin::form.control-group.label>
                                                 <div class="flex gap-4">
                                                     <label class="flex items-center">
-                                                        <input type="radio" name="claustrophobia" value="1" required class="mr-2"> Ja
+                                                        <input type="radio" name="claustrophobia" value="1" required
+                                                               class="mr-2"> Ja
                                                     </label>
                                                     <label class="flex items-center">
-                                                        <input type="radio" name="claustrophobia" value="0" required class="mr-2"> Nee
+                                                        <input type="radio" name="claustrophobia" value="0" required
+                                                               class="mr-2"> Nee
                                                     </label>
                                                 </div>
                                             </x-admin::form.control-group>
@@ -389,10 +387,14 @@
                                                 </x-admin::form.control-group.label>
                                                 <div class="flex gap-4">
                                                     <label class="flex items-center">
-                                                        <input type="radio" name="allergies" value="1" required @change="() => {$refs.allergies_notes_container.style.display='block'; const n=$refs.allergies_notes_container.querySelector('input[name=\'allergies_notes\']'); if(n){n.setAttribute('required','required');}}" class="mr-2"> Ja
+                                                        <input type="radio" name="allergies" value="1" required
+                                                               @change="() => {$refs.allergies_notes_container.style.display='block'; const n=$refs.allergies_notes_container.querySelector('input[name=\'allergies_notes\']'); if(n){n.setAttribute('required','required');}}"
+                                                               class="mr-2"> Ja
                                                     </label>
                                                     <label class="flex items-center">
-                                                        <input type="radio" name="allergies" value="0" required @change="() => {$refs.allergies_notes_container.style.display='none'; const n=$refs.allergies_notes_container.querySelector('input[name=\'allergies_notes\']'); if(n){n.removeAttribute('required');}}" class="mr-2"> Nee
+                                                        <input type="radio" name="allergies" value="0" required
+                                                               @change="() => {$refs.allergies_notes_container.style.display='none'; const n=$refs.allergies_notes_container.querySelector('input[name=\'allergies_notes\']'); if(n){n.removeAttribute('required');}}"
+                                                               class="mr-2"> Nee
                                                     </label>
                                                 </div>
                                                 <div ref="allergies_notes_container" style="display: none" class="mt-2">
@@ -406,6 +408,34 @@
                                         </div>
                                     </div>
                                     <!-- /Anamnese -->
+
+                                    <!-- Organization Section -->
+                                    <div class="flex flex-col gap-4 mb-4">
+                                        @include('admin::leads.common.organization', ['organization' => null])
+                                    </div>
+                                    <!-- Owner -->
+                                    <div class="flex-1">
+                                        @php
+                                            $userOptions = User::query()->pluck('name', 'id')->toArray();
+                                            $currentUserId = null;
+                                        @endphp
+                                        <x-admin::form.control-group>
+                                            <x-admin::form.control-group.label>
+                                                Toegewezen gebruiker
+                                            </x-admin::form.control-group.label>
+                                            <x-admin::form.control-group.control
+                                                type="select"
+                                                name="user_id"
+                                                value="{{ $currentUserId }}"
+                                            >
+                                                <option value="">-- Kies gebruiker --</option>
+                                                @foreach ($userOptions as $id => $name)
+                                                    <option
+                                                        value="{{ $id }}" {{ ($currentUserId == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                                                @endforeach
+                                            </x-admin::form.control-group.control>
+                                        </x-admin::form.control-group>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -441,14 +471,14 @@
                         persons: [...this.initialPersons],
                         isSubmitting: false,
                         formData: {
-                        description: '',
-                        lead_channel_id: this.userDefaults.lead_channel_id || '1', // Default: Telefoon
-                        lead_source_id: this.userDefaults.lead_source_id || 32, // Default: Anders
-                        department_id: this.userDefaults.department_id || '{{ $defaultDepartmentId ?? "" }}', // Set based on pipeline or user groups
-                        lead_pipeline_id: '{{ $defaultPipelineId ?? "" }}', // Set based on department or URL param
-                        lead_pipeline_stage_id: '{{ $defaultStageId ?? "" }}', // Set based on pipeline or URL param
-                        combine_order: 1,
-                        mri_status: this.userDefaults.mri_status || '',
+                            description: '',
+                            lead_channel_id: this.userDefaults.lead_channel_id || '1', // Default: Telefoon
+                            lead_source_id: this.userDefaults.lead_source_id || 32, // Default: Anders
+                            department_id: this.userDefaults.department_id || '{{ $defaultDepartmentId ?? "" }}', // Set based on pipeline or user groups
+                            lead_pipeline_id: '{{ $defaultPipelineId ?? "" }}', // Set based on department or URL param
+                            lead_pipeline_stage_id: '{{ $defaultStageId ?? "" }}', // Set based on pipeline or URL param
+                            combine_order: 1,
+                            mri_status: this.userDefaults.mri_status || '',
                             lead_type_id: this.userDefaults.lead_type_id || '1', // Default: Preventie
                             // Personal fields for matching
                             salutation: this.initialLeadPerson?.salutation?.value || this.userDefaults.salutation || '',
@@ -489,7 +519,7 @@
                         this.$nextTick(() => this.syncPersonalFieldsToForm());
                     } else {
                         // Initialize with one empty slot for ease of use
-                        this.persons.push({ id: null, name: '', match_percentage: null, organization: null });
+                        this.persons.push({id: null, name: '', match_percentage: null, organization: null});
                     }
                 },
 
@@ -516,7 +546,6 @@
                             });
                         }
                     },
-
 
 
                     updateFormDataFromPersons() {
@@ -579,8 +608,8 @@
                             const input = this.$refs.leadForm.querySelector(`[name="${name}"]`);
                             if (input) {
                                 input.value = fields[name] || '';
-                                input.dispatchEvent(new Event('input', { bubbles: true }));
-                                input.dispatchEvent(new Event('change', { bubbles: true }));
+                                input.dispatchEvent(new Event('input', {bubbles: true}));
+                                input.dispatchEvent(new Event('change', {bubbles: true}));
                             }
                         });
                     },
@@ -598,16 +627,17 @@
                                 const primaryEmail = first.emails[0];
                                 if (emailValueInputs[0]) {
                                     emailValueInputs[0].value = primaryEmail.value || '';
-                                    emailValueInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
-                                    emailValueInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
+                                    emailValueInputs[0].dispatchEvent(new Event('input', {bubbles: true}));
+                                    emailValueInputs[0].dispatchEvent(new Event('change', {bubbles: true}));
                                 }
                                 if (emailLabelInputs[0]) {
                                     emailLabelInputs[0].value = (primaryEmail.label || 'work');
-                                    emailLabelInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
-                                    emailLabelInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
+                                    emailLabelInputs[0].dispatchEvent(new Event('input', {bubbles: true}));
+                                    emailLabelInputs[0].dispatchEvent(new Event('change', {bubbles: true}));
                                 }
                             }
-                        } catch (e) { /* no-op */ }
+                        } catch (e) { /* no-op */
+                        }
 
                         // Phones
                         try {
@@ -617,18 +647,18 @@
                                 const primaryPhone = first.phones[0];
                                 if (phoneValueInputs[0]) {
                                     phoneValueInputs[0].value = primaryPhone.value || '';
-                                    phoneValueInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
-                                    phoneValueInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
+                                    phoneValueInputs[0].dispatchEvent(new Event('input', {bubbles: true}));
+                                    phoneValueInputs[0].dispatchEvent(new Event('change', {bubbles: true}));
                                 }
                                 if (phoneLabelInputs[0]) {
                                     phoneLabelInputs[0].value = (primaryPhone.label || 'work');
-                                    phoneLabelInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
-                                    phoneLabelInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
+                                    phoneLabelInputs[0].dispatchEvent(new Event('input', {bubbles: true}));
+                                    phoneLabelInputs[0].dispatchEvent(new Event('change', {bubbles: true}));
                                 }
                             }
-                        } catch (e) { /* no-op */ }
+                        } catch (e) { /* no-op */
+                        }
                     },
-
 
 
                     async submitForm() {
@@ -801,29 +831,29 @@
                             name: selectedPerson.name,
                             match_percentage: selectedPerson.match_percentage || null,
                             organization: selectedPerson.organization || null
-                                            });
-                },
+                        });
+                    },
 
-                async calculateMatchPercentage(person) {
-                    if (!person.id || !this.leadId) return null;
+                    async calculateMatchPercentage(person) {
+                        if (!person.id || !this.leadId) return null;
 
-                    try {
-                        // Call the person search API with lead_id to get match score
-                        const response = await fetch(`/admin/contacts/persons/search?lead_id=${this.leadId}&person_id=${person.id}`);
-                        const data = await response.json();
+                        try {
+                            // Call the person search API with lead_id to get match score
+                            const response = await fetch(`/admin/contacts/persons/search?lead_id=${this.leadId}&person_id=${person.id}`);
+                            const data = await response.json();
 
-                        if (data.data && data.data.length > 0) {
-                            const matchedPerson = data.data.find(p => p.id === person.id);
-                            return matchedPerson?.match_score_percentage || null;
+                            if (data.data && data.data.length > 0) {
+                                const matchedPerson = data.data.find(p => p.id === person.id);
+                                return matchedPerson?.match_score_percentage || null;
+                            }
+                        } catch (error) {
+                            console.warn('Could not calculate match percentage:', error);
                         }
-                    } catch (error) {
-                        console.warn('Could not calculate match percentage:', error);
-                    }
 
-                    return null;
-                },
+                        return null;
+                    },
 
-                getPersonInitials(person) {
+                    getPersonInitials(person) {
                         if (!person.name) return '?';
 
                         const names = person.name.split(' ');
@@ -893,7 +923,10 @@
 
     @pushOnce('styles')
         <style>
-            [v-cloak] { display: none; }
+            [v-cloak] {
+                display: none;
+            }
+
             html {
                 scroll-behavior: smooth;
             }

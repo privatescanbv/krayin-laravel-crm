@@ -160,28 +160,7 @@
                 </div>
             </x-admin::form.control-group>
         </div>
-        <!-- Owner -->
-        <div class="flex-1">
-            @php
-                $userOptions = User::query()->pluck('name', 'id')->toArray();
-                $currentUserId = $val('user_id');
-            @endphp
-            <x-admin::form.control-group>
-                <x-admin::form.control-group.label>
-                    Toegewezen gebruiker
-                </x-admin::form.control-group.label>
-                <x-admin::form.control-group.control
-                    type="select"
-                    name="user_id"
-                    value="{{ $currentUserId }}"
-                >
-                    <option value="">-- Kies gebruiker --</option>
-                    @foreach ($userOptions as $id => $name)
-                        <option value="{{ $id }}" {{ ($currentUserId == $id) ? 'selected' : '' }}>{{ $name }}</option>
-                    @endforeach
-                </x-admin::form.control-group.control>
-            </x-admin::form.control-group>
-        </div>
+
     </div>
 </div>
 

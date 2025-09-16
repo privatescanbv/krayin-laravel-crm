@@ -301,7 +301,7 @@ class LeadController extends Controller
                         'phones' => is_array($person->phones) ? $person->phones : [],
                     ];
                 }
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Ignore if person not found
             }
         }
@@ -320,25 +320,31 @@ class LeadController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(LeadForm $request): RedirectResponse
+    public function store(LeadForm $request): RedirectResponse|JsonResponse
     {
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
 
         // Validate with custom rules including email/phone requirement
         $this->validate($request, LeadValidationService::getWebValidationRules($request));
-        
-        // Additional validation for at least one email or phone
-        $this->validateAtLeastOneContact($request);
+
+        // Additional rule now embedded in LeadValidationService rules
 
             try {
                 [$lead, $leadPipelineId] = $this->storeLead($request);
 
+                // If this is an AJAX request, respond with JSON containing redirect target
+                if (request()->ajax()) {
+                    return response()->json([
+                        'message'  => trans('admin::app.leads.create-success'),
+                        'redirect' => route('admin.leads.view', $lead->id),
+                    ]);
+                }
+
                 session()->flash('success', trans('admin::app.leads.create-success'));
 
-                // Set cookie to remember pipeline selection
-                $this->pipelineCookieService->setLastSelectedPipelineId($leadPipelineId);
-                return redirect()->route('admin.leads.index', ['pipeline_id' => $leadPipelineId]);
+                // Na aanmaken: ga naar de lead detailpagina in plaats van het kanban bord
+                return redirect()->route('admin.leads.view', $lead->id);
             } catch (InvalidArgumentException $e) {
                 if (request()->ajax()) {
                     throw new ValidationException(
@@ -467,7 +473,7 @@ class LeadController extends Controller
                     if (!empty($anamnesisUpdate)) {
                         // Update all related anamnesis for this lead
                         foreach ($lead->persons as $person) {
-                            \App\Models\Anamnesis::where('lead_id', $lead->id)
+                            Anamnesis::where('lead_id', $lead->id)
                                 ->where('person_id', $person->id)
                                 ->update($anamnesisUpdate);
                         }
@@ -530,14 +536,13 @@ class LeadController extends Controller
     {
         try {
             $this->validate($request, LeadValidationService::getWebValidationRules($request));
-            
-            // Additional validation for at least one email or phone
-            $this->validateAtLeastOneContact($request);
+
+            // Additional rule now embedded in LeadValidationService rules
 
             Event::dispatch('lead.update.before', $id);
 
             $data = $request->all();
-
+logger()->info('Updating lead', ['lead_id' => $id, 'data' => $data]);
             // Handle empty date field
             if (array_key_exists('date_of_birth', $data) && ($data['date_of_birth'] === '' || $data['date_of_birth'] === null)) {
                 $data['date_of_birth'] = null;
@@ -597,53 +602,22 @@ class LeadController extends Controller
 
             $lead = $this->leadRepository->update($data, $id);
 
-            // Persist basic anamnesis answers if provided
-            try {
-                $anamnesisUpdate = [];
-                if (array_key_exists('metals', $data)) {
-                    $anamnesisUpdate['metals'] = (bool) $data['metals'];
-                }
-                if (!empty($data['metals_notes'])) {
-                    $anamnesisUpdate['metals_notes'] = $data['metals_notes'];
-                }
-                if (array_key_exists('claustrophobia', $data)) {
-                    $anamnesisUpdate['claustrophobia'] = (bool) $data['claustrophobia'];
-                }
-                if (array_key_exists('allergies', $data)) {
-                    $anamnesisUpdate['allergies'] = (bool) $data['allergies'];
-                }
-                if (!empty($data['allergies_notes'])) {
-                    $anamnesisUpdate['allergies_notes'] = $data['allergies_notes'];
-                }
-
-                if (!empty($anamnesisUpdate)) {
-                    foreach ($lead->persons as $person) {
-                        \App\Models\Anamnesis::where('lead_id', $lead->id)
-                            ->where('person_id', $person->id)
-                            ->update($anamnesisUpdate);
-                    }
-                }
-            } catch (\Exception $e) {
-                \Log::warning('Failed to persist anamnesis answers on lead update', ['lead_id' => $lead->id, 'error' => $e->getMessage()]);
-            }
-
             Event::dispatch('lead.update.after', $lead);
 
             if (request()->ajax()) {
+                logger()->info('Lead updated via AJAX', ['lead_id' => $lead->id]);
                 return response()->json([
                     'message' => trans('admin::app.leads.update-success'),
                 ]);
             }
+            logger()->info('NOT Lead updated via AJAX', ['lead_id' => $lead->id]);
+
 
             session()->flash('success', trans('admin::app.leads.update-success'));
 
-            if (request()->has('closed_at')) {
-                return redirect()->back();
-            } else {
-                // Set cookie to remember pipeline selection
-                $this->pipelineCookieService->setLastSelectedPipelineId($data['lead_pipeline_id']);
-                return redirect()->route('admin.leads.index', ['pipeline_id' => $data['lead_pipeline_id']]);
-            }
+            // Set cookie to remember pipeline selection
+            $this->pipelineCookieService->setLastSelectedPipelineId($data['lead_pipeline_id']);
+            return redirect()->route('admin.leads.index', ['pipeline_id' => $data['lead_pipeline_id']]);
         } catch (InvalidArgumentException $e) {
             if (request()->ajax()) {
                 throw new ValidationException(
@@ -1403,43 +1377,7 @@ class LeadController extends Controller
         return $labelMap[$normalizedLabel] ?? 'work';
     }
 
-    /**
-     * Validate that at least one email or phone is provided
-     */
-    private function validateAtLeastOneContact($request): void
-    {
-        $data = $request->all();
-
-        $hasEmail = false;
-        if (!empty($data['emails']) && is_array($data['emails'])) {
-            foreach ($data['emails'] as $email) {
-                if (is_array($email) && isset($email['value']) && trim((string) $email['value']) !== '') {
-                    $hasEmail = true;
-                    break;
-                }
-            }
-        }
-
-        $hasPhone = false;
-        if (!empty($data['phones']) && is_array($data['phones'])) {
-            foreach ($data['phones'] as $phone) {
-                if (is_array($phone) && isset($phone['value']) && trim((string) $phone['value']) !== '') {
-                    $hasPhone = true;
-                    break;
-                }
-            }
-        }
-
-        if (!($hasEmail || $hasPhone)) {
-            throw new \Illuminate\Validation\ValidationException(
-                \Illuminate\Support\Facades\Validator::make([], []),
-                response()->json([
-                    'message' => 'Vul ten minste één e-mail of telefoonnummer in.',
-                    'errors' => ['emails' => ['Vul ten minste één e-mail of telefoonnummer in.']]
-                ], 422)
-            );
-        }
-    }
+    // moved contact validation to LeadValidationService
 
     /**
      * Detach person from lead.

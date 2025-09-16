@@ -94,6 +94,27 @@ class LeadController extends Controller
             'allergies' => $request->has('allergies') ? $request->input('allergies') : false,
         ]);
 
+        // Ensure contacts are in array structure expected by validators
+        // Map single 'email'/'phone' fields to emails[]/phones[] arrays if provided
+        $incoming = $request->all();
+        if (isset($incoming['email']) && !isset($incoming['emails'])) {
+            $incoming['emails'] = [[
+                'value' => (string) $incoming['email'],
+                'label' => 'work',
+                'is_default' => true,
+            ]];
+            unset($incoming['email']);
+        }
+        if (isset($incoming['phone']) && !isset($incoming['phones'])) {
+            $incoming['phones'] = [[
+                'value' => (string) $incoming['phone'],
+                'label' => 'work',
+                'is_default' => true,
+            ]];
+            unset($incoming['phone']);
+        }
+        $request->replace($incoming);
+
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
 
@@ -108,18 +129,6 @@ class LeadController extends Controller
 
         // Create lead with person_id
         $leadData = $request->all();
-
-        // Convert single email to emails array format expected by the admin controller
-        if (isset($leadData['email']) && !isset($leadData['emails'])) {
-            $leadData['emails'] = [
-                [
-                    'value' => $leadData['email'],
-                    'label' => 'work',
-                    'is_default' => true
-                ]
-            ];
-            unset($leadData['email']);
-        }
 
         // Set the data via the request
         foreach ($leadData as $key => $value) {

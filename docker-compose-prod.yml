@@ -31,6 +31,7 @@ services:
     depends_on:
       - mysql
       - n8n
+      - mailserver
     healthcheck:
       test: [
         "CMD-SHELL",
@@ -115,9 +116,7 @@ services:
       N8N_PORT: '5678'
       N8N_API_URL: 'http://n8n:5678/api/v1/workflows'
     depends_on:
-      - crm
       - n8n
-      - mysql
     networks:
       - sail
 

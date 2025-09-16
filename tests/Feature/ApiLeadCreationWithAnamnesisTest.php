@@ -45,7 +45,7 @@ test('API lead creation successfully creates a lead with anamnesis', function ()
         'first_name'      => 'John',
         'last_name'       => 'Doe'.$uniqueId,
         'email'           => 'john.doe.'.$uniqueId.'@example.com',
-        'phone'           => '0612345678',
+        'phone'           => '+31612345678',
         'company_name'    => 'Test Company',
         'lead_source_id'  => $source->id,
         'lead_channel_id' => $channel->id,
@@ -144,6 +144,7 @@ test('API lead creation fails gracefully with invalid data', function () {
         'first_name' => 'InvalidTest'.$uniqueId,
         // Include required IDs to avoid 500 errors, but missing other required fields
         'lead_source_id'  => $source->id,
+        'email'           => 'mm@mm.nl', // Invalid email format to trigger validation error
         'lead_type_id'    => $type->id,
         'lead_channel_id' => $channel->id,
         // Missing last_name, and other required fields to trigger validation errors

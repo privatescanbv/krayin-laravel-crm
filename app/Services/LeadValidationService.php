@@ -8,7 +8,9 @@ use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
 use App\Validators\ContactArrayValidator;
 use App\Validators\DateValidator;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Enum;
+use Illuminate\Validation\ValidationException;
 use Webkul\Core\Contracts\Validations\EmailValidator;
 use Webkul\Core\Contracts\Validations\PhoneValidator;
 use Webkul\Lead\Models\Stage;
@@ -95,7 +97,42 @@ class LeadValidationService
             'allergies'             => 'required|boolean',
             'allergies_notes'       => 'required_if:allergies,1|nullable|string',
         ];
+        // Enforce: at least one contact (email or phone) must be provided
+        // Attach as a closure on a guaranteed field so it always runs
+        $baseFirstNameRules = is_string($rules['first_name'])
+            ? array_filter(explode('|', $rules['first_name']))
+            : (array) $rules['first_name'];
 
+        $rules['first_name'] = [
+            ...$baseFirstNameRules,
+            function ($attribute, $value, $fail) use ($request) {
+                $data = $request?->all() ?? request()->all();
+
+                $hasEmail = false;
+                if (! empty($data['emails']) && is_array($data['emails'])) {
+                    foreach ($data['emails'] as $email) {
+                        if (is_array($email) && isset($email['value']) && trim((string) $email['value']) !== '') {
+                            $hasEmail = true;
+                            break;
+                        }
+                    }
+                }
+
+                $hasPhone = false;
+                if (! empty($data['phones']) && is_array($data['phones'])) {
+                    foreach ($data['phones'] as $phone) {
+                        if (is_array($phone) && isset($phone['value']) && trim((string) $phone['value']) !== '') {
+                            $hasPhone = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (! ($hasEmail || $hasPhone)) {
+                    $fail('Vul ten minste één e-mail of telefoonnummer in.');
+                }
+            },
+        ];
 
         return $rules;
     }
@@ -124,5 +161,41 @@ class LeadValidationService
     public static function getWebValidationRules($request = null): array
     {
         return self::getValidationRules($request);
+    }
+
+    /**
+     * Validate that at least one email or phone is provided; throws ValidationException on failure.
+     */
+    public static function validateAtLeastOneContactOrFail(array $data): void
+    {
+        $hasEmail = false;
+        if (! empty($data['emails']) && is_array($data['emails'])) {
+            foreach ($data['emails'] as $email) {
+                if (is_array($email) && isset($email['value']) && trim((string) $email['value']) !== '') {
+                    $hasEmail = true;
+                    break;
+                }
+            }
+        }
+
+        $hasPhone = false;
+        if (! empty($data['phones']) && is_array($data['phones'])) {
+            foreach ($data['phones'] as $phone) {
+                if (is_array($phone) && isset($phone['value']) && trim((string) $phone['value']) !== '') {
+                    $hasPhone = true;
+                    break;
+                }
+            }
+        }
+
+        if (! ($hasEmail || $hasPhone)) {
+            throw new ValidationException(
+                Validator::make([], []),
+                response()->json([
+                    'message' => 'Vul ten minste één e-mail of telefoonnummer in.',
+                    'errors'  => ['emails' => ['Vul ten minste één e-mail of telefoonnummer in.']],
+                ], 422)
+            );
+        }
     }
 }

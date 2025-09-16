@@ -102,15 +102,6 @@
         <div class="text-center py-8 text-gray-500 dark:text-gray-400">
             <i class="icon-users text-4xl mb-2"></i>
             <p class="font-medium">Geen contactpersonen gekoppeld</p>
-            <p class="text-sm">Klik op "Persoon toevoegen" om contactpersonen te koppelen</p>
-            <button
-                type="button"
-                class="mt-3 secondary-button"
-                onclick="openAddPersonModal()"
-            >
-                <i class="icon-plus text-xs"></i>
-                Persoon toevoegen
-            </button>
         </div>
     </div>
 @endif

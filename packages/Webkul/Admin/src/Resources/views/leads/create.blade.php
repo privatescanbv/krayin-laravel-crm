@@ -496,6 +496,9 @@
                 methods: {
                     onLookupSelected(index, selectedPerson) {
                         this.updatePerson(index, selectedPerson);
+                        // After selecting a person, update lead fields and contacts
+                        this.updateFormDataFromPersons();
+                        this.$nextTick(() => this.populateContactsFromFirstPerson());
                     },
                     goToStep(step) {
                         this.currentStep = step;
@@ -508,6 +511,8 @@
                                 }
                                 // Ensure personal fields are synced when entering step 2
                                 this.syncPersonalFieldsToForm();
+                                // Also populate email/phone fields from first selected person
+                                this.populateContactsFromFirstPerson();
                             });
                         }
                     },
@@ -580,39 +585,54 @@
                         });
                     },
 
+                    // Populate first email/phone inputs in the form from the first selected person
+                    populateContactsFromFirstPerson() {
+                        if (!this.$refs.leadForm) return;
+                        const first = (this.persons && this.persons[0]) || {};
+
+                        // Emails
+                        try {
+                            const emailValueInputs = this.$refs.leadForm.querySelectorAll('input[name^="emails"][name$="[value]"]');
+                            const emailLabelInputs = this.$refs.leadForm.querySelectorAll('input[name^="emails"][name$="[label]"]');
+                            if (first.emails && Array.isArray(first.emails) && first.emails.length > 0) {
+                                const primaryEmail = first.emails[0];
+                                if (emailValueInputs[0]) {
+                                    emailValueInputs[0].value = primaryEmail.value || '';
+                                    emailValueInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                                    emailValueInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
+                                }
+                                if (emailLabelInputs[0]) {
+                                    emailLabelInputs[0].value = (primaryEmail.label || 'work');
+                                    emailLabelInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                                    emailLabelInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
+                                }
+                            }
+                        } catch (e) { /* no-op */ }
+
+                        // Phones
+                        try {
+                            const phoneValueInputs = this.$refs.leadForm.querySelectorAll('input[name^="phones"][name$="[value]"]');
+                            const phoneLabelInputs = this.$refs.leadForm.querySelectorAll('input[name^="phones"][name$="[label]"]');
+                            if (first.phones && Array.isArray(first.phones) && first.phones.length > 0) {
+                                const primaryPhone = first.phones[0];
+                                if (phoneValueInputs[0]) {
+                                    phoneValueInputs[0].value = primaryPhone.value || '';
+                                    phoneValueInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                                    phoneValueInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
+                                }
+                                if (phoneLabelInputs[0]) {
+                                    phoneLabelInputs[0].value = (primaryPhone.label || 'work');
+                                    phoneLabelInputs[0].dispatchEvent(new Event('input', { bubbles: true }));
+                                    phoneLabelInputs[0].dispatchEvent(new Event('change', { bubbles: true }));
+                                }
+                            }
+                        } catch (e) { /* no-op */ }
+                    },
+
 
 
                     async submitForm() {
                         if (this.isSubmitting) return;
-
-                        // Validate required fields
-                        if (!this.formData.first_name || this.formData.first_name.trim() === '') {
-                            this.$emitter.emit('add-flash', {
-                                type: 'error',
-                                message: 'Voornaam is verplicht.'
-                            });
-                            return;
-                        }
-
-                        if (!this.formData.last_name || this.formData.last_name.trim() === '') {
-                            this.$emitter.emit('add-flash', {
-                                type: 'error',
-                                message: 'Achternaam is verplicht.'
-                            });
-                            return;
-                        }
-
-                        // Validate at least one email or phone
-                        const hasEmail = this.hasValidEmail();
-                        const hasPhone = this.hasValidPhone();
-                        
-                        if (!hasEmail && !hasPhone) {
-                            this.$emitter.emit('add-flash', {
-                                type: 'error',
-                                message: 'Vul ten minste één e-mail of telefoonnummer in.'
-                            });
-                            return;
-                        }
 
                         this.isSubmitting = true;
 
@@ -645,12 +665,12 @@
                                 message: 'Lead succesvol aangemaakt!'
                             });
 
-                            // Redirect to leads index with pipeline preservation
-                            {{--const pipelineId = getCookieValue('last_selected_pipeline_id');--}}
-                            {{--const url = pipelineId--}}
-                            {{--    ? '{{ route('admin.leads.index') }}?pipeline_id=' + pipelineId--}}
-                            {{--    : '{{ route('admin.leads.index') }}';--}}
-                            window.location.href = '{{ route('admin.leads.index') }}';
+                            // Redirect to lead view when backend provides redirect
+                            if (response?.data?.redirect) {
+                                window.location.href = response.data.redirect;
+                            } else {
+                                window.location.href = '{{ route('admin.leads.view', ['id' => 'REPLACE']) }}'.replace('REPLACE', response?.data?.id || '');
+                            }
 
                         } catch (error) {
                             console.error('Error submitting form:', error);
@@ -702,7 +722,7 @@
 
                     hasValidEmail() {
                         if (!this.$refs.leadForm) return false;
-                        
+
                         const emailInputs = this.$refs.leadForm.querySelectorAll('input[name^="emails"][name$="[value]"]');
                         for (let input of emailInputs) {
                             if (input.value && input.value.trim() !== '') {
@@ -714,7 +734,7 @@
 
                     hasValidPhone() {
                         if (!this.$refs.leadForm) return false;
-                        
+
                         const phoneInputs = this.$refs.leadForm.querySelectorAll('input[name^="phones"][name$="[value]"]');
                         for (let input of phoneInputs) {
                             if (input.value && input.value.trim() !== '') {

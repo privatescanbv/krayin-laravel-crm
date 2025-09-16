@@ -1156,18 +1156,20 @@
                     || bouncer()->hasPermission('contacts.persons.edit')
                 )
                     <!-- Link to contact -->
-                    <label class="font-semibold text-gray-800 dark:text-gray-300">
-                        @{{ email?.person ? "@lang('admin::app.mail.view.linked-contact')" : "@lang('admin::app.mail.view.link-to-contact')" }}
-                    </label>
+                    <template v-if="email?.person_id || (!email?.person_id && !email?.lead_id && !email?.activity_id)">
+                        <label class="font-semibold text-gray-800 dark:text-gray-300">
+                            @{{ email?.person ? "@lang('admin::app.mail.view.linked-contact')" : "@lang('admin::app.mail.view.link-to-contact')" }}
+                        </label>
 
-                    <v-contact-lookup
-                        @link-contact="linkContact"
-                        @unlink-contact="unlinkContact"
-                        @open-contact-modal="openContactModal"
-                        :unlinking="unlinking"
-                        :email="email"
-                        :tag-text-color="tagTextColor"
-                    ></v-contact-lookup>
+                        <v-contact-lookup
+                            @link-contact="linkContact"
+                            @unlink-contact="unlinkContact"
+                            @open-contact-modal="openContactModal"
+                            :unlinking="unlinking"
+                            :email="email"
+                            :tag-text-color="tagTextColor"
+                        ></v-contact-lookup>
+                    </template>
                 @endif
 
 
@@ -1212,14 +1214,22 @@
                                     </div>
                                 </div>
                             </div>
-                            <a
-                                href="{{ route('admin.activities.edit', $email->activity->id) }}"
-                                target="_blank"
-                                class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-                                title="Activiteit bekijken"
-                            >
-                                <span class="icon-right-arrow text-sm"></span>
-                            </a>
+                            <div class="flex items-center gap-2">
+                                <a
+                                    href="{{ route('admin.activities.edit', $email->activity->id) }}"
+                                    target="_blank"
+                                    class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                                    title="Activiteit bekijken"
+                                >
+                                    <span class="icon-right-arrow text-sm"></span>
+                                </a>
+                                <button
+                                    type="button"
+                                    class="icon-delete flex h-8 w-8 items-center justify-center rounded-md text-2xl hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    title="Koppeling verwijderen"
+                                    @click="$refs.emailAction.unlinkActivity()"
+                                ></button>
+                            </div>
                         </div>
                     </div>
                 @endif
@@ -1472,6 +1482,16 @@
                     if (this.value) {
                         this.selectedItem = this.value;
                     }
+                    // Prefill search with sender email to suggest a match
+                    try {
+                        const raw = this.email?.from || '';
+                        const match = String(raw).match(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/);
+                        if (match && match[0]) {
+                            this.searchTerm = match[0];
+                            this.showPopup = true;
+                            this.$nextTick(() => this.search());
+                        }
+                    } catch (e) {}
                 },
 
                 created() {
@@ -1495,9 +1515,24 @@
                      * @return {Array}
                      */
                     persons() {
-                        return this.searchedResults.filter(item =>
-                            item.name.toLowerCase().includes(this.searchTerm.toLowerCase())
+                        const term = (this.searchTerm || '').toLowerCase();
+                        const results = this.searchedResults.filter(item =>
+                            (item.name || '').toLowerCase().includes(term)
+                            || (Array.isArray(item.emails) && item.emails.some(e => (e.value || '').toLowerCase().includes(term)))
                         );
+                        // If a person matches sender email exactly, move to top
+                        try {
+                            const sender = (this.email?.from || '').toLowerCase();
+                            const senderEmail = (sender.match(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/) || [])[0];
+                            if (senderEmail) {
+                                results.sort((a, b) => {
+                                    const aHas = Array.isArray(a.emails) && a.emails.some(e => (e.value || '').toLowerCase() === senderEmail);
+                                    const bHas = Array.isArray(b.emails) && b.emails.some(e => (e.value || '').toLowerCase() === senderEmail);
+                                    return (aHas === bHas) ? 0 : (aHas ? -1 : 1);
+                                });
+                            }
+                        } catch (e) {}
+                        return results;
                     }
                 },
 
@@ -1659,9 +1694,22 @@
                      * @return {Array}
                      */
                     leads() {
-                        return this.searchedResults.filter(item =>
-                            item.title.toLowerCase().includes(this.searchTerm.toLowerCase())
+                        const term = (this.searchTerm || '').toLowerCase();
+                        // Filter by title and then apply business filters: open stages and selected person if present
+                        let list = this.searchedResults.filter(item =>
+                            (item.title || '').toLowerCase().includes(term)
                         );
+                        // Exclude won/lost stages
+                        list = list.filter(lead => {
+                            const code = lead?.stage?.code || '';
+                            return !(code.startsWith('won') || code.startsWith('lost'));
+                        });
+                        // If email has a selected person, filter to leads containing that person
+                        const pid = this.$parent?.email?.person_id || this.email?.person_id || null;
+                        if (pid) {
+                            list = list.filter(lead => Array.isArray(lead.persons?.data) && lead.persons.data.some(p => p.id === pid));
+                        }
+                        return list;
                     },
                 },
 
@@ -1989,6 +2037,23 @@
                                     })
                                     .catch (error => {})
                                     .finally(() => this.unlinking.lead = false);
+                            },
+                        });
+                    },
+
+                    unlinkActivity() {
+                        this.$emitter.emit('open-confirm-modal', {
+                            agree: () => {
+                                this.$axios.post('{{ route('admin.mail.update', $email->id) }}', {
+                                    _method: 'PUT',
+                                    activity_id: null,
+                                })
+                                    .then (response => {
+                                        this.email['activity_id'] = null;
+                                        this.email['activity'] = null;
+                                        this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                                    })
+                                    .catch (error => {});
                             },
                         });
                     },

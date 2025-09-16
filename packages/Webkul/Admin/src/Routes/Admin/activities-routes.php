@@ -27,6 +27,11 @@ Route::controller(ActivityController::class)->prefix('activities')->group(functi
     Route::post('mass-update', 'massUpdate')->name('admin.activities.mass_update');
 
     Route::post('mass-destroy', 'massDestroy')->name('admin.activities.mass_delete');
+
+    // Open activities by lead (for email linking UI)
+    Route::get('by-lead/{leadId}/open', function($leadId) {
+        return app(ActivityController::class)->openByLead($leadId);
+    })->name('admin.activities.by_lead_open');
 });
 
 Route::controller(ActivityAssignmentController::class)->prefix('activities')->group(function () {

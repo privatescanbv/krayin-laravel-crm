@@ -88,14 +88,6 @@ return [
         'sort'       => 6,
         'icon-class' => '',
     ],
-    // , [
-    //     'key'        => 'mail.setting',
-    //     'name'       => 'admin::app.layouts.mail.setting',
-    //     'route'      => 'admin.mail.index',
-    //     'params'     => ['route' => 'setting'],
-    //     'sort'       => 5,
-    // ]
-
     /**
      * Activities.
      */
@@ -108,26 +100,20 @@ return [
     ],
 
     /**
-     * Contacts.
+     * Contacts split into two top-level items.
      */
     [
-        'key'        => 'contacts',
-        'name'       => 'admin::app.layouts.contacts',
+        'key'        => 'persons',
+        'name'       => 'admin::app.layouts.persons',
         'route'      => 'admin.contacts.persons.index',
         'sort'       => 7,
         'icon-class' => 'icon-contact',
     ], [
-        'key'        => 'contacts.persons',
-        'name'       => 'admin::app.layouts.persons',
-        'route'      => 'admin.contacts.persons.index',
-        'sort'       => 1,
-        'icon-class' => '',
-    ], [
-        'key'        => 'contacts.organizations',
+        'key'        => 'organizations',
         'name'       => 'admin::app.layouts.organizations',
         'route'      => 'admin.contacts.organizations.index',
-        'sort'       => 2,
-        'icon-class' => '',
+        'sort'       => 8,
+        'icon-class' => 'icon-organization',
     ],
 
     /**
@@ -137,7 +123,7 @@ return [
         'key'        => 'products',
         'name'       => 'admin::app.layouts.products',
         'route'      => 'admin.products.index',
-        'sort'       => 8,
+        'sort'       => 9,
         'icon-class' => 'icon-product',
     ],
 
@@ -148,7 +134,7 @@ return [
         'key'        => 'productgroups',
         'name'       => 'admin::app.layouts.product-groups',
         'route'      => 'admin.productgroups.index',
-        'sort'       => 9,
+        'sort'       => 10,
         'icon-class' => 'icon-setting',
     ],
 
@@ -159,7 +145,7 @@ return [
         'key'        => 'settings',
         'name'       => 'admin::app.layouts.settings',
         'route'      => 'admin.settings.index',
-        'sort'       => 10,
+        'sort'       => 11,
         'icon-class' => 'icon-setting',
     ], [
         'key'        => 'settings.user',
@@ -311,7 +297,7 @@ return [
         'key'        => 'configuration',
         'name'       => 'admin::app.layouts.configuration',
         'route'      => 'admin.configuration.index',
-        'sort'       => 9,
+        'sort'       => 12,
         'icon-class' => 'icon-configuration',
     ],
 
@@ -322,7 +308,7 @@ return [
         'key'        => 'documentation',
         'name'       => 'Documentation',
         'route'      => 'admin.docs.index',
-        'sort'       => 11,
+        'sort'       => 13,
         'icon-class' => 'icon-file',
     ],
 

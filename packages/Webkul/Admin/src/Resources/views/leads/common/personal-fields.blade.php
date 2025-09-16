@@ -101,7 +101,7 @@
                 name="last_name"
                 value="{{ $entity?->last_name ?? '' }}"
                 label="@lang('admin::app.leads.merge.field-last-name-birth')"
-                placeholder="@lang('admin::app.leads.merge.field-last-name-birth')"
+                placeholder="Achternaam"
                 rules="required"
             />
 

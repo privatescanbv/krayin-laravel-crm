@@ -2,8 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ActivityStatus;
 use App\Enums\ActivityType;
 use App\Models\Address;
+use App\Services\ActivityStatusService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Schema\Blueprint;
@@ -740,6 +742,7 @@ test('imports call activities from sugarcrm', function () {
         ->and($activity1->type)->toBe(ActivityType::CALL)
         ->and($activity1->comment)->toBe('Eerste intake gesprek met klant')
         ->and($activity1->is_done)->toBe(true) // 'held' status should map to done
+        ->and($activity1->status)->toBe(ActivityStatus::DONE)
         ->and($activity1->additional['direction'])->toBe('outbound')
         ->and($activity1->additional['status'])->toBe('held')
         ->and($activity1->additional['belgroep'])->toBe('intake');
@@ -753,6 +756,7 @@ test('imports call activities from sugarcrm', function () {
         ->and($activity2->type)->toBe(ActivityType::CALL)
         ->and($activity2->comment)->toBe('Follow-up gesprek')
         ->and($activity2->is_done)->toBe(false) // 'planned' status should map to not done
+        ->and($activity2->status)->toBe(ActivityStatusService::computeStatus($activity2->schedule_from, $activity2->schedule_to, ActivityStatus::ACTIVE))
         ->and($activity2->additional['direction'])->toBe('outbound')
         ->and($activity2->additional['status'])->toBe('planned')
         ->and($activity2->additional['belgroep'])->toBe('follow-up');
@@ -1183,6 +1187,7 @@ test('imports meeting activities from sugarcrm', function () {
         ->and($activity1->type)->toBe(ActivityType::MEETING)
         ->and($activity1->comment)->toBe('Eerste consultatie met de klant')
         ->and($activity1->is_done)->toBe(true) // 'Held' status should map to done
+        ->and($activity1->status)->toBe(ActivityStatus::DONE)
         ->and($activity1->additional['status'])->toBe('Held')
         ->and($activity1->additional['duration_hours'])->toBe(1)
         ->and($activity1->additional['duration_minutes'])->toBe(30)
@@ -1199,6 +1204,7 @@ test('imports meeting activities from sugarcrm', function () {
         ->and($activity2->type)->toBe(ActivityType::MEETING)
         ->and($activity2->comment)->toBe('Bespreking van de resultaten')
         ->and($activity2->is_done)->toBe(false) // 'Planned' status should map to not done
+        ->and($activity2->status)->toBe(ActivityStatusService::computeStatus($activity2->schedule_from, $activity2->schedule_to, ActivityStatus::ACTIVE))
         ->and($activity2->additional['status'])->toBe('Planned')
         ->and($activity2->additional['duration_hours'])->toBe(0)
         ->and($activity2->additional['duration_minutes'])->toBe(45)
@@ -1215,6 +1221,7 @@ test('imports meeting activities from sugarcrm', function () {
         ->and($activity3->type)->toBe(ActivityType::MEETING)
         ->and($activity3->comment)->toBe('Meeting was gepland maar niet gehouden')
         ->and($activity3->is_done)->toBe(false) // 'Not Held' status should map to not done
+        ->and($activity3->status)->toBe(ActivityStatusService::computeStatus($activity3->schedule_from, $activity3->schedule_to, ActivityStatus::ACTIVE))
         ->and($activity3->additional['status'])->toBe('Not Held')
         ->and($activity3->additional['duration_hours'])->toBe(1)
         ->and($activity3->additional['duration_minutes'])->toBe(0)

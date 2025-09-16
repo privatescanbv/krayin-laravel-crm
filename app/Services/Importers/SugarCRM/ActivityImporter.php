@@ -2,10 +2,12 @@
 
 namespace App\Services\Importers\SugarCRM;
 
+use App\Enums\ActivityStatus;
 use App\Models\Department;
+use App\Services\ActivityStatusService;
+use App\Services\Importers\SugarCRM\Concerns\ImportsSugarHelpers;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Webkul\Activity\Models\Activity;
@@ -16,6 +18,8 @@ use Webkul\User\Models\User;
 
 class ActivityImporter
 {
+    use ImportsSugarHelpers;
+
     protected Command $command;
 
     protected string $connection;
@@ -254,6 +258,9 @@ class ActivityImporter
 
                     $activity = $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
 
+                    // Keep status consistent with is_done and dates without touching timestamps
+                    $this->syncActivityStatus($activity);
+
                     $this->command->info("✓ Imported call activity: {$callData->name} for lead {$lead->external_id}");
                     $imported++;
                 } catch (Exception $e) {
@@ -334,6 +341,14 @@ class ActivityImporter
                     ];
 
                     $activity = $this->createEntityWithTimestamps(Activity::class, $activityData, $timestamps);
+
+                    // Keep status consistent with is_done and dates
+                    if ($activity->is_done) {
+                        $activity->status = ActivityStatus::DONE;
+                    } else {
+                        $activity->status = ActivityStatusService::computeStatus($activity->schedule_from, $activity->schedule_to, ActivityStatus::ACTIVE);
+                    }
+                    $activity->saveQuietly();
 
                     $this->command->info("✓ Imported email activity: {$emailData->subject} for lead {$lead->external_id}");
                     $imported++;
@@ -509,59 +524,5 @@ class ActivityImporter
         $this->command->info("Mapped assigned user {$assignedUserId} to user: {$user->name} (ID: {$user->id})");
 
         return $user->id;
-    }
-
-    /**
-     * Parse SugarCRM date format to our timezone
-     */
-    private function parseSugarDate($value): ?string
-    {
-        if (! $value) {
-            return null;
-        }
-        try {
-            // Accept Carbon, DateTimeInterface, or string
-            if ($value instanceof \DateTimeInterface) {
-                return Carbon::instance($value)->setTimezone(config('app.timezone'))->format('Y-m-d H:i:s');
-            }
-
-            // Parse SugarCRM date assuming it's already in the application timezone
-            // SugarCRM dates appear to be stored in local time, not UTC
-            return Carbon::parse((string) $value, config('app.timezone'))
-                ->format('Y-m-d H:i:s');
-        } catch (\Throwable $e) {
-            return null;
-        }
-    }
-
-    /**
-     * Create an entity with proper timestamps from SugarCRM data
-     *
-     * @param  string  $modelClass  The model class to create
-     * @param  array  $data  The entity data
-     * @param  array  $timestamps  The timestamps to set (created_at, updated_at)
-     * @return mixed The created entity
-     */
-    private function createEntityWithTimestamps(string $modelClass, array $data, array $timestamps = [])
-    {
-        // Create entity without timestamps to avoid auto-override
-        $entity = new $modelClass($data);
-        $entity->timestamps = false;
-
-        // Set custom timestamps if provided
-        if (! empty($timestamps['created_at'])) {
-            $entity->setAttribute('created_at', $timestamps['created_at']);
-        }
-        if (! empty($timestamps['updated_at'])) {
-            $entity->setAttribute('updated_at', $timestamps['updated_at']);
-        }
-
-        // Save without triggering timestamps
-        $entity->saveQuietly();
-
-        // Re-enable timestamps for future operations
-        $entity->timestamps = true;
-
-        return $entity;
     }
 }

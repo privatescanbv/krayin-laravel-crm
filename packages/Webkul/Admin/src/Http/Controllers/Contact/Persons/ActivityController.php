@@ -6,11 +6,15 @@ use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Resources\ActivityResource;
+use Webkul\Contact\Models\Person;
+use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
+use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
 
 class ActivityController extends Controller
 {
+    use ConcatsEmailActivities;
     /**
      * Create a new controller instance.
      *
@@ -26,7 +30,7 @@ class ActivityController extends Controller
      * Display a listing of the resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
     public function index($id)
     {
@@ -43,46 +47,19 @@ class ActivityController extends Controller
      */
     public function concatEmailAsActivities($personId, $activities)
     {
+        $leadIds = Person::findOrFail($personId)->leads->pluck('id')->toArray();
         $emails = DB::table('emails as child')
             ->select('child.*')
             ->join('emails as parent', 'child.parent_id', '=', 'parent.id')
             ->where('parent.person_id', $personId)
-            ->union(DB::table('emails as parent')->where('parent.person_id', $personId))
+            ->orWhereIn('child.lead_id', $leadIds)
+            ->union(
+                DB::table('emails as parent')
+                    ->where('parent.person_id', $personId)
+                    ->orWhereIn('parent.lead_id', $leadIds)
+            )
             ->get();
 
-        return $activities->concat($emails->map(function ($email) {
-            return (object) [
-                'id'            => $email->id,
-                'parent_id'     => $email->parent_id,
-                'title'         => $email->subject,
-                'type'          => 'email',
-                'is_done'       => 1,
-                'comment'       => $email->reply,
-                'schedule_from' => null,
-                'schedule_to'   => null,
-                'user'          => auth()->guard('user')->user(),
-                'participants'  => [],
-                'location'      => null,
-                'additional'    => [
-                    'folders' => json_decode($email->folders),
-                    'from'    => json_decode($email->from),
-                    'to'      => json_decode($email->reply_to),
-                    'cc'      => json_decode($email->cc),
-                    'bcc'     => json_decode($email->bcc),
-                ],
-                'files'         => $this->attachmentRepository->findWhere(['email_id' => $email->id])->map(function ($attachment) {
-                    return (object) [
-                        'id'         => $attachment->id,
-                        'name'       => $attachment->name,
-                        'path'       => $attachment->path,
-                        'url'        => $attachment->url,
-                        'created_at' => $attachment->created_at,
-                        'updated_at' => $attachment->updated_at,
-                    ];
-                }),
-                'created_at'    => $email->created_at,
-                'updated_at'    => $email->updated_at,
-            ];
-        }))->sortByDesc('id')->sortByDesc('created_at');
+        return $this->concatEmails($activities, $emails, $this->attachmentRepository);
     }
 }

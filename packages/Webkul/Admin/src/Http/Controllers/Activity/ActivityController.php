@@ -4,6 +4,7 @@ namespace Webkul\Admin\Http\Controllers\Activity;
 
 use App\Enums\ActivityStatus;
 use App\Enums\WebhookType;
+use App\Models\CallStatus;
 use App\Models\Department;
 use App\Services\WebhookService;
 use Carbon\Carbon;
@@ -103,7 +104,7 @@ class ActivityController extends Controller
     {
         $activity = $this->activityRepository->with('emails', 'lead')->findOrFail($id);
 
-        $callStatuses = \App\Models\CallStatus::where('activity_id', $activity->id)
+        $callStatuses = CallStatus::where('activity_id', $activity->id)
             ->with('creator')
             ->orderByDesc('created_at')
             ->get();
@@ -221,7 +222,7 @@ class ActivityController extends Controller
         $user = auth()->guard('user')->user();
         $canTakeover = $user->hasPermission('activities.takeover');
 
-        $callStatuses = \App\Models\CallStatus::where('activity_id', $activity->id)
+        $callStatuses = CallStatus::where('activity_id', $activity->id)
             ->with('creator')
             ->orderByDesc('created_at')
             ->get();
@@ -262,7 +263,7 @@ class ActivityController extends Controller
 
         // Convert empty strings to null for foreign key constraints
         foreach (['lead_id', 'group_id', 'user_id'] as $field) {
-            if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
+            if (isset($data[$field]) && ($data[$field] === '')) {
                 $data[$field] = null;
             }
         }
@@ -487,7 +488,7 @@ class ActivityController extends Controller
             return response()->json([
                 'message' => trans('admin::app.activities.mass-destroy-success'),
             ]);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return response()->json([
                 'message' => trans('admin::app.activities.mass-delete-failed'),
             ], 400);

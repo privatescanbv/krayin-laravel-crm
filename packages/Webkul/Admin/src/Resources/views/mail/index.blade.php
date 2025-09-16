@@ -225,7 +225,7 @@
                                         <!-- Dot Indicator -->
                                         <span
                                             class="absolute right-8 h-1.5 w-1.5 rounded-full bg-sky-600 dark:bg-white"
-                                            v-if="! record.is_read"
+                                            v-if="record && (record.is_read === 0 || record.is_read === false || record.is_read === '0')"
                                         ></span>
 
                                         <!-- Checkbox Container -->
@@ -329,7 +329,7 @@
                                     <!-- Dot Indicator -->
                                     <span
                                         class="h-1.5 w-1.5 rounded-full bg-sky-600 dark:bg-white"
-                                        v-if="! record.is_read"
+                                        v-if="record && (record.is_read === 0 || record.is_read === false || record.is_read === '0')"
                                     ></span>
                                 </div>
                             </div>

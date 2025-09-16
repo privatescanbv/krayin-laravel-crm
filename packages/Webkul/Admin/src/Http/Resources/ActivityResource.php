@@ -15,6 +15,7 @@ class ActivityResource extends JsonResource
      */
     public function toArray($request)
     {
+        logger()->info('Transforming ActivityResource '. get_class($this));
         $data = [
             'id'              => $this->id,
             'parent_id'       => $this->parent_id ?? null,
@@ -62,6 +63,7 @@ class ActivityResource extends JsonResource
             })(),
             'files'           => is_array($this->files) ? $this->files : ActivityFileResource::collection($this->files),
             'location'        => $this->location,
+            'linked_entity_type' => (isset($this->emailLinkedEntityType)) ? $this->emailLinkedEntityType: '',
             'created_at'      => $this->created_at,
             'updated_at'      => $this->updated_at,
         ];

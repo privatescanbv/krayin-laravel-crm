@@ -3,7 +3,9 @@
 namespace Webkul\Email\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\PersonProxy;
 use Webkul\Email\Contracts\Email as EmailContract;
 use Webkul\Lead\Models\LeadProxy;
@@ -139,7 +141,7 @@ class Email extends Model implements EmailContract
      */
     public function activity()
     {
-        return $this->belongsTo(\Webkul\Activity\Models\Activity::class, 'activity_id');
+        return $this->belongsTo(Activity::class, 'activity_id');
     }
 
     /**

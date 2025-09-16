@@ -201,7 +201,7 @@
                                                 </div>
                                             </div>
 
-                                            <!-- Unread Emails Count -->
+                                            <!-- Unread Emails Count (includes nested activity emails) -->
                                             <div class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
                                                 <span class="icon-mail text-xs"></span>
                                                 <span>@{{ element.unread_emails_count || 0 }}</span>

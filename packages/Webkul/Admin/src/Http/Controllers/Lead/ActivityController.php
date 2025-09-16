@@ -14,9 +14,11 @@ use Webkul\Email\Repositories\EmailRepository;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\User\Models\Group;
 use Webkul\User\Models\User;
+use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
 
 class ActivityController extends Controller
 {
+    use ConcatsEmailActivities;
     /**
      * Create a new controller instance.
      *
@@ -44,7 +46,7 @@ class ActivityController extends Controller
             return response()->json([
                 'group_id' => $groupId,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'group_id' => null,
                 'error' => $e->getMessage(),
@@ -137,49 +139,6 @@ class ActivityController extends Controller
             ->union(DB::table('emails as parent')->where('parent.lead_id', $leadId))
             ->get();
 
-        // Get the first user as fallback for API requests
-        $user = auth()->guard('user')->user() ?? User::query()->where('status', 1)->first();
-
-        // If no user is available, return activities without email mapping
-        if (!$user) {
-            return $activities;
-        }
-
-        return $activities->concat($emails->map(function ($email) use ($user) {
-            return (object)[
-                'id' => $email->id,
-                'parent_id' => $email->parent_id,
-                'title' => $email->subject,
-                'type' => 'email',
-                'is_done' => 1,
-                'comment' => $email->reply,
-                'schedule_from' => null,
-                'schedule_to' => null,
-                'user' => $user,
-                'group' => null,
-
-                'location' => null,
-                'additional' => [
-                    'folders' => json_decode($email->folders),
-                    'from' => json_decode($email->from),
-                    'to' => json_decode($email->reply_to),
-                    'cc' => json_decode($email->cc),
-                    'bcc' => json_decode($email->bcc),
-                ],
-                'files' => $this->attachmentRepository->findWhere(['email_id' => $email->id])->map(function ($attachment) {
-                    return (object)[
-                        'id' => $attachment->id,
-                        'name' => $attachment->name,
-                        'path' => $attachment->path,
-                        'url' => $attachment->url,
-                        'is_email_attachment' => true, // Flag to identify email attachments
-                        'created_at' => $attachment->created_at,
-                        'updated_at' => $attachment->updated_at,
-                    ];
-                })->toArray(),
-                'created_at' => $email->created_at,
-                'updated_at' => $email->updated_at,
-            ];
-        }))->sortByDesc('id')->sortByDesc('created_at');
+        return $this->concatEmails($activities, $emails, $this->attachmentRepository);
     }
 }

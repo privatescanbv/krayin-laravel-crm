@@ -71,7 +71,8 @@ class LeadResource extends JsonResource
 
             // Computed attributes
             'open_activities_count'=> $this->open_activities_count ?? 0,
-            'unread_emails_count'  => $this->unread_emails_count ?? 0,
+            // Include unread emails from direct lead emails plus nested activity emails
+            'unread_emails_count'  => $this->getUnreadEmailsCountNestedAttribute() ?? 0,
             'days_until_due_date'  => $this->days_until_due_date,
             'has_duplicates'       => $duplicatesCount > 0,
             'duplicates_count'     => $duplicatesCount,

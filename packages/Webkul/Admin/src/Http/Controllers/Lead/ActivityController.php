@@ -74,10 +74,12 @@ class ActivityController extends Controller
             }
         }
 
+        // Always load the lead for department validation
+        $lead = $this->leadRepository->findOrFail($id);
+
         // Set group_id from lead's department if not provided (required for lead activities)
         $groupId = $data['group_id'] ?? null;
         if (!$groupId || $groupId === '') {
-            $lead = $this->leadRepository->findOrFail($id);
             try {
                 $groupId = \App\Models\Department::getGroupIdForLead($lead);
             } catch (\Exception $e) {
@@ -85,6 +87,17 @@ class ActivityController extends Controller
                     'message' => 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.',
                     'errors' => [
                         'group_id' => ['Kan geen groep bepalen vanuit lead department.']
+                    ]
+                ], 422);
+            }
+        } else {
+            // If group_id is provided, enforce it matches the lead's department
+            $group = \Webkul\User\Models\Group::query()->find($groupId);
+            if (!$group || ($group->department_id !== $lead->department_id)) {
+                return response()->json([
+                    'message' => 'De opgegeven groep komt niet overeen met het departement van de lead.',
+                    'errors' => [
+                        'group_id' => ['Group behoort niet tot het departement van deze lead.']
                     ]
                 ], 422);
             }

@@ -28,7 +28,7 @@
 
         <div class="flex items-center gap-x-2.5">
 
-            @if (bouncer()->hasPermission('activities.delete'))
+            @if (!$activity->is_done && bouncer()->hasPermission('activities.delete'))
                 <form method="POST" action="{{ route('admin.activities.delete', $activity->id) }}"
                       onsubmit="return confirm('Weet je zeker dat je deze activiteit wilt verwijderen?');">
                     @csrf
@@ -40,7 +40,7 @@
                     </button>
                 </form>
             @endif
-            @if (bouncer()->hasPermission('activities.edit'))
+            @if (!$activity->is_done && bouncer()->hasPermission('activities.edit'))
                 <a
                     href="{{ route('admin.activities.edit', $activity->id) }}"
                     class="secondary-button"
@@ -49,7 +49,7 @@
                 </a>
             @endif
 
-            @if ($activity->lead && bouncer()->hasPermission('leads.edit'))
+            @if (!$activity->is_done && $activity->lead && bouncer()->hasPermission('leads.edit'))
                 <button
                     type="button"
                     class="secondary-button"

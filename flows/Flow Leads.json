@@ -1067,15 +1067,15 @@
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3.2,
       "position": [
-        -1344,
-        320
+        -1232,
+        352
       ],
       "id": "f1f8fd2e-9c66-47e3-abca-e93f3834d3e1",
       "name": "Merge4"
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Klant adviseren met MRI beelden',\n      task_description: '1. Samenstellen order; 2. Samenstellen mail in de juist taal met de bijlages (GVL, kaarten). 3. versturen '\n    }\n  }\n];"
+        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Klant adviseren met MRI beelden',\n      task_description: ''\n    }\n  }\n];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1100,13 +1100,92 @@
       ],
       "id": "97c47013-2ba3-496f-b5b3-5ad872d5244c",
       "name": "Sticky Note7"
+    },
+    {
+      "parameters": {
+        "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "3!LvFF3HNTUGz*E^X@cu"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1504,
+        96
+      ],
+      "id": "585bc376-7b31-42ae-bdc5-8d8b496ec464",
+      "name": "Find group by Department5"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1344,
+        96
+      ],
+      "id": "f4bd7995-0c25-4a67-a6b7-076c2cdee63b",
+      "name": "Merge5"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Klant adviseren opvolgen',\n      task_description: ''\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        96
+      ],
+      "id": "0cf34fb6-e930-46d8-9000-948135451497",
+      "name": "set lead_id and group_id5"
+    },
+    {
+      "parameters": {
+        "content": "**Adviseren opvolgen met MRI beelden**",
+        "height": 80,
+        "width": 180
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1056,
+        48
+      ],
+      "id": "e88a6a98-9829-41f6-95d0-a63d72e4f77e",
+      "name": "Sticky Note8"
     }
   ],
   "pinData": {},
   "connections": {
     "Route based on call_status": {
       "main": [
-        [],
+        [
+          {
+            "node": "Find group by Department5",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge5",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Merge",
@@ -1405,13 +1484,46 @@
           }
         ]
       ]
+    },
+    "Find group by Department5": {
+      "main": [
+        [
+          {
+            "node": "Merge5",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge5": {
+      "main": [
+        [
+          {
+            "node": "set lead_id and group_id5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "set lead_id and group_id5": {
+      "main": [
+        [
+          {
+            "node": "Create task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "96df4957-36af-4ff8-83b6-8141cb979b25",
+  "versionId": "a4114ea9-6b2f-4c49-b88a-c21094914a73",
   "meta": {
     "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },

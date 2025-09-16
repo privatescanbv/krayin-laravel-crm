@@ -2,6 +2,8 @@
 
 namespace Webkul\Admin\Http\Controllers\Lead;
 
+use App\Models\Department;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Repositories\ActivityRepository;
@@ -10,6 +12,7 @@ use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 use Webkul\Lead\Repositories\LeadRepository;
+use Webkul\User\Models\Group;
 use Webkul\User\Models\User;
 
 class ActivityController extends Controller
@@ -34,10 +37,10 @@ class ActivityController extends Controller
     public function getDefaultGroup(int $id)
     {
         $lead = $this->leadRepository->findOrFail($id);
-        
+
         try {
-            $groupId = \App\Models\Department::getGroupIdForLead($lead);
-            
+            $groupId = Department::getGroupIdForLead($lead);
+
             return response()->json([
                 'group_id' => $groupId,
             ]);
@@ -59,7 +62,6 @@ class ActivityController extends Controller
             'comment' => 'required_if:type,note',
             'description' => 'nullable|string',
             'user_id' => 'nullable|exists:users,id',
-            'group_id' => 'nullable|exists:groups,id', // Will be auto-determined if not provided
             'schedule_from' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
             'schedule_to' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
             'file' => 'required_if:type,file',
@@ -76,42 +78,7 @@ class ActivityController extends Controller
 
         // Always load the lead for department validation
         $lead = $this->leadRepository->findOrFail($id);
-
-        // Set group_id from lead's department if not provided (required for lead activities)
-        $groupId = $data['group_id'] ?? null;
-        if (!$groupId || $groupId === '') {
-            try {
-                $groupId = \App\Models\Department::getGroupIdForLead($lead);
-            } catch (\Exception $e) {
-                return response()->json([
-                    'message' => 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.',
-                    'errors' => [
-                        'group_id' => ['Kan geen groep bepalen vanuit lead department.']
-                    ]
-                ], 422);
-            }
-        } else {
-            // If group_id is provided, enforce it matches the lead's department
-            $group = \Webkul\User\Models\Group::query()->find($groupId);
-            if (!$group || ($group->department_id !== $lead->department_id)) {
-                return response()->json([
-                    'message' => 'De opgegeven groep komt niet overeen met het departement van de lead.',
-                    'errors' => [
-                        'group_id' => ['Group behoort niet tot het departement van deze lead.']
-                    ]
-                ], 422);
-            }
-        }
-
-        // Ensure we have a group_id after auto-determination
-        if (!$groupId) {
-            return response()->json([
-                'message' => 'Groep is verplicht voor activiteiten van leads.',
-                'errors' => [
-                    'group_id' => ['Groep is verplicht voor activiteiten van leads.']
-                ]
-            ], 422);
-        }
+        $groupId = Department::getGroupIdForLead($lead);
 
         // Duplicate guard: same title on same lead with is_done = 0 should be rejected
         $isDuplicate = $this->activityRepository
@@ -172,7 +139,7 @@ class ActivityController extends Controller
 
         // Get the first user as fallback for API requests
         $user = auth()->guard('user')->user() ?? User::query()->where('status', 1)->first();
-        
+
         // If no user is available, return activities without email mapping
         if (!$user) {
             return $activities;

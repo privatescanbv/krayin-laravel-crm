@@ -1,127 +1,120 @@
 {
-  "name": "Create Task",
-  "nodes": [
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "=http://crm/api/leads/{{ $json.lead_id }}/activities",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-API-KEY",
-              "value": "3!LvFF3HNTUGz*E^X@cu"
-            }
-          ]
+    "name": "Create Task",
+    "nodes": [
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "=http://crm/api/leads/{{ $json.lead_id }}/activities",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "X-API-KEY",
+                            "value": "3!LvFF3HNTUGz*E^X@cu"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "type",
+                            "value": "={{ $json.task_type || 'task' }}"
+                        },
+                        {
+                            "name": "title",
+                            "value": "={{ $json.task_title }}"
+                        },
+                        {
+                            "name": "description",
+                            "value": "={{ $json.task_description }}"
+                        },
+                        {
+                            "name": "schedule_from",
+                            "value": "={{ $now.format('yyyy-MM-dd hh:mm:ss') }}"
+                        },
+                        {
+                            "name": "schedule_to",
+                            "value": "={{ $now.plus(7, 'days').format('yyyy-MM-dd hh:mm:ss') }}"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.2,
+            "position": [
+                1088,
+                400
+            ],
+            "id": "17aeb0ea-a7ee-4f68-8814-9489158c490f",
+            "name": "Add task - klant bellen"
         },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "type",
-              "value": "={{ $json.task_type || 'task' }}"
+        {
+            "parameters": {
+                "workflowInputs": {
+                    "values": [
+                        {
+                            "name": "task_title"
+                        },
+                        {
+                            "name": "task_description"
+                        },
+                        {
+                            "name": "lead_id"
+                        },
+                        {
+                            "name": "task_type"
+                        }
+                    ]
+                }
             },
-            {
-              "name": "title",
-              "value": "={{ $json.task_title }}"
-            },
-            {
-              "name": "description",
-              "value": "={{ $json.task_description }}"
-            },
-            {
-              "name": "schedule_from",
-              "value": "={{ $now.format('yyyy-MM-dd hh:mm:ss') }}"
-            },
-            {
-              "name": "schedule_to",
-              "value": "={{ $now.plus(7, 'days').format('yyyy-MM-dd hh:mm:ss') }}"
-            },
-            {
-              "name": "group_id",
-              "value": "={{ $json.group_id }}"
-            }
-          ]
+            "type": "n8n-nodes-base.executeWorkflowTrigger",
+            "typeVersion": 1.1,
+            "position": [
+                352,
+                240
+            ],
+            "id": "70143ec9-9f1c-4a78-901c-c15a12d66077",
+            "name": "When Executed by Another Workflow"
         },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1080,
-        400
-      ],
-      "id": "17aeb0ea-a7ee-4f68-8814-9489158c490f",
-      "name": "Add task - klant bellen"
-    },
-    {
-      "parameters": {
-        "workflowInputs": {
-          "values": [
-            {
-              "name": "task_title"
+        {
+            "parameters": {
+                "content": "Deze flow maakt een taak aan, gekoppeld aan meegeven lead.\n\n## Parameters\n* task_title (*)\n* task_description (*)\n* task_type (call;meeting;task, default: task)",
+                "height": 320
             },
-            {
-              "name": "task_description"
-            },
-            {
-              "name": "lead_id"
-            },
-            {
-              "name": "group_id"
-            },
-            {
-              "name": "task_type"
-            }
-          ]
+            "type": "n8n-nodes-base.stickyNote",
+            "typeVersion": 1,
+            "position": [
+                64,
+                80
+            ],
+            "id": "88d08499-9cbc-4c71-91e8-ab8965176663",
+            "name": "Sticky Note"
         }
-      },
-      "type": "n8n-nodes-base.executeWorkflowTrigger",
-      "typeVersion": 1.1,
-      "position": [
-        340,
-        240
-      ],
-      "id": "70143ec9-9f1c-4a78-901c-c15a12d66077",
-      "name": "When Executed by Another Workflow"
+    ],
+    "pinData": {},
+    "connections": {
+        "When Executed by Another Workflow": {
+            "main": [
+                [
+                    {
+                        "node": "Add task - klant bellen",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
     },
-    {
-      "parameters": {
-        "content": "Deze flow maakt een taak aan, gekoppeld aan meegeven lead.\n\n## Parameters\n* task_title (*)\n* task_description (*)\n* task_type (call;meeting;task, default: task)",
-        "height": 320
-      },
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        60,
-        80
-      ],
-      "id": "88d08499-9cbc-4c71-91e8-ab8965176663",
-      "name": "Sticky Note"
-    }
-  ],
-  "pinData": {},
-  "connections": {
-    "When Executed by Another Workflow": {
-      "main": [
-        [
-          {
-            "node": "Add task - klant bellen",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    }
-  },
-  "active": false,
-  "settings": {
-    "executionOrder": "v1"
-  },
-  "versionId": "c3be4ae1-c458-4a6c-b8a7-07f4baf25d25",
-  "meta": {
-    "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
-  },
-  "id": "FoL6phxyuOVrAwz5",
-  "tags": []
+    "active": false,
+    "settings": {
+        "executionOrder": "v1"
+    },
+    "versionId": "b8ce0d4f-7b62-4702-834e-8e452bcdc1d6",
+    "meta": {
+        "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
+    },
+    "id": "FoL6phxyuOVrAwz5",
+    "tags": []
 }

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Webkul\Admin\Http\Requests\LeadForm;
 use Webkul\Lead\Models\Lead;
@@ -120,7 +121,7 @@ class LeadController extends Controller
 
         try {
             $this->validate($request, LeadValidationService::getApiValidationRules($request));
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'message' => 'Lead creation failed.',
                 'errors' => $e->errors(),

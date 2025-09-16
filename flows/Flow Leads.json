@@ -568,46 +568,6 @@
     },
     {
       "parameters": {
-        "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-API-KEY",
-              "value": "3!LvFF3HNTUGz*E^X@cu"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        -1568,
-        1008
-      ],
-      "id": "13a140e2-e8cb-4447-b059-4ccabe54ab5c",
-      "name": "Find group by Department"
-    },
-    {
-      "parameters": {},
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [
-        -1344,
-        944
-      ],
-      "id": "756fddc2-8ff2-47b3-8133-2f7f945e9669",
-      "name": "Merge"
-    },
-    {
-      "parameters": {
         "httpMethod": "POST",
         "path": "7dd5d03e-3f85-493d-a589-01fb66f7b210",
         "options": {}
@@ -624,47 +584,7 @@
     },
     {
       "parameters": {
-        "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-API-KEY",
-              "value": "3!LvFF3HNTUGz*E^X@cu"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        -1568,
-        1312
-      ],
-      "id": "4af4828a-6e16-4ce3-9c87-ab79d35193d7",
-      "name": "Find group by Department1"
-    },
-    {
-      "parameters": {},
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [
-        -1344,
-        1248
-      ],
-      "id": "2c9efa34-1e46-4659-8798-713e42077e00",
-      "name": "Merge1"
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Klant bellen voor advies',\n      task_type: 'call',\n      task_description: ''\n    }\n  }\n];"
+        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Klant bellen voor advies')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -723,7 +643,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Klant data bijwerken',\n      task_description: ''\n    }\n  }\n];"
+        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Klant data bijwerken')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -809,47 +729,7 @@
     },
     {
       "parameters": {
-        "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-API-KEY",
-              "value": "3!LvFF3HNTUGz*E^X@cu"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        -1568,
-        720
-      ],
-      "id": "dda058c9-288f-47e4-a4e8-1801c84b3574",
-      "name": "Find group by Department2"
-    },
-    {
-      "parameters": {},
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [
-        -1408,
-        720
-      ],
-      "id": "d2e448ec-de7d-445b-b48d-705c81d992d6",
-      "name": "Merge2"
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Order verzenden',\n      task_description: ''\n    }\n  }\n];"
+        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Order verzenden')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -967,47 +847,7 @@
     },
     {
       "parameters": {
-        "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-API-KEY",
-              "value": "3!LvFF3HNTUGz*E^X@cu"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        -1504,
-        528
-      ],
-      "id": "dd5d2b3e-4abf-4e5c-a784-75847813da2e",
-      "name": "Find group by Department3"
-    },
-    {
-      "parameters": {},
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [
-        -1328,
-        528
-      ],
-      "id": "aad7a928-a157-4fff-89aa-d1847a64fa1b",
-      "name": "Merge3"
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'MRI aanleveren',\n      task_description: ''\n    }\n  }\n];"
+        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'MRI aanleveren')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1035,47 +875,7 @@
     },
     {
       "parameters": {
-        "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-API-KEY",
-              "value": "3!LvFF3HNTUGz*E^X@cu"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        -1504,
-        320
-      ],
-      "id": "1f6c6e2e-d53a-4d33-b77f-d07f765eda78",
-      "name": "Find group by Department4"
-    },
-    {
-      "parameters": {},
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [
-        -1232,
-        352
-      ],
-      "id": "f1f8fd2e-9c66-47e3-abca-e93f3834d3e1",
-      "name": "Merge4"
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Klant adviseren met MRI beelden',\n      task_description: ''\n    }\n  }\n];"
+        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Klant adviseren met MRI beelden')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1103,47 +903,7 @@
     },
     {
       "parameters": {
-        "url": "=http://crm/api/groups/byDepartment/{{$json.body.department}}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-API-KEY",
-              "value": "3!LvFF3HNTUGz*E^X@cu"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {}
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        -1504,
-        96
-      ],
-      "id": "585bc376-7b31-42ae-bdc5-8d8b496ec464",
-      "name": "Find group by Department5"
-    },
-    {
-      "parameters": {},
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3.2,
-      "position": [
-        -1344,
-        96
-      ],
-      "id": "f4bd7995-0c25-4a67-a6b7-076c2cdee63b",
-      "name": "Merge5"
-    },
-    {
-      "parameters": {
-        "jsCode": "const items = $input.all();\n\nreturn [\n  {\n    json: {\n      ...items[0].json, // webhook item\n      ...items[1].json, // data item (overschrijft waar nodig)\n      lead_id: items[0].json.body.entity_id,\n      group_id: items[1].json.data.id,\n      task_title: 'Klant adviseren opvolgen',\n      task_description: ''\n    }\n  }\n];"
+        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Klant adviseren opvolgen')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -1176,60 +936,35 @@
       "main": [
         [
           {
-            "node": "Find group by Department5",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Merge5",
+            "node": "set lead_id and group_id5",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Merge",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Find group by Department",
+            "node": "set lead_id and group_id",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Find group by Department3",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Merge3",
+            "node": "set lead_id and group_id3",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Find group by Department4",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Merge4",
+            "node": "set lead_id and group_id4",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Find group by Department1",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Merge1",
+            "node": "set lead_id and group_id1",
             "type": "main",
             "index": 0
           }
@@ -1241,12 +976,7 @@
             "index": 0
           },
           {
-            "node": "Find group by Department2",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Merge2",
+            "node": "set lead_id and group_id2",
             "type": "main",
             "index": 0
           }
@@ -1298,55 +1028,11 @@
         ]
       ]
     },
-    "Find group by Department": {
-      "main": [
-        [
-          {
-            "node": "Merge",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "Merge": {
-      "main": [
-        [
-          {
-            "node": "set lead_id and group_id",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Webhook - task done": {
       "main": [
         [
           {
             "node": "Route on task title",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Find group by Department1": {
-      "main": [
-        [
-          {
-            "node": "Merge1",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "Merge1": {
-      "main": [
-        [
-          {
-            "node": "set lead_id and group_id1",
             "type": "main",
             "index": 0
           }
@@ -1386,55 +1072,11 @@
         ]
       ]
     },
-    "Find group by Department2": {
-      "main": [
-        [
-          {
-            "node": "Merge2",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "Merge2": {
-      "main": [
-        [
-          {
-            "node": "set lead_id and group_id2",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "set lead_id and group_id2": {
       "main": [
         [
           {
             "node": "Create task",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Find group by Department3": {
-      "main": [
-        [
-          {
-            "node": "Merge3",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "Merge3": {
-      "main": [
-        [
-          {
-            "node": "set lead_id and group_id3",
             "type": "main",
             "index": 0
           }
@@ -1452,55 +1094,11 @@
         ]
       ]
     },
-    "Find group by Department4": {
-      "main": [
-        [
-          {
-            "node": "Merge4",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "Merge4": {
-      "main": [
-        [
-          {
-            "node": "set lead_id and group_id4",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "set lead_id and group_id4": {
       "main": [
         [
           {
             "node": "Create task",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Find group by Department5": {
-      "main": [
-        [
-          {
-            "node": "Merge5",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "Merge5": {
-      "main": [
-        [
-          {
-            "node": "set lead_id and group_id5",
             "type": "main",
             "index": 0
           }
@@ -1523,7 +1121,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "a4114ea9-6b2f-4c49-b88a-c21094914a73",
+  "versionId": "0f37430c-8c77-4f8e-98ce-85548af27ed5",
   "meta": {
     "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },

@@ -160,7 +160,7 @@ class ActivityController extends Controller
             }
         }
 
-        // Ensure group_id is set for lead activities
+        // Ensure group_id is set and valid for lead activities
         $result = $this->ensureGroupIdForLeadActivity($data);
         if ($result !== null) {
             return $result; // Return error response if group_id could not be determined
@@ -504,8 +504,8 @@ class ActivityController extends Controller
     {
         // If lead_id is provided, group_id is required
         if (!empty($data['lead_id'])) {
+            $lead = app(LeadRepository::class)->findOrFail($data['lead_id']);
             if (!isset($data['group_id']) || !$data['group_id']) {
-                $lead = app(LeadRepository::class)->findOrFail($data['lead_id']);
                 try {
                     $data['group_id'] = Department::getGroupIdForLead($lead);
                 } catch (Exception $e) {
@@ -515,6 +515,18 @@ class ActivityController extends Controller
                         ], 422);
                     }
                     session()->flash('error', 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.');
+                    return redirect()->back();
+                }
+            } else {
+                // Validate provided group_id belongs to the same department as the lead
+                $group = \Webkul\User\Models\Group::query()->find($data['group_id']);
+                if (!$group || ($group->department_id !== $lead->department_id)) {
+                    if (request()->ajax()) {
+                        return response()->json([
+                            'message' => 'De opgegeven groep komt niet overeen met het departement van de lead.',
+                        ], 422);
+                    }
+                    session()->flash('error', 'De opgegeven groep komt niet overeen met het departement van de lead.');
                     return redirect()->back();
                 }
             }

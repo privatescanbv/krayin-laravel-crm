@@ -85,3 +85,77 @@ test('reject duplicate open activity by same title on same lead', function () {
     $duplicate->assertStatus(409);
     $duplicate->assertJsonStructure(['message', 'errors' => ['title']]);
 });
+
+test('reject activity creation with group_id that does not match lead department', function () {
+    // Arrange
+    $user = User::factory()->create();
+    $privateScanDept = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
+    $herniaDept = Department::where('name', Departments::HERNIA->value)->firstOrFail();
+    
+    // Create lead in PrivateScan department
+    $lead = Lead::factory()->create([
+        'created_by'    => $user->id,
+        'department_id' => $privateScanDept->id,
+    ]);
+    $this->actingAs($user, 'user');
+
+    // Get a group from the Hernia department (wrong department)
+    $wrongGroup = Group::where('department_id', $herniaDept->id)->firstOrFail();
+
+    $activityData = [
+        'title'         => 'Test activity with wrong group',
+        'description'   => 'This should fail validation.',
+        'type'          => 'task',
+        'schedule_from' => now()->format('Y-m-d H:i:s'),
+        'schedule_to'   => now()->addHour()->format('Y-m-d H:i:s'),
+        'group_id'      => $wrongGroup->id, // Wrong department group
+    ];
+
+    // Act
+    $response = test()->withHeaders([
+        'X-API-KEY' => 'valid-api-key-123',
+    ])->postJson(route('admin.leads.activities.store', $lead->id), $activityData);
+
+    // Assert
+    $response->assertStatus(422);
+    $response->assertJsonStructure(['message', 'errors' => ['group_id']]);
+    $response->assertJsonFragment([
+        'message' => 'De opgegeven groep komt niet overeen met het department van de lead.'
+    ]);
+});
+
+test('accept activity creation with group_id that matches lead department', function () {
+    // Arrange
+    $user = User::factory()->create();
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
+    $lead = Lead::factory()->create([
+        'created_by'    => $user->id,
+        'department_id' => $department->id,
+    ]);
+    $this->actingAs($user, 'user');
+
+    // Get a group from the correct department
+    $correctGroup = Group::where('department_id', $department->id)->firstOrFail();
+
+    $activityData = [
+        'title'         => 'Test activity with correct group',
+        'description'   => 'This should pass validation.',
+        'type'          => 'task',
+        'schedule_from' => now()->format('Y-m-d H:i:s'),
+        'schedule_to'   => now()->addHour()->format('Y-m-d H:i:s'),
+        'group_id'      => $correctGroup->id, // Correct department group
+    ];
+
+    // Act
+    $response = test()->withHeaders([
+        'X-API-KEY' => 'valid-api-key-123',
+    ])->postJson(route('admin.leads.activities.store', $lead->id), $activityData);
+
+    // Assert
+    $response->assertStatus(200);
+    $this->assertDatabaseHas('activities', [
+        'title'    => 'Test activity with correct group',
+        'group_id' => $correctGroup->id,
+        'lead_id'  => $lead->id,
+    ]);
+});

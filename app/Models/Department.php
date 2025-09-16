@@ -120,4 +120,32 @@ class Department extends Model
     {
         return $this->hasMany(Group::class, 'department_id');
     }
+
+    /**
+     * Validate that a group_id matches the department_id of a lead.
+     * This ensures that activities are assigned to groups within the correct department.
+     *
+     * @param int $groupId The group ID to validate
+     * @param \Webkul\Lead\Models\Lead $lead The lead to validate against
+     * @return bool True if the group belongs to the lead's department
+     * @throws Exception if lead has no department or group doesn't exist
+     */
+    public static function validateGroupForLead(int $groupId, $lead): bool
+    {
+        if (!$lead) {
+            throw new Exception('Lead cannot be null');
+        }
+
+        if (!$lead->department_id) {
+            throw new Exception("Lead {$lead->id} has no department_id");
+        }
+
+        // Find the group and check if it belongs to the lead's department
+        $group = Group::query()
+            ->where('id', $groupId)
+            ->where('department_id', $lead->department_id)
+            ->first();
+
+        return $group !== null;
+    }
 }

@@ -75,9 +75,11 @@ class ActivityController extends Controller
         }
 
         // Set group_id from lead's department if not provided (required for lead activities)
+        $lead = $this->leadRepository->findOrFail($id);
         $groupId = $data['group_id'] ?? null;
+        
         if (!$groupId || $groupId === '') {
-            $lead = $this->leadRepository->findOrFail($id);
+            // Auto-determine group_id from lead's department
             try {
                 $groupId = \App\Models\Department::getGroupIdForLead($lead);
             } catch (\Exception $e) {
@@ -85,6 +87,26 @@ class ActivityController extends Controller
                     'message' => 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.',
                     'errors' => [
                         'group_id' => ['Kan geen groep bepalen vanuit lead department.']
+                    ]
+                ], 422);
+            }
+        } else {
+            // Validate that the provided group_id matches the lead's department
+            try {
+                $isValid = \App\Models\Department::validateGroupForLead($groupId, $lead);
+                if (!$isValid) {
+                    return response()->json([
+                        'message' => 'De opgegeven groep komt niet overeen met het department van de lead.',
+                        'errors' => [
+                            'group_id' => ['Groep moet binnen het department van de lead vallen.']
+                        ]
+                    ], 422);
+                }
+            } catch (\Exception $e) {
+                return response()->json([
+                    'message' => 'Fout bij valideren van groep: ' . $e->getMessage(),
+                    'errors' => [
+                        'group_id' => ['Kan groep niet valideren voor deze lead.']
                     ]
                 ], 422);
             }

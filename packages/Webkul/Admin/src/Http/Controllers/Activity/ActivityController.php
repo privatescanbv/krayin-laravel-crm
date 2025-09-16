@@ -496,6 +496,7 @@ class ActivityController extends Controller
 
     /**
      * Ensure group_id is set for lead activities by auto-determining from lead's department.
+     * Also validates that any provided group_id matches the lead's department.
      *
      * @param array $data Activity data (passed by reference)
      * @return \Illuminate\Http\JsonResponse|\Symfony\Component\HttpFoundation\RedirectResponse|null
@@ -504,8 +505,10 @@ class ActivityController extends Controller
     {
         // If lead_id is provided, group_id is required
         if (!empty($data['lead_id'])) {
+            $lead = app(LeadRepository::class)->findOrFail($data['lead_id']);
+            
             if (!isset($data['group_id']) || !$data['group_id']) {
-                $lead = app(LeadRepository::class)->findOrFail($data['lead_id']);
+                // Auto-determine group_id from lead's department
                 try {
                     $data['group_id'] = Department::getGroupIdForLead($lead);
                 } catch (Exception $e) {
@@ -515,6 +518,31 @@ class ActivityController extends Controller
                         ], 422);
                     }
                     session()->flash('error', 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.');
+                    return redirect()->back();
+                }
+            } else {
+                // Validate that the provided group_id matches the lead's department
+                try {
+                    $isValid = Department::validateGroupForLead($data['group_id'], $lead);
+                    if (!$isValid) {
+                        if (request()->ajax()) {
+                            return response()->json([
+                                'message' => 'De opgegeven groep komt niet overeen met het department van de lead.',
+                                'errors' => [
+                                    'group_id' => ['Groep moet binnen het department van de lead vallen.']
+                                ]
+                            ], 422);
+                        }
+                        session()->flash('error', 'De opgegeven groep komt niet overeen met het department van de lead.');
+                        return redirect()->back();
+                    }
+                } catch (Exception $e) {
+                    if (request()->ajax()) {
+                        return response()->json([
+                            'message' => 'Fout bij valideren van groep: ' . $e->getMessage(),
+                        ], 422);
+                    }
+                    session()->flash('error', 'Fout bij valideren van groep: ' . $e->getMessage());
                     return redirect()->back();
                 }
             }

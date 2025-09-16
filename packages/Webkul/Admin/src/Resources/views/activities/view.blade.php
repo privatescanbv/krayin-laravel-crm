@@ -202,6 +202,9 @@
                                                        target="_blank" class="hover:underline"
                                                        title="E-mail bekijken">
                                                         {{ $email->subject ?: 'Geen onderwerp' }}
+                                                        @if (! $email->is_read)
+                                                            <span class="inline-block h-1.5 w-1.5 rounded-full bg-sky-600 align-middle ml-1 dark:bg-white"></span>
+                                                        @endif
                                                     </a>
                                                 </h4>
                                                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">

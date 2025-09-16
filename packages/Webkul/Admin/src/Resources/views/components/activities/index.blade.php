@@ -188,6 +188,7 @@
                                                                 <span class="icon-mail text-blue-600 text-xs"></span>
                                                                 <span class="font-medium truncate max-w-[200px]" :title="email.subject || 'Geen onderwerp'">
                                                                     @{{ email.subject || 'Geen onderwerp' }}
+                                                                    <span v-if="!email.is_read" class="inline-block h-1.5 w-1.5 rounded-full bg-sky-600 align-middle ml-1 dark:bg-white"></span>
                                                                 </span>
                                                             </div>
                                                             <span>@{{ $admin.formatDate(email.created_at, 'd MMM yyyy, h:mm', timezone) }}</span>

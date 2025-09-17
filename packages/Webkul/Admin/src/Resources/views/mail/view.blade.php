@@ -900,7 +900,7 @@
                                 </div>
                             </span>
 
-                            <!-- Popup Box -->f
+                            <!-- Popup Box -->
                             <div
                                 v-if="showPopup"
                                 class="absolute top-full z-10 mt-1 flex w-full origin-top transform flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800"
@@ -1719,11 +1719,16 @@
 
                         this.cancelToken = this.$axios.CancelToken.source();
 
+                        // Check if search term looks like an email address
+                        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.searchTerm);
+                        const searchParams = {
+                            ...this.params,
+                            query: isEmail ? `email:${this.searchTerm}` : this.searchTerm,
+                            searchFields: 'first_name:like;last_name:like;married_name:like;emails:like'
+                        };
+
                         this.$axios.get('{{ route('admin.contacts.persons.search') }}', {
-                                params: {
-                                    ...this.params,
-                                    query: this.searchTerm
-                                },
+                                params: searchParams,
                                 cancelToken: this.cancelToken.token,
                             })
                             .then(response => {
@@ -1906,15 +1911,20 @@
 
                         this.cancelToken = this.$axios.CancelToken.source();
 
+                        // Check if search term looks like an email address
+                        const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.searchTerm);
+                        const searchParams = {
+                            ...this.params,
+                            query: isEmail ? `email:${this.searchTerm}` : this.searchTerm,
+                            searchFields: 'first_name:like;last_name:like;married_name:like;emails:like'
+                        };
+
                         const request = pid
                             ? this.$axios.get('{{ route('admin.leads.open_by_person', ['person' => ':id']) }}'.replace(':id', pid), {
                                 cancelToken: this.cancelToken.token,
                               })
                             : this.$axios.get('{{ route('admin.leads.search') }}', {
-                                params: {
-                                    ...this.params,
-                                    query: this.searchTerm
-                                },
+                                params: searchParams,
                                 cancelToken: this.cancelToken.token,
                               });
 

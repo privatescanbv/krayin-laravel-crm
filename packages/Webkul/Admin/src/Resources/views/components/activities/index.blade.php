@@ -107,7 +107,15 @@
                                                     "
                                                 >
                                                     @{{ activity.title }}
-                                                    <span v-if="activity.type === 'email' && (!activity.additional || activity.additional.__source !== 'lead')" class="icon-activity text-xs text-blue-600 ml-1" title="Behoort tot activiteit"></span>
+                                                    <span v-if="activity.type === 'email' && activity.additional && activity.additional.__source === 'lead'" class="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200" title="E-mail gekoppeld aan lead">
+                                                        <span class="icon-activity text-[10px]"></span>
+                                                        Lead
+                                                    </span>
+                                                    <span v-else-if="activity.type === 'email' && activity.additional && activity.additional.__source === 'person'" class="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-2 00" title="E-mail gekoppeld aan persoon">
+                                                        <span class="icon-contact text-[10px]"></span>
+                                                        Persoon
+                                                    </span>
+                                                    <span v-else-if="activity.type === 'email'" class="icon-activity text-xs text-blue-600 ml-1" title="E-mail gekoppeld aan activiteit"></span>
 
                                                     <span v-if="activity.is_done == 1 || activity.is_done === true" class="ml-2 inline-block bg-green-100 text-green-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">@{{ activity.status}}</span>
                                                     <span v-else class="ml-2 inline-block bg-yellow-100 text-yellow-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">@{{ activity.status}}</span>
@@ -189,7 +197,21 @@
                                                         <div class="flex justify-between items-center">
                                                             <div class="flex items-center gap-2">
                                                                 <span class="icon-mail text-blue-600 text-xs"></span>
-                                                                <span class="icon-activity text-[10px] text-blue-600" title="E-mail gekoppeld aan activiteit"></span>
+                                                                <template v-if="email.lead_id || (email.additional && email.additional.__source === 'lead')">
+                                                                    <span class="ml-0.5 inline-flex items-center gap-1 text-[10px] px-1 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200" title="Lead">
+                                                                        <span class="icon-activity text-[10px]"></span>
+                                                                        Lead
+                                                                    </span>
+                                                                </template>
+                                                                <template v-else-if="email.person_id || (email.additional && email.additional.__source === 'person')">
+                                                                    <span class="ml-0.5 inline-flex items-center gap-1 text-[10px] px-1 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200" title="Persoon">
+                                                                        <span class="icon-contact text-[10px]"></span>
+                                                                        Persoon
+                                                                    </span>
+                                                                </template>
+                                                                <template v-else>
+                                                                    <span class="icon-activity text-[10px] text-blue-600" title="Activiteit"></span>
+                                                                </template>
                                                                 <span class="font-medium truncate max-w-[200px]" :title="email.subject || 'Geen onderwerp'">
                                                                     @{{ email.subject || 'Geen onderwerp' }}
                                                                     <span v-if="email && (email.is_read === 0 || email.is_read === false || email.is_read === '0')" class="inline-block h-1.5 w-1.5 rounded-full bg-sky-600 align-middle ml-1 dark:bg-white"></span>

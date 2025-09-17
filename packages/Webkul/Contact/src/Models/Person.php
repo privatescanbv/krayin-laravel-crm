@@ -290,4 +290,22 @@ class Person extends Model implements PersonContract
     public function getEmailsForPerson(): Collection {
         return Email::where('person_id', $this->id)->select(['id','subject','created_at','is_read','folders','person_id'])->get();
     }
+
+    /**
+     * Aggregate direct person emails and direct lead emails for this person.
+     */
+    public function getExtraEmailsForActivities(): Collection
+    {
+        $personDirectEmails = Email::where('person_id', $this->id)
+            ->select(['id','subject','created_at','is_read','folders','person_id'])
+            ->get();
+
+        $leadIds = $this->leads->pluck('id');
+
+        $leadDirectEmails = \Webkul\Email\Models\Email::whereIn('lead_id', $leadIds)
+            ->select(['id','subject','created_at','is_read','folders','lead_id'])
+            ->get();
+
+        return $personDirectEmails->concat($leadDirectEmails);
+    }
 }

@@ -369,6 +369,29 @@ class LeadController extends Controller
             Event::dispatch('lead.create.before');
 
             $data = $request->all();
+            // Normalize empty strings and placeholders to null for foreign keys and enums
+            foreach (['user_id', 'organization_id', 'lead_channel_id', 'lead_source_id', 'lead_type_id'] as $nullableKey) {
+                if (array_key_exists($nullableKey, $data)) {
+                    if ($data[$nullableKey] === '' || $data[$nullableKey] === '?' || $data[$nullableKey] === null) {
+                        $data[$nullableKey] = null;
+                    }
+                }
+            }
+            foreach (['salutation', 'gender', 'mri_status'] as $enumKey) {
+                if (array_key_exists($enumKey, $data)) {
+                    if ($data[$enumKey] === '' || $data[$enumKey] === '?') {
+                        $data[$enumKey] = null;
+                    }
+                }
+            }
+
+            // If persons/person_ids are present but not proper arrays (e.g., empty string), ignore to prevent unintended re-sync
+            if (array_key_exists('persons', $data) && !is_array($data['persons'])) {
+                unset($data['persons']);
+            }
+            if (array_key_exists('person_ids', $data) && !is_array($data['person_ids'])) {
+                unset($data['person_ids']);
+            }
 
             // Normalize empty strings and placeholders to null for foreign keys and enums
             foreach (['user_id', 'organization_id', 'lead_channel_id', 'lead_source_id', 'lead_type_id'] as $nullableKey) {

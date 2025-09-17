@@ -30,7 +30,7 @@ class ActivityController extends Controller
      * Display a listing of the resource.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
     public function index($id)
     {

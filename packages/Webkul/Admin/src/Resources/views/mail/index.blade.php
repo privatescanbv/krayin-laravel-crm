@@ -77,7 +77,7 @@
                         <div class="row grid grid-cols-[2fr_7fr_.0.3fr] grid-rows-1 items-center border-b px-8 py-4 dark:border-gray-800 max-lg:hidden">
                             <div
                                 class="flex items-center gap-6"
-                                v-for="(columnGroup, index) in [['name'], ['attachments', 'tags', 'subject', 'reply'], ['created_at']]"
+                                v-for="(columnGroup, index) in [['name'], ['attachments', 'tags', 'entity_type', 'subject', 'reply'], ['created_at']]"
                             >
                                 <label
                                     class="flex w-max cursor-pointer select-none items-center gap-2"
@@ -272,6 +272,9 @@
                                             v-html="tag.name"
                                         >
                                         </span>
+
+                                        <!-- Entity Type (Related to) -->
+                                        <span class="text-sm text-gray-700 dark:text-gray-300" v-html="record.entity_type"></span>
 
                                         <!-- Subject And Reply -->
                                         <div class="min-w-0 flex-1">

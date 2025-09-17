@@ -388,6 +388,25 @@ class PersonController extends Controller
         // Map incoming lookup term to RequestCriteria expectations (Contactpersoon zoeken)
         $searchTerm = trim((string) (request('search') ?? request('query') ?? request('term') ?? ''));
 
+        // If searchTerm looks like an email, normalize to emails JSON search for better matching
+        if ($searchTerm !== '' && filter_var($searchTerm, FILTER_VALIDATE_EMAIL)) {
+            // Clear standard search and use scope for JSON email match; also ensure emails:like is allowed
+            request()->merge([
+                'search'       => '',
+                'searchFields' => 'emails:like;',
+                'searchJoin'   => 'or',
+            ]);
+
+            $this->personRepository->scopeQuery(function ($q) use ($searchTerm) {
+                $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $searchTerm);
+                $jsonLike = '%"value":"%' . $escaped . '%"%';
+                return $q->where(function ($qb) use ($jsonLike, $searchTerm) {
+                    $qb->where('emails', 'like', $jsonLike)
+                       ->orWhere('emails', 'like', '%' . $searchTerm . '%');
+                });
+            });
+        }
+
         // Log all SQL hitting the persons table for this request (interpolated)
         if ($this->enableLogging) {
             DB::listen(function ($query) {

@@ -192,8 +192,10 @@ class ActivityController extends Controller
             'is_done' => request('type') == 'note' ? 1 : 0,
         ]));
 
-        $didChange = $this->updateStatus($this->activity);
-        if($didChange) $this->activity->save();
+        $didChange = $this->updateStatus($activity);
+        if ($didChange) {
+            $activity->save();
+        }
 
         Event::dispatch('activity.create.after', $activity);
 

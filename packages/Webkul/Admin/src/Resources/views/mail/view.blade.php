@@ -1257,14 +1257,52 @@
                         @{{ email?.lead ? "@lang('admin::app.mail.view.linked-lead')" : "@lang('admin::app.mail.view.link-to-lead')" }}
                     </label>
 
-                    <v-lead-lookup
-                        @link-lead="linkLead"
-                        @unlink-lead="unlinkLead"
-                        @open-lead-modal="openLeadModal"
-                        :unlinking="unlinking"
-                        :email="email"
-                        :tag-text-color="tagTextColor"
-                    ></v-lead-lookup>
+                    <!-- When a lead is already linked, show a small card with delete -->
+                    <template v-if="email?.lead_id && email?.lead">
+                        <div class="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+                            <div class="flex items-center gap-3">
+                                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-300">
+                                    <x-admin::avatar ::name="email.lead?.name || email.lead?.title" />
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-900 dark:text-gray-100">
+                                        @{{ email.lead?.name || email.lead?.title }}
+                                    </div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                                        @{{ email.lead?.stage?.name }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <a
+                                    :href="'{{ route('admin.leads.view', ':id') }}'.replace(':id', email.lead_id)"
+                                    target="_blank"
+                                    class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                                    title="Lead bekijken"
+                                >
+                                    <span class="icon-right-arrow text-sm"></span>
+                                </a>
+                                <button
+                                    type="button"
+                                    class="icon-delete flex h-8 w-8 items-center justify-center rounded-md text-2xl hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    title="Koppeling verwijderen"
+                                    @click="unlinkLead()"
+                                ></button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Otherwise, show the lead lookup -->
+                    <template v-else>
+                        <v-lead-lookup
+                            @link-lead="linkLead"
+                            @unlink-lead="unlinkLead"
+                            @open-lead-modal="openLeadModal"
+                            :unlinking="unlinking"
+                            :email="email"
+                            :tag-text-color="tagTextColor"
+                        ></v-lead-lookup>
+                    </template>
 
                     <!-- Activity Lookup directly under lead block -->
                     <template v-if="(email?.lead_id || email?.lead) && !email?.activity_id">

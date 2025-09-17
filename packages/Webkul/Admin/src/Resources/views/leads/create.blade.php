@@ -395,6 +395,38 @@
                                                 </div>
                                             </x-admin::form.control-group>
                                         </div>
+
+                                        <!-- Lengte (cm) -->
+                                        <div class="mt-3">
+                                            <x-admin::form.control-group>
+                                                <x-admin::form.control-group.label>
+                                                    Lengte (cm)
+                                                </x-admin::form.control-group.label>
+                                                <x-admin::form.control-group.control
+                                                    type="number"
+                                                    name="height"
+                                                    min="0"
+                                                    step="1"
+                                                    placeholder="Bijv. 180"
+                                                />
+                                            </x-admin::form.control-group>
+                                        </div>
+
+                                        <!-- Gewicht (kg) -->
+                                        <div class="mt-3">
+                                            <x-admin::form.control-group>
+                                                <x-admin::form.control-group.label>
+                                                    Gewicht (kg)
+                                                </x-admin::form.control-group.label>
+                                                <x-admin::form.control-group.control
+                                                    type="number"
+                                                    name="weight"
+                                                    min="0"
+                                                    step="1"
+                                                    placeholder="Bijv. 75"
+                                                />
+                                            </x-admin::form.control-group>
+                                        </div>
                                     </div>
                                     <!-- /Anamnese -->
 

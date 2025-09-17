@@ -2,6 +2,10 @@
 
 Het CRM systeem heeft een geïntegreerde email functionaliteit die automatische koppeling van inkomende berichten aan leads, contactpersonen en activiteiten mogelijk maakt.
 Het systeem werkt in de basis als een *ticket systeem*, maar is uitgebreid met functionaliteiten die het werkproces ondersteunen.
+Op deze manier lees je de mail altijd op de juiste plek, waar je alle informatie bij de hand hebt. Daarnaast bevordert dit het proces om de juiste prioriteiten te geven aan mail beantwoorden, aangezien de gekoppelde leads of activiteiten een bepaalde prioriteit kunnen hebben.
+
+Het beantwoorden van de mail, zal altijd vanuit 1 e-mailadres zijn, dat van het CRM zelf (b.v. crm-reply@privatescan.nl). Het is daarmee van belang om de naam van de medewerker goed in de email te vermelden. Dit houdt het persoonlijk en overzichtelijk.
+Ook dit is natuurlijk weer te automatiseren, denk aan een automatische handtekening met naam en functie (footnote).
 
 ==== Email Accounts Configuratie
 
@@ -20,7 +24,12 @@ Op dit moment werkt het systeem met twee specifieke email accounts die elk een v
 
 [NOTE]
 ====
-Het CRM systeem herkent automatisch inkomende berichten op `privatescan@test.local` en koppelt deze aan de juiste lead of contactpersoon op basis van de afzender en eerdere correspondentie.
+* Het CRM systeem herkent automatisch inkomende berichten op `privatescan@test.local` en koppelt deze aan de juiste lead of contactpersoon op basis van de afzender en eerdere correspondentie.
+
+* Dit e-mailadres 'privatescan@test.local' zal later een nieuw emailadres worden als crm-reply@privatescan.nl
+
+* Patient Email Account; We ondersteunen nu 1 emailaccount, maar later is dit natuurlijk het e-mailadres van de patiënt zelf.
+
 ====
 
 ==== Hoe Email Koppeling Werkt

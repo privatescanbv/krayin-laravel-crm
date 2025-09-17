@@ -170,6 +170,11 @@ class ActivityController extends Controller
         // Auto-assign group if not specified but user has a group
         $data = request()->all();
 
+        // If lead_id is set, ensure we do not also bind a person via pivot
+        if (!empty($data['lead_id'])) {
+            unset($data['person_id']);
+        }
+
         // Convert empty strings to null for foreign key constraints
         foreach (['lead_id', 'group_id', 'user_id'] as $field) {
             if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {

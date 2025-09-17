@@ -27,9 +27,9 @@ class Activity
      */
     public function afterUpdateOrCreate(ActivityContract $activity): void
     {
-        if (request()->input('lead_id')) {
-            // For leads, the lead_id is already set in the activity model
-            // No need to attach via pivot table anymore
+        // If the activity is tied to a lead, skip any person linkage
+        if ($activity->lead_id || request()->input('lead_id')) {
+            // lead-bound: do nothing here
         } elseif (request()->input('person_id')) {
             $person = $this->personRepository->find(request()->input('person_id'));
 

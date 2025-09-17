@@ -2,6 +2,8 @@
 
 namespace Webkul\Admin\Http\Controllers\Lead;
 
+use App\Models\Department;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Repositories\ActivityRepository;
@@ -34,14 +36,14 @@ class ActivityController extends Controller
     public function getDefaultGroup(int $id)
     {
         $lead = $this->leadRepository->findOrFail($id);
-        
+
         try {
-            $groupId = \App\Models\Department::getGroupIdForLead($lead);
-            
+            $groupId = Department::getGroupIdForLead($lead);
+
             return response()->json([
                 'group_id' => $groupId,
             ]);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return response()->json([
                 'group_id' => null,
                 'error' => $e->getMessage(),
@@ -79,8 +81,8 @@ class ActivityController extends Controller
         if (!$groupId || $groupId === '') {
             $lead = $this->leadRepository->findOrFail($id);
             try {
-                $groupId = \App\Models\Department::getGroupIdForLead($lead);
-            } catch (\Exception $e) {
+                $groupId = Department::getGroupIdForLead($lead);
+            } catch (Exception $e) {
                 return response()->json([
                     'message' => 'Kan geen groep bepalen voor deze activiteit. Lead heeft geen geldig department.',
                     'errors' => [
@@ -159,7 +161,7 @@ class ActivityController extends Controller
 
         // Get the first user as fallback for API requests
         $user = auth()->guard('user')->user() ?? User::query()->where('status', 1)->first();
-        
+
         // If no user is available, return activities without email mapping
         if (!$user) {
             return $activities;
@@ -197,6 +199,7 @@ class ActivityController extends Controller
                         'updated_at' => $attachment->updated_at,
                     ];
                 })->toArray(),
+                'emailLinkedEntityType' => $email->activity_id ? 'activity' : ($email->person_id ? 'person' : ($email->lead_id ? 'lead' : 'unknown')),
                 'created_at' => $email->created_at,
                 'updated_at' => $email->updated_at,
             ];

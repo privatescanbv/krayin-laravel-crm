@@ -287,25 +287,4 @@ class Person extends Model implements PersonContract
 
         return $this->date_of_birth->age;
     }
-
-    public function getEmailsForPerson(): Collection {
-        return Email::where('person_id', $this->id)->select(['id','subject','created_at','is_read','folders','person_id'])->get();
-    }
-
-    /**
-     * Aggregate direct person emails and direct lead emails for this person.
-     */
-    public function getAllRelatedEmails(): Collection
-    {
-        $leadIds = $this->leads->pluck('id');
-
-        return Email::where(function ($query) use ($leadIds) {
-                $query->where('person_id', $this->id);
-                if ($leadIds->isNotEmpty()) {
-                    $query->orWhereIn('lead_id', $leadIds);
-                }
-            })
-            ->select(['id','subject','created_at','is_read','folders','person_id','lead_id', 'activity_id'])
-            ->get();
-    }
 }

@@ -4,7 +4,6 @@
     'activeType'          => 'all',
     'types'               => null,
     'extraTypes'          => null,
-    'extraEmails'         => null,
 ])
 
 {!! view_render_event('admin.components.activities.before') !!}
@@ -16,7 +15,6 @@
     active-type="{{ $activeType }}"
     @if($types):types='@json($types)'@endif
     @if($extraTypes):extra-types='@json($extraTypes)'@endif
-    @if($extraEmails):extra-emails='@json($extraEmails)'@endif
     ref="activities"
 >
     <!-- Shimmer -->
@@ -106,7 +104,7 @@
                                                         : '{{ route('admin.activities.view', 'replaceId') }}'.replace('replaceId', activity.id)
                                                     "
                                                 >
-                                                    @{{ activity.linked_entity_type }} -- @{{ activity.title }}- @{{ activity.id }}
+                                                     @{{ activity.title }}
                                                     <span v-if="activity.type === 'email' && activity.linked_entity_type === 'lead'" class="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200" title="E-mail gekoppeld aan lead">
                                                         <span class="icon-activity text-[10px]"></span>
                                                     </span>
@@ -498,11 +496,6 @@
                     default: [],
                 },
 
-                // Additional emails to include in the 'email' tab (e.g., direct lead emails)
-                extraEmails: {
-                    type: Array,
-                    default: [],
-                },
             },
 
             data() {
@@ -617,34 +610,6 @@
                     this.$axios.get(this.endpoint)
                         .then(response => {
                             this.activities = response.data.data;
-
-                            // If there are extra emails to include, convert them into synthetic email-activities
-                            if (Array.isArray(this.extraEmails) && this.extraEmails.length) {
-                                console.log('mapping extra emails to activities', this.extraEmails);
-                                const mapped = this.extraEmails.map(email => ({
-                                    id: email.id,
-                                    type: 'email',
-                                    title: email.subject,
-                                    status: 'done',
-                                    is_done: 1,
-                                    created_at: email.created_at,
-                                    user: email.user || null,
-                                    comment: null,
-                                    files: [],
-                                    emails: [],
-                                    linked_entity_type: email.lead_id ? 'lead' : (email.person_id ? 'person' : (email.activity_id ? 'activity' : 'unknown')),
-                                    additional: {
-                                        folders: email.folders || ['inbox'],
-                                        __source: (email.lead_id ? 'lead' : (email.person_id ? 'person' : (email.__source || 'lead'))),
-                                    },
-                                }));
-                                console.log('mapeped ', mapped);
-                                this.activities = [...this.activities, ...mapped]
-                                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                            } else {
-                                console.log('no extra emails to map');
-                            }
-
                             this.isLoading = false;
                         })
                         .catch(error => {

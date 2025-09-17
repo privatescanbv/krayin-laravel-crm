@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Resources\ActivityResource;
+use Webkul\Contact\Models\Person;
+use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 
@@ -31,7 +33,8 @@ class ActivityController extends Controller
     public function index($id)
     {
         $activities = $this->activityRepository
-            ->where('person_id', $id)
+            ->leftJoin('person_activities', 'activities.id', '=', 'person_activities.activity_id')
+            ->where('person_activities.person_id', $id)
             ->get();
 
         return ActivityResource::collection($this->concatEmailAsActivities($id, $activities));
@@ -42,12 +45,18 @@ class ActivityController extends Controller
      */
     public function concatEmailAsActivities($personId, $activities)
     {
+        $leadIds = Person::findOrFail($personId)->leads->pluck('id')->toArray();
         $emails = DB::table('emails as child')
-            ->select('child.*')
-            ->join('emails as parent', 'child.parent_id', '=', 'parent.id')
-            ->where('parent.person_id', $personId)
-            ->union(DB::table('emails as parent')->where('parent.person_id', $personId))
-            ->get();
+                ->select('child.*')
+                ->join('emails as parent', 'child.parent_id', '=', 'parent.id')
+                ->where('parent.person_id', $personId)
+                ->orWhereIn('child.lead_id', $leadIds)
+                ->union(
+                    DB::table('emails as parent')
+                        ->where('parent.person_id', $personId)
+                        ->orWhereIn('parent.lead_id', $leadIds)
+                )
+                ->get();
 
         return $activities->concat($emails->map(function ($email) {
             return (object) [
@@ -79,6 +88,7 @@ class ActivityController extends Controller
                         'updated_at' => $attachment->updated_at,
                     ];
                 }),
+                'emailLinkedEntityType' => $email->activity_id ? 'activity' : ($email->person_id ? 'person' : ($email->lead_id ? 'lead' : 'unknown')),
                 'created_at'    => $email->created_at,
                 'updated_at'    => $email->updated_at,
             ];

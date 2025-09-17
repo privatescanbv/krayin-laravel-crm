@@ -427,4 +427,3 @@ test('API lead creation without height and weight fields should work', function 
         ->and($anamnesis->allergies)->toBe(true)
         ->and($anamnesis->allergies_notes)->toBe('Peanut allergy');
 });
-

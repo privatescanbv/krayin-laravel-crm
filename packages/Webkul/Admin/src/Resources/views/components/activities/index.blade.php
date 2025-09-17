@@ -598,6 +598,7 @@
                             this.activities = response.data.data;
 
                             // If there are extra emails to include, convert them into synthetic email-activities
+                            console.log(this.extraEmails);
                             if (Array.isArray(this.extraEmails) && this.extraEmails.length) {
                                 const mapped = this.extraEmails.map(email => ({
                                     id: email.id,

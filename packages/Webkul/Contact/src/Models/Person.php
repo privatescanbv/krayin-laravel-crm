@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
@@ -296,16 +297,18 @@ class Person extends Model implements PersonContract
      */
     public function getExtraEmailsForActivities(): Collection
     {
-        $personDirectEmails = Email::where('person_id', $this->id)
-            ->select(['id','subject','created_at','is_read','folders','person_id'])
-            ->get();
-
         $leadIds = $this->leads->pluck('id');
 
-        $leadDirectEmails = \Webkul\Email\Models\Email::whereIn('lead_id', $leadIds)
-            ->select(['id','subject','created_at','is_read','folders','lead_id'])
+        $emails = Email::where(function ($query) use ($leadIds) {
+                $query->where('person_id', $this->id);
+                if ($leadIds->isNotEmpty()) {
+                    $query->orWhereIn('lead_id', $leadIds);
+                }
+            })
+            ->select(['id','subject','created_at','is_read','folders','person_id','lead_id'])
             ->get();
 
-        return $personDirectEmails->concat($leadDirectEmails);
+        Log::info('Aggregated emails for person '.$this->id.' including leads: '.($leadIds->isNotEmpty() ? $leadIds->implode(',') : 'no leads').'. Total emails found: '.$emails->count());
+        return $emails;
     }
 }

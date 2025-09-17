@@ -154,7 +154,7 @@
             <div class="flex-1">
                 <x-admin::activities
                     :endpoint="route('admin.contacts.persons.activities.index', $person->id)"
-                    :extra-emails="@json($person->getExtraEmailsForActivities())"
+                    extra-emails='@json($person->getExtraEmailsForActivities())'
                 />
             </div>
         </div>

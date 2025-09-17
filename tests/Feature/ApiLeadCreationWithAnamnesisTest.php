@@ -331,3 +331,99 @@ test('API lead creation validates email and phone array structure', function () 
     //            'errors'
     //        ]);
 });
+
+test('API lead creation with anamnesis height and weight fields', function () {
+    // Arrange: Get required IDs for lead creation
+    $source = Source::first();
+    $type = Type::first();
+    $channel = Channel::first();
+
+    // Create a person first
+    $person = Person::factory()->create();
+
+    $uniqueId = uniqid();
+    $leadData = [
+        'first_name'      => 'John',
+        'last_name'       => 'Doe'.$uniqueId,
+        'email'           => 'john.doe.'.$uniqueId.'@example.com',
+        'phone'           => '+31612345678',
+        'company_name'    => 'Test Company',
+        'lead_source_id'  => $source->id,
+        'lead_channel_id' => $channel->id,
+        'lead_type_id'    => $type->id,
+        'height'          => 175,
+        'weight'          => 75,
+        'metals'          => 0,
+        'claustrophobia'  => 0,
+        'allergies'       => 0,
+        // Include person data during lead creation
+        'person_ids'      => [$person->id],
+    ];
+
+    // Act: Make API request to create lead
+    $response = makeApiRequest('postJson', '/api/leads', $leadData);
+
+    // Assert: Check API response
+    $response->assertStatus(201)
+        ->assertJson([
+            'message' => 'Lead created successfully.',
+        ]);
+
+    $leadId = $response->json('data.id');
+
+    // Assert: Check anamnesis was created with height and weight
+    $anamnesis = Anamnesis::where('lead_id', $leadId)->where('person_id', $person->id)->first();
+
+    expect($anamnesis)->not->toBeNull()
+        ->and($anamnesis->height)->toBe(175)
+        ->and($anamnesis->weight)->toBe(75) // Cast as integer returns integer
+        ->and($anamnesis->metals)->toBe(false)
+        ->and($anamnesis->claustrophobia)->toBe(false)
+        ->and($anamnesis->allergies)->toBe(false);
+});
+
+test('API lead creation without height and weight fields should work', function () {
+    // Arrange: Get required IDs for lead creation
+    $source = Source::first();
+    $type = Type::first();
+    $channel = Channel::first();
+
+    // Create a person first to include during lead creation
+    $person = Person::factory()->create();
+
+    $uniqueId = uniqid();
+    $leadData = [
+        'first_name'      => 'Jane',
+        'last_name'       => 'Smith'.$uniqueId,
+        'email'           => 'jane.smith.'.$uniqueId.'@example.com',
+        'lead_source_id'  => $source->id,
+        'lead_channel_id' => $channel->id,
+        'lead_type_id'    => $type->id,
+        'metals'          => 1,
+        'metals_notes'    => 'Some metal implants',
+        'claustrophobia'  => 0,
+        'allergies'       => 1,
+        'allergies_notes' => 'Peanut allergy',
+        // Include person data during lead creation
+        'person_ids'      => [$person->id],
+    ];
+
+    // Act: Make API request to create lead
+    $response = makeApiRequest('postJson', '/api/leads', $leadData);
+
+    // Assert: Check API response
+    $response->assertStatus(201);
+
+    $leadId = $response->json('data.id');
+
+    // Assert: Check anamnesis was created without height and weight (should be null)
+    $anamnesis = Anamnesis::where('lead_id', $leadId)->where('person_id', $person->id)->first();
+    expect($anamnesis)->not->toBeNull()
+        ->and($anamnesis->height)->toBeNull()
+        ->and($anamnesis->weight)->toBeNull()
+        ->and($anamnesis->metals)->toBe(true)
+        ->and($anamnesis->metals_notes)->toBe('Some metal implants')
+        ->and($anamnesis->claustrophobia)->toBe(false)
+        ->and($anamnesis->allergies)->toBe(true)
+        ->and($anamnesis->allergies_notes)->toBe('Peanut allergy');
+});

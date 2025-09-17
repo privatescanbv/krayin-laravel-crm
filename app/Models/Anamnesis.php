@@ -76,6 +76,8 @@ class Anamnesis extends Model
 
     protected $casts = [
         'deleted'                 => 'boolean',
+        'height'                  => 'integer',
+        'weight'                  => 'integer',
         'metals'                  => 'boolean',
         'medications'             => 'boolean',
         'glaucoma'                => 'boolean',

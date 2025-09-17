@@ -105,6 +105,7 @@
                                                     "
                                                 >
                                                     @{{ activity.title }}
+                                                    <span v-if="activity.type === 'email' && activity.additional && activity.additional.__source" class="ml-2 inline-block bg-slate-100 text-slate-800 text-[10px] font-semibold px-2 py-0.5 rounded-full dark:bg-slate-800 dark:text-slate-200">@{{ activity.additional.__source === 'lead' ? 'Lead' : 'Activiteit' }}</span>
 
                                                     <span v-if="activity.is_done == 1 || activity.is_done === true" class="ml-2 inline-block bg-green-100 text-green-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">@{{ activity.status}}</span>
                                                     <span v-else class="ml-2 inline-block bg-yellow-100 text-yellow-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">@{{ activity.status}}</span>
@@ -472,6 +473,12 @@
                     type: Array,
                     default: [],
                 },
+
+                // Additional emails to include in the 'email' tab (e.g., direct lead emails)
+                extraEmails: {
+                    type: Array,
+                    default: [],
+                },
             },
 
             data() {
@@ -586,6 +593,29 @@
                     this.$axios.get(this.endpoint)
                         .then(response => {
                             this.activities = response.data.data;
+
+                            // If there are extra emails to include, convert them into synthetic email-activities
+                            if (Array.isArray(this.extraEmails) && this.extraEmails.length) {
+                                const mapped = this.extraEmails.map(email => ({
+                                    id: email.id,
+                                    type: 'email',
+                                    title: email.subject,
+                                    status: 'done',
+                                    is_done: 1,
+                                    created_at: email.created_at,
+                                    user: email.user || null,
+                                    comment: null,
+                                    files: [],
+                                    emails: [],
+                                    additional: {
+                                        folders: email.folders || ['inbox'],
+                                        __source: 'lead',
+                                    },
+                                }));
+
+                                this.activities = [...this.activities, ...mapped]
+                                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                            }
 
                             this.isLoading = false;
                         })

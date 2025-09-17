@@ -151,7 +151,10 @@
                 <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 mb-4">
                     <x-admin::email-feed :endpoint="route('admin.contacts.persons.activities.index', $person->id)" title="E-mails (incl. leads/activiteiten)" />
                 </div>
-                <x-admin::activities :endpoint="route('admin.contacts.persons.activities.index', $person->id)" />
+                <x-admin::activities
+                    :endpoint="route('admin.contacts.persons.activities.index', $person->id)"
+                    :extra-emails="@json(\Webkul\Email\Models\Email::where('person_id', $person->id)->select(['id','subject','created_at','is_read','folders','person_id'])->get())"
+                />
             </div>
         </div>
     </div>

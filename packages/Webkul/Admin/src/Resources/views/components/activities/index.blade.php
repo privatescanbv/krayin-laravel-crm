@@ -107,7 +107,7 @@
                                                     "
                                                 >
                                                     @{{ activity.title }}
-                                                    <span v-if="activity.type === 'email' && activity.additional && activity.additional.__source" class="ml-2 inline-block bg-slate-100 text-slate-800 text-[10px] font-semibold px-2 py-0.5 rounded-full dark:bg-slate-800 dark:text-slate-200">@{{ activity.additional.__source === 'lead' ? 'Lead' : 'Activiteit' }}</span>
+                                                    <span v-if="activity.type === 'email' && (!activity.additional || activity.additional.__source !== 'lead')" class="icon-activity text-xs text-blue-600 ml-1" title="Behoort tot activiteit"></span>
 
                                                     <span v-if="activity.is_done == 1 || activity.is_done === true" class="ml-2 inline-block bg-green-100 text-green-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">@{{ activity.status}}</span>
                                                     <span v-else class="ml-2 inline-block bg-yellow-100 text-yellow-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">@{{ activity.status}}</span>
@@ -189,6 +189,7 @@
                                                         <div class="flex justify-between items-center">
                                                             <div class="flex items-center gap-2">
                                                                 <span class="icon-mail text-blue-600 text-xs"></span>
+                                                                <span class="icon-activity text-[10px] text-blue-600" title="E-mail gekoppeld aan activiteit"></span>
                                                                 <span class="font-medium truncate max-w-[200px]" :title="email.subject || 'Geen onderwerp'">
                                                                     @{{ email.subject || 'Geen onderwerp' }}
                                                                     <span v-if="email && (email.is_read === 0 || email.is_read === false || email.is_read === '0')" class="inline-block h-1.5 w-1.5 rounded-full bg-sky-600 align-middle ml-1 dark:bg-white"></span>
@@ -611,7 +612,7 @@
                                     emails: [],
                                     additional: {
                                         folders: email.folders || ['inbox'],
-                                        __source: 'lead',
+                                        __source: (email.lead_id ? 'lead' : (email.person_id ? 'person' : (email.__source || 'lead'))),
                                     },
                                 }));
 

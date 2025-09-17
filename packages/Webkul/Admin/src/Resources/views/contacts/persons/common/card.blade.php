@@ -1,4 +1,4 @@
-<div class="relative rounded-xl border border-indigo-100 bg-indigo-50/80
+<div class="relative rounded-xl border border-indigo-100 bg-green-50/80
             dark:border-zinc-700 dark:bg-zinc-800/70
             shadow-sm hover:shadow-md transition p-4">
     <!-- accent links -->

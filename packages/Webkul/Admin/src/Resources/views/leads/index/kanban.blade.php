@@ -201,13 +201,13 @@
                                                 </div>
                                             </div>
 
-                                            <!-- Unread Emails Count -->
+                                            <!-- Unread Emails Count (includes nested activity emails) -->
                                             <div class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
                                                 <span class="icon-mail text-xs"></span>
                                                 <span>@{{ element.unread_emails_count || 0 }}</span>
                                                 <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
                                                     <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
-                                                        Ongelezen e-mails
+                                                        Ongelezen e-mails (incl. activiteiten)
                                                     </span>
                                                     <div class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                                 </div>

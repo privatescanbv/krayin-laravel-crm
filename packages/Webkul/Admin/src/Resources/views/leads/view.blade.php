@@ -156,6 +156,11 @@
             <!-- Activities -->
             {!! view_render_event('admin.leads.view.activities.before', ['lead' => $lead]) !!}
 
+            <!-- Emails (from activities) -->
+            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <x-admin::email-feed :endpoint="route('admin.leads.activities.index', $lead->id)" title="E-mails (incl. activiteiten)" />
+            </div>
+
             <x-admin::activities
                 :endpoint="route('admin.leads.activities.index', $lead->id)"
                 :email-detach-endpoint="route('admin.leads.emails.detach', $lead->id)"

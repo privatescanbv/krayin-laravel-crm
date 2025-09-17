@@ -148,6 +148,9 @@
         <!-- Right Panel -->
         <div class="flex w-full flex-row gap-4 rounded-lg">
             <div class="flex-1">
+                <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 mb-4">
+                    <x-admin::email-feed :endpoint="route('admin.contacts.persons.activities.index', $person->id)" title="E-mails (incl. leads/activiteiten)" />
+                </div>
                 <x-admin::activities :endpoint="route('admin.contacts.persons.activities.index', $person->id)" />
             </div>
         </div>

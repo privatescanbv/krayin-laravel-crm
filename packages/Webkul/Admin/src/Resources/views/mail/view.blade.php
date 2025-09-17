@@ -1213,7 +1213,7 @@
                                 </div>
                             </div>
                             <a
-                                href="{{ route('admin.activities.edit', $email->activity->id) }}"
+                                href="{{ route('admin.activities.view', $email->activity->id) }}"
                                 target="_blank"
                                 class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
                                 title="Activiteit bekijken"

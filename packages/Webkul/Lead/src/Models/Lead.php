@@ -464,6 +464,27 @@ class Lead extends Model implements LeadContract
         return $this->emails()->where('is_read', 0)->count();
     }
 
+    /**
+     * Compute unread emails including emails linked via activities.
+     */
+    public function unread_emails_count_with_nested(): int
+    {
+        try {
+            $direct = (int) $this->emails()->where('is_read', 0)->count();
+
+            $activityEmailIds = app(\Illuminate\Support\Facades\DB::class)
+                ::table('emails')
+                ->where('lead_id', $this->id)
+                ->whereNotNull('activity_id')
+                ->where('is_read', 0)
+                ->count();
+
+            return $direct + (int) $activityEmailIds;
+        } catch (\Throwable $e) {
+            return (int) $this->unread_emails_count;
+        }
+    }
+
 
 
     public function getNameAttribute($value): string

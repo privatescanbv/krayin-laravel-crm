@@ -588,10 +588,14 @@
 
                             <!-- Mailer receivers -->
                             <div class="flex flex-col gap-1">
-                                <!-- Mailer Name -->
-                                <span class="text-xs font-medium text-gray-800 dark:text-gray-300">
+                                <!-- Mailer Name (clickable to person view) -->
+                                <a
+                                    :href="'{{ route('admin.contacts.persons.view', ':id') }}'.replace(':id', email.person_id)"
+                                    target="_blank"
+                                    class="text-xs font-medium text-brandColor hover:underline dark:text-gray-300"
+                                >
                                     @{{ email.person?.name }}
-                                </span>
+                                </a>
 
                                 <!-- Mailer Additional Deatils -->
                                 <div class="flex flex-col gap-1">
@@ -634,7 +638,7 @@
                             </template>
 
                             <a
-                                :href="'{{ route('admin.contacts.persons.edit', ':id') }}'.replace(':id', email.person_id)"
+                                :href="'{{ route('admin.contacts.persons.view', ':id') }}'.replace(':id', email.person_id)"
                                 target="_blank"
                                 class="icon-right-arrow flex h-7 w-7 cursor-pointer items-center justify-center rounded-md text-2xl hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-950"
                             ></a>

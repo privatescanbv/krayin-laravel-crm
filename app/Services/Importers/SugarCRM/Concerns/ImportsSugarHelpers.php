@@ -98,3 +98,4 @@ trait ImportsSugarHelpers
         $activity->timestamps = true;
     }
 }
+

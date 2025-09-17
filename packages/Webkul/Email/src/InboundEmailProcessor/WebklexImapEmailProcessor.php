@@ -2,6 +2,7 @@
 
 namespace Webkul\Email\InboundEmailProcessor;
 
+use Exception;
 use Webklex\IMAP\Facades\Client;
 use Webkul\Email\Enums\SupportedFolderEnum;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
@@ -34,7 +35,7 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
         $this->client->connect();
 
         if (! $this->client->isConnected()) {
-            throw new \Exception('Failed to connect to the mail server.');
+            throw new Exception('Failed to connect to the mail server.');
         }
     }
 
@@ -50,10 +51,12 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
 
     /**
      * Process messages from all folders.
+     * @throws Exception
      */
     public function processMessagesFromAllFolders()
     {
         if (!$this->client) {
+            logger()->warning('IMAP client is not initialized. Skipping email processing.');
             return; // Skip processing if client is not initialized (e.g., during testing)
         }
 
@@ -61,8 +64,8 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
             $rootFolders = $this->client->getFolders();
 
             $this->processMessagesFromLeafFolders($rootFolders);
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage());
         }
     }
 

@@ -32,21 +32,22 @@ class EmailDataGrid extends DataGrid
                 'emails.reply',
                 'emails.is_read',
                 'emails.created_at',
-                'tags.name as tags',
+                DB::raw('GROUP_CONCAT(DISTINCT tags.name) as tags'),
                 DB::raw('COUNT(DISTINCT '.DB::getTablePrefix().'email_attachments.id) as attachments')
             )
             ->leftJoin('email_attachments', 'emails.id', '=', 'email_attachments.email_id')
             ->leftJoin('email_tags', 'emails.id', '=', 'email_tags.email_id')
             ->leftJoin('tags', 'tags.id', '=', 'email_tags.tag_id')
             ->groupBy('emails.id')
-            ->where('folders', 'like', '%"'.request('route').'"%')
-            ->whereNull('parent_id');
+            ->where('folders', 'like', '%"'.request('route').'"%');
 
         $this->addFilter('id', 'emails.id');
         $this->addFilter('name', 'emails.name');
         $this->addFilter('tags', 'tags.name');
         $this->addFilter('created_at', 'emails.created_at');
 
+
+        logger()->info($queryBuilder->toRawSql());
         return $queryBuilder;
     }
 

@@ -216,7 +216,6 @@
                         <div
                             v-for="record in available.records"
                             class="grid grid-cols-[2fr_2fr_6fr_.8fr] items-center border-b px-8 py-4 text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-gray-950 max-lg:hidden cursor-pointer"
-                            :class="{ 'pl-16': record.parent_id }"
                             @click.stop="selectedMail=true; editModal(record.actions.find(action => action.index === 'edit'))"
                         >
                             <!-- Col 1: Name + checkbox + unread dot -->
@@ -248,7 +247,7 @@
                             </div>
 
                             <!-- Col 3: Subject / preview with tags/attachments -->
-                            <div class="min-w-0">
+                            <div class="min-w-0" :class="{ 'pl-16': record.parent_id }">
                                 <div class="flex items-center gap-2">
                                     <p class="line-clamp-1 text-sm text-gray-900 dark:text-gray-100" v-text="record.subject"></p>
                                     <p v-html="record.attachments"></p>

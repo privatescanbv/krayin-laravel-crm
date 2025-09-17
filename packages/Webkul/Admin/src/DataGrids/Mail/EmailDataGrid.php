@@ -183,7 +183,7 @@ class EmailDataGrid extends DataGrid
                     case 'activity':
                         $route = route('admin.activities.view', $row->activity_id);
                         $activity = Activity::find($row->activity_id);
-                        $display = $activity->name ?: ('#'.$row->activity_id);
+                        $display = $activity ? $activity->title : ('#'.$row->activity_id);
                         $label = e($display);
                         break;
                     default:

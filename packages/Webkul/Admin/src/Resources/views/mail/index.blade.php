@@ -74,10 +74,10 @@
                     </template>
 
                     <template v-else>
-                        <div class="row grid grid-cols-[2fr_6fr_1fr_.0.3fr] grid-rows-1 items-center border-b px-8 py-4 dark:border-gray-800 max-lg:hidden">
+                        <div class="row grid grid-cols-[2fr_7fr_.0.3fr] grid-rows-1 items-center border-b px-8 py-4 dark:border-gray-800 max-lg:hidden">
                             <div
                                 class="flex items-center gap-6"
-                                v-for="(columnGroup, index) in [['name'], ['attachments', 'tags'], ['entity_type'], ['created_at']]"
+                                v-for="(columnGroup, index) in [['name'], ['attachments', 'tags', 'subject', 'reply'], ['entity_type'],['created_at']]"
                             >
                                 <label
                                     class="flex w-max cursor-pointer select-none items-center gap-2"
@@ -130,7 +130,7 @@
                                 </p>
                             </div>
                         </div>
-                        
+
                         <!-- Mobile Sort/Filter Header -->
                         <div class="hidden border-b bg-gray-50 px-4 py-3 text-black dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 max-lg:block">
                             <div class="flex items-center justify-between">
@@ -157,7 +157,7 @@
                                         </span>
                                     </label>
                                 </div>
-                                
+
                                 <!-- Mobile Sort Dropdown -->
                                 <div v-if="available.columns.some(column => column.sortable)">
                                     <x-admin::dropdown position="bottom-{{ in_array(app()->getLocale(), ['fa', 'ar']) ? 'left' : 'right' }}">
@@ -170,12 +170,12 @@
                                                     <span>
                                                         Sort
                                                     </span>
-                    
+
                                                     <span class="icon-down-arrow text-2xl"></span>
                                                 </button>
                                             </div>
                                         </x-slot>
-                
+
                                         <x-slot:menu>
                                             <x-admin::dropdown.menu.item
                                                 v-for="column in available.columns.filter(column => column.sortable && column.visibility)"
@@ -274,7 +274,7 @@
                                         </span>
 
                                         <!-- Entity Type (Related to) -->
-                                        
+
 
                                         <!-- Subject And Reply -->
                                         <div class="min-w-0 flex-1">
@@ -306,7 +306,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Mobile Card View -->
                         <div
                             class="hidden border-b px-4 py-4 text-black dark:border-gray-800 dark:text-gray-300 max-lg:block"
@@ -346,17 +346,17 @@
                             <div class="grid gap-2">
                                 <template v-for="column in available.columns">
                                     <div class="flex flex-wrap items-baseline gap-x-2">
-                                        <span 
+                                        <span
                                             :class="{'font-semibold': ! record.is_read}"
-                                            class="text-slate-600 dark:text-gray-300" 
+                                            class="text-slate-600 dark:text-gray-300"
                                             v-html="column.label + ':'"
                                         ></span>
-                                        <span                         
+                                        <span
                                             :class="{
                                                 'font-medium': record.is_read,
                                                 'font-semibold': ! record.is_read
                                             }"
-                                            class="break-words text-slate-900 dark:text-white" 
+                                            class="break-words text-slate-900 dark:text-white"
                                             v-html="record[column.index]"
                                         ></span>
                                     </div>
@@ -561,19 +561,19 @@
         <script type="module">
             app.component('v-mail', {
                 template: '#v-mail-template',
-        
+
                 data() {
                     return {
                         selectedMail: false,
-        
+
                         showCC: false,
-        
+
                         showBCC: false,
-        
+
                         isStoring: false,
-        
+
                         saveAsDraft: 0,
-        
+
                         draft: {
                             id: null,
                             reply_to: [],
@@ -583,7 +583,7 @@
                             reply: '',
                             attachments: [],
                         },
-        
+
                         backgroundColors: [
                             {
                                 label: "@lang('admin::app.components.tags.index.aquarelle-red')",
@@ -613,47 +613,47 @@
                         ],
                     };
                 },
-        
+
                 mounted() {
                     const params = new URLSearchParams(window.location.search);
-        
+
                     if (params.get('openModal')) {
                         this.$refs.toggleComposeModal.toggle();
                     }
                 },
-        
+
                 methods: {
                     removeTinyMCE() {
                         tinymce?.remove?.();
                     },
-                    
+
                     truncatedReply(reply) {
                         const maxLength = 100;
-        
+
                         if (reply.length > maxLength) {
                             return `${reply.substring(0, maxLength)}...`;
                         }
-        
+
                         return reply;
                     },
-        
+
                     toggleModal() {
                         this.draft.reply_to = [];
-        
+
                         this.$refs.toggleComposeModal.toggle();
                     },
-        
+
                     save(params, { resetForm, setErrors  }) {
                         this.isStoring = true;
-        
+
                         let formData = new FormData(this.$refs.mailForm);
-        
+
                         formData.append('is_draft', this.saveAsDraft);
-        
+
                         if (this.draft.id) {
                             formData.append('_method', 'PUT');
                         }
-        
+
                         this.$axios.post(this.draft.id ? "{{ route('admin.mail.update', ':id') }}".replace(':id', this.draft.id) : '{{ route('admin.mail.store') }}', formData, {
                                 headers: {
                                     'Content-Type': 'multipart/form-data',
@@ -661,9 +661,9 @@
                             })
                             .then ((response) => {
                                 this.$refs.datagrid.get();
-        
+
                                 this.$emitter.emit('add-flash', { type: 'success', message: response.data?.message });
-        
+
                                 resetForm();
                             })
                             .catch ((error) => {
@@ -674,13 +674,13 @@
                                 }
                             }).finally(() => {
                                 this.$refs.toggleComposeModal.close();
-        
+
                                 this.isStoring = false;
-        
+
                                 this.resetForm();
                             });
                     },
-        
+
                     editModal(row) {
                         // Als het geen draft is, ga naar de view-pagina
                         if (!row.is_draft) {
@@ -698,7 +698,7 @@
                             })
                             .catch(error => {});
                     },
-        
+
                     resetForm() {
                         this.draft = {
                             id: null,

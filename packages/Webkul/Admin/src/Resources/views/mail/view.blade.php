@@ -1304,7 +1304,7 @@
                                     type="button"
                                     class="icon-delete flex h-8 w-8 items-center justify-center rounded-md text-2xl hover:bg-gray-200 dark:hover:bg-gray-700"
                                     title="Koppeling verwijderen"
-                                    @click="$refs.emailAction.unlinkActivity()"
+                                    @click="unlinkActivity()"
                                 ></button>
                             </div>
                         </div>

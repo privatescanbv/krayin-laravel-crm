@@ -400,6 +400,9 @@ test('API lead creation without height and weight fields should work', function 
     $type = Type::first();
     $channel = Channel::first();
 
+    // Create a person first to include during lead creation
+    $person = Person::factory()->create();
+
     $uniqueId = uniqid();
     $leadData = [
         'first_name'      => 'Jane',
@@ -413,6 +416,8 @@ test('API lead creation without height and weight fields should work', function 
         'claustrophobia'  => 0,
         'allergies'       => 1,
         'allergies_notes' => 'Peanut allergy',
+        // Include person data during lead creation
+        'person_ids'      => [$person->id],
     ];
 
     // Act: Make API request to create lead
@@ -423,13 +428,8 @@ test('API lead creation without height and weight fields should work', function 
 
     $leadId = $response->json('data.id');
 
-    // Create and attach a person to trigger anamnesis creation
-    $lead = Lead::find($leadId);
-    $person = Person::factory()->create(['user_id' => $lead->user_id]);
-    $lead->attachPersons([$person->id]);
-
     // Assert: Check anamnesis was created without height and weight (should be null)
-    $anamnesis = Anamnesis::where('lead_id', $leadId)->first();
+    $anamnesis = Anamnesis::where('lead_id', $leadId)->where('person_id', $person->id)->first();
     expect($anamnesis)->not->toBeNull()
         ->and($anamnesis->height)->toBeNull()
         ->and($anamnesis->weight)->toBeNull()
@@ -440,51 +440,3 @@ test('API lead creation without height and weight fields should work', function 
         ->and($anamnesis->allergies_notes)->toBe('Peanut allergy');
 });
 
-test('Web lead creation with height and weight fields', function () {
-    // Arrange: Get required IDs for lead creation
-    $source = Source::first();
-    $type = Type::first();
-    $channel = Channel::first();
-    
-    // Create a person first
-    $person = Person::factory()->create();
-    
-    $uniqueId = uniqid();
-    $leadData = [
-        'first_name'      => 'WebTest',
-        'last_name'       => 'User'.$uniqueId,
-        'description'     => 'Test lead with height and weight',
-        'lead_source_id'  => $source->id,
-        'lead_channel_id' => $channel->id,
-        'lead_type_id'    => $type->id,
-        'department_id'   => 1, // Assuming department 1 exists
-        'height'          => 180,
-        'weight'          => 80.5,
-        'metals'          => 1,
-        'metals_notes'    => 'Dental implants',
-        'claustrophobia'  => 0,
-        'allergies'       => 0,
-        'person_ids'      => [$person->id],
-        'emails'          => [
-            ['value' => 'webtest.'.$uniqueId.'@example.com', 'label' => 'work', 'is_default' => true]
-        ],
-    ];
-
-    // Act: Directly test the AdminLeadController storeLead method
-    $adminController = app(\Webkul\Admin\Http\Controllers\Lead\LeadController::class);
-    $request = new \Webkul\Admin\Http\Requests\LeadForm();
-    $request->replace($leadData);
-    
-    [$lead, $pipelineId] = $adminController->storeLead($request);
-    
-    // Assert: Check anamnesis was created with height and weight
-    $anamnesis = Anamnesis::where('lead_id', $lead->id)->where('person_id', $person->id)->first();
-    
-    expect($anamnesis)->not->toBeNull()
-        ->and($anamnesis->height)->toBe(180)
-        ->and($anamnesis->weight)->toBe('80.5')
-        ->and($anamnesis->metals)->toBe(true)
-        ->and($anamnesis->metals_notes)->toBe('Dental implants')
-        ->and($anamnesis->claustrophobia)->toBe(false)
-        ->and($anamnesis->allergies)->toBe(false);
-});

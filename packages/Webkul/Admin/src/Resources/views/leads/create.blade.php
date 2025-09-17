@@ -425,7 +425,7 @@
                                                         placeholder="Bijv. 75"
                                                         min="20"
                                                         max="300"
-                                                        step="0.1"
+                                                        step="1"
                                                     />
                                                     <x-admin::form.control-group.error control-name="weight"/>
                                                 </x-admin::form.control-group>

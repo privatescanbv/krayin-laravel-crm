@@ -352,7 +352,7 @@ test('API lead creation with anamnesis height and weight fields', function () {
         'lead_channel_id' => $channel->id,
         'lead_type_id'    => $type->id,
         'height'          => 175,
-        'weight'          => 75.5,
+        'weight'          => 75,
         'metals'          => 0,
         'claustrophobia'  => 0,
         'allergies'       => 0,
@@ -376,7 +376,7 @@ test('API lead creation with anamnesis height and weight fields', function () {
 
     expect($anamnesis)->not->toBeNull()
         ->and($anamnesis->height)->toBe(175)
-        ->and($anamnesis->weight)->toBe('75.5') // Cast as decimal:1 returns string
+        ->and($anamnesis->weight)->toBe(75) // Cast as integer returns integer
         ->and($anamnesis->metals)->toBe(false)
         ->and($anamnesis->claustrophobia)->toBe(false)
         ->and($anamnesis->allergies)->toBe(false);

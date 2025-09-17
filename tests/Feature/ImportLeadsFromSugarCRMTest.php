@@ -586,7 +586,7 @@ test('imports lead with multiple persons correctly', function () {
     $anamnesis1 = $anamnesisRecords->where('person_id', $appPerson1->id)->first();
     expect($anamnesis1)->not->toBeNull()
         ->and($anamnesis1->height)->toBe(170)
-        ->and($anamnesis1->weight)->toBe('65.0') // Cast as decimal:1 returns string
+        ->and($anamnesis1->weight)->toBe(65) // Cast as integer returns integer
         ->and($anamnesis1->metals)->toBe(false)
         ->and($anamnesis1->medications)->toBe(true);
 
@@ -594,7 +594,7 @@ test('imports lead with multiple persons correctly', function () {
     $anamnesis2 = $anamnesisRecords->where('person_id', $appPerson2->id)->first();
     expect($anamnesis2)->not->toBeNull()
         ->and($anamnesis2->height)->toBe(180)
-        ->and($anamnesis2->weight)->toBe('75.0') // Cast as decimal:1 returns string
+        ->and($anamnesis2->weight)->toBe(75) // Cast as integer returns integer
         ->and($anamnesis2->metals)->toBe(true)
         ->and($anamnesis2->medications)->toBe(false);
 });

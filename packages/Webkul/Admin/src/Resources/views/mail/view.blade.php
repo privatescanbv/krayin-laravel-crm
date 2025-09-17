@@ -952,11 +952,11 @@
                                         class="flex cursor-pointer gap-2 px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900"
                                         @click="linkLead(lead)"
                                     >
-                                        <x-admin::avatar ::name="lead.title" />
+                                        <x-admin::avatar ::name="lead.name || lead.title" />
 
                                         <!-- Lead Title -->
                                         <div class="flex flex-col gap-1">
-                                            <span>@{{ lead.title }}</span>
+                                            <span>@{{ lead.name || lead.title }}</span>
                                         </div>
                                     </li>
 
@@ -1784,9 +1784,9 @@
                      */
                     leads() {
                         const term = (this.searchTerm || '').toLowerCase();
-                        // Filter by title and then apply business filters: open stages and selected person if present
+                        // Filter by name/title
                         let list = this.searchedResults.filter(item =>
-                            (item.title || '').toLowerCase().includes(term)
+                            ((item.name || item.title || '')).toLowerCase().includes(term)
                         );
                         // Exclude won/lost stages
                         list = list.filter(lead => {
@@ -1796,7 +1796,12 @@
                         // If email has a selected person, filter to leads containing that person
                         const pid = this.$parent?.email?.person_id || this.email?.person_id || null;
                         if (pid) {
-                            list = list.filter(lead => Array.isArray(lead.persons?.data) && lead.persons.data.some(p => p.id === pid));
+                            list = list.filter(lead => {
+                                const arr = Array.isArray(lead.persons)
+                                    ? lead.persons
+                                    : (Array.isArray(lead.persons?.data) ? lead.persons.data : []);
+                                return arr.some(p => p.id === pid);
+                            });
                         }
                         return list;
                     },

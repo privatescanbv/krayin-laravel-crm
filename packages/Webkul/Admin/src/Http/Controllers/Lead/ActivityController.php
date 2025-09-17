@@ -70,6 +70,9 @@ class ActivityController extends Controller
         ]);
         $request['comment'] = $request->description;
 
+        // Ensure person_id is not saved when storing activity for a lead
+        $request->request->remove('person_id');
+
         // Convert empty strings to null for foreign key constraints
         $data = $request->all();
         foreach (['user_id'] as $field) {

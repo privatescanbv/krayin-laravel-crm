@@ -900,7 +900,7 @@
                                 </div>
                             </span>
 
-                            <!-- Popup Box -->f
+                            <!-- Popup Box -->
                             <div
                                 v-if="showPopup"
                                 class="absolute top-full z-10 mt-1 flex w-full origin-top transform flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800"

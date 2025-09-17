@@ -170,6 +170,11 @@ class ActivityController extends Controller
         // Auto-assign group if not specified but user has a group
         $data = request()->all();
 
+        // If lead_id is set, ensure we do not also bind a person via pivot
+        if (!empty($data['lead_id'])) {
+            unset($data['person_id']);
+        }
+
         // Convert empty strings to null for foreign key constraints
         foreach (['lead_id', 'group_id', 'user_id'] as $field) {
             if (isset($data[$field]) && ($data[$field] === '' || $data[$field] === null)) {
@@ -187,8 +192,10 @@ class ActivityController extends Controller
             'is_done' => request('type') == 'note' ? 1 : 0,
         ]));
 
-        $didChange = $this->updateStatus($this->activity);
-        if($didChange) $this->activity->save();
+        $didChange = $this->updateStatus($activity);
+        if ($didChange) {
+            $activity->save();
+        }
 
         Event::dispatch('activity.create.after', $activity);
 

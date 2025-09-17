@@ -1,10 +1,11 @@
 === Email Functionaliteit
 
-Het CRM systeem heeft een geïntegreerde email functionaliteit die automatische koppeling van inkomende berichten aan leads en contactpersonen mogelijk maakt.
+Het CRM systeem heeft een geïntegreerde email functionaliteit die automatische koppeling van inkomende berichten aan leads, contactpersonen en activiteiten mogelijk maakt.
+Het systeem werkt in de basis als een *ticket systeem*, maar is uitgebreid met functionaliteiten die het werkproces ondersteunen.
 
 ==== Email Accounts Configuratie
 
-Op het moment werkt het systeem werkt met twee specifieke email accounts die elk een verschillende functie hebben:
+Op dit moment werkt het systeem met twee specifieke email accounts die elk een verschillende functie hebben:
 
 ===== Patient Email Account
 * **Email adres**: `user1@test.local`
@@ -27,140 +28,178 @@ Het CRM systeem herkent automatisch inkomende berichten op `privatescan@test.loc
 ===== Automatische Koppeling
 Het systeem gebruikt de volgende logica voor het koppelen van inkomende emails:
 
-. **Afzender Herkenning**: Het systeem zoekt naar bestaande leads/contacten met het email adres van de afzender
-. **Thread Detectie**: Replies worden gekoppeld aan de oorspronkelijke conversatie
-. **Lead Associatie**: Nieuwe berichten verschijnen zowel in de CRM inbox als in de specifieke lead
+. **Afzender Herkenning**: Het systeem zoekt naar bestaande leads/contacten met het email adres van de afzender.
+. **Thread Detectie**: Replies worden gekoppeld aan de oorspronkelijke conversatie.
+. **Lead Associatie**: Nieuwe berichten verschijnen zowel in de CRM inbox als in de specifieke lead.
+. **Activiteit Koppeling**: Wanneer een email vanuit een activiteit wordt verstuurd, gaat de activiteit tijdelijk op *On-Hold*. Zodra er een reply binnenkomt, wordt de activiteit weer aangeboden om verder op te volgen.
 
 ===== Verwerkingstijd
 * **Maximale verwerkingstijd**: 1 minuut
 * **Gemiddelde verwerkingstijd**: 10-30 seconden
 * **Status updates**: Automatisch in real-time
 
+==== Inbox View
+
+* Het CRM bevat een *Inbox View* die standaard alle ongelezen mails toont.
+* Vanuit deze view kan verder gefilterd worden, vergelijkbaar met Outlook of andere mailclients.
+* Filtering kan plaatsvinden op:
+** status (gelezen / ongelezen)
+** tags (bijvoorbeeld per mailbox)
+** folders (aanbevolen voor overzichtelijkheid)
+
+==== Extra Mogelijkheden: Scannen van Andere Mailboxen
+
+* Het CRM kan meerdere mailboxen uitlezen, omdat deze mails nieuwe leads kunnen bevatten.
+* Binnen het CRM worden deze mails automatisch voorzien van een *tag* of in een *folder* geplaatst. Dit voorkomt dat alles door elkaar komt te staan.
+* Vanuit geïmporteerde mails kan een gebruiker de mail koppelen aan:
+** een persoon
+** een lead
+** een activiteit
+** een order
+* Mails die na 4 weken niet gekoppeld zijn, worden automatisch verwijderd uit de CRM-database om onnodige datagroei te voorkomen.
+
+==== Opschoning en koppeling met Outlook
+
+* Alle mails blijven in de originele inbox van Outlook staan; er wordt niets verwijderd buiten het CRM om. (Exclusief hoofd emailadres van het CRM zelf.)
+* Wanneer een mail in het CRM aan een entiteit wordt gekoppeld, kan er automatisch gekozen worden om deze mail uit de Outlook inbox te verwijderen.
+* Dit helpt om persoonlijke inboxen op te schonen en dubbel beheer te voorkomen.
+
 ==== Praktijk Voorbeeld: Email Workflow
 
-Hieronder staat een complete workflow die demonstreert hoe de email functionaliteit werkt van begin tot eind.
-
 ===== Stap 1: Email Verzenden vanuit CRM
+. Open de gewenste lead of activiteit in het CRM systeem.
+. Klik op het **email icoon** (📧) om een nieuwe email op te stellen.
+. Vul de email gegevens in en klik op **Verzenden**.
+. De activiteit wordt automatisch op *On-Hold* gezet tot er een antwoord komt.
 
-. Open de gewenste lead in het CRM systeem
-. Klik op het **email icoon** (📧) om een nieuwe email op te stellen
-. Vul de email gegevens in:
-   * **Naar**: `user1@test.local`
-   * **Onderwerp**: Voeg een duidelijk onderwerp toe
-   * **Bericht**: Schrijf je bericht
-. Klik op **Verzenden**
+===== Stap 2: Reply Ontvangen
+. Reply komt binnen in de CRM Inbox.
+. De reply wordt automatisch gekoppeld aan de juiste lead, contactpersoon of activiteit.
+. De activiteit gaat uit *On-Hold* en wordt weer actief in de takenlijst.
 
-[TIP]
-====
-Gebruik duidelijke onderwerpen zodat de email thread gemakkelijk te volgen is in de correspondentie geschiedenis.
-====
-
-===== Stap 2: Webmail Toegang
-
-. Navigeer naar `webmail.dev.privatescan.nl`
-. Log in met de volgende gegevens:
-   * **Gebruikersnaam**: `user1@test.local`
-   * **Wachtwoord**: `test1234`
-. Controleer de inbox voor de ontvangen email
-
-===== Stap 3: Email Beantwoorden
-
-. Open de ontvangen email in de webmail interface
-. Klik op **Beantwoorden** of **Reply**
-. Schrijf je antwoord
-. **Belangrijk**: Zorg ervoor dat het antwoord wordt verstuurd naar `privatescan@test.local`
-. Verstuur de reply
-
-[IMPORTANT]
-====
-Voor correcte koppeling moet de reply altijd naar `privatescan@test.local` worden verstuurd. Het systeem herkent de thread op basis van het onderwerp en eerdere correspondentie.
-====
-
-===== Stap 4: Verificatie in CRM
-
-**CRM Inbox Controle:**
-. Ga naar de **CRM Inbox** sectie
-. Wacht maximaal 1 minuut op verwerking
-. De reply email verschijnt in de inbox lijst
-
-**Lead Specifieke Controle:**
-. Open de oorspronkelijke lead
-. Navigeer naar de **Correspondentie** of **Email** sectie
-. De complete email thread is zichtbaar, inclusief de reply
-
-===== Stap 5: Resultaat Verificatie
-
-Na succesvolle verwerking zie je:
-
-* ✅ **In CRM Inbox**: Nieuwe email met juiste afzender informatie
-* ✅ **In Lead Details**: Complete conversatie geschiedenis
-* ✅ **Thread Continuïteit**: Alle berichten zijn aan elkaar gekoppeld
-* ✅ **Timestamp**: Correcte datum en tijd van ontvangst
+===== Stap 3: Controle in CRM
+* ✅ **In CRM Inbox**: Nieuwe email zichtbaar met juiste afzenderinformatie.
+* ✅ **In Lead Details** of **Activiteit**: Complete conversatiegeschiedenis zichtbaar.
+* ✅ **Thread Continuïteit**: Alle berichten aan elkaar gekoppeld.
+* ✅ **Takenbeheer**: Activiteit weer open voor opvolging.
 
 ==== Troubleshooting
 
-===== Email Komt Niet Aan
-
-**Probleem**: Verzonden email komt niet aan bij `user1@test.local`
-
-**Mogelijke Oorzaken:**
-* Verkeerd email adres gebruikt
-* Email server problemen
-* Spam filter blokkeert bericht
-
-**Oplossing:**
-. Controleer spelling van email adres
-. Wacht 2-3 minuten voor vertraging
-. Controleer spam/junk folder in webmail
-
-===== Reply Wordt Niet Gekoppeld
-
-**Probleem**: Reply email verschijnt niet in CRM of bij de juiste lead
-
-**Mogelijke Oorzaken:**
-
-* Reply niet naar `privatescan@test.local` gestuurd
-* Onderwerp regel gewijzigd
-* Verwerkingstijd nog niet verstreken
-
-**Oplossing:**
-
-. Verificeer dat reply naar `privatescan@test.local` is gestuurd
-. Wacht volledige minuut voor automatische verwerking
-. Controleer of onderwerp regel intact is gebleven
-
-===== Webmail Toegang Problemen
-
-**Probleem**: Kan niet inloggen op webmail interface
-
-**Mogelijke Oorzaken:**
-
-* Verkeerde inloggegevens
-* Browser cache problemen
-* Webmail server niet beschikbaar
-
-**Oplossing:**
-
-. Gebruik exact: `user1@test.local` / `test1234`
-. Probeer incognito/private browsing mode
-. Wis browser cache en cookies
+Zie afzonderlijke secties voor veelvoorkomende problemen zoals:
+* email komt niet aan
+* reply wordt niet gekoppeld
+* webmail toegang werkt niet
 
 ==== Best Practices
 
-===== Email Communicatie
+* Gebruik duidelijke onderwerpregels voor betere tracking.
+* Wijzig onderwerpregels niet in replies (belangrijk voor thread-koppeling).
+* Reageer tijdig op inkomende berichten.
+* Controleer regelmatig de CRM Inbox.
+* Documenteer belangrijke correspondentie in de lead-notities.
 
-. **Duidelijke Onderwerpen**: Gebruik beschrijvende onderwerpen voor betere tracking
-. **Professionele Toon**: Houd berichten professioneel en relevant
-. **Tijdige Responses**: Reageer binnen redelijke tijd op inkomende berichten
+==== Belangrijke Noot
 
-===== Systeem Gebruik
+De server waarop het CRM draait, is **geen mailserver** (met uitzondering van testomgevingen).
+Het draaien van een eigen mailserver in productie brengt aanzienlijke risico’s met zich mee.
+De mailafhandeling zal daarom via een partner worden ingericht, zoals bijvoorbeeld *Postmark* of *Steentjes*.
+De exacte technische keuze valt buiten deze beschrijving en zal later worden ingevuld.
 
-. **Regelmatige Controle**: Check CRM inbox regelmatig voor nieuwe berichten
-. **Thread Integriteit**: Wijzig onderwerp regels niet in replies
-. **Documentatie**: Houd belangrijke email correspondentie bij in lead notities
 
-===== Monitoring
+==== Visuele flow
 
-. **Response Tijden**: Monitor hoe snel emails worden verwerkt
-. **Koppeling Accuratesse**: Controleer of emails correct gekoppeld worden
-. **Systeem Status**: Let op eventuele email server problemen
+[plantuml, email-activity-flow, format=svg]
+....
+@startuml
+title E-mailflow: vanuit Activiteit -> koppelen -> opvolgen
+
+actor Gebruiker as User
+participant "CRM UI" as CRM
+participant "Activiteit" as Activity
+participant "Mailpartner\n(Postmark/Steentjes)" as MailGW
+participant "Ontvanger\n(bijv. user1@test.local)" as Recipient
+participant "CRM Inbox Processor" as Processor
+collections "Lead/Persoon/Order" as Entities
+participant "Outlook/Gmail\nvan medewerker" as Outlook
+
+== Verzenden vanuit activiteit ==
+User -> CRM: Open lead/activiteit en klikt op "E-mail"
+CRM -> Activity: Registreer concept en metadata
+CRM -> MailGW: Verzenden e-mail (to, subject, thread-id)
+Activity -> Activity: Zet status = On-Hold
+
+== Ontvangen reply ==
+Recipient -> MailGW: Reply op bericht
+MailGW -> Processor: Lever inkomende mail (webhook/IMAP-poll)
+Processor -> Processor: Match op thread-id / Message-Id / afzender
+Processor -> Entities: Koppel aan juiste lead/persoon/activiteit
+Processor -> Activity: Zet status = Te behandelen (van On-Hold af)
+Processor -> CRM: Toon in CRM Inbox en bij entiteit
+
+== Huisregels ==
+note over Processor
+- Ongekoppeld ouder dan 4 weken? -> verwijder uit CRM-database
+- Inbox-view toont standaard ongelezen
+- Filteren op status, tags of folders
+end note
+
+legend left
+  Groen: automatische stappen
+  Blauw: gebruikersactie
+  Grijs: optioneel beleid
+endlegend
+@enduml
+....
+
+[plantuml, email-scanning-flow, format=svg]
+....
+@startuml
+title E-mailflow: mailbox-scanning -> inbox -> koppelen
+
+actor Gebruiker as User
+participant "Externe mailbox\n(bijv. info@...)" as ExtMB
+participant "Mailpartner\n(Postmark/Steentjes)" as MailGW
+participant "CRM Inbox Processor" as Processor
+participant "CRM Inbox View" as Inbox
+collections "Lead/Persoon/Activiteit/Order" as Entities
+
+== Scrapen/Importeren ==
+ExtMB -> MailGW: Nieuwe e-mails binnen
+MailGW -> Processor: Doorlevering (batch/poll)
+Processor -> Processor: Tag of folder bepalen o.b.v. afzender/mailbox
+Processor -> Inbox: Plaats mail in Inbox met tag/folder
+User -> Inbox: Filter op tag/folder
+Inbox -> Entities: Gebruiker koppelt mail aan entiteit
+Processor -> Processor: Verwijder mail uit oorspronkelijke mailbox
+
+== Opschonen ==
+Processor -> Processor: Ongekoppeld > 4 weken? Verwijderen uit CRM
+note right
+- Originele mail blijft in externe mailbox bestaan
+- Koppelen in CRM wijzigt niets aan externe mailbox
+- Optioneel beleid: verwijderen uit externe Outlook bij koppeling
+end note
+
+legend left
+  Tag/folder:
+    - Folder is aanbevolen voor overzicht
+    - Tag kan aanvullend gebruikt worden
+endlegend
+@enduml
+....
+
+[NOTE]
+====
+Deze diagrams beschrijven het functionele gedrag zoals het nu bedoeld is:
+- Activiteiten kunnen bij verzending op On-Hold en gaan eraf bij reply.
+- De inbox-view toont standaard ongelezen en ondersteunt filtering op status, tags en folders.
+- Externe mailboxen worden geïmporteerd met folder-indeling voor overzicht, tag is optioneel.
+- Ongekoppelde mail wordt na 4 weken automatisch uit het CRM verwijderd. De originele mail in Outlook/webmail blijft bestaan.
+====
+
+[IMPORTANT]
+====
+De CRM-server draait geen mailserver in productie (testomgevingen uitgezonderd).
+De mailafhandeling wordt ingericht via een partner (bijvoorbeeld Postmark of Steentjes).
+De precieze technische keuze en implementatiedetails vallen buiten deze handleiding.
+====

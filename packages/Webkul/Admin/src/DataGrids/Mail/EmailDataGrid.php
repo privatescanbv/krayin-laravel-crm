@@ -5,8 +5,12 @@ namespace Webkul\Admin\DataGrids\Mail;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use Throwable;
+use Webkul\Activity\Models\Activity;
+use Webkul\Contact\Models\Person;
 use Webkul\DataGrid\DataGrid;
 use Webkul\Email\Repositories\EmailRepository;
+use Webkul\Lead\Models\Lead;
 use Webkul\Tag\Repositories\TagRepository;
 
 class EmailDataGrid extends DataGrid
@@ -33,7 +37,17 @@ class EmailDataGrid extends DataGrid
                 'emails.is_read',
                 'emails.created_at',
                 'tags.name as tags',
-                DB::raw('COUNT(DISTINCT '.DB::getTablePrefix().'email_attachments.id) as attachments')
+                'emails.person_id',
+                'emails.lead_id',
+                'emails.activity_id',
+                DB::raw('COUNT(DISTINCT '.DB::getTablePrefix().'email_attachments.id) as attachments'),
+                // Add entity information
+                DB::raw('CASE
+                    WHEN emails.person_id IS NOT NULL THEN "person"
+                    WHEN emails.activity_id IS NOT NULL THEN "activity"
+                    WHEN emails.lead_id IS NOT NULL THEN "lead"
+                    ELSE "N/A"
+                END as entity_type'),
             )
             ->leftJoin('email_attachments', 'emails.id', '=', 'email_attachments.email_id')
             ->leftJoin('email_tags', 'emails.id', '=', 'email_tags.email_id')
@@ -119,6 +133,65 @@ class EmailDataGrid extends DataGrid
                     'value' => 'name',
                 ],
             ],
+        ]);
+
+        // Place "Gerelateerd aan" (entity_type) before "type"
+        $this->addColumn([
+            'index'              => 'entity_type',
+            'label'              => 'Gerelateerd aan',
+            'type'               => 'string',
+            'searchable'         => false,
+            'sortable'           => true,
+            'filterable'         => true,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => [
+                ['label' => 'Alles', 'value' => ''],
+                ['label' => 'Lead', 'value' => 'lead'],
+                ['label' => 'Person', 'value' => 'person'],
+                ['label' => 'Product', 'value' => 'product'],
+            ],
+            'closure'    => function ($row) {
+                if ($row->entity_type === 'N/A') {
+                    return "<span class='text-gray-800 dark:text-gray-300'>N/A</span>";
+                }
+
+                switch ($row->entity_type) {
+                    case 'lead':
+                        $route = route('admin.leads.view', $row->lead_id);
+                        // Try to resolve lead name via model accessor; fallback to #ID
+                        try {
+                            $lead = Lead::find($row->lead_id);
+                            $display = $lead ? ($lead->name ?? ('#'.$row->lead_id)) : ('#'.$row->lead_id);
+                        } catch (Throwable $e) {
+                            logger()->warning('Unable to locate lead entity id '.$row->lead_id . ', '. $e->getMessage());
+                            $display = '#'.$row->lead_id;
+                        }
+                        $label = e($display);
+                        break;
+                    case 'person':
+                        $route = route('admin.contacts.persons.view', $row->person_id);
+                        // Try to resolve person name via model accessor; fallback to #ID
+                        try {
+                            $person = Person::find($row->person_id);
+                            $display = $person ? $person->name : ('#'.$row->person_id);
+                        } catch (Throwable $e) {
+                            logger()->warning('Unable to locate person entity id '.$row->person_id . ', '. $e->getMessage());
+                            $display = '#'.$row->person_id;
+                        }
+                        $label = e($display);
+                        break;
+                    case 'activity':
+                        $route = route('admin.activities.view', $row->activity_id);
+                        $activity = Activity::find($row->activity_id);
+                        $display = $activity->name ?: ('#'.$row->activity_id);
+                        $label = e($display);
+                        break;
+                    default:
+                        return "<span class='text-gray-800 dark:text-gray-300'>Onbekend</span>";
+                }
+
+                return "<a class='text-brandColor hover:underline' target='_blank' href='".$route."'>".$label.'</a>';
+            },
         ]);
 
         $this->addColumn([

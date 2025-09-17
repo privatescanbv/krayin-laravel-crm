@@ -4,6 +4,7 @@
     'activeType'          => 'all',
     'types'               => null,
     'extraTypes'          => null,
+    'extraEmails'         => null,
 ])
 
 {!! view_render_event('admin.components.activities.before') !!}
@@ -15,6 +16,7 @@
     active-type="{{ $activeType }}"
     @if($types):types='@json($types)'@endif
     @if($extraTypes):extra-types='@json($extraTypes)'@endif
+    @if($extraEmails):extra-emails='@json($extraEmails)'@endif
     ref="activities"
 >
     <!-- Shimmer -->

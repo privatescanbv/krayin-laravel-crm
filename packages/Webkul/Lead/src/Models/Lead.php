@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Throwable;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
@@ -467,7 +468,7 @@ class Lead extends Model implements LeadContract
     /**
      * Compute unread emails including emails linked via activities.
      */
-    public function unread_emails_count_with_nested(): int
+    public function getUnreadEmailsCountNestedAttribute(): int
     {
         try {
             $direct = (int) $this->emails()->where('is_read', 0)->count();
@@ -480,7 +481,7 @@ class Lead extends Model implements LeadContract
                 ->count();
 
             return $direct + (int) $activityEmailIds;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return (int) $this->unread_emails_count;
         }
     }

@@ -5,6 +5,10 @@ namespace Tests\Feature;
 use App\Models\Anamnesis;
 use Database\Seeders\LeadChannelSeeder;
 use Database\Seeders\TestSeeder;
+use Webkul\Admin\Http\Controllers\Lead\LeadController;
+use Webkul\Admin\Http\Requests\LeadForm;
+use Webkul\Attribute\Repositories\AttributeRepository;
+use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Channel;
 use Webkul\Lead\Models\Lead;
@@ -340,7 +344,7 @@ test('API lead creation with anamnesis height and weight fields', function () {
 
     // Create a person first
     $person = Person::factory()->create();
-    
+
     $uniqueId = uniqid();
     $leadData = [
         'first_name'      => 'John',
@@ -373,22 +377,22 @@ test('API lead creation with anamnesis height and weight fields', function () {
 
     // Assert: Check anamnesis was created with height and weight
     $anamnesis = Anamnesis::where('lead_id', $leadId)->where('person_id', $person->id)->first();
-    
+
     // Debug: Log anamnesis data to see what was actually saved
     if ($anamnesis) {
-        error_log('Anamnesis data: ' . json_encode([
-            'id' => $anamnesis->id,
-            'height' => $anamnesis->height,
-            'weight' => $anamnesis->weight,
-            'metals' => $anamnesis->metals,
+        error_log('Anamnesis data: '.json_encode([
+            'id'             => $anamnesis->id,
+            'height'         => $anamnesis->height,
+            'weight'         => $anamnesis->weight,
+            'metals'         => $anamnesis->metals,
             'claustrophobia' => $anamnesis->claustrophobia,
-            'allergies' => $anamnesis->allergies,
+            'allergies'      => $anamnesis->allergies,
         ]));
     }
-    
+
     expect($anamnesis)->not->toBeNull()
         ->and($anamnesis->height)->toBe(175)
-        ->and($anamnesis->weight)->toBe('75.5') // Cast as decimal:1 returns string
+        ->and($anamnesis->weight)->toBe(75) // Cast as decimal:1 returns string
         ->and($anamnesis->metals)->toBe(false)
         ->and($anamnesis->claustrophobia)->toBe(false)
         ->and($anamnesis->allergies)->toBe(false);
@@ -440,3 +444,51 @@ test('API lead creation without height and weight fields should work', function 
         ->and($anamnesis->allergies_notes)->toBe('Peanut allergy');
 });
 
+test('Web lead creation with height and weight fields', function () {
+    // Arrange: Get required IDs for lead creation
+    $source = Source::first();
+    $type = Type::first();
+    $channel = Channel::first();
+
+    // Create a person first
+    $person = Person::factory()->create();
+
+    $uniqueId = uniqid();
+    $leadData = [
+        'first_name'      => 'WebTest',
+        'last_name'       => 'User'.$uniqueId,
+        'description'     => 'Test lead with height and weight',
+        'lead_source_id'  => $source->id,
+        'lead_channel_id' => $channel->id,
+        'lead_type_id'    => $type->id,
+        'department_id'   => 1, // Assuming department 1 exists
+        'height'          => 180,
+        'weight'          => 80,
+        'metals'          => 1,
+        'metals_notes'    => 'Dental implants',
+        'claustrophobia'  => 0,
+        'allergies'       => 0,
+        'person_ids'      => [$person->id],
+        'emails'          => [
+            ['value' => 'webtest.'.$uniqueId.'@example.com', 'label' => 'work', 'is_default' => true],
+        ],
+    ];
+
+    // Act: Directly test the AdminLeadController storeLead method
+    $adminController = app(LeadController::class);
+    $request = new LeadForm(app(AttributeRepository::class), app(AttributeValueRepository::class));
+    $request->replace($leadData);
+
+    [$lead, $pipelineId] = $adminController->storeLead($request);
+
+    // Assert: Check anamnesis was created with height and weight
+    $anamnesis = Anamnesis::where('lead_id', $lead->id)->where('person_id', $person->id)->first();
+
+    expect($anamnesis)->not->toBeNull()
+        ->and($anamnesis->height)->toBe(180)
+        ->and($anamnesis->weight)->toBe('80.5')
+        ->and($anamnesis->metals)->toBe(true)
+        ->and($anamnesis->metals_notes)->toBe('Dental implants')
+        ->and($anamnesis->claustrophobia)->toBe(false)
+        ->and($anamnesis->allergies)->toBe(false);
+});

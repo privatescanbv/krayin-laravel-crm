@@ -2,8 +2,11 @@
 
 namespace Webkul\Email\InboundEmailProcessor;
 
+use Carbon\Carbon;
 use Exception;
+use Schema;
 use Webklex\IMAP\Facades\Client;
+use Webklex\PHPIMAP\Message;
 use Webkul\Email\Enums\SupportedFolderEnum;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
 use Webkul\Email\Repositories\AttachmentRepository;
@@ -72,7 +75,7 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
     /**
      * Process the inbound email.
      *
-     * @param  ?\Webklex\PHPIMAP\Message  $message
+     * @param  ?Message  $message
      */
     public function processMessage($message = null): void
     {
@@ -139,7 +142,7 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
                 'reference_ids' => array_merge($email->reference_ids ?? [], [$references]),
             ], $email->id);
         }
-
+        logger()->info('Processed email with Message-ID: '.$messageId.' and assigned ID: '.$email->id);
         $email = $this->emailRepository->create([
             'from'          => $attributes['from']->first()->mail,
             'subject'       => $attributes['subject']->first(),
@@ -211,7 +214,7 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
     /**
      * Convert the date to the desired timezone.
      *
-     * @param  \Carbon\Carbon  $carbonDate
+     * @param  Carbon  $carbonDate
      * @param  ?string  $targetTimezone
      */
     protected function convertToDesiredTimezone($carbonDate, $targetTimezone = null)
@@ -252,8 +255,8 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
     {
         try {
             // Check if the core_config table exists
-            return \Schema::hasTable('core_config');
-        } catch (\Exception $e) {
+            return Schema::hasTable('core_config');
+        } catch (Exception $e) {
             return false;
         }
     }

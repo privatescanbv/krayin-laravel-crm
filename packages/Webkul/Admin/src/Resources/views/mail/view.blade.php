@@ -607,7 +607,7 @@
                                     <span class="text-[10px] dark:text-gray-300">@{{ email.person.job_title }}</span>
 
                                     <!-- Emails -->
-                                    <template v-for="email in email?.person?.emails.map(item => item.value)">
+                                    <template v-for="email in (Array.isArray(email?.person?.emails) ? email.person.emails.map(item => item.value) : [])">
                                         <a
                                             class="text-brandColor"
                                             :href="`mailto:${email}`"
@@ -617,7 +617,7 @@
                                     </template>
 
                                     <!-- Contact Numbers -->
-                                    <template v-for="contactNumber in email.person?.contact_numbers.map(item => item.value)">
+                                    <template v-for="contactNumber in (Array.isArray(email?.person?.contact_numbers) ? email.person.contact_numbers.map(item => item.value) : [])">
                                         <a
                                             class="text-brandColor"
                                             :href="`tel:${contactNumber}`"
@@ -732,7 +732,7 @@
                                         <span>@{{ person.name }}</span>
 
                                         <div class="flex flex-col gap-1">
-                                            <span class="text-sm">@{{ person.emails.map(item => item.value).join(', ') }}</span>
+                                            <span class="text-sm">@{{ (Array.isArray(person.emails) ? person.emails.map(item => item.value) : []).join(', ') }}</span>
                                         </div>
                                     </div>
                                 </li>

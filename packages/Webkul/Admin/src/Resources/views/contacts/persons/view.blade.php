@@ -120,6 +120,8 @@
                 </div>
             </div>
 
+            @include('admin::contacts.persons.common.card', ['person' => $person, 'show_actions' => false])
+
             <!-- Person Overview (merged attributes and organization) -->
             @include ('admin::contacts.persons.view.compact-overview')
 

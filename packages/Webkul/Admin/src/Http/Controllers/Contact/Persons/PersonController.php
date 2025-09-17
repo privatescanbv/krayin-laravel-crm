@@ -390,21 +390,29 @@ class PersonController extends Controller
 
         // If searchTerm looks like an email, normalize to emails JSON search for better matching
         if ($searchTerm !== '' && filter_var($searchTerm, FILTER_VALIDATE_EMAIL)) {
-            // Clear standard search and use scope for JSON email match; also ensure emails:like is allowed
+            // Build a single OR group across name fields and emails JSON for email-like input
             request()->merge([
                 'search'       => '',
-                'searchFields' => 'emails:like;',
+                'searchFields' => '',
                 'searchJoin'   => 'or',
             ]);
 
             $this->personRepository->scopeQuery(function ($q) use ($searchTerm) {
                 $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $searchTerm);
                 $jsonLike = '%"value":"%' . $escaped . '%"%';
-                return $q->where(function ($qb) use ($jsonLike, $searchTerm) {
-                    $qb->where('emails', 'like', $jsonLike)
+                $nameLike = '%' . $searchTerm . '%';
+
+                return $q->where(function ($qb) use ($jsonLike, $nameLike, $searchTerm) {
+                    $qb->where('first_name', 'like', $nameLike)
+                       ->orWhere('last_name', 'like', $nameLike)
+                       ->orWhere('married_name', 'like', $nameLike)
+                       ->orWhere('emails', 'like', $jsonLike)
                        ->orWhere('emails', 'like', '%' . $searchTerm . '%');
                 });
             });
+
+            // Prevent additional name-only criteria from being added below
+            $searchTerm = '';
         }
 
         // Log all SQL hitting the persons table for this request (interpolated)

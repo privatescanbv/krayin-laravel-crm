@@ -830,6 +830,12 @@
                                 </div>
                             </div>
 
+                           {{-- Lead card (only rendered server-side, not in Vue template) --}}
+                           {{--
+                           @if ($email->lead)
+                               @include('admin::leads.common.card', ['lead' => $email->lead, 'show_actions' => false])
+                           @endif
+                           --}}
                             <!-- Lead Name (clickable to lead view) -->
                             <a
                                 :href="'{{ route('admin.leads.view', ':id') }}'.replace(':id', email.lead_id)"
@@ -1275,7 +1281,7 @@
                     <label class="font-semibold text-gray-800 dark:text-gray-300">
                         Gekoppelde Activiteit
                     </label>
-                    
+
                     <div class="flex flex-col gap-2">
                         <div class="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
                             <div class="flex items-center gap-3">

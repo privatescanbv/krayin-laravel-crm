@@ -952,11 +952,11 @@
                                         class="flex cursor-pointer gap-2 px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900"
                                         @click="linkLead(lead)"
                                     >
-                                        <x-admin::avatar ::name="lead.name || lead.title" />
+                                        <x-admin::avatar ::name="lead.name" />
 
                                         <!-- Lead Title -->
                                         <div class="flex flex-col gap-1">
-                                            <span>@{{ lead.name || lead.title }}</span>
+                                            <span>@{{ lead.name }}</span>
                                         </div>
                                     </li>
 

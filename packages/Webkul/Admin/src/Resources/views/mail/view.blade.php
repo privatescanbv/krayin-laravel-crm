@@ -826,7 +826,7 @@
                                 </div>
                             </span>
 
-                            <!-- Popup Box -->
+                            <!-- Popup Box -->f
                             <div
                                 v-if="showPopup"
                                 class="absolute top-full z-10 mt-1 flex w-full origin-top transform flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800"
@@ -1196,7 +1196,7 @@
                     <label class="font-semibold text-gray-800 dark:text-gray-300">
                         Gekoppelde Activiteit
                     </label>
-                    
+
                     <div class="flex flex-col gap-2">
                         <div class="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
                             <div class="flex items-center gap-3">

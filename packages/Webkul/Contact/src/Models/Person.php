@@ -7,11 +7,13 @@ use App\Enums\PersonSalutation;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
 use Webkul\Contact\Contracts\Person as PersonContract;
 use Webkul\Contact\Database\Factories\PersonFactory;
+use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\LeadProxy;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
@@ -283,5 +285,9 @@ class Person extends Model implements PersonContract
         }
 
         return $this->date_of_birth->age;
+    }
+
+    public function getEmailsForPerson(): Collection {
+        return Email::where('person_id', $this->id)->select(['id','subject','created_at','is_read','folders','person_id'])->get();
     }
 }

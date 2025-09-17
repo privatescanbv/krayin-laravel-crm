@@ -1,3 +1,4 @@
+@php use Webkul\Email\Models\Email; @endphp
 <x-admin::layouts>
     <x-slot:title>
         @lang('admin::app.contacts.persons.view.title', ['name' => $person->name])
@@ -8,7 +9,8 @@
         <!-- Left Panel -->
         {!! view_render_event('admin.contact.persons.view.left.before', ['person' => $person]) !!}
 
-        <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div
+            class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <!-- Person Information -->
             <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
                 <!-- Breadcrumbs and Edit Button -->
@@ -31,7 +33,8 @@
 
                 <!-- Duplicate Detection -->
                 @if (($duplicateCount ?? 0) > 0)
-                    <div class="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
+                    <div
+                        class="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <span class="icon-warning text-orange-600"></span>
@@ -122,16 +125,17 @@
 
             <!-- Gekoppelde Anamneses -->
             <div class="border-b border-gray-200 dark:border-gray-800">
-                <x-admin::anamnesis.index :anamnesis="$person->anamnesis" />
+                <x-admin::anamnesis.index :anamnesis="$person->anamnesis"/>
             </div>
 
             <!-- Gekoppelde Leads -->
             <div class="border-b border-gray-200 dark:border-gray-800">
-                <x-admin::leads :leads="$sortedLeads ?? $person->leads" />
+                <x-admin::leads :leads="$sortedLeads ?? $person->leads"/>
             </div>
 
             <!-- Footer with creation and modification dates -->
-            <div class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
+            <div
+                class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
                 <div class="flex justify-between">
                     <span>Aangemaakt:</span>
                     <span>{{ $person->created_at->format('d-m-Y') }}</span>
@@ -148,12 +152,14 @@
         <!-- Right Panel -->
         <div class="flex w-full flex-row gap-4 rounded-lg">
             <div class="flex-1">
-                <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 mb-4">
-                    <x-admin::email-feed :endpoint="route('admin.contacts.persons.activities.index', $person->id)" title="E-mails (incl. leads/activiteiten)" />
+                <div
+                    class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 mb-4">
+                    <x-admin::email-feed :endpoint="route('admin.contacts.persons.activities.index', $person->id)"
+                                         title="E-mails (incl. leads/activiteiten)"/>
                 </div>
                 <x-admin::activities
                     :endpoint="route('admin.contacts.persons.activities.index', $person->id)"
-                    :extra-emails="@json(\Webkul\Email\Models\Email::where('person_id', $person->id)->select(['id','subject','created_at','is_read','folders','person_id'])->get())"
+                    extra-emails='@json($person->getEmailsForPerson())'
                 />
             </div>
         </div>

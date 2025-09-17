@@ -31,6 +31,7 @@ Route::controller(LeadController::class)->prefix('leads')->group(function () {
     Route::put('{id}/lost', 'markAsLost')->name('admin.leads.lost');
 
     Route::get('search', 'search')->name('admin.leads.search');
+    Route::get('open-by-person/{person}', 'openByPerson')->name('admin.leads.open_by_person');
 
     Route::delete('{id}', 'destroy')->name('admin.leads.delete');
 

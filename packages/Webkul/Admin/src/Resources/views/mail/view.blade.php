@@ -110,7 +110,84 @@
                         </div>
                     </div>
                 @endif
+
+                <template v-if="(email?.lead_id || email?.lead) && !email?.activity_id">
+                    <label class="font-semibold text-gray-800 dark:text-gray-300">
+                        Koppel aan activiteit
+                    </label>
+
+                    <v-activity-lookup
+                        :email="email"
+                        @link-activity="linkActivity"
+                    ></v-activity-lookup>
+                </template>
             </div>
+        </script>
+
+        <!-- Activity Lookup Component -->
+        <script type="module">
+            app.component('v-activity-lookup', {
+                props: ['email'],
+                emits: ['link-activity'],
+                data() {
+                    return {
+                        isLoading: false,
+                        activities: [],
+                        searchTerm: '',
+                        selectedItem: {},
+                    };
+                },
+                mounted() {
+                    this.fetchActivities();
+                },
+                watch: {
+                    'email.lead_id': function() {
+                        this.fetchActivities();
+                    },
+                },
+                computed: {
+                    filteredActivities() {
+                        const term = (this.searchTerm || '').toLowerCase();
+                        return this.activities.filter(a => (a.title || '').toLowerCase().includes(term));
+                    }
+                },
+                methods: {
+                    async fetchActivities() {
+                        if (!this.email?.lead_id) return;
+                        this.isLoading = true;
+                        try {
+                            const resp = await this.$axios.get('{{ route('admin.activities.by_lead_open', ['leadId' => ':id']) }}'.replace(':id', this.email.lead_id));
+                            this.activities = resp.data.data || [];
+                        } catch (e) {
+                            this.activities = [];
+                        } finally {
+                            this.isLoading = false;
+                        }
+                    },
+                    select(activity) {
+                        this.selectedItem = activity;
+                        this.$emit('link-activity', activity);
+                    }
+                },
+                template: `
+                    <div>
+                        <div class="relative">
+                            <input type="text" v-model="searchTerm" class="w-full rounded border border-gray-200 px-2.5 py-2 pr-10 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400" placeholder="@lang('admin::app.mail.view.search')" />
+                        </div>
+                        <ul class="max-h-40 divide-y divide-gray-100 overflow-y-auto dark:divide-gray-700 mt-2">
+                            <li v-for="activity in filteredActivities" :key="activity.id" class="flex cursor-pointer gap-2 px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900" @click="select(activity)">
+                                <span class="text-sm">{{ activity.title }}</span>
+                            </li>
+                            <li v-if="!isLoading && filteredActivities.length === 0" class="px-4 py-2 text-gray-800 dark:text-gray-300">
+                                @lang('admin::app.mail.view.no-result-found')
+                            </li>
+                            <li v-if="isLoading" class="px-4 py-2">
+                                <x-admin::spinner />
+                            </li>
+                        </ul>
+                    </div>
+                `
+            });
         </script>
 
         <!-- Email Item Template -->
@@ -1671,6 +1748,12 @@
                     if (this.value) {
                         this.selectedItem = this.value;
                     }
+                    // Auto-fetch open leads for selected person when available
+                    try {
+                        if (this.email?.person_id) {
+                            this.search();
+                        }
+                    } catch(e) {}
                 },
 
                 created() {
@@ -1756,11 +1839,10 @@
                      * @return {void}
                      */
                     search() {
-                        if (this.searchTerm.length <= 2) {
+                        const pid = this.email?.person_id || null;
+                        if (!pid && this.searchTerm.length <= 2) {
                             this.searchedResults = [];
-
                             this.isSearching = false;
-
                             return;
                         }
 
@@ -1772,13 +1854,19 @@
 
                         this.cancelToken = this.$axios.CancelToken.source();
 
-                        this.$axios.get('{{ route('admin.leads.search') }}', {
+                        const request = pid
+                            ? this.$axios.get('{{ route('admin.leads.open_by_person', ['person' => ':id']) }}'.replace(':id', pid), {
+                                cancelToken: this.cancelToken.token,
+                              })
+                            : this.$axios.get('{{ route('admin.leads.search') }}', {
                                 params: {
                                     ...this.params,
                                     query: this.searchTerm
                                 },
                                 cancelToken: this.cancelToken.token,
-                            })
+                              });
+
+                        request
                             .then(response => {
                                 this.searchedResults = response.data.data;
                             })
@@ -2039,6 +2127,19 @@
                                     .finally(() => this.unlinking.lead = false);
                             },
                         });
+                    },
+
+                    linkActivity(activity) {
+                        this.email['activity'] = activity;
+                        this.email['activity_id'] = activity.id;
+                        this.$axios.post('{{ route('admin.mail.update', $email->id) }}', {
+                            _method: 'PUT',
+                            activity_id: activity.id,
+                        })
+                            .then (response => {
+                                this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                            })
+                            .catch (error => {});
                     },
 
                     unlinkActivity() {

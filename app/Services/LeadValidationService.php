@@ -97,6 +97,9 @@ class LeadValidationService
             $rules['claustrophobia'] = 'required|boolean';
             $rules['allergies'] = 'required|boolean';
             $rules['allergies_notes'] = 'required_if:allergies,1|nullable|string';
+            // Height and weight fields (optional)
+            $rules['height'] = 'nullable|numeric|min:100|max:250';
+            $rules['weight'] = 'nullable|numeric|min:20|max:300';
         }
 
         // Enforce: at least one contact (email or phone) must be provided

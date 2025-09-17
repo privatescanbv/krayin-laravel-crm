@@ -395,6 +395,42 @@
                                                 </div>
                                             </x-admin::form.control-group>
                                         </div>
+
+                                        <!-- Lengte en Gewicht (optioneel) -->
+                                        <div class="mt-3 flex gap-4">
+                                            <div class="w-1/2">
+                                                <x-admin::form.control-group>
+                                                    <x-admin::form.control-group.label>
+                                                        Lengte (cm)
+                                                    </x-admin::form.control-group.label>
+                                                    <x-admin::form.control-group.control
+                                                        type="number"
+                                                        name="height"
+                                                        placeholder="Bijv. 175"
+                                                        min="100"
+                                                        max="250"
+                                                        step="1"
+                                                    />
+                                                    <x-admin::form.control-group.error control-name="height"/>
+                                                </x-admin::form.control-group>
+                                            </div>
+                                            <div class="w-1/2">
+                                                <x-admin::form.control-group>
+                                                    <x-admin::form.control-group.label>
+                                                        Gewicht (kg)
+                                                    </x-admin::form.control-group.label>
+                                                    <x-admin::form.control-group.control
+                                                        type="number"
+                                                        name="weight"
+                                                        placeholder="Bijv. 75"
+                                                        min="20"
+                                                        max="300"
+                                                        step="0.1"
+                                                    />
+                                                    <x-admin::form.control-group.error control-name="weight"/>
+                                                </x-admin::form.control-group>
+                                            </div>
+                                        </div>
                                     </div>
                                     <!-- /Anamnese -->
 

@@ -469,6 +469,12 @@ class LeadController extends Controller
                     if (!empty($data['allergies_notes'])) {
                         $anamnesisUpdate['allergies_notes'] = $data['allergies_notes'];
                     }
+                    if (!empty($data['height'])) {
+                        $anamnesisUpdate['height'] = $data['height'];
+                    }
+                    if (!empty($data['weight'])) {
+                        $anamnesisUpdate['weight'] = $data['weight'];
+                    }
 
                     if (!empty($anamnesisUpdate)) {
                         // Update all related anamnesis for this lead

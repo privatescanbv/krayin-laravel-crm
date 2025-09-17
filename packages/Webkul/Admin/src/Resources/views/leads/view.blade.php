@@ -165,7 +165,7 @@
                     ['name' => 'products', 'label' => trans('admin::app.leads.view.tabs.products')],
                     ['name' => 'quotes', 'label' => trans('admin::app.leads.view.tabs.quotes')],
                 ]"
-                :extra-emails='{!! $lead->emails()->select(["id","subject","created_at","is_read","folders"])->get()->toJson() !!}'
+                :extra-emails={!! json_encode($lead->emails()->select(['id','subject','created_at','is_read','folders'])->get(), JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT) !!}
             >
                 <!-- Products -->
                 <x-slot:products>

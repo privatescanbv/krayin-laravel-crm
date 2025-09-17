@@ -148,7 +148,7 @@
                 computed: {
                     filteredActivities() {
                         const term = (this.searchTerm || '').toLowerCase();
-                        return this.activities.filter(a => (a.title || '').toLowerCase().includes(term));
+                        return this.activities.filter(a => ((a.title || a.name || '')).toLowerCase().includes(term));
                     }
                 },
                 methods: {
@@ -176,7 +176,7 @@
                         </div>
                         <ul class="max-h-40 divide-y divide-gray-100 overflow-y-auto dark:divide-gray-700 mt-2">
                             <li v-for="activity in filteredActivities" :key="activity.id" class="flex cursor-pointer gap-2 px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900" @click="select(activity)">
-                                <span class="text-sm">@{{ activity.title }}</span>
+                                <span class="text-sm">@{{ activity.title || activity.name }}</span>
                             </li>
                             <li v-if="!isLoading && filteredActivities.length === 0" class="px-4 py-2 text-gray-800 dark:text-gray-300">
                                 @lang('admin::app.mail.view.no-result-found')

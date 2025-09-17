@@ -109,11 +109,9 @@
                                                     @{{ activity.title }}
                                                     <span v-if="activity.type === 'email' && activity.additional && activity.additional.__source === 'lead'" class="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200" title="E-mail gekoppeld aan lead">
                                                         <span class="icon-activity text-[10px]"></span>
-                                                        Lead
                                                     </span>
                                                     <span v-else-if="activity.type === 'email' && activity.additional && activity.additional.__source === 'person'" class="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-2 00" title="E-mail gekoppeld aan persoon">
                                                         <span class="icon-contact text-[10px]"></span>
-                                                        Persoon
                                                     </span>
                                                     <span v-else-if="activity.type === 'email'" class="icon-activity text-xs text-blue-600 ml-1" title="E-mail gekoppeld aan activiteit"></span>
 

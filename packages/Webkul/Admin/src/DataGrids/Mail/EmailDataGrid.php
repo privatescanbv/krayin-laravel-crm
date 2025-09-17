@@ -60,6 +60,8 @@ class EmailDataGrid extends DataGrid
         $this->addFilter('name', 'emails.name');
         $this->addFilter('tags', 'tags.name');
         $this->addFilter('created_at', 'emails.created_at');
+        // Allow filtering by computed entity_type alias
+        $this->addFilter('entity_type', 'entity_type');
 
         return $queryBuilder;
     }
@@ -147,8 +149,9 @@ class EmailDataGrid extends DataGrid
             'filterable_options' => [
                 ['label' => 'Alles', 'value' => ''],
                 ['label' => 'Lead', 'value' => 'lead'],
-                ['label' => 'Person', 'value' => 'person'],
-                ['label' => 'Product', 'value' => 'product'],
+                ['label' => 'Persoon', 'value' => 'person'],
+                ['label' => 'Activiteit', 'value' => 'activity'],
+                ['label' => 'N/A', 'value' => 'N/A'],
             ],
             'closure'    => function ($row) {
                 if ($row->entity_type === 'N/A') {

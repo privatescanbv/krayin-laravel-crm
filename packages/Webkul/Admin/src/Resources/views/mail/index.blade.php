@@ -74,10 +74,10 @@
                     </template>
 
                     <template v-else>
-                        <div class="row grid grid-cols-[2fr_7fr_.0.3fr] grid-rows-1 items-center border-b px-8 py-4 dark:border-gray-800 max-lg:hidden">
+                        <div class="row grid grid-cols-[2fr_2fr_6fr_.8fr] grid-rows-1 items-center border-b px-8 py-4 dark:border-gray-800 max-lg:hidden">
                             <div
                                 class="flex items-center gap-6"
-                                v-for="(columnGroup, index) in [['name'], ['attachments', 'tags', 'subject', 'reply'], ['entity_type'],['created_at']]"
+                                v-for="(columnGroup, index) in [['name'], ['entity_type'], ['subject', 'reply'], ['created_at']]"
                             >
                                 <label
                                     class="flex w-max cursor-pointer select-none items-center gap-2"

@@ -147,7 +147,7 @@ class LeadValidationService
      */
     public static function getApiValidationRules($request = null): array
     {
-        $rules = self::getValidationRules($request);
+        $rules = self::getValidationRules($request, true); // Pass true for create mode to include anamnesis fields
 
         // For API, make some fields required that are optional in web
         $rules['lead_source_id'] = 'required|numeric|exists:lead_sources,id';

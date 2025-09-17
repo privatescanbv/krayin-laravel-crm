@@ -111,16 +111,7 @@
                     </div>
                 @endif
 
-                <template v-if="(email?.lead_id || email?.lead) && !email?.activity_id">
-                    <label class="font-semibold text-gray-800 dark:text-gray-300">
-                        Koppel aan activiteit
-                    </label>
-
-                    <v-activity-lookup
-                        :email="email"
-                        @link-activity="linkActivity"
-                    ></v-activity-lookup>
-                </template>
+                
             </div>
         </script>
 
@@ -1274,6 +1265,18 @@
                         :email="email"
                         :tag-text-color="tagTextColor"
                     ></v-lead-lookup>
+
+                    <!-- Activity Lookup directly under lead block -->
+                    <template v-if="(email?.lead_id || email?.lead) && !email?.activity_id">
+                        <label class="font-semibold text-gray-800 dark:text-gray-300 mt-2">
+                            Koppel aan activiteit
+                        </label>
+
+                        <v-activity-lookup
+                            :email="email"
+                            @link-activity="linkActivity"
+                        ></v-activity-lookup>
+                    </template>
                 @endif
 
                 <!-- Activity Link -->

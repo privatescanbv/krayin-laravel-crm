@@ -880,12 +880,14 @@ logger()->info('Updating lead', ['lead_id' => $id, 'data' => $data]);
     public function openByPerson(\Webkul\Contact\Models\Person $person): AnonymousResourceCollection
     {
         $results = $this->leadRepository
-            ->with(['stage', 'persons'])
-            ->whereHas('persons', function($q) use ($person) {
-                $q->where('persons.id', $person->id);
-            })
-            ->whereHas('stage', function($q) {
-                $q->whereNotIn('code', self::WON_LOST_STAGE_CODES);
+            ->with(['stage'])
+            ->scopeQuery(function($q) use ($person) {
+                return $q->whereHas('persons', function($qq) use ($person) {
+                        $qq->where('persons.id', $person->id);
+                    })
+                    ->whereHas('stage', function($qq) {
+                        $qq->whereNotIn('code', self::WON_LOST_STAGE_CODES);
+                    });
             })
             ->all();
 

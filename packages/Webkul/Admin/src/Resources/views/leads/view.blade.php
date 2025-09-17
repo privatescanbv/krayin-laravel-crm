@@ -165,7 +165,6 @@
                     ['name' => 'products', 'label' => trans('admin::app.leads.view.tabs.products')],
                     ['name' => 'quotes', 'label' => trans('admin::app.leads.view.tabs.quotes')],
                 ]"
-                extra-emails='@json($lead->emails()->select(["id","subject","created_at","is_read","folders"])->get())'
             >
                 <!-- Products -->
                 <x-slot:products>

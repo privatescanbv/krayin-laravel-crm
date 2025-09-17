@@ -473,10 +473,9 @@ class Lead extends Model implements LeadContract
         try {
             $direct = (int) $this->emails()->where('is_read', 0)->count();
 
-            $activityEmailIds = app(\Illuminate\Support\Facades\DB::class)
+            $activityEmailIds = app(DB::class)
                 ::table('emails')
                 ->where('lead_id', $this->id)
-                ->whereNotNull('activity_id')
                 ->where('is_read', 0)
                 ->count();
 

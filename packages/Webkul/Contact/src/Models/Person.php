@@ -295,20 +295,17 @@ class Person extends Model implements PersonContract
     /**
      * Aggregate direct person emails and direct lead emails for this person.
      */
-    public function getExtraEmailsForActivities(): Collection
+    public function getAllRelatedEmails(): Collection
     {
         $leadIds = $this->leads->pluck('id');
 
-        $emails = Email::where(function ($query) use ($leadIds) {
+        return Email::where(function ($query) use ($leadIds) {
                 $query->where('person_id', $this->id);
                 if ($leadIds->isNotEmpty()) {
                     $query->orWhereIn('lead_id', $leadIds);
                 }
             })
-            ->select(['id','subject','created_at','is_read','folders','person_id','lead_id'])
+            ->select(['id','subject','created_at','is_read','folders','person_id','lead_id', 'activity_id'])
             ->get();
-
-        Log::info('Aggregated emails for person '.$this->id.' including leads: '.($leadIds->isNotEmpty() ? $leadIds->implode(',') : 'no leads').'. Total emails found: '.$emails->count());
-        return $emails;
     }
 }

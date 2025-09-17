@@ -106,14 +106,15 @@
                                                         : '{{ route('admin.activities.view', 'replaceId') }}'.replace('replaceId', activity.id)
                                                     "
                                                 >
-                                                    @{{ activity.title }}
-                                                    <span v-if="activity.type === 'email' && activity.additional && activity.additional.__source === 'lead'" class="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200" title="E-mail gekoppeld aan lead">
+                                                    @{{ activity.linked_entity_type }} -- @{{ activity.title }}- @{{ activity.id }}
+                                                    <span v-if="activity.type === 'email' && activity.linked_entity_type === 'lead'" class="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200" title="E-mail gekoppeld aan lead">
                                                         <span class="icon-activity text-[10px]"></span>
                                                     </span>
-                                                    <span v-else-if="activity.type === 'email' && activity.additional && activity.additional.__source === 'person'" class="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-2 00" title="E-mail gekoppeld aan persoon">
+                                                    <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'person'" class="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-2 00" title="E-mail gekoppeld aan persoon">
                                                         <span class="icon-contact text-[10px]"></span>
                                                     </span>
-                                                    <span v-else-if="activity.type === 'email'" class="icon-activity text-xs text-blue-600 ml-1" title="E-mail gekoppeld aan activiteit"></span>
+                                                    <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'activity'" class="icon-activity text-xs text-blue-600 ml-1" title="E-mail gekoppeld aan activiteit"></span>
+                                                    <span v-else-if="activity.type === 'email'" class="icon-activity text-xs text-blue-600 ml-1" title="E-mail gekoppeld aan onbekend"></span>
 
                                                     <span v-if="activity.is_done == 1 || activity.is_done === true" class="ml-2 inline-block bg-green-100 text-green-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">@{{ activity.status}}</span>
                                                     <span v-else class="ml-2 inline-block bg-yellow-100 text-yellow-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">@{{ activity.status}}</span>
@@ -618,8 +619,8 @@
                             this.activities = response.data.data;
 
                             // If there are extra emails to include, convert them into synthetic email-activities
-                            console.log(this.extraEmails);
                             if (Array.isArray(this.extraEmails) && this.extraEmails.length) {
+                                console.log('mapping extra emails to activities', this.extraEmails);
                                 const mapped = this.extraEmails.map(email => ({
                                     id: email.id,
                                     type: 'email',
@@ -631,14 +632,17 @@
                                     comment: null,
                                     files: [],
                                     emails: [],
+                                    linked_entity_type: email.lead_id ? 'lead' : (email.person_id ? 'person' : (email.activity_id ? 'activity' : 'unknown')),
                                     additional: {
                                         folders: email.folders || ['inbox'],
                                         __source: (email.lead_id ? 'lead' : (email.person_id ? 'person' : (email.__source || 'lead'))),
                                     },
                                 }));
-
+                                console.log('mapeped ', mapped);
                                 this.activities = [...this.activities, ...mapped]
                                     .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                            } else {
+                                console.log('no extra emails to map');
                             }
 
                             this.isLoading = false;

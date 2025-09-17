@@ -152,14 +152,23 @@
         <!-- Right Panel -->
         <div class="flex w-full flex-row gap-4 rounded-lg">
             <div class="flex-1">
-                <div
-                    class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 mb-4">
-                    <x-admin::email-feed :endpoint="route('admin.contacts.persons.activities.index', $person->id)"
-                                         title="E-mails (incl. leads/activiteiten)"/>
-                </div>
+                @php
+                    $personDirectEmails = Email::where('person_id', $person->id)
+                        ->select(['id','subject','created_at','is_read','folders','person_id'])
+                        ->get();
+
+                    $leadIds = $person->leads->pluck('id');
+
+                    $leadDirectEmails = Email::whereIn('lead_id', $leadIds)
+                        ->select(['id','subject','created_at','is_read','folders','lead_id'])
+                        ->get();
+
+                    $extraEmails = $personDirectEmails->concat($leadDirectEmails);
+                @endphp
+
                 <x-admin::activities
                     :endpoint="route('admin.contacts.persons.activities.index', $person->id)"
-                    extra-emails='@json($person->getEmailsForPerson())'
+                    :extra-emails="@json($extraEmails)"
                 />
             </div>
         </div>

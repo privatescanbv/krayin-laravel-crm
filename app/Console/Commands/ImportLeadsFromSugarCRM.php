@@ -352,7 +352,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 $record->phone_work ?? 'N/A',
                 $record->status ?? 'N/A',
                 $record->workflow_status_c ?? 'N/A',
-                $this->mapStage($record),
+                $this->mapStage($record, $this->mapPipeline($record, $this->mapDepartment($record))),
                 $this->mapDepartment($record),
                 $this->mapChannel($record),
                 $this->mapType($record),
@@ -827,6 +827,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         // Check lead status first (higher priority)
         if ($leadStatus) {
             $leadStatusLower = strtolower($leadStatus);
+//            $this->info('Looking for lead status: '.$leadStatusLower);
             if ($leadStatusLower === 'converted') {
                 // Find won stage for this pipeline
                 $wonStage = Stage::where('lead_pipeline_id', $pipelineId)

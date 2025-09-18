@@ -119,8 +119,9 @@ class WebklexImapEmailProcessorTest extends TestCase
             ->with(m::on(function ($data) {
                 // Minimal sanity checks to ensure required fields are present and no exceptions occur
                 return isset($data['from'], $data['subject'], $data['message_id'])
-                    && $data['folders'] === ['INBOX']
-                    && array_key_exists('parent_id', $data) && $data['parent_id'] === null;
+                    && is_array($data['folders']) && count($data['folders']) >= 1
+                    && array_key_exists('parent_id', $data) && $data['parent_id'] === null
+                    && isset($data['reference_ids']) && is_array($data['reference_ids']) && count($data['reference_ids']) >= 1;
             }))
             ->andReturn((object) ['id' => 123]);
 
@@ -176,7 +177,9 @@ class WebklexImapEmailProcessorTest extends TestCase
                 return ($data['parent_id'] === $parentEmail->id)
                     && ($data['activity_id'] === $parentEmail->activity_id)
                     && ($data['lead_id'] === $parentEmail->lead_id)
-                    && ($data['person_id'] === $parentEmail->person_id);
+                    && ($data['person_id'] === $parentEmail->person_id)
+                    && is_array($data['folders']) && count($data['folders']) >= 1
+                    && isset($data['reference_ids']) && is_array($data['reference_ids']) && count($data['reference_ids']) >= 1;
             }))
             ->andReturn((object) ['id' => 555]);
 

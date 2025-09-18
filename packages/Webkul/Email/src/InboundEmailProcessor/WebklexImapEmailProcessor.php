@@ -165,7 +165,6 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
                 'reference_ids' => array_merge($email->reference_ids ?? [], [$references]),
             ], $email->id);
         }
-        logger()->info('Processed email with Message-ID: '.$messageId.' and assigned ID: '.$email->id);
         $email = $this->emailRepository->create([
             'from'          => $attributes['from']->first()->mail,
             'subject'       => $attributes['subject']->first(),
@@ -187,6 +186,11 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
             'lead_id'       => $parentEmail?->lead_id,     // Inherit lead_id from parent email
             'person_id'     => $parentEmail?->person_id,   // Inherit person_id from parent email
         ]);
+
+        logger()->info(
+            'Processed email with Message-ID: ' . $messageId . ' and assigned ID: ' . $email->id
+            . ($parentEmail ? ' (parent ID: ' . $parentEmail->id . ')' : '')
+        );
 
         if ($message->hasAttachments()) {
             $this->attachmentRepository->uploadAttachments($email, [

@@ -29,10 +29,6 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
         protected AttachmentRepository $attachmentRepository
     ) {
         // Skip IMAP connection during testing or when database is not available
-        if (app()->environment('testing')) {
-            logger()->warning('Skipping IMAP connection during testing: ' . app()->environment());
-            return;
-        }
         if (!$this->isDatabaseAvailable()) {
             logger()->warning('Skipping IMAP when database is not available.');
             return;

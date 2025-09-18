@@ -815,8 +815,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
     private function mapStage($record, int $pipelineId): int
     {
         // Get workflow status from Sugar CRM
-        $workflowStatus = $record->workflow_status_c ?? 'nieuweaanvraag';
-        $leadStatus = $record->status ?? '';
+        $workflowStatus = strtolower($record->workflow_status_c ?? 'nieuweaanvraag');
+        $leadStatus = strtolower($record->status ?? '');
 
         // Determine the correct first stage based on pipeline
         $firstStageId = $this->getFirstStageForPipeline($pipelineId);
@@ -826,17 +826,20 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
         // Check lead status first (higher priority)
         if ($leadStatus) {
-            $leadStatusLower = strtolower($leadStatus);
-//            $this->info('Looking for lead status: '.$leadStatusLower);
-            if ($leadStatusLower === 'converted') {
+            if ($leadStatus === 'converted') {
                 // Find won stage for this pipeline
                 $wonStage = Stage::where('lead_pipeline_id', $pipelineId)
                     ->where('code', 'like', '%won%')
                     ->first();
 
                 return $wonStage ? $wonStage->id : $firstStageId;
+            } else if ($leadStatus === 'in process' && $workflowStatus === 'verkoopadvies') {
+                $firstStageId = $firstStageId + 1;
             }
-            if (in_array($leadStatusLower, ['dead', 'recycled'])) {
+            else if ($leadStatus === 'offer' && $workflowStatus === 'opvolgen' && $pipelineId === PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value) {
+                $firstStageId = $firstStageId + 2;
+            }
+            else if (in_array($leadStatus, ['dead', 'recycled'])) {
                 // Find lost stage for this pipeline
                 $lostStage = Stage::where('lead_pipeline_id', $pipelineId)
                     ->where('code', 'like', '%lost%')

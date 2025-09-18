@@ -4,6 +4,7 @@ namespace Webkul\Email\Providers;
 
 use Exception;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
 use Webkul\Email\Console\Commands\ProcessInboundEmails;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
 use Webkul\Email\InboundEmailProcessor\SendgridEmailProcessor;
@@ -22,7 +23,9 @@ class EmailServiceProvider extends ServiceProvider
 
         $this->app->bind(InboundEmailProcessor::class, function ($app) {
             $driver = config('mail-receiver.default');
-            logger()->info('Binding InboundEmailProcessor with driver: '.$driver);
+            if (!$driver || !Str::contains($driver, 'webklex')) {
+                logger()->warning('Binding InboundEmailProcessor with driver: '.$driver);
+            }
 
             if ($driver === 'sendgrid') {
                 return $app->make(SendgridEmailProcessor::class);

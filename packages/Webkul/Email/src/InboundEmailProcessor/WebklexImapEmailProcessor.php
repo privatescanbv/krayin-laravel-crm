@@ -29,16 +29,18 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
         protected AttachmentRepository $attachmentRepository
     ) {
         // Skip IMAP connection during testing or when database is not available
-        if (app()->environment('testing') || !$this->isDatabaseAvailable()) {
+        if (app()->environment('testing')) {
+            logger()->warning('Skipping IMAP connection during testing: ' . app()->environment());
             return;
         }
-
-        $this->client = Client::make($this->getDefaultConfigs());
-
-        $this->client->connect();
-
-        if (! $this->client->isConnected()) {
-            throw new Exception('Failed to connect to the mail server.');
+        if (!$this->isDatabaseAvailable()) {
+            logger()->warning('Skipping IMAP when database is not available.');
+            return;
+        }
+        try {
+            $this->reconnect();
+        } catch (Exception $e) {
+            logger()->error('Reconnect fail for email processing: ' . $e->getMessage());
         }
     }
 
@@ -53,11 +55,32 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
     }
 
     /**
+     * @throws Exception, with email client connection errors
+     */
+    private function reconnect():void
+    {
+        if (!$this->client) {
+            logger()->info('Reconnecting: Establishing IMAP connection...', ['config' => $this->getDefaultConfigs()]);
+            $this->client = Client::make($this->getDefaultConfigs());
+
+            $this->client->connect();
+
+            if (! $this->client->isConnected()) {
+                // reset client for next attempt
+                $this->client = null;
+                logger()->error('Failed to connect to the mail server.');
+                throw new Exception('Failed to connect to the mail server.');
+            }
+        }
+    }
+
+    /**
      * Process messages from all folders.
      * @throws Exception
      */
     public function processMessagesFromAllFolders()
     {
+        $this->reconnect();
         if (!$this->client) {
             logger()->warning('IMAP client is not initialized. Skipping email processing.');
             return; // Skip processing if client is not initialized (e.g., during testing)
@@ -257,6 +280,7 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
             // Check if the core_config table exists
             return Schema::hasTable('core_config');
         } catch (Exception $e) {
+            logger()->error('Database is not available: '.$e->getMessage());
             return false;
         }
     }

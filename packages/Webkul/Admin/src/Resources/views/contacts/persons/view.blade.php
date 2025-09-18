@@ -19,14 +19,6 @@
                         name="contacts.persons.view"
                         :entity="$person"
                     />
-
-                    @if (bouncer()->hasPermission('contacts.persons.edit'))
-                        <a
-                            href="{{ route('admin.contacts.persons.edit', $person->id) }}"
-                            class="icon-edit rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
-                            title="Wijzig persoon"
-                        ></a>
-                    @endif
                 </div>
 
                 {!! view_render_event('admin.contact.persons.view.tags.before', ['person' => $person]) !!}
@@ -60,22 +52,6 @@
                 />
 
                 {!! view_render_event('admin.contact.persons.view.tags.after', ['person' => $person]) !!}
-
-
-                <!-- Title -->
-                <div class="mb-4 flex flex-col gap-0.5">
-                    {!! view_render_event('admin.contact.persons.view.title.before', ['person' => $person]) !!}
-
-                    <h3 class="text-lg font-bold dark:text-white">
-                        {{ $person->name }}
-                    </h3>
-
-                    <p class="dark:text-white">
-                        {{ $person->job_title }}
-                    </p>
-
-                    {!! view_render_event('admin.contact.persons.view.title.after', ['person' => $person]) !!}
-                </div>
 
                 <!-- Activity Actions -->
                 <div class="flex flex-wrap gap-2">

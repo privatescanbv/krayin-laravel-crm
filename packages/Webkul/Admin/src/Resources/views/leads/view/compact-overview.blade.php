@@ -4,7 +4,7 @@
     <x-admin::accordion class="select-none !border-none">
         <x-slot:header class="!p-0">
             <div class="flex w-full items-center justify-between gap-4 font-semibold dark:text-white">
-                <h4>Over de lead</h4>
+                <h4>Gegevens</h4>
 
                 @if (bouncer()->hasPermission('leads.edit'))
                     <a

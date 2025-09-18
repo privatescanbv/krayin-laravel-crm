@@ -2,7 +2,18 @@
 
 <div class="flex w-full flex-col gap-4 border-b border-gray-200 p-4 dark:border-gray-800">
     <x-admin::accordion class="select-none !border-none">
+        <x-slot:header class="!p-0">
+            <div class="flex w-full items-center justify-between gap-4 font-semibold dark:text-white">
+                <h4>Gegevens</h4>
 
+                @if (bouncer()->hasPermission('persons.edit'))
+                    <a
+                        href="{{ route('admin.contacts.persons.edit', $person->id) }}"
+                        class="icon-edit rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                    ></a>
+                @endif
+            </div>
+        </x-slot>
         <x-slot:content class="mt-4 !px-0 !pb-0">
             {!! view_render_event('admin.contacts.persons.view.attributes.form_controls.before', ['person' => $person]) !!}
 

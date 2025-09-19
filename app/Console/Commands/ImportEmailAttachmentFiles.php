@@ -51,7 +51,7 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
         }
 
         return $this->executeImport($dryRun, function () use ($limit, $attachmentIds, $dryRun) {// Check if upload_sugarcrm directory exists
-            $uploadDir = base_path('upload_sugarcrm');
+            $uploadDir = '/var/www/html/upload_sugarcrm';
             if (! File::exists($uploadDir)) {
                 throw new Exception("Upload directory does not exist: {$uploadDir}");
             }

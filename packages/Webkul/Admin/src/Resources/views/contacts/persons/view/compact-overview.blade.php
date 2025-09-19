@@ -79,6 +79,16 @@
                 </x-admin::form>
             </div>
 
+            <!-- Suite CRM link -->
+            @if (!empty($person->sugar_link))
+                <div class="mb-4 pt-[10px]">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Sugar Link</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        <a href="{{ $person->sugar_link }}" target="_blank">{{ $person->external_id }}</a>
+                    </div>
+                </div>
+            @endif
+
             {!! view_render_event('admin.contacts.persons.view.attributes.form_controls.after', ['person' => $person]) !!}
         </x-slot>
     </x-admin::accordion>

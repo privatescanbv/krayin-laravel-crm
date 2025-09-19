@@ -18,85 +18,6 @@ class WebklexImapEmailProcessorTest extends TestCase
         parent::tearDown();
     }
 
-    /**
-     * Build a fake message object that mimics the subset of Webklex Message API we use.
-     */
-    private function makeFakeMessage(array $overrides = []): object
-    {
-        $messageId = $overrides['message_id'] ?? '<test-id@example.com>';
-
-        $attributes = [
-            'message_id' => new Collection([$messageId]),
-            'from'       => new Collection([(object) ['mail' => 'sender@example.com', 'personal' => 'Sender']]),
-            'subject'    => new Collection(['Test Subject']),
-            'to'         => new Collection([(object) ['mail' => 'to@example.com']]),
-        ];
-
-        if (array_key_exists('in_reply_to', $overrides)) {
-            $attributes['in_reply_to'] = new Collection([$overrides['in_reply_to']]);
-        }
-
-        if (array_key_exists('references', $overrides)) {
-            $attributes['references'] = new Collection($overrides['references']);
-        }
-
-        $folder = new class {
-            public $name = 'INBOX';
-        };
-
-        return new class($attributes, $folder) {
-            public array $attributes;
-            public object $folder;
-
-            public array $bodies = [
-                'html' => '<p>Hello</p>',
-                'text' => 'Hello',
-            ];
-
-            public function __construct(array $attributes, object $folder)
-            {
-                $this->attributes = $attributes;
-                $this->folder = $folder;
-                $this->date = new class {
-                    public function toDate()
-                    {
-                        return Carbon::now();
-                    }
-                };
-            }
-
-            public function getAttributes(): array
-            {
-                return $this->attributes;
-            }
-
-            public function getFolder(): object
-            {
-                return $this->folder;
-            }
-
-            public function flags(): object
-            {
-                return new class {
-                    public function has(string $flag): bool
-                    {
-                        return false;
-                    }
-                };
-            }
-
-            public function hasAttachments(): bool
-            {
-                return false;
-            }
-
-            public function getAttachments(): array
-            {
-                return [];
-            }
-        };
-    }
-
     public function test_process_message_creates_email_when_none_exists(): void
     {
         $emailRepository = m::mock(EmailRepository::class);
@@ -144,12 +65,12 @@ class WebklexImapEmailProcessorTest extends TestCase
         $message = $this->makeFakeMessage();
 
         $parentEmail = (object) [
-            'id' => 77,
-            'folders' => ['INBOX'],
+            'id'            => 77,
+            'folders'       => ['INBOX'],
             'reference_ids' => ['<old@id>'],
-            'activity_id' => 9001,
-            'lead_id' => 2002,
-            'person_id' => 3003,
+            'activity_id'   => 9001,
+            'lead_id'       => 2002,
+            'person_id'     => 3003,
         ];
 
         // Not found by message_id
@@ -192,5 +113,88 @@ class WebklexImapEmailProcessorTest extends TestCase
 
         $this->assertTrue(true);
     }
-}
 
+    /**
+     * Build a fake message object that mimics the subset of Webklex Message API we use.
+     */
+    private function makeFakeMessage(array $overrides = []): object
+    {
+        $messageId = $overrides['message_id'] ?? '<test-id@example.com>';
+
+        $attributes = [
+            'message_id' => new Collection([$messageId]),
+            'from'       => new Collection([(object) ['mail' => 'sender@example.com', 'personal' => 'Sender']]),
+            'subject'    => new Collection(['Test Subject']),
+            'to'         => new Collection([(object) ['mail' => 'to@example.com']]),
+        ];
+
+        if (array_key_exists('in_reply_to', $overrides)) {
+            $attributes['in_reply_to'] = new Collection([$overrides['in_reply_to']]);
+        }
+
+        if (array_key_exists('references', $overrides)) {
+            $attributes['references'] = new Collection($overrides['references']);
+        }
+
+        $folder = new class
+        {
+            public $name = 'INBOX';
+        };
+
+        return new class($attributes, $folder)
+        {
+            public array $attributes;
+
+            public object $folder;
+
+            public array $bodies = [
+                'html' => '<p>Hello</p>',
+                'text' => 'Hello',
+            ];
+
+            public function __construct(array $attributes, object $folder)
+            {
+                $this->attributes = $attributes;
+                $this->folder = $folder;
+                $this->date = new class
+                {
+                    public function toDate()
+                    {
+                        return Carbon::now();
+                    }
+                };
+            }
+
+            public function getAttributes(): array
+            {
+                return $this->attributes;
+            }
+
+            public function getFolder(): object
+            {
+                return $this->folder;
+            }
+
+            public function flags(): object
+            {
+                return new class
+                {
+                    public function has(string $flag): bool
+                    {
+                        return false;
+                    }
+                };
+            }
+
+            public function hasAttachments(): bool
+            {
+                return false;
+            }
+
+            public function getAttachments(): array
+            {
+                return [];
+            }
+        };
+    }
+}

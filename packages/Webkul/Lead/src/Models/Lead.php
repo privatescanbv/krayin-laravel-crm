@@ -637,4 +637,14 @@ class Lead extends Model implements LeadContract
 
         return $this->update(['lead_pipeline_stage_id' => $newStageId]);
     }
+
+    public function getSugarLinkAttribute() :?string
+    {
+        if ($this->external_id) {
+            $baseUrl = config('services.sugarcrm.base_url');
+            $record = $this->external_id;
+            return "{$baseUrl}index.php?module=Leads&offset=1&stamp=1758188884015851000&return_module=Leads&action=DetailView&record={$record}";
+        }
+        return null;
+    }
 }

@@ -35,4 +35,8 @@ return [
         'token' => env('POSTCODEAPI_TOKEN'),
     ],
 
+    'sugarcrm' => [
+        'base_url' => env('SUGARCRM_BASE_URL', 'http://localhost:81/'),
+    ],
+
 ];

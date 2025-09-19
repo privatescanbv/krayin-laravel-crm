@@ -833,13 +833,11 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     ->first();
 
                 return $wonStage ? $wonStage->id : $firstStageId;
-            } else if ($leadStatus === 'in process' && $workflowStatus === 'verkoopadvies') {
+            } elseif ($leadStatus === 'in process' && $workflowStatus === 'verkoopadvies') {
                 $firstStageId = $firstStageId + 1;
-            }
-            else if ($leadStatus === 'offer' && $workflowStatus === 'opvolgen' && $pipelineId === PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value) {
+            } elseif ($leadStatus === 'offer' && $workflowStatus === 'opvolgen' && $pipelineId === PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value) {
                 $firstStageId = $firstStageId + 2;
-            }
-            else if (in_array($leadStatus, ['dead', 'recycled'])) {
+            } elseif (in_array($leadStatus, ['dead', 'recycled'])) {
                 // Find lost stage for this pipeline
                 $lostStage = Stage::where('lead_pipeline_id', $pipelineId)
                     ->where('code', 'like', '%lost%')

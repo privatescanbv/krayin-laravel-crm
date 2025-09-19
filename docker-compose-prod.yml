@@ -217,7 +217,7 @@ services:
       - traefik.docker.network=mb_traefik
 
   suitecrm:
-    image: ghcr.io/privatescanbv/privatesuite/suitecrm:1.0
+    image: ghcr.io/privatescanbv/privatecrm/suitecrm:1.0
     container_name: suitecrm
     ports:
       - "81:80"

@@ -19,6 +19,7 @@
             {!! view_render_event('admin.leads.view.attributes.form_controls.before', ['lead' => $lead]) !!}
 
             <div class="flex flex-col text-sm">
+
                 <!-- Description -->
                 <div class="mb-4">
                     <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Omschrijving</div>
@@ -171,6 +172,16 @@
                     </form>
                 </x-admin::form>
             </div>
+
+            <!-- Suite CRM link -->
+            @if (!empty($lead->sugar_link))
+                <div class="mb-4 pt-[10px]">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Sugar Link</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        <a href="{{ $lead->sugar_link }}" target="_blank">{{ $lead->external_id }}</a>
+                    </div>
+                </div>
+            @endif
 
             {!! view_render_event('admin.leads.view.attributes.form_controls.after', ['lead' => $lead]) !!}
         </x-slot>

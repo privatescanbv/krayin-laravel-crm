@@ -139,6 +139,16 @@
                         </div>
                     </div>
 
+                    <!-- Suite CRM link -->
+                    @if (!empty($activity->sugar_link))
+                        <div class="mb-3 pt-[10px]">
+                            <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Sugar Link</div>
+                            <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                <a href="{{ $activity->sugar_link }}" target="_blank">{{ $activity->external_id }}</a>
+                            </div>
+                        </div>
+                    @endif
+
                 </div>
             </div>
 

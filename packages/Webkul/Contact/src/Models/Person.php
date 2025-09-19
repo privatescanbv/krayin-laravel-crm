@@ -287,4 +287,14 @@ class Person extends Model implements PersonContract
 
         return $this->date_of_birth->age;
     }
+
+    public function getSugarLinkAttribute() :?string
+    {
+        if ($this->external_id) {
+            $baseUrl = config('services.sugarcrm.base_url');
+            $record = $this->external_id;
+            return "{$baseUrl}index.php?module=Contacts&offset=1&stamp=1758266828019787100&return_module=Contacts&action=DetailView&record={$record}";
+        }
+        return null;
+    }
 }

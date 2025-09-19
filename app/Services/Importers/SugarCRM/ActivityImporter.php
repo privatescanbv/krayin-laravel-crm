@@ -8,6 +8,7 @@ use App\Services\ActivityStatusService;
 use App\Services\Importers\SugarCRM\Concerns\ImportsSugarHelpers;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Webkul\Activity\Models\Activity;
@@ -98,7 +99,7 @@ class ActivityImporter
             }
 
             return $result;
-        } catch (\Illuminate\Database\QueryException $e) {
+        } catch (QueryException $e) {
             $this->command->error('SQL Error while extracting call activities: '.$e->getMessage());
             $this->command->error('SQL: '.$e->getSql());
             throw new Exception('Call activities extraction failed due to SQL error: '.$e->getMessage(), 0, $e);

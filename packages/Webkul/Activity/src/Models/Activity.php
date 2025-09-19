@@ -141,4 +141,27 @@ class Activity extends Model implements ActivityContract
     {
         return $this->belongsTo(GroupProxy::modelClass(), 'group_id');
     }
+
+    public function getSugarLinkAttribute() :?string
+    {
+        // no support
+//        if ($this->external_id) {
+//            $baseUrl = config('services.sugarcrm.base_url');
+//            $record = $this->external_id;
+//            $activityType = $this->mapSugarActivityType();
+//            return "{$baseUrl}action=DetailView&module={$activityType}&record={$record}";
+//            //&offset=3&stamp=1758266889055967400{$record}
+//        }
+        return null;
+    }
+
+    private function mapSugarActivityType(): ?string
+    {
+        return match ($this->type) {
+            ActivityType::CALL => 'Calls',
+            ActivityType::MEETING => 'Meetings',
+            ActivityType::TASK => 'Tasks',
+            default => null,
+        };
+    }
 }

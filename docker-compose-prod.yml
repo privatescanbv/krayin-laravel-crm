@@ -216,6 +216,32 @@ services:
       - traefik.http.services.rainloop.loadbalancer.server.port=8888
       - traefik.docker.network=mb_traefik
 
+  suitecrm:
+    image: ghcr.io/privatescanbv/privatesuite/suitecrm:1.0
+    container_name: suitecrm
+    ports:
+      - "81:80"
+    environment:
+      SITE_URL: 'https://suitecrm.dev.privatescan.nl'
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=mb_traefik
+      - traefik.http.routers.suitecrm.rule=Host(`suitecrm.dev.privatescan.nl`)
+      - traefik.http.routers.suitecrm.entrypoints=https
+      - traefik.http.routers.suitecrm.tls=true
+      - traefik.http.routers.suitecrm.tls.certresolver=myresolver
+      - traefik.http.routers.suitecrm.service=suitecrm-svc
+      - traefik.http.services.suitecrm-svc.loadbalancer.server.port=80
+      - traefik.http.middlewares.suitecrm-forward.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.suitecrm-forward.headers.customrequestheaders.X-Forwarded-Port=443
+      - traefik.http.middlewares.suitecrm-forward.headers.customrequestheaders.X-Forwarded-Host=suitecrm.dev.privatescan.nl
+      - traefik.http.routers.suitecrm.middlewares=suitecrm-forward@docker
+    networks:
+      - sail
+      - mb_traefik
+    depends_on:
+      - mysql
+
 networks:
   sail:
     driver: bridge

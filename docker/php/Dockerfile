@@ -7,7 +7,7 @@ RUN rm -rf tests
 RUN rm -rf .git
 RUN rm -rf flows
 
-FROM docker.io/php:8.2.12-fpm-bullseye
+FROM docker.io/php:8.3-fpm-bullseye
 
 RUN apt-get update \
 && apt upgrade -y \

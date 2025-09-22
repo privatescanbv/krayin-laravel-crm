@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # Stel de variabelen in
 IMAGE_NAME="krayincrm"

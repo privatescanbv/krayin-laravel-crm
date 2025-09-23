@@ -1129,8 +1129,13 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
         $this->info('extractPerson: Found '.$relations->count().' relations');
 
-        // Map lead_id => [person_id1, person_id2, ...] to support multiple persons per lead
+        // Initialize map for all leads to ensure presence even if no relations exist
         $map = [];
+        foreach ($leadIds as $leadId) {
+            $map[$leadId] = [];
+        }
+
+        // Map lead_id => [person_id1, person_id2, ...] to support multiple persons per lead
         foreach ($relations as $rel) {
             if (! isset($map[$rel->lead_id])) {
                 $map[$rel->lead_id] = [];
@@ -1163,7 +1168,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
         $connection = $this->option('connection');
         $leadIds = array_keys($leadByPersons);
-        $personIds = array_merge(...array_values($leadByPersons));
+        $personIdLists = array_values($leadByPersons);
+        $nonEmptyPersonLists = array_values(array_filter($personIdLists, fn ($lst) => !empty($lst)));
+        $personIds = !empty($nonEmptyPersonLists) ? array_merge(...$nonEmptyPersonLists) : [];
 
         // Fetch anamnesis relations for given lead and person IDs
         $sql = DB::connection($connection)
@@ -1175,7 +1182,13 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     'lead_anamnesis.leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb'
                 )
                     ->where('anamnesis_person.deleted', '=', 0)
-                    ->whereIn('anamnesis_person.pcrm_anamn0b6eontacts_ida', $personIds);
+                    ->when(!empty($personIds), function ($q) use ($personIds) {
+                        $q->whereIn('anamnesis_person.pcrm_anamn0b6eontacts_ida', $personIds);
+                    })
+                    ->when(empty($personIds), function ($q) {
+                        // Force empty result when no person IDs are provided
+                        $q->whereRaw('1 = 0');
+                    });
             })
             ->join('pcrm_anamnesepreventie as anamnesis', 'anamnesis.id', '=', 'lead_anamnesis.leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb')
             ->join('pcrm_anamnesepreventie_cstm as anamnesis_cstm', 'anamnesis_cstm.id_c', '=', 'anamnesis.id')

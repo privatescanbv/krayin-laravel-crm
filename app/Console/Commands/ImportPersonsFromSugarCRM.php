@@ -207,7 +207,7 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                 if ($existingPerson) {
                     $skipped++;
                     $skippedAlreadyExisting++;
-                    $this->info("Skipping existing person with external_id={$record->id} (already imported as #{$existingPerson->id})");
+                    $this->infoV("Skipping existing person with external_id={$record->id} (already imported as #{$existingPerson->id})");
                     $bar->advance();
 
                     continue;

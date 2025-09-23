@@ -359,6 +359,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             $leadEmailAttachments = $emailAttachments[$record->id] ?? [];
             $emailAttachmentsInfo = empty($leadEmailAttachments) ? '—' : count($leadEmailAttachments).' files';
 
+            $mappedDepartementId = $this->mapDepartment($record);
+            $mappedPipelineId = $this->mapPipeline($record, $mappedDepartementId);
+            $mappedStatus = $this->mapStage($record, $mappedPipelineId);
             $rows[] = [
                 $record->id ?? 'N/A',
                 $record->first_name ?? 'N/A',
@@ -367,8 +370,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 $record->phone_work ?? 'N/A',
                 $record->status ?? 'N/A',
                 $record->workflow_status_c ?? 'N/A',
-                $this->mapStage($record, $this->mapPipeline($record, $this->mapDepartment($record))),
-                $this->mapDepartment($record),
+                $mappedStatus,
+                $mappedDepartementId,
                 $this->mapChannel($record),
                 $this->mapType($record),
                 $this->mapSource($record),
@@ -506,7 +509,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 }
 
                 // Find matching persons
-        $this->infoVV('leadByPersonsByAnamnesis = '.print_r($leadByPersonsByAnamnesis, true));
+                $this->infoVV('leadByPersonsByAnamnesis = '.print_r($leadByPersonsByAnamnesis, true));
                 $persons = $this->findMatchingPerson($record, $leadByPersonsByAnamnesis);
                 $related = $leadByPersonsByAnamnesis[$record->id] ?? [];
                 $expectedPersonIds = array_keys($related);
@@ -549,7 +552,18 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 // Use database transaction to ensure all-or-nothing import
                 DB::transaction(function () use ($record, $persons, $leadByPersonsByAnamnesis, &$lead) {
                     // Create lead with proper timestamps
-                    $departmentId = $this->mapDepartment($record);
+                    $mappedDepartmentId = $this->mapDepartment($record);
+                    $departmentId = $mappedDepartmentId;
+                    $mappedPipelineId = $this->mapPipeline($record, $mappedDepartmentId);
+                    $mappedStageId = $this->mapStage($record, $mappedPipelineId);
+                    $mapLostReason = self::mapLostReason($record->reden_afvoeren_c ?? null);
+                    $lostStageId = Stage::where('lead_pipeline_id', $mappedPipelineId)
+                        ->where('code', 'like', '%lost%')
+                        ->firstOrFail()->id;
+                    if ($lostStageId == $mappedStageId && is_null($mapLostReason)) {
+                        $this->infoV('Mapping lost reason to NoReason for lost stage (default)');
+                        $mapLostReason = LostReason::NoReason->value;
+                    }
                     $lead = $this->createEntityWithTimestamps(Lead::class, [
                         'external_id'            => $record->id,
                         'description'            => $record->description ?? '',
@@ -557,7 +571,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'phones'                 => $this->formatPhones($record),
                         'status'                 => $this->mapStatus($record->status),
                         'lead_pipeline_id'       => $this->mapPipeline($record, $departmentId),
-                        'lead_pipeline_stage_id' => $this->mapStage($record, $this->mapPipeline($record, $this->mapDepartment($record))),
+                        'lead_pipeline_stage_id' => $mappedStageId,
                         'salutation'             => $this->mapSalutationFromGender($this->mapGenderFromSugar($record->gender_c ?? null)),
                         'first_name'             => $record->first_name,
                         'last_name'              => $record->last_name,
@@ -571,7 +585,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         'lead_channel_id'        => $this->mapChannel($record),
                         'lead_type_id'           => $this->mapType($record),
                         'lead_source_id'         => $this->mapSource($record),
-                        'lost_reason'            => self::mapLostReason($record->reden_afvoeren_c ?? null),
+                        'lost_reason'            => $mapLostReason,
                         'user_id'                => $this->mapUser($record),
                     ], [
                         'created_at' => $this->parseSugarDate($record->lead_date_entered ?? $record->date_entered),
@@ -709,7 +723,6 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
      */
     private function findMatchingPerson($record, array $leadByPersonsByAnamnesis): array
     {
-        $this->info('checking record id '.$record->id);
         $related = $leadByPersonsByAnamnesis[$record->id] ?? [];
         $relatedPersonIds = array_keys($related);
 
@@ -717,12 +730,12 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             return [];
         }
         if ($this->output->isVerbose()) {
-            $this->info('Looking for persons with external_ids: ' . implode(', ', $relatedPersonIds));
+            $this->info('Looking for persons with external_ids: '.implode(', ', $relatedPersonIds));
         }
         $persons = Person::whereIn('external_id', $relatedPersonIds)->get()->all();
 
         if ($this->output->isVerbose()) {
-            $this->info('Found ' . count($persons) . ' persons: ' . implode(', ', array_map(fn($p) => $p->name . ' (ext_id: ' . $p->external_id . ')', $persons)));
+            $this->info('Found '.count($persons).' persons: '.implode(', ', array_map(fn ($p) => $p->name.' (ext_id: '.$p->external_id.')', $persons)));
         }
         // Check if any persons were not found and warn
         $foundPersonIds = array_map(fn ($p) => $p->external_id, $persons);
@@ -854,9 +867,6 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 return $firstStageId;
             } elseif ($workflowStatus == 'afvoeren') {
                 $lostReason = self::mapLostReason($record->reden_afvoeren_c ?? null);
-                if (empty($lostReason)) {
-                    throw new Exception('Lead marked as lost (afvoeren) but no lost reason provided for lead ID '.$record->id);
-                }
 
                 return Stage::where('lead_pipeline_id', $pipelineId)
                     ->where('code', 'like', '%lost%')
@@ -1275,14 +1285,12 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             }
         }
 
-
         // Merge in actual anamnesis relations (if any)
         foreach ($relations as $rel) {
             //            if (! isset($result[$rel->lead_id][$rel->person_id][$rel->anamnesis_id])) {
             $result[$rel->lead_id][$rel->person_id][$rel->anamnesis_id] = $rel;
             //            }
         }
-
 
         //        $this->info(
         //            'extractAnamenesis: Found '.$relations->count().' relations, returning '.count($result).' unique lead-person-anamnesis mappings. '.

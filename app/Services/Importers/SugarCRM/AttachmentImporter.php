@@ -89,7 +89,6 @@ class AttachmentImporter
                 ->whereRaw("n.name NOT LIKE 'image00%'")
                 ->orderBy('n.date_entered', 'asc');
 
-            $this->command->info('Extracting email attachments: '.$sql->toRawSql());
             $attachments = $sql->get();
 
             $this->command->info('Found '.$attachments->count().' email attachments');

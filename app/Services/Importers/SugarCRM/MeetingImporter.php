@@ -134,9 +134,9 @@ class MeetingImporter
                     // Check if activity already exists by external reference
                     $existingActivity = Activity::where('external_id', $meetingData->id)->first();
                     if ($existingActivity) {
-                    if ($this->command->getOutput()->isVerbose()) {
-                        $this->command->info("Skipping existing meeting activity with external_id={$meetingData->id}");
-                    }
+                        if ($this->command->getOutput()->isVerbose()) {
+                            $this->command->info("Skipping existing meeting activity with external_id={$meetingData->id}");
+                        }
                         $skipped++;
 
                         continue;

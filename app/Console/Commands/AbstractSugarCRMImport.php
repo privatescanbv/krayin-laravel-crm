@@ -33,6 +33,7 @@ abstract class AbstractSugarCRMImport extends Command
             $this->info($message);
         }
     }
+
     /**
      * Parse SugarCRM date format to our timezone
      */

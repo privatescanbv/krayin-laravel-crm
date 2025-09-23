@@ -1410,8 +1410,9 @@ class LeadController extends Controller
                 ->where('person_id', $personId)
                 ->delete();
 
+            // Delete anamnesis linked to this lead-person combination
             Anamnesis::where('lead_id', $leadId)
-                ->where('user_id', $personId)
+                ->where('person_id', $personId)
                 ->delete();
 
             return response()->json([

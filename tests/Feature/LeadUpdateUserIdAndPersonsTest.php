@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
+use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
@@ -40,5 +41,28 @@ test('it syncs persons even when user_id is cleared during update', function () 
     expect($updated->fresh()->persons)->toHaveCount(2);
     expect($updated->fresh()->persons->pluck('id')->contains($personA->id))->toBeTrue();
     expect($updated->fresh()->persons->pluck('id')->contains($personB->id))->toBeTrue();
+});
+
+test('detaching the last person really unlinks the person and removes anamnesis', function () {
+    $lead = Lead::factory()->create();
+    $person = Person::factory()->create();
+
+    // Attach single person
+    $lead->attachPersons([$person->id]);
+    expect($lead->fresh()->persons)->toHaveCount(1);
+
+    // Detach via controller endpoint (simulating UI action)
+    test()->deleteJson(route('admin.leads.detach_person', ['leadId' => $lead->id, 'personId' => $person->id]))
+        ->assertOk();
+
+    // Relationship should be removed
+    expect($lead->fresh()->persons)->toHaveCount(0);
+
+    // Anamnesis entry for this lead-person should be removed as well
+    $exists = DB::table('anamneses')
+        ->where('lead_id', $lead->id)
+        ->where('person_id', $person->id)
+        ->exists();
+    expect($exists)->toBeFalse();
 });
 

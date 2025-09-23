@@ -866,7 +866,10 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 ->first();
 
             return $wonStage ? $wonStage->id : $firstStageId;
+        } else {
+            $this->warn('Handling lead status as first stage: '.$leadStatus);
         }
+
 
         $this->warn('Empty workflow status for lead ID '.($record->id ?? 'unknown').'. Defaulting to first stage of pipeline.');
 

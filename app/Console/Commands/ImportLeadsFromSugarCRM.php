@@ -1245,7 +1245,17 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
         $this->info('extractAnamenesis: Found '.$relations->count().' relations');
 
+        // Initialize result with all leads and their related person ids from leadByPersons
+        // so that we also return person mappings even when anamnesis is missing.
         $result = [];
+        foreach ($leadByPersons as $leadId => $persons) {
+            // Ensure array structure lead_id => [person_id => []]
+            foreach ($persons as $personId) {
+                $result[$leadId][$personId] = $result[$leadId][$personId] ?? [];
+            }
+        }
+
+        // Merge in actual anamnesis relations (if any)
         foreach ($relations as $rel) {
             if (! isset($result[$rel->lead_id])) {
                 $result[$rel->lead_id] = [];
@@ -1253,7 +1263,6 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             if (! isset($result[$rel->lead_id][$rel->person_id])) {
                 $result[$rel->lead_id][$rel->person_id] = [];
             }
-            // Only add if this anamnesis_id doesn't already exist for this person
             if (! isset($result[$rel->lead_id][$rel->person_id][$rel->anamnesis_id])) {
                 $result[$rel->lead_id][$rel->person_id][$rel->anamnesis_id] = $rel;
             }

@@ -63,7 +63,7 @@ test('detaching the last person really unlinks the person and removes anamnesis'
     expect($lead->fresh()->persons)->toHaveCount(0);
 
     // Anamnesis entry for this lead-person should be removed as well
-    $exists = DB::table('anamneses')
+    $exists = DB::table('anamnesis')
         ->where('lead_id', $lead->id)
         ->where('person_id', $person->id)
         ->exists();

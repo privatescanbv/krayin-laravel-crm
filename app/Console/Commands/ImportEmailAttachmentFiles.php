@@ -190,7 +190,7 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
                 $sourceContent = File::get($sourceFile);
                 Storage::put($targetPath, $sourceContent);
 
-                $this->info("\n✓ Copied: {$sourceFile} → {$targetPath}");
+                $this->infoV("\n✓ Copied: {$sourceFile} → {$targetPath}");
                 $copied++;
 
             } catch (Exception $e) {

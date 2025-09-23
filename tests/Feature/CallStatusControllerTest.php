@@ -119,7 +119,7 @@ test('call status with send_email returns email data', function () {
 	$lead = Lead::create([
 		'first_name' => 'John',
 		'last_name'  => 'Doe',
-		emails'     => [
+		'emails'     => [
 			['value' => 'john.doe@example.com', 'is_default' => true],
 		],
 		'user_id'    => $user->id,

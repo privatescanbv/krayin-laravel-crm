@@ -149,6 +149,10 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             // Test connection
             $this->testConnection($connection);
 
+            // Reduce memory usage for large imports
+            DB::disableQueryLog();
+            DB::connection($connection)->disableQueryLog();
+
             // Get records from SugarCRM
             $sql = DB::connection($connection)
                 ->table('leads as l')
@@ -245,32 +249,60 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             }
 
             $this->info($sql->toRawSql());
-            $records = $sql->get();
 
-            $this->info('Found '.$records->count().' records to import');
+            // Count total first without loading all rows
+            $countQuery = (clone $sql)
+                ->select(DB::raw('COUNT(DISTINCT l.id) as aggregate'))
+                ->orders([]);
+            $total = (int) $countQuery->value('aggregate');
+            $this->info('Found '.$total.' records to import');
 
-            $leadByPersons = $this->extractPerson($records);
-            $leadByPersonsByAnamnesis = $this->extractAnamenesis($leadByPersons);
+            // Process in chunks to keep memory usage low
+            $batchSize = 1000;
+            $processed = 0;
 
-            // Extract call activities for the leads
-            $callActivities = $this->activityImporter->extractCallActivities($records);
+            // When specific lead IDs are provided, ignore limit entirely (already applied above)
+            // Otherwise, cap processing to the provided limit
+            $remaining = empty($leadIds) ? max(0, $limit) : PHP_INT_MAX;
 
-            // Extract emails for the leads (to be imported as Email records)
-            $emailActivities = $this->activityImporter->extractEmailActivities($records);
+            $sql
+                ->groupBy('l.id')
+                ->orderBy('l.date_entered', 'desc')
+                ->chunk($batchSize, function ($records) use (&$processed, &$remaining, $dryRun) {
+                    if ($remaining <= 0) {
+                        return false; // stop chunking
+                    }
 
-            // Extract meeting activities for the leads
-            $meetingActivities = $this->meetingImporter->extractMeetingActivities($records);
+                    // If a limit is set, trim current chunk to remaining size
+                    if ($remaining < $records->count()) {
+                        $records = $records->slice(0, $remaining)->values();
+                    }
 
-            // Extract email attachments for the leads
-            $emailAttachments = $this->attachmentImporter->extractEmailAttachments($records);
+                    $leadByPersons = $this->extractPerson($records);
+                    $leadByPersonsByAnamnesis = $this->extractAnamenesis($leadByPersons);
 
-            if ($dryRun) {
-                $this->showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
+                    // Extract related activities/attachments for these leads
+                    $callActivities = $this->activityImporter->extractCallActivities($records);
+                    $emailActivities = $this->activityImporter->extractEmailActivities($records);
+                    $meetingActivities = $this->meetingImporter->extractMeetingActivities($records);
+                    $emailAttachments = $this->attachmentImporter->extractEmailAttachments($records);
 
-                return;
-            }
+                    if ($dryRun) {
+                        $this->showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
+                    } else {
+                        $this->importRecords($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
+                    }
 
-            $this->importRecords($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
+                    $processed += $records->count();
+                    $remaining -= $records->count();
+
+                    // Free memory between batches
+                    unset($records);
+                    gc_collect_cycles();
+
+                    // Continue chunking unless remaining reached
+                    return $remaining > 0;
+                });
         });
     }
 

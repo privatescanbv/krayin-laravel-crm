@@ -60,8 +60,6 @@ beforeEach(function () {
         $table->date('birthdate')->nullable();
     });
 
-    
-
     Schema::connection('sugarcrm')->create('leads_cstm', function (Blueprint $table) {
         $table->string('id_c')->primary();
         $table->string('gender_c')->nullable();

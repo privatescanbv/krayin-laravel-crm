@@ -167,8 +167,6 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     ->limit($limit);
             }
 
-            $this->info($idQuery->toRawSql());
-
             $batchSize = 1000;
             $processed = 0;
 
@@ -269,33 +267,22 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     ->groupBy('l.id')
                     ->orderBy('l.date_entered', 'desc');
 
-                $this->info($sqlBatch->toRawSql());
-
                 $records = $sqlBatch->get();
-
                 $leadByPersons = $this->extractPerson($records);
-//                if(!empty($leadByPersons)) {
-                    // lead_id => person_id => anamnesis_id => true
-                    $leadByPersonsByAnamnesis = $this->extractAnamenesis($leadByPersons);
-//                    foreach ($leadByPersonsByAnamnesis as $leadId => $persons) {
-//                        if (!is_array($persons)) {
-//                            throw new Exception('Unexpected results: Each value in $leadByPersonsByAnamnesis should be an array. Lead ID: ' . $leadId . '. Data: ' . print_r($leadByPersonsByAnamnesis, true));
-//                        }
-//                    }
+                $leadByPersonsByAnamnesis = $this->extractAnamenesis($leadByPersons);
 
-                    $callActivities = $this->activityImporter->extractCallActivities($records);
-                    $emailActivities = $this->activityImporter->extractEmailActivities($records);
-                    $meetingActivities = $this->meetingImporter->extractMeetingActivities($records);
-                    $emailAttachments = $this->attachmentImporter->extractEmailAttachments($records);
+                $callActivities = $this->activityImporter->extractCallActivities($records);
+                $emailActivities = $this->activityImporter->extractEmailActivities($records);
+                $meetingActivities = $this->meetingImporter->extractMeetingActivities($records);
+                $emailAttachments = $this->attachmentImporter->extractEmailAttachments($records);
 
-                    if ($dryRun) {
-                        $this->showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
-                    } else {
-                        $this->importRecords($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
-                    }
+                if ($dryRun) {
+                    $this->showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
+                } else {
+                    $this->importRecords($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
+                }
 
-                    $processed += $records->count();
-//                }
+                $processed += $records->count();
                 unset($records);
                 gc_collect_cycles();
             });
@@ -512,7 +499,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 if ($existingLead) {
                     $skipped++;
                     $skippedAlreadyExisting++;
-//                    $this->info("Skipping existing lead with external_id={$record->id} (already imported as #{$existingLead->id})");
+                    //                    $this->info("Skipping existing lead with external_id={$record->id} (already imported as #{$existingLead->id})");
                     $bar->advance();
 
                     continue;
@@ -865,8 +852,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             } elseif ($workflowStatus == 'afvoeren') {
                 $lostReason = self::mapLostReason($record->reden_afvoeren_c ?? null);
                 if (empty($lostReason)) {
-                    throw new Exception('Lead marked as lost (afvoeren) but no lost reason provided for lead ID ' . $record->id);
+                    throw new Exception('Lead marked as lost (afvoeren) but no lost reason provided for lead ID '.$record->id);
                 }
+
                 return Stage::where('lead_pipeline_id', $pipelineId)
                     ->where('code', 'like', '%lost%')
                     ->firstOrFail()->id;
@@ -878,6 +866,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 if ($pipelineId === PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value) {
                     return $firstStageId + 2;
                 }
+
                 return $firstStageId + 1;
             } elseif ($workflowStatus === 'orderbevestigen') {
                 return Stage::where('lead_pipeline_id', $pipelineId)
@@ -1109,7 +1098,6 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
     }
 
     /**
-     * @param mixed $records
      * @return array [lead_id] => [person_id1, person_id2, ...]
      */
     private function extractPerson(mixed $records): array
@@ -1161,8 +1149,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
     }
 
     /**
-     * @param array $leadByPersons [lead_id => [person_id1, person_id2, ...]]
+     * @param  array  $leadByPersons  [lead_id => [person_id1, person_id2, ...]]
      * @return array [lead_id => [person_id => anamnesis_data]]
+     *
      * @throws Exception if argument is empty
      */
     private function extractAnamenesis(array $leadByPersons): array
@@ -1174,8 +1163,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $connection = $this->option('connection');
         $leadIds = array_keys($leadByPersons);
         $personIdLists = array_values($leadByPersons);
-        $nonEmptyPersonLists = array_values(array_filter($personIdLists, fn ($lst) => !empty($lst)));
-        $personIds = !empty($nonEmptyPersonLists) ? array_merge(...$nonEmptyPersonLists) : [];
+        $nonEmptyPersonLists = array_values(array_filter($personIdLists, fn ($lst) => ! empty($lst)));
+        $personIds = ! empty($nonEmptyPersonLists) ? array_merge(...$nonEmptyPersonLists) : [];
 
         // Fetch anamnesis relations for given lead and person IDs
         $sql = DB::connection($connection)
@@ -1187,7 +1176,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     'lead_anamnesis.leads_pcrm_anamnesepreventie_1pcrm_anamnesepreventie_idb'
                 )
                     ->where('anamnesis_person.deleted', '=', 0)
-                    ->when(!empty($personIds), function ($q) use ($personIds) {
+                    ->when(! empty($personIds), function ($q) use ($personIds) {
                         $q->whereIn('anamnesis_person.pcrm_anamn0b6eontacts_ida', $personIds);
                     })
                     ->when(empty($personIds), function ($q) {
@@ -1266,7 +1255,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         // Initialize result with all leads and their related person ids from leadByPersons
         // so that we also return person mappings even when anamnesis is missing.
         $result = [];
-        $this->info('extractAnamenesis 1: Initialized result with '.count($leadByPersons).' leads and their persons.'. print_r($leadByPersons, true));
+        $this->info('extractAnamenesis 1: Initialized result with '.count($leadByPersons).' leads and their persons.'.print_r($leadByPersons, true));
         foreach ($leadByPersons as $leadId => $persons) {
             // Ensure array structure lead_id => [person_id => []]
             foreach ($persons as $personId) {
@@ -1277,24 +1266,24 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
         // Merge in actual anamnesis relations (if any)
         foreach ($relations as $rel) {
-//            if (! isset($result[$rel->lead_id][$rel->person_id][$rel->anamnesis_id])) {
-                $result[$rel->lead_id][$rel->person_id][$rel->anamnesis_id] = $rel;
-//            }
+            //            if (! isset($result[$rel->lead_id][$rel->person_id][$rel->anamnesis_id])) {
+            $result[$rel->lead_id][$rel->person_id][$rel->anamnesis_id] = $rel;
+            //            }
         }
         $this->info('extractAnamenesis 3 : Initialized result with '.count($result).' leads and their persons.');
 
-//        $this->info(
-//            'extractAnamenesis: Found '.$relations->count().' relations, returning '.count($result).' unique lead-person-anamnesis mappings. '.
-//            'Unique persons per lead: '.implode(', ', array_map(
-//                fn ($persons) => count($persons),
-//                $result
-//            )).'. '.
-//            'Anamnesis counts per person: '.implode(', ', array_map(
-//                fn ($persons) => implode('|', array_map(fn ($anamneses) => count($anamneses), $persons)),
-//                $result
-//            ))
-//        );
-//$this->info('extractAnamenesis: Detailed mapping: '.json_encode($result));
+        //        $this->info(
+        //            'extractAnamenesis: Found '.$relations->count().' relations, returning '.count($result).' unique lead-person-anamnesis mappings. '.
+        //            'Unique persons per lead: '.implode(', ', array_map(
+        //                fn ($persons) => count($persons),
+        //                $result
+        //            )).'. '.
+        //            'Anamnesis counts per person: '.implode(', ', array_map(
+        //                fn ($persons) => implode('|', array_map(fn ($anamneses) => count($anamneses), $persons)),
+        //                $result
+        //            ))
+        //        );
+        // $this->info('extractAnamenesis: Detailed mapping: '.json_encode($result));
         return $result;
     }
 
@@ -1320,12 +1309,13 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
      */
     private function mapUser($record): ?int
     {
-        if (!empty($record->assigned_user_id)) {
+        if (! empty($record->assigned_user_id)) {
             $user = User::where('external_id', $record->assigned_user_id)->first();
             if ($user) {
                 return $user->id;
             }
         }
+
         return null;
     }
 }

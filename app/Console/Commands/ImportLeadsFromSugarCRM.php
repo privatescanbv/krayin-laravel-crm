@@ -524,11 +524,13 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 $related = $leadByPersonsByAnamnesis[$record->id] ?? [];
                 $expectedPersonIds = array_keys($related);
 
-                if (empty($persons)) {
+                // If SugarCRM shows no related persons for this lead, we still import the lead
+                // If SugarCRM shows related persons, then all of them must be found to proceed
+                if (! empty($expectedPersonIds) && empty($persons)) {
                     $personNotFound++;
                     $skipped++;
                     $skippedNoRelatedPersons++;
-                    $this->error("\nPerson not found for lead: {$record->first_name} {$record->last_name} (LEAD ID: {$record->id}) (person ids: ".(empty($expectedPersonIds) ? 'none' : implode(',', $expectedPersonIds)).')');
+                    $this->error("\nPerson not found for lead: {$record->first_name} {$record->last_name} (LEAD ID: {$record->id}) (person ids: ".implode(',', $expectedPersonIds).')');
                     $bar->advance();
 
                     continue;
@@ -538,7 +540,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 $foundPersonIds = array_map(fn ($p) => $p->external_id, $persons);
                 $missingPersonIds = array_diff($expectedPersonIds, $foundPersonIds);
 
-                if (! empty($missingPersonIds)) {
+                if (! empty($expectedPersonIds) && ! empty($missingPersonIds)) {
                     $personNotFound++;
                     $skipped++;
                     $skippedNotAllPersonsFound++;
@@ -619,6 +621,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                                 $this->updateAnamnesis($lead, $record, $p->id, $firstAnamnesisObj);
                             }
                         }
+                    } else {
+                        $this->info('No related persons for lead '.$record->id.'; lead imported without person attachments.');
                     }
                 });
 

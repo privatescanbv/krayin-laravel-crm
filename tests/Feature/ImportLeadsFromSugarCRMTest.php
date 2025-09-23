@@ -395,6 +395,45 @@ test('imports lead with person but without anamnesis relations', function () {
         ->and($anamnesis->person_id)->toBe($appPerson->id);
 });
 
+test('imports lead without any person relation', function () {
+    // Create user with external_id (required for import)
+    $user = User::factory()->create(['external_id' => 'user-no-person-001']);
+
+    // Insert sugarcrm lead with no leads_contacts_c rows
+    $leadId = 'lead-no-person-001';
+    DB::connection('sugarcrm')->table('leads')->insert([
+        'id'            => $leadId,
+        'first_name'    => 'Lonely',
+        'last_name'     => 'Lead',
+        'status'        => 'New',
+        'date_entered'  => '2025-06-11 13:41:07',
+        'date_modified' => '2025-06-12 10:00:00',
+        'deleted'       => 0,
+    ]);
+    DB::connection('sugarcrm')->table('leads_cstm')->insert([
+        'id_c'              => $leadId,
+        'workflow_status_c' => 'nieuweaanvraag',
+        'kanaal_c'          => 'website',
+        'soort_aanvraag_c'  => 'preventie',
+    ]);
+
+    // No `leads_contacts_c` entry
+
+    // Run import
+    $exit = Artisan::call('import:leads', [
+        '--connection' => 'sugarcrm',
+        '--limit'      => 10,
+        '--lead-ids'   => [$leadId],
+    ]);
+    expect($exit)->toBe(0);
+
+    // Verify lead imported without persons
+    $lead = Lead::where('external_id', $leadId)->first();
+    expect($lead)->not->toBeNull();
+    expect($lead->persons)->toHaveCount(0);
+    expect($lead->anamnesis)->toHaveCount(0);
+});
+
 test('imports lead created_at parsed correctly from sugarcrm', function () {
     // Create user with external_id (required for import)
     $user = User::factory()->create(['external_id' => 'user-001']);

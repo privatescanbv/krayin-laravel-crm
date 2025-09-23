@@ -843,17 +843,17 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         // Determine the correct first stage based on pipeline
         $firstStageId = $this->getFirstStageForPipeline($pipelineId);
 
-        // For now, we'll use the first stage of the appropriate pipeline
-        // TODO: In the future, we could map specific workflow statuses to specific stages per pipeline
-
         if ($workflowStatus) {
-            if ($workflowStatus == 'afvoeren') {
-                // Find lost stage for this pipeline
-                $lostStage = Stage::where('lead_pipeline_id', $pipelineId)
+            if ($workflowStatus == 'nieuweaanvraag') {
+                return $firstStageId;
+            } elseif ($workflowStatus == 'afvoeren') {
+                $lostReason = self::mapLostReason($record->reden_afvoeren_c ?? null);
+                if (empty($lostReason)) {
+                    throw new Exception('Lead marked as lost (afvoeren) but no lost reason provided for lead ID ' . $record->id);
+                }
+                return Stage::where('lead_pipeline_id', $pipelineId)
                     ->where('code', 'like', '%lost%')
-                    ->first();
-
-                return $lostStage ? $lostStage->id : $firstStageId;
+                    ->firstOrFail()->id;
             } elseif ($workflowStatus == 'verkoopadvies') {
                 //                if ($leadStatus === 'in process') {
                 return $firstStageId + 1;
@@ -862,37 +862,19 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 if ($pipelineId === PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value) {
                     return $firstStageId + 2;
                 }
-
                 return $firstStageId + 1;
+            } elseif ($workflowStatus === 'orderbevestigen') {
+                return Stage::where('lead_pipeline_id', $pipelineId)
+                    ->where('code', 'like', '%won%')
+                    ->firstOrFail()->id;
+
             } else {
                 $this->warn('Unknown workflow status: '.$workflowStatus.'. Defaulting to first stage of pipeline.');
             }
         }
 
-        // extra check, if workflow status is empty but lead status is dead or recycled
-        if (in_array($leadStatus, ['dead', 'recycled'])) {
-            // Find lost stage for this pipeline
-            $lostStage = Stage::where('lead_pipeline_id', $pipelineId)
-                ->where('code', 'like', '%lost%')
-                ->first();
+        $this->error('Unknown or missing workflow status for lead ID '.$record->id.'. Lead stastus = '.$leadStatus.', workflow status = '.$workflowStatus.'. Defaulting to first stage of pipeline.');
 
-            return $lostStage ? $lostStage->id : $firstStageId;
-        } elseif ($leadStatus === 'converted') {
-            // Find won stage for this pipeline
-            $wonStage = Stage::where('lead_pipeline_id', $pipelineId)
-                ->where('code', 'like', '%won%')
-                ->first();
-
-            return $wonStage ? $wonStage->id : $firstStageId;
-        } else {
-            $this->warn('Handling lead status as first stage: '.$leadStatus);
-        }
-
-
-        $this->warn('Empty workflow status for lead ID '.($record->id ?? 'unknown').'. Defaulting to first stage of pipeline.');
-
-        // For now, return the first stage of the pipeline
-        // In the future, we could implement more sophisticated mapping based on workflow_status
         return $firstStageId;
     }
 

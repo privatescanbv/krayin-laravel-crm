@@ -136,6 +136,10 @@ class LeadRepository extends Repository
     public function create(array $data): Lead
     {
 
+        // Ensure entity_type default for attribute saving
+        if (!isset($data['entity_type'])) {
+            $data['entity_type'] = 'leads';
+        }
 
         // Handle multiple persons
         $personsToAttach = [];
@@ -228,6 +232,20 @@ class LeadRepository extends Repository
             'persons_data' => $data['persons'] ?? null,
             'person_ids_data' => $data['person_ids'] ?? null,
         ]);
+
+        // Ensure entity_type default for attribute saving
+        if (!isset($data['entity_type'])) {
+            $data['entity_type'] = 'leads';
+        }
+
+        // Normalize nullable foreign keys that might come as empty strings/placeholders
+        foreach (['user_id', 'organization_id', 'lead_channel_id', 'lead_source_id', 'lead_type_id'] as $nullableKey) {
+            if (array_key_exists($nullableKey, $data)) {
+                if ($data[$nullableKey] === '' || $data[$nullableKey] === '?' || $data[$nullableKey] === null) {
+                    $data[$nullableKey] = null;
+                }
+            }
+        }
 
         // Handle multiple persons update
         $personsToSync = [];

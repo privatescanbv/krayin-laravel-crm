@@ -153,156 +153,142 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             DB::disableQueryLog();
             DB::connection($connection)->disableQueryLog();
 
-            // Get records from SugarCRM
-            $sql = DB::connection($connection)
+            // Prepare an ID-only query for safe chunking
+            $idQuery = DB::connection($connection)
                 ->table('leads as l')
                 ->join('leads_cstm as lc', 'l.id', '=', 'lc.id_c')
-                ->leftJoin('email_addr_bean_rel as eabr', function ($join) {
-                    $join->on('eabr.bean_id', '=', 'l.id')
-                        ->where('eabr.bean_module', '=', 'Leads')
-                        ->where('eabr.deleted', '=', 0);
-                })
-                ->leftJoin('email_addresses as ea', function ($join) {
-                    $join->on('ea.id', '=', 'eabr.email_address_id')
-                        ->where('ea.deleted', '=', 0);
-                })
-                ->select([
-                    'l.*',
-                    DB::raw('MAX(l.date_entered) as lead_date_entered'),
-                    DB::raw('MAX(l.date_modified) as lead_date_modified'),
-                    'lc.gender_c',
-                    'lc.workflow_status_c',
-                    'lc.kanaal_c',
-                    'lc.soort_aanvraag_c',
-                    'lc.meisjesnaam_c',
-                    'lc.aang_tussenv_c',
-                    'lc.partner_birthdate_c',
-                    'lc.partner_gender_c',
-                    'lc.lengte_c',
-                    'lc.gewicht_c',
-                    'lc.op_een_factuur_c',
-                    'lc.anamnese_c',
-                    'lc.partner_anamnese_c',
-                    'lc.metalen_c',
-                    'lc.medicijnen_c',
-                    'lc.glaucoom_c',
-                    'lc.claustrofobie_c',
-                    'lc.opmerking_c',
-                    'lc.partner_medicijnen_c',
-                    'lc.partner_smoking_c',
-                    'lc.partner_diabetes_c',
-                    'lc.partner_vaat_erfelijk_c',
-                    'lc.partner_gewicht_c',
-                    'lc.partner_metalen_c',
-                    'lc.partner_tumoren_erfelijk_c',
-                    'lc.partner_glaucoom_c',
-                    'lc.partner_meisjesnaam_c',
-                    'lc.partner_lengte_c',
-                    'lc.partner_first_name_c',
-                    'lc.partner_heart_problems_c',
-                    'lc.partner_rugklachten_c',
-                    'lc.partner_last_name_c',
-                    'lc.partner_dormicum_c',
-                    'lc.partner_claustrofobie_c',
-                    'lc.partner_spijsverteringsklach_c',
-                    'lc.partner_hart_erfelijk_c',
-                    'lc.partner_salutation_c',
-                    'lc.partner_opmerking_c',
-                    'lc.partner_risico_hartinfarct_c',
-                    'lc.ms_sinds_c',
-                    'lc.ms_type_c',
-                    'lc.spreektalen_c',
-                    'lc.straat_c',
-                    'lc.primary_huisnr_c',
-                    'lc.primary_huisnr_toevoeging_c',
-                    'lc.reden_afvoeren_c',
-                    'lc.nieuwsbrief_vraag_c',
-                    'lc.reset_wfl_status_c',
-                    'lc.particulier_c',
-                    'lc.roepnaam_c',
-                    'lc.voorletters_c',
-                    'lc.leeftijd_c',
-                    'lc.allergie_c',
-                    'lc.opm_allergie_c',
-                    'lc.hart_operatie_c',
-                    'lc.opm_hart_operatie_c',
-                    'lc.implantaat_c',
-                    'lc.opm_implantaat_c',
-                    'lc.tussenvoegsel_c',
-                    'lc.interes_info_c',
-                    'lc.operaties_c',
-                    'lc.reden_afvoeren_c',
-                    'lc.opm_erf_tumoren_c',
-                    DB::raw('MAX(CASE WHEN eabr.primary_address = 1 THEN ea.email_address END) as email_primary'),
-                    DB::raw('MIN(CASE WHEN eabr.primary_address = 0 THEN ea.email_address END) as email_any'),
-                ])
                 ->where('l.deleted', 0)
-                ->where('soort_aanvraag_c', '!=', 'ccsvi'); // Exclude 'ccsvi'
+                ->where('soort_aanvraag_c', '!=', 'ccsvi');
 
-            // If specific lead IDs are provided, filter by them and ignore limit
             if (! empty($leadIds)) {
-                $sql->whereIn('l.id', $leadIds);
+                $idQuery->whereIn('l.id', $leadIds);
             } else {
-                $sql->groupBy('l.id')
-                    ->orderBy('l.date_entered', 'desc') // Nieuwste eerst
+                $idQuery->orderBy('l.date_entered', 'desc')
                     ->limit($limit);
             }
 
-            $this->info($sql->toRawSql());
+            $this->info($idQuery->toRawSql());
 
-            // Count total first without loading all rows
-            $countQuery = (clone $sql)
-                ->select(DB::raw('COUNT(DISTINCT l.id) as aggregate'))
-                ->orders([]);
-            $total = (int) $countQuery->value('aggregate');
-            $this->info('Found '.$total.' records to import');
-
-            // Process in chunks to keep memory usage low
             $batchSize = 1000;
             $processed = 0;
 
-            // When specific lead IDs are provided, ignore limit entirely (already applied above)
-            // Otherwise, cap processing to the provided limit
-            $remaining = empty($leadIds) ? max(0, $limit) : PHP_INT_MAX;
+            $idQuery->select('l.id')->chunkById($batchSize, function ($rows) use ($connection, $dryRun, &$processed) {
+                if ($rows->isEmpty()) {
+                    return false;
+                }
 
-            $sql
-                ->groupBy('l.id')
-                ->orderBy('l.date_entered', 'desc')
-                ->chunk($batchSize, function ($records) use (&$processed, &$remaining, $dryRun) {
-                    if ($remaining <= 0) {
-                        return false; // stop chunking
-                    }
+                $leadIdsBatch = $rows->pluck('id')->all();
 
-                    // If a limit is set, trim current chunk to remaining size
-                    if ($remaining < $records->count()) {
-                        $records = $records->slice(0, $remaining)->values();
-                    }
+                // Build the full select for this batch
+                $sqlBatch = DB::connection($connection)
+                    ->table('leads as l')
+                    ->join('leads_cstm as lc', 'l.id', '=', 'lc.id_c')
+                    ->leftJoin('email_addr_bean_rel as eabr', function ($join) {
+                        $join->on('eabr.bean_id', '=', 'l.id')
+                            ->where('eabr.bean_module', '=', 'Leads')
+                            ->where('eabr.deleted', '=', 0);
+                    })
+                    ->leftJoin('email_addresses as ea', function ($join) {
+                        $join->on('ea.id', '=', 'eabr.email_address_id')
+                            ->where('ea.deleted', '=', 0);
+                    })
+                    ->select([
+                        'l.*',
+                        DB::raw('MAX(l.date_entered) as lead_date_entered'),
+                        DB::raw('MAX(l.date_modified) as lead_date_modified'),
+                        'lc.gender_c',
+                        'lc.workflow_status_c',
+                        'lc.kanaal_c',
+                        'lc.soort_aanvraag_c',
+                        'lc.meisjesnaam_c',
+                        'lc.aang_tussenv_c',
+                        'lc.partner_birthdate_c',
+                        'lc.partner_gender_c',
+                        'lc.lengte_c',
+                        'lc.gewicht_c',
+                        'lc.op_een_factuur_c',
+                        'lc.anamnese_c',
+                        'lc.partner_anamnese_c',
+                        'lc.metalen_c',
+                        'lc.medicijnen_c',
+                        'lc.glaucoom_c',
+                        'lc.claustrofobie_c',
+                        'lc.opmerking_c',
+                        'lc.partner_medicijnen_c',
+                        'lc.partner_smoking_c',
+                        'lc.partner_diabetes_c',
+                        'lc.partner_vaat_erfelijk_c',
+                        'lc.partner_gewicht_c',
+                        'lc.partner_metalen_c',
+                        'lc.partner_tumoren_erfelijk_c',
+                        'lc.partner_glaucoom_c',
+                        'lc.partner_meisjesnaam_c',
+                        'lc.partner_lengte_c',
+                        'lc.partner_first_name_c',
+                        'lc.partner_heart_problems_c',
+                        'lc.partner_rugklachten_c',
+                        'lc.partner_last_name_c',
+                        'lc.partner_dormicum_c',
+                        'lc.partner_claustrofobie_c',
+                        'lc.partner_spijsverteringsklach_c',
+                        'lc.partner_hart_erfelijk_c',
+                        'lc.partner_salutation_c',
+                        'lc.partner_opmerking_c',
+                        'lc.partner_risico_hartinfarct_c',
+                        'lc.ms_sinds_c',
+                        'lc.ms_type_c',
+                        'lc.spreektalen_c',
+                        'lc.straat_c',
+                        'lc.primary_huisnr_c',
+                        'lc.primary_huisnr_toevoeging_c',
+                        'lc.reden_afvoeren_c',
+                        'lc.nieuwsbrief_vraag_c',
+                        'lc.reset_wfl_status_c',
+                        'lc.particulier_c',
+                        'lc.roepnaam_c',
+                        'lc.voorletters_c',
+                        'lc.leeftijd_c',
+                        'lc.allergie_c',
+                        'lc.opm_allergie_c',
+                        'lc.hart_operatie_c',
+                        'lc.opm_hart_operatie_c',
+                        'lc.implantaat_c',
+                        'lc.opm_implantaat_c',
+                        'lc.tussenvoegsel_c',
+                        'lc.interes_info_c',
+                        'lc.operaties_c',
+                        'lc.reden_afvoeren_c',
+                        'lc.opm_erf_tumoren_c',
+                        DB::raw('MAX(CASE WHEN eabr.primary_address = 1 THEN ea.email_address END) as email_primary'),
+                        DB::raw('MIN(CASE WHEN eabr.primary_address = 0 THEN ea.email_address END) as email_any'),
+                    ])
+                    ->whereIn('l.id', $leadIdsBatch)
+                    ->groupBy('l.id')
+                    ->orderBy('l.date_entered', 'desc');
 
-                    $leadByPersons = $this->extractPerson($records);
-                    $leadByPersonsByAnamnesis = $this->extractAnamenesis($leadByPersons);
+                $this->info($sqlBatch->toRawSql());
 
-                    // Extract related activities/attachments for these leads
-                    $callActivities = $this->activityImporter->extractCallActivities($records);
-                    $emailActivities = $this->activityImporter->extractEmailActivities($records);
-                    $meetingActivities = $this->meetingImporter->extractMeetingActivities($records);
-                    $emailAttachments = $this->attachmentImporter->extractEmailAttachments($records);
+                $records = $sqlBatch->get();
 
-                    if ($dryRun) {
-                        $this->showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
-                    } else {
-                        $this->importRecords($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
-                    }
+                $leadByPersons = $this->extractPerson($records);
+                $leadByPersonsByAnamnesis = $this->extractAnamenesis($leadByPersons);
 
-                    $processed += $records->count();
-                    $remaining -= $records->count();
+                $callActivities = $this->activityImporter->extractCallActivities($records);
+                $emailActivities = $this->activityImporter->extractEmailActivities($records);
+                $meetingActivities = $this->meetingImporter->extractMeetingActivities($records);
+                $emailAttachments = $this->attachmentImporter->extractEmailAttachments($records);
 
-                    // Free memory between batches
-                    unset($records);
-                    gc_collect_cycles();
+                if ($dryRun) {
+                    $this->showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
+                } else {
+                    $this->importRecords($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
+                }
 
-                    // Continue chunking unless remaining reached
-                    return $remaining > 0;
-                });
+                $processed += $records->count();
+
+                unset($records);
+                gc_collect_cycles();
+            });
         });
     }
 

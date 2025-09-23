@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Illuminate\Support\Facades\DB;
+use Webkul\User\Models\User;
 use Webkul\Lead\Repositories\LeadRepository;
 
 uses(RefreshDatabase::class);
@@ -47,13 +48,15 @@ test('it syncs persons even when user_id is cleared during update', function () 
 test('detaching the last person really unlinks the person and removes anamnesis', function () {
     $lead = Lead::factory()->create();
     $person = Person::factory()->create();
+    $user = User::factory()->active()->create();
 
     // Attach single person
     $lead->attachPersons([$person->id]);
     expect($lead->fresh()->persons)->toHaveCount(1);
 
-    // Detach via controller endpoint (simulating UI action)
-    test()->deleteJson(route('admin.leads.detach_person', ['leadId' => $lead->id, 'personId' => $person->id]))
+    // Detach via controller endpoint (simulating UI action) with auth
+    test()->actingAs($user, 'user')
+        ->deleteJson(route('admin.leads.detach_person', ['leadId' => $lead->id, 'personId' => $person->id]))
         ->assertOk();
 
     // Relationship should be removed

@@ -724,13 +724,14 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         if (empty($relatedPersonIds)) {
             return [];
         }
-
-        $this->info('Looking for persons with external_ids: '.implode(', ', $relatedPersonIds));
-
+        if ($this->output->isVerbose()) {
+            $this->info('Looking for persons with external_ids: ' . implode(', ', $relatedPersonIds));
+        }
         $persons = Person::whereIn('external_id', $relatedPersonIds)->get()->all();
 
-        $this->info('Found '.count($persons).' persons: '.implode(', ', array_map(fn ($p) => $p->name.' (ext_id: '.$p->external_id.')', $persons)));
-
+        if ($this->output->isVerbose()) {
+            $this->info('Found ' . count($persons) . ' persons: ' . implode(', ', array_map(fn($p) => $p->name . ' (ext_id: ' . $p->external_id . ')', $persons)));
+        }
         // Check if any persons were not found and warn
         $foundPersonIds = array_map(fn ($p) => $p->external_id, $persons);
         $missingPersonIds = array_diff($relatedPersonIds, $foundPersonIds);
@@ -1281,7 +1282,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 $result[$leadId][$personId] = [];
             }
         }
-        
+
 
         // Merge in actual anamnesis relations (if any)
         foreach ($relations as $rel) {
@@ -1289,7 +1290,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             $result[$rel->lead_id][$rel->person_id][$rel->anamnesis_id] = $rel;
             //            }
         }
-        
+
 
         //        $this->info(
         //            'extractAnamenesis: Found '.$relations->count().' relations, returning '.count($result).' unique lead-person-anamnesis mappings. '.

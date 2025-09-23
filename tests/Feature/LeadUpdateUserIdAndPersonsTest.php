@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Illuminate\Support\Facades\DB;
+use Webkul\Lead\Repositories\LeadRepository;
 
 uses(RefreshDatabase::class);
 
@@ -14,7 +15,7 @@ test('updating lead with empty user_id sets it to null', function () {
 
     expect($lead->user_id)->not->toBeNull();
 
-    $updated = app(\Webkul\Lead\Repositories\LeadRepository::class)
+    $updated = app(LeadRepository::class)
         ->update(['user_id' => ''], $lead->id);
 
     expect($updated->user_id)->toBeNull();
@@ -34,13 +35,13 @@ test('it syncs persons even when user_id is cleared during update', function () 
         'person_ids' => [$personA->id, $personB->id],
     ];
 
-    $updated = app(\Webkul\Lead\Repositories\LeadRepository::class)
+    $updated = app(LeadRepository::class)
         ->update($payload, $lead->id);
 
-    expect($updated->user_id)->toBeNull();
-    expect($updated->fresh()->persons)->toHaveCount(2);
-    expect($updated->fresh()->persons->pluck('id')->contains($personA->id))->toBeTrue();
-    expect($updated->fresh()->persons->pluck('id')->contains($personB->id))->toBeTrue();
+    expect($updated->user_id)->toBeNull()
+        ->and($updated->fresh()->persons)->toHaveCount(2)
+        ->and($updated->fresh()->persons->pluck('id')->contains($personA->id))->toBeTrue()
+        ->and($updated->fresh()->persons->pluck('id')->contains($personB->id))->toBeTrue();
 });
 
 test('detaching the last person really unlinks the person and removes anamnesis', function () {

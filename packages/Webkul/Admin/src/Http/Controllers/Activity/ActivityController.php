@@ -471,21 +471,23 @@ class ActivityController extends Controller
     /*
      * Remove the specified resource from storage.
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(int $id): RedirectResponse
     {
         $activity = $this->activityRepository->findOrFail($id);
-
+        $leadId = $activity->lead_id;
         try {
             Event::dispatch('activity.delete.before', $id);
-
-            $activity?->delete($id);
+            $activity->delete($id);
 
             Event::dispatch('activity.delete.after', $id);
 
-            return response()->json([
-                'message' => trans('admin::app.activities.destroy-success'),
-            ], 200);
-        } catch (\Exception $exception) {
+            if($leadId) {
+                return redirect()->route('admin.leads.view', $leadId)->with('Activiteit is verwijderd.');
+            } else {
+                return redirect()->route('admin.persons.view', $activity->persons()->first()->id)->with('Activiteit is verwijderd.');
+            }
+        } catch (Exception $exception) {
+            logger()->error('Could not delete activity: '.$exception->getMessage());
             return response()->json([
                 'message' => trans('admin::app.activities.destroy-failed'),
             ], 400);

@@ -60,63 +60,7 @@ beforeEach(function () {
         $table->date('birthdate')->nullable();
     });
 
-    test('imports lead with person but without anamnesis relations', function () {
-        // Create user with external_id (required for import)
-        $user = User::factory()->create(['external_id' => 'user-no-anam-001']);
-
-        // Create app person that will be linked to lead via lead->person mapping only
-        $personExternalId = 'person-no-anam-001';
-        $appPerson = Person::factory()->create(['external_id' => $personExternalId]);
-
-        // Insert sugarcrm lead and related data (no anamnesis tables populated)
-        $leadId = 'lead-no-anam-001';
-        DB::connection('sugarcrm')->table('leads')->insert([
-            'id'            => $leadId,
-            'first_name'    => 'NoAnam',
-            'last_name'     => 'Person',
-            'status'        => 'New',
-            'date_entered'  => '2025-06-11 13:41:07',
-            'date_modified' => '2025-06-12 10:00:00',
-            'deleted'       => 0,
-        ]);
-        DB::connection('sugarcrm')->table('leads_cstm')->insert([
-            'id_c'              => $leadId,
-            'workflow_status_c' => 'nieuweaanvraag',
-            'kanaal_c'          => 'website',
-            'soort_aanvraag_c'  => 'preventie',
-            'gender_c'          => 'male',
-        ]);
-
-        // Link lead to person directly; NO entries in leads_pcrm_anamnesepreventie_1_c or pcrm_anamnetie_contacts_c
-        DB::connection('sugarcrm')->table('leads_contacts_c')->insert([
-            'id'                  => 'lead-contact-no-anam-001',
-            'leads_c7104eads_ida' => $leadId,
-            'leads_cbb5dacts_idb' => $personExternalId,
-            'deleted'             => 0,
-        ]);
-
-        // Run import
-        $exit = Artisan::call('import:leads', [
-            '--connection' => 'sugarcrm',
-            '--limit'      => 1,
-            '--lead-ids'   => [$leadId],
-        ]);
-        expect($exit)->toBe(0);
-
-        // Verify lead was imported and person attached
-        $lead = Lead::where('external_id', $leadId)->first();
-        expect($lead)->not->toBeNull();
-
-        $attachedPersons = $lead->persons;
-        expect($attachedPersons)->not->toBeNull()
-            ->and($attachedPersons)->toHaveCount(1)
-            ->and($attachedPersons->first()->id)->toBe($appPerson->id);
-
-        // Anamnesis should exist due to attachPersons, but without imported values
-        $anamnesis = $lead->anamnesis->first();
-        expect($anamnesis)->not->toBeNull()
-            ->and($anamnesis->person_id)->toBe($appPerson->id);
-    });
+    
 
     Schema::connection('sugarcrm')->create('leads_cstm', function (Blueprint $table) {
         $table->string('id_c')->primary();
@@ -391,6 +335,64 @@ beforeEach(function () {
         $table->string('parent_id')->nullable();
         $table->string('parent_type')->nullable();
     });
+});
+
+test('imports lead with person but without anamnesis relations', function () {
+    // Create user with external_id (required for import)
+    $user = User::factory()->create(['external_id' => 'user-no-anam-001']);
+
+    // Create app person that will be linked to lead via lead->person mapping only
+    $personExternalId = 'person-no-anam-001';
+    $appPerson = Person::factory()->create(['external_id' => $personExternalId]);
+
+    // Insert sugarcrm lead and related data (no anamnesis tables populated)
+    $leadId = 'lead-no-anam-001';
+    DB::connection('sugarcrm')->table('leads')->insert([
+        'id'            => $leadId,
+        'first_name'    => 'NoAnam',
+        'last_name'     => 'Person',
+        'status'        => 'New',
+        'date_entered'  => '2025-06-11 13:41:07',
+        'date_modified' => '2025-06-12 10:00:00',
+        'deleted'       => 0,
+    ]);
+    DB::connection('sugarcrm')->table('leads_cstm')->insert([
+        'id_c'              => $leadId,
+        'workflow_status_c' => 'nieuweaanvraag',
+        'kanaal_c'          => 'website',
+        'soort_aanvraag_c'  => 'preventie',
+        'gender_c'          => 'male',
+    ]);
+
+    // Link lead to person directly; NO entries in leads_pcrm_anamnesepreventie_1_c or pcrm_anamnetie_contacts_c
+    DB::connection('sugarcrm')->table('leads_contacts_c')->insert([
+        'id'                  => 'lead-contact-no-anam-001',
+        'leads_c7104eads_ida' => $leadId,
+        'leads_cbb5dacts_idb' => $personExternalId,
+        'deleted'             => 0,
+    ]);
+
+    // Run import
+    $exit = Artisan::call('import:leads', [
+        '--connection' => 'sugarcrm',
+        '--limit'      => 1,
+        '--lead-ids'   => [$leadId],
+    ]);
+    expect($exit)->toBe(0);
+
+    // Verify lead was imported and person attached
+    $lead = Lead::where('external_id', $leadId)->first();
+    expect($lead)->not->toBeNull();
+
+    $attachedPersons = $lead->persons;
+    expect($attachedPersons)->not->toBeNull()
+        ->and($attachedPersons)->toHaveCount(1)
+        ->and($attachedPersons->first()->id)->toBe($appPerson->id);
+
+    // Anamnesis should exist due to attachPersons, but without imported values
+    $anamnesis = $lead->anamnesis->first();
+    expect($anamnesis)->not->toBeNull()
+        ->and($anamnesis->person_id)->toBe($appPerson->id);
 });
 
 test('imports lead created_at parsed correctly from sugarcrm', function () {

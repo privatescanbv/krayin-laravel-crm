@@ -229,6 +229,15 @@ class LeadRepository extends Repository
             'person_ids_data' => $data['person_ids'] ?? null,
         ]);
 
+        // Normalize nullable foreign keys that might come as empty strings/placeholders
+        foreach (['user_id', 'organization_id', 'lead_channel_id', 'lead_source_id', 'lead_type_id'] as $nullableKey) {
+            if (array_key_exists($nullableKey, $data)) {
+                if ($data[$nullableKey] === '' || $data[$nullableKey] === '?' || $data[$nullableKey] === null) {
+                    $data[$nullableKey] = null;
+                }
+            }
+        }
+
         // Handle multiple persons update
         $personsToSync = [];
 

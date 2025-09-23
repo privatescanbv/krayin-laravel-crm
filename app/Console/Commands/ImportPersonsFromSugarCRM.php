@@ -42,14 +42,14 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
         $dryRun = $this->option('dry-run');
 
         $this->info('Starting import from SugarCRM...');
-        $this->info("Connection: {$connection}");
-        $this->info("Table: {$table}");
+        $this->infoV("Connection: {$connection}");
+        $this->infoV("Table: {$table}");
         if (! empty($personIds)) {
-            $this->info('Person IDs: '.implode(', ', $personIds));
+            $this->infoV('Person IDs: '.implode(', ', $personIds));
         } else {
-            $this->info("Limit: {$limit}");
+            $this->infoV("Limit: {$limit}");
         }
-        $this->info('Dry run: '.($dryRun ? 'Yes' : 'No'));
+        $this->infoV('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
         try {
             return $this->executeImport($dryRun, function () use ($connection, $table, $limit, $personIds, $dryRun) {
@@ -207,7 +207,7 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                 if ($existingPerson) {
                     $skipped++;
                     $skippedAlreadyExisting++;
-                    $this->info("Skipping existing person with external_id={$record->id} (already imported as #{$existingPerson->id})");
+                    $this->infoV("Skipping existing person with external_id={$record->id} (already imported as #{$existingPerson->id})");
                     $bar->advance();
 
                     continue;

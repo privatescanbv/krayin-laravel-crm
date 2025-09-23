@@ -15,6 +15,26 @@ use Throwable;
 abstract class AbstractSugarCRMImport extends Command
 {
     /**
+     * Verbose info helper (-v)
+     */
+    protected function infoV(string $message): void
+    {
+        if ($this->output->isVerbose()) {
+            $this->info($message);
+        }
+    }
+
+    /**
+     * Very verbose info helper (-vv)
+     */
+    protected function infoVV(string $message): void
+    {
+        if ($this->output->isVeryVerbose()) {
+            $this->info($message);
+        }
+    }
+
+    /**
      * Parse SugarCRM date format to our timezone
      */
     protected function parseSugarDate($value): ?string

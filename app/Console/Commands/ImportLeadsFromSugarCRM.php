@@ -129,13 +129,15 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $dryRun = $this->option('dry-run');
 
         $this->info('Starting lead import from SugarCRM...');
-        $this->info("Connection: {$connection}");
-        if (! empty($leadIds)) {
-            $this->info('Lead IDs: '.implode(', ', $leadIds));
-        } else {
-            $this->info("Limit: {$limit}");
+        if ($this->output->isVerbose()) {
+            $this->info("Connection: {$connection}");
+            if (! empty($leadIds)) {
+                $this->info('Lead IDs: '.implode(', ', $leadIds));
+            } else {
+                $this->info("Limit: {$limit}");
+            }
+            $this->info('Dry run: '.($dryRun ? 'Yes' : 'No'));
         }
-        $this->info('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
         // Initialize importers
         $this->activityImporter = new ActivityImporter($this, $connection);
@@ -506,7 +508,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 }
 
                 // Find matching persons
-                $this->info('leadByPersonsByAnamnesis = '.print_r($leadByPersonsByAnamnesis, true));
+        if ($this->output->isVeryVerbose()) {
+            $this->info('leadByPersonsByAnamnesis = '.print_r($leadByPersonsByAnamnesis, true));
+        }
                 $persons = $this->findMatchingPerson($record, $leadByPersonsByAnamnesis);
                 $related = $leadByPersonsByAnamnesis[$record->id] ?? [];
                 $expectedPersonIds = array_keys($related);
@@ -542,7 +546,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 }
 
                 // Debug: Check person data
-                $this->info('Creating lead for persons: '.implode(', ', array_map(fn ($p) => $p->name.' (#'.$p->id.')', $persons)));
+                if ($this->output->isVerbose() && ! empty($persons)) {
+                    $this->info('Creating lead for persons: '.implode(', ', array_map(fn ($p) => $p->name.' (#'.$p->id.')', $persons)));
+                }
 
                 // Use database transaction to ensure all-or-nothing import
                 DB::transaction(function () use ($record, $persons, $leadByPersonsByAnamnesis, &$lead) {
@@ -595,7 +601,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     // Attach persons to lead using many-to-many relationship
                     $personIdsToAttach = array_values(array_filter(array_map(fn ($p) => $p->id ?? null, $persons)));
                     if (! empty($personIdsToAttach)) {
-                        $this->info('Attached persons ['.implode(', ', $personIdsToAttach).'] to lead ID '.$lead->id);
+                        if ($this->output->isVerbose()) {
+                            $this->info('Attached persons ['.implode(', ', $personIdsToAttach).'] to lead ID '.$lead->id);
+                        }
                         $lead->attachPersons($personIdsToAttach);
 
                         // Update anamnesis per person (anamnesis created by attachPersons)
@@ -609,7 +617,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                             }
                         }
                     } else {
-                        $this->info('No related persons for lead '.$record->id.'; lead imported without person attachments.');
+                        if ($this->output->isVerbose()) {
+                            $this->info('No related persons for lead '.$record->id.'; lead imported without person attachments.');
+                        }
                     }
                 });
 
@@ -1118,9 +1128,13 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             ->where('deleted', 0);
         $relations = $sql->get();
 
-        $this->info($sql->toRawSql());
+        if ($this->output->isVeryVerbose()) {
+            $this->info($sql->toRawSql());
+        }
 
-        $this->info('extractPerson: Found '.$relations->count().' relations');
+        if ($this->output->isVerbose()) {
+            $this->info('extractPerson: Found '.$relations->count().' relations');
+        }
 
         // Initialize map for all leads to ensure presence even if no relations exist
         $map = [];
@@ -1140,9 +1154,11 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         }
 
         // Debug: Show unique person counts per lead
-        foreach ($map as $leadId => $personIds) {
-            $uniquePersonIds = array_unique($personIds);
-            $this->info("Lead {$leadId}: ".count($personIds).' total relations, '.count($uniquePersonIds).' unique persons: '.implode(', ', $uniquePersonIds));
+        if ($this->output->isVeryVerbose()) {
+            foreach ($map as $leadId => $personIds) {
+                $uniquePersonIds = array_unique($personIds);
+                $this->info("Lead {$leadId}: ".count($personIds).' total relations, '.count($uniquePersonIds).' unique persons: '.implode(', ', $uniquePersonIds));
+            }
         }
 
         return $map;
@@ -1247,22 +1263,25 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             ->whereIn('lead_anamnesis.leads_pcrm_anamnesepreventie_1leads_ida', $leadIds)
             ->where('anamnesis.status', '=', 'active');
 
-        $this->info($sql->toRawSql());
+        if ($this->output->isVeryVerbose()) {
+            $this->info($sql->toRawSql());
+        }
         $relations = $sql->get();
 
-        $this->info('extractAnamenesis: Found '.$relations->count().' relations');
+        if ($this->output->isVerbose()) {
+            $this->info('extractAnamenesis: Found '.$relations->count().' relations');
+        }
 
         // Initialize result with all leads and their related person ids from leadByPersons
         // so that we also return person mappings even when anamnesis is missing.
         $result = [];
-        $this->info('extractAnamenesis 1: Initialized result with '.count($leadByPersons).' leads and their persons.'.print_r($leadByPersons, true));
         foreach ($leadByPersons as $leadId => $persons) {
             // Ensure array structure lead_id => [person_id => []]
             foreach ($persons as $personId) {
                 $result[$leadId][$personId] = [];
             }
         }
-        $this->info('extractAnamenesis 2: Initialized result with '.count($result).' leads and their persons.');
+        
 
         // Merge in actual anamnesis relations (if any)
         foreach ($relations as $rel) {
@@ -1270,7 +1289,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             $result[$rel->lead_id][$rel->person_id][$rel->anamnesis_id] = $rel;
             //            }
         }
-        $this->info('extractAnamenesis 3 : Initialized result with '.count($result).' leads and their persons.');
+        
 
         //        $this->info(
         //            'extractAnamenesis: Found '.$relations->count().' relations, returning '.count($result).' unique lead-person-anamnesis mappings. '.

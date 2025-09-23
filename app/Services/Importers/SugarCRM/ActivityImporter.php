@@ -48,12 +48,16 @@ class ActivityImporter
         try {
             // Check if calls tables exist
             if (! Schema::connection($this->connection)->hasTable('calls')) {
-                $this->command->info('Calls table does not exist in SugarCRM database, skipping call activities import');
+                if ($this->command->getOutput()->isVerbose()) {
+                    $this->command->info('Calls table does not exist in SugarCRM database, skipping call activities import');
+                }
 
                 return [];
             }
             if (! Schema::connection($this->connection)->hasTable('calls_cstm')) {
-                $this->command->info('Calls_cstm table does not exist in SugarCRM database, skipping call activities import');
+                if ($this->command->getOutput()->isVerbose()) {
+                    $this->command->info('Calls_cstm table does not exist in SugarCRM database, skipping call activities import');
+                }
 
                 return [];
             }
@@ -84,10 +88,14 @@ class ActivityImporter
                 ->where('c.deleted', '=', 0)
                 ->orderBy('c.date_entered', 'asc');
 
-            $this->command->info('Extracting call activities: '.$sql->toRawSql());
+            if ($this->command->getOutput()->isVeryVerbose()) {
+                $this->command->info('Extracting call activities: '.$sql->toRawSql());
+            }
             $calls = $sql->get();
 
-            $this->command->info('Found '.$calls->count().' call activities');
+            if ($this->command->getOutput()->isVerbose()) {
+                $this->command->info('Found '.$calls->count().' call activities');
+            }
 
             // Group calls by parent_id (lead_id)
             $result = [];
@@ -175,10 +183,14 @@ class ActivityImporter
                 ->where('eb.deleted', '=', 0)
                 ->orderBy('e.date_sent', 'asc');
 
-            $this->command->info('Extracting email activities: '.$sql->toRawSql());
+            if ($this->command->getOutput()->isVeryVerbose()) {
+                $this->command->info('Extracting email activities: '.$sql->toRawSql());
+            }
             $emails = $sql->get();
 
-            $this->command->info('Found '.$emails->count().' email activities');
+            if ($this->command->getOutput()->isVerbose()) {
+                $this->command->info('Found '.$emails->count().' email activities');
+            }
 
             // Group emails by bean_id (lead_id)
             $result = [];
@@ -217,14 +229,18 @@ class ActivityImporter
                 return ['imported' => $imported, 'skipped' => $skipped];
             }
 
-            $this->command->info('Importing '.count($leadCallActivities)." call activities for lead {$lead->external_id}");
+            if ($this->command->getOutput()->isVerbose()) {
+                $this->command->info('Importing '.count($leadCallActivities)." call activities for lead {$lead->external_id}");
+            }
 
             foreach ($leadCallActivities as $callData) {
                 try {
                     // Check if activity already exists by external reference
                     $existingActivity = Activity::where('external_id', $callData->id)->first();
                     if ($existingActivity) {
-                        $this->command->info("Skipping existing call activity with external_id={$callData->id}");
+                        if ($this->command->getOutput()->isVerbose()) {
+                            $this->command->info("Skipping existing call activity with external_id={$callData->id}");
+                        }
                         $skipped++;
 
                         continue;
@@ -295,14 +311,18 @@ class ActivityImporter
                 return ['imported' => $imported, 'skipped' => $skipped];
             }
 
-            $this->command->info('Importing '.count($leadEmailActivities)." email activities for lead {$lead->external_id}");
+            if ($this->command->getOutput()->isVerbose()) {
+                $this->command->info('Importing '.count($leadEmailActivities)." email activities for lead {$lead->external_id}");
+            }
 
             foreach ($leadEmailActivities as $emailData) {
                 try {
                     // Check if activity already exists by external reference
                     $existingActivity = Activity::where('external_id', $emailData->id)->first();
                     if ($existingActivity) {
-                        $this->command->info("Skipping existing email activity with external_id={$emailData->id}");
+                        if ($this->command->getOutput()->isVerbose()) {
+                            $this->command->info("Skipping existing email activity with external_id={$emailData->id}");
+                        }
                         $skipped++;
 
                         continue;

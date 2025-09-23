@@ -1,54 +1,5 @@
 name: CI
 
-on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup PHP 8.3
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.3'
-          tools: composer:v2
-          coverage: none
-
-      - name: Validate composer.json and composer.lock
-        run: composer validate --no-interaction --no-ansi | cat
-
-      - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist --no-progress --no-ansi
-
-      - name: Create .env
-        run: |
-          cp -n .env.example .env || true
-
-      - name: Generate app key
-        run: php artisan key:generate --no-interaction
-
-      - name: Run migrations
-        run: php artisan migrate --no-interaction --force
-
-      - name: Run tests
-        run: |
-          if [ -f vendor/bin/pest ]; then
-            vendor/bin/pest --colors=always | cat
-          elif [ -f vendor/bin/phpunit ]; then
-            vendor/bin/phpunit --colors=always | cat
-          else
-            echo "No test runner found"; exit 0;
-          fi
-
-name: CI
-
 on: [push, pull_request]
 
 jobs:
@@ -58,7 +9,7 @@ jobs:
     strategy:
       matrix:
         operating-system: [ubuntu-latest]
-        php-versions: ["8.3", "8.2"]
+        php-versions: ["8.3"]
 
     name: PHP ${{ matrix.php-versions }} test on ${{ matrix.operating-system }}
 

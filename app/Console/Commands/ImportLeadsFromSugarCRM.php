@@ -149,128 +149,146 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             // Test connection
             $this->testConnection($connection);
 
-            // Get records from SugarCRM
-            $sql = DB::connection($connection)
+            // Reduce memory usage for large imports
+            DB::disableQueryLog();
+            DB::connection($connection)->disableQueryLog();
+
+            // Prepare an ID-only query for safe chunking
+            $idQuery = DB::connection($connection)
                 ->table('leads as l')
                 ->join('leads_cstm as lc', 'l.id', '=', 'lc.id_c')
-                ->leftJoin('email_addr_bean_rel as eabr', function ($join) {
-                    $join->on('eabr.bean_id', '=', 'l.id')
-                        ->where('eabr.bean_module', '=', 'Leads')
-                        ->where('eabr.deleted', '=', 0);
-                })
-                ->leftJoin('email_addresses as ea', function ($join) {
-                    $join->on('ea.id', '=', 'eabr.email_address_id')
-                        ->where('ea.deleted', '=', 0);
-                })
-                ->select([
-                    'l.*',
-                    DB::raw('MAX(l.date_entered) as lead_date_entered'),
-                    DB::raw('MAX(l.date_modified) as lead_date_modified'),
-                    'lc.gender_c',
-                    'lc.workflow_status_c',
-                    'lc.kanaal_c',
-                    'lc.soort_aanvraag_c',
-                    'lc.meisjesnaam_c',
-                    'lc.aang_tussenv_c',
-                    'lc.partner_birthdate_c',
-                    'lc.partner_gender_c',
-                    'lc.lengte_c',
-                    'lc.gewicht_c',
-                    'lc.op_een_factuur_c',
-                    'lc.anamnese_c',
-                    'lc.partner_anamnese_c',
-                    'lc.metalen_c',
-                    'lc.medicijnen_c',
-                    'lc.glaucoom_c',
-                    'lc.claustrofobie_c',
-                    'lc.opmerking_c',
-                    'lc.partner_medicijnen_c',
-                    'lc.partner_smoking_c',
-                    'lc.partner_diabetes_c',
-                    'lc.partner_vaat_erfelijk_c',
-                    'lc.partner_gewicht_c',
-                    'lc.partner_metalen_c',
-                    'lc.partner_tumoren_erfelijk_c',
-                    'lc.partner_glaucoom_c',
-                    'lc.partner_meisjesnaam_c',
-                    'lc.partner_lengte_c',
-                    'lc.partner_first_name_c',
-                    'lc.partner_heart_problems_c',
-                    'lc.partner_rugklachten_c',
-                    'lc.partner_last_name_c',
-                    'lc.partner_dormicum_c',
-                    'lc.partner_claustrofobie_c',
-                    'lc.partner_spijsverteringsklach_c',
-                    'lc.partner_hart_erfelijk_c',
-                    'lc.partner_salutation_c',
-                    'lc.partner_opmerking_c',
-                    'lc.partner_risico_hartinfarct_c',
-                    'lc.ms_sinds_c',
-                    'lc.ms_type_c',
-                    'lc.spreektalen_c',
-                    'lc.straat_c',
-                    'lc.primary_huisnr_c',
-                    'lc.primary_huisnr_toevoeging_c',
-                    'lc.reden_afvoeren_c',
-                    'lc.nieuwsbrief_vraag_c',
-                    'lc.reset_wfl_status_c',
-                    'lc.particulier_c',
-                    'lc.roepnaam_c',
-                    'lc.voorletters_c',
-                    'lc.leeftijd_c',
-                    'lc.allergie_c',
-                    'lc.opm_allergie_c',
-                    'lc.hart_operatie_c',
-                    'lc.opm_hart_operatie_c',
-                    'lc.implantaat_c',
-                    'lc.opm_implantaat_c',
-                    'lc.tussenvoegsel_c',
-                    'lc.interes_info_c',
-                    'lc.operaties_c',
-                    'lc.reden_afvoeren_c',
-                    'lc.opm_erf_tumoren_c',
-                    DB::raw('MAX(CASE WHEN eabr.primary_address = 1 THEN ea.email_address END) as email_primary'),
-                    DB::raw('MIN(CASE WHEN eabr.primary_address = 0 THEN ea.email_address END) as email_any'),
-                ])
                 ->where('l.deleted', 0)
-                ->where('soort_aanvraag_c', '!=', 'ccsvi'); // Exclude 'ccsvi'
+                ->where('soort_aanvraag_c', '!=', 'ccsvi');
 
-            // If specific lead IDs are provided, filter by them and ignore limit
             if (! empty($leadIds)) {
-                $sql->whereIn('l.id', $leadIds);
+                $idQuery->whereIn('l.id', $leadIds);
             } else {
-                $sql->groupBy('l.id')
-                    ->orderBy('l.date_entered', 'desc') // Nieuwste eerst
+                $idQuery->orderBy('l.date_entered', 'desc')
                     ->limit($limit);
             }
 
-            $this->info($sql->toRawSql());
-            $records = $sql->get();
+            $this->info($idQuery->toRawSql());
 
-            $this->info('Found '.$records->count().' records to import');
+            $batchSize = 1000;
+            $processed = 0;
 
-            $leadByPersons = $this->extractPerson($records);
-            $leadByPersonsByAnamnesis = $this->extractAnamenesis($leadByPersons);
+            $idQuery->select('l.id')->chunkById($batchSize, function ($rows) use ($connection, $dryRun, &$processed) {
+                if ($rows->isEmpty()) {
+                    return false;
+                }
 
-            // Extract call activities for the leads
-            $callActivities = $this->activityImporter->extractCallActivities($records);
+                $leadIdsBatch = $rows->pluck('id')->all();
 
-            // Extract emails for the leads (to be imported as Email records)
-            $emailActivities = $this->activityImporter->extractEmailActivities($records);
+                // Build the full select for this batch
+                $sqlBatch = DB::connection($connection)
+                    ->table('leads as l')
+                    ->join('leads_cstm as lc', 'l.id', '=', 'lc.id_c')
+                    ->leftJoin('email_addr_bean_rel as eabr', function ($join) {
+                        $join->on('eabr.bean_id', '=', 'l.id')
+                            ->where('eabr.bean_module', '=', 'Leads')
+                            ->where('eabr.deleted', '=', 0);
+                    })
+                    ->leftJoin('email_addresses as ea', function ($join) {
+                        $join->on('ea.id', '=', 'eabr.email_address_id')
+                            ->where('ea.deleted', '=', 0);
+                    })
+                    ->select([
+                        'l.*',
+                        DB::raw('MAX(l.date_entered) as lead_date_entered'),
+                        DB::raw('MAX(l.date_modified) as lead_date_modified'),
+                        'lc.gender_c',
+                        'lc.workflow_status_c',
+                        'lc.kanaal_c',
+                        'lc.soort_aanvraag_c',
+                        'lc.meisjesnaam_c',
+                        'lc.aang_tussenv_c',
+                        'lc.partner_birthdate_c',
+                        'lc.partner_gender_c',
+                        'lc.lengte_c',
+                        'lc.gewicht_c',
+                        'lc.op_een_factuur_c',
+                        'lc.anamnese_c',
+                        'lc.partner_anamnese_c',
+                        'lc.metalen_c',
+                        'lc.medicijnen_c',
+                        'lc.glaucoom_c',
+                        'lc.claustrofobie_c',
+                        'lc.opmerking_c',
+                        'lc.partner_medicijnen_c',
+                        'lc.partner_smoking_c',
+                        'lc.partner_diabetes_c',
+                        'lc.partner_vaat_erfelijk_c',
+                        'lc.partner_gewicht_c',
+                        'lc.partner_metalen_c',
+                        'lc.partner_tumoren_erfelijk_c',
+                        'lc.partner_glaucoom_c',
+                        'lc.partner_meisjesnaam_c',
+                        'lc.partner_lengte_c',
+                        'lc.partner_first_name_c',
+                        'lc.partner_heart_problems_c',
+                        'lc.partner_rugklachten_c',
+                        'lc.partner_last_name_c',
+                        'lc.partner_dormicum_c',
+                        'lc.partner_claustrofobie_c',
+                        'lc.partner_spijsverteringsklach_c',
+                        'lc.partner_hart_erfelijk_c',
+                        'lc.partner_salutation_c',
+                        'lc.partner_opmerking_c',
+                        'lc.partner_risico_hartinfarct_c',
+                        'lc.ms_sinds_c',
+                        'lc.ms_type_c',
+                        'lc.spreektalen_c',
+                        'lc.straat_c',
+                        'lc.primary_huisnr_c',
+                        'lc.primary_huisnr_toevoeging_c',
+                        'lc.reden_afvoeren_c',
+                        'lc.nieuwsbrief_vraag_c',
+                        'lc.reset_wfl_status_c',
+                        'lc.particulier_c',
+                        'lc.roepnaam_c',
+                        'lc.voorletters_c',
+                        'lc.leeftijd_c',
+                        'lc.allergie_c',
+                        'lc.opm_allergie_c',
+                        'lc.hart_operatie_c',
+                        'lc.opm_hart_operatie_c',
+                        'lc.implantaat_c',
+                        'lc.opm_implantaat_c',
+                        'lc.tussenvoegsel_c',
+                        'lc.interes_info_c',
+                        'lc.operaties_c',
+                        'lc.reden_afvoeren_c',
+                        'lc.opm_erf_tumoren_c',
+                        DB::raw('MAX(CASE WHEN eabr.primary_address = 1 THEN ea.email_address END) as email_primary'),
+                        DB::raw('MIN(CASE WHEN eabr.primary_address = 0 THEN ea.email_address END) as email_any'),
+                    ])
+                    ->whereIn('l.id', $leadIdsBatch)
+                    ->groupBy('l.id')
+                    ->orderBy('l.date_entered', 'desc');
 
-            // Extract meeting activities for the leads
-            $meetingActivities = $this->meetingImporter->extractMeetingActivities($records);
+                $this->info($sqlBatch->toRawSql());
 
-            // Extract email attachments for the leads
-            $emailAttachments = $this->attachmentImporter->extractEmailAttachments($records);
+                $records = $sqlBatch->get();
 
-            if ($dryRun) {
-                $this->showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
+                $leadByPersons = $this->extractPerson($records);
+                $leadByPersonsByAnamnesis = $this->extractAnamenesis($leadByPersons);
 
-                return;
-            }
+                $callActivities = $this->activityImporter->extractCallActivities($records);
+                $emailActivities = $this->activityImporter->extractEmailActivities($records);
+                $meetingActivities = $this->meetingImporter->extractMeetingActivities($records);
+                $emailAttachments = $this->attachmentImporter->extractEmailAttachments($records);
 
-            $this->importRecords($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
+                if ($dryRun) {
+                    $this->showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
+                } else {
+                    $this->importRecords($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);
+                }
+
+                $processed += $records->count();
+
+                unset($records);
+                gc_collect_cycles();
+            });
         });
     }
 
@@ -825,17 +843,17 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         // Determine the correct first stage based on pipeline
         $firstStageId = $this->getFirstStageForPipeline($pipelineId);
 
-        // For now, we'll use the first stage of the appropriate pipeline
-        // TODO: In the future, we could map specific workflow statuses to specific stages per pipeline
-
         if ($workflowStatus) {
-            if ($workflowStatus == 'afvoeren') {
-                // Find lost stage for this pipeline
-                $lostStage = Stage::where('lead_pipeline_id', $pipelineId)
+            if ($workflowStatus == 'nieuweaanvraag') {
+                return $firstStageId;
+            } elseif ($workflowStatus == 'afvoeren') {
+                $lostReason = self::mapLostReason($record->reden_afvoeren_c ?? null);
+                if (empty($lostReason)) {
+                    throw new Exception('Lead marked as lost (afvoeren) but no lost reason provided for lead ID ' . $record->id);
+                }
+                return Stage::where('lead_pipeline_id', $pipelineId)
                     ->where('code', 'like', '%lost%')
-                    ->first();
-
-                return $lostStage ? $lostStage->id : $firstStageId;
+                    ->firstOrFail()->id;
             } elseif ($workflowStatus == 'verkoopadvies') {
                 //                if ($leadStatus === 'in process') {
                 return $firstStageId + 1;
@@ -844,37 +862,19 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 if ($pipelineId === PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value) {
                     return $firstStageId + 2;
                 }
-
                 return $firstStageId + 1;
+            } elseif ($workflowStatus === 'orderbevestigen') {
+                return Stage::where('lead_pipeline_id', $pipelineId)
+                    ->where('code', 'like', '%won%')
+                    ->firstOrFail()->id;
+
             } else {
                 $this->warn('Unknown workflow status: '.$workflowStatus.'. Defaulting to first stage of pipeline.');
             }
         }
 
-        // extra check, if workflow status is empty but lead status is dead or recycled
-        if (in_array($leadStatus, ['dead', 'recycled'])) {
-            // Find lost stage for this pipeline
-            $lostStage = Stage::where('lead_pipeline_id', $pipelineId)
-                ->where('code', 'like', '%lost%')
-                ->first();
+        $this->error('Unknown or missing workflow status for lead ID '.$record->id.'. Lead stastus = '.$leadStatus.', workflow status = '.$workflowStatus.'. Defaulting to first stage of pipeline.');
 
-            return $lostStage ? $lostStage->id : $firstStageId;
-        } elseif ($leadStatus === 'converted') {
-            // Find won stage for this pipeline
-            $wonStage = Stage::where('lead_pipeline_id', $pipelineId)
-                ->where('code', 'like', '%won%')
-                ->first();
-
-            return $wonStage ? $wonStage->id : $firstStageId;
-        } else {
-            $this->warn('Handling lead status as first stage: '.$leadStatus);
-        }
-
-
-        $this->warn('Empty workflow status for lead ID '.($record->id ?? 'unknown').'. Defaulting to first stage of pipeline.');
-
-        // For now, return the first stage of the pipeline
-        // In the future, we could implement more sophisticated mapping based on workflow_status
         return $firstStageId;
     }
 

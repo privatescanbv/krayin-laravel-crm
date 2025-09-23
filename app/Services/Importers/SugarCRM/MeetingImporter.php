@@ -44,7 +44,9 @@ class MeetingImporter
         try {
             // Check if meetings table exists
             if (! Schema::connection($this->connection)->hasTable('meetings')) {
-                $this->command->info('Meetings table does not exist in SugarCRM database, skipping meeting activities import');
+                if ($this->command->getOutput()->isVerbose()) {
+                    $this->command->info('Meetings table does not exist in SugarCRM database, skipping meeting activities import');
+                }
 
                 return [];
             }
@@ -75,10 +77,14 @@ class MeetingImporter
                 ->where('m.deleted', '=', 0)
                 ->orderBy('m.date_entered', 'asc');
 
-            $this->command->info('Extracting meeting activities: '.$sql->toRawSql());
+            if ($this->command->getOutput()->isVeryVerbose()) {
+                $this->command->info('Extracting meeting activities: '.$sql->toRawSql());
+            }
             $meetings = $sql->get();
 
-            $this->command->info('Found '.$meetings->count().' meeting activities');
+            if ($this->command->getOutput()->isVerbose()) {
+                $this->command->info('Found '.$meetings->count().' meeting activities');
+            }
 
             // Group meetings by parent_id (lead_id)
             $result = [];
@@ -119,14 +125,18 @@ class MeetingImporter
                 return ['imported' => $imported, 'skipped' => $skipped];
             }
 
-            $this->command->info('Importing '.count($leadMeetingActivities)." meeting activities for lead {$lead->external_id}");
+            if ($this->command->getOutput()->isVerbose()) {
+                $this->command->info('Importing '.count($leadMeetingActivities)." meeting activities for lead {$lead->external_id}");
+            }
 
             foreach ($leadMeetingActivities as $meetingData) {
                 try {
                     // Check if activity already exists by external reference
                     $existingActivity = Activity::where('external_id', $meetingData->id)->first();
                     if ($existingActivity) {
+                    if ($this->command->getOutput()->isVerbose()) {
                         $this->command->info("Skipping existing meeting activity with external_id={$meetingData->id}");
+                    }
                         $skipped++;
 
                         continue;

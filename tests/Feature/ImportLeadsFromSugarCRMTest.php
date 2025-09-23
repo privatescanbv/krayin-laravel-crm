@@ -420,16 +420,15 @@ test('imports lead without any person relation', function () {
     // Run import
     $exit = Artisan::call('import:leads', [
         '--connection' => 'sugarcrm',
-        '--limit'      => 10,
         '--lead-ids'   => [$leadId],
     ]);
     expect($exit)->toBe(0);
 
     // Verify lead imported without persons
     $lead = Lead::where('external_id', $leadId)->first();
-    expect($lead)->not->toBeNull();
-    expect($lead->persons)->toHaveCount(0);
-    expect($lead->anamnesis)->toHaveCount(0);
+    expect($lead)->not->toBeNull()
+        ->and($lead->persons)->toHaveCount(0)
+        ->and($lead->anamnesis)->toHaveCount(0);
 });
 
 test('imports lead created_at parsed correctly from sugarcrm', function () {
@@ -511,7 +510,7 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
 
     $exit = Artisan::call('import:leads', [
         '--connection' => 'sugarcrm',
-        '--limit'      => 1,
+         '--limit'      => 1,
     ]);
     expect($exit)->toBe(0);
 

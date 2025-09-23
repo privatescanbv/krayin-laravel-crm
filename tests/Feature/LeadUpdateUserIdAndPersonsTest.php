@@ -3,11 +3,11 @@
 namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
-use Illuminate\Support\Facades\DB;
-use Webkul\User\Models\User;
 use Webkul\Lead\Repositories\LeadRepository;
+use Webkul\User\Models\User;
 
 uses(RefreshDatabase::class);
 
@@ -21,7 +21,7 @@ test('updating lead with empty user_id sets it to null', function () {
 
     expect($updated->user_id)->toBeNull();
     $this->assertDatabaseHas('leads', [
-        'id' => $lead->id,
+        'id'      => $lead->id,
         'user_id' => null,
     ]);
 });
@@ -32,7 +32,7 @@ test('it syncs persons even when user_id is cleared during update', function () 
     $personB = Person::factory()->create();
 
     $payload = [
-        'user_id' => '',
+        'user_id'    => '',
         'person_ids' => [$personA->id, $personB->id],
     ];
 
@@ -69,4 +69,3 @@ test('detaching the last person really unlinks the person and removes anamnesis'
         ->exists();
     expect($exists)->toBeFalse();
 });
-

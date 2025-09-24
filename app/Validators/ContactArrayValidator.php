@@ -61,7 +61,7 @@ class ContactArrayValidator implements Rule
 
                 if (! in_array($item['label'], $validLabels, true)) {
                     $validLabelsStr = implode(', ', $validLabels);
-                    $this->message = "Het {$this->type} label moet een van de volgende waarden zijn: {$validLabelsStr}.";
+                    $this->message = "Het {$this->type} label '{$item['label']}' moet een van de volgende waarden zijn: {$validLabelsStr}.";
 
                     return false;
                 }

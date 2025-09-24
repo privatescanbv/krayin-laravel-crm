@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
 use App\Models\Address;
+use Dotenv\Exception\ValidationException;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -225,7 +226,17 @@ class PersonController extends Controller
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
 
-        $request->validate(PersonValidationService::getWebValidationRules($request));
+        logger()->info('update person 1');
+        try {
+            $request->validate(PersonValidationService::getWebValidationRules($request));
+        } catch (Exception $exception) {
+            logger()->error('Person update validation failed', [
+                'person_id' => $id,
+                'errors' => $exception->errors(),
+            ]);
+            throw $exception;
+        }
+        logger()->info('update person 2');
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
         Event::dispatch('contacts.person.update.before', $id);
@@ -245,9 +256,6 @@ class PersonController extends Controller
         if (isset($data['entity'])) {
             unset($data['entity']);
         }
-
-        // Debug: Log the incoming data
-        Log::info('Person update request data:', $data);
 
         // Handle empty date fields
         if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
@@ -301,9 +309,6 @@ class PersonController extends Controller
                 return $email;
             }, $data['emails']);
         }
-
-        // Debug: Log the processed data
-        Log::info('Person update processed data:', $data);
 
         $person = $this->personRepository->update($data, $id);
 

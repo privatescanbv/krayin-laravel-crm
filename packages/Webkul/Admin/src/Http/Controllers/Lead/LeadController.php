@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Lead;
 
+use App\Enums\ContactLabel;
 use App\Enums\LostReason;
 use App\Enums\ActivityStatus;
 use App\Enums\PipelineDefaultKeys;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -667,7 +669,7 @@ class LeadController extends Controller
     {
         $this->validate(request(), [
             'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
-            'lost_reason' => ['nullable', new \Illuminate\Validation\Rules\Enum(LostReason::class)],
+            'lost_reason' => ['nullable', new Enum(LostReason::class)],
             'closed_at' => 'nullable|date',
         ]);
 
@@ -1318,7 +1320,7 @@ class LeadController extends Controller
                 if (is_array($email)) {
                     // Ensure label exists and normalize it
                     if (!isset($email['label']) || empty($email['label'])) {
-                        $requestData['emails'][$index]['label'] = \App\Enums\ContactLabel::default()->value;
+                        $requestData['emails'][$index]['label'] = ContactLabel::default()->value;
                     } else {
                         $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
                     }
@@ -1339,7 +1341,7 @@ class LeadController extends Controller
                 if (is_array($phone)) {
                     // Ensure label exists and normalize it
                     if (!isset($phone['label']) || empty($phone['label'])) {
-                        $requestData['phones'][$index]['label'] = \App\Enums\ContactLabel::default()->value;
+                        $requestData['phones'][$index]['label'] = ContactLabel::default()->value;
                     } else {
                         $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
@@ -1384,19 +1386,19 @@ class LeadController extends Controller
     private function normalizeLabel(string $label): string
     {
         if (empty($label)) {
-            return \App\Enums\ContactLabel::default()->value;
+            return ContactLabel::default()->value;
         }
 
         // Convert to lowercase and map common variations
         $normalizedLabel = strtolower(trim($label));
         return match ($normalizedLabel) {
-            'eigen' => \App\Enums\ContactLabel::Eigen->value,
-            'relatie' => \App\Enums\ContactLabel::Relatie->value,
-            'anders' => \App\Enums\ContactLabel::Anders->value,
+            'eigen' => ContactLabel::Eigen->value,
+            'relatie' => ContactLabel::Relatie->value,
+            'anders' => ContactLabel::Anders->value,
             // legacy mappings
-            'work', 'werk', 'home', 'thuis', 'mobile', 'mobiel' => \App\Enums\ContactLabel::Eigen->value,
-            'other' => \App\Enums\ContactLabel::Anders->value,
-            default => \App\Enums\ContactLabel::default()->value,
+            'work', 'werk', 'home', 'thuis', 'mobile', 'mobiel' => ContactLabel::Eigen->value,
+            'other' => ContactLabel::Anders->value,
+            default => ContactLabel::default()->value,
         };
     }
 
@@ -1507,7 +1509,7 @@ class LeadController extends Controller
     public function markAsLost(int $id): JsonResponse
     {
         $this->validate(request(), [
-            'lost_reason' => ['required', new \Illuminate\Validation\Rules\Enum(LostReason::class)],
+            'lost_reason' => ['required', new Enum(LostReason::class)],
             'closed_at' => 'nullable|date',
         ]);
 

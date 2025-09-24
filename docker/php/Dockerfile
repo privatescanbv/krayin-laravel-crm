@@ -78,6 +78,13 @@ RUN docker-php-ext-enable ssh2
 WORKDIR /usr/share/nginx/html
 COPY --chown=www-data:www-data ./ ./
 
+# Install Composer and PHP dependencies (ensure vendor/autoload.php exists)
+ENV COMPOSER_ALLOW_SUPERUSER=1
+RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
+    && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
+    && php -r "unlink('composer-setup.php');" \
+    && composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
 COPY  .docker/php/fpm-cloud.conf /usr/local/etc/php-fpm.d/zz-lento-fpm.conf
 COPY  .docker/php/php.ini /usr/local/etc/php/conf.d/docker-php-config.ini
 COPY  .docker/nginx/templates/default.cloud.conf /etc/nginx/sites-enabled/default

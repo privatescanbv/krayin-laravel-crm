@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\ActivityStatus;
 use App\Enums\ActivityType;
+use App\Enums\ContactLabel;
 use App\Models\Address;
 use App\Services\ActivityStatusService;
 use Database\Seeders\TestSeeder;
@@ -823,7 +824,7 @@ test('imports call activities from sugarcrm', function () {
     $firstPhone = $lead->phones[0] ?? null;
     expect($firstPhone)->not->toBeNull()
         ->and($firstPhone['value'])->toBe('+31612345678')
-        ->and(in_array($firstPhone['label'], ['home', 'work', 'mobile', 'other']))->toBeTrue();
+        ->and(in_array($firstPhone['label'], [ContactLabel::Eigen->value, ContactLabel::Relatie->value, ContactLabel::Anders->value]))->toBeTrue();
 
     // Verify call activities were imported
     $callActivities = $lead->activities()->where('type', 'call')->get();

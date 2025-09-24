@@ -2,8 +2,8 @@
 
 namespace Database\Factories;
 
-use App\Enums\Departments;
 use App\Enums\ContactLabel;
+use App\Enums\Departments;
 use App\Enums\LostReason;
 use App\Models\Address;
 use App\Models\Department;

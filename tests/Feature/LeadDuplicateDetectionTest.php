@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Address;
 use App\Enums\ContactLabel;
+use App\Models\Address;
 use Database\Seeders\TestSeeder;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;

@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ContactLabel;
 use App\Models\Address;
 use App\Models\Anamnesis;
-use App\Enums\ContactLabel;
 use Database\Seeders\TestSeeder;
 use Illuminate\Support\Str;
 use Webkul\Contact\Models\Organization;

@@ -1,7 +1,7 @@
 <?php
 
-use Database\Seeders\TestSeeder;
 use App\Enums\ContactLabel;
+use Database\Seeders\TestSeeder;
 use Illuminate\Auth\Middleware\Authenticate;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;

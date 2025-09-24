@@ -2,8 +2,8 @@
 
 namespace Tests\Unit;
 
-use App\Validators\ContactArrayValidator;
 use App\Enums\ContactLabel;
+use App\Validators\ContactArrayValidator;
 use PHPUnit\Framework\TestCase;
 
 class ContactArrayValidatorTest extends TestCase

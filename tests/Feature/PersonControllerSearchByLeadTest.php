@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\Address;
 use App\Enums\ContactLabel;
+use App\Models\Address;
 use Database\Seeders\TestSeeder;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Webkul\Admin\Http\Controllers\Contact\Persons\PersonController;

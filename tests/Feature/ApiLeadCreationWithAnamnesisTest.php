@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Anamnesis;
 use App\Enums\ContactLabel;
+use App\Models\Anamnesis;
 use Database\Seeders\LeadChannelSeeder;
 use Database\Seeders\TestSeeder;
 use Webkul\Contact\Models\Person;

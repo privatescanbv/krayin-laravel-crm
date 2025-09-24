@@ -114,8 +114,7 @@
                                                     <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'activity'" class="icon-activity text-xs text-blue-600 ml-1" title="E-mail gekoppeld aan activiteit"></span>
                                                     <span v-else-if="activity.type === 'email'" class="icon-activity text-xs text-blue-600 ml-1" title="E-mail gekoppeld aan onbekend"></span>
 
-                                                    <span v-if="activity.is_done == 1 || activity.is_done === true" class="ml-2 inline-block bg-green-100 text-green-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">@{{ activity.status}}</span>
-                                                    <span v-else class="ml-2 inline-block bg-yellow-100 text-yellow-800 text-[10px] font-semibold px-2 py-0.5 rounded-full">@{{ activity.status}}</span>
+                                                    <!-- Status chip hidden per requirement -->
                                                 </a>
                                             </template>
 

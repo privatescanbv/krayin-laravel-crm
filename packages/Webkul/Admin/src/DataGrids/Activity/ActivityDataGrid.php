@@ -248,7 +248,20 @@ class ActivityDataGrid extends DataGrid
             'filterable_type'    => 'dropdown',
             'filterable_options' => $this->getActivityTypeDropdownOptions(),
             'sortable'           => true,
-            'closure'            => fn ($row) => trans('admin::app.activities.edit.'.$row->type),
+            // Show as icon instead of text label
+            'closure'            => function ($row) {
+                $map = [
+                    'call'    => 'icon-call',
+                    'email'   => 'icon-mail',
+                    'note'    => 'icon-note',
+                    'meeting' => 'icon-activity',
+                    'task'    => 'icon-activity',
+                    'file'    => 'icon-file',
+                    'system'  => 'icon-system-generate',
+                ];
+                $icon = $map[$row->type] ?? 'icon-activity';
+                return "<span class='".$icon." text-lg'></span>";
+            },
             'width'              => '20px',
         ]);
 
@@ -277,40 +290,24 @@ class ActivityDataGrid extends DataGrid
         // Removed comment column as requested
 
 
-        $this->addColumn([
-            'index'              => 'status',
-            'label'              => 'Status',
-            'type'               => 'string',
-            'searchable'         => false,
-            'filterable'         => true,
-            'filterable_type'    => 'dropdown',
-            'filterable_options' => $this->getActivityStatusDropdownOptions(),
-            'sortable'           => true,
-            'closure'            => function ($row) {
-                $statusLabels = [
-                    'in_progress' => '<span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full dark:bg-blue-900 dark:text-blue-300">In behandeling</span>',
-                    'active' => '<span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full dark:bg-green-900 dark:text-green-300">Actief</span>',
-                    'on_hold' => '<span class="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full dark:bg-yellow-900 dark:text-yellow-300">On hold</span>',
-                    'expired' => '<span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full dark:bg-red-900 dark:text-red-300">Verlopen</span>',
-                ];
-                $status = $row->status === 'new' ? 'active' : ($row->status ?? 'active');
-                return $statusLabels[$status] ?? $status;
-            },
-        ]);
+        // Status column removed from UI (kept in DB/entity)
 
+        // Removed 'Oppakken vanaf' column as requested
+
+        // Created date column
         $this->addColumn([
-            'index'      => 'schedule_from',
-            'label'      => 'Oppakken vanaf',
+            'index'      => 'created_at',
+            'label'      => 'Aangemaakt op',
             'type'       => 'datetime',
             'sortable'   => true,
             'searchable' => true,
             'filterable' => false,
             'closure'    => function ($row) {
-                if (empty($row->schedule_from)) {
+                if (empty($row->created_at)) {
                     return 'N/A';
                 }
 
-                $timestamp = strtotime($row->schedule_from);
+                $timestamp = strtotime($row->created_at);
                 if ($timestamp === false) {
                     return 'N/A';
                 }
@@ -328,15 +325,24 @@ class ActivityDataGrid extends DataGrid
             'filterable' => false,
             'closure'    => function ($row) {
                 if (empty($row->schedule_to)) {
-                    return 'N/A';
+                    return "<span class='text-gray-500'>N/A</span>";
                 }
 
                 $timestamp = strtotime($row->schedule_to);
                 if ($timestamp === false) {
-                    return 'N/A';
+                    return "<span class='text-gray-500'>N/A</span>";
                 }
 
-                return date('d-m-Y H:i', $timestamp);
+                $date = date('d-m-Y H:i', $timestamp);
+                $days = (int)($row->days_until_deadline ?? 0);
+                if ($days < 0) {
+                    $classes = 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
+                } elseif ($days === 0) {
+                    $classes = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300';
+                } else {
+                    $classes = 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
+                }
+                return "<span class='px-2 py-0.5 rounded-full text-xs ".$classes."'>".$date.'</span>';
             },
         ]);
 
@@ -351,7 +357,7 @@ class ActivityDataGrid extends DataGrid
             'visibility' => false,
         ]);
 
-        // Hidden column to support filtering by is_done via mirrored view filters
+        // Hidden technical column remains for filtering, plus visual "done" icon column at the end
         $this->addColumn([
             'index'      => 'is_done',
             'label'      => 'Afgerond',
@@ -360,6 +366,22 @@ class ActivityDataGrid extends DataGrid
             'filterable' => true,
             'sortable'   => false,
             'visibility' => false,
+        ]);
+
+        // Visual done indicator (last column)
+        $this->addColumn([
+            'index'      => 'is_done_symbol',
+            'label'      => 'Gereed',
+            'type'       => 'string',
+            'searchable' => false,
+            'filterable' => false,
+            'sortable'   => false,
+            'closure'    => function ($row) {
+                if ((int)($row->is_done ?? 0) === 1) {
+                    return "<span class='icon-tick text-green-600 text-xl' title='Afgerond'></span>";
+                }
+                return '';
+            },
         ]);
     }
 

@@ -25,23 +25,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php-versions }}
-          extensions: curl, gd, intl, mbstring, openssl, pdo, pdo_mysql, tokenizer, zip
-          ini-values: error_reporting=E_ALL
-          tools: composer:v2
-
       # for building frontend, will be copied to docker later
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'npm'
-
-      - name: public log-viewer
-        run: php artisan vendor:publish --tag=log-viewer-assets --force
 
       - name: Build and push image using build_image.sh
         run: |

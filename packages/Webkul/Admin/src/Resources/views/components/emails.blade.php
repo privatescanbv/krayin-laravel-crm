@@ -43,7 +43,7 @@
                                 v-for="opt in labelOptions"
                                 :key="opt.value"
                                 :value="opt.value"
-                            >@{{ opt.label }}</option>
+                            >{{ opt.label }}</option>
                         </select>
 
                         <div class="flex items-center space-x-2">

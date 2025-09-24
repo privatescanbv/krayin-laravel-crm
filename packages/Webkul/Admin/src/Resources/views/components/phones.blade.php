@@ -44,7 +44,7 @@
                                 v-for="opt in labelOptions"
                                 :key="opt.value"
                                 :value="opt.value"
-                            >@{{ opt.label }}
+                            >{{ opt.label }}
                             </option>
                         </select>
 

@@ -20,10 +20,7 @@
                 <span>{{ $activity->title ?: __('admin::app.activities.edit.title') }}</span>
             </div>
 
-            <!-- Status Bar -->
-            <div class="flex items-center">
-                @include('admin::components.activities.status-bar', ['activity' => $activity, 'hide_help' => true])
-            </div>
+            <!-- Status Bar hidden per requirement -->
         </div>
 
         <div class="flex items-center gap-x-2.5">

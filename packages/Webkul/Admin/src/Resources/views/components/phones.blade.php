@@ -218,29 +218,4 @@
     </script>
 @endPushOnce
 
-@php
-    $phones = $value ?? [];
-
-    // Ensure $phones is an array
-    if (!is_array($phones)) {
-        $phones = [];
-    }
-
-    // Filter out empty phone numbers
-    $phones = array_filter($phones, function($phone) {
-        return isset($phone['value']) && !empty(trim($phone['value']));
-    });
-
-    // If no valid phones, create a default empty phone
-    if (empty($phones)) {
-        $phones = [['value' => '', 'label' => \App\Enums\ContactLabel::default()->value, 'is_default' => true]];
-    }
-
-    // Normaliseer is_default naar boolean
-    foreach ($phones as &$phone) {
-        if (isset($phone['is_default'])) {
-            $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
-        }
-    }
-    unset($phone);
-@endphp
+@php /* moved normalization to Vue component; server no-op */ @endphp

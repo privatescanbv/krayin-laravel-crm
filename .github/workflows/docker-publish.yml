@@ -41,7 +41,7 @@ jobs:
           cache: 'npm'
 
       - name: public log-viewer
-        run: sail artisan vendor:publish --tag=log-viewer-assets --force
+        run: php artisan vendor:publish --tag=log-viewer-assets --force
 
       - name: Build and push image using build_image.sh
         run: |

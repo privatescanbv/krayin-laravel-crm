@@ -1311,7 +1311,7 @@ class LeadController extends Controller
                 if (is_array($email)) {
                     // Ensure label exists and normalize it
                     if (!isset($email['label']) || empty($email['label'])) {
-                        $requestData['emails'][$index]['label'] = 'work';
+                        $requestData['emails'][$index]['label'] = \App\Enums\ContactLabel::default()->value;
                     } else {
                         $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
                     }
@@ -1332,7 +1332,7 @@ class LeadController extends Controller
                 if (is_array($phone)) {
                     // Ensure label exists and normalize it
                     if (!isset($phone['label']) || empty($phone['label'])) {
-                        $requestData['phones'][$index]['label'] = 'work';
+                        $requestData['phones'][$index]['label'] = \App\Enums\ContactLabel::default()->value;
                     } else {
                         $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
@@ -1377,23 +1377,20 @@ class LeadController extends Controller
     private function normalizeLabel(string $label): string
     {
         if (empty($label)) {
-            return 'work';
+            return \App\Enums\ContactLabel::default()->value;
         }
 
         // Convert to lowercase and map common variations
         $normalizedLabel = strtolower(trim($label));
-        $labelMap = [
-            'work' => 'work',
-            'werk' => 'work',
-            'home' => 'home',
-            'thuis' => 'home',
-            'mobile' => 'mobile',
-            'mobiel' => 'mobile',
-            'other' => 'other',
-            'anders' => 'other'
-        ];
-
-        return $labelMap[$normalizedLabel] ?? 'work';
+        return match ($normalizedLabel) {
+            'eigen' => \App\Enums\ContactLabel::Eigen->value,
+            'relatie' => \App\Enums\ContactLabel::Relatie->value,
+            'anders' => \App\Enums\ContactLabel::Anders->value,
+            // legacy mappings
+            'work', 'werk', 'home', 'thuis', 'mobile', 'mobiel' => \App\Enums\ContactLabel::Eigen->value,
+            'other' => \App\Enums\ContactLabel::Anders->value,
+            default => \App\Enums\ContactLabel::default()->value,
+        };
     }
 
     // moved contact validation to LeadValidationService

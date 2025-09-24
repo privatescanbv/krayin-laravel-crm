@@ -12,8 +12,9 @@
 
             <div class="relative">
                 <select class="custom-select w-full rounded rounded-l-none border bg-white px-2.5 py-2 text-sm font-normal text-gray-800 hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 ltr:mr-6 ltr:pr-8 rtl:ml-6 rtl:pl-8">
-                    <option value="work" selected>@lang('admin::app.common.custom-attributes.work')</option>
-                    <option value="home">@lang('admin::app.common.custom-attributes.home')</option>
+                    <option value="eigen" selected>Eigen</option>
+                    <option value="relatie">Relatie</option>
+                    <option value="anders">Anders</option>
                 </select>
             </div>
         </div>
@@ -55,8 +56,7 @@
                         v-model="email['label']"
                         ::disabled="isDisabled"
                     >
-                        <option value="work">@lang('admin::app.common.custom-attributes.work')</option>
-                        <option value="home">@lang('admin::app.common.custom-attributes.home')</option>
+                        <option v-for="opt in labelOptions" :key="opt.value" :value="opt.value">@{{ opt.label }}</option>
                     </x-admin::form.control-group.control>
                 </div>
 
@@ -91,7 +91,9 @@
 
             data() {
                 return {
-                    emails: this.value || [{'value': '', 'label': 'work'}],
+                    emails: this.value || [{'value': '', 'label': '{{ \App\Enums\ContactLabel::default()->value }}'}],
+                    labelOptions: @json(\App\Enums\ContactLabel::options()),
+                    defaultLabel: '{{ \App\Enums\ContactLabel::default()->value }}',
                 };
             },
 
@@ -101,7 +103,7 @@
                         JSON.stringify(newValue)
                         !== JSON.stringify(oldValue)
                     ) {
-                        this.emails = newValue || [{'value': '', 'label': 'work'}];
+                        this.emails = newValue || [{'value': '', 'label': this.defaultLabel}];
                     }
                 },
             },
@@ -124,7 +126,7 @@
                 add() {
                     this.emails.push({
                         'value': '',
-                        'label': 'work'
+                        'label': this.defaultLabel
                     });
                 },
 

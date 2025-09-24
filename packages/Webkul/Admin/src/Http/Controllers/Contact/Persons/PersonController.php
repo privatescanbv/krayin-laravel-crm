@@ -4,6 +4,7 @@ namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
 use App\Enums\ContactLabel;
 use App\Models\Address;
+use BackedEnum;
 use Dotenv\Exception\ValidationException;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -227,17 +228,16 @@ class PersonController extends Controller
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
 
-        logger()->info('update person 1');
         try {
             $request->validate(PersonValidationService::getWebValidationRules($request));
-        } catch (Exception $exception) {
-            logger()->error('Person update validation failed', [
+        } catch (Exception $e) {
+            // for missing error displaying in the UI
+            logger()->warning('Person update validation failed', [
                 'person_id' => $id,
-                'errors' => $exception->errors(),
+                'errors' => $e->errors(),
             ]);
-            throw $exception;
+            throw $e;
         }
-        logger()->info('update person 2');
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
         Event::dispatch('contacts.person.update.before', $id);
@@ -246,10 +246,10 @@ class PersonController extends Controller
         $data['entity_type'] = 'persons';
 
         // Normalize enum-like fields to strings for persistence
-        if (isset($data['salutation']) && $data['salutation'] instanceof \BackedEnum) {
+        if (isset($data['salutation']) && $data['salutation'] instanceof BackedEnum) {
             $data['salutation'] = $data['salutation']->value;
         }
-        if (isset($data['gender']) && $data['gender'] instanceof \BackedEnum) {
+        if (isset($data['gender']) && $data['gender'] instanceof BackedEnum) {
             $data['gender'] = $data['gender']->value;
         }
 

@@ -543,16 +543,15 @@ class LeadController extends Controller
     public function update(LeadForm $request, int $id): RedirectResponse|JsonResponse
     {
         try {
-            logger()->info('update lead 1');
             try {
                 $this->validate($request, LeadValidationService::getWebValidationRules($request, false));
             } catch (ValidationException $exception) {
-                logger()->warn('Validation error during lead update', ['errors' => $exception->errors()]);
+                // for missing error displaying in the UI
+                logger()->warning('Validation error during lead update', ['errors' => $exception->errors()]);
                 throw $exception;
             }
             // Additional rule now embedded in LeadValidationService rules
             Event::dispatch('lead.update.before', $id);
-            logger()->info('update lead 2');
 
             $data = $request->all();
             // Handle empty date field

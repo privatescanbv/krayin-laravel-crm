@@ -14,6 +14,7 @@ use App\Services\Importers\SugarCRM\MeetingImporter;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\Console\Helper\ProgressBar;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
@@ -57,6 +58,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
     private int $totalMeetingActivitiesSkipped = 0;
     private int $totalEmailAttachmentsImported = 0;
     private int $totalEmailAttachmentsSkipped = 0;
+    private ProgressBar $bar;
 
     /**
      * The name and signature of the console command.
@@ -190,6 +192,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             $batchSize = 1000;
             $processed = 0;
 
+            $this->bar = $this->output->createProgressBar($idQuery->count());
+            $this->bar->start();
+
             $idQuery->select('l.id')->chunkById($batchSize, function ($rows) use ($limit, $connection, $dryRun, &$processed) {
                 if ($rows->isEmpty()) {
                     return false;
@@ -312,6 +317,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 gc_collect_cycles();
             });
 
+            $this->bar->finish();
             // After processing all chunks, print a single consolidated summary
             if (! $dryRun) {
                 $this->printImportSummary();
@@ -506,8 +512,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
      */
     private function importRecords($records, $leadByPersonsByAnamnesis, $callActivities = [], $emailActivities = [], $meetingActivities = [], $emailAttachments = []): void
     {
-        $bar = $this->output->createProgressBar($records->count());
-        $bar->start();
+
 
         $imported = 0;
         $skipped = 0;
@@ -533,7 +538,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     $skipped++;
                     $skippedAlreadyExisting++;
                     //                    $this->info("Skipping existing lead with external_id={$record->id} (already imported as #{$existingLead->id})");
-                    $bar->advance();
+                    $this->bar->advance();
 
                     continue;
                 }
@@ -551,7 +556,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     $skipped++;
                     $skippedNoRelatedPersons++;
                     $this->error("\nPerson not found for lead: {$record->first_name} {$record->last_name} (LEAD ID: {$record->id}) (person ids: ".implode(',', $expectedPersonIds).')');
-                    $bar->advance();
+                    $this->bar->advance();
 
                     continue;
                 }
@@ -569,7 +574,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     $this->error('Found persons: '.implode(', ', $foundPersonIds));
                     $this->error('Missing persons: '.implode(', ', $missingPersonIds));
                     $this->error('Skipping lead import - all persons must be found first.');
-                    $bar->advance();
+                    $this->bar->advance();
 
                     continue;
                 }
@@ -697,7 +702,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 }
 
                 $imported++;
-                $bar->advance();
+                $this->bar->advance();
 
             } catch (Exception $e) {
                 $errors++;
@@ -707,11 +712,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     'error'     => $e->getMessage(),
                     'trace'     => $e->getTraceAsString(),
                 ]);
-                $bar->advance();
+                $this->bar->advance();
             }
         }
-
-        $bar->finish();
 
         // Accumulate totals across all chunks
         $this->totalImported += $imported;

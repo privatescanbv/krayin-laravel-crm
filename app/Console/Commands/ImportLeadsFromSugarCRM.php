@@ -41,6 +41,23 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
     protected MeetingImporter $meetingImporter;
 
+    // Totals across all chunks
+    private int $totalImported = 0;
+    private int $totalSkipped = 0;
+    private int $totalErrors = 0;
+    private int $totalPersonNotFound = 0;
+    private int $totalSkippedAlreadyExisting = 0;
+    private int $totalSkippedNoRelatedPersons = 0;
+    private int $totalSkippedNotAllPersonsFound = 0;
+    private int $totalCallActivitiesImported = 0;
+    private int $totalCallActivitiesSkipped = 0;
+    private int $totalEmailActivitiesImported = 0;
+    private int $totalEmailActivitiesSkipped = 0;
+    private int $totalMeetingActivitiesImported = 0;
+    private int $totalMeetingActivitiesSkipped = 0;
+    private int $totalEmailAttachmentsImported = 0;
+    private int $totalEmailAttachmentsSkipped = 0;
+
     /**
      * The name and signature of the console command.
      *
@@ -292,6 +309,11 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 unset($records);
                 gc_collect_cycles();
             });
+
+            // After processing all chunks, print a single consolidated summary
+            if (! $dryRun) {
+                $this->printImportSummary();
+            }
         });
     }
 
@@ -688,38 +710,62 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         }
 
         $bar->finish();
+
+        // Accumulate totals across all chunks
+        $this->totalImported += $imported;
+        $this->totalSkipped += $skipped;
+        $this->totalErrors += $errors;
+        $this->totalPersonNotFound += $personNotFound;
+        $this->totalSkippedAlreadyExisting += $skippedAlreadyExisting;
+        $this->totalSkippedNoRelatedPersons += $skippedNoRelatedPersons;
+        $this->totalSkippedNotAllPersonsFound += $skippedNotAllPersonsFound;
+        $this->totalCallActivitiesImported += $callActivitiesImported;
+        $this->totalCallActivitiesSkipped += $callActivitiesSkipped;
+        $this->totalEmailActivitiesImported += $emailActivitiesImported;
+        $this->totalEmailActivitiesSkipped += $emailActivitiesSkipped;
+        $this->totalMeetingActivitiesImported += $meetingActivitiesImported;
+        $this->totalMeetingActivitiesSkipped += $meetingActivitiesSkipped;
+        $this->totalEmailAttachmentsImported += $emailAttachmentsImported;
+        $this->totalEmailAttachmentsSkipped += $emailAttachmentsSkipped;
+    }
+
+    /**
+     * Print a consolidated import summary across all chunks
+     */
+    private function printImportSummary(): void
+    {
         $this->newLine(2);
         $this->info('Import completed!');
-        $this->info("✓ Imported: {$imported}");
-        $this->info("⚠ Skipped: {$skipped}");
-        $this->info("✗ Person not found: {$personNotFound}");
-        $this->info("✗ Errors: {$errors}");
+        $this->info("✓ Imported: {$this->totalImported}");
+        $this->info("⚠ Skipped: {$this->totalSkipped}");
+        $this->info("✗ Person not found: {$this->totalPersonNotFound}");
+        $this->info("✗ Errors: {$this->totalErrors}");
         $this->line('');
         $this->info('Call Activities:');
-        $this->info("✓ Call activities imported: {$callActivitiesImported}");
-        $this->info("⚠ Call activities skipped: {$callActivitiesSkipped}");
+        $this->info("✓ Call activities imported: {$this->totalCallActivitiesImported}");
+        $this->info("⚠ Call activities skipped: {$this->totalCallActivitiesSkipped}");
 
         $this->line('');
         $this->info('Email Activities:');
-        $this->info("✓ Email activities imported: {$emailActivitiesImported}");
-        $this->info("⚠ Email activities skipped: {$emailActivitiesSkipped}");
+        $this->info("✓ Email activities imported: {$this->totalEmailActivitiesImported}");
+        $this->info("⚠ Email activities skipped: {$this->totalEmailActivitiesSkipped}");
 
         $this->line('');
         $this->info('Meeting Activities:');
-        $this->info("✓ Meeting activities imported: {$meetingActivitiesImported}");
-        $this->info("⚠ Meeting activities skipped: {$meetingActivitiesSkipped}");
+        $this->info("✓ Meeting activities imported: {$this->totalMeetingActivitiesImported}");
+        $this->info("⚠ Meeting activities skipped: {$this->totalMeetingActivitiesSkipped}");
 
         $this->line('');
         $this->info('Email Attachments:');
-        $this->info("✓ Email attachments imported: {$emailAttachmentsImported}");
-        $this->info("⚠ Email attachments skipped: {$emailAttachmentsSkipped}");
+        $this->info("✓ Email attachments imported: {$this->totalEmailAttachmentsImported}");
+        $this->info("⚠ Email attachments skipped: {$this->totalEmailAttachmentsSkipped}");
 
         // Detailed skip breakdown
         $this->line('');
         $this->info('Skip breakdown:');
-        $this->info("- Already existing (external_id present): {$skippedAlreadyExisting}");
-        $this->info("- No related persons found: {$skippedNoRelatedPersons}");
-        $this->info("- Not all related persons found: {$skippedNotAllPersonsFound}");
+        $this->info("- Already existing (external_id present): {$this->totalSkippedAlreadyExisting}");
+        $this->info("- No related persons found: {$this->totalSkippedNoRelatedPersons}");
+        $this->info("- Not all related persons found: {$this->totalSkippedNotAllPersonsFound}");
     }
 
     /**

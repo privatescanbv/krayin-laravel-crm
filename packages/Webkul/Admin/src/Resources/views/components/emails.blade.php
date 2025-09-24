@@ -15,6 +15,9 @@
     @verbatim
         <script type="text/x-template" id="v-emails-component-template">
             <div>
+                <div v-if="topLevelErrors.length" class="mb-2 rounded border border-red-400 bg-red-100 px-3 py-2 text-red-800 dark:bg-red-900 dark:text-red-200">
+                    <div v-for="(msg, i) in topLevelErrors" :key="i">{{ msg }}</div>
+                </div>
                 <div class="space-y-3">
                     <div
                         v-for="(email, index) in emails"
@@ -127,6 +130,13 @@
                         this.$emit('input', newEmails);
                     },
                     deep: true
+                }
+            },
+
+            computed: {
+                topLevelErrors() {
+                    const msgs = this.errors && this.errors[this.name];
+                    return Array.isArray(msgs) ? msgs : [];
                 }
             },
 

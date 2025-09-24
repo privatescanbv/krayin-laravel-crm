@@ -55,7 +55,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'false'
+          cache: 'npm'
 
       - name: Install Admin frontend dependencies
         run: npm install && npm ci --prefix packages/Webkul/Admin

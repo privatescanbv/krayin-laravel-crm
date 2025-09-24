@@ -137,6 +137,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
     /**
      * Execute the console command.
+     * @throws Exception
      */
     public function handle()
     {
@@ -185,7 +186,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     $idQuery = $idQuery->limit($limit);
                 }
             }
-
+            $this->info('Total leads to process: '.$idQuery->count());
             $batchSize = 1000;
             $processed = 0;
 
@@ -202,6 +203,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 } else {
                     $leadIdsBatch = $rows->pluck('id')->all();
                 }
+                $this->info('Running next batch, number of leads: '.count($leadIdsBatch));
 
                 // Build the full select for this batch
                 $sqlBatch = DB::connection($connection)
@@ -294,10 +296,10 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 $leadByPersons = $this->extractPerson($records);
                 $leadByPersonsByAnamnesis = $this->extractAnamenesis($leadByPersons);
 
-                $callActivities = $this->activityImporter->extractCallActivities($records);
-                $emailActivities = $this->activityImporter->extractEmailActivities($records);
-                $meetingActivities = $this->meetingImporter->extractMeetingActivities($records);
-                $emailAttachments = $this->attachmentImporter->extractEmailAttachments($records);
+                $callActivities = $this->activityImporter->extractCallActivities($leadIdsBatch);
+                $emailActivities = $this->activityImporter->extractEmailActivities($leadIdsBatch);
+                $meetingActivities = $this->meetingImporter->extractMeetingActivities($leadIdsBatch);
+                $emailAttachments = $this->attachmentImporter->extractEmailAttachments($leadIdsBatch);
 
                 if ($dryRun) {
                     $this->showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities, $emailActivities, $meetingActivities, $emailAttachments);

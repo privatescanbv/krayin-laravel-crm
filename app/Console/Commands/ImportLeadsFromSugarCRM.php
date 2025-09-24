@@ -941,8 +941,14 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     ->firstOrFail()->id;
 
             } else {
-                $this->warn('Unknown workflow status: '.$workflowStatus.'. Defaulting to first stage of pipeline.');
+                $this->warn('Unknown workflow status for lead ID '.$record->id.': '.$workflowStatus.'. Defaulting to first stage of pipeline.');
             }
+            // TODO wachtakkoord, uitgevoerdrapport
+        } elseif (in_array($leadStatus, ['dead', 'recycled'])) {
+            // Find lost stage for this pipeline
+            return Stage::where('lead_pipeline_id', $pipelineId)
+                ->where('code', 'like', '%lost%')
+                ->firstOrFail()->id;
         }
 
         $this->error('Unknown or missing workflow status for lead ID '.$record->id.'. Lead stastus = '.$leadStatus.', workflow status = '.$workflowStatus.'. Defaulting to first stage of pipeline.');

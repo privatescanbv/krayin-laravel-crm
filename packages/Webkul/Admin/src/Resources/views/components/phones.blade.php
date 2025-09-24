@@ -39,10 +39,9 @@
                             v-model="phone.label"
                             class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                         >
-                            <option value="work">Werk</option>
-                            <option value="home">Thuis</option>
-                            <option value="mobile">Mobiel</option>
-                            <option value="other">Anders</option>
+                            <option value="eigen">Eigen</option>
+                            <option value="relatie">Relatie</option>
+                            <option value="anders">Anders</option>
                         </select>
 
                         <div class="flex items-center space-x-2">
@@ -140,14 +139,14 @@
 
                         // If no valid phones, return a default empty phone
                         if (validPhones.length === 0) {
-                            return [{ value: '', label: 'work', is_default: true }];
+                            return [{ value: '', label: 'eigen', is_default: true }];
                         }
 
                         return validPhones;
                     },
 
                     addPhone() {
-                        this.phones.push({ value: '', label: 'work', is_default: false });
+                        this.phones.push({ value: '', label: 'eigen', is_default: false });
                     },
 
                     removePhone(index) {

@@ -823,7 +823,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
         if ($primary) {
             $emails[] = [
-                'label'      => 'work',
+                'label'      => \App\Enums\ContactLabel::Eigen->value,
                 'value'      => $primary,
                 'is_default' => true,
             ];
@@ -831,7 +831,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
         if ($any && $any !== $primary) {
             $emails[] = [
-                'label'      => 'work',
+                'label'      => \App\Enums\ContactLabel::Eigen->value,
                 'value'      => $any,
                 'is_default' => false,
             ];
@@ -848,10 +848,10 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $phones = [];
 
         if ($record->phone_work) {
-            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_work, 'work');
+            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_work, \App\Enums\ContactLabel::Eigen->value);
             if ($value !== '') {
                 $phones[] = [
-                    'label'      => $label,
+                    'label'      => \App\Enums\ContactLabel::fromOld($label)->value,
                     'value'      => $value,
                     'is_default' => true,
                 ];
@@ -859,10 +859,10 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         }
 
         if ($record->phone_mobile) {
-            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_mobile, 'mobile');
+            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_mobile, \App\Enums\ContactLabel::Eigen->value);
             if ($value !== '') {
                 $phones[] = [
-                    'label'      => $label,
+                    'label'      => \App\Enums\ContactLabel::fromOld($label)->value,
                     'value'      => $value,
                     'is_default' => empty($phones),
                 ];
@@ -870,10 +870,10 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         }
 
         if ($record->phone_home) {
-            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_home, 'home');
+            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_home, \App\Enums\ContactLabel::Eigen->value);
             if ($value !== '') {
                 $phones[] = [
-                    'label'      => $label,
+                    'label'      => \App\Enums\ContactLabel::fromOld($label)->value,
                     'value'      => $value,
                     'is_default' => empty($phones),
                 ];

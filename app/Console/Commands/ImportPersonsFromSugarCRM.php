@@ -217,35 +217,35 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                 // Build phones array from available SugarCRM fields with sanitization
                 $phones = [];
                 if (! empty($record->phone_work)) {
-                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_work, 'work');
+                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_work, \App\Enums\ContactLabel::Eigen->value);
                     if ($value !== '') {
-                        $phones[] = ['label' => $label, 'value' => $value, 'is_default' => true];
+                        $phones[] = ['label' => \App\Enums\ContactLabel::fromOld($label)->value, 'value' => $value, 'is_default' => true];
                     }
                 }
                 if (! empty($record->phone_mobile)) {
-                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_mobile, 'mobile');
+                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_mobile, \App\Enums\ContactLabel::Eigen->value);
                     if ($value !== '') {
-                        $phones[] = ['label' => $label, 'value' => $value, 'is_default' => empty($phones)];
+                        $phones[] = ['label' => \App\Enums\ContactLabel::fromOld($label)->value, 'value' => $value, 'is_default' => empty($phones)];
                     }
                 }
                 if (! empty($record->phone_home)) {
-                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_home, 'home');
+                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_home, \App\Enums\ContactLabel::Eigen->value);
                     if ($value !== '') {
-                        $phones[] = ['label' => $label, 'value' => $value, 'is_default' => empty($phones)];
+                        $phones[] = ['label' => \App\Enums\ContactLabel::fromOld($label)->value, 'value' => $value, 'is_default' => empty($phones)];
                     }
                 }
                 if (! empty($record->phone_other)) {
-                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_other, 'other');
+                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_other, \App\Enums\ContactLabel::Eigen->value);
                     if ($value !== '') {
-                        $phones[] = ['label' => $label, 'value' => $value, 'is_default' => empty($phones)];
+                        $phones[] = ['label' => \App\Enums\ContactLabel::fromOld($label)->value, 'value' => $value, 'is_default' => empty($phones)];
                     }
                 }
 
                 $emails = [];
                 if (! empty($record->email_primary)) {
-                    $emails[] = ['label' => 'work', 'value' => $record->email_primary, 'is_default' => true];
+                    $emails[] = ['label' => \App\Enums\ContactLabel::Eigen->value, 'value' => $record->email_primary, 'is_default' => true];
                 } elseif (! empty($record->email_any)) {
-                    $emails[] = ['label' => 'work', 'value' => $record->email_any, 'is_default' => true];
+                    $emails[] = ['label' => \App\Enums\ContactLabel::Eigen->value, 'value' => $record->email_any, 'is_default' => true];
                 }
 
                 $gender = $this->mapGenderFromSugar($record->gender_c ?? null);

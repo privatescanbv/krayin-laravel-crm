@@ -391,10 +391,12 @@
                 },
 
                 setReplyTo(email) {
-                    const emailField = this.$refs.mailActionForm.querySelector('[name="reply_to"]');
-                    if (emailField) {
-                        emailField.value = email;
-                        emailField.dispatchEvent(new Event('change', { bubbles: true }));
+                    // v-control-tags uses an inner input named 'temp-<name>' and adds tag on blur
+                    const tempInput = this.$refs.mailActionForm.querySelector('input[name="temp-reply_to"]');
+                    if (tempInput) {
+                        tempInput.value = email;
+                        tempInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        tempInput.blur();
                         this.selectedEmailLabel = email;
                     }
                 },

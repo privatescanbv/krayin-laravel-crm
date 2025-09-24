@@ -2,6 +2,7 @@
 
 namespace App\Services\Importers\SugarCRM;
 
+use App\Console\Commands\AbstractSugarCRMImport;
 use App\Enums\ActivityStatus;
 use App\Models\Department;
 use App\Services\ActivityStatusService;
@@ -21,11 +22,11 @@ class ActivityImporter
 {
     use ImportsSugarHelpers;
 
-    protected Command $command;
+    protected AbstractSugarCRMImport $command;
 
     protected string $connection;
 
-    public function __construct(Command $command, string $connection)
+    public function __construct(AbstractSugarCRMImport $command, string $connection)
     {
         $this->command = $command;
         $this->connection = $connection;
@@ -34,33 +35,17 @@ class ActivityImporter
     /**
      * Extract call activities from SugarCRM for the given leads
      *
-     * @param  mixed  $records  The lead records
      * @return array [lead_id => [call_data1, call_data2, ...]]
+     * @throws Exception
      */
-    public function extractCallActivities($records): array
+    public function extractCallActivities(array $leadIds): array
     {
-        $leadIds = collect($records)->pluck('id')->all();
-
         if (empty($leadIds)) {
             return [];
         }
 
         try {
-            // Check if calls tables exist
-            if (! Schema::connection($this->connection)->hasTable('calls')) {
-                if ($this->command->getOutput()->isVerbose()) {
-                    $this->command->info('Calls table does not exist in SugarCRM database, skipping call activities import');
-                }
-
-                return [];
-            }
-            if (! Schema::connection($this->connection)->hasTable('calls_cstm')) {
-                if ($this->command->getOutput()->isVerbose()) {
-                    $this->command->info('Calls_cstm table does not exist in SugarCRM database, skipping call activities import');
-                }
-
-                return [];
-            }
+            $this->command->validateTableExists($this->connection, ['calls', 'calls_cstm']);
 
             $sql = DB::connection($this->connection)
                 ->table('calls as c')
@@ -88,14 +73,10 @@ class ActivityImporter
                 ->where('c.deleted', '=', 0)
                 ->orderBy('c.date_entered', 'asc');
 
-            if ($this->command->getOutput()->isVeryVerbose()) {
-                $this->command->info('Extracting call activities: '.$sql->toRawSql());
-            }
+            $this->command->infoVV('Extracting call activities: '.$sql->toRawSql());
             $calls = $sql->get();
 
-            if ($this->command->getOutput()->isVerbose()) {
-                $this->command->info('Found '.$calls->count().' call activities');
-            }
+            $this->command->infoV('Found '.$calls->count().' call activities');
 
             // Group calls by parent_id (lead_id)
             $result = [];
@@ -120,34 +101,16 @@ class ActivityImporter
     /**
      * Extract email activities from SugarCRM for the given leads
      *
-     * @param  mixed  $records  The lead records
      * @return array [lead_id => [email_data1, email_data2, ...]]
      */
-    public function extractEmailActivities($records): array
+    public function extractEmailActivities(array $leadIds): array
     {
-        $leadIds = collect($records)->pluck('id')->all();
-
         if (empty($leadIds)) {
             return [];
         }
 
         try {
-            // Check if email tables exist
-            if (! Schema::connection($this->connection)->hasTable('emails')) {
-                $this->command->info('Emails table does not exist in SugarCRM database, skipping email activities import');
-
-                return [];
-            }
-            if (! Schema::connection($this->connection)->hasTable('emails_text')) {
-                $this->command->info('Emails_text table does not exist in SugarCRM database, skipping email activities import');
-
-                return [];
-            }
-            if (! Schema::connection($this->connection)->hasTable('emails_beans')) {
-                $this->command->info('Emails_beans table does not exist in SugarCRM database, skipping email activities import');
-
-                return [];
-            }
+            $this->command->validateTableExists($this->connection, ['emails', 'emails_text', 'emails_beans']);
 
             $sql = DB::connection($this->connection)
                 ->table('emails as e')
@@ -183,14 +146,10 @@ class ActivityImporter
                 ->where('eb.deleted', '=', 0)
                 ->orderBy('e.date_sent', 'asc');
 
-            if ($this->command->getOutput()->isVeryVerbose()) {
-                $this->command->info('Extracting email activities: '.$sql->toRawSql());
-            }
+            $this->command->infoVV('Extracting email activities: '.$sql->toRawSql());
             $emails = $sql->get();
 
-            if ($this->command->getOutput()->isVerbose()) {
-                $this->command->info('Found '.$emails->count().' email activities');
-            }
+            $this->command->infoV('Found '.$emails->count().' email activities');
 
             // Group emails by bean_id (lead_id)
             $result = [];
@@ -204,7 +163,6 @@ class ActivityImporter
             return $result;
         } catch (Exception $e) {
             $this->command->error('Failed to extract email activities: '.$e->getMessage());
-            $this->command->info('Continuing import without email activities');
 
             return [];
         }
@@ -229,18 +187,14 @@ class ActivityImporter
                 return ['imported' => $imported, 'skipped' => $skipped];
             }
 
-            if ($this->command->getOutput()->isVerbose()) {
-                $this->command->info('Importing '.count($leadCallActivities)." call activities for lead {$lead->external_id}");
-            }
+            $this->command->infoV('Importing '.count($leadCallActivities)." call activities for lead {$lead->external_id}");
 
             foreach ($leadCallActivities as $callData) {
                 try {
                     // Check if activity already exists by external reference
                     $existingActivity = Activity::where('external_id', $callData->id)->first();
                     if ($existingActivity) {
-                        if ($this->command->getOutput()->isVerbose()) {
-                            $this->command->info("Skipping existing call activity with external_id={$callData->id}");
-                        }
+                        $this->command->infoV("Skipping existing call activity with external_id={$callData->id}");
                         $skipped++;
 
                         continue;
@@ -278,7 +232,7 @@ class ActivityImporter
                     // Keep status consistent with is_done and dates without touching timestamps
                     $this->syncActivityStatus($activity);
 
-                    $this->command->info("✓ Imported call activity: {$callData->name} for lead {$lead->external_id}");
+                    $this->command->infoV("✓ Imported call activity: {$callData->name} for lead {$lead->external_id}");
                     $imported++;
                 } catch (Exception $e) {
                     $this->command->error("Failed to import call activity {$callData->id}: ".$e->getMessage());
@@ -311,18 +265,14 @@ class ActivityImporter
                 return ['imported' => $imported, 'skipped' => $skipped];
             }
 
-            if ($this->command->getOutput()->isVerbose()) {
-                $this->command->info('Importing '.count($leadEmailActivities)." email activities for lead {$lead->external_id}");
-            }
+            $this->command->infoV('Importing '.count($leadEmailActivities)." email activities for lead {$lead->external_id}");
 
             foreach ($leadEmailActivities as $emailData) {
                 try {
                     // Check if activity already exists by external reference
                     $existingActivity = Activity::where('external_id', $emailData->id)->first();
                     if ($existingActivity) {
-                        if ($this->command->getOutput()->isVerbose()) {
-                            $this->command->info("Skipping existing email activity with external_id={$emailData->id}");
-                        }
+                        $this->command->infoV("Skipping existing email activity with external_id={$emailData->id}");
                         $skipped++;
 
                         continue;
@@ -371,7 +321,7 @@ class ActivityImporter
                     }
                     $activity->saveQuietly();
 
-                    $this->command->info("✓ Imported email activity: {$emailData->subject} for lead {$lead->external_id}");
+                    $this->command->infoV("✓ Imported email activity: {$emailData->subject} for lead {$lead->external_id}");
                     $imported++;
                 } catch (Exception $e) {
                     $this->command->error("Failed to import email activity {$emailData->id}: ".$e->getMessage());
@@ -411,14 +361,14 @@ class ActivityImporter
                 ['color' => '#6B7280', 'user_id' => 1] // Default user ID
             );
 
-            $this->command->info('Importing '.count($leadEmailActivities)." emails for lead {$lead->external_id}");
+            $this->command->infoV('Importing '.count($leadEmailActivities)." emails for lead {$lead->external_id}");
 
             foreach ($leadEmailActivities as $emailData) {
                 try {
                     // Check if email already exists by external reference
                     $existingEmail = Email::where('unique_id', $emailData->id)->first();
                     if ($existingEmail) {
-                        $this->command->info("Skipping existing email with unique_id={$emailData->id}");
+                        $this->command->infoV("Skipping existing email with unique_id={$emailData->id}");
                         $skipped++;
                         $importedEmailIds[$emailData->id] = $existingEmail->id;
 
@@ -458,7 +408,7 @@ class ActivityImporter
                     // Attach import tag to email
                     $email->tags()->attach($importTag->id);
 
-                    $this->command->info("✓ Imported email: {$emailData->subject} for lead {$lead->external_id} (Email ID: {$email->id})");
+                    $this->command->infoV("✓ Imported email: {$emailData->subject} for lead {$lead->external_id} (Email ID: {$email->id})");
                     $imported++;
                     $importedEmailIds[$emailData->id] = $email->id; // Map SugarCRM email ID to Krayin email ID
                 } catch (Exception $e) {
@@ -542,7 +492,7 @@ class ActivityImporter
             throw new Exception('User not found by external_id: '.$assignedUserId);
         }
 
-        $this->command->info("Mapped assigned user {$assignedUserId} to user: {$user->name} (ID: {$user->id})");
+        $this->command->infoV("Mapped assigned user {$assignedUserId} to user: {$user->name} (ID: {$user->id})");
 
         return $user->id;
     }

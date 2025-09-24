@@ -2,8 +2,8 @@
 
 namespace App\Services\Importers\SugarCRM;
 
+use App\Console\Commands\AbstractSugarCRMImport;
 use Exception;
-use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -13,11 +13,11 @@ use Webkul\Lead\Models\Lead;
 
 class AttachmentImporter
 {
-    protected Command $command;
+    protected AbstractSugarCRMImport $command;
 
     protected string $connection;
 
-    public function __construct(Command $command, string $connection)
+    public function __construct(AbstractSugarCRMImport $command, string $connection)
     {
         $this->command = $command;
         $this->connection = $connection;
@@ -26,24 +26,18 @@ class AttachmentImporter
     /**
      * Extract email attachments from SugarCRM for the given leads
      *
-     * @param  mixed  $records  The lead records
      * @return array [lead_id => [attachment_data1, attachment_data2, ...]]
+     * @throws Exception
      */
-    public function extractEmailAttachments($records): array
+    public function extractEmailAttachments(array $leadIds): array
     {
-        $leadIds = collect($records)->pluck('id')->all();
-
+        $this->command->infoV('Extracting email attachments for '.count($leadIds).' leads');
         if (empty($leadIds)) {
             return [];
         }
 
         try {
-            // Check if notes table exists
-            if (! Schema::connection($this->connection)->hasTable('notes')) {
-                $this->command->info('Notes table does not exist in SugarCRM database, skipping email attachments import');
-
-                return [];
-            }
+            $this->command->validateTableExists($this->connection, ['notes']);
 
             // First, get all email IDs that belong to our leads
             $emailIds = DB::connection($this->connection)
@@ -57,7 +51,7 @@ class AttachmentImporter
                 ->all();
 
             if (empty($emailIds)) {
-                $this->command->info('No emails found for leads, skipping email attachments import');
+                $this->command->infoVV('No emails found for leads, skipping email attachments import');
 
                 return [];
             }
@@ -91,7 +85,7 @@ class AttachmentImporter
 
             $attachments = $sql->get();
 
-            $this->command->info('Found '.$attachments->count().' email attachments');
+            $this->command->infoV('Found '.$attachments->count().' email attachments');
 
             // Get email-bean mappings to determine lead_id for each attachment
             $emailBeanMap = DB::connection($this->connection)
@@ -148,7 +142,7 @@ class AttachmentImporter
                 return ['imported' => $imported, 'skipped' => $skipped];
             }
 
-            $this->command->info('Importing '.count($leadEmailAttachments)." email attachments for lead {$lead->external_id}");
+            $this->command->infoV('Importing '.count($leadEmailAttachments)." email attachments for lead {$lead->external_id}");
 
             foreach ($leadEmailAttachments as $attachmentData) {
                 try {
@@ -167,7 +161,7 @@ class AttachmentImporter
                         ->first();
 
                     if ($existingAttachment) {
-                        $this->command->info("Skipping existing email attachment: {$attachmentData->filename}");
+                        $this->command->infoVV("Skipping existing email attachment: {$attachmentData->filename}");
                         $skipped++;
 
                         continue;
@@ -194,7 +188,7 @@ class AttachmentImporter
                         'updated_at' => $this->parseSugarDate($attachmentData->date_modified),
                     ]);
 
-                    $this->command->info("✓ Imported email attachment: {$attachmentData->filename} for email {$krayinEmailId}");
+                    $this->command->infoV("✓ Imported email attachment: {$attachmentData->filename} for email {$krayinEmailId}");
                     $imported++;
                 } catch (Exception $e) {
                     $this->command->error("Failed to import email attachment {$attachmentData->id}: ".$e->getMessage());
@@ -310,39 +304,6 @@ class AttachmentImporter
 
         // For application/octet-stream or unknown types, keep original filename
         return $filename;
-    }
-
-    /**
-     * Create a minimal binary file stub that won't corrupt the file
-     */
-    private function createBinaryFileStub($attachmentData): string
-    {
-        $mimeType = $attachmentData->file_mime_type ?? 'unknown';
-
-        // For PDF files, create a minimal valid PDF
-        if ($mimeType === 'application/pdf') {
-            return $this->createMinimalPdf($attachmentData);
-        }
-
-        // For other binary files, create a text file with metadata
-        // This prevents corruption while still providing downloadable content
-        $content = "IMPORTED ATTACHMENT METADATA\n";
-        $content .= "============================\n\n";
-        $content .= "This file was imported from SugarCRM but the original binary content was not available.\n\n";
-        $content .= "File Information:\n";
-        $content .= '- Original Filename: '.($attachmentData->filename ?? 'Unknown')."\n";
-        $content .= '- MIME Type: '.($attachmentData->file_mime_type ?? 'Unknown')."\n";
-        $content .= '- Description: '.($attachmentData->description ?? 'No description')."\n";
-        $content .= '- SugarCRM Note ID: '.($attachmentData->id ?? 'Unknown')."\n";
-        $content .= '- Email ID: '.($attachmentData->email_id ?? 'Unknown')."\n";
-        $content .= '- Date Created: '.($attachmentData->date_entered ?? 'Unknown')."\n\n";
-        $content .= "To get the original file:\n";
-        $content .= '1. Locate the file in SugarCRM using Note ID: '.($attachmentData->id ?? 'Unknown')."\n";
-        $content .= "2. Export/download the original file from SugarCRM\n";
-        $content .= "3. Replace this placeholder file manually\n\n";
-        $content .= 'Note: This is a text file containing metadata, not the original '.($attachmentData->file_mime_type ?? 'unknown')." file.\n";
-
-        return $content;
     }
 
     /**

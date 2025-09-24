@@ -2,10 +2,10 @@
 
 namespace App\Services\Importers\SugarCRM;
 
+use App\Console\Commands\AbstractSugarCRMImport;
 use App\Models\Department;
 use App\Services\Importers\SugarCRM\Concerns\ImportsSugarHelpers;
 use Exception;
-use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -17,11 +17,11 @@ class MeetingImporter
 {
     use ImportsSugarHelpers;
 
-    protected Command $command;
+    protected AbstractSugarCRMImport $command;
 
     protected string $connection;
 
-    public function __construct(Command $command, string $connection)
+    public function __construct(AbstractSugarCRMImport $command, string $connection)
     {
         $this->command = $command;
         $this->connection = $connection;
@@ -30,26 +30,17 @@ class MeetingImporter
     /**
      * Extract meeting activities from SugarCRM for the given leads
      *
-     * @param  mixed  $records  The lead records
      * @return array [lead_id => [meeting_data1, meeting_data2, ...]]
+     * @throws Exception
      */
-    public function extractMeetingActivities($records): array
+    public function extractMeetingActivities(array $leadIds): array
     {
-        $leadIds = collect($records)->pluck('id')->all();
-
         if (empty($leadIds)) {
             return [];
         }
 
         try {
-            // Check if meetings table exists
-            if (! Schema::connection($this->connection)->hasTable('meetings')) {
-                if ($this->command->getOutput()->isVerbose()) {
-                    $this->command->info('Meetings table does not exist in SugarCRM database, skipping meeting activities import');
-                }
-
-                return [];
-            }
+            $this->command->validateTableExists($this->connection, ['meetings']);
 
             $sql = DB::connection($this->connection)
                 ->table('meetings as m')
@@ -77,14 +68,10 @@ class MeetingImporter
                 ->where('m.deleted', '=', 0)
                 ->orderBy('m.date_entered', 'asc');
 
-            if ($this->command->getOutput()->isVeryVerbose()) {
-                $this->command->info('Extracting meeting activities: '.$sql->toRawSql());
-            }
+            $this->command->infoVV('Extracting meeting activities: '.$sql->toRawSql());
             $meetings = $sql->get();
 
-            if ($this->command->getOutput()->isVerbose()) {
-                $this->command->info('Found '.$meetings->count().' meeting activities');
-            }
+            $this->command->infoV('Found '.$meetings->count().' meeting activities');
 
             // Group meetings by parent_id (lead_id)
             $result = [];
@@ -125,18 +112,14 @@ class MeetingImporter
                 return ['imported' => $imported, 'skipped' => $skipped];
             }
 
-            if ($this->command->getOutput()->isVerbose()) {
-                $this->command->info('Importing '.count($leadMeetingActivities)." meeting activities for lead {$lead->external_id}");
-            }
+            $this->command->infoV('Importing '.count($leadMeetingActivities)." meeting activities for lead {$lead->external_id}");
 
             foreach ($leadMeetingActivities as $meetingData) {
                 try {
                     // Check if activity already exists by external reference
                     $existingActivity = Activity::where('external_id', $meetingData->id)->first();
                     if ($existingActivity) {
-                        if ($this->command->getOutput()->isVerbose()) {
-                            $this->command->info("Skipping existing meeting activity with external_id={$meetingData->id}");
-                        }
+                        $this->command->infoV("Skipping existing meeting activity with external_id={$meetingData->id}");
                         $skipped++;
 
                         continue;
@@ -179,7 +162,7 @@ class MeetingImporter
                     // Keep status consistent with is_done and dates without touching timestamps
                     $this->syncActivityStatus($activity);
 
-                    $this->command->info("✓ Imported meeting activity: {$meetingData->name} for lead {$lead->external_id}");
+                    $this->command->infoV("✓ Imported meeting activity: {$meetingData->name} for lead {$lead->external_id}");
                     $imported++;
                 } catch (Exception $e) {
                     $this->command->error("Failed to import meeting activity {$meetingData->id}: ".$e->getMessage());
@@ -231,7 +214,7 @@ class MeetingImporter
             throw new Exception('User not found by external_id: '.$assignedUserId);
         }
 
-        $this->command->info("Mapped assigned user {$assignedUserId} to user: {$user->name} (ID: {$user->id})");
+        $this->command->infoV("Mapped assigned user {$assignedUserId} to user: {$user->name} (ID: {$user->id})");
 
         return $user->id;
     }

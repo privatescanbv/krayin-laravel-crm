@@ -5,11 +5,13 @@ namespace App\Console\Commands;
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
 use DateTimeInterface;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 abstract class AbstractSugarCRMImport extends Command
@@ -17,7 +19,7 @@ abstract class AbstractSugarCRMImport extends Command
     /**
      * Verbose info helper (-v)
      */
-    protected function infoV(string $message): void
+    public function infoV(string $message): void
     {
         if ($this->output->isVerbose()) {
             $this->info($message);
@@ -27,7 +29,7 @@ abstract class AbstractSugarCRMImport extends Command
     /**
      * Very verbose info helper (-vv)
      */
-    protected function infoVV(string $message): void
+    public function infoVV(string $message): void
     {
         if ($this->output->isVeryVerbose()) {
             $this->info($message);
@@ -250,5 +252,17 @@ abstract class AbstractSugarCRMImport extends Command
     {
         Config::set('webhook.enabled', true);
         $this->info('🔔 Webhooks re-enabled after import operation');
+    }
+
+    /**
+     * @throws Exception if any of the specified tables do not exist
+     */
+    public function validateTableExists(string $connection, array $tables): void
+    {
+        foreach ($tables as $table) {
+            if (!Schema::connection($connection)->hasTable($table)) {
+                throw new Exception("Missing table: {$table}");
+            }
+        }
     }
 }

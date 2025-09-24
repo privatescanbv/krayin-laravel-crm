@@ -867,7 +867,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $phones = [];
 
         if ($record->phone_work) {
-            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_work, 'work');
+            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_work, 'work', true);
             if ($value !== '') {
                 $phones[] = [
                     'label'      => $label,
@@ -878,7 +878,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         }
 
         if ($record->phone_mobile) {
-            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_mobile, 'mobile');
+            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_mobile, 'mobile', true);
             if ($value !== '') {
                 $phones[] = [
                     'label'      => $label,
@@ -889,7 +889,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         }
 
         if ($record->phone_home) {
-            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_home, 'home');
+            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_home, 'home', true);
             if ($value !== '') {
                 $phones[] = [
                     'label'      => $label,

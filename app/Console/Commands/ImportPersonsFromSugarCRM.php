@@ -218,25 +218,25 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                 // Build phones array from available SugarCRM fields with sanitization
                 $phones = [];
                 if (! empty($record->phone_work)) {
-                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_work, 'work');
+                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_work, 'work', false);
                     if ($value !== '') {
                         $phones[] = ['label' => $label, 'value' => $value, 'is_default' => true];
                     }
                 }
                 if (! empty($record->phone_mobile)) {
-                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_mobile, 'mobile');
+                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_mobile, 'mobile', false);
                     if ($value !== '') {
                         $phones[] = ['label' => $label, 'value' => $value, 'is_default' => empty($phones)];
                     }
                 }
                 if (! empty($record->phone_home)) {
-                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_home, 'home');
+                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_home, 'home', false);
                     if ($value !== '') {
                         $phones[] = ['label' => $label, 'value' => $value, 'is_default' => empty($phones)];
                     }
                 }
                 if (! empty($record->phone_other)) {
-                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_other, 'other');
+                    [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_other, 'other', false);
                     if ($value !== '') {
                         $phones[] = ['label' => $label, 'value' => $value, 'is_default' => empty($phones)];
                     }

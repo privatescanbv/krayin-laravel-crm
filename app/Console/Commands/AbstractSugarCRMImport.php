@@ -173,10 +173,11 @@ abstract class AbstractSugarCRMImport extends Command
      * Returns an array with [label, value]. The label is derived from any
      * detected keywords if present; otherwise the provided default label is used.
      *
-     * Note: This method is intentionally conservative and does NOT normalize local
-     * formats like "010-123" to keep backward compatibility with existing data and tests.
+     * Note: This method is intentionally conservative by default and does NOT normalize local
+     * formats like "010-123" to keep backward compatibility with existing data and tests,
+     * unless $strict is set to true.
      */
-    protected function sanitizePhoneAndInferLabel(?string $raw, string $defaultLabel): array
+    protected function sanitizePhoneAndInferLabel(?string $raw, string $defaultLabel, bool $strict = false): array
     {
         $value = trim((string) ($raw ?? ''));
         if ($value === '') {
@@ -238,14 +239,14 @@ abstract class AbstractSugarCRMImport extends Command
             if (preg_match('/^06(\d{8})$/', $digitsOnly, $m)) {
                 $value = '+316'.$m[1];
                 $detectedLabel = 'mobile';
-            } elseif (preg_match('/^06/', $digitsOnly)) {
-                // 06 present but not in valid 06XXXXXXXX format -> invalid
+            } elseif ($strict && preg_match('/^06/', $digitsOnly)) {
+                // 06 present but not in valid 06XXXXXXXX format -> invalid only in strict mode
                 throw new Exception('Ongeldig 06-nummer: verwacht exact 8 cijfers na 06');
             }
         }
 
-        // 5) Validate using existing PhoneValidator rule only if E.164-like (+...) or normalized 06
-        if (str_starts_with($value, '+')) {
+        // 5) Validate using existing PhoneValidator rule only if E.164-like (+...) or normalized 06, or when strict is enabled
+        if (str_starts_with($value, '+') || $strict) {
             $validator = new PhoneValidator();
             $failed = false;
             $failMessage = '';

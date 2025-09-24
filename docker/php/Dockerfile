@@ -108,6 +108,7 @@ COPY .docker/mysql/init-n8n.sql /docker/mysql/
 COPY docker-compose-prod.yml /docker/docker-compose.yml
 # TODO security wise, red flag. Change this CI implmementation later to a vault.
 COPY .env.prod /docker/.env.prod
+RUN mkdir -p ./storage && touch ./storage/installed
 
 # Voeg de cronjob toe
 # Bijvoorbeeld: draai elke minuut een Laravel schedule commando

@@ -58,10 +58,12 @@ jobs:
           cache: 'npm'
 
       - name: Install Admin frontend dependencies
-        run: npm ci --prefix packages/Webkul/Admin
+        working-directory: packages/Webkul/Admin
+        run: npm ci
 
       - name: Build Admin assets
-        run: npm run build --prefix packages/Webkul/Admin
+        working-directory: packages/Webkul/Admin
+        run: npm run build
 
       - name: Running Pest Test
         run: php artisan test --parallel --colors=always

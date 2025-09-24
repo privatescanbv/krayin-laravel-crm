@@ -51,5 +51,17 @@ jobs:
       - name: Running Krayin Installer
         run: php artisan krayin-crm:install --skip-env-check --skip-admin-creation
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Admin frontend dependencies
+        run: npm ci --prefix packages/Webkul/Admin
+
+      - name: Build Admin assets
+        run: npm run build --prefix packages/Webkul/Admin
+
       - name: Running Pest Test
         run: php artisan test --parallel --colors=always

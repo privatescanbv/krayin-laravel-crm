@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ContactLabel;
 use Database\Seeders\TestSeeder;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Support\Facades\DB;
@@ -103,10 +104,10 @@ test('lead search can find by email and phone', function () {
         'first_name' => 'Eva',
         'last_name'  => 'Kuijer',
         'emails'     => [
-            ['value' => 'eva.kuijer@example.com', 'label' => 'work', 'is_default' => true],
+            ['value' => 'eva.kuijer@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => true],
         ],
         'phones' => [
-            ['value' => '0612345678', 'label' => 'mobile', 'is_default' => true],
+            ['value' => '0612345678', 'label' => ContactLabel::Relatie->value, 'is_default' => true],
         ],
         'lead_pipeline_id'       => $this->pipeline->id,
         'lead_pipeline_stage_id' => $this->stage->id,

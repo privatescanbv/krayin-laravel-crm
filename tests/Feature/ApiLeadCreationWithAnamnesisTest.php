@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ContactLabel;
 use App\Models\Anamnesis;
 use Database\Seeders\LeadChannelSeeder;
 use Database\Seeders\TestSeeder;
@@ -268,10 +269,10 @@ test('API lead creation validates email and phone array structure', function () 
         'lead_type_id'    => $type->id,
         'lead_channel_id' => $channel->id,
         'emails'          => [
-            ['value' => 'john.doe.'.$uniqueId.'@example.com', 'label' => 'work', 'is_default' => true],
+            ['value' => 'john.doe.'.$uniqueId.'@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => true],
         ],
         'phones'          => [
-            ['value' => '+31612345678', 'label' => 'work', 'is_default' => true],
+            ['value' => '+31612345678', 'label' => ContactLabel::Eigen->value, 'is_default' => true],
         ],
     ];
 

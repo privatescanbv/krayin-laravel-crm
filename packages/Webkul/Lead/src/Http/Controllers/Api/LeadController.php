@@ -3,6 +3,7 @@
 namespace Webkul\Lead\Http\Controllers\Api;
 
 use App\Enums\PipelineDefaultKeys;
+use App\Enums\ContactLabel;
 use App\Models\Department;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -101,7 +102,7 @@ class LeadController extends Controller
         if (isset($incoming['email']) && !isset($incoming['emails'])) {
             $incoming['emails'] = [[
                 'value' => (string) $incoming['email'],
-                'label' => 'work',
+                'label' => ContactLabel::default()->value,
                 'is_default' => true,
             ]];
             unset($incoming['email']);
@@ -109,7 +110,7 @@ class LeadController extends Controller
         if (isset($incoming['phone']) && !isset($incoming['phones'])) {
             $incoming['phones'] = [[
                 'value' => (string) $incoming['phone'],
-                'label' => 'work',
+                'label' => ContactLabel::default()->value,
                 'is_default' => true,
             ]];
             unset($incoming['phone']);
@@ -265,7 +266,7 @@ class LeadController extends Controller
                 if (is_array($email)) {
                     // Ensure label exists and normalize it
                     if (!isset($email['label']) || empty($email['label'])) {
-                        $requestData['emails'][$index]['label'] = 'work';
+                        $requestData['emails'][$index]['label'] = ContactLabel::default()->value;
                     } else {
                         $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
                     }
@@ -286,7 +287,7 @@ class LeadController extends Controller
                 if (is_array($phone)) {
                     // Ensure label exists and normalize it
                     if (!isset($phone['label']) || empty($phone['label'])) {
-                        $requestData['phones'][$index]['label'] = 'work';
+                        $requestData['phones'][$index]['label'] = ContactLabel::default()->value;
                     } else {
                         $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
@@ -331,22 +332,9 @@ class LeadController extends Controller
     private function normalizeLabel(string $label): string
     {
         if (empty($label)) {
-            return 'work';
+            return ContactLabel::default()->value;
         }
 
-        // Convert to lowercase and map common variations
-        $normalizedLabel = strtolower(trim($label));
-        $labelMap = [
-            'work' => 'work',
-            'werk' => 'work',
-            'home' => 'home',
-            'thuis' => 'home',
-            'mobile' => 'mobile',
-            'mobiel' => 'mobile',
-            'other' => 'other',
-            'anders' => 'other'
-        ];
-
-        return $labelMap[$normalizedLabel] ?? 'work';
+        return ContactLabel::fromOld($label)->value;
     }
 }

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ContactLabel;
 use Database\Seeders\TestSeeder;
 use Illuminate\Auth\Middleware\Authenticate;
 use Webkul\Contact\Models\Organization;
@@ -57,10 +58,10 @@ test('person search by email and phone works', function () {
         'first_name' => 'John',
         'last_name'  => 'Doe',
         'emails'     => [
-            ['value' => 'john.doe@example.com', 'label' => 'work', 'is_default' => true],
+            ['value' => 'john.doe@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => true],
         ],
         'phones' => [
-            ['value' => '0687654321', 'label' => 'mobile', 'is_default' => true],
+            ['value' => '0687654321', 'label' => ContactLabel::Relatie->value, 'is_default' => true],
         ],
         'user_id'    => $this->user->id,
     ]);

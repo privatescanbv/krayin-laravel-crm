@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Enums\ContactLabel;
 use App\Validators\ContactArrayValidator;
 use PHPUnit\Framework\TestCase;
 
@@ -12,8 +13,8 @@ class ContactArrayValidatorTest extends TestCase
         $validator = new ContactArrayValidator('email');
 
         $validEmails = [
-            ['value' => 'test@example.com', 'label' => 'work', 'is_default' => true],
-            ['value' => 'test2@example.com', 'label' => 'home', 'is_default' => false],
+            ['value' => 'test@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => true],
+            ['value' => 'test2@example.com', 'label' => ContactLabel::Relatie->value, 'is_default' => false],
         ];
 
         $this->assertTrue($validator->passes('emails', $validEmails));
@@ -24,8 +25,8 @@ class ContactArrayValidatorTest extends TestCase
         $validator = new ContactArrayValidator('telefoon');
 
         $validPhones = [
-            ['value' => '+31612345678', 'label' => 'work', 'is_default' => true],
-            ['value' => '+31687654321', 'label' => 'mobile', 'is_default' => false],
+            ['value' => '+31612345678', 'label' => ContactLabel::Eigen->value, 'is_default' => true],
+            ['value' => '+31687654321', 'label' => ContactLabel::Relatie->value, 'is_default' => false],
         ];
 
         $this->assertTrue($validator->passes('phones', $validPhones));
@@ -60,7 +61,7 @@ class ContactArrayValidatorTest extends TestCase
         ];
 
         $this->assertFalse($validator->passes('emails', $invalidEmails));
-        $this->assertStringContainsString('work, home, other', $validator->message());
+        $this->assertStringContainsString('eigen, relatie, anders', $validator->message());
     }
 
     public function test_phone_validator_allows_mobile_label()
@@ -68,7 +69,7 @@ class ContactArrayValidatorTest extends TestCase
         $validator = new ContactArrayValidator('telefoon');
 
         $validPhones = [
-            ['value' => '+31612345678', 'label' => 'mobile', 'is_default' => true],
+            ['value' => '+31612345678', 'label' => ContactLabel::Relatie->value, 'is_default' => true],
         ];
 
         $this->assertTrue($validator->passes('phones', $validPhones));
@@ -80,7 +81,7 @@ class ContactArrayValidatorTest extends TestCase
 
         // Use an array as is_default value - this should definitely fail
         $invalidEmails = [
-            ['value' => 'test@example.com', 'label' => 'work', 'is_default' => ['not_a_boolean']],
+            ['value' => 'test@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => ['not_a_boolean']],
         ];
 
         $this->assertFalse($validator->passes('emails', $invalidEmails));
@@ -92,8 +93,8 @@ class ContactArrayValidatorTest extends TestCase
         $validator = new ContactArrayValidator('email');
 
         $emailsWithoutDefault = [
-            ['value' => 'test1@example.com', 'label' => 'work', 'is_default' => false],
-            ['value' => 'test2@example.com', 'label' => 'home', 'is_default' => false],
+            ['value' => 'test1@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => false],
+            ['value' => 'test2@example.com', 'label' => ContactLabel::Relatie->value, 'is_default' => false],
         ];
 
         $this->assertFalse($validator->passes('emails', $emailsWithoutDefault));
@@ -105,7 +106,7 @@ class ContactArrayValidatorTest extends TestCase
         $validator = new ContactArrayValidator('email');
 
         $emptyEmails = [
-            ['value' => '', 'label' => 'work', 'is_default' => true],
+            ['value' => '', 'label' => ContactLabel::Eigen->value, 'is_default' => true],
         ];
 
         $this->assertTrue($validator->passes('emails', $emptyEmails));
@@ -116,7 +117,7 @@ class ContactArrayValidatorTest extends TestCase
         $validator = new ContactArrayValidator('email');
 
         $singleEmail = [
-            ['value' => 'test@example.com', 'label' => 'work'],
+            ['value' => 'test@example.com', 'label' => ContactLabel::Eigen->value],
         ];
 
         $this->assertTrue($validator->passes('emails', $singleEmail));
@@ -128,9 +129,9 @@ class ContactArrayValidatorTest extends TestCase
 
         // Test various string representations that should be converted to boolean
         $emailsWithStringDefaults = [
-            ['value' => 'test1@example.com', 'label' => 'work', 'is_default' => 'true'],
-            ['value' => 'test2@example.com', 'label' => 'home', 'is_default' => '1'],
-            ['value' => 'test3@example.com', 'label' => 'other', 'is_default' => 'on'],
+            ['value' => 'test1@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => 'true'],
+            ['value' => 'test2@example.com', 'label' => ContactLabel::Relatie->value, 'is_default' => '1'],
+            ['value' => 'test3@example.com', 'label' => ContactLabel::Anders->value, 'is_default' => 'on'],
         ];
 
         // This should pass because strings are converted to booleans
@@ -143,9 +144,9 @@ class ContactArrayValidatorTest extends TestCase
 
         // Test strings that should be converted to false
         $emailsWithFalsyDefaults = [
-            ['value' => 'test1@example.com', 'label' => 'work', 'is_default' => 'false'],
-            ['value' => 'test2@example.com', 'label' => 'home', 'is_default' => '0'],
-            ['value' => 'test3@example.com', 'label' => 'other', 'is_default' => 'random_string'],
+            ['value' => 'test1@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => 'false'],
+            ['value' => 'test2@example.com', 'label' => ContactLabel::Relatie->value, 'is_default' => '0'],
+            ['value' => 'test3@example.com', 'label' => ContactLabel::Anders->value, 'is_default' => 'random_string'],
         ];
 
         // This should fail because no item has is_default = true

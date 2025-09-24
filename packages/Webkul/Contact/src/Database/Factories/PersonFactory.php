@@ -3,6 +3,7 @@
 namespace Webkul\Contact\Database\Factories;
 
 use App\Models\Address;
+use App\Enums\ContactLabel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
@@ -25,7 +26,7 @@ class PersonFactory extends Factory
     {
         return [
             'name'            => $this->faker->name(),
-            'emails'          => [['value' => $this->faker->unique()->safeEmail(), 'label' => 'work', 'is_default' => true]],
+            'emails'          => [['value' => $this->faker->unique()->safeEmail(), 'label' => ContactLabel::Eigen->value, 'is_default' => true]],
             'phones' => [], // Empty by default to avoid conflicts in tests
         ];
     }

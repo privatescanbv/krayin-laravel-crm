@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ContactLabel;
 use App\Models\Address;
 use App\Models\Anamnesis;
 use Database\Seeders\TestSeeder;
@@ -75,7 +76,7 @@ test('address_audit_trail', function () {
     $person = Person::create([
         'name'            => 'Test Person',
         'emails'          => ['test@example.com'],
-        'phones'          => [['value' => '1234567890', 'label' => 'mobile']],
+        'phones'          => [['value' => '1234567890', 'label' => ContactLabel::Relatie->value]],
         'user_id'         => $this->user1->id,
         'created_by'      => $this->user1->id,
         'updated_by'      => $this->user1->id,
@@ -183,7 +184,7 @@ test('person_audit_trail', function () {
     $person = Person::create([
         'name'            => 'Test Person',
         'emails'          => ['person@example.com'],
-        'phones'          => [['value' => '1234567890', 'label' => 'mobile']],
+        'phones'          => [['value' => '1234567890', 'label' => ContactLabel::Relatie->value]],
         'user_id'         => $this->user1->id,
         'created_by'      => $this->user1->id,
         'updated_by'      => $this->user1->id,

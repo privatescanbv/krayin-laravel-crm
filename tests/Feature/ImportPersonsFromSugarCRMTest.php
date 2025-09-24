@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ContactLabel;
 use App\Models\Address;
 use Database\Seeders\TestSeeder;
 use Illuminate\Database\Schema\Blueprint;
@@ -82,7 +83,7 @@ test('imports person with emails, phones and address from sugarcrm sqlite stub',
         'first_name'                 => 'Anna',
         'last_name'                  => 'Tester',
         'phone_work'                 => '010-123',
-        'phone_mobile'               => '06-456',
+        'phone_mobile'               => '06-11251145',
         'primary_address_street'     => 'Teststraat',
         'primary_address_city'       => 'Rotterdam',
         'primary_address_state'      => 'ZH',
@@ -134,7 +135,7 @@ test('imports person with emails, phones and address from sugarcrm sqlite stub',
         ->and($person->married_name)->toBe('Jansen')
         ->and($person->married_name_prefix)->toBe('de')
         ->and($person->phones)->toBeArray()
-        ->and(collect($person->phones)->pluck('value'))->toContain('010-123', '06-456')
+        ->and(collect($person->phones)->pluck('value'))->toContain('010-123', '+31611251145')
         ->and($person->emails)->toBeArray()
         ->and($person->emails[0]['value'])->toBe('anna.primary@example.com');
 
@@ -224,15 +225,15 @@ test('person import strips label text from phone values and infers labels', func
     // Mobile with (prive) becomes label home and value cleaned
     $mobile = $phones->firstWhere('value', '+31623234434');
     expect($mobile)->not->toBeNull()
-        ->and($mobile['label'])->toBe('home');
+        ->and($mobile['label'])->toBe(ContactLabel::default()->value);
 
     // Work prefixed becomes work
     $work = $phones->firstWhere('value', '+31201234567');
     expect($work)->not->toBeNull()
-        ->and($work['label'])->toBe('work');
+        ->and($work['label'])->toBe(ContactLabel::default()->value);
 
     // Home suffixed becomes home
     $home = $phones->firstWhere('value', '+31851234567');
     expect($home)->not->toBeNull()
-        ->and($home['label'])->toBe('home');
+        ->and($home['label'])->toBe(ContactLabel::default()->value);
 });

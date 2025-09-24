@@ -39,9 +39,11 @@
                             v-model="phone.label"
                             class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                         >
-                            <option value="eigen">Eigen</option>
-                            <option value="relatie">Relatie</option>
-                            <option value="anders">Anders</option>
+                            <option
+                                v-for="opt in labelOptions"
+                                :key="opt.value"
+                                :value="opt.value"
+                            >@{{ opt.label }}</option>
                         </select>
 
                         <div class="flex items-center space-x-2">
@@ -105,7 +107,9 @@
 
                 data() {
                     return {
-                        phones: this.processPhones(this.value)
+                        phones: this.processPhones(this.value),
+                        labelOptions: @json(\App\Enums\ContactLabel::options()),
+                        defaultLabel: '{{ \App\Enums\ContactLabel::default()->value }}'
                     }
                 },
 
@@ -139,14 +143,14 @@
 
                         // If no valid phones, return a default empty phone
                         if (validPhones.length === 0) {
-                            return [{ value: '', label: 'eigen', is_default: true }];
+                            return [{ value: '', label: this.defaultLabel, is_default: true }];
                         }
 
                         return validPhones;
                     },
 
                     addPhone() {
-                        this.phones.push({ value: '', label: 'eigen', is_default: false });
+                        this.phones.push({ value: '', label: this.defaultLabel, is_default: false });
                     },
 
                     removePhone(index) {
@@ -226,7 +230,7 @@
 
     // If no valid phones, create a default empty phone
     if (empty($phones)) {
-        $phones = [['value' => '', 'label' => 'work', 'is_default' => true]];
+        $phones = [['value' => '', 'label' => \App\Enums\ContactLabel::default()->value, 'is_default' => true]];
     }
 
     // Normaliseer is_default naar boolean

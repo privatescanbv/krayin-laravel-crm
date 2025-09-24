@@ -27,5 +27,23 @@ enum ContactLabel: string
             default                  => self::Eigen,
         };
     }
+
+    public static function default(): self
+    {
+        return self::Eigen;
+    }
+
+    /**
+     * Return enum options for UI: [ ['value' => 'eigen', 'label' => 'Eigen'], ... ]
+     */
+    public static function options(): array
+    {
+        return array_map(static function (self $case) {
+            return [
+                'value' => $case->value,
+                'label' => $case->label(),
+            ];
+        }, self::cases());
+    }
 }
 

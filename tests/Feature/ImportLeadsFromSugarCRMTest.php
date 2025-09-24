@@ -510,7 +510,7 @@ test('imports lead created_at parsed correctly from sugarcrm', function () {
 
     $exit = Artisan::call('import:leads', [
         '--connection' => 'sugarcrm',
-         '--limit'      => 1,
+        '--limit'      => 1,
     ]);
     expect($exit)->toBe(0);
 

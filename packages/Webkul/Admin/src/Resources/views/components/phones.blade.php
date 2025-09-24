@@ -1,3 +1,4 @@
+@php use App\Enums\ContactLabel; @endphp
 {!! view_render_event('admin.phones.before') !!}
 
 <div class="flex flex-col gap-4">
@@ -43,7 +44,8 @@
                                 v-for="opt in labelOptions"
                                 :key="opt.value"
                                 :value="opt.value"
-                            >@{{ opt.label }}</option>
+                            >@{{ opt.label }}
+                            </option>
                         </select>
 
                         <div class="flex items-center space-x-2">
@@ -67,7 +69,8 @@
                         >
                             <span class="sr-only">Remove Phone</span>
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                         </button>
                     </div>
@@ -79,7 +82,8 @@
                     class="mt-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
                 >
                     <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                     </svg>
                     Voeg telefoonnummer toe
                 </button>
@@ -88,8 +92,8 @@
     @endverbatim
 
     <script type="module">
-        const CONTACT_LABEL_OPTIONS = @json(\App\Enums\ContactLabel::options());
-        const CONTACT_LABEL_DEFAULT = @json(\App\Enums\ContactLabel::default()->value);
+        const CONTACT_LABEL_OPTIONS = @json(ContactLabel::options());
+        const CONTACT_LABEL_DEFAULT = @json(ContactLabel::default()->value);
 
         app.component('v-phones-component', {
             template: '#v-phones-component-template',
@@ -147,14 +151,14 @@
 
                     // If no valid phones, return a default empty phone
                     if (validPhones.length === 0) {
-                        return [{ value: '', label: this.defaultLabel, is_default: true }];
+                        return [{value: '', label: this.defaultLabel, is_default: true}];
                     }
 
                     return validPhones;
                 },
 
                 addPhone() {
-                    this.phones.push({ value: '', label: this.defaultLabel, is_default: false });
+                    this.phones.push({value: '', label: this.defaultLabel, is_default: false});
                 },
 
                 removePhone(index) {

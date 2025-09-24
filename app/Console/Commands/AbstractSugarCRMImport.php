@@ -37,6 +37,18 @@ abstract class AbstractSugarCRMImport extends Command
     }
 
     /**
+     * @throws Exception if any of the specified tables do not exist
+     */
+    public function validateTableExists(string $connection, array $tables): void
+    {
+        foreach ($tables as $table) {
+            if (! Schema::connection($connection)->hasTable($table)) {
+                throw new Exception("Missing table: {$table}");
+            }
+        }
+    }
+
+    /**
      * Parse SugarCRM date format to our timezone
      */
     protected function parseSugarDate($value): ?string
@@ -177,12 +189,10 @@ abstract class AbstractSugarCRMImport extends Command
      */
     protected function sanitizePhoneAndInferLabel(?string $raw, string $defaultLabel): array
     {
-        $value = trim((string) ($raw ?? ''));
+        $value = trim($raw ?? '');
         if ($value === '') {
             return [$defaultLabel, $value];
         }
-
-        $lower = strtolower($value);
 
         // Known label keywords and their mapped labels used in our system
         $labelMap = [
@@ -252,17 +262,5 @@ abstract class AbstractSugarCRMImport extends Command
     {
         Config::set('webhook.enabled', true);
         $this->info('🔔 Webhooks re-enabled after import operation');
-    }
-
-    /**
-     * @throws Exception if any of the specified tables do not exist
-     */
-    public function validateTableExists(string $connection, array $tables): void
-    {
-        foreach ($tables as $table) {
-            if (!Schema::connection($connection)->hasTable($table)) {
-                throw new Exception("Missing table: {$table}");
-            }
-        }
     }
 }

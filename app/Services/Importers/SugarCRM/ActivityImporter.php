@@ -8,10 +8,8 @@ use App\Models\Department;
 use App\Services\ActivityStatusService;
 use App\Services\Importers\SugarCRM\Concerns\ImportsSugarHelpers;
 use Exception;
-use Illuminate\Console\Command;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Webkul\Activity\Models\Activity;
 use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
@@ -36,6 +34,7 @@ class ActivityImporter
      * Extract call activities from SugarCRM for the given leads
      *
      * @return array [lead_id => [call_data1, call_data2, ...]]
+     *
      * @throws Exception
      */
     public function extractCallActivities(array $leadIds): array

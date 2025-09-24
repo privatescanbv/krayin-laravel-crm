@@ -8,7 +8,6 @@ use App\Services\Importers\SugarCRM\Concerns\ImportsSugarHelpers;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Webkul\Activity\Models\Activity;
 use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\User;
@@ -31,6 +30,7 @@ class MeetingImporter
      * Extract meeting activities from SugarCRM for the given leads
      *
      * @return array [lead_id => [meeting_data1, meeting_data2, ...]]
+     *
      * @throws Exception
      */
     public function extractMeetingActivities(array $leadIds): array

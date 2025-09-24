@@ -21,3 +21,12 @@ jobs:
           tag-selection: both
           cut-off: '2w'
           rust-log: info
+      - name: Verwijder ongetagde GHCR images
+        uses: snok/container-retention-policy@v3.0.0
+        with:
+          account: privatescanbv
+          token: ${{ secrets.GHCR_PAT }}
+          image-names: "krayin-laravel-crm/krayincrm"
+          tag-selection: untagged
+          dry-run: false
+          rust-log: info

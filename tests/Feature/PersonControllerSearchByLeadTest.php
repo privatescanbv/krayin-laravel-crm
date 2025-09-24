@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Address;
+use App\Enums\ContactLabel;
 use Database\Seeders\TestSeeder;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Webkul\Admin\Http\Controllers\Contact\Persons\PersonController;
@@ -117,9 +118,9 @@ test('finds exact first name match', function () {
     $matchingPerson = createPersonWithAttributes($this->attributeValueRepository,
         'John',
         'Smith',
-        [['value' => 'john.smith@example.com', 'label' => 'work']],
+        [['value' => 'john.smith@example.com', 'label' => ContactLabel::Eigen->value]],
         [
-            'phones'                      => [['value' => '0687654321', 'label' => 'mobile']],
+            'phones'                      => [['value' => '0687654321', 'label' => ContactLabel::Relatie->value]],
         ]);
 
     // must initial filter on married name of lastname
@@ -153,24 +154,24 @@ test('finds exact email match', function () {
     $noNameMatchingPerson = Person::factory()->create([
         'first_name'      => 'Jane',
         'last_name'       => 'Smith',
-        'emails'          => [['value' => 'john2@example.com', 'label' => 'work']],
-        'phones'          => [['value' => '0687654321', 'label' => 'mobile']],
+        'emails'          => [['value' => 'john2@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'          => [['value' => '0687654321', 'label' => ContactLabel::Relatie->value]],
     ]);
 
     // Create a person with exact email match
     $matchingPerson = Person::factory()->create([
         'first_name'      => 'John',
         'last_name'       => 'Doe',
-        'emails'          => [['value' => 'john@example.com', 'label' => 'work']],
-        'phones'          => [['value' => '0687654321', 'label' => 'mobile']],
+        'emails'          => [['value' => 'john@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'          => [['value' => '0687654321', 'label' => ContactLabel::Relatie->value]],
     ]);
 
     // Create a person with different email
     $matchWithDifferentEmail = Person::factory()->create([
         'first_name'      => 'John',
         'last_name'       => 'Doe',
-        'emails'          => [['value' => 'jane@example.com', 'label' => 'work']],
-        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
+        'emails'          => [['value' => 'jane@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'          => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
     ]);
 
     // Call the method
@@ -191,8 +192,8 @@ test('returns results with match scores and sorts by score', function () {
         'first_name'             => 'John',
         'last_name'              => 'Smith',
         'married_name'           => 'Johnson',
-        'emails'                 => [['value' => 'john.smith@example.com', 'label' => 'work']],
-        'phones'                 => [['value' => '0612345678', 'label' => 'mobile']],
+        'emails'                 => [['value' => 'john.smith@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'                 => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
         'lead_pipeline_id'       => $pipeline->id,
         'lead_pipeline_stage_id' => $stage->id,
     ]);
@@ -202,8 +203,8 @@ test('returns results with match scores and sorts by score', function () {
         'first_name'      => 'John',
         'last_name'       => 'Smith',
         'married_name'    => 'Johnson',
-        'emails'          => [['value' => 'john.smith@example.com', 'label' => 'work']],
-        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
+        'emails'          => [['value' => 'john.smith@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'          => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
     ]);
 
     // Create person with medium match score (some name fields missing, different email/phone)
@@ -211,16 +212,16 @@ test('returns results with match scores and sorts by score', function () {
         'first_name' => 'John',
         'last_name'  => 'Smith',
         // No married_name - this should result in lower score than highMatchPerson
-        'emails'          => [['value' => 'different@example.com', 'label' => 'work']],
-        'phones'          => [['value' => '0687654321', 'label' => 'mobile']],
+        'emails'          => [['value' => 'different@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'          => [['value' => '0687654321', 'label' => ContactLabel::Relatie->value]],
     ]);
 
     // Create person with low match score (first name only)
     $lowMatchPerson = Person::factory()->create([
         'first_name'      => 'John',
         'last_name'       => 'Doe',
-        'emails'          => [['value' => 'john.doe@example.com', 'label' => 'work']],
-        'phones'          => [['value' => '0698765432', 'label' => 'mobile']],
+        'emails'          => [['value' => 'john.doe@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'          => [['value' => '0698765432', 'label' => ContactLabel::Relatie->value]],
     ]);
 
     $onlyNameMatch = Person::factory()
@@ -271,10 +272,10 @@ test('validates email and phone array structure when creating person', function 
         'first_name' => 'John',
         'last_name'  => 'Doe',
         'emails'     => [
-            ['value' => 'john@example.com', 'label' => 'work', 'is_default' => true],
+            ['value' => 'john@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => true],
         ],
         'phones' => [
-            ['value' => '+31612345678', 'label' => 'work', 'is_default' => true],
+            ['value' => '+31612345678', 'label' => ContactLabel::Eigen->value, 'is_default' => true],
         ],
         'entity_type' => 'persons',
     ];
@@ -328,10 +329,10 @@ test('validates email and phone array structure when creating person', function 
         'first_name' => 'Charlie',
         'last_name'  => 'Wilson',
         'emails'     => [
-            ['value' => '', 'label' => 'work', 'is_default' => true],
+            ['value' => '', 'label' => ContactLabel::Eigen->value, 'is_default' => true],
         ],
         'phones' => [
-            ['value' => '', 'label' => 'work', 'is_default' => true],
+            ['value' => '', 'label' => ContactLabel::Eigen->value, 'is_default' => true],
         ],
         'entity_type' => 'persons',
     ];
@@ -347,8 +348,8 @@ test('match algorithm includes date of birth and address in scoring', function (
     $lead = Lead::factory()->create([
         'first_name'             => 'Alice',
         'last_name'              => 'Johnson',
-        'emails'                 => [['value' => 'alice.johnson@example.com', 'label' => 'work']],
-        'phones'                 => [['value' => '0612345678', 'label' => 'mobile']],
+        'emails'                 => [['value' => 'alice.johnson@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'                 => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
         'date_of_birth'          => '1985-03-15',
         'lead_pipeline_id'       => $pipeline->id,
         'lead_pipeline_stage_id' => $stage->id,
@@ -368,8 +369,8 @@ test('match algorithm includes date of birth and address in scoring', function (
     $perfectMatchPerson = Person::factory()->create([
         'first_name'      => 'Alice',
         'last_name'       => 'Johnson',
-        'emails'          => [['value' => 'alice.johnson@example.com', 'label' => 'work']],
-        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
+        'emails'          => [['value' => 'alice.johnson@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'          => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
         'date_of_birth'   => '1985-03-15',
     ]);
 
@@ -387,8 +388,8 @@ test('match algorithm includes date of birth and address in scoring', function (
     $partialMatchPerson = Person::factory()->create([
         'first_name'      => 'Alice',
         'last_name'       => 'Johnson',
-        'emails'          => [['value' => 'alice.johnson@example.com', 'label' => 'work']],
-        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
+        'emails'          => [['value' => 'alice.johnson@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'          => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
         // No date_of_birth and no address
     ]);
 
@@ -396,8 +397,8 @@ test('match algorithm includes date of birth and address in scoring', function (
     $differentDataPerson = Person::factory()->create([
         'first_name'      => 'Alice',
         'last_name'       => 'Johnson',
-        'emails'          => [['value' => 'alice.johnson@example.com', 'label' => 'work']],
-        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
+        'emails'          => [['value' => 'alice.johnson@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'          => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
         'date_of_birth'   => '1990-06-20', // Different date
     ]);
 
@@ -466,8 +467,8 @@ test('address matching works with partial postal code matches', function () {
     $lead = Lead::factory()->create([
         'first_name'             => 'Bob',
         'last_name'              => 'Wilson',
-        'emails'                 => [['value' => 'bob.wilson@example.com', 'label' => 'work']],
-        'phones'                 => [['value' => '0612345678', 'label' => 'mobile']],
+        'emails'                 => [['value' => 'bob.wilson@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'                 => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
         'lead_pipeline_id'       => $pipeline->id,
         'lead_pipeline_stage_id' => $stage->id,
     ]);
@@ -486,8 +487,8 @@ test('address matching works with partial postal code matches', function () {
     $exactMatchPerson = Person::factory()->create([
         'first_name'      => 'Bob',
         'last_name'       => 'Wilson',
-        'emails'          => [['value' => 'bob.wilson@example.com', 'label' => 'work']],
-        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
+        'emails'          => [['value' => 'bob.wilson@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'          => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
     ]);
 
     Address::create([
@@ -503,8 +504,8 @@ test('address matching works with partial postal code matches', function () {
     $partialMatchPerson = Person::factory()->create([
         'first_name'      => 'Bob',
         'last_name'       => 'Wilson',
-        'emails'          => [['value' => 'bob.wilson@example.com', 'label' => 'work']],
-        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
+        'emails'          => [['value' => 'bob.wilson@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'          => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
     ]);
 
     Address::create([
@@ -520,8 +521,8 @@ test('address matching works with partial postal code matches', function () {
     $differentAddressPerson = Person::factory()->create([
         'first_name'      => 'Bob',
         'last_name'       => 'Wilson',
-        'emails'          => [['value' => 'bob.wilson@example.com', 'label' => 'work']],
-        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
+        'emails'          => [['value' => 'bob.wilson@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'          => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
     ]);
 
     Address::create([
@@ -571,8 +572,8 @@ test('date of birth matching affects name field scoring', function () {
     $lead = Lead::factory()->create([
         'first_name'             => 'Charlie',
         'last_name'              => 'Brown',
-        'emails'                 => [['value' => 'charlie.brown@example.com', 'label' => 'work']],
-        'phones'                 => [['value' => '0612345678', 'label' => 'mobile']],
+        'emails'                 => [['value' => 'charlie.brown@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'                 => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
         'date_of_birth'          => '1980-12-25',
         'lead_pipeline_id'       => $pipeline->id,
         'lead_pipeline_stage_id' => $stage->id,
@@ -582,8 +583,8 @@ test('date of birth matching affects name field scoring', function () {
     $matchingDatePerson = Person::factory()->create([
         'first_name'      => 'Charlie',
         'last_name'       => 'Brown',
-        'emails'          => [['value' => 'charlie.brown@example.com', 'label' => 'work']],
-        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
+        'emails'          => [['value' => 'charlie.brown@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'          => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
         'date_of_birth'   => '1980-12-25', // Exact match
     ]);
 
@@ -591,8 +592,8 @@ test('date of birth matching affects name field scoring', function () {
     $differentDatePerson = Person::factory()->create([
         'first_name'      => 'Charlie',
         'last_name'       => 'Brown',
-        'emails'          => [['value' => 'charlie.brown@example.com', 'label' => 'work']],
-        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
+        'emails'          => [['value' => 'charlie.brown@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'          => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
         'date_of_birth'   => '1985-06-15', // Different date
     ]);
 
@@ -600,8 +601,8 @@ test('date of birth matching affects name field scoring', function () {
     $noDatePerson = Person::factory()->create([
         'first_name'      => 'Charlie',
         'last_name'       => 'Brown',
-        'emails'          => [['value' => 'charlie.brown@example.com', 'label' => 'work']],
-        'phones'          => [['value' => '0612345678', 'label' => 'mobile']],
+        'emails'          => [['value' => 'charlie.brown@example.com', 'label' => ContactLabel::Eigen->value]],
+        'phones'          => [['value' => '0612345678', 'label' => ContactLabel::Relatie->value]],
         // No date_of_birth
     ]);
 

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Address;
+use App\Enums\ContactLabel;
 use Database\Seeders\TestSeeder;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
@@ -22,7 +23,7 @@ test('it detects duplicate leads by email', function () {
         'first_name' => 'Marcus',
         'last_name'  => 'Emailtest',
         'emails'     => [
-            ['value' => 'shared.email@example.com', 'label' => 'work'],
+            ['value' => 'shared.email@example.com', 'label' => ContactLabel::Eigen->value],
         ],
     ]);
 
@@ -31,7 +32,7 @@ test('it detects duplicate leads by email', function () {
         'first_name' => 'Natasha',
         'last_name'  => 'Differentname',
         'emails'     => [
-            ['value' => 'shared.email@example.com', 'label' => 'home'],
+            ['value' => 'shared.email@example.com', 'label' => ContactLabel::Relatie->value],
         ],
     ]);
 
@@ -50,7 +51,7 @@ test('it detects duplicate leads by phone', function () {
         'first_name' => 'Alexander',
         'last_name'  => 'Phonetest',
         'phones'     => [
-            ['value' => '+1234567890', 'label' => 'mobile'],
+            ['value' => '+1234567890', 'label' => ContactLabel::Relatie->value],
         ],
     ]);
 
@@ -59,7 +60,7 @@ test('it detects duplicate leads by phone', function () {
         'first_name' => 'Bethany',
         'last_name'  => 'Differentname',
         'phones'     => [
-            ['value' => '+1234567890', 'label' => 'work'],
+            ['value' => '+1234567890', 'label' => ContactLabel::Eigen->value],
         ],
     ]);
 
@@ -97,10 +98,10 @@ test('it returns empty collection when no duplicates exist', function () {
         'first_name' => 'Zephyr',
         'last_name'  => 'Quintessential',
         'emails'     => [
-            ['value' => 'zephyr.quintessential.unique.test@example.com', 'label' => 'work'],
+            ['value' => 'zephyr.quintessential.unique.test@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'phones'     => [
-            ['value' => '+9999999999', 'label' => 'mobile'],
+            ['value' => '+9999999999', 'label' => ContactLabel::Relatie->value],
         ],
     ]);
 
@@ -118,7 +119,7 @@ test('it excludes self from duplicate detection', function () {
         'first_name' => 'Selftest',
         'last_name'  => 'Exclusion',
         'emails'     => [
-            ['value' => 'selftest.exclusion@example.com', 'label' => 'work'],
+            ['value' => 'selftest.exclusion@example.com', 'label' => ContactLabel::Eigen->value],
         ],
     ]);
 
@@ -135,7 +136,7 @@ test('it detects duplicate leads with same name and address information', functi
         'first_name' => 'Sarah',
         'last_name'  => 'Addresstest',
         'emails'     => [
-            ['value' => 'sarah.address1@example.com', 'label' => 'work'],
+            ['value' => 'sarah.address1@example.com', 'label' => ContactLabel::Eigen->value],
         ],
     ]);
 
@@ -155,7 +156,7 @@ test('it detects duplicate leads with same name and address information', functi
         'first_name' => 'Sarah',
         'last_name'  => 'Addresstest',
         'emails'     => [
-            ['value' => 'sarah.address2@example.com', 'label' => 'home'],
+            ['value' => 'sarah.address2@example.com', 'label' => ContactLabel::Relatie->value],
         ],
     ]);
 
@@ -200,7 +201,7 @@ test('it ignores leads in won status as duplicates', function () {
         'first_name' => 'Marcus',
         'last_name'  => 'Wontest',
         'emails'     => [
-            ['value' => 'marcus.won@example.com', 'label' => 'work'],
+            ['value' => 'marcus.won@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'created_at' => now(),
     ]);
@@ -210,7 +211,7 @@ test('it ignores leads in won status as duplicates', function () {
         'first_name' => 'Marcus',
         'last_name'  => 'Wontest',
         'emails'     => [
-            ['value' => 'marcus.won@example.com', 'label' => 'work'],
+            ['value' => 'marcus.won@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'lead_pipeline_stage_id' => $wonStage->id,
         'created_at'             => now()->subDays(5), // Within 2 weeks but won status
@@ -229,7 +230,7 @@ test('it ignores leads created more than 2 weeks apart as duplicates', function 
         'first_name' => 'John',
         'last_name'  => 'Timetest',
         'emails'     => [
-            ['value' => 'john.time@example.com', 'label' => 'work'],
+            ['value' => 'john.time@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'created_at' => now(),
     ]);
@@ -249,7 +250,7 @@ test('it ignores leads created more than 2 weeks apart as duplicates', function 
         'first_name' => 'John',
         'last_name'  => 'Timetest',
         'phones'     => [
-            ['value' => '+1234567890', 'label' => 'mobile'],
+            ['value' => '+1234567890', 'label' => ContactLabel::Relatie->value],
         ],
         'created_at' => now()->subDays(16),
     ]);
@@ -267,7 +268,7 @@ test('it finds leads created within 2 weeks as duplicates', function () {
         'first_name' => 'Sarah',
         'last_name'  => 'Recenttest',
         'emails'     => [
-            ['value' => 'sarah.recent@example.com', 'label' => 'work'],
+            ['value' => 'sarah.recent@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'created_at' => now(),
     ]);
@@ -277,7 +278,7 @@ test('it finds leads created within 2 weeks as duplicates', function () {
         'first_name' => 'Sarah',
         'last_name'  => 'Recenttest',
         'emails'     => [
-            ['value' => 'sarah.recent@example.com', 'label' => 'work'],
+            ['value' => 'sarah.recent@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'created_at' => now()->subWeek(1),
     ]);
@@ -287,7 +288,7 @@ test('it finds leads created within 2 weeks as duplicates', function () {
         'first_name' => 'Sarah',
         'last_name'  => 'Recenttest',
         'phones'     => [
-            ['value' => '+9876543210', 'label' => 'mobile'],
+            ['value' => '+9876543210', 'label' => ContactLabel::Relatie->value],
         ],
         'created_at' => now()->subDays(10),
     ]);
@@ -315,7 +316,7 @@ test('it combines time and status filters correctly', function () {
         'first_name' => 'Alice',
         'last_name'  => 'Combinedtest',
         'emails'     => [
-            ['value' => 'alice.combined@example.com', 'label' => 'work'],
+            ['value' => 'alice.combined@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'created_at' => now(),
     ]);
@@ -325,7 +326,7 @@ test('it combines time and status filters correctly', function () {
         'first_name' => 'Alice',
         'last_name'  => 'Combinedtest',
         'emails'     => [
-            ['value' => 'alice.combined@example.com', 'label' => 'work'],
+            ['value' => 'alice.combined@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'created_at'             => now()->subDays(5),
         'lead_pipeline_stage_id' => $wonStage->id,
@@ -336,7 +337,7 @@ test('it combines time and status filters correctly', function () {
         'first_name' => 'Alice',
         'last_name'  => 'Combinedtest',
         'emails'     => [
-            ['value' => 'alice.combined@example.com', 'label' => 'work'],
+            ['value' => 'alice.combined@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'created_at' => now()->subWeeks(3),
     ]);
@@ -346,7 +347,7 @@ test('it combines time and status filters correctly', function () {
         'first_name' => 'Alice',
         'last_name'  => 'Combinedtest',
         'emails'     => [
-            ['value' => 'alice.combined@example.com', 'label' => 'work'],
+            ['value' => 'alice.combined@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'created_at' => now()->subDays(7),
     ]);
@@ -365,7 +366,7 @@ test('it handles edge case of exactly 2 weeks difference', function () {
         'first_name' => 'Edge',
         'last_name'  => 'Case',
         'emails'     => [
-            ['value' => 'edge.case@example.com', 'label' => 'work'],
+            ['value' => 'edge.case@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'created_at' => now(),
     ]);
@@ -375,7 +376,7 @@ test('it handles edge case of exactly 2 weeks difference', function () {
         'first_name' => 'Edge',
         'last_name'  => 'Case',
         'emails'     => [
-            ['value' => 'edge.case@example.com', 'label' => 'work'],
+            ['value' => 'edge.case@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'created_at' => now()->subWeeks(2),
     ]);
@@ -385,7 +386,7 @@ test('it handles edge case of exactly 2 weeks difference', function () {
         'first_name' => 'Edge',
         'last_name'  => 'Case',
         'emails'     => [
-            ['value' => 'edge.case@example.com', 'label' => 'work'],
+            ['value' => 'edge.case@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'created_at' => now()->subWeeks(2)->subDay(1),
     ]);
@@ -410,10 +411,10 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
         'first_name' => 'John',
         'last_name'  => 'Comprehensive',
         'emails'     => [
-            ['value' => 'john.comprehensive@example.com', 'label' => 'work'],
+            ['value' => 'john.comprehensive@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'phones'     => [
-            ['value' => '+1234567890', 'label' => 'mobile'],
+            ['value' => '+1234567890', 'label' => ContactLabel::Relatie->value],
         ],
         'created_at' => now(),
     ]);
@@ -423,7 +424,7 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
         'first_name' => 'John',
         'last_name'  => 'Comprehensive',
         'emails'     => [
-            ['value' => 'john.comprehensive@example.com', 'label' => 'work'],
+            ['value' => 'john.comprehensive@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'created_at'             => now()->subMonths(6),
         'lead_pipeline_stage_id' => $wonStage->id,
@@ -434,7 +435,7 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
         'first_name' => 'John',
         'last_name'  => 'Comprehensive',
         'phones'     => [
-            ['value' => '+1234567890', 'label' => 'mobile'],
+            ['value' => '+1234567890', 'label' => ContactLabel::Relatie->value],
         ],
         'created_at'             => now()->subWeek(1),
         'lead_pipeline_stage_id' => $wonStage->id,
@@ -445,7 +446,7 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
         'first_name' => 'John',
         'last_name'  => 'Comprehensive',
         'emails'     => [
-            ['value' => 'john.comprehensive@example.com', 'label' => 'work'],
+            ['value' => 'john.comprehensive@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'created_at' => now()->subWeeks(3),
         // Default stage (not won)

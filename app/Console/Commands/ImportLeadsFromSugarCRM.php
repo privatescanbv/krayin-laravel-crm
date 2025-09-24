@@ -151,9 +151,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $this->info('Starting lead import from SugarCRM...');
         $this->infoV("Connection: {$connection}");
         if (! empty($leadIds)) {
-            $this->infoV('Lead IDs: '.implode(', ', $leadIds));
+            $this->info('Lead IDs: '.implode(', ', $leadIds));
         } else {
-            $this->infoV("Limit: {$limit}");
+            $this->info("Limit: {$limit}");
         }
         $this->infoV('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
@@ -182,13 +182,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
             if (! empty($leadIds)) {
                 $idQuery= $idQuery->whereIn('l.id', $leadIds);
-            } else {
-                $idQuery = $idQuery->orderBy('l.date_entered', 'desc');
-                if ($limit > 0) {
-                    $idQuery = $idQuery->limit($limit);
-                }
             }
             $this->info('Total leads to process: '.$idQuery->count());
+            $this->infoVV($idQuery->toRawSql());
             $batchSize = 1000;
             $processed = 0;
 
@@ -197,6 +193,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
             $idQuery->select('l.id')->chunkById($batchSize, function ($rows) use ($limit, $connection, $dryRun, &$processed) {
                 if ($rows->isEmpty()) {
+                    $this->info('No more leads to process, exiting chunk loop');
                     return false;
                 }
                 if ($limit > 0) {
@@ -209,6 +206,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     $leadIdsBatch = $rows->pluck('id')->all();
                 }
                 $this->info('Running next batch, number of leads: '.count($leadIdsBatch));
+//                $this->info(print_r($leadIdsBatch, true));
 
                 // Build the full select for this batch
                 $sqlBatch = DB::connection($connection)
@@ -294,10 +292,9 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         DB::raw('MIN(CASE WHEN eabr.primary_address = 0 THEN ea.email_address END) as email_any'),
                     ])
                     ->whereIn('l.id', $leadIdsBatch)
-                    ->groupBy('l.id')
-                    ->orderBy('l.date_entered', 'desc');
-
+                    ->groupBy('l.id');
                 $records = $sqlBatch->get();
+                $this->infoV('Fetched '.($records ? $records->count() : 0).' lead records');
                 $leadByPersons = $this->extractPerson($records);
                 $leadByPersonsByAnamnesis = $this->extractAnamenesis($leadByPersons);
 

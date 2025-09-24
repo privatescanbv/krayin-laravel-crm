@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Enums\Departments;
+use App\Enums\ContactLabel;
 use App\Enums\LostReason;
 use App\Models\Address;
 use App\Models\Department;
@@ -81,8 +82,8 @@ class LeadFactory extends Factory
             // Personal fields - minimal defaults, can be overridden
             'first_name'             => $this->faker->firstName(),
             'last_name'              => $this->faker->lastName(),
-            'emails'                 => [['value' => $this->faker->email(), 'label' => 'work', 'is_default' => true]],
-            'phones'                 => [['value' => $this->faker->randomNumber(9), 'label' => 'mobile', 'is_default' => true]],
+            'emails'                 => [['value' => $this->faker->email(), 'label' => ContactLabel::Eigen->value, 'is_default' => true]],
+            'phones'                 => [['value' => $this->faker->randomNumber(9), 'label' => ContactLabel::Relatie->value, 'is_default' => true]],
             'lastname_prefix'        => null,
             'married_name'           => null,
             'married_name_prefix'    => null,
@@ -102,8 +103,8 @@ class LeadFactory extends Factory
             return [
                 'first_name'    => $this->faker->firstName(),
                 'last_name'     => $this->faker->lastName(),
-                'emails'        => [['value' => $this->faker->email(), 'label' => 'work', 'is_default' => true]],
-                'phones'        => [['value' => $this->faker->randomNumber(9), 'label' => 'mobile', 'is_default' => true]],
+                'emails'        => [['value' => $this->faker->email(), 'label' => ContactLabel::Eigen->value, 'is_default' => true]],
+                'phones'        => [['value' => $this->faker->randomNumber(9), 'label' => ContactLabel::Relatie->value, 'is_default' => true]],
             ];
         });
     }

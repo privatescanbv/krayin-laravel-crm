@@ -149,6 +149,46 @@ services:
 #      - n8n
 #    command: ./vendor/bin/behat --format=pretty
 
+  ai-agent:
+    build: ./ai-agent
+    container_name: ai-agent
+    env_file:
+      - .env.ai
+    environment:
+      - DB_HOST=mysql
+      - DB_PORT=3306
+      - DB_USER=${DB_USERNAME}
+      - DB_PASS=${DB_PASSWORD}
+      - DB_NAME=${DB_DATABASE}
+    ports:
+      - "8001:8001"
+    depends_on:
+      - mysql
+    networks:
+      - sail
+      - mb_traefik
+
+  ai-frontend:
+    build: ./ai-frontend
+    container_name: ai-frontend
+    ports:
+      - "8501:8501"
+    depends_on:
+      - ai-agent
+    networks:
+        - sail
+
+  ai-visualizer:
+    build: ./ai-visualizer
+    container_name: ai-visualizer
+    ports:
+      - "8002:8002"
+    env_file:
+      - .env.ai
+    networks:
+      - sail
+      - mb_traefik
+
 networks:
   sail:
     driver: bridge

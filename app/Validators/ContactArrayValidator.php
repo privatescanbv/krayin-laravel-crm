@@ -2,6 +2,7 @@
 
 namespace App\Validators;
 
+use App\Enums\ContactLabel;
 use Illuminate\Contracts\Validation\Rule;
 
 class ContactArrayValidator implements Rule
@@ -55,15 +56,12 @@ class ContactArrayValidator implements Rule
 
             // If label is provided, it must be valid
             if (isset($item['label']) && ! empty(trim($item['label']))) {
-                // Validate label values
-                $validLabels = ['work', 'home', 'other'];
-                if ($this->type === 'telefoon') {
-                    $validLabels[] = 'mobile';
-                }
+                // Validate label values using ContactLabel enum
+                $validLabels = array_map(fn ($c) => $c->value, ContactLabel::cases());
 
-                if (! in_array($item['label'], $validLabels)) {
+                if (! in_array($item['label'], $validLabels, true)) {
                     $validLabelsStr = implode(', ', $validLabels);
-                    $this->message = "Het {$this->type} label moet een van de volgende waarden zijn: {$validLabelsStr}.";
+                    $this->message = "Het {$this->type} label '{$item['label']}' moet een van de volgende waarden zijn: {$validLabelsStr}.";
 
                     return false;
                 }

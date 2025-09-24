@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Lead;
 
+use App\Enums\ContactLabel;
 use App\Enums\LostReason;
 use App\Enums\ActivityStatus;
 use App\Enums\PipelineDefaultKeys;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -541,7 +543,13 @@ class LeadController extends Controller
     public function update(LeadForm $request, int $id): RedirectResponse|JsonResponse
     {
         try {
-            $this->validate($request, LeadValidationService::getWebValidationRules($request, false));
+            try {
+                $this->validate($request, LeadValidationService::getWebValidationRules($request, false));
+            } catch (ValidationException $exception) {
+                // for missing error displaying in the UI
+                logger()->warning('Validation error during lead update', ['errors' => $exception->errors()]);
+                throw $exception;
+            }
             // Additional rule now embedded in LeadValidationService rules
             Event::dispatch('lead.update.before', $id);
 
@@ -660,7 +668,7 @@ class LeadController extends Controller
     {
         $this->validate(request(), [
             'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
-            'lost_reason' => ['nullable', new \Illuminate\Validation\Rules\Enum(LostReason::class)],
+            'lost_reason' => ['nullable', new Enum(LostReason::class)],
             'closed_at' => 'nullable|date',
         ]);
 
@@ -1311,7 +1319,7 @@ class LeadController extends Controller
                 if (is_array($email)) {
                     // Ensure label exists and normalize it
                     if (!isset($email['label']) || empty($email['label'])) {
-                        $requestData['emails'][$index]['label'] = 'work';
+                        $requestData['emails'][$index]['label'] = ContactLabel::default()->value;
                     } else {
                         $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
                     }
@@ -1332,7 +1340,7 @@ class LeadController extends Controller
                 if (is_array($phone)) {
                     // Ensure label exists and normalize it
                     if (!isset($phone['label']) || empty($phone['label'])) {
-                        $requestData['phones'][$index]['label'] = 'work';
+                        $requestData['phones'][$index]['label'] = ContactLabel::default()->value;
                     } else {
                         $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
@@ -1377,23 +1385,20 @@ class LeadController extends Controller
     private function normalizeLabel(string $label): string
     {
         if (empty($label)) {
-            return 'work';
+            return ContactLabel::default()->value;
         }
 
         // Convert to lowercase and map common variations
         $normalizedLabel = strtolower(trim($label));
-        $labelMap = [
-            'work' => 'work',
-            'werk' => 'work',
-            'home' => 'home',
-            'thuis' => 'home',
-            'mobile' => 'mobile',
-            'mobiel' => 'mobile',
-            'other' => 'other',
-            'anders' => 'other'
-        ];
-
-        return $labelMap[$normalizedLabel] ?? 'work';
+        return match ($normalizedLabel) {
+            'eigen' => ContactLabel::Eigen->value,
+            'relatie' => ContactLabel::Relatie->value,
+            'anders' => ContactLabel::Anders->value,
+            // legacy mappings
+            'work', 'werk', 'home', 'thuis', 'mobile', 'mobiel' => ContactLabel::Eigen->value,
+            'other' => ContactLabel::Anders->value,
+            default => ContactLabel::default()->value,
+        };
     }
 
     // moved contact validation to LeadValidationService
@@ -1503,7 +1508,7 @@ class LeadController extends Controller
     public function markAsLost(int $id): JsonResponse
     {
         $this->validate(request(), [
-            'lost_reason' => ['required', new \Illuminate\Validation\Rules\Enum(LostReason::class)],
+            'lost_reason' => ['required', new Enum(LostReason::class)],
             'closed_at' => 'nullable|date',
         ]);
 

@@ -86,7 +86,6 @@
                         @lang('admin::app.leads.common.emails.title')
                     </h3>
                 </div>
-
                 @include('admin::components.emails', ['name' => 'emails', 'value' => old('emails', $person->emails ?? [])])
             </div>
 
@@ -97,7 +96,6 @@
                         Telefoonnummers
                     </h3>
                 </div>
-
                 @include('admin::components.phones', ['name' => 'phones', 'value' => old('phones', $person->phones ?? [])])
             </div>
 

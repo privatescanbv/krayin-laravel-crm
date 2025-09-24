@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\ContactLabel;
 use App\Enums\LostReason;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
@@ -42,24 +43,6 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
     protected MeetingImporter $meetingImporter;
 
-    // Totals across all chunks
-    private int $totalImported = 0;
-    private int $totalSkipped = 0;
-    private int $totalErrors = 0;
-    private int $totalPersonNotFound = 0;
-    private int $totalSkippedAlreadyExisting = 0;
-    private int $totalSkippedNoRelatedPersons = 0;
-    private int $totalSkippedNotAllPersonsFound = 0;
-    private int $totalCallActivitiesImported = 0;
-    private int $totalCallActivitiesSkipped = 0;
-    private int $totalEmailActivitiesImported = 0;
-    private int $totalEmailActivitiesSkipped = 0;
-    private int $totalMeetingActivitiesImported = 0;
-    private int $totalMeetingActivitiesSkipped = 0;
-    private int $totalEmailAttachmentsImported = 0;
-    private int $totalEmailAttachmentsSkipped = 0;
-    private ProgressBar $bar;
-
     /**
      * The name and signature of the console command.
      *
@@ -77,6 +60,39 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
      * @var string
      */
     protected $description = 'Import leads from SugarCRM database with anamnesis data, call activities, email activities, meeting activities and email attachments';
+
+    // Totals across all chunks
+    private int $totalImported = 0;
+
+    private int $totalSkipped = 0;
+
+    private int $totalErrors = 0;
+
+    private int $totalPersonNotFound = 0;
+
+    private int $totalSkippedAlreadyExisting = 0;
+
+    private int $totalSkippedNoRelatedPersons = 0;
+
+    private int $totalSkippedNotAllPersonsFound = 0;
+
+    private int $totalCallActivitiesImported = 0;
+
+    private int $totalCallActivitiesSkipped = 0;
+
+    private int $totalEmailActivitiesImported = 0;
+
+    private int $totalEmailActivitiesSkipped = 0;
+
+    private int $totalMeetingActivitiesImported = 0;
+
+    private int $totalMeetingActivitiesSkipped = 0;
+
+    private int $totalEmailAttachmentsImported = 0;
+
+    private int $totalEmailAttachmentsSkipped = 0;
+
+    private ProgressBar $bar;
 
     /**
      * Map SugarCRM reden_afvoeren_c (free text/code) to our LostReason enum value
@@ -139,6 +155,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
     /**
      * Execute the console command.
+     *
      * @throws Exception
      */
     public function handle()
@@ -181,7 +198,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 ->where('soort_aanvraag_c', '!=', 'ccsvi');
 
             if (! empty($leadIds)) {
-                $idQuery= $idQuery->whereIn('l.id', $leadIds);
+                $idQuery = $idQuery->whereIn('l.id', $leadIds);
             }
             $this->info('Total leads to process: '.$idQuery->count());
             $this->infoVV($idQuery->toRawSql());
@@ -194,6 +211,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             $idQuery->select('l.id')->chunkById($batchSize, function ($rows) use ($limit, $connection, $dryRun, &$processed) {
                 if ($rows->isEmpty()) {
                     $this->info('No more leads to process, exiting chunk loop');
+
                     return false;
                 }
                 if ($limit > 0) {
@@ -206,7 +224,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                     $leadIdsBatch = $rows->pluck('id')->all();
                 }
                 $this->infoV('Running next batch, number of leads: '.count($leadIdsBatch));
-//                $this->info(print_r($leadIdsBatch, true));
+                //                $this->info(print_r($leadIdsBatch, true));
 
                 // Build the full select for this batch
                 $sqlBatch = DB::connection($connection)
@@ -509,7 +527,6 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
      */
     private function importRecords($records, $leadByPersonsByAnamnesis, $callActivities = [], $emailActivities = [], $meetingActivities = [], $emailAttachments = []): void
     {
-
 
         $imported = 0;
         $skipped = 0;
@@ -823,7 +840,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
         if ($primary) {
             $emails[] = [
-                'label'      => 'work',
+                'label'      => ContactLabel::Eigen->value,
                 'value'      => $primary,
                 'is_default' => true,
             ];
@@ -831,7 +848,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
         if ($any && $any !== $primary) {
             $emails[] = [
-                'label'      => 'work',
+                'label'      => ContactLabel::Eigen->value,
                 'value'      => $any,
                 'is_default' => false,
             ];
@@ -848,10 +865,10 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $phones = [];
 
         if ($record->phone_work) {
-            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_work, 'work');
+            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_work, ContactLabel::Eigen->value);
             if ($value !== '') {
                 $phones[] = [
-                    'label'      => $label,
+                    'label'      => ContactLabel::fromOld($label)->value,
                     'value'      => $value,
                     'is_default' => true,
                 ];
@@ -859,10 +876,10 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         }
 
         if ($record->phone_mobile) {
-            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_mobile, 'mobile');
+            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_mobile, ContactLabel::Eigen->value);
             if ($value !== '') {
                 $phones[] = [
-                    'label'      => $label,
+                    'label'      => ContactLabel::fromOld($label)->value,
                     'value'      => $value,
                     'is_default' => empty($phones),
                 ];
@@ -870,10 +887,10 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         }
 
         if ($record->phone_home) {
-            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_home, 'home');
+            [$label, $value] = $this->sanitizePhoneAndInferLabel($record->phone_home, ContactLabel::Eigen->value);
             if ($value !== '') {
                 $phones[] = [
-                    'label'      => $label,
+                    'label'      => ContactLabel::fromOld($label)->value,
                     'value'      => $value,
                     'is_default' => empty($phones),
                 ];

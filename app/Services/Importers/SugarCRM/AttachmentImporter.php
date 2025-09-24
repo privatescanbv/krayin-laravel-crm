@@ -7,7 +7,6 @@ use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Webkul\Email\Models\Attachment;
 use Webkul\Lead\Models\Lead;
 
@@ -27,6 +26,7 @@ class AttachmentImporter
      * Extract email attachments from SugarCRM for the given leads
      *
      * @return array [lead_id => [attachment_data1, attachment_data2, ...]]
+     *
      * @throws Exception
      */
     public function extractEmailAttachments(array $leadIds): array

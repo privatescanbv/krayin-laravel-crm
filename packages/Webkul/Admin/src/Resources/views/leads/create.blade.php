@@ -666,7 +666,7 @@
                                     emailValueInputs[0].dispatchEvent(new Event('change', {bubbles: true}));
                                 }
                                 if (emailLabelInputs[0]) {
-                                    emailLabelInputs[0].value = (primaryEmail.label || 'work');
+                                    emailLabelInputs[0].value = (primaryEmail.label || 'eigen');
                                     emailLabelInputs[0].dispatchEvent(new Event('input', {bubbles: true}));
                                     emailLabelInputs[0].dispatchEvent(new Event('change', {bubbles: true}));
                                 }
@@ -686,7 +686,7 @@
                                     phoneValueInputs[0].dispatchEvent(new Event('change', {bubbles: true}));
                                 }
                                 if (phoneLabelInputs[0]) {
-                                    phoneLabelInputs[0].value = (primaryPhone.label || 'work');
+                                    phoneLabelInputs[0].value = (primaryPhone.label || 'eigen');
                                     phoneLabelInputs[0].dispatchEvent(new Event('input', {bubbles: true}));
                                     phoneLabelInputs[0].dispatchEvent(new Event('change', {bubbles: true}));
                                 }

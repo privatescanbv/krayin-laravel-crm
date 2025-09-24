@@ -2,7 +2,10 @@
 
 namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
+use App\Enums\ContactLabel;
 use App\Models\Address;
+use BackedEnum;
+use Dotenv\Exception\ValidationException;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -225,7 +228,16 @@ class PersonController extends Controller
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
 
-        $request->validate(PersonValidationService::getWebValidationRules($request));
+        try {
+            $request->validate(PersonValidationService::getWebValidationRules($request));
+        } catch (Exception $e) {
+            // for missing error displaying in the UI
+            logger()->warning('Person update validation failed', [
+                'person_id' => $id,
+                'errors' => $e->errors(),
+            ]);
+            throw $e;
+        }
         // Normalize contact arrays before validation
         $this->normalizeContactArrays($request);
         Event::dispatch('contacts.person.update.before', $id);
@@ -234,10 +246,10 @@ class PersonController extends Controller
         $data['entity_type'] = 'persons';
 
         // Normalize enum-like fields to strings for persistence
-        if (isset($data['salutation']) && $data['salutation'] instanceof \BackedEnum) {
+        if (isset($data['salutation']) && $data['salutation'] instanceof BackedEnum) {
             $data['salutation'] = $data['salutation']->value;
         }
-        if (isset($data['gender']) && $data['gender'] instanceof \BackedEnum) {
+        if (isset($data['gender']) && $data['gender'] instanceof BackedEnum) {
             $data['gender'] = $data['gender']->value;
         }
 
@@ -245,9 +257,6 @@ class PersonController extends Controller
         if (isset($data['entity'])) {
             unset($data['entity']);
         }
-
-        // Debug: Log the incoming data
-        Log::info('Person update request data:', $data);
 
         // Handle empty date fields
         if (isset($data['date_of_birth']) && empty($data['date_of_birth'])) {
@@ -301,9 +310,6 @@ class PersonController extends Controller
                 return $email;
             }, $data['emails']);
         }
-
-        // Debug: Log the processed data
-        Log::info('Person update processed data:', $data);
 
         $person = $this->personRepository->update($data, $id);
 
@@ -1396,7 +1402,7 @@ class PersonController extends Controller
                 if (is_array($email)) {
                     // Ensure label exists and normalize it
                     if (!isset($email['label']) || empty($email['label'])) {
-                        $requestData['emails'][$index]['label'] = 'work';
+                        $requestData['emails'][$index]['label'] = ContactLabel::default()->value;
                     } else {
                         $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
                     }
@@ -1417,7 +1423,7 @@ class PersonController extends Controller
                 if (is_array($phone)) {
                     // Ensure label exists and normalize it
                     if (!isset($phone['label']) || empty($phone['label'])) {
-                        $requestData['phones'][$index]['label'] = 'work';
+                        $requestData['phones'][$index]['label'] = ContactLabel::default()->value;
                     } else {
                         $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
@@ -1438,7 +1444,7 @@ class PersonController extends Controller
                 if (is_array($phone)) {
                     // Ensure label exists and normalize it
                     if (!isset($phone['label']) || empty($phone['label'])) {
-                        $requestData['contact_numbers'][$index]['label'] = 'work';
+                        $requestData['contact_numbers'][$index]['label'] = ContactLabel::default()->value;
                     } else {
                         $requestData['contact_numbers'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
@@ -1483,22 +1489,19 @@ class PersonController extends Controller
     private function normalizeLabel(string $label): string
     {
         if (empty($label)) {
-            return 'work';
+            return ContactLabel::default()->value;
         }
 
-        // Convert to lowercase and map common variations
         $normalizedLabel = strtolower(trim($label));
-        $labelMap = [
-            'work' => 'work',
-            'werk' => 'work',
-            'home' => 'home',
-            'thuis' => 'home',
-            'mobile' => 'mobile',
-            'mobiel' => 'mobile',
-            'other' => 'other',
-            'anders' => 'other'
-        ];
 
-        return $labelMap[$normalizedLabel] ?? 'work';
+        return match ($normalizedLabel) {
+            'eigen' => ContactLabel::Eigen->value,
+            'relatie' => ContactLabel::Relatie->value,
+            'anders' => ContactLabel::Anders->value,
+            // legacy values mapped to enum
+            'work', 'werk', 'home', 'thuis', 'mobile', 'mobiel' => ContactLabel::Eigen->value,
+            'other' => ContactLabel::Anders->value,
+            default => ContactLabel::default()->value,
+        };
     }
 }

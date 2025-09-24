@@ -68,7 +68,8 @@ RUN docker-php-ext-install \
         mbstring \
         soap \
         pcntl \
-        bcmath
+        bcmath \
+        calendar
 
 RUN docker-php-ext-configure gd --with-jpeg --with-freetype
 
@@ -80,6 +81,7 @@ COPY --chown=www-data:www-data ./ ./
 
 # Install Composer and PHP dependencies (ensure vendor/autoload.php exists)
 ENV COMPOSER_ALLOW_SUPERUSER=1
+RUN git config --global --add safe.directory /usr/share/nginx/html
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
     && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
     && php -r "unlink('composer-setup.php');" \

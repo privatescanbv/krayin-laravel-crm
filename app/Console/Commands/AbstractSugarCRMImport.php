@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
+use Webkul\Core\Contracts\Validations\PhoneValidator;
 
 abstract class AbstractSugarCRMImport extends Command
 {
@@ -229,6 +230,34 @@ abstract class AbstractSugarCRMImport extends Command
         // 3) Collapse extra whitespace and trim common trailing punctuation leftover
         $value = preg_replace('/\s{2,}/u', ' ', $value ?? '');
         $value = trim($value, " \t\n\r\0\x0B-;:,.");
+
+        // 4) Normalize Dutch mobile 06 numbers to +316XXXXXXXX
+        $digitsOnly = preg_replace('/\D+/', '', $value);
+        if ($digitsOnly !== null && $digitsOnly !== '') {
+            // If it looks like a Dutch mobile starting with 06 and followed by 8 digits
+            if (preg_match('/^06(\d{8})$/', $digitsOnly, $m)) {
+                $value = '+316'.$m[1];
+                $detectedLabel = 'mobile';
+            } elseif (preg_match('/^06/', $digitsOnly)) {
+                // 06 present but not in valid 06XXXXXXXX format -> invalid
+                throw new Exception('Ongeldig 06-nummer: verwacht exact 8 cijfers na 06');
+            }
+        }
+
+        // 5) Validate using existing PhoneValidator rule only if E.164-like (+...) or normalized 06
+        if (str_starts_with($value, '+')) {
+            $validator = new PhoneValidator();
+            $failed = false;
+            $failMessage = '';
+            $validator->validate('phone', $value, function ($message) use (&$failed, &$failMessage) {
+                $failed = true;
+                $failMessage = (string) $message;
+            });
+
+            if ($failed) {
+                throw new Exception($failMessage ?: 'Ongeldig telefoonnummer');
+            }
+        }
 
         return [$detectedLabel, $value];
     }

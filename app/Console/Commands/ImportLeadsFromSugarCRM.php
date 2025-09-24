@@ -19,6 +19,7 @@ use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
 use Webkul\User\Models\User;
+use Webkul\Core\Contracts\Validations\EmailValidator;
 
 /**
  * Import leads from SugarCRM database with anamnesis data, call activities, email activities, meeting activities and email attachments
@@ -822,6 +823,15 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $any = $record->email_any ?? null;
 
         if ($primary) {
+            // Validate primary email
+            $emailValidator = new EmailValidator();
+            $failed = false;
+            $emailValidator->validate('email', $primary, function ($message) use (&$failed) {
+                $failed = true;
+            });
+            if ($failed) {
+                throw new Exception('Ongeldig e-mailadres (primary) tijdens import');
+            }
             $emails[] = [
                 'label'      => 'work',
                 'value'      => $primary,
@@ -830,6 +840,15 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         }
 
         if ($any && $any !== $primary) {
+            // Validate secondary email
+            $emailValidator = new EmailValidator();
+            $failed = false;
+            $emailValidator->validate('email', $any, function ($message) use (&$failed) {
+                $failed = true;
+            });
+            if ($failed) {
+                throw new Exception('Ongeldig e-mailadres (secundair) tijdens import');
+            }
             $emails[] = [
                 'label'      => 'work',
                 'value'      => $any,

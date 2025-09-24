@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Models\Person;
+use Webkul\Core\Contracts\Validations\EmailValidator;
 
 class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
 {
@@ -243,8 +244,24 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
 
                 $emails = [];
                 if (! empty($record->email_primary)) {
+                    $emailValidator = new EmailValidator();
+                    $failed = false;
+                    $emailValidator->validate('email', $record->email_primary, function ($message) use (&$failed) {
+                        $failed = true;
+                    });
+                    if ($failed) {
+                        throw new Exception('Ongeldig e-mailadres (primary) tijdens import');
+                    }
                     $emails[] = ['label' => 'work', 'value' => $record->email_primary, 'is_default' => true];
                 } elseif (! empty($record->email_any)) {
+                    $emailValidator = new EmailValidator();
+                    $failed = false;
+                    $emailValidator->validate('email', $record->email_any, function ($message) use (&$failed) {
+                        $failed = true;
+                    });
+                    if ($failed) {
+                        throw new Exception('Ongeldig e-mailadres (secundair) tijdens import');
+                    }
                     $emails[] = ['label' => 'work', 'value' => $record->email_any, 'is_default' => true];
                 }
 

@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
+use App\Enums\ContactLabel;
 use App\Models\Address;
 use Dotenv\Exception\ValidationException;
 use Exception;
@@ -1401,7 +1402,7 @@ class PersonController extends Controller
                 if (is_array($email)) {
                     // Ensure label exists and normalize it
                     if (!isset($email['label']) || empty($email['label'])) {
-                        $requestData['emails'][$index]['label'] = \App\Enums\ContactLabel::default()->value;
+                        $requestData['emails'][$index]['label'] = ContactLabel::default()->value;
                     } else {
                         $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
                     }
@@ -1422,7 +1423,7 @@ class PersonController extends Controller
                 if (is_array($phone)) {
                     // Ensure label exists and normalize it
                     if (!isset($phone['label']) || empty($phone['label'])) {
-                        $requestData['phones'][$index]['label'] = \App\Enums\ContactLabel::default()->value;
+                        $requestData['phones'][$index]['label'] = ContactLabel::default()->value;
                     } else {
                         $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
@@ -1443,7 +1444,7 @@ class PersonController extends Controller
                 if (is_array($phone)) {
                     // Ensure label exists and normalize it
                     if (!isset($phone['label']) || empty($phone['label'])) {
-                        $requestData['contact_numbers'][$index]['label'] = \App\Enums\ContactLabel::default()->value;
+                        $requestData['contact_numbers'][$index]['label'] = ContactLabel::default()->value;
                     } else {
                         $requestData['contact_numbers'][$index]['label'] = $this->normalizeLabel($phone['label']);
                     }
@@ -1488,19 +1489,19 @@ class PersonController extends Controller
     private function normalizeLabel(string $label): string
     {
         if (empty($label)) {
-            return \App\Enums\ContactLabel::default()->value;
+            return ContactLabel::default()->value;
         }
 
         $normalizedLabel = strtolower(trim($label));
 
         return match ($normalizedLabel) {
-            'eigen' => \App\Enums\ContactLabel::Eigen->value,
-            'relatie' => \App\Enums\ContactLabel::Relatie->value,
-            'anders' => \App\Enums\ContactLabel::Anders->value,
+            'eigen' => ContactLabel::Eigen->value,
+            'relatie' => ContactLabel::Relatie->value,
+            'anders' => ContactLabel::Anders->value,
             // legacy values mapped to enum
-            'work', 'werk', 'home', 'thuis', 'mobile', 'mobiel' => \App\Enums\ContactLabel::Eigen->value,
-            'other' => \App\Enums\ContactLabel::Anders->value,
-            default => \App\Enums\ContactLabel::default()->value,
+            'work', 'werk', 'home', 'thuis', 'mobile', 'mobiel' => ContactLabel::Eigen->value,
+            'other' => ContactLabel::Anders->value,
+            default => ContactLabel::default()->value,
         };
     }
 }

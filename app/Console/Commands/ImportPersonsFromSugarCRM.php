@@ -19,7 +19,7 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
     protected $signature = 'import:persons
                             {--connection=sugarcrm : Database connection name}
                             {--table=contacts : Source table name}
-                            {--limit=100 : Number of records to import}
+                            {--limit=-1 : Number of records to import}
                             {--person-ids=* : Specific person IDs to import (ignores limit)}
                             {--dry-run : Show what would be imported without actually importing}';
 
@@ -103,11 +103,13 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
 
                 // If specific person IDs are provided, filter by them and ignore limit
                 if (! empty($personIds)) {
-                    $sql->whereIn('c.id', $personIds);
+                    $sql = $sql->whereIn('c.id', $personIds);
                 } else {
-                    $sql->groupBy('c.id')
-                        ->orderBy('c.date_entered', 'desc') // Nieuwste eerst
-                        ->limit($limit);
+                    $sql = $sql->groupBy('c.id')
+                        ->orderBy('c.date_entered', 'desc'); // Nieuwste eerst
+                    if ($limit > 0) {
+                        $sql = $sql->limit($limit);
+                    }
                 }
                 $records = $sql->get();
 

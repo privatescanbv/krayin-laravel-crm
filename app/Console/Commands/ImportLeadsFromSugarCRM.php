@@ -48,7 +48,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
      */
     protected $signature = 'import:leads
                             {--connection=sugarcrm : Database connection name}
-                            {--limit=100 : Number of records to import}
+                            {--limit=-1 : Number of records to import (optional, defaults to all)}
                             {--lead-ids=* : Specific lead IDs to import (ignores limit)}
                             {--dry-run : Show what would be imported without actually importing}';
 
@@ -161,10 +161,12 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 ->where('soort_aanvraag_c', '!=', 'ccsvi');
 
             if (! empty($leadIds)) {
-                $idQuery->whereIn('l.id', $leadIds);
+                $idQuery= $idQuery->whereIn('l.id', $leadIds);
             } else {
-                $idQuery->orderBy('l.date_entered', 'desc')
-                    ->limit($limit);
+                $idQuery = $idQuery->orderBy('l.date_entered', 'desc');
+                if ($limit > 0) {
+                    $idQuery = $idQuery->limit($limit);
+                }
             }
 
             $batchSize = 1000;
@@ -174,11 +176,15 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 if ($rows->isEmpty()) {
                     return false;
                 }
-                $remaining = $limit - $processed;
-                if ($remaining <= 0) {
-                    return false; // al klaar
+                if ($limit > 0) {
+                    $remaining = $limit - $processed;
+                    if ($remaining <= 0) {
+                        return false; // al klaar
+                    }
+                    $leadIdsBatch = $rows->pluck('id')->take($remaining)->all();
+                } else {
+                    $leadIdsBatch = $rows->pluck('id')->all();
                 }
-                $leadIdsBatch = $rows->pluck('id')->take($remaining)->all();
 
                 // Build the full select for this batch
                 $sqlBatch = DB::connection($connection)

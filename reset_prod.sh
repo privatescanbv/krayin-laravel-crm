@@ -5,6 +5,7 @@ read -p "Enter import limit (-1 = no limit) [ -1 ]: " IMPORT_LIMIT
 IMPORT_LIMIT=${IMPORT_LIMIT:--1}
 
 if [ "$IMPORT_LIMIT" = "-1" ]; then
+    # import all
     PERSON_LIMIT_ARG=""
     LEAD_LIMIT_ARG=""
 else

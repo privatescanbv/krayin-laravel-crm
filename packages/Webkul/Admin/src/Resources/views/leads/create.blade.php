@@ -235,9 +235,6 @@
                                 <p class="text-xl font-semibold dark:text-white">
                                     Stap 2: Lead gegevens
                                 </p>
-                                <p class="text-gray-600 dark:text-white">
-                                    Vul de lead informatie in
-                                </p>
 
                                 <!-- Show selected persons info if available -->
                                 <div v-if="hasSelectedPersons"
@@ -257,23 +254,6 @@
                             <!-- Lead Details -->
                             <div class="flex flex-col gap-4">
                                 <div class="w-1/2 max-md:w-full">
-                                    <!-- Description -->
-                                    <div class="mb-4">
-                                        <x-admin::form.control-group>
-                                            <x-admin::form.control-group.label>
-                                                @lang('admin::app.leads.create.description')
-                                            </x-admin::form.control-group.label>
-                                            <x-admin::form.control-group.control
-                                                type="textarea"
-                                                name="description"
-                                                v-model="formData.description"
-                                                label="Beschrijving"
-                                                placeholder="Beschrijving"
-                                                class="min-h-[80px]"
-                                            />
-                                            <x-admin::form.control-group.error control-name="description"/>
-                                        </x-admin::form.control-group>
-                                    </div>
 
                                     <!-- Personal Fields (full, same as edit) -->
                                     <div class="flex flex-col gap-4 mb-4">
@@ -445,6 +425,24 @@
                                         ],
                                         'useVueModel' => false,
                                     ])
+
+                                    <!-- Description -->
+                                    <div class="mb-4">
+                                        <x-admin::form.control-group>
+                                            <x-admin::form.control-group.label>
+                                                @lang('admin::app.leads.create.description')
+                                            </x-admin::form.control-group.label>
+                                            <x-admin::form.control-group.control
+                                                type="textarea"
+                                                name="description"
+                                                v-model="formData.description"
+                                                label="Beschrijving"
+                                                placeholder="Beschrijving"
+                                                class="min-h-[80px]"
+                                            />
+                                            <x-admin::form.control-group.error control-name="description"/>
+                                        </x-admin::form.control-group>
+                                    </div>
 
                                     <!-- Organization Section -->
                                     <div class="flex flex-col gap-4 mb-4">

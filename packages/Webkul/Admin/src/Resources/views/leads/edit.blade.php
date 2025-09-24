@@ -103,67 +103,30 @@
                         id="lead-details"
                     >
                         <div class="flex flex-col gap-1">
-                            <p class="text-base font-semibold dark:text-white">
-                                @lang('admin::app.leads.edit.details')
-                            </p>
+                        </div>
 
-                            <p class="text-gray-600 dark:text-white">
-                                @lang('admin::app.leads.edit.details-info')
+
+                    {!! view_render_event('admin.leads.edit.personal_fields.before', ['lead' => $lead]) !!}
+
+                    <!-- Personal Fields Section -->
+                    <div
+                        class="flex flex-col gap-4"
+                        id="personal-fields"
+                    >
+                        <div class="flex flex-col gap-1">
+                            <p class="text-base font-semibold dark:text-white">
+                                Persoons gegevens
                             </p>
                         </div>
 
                         <div class="w-1/2 max-md:w-full">
-                            {!! view_render_event('admin.leads.edit.lead_details.attributes.before', ['lead' => $lead]) !!}
-                            <!-- Lead Details Description -->
-                            <div class="mb-0.5">
-                                <x-admin::form.control-group>
-                                    <x-admin::form.control-group.label>
-                                        @lang('admin::app.leads.edit.description')
-                                    </x-admin::form.control-group.label>
-                                    <x-admin::form.control-group.control
-                                        type="textarea"
-                                        name="description"
-                                        value="{{ old('description', $lead->description) }}"
-                                        :label="trans('admin::app.leads.edit.description')"
-                                        :placeholder="trans('admin::app.leads.edit.description')"
-                                        class="min-h-[80px]"
-                                    />
-                                    <x-admin::form.control-group.error control-name="description"/>
-                                </x-admin::form.control-group>
-                            </div>
-
-                            <!-- afdeling and other custom fields -->
-                            <x-admin::attributes
-                                :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                    ['code', 'NOTIN', ['lead_type_id', 'lead_source_id', 'user_id', 'lead_pipeline_id', 'lead_pipeline_stage_id', 'lead_channel_id']],
-                                    'entity_type' => 'leads',
-                                    'quick_add'   => 1
-                                ])"
-                                :custom-validations="[]"
-                                :entity="$lead"
-                            />
-
-                            <!-- Lead Details Other input fields -->
-                            <div class="flex gap-4 max-sm:flex-wrap">
-                                <div class="w-full">
-                                    <x-admin::attributes
-                                        :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                            ['code', 'IN', ['lead_type_id', 'lead_source_id']],
-                                            'entity_type' => 'leads',
-                                            'quick_add'   => 1
-                                        ])"
-                                        :custom-validations="[]"
-                                        :entity="$lead"
-                                    />
-                                </div>
-                            </div>
-
-                            {!! view_render_event('admin.leads.edit.lead_details.attributes.after', ['lead' => $lead]) !!}
+                            <!-- Personal Fields Component -->
+                            @include('admin::leads.common.personal-fields', ['entity' => $lead])
                         </div>
                     </div>
 
+                    {!! view_render_event('admin.leads.edit.personal_fields.after', ['lead' => $lead]) !!}
 
-                    {!! view_render_event('admin.leads.edit.lead_details.after', ['lead' => $lead]) !!}
 
                     {!! view_render_event('admin.leads.edit.emails.before', ['lead' => $lead]) !!}
 
@@ -202,27 +165,6 @@
 
                     {!! view_render_event('admin.leads.edit.contact_person.after', ['lead' => $lead]) !!}
 
-                    {!! view_render_event('admin.leads.edit.personal_fields.before', ['lead' => $lead]) !!}
-
-                    <!-- Personal Fields Section -->
-                    <div
-                        class="flex flex-col gap-4"
-                        id="personal-fields"
-                    >
-                        <div class="flex flex-col gap-1">
-                            <p class="text-base font-semibold dark:text-white">
-                                Persoons gegevens
-                            </p>
-                        </div>
-
-                        <div class="w-1/2 max-md:w-full">
-                            <!-- Personal Fields Component -->
-                            @include('admin::leads.common.personal-fields', ['entity' => $lead])
-                        </div>
-                    </div>
-
-                    {!! view_render_event('admin.leads.edit.personal_fields.after', ['lead' => $lead]) !!}
-
                     {!! view_render_event('admin.leads.edit.address.before', ['lead' => $lead]) !!}
 
                     <!-- Address Section -->
@@ -242,6 +184,24 @@
                         'defaults' => [],
                         'useVueModel' => false,
                     ])
+
+                    <!-- Lead Details Description -->
+                    <div class="mb-0.5">
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>
+                                @lang('admin::app.leads.edit.description')
+                            </x-admin::form.control-group.label>
+                            <x-admin::form.control-group.control
+                                type="textarea"
+                                name="description"
+                                value="{{ old('description', $lead->description) }}"
+                                :label="trans('admin::app.leads.edit.description')"
+                                :placeholder="trans('admin::app.leads.edit.description')"
+                                class="min-h-[80px]"
+                            />
+                            <x-admin::form.control-group.error control-name="description"/>
+                        </x-admin::form.control-group>
+                    </div>
 
                     {!! view_render_event('admin.leads.edit.organization.before', ['lead' => $lead]) !!}
 
@@ -278,6 +238,44 @@
                             </x-admin::form.control-group.control>
                         </x-admin::form.control-group>
                     </div>
+
+
+
+                        <div class="w-1/2 max-md:w-full">
+                            {!! view_render_event('admin.leads.edit.lead_details.attributes.before', ['lead' => $lead]) !!}
+
+                            <!-- afdeling and other custom fields -->
+                            <x-admin::attributes
+                                :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
+                                    ['code', 'NOTIN', ['lead_type_id', 'lead_source_id', 'user_id', 'lead_pipeline_id', 'lead_pipeline_stage_id', 'lead_channel_id']],
+                                    'entity_type' => 'leads',
+                                    'quick_add'   => 1
+                                ])"
+                                :custom-validations="[]"
+                                :entity="$lead"
+                            />
+
+                            <!-- Lead Details Other input fields -->
+                            <div class="flex gap-4 max-sm:flex-wrap">
+                                <div class="w-full">
+                                    <x-admin::attributes
+                                        :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
+                                            ['code', 'IN', ['lead_type_id', 'lead_source_id']],
+                                            'entity_type' => 'leads',
+                                            'quick_add'   => 1
+                                        ])"
+                                        :custom-validations="[]"
+                                        :entity="$lead"
+                                    />
+                                </div>
+                            </div>
+
+                            {!! view_render_event('admin.leads.edit.lead_details.attributes.after', ['lead' => $lead]) !!}
+                        </div>
+                    </div>
+
+
+                    {!! view_render_event('admin.leads.edit.lead_details.after', ['lead' => $lead]) !!}
                 </div>
 
                 {!! view_render_event('admin.leads.form_controls.after') !!}

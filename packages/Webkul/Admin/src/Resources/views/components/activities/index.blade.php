@@ -104,7 +104,8 @@
                                                         : '{{ route('admin.activities.view', 'replaceId') }}'.replace('replaceId', activity.id)
                                                     "
                                                 >
-                                                     @{{ activity.title }}
+                                                    @{{ activity.title }}
+                                                    <span v-if="activity.is_done == 1 || activity.is_done === true" class="ml-1 icon-tick text-green-600 text-base" title="Afgerond"></span>
                                                     <span v-if="activity.type === 'email' && activity.linked_entity_type === 'lead'" class="ml-2 inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200" title="E-mail gekoppeld aan lead">
                                                         <span class="icon-activity text-[10px]"></span>
                                                     </span>

@@ -55,10 +55,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: 'false'
 
       - name: Install Admin frontend dependencies
-        run: npm ci --prefix packages/Webkul/Admin
+        run: npm install && npm ci --prefix packages/Webkul/Admin
 
       - name: Build Admin assets
         run: npm run build --prefix packages/Webkul/Admin

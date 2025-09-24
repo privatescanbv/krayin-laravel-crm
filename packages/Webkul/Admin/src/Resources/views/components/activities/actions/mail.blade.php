@@ -96,6 +96,30 @@
                                     />
 
                                     <div class="absolute top-[9px] flex items-center gap-2 ltr:right-2 rtl:left-2">
+                                        <template v-if="entityEmails.length">
+                                            <x-admin::dropdown position="bottom-right" ::close-on-click="true">
+                                                <x-slot:toggle>
+                                                    <button type="button" class="rounded-md px-2 py-1 text-sm transition-all hover:bg-gray-200 dark:hover:bg-gray-950">
+                                                        @{{ selectedEmailLabel || (entityEmails[0]?.value || 'Kies') }}
+                                                    </button>
+                                                </x-slot:toggle>
+
+                                                <x-slot:menu class="!p-0 !top-8 min-w-[220px]">
+                                                    <x-admin::dropdown.menu.item
+                                                        class="flex items-center justify-between gap-2"
+                                                        v-for="mail in entityEmails"
+                                                        @click="setReplyTo(mail.value)"
+                                                    >
+                                                        <span class="truncate max-w-[160px]">@{{ mail.value }}</span>
+                                                        <span v-if="mail.is_default" class="text-xs text-gray-500">default</span>
+                                                    </x-admin::dropdown.menu.item>
+                                                    <x-admin::dropdown.menu.item @click="focusReplyToInput()">
+                                                        @lang('admin::app.components.datagrid.search.other')
+                                                    </x-admin::dropdown.menu.item>
+                                                </x-slot:menu>
+                                            </x-admin::dropdown>
+                                        </template>
+
                                         <span
                                             class="cursor-pointer font-medium hover:underline dark:text-white"
                                             @click="showCC = ! showCC"
@@ -256,6 +280,10 @@
                     showBCC: false,
 
                     isStoring: false,
+
+                    entityEmails: [],
+
+                    selectedEmailLabel: '',
                 }
             },
 
@@ -264,11 +292,26 @@
                 window.addEventListener('open-email-dialog', (event) => {
                     this.openModalWithEmail(event.detail.defaultEmail, event.detail.activityId);
                 });
+
+                // Collect emails from current entity context
+                this.entityEmails = this.collectEntityEmails();
             },
 
             methods: {
                 openModal(type) {
                     this.$refs.mailActivityModal.open();
+
+                    // On open, prefill default email if available and field is empty
+                    setTimeout(() => {
+                        const emailField = this.$refs.mailActionForm.querySelector('[name="reply_to"]');
+                        const current = (emailField && emailField.value) ? emailField.value.trim() : '';
+                        if (!current) {
+                            const def = this.getDefaultEmail();
+                            if (def) {
+                                this.setReplyTo(def);
+                            }
+                        }
+                    }, 100);
                 },
 
                 openModalWithEmail(defaultEmail, activityId) {
@@ -282,6 +325,7 @@
                             emailField.value = defaultEmail;
                             // Trigger change event to update any tags input
                             emailField.dispatchEvent(new Event('change', { bubbles: true }));
+                            this.selectedEmailLabel = defaultEmail;
                         }
 
                         // Inject activity_id hidden input if provided
@@ -297,6 +341,69 @@
                             hidden.value = activityId || this.activityId;
                         }
                     }, 100);
+                },
+
+                collectEntityEmails() {
+                    const results = [];
+                    const pushEmail = (value, isDefault = false) => {
+                        if (value && typeof value === 'string') {
+                            results.push({ value, is_default: !!isDefault });
+                        }
+                    };
+
+                    // Lead or Person with emails array [{value, is_default}]
+                    const tryExtract = (obj) => {
+                        if (!obj) return;
+                        if (Array.isArray(obj.emails)) {
+                            obj.emails.forEach(e => {
+                                if (e && e.value) pushEmail(e.value, e.is_default === true || e.is_default === 'on' || e.is_default === '1');
+                            });
+                        }
+                        if (obj.email) pushEmail(obj.email, true);
+                    };
+
+                    tryExtract(this.entity);
+                    // Some entities may have nested person
+                    if (this.entity && this.entity.person) tryExtract(this.entity.person);
+
+                    // De-duplicate, preserve first/default
+                    const seen = new Set();
+                    const deduped = [];
+                    results.forEach(r => {
+                        const key = r.value.toLowerCase();
+                        if (!seen.has(key)) {
+                            seen.add(key);
+                            deduped.push(r);
+                        }
+                    });
+
+                    // Ensure one default
+                    if (!deduped.some(e => e.is_default) && deduped.length) {
+                        deduped[0].is_default = true;
+                    }
+
+                    return deduped;
+                },
+
+                getDefaultEmail() {
+                    const def = this.entityEmails.find(e => e.is_default);
+                    return def ? def.value : (this.entityEmails[0]?.value || '');
+                },
+
+                setReplyTo(email) {
+                    const emailField = this.$refs.mailActionForm.querySelector('[name="reply_to"]');
+                    if (emailField) {
+                        emailField.value = email;
+                        emailField.dispatchEvent(new Event('change', { bubbles: true }));
+                        this.selectedEmailLabel = email;
+                    }
+                },
+
+                focusReplyToInput() {
+                    const emailField = this.$refs.mailActionForm.querySelector('[name="reply_to"]');
+                    if (emailField) {
+                        emailField.focus();
+                    }
                 },
 
                 save(params, { resetForm, setErrors  }) {

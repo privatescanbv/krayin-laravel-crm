@@ -56,6 +56,8 @@ Route::prefix('settings')->group(function () {
         Route::post('create', 'store')->name('admin.settings.clinics.store');
         Route::get('edit/{id}', 'edit')->name('admin.settings.clinics.edit');
         Route::put('edit/{id}', 'update')->name('admin.settings.clinics.update');
+        // Some datagrid actions may send DELETE to base path; support both
+        Route::delete('', 'destroy')->name('admin.settings.clinics.delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.clinics.delete');
     });
 

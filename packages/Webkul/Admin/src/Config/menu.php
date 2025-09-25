@@ -191,6 +191,14 @@ return [
         'icon-class' => 'icon-settings-pipeline',
     ],
     [
+        'key'        => 'settings.resources',
+        'name'       => 'admin::app.layouts.resources',
+        'info'       => 'admin::app.layouts.resources-info',
+        'route'      => 'admin.settings.resources.index',
+        'sort'       => 5,
+        'icon-class' => 'icon-setting',
+    ],
+    [
         'key'        => 'settings.lead',
         'name'       => 'admin::app.layouts.lead',
         'info'       => 'admin::app.layouts.lead-info',

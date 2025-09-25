@@ -471,6 +471,18 @@ Breadcrumbs::for('settings.locations.edit', function (BreadcrumbTrail $trail, $l
     $trail->push(trans('admin::app.settings.locations.edit-title'), route('admin.settings.locations.edit', $location->id));
 });
 
+// Settings > Resources
+Breadcrumbs::for('settings.resources', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings');
+    $trail->push(trans('admin::app.layouts.resources'), route('admin.settings.resources.index'));
+});
+
+// Settings > Resources > Create
+Breadcrumbs::for('settings.resources.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings.resources');
+    $trail->push(trans('admin::app.settings.resources.index.create.title'), route('admin.settings.resources.create'));
+});
+
 // Dashboard > Settings > Data Transfers
 Breadcrumbs::for('settings.data_transfers', function (BreadcrumbTrail $trail) {
     $trail->parent('settings');

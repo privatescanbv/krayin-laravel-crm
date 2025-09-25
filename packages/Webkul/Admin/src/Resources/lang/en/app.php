@@ -791,6 +791,36 @@ return [
             ],
         ],
 
+        'resources' => [
+            'index' => [
+                'title'           => 'Resources',
+                'create-btn'      => 'Add Resource',
+                'create-success'  => 'Resource created successfully.',
+                'update-success'  => 'Resource updated successfully.',
+                'destroy-success' => 'Resource deleted successfully.',
+                'delete-failed'   => 'Failed to delete resource.',
+
+                'datagrid' => [
+                    'id'     => 'ID',
+                    'type'   => 'Type',
+                    'name'   => 'Name',
+                    'edit'   => 'Edit',
+                    'delete' => 'Delete',
+                ],
+
+                'edit' => [
+                    'title' => 'Edit Resource',
+                ],
+
+                'create' => [
+                    'title'       => 'Create Resource',
+                    'type'        => 'Type',
+                    'name'        => 'Name',
+                    'save-btn'    => 'Save',
+                ],
+            ],
+        ],
+
         'groups' => [
             'index' => [
                 'create-btn'        => 'Create Group',
@@ -2442,6 +2472,10 @@ return [
         'products'             => 'Products',
         'product-groups'       => 'Product Groups',  // Nieuwe taal key
         'workflow-leads'       => 'Backoffice',
+        'clinics'              => 'Clinics',
+        'clinics-info'         => 'Add, edit or delete clinics from CRM',
+        'resources'            => 'Resources',
+        'resources-info'       => 'Add, edit or delete resources from CRM',
     ],
 
     'user' => [

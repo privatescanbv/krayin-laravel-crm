@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Exception;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Webkul\Lead\Models\Lead;
@@ -20,12 +21,6 @@ class LeadStatusTransitionValidator
             'min_persons' => 1,
             'message'     => 'Voor de status "Klant adviseren" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
         ],
-
-        // Andere voorbeelden kunnen hier worden toegevoegd:
-        // 'klant-adviseren-start->klant-adviseren-opvolgen' => [
-        //     'required_fields' => ['first_name', 'last_name', 'emails'],
-        //     'message' => 'Voor deze status zijn naam en email verplicht.',
-        // ],
     ];
 
     /**
@@ -141,7 +136,7 @@ class LeadStatusTransitionValidator
             $result = $validationFunction($lead);
 
             return is_array($result) ? $result : [];
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             return ['Validatie fout: '.$e->getMessage()];
         }
     }

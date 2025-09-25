@@ -21,10 +21,6 @@ function makeGroup(string $name): Group
     return Group::firstOrCreate(['name' => $name]);
 }
 
-function makeUser(array $attrs = []): User
-{
-    return User::factory()->create(array_merge(['status' => 1], $attrs));
-}
 
 function makeActivity(array $attrs = []): Activity
 {
@@ -43,13 +39,6 @@ function makeActivity(array $attrs = []): Activity
     ], $attrs));
 }
 
-function getDatagridIds($response): array
-{
-    $payload = $response->json();
-    $records = $payload['records'] ?? [];
-
-    return collect($records)->pluck('id')->all();
-}
 
 // 1) Global admin in privatescan view: only activities from Privatescan
 

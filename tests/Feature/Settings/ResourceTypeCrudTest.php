@@ -4,13 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\ResourceType;
 use Webkul\Installer\Http\Middleware\CanInstall;
-use Webkul\User\Models\User;
 
 beforeEach(function () {
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
     test()->withoutMiddleware(CanInstall::class);
 });
-
 
 test('resource types index returns datagrid json', function () {
     $user = makeUser();

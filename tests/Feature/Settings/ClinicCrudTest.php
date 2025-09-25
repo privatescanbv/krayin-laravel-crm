@@ -4,13 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\Clinic;
 use Webkul\Installer\Http\Middleware\CanInstall;
-use Webkul\User\Models\User;
 
 beforeEach(function () {
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
     test()->withoutMiddleware(CanInstall::class);
 });
-
 
 test('clinics index returns datagrid json', function () {
     $user = makeUser();

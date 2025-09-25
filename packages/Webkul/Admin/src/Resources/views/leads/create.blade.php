@@ -284,12 +284,34 @@
 
                                     <!-- Emails -->
                                     <div class="mt-4">
-                                        @include('admin::leads.common.sections.emails', ['name' => 'emails', 'value' => old('emails', $prefilledLeadPerson['emails'] ?? []), 'widthClass' => 'w-full'])
+                                        @php
+                                            $__emailsVal = old('emails', $prefilledLeadPerson['emails'] ?? []);
+                                            if (!is_array($__emailsVal)) { $__emailsVal = []; }
+                                            $__emailsVal = array_map(function($e) {
+                                                if (!is_array($e)) { $e = []; }
+                                                if (!isset($e['label']) || trim((string)$e['label']) === '') {
+                                                    $e['label'] = \App\Enums\ContactLabel::default()->value;
+                                                }
+                                                return $e;
+                                            }, $__emailsVal);
+                                        @endphp
+                                        @include('admin::leads.common.sections.emails', ['name' => 'emails', 'value' => $__emailsVal, 'widthClass' => 'w-full'])
                                     </div>
 
                                     <!-- Phones -->
                                     <div class="mt-4">
-                                        @include('admin::leads.common.sections.phones', ['name' => 'phones', 'value' => old('phones', $prefilledLeadPerson['phones'] ?? []), 'widthClass' => 'w-full'])
+                                        @php
+                                            $__phonesVal = old('phones', $prefilledLeadPerson['phones'] ?? []);
+                                            if (!is_array($__phonesVal)) { $__phonesVal = []; }
+                                            $__phonesVal = array_map(function($p) {
+                                                if (!is_array($p)) { $p = []; }
+                                                if (!isset($p['label']) || trim((string)$p['label']) === '') {
+                                                    $p['label'] = \App\Enums\ContactLabel::default()->value;
+                                                }
+                                                return $p;
+                                            }, $__phonesVal);
+                                        @endphp
+                                        @include('admin::leads.common.sections.phones', ['name' => 'phones', 'value' => $__phonesVal, 'widthClass' => 'w-full'])
                                     </div>
 
                                     <!-- Address -->

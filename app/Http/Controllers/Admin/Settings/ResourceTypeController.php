@@ -7,8 +7,8 @@ use App\Repositories\ResourceTypeRepository;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
 use Illuminate\Support\Facades\Event;
+use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
 
 class ResourceTypeController extends Controller
@@ -31,7 +31,7 @@ class ResourceTypeController extends Controller
 
     public function store(): RedirectResponse
     {
-        $this->validate(request(), [
+        request()->validate(request(), [
             'name'        => 'required|unique:resource_types,name|max:100',
             'description' => 'nullable|string',
         ]);
@@ -59,7 +59,7 @@ class ResourceTypeController extends Controller
 
     public function update(int $id): RedirectResponse
     {
-        $this->validate(request(), [
+        request()->validate(request(), [
             'name'        => 'required|max:100|unique:resource_types,name,'.$id,
             'description' => 'nullable|string',
         ]);
@@ -125,4 +125,3 @@ class ResourceTypeController extends Controller
         }
     }
 }
-

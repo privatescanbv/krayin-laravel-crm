@@ -12,4 +12,3 @@ class ResourceTypeRepository extends Repository
         return ResourceType::class;
     }
 }
-

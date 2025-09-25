@@ -65,4 +65,3 @@ class ResourceTypeDataGrid extends DataGrid
         }
     }
 }
-

@@ -24,4 +24,3 @@ class ResourceType extends Model
         'updated_by' => 'integer',
     ];
 }
-

@@ -31,7 +31,7 @@ class ClinicController extends Controller
 
     public function store(): RedirectResponse
     {
-        $this->validate(request(), [
+        request()->validate(request(), [
             'name'   => 'required|unique:clinics,name|max:100',
             'emails' => 'nullable|array',
             'phones' => 'nullable|array',
@@ -61,7 +61,7 @@ class ClinicController extends Controller
 
     public function update(int $id): RedirectResponse
     {
-        $this->validate(request(), [
+        request()->validate(request(), [
             'name'   => 'required|max:100|unique:clinics,name,'.$id,
             'emails' => 'nullable|array',
             'phones' => 'nullable|array',

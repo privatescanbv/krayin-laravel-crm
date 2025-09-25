@@ -77,4 +77,3 @@ test('can delete resource type', function () {
         'id' => $entity->id,
     ]);
 });
-

@@ -17,4 +17,3 @@ class ResourceTypeFactory extends Factory
         ];
     }
 }
-

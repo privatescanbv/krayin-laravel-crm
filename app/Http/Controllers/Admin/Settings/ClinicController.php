@@ -17,7 +17,7 @@ class ClinicController extends Controller
 
     public function index(): View|JsonResponse
     {
-        if (request()->ajax()) {
+        if (request()->ajax() || request()->wantsJson()) {
             return datagrid(ClinicDataGrid::class)->process();
         }
 

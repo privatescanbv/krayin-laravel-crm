@@ -106,6 +106,16 @@ class Lead extends Model implements LeadContract
         });
     }
 
+    public function setAttribute($key, $value)
+    {
+        if ($key === 'persons_count') {
+            // Ignore attempts to set computed attribute
+            return $this;
+        }
+
+        return parent::setAttribute($key, $value);
+    }
+
     /**
      * Normalize gender assignment to allow empty strings and enums.
      */

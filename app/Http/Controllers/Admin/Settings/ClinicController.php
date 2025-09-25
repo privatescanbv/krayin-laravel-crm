@@ -6,7 +6,7 @@ use App\DataGrids\Settings\ClinicDataGrid;
 use App\Repositories\ClinicRepository;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
@@ -29,9 +29,9 @@ class ClinicController extends Controller
         return view('admin::settings.clinics.create');
     }
 
-    public function store(): JsonResponse
+    public function store(): RedirectResponse
     {
-        $this->validate(request(), [
+        request()->validate(request(), [
             'name'   => 'required|unique:clinics,name|max:100',
             'emails' => 'nullable|array',
             'phones' => 'nullable|array',
@@ -59,9 +59,9 @@ class ClinicController extends Controller
         return view('admin::settings.clinics.edit', compact('clinic'));
     }
 
-    public function update(int $id): JsonResponse
+    public function update(int $id): RedirectResponse
     {
-        $this->validate(request(), [
+        request()->validate(request(), [
             'name'   => 'required|max:100|unique:clinics,name,'.$id,
             'emails' => 'nullable|array',
             'phones' => 'nullable|array',
@@ -82,7 +82,7 @@ class ClinicController extends Controller
             ->with('success', trans('admin::app.settings.clinics.index.update-success'));
     }
 
-    public function destroy(int $id = null): 
+    public function destroy(?int $id = null): RedirectResponse
     {
         // Allow id from request for routes that do not pass parameter
         $id = $id ?? (int) request('id');

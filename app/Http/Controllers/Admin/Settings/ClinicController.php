@@ -108,10 +108,22 @@ class ClinicController extends Controller
 
             Event::dispatch('settings.clinic.delete.after', $id);
 
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'message' => trans('admin::app.settings.clinics.index.destroy-success'),
+                ], 200);
+            }
+
             return redirect()
                 ->route('admin.settings.clinics.index')
                 ->with('success', trans('admin::app.settings.clinics.index.destroy-success'));
         } catch (Exception $exception) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'message' => trans('admin::app.settings.clinics.index.delete-failed'),
+                ], 400);
+            }
+
             return redirect()
                 ->route('admin.settings.clinics.index')
                 ->with('error', trans('admin::app.settings.clinics.index.delete-failed'));

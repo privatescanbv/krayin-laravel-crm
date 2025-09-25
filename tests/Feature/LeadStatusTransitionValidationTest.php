@@ -155,8 +155,8 @@ test('it works with lead model update stage method', function () {
 test('it can add and remove transition rules', function () {
     // Remove the existing rule
     LeadStatusTransitionValidator::removeTransitionRule(
-        'klant-adviseren-start',
-        'klant-adviseren-opvolgen'
+        'nieuwe-aanvraag-kwalificeren',
+        'klant-adviseren-start'
     );
 
     // Now transition should succeed even without persons
@@ -164,11 +164,12 @@ test('it can add and remove transition rules', function () {
 
     // Add the rule back
     LeadStatusTransitionValidator::addTransitionRule(
+        'nieuwe-aanvraag-kwalificeren',
         'klant-adviseren-start',
-        'klant-adviseren-opvolgen',
         [
-            'min_persons' => 1,
-            'message'     => 'Test message',
+            'min_persons'     => 1,
+            'required_fields' => ['first_name', 'last_name'],
+            'message'         => 'Test message',
         ]
     );
 

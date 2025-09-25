@@ -453,6 +453,18 @@ Breadcrumbs::for('settings.warehouses.view.products', function (BreadcrumbTrail 
     $trail->push(trans('admin::app.settings.warehouses.products'), route('admin.settings.warehouses.products.index', $warehouse->id));
 });
 
+// Settings > Resource Types
+Breadcrumbs::for('settings.resource_types', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings');
+    $trail->push(trans('admin::app.layouts.resource_types'), route('admin.settings.resource_types.index'));
+});
+
+// Settings > Resource Types > Create
+Breadcrumbs::for('settings.resource_types.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings.resource_types');
+    $trail->push(trans('admin::app.settings.resource_types.index.create.title'), route('admin.settings.resource_types.create'));
+});
+
 // Dashboard > Settings > Locations
 Breadcrumbs::for('settings.locations', function (BreadcrumbTrail $trail) {
     $trail->parent('settings');

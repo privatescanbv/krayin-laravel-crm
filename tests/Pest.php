@@ -69,3 +69,28 @@ function actingAsSanctumAuthenticatedAdmin(): HasApiTokens|Authenticatable
         ['*']
     );
 }
+
+/**
+ * Create a test user with default attributes.
+ *
+ * @param array $attrs
+ * @return User
+ */
+function makeUser(array $attrs = []): User
+{
+    return User::factory()->create(array_merge(['status' => 1], $attrs));
+}
+
+/**
+ * Extract IDs from datagrid response.
+ *
+ * @param mixed $response
+ * @return array
+ */
+function getDatagridIds($response): array
+{
+    $payload = $response->json();
+    $records = $payload['records'] ?? [];
+
+    return collect($records)->pluck('id')->all();
+}

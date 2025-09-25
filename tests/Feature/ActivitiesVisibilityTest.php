@@ -6,7 +6,6 @@ use Webkul\Activity\Models\Activity;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\User\Models\Group;
 use Webkul\User\Models\Role;
-use Webkul\User\Models\User;
 
 beforeEach(function () {
     // Keep consistent with other feature tests
@@ -19,11 +18,6 @@ beforeEach(function () {
 function makeGroup(string $name): Group
 {
     return Group::firstOrCreate(['name' => $name]);
-}
-
-function makeUser(array $attrs = []): User
-{
-    return User::factory()->create(array_merge(['status' => 1], $attrs));
 }
 
 function makeActivity(array $attrs = []): Activity
@@ -41,14 +35,6 @@ function makeActivity(array $attrs = []): Activity
         'schedule_to'   => now()->addHour()->format('Y-m-d H:i:s'),
         'is_done'       => 0,
     ], $attrs));
-}
-
-function getDatagridIds($response): array
-{
-    $payload = $response->json();
-    $records = $payload['records'] ?? [];
-
-    return collect($records)->pluck('id')->all();
 }
 
 // 1) Global admin in privatescan view: only activities from Privatescan

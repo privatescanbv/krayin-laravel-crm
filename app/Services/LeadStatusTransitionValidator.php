@@ -86,6 +86,15 @@ class LeadStatusTransitionValidator
     }
 
     /**
+     * Reset validator state (intended for tests).
+     */
+    public static function reset(): void
+    {
+        self::$transitionRules = [];
+        self::$defaultsInitialized = false;
+    }
+
+    /**
      * Voeg een nieuwe transitie validatie regel toe.
      */
     public static function addTransitionRule(string $fromStageCode, string $toStageCode, array $rules): void

@@ -20,6 +20,14 @@ beforeEach(function () {
     ]);
 
     // Create test stages
+    test()->initialStage = Stage::create([
+        'code'             => 'nieuwe-aanvraag-kwalificeren',
+        'name'             => 'Nieuwe aanvraag kwalificeren',
+        'probability'      => 100,
+        'sort_order'       => 0,
+        'lead_pipeline_id' => test()->pipeline->id,
+    ]);
+
     test()->startStage = Stage::create([
         'code'             => 'klant-adviseren-start',
         'name'             => 'Klant adviseren',
@@ -41,21 +49,21 @@ beforeEach(function () {
         'first_name'             => 'John',
         'last_name'              => 'Doe',
         'lead_pipeline_id'       => test()->pipeline->id,
-        'lead_pipeline_stage_id' => test()->startStage->id,
+        'lead_pipeline_stage_id' => test()->initialStage->id,
         'user_id'                => test()->user->id,
     ]);
 
-    // Configure the validation rules
+    // Configure the validation rule for the first transition (min persons)
     LeadStatusTransitionValidator::addTransitionRule(
+        'nieuwe-aanvraag-kwalificeren',
         'klant-adviseren-start',
-        'klant-adviseren-opvolgen',
         [
             'min_persons' => 1,
-            'message'     => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
+            'message'     => 'Voor de status "Klant adviseren" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
         ]
     );
 
-    // Configure validation rule for first stage transition
+    // Additional example rule for required fields on the same transition
     LeadStatusTransitionValidator::addTransitionRule(
         'nieuwe-aanvraag-kwalificeren',
         'klant-adviseren-start',
@@ -67,12 +75,10 @@ beforeEach(function () {
 });
 
 test('it blocks transition when no persons are attached', function () {
-    // Lead has no persons attached
+    // Lead has no persons attached and is in initial stage
     expect(test()->lead->persons_count)->toBe(0)
-        ->and(fn () => LeadStatusTransitionValidator::validateTransition(test()->lead, test()->followUpStage->id))
+        ->and(fn () => LeadStatusTransitionValidator::validateTransition(test()->lead, test()->startStage->id))
         ->toThrow(ValidationException::class);
-
-    // Attempt to transition should fail
 });
 
 test('it allows transition when persons are attached', function () {
@@ -90,7 +96,7 @@ test('it allows transition when persons are attached', function () {
     expect(test()->lead->persons_count)->toBe(1);
 
     // Transition should succeed
-    LeadStatusTransitionValidator::validateTransition(test()->lead, test()->followUpStage->id);
+    LeadStatusTransitionValidator::validateTransition(test()->lead, test()->startStage->id);
 });
 
 test('it allows transition when multiple persons are attached', function () {
@@ -113,7 +119,7 @@ test('it allows transition when multiple persons are attached', function () {
     expect(test()->lead->persons_count)->toBe(2);
 
     // Transition should succeed
-    LeadStatusTransitionValidator::validateTransition(test()->lead, test()->followUpStage->id);
+    LeadStatusTransitionValidator::validateTransition(test()->lead, test()->startStage->id);
 });
 
 test('it ignores validation for transitions without rules', function () {
@@ -134,7 +140,7 @@ test('it ignores validation for transitions without rules', function () {
 test('it works with lead model update method', function () {
     // Lead has no persons attached
     expect(test()->lead->persons_count)->toBe(0)
-        ->and(fn () => test()->lead->update(['lead_pipeline_stage_id' => test()->followUpStage->id]))
+        ->and(fn () => test()->lead->update(['lead_pipeline_stage_id' => test()->startStage->id]))
         ->toThrow(ValidationException::class);
 
     // Attempt to update stage should fail
@@ -143,26 +149,26 @@ test('it works with lead model update method', function () {
 test('it works with lead model update stage method', function () {
     // Lead has no persons attached
     expect(test()->lead->persons_count)->toBe(0)
-        ->and(fn () => test()->lead->updateStage(test()->followUpStage->id))
+        ->and(fn () => test()->lead->updateStage(test()->startStage->id))
         ->toThrow(ValidationException::class);
 
     // Attempt to update stage should fail
 });
 
 test('it can add and remove transition rules', function () {
-    // Remove the existing rule
+    // Remove the existing rule for the first transition
     LeadStatusTransitionValidator::removeTransitionRule(
-        'klant-adviseren-start',
-        'klant-adviseren-opvolgen'
+        'nieuwe-aanvraag-kwalificeren',
+        'klant-adviseren-start'
     );
 
     // Now transition should succeed even without persons
-    LeadStatusTransitionValidator::validateTransition(test()->lead, test()->followUpStage->id);
+    LeadStatusTransitionValidator::validateTransition(test()->lead, test()->startStage->id);
 
     // Add the rule back
     LeadStatusTransitionValidator::addTransitionRule(
+        'nieuwe-aanvraag-kwalificeren',
         'klant-adviseren-start',
-        'klant-adviseren-opvolgen',
         [
             'min_persons' => 1,
             'message'     => 'Test message',
@@ -170,28 +176,16 @@ test('it can add and remove transition rules', function () {
     );
 
     // Now transition should fail again
-    expect(fn () => LeadStatusTransitionValidator::validateTransition(test()->lead, test()->followUpStage->id))
+    expect(fn () => LeadStatusTransitionValidator::validateTransition(test()->lead, test()->startStage->id))
         ->toThrow(ValidationException::class);
 });
 
 test('it validates required fields for first stage transition', function () {
-    // Create a lead without first_name and last_name
+    // Create a lead without first_name and last_name at initial stage
     $incompleteLead = Lead::create([
         'lead_pipeline_id'       => test()->pipeline->id,
-        'lead_pipeline_stage_id' => test()->startStage->id,
+        'lead_pipeline_stage_id' => test()->initialStage->id,
     ]);
-
-    // Create a new stage for the first transition
-    $newStage = Stage::create([
-        'code'             => 'nieuwe-aanvraag-kwalificeren',
-        'name'             => 'Nieuwe aanvraag kwalificeren',
-        'probability'      => 100,
-        'sort_order'       => 0,
-        'lead_pipeline_id' => test()->pipeline->id,
-    ]);
-
-    // Set the lead to the first stage
-    $incompleteLead->update(['lead_pipeline_stage_id' => $newStage->id]);
 
     // Attempt to transition should fail due to missing required fields
     expect(fn () => LeadStatusTransitionValidator::validateTransition($incompleteLead, test()->startStage->id))
@@ -205,48 +199,4 @@ test('it validates required fields for first stage transition', function () {
 
     // Transition should now succeed
     LeadStatusTransitionValidator::validateTransition($incompleteLead, test()->startStage->id);
-});
-
-test('it blocks transition from nieuwe-aanvraag-kwalificeren to klant-adviseren-start when no persons', function () {
-    // Create the initial stage and set lead to it
-    $initialStage = Stage::create([
-        'code'             => 'nieuwe-aanvraag-kwalificeren',
-        'name'             => 'Nieuwe aanvraag kwalificeren',
-        'probability'      => 100,
-        'sort_order'       => 0,
-        'lead_pipeline_id' => test()->pipeline->id,
-    ]);
-
-    // Move lead to initial stage
-    test()->lead->update(['lead_pipeline_stage_id' => $initialStage->id]);
-
-    // Ensure no persons are attached
-    expect(test()->lead->persons_count)->toBe(0)
-        ->and(fn () => LeadStatusTransitionValidator::validateTransition(test()->lead, test()->startStage->id))
-        ->toThrow(ValidationException::class);
-});
-
-test('it allows transition from nieuwe-aanvraag-kwalificeren to klant-adviseren-start when person attached', function () {
-    // Create the initial stage and set lead to it
-    $initialStage = Stage::create([
-        'code'             => 'nieuwe-aanvraag-kwalificeren',
-        'name'             => 'Nieuwe aanvraag kwalificeren',
-        'probability'      => 100,
-        'sort_order'       => 0,
-        'lead_pipeline_id' => test()->pipeline->id,
-    ]);
-
-    // Move lead to initial stage
-    test()->lead->update(['lead_pipeline_stage_id' => $initialStage->id]);
-
-    // Attach a person
-    $person = Person::create([
-        'name'   => 'Alice Example',
-        'emails' => [['value' => 'alice@example.com', 'is_default' => true]],
-    ]);
-    test()->lead->attachPersons([$person->id]);
-    test()->lead->refresh();
-
-    // Should validate successfully now
-    LeadStatusTransitionValidator::validateTransition(test()->lead, test()->startStage->id);
 });

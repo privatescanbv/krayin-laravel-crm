@@ -452,6 +452,7 @@ ProductCategory "0..1" -- "n" ProductCategory : "parent"
 Clinic "0..*" -- "n" Resource
 Clinic "0..*" -- "n" PartnerProduct
 Clinic "0..1" -- "1" Address
+PartnerProduct "1" -- "1" Resource
 
 Anamnesis "n" -- "1" Lead
 Anamnesis "n" -- "1" Person

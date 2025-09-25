@@ -226,10 +226,5 @@ class PipelineSeeder extends BaseSeeder
         if (PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value != $firstStageHerniaLeadPipeline) {
             throw new Exception('Pipeline stage is niet geldig voor hernia: ' . $firstStageHerniaLeadPipeline);
         }
-
-        // Status transition validations are now centralized in LeadStatusTransitionValidator
-        // and no longer configured via seeder.
     }
-
-    // Legacy seeder-based transition configuration removed.
 }

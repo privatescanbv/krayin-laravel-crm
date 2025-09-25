@@ -22,44 +22,6 @@ class LeadStatusTransitionValidator
     private static bool $defaultsInitialized = false;
 
     /**
-     * Ensure default rules are present (lazy initialization).
-     */
-    private static function ensureDefaultRules(): void
-    {
-        if (self::$defaultsInitialized) {
-            return;
-        }
-
-        // Privatescan: nieuwe-aanvraag-kwalificeren -> klant-adviseren-start
-        self::addTransitionRule(
-            'nieuwe-aanvraag-kwalificeren',
-            'klant-adviseren-start',
-            [
-                'min_persons'     => 1,
-                'required_fields' => ['first_name', 'last_name'],
-                'message'         => 'Voor de status "Klant adviseren" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
-            ]
-        );
-
-        // Hernia: nieuwe-aanvraag-kwalificeren-hernia -> meerdere klant-adviseren-* doelen
-        self::addTransitionsRule(
-            'nieuwe-aanvraag-kwalificeren-hernia',
-            [
-                'klant-adviseren-start-hernia',
-                'klant-adviseren-will-mri-hernia',
-                'klant-adviseren-wachten-op-mri-hernia',
-            ],
-            [
-                'min_persons'     => 1,
-                'required_fields' => ['first_name', 'last_name'],
-                'message'         => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
-            ]
-        );
-
-        self::$defaultsInitialized = true;
-    }
-
-    /**
      * Valideer een status transitie voor een lead.
      *
      * @throws ValidationException
@@ -154,6 +116,7 @@ class LeadStatusTransitionValidator
     public static function getAllTransitionRules(): array
     {
         self::ensureDefaultRules();
+
         return self::$transitionRules;
     }
 
@@ -166,6 +129,45 @@ class LeadStatusTransitionValidator
         $transitionKey = $fromStageCode.'->'.$toStageCode;
 
         return isset(self::$transitionRules[$transitionKey]);
+    }
+
+    /**
+     * Ensure default rules are present (lazy initialization).
+     */
+    private static function ensureDefaultRules(): void
+    {
+        if (self::$defaultsInitialized) {
+            return;
+        }
+
+        // Privatescan: nieuwe-aanvraag-kwalificeren -> klant-adviseren-start
+        self::addTransitionRule(
+            'nieuwe-aanvraag-kwalificeren',
+            'klant-adviseren-start',
+            [
+                'min_persons'     => 1,
+                'required_fields' => ['first_name', 'last_name'],
+                'message'         => 'Voor de status "Klant adviseren" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
+            ]
+        );
+
+        // Hernia: nieuwe-aanvraag-kwalificeren-hernia -> meerdere klant-adviseren-* doelen
+        self::addTransitionsRule(
+            'nieuwe-aanvraag-kwalificeren-hernia',
+            [
+                'klant-adviseren-start-hernia',
+                'klant-adviseren-will-mri-hernia',
+                'klant-adviseren-wachten-op-mri-hernia',
+            ],
+            [
+                'min_persons'     => 1,
+                'required_fields' => ['first_name', 'last_name'],
+                'message'         => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
+            ]
+
+        );
+
+        self::$defaultsInitialized = true;
     }
 
     /**

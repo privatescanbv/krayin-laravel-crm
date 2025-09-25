@@ -1,4 +1,4 @@
-@php use App\Models\Department;use App\Models\User; @endphp
+@php use App\Enums\ContactLabel;use App\Models\Department;use App\Models\User; @endphp
 <x-admin::layouts>
     <x-slot:title>
         @lang('admin::app.leads.create.title')
@@ -290,7 +290,7 @@
                                             $__emailsVal = array_map(function($e) {
                                                 if (!is_array($e)) { $e = []; }
                                                 if (!isset($e['label']) || trim((string)$e['label']) === '') {
-                                                    $e['label'] = \App\Enums\ContactLabel::default()->value;
+                                                    $e['label'] = ContactLabel::default()->value;
                                                 }
                                                 return $e;
                                             }, $__emailsVal);
@@ -306,7 +306,7 @@
                                             $__phonesVal = array_map(function($p) {
                                                 if (!is_array($p)) { $p = []; }
                                                 if (!isset($p['label']) || trim((string)$p['label']) === '') {
-                                                    $p['label'] = \App\Enums\ContactLabel::default()->value;
+                                                    $p['label'] = ContactLabel::default()->value;
                                                 }
                                                 return $p;
                                             }, $__phonesVal);

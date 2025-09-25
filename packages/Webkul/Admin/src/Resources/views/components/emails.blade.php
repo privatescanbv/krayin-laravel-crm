@@ -239,30 +239,4 @@
     </script>
 @endPushOnce
 
-@php
-    $emails = $value ?? [];
-
-    // Ensure $emails is an array
-    if (!is_array($emails)) {
-        $emails = [];
-    }
-
-    // Filter out empty email addresses
-    $emails = array_filter($emails, function($email) {
-        return isset($email['value']) && !empty(trim($email['value']));
-    });
-
-    // If no valid emails, create a default empty email
-    if (empty($emails)) {
-        $emails = [['value' => '', 'label' => \App\Enums\ContactLabel::default()->value, 'is_default' => true]];
-    }
-
-    // Normaliseer is_default naar boolean
-    foreach ($emails as &$email) {
-        if (isset($email['is_default'])) {
-            $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
-        }
-    }
-    unset($email);
-@endphp
-
+ 

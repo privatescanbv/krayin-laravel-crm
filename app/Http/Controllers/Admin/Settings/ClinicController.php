@@ -31,7 +31,7 @@ class ClinicController extends Controller
 
     public function store(): JsonResponse
     {
-        request()->validate(request(), [
+        $this->validate(request(), [
             'name'   => 'required|unique:clinics,name|max:100',
             'emails' => 'nullable|array',
             'phones' => 'nullable|array',
@@ -64,7 +64,7 @@ class ClinicController extends Controller
 
     public function update(int $id): JsonResponse
     {
-        request()->validate(request(), [
+        $this->validate(request(), [
             'name'   => 'required|max:100|unique:clinics,name,'.$id,
             'emails' => 'nullable|array',
             'phones' => 'nullable|array',

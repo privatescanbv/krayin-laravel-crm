@@ -189,8 +189,15 @@ return [
         'route'      => 'admin.settings.clinics.index',
         'sort'       => 1,
         'icon-class' => 'icon-settings-pipeline',
-    ],
-    [
+    ], [
+        'key'        => 'settings.clinics.reources',
+        'name'       => 'admin::app.layouts.resources',
+        'info'       => 'admin::app.layouts.resources-info',
+        'route'      => 'admin.settings.resources.index',
+        'sort'       => 2
+        ,
+        'icon-class' => 'icon-setting',
+    ],[
         'key'        => 'settings.resource_types',
         'name'       => 'admin::app.layouts.resource_types',
         'info'       => 'admin::app.layouts.resource_types-info',

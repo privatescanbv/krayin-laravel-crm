@@ -2397,6 +2397,8 @@ return [
         'clinics-info' => 'Beheer klinieken',
         'resource_types' => 'Resourcetypen',
         'resource_types-info' => 'Beheer resourcetypen',
+        'resources' => 'Resources',
+        'resources-info' => 'Beheer resources',
     ],
 
     'user' => [

@@ -63,9 +63,9 @@ class ClinicController extends Controller
         return view('admin::settings.clinics.edit', compact('clinic'));
     }
 
-    public function update(Request $request, int $id): JsonResponse|RedirectResponse
+    public function update(int $id): RedirectResponse
     {
-        $request->validate([
+        request()->validate(request(), [
             'name'   => 'required|max:100|unique:clinics,name,'.$id,
             'emails' => 'nullable|array',
             'phones' => 'nullable|array',
@@ -73,7 +73,11 @@ class ClinicController extends Controller
 
         Event::dispatch('settings.clinic.update.before', $id);
 
-        $clinic = $this->clinicRepository->update($request->all(), $id);
+        $clinic = $this->clinicRepository->update([
+            'name'   => request('name'),
+            'emails' => request('emails'),
+            'phones' => request('phones'),
+        ], $id);
 
         Event::dispatch('settings.clinic.update.after', $clinic);
 

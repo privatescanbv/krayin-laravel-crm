@@ -71,7 +71,7 @@ beforeEach(function () {
 
 test('it blocks transition when no persons are attached', function () {
     // Lead has no persons attached
-    expect(test()->lead->persons_count)->toBe(0)
+    expect(test()->lead->persons()->count())->toBe(0)
         ->and(fn () => LeadStatusTransitionValidator::validateTransition(test()->lead, test()->followUpStage->id))
         ->toThrow(ValidationException::class);
 
@@ -87,10 +87,7 @@ test('it allows transition when persons are attached', function () {
 
     test()->lead->attachPersons([$person->id]);
 
-    // Refresh the lead to get updated persons_count
-    test()->lead->refresh();
-
-    expect(test()->lead->persons_count)->toBe(1);
+    expect(test()->lead->persons()->count())->toBe(1);
 
     // Transition should succeed
     LeadStatusTransitionValidator::validateTransition(test()->lead, test()->followUpStage->id);
@@ -110,10 +107,7 @@ test('it allows transition when multiple persons are attached', function () {
 
     test()->lead->attachPersons([$person1->id, $person2->id]);
 
-    // Refresh the lead to get updated persons_count
-    test()->lead->refresh();
-
-    expect(test()->lead->persons_count)->toBe(2);
+    expect(test()->lead->persons()->count())->toBe(2);
 
     // Transition should succeed
     LeadStatusTransitionValidator::validateTransition(test()->lead, test()->followUpStage->id);
@@ -136,7 +130,7 @@ test('it ignores validation for transitions without rules', function () {
 
 test('it works with lead model update method', function () {
     // Lead has no persons attached
-    expect(test()->lead->persons_count)->toBe(0)
+    expect(test()->lead->persons()->count())->toBe(0)
         ->and(fn () => test()->lead->update(['lead_pipeline_stage_id' => test()->followUpStage->id]))
         ->toThrow(ValidationException::class);
 
@@ -145,7 +139,7 @@ test('it works with lead model update method', function () {
 
 test('it works with lead model update stage method', function () {
     // Lead has no persons attached
-    expect(test()->lead->persons_count)->toBe(0)
+    expect(test()->lead->persons()->count())->toBe(0)
         ->and(fn () => test()->lead->updateStage(test()->followUpStage->id))
         ->toThrow(ValidationException::class);
 
@@ -177,8 +171,6 @@ test('it validates required fields for first stage transition', function () {
         'emails' => [['value' => 'alice@example.com', 'is_default' => true]],
     ]);
     $incompleteLead->attachPersons([$person->id]);
-    $incompleteLead->refresh();
-
     // Transition should now succeed
     LeadStatusTransitionValidator::validateTransition($incompleteLead, test()->followUpStage->id);
 });

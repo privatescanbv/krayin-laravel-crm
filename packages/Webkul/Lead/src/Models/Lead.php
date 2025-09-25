@@ -96,34 +96,7 @@ class Lead extends Model implements LeadContract
         'has_diagnosis_form',
     ];
 
-    protected static function booted()
-    {
-        static::saving(function (self $lead) {
-            // Ensure computed attributes are never persisted
-            if (isset($lead->attributes['persons_count'])) {
-                unset($lead->attributes['persons_count']);
-            }
-        });
-    }
-
-    public function setAttribute($key, $value)
-    {
-        if ($key === 'persons_count') {
-            // Ignore attempts to set computed attribute
-            return $this;
-        }
-
-        return parent::setAttribute($key, $value);
-    }
-
-    public function getDirty()
-    {
-        $dirty = parent::getDirty();
-        if (array_key_exists('persons_count', $dirty)) {
-            unset($dirty['persons_count']);
-        }
-        return $dirty;
-    }
+    // No special handling for persons_count required anymore
 
     /**
      * Normalize gender assignment to allow empty strings and enums.
@@ -587,17 +560,7 @@ class Lead extends Model implements LeadContract
      */
     public function getPersonsCountAttribute(): int
     {
-        try {
-            return DB::table('lead_persons')->where('lead_id', $this->id)->count();
-        } catch (Exception $e) {
-            Log::warning('Could not count persons for lead', ['lead_id' => $this->id, 'error' => $e->getMessage()]);
-            return 0;
-        }
-    }
-
-    public function setPersonsCountAttribute($value): void
-    {
-        // Ignore attempts to set computed attribute
+        return (int) $this->persons()->count();
     }
 
     /**
@@ -605,7 +568,7 @@ class Lead extends Model implements LeadContract
      */
     public function hasMultiplePersons(): bool
     {
-        return $this->persons_count > 1;
+        return $this->persons()->count() > 1;
     }
 
     public function hasPotentialDuplicates() : bool

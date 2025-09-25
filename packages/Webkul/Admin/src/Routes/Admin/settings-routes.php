@@ -52,13 +52,10 @@ Route::prefix('settings')->group(function () {
      */
     Route::controller(ClinicController::class)->prefix('clinics')->group(function () {
         Route::get('', 'index')->name('admin.settings.clinics.index');
-
+        Route::get('create', 'create')->name('admin.settings.clinics.create');
         Route::post('create', 'store')->name('admin.settings.clinics.store');
-
         Route::get('edit/{id}', 'edit')->name('admin.settings.clinics.edit');
-
         Route::put('edit/{id}', 'update')->name('admin.settings.clinics.update');
-
         Route::delete('{id}', 'destroy')->name('admin.settings.clinics.delete');
     });
 

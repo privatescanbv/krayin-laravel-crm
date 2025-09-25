@@ -24,6 +24,11 @@ class ClinicController extends Controller
         return view('admin::settings.clinics.index');
     }
 
+    public function create(): View
+    {
+        return view('admin::settings.clinics.create');
+    }
+
     public function store(): JsonResponse
     {
         request()->validate(request(), [

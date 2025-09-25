@@ -16,5 +16,6 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(KrayinDatabaseSeeder::class);
         $this->call(DutchLocaleSeeder::class);
+        $this->call(ResourceTypeSeeder::class);
     }
 }

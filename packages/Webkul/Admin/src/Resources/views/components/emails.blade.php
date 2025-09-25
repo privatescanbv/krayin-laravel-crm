@@ -122,6 +122,7 @@
 
             mounted() {
                 this.ensureDefaultEmail();
+                this.normalizeMissingLabels();
             },
 
             watch: {
@@ -208,6 +209,13 @@
                     if (!hasDefault && this.emails.length > 0) {
                         this.emails[0].is_default = true;
                     }
+                },
+
+                normalizeMissingLabels() {
+                    this.emails = (this.emails || []).map(e => ({
+                        ...e,
+                        label: (e.label && String(e.label).trim() !== '') ? e.label : this.defaultLabel,
+                    }));
                 },
 
                 getInputClass(index) {

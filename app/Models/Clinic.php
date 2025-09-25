@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasAuditTrail;
 
 class Clinic extends Model
 {
-    use HasFactory;
+    use HasFactory, HasAuditTrail;
 
     protected $table = 'clinics';
 
@@ -22,6 +23,8 @@ class Clinic extends Model
     protected $casts = [
         'emails' => 'array',
         'phones' => 'array',
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
     ];
 }
 

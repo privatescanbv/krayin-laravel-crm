@@ -116,6 +116,15 @@ class Lead extends Model implements LeadContract
         return parent::setAttribute($key, $value);
     }
 
+    public function getDirty()
+    {
+        $dirty = parent::getDirty();
+        if (array_key_exists('persons_count', $dirty)) {
+            unset($dirty['persons_count']);
+        }
+        return $dirty;
+    }
+
     /**
      * Normalize gender assignment to allow empty strings and enums.
      */

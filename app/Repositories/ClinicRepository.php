@@ -1,9 +1,9 @@
 <?php
 
-namespace Webkul\Core\Repositories;
+namespace App\Repositories;
 
-use Webkul\Core\Eloquent\Repository;
 use App\Models\Clinic;
+use Webkul\Core\Eloquent\Repository;
 
 class ClinicRepository extends Repository
 {

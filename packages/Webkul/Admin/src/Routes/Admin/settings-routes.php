@@ -21,7 +21,7 @@ use Webkul\Admin\Http\Controllers\Settings\Warehouse\WarehouseController;
 use Webkul\Admin\Http\Controllers\Settings\WebFormController;
 use Webkul\Admin\Http\Controllers\Settings\WebhookController;
 use Webkul\Admin\Http\Controllers\Settings\WorkflowController;
-use Webkul\Admin\Http\Controllers\Settings\ClinicController;
+use App\Http\Controllers\Admin\Settings\ClinicController;
 
 /**
  * Settings routes.

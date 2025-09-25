@@ -300,6 +300,26 @@ return [
         'route' => ['admin.settings.users.delete', 'admin.settings.users.mass_delete'],
         'sort'  => 3,
     ], [
+        'key'   => 'settings.clinics',
+        'name'  => 'Clinics',
+        'route' => 'admin.settings.clinics.index',
+        'sort'  => 4,
+    ], [
+        'key'   => 'settings.clinics.create',
+        'name'  => 'admin::app.acl.create',
+        'route' => ['admin.settings.clinics.create', 'admin.settings.clinics.store'],
+        'sort'  => 1,
+    ], [
+        'key'   => 'settings.clinics.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.settings.clinics.edit', 'admin.settings.clinics.update'],
+        'sort'  => 2,
+    ], [
+        'key'   => 'settings.clinics.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => ['admin.settings.clinics.delete'],
+        'sort'  => 3,
+    ], [
         'key'   => 'settings.lead',
         'name'  => 'admin::app.acl.lead',
         'route' => ['admin.settings.pipelines.index', 'admin.settings.sources.index', 'admin.settings.types.index'],

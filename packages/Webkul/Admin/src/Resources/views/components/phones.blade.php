@@ -134,6 +134,13 @@
                         this.$emit('input', newPhones);
                     },
                     deep: true
+                },
+                // Re-process when parent updates value asynchronously
+                value: {
+                    handler(newVal) {
+                        this.phones = this.processPhones(newVal);
+                    },
+                    deep: true
                 }
             },
 

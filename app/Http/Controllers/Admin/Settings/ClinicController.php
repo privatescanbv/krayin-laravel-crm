@@ -47,10 +47,9 @@ class ClinicController extends Controller
 
         Event::dispatch('settings.clinic.create.after', $clinic);
 
-        return new JsonResponse([
-            'data'    => $clinic,
-            'message' => trans('admin::app.settings.clinics.index.create-success'),
-        ]);
+        return redirect()
+            ->route('admin.settings.clinics.index')
+            ->with('success', trans('admin::app.settings.clinics.index.create-success'));
     }
 
     public function edit(int $id): JsonResource
@@ -80,10 +79,9 @@ class ClinicController extends Controller
 
         Event::dispatch('settings.clinic.update.after', $clinic);
 
-        return new JsonResponse([
-            'data'    => $clinic,
-            'message' => trans('admin::app.settings.clinics.index.update-success'),
-        ]);
+        return redirect()
+            ->route('admin.settings.clinics.index')
+            ->with('success', trans('admin::app.settings.clinics.index.update-success'));
     }
 
     public function destroy(int $id): JsonResponse
@@ -97,13 +95,13 @@ class ClinicController extends Controller
 
             Event::dispatch('settings.clinic.delete.after', $id);
 
-            return new JsonResponse([
-                'message' => trans('admin::app.settings.clinics.index.destroy-success'),
-            ], 200);
+            return redirect()
+                ->route('admin.settings.clinics.index')
+                ->with('success', trans('admin::app.settings.clinics.index.destroy-success'));
         } catch (Exception $exception) {
-            return new JsonResponse([
-                'message' => trans('admin::app.settings.clinics.index.delete-failed'),
-            ], 400);
+            return redirect()
+                ->route('admin.settings.clinics.index')
+                ->with('error', trans('admin::app.settings.clinics.index.delete-failed'));
         }
     }
 }

@@ -15,7 +15,6 @@ class ClinicCrudTest extends TestCase
     {
         parent::setUp();
 
-        // Ensure migrations run
         $this->artisan('migrate');
     }
 
@@ -23,7 +22,7 @@ class ClinicCrudTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $this->be($user, 'web');
+        $this->actingAs($user, 'user');
 
         return $user;
     }

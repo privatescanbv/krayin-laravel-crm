@@ -791,6 +791,35 @@ return [
             ],
         ],
 
+        'resource_types' => [
+            'index' => [
+                'title'           => 'Resource Types',
+                'create-btn'      => 'Add Resource Type',
+                'create-success'  => 'Resource type created successfully.',
+                'update-success'  => 'Resource type updated successfully.',
+                'destroy-success' => 'Resource type deleted successfully.',
+                'delete-failed'   => 'Failed to delete resource type.',
+
+                'datagrid' => [
+                    'id'     => 'ID',
+                    'name'   => 'Name',
+                    'edit'   => 'Edit',
+                    'delete' => 'Delete',
+                ],
+
+                'edit' => [
+                    'title' => 'Edit Resource Type',
+                ],
+
+                'create' => [
+                    'title'       => 'Create Resource Type',
+                    'name'        => 'Name',
+                    'description' => 'Description',
+                    'save-btn'    => 'Save',
+                ],
+            ],
+        ],
+
         'groups' => [
             'index' => [
                 'create-btn'        => 'Create Group',
@@ -2442,6 +2471,10 @@ return [
         'products'             => 'Products',
         'product-groups'       => 'Product Groups',  // Nieuwe taal key
         'workflow-leads'       => 'Backoffice',
+        'clinics'              => 'Clinics',
+        'clinics-info'         => 'Manage clinics',
+        'resource_types'       => 'Resource Types',
+        'resource_types-info'  => 'Manage resource types',
     ],
 
     'user' => [

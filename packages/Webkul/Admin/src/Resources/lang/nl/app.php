@@ -1700,6 +1700,35 @@ return [
                 ],
             ],
         ],
+
+        'resource_types' => [
+            'index' => [
+                'title'           => 'Resourcetypen',
+                'create-btn'      => 'Resourcetype toevoegen',
+                'create-success'  => 'Resourcetype succesvol aangemaakt.',
+                'update-success'  => 'Resourcetype succesvol bijgewerkt.',
+                'destroy-success' => 'Resourcetype succesvol verwijderd.',
+                'delete-failed'   => 'Verwijderen van resourcetype mislukt.',
+
+                'datagrid' => [
+                    'id'     => 'ID',
+                    'name'   => 'Naam',
+                    'edit'   => 'Bewerken',
+                    'delete' => 'Verwijderen',
+                ],
+
+                'edit' => [
+                    'title' => 'Resourcetype bewerken',
+                ],
+
+                'create' => [
+                    'title'       => 'Resourcetype aanmaken',
+                    'name'        => 'Naam',
+                    'description' => 'Omschrijving',
+                    'save-btn'    => 'Opslaan',
+                ],
+            ],
+        ],
     ],
 
     'activities' => [
@@ -2366,6 +2395,8 @@ return [
         'workflow-leads' => 'Sales',
         'clinics' => 'Klinieken',
         'clinics-info' => 'Beheer klinieken',
+        'resource_types' => 'Resourcetypen',
+        'resource_types-info' => 'Beheer resourcetypen',
     ],
 
     'user' => [

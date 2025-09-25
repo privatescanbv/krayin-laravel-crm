@@ -1,4 +1,4 @@
-THIS SHOULD BE A LINTER ERROR<?php
+<?php
 
 namespace App\Services;
 
@@ -52,7 +52,7 @@ class LeadStatusTransitionValidator
             [
                 'min_persons'     => 1,
                 'required_fields' => ['first_name', 'last_name'],
-                'message'         => 'Voor de status "Klant adviseren" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
+                'message'         => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
             ]
         );
 

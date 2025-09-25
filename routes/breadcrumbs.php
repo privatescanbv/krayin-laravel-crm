@@ -208,6 +208,12 @@ Breadcrumbs::for('settings.groups', function (BreadcrumbTrail $trail) {
     $trail->push(trans('admin::app.layouts.groups'), route('admin.settings.groups.index'));
 });
 
+// Settings > Clinics
+Breadcrumbs::for('settings.clinics', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings');
+    $trail->push(trans('admin::app.layouts.clinics'), route('admin.settings.clinics.index'));
+});
+
 // Dashboard > Groups > Create Group
 Breadcrumbs::for('settings.groups.create', function (BreadcrumbTrail $trail) {
     $trail->parent('settings.groups');

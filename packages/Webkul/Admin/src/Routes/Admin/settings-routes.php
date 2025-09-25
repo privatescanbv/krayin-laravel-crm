@@ -22,6 +22,7 @@ use Webkul\Admin\Http\Controllers\Settings\WebFormController;
 use Webkul\Admin\Http\Controllers\Settings\WebhookController;
 use Webkul\Admin\Http\Controllers\Settings\WorkflowController;
 use App\Http\Controllers\Admin\Settings\ClinicController;
+use App\Http\Controllers\Admin\Settings\ResourceTypeController;
 
 /**
  * Settings routes.
@@ -59,6 +60,19 @@ Route::prefix('settings')->group(function () {
         // Some datagrid actions may send DELETE to base path; support both
         Route::delete('', 'destroy')->name('admin.settings.clinics.delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.clinics.delete');
+    });
+
+    /**
+     * Resource Type routes.
+     */
+    Route::controller(ResourceTypeController::class)->prefix('resource-types')->group(function () {
+        Route::get('', 'index')->name('admin.settings.resource_types.index');
+        Route::get('create', 'create')->name('admin.settings.resource_types.create');
+        Route::post('create', 'store')->name('admin.settings.resource_types.store');
+        Route::get('edit/{id}', 'edit')->name('admin.settings.resource_types.edit');
+        Route::put('edit/{id}', 'update')->name('admin.settings.resource_types.update');
+        Route::delete('', 'destroy')->name('admin.settings.resource_types.delete');
+        Route::delete('{id}', 'destroy')->name('admin.settings.resource_types.delete');
     });
 
     /**

@@ -21,6 +21,7 @@ use Webkul\Admin\Http\Controllers\Settings\Warehouse\WarehouseController;
 use Webkul\Admin\Http\Controllers\Settings\WebFormController;
 use Webkul\Admin\Http\Controllers\Settings\WebhookController;
 use Webkul\Admin\Http\Controllers\Settings\WorkflowController;
+use App\Http\Controllers\Admin\Settings\ClinicController;
 
 /**
  * Settings routes.
@@ -44,6 +45,20 @@ Route::prefix('settings')->group(function () {
         Route::put('edit/{id}', 'update')->name('admin.settings.groups.update');
 
         Route::delete('{id}', 'destroy')->name('admin.settings.groups.delete');
+    });
+
+    /**
+     * Clinic routes.
+     */
+    Route::controller(ClinicController::class)->prefix('clinics')->group(function () {
+        Route::get('', 'index')->name('admin.settings.clinics.index');
+        Route::get('create', 'create')->name('admin.settings.clinics.create');
+        Route::post('create', 'store')->name('admin.settings.clinics.store');
+        Route::get('edit/{id}', 'edit')->name('admin.settings.clinics.edit');
+        Route::put('edit/{id}', 'update')->name('admin.settings.clinics.update');
+        // Some datagrid actions may send DELETE to base path; support both
+        Route::delete('', 'destroy')->name('admin.settings.clinics.delete');
+        Route::delete('{id}', 'destroy')->name('admin.settings.clinics.delete');
     });
 
     /**

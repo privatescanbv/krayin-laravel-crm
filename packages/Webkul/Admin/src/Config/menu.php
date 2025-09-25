@@ -176,6 +176,21 @@ return [
         'sort'       => 3,
         'icon-class' => 'icon-user',
     ], [
+        'key'        => 'settings.clinics',
+        'name'       => 'admin::app.layouts.clinics',
+        'info'       => 'admin::app.layouts.clinics-info',
+        'route'      => 'admin.settings.clinics.index',
+        'sort'       => 4,
+        'icon-class' => 'icon-setting',
+    ], [
+        'key'        => 'settings.clinics.admin',
+        'name'       => 'admin::app.layouts.clinics',
+        'info'       => 'admin::app.layouts.clinics-info',
+        'route'      => 'admin.settings.clinics.index',
+        'sort'       => 1,
+        'icon-class' => 'icon-settings-pipeline',
+    ],
+    [
         'key'        => 'settings.lead',
         'name'       => 'admin::app.layouts.lead',
         'info'       => 'admin::app.layouts.lead-info',

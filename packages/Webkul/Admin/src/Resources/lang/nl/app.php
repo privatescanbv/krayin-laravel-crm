@@ -1669,6 +1669,37 @@ return [
                 'update-success' => 'Import updated successfully.',
             ],
         ],
+        'clinics' => [
+            'index' => [
+                'title' => 'Klinieken',
+                'create-btn' => 'Kliniek toevoegen',
+                'create-success' => 'Kliniek succesvol aangemaakt.',
+                'update-success' => 'Kliniek succesvol bijgewerkt.',
+                'destroy-success' => 'Kliniek succesvol verwijderd.',
+                'delete-failed' => 'Verwijderen van kliniek mislukt.',
+
+                'datagrid' => [
+                    'id' => 'ID',
+                    'name' => 'Naam',
+                    'edit' => 'Bewerken',
+                    'delete' => 'Verwijderen',
+                ],
+
+                'edit' => [
+                    'title' => 'Kliniek bewerken',
+                ],
+
+                'create' => [
+                    'title' => 'Kliniek aanmaken',
+                    'name' => 'Naam',
+                    'emails' => 'E-mails (JSON array)',
+                    'emails-help' => 'Voorbeeld: ["info@voorbeeld.nl", "support@voorbeeld.nl"]',
+                    'phones' => 'Telefoons (JSON array)',
+                    'phones-help' => 'Voorbeeld: ["+31 10 000 0000"]',
+                    'save-btn' => 'Opslaan',
+                ],
+            ],
+        ],
     ],
 
     'activities' => [
@@ -2333,6 +2364,8 @@ return [
         'product-groups' => 'Productgroepen',
         'products' => 'Producten',
         'workflow-leads' => 'Sales',
+        'clinics' => 'Klinieken',
+        'clinics-info' => 'Beheer klinieken',
     ],
 
     'user' => [

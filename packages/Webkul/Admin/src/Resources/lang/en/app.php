@@ -759,6 +759,38 @@ return [
     'settings' => [
         'title' => 'Settings',
 
+        'clinics' => [
+            'index' => [
+                'title'           => 'Clinics',
+                'create-btn'      => 'Add Clinic',
+                'create-success'  => 'Clinic created successfully.',
+                'update-success'  => 'Clinic updated successfully.',
+                'destroy-success' => 'Clinic deleted successfully.',
+                'delete-failed'   => 'Failed to delete clinic.',
+
+                'datagrid' => [
+                    'id'     => 'ID',
+                    'name'   => 'Name',
+                    'edit'   => 'Edit',
+                    'delete' => 'Delete',
+                ],
+
+                'edit' => [
+                    'title' => 'Edit Clinic',
+                ],
+
+                'create' => [
+                    'title'       => 'Create Clinic',
+                    'name'        => 'Name',
+                    'emails'      => 'Emails (JSON array)',
+                    'emails-help' => 'Example: ["info@example.com", "support@example.com"]',
+                    'phones'      => 'Phones (JSON array)',
+                    'phones-help' => 'Example: ["+31 10 000 0000"]',
+                    'save-btn'    => 'Save',
+                ],
+            ],
+        ],
+
         'groups' => [
             'index' => [
                 'create-btn'        => 'Create Group',

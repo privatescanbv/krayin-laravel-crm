@@ -230,6 +230,13 @@
                 :name="'person_ids[' + index + ']'" 
                 :value="person.id" 
             />
+            <!-- Ensure key exists when list is empty so backend can detach all -->
+            <input
+                v-if="selectedPersons.length === 0"
+                type="hidden"
+                name="person_ids[]"
+                value=""
+            />
         </div>
     </script>
 

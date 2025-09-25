@@ -86,12 +86,25 @@ class ClinicController extends Controller
     {
         // Allow id from request for routes that do not pass parameter
         $id = $id ?? (int) request('id');
+        if (! $id) {
+            $indices = request('indices');
+            if (is_array($indices) && count($indices) > 0) {
+                $id = (int) $indices[0];
+            }
+        }
+
+        if (! $id) {
+            return redirect()
+                ->route('admin.settings.clinics.index')
+                ->with('error', 'Geen geldig ID opgegeven.');
+        }
+
         $clinic = $this->clinicRepository->findOrFail($id);
 
         try {
             Event::dispatch('settings.clinic.delete.before', $id);
 
-            $clinic->delete($id);
+            $clinic->delete();
 
             Event::dispatch('settings.clinic.delete.after', $id);
 

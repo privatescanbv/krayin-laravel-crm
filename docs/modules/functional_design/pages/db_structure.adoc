@@ -137,7 +137,7 @@ TABLE(Address, "address") {
   updated_by: bigint
 }
 
-TABLE(Quote, "quote (order)") {
+TABLE(Order, "order (order)") {
   PRIMARY_KEY(id): bigint
   subject: string
   description: text
@@ -154,7 +154,7 @@ TABLE(Quote, "quote (order)") {
   person_id: bigint
 }
 
-TABLE(QuoteItem, "quote_items") {
+TABLE(OrderItem, "orderitems") {
     PRIMARY_KEY(id): bigint
     name: string
     quantity: int
@@ -164,8 +164,8 @@ TABLE(QuoteItem, "quote_items") {
     tax_percent: float
     tax_amount: int
     total: float
-    FOREIGN_KEY(product_id): bigint
-    FOREIGN_KEY(quote_id): bigint
+    FOREIGN_KEY(partnerproduct_id): bigint
+    FOREIGN_KEY(order_id): bigint
 }
 
 TABLE(Product, "product") {
@@ -173,7 +173,40 @@ TABLE(Product, "product") {
   name: string
   description: text
   price: decimal
-  sku: string
+  product_type: enum
+  resource_type: enum
+  created_by: bigint
+  updated_by: bigint
+}
+
+TABLE(PartnerProduct, "partner_product") {
+  PRIMARY_KEY(id): bigint
+  partner_name: string
+  description: text
+  created_at: datetime
+  updated_at: datetime
+  created_by: bigint
+  updated_by: bigint
+}
+
+TABLE(Resource, "resource") {
+  PRIMARY_KEY(id): bigint
+  type: string
+  name: string
+  type: enum
+  created_at: datetime
+  updated_at: datetime
+  created_by: bigint
+  updated_by: bigint
+}
+
+TABLE(Clinic, "clinic") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  emails: json
+  phones: json
+  created_at: datetime
+  updated_at: datetime
   created_by: bigint
   updated_by: bigint
 }
@@ -186,13 +219,31 @@ TABLE(ProductGroup, "product_groups") {
   updated_by: bigint
 }
 
+TABLE(Order, "order") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  number: string
+  created_at: datetime
+  updated_at: datetime
+  created_by: bigint
+  updated_by: bigint
+}
+
+TABLE(OrderItem, "orderItem") {
+  PRIMARY_KEY(id): bigint
+  created_at: datetime
+  updated_at: datetime
+  created_by: bigint
+  updated_by: bigint
+}
+
 TABLE(WorkflowLead, "workflow_lead (backoffice)") {
   PRIMARY_KEY(id): bigint
   name: string
   description: text
   FOREIGN_KEY(pipeline_stage_id): bigint
   FOREIGN_KEY(lead_id): bigint
-  FOREIGN_KEY(quote_id): bigint
+  FOREIGN_KEY(order_id): bigint
   FOREIGN_KEY(user_id): bigint
   workflow_type: enum
 }
@@ -328,9 +379,22 @@ TABLE(LeadPerson, "lead_persons") {
   PRIMARY_KEY(person_id): bigint
 }
 
+TABLE(ResourceAvailability, "resource_availability") {
+  PRIMARY_KEY(id): bigint
+  FOREIGN_KEY(resource_id): bigint
+  weekday: int
+  start_time: time
+  end_time: time
+  is_available: boolean
+  valid_from: date
+  valid_to: date
+  created_at: datetime
+  updated_at: datetime
+}
+
 ' Relationships
 User "1" -- "n" Lead
-User "1" -- "n" Quote
+User "1" -- "n" Order
 User "1" -- "n" WorkflowLead
 User "1" -- "n" Activity
 User "1" -- "n" CallStatus
@@ -343,20 +407,23 @@ Group "n" -- "1" Department
 
 Pipeline "1" -- "n" Stage
 Stage "1" -- "n" Lead
-Stage "1" -- "n" Quote
+Stage "1" -- "n" Order
 Stage "1" -- "n" WorkflowLead
 Stage "1" -- "n" Activity
 
-Lead "1" -- "n" Quote
+Lead "1" -- "n" Order
 Lead "0..1" -- "n" Activity
 Activity "1" -- "n" CallStatus
 Lead "n" -- "n" Person : "lead_persons"
 Lead "1" -- "0..1" Organization
 Lead "1" -- "0..1" Address
 
-Quote "1" --> "1" Person : "for"
-Quote "1" --> "1" User
-Quote "1" -- "n" QuoteItem
+Order "1" --> "1" Person : "for"
+Order "1" --> "1" User
+Order "1" -- "n" OrderItem
+
+OrderItem "n" -- "1" Order
+OrderItem "1" -- "1" PartnerProduct
 
 Activity "1" --> "1" User
 Activity "0..1" --> "1" Group
@@ -364,7 +431,7 @@ Activity "0..1" --> "1" Lead
 Activity "1" -- "0..*" Email
 
 WorkflowLead "1" -- "n" Activity
-WorkflowLead "0..1" -- "1" Quote
+WorkflowLead "0..1" -- "1" Order
 WorkflowLead "0..1" -- "1" Lead
 WorkflowLead "1" --> "1" User
 
@@ -379,9 +446,12 @@ Address "0..1" -- "1" Lead
 Address "0..1" -- "1" Person
 Address "0..1" -- "1" Organization
 
-Product "n" -- "0..1" ProductGroup
-QuoteItem "n" -- "1" Quote
-QuoteItem "1" -- "1" Product
+Product "n" -- "0..*" ProductGroup
+Product "n" -- "0..*" PartnerProduct
+ProductCategory "0..1" -- "n" ProductCategory : "parent"
+Clinic "0..*" -- "n" Resource
+Clinic "0..*" -- "n" PartnerProduct
+Clinic "0..1" -- "1" Address
 
 Anamnesis "n" -- "1" Lead
 Anamnesis "n" -- "1" Person
@@ -395,6 +465,8 @@ Email "1" --> "1" Person
 Email "0..1" --> "1" Email : "parent"
 Email "0..1" --> "1" Lead
 Email "0..1" --> "1" Activity
+
+ResourceAvailability "n" -- "1" Resource
 
 note right of Pipeline
   Verkoopfunnel met geordende fasen voor lead.
@@ -410,7 +482,7 @@ note right of Lead
   Ondersteunt nu persoonlijke velden en externe ID's.
 end note
 
-note right of Quote
+note right of Order
   Afgesloten deal, gekoppeld aan een lead, gebruiker en contactpersoon.
   Ondersteunt nu factuur- en verzendadressen.
 end note
@@ -426,7 +498,7 @@ note right of Activity
 end note
 
 note right of Person
-  Externe contactpersoon betrokken bij leads of quotes, kan gekoppeld zijn aan een gebruiker of organisatie.
+  Externe contactpersoon betrokken bij leads of orders, kan gekoppeld zijn aan een gebruiker of organisatie.
   Ondersteunt nu uitgebreide persoonlijke informatie.
 end note
 
@@ -455,14 +527,8 @@ note right of Email
   Kan gekoppeld zijn aan nul of één activiteit (0..1).
 end note
 
-note as N1
-  Belangrijke wijzigingen:
-  - Address ondersteunt nu organization_id
-  - Lead heeft nieuwe velden en relaties
-  - WorkflowLead vervangt Backoffice
-  - Department entiteit toegevoegd
-  - LeadPerson koppeltabel voor many-to-many relatie
-  - Anamnesis heeft uitgebreide medische velden
+note right of ResourceAvailability
+    Weekday: 0=Sunday, 1=Monday, ...
 end note
 
 @enduml

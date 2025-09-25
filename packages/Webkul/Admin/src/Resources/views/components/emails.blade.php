@@ -130,6 +130,13 @@
                         this.$emit('input', newEmails);
                     },
                     deep: true
+                },
+                // Re-process when parent updates value asynchronously
+                value: {
+                    handler(newVal) {
+                        this.emails = this.processEmails(newVal);
+                    },
+                    deep: true
                 }
             },
 

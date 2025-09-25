@@ -52,13 +52,11 @@ class ClinicController extends Controller
             ->with('success', trans('admin::app.settings.clinics.index.create-success'));
     }
 
-    public function edit(int $id): JsonResource
+    public function edit(int $id): View
     {
         $clinic = $this->clinicRepository->findOrFail($id);
 
-        return new JsonResource([
-            'data' => $clinic,
-        ]);
+        return view('admin::settings.clinics.edit', compact('clinic'));
     }
 
     public function update(int $id): JsonResponse

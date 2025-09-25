@@ -57,7 +57,6 @@ class Lead extends Model implements LeadContract
     protected $appends = [
         'rotten_days',
         'name',
-        'persons_count',
     ];
 
     /**

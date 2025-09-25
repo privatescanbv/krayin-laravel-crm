@@ -82,7 +82,7 @@ class ClinicController extends Controller
             ->with('success', trans('admin::app.settings.clinics.index.update-success'));
     }
 
-    public function destroy(?int $id = null): RedirectResponse
+    public function destroy(?int $id = null): JsonResponse|RedirectResponse
     {
         // Allow id from request for routes that do not pass parameter
         $id = $id ?? (int) request('id');

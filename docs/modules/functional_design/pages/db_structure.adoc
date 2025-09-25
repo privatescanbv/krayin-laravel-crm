@@ -174,7 +174,17 @@ TABLE(Product, "product") {
   description: text
   price: decimal
   product_type: enum
-  resource_type: enum
+  created_by: bigint
+  updated_by: bigint
+  FOREIGN_KEY(resource_type_id): bigint
+}
+
+TABLE(ResourceType, "resourcetype") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  description: text
+  created_at: datetime
+  updated_at: datetime
   created_by: bigint
   updated_by: bigint
 }
@@ -193,11 +203,12 @@ TABLE(Resource, "resource") {
   PRIMARY_KEY(id): bigint
   type: string
   name: string
-  type: enum
   created_at: datetime
   updated_at: datetime
   created_by: bigint
   updated_by: bigint
+  FOREIGN_KEY(clinic_id): bigint
+  FOREIGN_KEY(resource_type_id): bigint
 }
 
 TABLE(Clinic, "clinic") {
@@ -448,10 +459,13 @@ Address "0..1" -- "1" Organization
 
 Product "n" -- "0..*" ProductGroup
 Product "n" -- "0..*" PartnerProduct
+Product "1" -- "1" ResourceType
 ProductCategory "0..1" -- "n" ProductCategory : "parent"
 Clinic "0..*" -- "n" Resource
 Clinic "0..*" -- "n" PartnerProduct
 Clinic "0..1" -- "1" Address
+
+Resource "1" -- "1" ResourceType
 
 Anamnesis "n" -- "1" Lead
 Anamnesis "n" -- "1" Person

@@ -105,6 +105,12 @@
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"
         ],
+        "post-install-cmd": [
+            "@php artisan vendor:publish --tag=log-viewer-assets --force || true"
+        ],
+        "post-update-cmd": [
+            "@php artisan vendor:publish --tag=log-viewer-assets --force || true"
+        ],
         "post-root-package-install": [
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
         ],

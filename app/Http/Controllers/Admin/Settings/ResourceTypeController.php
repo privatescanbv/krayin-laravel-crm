@@ -6,7 +6,7 @@ use App\DataGrids\Settings\ResourceTypeDataGrid;
 use App\Repositories\ResourceTypeRepository;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 use Illuminate\Support\Facades\Event;
 use Webkul\Admin\Http\Controllers\Controller;
@@ -29,7 +29,7 @@ class ResourceTypeController extends Controller
         return view('admin::settings.resource_types.create');
     }
 
-    public function store(): JsonResponse
+    public function store(): RedirectResponse
     {
         $this->validate(request(), [
             'name'        => 'required|unique:resource_types,name|max:100',
@@ -45,22 +45,19 @@ class ResourceTypeController extends Controller
 
         Event::dispatch('settings.resource_type.create.after', $entity);
 
-        return new JsonResponse([
-            'data'    => $entity,
-            'message' => trans('admin::app.settings.resource_types.index.create-success'),
-        ]);
+        return redirect()
+            ->route('admin.settings.resource_types.index')
+            ->with('success', trans('admin::app.settings.resource_types.index.create-success'));
     }
 
-    public function edit(int $id): JsonResource
+    public function edit(int $id): View
     {
-        $entity = $this->resourceTypeRepository->findOrFail($id);
+        $resourceType = $this->resourceTypeRepository->findOrFail($id);
 
-        return new JsonResource([
-            'data' => $entity,
-        ]);
+        return view('admin::settings.resource_types.edit', compact('resourceType'));
     }
 
-    public function update(int $id): JsonResponse
+    public function update(int $id): RedirectResponse
     {
         $this->validate(request(), [
             'name'        => 'required|max:100|unique:resource_types,name,'.$id,
@@ -76,13 +73,12 @@ class ResourceTypeController extends Controller
 
         Event::dispatch('settings.resource_type.update.after', $entity);
 
-        return new JsonResponse([
-            'data'    => $entity,
-            'message' => trans('admin::app.settings.resource_types.index.update-success'),
-        ]);
+        return redirect()
+            ->route('admin.settings.resource_types.index')
+            ->with('success', trans('admin::app.settings.resource_types.index.update-success'));
     }
 
-    public function destroy(?int $id = null): JsonResponse
+    public function destroy(?int $id = null): JsonResponse|RedirectResponse
     {
         $id = $id ?? (int) request('id');
         if (! $id) {
@@ -90,6 +86,12 @@ class ResourceTypeController extends Controller
             if (is_array($indices) && count($indices) > 0) {
                 $id = (int) $indices[0];
             }
+        }
+
+        if (! $id) {
+            return redirect()
+                ->route('admin.settings.resource_types.index')
+                ->with('error', 'Geen geldig ID opgegeven.');
         }
 
         $entity = $this->resourceTypeRepository->findOrFail($id);
@@ -101,13 +103,25 @@ class ResourceTypeController extends Controller
 
             Event::dispatch('settings.resource_type.delete.after', $id);
 
-            return new JsonResponse([
-                'message' => trans('admin::app.settings.resource_types.index.destroy-success'),
-            ], 200);
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'message' => trans('admin::app.settings.resource_types.index.destroy-success'),
+                ], 200);
+            }
+
+            return redirect()
+                ->route('admin.settings.resource_types.index')
+                ->with('success', trans('admin::app.settings.resource_types.index.destroy-success'));
         } catch (Exception $exception) {
-            return new JsonResponse([
-                'message' => trans('admin::app.settings.resource_types.index.delete-failed'),
-            ], 400);
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json([
+                    'message' => trans('admin::app.settings.resource_types.index.delete-failed'),
+                ], 400);
+            }
+
+            return redirect()
+                ->route('admin.settings.resource_types.index')
+                ->with('error', trans('admin::app.settings.resource_types.index.delete-failed'));
         }
     }
 }

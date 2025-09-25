@@ -1,100 +1,93 @@
 <?php
 
-namespace Tests\Feature\Settings;
+namespace Tests\Feature;
 
 use App\Models\Clinic;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
+use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\User\Models\User;
 
-class ClinicCrudTest extends TestCase
+beforeEach(function () {
+    config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
+    test()->withoutMiddleware(CanInstall::class);
+});
+
+function makeUser(array $attrs = []): User
 {
-    use RefreshDatabase;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        $this->artisan('migrate');
-    }
-
-    protected function signInAdmin(): User
-    {
-        $user = User::factory()->create();
-
-        $this->actingAs($user, 'user');
-
-        return $user;
-    }
-
-    public function test_index_returns_ok(): void
-    {
-        $this->signInAdmin();
-
-        $response = $this->get(route('admin.settings.clinics.index'));
-        $response->assertStatus(200);
-    }
-
-    public function test_can_create_clinic(): void
-    {
-        $this->signInAdmin();
-
-        $payload = [
-            'name'   => 'Test Clinic',
-            'emails' => ['info@testclinic.tld'],
-            'phones' => ['+31 10 123 4567'],
-        ];
-
-        $response = $this->post(route('admin.settings.clinics.store'), $payload);
-        $response->assertStatus(200)->assertJsonPath('data.name', 'Test Clinic');
-
-        $this->assertDatabaseHas('clinics', [
-            'name' => 'Test Clinic',
-        ]);
-    }
-
-    public function test_can_update_clinic(): void
-    {
-        $this->signInAdmin();
-
-        $clinic = Clinic::factory()->create();
-
-        $payload = [
-            'name'    => 'Updated Clinic',
-            'emails'  => ['contact@updated.tld'],
-            'phones'  => ['+31 10 222 3333'],
-            '_method' => 'put',
-        ];
-
-        $response = $this->post(route('admin.settings.clinics.update', ['id' => $clinic->id]), $payload);
-        $response->assertStatus(200)->assertJsonPath('data.name', 'Updated Clinic');
-
-        $this->assertDatabaseHas('clinics', [
-            'id'   => $clinic->id,
-            'name' => 'Updated Clinic',
-        ]);
-    }
-
-    public function test_can_delete_clinic(): void
-    {
-        $this->signInAdmin();
-
-        $clinic = Clinic::factory()->create();
-
-        $response = $this->delete(route('admin.settings.clinics.delete', ['id' => $clinic->id]));
-        $response->assertStatus(200);
-
-        $this->assertDatabaseMissing('clinics', [
-            'id' => $clinic->id,
-        ]);
-    }
-
-    protected function signInAdmin(): User
-    {
-        $user = User::factory()->create();
-
-        $this->be($user, 'web');
-
-        return $user;
-    }
+    return User::factory()->create(array_merge(['status' => 1], $attrs));
 }
+
+function getDatagridIds($response): array
+{
+    $payload = $response->json();
+    $records = $payload['records'] ?? [];
+
+    return collect($records)->pluck('id')->all();
+}
+
+test('clinics index returns datagrid json', function () {
+    $user = makeUser();
+    $this->actingAs($user, 'user');
+
+    $c1 = Clinic::factory()->create();
+    $c2 = Clinic::factory()->create();
+
+    $response = $this->getJson(route('admin.settings.clinics.index'));
+    $response->assertOk();
+
+    $ids = getDatagridIds($response);
+    expect($ids)->toContain($c1->id, $c2->id);
+});
+
+test('can create clinic', function () {
+    $user = makeUser();
+    $this->actingAs($user, 'user');
+
+    $payload = [
+        'name'   => 'Test Clinic',
+        'emails' => ['info@testclinic.tld'],
+        'phones' => ['+31 10 123 4567'],
+    ];
+
+    $response = $this->postJson(route('admin.settings.clinics.store'), $payload);
+    $response->assertOk()->assertJsonPath('data.name', 'Test Clinic');
+
+    $this->assertDatabaseHas('clinics', [
+        'name' => 'Test Clinic',
+    ]);
+});
+
+test('can update clinic', function () {
+    $user = makeUser();
+    $this->actingAs($user, 'user');
+
+    $clinic = Clinic::factory()->create();
+
+    $payload = [
+        'name'    => 'Updated Clinic',
+        'emails'  => ['contact@updated.tld'],
+        'phones'  => ['+31 10 222 3333'],
+        '_method' => 'put',
+    ];
+
+    $response = $this->postJson(route('admin.settings.clinics.update', ['id' => $clinic->id]), $payload);
+    $response->assertOk()->assertJsonPath('data.name', 'Updated Clinic');
+
+    $this->assertDatabaseHas('clinics', [
+        'id'   => $clinic->id,
+        'name' => 'Updated Clinic',
+    ]);
+});
+
+test('can delete clinic', function () {
+    $user = makeUser();
+    $this->actingAs($user, 'user');
+
+    $clinic = Clinic::factory()->create();
+
+    $response = $this->deleteJson(route('admin.settings.clinics.delete', ['id' => $clinic->id]));
+    $response->assertOk();
+
+    $this->assertDatabaseMissing('clinics', [
+        'id' => $clinic->id,
+    ]);
+});

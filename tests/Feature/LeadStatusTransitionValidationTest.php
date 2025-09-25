@@ -206,3 +206,47 @@ test('it validates required fields for first stage transition', function () {
     // Transition should now succeed
     LeadStatusTransitionValidator::validateTransition($incompleteLead, test()->startStage->id);
 });
+
+test('it blocks transition from nieuwe-aanvraag-kwalificeren to klant-adviseren-start when no persons', function () {
+    // Create the initial stage and set lead to it
+    $initialStage = Stage::create([
+        'code'             => 'nieuwe-aanvraag-kwalificeren',
+        'name'             => 'Nieuwe aanvraag kwalificeren',
+        'probability'      => 100,
+        'sort_order'       => 0,
+        'lead_pipeline_id' => test()->pipeline->id,
+    ]);
+
+    // Move lead to initial stage
+    test()->lead->update(['lead_pipeline_stage_id' => $initialStage->id]);
+
+    // Ensure no persons are attached
+    expect(test()->lead->persons_count)->toBe(0)
+        ->and(fn () => LeadStatusTransitionValidator::validateTransition(test()->lead, test()->startStage->id))
+        ->toThrow(ValidationException::class);
+});
+
+test('it allows transition from nieuwe-aanvraag-kwalificeren to klant-adviseren-start when person attached', function () {
+    // Create the initial stage and set lead to it
+    $initialStage = Stage::create([
+        'code'             => 'nieuwe-aanvraag-kwalificeren',
+        'name'             => 'Nieuwe aanvraag kwalificeren',
+        'probability'      => 100,
+        'sort_order'       => 0,
+        'lead_pipeline_id' => test()->pipeline->id,
+    ]);
+
+    // Move lead to initial stage
+    test()->lead->update(['lead_pipeline_stage_id' => $initialStage->id]);
+
+    // Attach a person
+    $person = Person::create([
+        'name'   => 'Alice Example',
+        'emails' => [['value' => 'alice@example.com', 'is_default' => true]],
+    ]);
+    test()->lead->attachPersons([$person->id]);
+    test()->lead->refresh();
+
+    // Should validate successfully now
+    LeadStatusTransitionValidator::validateTransition(test()->lead, test()->startStage->id);
+});

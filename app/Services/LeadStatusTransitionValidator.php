@@ -14,14 +14,15 @@ class LeadStatusTransitionValidator
      * Key format: "from_stage_code->to_stage_code"
      */
     private static array $transitionRules = [
-        // Voorbeeld: van klant-adviseren-start naar klant-adviseren-opvolgen
-        'klant-adviseren-start->klant-adviseren-opvolgen' => [
+        // Validatie: van nieuwe-aanvraag-kwalificeren naar klant-adviseren-start
+        // Minimaal 1 persoon moet gekoppeld zijn aan de lead
+        'nieuwe-aanvraag-kwalificeren->klant-adviseren-start' => [
             'min_persons' => 1,
-            'message'     => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
+            'message'     => 'Voor de status "Klant adviseren" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
         ],
 
         // Andere voorbeelden kunnen hier worden toegevoegd:
-        // 'nieuwe-aanvraag-kwalificeren->klant-adviseren-start' => [
+        // 'klant-adviseren-start->klant-adviseren-opvolgen' => [
         //     'required_fields' => ['first_name', 'last_name', 'emails'],
         //     'message' => 'Voor deze status zijn naam en email verplicht.',
         // ],

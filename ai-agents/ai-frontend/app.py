@@ -4,9 +4,11 @@ import base64
 
 st.title("CRM AI Agent")
 
-user_input = st.text_input("Vraag aan je CRM:")
+with st.form("crm_form", clear_on_submit=False):
+    user_input = st.text_input("Vraag aan je CRM:")
+    submitted = st.form_submit_button("Verstuur")
 
-if st.button("Verstuur"):
+if submitted and user_input:
     with st.spinner("Even geduld, ik haal de data op..."):
         try:
             resp = requests.post("http://ai-agent:8001/chat", json={"question": user_input}, timeout=120)

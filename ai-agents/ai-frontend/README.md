@@ -11,3 +11,4 @@ Daarmee kun je nu ook zeggen "Voeg een lead toe met de naam bart" of "Verwijder 
 
 ## Development
 docker compose build ai-agent && docker compose up ai-agent -d
+docker compose build ai-frontend && docker compose up ai-frontend -d

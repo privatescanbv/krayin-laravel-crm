@@ -150,7 +150,7 @@ services:
 #    command: ./vendor/bin/behat --format=pretty
 
   ai-agent:
-    build: ./ai-agent
+    build: ./ai-agents/ai-agent
     container_name: ai-agent
     env_file:
       - .env.ai
@@ -169,7 +169,7 @@ services:
       - mb_traefik
 
   ai-frontend:
-    build: ./ai-frontend
+    build: ./ai-agents/ai-frontend
     container_name: ai-frontend
     ports:
       - "8501:8501"
@@ -179,7 +179,7 @@ services:
         - sail
 
   ai-visualizer:
-    build: ./ai-visualizer
+    build: ./ai-agents/ai-visualizer
     container_name: ai-visualizer
     ports:
       - "8002:8002"

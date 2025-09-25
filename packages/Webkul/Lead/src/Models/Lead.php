@@ -96,6 +96,16 @@ class Lead extends Model implements LeadContract
         'has_diagnosis_form',
     ];
 
+    protected static function booted()
+    {
+        static::saving(function (self $lead) {
+            // Ensure computed attributes are never persisted
+            if (isset($lead->attributes['persons_count'])) {
+                unset($lead->attributes['persons_count']);
+            }
+        });
+    }
+
     /**
      * Normalize gender assignment to allow empty strings and enums.
      */
@@ -564,6 +574,11 @@ class Lead extends Model implements LeadContract
             Log::warning('Could not count persons for lead', ['lead_id' => $this->id, 'error' => $e->getMessage()]);
             return 0;
         }
+    }
+
+    public function setPersonsCountAttribute($value): void
+    {
+        // Ignore attempts to set computed attribute
     }
 
     /**

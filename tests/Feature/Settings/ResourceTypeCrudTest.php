@@ -11,18 +11,6 @@ beforeEach(function () {
     test()->withoutMiddleware(CanInstall::class);
 });
 
-function makeUser(array $attrs = []): User
-{
-    return User::factory()->create(array_merge(['status' => 1], $attrs));
-}
-
-function getDatagridIds($response): array
-{
-    $payload = $response->json();
-    $records = $payload['records'] ?? [];
-
-    return collect($records)->pluck('id')->all();
-}
 
 test('resource types index returns datagrid json', function () {
     $user = makeUser();
@@ -47,8 +35,8 @@ test('can create resource type', function () {
         'description' => 'Magnetic resonance imaging',
     ];
 
-    $response = $this->postJson(route('admin.settings.resource_types.store'), $payload);
-    $response->assertOk()->assertJsonPath('data.name', 'MRI Scanner');
+    $response = $this->post(route('admin.settings.resource_types.store'), $payload);
+    $response->assertRedirect(route('admin.settings.resource_types.index'));
 
     $this->assertDatabaseHas('resource_types', [
         'name' => 'MRI Scanner',
@@ -67,8 +55,8 @@ test('can update resource type', function () {
         '_method'     => 'put',
     ];
 
-    $response = $this->postJson(route('admin.settings.resource_types.update', ['id' => $entity->id]), $payload);
-    $response->assertOk()->assertJsonPath('data.name', 'CT Scanner');
+    $response = $this->post(route('admin.settings.resource_types.update', ['id' => $entity->id]), $payload);
+    $response->assertRedirect(route('admin.settings.resource_types.index'));
 
     $this->assertDatabaseHas('resource_types', [
         'id'   => $entity->id,

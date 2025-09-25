@@ -11,18 +11,6 @@ beforeEach(function () {
     test()->withoutMiddleware(CanInstall::class);
 });
 
-function makeUser(array $attrs = []): User
-{
-    return User::factory()->create(array_merge(['status' => 1], $attrs));
-}
-
-function getDatagridIds($response): array
-{
-    $payload = $response->json();
-    $records = $payload['records'] ?? [];
-
-    return collect($records)->pluck('id')->all();
-}
 
 test('clinics index returns datagrid json', function () {
     $user = makeUser();

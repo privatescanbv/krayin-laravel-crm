@@ -14,10 +14,13 @@ return new class extends Migration
             $table->string('name');
             $table->json('emails')->nullable();
             $table->json('phones')->nullable();
+            $table->unsignedBigInteger('address_id')->nullable();
             $table->timestamps();
             AuditTrailMigrationHelper::addAuditTrailColumns($table);
 
             $table->unique('name');
+
+            $table->foreign('address_id')->references('id')->on('addresses')->onDelete('set null');
         });
     }
 

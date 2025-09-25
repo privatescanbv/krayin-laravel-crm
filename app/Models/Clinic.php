@@ -16,6 +16,7 @@ class Clinic extends Model
         'name',
         'emails',
         'phones',
+        'address_id',
         'created_by',
         'updated_by',
     ];
@@ -26,5 +27,10 @@ class Clinic extends Model
         'created_by' => 'integer',
         'updated_by' => 'integer',
     ];
+
+    public function address()
+    {
+        return $this->belongsTo(Address::class);
+    }
 }
 

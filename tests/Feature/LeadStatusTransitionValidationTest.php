@@ -21,16 +21,16 @@ beforeEach(function () {
 
     // Create test stages
     test()->startStage = Stage::create([
-        'code'             => 'klant-adviseren-start',
-        'name'             => 'Klant adviseren',
+        'code'             => 'nieuwe-aanvraag-kwalificeren',
+        'name'             => 'Nieuwe aanvraag',
         'probability'      => 100,
         'sort_order'       => 1,
         'lead_pipeline_id' => test()->pipeline->id,
     ]);
 
     test()->followUpStage = Stage::create([
-        'code'             => 'klant-adviseren-opvolgen',
-        'name'             => 'Klant adviseren opvolgen',
+        'code'             => 'klant-adviseren-start',
+        'name'             => 'Klant adviseren start',
         'probability'      => 100,
         'sort_order'       => 2,
         'lead_pipeline_id' => test()->pipeline->id,

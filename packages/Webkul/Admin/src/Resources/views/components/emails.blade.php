@@ -130,6 +130,13 @@
                         this.$emit('input', newEmails);
                     },
                     deep: true
+                },
+                // Re-process when parent updates value asynchronously
+                value: {
+                    handler(newVal) {
+                        this.emails = this.processEmails(newVal);
+                    },
+                    deep: true
                 }
             },
 
@@ -152,6 +159,8 @@
                         .filter(email => email && email.value && email.value.trim() !== '')
                         .map(email => ({
                             ...email,
+                            // default missing/empty label to CONTACT_LABEL_DEFAULT for proper select display
+                            label: (email.label && String(email.label).trim() !== '') ? email.label : this.defaultLabel,
                             is_default: email.is_default === true || email.is_default === 'on' || email.is_default === '1'
                         }));
 
@@ -208,6 +217,8 @@
                     }
                 },
 
+                
+
                 getInputClass(index) {
                     const baseClass = 'w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 dark:bg-gray-700 dark:text-white';
                     const hasError = this.getEmailError(index);
@@ -228,30 +239,4 @@
     </script>
 @endPushOnce
 
-@php
-    $emails = $value ?? [];
-
-    // Ensure $emails is an array
-    if (!is_array($emails)) {
-        $emails = [];
-    }
-
-    // Filter out empty email addresses
-    $emails = array_filter($emails, function($email) {
-        return isset($email['value']) && !empty(trim($email['value']));
-    });
-
-    // If no valid emails, create a default empty email
-    if (empty($emails)) {
-        $emails = [['value' => '', 'label' => \App\Enums\ContactLabel::default()->value, 'is_default' => true]];
-    }
-
-    // Normaliseer is_default naar boolean
-    foreach ($emails as &$email) {
-        if (isset($email['is_default'])) {
-            $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
-        }
-    }
-    unset($email);
-@endphp
-
+ 

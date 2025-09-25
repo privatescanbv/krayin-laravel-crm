@@ -25,29 +25,38 @@ Het `Lead` model is uitgebreid met validatie:
 - `update()` methode controleert automatisch status transities
 - `updateStage()` methode voor directe stage updates met validatie
 
-##### 3. PipelineSeeder Configuration
+##### 3. Centrale configuratie (geen seeding nodig)
 
-Validatieregels worden geconfigureerd in de `PipelineSeeder` via de `configureStatusTransitionValidations()` methode.
+Validatieregels zijn gecentraliseerd in `LeadStatusTransitionValidator` en worden lazy geïnitialiseerd. Er is geen seeding meer nodig voor de basisregels.
 
 #### Configuratie
 
 ##### Basis Configuratie
 
-Validatieregels worden gedefinieerd in de `PipelineSeeder`:
+De default regels worden in de service zelf geregistreerd (lazy). Wil je runtime extra regels toevoegen of wijzigen, gebruik dan onderstaande API in je applicatiestart of specifieke flows:
 
 ```php
-private function configureStatusTransitionValidations(): void
-{
-    // Voorbeeld: Minimaal 1 persoon vereist
-    LeadStatusTransitionValidator::addTransitionRule(
-        'klant-adviseren-start',
-        'klant-adviseren-opvolgen',
-        [
-            'min_persons' => 1,
-            'message' => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
-        ]
-    );
-}
+// Voorbeeld: Minimaal 1 persoon vereist op eerste transitie (privatescan)
+LeadStatusTransitionValidator::addTransitionRule(
+    'nieuwe-aanvraag-kwalificeren',
+    'klant-adviseren-start',
+    [
+        'min_persons' => 1,
+        'required_fields' => ['first_name', 'last_name'],
+        'message' => 'Voor de status "Klant adviseren" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
+    ]
+);
+
+// Voorbeeld: Zelfde logica voor meerdere hernia-doelstages in één keer
+LeadStatusTransitionValidator::addTransitionsRule(
+    'nieuwe-aanvraag-kwalificeren-hernia',
+    ['klant-adviseren-start-hernia', 'klant-adviseren-will-mri-hernia', 'klant-adviseren-wachten-op-mri-hernia'],
+    [
+        'min_persons' => 1,
+        'required_fields' => ['first_name', 'last_name'],
+        'message' => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
+    ]
+);
 ```
 
 ##### Ondersteunde Validatie Types
@@ -130,20 +139,20 @@ $hasRule = LeadStatusTransitionValidator::hasTransitionRule(
 
 #### Voorbeelden
 
-##### Voorbeeld 1: Minimaal 1 Persoon
+##### Voorbeeld 1: Minimaal 1 Persoon (privatescan)
 
 ```php
 LeadStatusTransitionValidator::addTransitionRule(
+    'nieuwe-aanvraag-kwalificeren',
     'klant-adviseren-start',
-    'klant-adviseren-opvolgen',
     [
         'min_persons' => 1,
-        'message' => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
+        'message' => 'Voor de status "Klant adviseren" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
     ]
 );
 ```
 
-##### Voorbeeld 2: Verplichte Velden
+##### Voorbeeld 2: Verplichte Velden (privatescan)
 
 ```php
 LeadStatusTransitionValidator::addTransitionRule(
@@ -152,6 +161,19 @@ LeadStatusTransitionValidator::addTransitionRule(
     [
         'required_fields' => ['first_name', 'last_name', 'emails'],
         'message' => 'Voor de status "Klant adviseren" zijn naam en email verplicht.',
+    ]
+);
+```
+
+##### Voorbeeld 3: Meerdere doelstages (hernia)
+```php
+LeadStatusTransitionValidator::addTransitionsRule(
+    'nieuwe-aanvraag-kwalificeren-hernia',
+    ['klant-adviseren-start-hernia', 'klant-adviseren-will-mri-hernia', 'klant-adviseren-wachten-op-mri-hernia'],
+    [
+        'min_persons' => 1,
+        'required_fields' => ['first_name', 'last_name'],
+        'message' => 'Voor de status "Klant adviseren opvolgen" moet minimaal 1 persoon aan de lead gekoppeld zijn.',
     ]
 );
 ```

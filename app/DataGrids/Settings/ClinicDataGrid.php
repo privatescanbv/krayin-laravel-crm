@@ -65,4 +65,3 @@ class ClinicDataGrid extends DataGrid
         }
     }
 }
-

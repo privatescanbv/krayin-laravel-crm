@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\HasAuditTrail;
 
 class Clinic extends Model
 {
-    use HasFactory, HasAuditTrail;
+    use HasAuditTrail, HasFactory;
 
     protected $table = 'clinics';
 
@@ -22,8 +22,8 @@ class Clinic extends Model
     ];
 
     protected $casts = [
-        'emails' => 'array',
-        'phones' => 'array',
+        'emails'     => 'array',
+        'phones'     => 'array',
         'created_by' => 'integer',
         'updated_by' => 'integer',
     ];
@@ -33,4 +33,3 @@ class Clinic extends Model
         return $this->belongsTo(Address::class);
     }
 }
-

@@ -12,4 +12,3 @@ class ClinicRepository extends Repository
         return Clinic::class;
     }
 }
-

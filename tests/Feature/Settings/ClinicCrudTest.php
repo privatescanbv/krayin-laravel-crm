@@ -60,9 +60,9 @@ class ClinicCrudTest extends TestCase
         $clinic = Clinic::factory()->create();
 
         $payload = [
-            'name'   => 'Updated Clinic',
-            'emails' => ['contact@updated.tld'],
-            'phones' => ['+31 10 222 3333'],
+            'name'    => 'Updated Clinic',
+            'emails'  => ['contact@updated.tld'],
+            'phones'  => ['+31 10 222 3333'],
             '_method' => 'put',
         ];
 
@@ -88,5 +88,13 @@ class ClinicCrudTest extends TestCase
             'id' => $clinic->id,
         ]);
     }
-}
 
+    protected function signInAdmin(): User
+    {
+        $user = User::factory()->create();
+
+        $this->be($user, 'web');
+
+        return $user;
+    }
+}

@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Admin\Settings;
 
+use App\DataGrids\Settings\ClinicDataGrid;
+use App\Repositories\ClinicRepository;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
-use App\DataGrids\Settings\ClinicDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
-use App\Repositories\ClinicRepository;
 
 class ClinicController extends Controller
 {
@@ -26,7 +26,7 @@ class ClinicController extends Controller
 
     public function store(): JsonResponse
     {
-        $this->validate(request(), [
+        request()->validate(request(), [
             'name'   => 'required|unique:clinics,name|max:100',
             'emails' => 'nullable|array',
             'phones' => 'nullable|array',
@@ -59,7 +59,7 @@ class ClinicController extends Controller
 
     public function update(int $id): JsonResponse
     {
-        $this->validate(request(), [
+        request()->validate(request(), [
             'name'   => 'required|max:100|unique:clinics,name,'.$id,
             'emails' => 'nullable|array',
             'phones' => 'nullable|array',
@@ -102,4 +102,3 @@ class ClinicController extends Controller
         }
     }
 }
-

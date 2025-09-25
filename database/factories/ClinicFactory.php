@@ -18,4 +18,3 @@ class ClinicFactory extends Factory
         ];
     }
 }
-

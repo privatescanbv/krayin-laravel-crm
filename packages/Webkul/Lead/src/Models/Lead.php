@@ -57,7 +57,6 @@ class Lead extends Model implements LeadContract
     protected $appends = [
         'rotten_days',
         'name',
-        'persons_count',
     ];
 
     /**
@@ -96,6 +95,8 @@ class Lead extends Model implements LeadContract
         'mri_status',
         'has_diagnosis_form',
     ];
+
+    // No special handling for persons_count required anymore
 
     /**
      * Normalize gender assignment to allow empty strings and enums.
@@ -559,12 +560,7 @@ class Lead extends Model implements LeadContract
      */
     public function getPersonsCountAttribute(): int
     {
-        try {
-            return DB::table('lead_persons')->where('lead_id', $this->id)->count();
-        } catch (Exception $e) {
-            Log::warning('Could not count persons for lead', ['lead_id' => $this->id, 'error' => $e->getMessage()]);
-            return 0;
-        }
+        return (int) $this->persons()->count();
     }
 
     /**
@@ -572,7 +568,7 @@ class Lead extends Model implements LeadContract
      */
     public function hasMultiplePersons(): bool
     {
-        return $this->persons_count > 1;
+        return $this->persons()->count() > 1;
     }
 
     public function hasPotentialDuplicates() : bool

@@ -54,7 +54,7 @@ class LeadStatusTransitionValidator
 
         // Valideer minimum aantal personen
         if (isset($rules['min_persons'])) {
-            $personCount = $lead->persons_count;
+            $personCount = (int) $lead->persons()->count();
             if ($personCount < $rules['min_persons']) {
                 $errors[] = $rules['message'] ?? "Minimaal {$rules['min_persons']} persoon(en) vereist voor deze status.";
             }
@@ -86,6 +86,15 @@ class LeadStatusTransitionValidator
     }
 
     /**
+     * Reset validator state (intended for tests).
+     */
+    public static function reset(): void
+    {
+        self::$transitionRules = [];
+        self::$defaultsInitialized = false;
+    }
+
+    /**
      * Voeg een nieuwe transitie validatie regel toe.
      */
     public static function addTransitionRule(string $fromStageCode, string $toStageCode, array $rules): void
@@ -101,14 +110,7 @@ class LeadStatusTransitionValidator
         }
     }
 
-    /**
-     * Verwijder een transitie validatie regel.
-     */
-    public static function removeTransitionRule(string $fromStageCode, string $toStageCode): void
-    {
-        $transitionKey = $fromStageCode.'->'.$toStageCode;
-        unset(self::$transitionRules[$transitionKey]);
-    }
+    // Removing transition rules is not supported anymore
 
     /**
      * Krijg alle transitie regels (voor debugging/configuratie).

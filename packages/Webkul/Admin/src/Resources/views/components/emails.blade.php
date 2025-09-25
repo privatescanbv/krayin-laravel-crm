@@ -152,6 +152,8 @@
                         .filter(email => email && email.value && email.value.trim() !== '')
                         .map(email => ({
                             ...email,
+                            // default missing/empty label to CONTACT_LABEL_DEFAULT for proper select display
+                            label: (email.label && String(email.label).trim() !== '') ? email.label : this.defaultLabel,
                             is_default: email.is_default === true || email.is_default === 'on' || email.is_default === '1'
                         }));
 

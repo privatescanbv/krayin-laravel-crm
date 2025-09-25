@@ -156,6 +156,8 @@
                         .filter(phone => phone && phone.value && phone.value.trim() !== '')
                         .map(phone => ({
                             ...phone,
+                            // default missing/empty label to CONTACT_LABEL_DEFAULT for proper select display
+                            label: (phone.label && String(phone.label).trim() !== '') ? phone.label : this.defaultLabel,
                             is_default: phone.is_default === true || phone.is_default === 'on' || phone.is_default === '1'
                         }));
 

@@ -173,7 +173,40 @@ TABLE(Product, "product") {
   name: string
   description: text
   price: decimal
-  sku: string
+  product_type: enum
+  resource_type: enum
+  created_by: bigint
+  updated_by: bigint
+}
+
+TABLE(PartnerProduct, "partner_product") {
+  PRIMARY_KEY(id): bigint
+  partner_name: string
+  description: text
+  created_at: datetime
+  updated_at: datetime
+  created_by: bigint
+  updated_by: bigint
+}
+
+TABLE(Resource, "resource") {
+  PRIMARY_KEY(id): bigint
+  type: string
+  name: string
+  type: enum
+  created_at: datetime
+  updated_at: datetime
+  created_by: bigint
+  updated_by: bigint
+}
+
+TABLE(Clinic, "clinic") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  emails: json
+  phones: json
+  created_at: datetime
+  updated_at: datetime
   created_by: bigint
   updated_by: bigint
 }
@@ -186,13 +219,31 @@ TABLE(ProductGroup, "product_groups") {
   updated_by: bigint
 }
 
+TABLE(Order, "order") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  number: string
+  created_at: datetime
+  updated_at: datetime
+  created_by: bigint
+  updated_by: bigint
+}
+
+TABLE(OrderItem, "orderItem") {
+  PRIMARY_KEY(id): bigint
+  created_at: datetime
+  updated_at: datetime
+  created_by: bigint
+  updated_by: bigint
+}
+
 TABLE(WorkflowLead, "workflow_lead (backoffice)") {
   PRIMARY_KEY(id): bigint
   name: string
   description: text
   FOREIGN_KEY(pipeline_stage_id): bigint
   FOREIGN_KEY(lead_id): bigint
-  FOREIGN_KEY(quote_id): bigint
+  FOREIGN_KEY(order_id): bigint
   FOREIGN_KEY(user_id): bigint
   workflow_type: enum
 }
@@ -330,7 +381,7 @@ TABLE(LeadPerson, "lead_persons") {
 
 ' Relationships
 User "1" -- "n" Lead
-User "1" -- "n" Quote
+User "1" -- "n" Order
 User "1" -- "n" WorkflowLead
 User "1" -- "n" Activity
 User "1" -- "n" CallStatus
@@ -343,20 +394,23 @@ Group "n" -- "1" Department
 
 Pipeline "1" -- "n" Stage
 Stage "1" -- "n" Lead
-Stage "1" -- "n" Quote
+Stage "1" -- "n" Order
 Stage "1" -- "n" WorkflowLead
 Stage "1" -- "n" Activity
 
-Lead "1" -- "n" Quote
+Lead "1" -- "n" Order
 Lead "0..1" -- "n" Activity
 Activity "1" -- "n" CallStatus
 Lead "n" -- "n" Person : "lead_persons"
 Lead "1" -- "0..1" Organization
 Lead "1" -- "0..1" Address
 
-Quote "1" --> "1" Person : "for"
-Quote "1" --> "1" User
-Quote "1" -- "n" QuoteItem
+Order "1" --> "1" Person : "for"
+Order "1" --> "1" User
+Order "1" -- "n" OrderItem
+
+OrderItem "n" -- "1" Order
+OrderItem "1" -- "1" PartnerProduct
 
 Activity "1" --> "1" User
 Activity "0..1" --> "1" Group
@@ -364,7 +418,7 @@ Activity "0..1" --> "1" Lead
 Activity "1" -- "0..*" Email
 
 WorkflowLead "1" -- "n" Activity
-WorkflowLead "0..1" -- "1" Quote
+WorkflowLead "0..1" -- "1" Order
 WorkflowLead "0..1" -- "1" Lead
 WorkflowLead "1" --> "1" User
 
@@ -379,9 +433,12 @@ Address "0..1" -- "1" Lead
 Address "0..1" -- "1" Person
 Address "0..1" -- "1" Organization
 
-Product "n" -- "0..1" ProductGroup
-QuoteItem "n" -- "1" Quote
-QuoteItem "1" -- "1" Product
+Product "n" -- "0..*" ProductGroup
+Product "n" -- "0..*" PartnerProduct
+ProductCategory "0..1" -- "n" ProductCategory : "parent"
+Clinic "0..*" -- "n" Resource
+Clinic "0..*" -- "n" PartnerProduct
+Clinic "0..1" -- "1" Address
 
 Anamnesis "n" -- "1" Lead
 Anamnesis "n" -- "1" Person
@@ -463,6 +520,10 @@ note as N1
   - Department entiteit toegevoegd
   - LeadPerson koppeltabel voor many-to-many relatie
   - Anamnesis heeft uitgebreide medische velden
+  - Nieuwe entiteiten: ProductCategory, PartnerProduct, Resource, Clinic
+  - ProductCategory ondersteunt parent-relatie
+  - Product kan gekoppeld zijn aan meerdere ProductCategories en PartnerProducts
+  - Clinic kan gekoppeld zijn aan PartnerProducts en Resources
 end note
 
 @enduml

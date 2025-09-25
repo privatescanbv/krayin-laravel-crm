@@ -177,7 +177,7 @@
 
                                             <!-- Type Column -->
                                             <template v-else-if="column.index === 'type'">
-                                                <p class="text-gray-600 dark:text-gray-300 text-sm">@{{ record.type ?? 'N/A'}}</p>
+                                                <div v-html="record.type" class="text-sm"></div>
                                             </template>
 
                                             <!-- Created At Column -->

@@ -17,7 +17,6 @@ De `LeadStatusTransitionValidator` service beheert alle validatieregels voor sta
 **Belangrijkste methoden:**
 - `validateTransition(Lead $lead, int $newStageId)` - Valideert een status transitie
 - `addTransitionRule(string $fromStageCode, string $toStageCode, array $rules)` - Voegt een validatieregel toe
-- `removeTransitionRule(string $fromStageCode, string $toStageCode)` - Verwijdert een validatieregel
 
 ##### 2. Lead Model Integration
 
@@ -124,11 +123,7 @@ LeadStatusTransitionValidator::addTransitionRule(
     ['min_persons' => 2]
 );
 
-// Verwijder een regel
-LeadStatusTransitionValidator::removeTransitionRule(
-    'from-stage',
-    'to-stage'
-);
+// Verwijderen van regels wordt niet ondersteund
 
 // Controleer of een regel bestaat
 $hasRule = LeadStatusTransitionValidator::hasTransitionRule(

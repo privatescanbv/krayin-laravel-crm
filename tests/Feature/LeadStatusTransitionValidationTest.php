@@ -152,31 +152,7 @@ test('it works with lead model update stage method', function () {
     // Attempt to update stage should fail
 });
 
-test('it can add and remove transition rules', function () {
-    // Remove the existing rule
-    LeadStatusTransitionValidator::removeTransitionRule(
-        'nieuwe-aanvraag-kwalificeren',
-        'klant-adviseren-start'
-    );
-
-    // Now transition should succeed even without persons
-    LeadStatusTransitionValidator::validateTransition(test()->lead, test()->followUpStage->id);
-
-    // Add the rule back
-    LeadStatusTransitionValidator::addTransitionRule(
-        'nieuwe-aanvraag-kwalificeren',
-        'klant-adviseren-start',
-        [
-            'min_persons'     => 1,
-            'required_fields' => ['first_name', 'last_name'],
-            'message'         => 'Test message',
-        ]
-    );
-
-    // Now transition should fail again
-    expect(fn () => LeadStatusTransitionValidator::validateTransition(test()->lead, test()->followUpStage->id))
-        ->toThrow(ValidationException::class);
-});
+// Removed test for removing transition rules as this functionality is no longer supported
 
 test('it validates required fields for first stage transition', function () {
     // Create a lead without first_name and last_name

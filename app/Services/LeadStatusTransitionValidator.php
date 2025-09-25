@@ -110,14 +110,7 @@ class LeadStatusTransitionValidator
         }
     }
 
-    /**
-     * Verwijder een transitie validatie regel.
-     */
-    public static function removeTransitionRule(string $fromStageCode, string $toStageCode): void
-    {
-        $transitionKey = $fromStageCode.'->'.$toStageCode;
-        unset(self::$transitionRules[$transitionKey]);
-    }
+    // Removing transition rules is not supported anymore
 
     /**
      * Krijg alle transitie regels (voor debugging/configuratie).

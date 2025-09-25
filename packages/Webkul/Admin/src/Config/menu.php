@@ -199,6 +199,14 @@ return [
         'icon-class' => 'icon-setting',
     ],
     [
+        'key'        => 'settings.resource_types.admin',
+        'name'       => 'admin::app.layouts.resource_types',
+        'info'       => 'admin::app.layouts.resource_types-info',
+        'route'      => 'admin.settings.resource_types.index',
+        'sort'       => 1,
+        'icon-class' => 'icon-setting',
+    ],
+    [
         'key'        => 'settings.lead',
         'name'       => 'admin::app.layouts.lead',
         'info'       => 'admin::app.layouts.lead-info',

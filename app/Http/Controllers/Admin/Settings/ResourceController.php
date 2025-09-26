@@ -7,6 +7,7 @@ use App\Repositories\ResourceRepository;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
@@ -29,20 +30,16 @@ class ResourceController extends Controller
         return view('admin::settings.resources.create');
     }
 
-    public function store(): RedirectResponse|JsonResponse
+    public function store(Request $request): RedirectResponse|JsonResponse
     {
-        $this->validate(request(), [
+        $request->validate([
             'type' => 'required|string|max:100',
             'name' => 'required|unique:resources,name|max:100',
         ]);
 
         Event::dispatch('settings.resource.create.before');
 
-        $resource = $this->resourceRepository->create([
-            'type'      => request('type'),
-            'name'      => request('name'),
-            'clinic_id' => request('clinic_id'),
-        ]);
+        $resource = $this->resourceRepository->create($request->all());
 
         Event::dispatch('settings.resource.create.after', $resource);
 
@@ -55,35 +52,31 @@ class ResourceController extends Controller
             ->with('success', trans('admin::app.settings.resources.index.create-success'));
     }
 
-    public function edit(int $id): View|JsonResponse
+    public function edit(Request $request, int $id): View|JsonResponse
     {
         $resource = $this->resourceRepository->findOrFail($id);
 
-        if (request()->ajax() || request()->wantsJson()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['data' => $resource]);
         }
 
         return view('admin::settings.resources.edit', compact('resource'));
     }
 
-    public function update(int $id): RedirectResponse|JsonResponse
+    public function update(Request $request, int $id): RedirectResponse|JsonResponse
     {
-        $this->validate(request(), [
+        $request->validate([
             'type' => 'required|string|max:100',
             'name' => 'required|max:100|unique:resources,name,'.$id,
         ]);
 
         Event::dispatch('settings.resource.update.before', $id);
 
-        $resource = $this->resourceRepository->update([
-            'type'      => request('type'),
-            'name'      => request('name'),
-            'clinic_id' => request('clinic_id'),
-        ], $id);
+        $resource = $this->resourceRepository->update($request->all(), $id);
 
         Event::dispatch('settings.resource.update.after', $resource);
 
-        if (request()->ajax() || request()->wantsJson()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json(['data' => $resource, 'message' => trans('admin::app.settings.resources.index.update-success')]);
         }
 
@@ -92,11 +85,10 @@ class ResourceController extends Controller
             ->with('success', trans('admin::app.settings.resources.index.update-success'));
     }
 
-    public function destroy(?int $id = null): JsonResponse|RedirectResponse
+    public function destroy(Request $request, ?int $id = null): JsonResponse|RedirectResponse
     {
-        $id = $id ?? (int) request('id');
         if (! $id) {
-            $indices = request('indices');
+            $indices = $request['indices'];
             if (is_array($indices) && count($indices) > 0) {
                 $id = (int) $indices[0];
             }
@@ -117,7 +109,7 @@ class ResourceController extends Controller
 
             Event::dispatch('settings.resource.delete.after', $id);
 
-            if (request()->ajax() || request()->wantsJson()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'message' => trans('admin::app.settings.resources.index.destroy-success'),
                 ], 200);
@@ -127,7 +119,7 @@ class ResourceController extends Controller
                 ->route('admin.settings.resources.index')
                 ->with('success', trans('admin::app.settings.resources.index.destroy-success'));
         } catch (Exception $exception) {
-            if (request()->ajax() || request()->wantsJson()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'message' => trans('admin::app.settings.resources.index.delete-failed'),
                 ], 400);
@@ -139,4 +131,3 @@ class ResourceController extends Controller
         }
     }
 }
-

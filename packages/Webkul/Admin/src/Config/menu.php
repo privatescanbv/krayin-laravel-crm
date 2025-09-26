@@ -191,11 +191,12 @@ return [
         'icon-class' => 'icon-settings-pipeline',
     ],
     [
-        'key'        => 'settings.resources',
+        'key'        => 'settings.clinics.reources',
         'name'       => 'admin::app.layouts.resources',
         'info'       => 'admin::app.layouts.resources-info',
         'route'      => 'admin.settings.resources.index',
-        'sort'       => 5,
+        'sort'       => 2
+        ,
         'icon-class' => 'icon-setting',
     ],
     [

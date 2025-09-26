@@ -9,6 +9,9 @@ use Webkul\User\Models\User;
 beforeEach(function () {
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
     test()->withoutMiddleware(CanInstall::class);
+
+    $user = makeUser();
+    $this->actingAs($user, 'user');
 });
 
 function makeUser(array $attrs = []): User
@@ -25,9 +28,6 @@ function getDatagridIds($response): array
 }
 
 test('resources index returns datagrid json', function () {
-    $user = makeUser();
-    $this->actingAs($user, 'user');
-
     $r1 = Resource::factory()->create();
     $r2 = Resource::factory()->create();
 
@@ -39,9 +39,6 @@ test('resources index returns datagrid json', function () {
 });
 
 test('can create resource', function () {
-    $user = makeUser();
-    $this->actingAs($user, 'user');
-
     $payload = [
         'type' => 'staff',
         'name' => 'Test Resource',
@@ -56,9 +53,6 @@ test('can create resource', function () {
 });
 
 test('can update resource', function () {
-    $user = makeUser();
-    $this->actingAs($user, 'user');
-
     $resource = Resource::factory()->create();
 
     $payload = [
@@ -77,9 +71,6 @@ test('can update resource', function () {
 });
 
 test('can delete resource', function () {
-    $user = makeUser();
-    $this->actingAs($user, 'user');
-
     $resource = Resource::factory()->create();
 
     $response = $this->deleteJson(route('admin.settings.resources.delete', ['id' => $resource->id]));
@@ -89,4 +80,3 @@ test('can delete resource', function () {
         'id' => $resource->id,
     ]);
 });
-

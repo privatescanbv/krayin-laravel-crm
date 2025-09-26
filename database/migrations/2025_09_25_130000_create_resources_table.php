@@ -11,7 +11,6 @@ return new class extends Migration
     {
         Schema::create('resources', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('type');
             $table->string('name');
             $table->unsignedBigInteger('resource_type_id');
             $table->unsignedBigInteger('clinic_id')->nullable();

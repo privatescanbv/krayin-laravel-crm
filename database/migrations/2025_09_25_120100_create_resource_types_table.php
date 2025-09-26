@@ -9,6 +9,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('resource_types')) {
+            return;
+        }
+
         Schema::create('resource_types', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name');

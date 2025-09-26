@@ -11,10 +11,11 @@ class ResourceDataGrid extends DataGrid
     public function prepareQueryBuilder(): Builder
     {
         $queryBuilder = DB::table('resources')
+            ->leftJoin('resource_types', 'resource_types.id', '=', 'resources.resource_type_id')
             ->addSelect(
                 'resources.id',
-                'resources.type',
-                'resources.name'
+                'resources.name',
+                'resource_types.name as resource_type_name'
             );
 
         $this->addFilter('id', 'resources.id');
@@ -33,19 +34,21 @@ class ResourceDataGrid extends DataGrid
             'sortable'   => true,
         ]);
 
+        // Removed deprecated 'type' column; it's replaced by relation to ResourceType
+
         $this->addColumn([
-            'index'      => 'type',
+            'index'      => 'name',
             'type'       => 'string',
-            'label'      => trans('admin::app.settings.resources.index.datagrid.type'),
+            'label'      => trans('admin::app.settings.resources.index.datagrid.name'),
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
         ]);
 
         $this->addColumn([
-            'index'      => 'name',
+            'index'      => 'resource_type_name',
             'type'       => 'string',
-            'label'      => trans('admin::app.settings.resources.index.datagrid.name'),
+            'label'      => trans('admin::app.settings.resources.index.datagrid.resource_type'),
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,

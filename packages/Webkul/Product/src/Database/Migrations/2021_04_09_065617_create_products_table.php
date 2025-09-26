@@ -15,17 +15,13 @@ return new class extends Migration
     {
         Schema::create('products', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('sku')->unique();
+            // SKU removed per requirements
             $table->string('name')->nullable();
+            $table->string('currency', 3)->default('EUR');
             $table->string('description')->nullable();
             $table->integer('quantity')->default(0);
             $table->decimal('price', 12, 4)->nullable();
-            $table->unsignedBigInteger('resource_type_id')->nullable();
-            $table->unsignedBigInteger('product_type_id')->nullable();
             $table->timestamps();
-
-            $table->foreign('resource_type_id')->references('id')->on('resource_types')->onDelete('set null');
-            $table->foreign('product_type_id')->references('id')->on('product_types')->onDelete('set null');
         });
     }
 

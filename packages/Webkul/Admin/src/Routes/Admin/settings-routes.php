@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\Settings\ClinicController;
+use App\Http\Controllers\Admin\Settings\PartnerProductController;
+use Webkul\Admin\Http\Controllers\Settings\PartnerProducts\ActivityController as PartnerProductActivityController;
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Settings\AttributeController;
 use Webkul\Admin\Http\Controllers\Settings\DataTransfer\ImportController;
@@ -75,6 +77,24 @@ Route::prefix('settings')->group(function () {
         Route::put('edit/{id}', 'update')->name('admin.settings.product_types.update');
         Route::delete('', 'destroy')->name('admin.settings.product_types.delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.product_types.delete');
+    });
+
+    /**
+     * Partner Products routes.
+     */
+    Route::controller(PartnerProductController::class)->prefix('partner-products')->group(function () {
+        Route::get('', 'index')->name('admin.settings.partner_products.index');
+        Route::get('create', 'create')->name('admin.settings.partner_products.create');
+        Route::post('create', 'store')->name('admin.settings.partner_products.store');
+        Route::get('view/{id}', 'view')->name('admin.settings.partner_products.view');
+        Route::get('edit/{id}', 'edit')->name('admin.settings.partner_products.edit');
+        Route::put('edit/{id}', 'update')->name('admin.settings.partner_products.update');
+        Route::delete('', 'destroy')->name('admin.settings.partner_products.delete');
+        Route::delete('{id}', 'destroy')->name('admin.settings.partner_products.delete');
+
+        Route::controller(PartnerProductActivityController::class)->prefix('{id}/activities')->group(function () {
+            Route::get('', 'index')->name('admin.settings.partner_products.activities.index');
+        });
     });
 
     /**

@@ -1,46 +1,38 @@
 <?php
 
-namespace App\Models;
+namespace App\Models\Abstracts;
 
+use App\Models\ResourceType;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Resource extends Model
+abstract class BaseProduct extends Model
 {
     use HasAuditTrail, HasFactory;
 
-    protected $table = 'resources';
-
     protected $fillable = [
-        'external_id',
+        'currency',
+        'sales_price',
         'name',
+        'active',
+        'description',
+        'discount_info',
         'resource_type_id',
-        'clinic_id',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
-        'resource_type_id' => 'integer',
-        'clinic_id'        => 'integer',
+        'sales_price'      => 'decimal:2',
+        'active'           => 'boolean',
         'resource_type_id' => 'integer',
         'created_by'       => 'integer',
         'updated_by'       => 'integer',
     ];
 
-    public function clinic()
-    {
-        return $this->belongsTo(Clinic::class);
-    }
-
     public function resourceType()
     {
         return $this->belongsTo(ResourceType::class);
-    }
-
-    public function shifts()
-    {
-        return $this->hasMany(Shift::class);
     }
 }

@@ -13,6 +13,7 @@ class ProductType extends Model
     protected $table = 'product_types';
 
     protected $fillable = [
+        'external_id',
         'name',
         'description',
         'created_by',

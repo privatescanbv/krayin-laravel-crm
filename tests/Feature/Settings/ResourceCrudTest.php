@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Resource;
+use App\Models\ResourceType;
 use Webkul\Installer\Http\Middleware\CanInstall;
 
 beforeEach(function () {
@@ -25,9 +26,11 @@ test('resources index returns datagrid json', function () {
 });
 
 test('can create resource', function () {
+    $resourceType = ResourceType::factory()->create();
+
     $payload = [
-        'type' => 'staff',
-        'name' => 'Test Resource',
+        'name'             => 'Test Resource',
+        'resource_type_id' => $resourceType->id,
     ];
 
     $response = $this->postJson(route('admin.settings.resources.store'), $payload);
@@ -42,9 +45,9 @@ test('can update resource', function () {
     $resource = Resource::factory()->create();
 
     $payload = [
-        'type'    => 'room',
-        'name'    => 'Updated Resource',
-        '_method' => 'put',
+        'name'             => 'Updated Resource',
+        'resource_type_id' => $resource->resource_type_id,
+        '_method'          => 'put',
     ];
 
     $response = $this->postJson(route('admin.settings.resources.update', ['id' => $resource->id]), $payload);

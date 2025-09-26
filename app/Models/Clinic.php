@@ -13,6 +13,7 @@ class Clinic extends Model
     protected $table = 'clinics';
 
     protected $fillable = [
+        'external_id',
         'name',
         'emails',
         'phones',
@@ -31,5 +32,10 @@ class Clinic extends Model
     public function address()
     {
         return $this->belongsTo(Address::class);
+    }
+
+    public function partnerProducts()
+    {
+        return $this->belongsToMany(PartnerProduct::class, 'clinic_partner_product');
     }
 }

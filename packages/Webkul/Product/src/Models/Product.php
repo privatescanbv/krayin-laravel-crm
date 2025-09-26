@@ -15,6 +15,7 @@ use Webkul\Warehouse\Models\WarehouseProxy;
 use App\Models\ResourceType;
 use App\Models\ProductType;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Enums\Currency;
 
 class Product extends Model implements ProductContract
 {
@@ -27,13 +28,17 @@ class Product extends Model implements ProductContract
      */
     protected $fillable = [
         'name',
-        'sku',
+        'currency',
         'description',
         'product_group_id',
         'quantity',
         'price',
         'resource_type_id',
         'product_type_id',
+    ];
+
+    protected $casts = [
+        'currency' => 'string',
     ];
 
     /**

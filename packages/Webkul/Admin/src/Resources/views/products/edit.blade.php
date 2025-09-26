@@ -51,6 +51,25 @@
                             @lang('admin::app.products.create.general')
                         </p>
 
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label class="required">
+                                @lang('admin::app.settings.partner_products.index.create.currency')
+                            </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="select"
+                                name="currency"
+                                rules="required"
+                                :label="trans('admin::app.settings.partner_products.index.create.currency')"
+                            >
+                                @foreach ($currencies as $currency)
+                                    <option value="{{ $currency['code'] }}" @selected(old('currency', $product->currency) === $currency['code'])>{{ $currency['label'] }}</option>
+                                @endforeach
+                            </x-admin::form.control-group.control>
+
+                            <x-admin::form.control-group.error control-name="currency" />
+                        </x-admin::form.control-group>
+
                         {!! view_render_event('admin.products.edit.attributes.before', ['product' => $product]) !!}
 
                         <x-admin::attributes

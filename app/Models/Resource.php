@@ -13,7 +13,7 @@ class Resource extends Model
     protected $table = 'resources';
 
     protected $fillable = [
-        'type',
+        'resource_type_id',
         'name',
         'clinic_id',
         'created_by',
@@ -22,6 +22,7 @@ class Resource extends Model
 
     protected $casts = [
         'clinic_id'  => 'integer',
+        'resource_type_id' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer',
     ];
@@ -29,5 +30,10 @@ class Resource extends Model
     public function clinic()
     {
         return $this->belongsTo(Clinic::class);
+    }
+
+    public function resourceType()
+    {
+        return $this->belongsTo(ResourceType::class);
     }
 }

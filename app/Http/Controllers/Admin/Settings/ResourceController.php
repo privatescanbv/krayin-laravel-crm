@@ -33,7 +33,7 @@ class ResourceController extends Controller
     public function store(Request $request): RedirectResponse|JsonResponse
     {
         $request->validate([
-            'type' => 'required|string|max:100',
+            'resource_type_id' => 'required|exists:resource_types,id',
             'name' => 'required|unique:resources,name|max:100',
         ]);
 
@@ -66,7 +66,7 @@ class ResourceController extends Controller
     public function update(Request $request, int $id): RedirectResponse|JsonResponse
     {
         $request->validate([
-            'type' => 'required|string|max:100',
+            'resource_type_id' => 'required|exists:resource_types,id',
             'name' => 'required|max:100|unique:resources,name,'.$id,
         ]);
 

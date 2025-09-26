@@ -1,0 +1,41 @@
+@extends('admin::layouts.master')
+
+@section('page_title')
+    {{ trans('admin::app.settings.product_types.create.title') }}
+@endsection
+
+@section('content')
+    <div class="content full-page">
+        <div class="page-header">
+            <div class="page-title">
+                <h1>{{ trans('admin::app.settings.product_types.create.title') }}</h1>
+            </div>
+        </div>
+
+        <form method="POST" action="{{ route('admin.settings.product_types.store') }}" @submit.prevent="onSubmit">
+            @csrf
+
+            <div class="page-content">
+                <div class="form-container">
+                    <div class="control-group" :class="{'has-error': errors.has('name')}">
+                        <label for="name" class="required">{{ trans('admin::app.settings.product_types.create.name') }}</label>
+                        <input type="text" name="name" v-validate="'required'" value="{{ old('name') }}" data-vv-as="&quot;{{ trans('admin::app.settings.product_types.create.name') }}&quot;">
+                        <span class="control-error" v-if="errors.has('name')">@{{ errors.first('name') }}</span>
+                    </div>
+
+                    <div class="control-group">
+                        <label for="description">{{ trans('admin::app.settings.product_types.create.description') }}</label>
+                        <textarea name="description" rows="3">{{ old('description') }}</textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page-action">
+                <button type="submit" class="btn btn-lg btn-primary">
+                    {{ trans('admin::app.settings.product_types.create.save-btn') }}
+                </button>
+            </div>
+        </form>
+    </div>
+@endsection
+

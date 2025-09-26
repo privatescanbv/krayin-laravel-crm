@@ -12,6 +12,9 @@ use Webkul\Product\Contracts\Product as ProductContract;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\Warehouse\Models\LocationProxy;
 use Webkul\Warehouse\Models\WarehouseProxy;
+use App\Models\ResourceType;
+use App\Models\ProductType;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Product extends Model implements ProductContract
 {
@@ -29,6 +32,8 @@ class Product extends Model implements ProductContract
         'product_group_id',
         'quantity',
         'price',
+        'resource_type_id',
+        'product_type_id',
     ];
 
     /**
@@ -77,5 +82,15 @@ class Product extends Model implements ProductContract
     public function productGroup()
     {
         return $this->belongsTo(ProductGroupProxy::modelClass());
+    }
+
+    public function resourceType(): BelongsTo
+    {
+        return $this->belongsTo(ResourceType::class);
+    }
+
+    public function productType(): BelongsTo
+    {
+        return $this->belongsTo(ProductType::class);
     }
 }

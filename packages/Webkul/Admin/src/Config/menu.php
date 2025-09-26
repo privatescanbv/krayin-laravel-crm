@@ -205,6 +205,13 @@ return [
         'sort'       => 3,
         'icon-class' => 'icon-setting',
     ], [
+        'key'        => 'settings.clinics.product_types',
+        'name'       => 'admin::app.layouts.product_types',
+        'info'       => 'admin::app.layouts.product_types-info',
+        'route'      => 'admin.settings.product_types.index',
+        'sort'       => 4,
+        'icon-class' => 'icon-setting',
+    ], [
         'key'        => 'settings.lead',
         'name'       => 'admin::app.layouts.lead',
         'info'       => 'admin::app.layouts.lead-info',

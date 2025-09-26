@@ -820,6 +820,35 @@ return [
             ],
         ],
 
+        'product_types' => [
+            'index' => [
+                'title'           => 'Product Types',
+                'create-btn'      => 'Add Product Type',
+                'create-success'  => 'Product type created successfully.',
+                'update-success'  => 'Product type updated successfully.',
+                'destroy-success' => 'Product type deleted successfully.',
+                'delete-failed'   => 'Failed to delete product type.',
+
+                'datagrid' => [
+                    'id'     => 'ID',
+                    'name'   => 'Name',
+                    'edit'   => 'Edit',
+                    'delete' => 'Delete',
+                ],
+
+                'edit' => [
+                    'title' => 'Edit Product Type',
+                ],
+
+                'create' => [
+                    'title'       => 'Create Product Type',
+                    'name'        => 'Name',
+                    'description' => 'Description',
+                    'save-btn'    => 'Save',
+                ],
+            ],
+        ],
+
         'resources' => [
             'index' => [
                 'title'           => 'Resources',
@@ -2505,6 +2534,8 @@ return [
         'clinics-info'         => 'Manage clinics',
         'resource_types'       => 'Resource Types',
         'resource_types-info'  => 'Manage resource types',
+        'product_types'        => 'Product Types',
+        'product_types-info'   => 'Manage product types',
         'resources'            => 'Resources',
         'resources-info'       => 'Add, edit or delete resources from CRM',
     ],

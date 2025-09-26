@@ -173,10 +173,20 @@ TABLE(Product, "product") {
   name: string
   description: text
   price: decimal
-  product_type: enum
+  FOREIGN_KEY(product_type_id): bigint
   created_by: bigint
   updated_by: bigint
   FOREIGN_KEY(resource_type_id): bigint
+}
+
+TABLE(ProductType, "product_type") {
+  PRIMARY_KEY(id): bigint
+  name: string
+  description: text
+  created_at: datetime
+  updated_at: datetime
+  created_by: bigint
+  updated_by: bigint
 }
 
 TABLE(ResourceType, "resourcetype") {
@@ -460,6 +470,7 @@ Address "0..1" -- "1" Organization
 Product "n" -- "0..*" ProductGroup
 Product "n" -- "0..*" PartnerProduct
 Product "1" -- "1" ResourceType
+Product "1" -- "1" ProductType
 ProductCategory "0..1" -- "n" ProductCategory : "parent"
 Clinic "0..*" -- "n" Resource
 Clinic "0..*" -- "n" PartnerProduct

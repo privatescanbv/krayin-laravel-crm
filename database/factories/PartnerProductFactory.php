@@ -12,7 +12,7 @@ class PartnerProductFactory extends Factory
     public function definition(): array
     {
         return [
-            'name'          => $this->faker->unique()->productName(),
+            'name'          => $this->faker->unique()->words(3, true),
             'currency'      => 'EUR',
             'sales_price'   => $this->faker->randomFloat(2, 10, 2000),
             'active'        => true,

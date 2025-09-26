@@ -9,14 +9,28 @@ class PartnerProduct extends BaseProduct
     protected $table = 'partner_products';
 
     protected $fillable = [
-        ...parent::fillable,
+        // base fields
+        'currency',
+        'sales_price',
+        'name',
+        'active',
+        'description',
+        'discount_info',
+        'resource_type_id',
+        'created_by',
+        'updated_by',
+        // partner specific
         'partner_name',
         'clinic_description',
         'duration',
     ];
 
     protected $casts = [
-        ...parent::casts,
+        'sales_price'      => 'decimal:2',
+        'active'           => 'boolean',
+        'resource_type_id' => 'integer',
+        'created_by'       => 'integer',
+        'updated_by'       => 'integer',
         'duration' => 'integer',
     ];
 }

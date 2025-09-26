@@ -4,135 +4,58 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\ClinicDataGrid;
 use App\Repositories\ClinicRepository;
-use Exception;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Event;
-use Illuminate\View\View;
-use Webkul\Admin\Http\Controllers\Controller;
 
-class ClinicController extends Controller
+class ClinicController extends SimpleEntityController
 {
-    public function __construct(protected ClinicRepository $clinicRepository) {}
-
-    public function index(Request $request): View|JsonResponse
+    public function __construct(protected ClinicRepository $clinicRepository)
     {
-        if ($request->ajax() || $request->wantsJson()) {
-            return datagrid(ClinicDataGrid::class)->process();
-        }
+        parent::__construct($clinicRepository);
 
-        return view('admin::settings.clinics.index');
+        $this->entityName       = 'clinic';
+        $this->datagridClass    = ClinicDataGrid::class;
+        $this->indexView        = 'admin::settings.clinics.index';
+        $this->createView       = 'admin::settings.clinics.create';
+        $this->editView         = 'admin::settings.clinics.edit';
+        $this->indexRoute       = 'admin.settings.clinics.index';
+        $this->permissionPrefix = 'settings.clinics';
     }
 
-    public function create(): View
-    {
-        return view('admin::settings.clinics.create');
-    }
-
-    public function store(Request $request): JsonResponse|RedirectResponse
+    protected function validateStore(Request $request): void
     {
         $request->validate([
             'name'   => 'required|unique:clinics,name|max:100',
             'emails' => 'nullable|array',
             'phones' => 'nullable|array',
         ]);
-
-        Event::dispatch('settings.clinic.create.before');
-
-        $clinic = $this->clinicRepository->create($request->all());
-
-        Event::dispatch('settings.clinic.create.after', $clinic);
-
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'data'    => $clinic,
-                'message' => trans('admin::app.settings.clinics.index.create-success'),
-            ], 200);
-        }
-
-        return redirect()
-            ->route('admin.settings.clinics.index')
-            ->with('success', trans('admin::app.settings.clinics.index.create-success'));
     }
 
-    public function edit(int $id): View
-    {
-        $clinic = $this->clinicRepository->findOrFail($id);
-
-        return view('admin::settings.clinics.edit', ['clinic' => $clinic]);
-    }
-
-    public function update(Request $request, int $id): RedirectResponse|JsonResponse
+    protected function validateUpdate(Request $request, int $id): void
     {
         $request->validate([
             'name'   => 'required|max:100|unique:clinics,name,'.$id,
             'emails' => 'nullable|array',
             'phones' => 'nullable|array',
         ]);
-
-        Event::dispatch('settings.clinic.update.before', $id);
-
-        $clinic = $this->clinicRepository->update($request->all(), $id);
-
-        Event::dispatch('settings.clinic.update.after', $clinic);
-
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'data'    => $clinic,
-                'message' => trans('admin::app.settings.clinics.index.update-success'),
-            ], 200);
-        }
-
-        return redirect()
-            ->route('admin.settings.clinics.index')
-            ->with('success', trans('admin::app.settings.clinics.index.update-success'));
     }
 
-    public function destroy(Request $request, ?int $id = null): JsonResponse|RedirectResponse
+    protected function getCreateSuccessMessage(): string
     {
-        // Allow id from request for routes that do not pass parameter
-        if (! $id) {
-            $indices = $request['indices'];
-            if (is_array($indices) && count($indices) > 0) {
-                $id = (int) $indices[0];
-            }
-        }
+        return trans('admin::app.settings.clinics.index.create-success');
+    }
 
-        if (! $id) {
-            return redirect()
-                ->route('admin.settings.clinics.index')
-                ->with('error', 'Geen geldig ID opgegeven.');
-        }
+    protected function getUpdateSuccessMessage(): string
+    {
+        return trans('admin::app.settings.clinics.index.update-success');
+    }
 
-        $clinic = $this->clinicRepository->findOrFail($id);
+    protected function getDestroySuccessMessage(): string
+    {
+        return trans('admin::app.settings.clinics.index.destroy-success');
+    }
 
-        try {
-            Event::dispatch('settings.clinic.delete.before', $id);
-
-            $clinic->delete();
-
-            Event::dispatch('settings.clinic.delete.after', $id);
-
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'message' => trans('admin::app.settings.clinics.index.destroy-success'),
-                ], 200);
-            }
-
-            return redirect()
-                ->route('admin.settings.clinics.index')
-                ->with('success', trans('admin::app.settings.clinics.index.destroy-success'));
-        } catch (Exception $exception) {
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'message' => trans('admin::app.settings.clinics.index.delete-failed'),
-                ], 400);
-            }
-
-            return redirect()
-                ->route('admin.settings.clinics.index')
-                ->with('error', trans('admin::app.settings.clinics.index.delete-failed'));
-        }
+    protected function getDeleteFailedMessage(): string
+    {
+        return trans('admin::app.settings.clinics.index.delete-failed');
     }
 }

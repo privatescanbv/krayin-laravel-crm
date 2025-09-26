@@ -43,22 +43,7 @@
                     <x-admin::form.control-group.error control-name="resource_type_id" />
                 </x-admin::form.control-group>
 
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.resources.index.create.type')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="type"
-                        value="{{ old('type', $resource->type) }}"
-                        rules="required|min:1|max:100"
-                        :label="trans('admin::app.settings.resources.index.create.type')"
-                        :placeholder="trans('admin::app.settings.resources.index.create.type')"
-                    />
-
-                    <x-admin::form.control-group.error control-name="type" />
-                </x-admin::form.control-group>
+                
 
                 <x-admin::form.control-group>
                     <x-admin::form.control-group.label class="required">

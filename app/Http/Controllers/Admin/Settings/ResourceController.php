@@ -42,7 +42,6 @@ class ResourceController extends SimpleEntityController
     protected function validateStore(Request $request): void
     {
         $request->validate([
-            'type'              => 'required|string|max:100',
             'name'              => 'required|unique:resources,name|max:100',
             'resource_type_id'  => 'required|exists:resource_types,id',
         ]);
@@ -51,7 +50,6 @@ class ResourceController extends SimpleEntityController
     protected function validateUpdate(Request $request, int $id): void
     {
         $request->validate([
-            'type'              => 'required|string|max:100',
             'name'              => 'required|max:100|unique:resources,name,'.$id,
             'resource_type_id'  => 'required|exists:resource_types,id',
         ]);

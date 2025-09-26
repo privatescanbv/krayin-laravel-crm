@@ -94,15 +94,17 @@ class AuditTrailServiceProvider extends ServiceProvider
     private function addAuditTrailEventListeners(string $modelClass): void
     {
         $modelClass::creating(function ($model) {
-            if (auth()->check()) {
-                $model->created_by = auth()->id();
-                $model->updated_by = auth()->id();
+            $auth = auth()->guard('user')->check() ? auth()->guard('user') : auth();
+            if ($auth->check()) {
+                $model->created_by = $auth->id();
+                $model->updated_by = $auth->id();
             }
         });
 
         $modelClass::updating(function ($model) {
-            if (auth()->check()) {
-                $model->updated_by = auth()->id();
+            $auth = auth()->guard('user')->check() ? auth()->guard('user') : auth();
+            if ($auth->check()) {
+                $model->updated_by = $auth->id();
             }
         });
     }

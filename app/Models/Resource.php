@@ -21,7 +21,7 @@ class Resource extends Model
     ];
 
     protected $casts = [
-        'clinic_id' => 'integer',
+        'clinic_id'  => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer',
     ];
@@ -31,4 +31,3 @@ class Resource extends Model
         return $this->belongsTo(Clinic::class);
     }
 }
-

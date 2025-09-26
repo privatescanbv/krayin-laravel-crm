@@ -1832,6 +1832,10 @@ return [
                 'datagrid' => [
                     'id'            => 'ID',
                     'partner_name'  => 'Partner Name',
+                    'name'          => 'Name',
+                    'currency'      => 'Currency',
+                    'sales_price'   => 'Sales Price',
+                    'active'        => 'Active',
                     'edit'          => 'Edit',
                     'delete'        => 'Delete',
                 ],
@@ -1842,8 +1846,16 @@ return [
 
                 'create' => [
                     'title'         => 'Create Partner Product',
+                    'name'          => 'Name',
+                    'currency'      => 'Currency',
+                    'sales_price'   => 'Sales Price',
+                    'active'        => 'Active',
                     'partner_name'  => 'Partner Name',
                     'description'   => 'Description',
+                    'discount_info' => 'Discount info',
+                    'resource_type' => 'Resource type',
+                    'clinic_description' => 'Clinic description',
+                    'duration'      => 'Duration (minutes)',
                     'save-btn'      => 'Save',
                 ],
             ],

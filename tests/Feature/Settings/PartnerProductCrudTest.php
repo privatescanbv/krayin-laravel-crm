@@ -26,8 +26,16 @@ test('partner products index returns datagrid json', function () {
 
 test('can create partner product', function () {
     $payload = [
-        'partner_name' => 'Acme Partner',
-        'description'  => 'Great partner product',
+        'name'               => 'MRI Scan',
+        'currency'           => 'EUR',
+        'sales_price'        => 199.99,
+        'active'             => 1,
+        'description'        => 'Great partner product',
+        'discount_info'      => 'Intro discount 10%',
+        'resource_type_id'   => null,
+        'partner_name'       => 'Acme Partner',
+        'clinic_description' => 'Omschrijving kliniek',
+        'duration'           => 60,
     ];
 
     $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
@@ -42,9 +50,17 @@ test('can update partner product', function () {
     $pp = PartnerProduct::factory()->create();
 
     $payload = [
-        'partner_name' => 'Updated Partner Name',
-        'description'  => 'Updated description',
-        '_method'      => 'put',
+        'name'               => 'CT Scan',
+        'currency'           => 'EUR',
+        'sales_price'        => 299.95,
+        'active'             => 0,
+        'description'        => 'Updated description',
+        'discount_info'      => null,
+        'resource_type_id'   => null,
+        'partner_name'       => 'Updated Partner Name',
+        'clinic_description' => 'Nieuwe omschrijving kliniek',
+        'duration'           => 45,
+        '_method'            => 'put',
     ];
 
     $response = $this->postJson(route('admin.settings.partner_products.update', ['id' => $pp->id]), $payload);

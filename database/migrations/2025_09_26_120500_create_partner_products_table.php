@@ -11,12 +11,26 @@ return new class extends Migration
     {
         Schema::create('partner_products', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->string('partner_name');
+
+            // Shared/base product fields
+            $table->string('currency', 3)->default('EUR');
+            $table->decimal('sales_price', 12, 2)->default(0);
+            $table->string('name');
+            $table->boolean('active')->default(true);
             $table->text('description')->nullable();
+            $table->text('discount_info')->nullable();
+            $table->unsignedBigInteger('resource_type_id')->nullable();
+
+            // Partner product only
+            $table->string('partner_name');
+            $table->text('clinic_description')->nullable();
+            $table->unsignedInteger('duration')->nullable(); // minutes
+
             $table->timestamps();
             AuditTrailMigrationHelper::addAuditTrailColumns($table);
 
             $table->unique('partner_name');
+            $table->foreign('resource_type_id')->references('id')->on('resource_types')->nullOnDelete();
         });
     }
 

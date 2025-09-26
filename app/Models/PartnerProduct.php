@@ -2,26 +2,22 @@
 
 namespace App\Models;
 
-use App\Traits\HasAuditTrail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\Abstracts\BaseProduct;
 
-class PartnerProduct extends Model
+class PartnerProduct extends BaseProduct
 {
-    use HasAuditTrail, HasFactory;
-
     protected $table = 'partner_products';
 
     protected $fillable = [
+        ...parent::fillable,
         'partner_name',
-        'description',
-        'created_by',
-        'updated_by',
+        'clinic_description',
+        'duration',
     ];
 
     protected $casts = [
-        'created_by' => 'integer',
-        'updated_by' => 'integer',
+        ...parent::casts,
+        'duration' => 'integer',
     ];
 }
 

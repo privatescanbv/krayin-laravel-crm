@@ -13,7 +13,11 @@ class PartnerProductDataGrid extends DataGrid
         $queryBuilder = DB::table('partner_products')
             ->addSelect(
                 'partner_products.id',
-                'partner_products.partner_name'
+                'partner_products.partner_name',
+                'partner_products.name',
+                'partner_products.currency',
+                'partner_products.sales_price',
+                'partner_products.active'
             );
 
         $this->addFilter('id', 'partner_products.id');
@@ -36,6 +40,42 @@ class PartnerProductDataGrid extends DataGrid
             'index'      => 'partner_name',
             'type'       => 'string',
             'label'      => trans('admin::app.settings.partner_products.index.datagrid.partner_name'),
+            'searchable' => true,
+            'filterable' => true,
+            'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'name',
+            'type'       => 'string',
+            'label'      => trans('admin::app.settings.partner_products.index.datagrid.name'),
+            'searchable' => true,
+            'filterable' => true,
+            'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'currency',
+            'type'       => 'string',
+            'label'      => trans('admin::app.settings.partner_products.index.datagrid.currency'),
+            'searchable' => true,
+            'filterable' => true,
+            'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'sales_price',
+            'type'       => 'price',
+            'label'      => trans('admin::app.settings.partner_products.index.datagrid.sales_price'),
+            'searchable' => true,
+            'filterable' => true,
+            'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'active',
+            'type'       => 'boolean',
+            'label'      => trans('admin::app.settings.partner_products.index.datagrid.active'),
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,

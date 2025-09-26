@@ -22,6 +22,122 @@
             </div>
 
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label class="required">
+                            @lang('admin::app.settings.partner_products.index.create.name')
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="text"
+                            name="name"
+                            rules="required|min:1|max:255"
+                            :label="trans('admin::app.settings.partner_products.index.create.name')"
+                            :placeholder="trans('admin::app.settings.partner_products.index.create.name')"
+                        />
+
+                        <x-admin::form.control-group.error control-name="name" />
+                    </x-admin::form.control-group>
+
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label class="required">
+                            @lang('admin::app.settings.partner_products.index.create.currency')
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="text"
+                            name="currency"
+                            value="EUR"
+                            rules="required|size:3"
+                            :label="trans('admin::app.settings.partner_products.index.create.currency')"
+                            :placeholder="trans('admin::app.settings.partner_products.index.create.currency')"
+                        />
+
+                        <x-admin::form.control-group.error control-name="currency" />
+                    </x-admin::form.control-group>
+
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label class="required">
+                            @lang('admin::app.settings.partner_products.index.create.sales_price')
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="number"
+                            step="0.01"
+                            name="sales_price"
+                            rules="required|numeric|min:0"
+                            :label="trans('admin::app.settings.partner_products.index.create.sales_price')"
+                            :placeholder="trans('admin::app.settings.partner_products.index.create.sales_price')"
+                        />
+
+                        <x-admin::form.control-group.error control-name="sales_price" />
+                    </x-admin::form.control-group>
+
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label class="required">
+                            @lang('admin::app.settings.partner_products.index.create.active')
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="select"
+                            name="active"
+                            rules="required|boolean"
+                            :label="trans('admin::app.settings.partner_products.index.create.active')"
+                        >
+                            <option value="1">@lang('admin::app.common.yes')</option>
+                            <option value="0">@lang('admin::app.common.no')</option>
+                        </x-admin::form.control-group.control>
+
+                        <x-admin::form.control-group.error control-name="active" />
+                    </x-admin::form.control-group>
+                </div>
+
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.settings.partner_products.index.create.description')
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.control
+                        type="textarea"
+                        name="description"
+                        :label="trans('admin::app.settings.partner_products.index.create.description')"
+                        :placeholder="trans('admin::app.settings.partner_products.index.create.description')"
+                    />
+
+                    <x-admin::form.control-group.error control-name="description" />
+                </x-admin::form.control-group>
+
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.settings.partner_products.index.create.discount_info')
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.control
+                        type="textarea"
+                        name="discount_info"
+                        :label="trans('admin::app.settings.partner_products.index.create.discount_info')"
+                        :placeholder="trans('admin::app.settings.partner_products.index.create.discount_info')"
+                    />
+
+                    <x-admin::form.control-group.error control-name="discount_info" />
+                </x-admin::form.control-group>
+
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.settings.partner_products.index.create.resource_type')
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.control
+                        type="text"
+                        name="resource_type_id"
+                        rules="nullable|integer"
+                        :label="trans('admin::app.settings.partner_products.index.create.resource_type')"
+                        :placeholder="trans('admin::app.settings.partner_products.index.create.resource_type')"
+                    />
+
+                    <x-admin::form.control-group.error control-name="resource_type_id" />
+                </x-admin::form.control-group>
+
                 <x-admin::form.control-group>
                     <x-admin::form.control-group.label class="required">
                         @lang('admin::app.settings.partner_products.index.create.partner_name')
@@ -40,17 +156,33 @@
 
                 <x-admin::form.control-group>
                     <x-admin::form.control-group.label>
-                        @lang('admin::app.settings.partner_products.index.create.description')
+                        @lang('admin::app.settings.partner_products.index.create.clinic_description')
                     </x-admin::form.control-group.label>
 
                     <x-admin::form.control-group.control
                         type="textarea"
-                        name="description"
-                        :label="trans('admin::app.settings.partner_products.index.create.description')"
-                        :placeholder="trans('admin::app.settings.partner_products.index.create.description')"
+                        name="clinic_description"
+                        :label="trans('admin::app.settings.partner_products.index.create.clinic_description')"
+                        :placeholder="trans('admin::app.settings.partner_products.index.create.clinic_description')"
                     />
 
-                    <x-admin::form.control-group.error control-name="description" />
+                    <x-admin::form.control-group.error control-name="clinic_description" />
+                </x-admin::form.control-group>
+
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.settings.partner_products.index.create.duration')
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.control
+                        type="number"
+                        name="duration"
+                        rules="nullable|integer|min:0"
+                        :label="trans('admin::app.settings.partner_products.index.create.duration')"
+                        :placeholder="trans('admin::app.settings.partner_products.index.create.duration')"
+                    />
+
+                    <x-admin::form.control-group.error control-name="duration" />
                 </x-admin::form.control-group>
             </div>
         </div>

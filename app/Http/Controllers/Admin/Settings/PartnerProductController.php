@@ -24,16 +24,38 @@ class PartnerProductController extends SimpleEntityController
     protected function validateStore(Request $request): void
     {
         $request->validate([
-            'partner_name' => 'required|unique:partner_products,partner_name|max:100',
-            'description'  => 'nullable|string',
+            // base fields
+            'currency'            => 'required|string|size:3',
+            'sales_price'         => 'required|numeric|min:0',
+            'name'                => 'required|string|max:255',
+            'active'              => 'required|boolean',
+            'description'         => 'nullable|string',
+            'discount_info'       => 'nullable|string',
+            'resource_type_id'    => 'nullable|integer|exists:resource_types,id',
+
+            // partner fields
+            'partner_name'        => 'required|unique:partner_products,partner_name|max:100',
+            'clinic_description'  => 'nullable|string',
+            'duration'            => 'nullable|integer|min:0',
         ]);
     }
 
     protected function validateUpdate(Request $request, int $id): void
     {
         $request->validate([
-            'partner_name' => 'required|max:100|unique:partner_products,partner_name,'.$id,
-            'description'  => 'nullable|string',
+            // base fields
+            'currency'            => 'required|string|size:3',
+            'sales_price'         => 'required|numeric|min:0',
+            'name'                => 'required|string|max:255',
+            'active'              => 'required|boolean',
+            'description'         => 'nullable|string',
+            'discount_info'       => 'nullable|string',
+            'resource_type_id'    => 'nullable|integer|exists:resource_types,id',
+
+            // partner fields
+            'partner_name'        => 'required|max:100|unique:partner_products,partner_name,'.$id,
+            'clinic_description'  => 'nullable|string',
+            'duration'            => 'nullable|integer|min:0',
         ]);
     }
 

@@ -21,10 +21,10 @@ class Resource extends Model
     ];
 
     protected $casts = [
-        'clinic_id'  => 'integer',
+        'clinic_id'        => 'integer',
         'resource_type_id' => 'integer',
-        'created_by' => 'integer',
-        'updated_by' => 'integer',
+        'created_by'       => 'integer',
+        'updated_by'       => 'integer',
     ];
 
     public function clinic()

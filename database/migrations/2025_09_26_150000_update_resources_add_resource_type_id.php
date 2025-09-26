@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('resources', function (Blueprint $table) {
-            if (!Schema::hasColumn('resources', 'resource_type_id')) {
+            if (! Schema::hasColumn('resources', 'resource_type_id')) {
                 $table->unsignedBigInteger('resource_type_id')->after('id');
                 $table->foreign('resource_type_id')->references('id')->on('resource_types')->onDelete('cascade');
             }
@@ -23,7 +23,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('resources', function (Blueprint $table) {
-            if (!Schema::hasColumn('resources', 'type')) {
+            if (! Schema::hasColumn('resources', 'type')) {
                 $table->string('type')->after('id');
             }
 
@@ -34,4 +34,3 @@ return new class extends Migration
         });
     }
 };
-

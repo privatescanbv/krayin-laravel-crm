@@ -51,4 +51,3 @@ test('resource_type_audit_trail_uses_user_guard', function () {
     expect($type->created_by)->toBe($user1->id)
         ->and($type->updated_by)->toBe($user2->id);
 });
-

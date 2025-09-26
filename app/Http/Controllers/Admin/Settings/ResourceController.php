@@ -34,7 +34,7 @@ class ResourceController extends Controller
     {
         $request->validate([
             'resource_type_id' => 'required|exists:resource_types,id',
-            'name' => 'required|unique:resources,name|max:100',
+            'name'             => 'required|unique:resources,name|max:100',
         ]);
 
         Event::dispatch('settings.resource.create.before');
@@ -67,7 +67,7 @@ class ResourceController extends Controller
     {
         $request->validate([
             'resource_type_id' => 'required|exists:resource_types,id',
-            'name' => 'required|max:100|unique:resources,name,'.$id,
+            'name'             => 'required|max:100|unique:resources,name,'.$id,
         ]);
 
         Event::dispatch('settings.resource.update.before', $id);

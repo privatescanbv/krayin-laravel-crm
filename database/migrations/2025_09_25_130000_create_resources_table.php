@@ -13,11 +13,13 @@ return new class extends Migration
             $table->bigIncrements('id');
             $table->string('type');
             $table->string('name');
+            $table->unsignedBigInteger('resource_type_id');
             $table->unsignedBigInteger('clinic_id')->nullable();
             $table->timestamps();
             AuditTrailMigrationHelper::addAuditTrailColumns($table);
 
             $table->index('name');
+            $table->foreign('resource_type_id')->references('id')->on('resource_types')->onDelete('restrict');
             $table->foreign('clinic_id')->references('id')->on('clinics')->onDelete('set null');
         });
     }

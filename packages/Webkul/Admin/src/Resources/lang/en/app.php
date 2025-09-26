@@ -843,7 +843,7 @@ return [
 
                 'create' => [
                     'title'       => 'Create Resource',
-                    'type'        => 'Type',
+                    'resource_type' => 'Resource Type',
                     'name'        => 'Name',
                     'save-btn'    => 'Save',
                 ],

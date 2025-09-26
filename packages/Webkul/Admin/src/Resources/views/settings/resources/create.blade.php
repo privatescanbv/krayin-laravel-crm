@@ -24,19 +24,25 @@
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <x-admin::form.control-group>
                     <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.resources.index.create.type')
+                        @lang('admin::app.settings.resources.index.create.resource_type')
                     </x-admin::form.control-group.label>
 
                     <x-admin::form.control-group.control
-                        type="text"
-                        name="type"
-                        rules="required|min:1|max:100"
-                        :label="trans('admin::app.settings.resources.index.create.type')"
-                        :placeholder="trans('admin::app.settings.resources.index.create.type')"
-                    />
+                        type="select"
+                        name="resource_type_id"
+                        rules="required|numeric"
+                        :label="trans('admin::app.settings.resources.index.create.resource_type')"
+                    >
+                        <option value="">@lang('admin::app.select')</option>
+                        @foreach ($resourceTypes as $type)
+                            <option value="{{ $type->id }}">{{ $type->name }}</option>
+                        @endforeach
+                    </x-admin::form.control-group.control>
 
-                    <x-admin::form.control-group.error control-name="type" />
+                    <x-admin::form.control-group.error control-name="resource_type_id" />
                 </x-admin::form.control-group>
+
+                
 
                 <x-admin::form.control-group>
                     <x-admin::form.control-group.label class="required">

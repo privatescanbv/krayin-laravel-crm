@@ -133,13 +133,16 @@
                     </x-admin::form.control-group.label>
 
                     <x-admin::form.control-group.control
-                        type="text"
+                        type="select"
                         name="resource_type_id"
-                        value="{{ old('resource_type_id', $partner_products->resource_type_id) }}"
-                        rules="nullable|integer"
+                        rules="nullable|numeric"
                         :label="trans('admin::app.settings.partner_products.index.create.resource_type')"
-                        :placeholder="trans('admin::app.settings.partner_products.index.create.resource_type')"
-                    />
+                    >
+                        <option value="">@lang('admin::app.select')</option>
+                        @foreach ($resourceTypes as $type)
+                            <option value="{{ $type->id }}" @selected(old('resource_type_id', $partner_products->resource_type_id) == $type->id)>{{ $type->name }}</option>
+                        @endforeach
+                    </x-admin::form.control-group.control>
 
                     <x-admin::form.control-group.error control-name="resource_type_id" />
                 </x-admin::form.control-group>

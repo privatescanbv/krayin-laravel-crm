@@ -4,7 +4,10 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\PartnerProductDataGrid;
 use App\Repositories\PartnerProductRepository;
+use App\Models\ResourceType;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class PartnerProductController extends SimpleEntityController
 {
@@ -19,6 +22,30 @@ class PartnerProductController extends SimpleEntityController
         $this->editView = 'admin::settings.partner_products.edit';
         $this->indexRoute = 'admin.settings.partner_products.index';
         $this->permissionPrefix = 'settings.partner_products';
+    }
+
+    protected function getCreateViewData(Request $request): array
+    {
+        return [
+            'resourceTypes' => ResourceType::orderBy('name')->get(['id', 'name']),
+        ];
+    }
+
+    protected function getEditViewData(Request $request, Model $entity): array
+    {
+        return [
+            'partner_products' => $entity,
+            'resourceTypes'    => ResourceType::orderBy('name')->get(['id', 'name']),
+        ];
+    }
+
+    public function view(int $id): View
+    {
+        $partnerProduct = $this->partnerProductRepository->findOrFail($id);
+
+        return view('admin::settings.partner_products.view', [
+            'partner_product' => $partnerProduct,
+        ]);
     }
 
     protected function validateStore(Request $request): void

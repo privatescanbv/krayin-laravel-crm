@@ -2,6 +2,7 @@
 
 namespace App\Models\Abstracts;
 
+use App\Models\ResourceType;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -29,4 +30,9 @@ abstract class BaseProduct extends Model
         'created_by'       => 'integer',
         'updated_by'       => 'integer',
     ];
+
+    public function resourceType()
+    {
+        return $this->belongsTo(ResourceType::class);
+    }
 }

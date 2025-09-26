@@ -84,8 +84,8 @@
                             rules="required|boolean"
                             :label="trans('admin::app.settings.partner_products.index.create.active')"
                         >
-                            <option value="1">@lang('admin::app.common.yes')</option>
-                            <option value="0">@lang('admin::app.common.no')</option>
+                            <option value="1" @selected(old('active', 1))>@lang('admin::app.common.yes')</option>
+                            <option value="0" @selected(! old('active', 1))>@lang('admin::app.common.no')</option>
                         </x-admin::form.control-group.control>
 
                         <x-admin::form.control-group.error control-name="active" />
@@ -122,21 +122,25 @@
                     <x-admin::form.control-group.error control-name="discount_info" />
                 </x-admin::form.control-group>
 
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        @lang('admin::app.settings.partner_products.index.create.resource_type')
-                    </x-admin::form.control-group.label>
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            @lang('admin::app.settings.partner_products.index.create.resource_type')
+                        </x-admin::form.control-group.label>
 
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="resource_type_id"
-                        rules="nullable|integer"
-                        :label="trans('admin::app.settings.partner_products.index.create.resource_type')"
-                        :placeholder="trans('admin::app.settings.partner_products.index.create.resource_type')"
-                    />
+                        <x-admin::form.control-group.control
+                            type="select"
+                            name="resource_type_id"
+                            rules="nullable|numeric"
+                            :label="trans('admin::app.settings.partner_products.index.create.resource_type')"
+                        >
+                            <option value="">@lang('admin::app.select')</option>
+                            @foreach ($resourceTypes as $type)
+                                <option value="{{ $type->id }}">{{ $type->name }}</option>
+                            @endforeach
+                        </x-admin::form.control-group.control>
 
-                    <x-admin::form.control-group.error control-name="resource_type_id" />
-                </x-admin::form.control-group>
+                        <x-admin::form.control-group.error control-name="resource_type_id" />
+                    </x-admin::form.control-group>
 
                 <x-admin::form.control-group>
                     <x-admin::form.control-group.label class="required">

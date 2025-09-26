@@ -190,7 +190,7 @@ return [
         'sort'       => 1,
         'icon-class' => 'icon-settings-pipeline',
     ], [
-        'key'        => 'settings.partner_products',
+        'key'        => 'settings.clinics.partner_products',
         'name'       => 'admin::app.layouts.partner_products',
         'info'       => 'admin::app.layouts.partner_products-info',
         'route'      => 'admin.settings.partner_products.index',

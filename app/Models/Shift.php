@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Shift extends BaseModel
 {
-    use HasAuditTrail, HasFactory;
+    use HasFactory, HasAuditTrail;
 
     protected $table = 'shifts';
 
@@ -33,3 +33,4 @@ class Shift extends BaseModel
         return $this->belongsTo(Resource::class);
     }
 }
+

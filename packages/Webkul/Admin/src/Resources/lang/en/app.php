@@ -1848,6 +1848,47 @@ return [
                 'update-success'    => 'Import updated successfully.',
             ],
         ],
+
+        'partner_products' => [
+            'index' => [
+                'title'           => 'Partner Products',
+                'create-btn'      => 'Add Partner Product',
+                'create-success'  => 'Partner product created successfully.',
+                'update-success'  => 'Partner product updated successfully.',
+                'destroy-success' => 'Partner product deleted successfully.',
+                'delete-failed'   => 'Failed to delete partner product.',
+
+                'datagrid' => [
+                    'id'            => 'ID',
+                    'partner_name'  => 'Partner Name',
+                    'name'          => 'Name',
+                    'currency'      => 'Currency',
+                    'sales_price'   => 'Sales Price',
+                    'active'        => 'Active',
+                    'edit'          => 'Edit',
+                    'delete'        => 'Delete',
+                ],
+
+                'edit' => [
+                    'title' => 'Edit Partner Product',
+                ],
+
+                'create' => [
+                    'title'         => 'Create Partner Product',
+                    'name'          => 'Name',
+                    'currency'      => 'Currency',
+                    'sales_price'   => 'Sales Price',
+                    'active'        => 'Active',
+                    'partner_name'  => 'Partner Name',
+                    'description'   => 'Description',
+                    'discount_info' => 'Discount info',
+                    'resource_type' => 'Resource type',
+                    'clinic_description' => 'Clinic description',
+                    'duration'      => 'Duration (minutes)',
+                    'save-btn'      => 'Save',
+                ],
+            ],
+        ],
     ],
 
     'activities' => [
@@ -2532,6 +2573,8 @@ return [
         'workflow-leads'       => 'Backoffice',
         'clinics'              => 'Clinics',
         'clinics-info'         => 'Manage clinics',
+        'partner_products'     => 'Partner Products',
+        'partner_products-info'=> 'Manage partner products',
         'resource_types'       => 'Resource Types',
         'resource_types-info'  => 'Manage resource types',
         'product_types'        => 'Product Types',

@@ -220,6 +220,18 @@ Breadcrumbs::for('settings.clinics.create', function (BreadcrumbTrail $trail) {
     $trail->push(trans('admin::app.settings.clinics.index.create.title'), route('admin.settings.clinics.create'));
 });
 
+// Settings > Partner Products
+Breadcrumbs::for('settings.partner_products', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings');
+    $trail->push(trans('admin::app.layouts.partner_products'), route('admin.settings.partner_products.index'));
+});
+
+// Settings > Partner Products > Create
+Breadcrumbs::for('settings.partner_products.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings.partner_products');
+    $trail->push(trans('admin::app.settings.partner_products.index.create.title'), route('admin.settings.partner_products.create'));
+});
+
 // Dashboard > Groups > Create Group
 Breadcrumbs::for('settings.groups.create', function (BreadcrumbTrail $trail) {
     $trail->parent('settings.groups');

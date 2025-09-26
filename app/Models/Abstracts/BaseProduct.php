@@ -30,4 +30,3 @@ abstract class BaseProduct extends Model
         'updated_by'       => 'integer',
     ];
 }
-

@@ -79,4 +79,3 @@ class PartnerProductController extends SimpleEntityController
         return trans('admin::app.settings.partner_products.index.delete-failed');
     }
 }
-

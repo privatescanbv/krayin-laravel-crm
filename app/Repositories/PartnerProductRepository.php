@@ -12,4 +12,3 @@ class PartnerProductRepository extends Repository
         return PartnerProduct::class;
     }
 }
-

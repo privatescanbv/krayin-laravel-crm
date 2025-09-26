@@ -31,7 +31,6 @@ class PartnerProduct extends BaseProduct
         'resource_type_id' => 'integer',
         'created_by'       => 'integer',
         'updated_by'       => 'integer',
-        'duration' => 'integer',
+        'duration'         => 'integer',
     ];
 }
-

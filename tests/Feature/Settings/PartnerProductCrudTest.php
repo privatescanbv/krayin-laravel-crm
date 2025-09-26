@@ -82,4 +82,3 @@ test('can delete partner product', function () {
         'id' => $pp->id,
     ]);
 });
-

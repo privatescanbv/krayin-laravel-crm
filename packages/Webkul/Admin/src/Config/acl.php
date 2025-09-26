@@ -320,6 +320,26 @@ return [
         'route' => ['admin.settings.clinics.delete'],
         'sort'  => 3,
     ], [
+        'key'   => 'settings.product_types',
+        'name'  => 'Product Types',
+        'route' => 'admin.settings.product_types.index',
+        'sort'  => 5,
+    ], [
+        'key'   => 'settings.product_types.create',
+        'name'  => 'admin::app.acl.create',
+        'route' => ['admin.settings.product_types.create', 'admin.settings.product_types.store'],
+        'sort'  => 1,
+    ], [
+        'key'   => 'settings.product_types.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.settings.product_types.edit', 'admin.settings.product_types.update'],
+        'sort'  => 2,
+    ], [
+        'key'   => 'settings.product_types.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => ['admin.settings.product_types.delete'],
+        'sort'  => 3,
+    ], [
         'key'   => 'settings.lead',
         'name'  => 'admin::app.acl.lead',
         'route' => ['admin.settings.pipelines.index', 'admin.settings.sources.index', 'admin.settings.types.index'],

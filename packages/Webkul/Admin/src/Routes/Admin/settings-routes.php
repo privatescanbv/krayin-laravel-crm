@@ -24,6 +24,7 @@ use Webkul\Admin\Http\Controllers\Settings\WebhookController;
 use Webkul\Admin\Http\Controllers\Settings\WorkflowController;
 use App\Http\Controllers\Admin\Settings\ResourceController;
 use App\Http\Controllers\Admin\Settings\ResourceTypeController;
+use App\Http\Controllers\Admin\Settings\ProductTypeController;
 
 /**
  * Settings routes.
@@ -61,6 +62,19 @@ Route::prefix('settings')->group(function () {
         // Some datagrid actions may send DELETE to base path; support both
         Route::delete('', 'destroy')->name('admin.settings.clinics.delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.clinics.delete');
+    });
+
+    /**
+     * Product Type routes.
+     */
+    Route::controller(ProductTypeController::class)->prefix('product-types')->group(function () {
+        Route::get('', 'index')->name('admin.settings.product_types.index');
+        Route::get('create', 'create')->name('admin.settings.product_types.create');
+        Route::post('create', 'store')->name('admin.settings.product_types.store');
+        Route::get('edit/{id}', 'edit')->name('admin.settings.product_types.edit');
+        Route::put('edit/{id}', 'update')->name('admin.settings.product_types.update');
+        Route::delete('', 'destroy')->name('admin.settings.product_types.delete');
+        Route::delete('{id}', 'destroy')->name('admin.settings.product_types.delete');
     });
 
     /**

@@ -52,7 +52,7 @@ class ResourceTypeController extends Controller
     {
         $resourceType = $this->resourceTypeRepository->findOrFail($id);
 
-        return view('admin::settings.resource_types.edit', compact('resourceType'));
+        return view('admin::settings.resource_types.edit', ['resourceType' => $resourceType]);
     }
 
     public function update(Request $request, int $id): RedirectResponse

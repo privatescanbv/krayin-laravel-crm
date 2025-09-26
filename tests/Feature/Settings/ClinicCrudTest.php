@@ -4,30 +4,16 @@ namespace Tests\Feature;
 
 use App\Models\Clinic;
 use Webkul\Installer\Http\Middleware\CanInstall;
-use Webkul\User\Models\User;
 
 beforeEach(function () {
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
     test()->withoutMiddleware(CanInstall::class);
-});
 
-function makeUser(array $attrs = []): User
-{
-    return User::factory()->create(array_merge(['status' => 1], $attrs));
-}
-
-function getDatagridIds($response): array
-{
-    $payload = $response->json();
-    $records = $payload['records'] ?? [];
-
-    return collect($records)->pluck('id')->all();
-}
-
-test('clinics index returns datagrid json', function () {
     $user = makeUser();
     $this->actingAs($user, 'user');
+});
 
+test('clinics index returns datagrid json', function () {
     $c1 = Clinic::factory()->create();
     $c2 = Clinic::factory()->create();
 
@@ -39,9 +25,6 @@ test('clinics index returns datagrid json', function () {
 });
 
 test('can create clinic', function () {
-    $user = makeUser();
-    $this->actingAs($user, 'user');
-
     $payload = [
         'name'   => 'Test Clinic',
         'emails' => ['info@testclinic.tld'],
@@ -57,9 +40,6 @@ test('can create clinic', function () {
 });
 
 test('can update clinic', function () {
-    $user = makeUser();
-    $this->actingAs($user, 'user');
-
     $clinic = Clinic::factory()->create();
 
     $payload = [
@@ -79,9 +59,6 @@ test('can update clinic', function () {
 });
 
 test('can delete clinic', function () {
-    $user = makeUser();
-    $this->actingAs($user, 'user');
-
     $clinic = Clinic::factory()->create();
 
     $response = $this->deleteJson(route('admin.settings.clinics.delete', ['id' => $clinic->id]));

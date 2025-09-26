@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\Settings\ClinicController;
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Settings\AttributeController;
 use Webkul\Admin\Http\Controllers\Settings\DataTransfer\ImportController;

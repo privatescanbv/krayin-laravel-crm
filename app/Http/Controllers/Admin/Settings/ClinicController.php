@@ -16,9 +16,9 @@ class ClinicController extends Controller
 {
     public function __construct(protected ClinicRepository $clinicRepository) {}
 
-    public function index(): View|JsonResponse
+    public function index(Request $request): View|JsonResponse
     {
-        if (request()->ajax() || request()->wantsJson()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return datagrid(ClinicDataGrid::class)->process();
         }
 
@@ -44,7 +44,7 @@ class ClinicController extends Controller
 
         Event::dispatch('settings.clinic.create.after', $clinic);
 
-        if (request()->ajax() || request()->wantsJson()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'data'    => $clinic,
                 'message' => trans('admin::app.settings.clinics.index.create-success'),
@@ -60,12 +60,12 @@ class ClinicController extends Controller
     {
         $clinic = $this->clinicRepository->findOrFail($id);
 
-        return view('admin::settings.clinics.edit', compact('clinic'));
+        return view('admin::settings.clinics.edit', ['clinic' => $clinic]);
     }
 
-    public function update(int $id): RedirectResponse
+    public function update(Request $request, int $id): RedirectResponse|JsonResponse
     {
-        request()->validate(request(), [
+        $request->validate([
             'name'   => 'required|max:100|unique:clinics,name,'.$id,
             'emails' => 'nullable|array',
             'phones' => 'nullable|array',
@@ -73,15 +73,11 @@ class ClinicController extends Controller
 
         Event::dispatch('settings.clinic.update.before', $id);
 
-        $clinic = $this->clinicRepository->update([
-            'name'   => request('name'),
-            'emails' => request('emails'),
-            'phones' => request('phones'),
-        ], $id);
+        $clinic = $this->clinicRepository->update($request->all(), $id);
 
         Event::dispatch('settings.clinic.update.after', $clinic);
 
-        if (request()->ajax() || request()->wantsJson()) {
+        if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'data'    => $clinic,
                 'message' => trans('admin::app.settings.clinics.index.update-success'),
@@ -93,12 +89,11 @@ class ClinicController extends Controller
             ->with('success', trans('admin::app.settings.clinics.index.update-success'));
     }
 
-    public function destroy(?int $id = null): JsonResponse|RedirectResponse
+    public function destroy(Request $request, ?int $id = null): JsonResponse|RedirectResponse
     {
         // Allow id from request for routes that do not pass parameter
-        $id = $id ?? (int) request('id');
         if (! $id) {
-            $indices = request('indices');
+            $indices = $request['indices'];
             if (is_array($indices) && count($indices) > 0) {
                 $id = (int) $indices[0];
             }
@@ -119,7 +114,7 @@ class ClinicController extends Controller
 
             Event::dispatch('settings.clinic.delete.after', $id);
 
-            if (request()->ajax() || request()->wantsJson()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'message' => trans('admin::app.settings.clinics.index.destroy-success'),
                 ], 200);
@@ -129,7 +124,7 @@ class ClinicController extends Controller
                 ->route('admin.settings.clinics.index')
                 ->with('success', trans('admin::app.settings.clinics.index.destroy-success'));
         } catch (Exception $exception) {
-            if (request()->ajax() || request()->wantsJson()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'message' => trans('admin::app.settings.clinics.index.delete-failed'),
                 ], 400);

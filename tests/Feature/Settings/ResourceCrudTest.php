@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Resource;
 use Webkul\Installer\Http\Middleware\CanInstall;
-use Webkul\User\Models\User;
 
 beforeEach(function () {
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
@@ -13,19 +12,6 @@ beforeEach(function () {
     $user = makeUser();
     $this->actingAs($user, 'user');
 });
-
-function makeUser(array $attrs = []): User
-{
-    return User::factory()->create(array_merge(['status' => 1], $attrs));
-}
-
-function getDatagridIds($response): array
-{
-    $payload = $response->json();
-    $records = $payload['records'] ?? [];
-
-    return collect($records)->pluck('id')->all();
-}
 
 test('resources index returns datagrid json', function () {
     $r1 = Resource::factory()->create();

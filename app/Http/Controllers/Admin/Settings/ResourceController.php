@@ -60,7 +60,7 @@ class ResourceController extends Controller
             return response()->json(['data' => $resource]);
         }
 
-        return view('admin::settings.resources.edit', compact('resource'));
+        return view('admin::settings.resources.edit', ['resource' => $resource]);
     }
 
     public function update(Request $request, int $id): RedirectResponse|JsonResponse

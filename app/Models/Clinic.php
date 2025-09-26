@@ -13,6 +13,7 @@ class Clinic extends Model
     protected $table = 'clinics';
 
     protected $fillable = [
+        'external_id',
         'name',
         'emails',
         'phones',

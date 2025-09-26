@@ -10,6 +10,7 @@ class PartnerProduct extends BaseProduct
 
     protected $fillable = [
         // base fields
+        'external_id',
         'currency',
         'sales_price',
         'name',

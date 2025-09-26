@@ -37,13 +37,10 @@
                     
                     {!! view_render_event('admin.products.view.left.title.after', ['product' => $product]) !!}
 
-                    {!! view_render_event('admin.products.view.left.sku.before', ['product' => $product]) !!}
-
+                    <!-- Currency -->
                     <p class="break-words text-sm font-normal dark:text-white">
-                        @lang('admin::app.products.view.sku') : {{ $product->sku }}
+                        @lang('admin::app.settings.partner_products.index.create.currency') : {{ $product->currency }}
                     </p>
-
-                    {!! view_render_event('admin.products.view.left.sku.after', ['product' => $product]) !!}
                 </div>
 
                 {!! view_render_event('admin.products.view.left.activity_actions.before', ['product' => $product]) !!}

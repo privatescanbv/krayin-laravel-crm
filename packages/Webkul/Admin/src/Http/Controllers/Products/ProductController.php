@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Controllers\Products;
 
+use App\Enums\Currency;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
@@ -43,7 +44,9 @@ class ProductController extends Controller
      */
     public function create(): View
     {
-        return view('admin::products.create');
+        return view('admin::products.create', [
+            'currencies' => Currency::options(),
+        ]);
     }
 
     /**
@@ -95,7 +98,9 @@ class ProductController extends Controller
                 ];
             });
 
-        return view('admin::products.edit', compact('product', 'inventories'));
+        $currencies = Currency::options();
+
+        return view('admin::products.edit', compact('product', 'inventories', 'currencies'));
     }
 
     /**

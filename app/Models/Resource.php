@@ -13,6 +13,7 @@ class Resource extends Model
     protected $table = 'resources';
 
     protected $fillable = [
+        'external_id',
         'name',
         'resource_type_id',
         'clinic_id',

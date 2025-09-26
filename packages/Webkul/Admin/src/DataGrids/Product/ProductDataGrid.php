@@ -23,7 +23,6 @@ class ProductDataGrid extends DataGrid
             ->leftJoin('product_groups', 'products.product_group_id', '=', 'product_groups.id')
             ->select(
                 'products.id',
-                'products.sku',
                 'products.name',
                 'products.price',
                 'tags.name as tag_name',
@@ -53,14 +52,7 @@ class ProductDataGrid extends DataGrid
      */
     public function prepareColumns(): void
     {
-        $this->addColumn([
-            'index'      => 'sku',
-            'label'      => trans('admin::app.products.index.datagrid.sku'),
-            'type'       => 'string',
-            'sortable'   => true,
-            'searchable' => true,
-            'filterable' => true,
-        ]);
+        // SKU removed per requirements
 
         $this->addColumn([
             'index'      => 'name',

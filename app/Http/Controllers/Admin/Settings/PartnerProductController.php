@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\PartnerProductDataGrid;
+use App\Enums\Currency;
 use App\Repositories\PartnerProductRepository;
 use App\Models\ResourceType;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,7 @@ class PartnerProductController extends SimpleEntityController
     {
         return [
             'resourceTypes' => ResourceType::orderBy('name')->get(['id', 'name']),
+            'currencies'    => Currency::options(),
         ];
     }
 
@@ -36,6 +38,7 @@ class PartnerProductController extends SimpleEntityController
         return [
             'partner_products' => $entity,
             'resourceTypes'    => ResourceType::orderBy('name')->get(['id', 'name']),
+            'currencies'       => Currency::options(),
         ];
     }
 
@@ -52,7 +55,7 @@ class PartnerProductController extends SimpleEntityController
     {
         $request->validate([
             // base fields
-            'currency'            => 'required|string|size:3',
+            'currency'            => 'required|in:' . implode(',', Currency::codes()),
             'sales_price'         => 'required|numeric|min:0',
             'name'                => 'required|string|max:255',
             'active'              => 'required|boolean',
@@ -71,7 +74,7 @@ class PartnerProductController extends SimpleEntityController
     {
         $request->validate([
             // base fields
-            'currency'            => 'required|string|size:3',
+            'currency'            => 'required|in:' . implode(',', Currency::codes()),
             'sales_price'         => 'required|numeric|min:0',
             'name'                => 'required|string|max:255',
             'active'              => 'required|boolean',

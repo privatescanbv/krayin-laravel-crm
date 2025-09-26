@@ -45,13 +45,15 @@
                         </x-admin::form.control-group.label>
 
                         <x-admin::form.control-group.control
-                            type="text"
+                            type="select"
                             name="currency"
-                            value="EUR"
-                            rules="required|size:3"
+                            rules="required"
                             :label="trans('admin::app.settings.partner_products.index.create.currency')"
-                            :placeholder="trans('admin::app.settings.partner_products.index.create.currency')"
-                        />
+                        >
+                            @foreach ($currencies as $currency)
+                                <option value="{{ $currency['code'] }}" @selected(old('currency', 'EUR') === $currency['code'])>{{ $currency['label'] }}</option>
+                            @endforeach
+                        </x-admin::form.control-group.control>
 
                         <x-admin::form.control-group.error control-name="currency" />
                     </x-admin::form.control-group>

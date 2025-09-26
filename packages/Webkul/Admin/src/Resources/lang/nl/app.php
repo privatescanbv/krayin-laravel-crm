@@ -1731,6 +1731,35 @@ return [
         ],
     ],
 
+    'partner_products' => [
+        'index' => [
+            'title'           => 'Partnerproducten',
+            'create-btn'      => 'Partnerproduct toevoegen',
+            'create-success'  => 'Partnerproduct succesvol aangemaakt.',
+            'update-success'  => 'Partnerproduct succesvol bijgewerkt.',
+            'destroy-success' => 'Partnerproduct succesvol verwijderd.',
+            'delete-failed'   => 'Verwijderen van partnerproduct mislukt.',
+
+            'datagrid' => [
+                'id'            => 'ID',
+                'partner_name'  => 'Partnernaam',
+                'edit'          => 'Bewerken',
+                'delete'        => 'Verwijderen',
+            ],
+
+            'edit' => [
+                'title' => 'Partnerproduct bewerken',
+            ],
+
+            'create' => [
+                'title'         => 'Partnerproduct aanmaken',
+                'partner_name'  => 'Partnernaam',
+                'description'   => 'Omschrijving',
+                'save-btn'      => 'Opslaan',
+            ],
+        ],
+    ],
+
     'activities' => [
         'index' => [
             'title' => 'Activiteiten',
@@ -2395,6 +2424,8 @@ return [
         'workflow-leads' => 'Sales',
         'clinics' => 'Klinieken',
         'clinics-info' => 'Beheer klinieken',
+        'partner_products' => 'Partnerproducten',
+        'partner_products-info' => 'Beheer partnerproducten',
         'resource_types' => 'Resourcetypen',
         'resource_types-info' => 'Beheer resourcetypen',
     'resources' => 'Resources',

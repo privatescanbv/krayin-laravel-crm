@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\Settings\ClinicController;
+use App\Http\Controllers\Admin\Settings\PartnerProductController;
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Settings\AttributeController;
 use Webkul\Admin\Http\Controllers\Settings\DataTransfer\ImportController;
@@ -61,6 +62,19 @@ Route::prefix('settings')->group(function () {
         // Some datagrid actions may send DELETE to base path; support both
         Route::delete('', 'destroy')->name('admin.settings.clinics.delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.clinics.delete');
+    });
+
+    /**
+     * Partner Products routes.
+     */
+    Route::controller(PartnerProductController::class)->prefix('partner-products')->group(function () {
+        Route::get('', 'index')->name('admin.settings.partner_products.index');
+        Route::get('create', 'create')->name('admin.settings.partner_products.create');
+        Route::post('create', 'store')->name('admin.settings.partner_products.store');
+        Route::get('edit/{id}', 'edit')->name('admin.settings.partner_products.edit');
+        Route::put('edit/{id}', 'update')->name('admin.settings.partner_products.update');
+        Route::delete('', 'destroy')->name('admin.settings.partner_products.delete');
+        Route::delete('{id}', 'destroy')->name('admin.settings.partner_products.delete');
     });
 
     /**

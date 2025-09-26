@@ -190,11 +190,18 @@ return [
         'sort'       => 1,
         'icon-class' => 'icon-settings-pipeline',
     ], [
+        'key'        => 'settings.partner_products',
+        'name'       => 'admin::app.layouts.partner_products',
+        'info'       => 'admin::app.layouts.partner_products-info',
+        'route'      => 'admin.settings.partner_products.index',
+        'sort'       => 2,
+        'icon-class' => 'icon-setting',
+    ], [
         'key'        => 'settings.clinics.reources',
         'name'       => 'admin::app.layouts.resources',
         'info'       => 'admin::app.layouts.resources-info',
         'route'      => 'admin.settings.resources.index',
-        'sort'       => 2
+        'sort'       => 3
         ,
         'icon-class' => 'icon-setting',
     ], [
@@ -202,7 +209,7 @@ return [
         'name'       => 'admin::app.layouts.resource_types',
         'info'       => 'admin::app.layouts.resource_types-info',
         'route'      => 'admin.settings.resource_types.index',
-        'sort'       => 3,
+        'sort'       => 4,
         'icon-class' => 'icon-setting',
     ], [
         'key'        => 'settings.lead',

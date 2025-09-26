@@ -23,9 +23,9 @@ class Resource extends Model
 
     protected $casts = [
         'resource_type_id' => 'integer',
-        'clinic_id'  => 'integer',
-        'created_by' => 'integer',
-        'updated_by' => 'integer',
+        'clinic_id'        => 'integer',
+        'created_by'       => 'integer',
+        'updated_by'       => 'integer',
     ];
 
     public function clinic()

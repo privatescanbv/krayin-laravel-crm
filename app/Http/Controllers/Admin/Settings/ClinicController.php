@@ -12,12 +12,12 @@ class ClinicController extends SimpleEntityController
     {
         parent::__construct($clinicRepository);
 
-        $this->entityName       = 'clinic';
-        $this->datagridClass    = ClinicDataGrid::class;
-        $this->indexView        = 'admin::settings.clinics.index';
-        $this->createView       = 'admin::settings.clinics.create';
-        $this->editView         = 'admin::settings.clinics.edit';
-        $this->indexRoute       = 'admin.settings.clinics.index';
+        $this->entityName = 'clinic';
+        $this->datagridClass = ClinicDataGrid::class;
+        $this->indexView = 'admin::settings.clinics.index';
+        $this->createView = 'admin::settings.clinics.create';
+        $this->editView = 'admin::settings.clinics.edit';
+        $this->indexRoute = 'admin.settings.clinics.index';
         $this->permissionPrefix = 'settings.clinics';
     }
 

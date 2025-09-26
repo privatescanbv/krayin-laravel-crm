@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\DataGrids\Settings\ResourceDataGrid;
 use App\Repositories\ResourceRepository;
 use App\Repositories\ResourceTypeRepository;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 class ResourceController extends SimpleEntityController
@@ -15,12 +16,12 @@ class ResourceController extends SimpleEntityController
     ) {
         parent::__construct($resourceRepository);
 
-        $this->entityName       = 'resource';
-        $this->datagridClass    = ResourceDataGrid::class;
-        $this->indexView        = 'admin::settings.resources.index';
-        $this->createView       = 'admin::settings.resources.create';
-        $this->editView         = 'admin::settings.resources.edit';
-        $this->indexRoute       = 'admin.settings.resources.index';
+        $this->entityName = 'resource';
+        $this->datagridClass = ResourceDataGrid::class;
+        $this->indexView = 'admin::settings.resources.index';
+        $this->createView = 'admin::settings.resources.create';
+        $this->editView = 'admin::settings.resources.edit';
+        $this->indexRoute = 'admin.settings.resources.index';
         $this->permissionPrefix = 'settings.resources';
     }
 
@@ -31,7 +32,7 @@ class ResourceController extends SimpleEntityController
         ];
     }
 
-    protected function getEditViewData(Request $request, \Illuminate\Database\Eloquent\Model $entity): array
+    protected function getEditViewData(Request $request, Model $entity): array
     {
         return [
             'resource'      => $entity,

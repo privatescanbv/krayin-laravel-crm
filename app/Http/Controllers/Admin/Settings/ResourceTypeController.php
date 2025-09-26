@@ -12,12 +12,12 @@ class ResourceTypeController extends SimpleEntityController
     {
         parent::__construct($resourceTypeRepository);
 
-        $this->entityName       = 'resource_type';
-        $this->datagridClass    = ResourceTypeDataGrid::class;
-        $this->indexView        = 'admin::settings.resource_types.index';
-        $this->createView       = 'admin::settings.resource_types.create';
-        $this->editView         = 'admin::settings.resource_types.edit';
-        $this->indexRoute       = 'admin.settings.resource_types.index';
+        $this->entityName = 'resource_type';
+        $this->datagridClass = ResourceTypeDataGrid::class;
+        $this->indexView = 'admin::settings.resource_types.index';
+        $this->createView = 'admin::settings.resource_types.create';
+        $this->editView = 'admin::settings.resource_types.edit';
+        $this->indexRoute = 'admin.settings.resource_types.index';
         $this->permissionPrefix = 'settings.resource_types';
     }
 

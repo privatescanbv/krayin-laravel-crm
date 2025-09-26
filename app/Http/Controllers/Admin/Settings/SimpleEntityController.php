@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin\Settings;
 
-use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -178,4 +177,3 @@ abstract class SimpleEntityController extends Controller
 
     abstract protected function getDeleteFailedMessage(): string;
 }
-

@@ -13,7 +13,6 @@ class Resource extends Model
     protected $table = 'resources';
 
     protected $fillable = [
-        'type',
         'name',
         'resource_type_id',
         'clinic_id',
@@ -24,6 +23,7 @@ class Resource extends Model
     protected $casts = [
         'resource_type_id' => 'integer',
         'clinic_id'        => 'integer',
+        'resource_type_id' => 'integer',
         'created_by'       => 'integer',
         'updated_by'       => 'integer',
     ];

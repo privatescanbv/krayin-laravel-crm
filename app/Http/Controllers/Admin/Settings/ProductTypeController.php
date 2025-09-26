@@ -32,7 +32,7 @@ class ProductTypeController extends SimpleEntityController
     protected function validateUpdate(Request $request, int $id): void
     {
         $request->validate([
-            'name'        => 'required|max:100|unique:product_types,name,' . $id,
+            'name'        => 'required|max:100|unique:product_types,name,'.$id,
             'description' => 'nullable|string',
         ]);
     }
@@ -57,4 +57,3 @@ class ProductTypeController extends SimpleEntityController
         return trans('admin::app.settings.product_types.index.delete-failed');
     }
 }
-

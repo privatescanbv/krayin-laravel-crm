@@ -24,4 +24,3 @@ class ProductType extends Model
         'updated_by' => 'integer',
     ];
 }
-

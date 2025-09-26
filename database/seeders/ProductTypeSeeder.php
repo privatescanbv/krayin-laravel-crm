@@ -30,4 +30,3 @@ class ProductTypeSeeder extends Seeder
         }
     }
 }
-

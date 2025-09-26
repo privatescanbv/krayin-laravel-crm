@@ -42,9 +42,9 @@ test('can update product type', function () {
     $type = ProductType::factory()->create();
 
     $payload = [
-        'name'    => 'Updated Type',
+        'name'         => 'Updated Type',
         'description'  => 'Updated',
-        '_method' => 'put',
+        '_method'      => 'put',
     ];
 
     $response = $this->postJson(route('admin.settings.product_types.update', ['id' => $type->id]), $payload);
@@ -66,4 +66,3 @@ test('can delete product type', function () {
         'id' => $type->id,
     ]);
 });
-

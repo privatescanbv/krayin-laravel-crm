@@ -26,4 +26,3 @@ class ShiftFactory extends Factory
         ];
     }
 }
-

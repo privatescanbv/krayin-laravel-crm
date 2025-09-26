@@ -65,7 +65,7 @@ class PartnerProductDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'sales_price',
-            'type'       => 'price',
+            'type'       => 'number',
             'label'      => trans('admin::app.settings.partner_products.index.datagrid.sales_price'),
             'searchable' => true,
             'filterable' => true,

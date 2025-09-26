@@ -7,6 +7,7 @@ use App\Repositories\ResourceTypeRepository;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
@@ -29,19 +30,16 @@ class ResourceTypeController extends Controller
         return view('admin::settings.resource_types.create');
     }
 
-    public function store(): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
-        request()->validate(request(), [
+        $request->validate( [
             'name'        => 'required|unique:resource_types,name|max:100',
             'description' => 'nullable|string',
         ]);
 
         Event::dispatch('settings.resource_type.create.before');
 
-        $entity = $this->resourceTypeRepository->create([
-            'name'        => request('name'),
-            'description' => request('description'),
-        ]);
+        $entity = $this->resourceTypeRepository->create($request->all());
 
         Event::dispatch('settings.resource_type.create.after', $entity);
 
@@ -57,19 +55,16 @@ class ResourceTypeController extends Controller
         return view('admin::settings.resource_types.edit', compact('resourceType'));
     }
 
-    public function update(int $id): RedirectResponse
+    public function update(Request $request,int $id): RedirectResponse
     {
-        request()->validate(request(), [
+        $request->validate( [
             'name'        => 'required|max:100|unique:resource_types,name,'.$id,
             'description' => 'nullable|string',
         ]);
 
         Event::dispatch('settings.resource_type.update.before', $id);
 
-        $entity = $this->resourceTypeRepository->update([
-            'name'        => request('name'),
-            'description' => request('description'),
-        ], $id);
+        $entity = $this->resourceTypeRepository->update($request->all(), $id);
 
         Event::dispatch('settings.resource_type.update.after', $entity);
 
@@ -78,11 +73,10 @@ class ResourceTypeController extends Controller
             ->with('success', trans('admin::app.settings.resource_types.index.update-success'));
     }
 
-    public function destroy(?int $id = null): JsonResponse|RedirectResponse
+    public function destroy(Request $request, ?int $id = null): JsonResponse|RedirectResponse
     {
-        $id = $id ?? (int) request('id');
         if (! $id) {
-            $indices = request('indices');
+            $indices = $request['indices'];
             if (is_array($indices) && count($indices) > 0) {
                 $id = (int) $indices[0];
             }

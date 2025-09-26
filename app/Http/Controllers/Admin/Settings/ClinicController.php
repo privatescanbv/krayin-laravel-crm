@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Webkul\Admin\Http\Controllers\Controller;
 
@@ -29,9 +30,9 @@ class ClinicController extends Controller
         return view('admin::settings.clinics.create');
     }
 
-    public function store(): RedirectResponse
+    public function store(Request $request): JsonResponse|RedirectResponse
     {
-        request()->validate(request(), [
+        $request->validate([
             'name'   => 'required|unique:clinics,name|max:100',
             'emails' => 'nullable|array',
             'phones' => 'nullable|array',
@@ -39,13 +40,16 @@ class ClinicController extends Controller
 
         Event::dispatch('settings.clinic.create.before');
 
-        $clinic = $this->clinicRepository->create([
-            'name'   => request('name'),
-            'emails' => request('emails'),
-            'phones' => request('phones'),
-        ]);
+        $clinic = $this->clinicRepository->create($request->all());
 
         Event::dispatch('settings.clinic.create.after', $clinic);
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'data' => $clinic,
+                'message' => trans('admin::app.settings.clinics.index.create-success'),
+            ], 200);
+        }
 
         return redirect()
             ->route('admin.settings.clinics.index')
@@ -59,9 +63,9 @@ class ClinicController extends Controller
         return view('admin::settings.clinics.edit', compact('clinic'));
     }
 
-    public function update(int $id): RedirectResponse
+    public function update(Request $request, int $id): JsonResponse|RedirectResponse
     {
-        request()->validate(request(), [
+        $request->validate( [
             'name'   => 'required|max:100|unique:clinics,name,'.$id,
             'emails' => 'nullable|array',
             'phones' => 'nullable|array',
@@ -69,13 +73,16 @@ class ClinicController extends Controller
 
         Event::dispatch('settings.clinic.update.before', $id);
 
-        $clinic = $this->clinicRepository->update([
-            'name'   => request('name'),
-            'emails' => request('emails'),
-            'phones' => request('phones'),
-        ], $id);
+        $clinic = $this->clinicRepository->update($request->all(), $id);
 
         Event::dispatch('settings.clinic.update.after', $clinic);
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json([
+                'data' => $clinic,
+                'message' => trans('admin::app.settings.clinics.index.update-success'),
+            ], 200);
+        }
 
         return redirect()
             ->route('admin.settings.clinics.index')

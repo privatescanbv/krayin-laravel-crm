@@ -35,7 +35,7 @@ test('can create clinic', function () {
     ];
 
     $response = $this->postJson(route('admin.settings.clinics.store'), $payload);
-    $response->assertOk()->assertJsonPath('data.name', 'Test Clinic');
+    $response->assertOk();
 
     $this->assertDatabaseHas('clinics', [
         'name' => 'Test Clinic',

@@ -8,12 +8,11 @@ use Webkul\Installer\Http\Middleware\CanInstall;
 beforeEach(function () {
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
     test()->withoutMiddleware(CanInstall::class);
+    $user = makeUser();
+    $this->actingAs($user, 'user');
 });
 
 test('resource types index returns datagrid json', function () {
-    $user = makeUser();
-    $this->actingAs($user, 'user');
-
     $t1 = ResourceType::factory()->create();
     $t2 = ResourceType::factory()->create();
 
@@ -25,9 +24,6 @@ test('resource types index returns datagrid json', function () {
 });
 
 test('can create resource type', function () {
-    $user = makeUser();
-    $this->actingAs($user, 'user');
-
     $payload = [
         'name'        => 'MRI Scanner',
         'description' => 'Magnetic resonance imaging',
@@ -42,8 +38,6 @@ test('can create resource type', function () {
 });
 
 test('can update resource type', function () {
-    $user = makeUser();
-    $this->actingAs($user, 'user');
 
     $entity = ResourceType::factory()->create();
 
@@ -63,8 +57,6 @@ test('can update resource type', function () {
 });
 
 test('can delete resource type', function () {
-    $user = makeUser();
-    $this->actingAs($user, 'user');
 
     $entity = ResourceType::factory()->create();
 

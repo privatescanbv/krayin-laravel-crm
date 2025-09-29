@@ -25,7 +25,7 @@ class ShiftController extends Controller
             return datagrid(ShiftDataGrid::class, ['resourceId' => $resource->id])->process();
         }
 
-        return view('admin::settings.shifts.index', compact('resource'));
+        return view('admin::settings.shifts.index', ['resource' => $resource]);
     }
 
     public function create(Request $request, int $resourceId): View
@@ -34,7 +34,7 @@ class ShiftController extends Controller
 
         $resources = $this->resourceRepository->all();
 
-        return view('admin::settings.shifts.create', compact('resource', 'resources'));
+        return view('admin::settings.shifts.create', ['resource' => $resource, 'resources' => $resources]);
     }
 
     public function store(Request $request, int $resourceId): RedirectResponse|JsonResponse
@@ -60,7 +60,11 @@ class ShiftController extends Controller
         $shift = $this->shiftRepository->findOrFail($id);
         $resources = $this->resourceRepository->all();
 
-        return view('admin::settings.shifts.edit', compact('resource', 'shift', 'resources'));
+        return view('admin::settings.shifts.edit', [
+            'resource'  => $resource,
+            'shift'     => $shift,
+            'resources' => $resources,
+        ]);
     }
 
     public function update(Request $request, int $resourceId, int $id): RedirectResponse|JsonResponse

@@ -25,7 +25,7 @@ class ShiftDataGrid extends DataGrid
 
         $queryBuilder = DB::table('shifts')
             ->where('shifts.resource_id', $resourceId)
-            ->addSelect('shifts.id', 'shifts.period_start', 'shifts.period_end', 'shifts.notes', 'shifts.weekday_time_blocks');
+            ->addSelect('shifts.id', 'shifts.period_start', 'shifts.period_end', 'shifts.notes', 'shifts.weekday_time_blocks', 'shifts.available');
 
         $this->addFilter('id', 'shifts.id');
 
@@ -36,6 +36,23 @@ class ShiftDataGrid extends DataGrid
 
     public function prepareColumns(): void
     {
+        $this->addColumn([
+            'index'      => 'available',
+            'label'      => trans('admin::app.settings.shifts.fields.available'),
+            'type'       => 'boolean',
+            'searchable' => false,
+            'filterable' => true,
+            'sortable'   => false,
+            'closure'    => function ($row) {
+                $isAvailable = (bool) ($row->available ?? false);
+
+                return $isAvailable
+                    ? "<span class='icon-tick text-green-600 text-lg' title='".e(trans('admin::app.settings.shifts.fields.available'))."'></span>"
+                    : "<span class='icon-cross-large text-red-600 text-lg' title='".e(trans('admin::app.settings.shifts.fields.available'))."'></span>";
+            },
+            'escape'     => false,
+        ]);
+
         $this->addColumn([
             'index'      => 'id',
             'label'      => trans('admin::app.settings.shifts.datagrid.id'),

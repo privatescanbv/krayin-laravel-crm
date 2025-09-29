@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use Carbon\CarbonImmutable;
+use InvalidArgumentException;
 
 class Period
 {
@@ -11,7 +12,7 @@ class Period
         public readonly ?CarbonImmutable $end,
     ) {
         if ($this->start && $this->end && $this->end->lt($this->start)) {
-            throw new \InvalidArgumentException('End date must be after start date');
+            throw new InvalidArgumentException('End date must be after start date');
         }
     }
 

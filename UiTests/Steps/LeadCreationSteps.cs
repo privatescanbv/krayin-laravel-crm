@@ -35,13 +35,14 @@ namespace UiTests.Steps
         [When(@"I select the first person suggestion for query ""(.*)""")]
         public async Task WhenISelectFirstPersonForQuery(string query)
         {
-            // The first person lookup input inside step 1
-            var input = _driver.Page.GetByPlaceholder("Zoek persoon...");
+            // Use the multi-contact matcher search input
+            var input = _driver.Page.GetByPlaceholder("Zoek op naam, e-mail, telefoon...");
             await input.FillAsync(query);
-            // Wait dropdown and click first option
-            var firstOption = _driver.Page.Locator(".lookup__results .lookup-result, .lookup-result").First;
-            await firstOption.WaitForAsync(new() { State = WaitForSelectorState.Visible });
-            await firstOption.ClickAsync();
+
+            // Wait for the suggestions list to render and click the first suggestion
+            var firstSuggestion = _driver.Page.Locator("ul li").First;
+            await firstSuggestion.WaitForAsync(new() { State = WaitForSelectorState.Visible });
+            await firstSuggestion.ClickAsync();
         }
 
         [When("I go to step 2")]

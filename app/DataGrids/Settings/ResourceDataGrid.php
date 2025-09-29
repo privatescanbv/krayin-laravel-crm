@@ -16,7 +16,6 @@ class ResourceDataGrid extends DataGrid
 
     public function __construct(protected ClinicRepository $clinicRepository)
     {
-        parent::__construct();
     }
 
     public function prepareQueryBuilder(): Builder

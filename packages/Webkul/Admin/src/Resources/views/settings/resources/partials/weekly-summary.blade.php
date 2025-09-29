@@ -26,7 +26,9 @@
                         <span class="rounded border border-green-300 px-2 py-0.5 text-xs text-green-800 dark:border-green-700 dark:text-green-300">{{ $range['from'] }}–{{ $range['to'] }}</span>
                     @endforeach
                 @else
-                    <span class="text-xs text-gray-500">—</span>
+                    @if (! count($unavailable))
+                        <span class="text-xs text-gray-500">—</span>
+                    @endif
                 @endif
             </div>
             @if (count($unavailable) && count($available) === 0)

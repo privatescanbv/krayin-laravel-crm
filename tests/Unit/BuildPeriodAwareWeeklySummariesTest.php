@@ -121,3 +121,61 @@ it('computes net availability with an unavailable sub-period within same month',
     }
 });
 
+it('shows net availability 12:00–17:00 for first week sub-period within same month', function () {
+    // A: whole September available 08:00–17:00
+    // B: sub-period 2025-09-05 .. 2025-09-12 unavailable 08:00–12:00
+    $year = 2025;
+    $septStart = Carbon::createFromDate($year, 9, 1)->startOfDay();
+    $septEnd   = Carbon::createFromDate($year, 9, 30)->startOfDay();
+    $subStart  = Carbon::createFromDate($year, 9, 5)->startOfDay();
+    $subEnd    = Carbon::createFromDate($year, 9, 12)->startOfDay();
+
+    $availAllMonth = (object) [
+        'available' => true,
+        'period_start' => $septStart->copy(),
+        'period_end' => $septEnd->copy(),
+        'weekday_time_blocks' => [
+            1 => [[ 'from' => '08:00', 'to' => '17:00' ]],
+            2 => [[ 'from' => '08:00', 'to' => '17:00' ]],
+            3 => [[ 'from' => '08:00', 'to' => '17:00' ]],
+            4 => [[ 'from' => '08:00', 'to' => '17:00' ]],
+            5 => [[ 'from' => '08:00', 'to' => '17:00' ]],
+            6 => [[ 'from' => '08:00', 'to' => '17:00' ]],
+            7 => [[ 'from' => '08:00', 'to' => '17:00' ]],
+        ],
+    ];
+
+    $unavailSub = (object) [
+        'available' => false,
+        'period_start' => $subStart->copy(),
+        'period_end' => $subEnd->copy(),
+        'weekday_time_blocks' => [
+            1 => [[ 'from' => '08:00', 'to' => '12:00' ]],
+            2 => [[ 'from' => '08:00', 'to' => '12:00' ]],
+            3 => [[ 'from' => '08:00', 'to' => '12:00' ]],
+            4 => [[ 'from' => '08:00', 'to' => '12:00' ]],
+            5 => [[ 'from' => '08:00', 'to' => '12:00' ]],
+            6 => [[ 'from' => '08:00', 'to' => '12:00' ]],
+            7 => [[ 'from' => '08:00', 'to' => '12:00' ]],
+        ],
+    ];
+
+    $controller = new ResourceController(
+        Mockery::mock(ResourceRepository::class),
+        Mockery::mock(ResourceTypeRepository::class),
+        Mockery::mock(ShiftRepository::class),
+        Mockery::mock(ClinicRepository::class),
+    );
+
+    $method = (new ReflectionClass($controller))->getMethod('buildPeriodAwareWeeklySummaries');
+    $method->setAccessible(true);
+    $result = $method->invoke($controller, [$availAllMonth, $unavailSub]);
+
+    $label = $subStart->format('Y-m-d') . ' — ' . $subEnd->format('Y-m-d');
+    $segment = collect($result)->firstWhere('label', $label);
+    expect($segment)->not()->toBeNull();
+
+    // Monday availability should be 12:00–17:00
+    expect($segment['summary'][1]['available'])->toBe([[ 'from' => '12:00', 'to' => '17:00' ]]);
+});
+

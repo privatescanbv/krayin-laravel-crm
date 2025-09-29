@@ -1,15 +1,15 @@
 <?php
 
 use App\Http\Controllers\Admin\Settings\ResourceController;
-use App\Models\Shift;
 use App\Repositories\ClinicRepository;
 use App\Repositories\ResourceRepository;
 use App\Repositories\ResourceTypeRepository;
 use App\Repositories\ShiftRepository;
+use Illuminate\Support\Carbon;
 
 it('merges blocks and computes net availability minus unavailability', function () {
     // Build two shifts with overlapping Monday blocks, one available and one unavailable
-    $shiftAvailable = new Shift([
+    $shiftAvailable = (object) [
         'available'           => true,
         'weekday_time_blocks' => [
             1 => [
@@ -18,9 +18,9 @@ it('merges blocks and computes net availability minus unavailability', function 
                 ['from' => '12:00', 'to' => '13:00'], // adjacent to end -> merged into 08:00-13:00
             ],
         ],
-    ]);
+    ];
 
-    $shiftUnavailable = new Shift([
+    $shiftUnavailable = (object) [
         'available'           => false,
         'weekday_time_blocks' => [
             1 => [
@@ -32,7 +32,7 @@ it('merges blocks and computes net availability minus unavailability', function 
                 ['from' => '14:30', 'to' => '16:00'], // merge to 14:00-16:00 on Tuesday unavailable
             ],
         ],
-    ]);
+    ];
 
     // Controller instance with mocked dependencies (not used by the method)
     $controller = new ResourceController(
@@ -57,4 +57,49 @@ it('merges blocks and computes net availability minus unavailability', function 
         ->toBe([['from' => '14:00', 'to' => '16:00']]);
 
     // Tuesday checks (day 2)
+});
+
+it('produces two distinct periods in period-aware summaries', function () {
+    // Two shifts in non-overlapping date ranges
+    $shiftPeriod1 = (object) [
+        'available'           => true,
+        'period_start'        => Carbon::now()->addDays(1),
+        'period_end'          => Carbon::now()->addDays(10),
+        'weekday_time_blocks' => [
+            1 => [['from' => '08:00', 'to' => '12:00']],
+        ],
+    ];
+
+    $shiftPeriod2 = (object) [
+        'available'           => false,
+        'period_start'        => Carbon::now()->addDays(20),
+        'period_end'          => Carbon::now()->addDays(30),
+        'weekday_time_blocks' => [
+            1 => [['from' => '10:00', 'to' => '11:00']],
+        ],
+    ];
+
+    $controller = new ResourceController(
+        Mockery::mock(ResourceRepository::class),
+        Mockery::mock(ResourceTypeRepository::class),
+        Mockery::mock(ShiftRepository::class),
+        Mockery::mock(ClinicRepository::class),
+    );
+
+    $method = (new ReflectionClass($controller))->getMethod('buildPeriodAwareWeeklySummaries');
+    $method->setAccessible(true);
+    $result = $method->invoke($controller, [$shiftPeriod1, $shiftPeriod2]);
+
+    expect($result)->toBeArray();
+    expect(count($result))->toBe(2);
+
+    // First period summary corresponds to shiftPeriod1 range
+    $first = $result[0];
+    expect($first['summary'][1]['available'])->toBe([['from' => '08:00', 'to' => '12:00']])
+        ->and($first['summary'][1]['unavailable'])->toBe([]);
+
+    // Second period summary corresponds to shiftPeriod2 range
+    $second = $result[1];
+    expect($second['summary'][1]['available'])->toBe([])
+        ->and($second['summary'][1]['unavailable'])->toBe([['from' => '10:00', 'to' => '11:00']]);
 });

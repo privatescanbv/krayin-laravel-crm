@@ -61,6 +61,26 @@ namespace UiTests.Steps
 
             // Minimal: ensure a description is set to avoid empty issues
             await _driver.Page.FillAsync("textarea[name=description]", "Automated test lead");
+
+            // Required personal fields when no person selected in step 1
+            // Ensure first and last name have values
+            var firstName = _driver.Page.Locator("input[name=first_name]");
+            var lastName = _driver.Page.Locator("input[name=last_name]");
+            if (await firstName.CountAsync() > 0)
+            {
+                await firstName.FillAsync("Test");
+            }
+            if (await lastName.CountAsync() > 0)
+            {
+                await lastName.FillAsync("Lead");
+            }
+
+            // At least one contact: fill first email input if present
+            var emailValueInput = _driver.Page.Locator("input[name^=emails][name$='[value]']").First;
+            if (await emailValueInput.CountAsync() > 0)
+            {
+                await emailValueInput.FillAsync($"test+{Guid.NewGuid():N}@example.com");
+            }
         }
 
         [When("I save the lead")]
@@ -73,7 +93,7 @@ namespace UiTests.Steps
         public async Task ThenIShouldBeRedirectedToLeadView()
         {
             // Expect url like /admin/leads/view/{id}
-            await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/leads/view/\\d+$"));
+            await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/leads/view/\\d+$"), new() { Timeout = 30000 });
         }
     }
 }

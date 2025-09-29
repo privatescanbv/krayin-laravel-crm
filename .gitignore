@@ -39,6 +39,16 @@ node_modules/
 /test-results/
 /blob-report/
 /playwright/.cache/
+
+bin/
+obj/
+.playwright/
+.cache/
+UiTests/Features/*.cs
+**/.playwright/
+**/bin/
+**/obj/
+
 docs/?
 docs/html
 

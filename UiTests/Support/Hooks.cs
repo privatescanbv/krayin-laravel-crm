@@ -8,7 +8,7 @@ public class Hooks
     public static void EnsurePlaywrightInstalled()
     {
         // Roept de Playwright installer aan en geeft een exitcode terug
-        var exitCode = Microsoft.Playwright.Program.Main(new[] { "install", "--with-deps" });
+        var exitCode = Microsoft.Playwright.Program.Main(new[] { "install" });
 
         if (exitCode != 0)
         {

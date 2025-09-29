@@ -35,17 +35,17 @@ class ResourceController extends SimpleEntityController
         $resource = $this->resourceRepository->findOrFail($id);
 		$upcomingShifts = $this->shiftRepository->upcomingForResource($resource->id, 50);
 
-		$scheduleSummary = $this->buildMergedWeeklySummary($upcomingShifts->all());
+		$periodSummaries = $this->buildPeriodAwareWeeklySummaries($upcomingShifts->all());
 
 		return view('admin::settings.resources.show', [
             'resource'       => $resource,
             'upcomingShifts' => $upcomingShifts,
-			'scheduleSummary'=> $scheduleSummary,
+			'periodSummaries' => $periodSummaries,
         ]);
     }
 
 	/**
-	 * Build a merged weekly summary of availability/unavailability.
+	 * Build a merged weekly summary of availability/unavailability (legacy, without period awareness).
 	 *
 	 * @param array<int, \App\Models\Shift> $shifts
 	 * @return array<int, array{available: array<int, array{from: string, to: string}>, unavailable: array<int, array{from: string, to: string}>}>
@@ -94,6 +94,116 @@ class ResourceController extends SimpleEntityController
 		}
 
 		return $summary;
+	}
+
+	/**
+	 * Build per-period weekly summaries by segmenting overlapping date periods
+	 * into non-overlapping ranges with a constant set of active shifts.
+	 *
+	 * @param array<int, \App\Models\Shift> $shifts
+	 * @return array<int, array{label: string, start: ?string, end: ?string, summary: array<int, array{available: array<int, array{from: string, to: string}>, unavailable: array<int, array{from: string, to: string}>}>}>
+	 */
+	protected function buildPeriodAwareWeeklySummaries(array $shifts): array
+	{
+		if (empty($shifts)) {
+			return [];
+		}
+
+		// Collect timeline boundary events: start at period_start, end at day after period_end
+		$events = [];
+		$today = now()->startOfDay();
+		$maxLookahead = $today->copy()->addMonths(18); // cap open-ended at 18 months for display
+
+		foreach ($shifts as $idx => $shift) {
+			$start = optional($shift->period_start)->startOfDay() ?? $today;
+			$end = $shift->period_end ? $shift->period_end->copy()->addDay()->startOfDay() : null; // end exclusive
+
+			// Ignore fully past periods
+			if ($shift->period_end && $shift->period_end->lt($today)) {
+				continue;
+			}
+
+			$events[] = ['date' => $start, 'type' => 'start', 'idx' => $idx];
+			if ($end) {
+				$events[] = ['date' => $end, 'type' => 'end', 'idx' => $idx];
+			}
+		}
+
+		if (empty($events)) {
+			return [];
+		}
+
+		usort($events, function ($a, $b) {
+			if ($a['date']->eq($b['date'])) {
+				return $a['type'] === 'end' ? -1 : 1; // end before start on same day
+			}
+			return $a['date'] <=> $b['date'];
+		});
+
+		$active = [];
+		$segments = [];
+		for ($i = 0; $i < count($events); $i++) {
+			$event = $events[$i];
+			$date = $event['date'];
+			$type = $event['type'];
+			$idx  = $event['idx'];
+
+			if ($type === 'end') {
+				unset($active[$idx]);
+			} else {
+				$active[$idx] = true;
+			}
+
+			$nextDate = $i + 1 < count($events) ? $events[$i + 1]['date'] : $maxLookahead;
+			if (!empty($active) && $date < $nextDate) {
+				$segmentShiftIndexes = array_keys($active);
+				$segments[] = [
+					'from' => $date->copy(),
+					'to'   => $nextDate ? $nextDate->copy() : null,
+					'shifts' => $segmentShiftIndexes,
+				];
+			}
+		}
+
+		// Merge adjacent segments with identical active shift sets
+		$normalized = [];
+		foreach ($segments as $seg) {
+			$signature = implode(',', $seg['shifts']);
+			$last = end($normalized);
+			if ($last !== false && $last['signature'] === $signature && $last['to']->eq($seg['from'])) {
+				$normalized[key($normalized)]['to'] = $seg['to'];
+			} else {
+				$normalized[] = [
+					'from' => $seg['from'],
+					'to' => $seg['to'],
+					'shifts' => $seg['shifts'],
+					'signature' => $signature,
+				];
+			}
+		}
+
+		$result = [];
+		foreach ($normalized as $seg) {
+			$segmentShifts = [];
+			foreach ($seg['shifts'] as $sIdx) {
+				$segmentShifts[] = $shifts[$sIdx];
+			}
+
+			$summary = $this->buildMergedWeeklySummary($segmentShifts);
+
+			$fromStr = $seg['from'] ? $seg['from']->format('Y-m-d') : null;
+			$toStr = $seg['to'] ? $seg['to']->copy()->subDay()->format('Y-m-d') : null; // convert exclusive end back to inclusive
+			$label = $fromStr && $toStr ? ($fromStr . ' — ' . $toStr) : ($fromStr . ' — ∞');
+
+			$result[] = [
+				'label' => $label,
+				'start' => $fromStr,
+				'end' => $toStr,
+				'summary' => $summary,
+			];
+		}
+
+		return $result;
 	}
 
 	/**

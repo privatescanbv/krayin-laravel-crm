@@ -2,6 +2,7 @@
 
 namespace App\DataGrids\Settings;
 
+use App\Repositories\ClinicRepository;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
@@ -12,6 +13,11 @@ class ResourceDataGrid extends DataGrid
      * Ensure default sorting uses a qualified column to avoid ambiguity when joins are present.
      */
     protected $sortColumn = 'resources.id';
+
+    public function __construct(protected ClinicRepository $clinicRepository)
+    {
+        parent::__construct();
+    }
 
     public function prepareQueryBuilder(): Builder
     {
@@ -68,19 +74,21 @@ class ResourceDataGrid extends DataGrid
             'type'       => 'string',
             'label'      => trans('admin::app.settings.resources.index.datagrid.clinic'),
             'searchable' => true,
-            'filterable' => true,
+            'filterable' => false,
             'sortable'   => true,
         ]);
 
-        // Hidden column for clinic_id filtering
+        // Clinic filter dropdown (hidden from view but visible in filter UI)
         $this->addColumn([
-            'index'      => 'clinic_id',
-            'type'       => 'string',
-            'label'      => 'Clinic ID',
-            'searchable' => false,
-            'filterable' => true,
-            'sortable'   => false,
-            'visibility' => false,
+            'index'              => 'clinic_id',
+            'type'               => 'string',
+            'label'              => trans('admin::app.settings.resources.index.datagrid.clinic'),
+            'searchable'         => false,
+            'filterable'         => true,
+            'sortable'           => false,
+            'visibility'         => false,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => $this->clinicRepository->all(['name as label', 'id as value'])->toArray(),
         ]);
     }
 

@@ -124,11 +124,6 @@ class ResourceController extends SimpleEntityController
             $start = optional($shift->period_start)->startOfDay() ?? $today;
             $end = $shift->period_end ? $shift->period_end->copy()->addDay()->startOfDay() : null; // end exclusive
 
-            // Ignore fully past periods
-            if ($shift->period_end && $shift->period_end->lt($today)) {
-                continue;
-            }
-
             $events[] = ['date' => $start, 'type' => 'start', 'idx' => $idx];
             if ($end) {
                 $events[] = ['date' => $end, 'type' => 'end', 'idx' => $idx];

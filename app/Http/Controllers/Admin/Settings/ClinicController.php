@@ -32,6 +32,7 @@ class ClinicController extends SimpleEntityController
                     'message' => $this->getDeleteFailedMessage(),
                 ], 400);
             }
+
             return redirect()->route($this->indexRoute)->with('error', $this->getDeleteFailedMessage());
         }
 
@@ -43,6 +44,7 @@ class ClinicController extends SimpleEntityController
                     'message' => $this->getDeleteFailedMessage(),
                 ], 400);
             }
+
             return redirect()->route($this->indexRoute)->with('error', $this->getDeleteFailedMessage());
         }
 

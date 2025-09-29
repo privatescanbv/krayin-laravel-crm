@@ -14,9 +14,7 @@ class ResourceDataGrid extends DataGrid
      */
     protected $sortColumn = 'resources.id';
 
-    public function __construct(protected ClinicRepository $clinicRepository)
-    {
-    }
+    public function __construct(protected ClinicRepository $clinicRepository) {}
 
     public function prepareQueryBuilder(): Builder
     {

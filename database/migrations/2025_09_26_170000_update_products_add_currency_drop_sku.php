@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            if (!Schema::hasColumn('products', 'currency')) {
+            if (! Schema::hasColumn('products', 'currency')) {
                 $table->string('currency', 3)->default('EUR')->after('name');
             }
             if (Schema::hasColumn('products', 'sku')) {
@@ -22,7 +22,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('products', function (Blueprint $table) {
-            if (!Schema::hasColumn('products', 'sku')) {
+            if (! Schema::hasColumn('products', 'sku')) {
                 $table->string('sku')->nullable();
             }
             if (Schema::hasColumn('products', 'currency')) {
@@ -31,4 +31,3 @@ return new class extends Migration
         });
     }
 };
-

@@ -4,11 +4,16 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\PartnerProductDataGrid;
 use App\Enums\Currency;
-use App\Repositories\PartnerProductRepository;
 use App\Models\ResourceType;
+use App\Models\Clinic;
+use App\Repositories\PartnerProductRepository;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
+use Illuminate\Validation\Rule;
 
 class PartnerProductController extends SimpleEntityController
 {
@@ -25,23 +30,6 @@ class PartnerProductController extends SimpleEntityController
         $this->permissionPrefix = 'settings.partner_products';
     }
 
-    protected function getCreateViewData(Request $request): array
-    {
-        return [
-            'resourceTypes' => ResourceType::orderBy('name')->get(['id', 'name']),
-            'currencies'    => Currency::options(),
-        ];
-    }
-
-    protected function getEditViewData(Request $request, Model $entity): array
-    {
-        return [
-            'partner_products' => $entity,
-            'resourceTypes'    => ResourceType::orderBy('name')->get(['id', 'name']),
-            'currencies'       => Currency::options(),
-        ];
-    }
-
     public function view(int $id): View
     {
         $partnerProduct = $this->partnerProductRepository->findOrFail($id);
@@ -51,42 +39,120 @@ class PartnerProductController extends SimpleEntityController
         ]);
     }
 
+    protected function getCreateViewData(Request $request): array
+    {
+        return [
+            'resourceTypes' => ResourceType::orderBy('name')->get(['id', 'name']),
+            'currencies'    => Currency::options(),
+            'defaultCurrency' => Currency::default()->value,
+            'clinics'       => Clinic::orderBy('name')->get(['id', 'name']),
+        ];
+    }
+
+    protected function getEditViewData(Request $request, Model $entity): array
+    {
+        return [
+            'partner_products' => $entity,
+            'resourceTypes'    => ResourceType::orderBy('name')->get(['id', 'name']),
+            'currencies'       => Currency::options(),
+            'clinics'          => Clinic::orderBy('name')->get(['id', 'name']),
+        ];
+    }
+
     protected function validateStore(Request $request): void
     {
-        $request->validate([
-            // base fields
-            'currency'            => 'required|in:' . implode(',', Currency::codes()),
-            'sales_price'         => 'required|numeric|min:0',
-            'name'                => 'required|string|max:255',
-            'active'              => 'required|boolean',
-            'description'         => 'nullable|string',
-            'discount_info'       => 'nullable|string',
-            'resource_type_id'    => 'nullable|integer|exists:resource_types,id',
-
-            // partner fields
-            'partner_name'        => 'required|unique:partner_products,partner_name|max:100',
-            'clinic_description'  => 'nullable|string',
-            'duration'            => 'nullable|integer|min:0',
-        ]);
+        $request->validate($this->getValidationRules());
     }
 
     protected function validateUpdate(Request $request, int $id): void
     {
-        $request->validate([
+        $request->validate($this->getValidationRules($id));
+    }
+
+    protected function getValidationRules(?int $id = null): array
+    {
+        return [
             // base fields
-            'currency'            => 'required|in:' . implode(',', Currency::codes()),
+            'currency'            => 'required|in:'.implode(',', Currency::codes()),
             'sales_price'         => 'required|numeric|min:0',
             'name'                => 'required|string|max:255',
             'active'              => 'required|boolean',
             'description'         => 'nullable|string',
             'discount_info'       => 'nullable|string',
-            'resource_type_id'    => 'nullable|integer|exists:resource_types,id',
+            'resource_type_id'    => 'required|integer|exists:resource_types,id',
 
             // partner fields
-            'partner_name'        => 'required|max:100|unique:partner_products,partner_name,'.$id,
+            'partner_name'        => [
+                'required',
+                'max:100',
+                Rule::unique('partner_products', 'partner_name')->ignore($id),
+            ],
             'clinic_description'  => 'nullable|string',
             'duration'            => 'nullable|integer|min:0',
-        ]);
+
+            // relations
+            'clinics'             => 'required|array|min:1',
+            'clinics.*'           => 'integer|exists:clinics,id',
+        ];
+    }
+
+    protected function transformPayload(array $payload, ?int $id = null): array
+    {
+        $payload['active'] = isset($payload['active']) ? (bool) $payload['active'] : true;
+
+        if (array_key_exists('resource_type_id', $payload)) {
+            $payload['resource_type_id'] = $payload['resource_type_id'] === '' ? null : $payload['resource_type_id'];
+        }
+
+        return parent::transformPayload($payload, $id);
+    }
+
+    public function store(Request $request): RedirectResponse|JsonResponse
+    {
+        $this->validateStore($request);
+
+        Event::dispatch("settings.{$this->entityName}.create.before");
+
+        $entity = $this->partnerProductRepository->create($this->transformPayload($request->all()));
+
+        $entity->clinics()->sync($request->input('clinics', []));
+
+        Event::dispatch("settings.{$this->entityName}.create.after", $entity);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'data'    => $entity,
+                'message' => $this->getCreateSuccessMessage(),
+            ], 200);
+        }
+
+        return redirect()
+            ->route($this->indexRoute)
+            ->with('success', $this->getCreateSuccessMessage());
+    }
+
+    public function update(Request $request, int $id): RedirectResponse|JsonResponse
+    {
+        $this->validateUpdate($request, $id);
+
+        Event::dispatch("settings.{$this->entityName}.update.before", $id);
+
+        $entity = $this->partnerProductRepository->update($this->transformPayload($request->all(), $id), $id);
+
+        $entity->clinics()->sync($request->input('clinics', []));
+
+        Event::dispatch("settings.{$this->entityName}.update.after", $entity);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'data'    => $entity,
+                'message' => $this->getUpdateSuccessMessage(),
+            ]);
+        }
+
+        return redirect()
+            ->route($this->indexRoute)
+            ->with('success', $this->getUpdateSuccessMessage());
     }
 
     protected function getCreateSuccessMessage(): string

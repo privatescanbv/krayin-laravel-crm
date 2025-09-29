@@ -79,19 +79,18 @@
                     </x-admin::form.control-group>
 
                     <x-admin::form.control-group>
-                        <x-admin::form.control-group.label class="required">
+                        <x-admin::form.control-group.label>
                             @lang('admin::app.settings.partner_products.index.create.active')
                         </x-admin::form.control-group.label>
 
+                        <input type="hidden" name="active" value="0" />
                         <x-admin::form.control-group.control
-                            type="select"
+                            type="checkbox"
                             name="active"
-                            rules="required|boolean"
+                            value="1"
                             :label="trans('admin::app.settings.partner_products.index.create.active')"
-                        >
-                            <option value="1" @selected(old('active', $partner_products->active))>@lang('admin::app.common.yes')</option>
-                            <option value="0" @selected(! old('active', $partner_products->active))>@lang('admin::app.common.no')</option>
-                        </x-admin::form.control-group.control>
+                            :checked="old('active', $partner_products->active)"
+                        />
 
                         <x-admin::form.control-group.error control-name="active" />
                     </x-admin::form.control-group>
@@ -137,7 +136,7 @@
                     <x-admin::form.control-group.control
                         type="select"
                         name="resource_type_id"
-                        rules="nullable|numeric"
+                        rules="required|numeric"
                         :label="trans('admin::app.settings.partner_products.index.create.resource_type')"
                     >
                         <option value="">@lang('admin::app.select')</option>
@@ -147,6 +146,29 @@
                     </x-admin::form.control-group.control>
 
                     <x-admin::form.control-group.error control-name="resource_type_id" />
+                </x-admin::form.control-group>
+
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.settings.clinics.index.title')
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.control
+                        type="select"
+                        name="clinics[]"
+                        rules="required"
+                        multiple
+                        :label="trans('admin::app.settings.clinics.index.title')"
+                    >
+                        @php
+                            $selectedClinics = old('clinics', $partner_products->clinics->pluck('id')->toArray());
+                        @endphp
+                        @foreach ($clinics as $clinic)
+                            <option value="{{ $clinic->id }}" @selected(in_array($clinic->id, $selectedClinics))>{{ $clinic->name }}</option>
+                        @endforeach
+                    </x-admin::form.control-group.control>
+
+                    <x-admin::form.control-group.error control-name="clinics" />
                 </x-admin::form.control-group>
 
                 <x-admin::form.control-group>
@@ -191,7 +213,7 @@
                         type="number"
                         name="duration"
                         value="{{ old('duration', $partner_products->duration) }}"
-                        rules="nullable|integer|min:0"
+                        
                         :label="trans('admin::app.settings.partner_products.index.create.duration')"
                         :placeholder="trans('admin::app.settings.partner_products.index.create.duration')"
                     />

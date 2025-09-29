@@ -10,7 +10,7 @@ return new class extends Migration
     {
         foreach (['resources', 'resource_types', 'clinics', 'partner_products', 'product_types'] as $table) {
             Schema::table($table, function (Blueprint $table) {
-                if (!Schema::hasColumn($table->getTable(), 'external_id')) {
+                if (! Schema::hasColumn($table->getTable(), 'external_id')) {
                     $table->string('external_id')->nullable()->after('name');
                     $table->index('external_id');
                 }
@@ -30,4 +30,3 @@ return new class extends Migration
         }
     }
 };
-

@@ -34,4 +34,9 @@ class PartnerProduct extends BaseProduct
         'updated_by'       => 'integer',
         'duration'         => 'integer',
     ];
+
+    public function clinics()
+    {
+        return $this->belongsToMany(Clinic::class, 'clinic_partner_product');
+    }
 }

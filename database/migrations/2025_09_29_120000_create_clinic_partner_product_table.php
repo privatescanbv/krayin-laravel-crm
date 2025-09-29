@@ -8,17 +8,19 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('partner_product_activities', function (Blueprint $table) {
-            $table->unsignedInteger('activity_id');
-            $table->foreign('activity_id')->references('id')->on('activities')->onDelete('cascade');
-
+        Schema::create('clinic_partner_product', function (Blueprint $table) {
+            $table->unsignedBigInteger('clinic_id');
             $table->unsignedBigInteger('partner_product_id');
+
+            $table->foreign('clinic_id')->references('id')->on('clinics')->onDelete('cascade');
             $table->foreign('partner_product_id')->references('id')->on('partner_products')->onDelete('cascade');
+
+            $table->primary(['clinic_id', 'partner_product_id']);
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('partner_product_activities');
+        Schema::dropIfExists('clinic_partner_product');
     }
 };

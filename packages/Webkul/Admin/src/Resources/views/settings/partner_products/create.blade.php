@@ -47,11 +47,12 @@
                         <x-admin::form.control-group.control
                             type="select"
                             name="currency"
+                            value="{{ old('currency', $defaultCurrency) }}"
                             rules="required"
                             :label="trans('admin::app.settings.partner_products.index.create.currency')"
                         >
                             @foreach ($currencies as $currency)
-                                <option value="{{ $currency['code'] }}" @selected(old('currency', 'EUR') === $currency['code'])>{{ $currency['label'] }}</option>
+                                <option value="{{ $currency['code'] }}" @selected(old('currency', $defaultCurrency) === $currency['code'])>{{ $currency['label'] }}</option>
                             @endforeach
                         </x-admin::form.control-group.control>
 
@@ -76,19 +77,18 @@
                     </x-admin::form.control-group>
 
                     <x-admin::form.control-group>
-                        <x-admin::form.control-group.label class="required">
+                        <x-admin::form.control-group.label>
                             @lang('admin::app.settings.partner_products.index.create.active')
                         </x-admin::form.control-group.label>
 
+                        <input type="hidden" name="active" value="0" />
                         <x-admin::form.control-group.control
-                            type="select"
+                            type="checkbox"
                             name="active"
-                            rules="required|boolean"
+                            value="1"
                             :label="trans('admin::app.settings.partner_products.index.create.active')"
-                        >
-                            <option value="1" @selected(old('active', 1))>@lang('admin::app.common.yes')</option>
-                            <option value="0" @selected(! old('active', 1))>@lang('admin::app.common.no')</option>
-                        </x-admin::form.control-group.control>
+                            :checked="old('active', 1)"
+                        />
 
                         <x-admin::form.control-group.error control-name="active" />
                     </x-admin::form.control-group>
@@ -132,7 +132,7 @@
                         <x-admin::form.control-group.control
                             type="select"
                             name="resource_type_id"
-                            rules="nullable|numeric"
+                            rules="required|numeric"
                             :label="trans('admin::app.settings.partner_products.index.create.resource_type')"
                         >
                             <option value="">@lang('admin::app.select')</option>
@@ -143,6 +143,26 @@
 
                         <x-admin::form.control-group.error control-name="resource_type_id" />
                     </x-admin::form.control-group>
+
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.settings.clinics.index.title')
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.control
+                        type="select"
+                        name="clinics[]"
+                        rules="required"
+                        multiple
+                        :label="trans('admin::app.settings.clinics.index.title')"
+                    >
+                        @foreach ($clinics as $clinic)
+                            <option value="{{ $clinic->id }}" @selected(collect(old('clinics', []))->contains($clinic->id))>{{ $clinic->name }}</option>
+                        @endforeach
+                    </x-admin::form.control-group.control>
+
+                    <x-admin::form.control-group.error control-name="clinics" />
+                </x-admin::form.control-group>
 
                 <x-admin::form.control-group>
                     <x-admin::form.control-group.label class="required">
@@ -183,7 +203,7 @@
                     <x-admin::form.control-group.control
                         type="number"
                         name="duration"
-                        rules="nullable|integer|min:0"
+                        
                         :label="trans('admin::app.settings.partner_products.index.create.duration')"
                         :placeholder="trans('admin::app.settings.partner_products.index.create.duration')"
                     />

@@ -33,4 +33,9 @@ class Clinic extends Model
     {
         return $this->belongsTo(Address::class);
     }
+
+    public function partnerProducts()
+    {
+        return $this->belongsToMany(PartnerProduct::class, 'clinic_partner_product');
+    }
 }

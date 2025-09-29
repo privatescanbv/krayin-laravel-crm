@@ -1,10 +1,7 @@
 Feature: Lead aanmaken
 
     Background:
-        Given I open the login page
-        When I enter username "mark.bulthuis@privatescan.nl" and password "8AAZ5jc%e&AF"
-        And I click the login button
-        Then I should see the dashboard
+        Given I am logged in
 
     Scenario: Aanmaken van lead zonder person te kiezen in stap 1
         Given I open the lead create page

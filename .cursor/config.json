@@ -1,0 +1,5 @@
+{
+    "defaultPrompts": {
+        "pr": "Controleer en voer de volgende stappen altijd uit bij een PR:\n\n1. **CI artifacts**\n   - Controleer of er een artifact `ci_errors.txt` aanwezig is vanuit de build.\n   - Verwijs in de PR-review naar de gevonden fouten of bevestig dat er geen fouten waren.\n\n2. **Class diagram in AsciiDoc**\n   - Het class diagram (`.adoc`) is leidend.\n   - Als er een verzoek is om een nieuw veld toe te voegen, werk dan ook het class diagram bij zodat dit consistent blijft.\n\n3. **Nieuwe entiteiten**\n   - Voeg altijd de trait `HasAuditTrail` toe.\n   - Maak een migratie met gebruik van `AuditTrailMigrationHelper`.\n   - Voeg een factory toe voor de nieuwe entiteit.\n   - Maak een CRUD-test aan, neem `ClinicCrudTest` als voorbeeld (in dezelfde syntax).\n   - Voor de CRUD-schermen: gebruik de implementatie van `Clinic` als voorbeeld voor een eenvoudige entiteit.\n\n4. **Code formatting**\n   - Voer aan het einde het commando uit: `./vendor/bin/duster fix`."
+    }
+}

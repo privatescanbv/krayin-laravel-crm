@@ -6,12 +6,11 @@ use App\Repositories\ClinicRepository;
 use App\Repositories\ResourceRepository;
 use App\Repositories\ResourceTypeRepository;
 use App\Repositories\ShiftRepository;
-use Mockery;
 
 it('merges overlapping and adjacent time blocks per day by availability flag', function () {
     // Build two shifts with overlapping Monday blocks, one available and one unavailable
     $shiftAvailable = new Shift([
-        'available' => true,
+        'available'           => true,
         'weekday_time_blocks' => [
             1 => [
                 ['from' => '08:00', 'to' => '10:00'],
@@ -22,7 +21,7 @@ it('merges overlapping and adjacent time blocks per day by availability flag', f
     ]);
 
     $shiftUnavailable = new Shift([
-        'available' => false,
+        'available'           => false,
         'weekday_time_blocks' => [
             1 => [
                 ['from' => '10:00', 'to' => '11:00'], // should appear under unavailable
@@ -50,14 +49,12 @@ it('merges overlapping and adjacent time blocks per day by availability flag', f
 
     // Monday checks (day 1)
     expect($result[1]['available'])
-        ->toBe([['from' => '08:00', 'to' => '13:00']]);
-
-    expect($result[1]['unavailable'])
-        ->toBe([['from' => '10:00', 'to' => '11:30']]);
+        ->toBe([['from' => '08:00', 'to' => '13:00']])
+        ->and($result[1]['unavailable'])
+        ->toBe([['from' => '10:00', 'to' => '11:30']])
+        ->and($result[2]['available'])->toBe([])
+        ->and($result[2]['unavailable'])
+        ->toBe([['from' => '14:00', 'to' => '16:00']]);
 
     // Tuesday checks (day 2)
-    expect($result[2]['available'])->toBe([]);
-    expect($result[2]['unavailable'])
-        ->toBe([['from' => '14:00', 'to' => '16:00']]);
 });
-

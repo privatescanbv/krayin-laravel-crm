@@ -33,217 +33,218 @@ class ResourceController extends SimpleEntityController
     public function show(int $id): View
     {
         $resource = $this->resourceRepository->findOrFail($id);
-		$upcomingShifts = $this->shiftRepository->upcomingForResource($resource->id, 50);
+        $upcomingShifts = $this->shiftRepository->upcomingForResource($resource->id, 50);
 
-		$periodSummaries = $this->buildPeriodAwareWeeklySummaries($upcomingShifts->all());
+        $periodSummaries = $this->buildPeriodAwareWeeklySummaries($upcomingShifts->all());
 
-		return view('admin::settings.resources.show', [
-            'resource'       => $resource,
-            'upcomingShifts' => $upcomingShifts,
-			'periodSummaries' => $periodSummaries,
+        return view('admin::settings.resources.show', [
+            'resource'        => $resource,
+            'upcomingShifts'  => $upcomingShifts,
+            'periodSummaries' => $periodSummaries,
         ]);
     }
 
-	/**
-	 * Build a merged weekly summary of availability/unavailability (legacy, without period awareness).
-	 *
-	 * @param array<int, \App\Models\Shift> $shifts
-	 * @return array<int, array{available: array<int, array{from: string, to: string}>, unavailable: array<int, array{from: string, to: string}>}>
-	 */
-	protected function buildMergedWeeklySummary(array $shifts): array
-	{
-		// Initialize summary for days 1..7 (Mon..Sun)
-		$summary = [];
-		for ($day = 1; $day <= 7; $day++) {
-			$summary[$day] = [
-				'available' => [],
-				'unavailable' => [],
-			];
-		}
+    /**
+     * Build a merged weekly summary of availability/unavailability (legacy, without period awareness).
+     *
+     * @param  array<int, \App\Models\Shift>  $shifts
+     * @return array<int, array{available: array<int, array{from: string, to: string}>, unavailable: array<int, array{from: string, to: string}>}>
+     */
+    protected function buildMergedWeeklySummary(array $shifts): array
+    {
+        // Initialize summary for days 1..7 (Mon..Sun)
+        $summary = [];
+        for ($day = 1; $day <= 7; $day++) {
+            $summary[$day] = [
+                'available'   => [],
+                'unavailable' => [],
+            ];
+        }
 
-		foreach ($shifts as $shift) {
-			$blocksByDay = (array) ($shift->weekday_time_blocks ?? []);
-			$available = (bool) ($shift->available ?? true);
+        foreach ($shifts as $shift) {
+            $blocksByDay = (array) ($shift->weekday_time_blocks ?? []);
+            $available = (bool) ($shift->available ?? true);
 
-			foreach ($blocksByDay as $day => $blocks) {
-				if (!is_array($blocks)) {
-					continue;
-				}
+            foreach ($blocksByDay as $day => $blocks) {
+                if (! is_array($blocks)) {
+                    continue;
+                }
 
-				foreach ($blocks as $block) {
-					$from = isset($block['from']) ? (string) $block['from'] : null;
-					$to = isset($block['to']) ? (string) $block['to'] : null;
-					if (!$from || !$to) {
-						continue;
-					}
+                foreach ($blocks as $block) {
+                    $from = isset($block['from']) ? (string) $block['from'] : null;
+                    $to = isset($block['to']) ? (string) $block['to'] : null;
+                    if (! $from || ! $to) {
+                        continue;
+                    }
 
-					$entry = ['from' => $from, 'to' => $to];
-					if ($available) {
-						$summary[$day]['available'][] = $entry;
-					} else {
-						$summary[$day]['unavailable'][] = $entry;
-					}
-				}
-			}
-		}
+                    $entry = ['from' => $from, 'to' => $to];
+                    if ($available) {
+                        $summary[$day]['available'][] = $entry;
+                    } else {
+                        $summary[$day]['unavailable'][] = $entry;
+                    }
+                }
+            }
+        }
 
-		// Merge overlaps inside each day's available/unavailable lists
-		for ($day = 1; $day <= 7; $day++) {
-			$summary[$day]['available'] = $this->mergeOverlappingTimeRanges($summary[$day]['available']);
-			$summary[$day]['unavailable'] = $this->mergeOverlappingTimeRanges($summary[$day]['unavailable']);
-		}
+        // Merge overlaps inside each day's available/unavailable lists
+        for ($day = 1; $day <= 7; $day++) {
+            $summary[$day]['available'] = $this->mergeOverlappingTimeRanges($summary[$day]['available']);
+            $summary[$day]['unavailable'] = $this->mergeOverlappingTimeRanges($summary[$day]['unavailable']);
+        }
 
-		return $summary;
-	}
+        return $summary;
+    }
 
-	/**
-	 * Build per-period weekly summaries by segmenting overlapping date periods
-	 * into non-overlapping ranges with a constant set of active shifts.
-	 *
-	 * @param array<int, \App\Models\Shift> $shifts
-	 * @return array<int, array{label: string, start: ?string, end: ?string, summary: array<int, array{available: array<int, array{from: string, to: string}>, unavailable: array<int, array{from: string, to: string}>}>}>
-	 */
-	protected function buildPeriodAwareWeeklySummaries(array $shifts): array
-	{
-		if (empty($shifts)) {
-			return [];
-		}
+    /**
+     * Build per-period weekly summaries by segmenting overlapping date periods
+     * into non-overlapping ranges with a constant set of active shifts.
+     *
+     * @param  array<int, \App\Models\Shift>  $shifts
+     * @return array<int, array{label: string, start: ?string, end: ?string, summary: array<int, array{available: array<int, array{from: string, to: string}>, unavailable: array<int, array{from: string, to: string}>}>}>
+     */
+    protected function buildPeriodAwareWeeklySummaries(array $shifts): array
+    {
+        if (empty($shifts)) {
+            return [];
+        }
 
-		// Collect timeline boundary events: start at period_start, end at day after period_end
-		$events = [];
-		$today = now()->startOfDay();
-		$maxLookahead = $today->copy()->addMonths(18); // cap open-ended at 18 months for display
+        // Collect timeline boundary events: start at period_start, end at day after period_end
+        $events = [];
+        $today = now()->startOfDay();
+        $maxLookahead = $today->copy()->addMonths(18); // cap open-ended at 18 months for display
 
-		foreach ($shifts as $idx => $shift) {
-			$start = optional($shift->period_start)->startOfDay() ?? $today;
-			$end = $shift->period_end ? $shift->period_end->copy()->addDay()->startOfDay() : null; // end exclusive
+        foreach ($shifts as $idx => $shift) {
+            $start = optional($shift->period_start)->startOfDay() ?? $today;
+            $end = $shift->period_end ? $shift->period_end->copy()->addDay()->startOfDay() : null; // end exclusive
 
-			// Ignore fully past periods
-			if ($shift->period_end && $shift->period_end->lt($today)) {
-				continue;
-			}
+            // Ignore fully past periods
+            if ($shift->period_end && $shift->period_end->lt($today)) {
+                continue;
+            }
 
-			$events[] = ['date' => $start, 'type' => 'start', 'idx' => $idx];
-			if ($end) {
-				$events[] = ['date' => $end, 'type' => 'end', 'idx' => $idx];
-			}
-		}
+            $events[] = ['date' => $start, 'type' => 'start', 'idx' => $idx];
+            if ($end) {
+                $events[] = ['date' => $end, 'type' => 'end', 'idx' => $idx];
+            }
+        }
 
-		if (empty($events)) {
-			return [];
-		}
+        if (empty($events)) {
+            return [];
+        }
 
-		usort($events, function ($a, $b) {
-			if ($a['date']->eq($b['date'])) {
-				return $a['type'] === 'end' ? -1 : 1; // end before start on same day
-			}
-			return $a['date'] <=> $b['date'];
-		});
+        usort($events, function ($a, $b) {
+            if ($a['date']->eq($b['date'])) {
+                return $a['type'] === 'end' ? -1 : 1; // end before start on same day
+            }
 
-		$active = [];
-		$segments = [];
-		for ($i = 0; $i < count($events); $i++) {
-			$event = $events[$i];
-			$date = $event['date'];
-			$type = $event['type'];
-			$idx  = $event['idx'];
+            return $a['date'] <=> $b['date'];
+        });
 
-			if ($type === 'end') {
-				unset($active[$idx]);
-			} else {
-				$active[$idx] = true;
-			}
+        $active = [];
+        $segments = [];
+        for ($i = 0; $i < count($events); $i++) {
+            $event = $events[$i];
+            $date = $event['date'];
+            $type = $event['type'];
+            $idx = $event['idx'];
 
-			$nextDate = $i + 1 < count($events) ? $events[$i + 1]['date'] : $maxLookahead;
-			if (!empty($active) && $date < $nextDate) {
-				$segmentShiftIndexes = array_keys($active);
-				$segments[] = [
-					'from' => $date->copy(),
-					'to'   => $nextDate ? $nextDate->copy() : null,
-					'shifts' => $segmentShiftIndexes,
-				];
-			}
-		}
+            if ($type === 'end') {
+                unset($active[$idx]);
+            } else {
+                $active[$idx] = true;
+            }
 
-		// Merge adjacent segments with identical active shift sets
-		$normalized = [];
-		foreach ($segments as $seg) {
-			$signature = implode(',', $seg['shifts']);
-			$last = end($normalized);
-			if ($last !== false && $last['signature'] === $signature && $last['to']->eq($seg['from'])) {
-				$normalized[key($normalized)]['to'] = $seg['to'];
-			} else {
-				$normalized[] = [
-					'from' => $seg['from'],
-					'to' => $seg['to'],
-					'shifts' => $seg['shifts'],
-					'signature' => $signature,
-				];
-			}
-		}
+            $nextDate = $i + 1 < count($events) ? $events[$i + 1]['date'] : $maxLookahead;
+            if (! empty($active) && $date < $nextDate) {
+                $segmentShiftIndexes = array_keys($active);
+                $segments[] = [
+                    'from'   => $date->copy(),
+                    'to'     => $nextDate ? $nextDate->copy() : null,
+                    'shifts' => $segmentShiftIndexes,
+                ];
+            }
+        }
 
-		$result = [];
-		foreach ($normalized as $seg) {
-			$segmentShifts = [];
-			foreach ($seg['shifts'] as $sIdx) {
-				$segmentShifts[] = $shifts[$sIdx];
-			}
+        // Merge adjacent segments with identical active shift sets
+        $normalized = [];
+        foreach ($segments as $seg) {
+            $signature = implode(',', $seg['shifts']);
+            $last = end($normalized);
+            if ($last !== false && $last['signature'] === $signature && $last['to']->eq($seg['from'])) {
+                $normalized[key($normalized)]['to'] = $seg['to'];
+            } else {
+                $normalized[] = [
+                    'from'      => $seg['from'],
+                    'to'        => $seg['to'],
+                    'shifts'    => $seg['shifts'],
+                    'signature' => $signature,
+                ];
+            }
+        }
 
-			$summary = $this->buildMergedWeeklySummary($segmentShifts);
+        $result = [];
+        foreach ($normalized as $seg) {
+            $segmentShifts = [];
+            foreach ($seg['shifts'] as $sIdx) {
+                $segmentShifts[] = $shifts[$sIdx];
+            }
 
-			$fromStr = $seg['from'] ? $seg['from']->format('Y-m-d') : null;
-			$toStr = $seg['to'] ? $seg['to']->copy()->subDay()->format('Y-m-d') : null; // convert exclusive end back to inclusive
-			$label = $fromStr && $toStr ? ($fromStr . ' — ' . $toStr) : ($fromStr . ' — ∞');
+            $summary = $this->buildMergedWeeklySummary($segmentShifts);
 
-			$result[] = [
-				'label' => $label,
-				'start' => $fromStr,
-				'end' => $toStr,
-				'summary' => $summary,
-			];
-		}
+            $fromStr = $seg['from'] ? $seg['from']->format('Y-m-d') : null;
+            $toStr = $seg['to'] ? $seg['to']->copy()->subDay()->format('Y-m-d') : null; // convert exclusive end back to inclusive
+            $label = $fromStr && $toStr ? ($fromStr.' — '.$toStr) : ($fromStr.' — ∞');
 
-		return $result;
-	}
+            $result[] = [
+                'label'   => $label,
+                'start'   => $fromStr,
+                'end'     => $toStr,
+                'summary' => $summary,
+            ];
+        }
 
-	/**
-	 * Merge overlapping time ranges within a single day.
-	 *
-	 * Input/Output format: array of ['from' => 'HH:MM', 'to' => 'HH:MM']
-	 *
-	 * @param array<int, array{from: string, to: string}> $ranges
-	 * @return array<int, array{from: string, to: string}>
-	 */
-	protected function mergeOverlappingTimeRanges(array $ranges): array
-	{
-		if (empty($ranges)) {
-			return [];
-		}
+        return $result;
+    }
 
-		usort($ranges, function ($a, $b) {
-			return strcmp($a['from'], $b['from']);
-		});
+    /**
+     * Merge overlapping time ranges within a single day.
+     *
+     * Input/Output format: array of ['from' => 'HH:MM', 'to' => 'HH:MM']
+     *
+     * @param  array<int, array{from: string, to: string}>  $ranges
+     * @return array<int, array{from: string, to: string}>
+     */
+    protected function mergeOverlappingTimeRanges(array $ranges): array
+    {
+        if (empty($ranges)) {
+            return [];
+        }
 
-		$merged = [];
-		$current = $ranges[0];
+        usort($ranges, function ($a, $b) {
+            return strcmp($a['from'], $b['from']);
+        });
 
-		for ($i = 1; $i < count($ranges); $i++) {
-			$next = $ranges[$i];
-			if ($next['from'] <= $current['to']) {
-				// Overlaps or touches: extend the current range
-				if ($next['to'] > $current['to']) {
-					$current['to'] = $next['to'];
-				}
-			} else {
-				$merged[] = $current;
-				$current = $next;
-			}
-		}
+        $merged = [];
+        $current = $ranges[0];
 
-		$merged[] = $current;
+        for ($i = 1; $i < count($ranges); $i++) {
+            $next = $ranges[$i];
+            if ($next['from'] <= $current['to']) {
+                // Overlaps or touches: extend the current range
+                if ($next['to'] > $current['to']) {
+                    $current['to'] = $next['to'];
+                }
+            } else {
+                $merged[] = $current;
+                $current = $next;
+            }
+        }
 
-		return $merged;
-	}
+        $merged[] = $current;
+
+        return $merged;
+    }
 
     protected function getCreateViewData(Request $request): array
     {

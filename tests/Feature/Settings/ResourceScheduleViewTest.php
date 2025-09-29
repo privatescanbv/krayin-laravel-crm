@@ -1,12 +1,9 @@
 <?php
 
 use App\Models\Resource;
-use App\Models\Shift;
-use App\Models\User;
 use Illuminate\Support\Carbon;
-
 use Webkul\Installer\Http\Middleware\CanInstall;
-use function Pest\Laravel\actingAs;
+
 use function Pest\Laravel\get;
 use function Pest\Laravel\post;
 
@@ -25,8 +22,8 @@ it('renders per-period weekly summaries with merged time ranges', function () {
     // Build dynamic future dates to avoid being filtered out by upcoming query.
     $startA = now()->copy()->addDays(1)->toDateString();
     $startB = now()->copy()->addDays(15)->toDateString();
-    $endA   = now()->copy()->addDays(31)->toDateString();
-    $endB   = now()->copy()->addDays(60)->toDateString();
+    $endA = now()->copy()->addDays(31)->toDateString();
+    $endB = now()->copy()->addDays(60)->toDateString();
     $startC = Carbon::parse($endB)->addDay()->toDateString();
 
     // Period A: startA .. endA
@@ -86,18 +83,17 @@ it('renders per-period weekly summaries with merged time ranges', function () {
 
     // Expect three period segments rendered (A-only, A+B overlap, C-only)
     $segment1Start = Carbon::parse($startA)->toDateString();
-    $segment1End   = Carbon::parse($startB)->subDay()->toDateString();
-    $resp->assertSee('Periode: ' . $segment1Start . ' — ' . $segment1End, false);
+    $segment1End = Carbon::parse($startB)->subDay()->toDateString();
+    $resp->assertSee('Periode: '.$segment1Start.' — '.$segment1End, false);
     // Monday available merged range from A: 08:00–12:00, no unavailable
     $resp->assertSee('08:00–12:00', false);
 
     // Segment 2: A+B overlap
-    $resp->assertSee('Periode: ' . Carbon::parse($startB)->toDateString() . ' — ' . Carbon::parse($endB)->toDateString(), false);
+    $resp->assertSee('Periode: '.Carbon::parse($startB)->toDateString().' — '.Carbon::parse($endB)->toDateString(), false);
     // For Monday, available still 08:00–12:00 from A; unavailable 10:00–11:00 from B
     $resp->assertSee('10:00–11:00', false);
 
     // Segment 3: C only (open ended)
-    $resp->assertSee('Periode: ' . Carbon::parse($startC)->toDateString() . ' — ∞', false);
+    $resp->assertSee('Periode: '.Carbon::parse($startC)->toDateString().' — ∞', false);
     $resp->assertSee('13:00–16:00', false);
 });
-

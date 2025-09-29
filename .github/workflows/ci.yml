@@ -59,7 +59,9 @@ jobs:
         run: npm run build
 
       - name: Run backend tests
-        run: php artisan test --parallel --colors=always
+        run: |
+          set -o pipefail
+          php artisan test --parallel --colors=always --log-junit backend_junit.xml | tee backend_tests.txt
 
       - name: Start Laravel server
         run: php artisan serve --host=0.0.0.0 --port=8000 &
@@ -89,6 +91,27 @@ jobs:
         run: dotnet build ./UiTests/UiTests.csproj --configuration Release --nologo
 
       - name: Run UI tests
-        run: dotnet test ./UiTests/UiTests.csproj --configuration Release --no-build --logger "trx;LogFileName=test_results.trx"
+        run: |
+          set -o pipefail
+          dotnet test ./UiTests/UiTests.csproj --configuration Release --no-build --logger "trx;LogFileName=test_results.trx" | tee ui_tests.txt
         env:
           TestSettings__BaseUrl: http://localhost:8000
+
+      - name: Collect Laravel log (if exists)
+        if: always()
+        run: |
+          if [ -f storage/logs/laravel.log ]; then
+            cp storage/logs/laravel.log laravel.log || true
+          fi
+
+      - name: Upload CI error artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-errors
+          path: |
+            backend_tests.txt
+            backend_junit.xml
+            ui_tests.txt
+            test_results.trx
+            laravel.log

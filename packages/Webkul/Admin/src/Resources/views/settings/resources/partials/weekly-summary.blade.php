@@ -39,5 +39,3 @@
             @endif
         </div>
     @endfor
-@endphp
-

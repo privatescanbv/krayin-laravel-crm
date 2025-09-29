@@ -13,7 +13,7 @@ class ClinicFactory extends Factory
     {
         return [
             'name'       => $this->faker->unique()->company(),
-            'department' => $this->faker->optional()->randomElement(['Cardiology', 'Neurology', 'Oncology', 'Pediatrics', 'Orthopedics']),
+            'department' => 'eerste hulp van Anna',
             'emails'     => [$this->faker->unique()->companyEmail()],
             'phones'     => [$this->faker->phoneNumber()],
         ];

@@ -46,7 +46,7 @@
                     <x-admin::form.control-group.control
                         type="text"
                         name="department"
-                        value="{{ old('department', 'Eerste hulp') }}"
+                        value="{{ old('department', 'eerste hulp van Anna') }}"
                         rules="max:100"
                         :label="trans('admin::app.settings.clinics.index.create.department')"
                         :placeholder="trans('admin::app.settings.clinics.index.create.department')"

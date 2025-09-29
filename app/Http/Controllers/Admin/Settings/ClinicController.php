@@ -42,6 +42,7 @@ class ClinicController extends SimpleEntityController
     {
         $request->validate([
             'name'   => 'required|unique:clinics,name|max:100',
+            'soort'  => 'nullable|string|max:255',
             'emails' => 'nullable|array',
             'phones' => 'nullable|array',
         ]);
@@ -51,6 +52,7 @@ class ClinicController extends SimpleEntityController
     {
         $request->validate([
             'name'   => 'required|max:100|unique:clinics,name,'.$id,
+            'soort'  => 'nullable|string|max:255',
             'emails' => 'nullable|array',
             'phones' => 'nullable|array',
         ]);

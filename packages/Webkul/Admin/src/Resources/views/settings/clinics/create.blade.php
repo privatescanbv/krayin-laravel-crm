@@ -38,6 +38,21 @@
                     <x-admin::form.control-group.error control-name="name" />
                 </x-admin::form.control-group>
 
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.settings.clinics.index.create.soort')
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.control
+                        type="text"
+                        name="soort"
+                        :label="trans('admin::app.settings.clinics.index.create.soort')"
+                        :placeholder="trans('admin::app.settings.clinics.index.create.soort')"
+                    />
+
+                    <x-admin::form.control-group.error control-name="soort" />
+                </x-admin::form.control-group>
+
                 <!-- Emails -->
                 @php
                     $__emailsVal = old('emails', []);

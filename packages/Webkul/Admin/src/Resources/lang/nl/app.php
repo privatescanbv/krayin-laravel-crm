@@ -1681,6 +1681,7 @@ return [
                 'datagrid' => [
                     'id' => 'ID',
                     'name' => 'Naam',
+                    'soort' => 'Soort',
                     'edit' => 'Bewerken',
                     'delete' => 'Verwijderen',
                 ],
@@ -1694,6 +1695,7 @@ return [
                     'title' => 'Kliniek aanmaken',
                     'delete-warning' => 'Weet je zeker dat je deze kliniek wilt verwijderen? Alle gekoppelde resources worden losgekoppeld.',
                     'name' => 'Naam',
+                    'soort' => 'Soort',
                     'emails' => 'E-mails (JSON array)',
                     'emails-help' => 'Voorbeeld: ["info@voorbeeld.nl", "support@voorbeeld.nl"]',
                     'phones' => 'Telefoons (JSON array)',

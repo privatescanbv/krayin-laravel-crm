@@ -771,6 +771,7 @@ return [
                 'datagrid' => [
                     'id'     => 'ID',
                     'name'   => 'Name',
+                    'soort'  => 'Type',
                     'edit'   => 'Edit',
                     'delete' => 'Delete',
                 ],
@@ -782,6 +783,7 @@ return [
                 'create' => [
                     'title'       => 'Create Clinic',
                     'name'        => 'Name',
+                    'soort'       => 'Type',
                     'emails'      => 'Emails (JSON array)',
                     'emails-help' => 'Example: ["info@example.com", "support@example.com"]',
                     'phones'      => 'Phones (JSON array)',

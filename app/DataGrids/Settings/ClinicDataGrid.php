@@ -13,7 +13,8 @@ class ClinicDataGrid extends DataGrid
         $queryBuilder = DB::table('clinics')
             ->addSelect(
                 'clinics.id',
-                'clinics.name'
+                'clinics.name',
+                'clinics.soort'
             );
 
         $this->addFilter('id', 'clinics.id');
@@ -36,6 +37,15 @@ class ClinicDataGrid extends DataGrid
             'index'      => 'name',
             'type'       => 'string',
             'label'      => trans('admin::app.settings.clinics.index.datagrid.name'),
+            'searchable' => true,
+            'filterable' => true,
+            'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'soort',
+            'type'       => 'string',
+            'label'      => trans('admin::app.settings.clinics.index.datagrid.soort'),
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,

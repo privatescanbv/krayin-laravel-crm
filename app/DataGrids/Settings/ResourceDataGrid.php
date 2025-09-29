@@ -21,6 +21,7 @@ class ResourceDataGrid extends DataGrid
             ->addSelect(
                 'resources.id',
                 'resources.name',
+                'resources.clinic_id',
                 'resource_types.name as resource_type_name',
                 'clinics.name as clinic_name'
             );
@@ -69,6 +70,17 @@ class ResourceDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+        ]);
+
+        // Hidden column for clinic_id filtering
+        $this->addColumn([
+            'index'      => 'clinic_id',
+            'type'       => 'string',
+            'label'      => 'Clinic ID',
+            'searchable' => false,
+            'filterable' => true,
+            'sortable'   => false,
+            'visibility' => false,
         ]);
     }
 

@@ -949,6 +949,16 @@
                 },
             },
 
+            watch: {
+                'applied.filters.columns': {
+                    handler(newColumns) {
+                        // Update local filters when applied filters change (e.g., from URL params)
+                        this.filters.columns = this.getAppliedColumns();
+                    },
+                    deep: true
+                }
+            },
+
             methods: {
                 /**
                  * Has any column.

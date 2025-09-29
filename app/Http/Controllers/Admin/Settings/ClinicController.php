@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\ClinicDataGrid;
 use App\Repositories\ClinicRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Throwable;
@@ -23,16 +24,32 @@ class ClinicController extends SimpleEntityController
         $this->permissionPrefix = 'settings.clinics';
     }
 
-    public function destroy(Request $request, ?int $id = null): RedirectResponse
+    public function destroy(Request $request, ?int $id = null): RedirectResponse|JsonResponse
     {
         if (! $id) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'message' => $this->getDeleteFailedMessage(),
+                ], 400);
+            }
             return redirect()->route($this->indexRoute)->with('error', $this->getDeleteFailedMessage());
         }
 
         try {
             $this->clinicRepository->deleteWithResourceDetach($id);
         } catch (Throwable $ex) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'message' => $this->getDeleteFailedMessage(),
+                ], 400);
+            }
             return redirect()->route($this->indexRoute)->with('error', $this->getDeleteFailedMessage());
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'message' => $this->getDestroySuccessMessage(),
+            ], 200);
         }
 
         return redirect()->route($this->indexRoute)->with('success', $this->getDestroySuccessMessage());

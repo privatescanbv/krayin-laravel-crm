@@ -2,6 +2,7 @@
 
 namespace App\DataGrids\Settings;
 
+use App\Repositories\ClinicRepository;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
@@ -13,6 +14,10 @@ class ResourceDataGrid extends DataGrid
      */
     protected $sortColumn = 'resources.id';
 
+    public function __construct(protected ClinicRepository $clinicRepository)
+    {
+    }
+
     public function prepareQueryBuilder(): Builder
     {
         $queryBuilder = DB::table('resources')
@@ -21,11 +26,13 @@ class ResourceDataGrid extends DataGrid
             ->addSelect(
                 'resources.id',
                 'resources.name',
+                'resources.clinic_id',
                 'resource_types.name as resource_type_name',
                 'clinics.name as clinic_name'
             );
 
         $this->addFilter('id', 'resources.id');
+        $this->addFilter('clinic_id', 'resources.clinic_id');
 
         return $queryBuilder;
     }
@@ -66,8 +73,20 @@ class ResourceDataGrid extends DataGrid
             'type'       => 'string',
             'label'      => trans('admin::app.settings.resources.index.datagrid.clinic'),
             'searchable' => true,
-            'filterable' => true,
+            'filterable' => false,
             'sortable'   => true,
+        ]);
+
+        // Hidden clinic_id column for filtering purposes
+        $this->addColumn([
+            'index'              => 'clinic_id',
+            'type'               => 'string',
+            'label'              => 'Clinic (Filter)',
+            'searchable'         => false,
+            'filterable'         => true,
+            'sortable'           => false,
+            'filterable_type'    => 'dropdown',
+            'filterable_options' => $this->clinicRepository->all(['name as label', 'id as value'])->toArray(),
         ]);
     }
 

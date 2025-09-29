@@ -183,6 +183,31 @@
                         searchAppliedColumn.value = [urlParams.get('search')];
                     }
 
+                    // Load filters from URL parameters BEFORE first get()
+                    urlParams.forEach((value, key) => {
+                        // Match patterns like: filters[clinic_id][0]=3 or filters[clinic_id]=3
+                        const match = key.match(/^filters\[([^\]]+)\](?:\[\d+\])?$/);
+                        if (match) {
+                            const columnIndex = match[1];
+                            
+                            // Find or create filter column
+                            let filterColumn = this.applied.filters.columns.find(column => column.index === columnIndex);
+                            
+                            if (!filterColumn) {
+                                filterColumn = {
+                                    index: columnIndex,
+                                    value: []
+                                };
+                                this.applied.filters.columns.push(filterColumn);
+                            }
+                            
+                            // Add the value if not already present
+                            if (!filterColumn.value.includes(value)) {
+                                filterColumn.value.push(value);
+                            }
+                        }
+                    });
+
                     if (datagrids?.length) {
                         const currentDatagrid = datagrids.find(({ src }) => src === this.src);
 
@@ -200,6 +225,27 @@
 
                                 searchAppliedColumn.value = [urlParams.get('search')];
                             }
+
+                            // Re-apply URL filters (they override stored state)
+                            urlParams.forEach((value, key) => {
+                                const match = key.match(/^filters\[([^\]]+)\](?:\[\d+\])?$/);
+                                if (match) {
+                                    const columnIndex = match[1];
+                                    let filterColumn = this.applied.filters.columns.find(column => column.index === columnIndex);
+                                    
+                                    if (!filterColumn) {
+                                        filterColumn = {
+                                            index: columnIndex,
+                                            value: []
+                                        };
+                                        this.applied.filters.columns.push(filterColumn);
+                                    }
+                                    
+                                    if (!filterColumn.value.includes(value)) {
+                                        filterColumn.value.push(value);
+                                    }
+                                }
+                            });
 
                             this.get();
 
@@ -238,9 +284,16 @@
                         params.filters[column.index] = column.value;
                     });
 
+                    // Only include non-filter URL params (pagination, sort, etc.)
+                    // Filter params should come from applied.filters.columns, not URL
                     const urlParams = new URLSearchParams(window.location.search);
 
-                    urlParams.forEach((param, key) => params[key] = param);
+                    urlParams.forEach((param, key) => {
+                        // Skip filter params - they're already handled above from applied.filters.columns
+                        if (!key.match(/^filters\[/)) {
+                            params[key] = param;
+                        }
+                    });
 
                     this.isLoading = true;
 

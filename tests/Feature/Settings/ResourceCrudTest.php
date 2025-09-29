@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Clinic;
 use App\Models\Resource;
 use App\Models\ResourceType;
 use Webkul\Installer\Http\Middleware\CanInstall;
@@ -27,10 +28,12 @@ test('resources index returns datagrid json', function () {
 
 test('can create resource', function () {
     $resourceType = ResourceType::factory()->create();
+    $clinic = Clinic::factory()->create();
 
     $payload = [
         'name'             => 'Test Resource',
         'resource_type_id' => $resourceType->id,
+        'clinic_id'        => $clinic->id,
     ];
 
     $response = $this->postJson(route('admin.settings.resources.store'), $payload);
@@ -47,6 +50,7 @@ test('can update resource', function () {
     $payload = [
         'name'             => 'Updated Resource',
         'resource_type_id' => $resource->resource_type_id,
+        'clinic_id'        => $resource->clinic_id,
         '_method'          => 'put',
     ];
 

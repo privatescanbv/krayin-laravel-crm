@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Admin\Settings\ResourceController;
-use App\Models\Shift;
 use App\Repositories\ClinicRepository;
 use App\Repositories\ResourceRepository;
 use App\Repositories\ResourceTypeRepository;
@@ -11,23 +10,23 @@ use Mockery;
 
 it('produces two distinct periods in period-aware summaries', function () {
     // Two shifts in non-overlapping date ranges
-    $shiftPeriod1 = new Shift([
+    $shiftPeriod1 = (object) [
         'available' => true,
         'period_start' => Carbon::now()->addDays(1),
         'period_end' => Carbon::now()->addDays(10),
         'weekday_time_blocks' => [
             1 => [ ['from' => '08:00', 'to' => '12:00'] ],
         ],
-    ]);
+    ];
 
-    $shiftPeriod2 = new Shift([
+    $shiftPeriod2 = (object) [
         'available' => false,
         'period_start' => Carbon::now()->addDays(20),
         'period_end' => Carbon::now()->addDays(30),
         'weekday_time_blocks' => [
             1 => [ ['from' => '10:00', 'to' => '11:00'] ],
         ],
-    ]);
+    ];
 
     $controller = new ResourceController(
         Mockery::mock(ResourceRepository::class),

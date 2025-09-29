@@ -7,7 +7,7 @@ use App\Repositories\ResourceRepository;
 use App\Repositories\ResourceTypeRepository;
 use App\Repositories\ShiftRepository;
 
-it('merges overlapping and adjacent time blocks per day by availability flag', function () {
+it('merges blocks and computes net availability minus unavailability', function () {
     // Build two shifts with overlapping Monday blocks, one available and one unavailable
     $shiftAvailable = new Shift([
         'available'           => true,
@@ -47,9 +47,9 @@ it('merges overlapping and adjacent time blocks per day by availability flag', f
     $method->setAccessible(true);
     $result = $method->invoke($controller, [$shiftAvailable, $shiftUnavailable]);
 
-    // Monday checks (day 1)
+    // Monday checks (day 1): available 08:00–13:00 minus unavailable 10:00–11:30 => 08:00–10:00 and 11:30–13:00
     expect($result[1]['available'])
-        ->toBe([['from' => '08:00', 'to' => '13:00']])
+        ->toBe([['from' => '08:00', 'to' => '10:00'], ['from' => '11:30', 'to' => '13:00']])
         ->and($result[1]['unavailable'])
         ->toBe([['from' => '10:00', 'to' => '11:30']])
         ->and($result[2]['available'])->toBe([])

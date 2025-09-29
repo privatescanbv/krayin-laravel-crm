@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Resource;
+use App\Models\Clinic;
 use App\Models\Shift;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -19,6 +20,7 @@ class ShiftFactory extends Factory
         $end = (clone $start)->modify('+4 hours');
 
         return [
+            'clinic_id'  => Clinic::factory(),
             'resource_id' => Resource::factory(),
             'starts_at'   => $start,
             'ends_at'     => $end,

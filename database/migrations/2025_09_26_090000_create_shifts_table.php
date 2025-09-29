@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('shifts', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('clinic_id');
             $table->unsignedBigInteger('resource_id');
             $table->dateTime('starts_at');
             $table->dateTime('ends_at');
@@ -21,15 +22,14 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->foreign('resource_id')
-                ->references('id')->on('resources')
-                ->onDelete('cascade');
+            $table->foreign('clinic_id')->references('id')->on('clinics')->onDelete('cascade');
+            $table->foreign('resource_id')->references('id')->on('resources')->onDelete('cascade');
 
             // Optional FKs for audit users (keep nullable, do not cascade)
             $table->foreign('created_by')->references('id')->on('users');
             $table->foreign('updated_by')->references('id')->on('users');
 
-            $table->index(['resource_id', 'starts_at']);
+            $table->index(['clinic_id', 'resource_id', 'starts_at']);
         });
     }
 

@@ -51,3 +51,52 @@ Voor monitoring en foutanalyse zetten we Sentry in. Hiermee kunnen we technische
 * **Versiebeheer & Continuous Integration**
 Git en CI zijn ondergebracht in GitHub. Dit biedt overzichtelijke versiecontrole, pull requests, en geautomatiseerde tests bij elke wijziging.
 
+=== Bekende Issues & Oplossingen
+
+==== Log schrijfrechten probleem (OPGELOST)
+
+**Symptoom:**
+Na 2-3 dagen krijgen alle acties een foutmelding:
+
+----
+could not append log.. invalid rights.
+Kon niet overnemen: The stream or file "/usr/share/nginx/html/storage/logs/laravel-2025-09-29.log" 
+could not be opened in append mode: Failed to open stream: Permission denied
+----
+
+**Oorzaak:**
+Laravel's daily log rotatie maakt dagelijks nieuwe logbestanden aan (bijv. `laravel-2025-09-29.log`). Het probleem ontstond doordat:
+
+1. PHP-FPM draaide als root gebruiker (via `-R` flag) in plaats van `www-data`
+2. De `storage/logs` directory had geen correcte permissies voor `www-data` gebruiker
+3. Bij het aanmaken van een nieuw dagelijks logbestand faalde dit door missende schrijfrechten
+
+**Oplossing:**
+De volgende aanpassingen zijn doorgevoerd:
+
+1. **PHP-FPM configuratie** (`.docker/php/fpm-cloud.conf`):
+   - Toegevoegd: `user = www-data` en `group = www-data`
+   - Socket ownership aangepast naar `www-data:www-data`
+   - Socket mode ingesteld op `0660`
+
+2. **Supervisor configuratie** (`.docker/supervisord.conf`):
+   - Verwijderd: `-R` flag van php-fpm command
+   - Toegevoegd: `user=www-data` directive voor php-fpm programma
+
+3. **Docker startup script** (`.docker/start.sh`):
+   - Toegevoegd: Automatische permissie fix bij elke container start
+   - Commando's: 
+     ```bash
+     chown -R www-data:www-data /usr/share/nginx/html/storage
+     chmod -R 775 /usr/share/nginx/html/storage
+     chmod -R 775 /usr/share/nginx/html/storage/logs
+     chmod -R 775 /usr/share/nginx/html/bootstrap/cache
+     ```
+
+4. **Dockerfile** (`docker/php/Dockerfile`):
+   - Toegevoegd: Expliciete aanmaak van storage directories met juiste permissies
+   - Directory ownership en permissions worden ingesteld tijdens image build
+
+**Preventie:**
+Deze fix zorgt ervoor dat de permissies bij elke container herstart automatisch worden hersteld, waardoor het probleem niet meer kan optreden.
+

@@ -17,5 +17,12 @@ if [ ! -d "public/vendor/log-viewer" ]; then
     rm ./storage/logs/*.log
 fi
 
+# Fix storage permissions to prevent log write errors
+echo "Fixing storage permissions..."
+chown -R www-data:www-data /usr/share/nginx/html/storage
+chmod -R 775 /usr/share/nginx/html/storage
+chmod -R 775 /usr/share/nginx/html/storage/logs
+chmod -R 775 /usr/share/nginx/html/bootstrap/cache
+
 echo "Starting Supervisor..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

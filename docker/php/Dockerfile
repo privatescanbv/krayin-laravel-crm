@@ -95,14 +95,22 @@ COPY  .docker/php/php.ini /usr/local/etc/php/conf.d/docker-php-config.ini
 COPY  .docker/nginx/templates/default.cloud.conf /etc/nginx/sites-enabled/default
 COPY  .docker/nginx/nginx.conf /etc/nginx/nginx.conf
 
-RUN #chmod 750 /usr/share/nginx/html/* \
-    && chown -R www-data:www-data /usr/share/nginx/html /var/log /run /etc/nginx
+RUN chown -R www-data:www-data /usr/share/nginx/html /var/log /run /etc/nginx
 
 COPY --chown=www-data:www-data --from=yarn /build/public/build public/build
-RUN touch /usr/share/nginx/html/storage/logs/laravel.log
-RUN chown www-data:www-data /usr/share/nginx/html/storage/logs/laravel.log
+
+# Ensure storage directories have correct permissions for log writing
+RUN mkdir -p /usr/share/nginx/html/storage/logs \
+    && mkdir -p /usr/share/nginx/html/storage/framework/cache \
+    && mkdir -p /usr/share/nginx/html/storage/framework/sessions \
+    && mkdir -p /usr/share/nginx/html/storage/framework/views \
+    && mkdir -p /usr/share/nginx/html/bootstrap/cache \
+    && chown -R www-data:www-data /usr/share/nginx/html/storage \
+    && chown -R www-data:www-data /usr/share/nginx/html/bootstrap/cache \
+    && chmod -R 775 /usr/share/nginx/html/storage \
+    && chmod -R 775 /usr/share/nginx/html/bootstrap/cache
+
 RUN rm -rf /usr/share/nginx/html/.env
-RUN rm ./storage/logs/laravel.log
 
 # These files are not used within the container, but copied in the server
 COPY .docker/mysql/init-n8n.sql /docker/mysql/

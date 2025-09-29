@@ -34,22 +34,51 @@
                 <div class="relative w-full overflow-x-auto">
                     <div class="min-w-[640px]">
                         <div class="mb-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                            <div>@lang('admin::app.settings.resources.show.upcoming')</div>
+                            <div>Samenvatting van roosters (samengevoegd)</div>
                         </div>
                         <div class="flex flex-col divide-y divide-gray-200 dark:divide-gray-800">
-                            @forelse($upcomingShifts as $shift)
-                                <div class="flex items-center justify-between py-2 text-sm">
-                                    <div class="flex items-center gap-2">
-                                        <span class="h-2 w-2 rounded-full bg-green-500"></span>
-                                        <span>{{ \Carbon\Carbon::parse($shift->starts_at)->format('d-m-Y H:i') }}</span>
-                                        <span class="mx-1">→</span>
-                                        <span>{{ \Carbon\Carbon::parse($shift->ends_at)->format('d-m-Y H:i') }}</span>
+                            @php
+                                $dayNames = [
+                                    1 => trans('admin::app.monday'),
+                                    2 => trans('admin::app.tuesday'),
+                                    3 => trans('admin::app.wednesday'),
+                                    4 => trans('admin::app.thursday'),
+                                    5 => trans('admin::app.friday'),
+                                    6 => trans('admin::app.saturday'),
+                                    7 => trans('admin::app.sunday'),
+                                ];
+                            @endphp
+
+                            @for($day = 1; $day <= 7; $day++)
+                                @php
+                                    $daySummary = $scheduleSummary[$day] ?? ['available' => [], 'unavailable' => []];
+                                    $available = $daySummary['available'] ?? [];
+                                    $unavailable = $daySummary['unavailable'] ?? [];
+                                @endphp
+                                <div class="py-3 text-sm">
+                                    <div class="mb-2 font-semibold">{{ $dayNames[$day] }}</div>
+                                    <div class="mb-1 flex flex-wrap items-center gap-2">
+                                        <span class="rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/40 dark:text-green-300">Beschikbaar</span>
+                                        @if (count($available))
+                                            @foreach($available as $range)
+                                                <span class="rounded border border-green-300 px-2 py-0.5 text-xs text-green-800 dark:border-green-700 dark:text-green-300">{{ $range['from'] }}–{{ $range['to'] }}</span>
+                                            @endforeach
+                                        @else
+                                            <span class="text-xs text-gray-500">—</span>
+                                        @endif
                                     </div>
-                                    <div class="truncate text-gray-600 dark:text-gray-300">{{ $shift->notes }}</div>
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">Niet beschikbaar</span>
+                                        @if (count($unavailable))
+                                            @foreach($unavailable as $range)
+                                                <span class="rounded border border-red-300 px-2 py-0.5 text-xs text-red-800 dark:border-red-700 dark:text-red-300">{{ $range['from'] }}–{{ $range['to'] }}</span>
+                                            @endforeach
+                                        @else
+                                            <span class="text-xs text-gray-500">—</span>
+                                        @endif
+                                    </div>
                                 </div>
-                            @empty
-                                <div class="py-6 text-center text-gray-500">@lang('admin::app.settings.resources.show.no-upcoming')</div>
-                            @endforelse
+                            @endfor
                         </div>
                     </div>
                 </div>

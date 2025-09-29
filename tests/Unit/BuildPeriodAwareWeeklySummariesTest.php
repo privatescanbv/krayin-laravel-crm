@@ -6,7 +6,6 @@ use App\Repositories\ResourceRepository;
 use App\Repositories\ResourceTypeRepository;
 use App\Repositories\ShiftRepository;
 use Illuminate\Support\Carbon;
-use Mockery;
 
 it('produces two distinct periods in period-aware summaries', function () {
     // Two shifts in non-overlapping date ranges

@@ -13,9 +13,8 @@
 <div class="flex flex-col divide-y divide-gray-200 dark:divide-gray-800">
     @for ($day = 1; $day <= 7; $day++)
         @php
-            $daySummary = $summary[$day] ?? ['available' => [], 'unavailable' => []];
+            $daySummary = $summary[$day] ?? ['available' => []];
             $available = $daySummary['available'] ?? [];
-            $unavailable = $daySummary['unavailable'] ?? [];
         @endphp
         <div class="py-3 text-sm">
             <div class="mb-2 font-semibold">{{ $dayNames[$day] }}</div>
@@ -26,18 +25,9 @@
                         <span class="rounded border border-green-300 px-2 py-0.5 text-xs text-green-800 dark:border-green-700 dark:text-green-300">{{ $range['from'] }}–{{ $range['to'] }}</span>
                     @endforeach
                 @else
-                    @if (! count($unavailable))
-                        <span class="text-xs text-gray-500">—</span>
-                    @endif
+                    <span class="text-xs text-gray-500">—</span>
                 @endif
             </div>
-            @if (count($unavailable) && count($available) === 0)
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">Niet beschikbaar</span>
-                    @foreach ($unavailable as $range)
-                        <span class="rounded border border-red-300 px-2 py-0.5 text-xs text-red-800 dark:border-red-700 dark:text-red-300">{{ $range['from'] }}–{{ $range['to'] }}</span>
-                    @endforeach
-                </div>
-            @endif
+            
         </div>
     @endfor

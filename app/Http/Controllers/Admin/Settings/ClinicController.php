@@ -41,18 +41,20 @@ class ClinicController extends SimpleEntityController
     protected function validateStore(Request $request): void
     {
         $request->validate([
-            'name'   => 'required|unique:clinics,name|max:100',
-            'emails' => 'nullable|array',
-            'phones' => 'nullable|array',
+            'name'       => 'required|unique:clinics,name|max:100',
+            'department' => 'nullable|max:100',
+            'emails'     => 'nullable|array',
+            'phones'     => 'nullable|array',
         ]);
     }
 
     protected function validateUpdate(Request $request, int $id): void
     {
         $request->validate([
-            'name'   => 'required|max:100|unique:clinics,name,'.$id,
-            'emails' => 'nullable|array',
-            'phones' => 'nullable|array',
+            'name'       => 'required|max:100|unique:clinics,name,'.$id,
+            'department' => 'nullable|max:100',
+            'emails'     => 'nullable|array',
+            'phones'     => 'nullable|array',
         ]);
     }
 

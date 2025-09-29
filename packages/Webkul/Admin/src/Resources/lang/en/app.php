@@ -769,10 +769,11 @@ return [
                 'delete-failed'   => 'Failed to delete clinic.',
 
                 'datagrid' => [
-                    'id'     => 'ID',
-                    'name'   => 'Name',
-                    'edit'   => 'Edit',
-                    'delete' => 'Delete',
+                    'id'         => 'ID',
+                    'name'       => 'Name',
+                    'department' => 'Department',
+                    'edit'       => 'Edit',
+                    'delete'     => 'Delete',
                 ],
 
                 'edit' => [
@@ -782,6 +783,7 @@ return [
                 'create' => [
                     'title'       => 'Create Clinic',
                     'name'        => 'Name',
+                    'department'  => 'Department',
                     'emails'      => 'Emails (JSON array)',
                     'emails-help' => 'Example: ["info@example.com", "support@example.com"]',
                     'phones'      => 'Phones (JSON array)',

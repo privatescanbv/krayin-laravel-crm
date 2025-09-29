@@ -1679,10 +1679,11 @@ return [
                 'delete-failed' => 'Verwijderen van kliniek mislukt.',
 
                 'datagrid' => [
-                    'id' => 'ID',
-                    'name' => 'Naam',
-                    'edit' => 'Bewerken',
-                    'delete' => 'Verwijderen',
+                    'id'         => 'ID',
+                    'name'       => 'Naam',
+                    'department' => 'Afdeling',
+                    'edit'       => 'Bewerken',
+                    'delete'     => 'Verwijderen',
                 ],
 
                 'edit' => [
@@ -1694,6 +1695,7 @@ return [
                     'title' => 'Kliniek aanmaken',
                     'delete-warning' => 'Weet je zeker dat je deze kliniek wilt verwijderen? Alle gekoppelde resources worden losgekoppeld.',
                     'name' => 'Naam',
+                    'department' => 'Afdeling',
                     'emails' => 'E-mails (JSON array)',
                     'emails-help' => 'Voorbeeld: ["info@voorbeeld.nl", "support@voorbeeld.nl"]',
                     'phones' => 'Telefoons (JSON array)',

@@ -12,9 +12,10 @@ class ClinicFactory extends Factory
     public function definition(): array
     {
         return [
-            'name'   => $this->faker->unique()->company(),
-            'emails' => [$this->faker->unique()->companyEmail()],
-            'phones' => [$this->faker->phoneNumber()],
+            'name'       => $this->faker->unique()->company(),
+            'department' => $this->faker->optional()->randomElement(['Cardiology', 'Neurology', 'Oncology', 'Pediatrics', 'Orthopedics']),
+            'emails'     => [$this->faker->unique()->companyEmail()],
+            'phones'     => [$this->faker->phoneNumber()],
         ];
     }
 }

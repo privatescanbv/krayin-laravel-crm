@@ -29,7 +29,7 @@
                     <span class="text-xs text-gray-500">—</span>
                 @endif
             </div>
-            @if (count($unavailable))
+            @if (count($unavailable) && count($available) === 0)
                 <div class="flex flex-wrap items-center gap-2">
                     <span class="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">Niet beschikbaar</span>
                     @foreach ($unavailable as $range)

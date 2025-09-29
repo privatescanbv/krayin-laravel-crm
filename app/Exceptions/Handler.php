@@ -33,23 +33,23 @@ class Handler extends ExceptionHandler
      * Render an exception into an HTTP response.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \Throwable  $e
+     * @param  \Throwable  $exception
      * @return \Symfony\Component\HttpFoundation\Response
      *
      * @throws \Throwable
      */
-    public function render($request, Throwable $e)
+    public function render($request, Throwable $exception)
     {
-        $response = parent::render($request, $e);
+        $response = parent::render($request, $exception);
 
         // Log all 500 errors with full stack trace
         if ($response->getStatusCode() === 500) {
             Log::error('500 Internal Server Error', [
-                'exception' => get_class($e),
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
+                'exception' => get_class($exception),
+                'message' => $exception->getMessage(),
+                'file' => $exception->getFile(),
+                'line' => $exception->getLine(),
+                'trace' => $exception->getTraceAsString(),
                 'url' => $request->fullUrl(),
                 'method' => $request->method(),
                 'ip' => $request->ip(),

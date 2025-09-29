@@ -29,7 +29,10 @@ jobs:
           tools: composer:v2
 
       - name: Install PHP dependencies
-        run: composer install
+        run: |
+          set -o pipefail
+          echo "" > ci_error.txt
+          composer install |& tee -a ci_error.txt
 
       - name: Configure environment
         run: |
@@ -42,7 +45,9 @@ jobs:
           sed -i "s|^\(DB_PASSWORD=\s*\).*$|\1root|" .env
 
       - name: Install Krayin (DB, config)
-        run: php artisan krayin-crm:install --skip-env-check --skip-admin-creation
+        run: |
+          set -o pipefail
+          php artisan krayin-crm:install --skip-env-check --skip-admin-creation |& tee -a ci_error.txt
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -52,20 +57,27 @@ jobs:
 
       - name: Install Admin frontend dependencies
         working-directory: packages/Webkul/Admin
-        run: npm ci
+        run: |
+          set -o pipefail
+          npm ci |& tee -a ../../ci_error.txt
 
       - name: Build Admin assets
         working-directory: packages/Webkul/Admin
-        run: npm run build
+        run: |
+          set -o pipefail
+          npm run build |& tee -a ../../ci_error.txt
 
       - name: Run backend tests
-        run: php artisan test --parallel --colors=always
+        run: |
+          set -o pipefail
+          php artisan test --parallel --colors=always |& tee -a ci_error.txt
 
       - name: Start Laravel server
         run: php artisan serve --host=0.0.0.0 --port=8000 &
 
       - name: Wait for Laravel
         run: |
+          set -o pipefail
           for i in {1..10}; do
             if curl -s http://localhost:8000 > /dev/null; then
               echo "Laravel is up!"
@@ -83,12 +95,27 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Restore .NET dependencies
-        run: dotnet restore ./UiTests/UiTests.csproj
+        run: |
+          set -o pipefail
+          dotnet restore ./UiTests/UiTests.csproj |& tee -a ci_error.txt
 
       - name: Build UI tests
-        run: dotnet build ./UiTests/UiTests.csproj --configuration Release --nologo
+        run: |
+          set -o pipefail
+          dotnet build ./UiTests/UiTests.csproj --configuration Release --nologo |& tee -a ci_error.txt
 
       - name: Run UI tests
-        run: dotnet test ./UiTests/UiTests.csproj --configuration Release --no-build --logger "trx;LogFileName=test_results.trx"
+        run: |
+          set -o pipefail
+          dotnet test ./UiTests/UiTests.csproj --configuration Release --no-build --logger "trx;LogFileName=test_results.trx" |& tee -a ci_error.txt
         env:
           TestSettings__BaseUrl: http://localhost:8000
+
+      - name: Upload failure artifact
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci_error.txt
+          path: ci_error.txt
+          if-no-files-found: warn
+          retention-days: 7

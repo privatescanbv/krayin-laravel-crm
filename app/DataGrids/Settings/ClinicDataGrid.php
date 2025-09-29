@@ -46,7 +46,7 @@ class ClinicDataGrid extends DataGrid
     {
         $this->addAction([
             'index'  => 'view-resources',
-            'icon'   => 'icon-eye',
+            'icon'   => 'icon-setting',
             'title'  => trans('admin::app.settings.clinics.index.datagrid.view-resources'),
             'method' => 'GET',
             'url'    => fn ($row) => route('admin.settings.resources.index', ['filters' => ['clinic_id' => [$row->id]]]),

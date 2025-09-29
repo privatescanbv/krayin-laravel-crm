@@ -769,10 +769,11 @@ return [
                 'delete-failed'   => 'Failed to delete clinic.',
 
                 'datagrid' => [
-                    'id'     => 'ID',
-                    'name'   => 'Name',
-                    'edit'   => 'Edit',
-                    'delete' => 'Delete',
+                    'id'             => 'ID',
+                    'name'           => 'Name',
+                    'view-resources' => 'View Resources',
+                    'edit'           => 'Edit',
+                    'delete'         => 'Delete',
                 ],
 
                 'edit' => [

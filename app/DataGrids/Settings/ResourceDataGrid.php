@@ -26,6 +26,7 @@ class ResourceDataGrid extends DataGrid
             );
 
         $this->addFilter('id', 'resources.id');
+        $this->addFilter('clinic_id', 'resources.clinic_id');
 
         return $queryBuilder;
     }

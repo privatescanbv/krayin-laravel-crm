@@ -38,6 +38,22 @@
                     <x-admin::form.control-group.error control-name="name" />
                 </x-admin::form.control-group>
 
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label>
+                        @lang('admin::app.settings.clinics.index.create.department-head')
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.control
+                        type="text"
+                        name="department_head"
+                        rules="max:255"
+                        :label="trans('admin::app.settings.clinics.index.create.department-head')"
+                        :placeholder="trans('admin::app.settings.clinics.index.create.department-head')"
+                    />
+
+                    <x-admin::form.control-group.error control-name="department_head" />
+                </x-admin::form.control-group>
+
                 <!-- Emails -->
                 @php
                     $__emailsVal = old('emails', []);

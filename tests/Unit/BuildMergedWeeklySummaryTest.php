@@ -2,7 +2,11 @@
 
 use App\Http\Controllers\Admin\Settings\ResourceController;
 use App\Models\Shift;
-use Illuminate\Support\Facades\App;
+use App\Repositories\ClinicRepository;
+use App\Repositories\ResourceRepository;
+use App\Repositories\ResourceTypeRepository;
+use App\Repositories\ShiftRepository;
+use Mockery;
 
 it('merges overlapping and adjacent time blocks per day by availability flag', function () {
     // Build two shifts with overlapping Monday blocks, one available and one unavailable
@@ -31,8 +35,13 @@ it('merges overlapping and adjacent time blocks per day by availability flag', f
         ],
     ]);
 
-    // Controller instance (dependencies are not used for this method)
-    $controller = App::make(ResourceController::class);
+    // Controller instance with mocked dependencies (not used by the method)
+    $controller = new ResourceController(
+        Mockery::mock(ResourceRepository::class),
+        Mockery::mock(ResourceTypeRepository::class),
+        Mockery::mock(ShiftRepository::class),
+        Mockery::mock(ClinicRepository::class),
+    );
 
     // Access protected method via reflection
     $method = (new ReflectionClass($controller))->getMethod('buildMergedWeeklySummary');

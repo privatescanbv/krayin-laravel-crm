@@ -74,16 +74,14 @@
                                                         <span class="text-xs text-gray-500">—</span>
                                                     @endif
                                                 </div>
-                                                <div class="flex flex-wrap items-center gap-2">
-                                                    <span class="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">Niet beschikbaar</span>
-                                                    @if (count($unavailable))
+                                                @if (count($unavailable))
+                                                    <div class="flex flex-wrap items-center gap-2">
+                                                        <span class="rounded bg-red-100 px-2 py-0.5 text-xs font-medium text-red-800 dark:bg-red-900/40 dark:text-red-300">Niet beschikbaar</span>
                                                         @foreach ($unavailable as $range)
                                                             <span class="rounded border border-red-300 px-2 py-0.5 text-xs text-red-800 dark:border-red-700 dark:text-red-300">{{ $range['from'] }}–{{ $range['to'] }}</span>
                                                         @endforeach
-                                                    @else
-                                                        <span class="text-xs text-gray-500">—</span>
-                                                    @endif
-                                                </div>
+                                                    </div>
+                                                @endif
                                             </div>
                                         @endfor
                                     </div>

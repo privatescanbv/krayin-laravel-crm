@@ -5,13 +5,20 @@ use App\Models\Shift;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
+use Webkul\Installer\Http\Middleware\CanInstall;
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
 use function Pest\Laravel\post;
 
+beforeEach(function () {
+    config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
+    test()->withoutMiddleware(CanInstall::class);
+
+    $user = makeUser();
+    $this->actingAs($user, 'user');
+});
+
 it('renders per-period weekly summaries with merged time ranges', function () {
-    $user = User::factory()->create();
-    actingAs($user, 'user');
 
     $resource = Resource::factory()->create();
 

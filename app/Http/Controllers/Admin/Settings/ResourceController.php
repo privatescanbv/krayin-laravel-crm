@@ -33,13 +33,16 @@ class ResourceController extends SimpleEntityController
     public function show(int $id): View
     {
         $resource = $this->resourceRepository->findOrFail($id);
-        $upcomingShifts = $this->shiftRepository->upcomingForResource($resource->id, 50);
+        // Load all shifts for accurate period summaries (not only upcoming)
+        $allShifts = $this->shiftRepository->forResource($resource->id)
+            ->orderBy('period_start')
+            ->get();
 
-        $periodSummaries = $this->buildPeriodAwareWeeklySummaries($upcomingShifts->all());
+        $periodSummaries = $this->buildPeriodAwareWeeklySummaries($allShifts->all());
 
         return view('admin::settings.resources.show', [
             'resource'        => $resource,
-            'upcomingShifts'  => $upcomingShifts,
+            'upcomingShifts'  => collect(),
             'periodSummaries' => $periodSummaries,
         ]);
     }
@@ -87,10 +90,13 @@ class ResourceController extends SimpleEntityController
             }
         }
 
-        // Merge overlaps inside each day's available/unavailable lists
+        // Merge overlaps and compute net available by subtracting unavailable
         for ($day = 1; $day <= 7; $day++) {
-            $summary[$day]['available'] = $this->mergeOverlappingTimeRanges($summary[$day]['available']);
-            $summary[$day]['unavailable'] = $this->mergeOverlappingTimeRanges($summary[$day]['unavailable']);
+            $mergedAvailable = $this->mergeOverlappingTimeRanges($summary[$day]['available']);
+            $mergedUnavailable = $this->mergeOverlappingTimeRanges($summary[$day]['unavailable']);
+
+            $summary[$day]['available'] = $this->subtractTimeRanges($mergedAvailable, $mergedUnavailable);
+            $summary[$day]['unavailable'] = $mergedUnavailable;
         }
 
         return $summary;
@@ -244,6 +250,62 @@ class ResourceController extends SimpleEntityController
         $merged[] = $current;
 
         return $merged;
+    }
+
+    /**
+     * Subtract unavailable ranges from available ranges within a day,
+     * returning the net available ranges.
+     *
+     * @param  array<int, array{from: string, to: string}>  $available
+     * @param  array<int, array{from: string, to: string}>  $unavailable
+     * @return array<int, array{from: string, to: string}>
+     */
+    protected function subtractTimeRanges(array $available, array $unavailable): array
+    {
+        if (empty($available)) {
+            return [];
+        }
+        if (empty($unavailable)) {
+            return $available;
+        }
+
+        // Inputs should be merged and sorted
+        $available = $this->mergeOverlappingTimeRanges($available);
+        $unavailable = $this->mergeOverlappingTimeRanges($unavailable);
+
+        $result = [];
+        foreach ($available as $a) {
+            $segments = [[$a['from'], $a['to']]];
+            foreach ($unavailable as $u) {
+                $newSegments = [];
+                foreach ($segments as [$sf, $st]) {
+                    // no overlap
+                    if ($u['to'] <= $sf || $u['from'] >= $st) {
+                        $newSegments[] = [$sf, $st];
+                        continue;
+                    }
+                    // left remainder
+                    if ($u['from'] > $sf) {
+                        $newSegments[] = [$sf, min($st, $u['from'])];
+                    }
+                    // right remainder
+                    if ($u['to'] < $st) {
+                        $newSegments[] = [max($sf, $u['to']), $st];
+                    }
+                }
+                $segments = $newSegments;
+                if (empty($segments)) {
+                    break;
+                }
+            }
+            foreach ($segments as [$sf, $st]) {
+                if ($sf < $st) {
+                    $result[] = ['from' => $sf, 'to' => $st];
+                }
+            }
+        }
+
+        return $this->mergeOverlappingTimeRanges($result);
     }
 
     protected function getCreateViewData(Request $request): array

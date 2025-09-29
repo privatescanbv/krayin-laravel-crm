@@ -53,3 +53,71 @@ it('produces two distinct periods in period-aware summaries', function () {
     expect($second['summary'][1]['unavailable'])->toBe([['from' => '10:00', 'to' => '11:00']]);
 });
 
+it('computes net availability with an unavailable sub-period within same month', function () {
+    $septStart = Carbon::createFromDate(now()->year, 9, 1)->startOfDay();
+    $septEnd   = Carbon::createFromDate(now()->year, 9, 30)->startOfDay();
+    $firstWeekEnd = $septStart->copy()->addDays(6);
+
+    $availAllMonth = (object) [
+        'available' => true,
+        'period_start' => $septStart->copy(),
+        'period_end' => $septEnd->copy(),
+        'weekday_time_blocks' => [
+            1 => [[ 'from' => '08:00', 'to' => '17:00' ]],
+            2 => [[ 'from' => '08:00', 'to' => '17:00' ]],
+            3 => [[ 'from' => '08:00', 'to' => '17:00' ]],
+            4 => [[ 'from' => '08:00', 'to' => '17:00' ]],
+            5 => [[ 'from' => '08:00', 'to' => '17:00' ]],
+            6 => [[ 'from' => '08:00', 'to' => '17:00' ]],
+            7 => [[ 'from' => '08:00', 'to' => '17:00' ]],
+        ],
+    ];
+
+    $unavailFirstWeek = (object) [
+        'available' => false,
+        'period_start' => $septStart->copy(),
+        'period_end' => $firstWeekEnd->copy(),
+        'weekday_time_blocks' => [
+            1 => [[ 'from' => '08:00', 'to' => '12:00' ]],
+            2 => [[ 'from' => '08:00', 'to' => '12:00' ]],
+            3 => [[ 'from' => '08:00', 'to' => '12:00' ]],
+            4 => [[ 'from' => '08:00', 'to' => '12:00' ]],
+            5 => [[ 'from' => '08:00', 'to' => '12:00' ]],
+            6 => [[ 'from' => '08:00', 'to' => '12:00' ]],
+            7 => [[ 'from' => '08:00', 'to' => '12:00' ]],
+        ],
+    ];
+
+    $controller = new ResourceController(
+        Mockery::mock(ResourceRepository::class),
+        Mockery::mock(ResourceTypeRepository::class),
+        Mockery::mock(ShiftRepository::class),
+        Mockery::mock(ClinicRepository::class),
+    );
+
+    $method = (new ReflectionClass($controller))->getMethod('buildPeriodAwareWeeklySummaries');
+    $method->setAccessible(true);
+    $result = $method->invoke($controller, [$availAllMonth, $unavailFirstWeek]);
+
+    // Expect at least two segments in September: first week and the remainder
+    expect(count($result))->toBeGreaterThanOrEqual(2);
+
+    // First week segment
+    $labelFirstWeek = $septStart->format('Y-m-d') . ' — ' . $firstWeekEnd->format('Y-m-d');
+    $firstWeek = collect($result)->firstWhere('label', $labelFirstWeek);
+    expect($firstWeek)->not()->toBeNull();
+    for ($day = 1; $day <= 7; $day++) {
+        expect($firstWeek['summary'][$day]['available'])->toBe([[ 'from' => '12:00', 'to' => '17:00' ]]);
+    }
+
+    // Remainder segment
+    $remStart = $firstWeekEnd->copy()->addDay();
+    $rem = collect($result)->first(function ($seg) use ($remStart, $septEnd) {
+        return $seg['start'] === $remStart->format('Y-m-d') && $seg['end'] === $septEnd->format('Y-m-d');
+    });
+    expect($rem)->not()->toBeNull();
+    for ($day = 1; $day <= 7; $day++) {
+        expect($rem['summary'][$day]['available'])->toBe([[ 'from' => '08:00', 'to' => '17:00' ]]);
+    }
+});
+

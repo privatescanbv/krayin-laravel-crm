@@ -1687,10 +1687,12 @@ return [
 
                 'edit' => [
                     'title' => 'Kliniek bewerken',
+                    'delete-warning' => 'Weet je zeker dat je deze kliniek wilt verwijderen? Alle gekoppelde resources worden losgekoppeld.',
                 ],
 
                 'create' => [
                     'title' => 'Kliniek aanmaken',
+                    'delete-warning' => 'Weet je zeker dat je deze kliniek wilt verwijderen? Alle gekoppelde resources worden losgekoppeld.',
                     'name' => 'Naam',
                     'emails' => 'E-mails (JSON array)',
                     'emails-help' => 'Voorbeeld: ["info@voorbeeld.nl", "support@voorbeeld.nl"]',
@@ -1729,7 +1731,90 @@ return [
                 ],
             ],
         ],
+
+        'resources' => [
+            'index' => [
+                'manage-shifts' => 'Rooster beheren',
+                'datagrid' => [
+                    'view' => 'Bekijken',
+                    'clinic' => 'Kliniek',
+                ],
+                'create' => [
+                    'clinic' => 'Kliniek',
+                ],
+            ],
+            'show' => [
+                'title'          => 'Bekijken',
+                'details'        => 'Details',
+                'schedule'       => 'Rooster',
+                'upcoming'       => 'Aankomende diensten',
+                'no-upcoming'    => 'Geen aankomende diensten',
+                'manage-shifts'  => 'Rooster beheren',
+            ],
+        ],
+
+        'shifts' => [
+            'index' => [
+                'title'       => 'Diensten',
+                'create-btn'  => 'Dienst toevoegen',
+                'datagrid'    => [
+                    'id'        => 'ID',
+                    'starts_at' => 'Start',
+                    'ends_at'   => 'Einde',
+                    'notes'     => 'Notities',
+                    'edit'      => 'Bewerken',
+                    'delete'    => 'Verwijderen',
+                ],
+            ],
+            'create' => [
+                'title'    => 'Dienst aanmaken',
+                'save-btn' => 'Opslaan',
+            ],
+            'edit' => [
+                'title'    => 'Dienst bewerken',
+                'save-btn' => 'Opslaan',
+            ],
+            'fields' => [
+                'starts_at' => 'Starttijd',
+                'ends_at'   => 'Eindtijd',
+                'notes'     => 'Notities',
+                'available' => 'Beschikbaar',
+                'period_start' => 'Startdatum',
+                'period_end'   => 'Einddatum',
+                'weekdays'     => 'Weekdagen',
+                'time_blocks'  => 'Tijdblokken',
+            ],
+            'validation' => [
+                'period_start_required' => 'Startdatum is verplicht.',
+                'end_after_start'       => 'Einddatum moet na de startdatum liggen.',
+                'timeblock_order'       => 'Eindtijd moet later zijn dan begintijd.',
+            ],
+            'datagrid' => [
+                'id'        => 'ID',
+                'starts_at' => 'Start',
+                'ends_at'   => 'Einde',
+                'notes'     => 'Notities',
+                'edit'      => 'Bewerken',
+                'delete'    => 'Verwijderen',
+            ],
+            'create-success' => 'Dienst succesvol aangemaakt.',
+            'update-success' => 'Dienst succesvol bijgewerkt.',
+            'delete-success' => 'Dienst succesvol verwijderd.',
+            'delete-failed'  => 'Verwijderen van dienst mislukt.',
+        ],
     ],
+
+    // Weekday labels (used in shifts forms)
+    'edit'      => 'Bewerken',
+    'select'      => 'Selecteer',
+    'add'      => 'Toevoegen',
+    'monday'    => 'Maandag',
+    'tuesday'   => 'Dinsdag',
+    'wednesday' => 'Woensdag',
+    'thursday'  => 'Donderdag',
+    'friday'    => 'Vrijdag',
+    'saturday'  => 'Zaterdag',
+    'sunday'    => 'Zondag',
 
     'partner_products' => [
         'index' => [

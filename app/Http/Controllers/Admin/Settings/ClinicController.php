@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\ClinicDataGrid;
 use App\Repositories\ClinicRepository;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Throwable;
 
 class ClinicController extends SimpleEntityController
 {
@@ -19,6 +21,21 @@ class ClinicController extends SimpleEntityController
         $this->editView = 'admin::settings.clinics.edit';
         $this->indexRoute = 'admin.settings.clinics.index';
         $this->permissionPrefix = 'settings.clinics';
+    }
+
+    public function destroy(Request $request, ?int $id = null): RedirectResponse
+    {
+        if (! $id) {
+            return redirect()->route($this->indexRoute)->with('error', $this->getDeleteFailedMessage());
+        }
+
+        try {
+            $this->clinicRepository->deleteWithResourceDetach($id);
+        } catch (Throwable $ex) {
+            return redirect()->route($this->indexRoute)->with('error', $this->getDeleteFailedMessage());
+        }
+
+        return redirect()->route($this->indexRoute)->with('success', $this->getDestroySuccessMessage());
     }
 
     protected function validateStore(Request $request): void

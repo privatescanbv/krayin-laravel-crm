@@ -17,10 +17,12 @@ class ResourceDataGrid extends DataGrid
     {
         $queryBuilder = DB::table('resources')
             ->leftJoin('resource_types', 'resource_types.id', '=', 'resources.resource_type_id')
+            ->leftJoin('clinics', 'clinics.id', '=', 'resources.clinic_id')
             ->addSelect(
                 'resources.id',
                 'resources.name',
-                'resource_types.name as resource_type_name'
+                'resource_types.name as resource_type_name',
+                'clinics.name as clinic_name'
             );
 
         $this->addFilter('id', 'resources.id');
@@ -58,10 +60,35 @@ class ResourceDataGrid extends DataGrid
             'filterable' => true,
             'sortable'   => true,
         ]);
+
+        $this->addColumn([
+            'index'      => 'clinic_name',
+            'type'       => 'string',
+            'label'      => trans('admin::app.settings.resources.index.datagrid.clinic'),
+            'searchable' => true,
+            'filterable' => true,
+            'sortable'   => true,
+        ]);
     }
 
     public function prepareActions(): void
     {
+        $this->addAction([
+            'index'  => 'view',
+            'icon'   => 'icon-eye',
+            'title'  => trans('admin::app.settings.resources.index.datagrid.view'),
+            'method' => 'GET',
+            'url'    => fn ($row) => route('admin.settings.resources.show', $row->id),
+        ]);
+
+        $this->addAction([
+            'index'  => 'manage-shifts',
+            'icon'   => 'icon-calendar',
+            'title'  => trans('admin::app.settings.resources.index.manage-shifts'),
+            'method' => 'GET',
+            'url'    => fn ($row) => route('admin.settings.resources.shifts.index', $row->id),
+        ]);
+
         if (bouncer()->hasPermission('settings.resources.edit')) {
             $this->addAction([
                 'index'  => 'edit',

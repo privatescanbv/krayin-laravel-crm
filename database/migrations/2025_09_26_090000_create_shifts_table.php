@@ -11,9 +11,15 @@ return new class extends Migration
         Schema::create('shifts', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('resource_id');
-            $table->dateTime('starts_at');
-            $table->dateTime('ends_at');
             $table->text('notes')->nullable();
+            $table->boolean('available')->default(true);
+
+            // Period (whole days)
+            $table->date('period_start')->nullable();
+            $table->date('period_end')->nullable();
+
+            // Per-weekday time blocks: { "1": [{"from":"08:00","to":"12:00"}], "2": [...], ... }
+            $table->json('weekday_time_blocks')->nullable();
 
             // Audit trail fields
             $table->unsignedInteger('created_by')->nullable();
@@ -29,7 +35,7 @@ return new class extends Migration
             $table->foreign('created_by')->references('id')->on('users');
             $table->foreign('updated_by')->references('id')->on('users');
 
-            $table->index(['resource_id', 'starts_at']);
+            $table->index(['resource_id']);
         });
     }
 

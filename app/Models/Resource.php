@@ -22,7 +22,6 @@ class Resource extends Model
     ];
 
     protected $casts = [
-        'resource_type_id' => 'integer',
         'clinic_id'        => 'integer',
         'resource_type_id' => 'integer',
         'created_by'       => 'integer',

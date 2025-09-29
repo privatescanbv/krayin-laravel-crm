@@ -220,6 +220,12 @@ Breadcrumbs::for('settings.clinics.create', function (BreadcrumbTrail $trail) {
     $trail->push(trans('admin::app.settings.clinics.index.create.title'), route('admin.settings.clinics.create'));
 });
 
+// Settings > Clinics > Edit
+Breadcrumbs::for('settings.clinics.edit', function (BreadcrumbTrail $trail, $clinic) {
+    $trail->parent('settings.clinics');
+    $trail->push(trans('admin::app.settings.clinics.index.edit.title'), route('admin.settings.clinics.edit', $clinic->id));
+});
+
 // Settings > Partner Products
 Breadcrumbs::for('settings.partner_products', function (BreadcrumbTrail $trail) {
     $trail->parent('settings');
@@ -507,10 +513,43 @@ Breadcrumbs::for('settings.resources', function (BreadcrumbTrail $trail) {
     $trail->push(trans('admin::app.layouts.resources'), route('admin.settings.resources.index'));
 });
 
+// Settings > Resources > View
+Breadcrumbs::for('settings.resources.view', function (BreadcrumbTrail $trail, $resource) {
+    $trail->parent('settings.resources');
+    $trail->push($resource->name, route('admin.settings.resources.show', $resource->id));
+});
+
+// Settings > Resources > View > Shifts
+Breadcrumbs::for('settings.resources.shifts', function (BreadcrumbTrail $trail, $resource) {
+    $trail->parent('settings.resources.view', $resource);
+    $trail->push(trans('admin::app.settings.shifts.index.title'), route('admin.settings.resources.shifts.index', $resource->id));
+});
+
+// Settings > Resources > View > Shifts > Create
+Breadcrumbs::for('settings.resources.shifts.create', function (BreadcrumbTrail $trail, $resource) {
+    $trail->parent('settings.resources.shifts', $resource);
+    $trail->push(trans('admin::app.settings.shifts.create.title'), route('admin.settings.resources.shifts.create', $resource->id));
+});
+
+// Settings > Resources > View > Shifts > Edit
+Breadcrumbs::for('settings.resources.shifts.edit', function (BreadcrumbTrail $trail, $params) {
+    $resource = $params['resource'];
+    $shift = $params['shift'];
+
+    $trail->parent('settings.resources.shifts', $resource);
+    $trail->push(trans('admin::app.settings.shifts.edit.title'), route('admin.settings.resources.shifts.edit', [$resource->id, $shift->id]));
+});
+
 // Settings > Resources > Create
 Breadcrumbs::for('settings.resources.create', function (BreadcrumbTrail $trail) {
     $trail->parent('settings.resources');
     $trail->push(trans('admin::app.settings.resources.index.create.title'), route('admin.settings.resources.create'));
+});
+
+// Settings > Resources > Edit
+Breadcrumbs::for('settings.resources.edit', function (BreadcrumbTrail $trail, $resource) {
+    $trail->parent('settings.resources');
+    $trail->push(trans('admin::app.settings.resources.index.edit.title'), route('admin.settings.resources.edit', $resource->id));
 });
 
 // Dashboard > Settings > Data Transfers

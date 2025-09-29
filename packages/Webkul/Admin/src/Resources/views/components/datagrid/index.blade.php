@@ -184,11 +184,14 @@
                     }
 
                     // Load filters from URL parameters
+                    console.log('Datagrid boot - checking URL params');
                     urlParams.forEach((value, key) => {
+                        console.log('URL param:', key, '=', value);
                         // Match patterns like: filters[clinic_id][0]=3 or filters[clinic_id]=3
                         const match = key.match(/^filters\[([^\]]+)\](?:\[\d+\])?$/);
                         if (match) {
                             const columnIndex = match[1];
+                            console.log('Matched filter column:', columnIndex, 'with value:', value);
                             
                             // Find or create filter column
                             let filterColumn = this.applied.filters.columns.find(column => column.index === columnIndex);
@@ -199,14 +202,17 @@
                                     value: []
                                 };
                                 this.applied.filters.columns.push(filterColumn);
+                                console.log('Created new filter column:', columnIndex);
                             }
                             
                             // Add the value if not already present
                             if (!filterColumn.value.includes(value)) {
                                 filterColumn.value.push(value);
+                                console.log('Added value to filter:', value);
                             }
                         }
                     });
+                    console.log('Applied filters after URL parse:', JSON.stringify(this.applied.filters.columns));
 
                     if (datagrids?.length) {
                         const currentDatagrid = datagrids.find(({ src }) => src === this.src);
@@ -227,11 +233,13 @@
                             }
 
                             // Re-apply URL filters (they override stored state)
+                            console.log('Re-applying URL filters from cached state');
                             urlParams.forEach((value, key) => {
                                 // Match patterns like: filters[clinic_id][0]=3 or filters[clinic_id]=3
                                 const match = key.match(/^filters\[([^\]]+)\](?:\[\d+\])?$/);
                                 if (match) {
                                     const columnIndex = match[1];
+                                    console.log('Re-apply matched filter:', columnIndex, '=', value);
                                     let filterColumn = this.applied.filters.columns.find(column => column.index === columnIndex);
                                     
                                     if (!filterColumn) {
@@ -247,6 +255,7 @@
                                     }
                                 }
                             });
+                            console.log('Applied filters after re-apply:', JSON.stringify(this.applied.filters.columns));
 
                             this.get();
 

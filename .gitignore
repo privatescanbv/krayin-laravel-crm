@@ -32,6 +32,9 @@ yarn.lock
 yarn-error.log
 
 # Playwright
+UiTests/bin/
+UiTests/obj/
+UiTests/Features/**/*.cs
 node_modules/
 /test-results/
 /blob-report/
@@ -41,3 +44,4 @@ docs/html
 
 /rainloop_data
 /upload_sugarcrm
+

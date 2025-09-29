@@ -1,9 +1,9 @@
 @php
-    if (! empty($value)) {
-        if ($value instanceof \Carbon\Carbon) {
+    use Carbon\Carbon;if (! empty($value)) {
+        if ($value instanceof Carbon) {
             $value = $value->format('d-m-Y');
         } elseif (is_string($value)) {
-            $value = \Carbon\Carbon::parse($value)->format('d-m-Y');
+            $value = Carbon::parse($value)->format('d-m-Y');
         }
     }
 @endphp

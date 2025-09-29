@@ -13,19 +13,24 @@ class Shift extends BaseModel
 
     protected $fillable = [
         'resource_id',
-        'starts_at',
-        'ends_at',
         'notes',
+        'available',
+        // new period-based fields
+        'period_start',
+        'period_end',
+        'weekday_time_blocks',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
-        'resource_id' => 'integer',
-        'starts_at'   => 'datetime',
-        'ends_at'     => 'datetime',
-        'created_by'  => 'integer',
-        'updated_by'  => 'integer',
+        'resource_id'         => 'integer',
+        'available'           => 'boolean',
+        'period_start'        => 'date',
+        'period_end'          => 'date',
+        'weekday_time_blocks' => 'array',
+        'created_by'          => 'integer',
+        'updated_by'          => 'integer',
     ];
 
     public function resource()

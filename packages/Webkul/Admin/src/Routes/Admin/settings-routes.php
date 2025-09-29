@@ -26,6 +26,7 @@ use Webkul\Admin\Http\Controllers\Settings\WebhookController;
 use Webkul\Admin\Http\Controllers\Settings\WorkflowController;
 use App\Http\Controllers\Admin\Settings\ResourceController;
 use App\Http\Controllers\Admin\Settings\ResourceTypeController;
+use App\Http\Controllers\Admin\Settings\ShiftController;
 use App\Http\Controllers\Admin\Settings\ProductTypeController;
 
 /**
@@ -122,6 +123,21 @@ Route::prefix('settings')->group(function () {
         Route::put('edit/{id}', 'update')->name('admin.settings.resources.update');
         Route::delete('', 'destroy')->name('admin.settings.resources.delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.resources.delete');
+
+        // Nested: Resource Shifts
+        Route::controller(ShiftController::class)->prefix('{resourceId}/shifts')->group(function () {
+            Route::get('', 'index')->name('admin.settings.resources.shifts.index');
+            Route::get('create', 'create')->name('admin.settings.resources.shifts.create');
+            Route::post('create', 'store')->name('admin.settings.resources.shifts.store');
+            Route::get('edit/{id}', 'edit')->name('admin.settings.resources.shifts.edit');
+            Route::put('edit/{id}', 'update')->name('admin.settings.resources.shifts.update');
+            Route::delete('', 'destroy')->name('admin.settings.resources.shifts.delete');
+            Route::delete('{id}', 'destroy')->name('admin.settings.resources.shifts.delete');
+        });
+
+        // Resource bekijken (visual schedule)
+        Route::get('{id}/bekijken', [ResourceController::class, 'show'])
+            ->name('admin.settings.resources.show');
     });
 
     /**

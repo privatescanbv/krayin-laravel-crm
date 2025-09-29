@@ -62,6 +62,22 @@ class ResourceDataGrid extends DataGrid
 
     public function prepareActions(): void
     {
+        $this->addAction([
+            'index'  => 'view',
+            'icon'   => 'icon-eye',
+            'title'  => trans('admin::app.settings.resources.index.datagrid.view'),
+            'method' => 'GET',
+            'url'    => fn ($row) => route('admin.settings.resources.show', $row->id),
+        ]);
+
+        $this->addAction([
+            'index'  => 'manage-shifts',
+            'icon'   => 'icon-calendar',
+            'title'  => trans('admin::app.settings.resources.index.manage-shifts'),
+            'method' => 'GET',
+            'url'    => fn ($row) => route('admin.settings.resources.shifts.index', $row->id),
+        ]);
+
         if (bouncer()->hasPermission('settings.resources.edit')) {
             $this->addAction([
                 'index'  => 'edit',

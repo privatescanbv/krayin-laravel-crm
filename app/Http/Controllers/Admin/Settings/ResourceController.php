@@ -5,14 +5,17 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\DataGrids\Settings\ResourceDataGrid;
 use App\Repositories\ResourceRepository;
 use App\Repositories\ResourceTypeRepository;
+use App\Repositories\ShiftRepository;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class ResourceController extends SimpleEntityController
 {
     public function __construct(
         protected ResourceRepository $resourceRepository,
-        protected ResourceTypeRepository $resourceTypeRepository
+        protected ResourceTypeRepository $resourceTypeRepository,
+        protected ShiftRepository $shiftRepository
     ) {
         parent::__construct($resourceRepository);
 
@@ -23,6 +26,17 @@ class ResourceController extends SimpleEntityController
         $this->editView = 'admin::settings.resources.edit';
         $this->indexRoute = 'admin.settings.resources.index';
         $this->permissionPrefix = 'settings.resources';
+    }
+
+    public function show(int $id): View
+    {
+        $resource = $this->resourceRepository->findOrFail($id);
+        $upcomingShifts = $this->shiftRepository->upcomingForResource($resource->id, 50);
+
+        return view('admin::settings.resources.show', [
+            'resource'       => $resource,
+            'upcomingShifts' => $upcomingShifts,
+        ]);
     }
 
     protected function getCreateViewData(Request $request): array

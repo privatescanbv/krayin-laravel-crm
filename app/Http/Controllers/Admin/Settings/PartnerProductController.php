@@ -4,16 +4,16 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\PartnerProductDataGrid;
 use App\Enums\Currency;
-use App\Models\ResourceType;
 use App\Models\Clinic;
+use App\Models\ResourceType;
 use App\Repositories\PartnerProductRepository;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
-use Illuminate\View\View;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class PartnerProductController extends SimpleEntityController
 {
@@ -39,13 +39,61 @@ class PartnerProductController extends SimpleEntityController
         ]);
     }
 
+    public function store(Request $request): RedirectResponse|JsonResponse
+    {
+        $this->validateStore($request);
+
+        Event::dispatch("settings.{$this->entityName}.create.before");
+
+        $entity = $this->partnerProductRepository->create($this->transformPayload($request->all()));
+
+        $entity->clinics()->sync($request->input('clinics', []));
+
+        Event::dispatch("settings.{$this->entityName}.create.after", $entity);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'data'    => $entity,
+                'message' => $this->getCreateSuccessMessage(),
+            ], 200);
+        }
+
+        return redirect()
+            ->route($this->indexRoute)
+            ->with('success', $this->getCreateSuccessMessage());
+    }
+
+    public function update(Request $request, int $id): RedirectResponse|JsonResponse
+    {
+        $this->validateUpdate($request, $id);
+
+        Event::dispatch("settings.{$this->entityName}.update.before", $id);
+
+        $entity = $this->partnerProductRepository->update($this->transformPayload($request->all(), $id), $id);
+
+        $entity->clinics()->sync($request->input('clinics', []));
+
+        Event::dispatch("settings.{$this->entityName}.update.after", $entity);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'data'    => $entity,
+                'message' => $this->getUpdateSuccessMessage(),
+            ]);
+        }
+
+        return redirect()
+            ->route($this->indexRoute)
+            ->with('success', $this->getUpdateSuccessMessage());
+    }
+
     protected function getCreateViewData(Request $request): array
     {
         return [
-            'resourceTypes' => ResourceType::orderBy('name')->get(['id', 'name']),
-            'currencies'    => Currency::options(),
+            'resourceTypes'   => ResourceType::orderBy('name')->get(['id', 'name']),
+            'currencies'      => Currency::options(),
             'defaultCurrency' => Currency::default()->value,
-            'clinics'       => Clinic::orderBy('name')->get(['id', 'name']),
+            'clinics'         => Clinic::orderBy('name')->get(['id', 'name']),
         ];
     }
 
@@ -105,54 +153,6 @@ class PartnerProductController extends SimpleEntityController
         }
 
         return parent::transformPayload($payload, $id);
-    }
-
-    public function store(Request $request): RedirectResponse|JsonResponse
-    {
-        $this->validateStore($request);
-
-        Event::dispatch("settings.{$this->entityName}.create.before");
-
-        $entity = $this->partnerProductRepository->create($this->transformPayload($request->all()));
-
-        $entity->clinics()->sync($request->input('clinics', []));
-
-        Event::dispatch("settings.{$this->entityName}.create.after", $entity);
-
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'data'    => $entity,
-                'message' => $this->getCreateSuccessMessage(),
-            ], 200);
-        }
-
-        return redirect()
-            ->route($this->indexRoute)
-            ->with('success', $this->getCreateSuccessMessage());
-    }
-
-    public function update(Request $request, int $id): RedirectResponse|JsonResponse
-    {
-        $this->validateUpdate($request, $id);
-
-        Event::dispatch("settings.{$this->entityName}.update.before", $id);
-
-        $entity = $this->partnerProductRepository->update($this->transformPayload($request->all(), $id), $id);
-
-        $entity->clinics()->sync($request->input('clinics', []));
-
-        Event::dispatch("settings.{$this->entityName}.update.after", $entity);
-
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'data'    => $entity,
-                'message' => $this->getUpdateSuccessMessage(),
-            ]);
-        }
-
-        return redirect()
-            ->route($this->indexRoute)
-            ->with('success', $this->getUpdateSuccessMessage());
     }
 
     protected function getCreateSuccessMessage(): string

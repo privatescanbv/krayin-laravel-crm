@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Clinic;
 use App\Models\PartnerProduct;
+use App\Models\ResourceType;
 use Webkul\Installer\Http\Middleware\CanInstall;
 
 beforeEach(function () {
@@ -25,6 +27,9 @@ test('partner products index returns datagrid json', function () {
 });
 
 test('can create partner product', function () {
+
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+    $clinicId = Clinic::query()->value('id') ?? Clinic::factory()->create()->id;
     $payload = [
         'name'               => 'MRI Scan',
         'currency'           => 'EUR',
@@ -32,7 +37,8 @@ test('can create partner product', function () {
         'active'             => 1,
         'description'        => 'Great partner product',
         'discount_info'      => 'Intro discount 10%',
-        'resource_type_id'   => null,
+        'resource_type_id'   => $resourceTypeId,
+        'clinics'            => [$clinicId],
         'partner_name'       => 'Acme Partner',
         'clinic_description' => 'Omschrijving kliniek',
         'duration'           => 60,
@@ -49,6 +55,9 @@ test('can create partner product', function () {
 test('can update partner product', function () {
     $pp = PartnerProduct::factory()->create();
 
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+    $clinicId = Clinic::query()->value('id') ?? Clinic::factory()->create()->id;
+
     $payload = [
         'name'               => 'CT Scan',
         'currency'           => 'EUR',
@@ -56,10 +65,11 @@ test('can update partner product', function () {
         'active'             => 0,
         'description'        => 'Updated description',
         'discount_info'      => null,
-        'resource_type_id'   => null,
+        'resource_type_id'   => $resourceTypeId,
         'partner_name'       => 'Updated Partner Name',
         'clinic_description' => 'Nieuwe omschrijving kliniek',
         'duration'           => 45,
+        'clinics'            => [$clinicId],
         '_method'            => 'put',
     ];
 

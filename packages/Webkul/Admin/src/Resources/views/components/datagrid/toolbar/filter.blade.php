@@ -949,6 +949,17 @@
                 },
             },
 
+            watch: {
+                'applied.filters.columns': {
+                    handler(newColumns) {
+                        // Update local filters when applied filters change (e.g., from URL params)
+                        this.filters.columns = this.getAppliedColumns();
+                        console.log('Filter component detected applied filters change:', JSON.stringify(this.filters.columns));
+                    },
+                    deep: true
+                }
+            },
+
             methods: {
                 /**
                  * Has any column.

@@ -183,6 +183,33 @@
                         searchAppliedColumn.value = [urlParams.get('search')];
                     }
 
+                    // Load filters from URL parameters
+                    urlParams.forEach((value, key) => {
+                        if (key.startsWith('filters[') && key.endsWith(']')) {
+                            // Extract the column name: filters[clinic_id][0] -> clinic_id
+                            const match = key.match(/^filters\[([^\]]+)\]/);
+                            if (match) {
+                                const columnIndex = match[1];
+                                
+                                // Find or create filter column
+                                let filterColumn = this.applied.filters.columns.find(column => column.index === columnIndex);
+                                
+                                if (!filterColumn) {
+                                    filterColumn = {
+                                        index: columnIndex,
+                                        value: []
+                                    };
+                                    this.applied.filters.columns.push(filterColumn);
+                                }
+                                
+                                // Add the value if not already present
+                                if (!filterColumn.value.includes(value)) {
+                                    filterColumn.value.push(value);
+                                }
+                            }
+                        }
+                    });
+
                     if (datagrids?.length) {
                         const currentDatagrid = datagrids.find(({ src }) => src === this.src);
 
@@ -200,6 +227,29 @@
 
                                 searchAppliedColumn.value = [urlParams.get('search')];
                             }
+
+                            // Re-apply URL filters (they override stored state)
+                            urlParams.forEach((value, key) => {
+                                if (key.startsWith('filters[') && key.endsWith(']')) {
+                                    const match = key.match(/^filters\[([^\]]+)\]/);
+                                    if (match) {
+                                        const columnIndex = match[1];
+                                        let filterColumn = this.applied.filters.columns.find(column => column.index === columnIndex);
+                                        
+                                        if (!filterColumn) {
+                                            filterColumn = {
+                                                index: columnIndex,
+                                                value: []
+                                            };
+                                            this.applied.filters.columns.push(filterColumn);
+                                        }
+                                        
+                                        if (!filterColumn.value.includes(value)) {
+                                            filterColumn.value.push(value);
+                                        }
+                                    }
+                                }
+                            });
 
                             this.get();
 

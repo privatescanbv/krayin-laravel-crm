@@ -46,6 +46,7 @@
                     <x-admin::form.control-group.control
                         type="text"
                         name="department_head"
+                        value="{{ old('department_head', 'bart') }}"
                         rules="max:255"
                         :label="trans('admin::app.settings.clinics.index.create.department-head')"
                         :placeholder="trans('admin::app.settings.clinics.index.create.department-head')"

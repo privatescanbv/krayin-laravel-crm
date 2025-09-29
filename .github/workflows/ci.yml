@@ -67,3 +67,11 @@ jobs:
 
       - name: Running Pest Test
         run: php artisan test --parallel --colors=always
+
+  ui-tests:
+    runs-on: ubuntu-latest
+    needs: tests   # wacht tot PHP-tests klaar zijn
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4

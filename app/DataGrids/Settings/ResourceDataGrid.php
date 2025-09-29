@@ -8,6 +8,11 @@ use Webkul\DataGrid\DataGrid;
 
 class ResourceDataGrid extends DataGrid
 {
+    /**
+     * Ensure default sorting uses a qualified column to avoid ambiguity when joins are present.
+     */
+    protected $sortColumn = 'resources.id';
+
     public function prepareQueryBuilder(): Builder
     {
         $queryBuilder = DB::table('resources')

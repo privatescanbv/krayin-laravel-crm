@@ -277,9 +277,16 @@
                         params.filters[column.index] = column.value;
                     });
 
+                    // Only include non-filter URL params (pagination, sort, etc.)
+                    // Filter params should come from applied.filters.columns, not URL
                     const urlParams = new URLSearchParams(window.location.search);
 
-                    urlParams.forEach((param, key) => params[key] = param);
+                    urlParams.forEach((param, key) => {
+                        // Skip filter params - they're already handled above from applied.filters.columns
+                        if (!key.match(/^filters\[/)) {
+                            params[key] = param;
+                        }
+                    });
 
                     this.isLoading = true;
 

@@ -77,15 +77,14 @@ class ResourceDataGrid extends DataGrid
             'sortable'   => true,
         ]);
 
-        // Clinic filter dropdown (hidden from view but visible in filter UI)
+        // Hidden clinic_id column for filtering purposes
         $this->addColumn([
             'index'              => 'clinic_id',
             'type'               => 'string',
-            'label'              => trans('admin::app.settings.resources.index.datagrid.clinic'),
+            'label'              => 'Clinic (Filter)',
             'searchable'         => false,
             'filterable'         => true,
             'sortable'           => false,
-            'visibility'         => false,
             'filterable_type'    => 'dropdown',
             'filterable_options' => $this->clinicRepository->all(['name as label', 'id as value'])->toArray(),
         ]);

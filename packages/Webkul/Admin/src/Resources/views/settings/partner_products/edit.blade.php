@@ -162,8 +162,6 @@
                         name="clinics[]"
                         multiple
                         class="custom-select w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
-                        onchange="window.updateResourcesForClinics && window.updateResourcesForClinics()"
-                        onclick="setTimeout(() => window.updateResourcesForClinics && window.updateResourcesForClinics(), 100)"
                     >
                         @foreach ($clinics as $clinic)
                             <option value="{{ $clinic->id }}" @selected(in_array($clinic->id, $selectedClinics))>{{ $clinic->name }}</option>

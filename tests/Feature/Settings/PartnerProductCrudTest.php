@@ -119,21 +119,22 @@ test('can create partner product with resources from selected clinics', function
     $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
     $response->assertOk();
 
-    // Verify using the response data directly
-    $responseData = $response->json('data');
-    expect($responseData)->not->toBeNull();
-    expect($responseData['partner_name'])->toBe($uniquePartnerName);
+    // Verify using the response data directly (most reliable in parallel tests)
+    $response->assertJsonPath('data.partner_name', $uniquePartnerName);
+    $response->assertJsonPath('data.name', 'CT Scan Resource Test');
     
-    // Double-check in database
-    $this->assertDatabaseHas('partner_products', [
-        'partner_name' => $uniquePartnerName,
-        'name' => 'CT Scan Resource Test',
+    $createdId = $response->json('data.id');
+    
+    // Verify relationships in database
+    $this->assertDatabaseHas('clinic_partner_product', [
+        'partner_product_id' => $createdId,
+        'clinic_id' => $clinic->id,
     ]);
     
-    // Verify relationships
-    $partnerProduct = PartnerProduct::find($responseData['id']);
-    expect($partnerProduct->clinics->pluck('id')->toArray())->toContain($clinic->id);
-    expect($partnerProduct->resources->pluck('id')->toArray())->toContain($resource->id);
+    $this->assertDatabaseHas('partner_product_resource', [
+        'partner_product_id' => $createdId,
+        'resource_id' => $resource->id,
+    ]);
 });
 
 test('cannot create partner product with resources from different clinics', function () {

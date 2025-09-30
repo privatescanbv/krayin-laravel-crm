@@ -143,9 +143,7 @@ class Installer extends Command
         
         $this->warn('Step: Seeding custom application data...');
         $this->call('db:seed', ['--class' => \Database\Seeders\DutchLocaleSeeder::class]);
-        $this->call('db:seed', ['--class' => \Database\Seeders\ResourceTypeSeeder::class]);
-        $this->call('db:seed', ['--class' => \Database\Seeders\ProductTypeSeeder::class]);
-        $this->call('db:seed', ['--class' => \Database\Seeders\ClinicSeeder::class]);
+        $this->call('db:seed', ['--class' => \Database\Seeders\TestSeeder::class]);
         
         $this->warn('Step: Publishing assets and configurations...');
         $result = $this->call('vendor:publish', ['--provider' => CoreServiceProvider::class, '--force' => true]);

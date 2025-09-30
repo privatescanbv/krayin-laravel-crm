@@ -1832,6 +1832,7 @@ return [
                 'currency'      => 'Valuta',
                 'sales_price'   => 'Verkoopprijs',
                 'active'        => 'Actief',
+                'view'          => 'Bekijken',
                 'edit'          => 'Bewerken',
                 'delete'        => 'Verwijderen',
             ],

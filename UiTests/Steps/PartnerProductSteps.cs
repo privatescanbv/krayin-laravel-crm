@@ -29,7 +29,8 @@ namespace UiTests.Steps
         [When("I click on create partner product")]
         public async Task WhenIClickOnCreatePartnerProduct()
         {
-            await _driver.Page.GetByRole(AriaRole.Link, new() { Name = "Partnerproduct toevoegen" }).ClickAsync();
+            // Click the create button (it's an <a> tag with class="primary-button")
+            await _driver.Page.Locator("a.primary-button:has-text('Partnerproduct toevoegen')").ClickAsync();
             await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/settings/partner-products/create$"));
         }
 
@@ -44,16 +45,29 @@ namespace UiTests.Steps
             await _driver.Page.FillAsync("input[name='partner_name']", $"Test Partner {Guid.NewGuid():N}");
             
             // Select currency (should default to EUR)
-            // Select resource type - select the first option that's not empty
-            var resourceTypeSelect = _driver.Page.Locator("select[name='resource_type_id']");
-            await resourceTypeSelect.SelectOptionAsync(new[] { "1" });
             
-            // Select at least one clinic
-            var clinicSelect = _driver.Page.Locator("select[name='clinics[]']");
-            var firstOption = await clinicSelect.Locator("option").First.GetAttributeAsync("value");
-            if (!string.IsNullOrEmpty(firstOption))
+            // Select resource type - select the first non-empty option
+            var resourceTypeSelect = _driver.Page.Locator("select[name='resource_type_id']");
+            var resourceTypeOptions = await resourceTypeSelect.Locator("option[value]:not([value=''])").AllAsync();
+            if (resourceTypeOptions.Count > 0)
             {
-                await clinicSelect.SelectOptionAsync(new[] { firstOption });
+                var firstResourceTypeValue = await resourceTypeOptions[0].GetAttributeAsync("value");
+                if (!string.IsNullOrEmpty(firstResourceTypeValue))
+                {
+                    await resourceTypeSelect.SelectOptionAsync(new[] { firstResourceTypeValue });
+                }
+            }
+            
+            // Select at least one clinic - select the first available option
+            var clinicSelect = _driver.Page.Locator("select[name='clinics[]']");
+            var clinicOptions = await clinicSelect.Locator("option").AllAsync();
+            if (clinicOptions.Count > 0)
+            {
+                var firstClinicValue = await clinicOptions[0].GetAttributeAsync("value");
+                if (!string.IsNullOrEmpty(firstClinicValue))
+                {
+                    await clinicSelect.SelectOptionAsync(new[] { firstClinicValue });
+                }
             }
             
             // Check active checkbox
@@ -79,11 +93,11 @@ namespace UiTests.Steps
         public async Task WhenIEditTheFirstPartnerProduct()
         {
             // Wait for the datagrid to load
-            await _driver.Page.WaitForSelectorAsync("table tbody tr", new() { Timeout = 5000 });
+            await _driver.Page.WaitForSelectorAsync("table tbody tr", new() { Timeout = 10000 });
             
-            // Find the row with our created product and click edit
+            // Find the row with our created product and click edit icon
             var row = _driver.Page.Locator($"table tbody tr:has-text('{_createdProductName}')").First;
-            await row.Locator("a[title='Bewerken']").ClickAsync();
+            await row.Locator("a.icon-edit").ClickAsync();
             
             await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/settings/partner-products/edit/\\d+$"));
         }

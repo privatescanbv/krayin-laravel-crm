@@ -1866,6 +1866,7 @@ return [
                     'currency'      => 'Currency',
                     'sales_price'   => 'Sales Price',
                     'active'        => 'Active',
+                    'view'          => 'View',
                     'edit'          => 'Edit',
                     'delete'        => 'Delete',
                 ],

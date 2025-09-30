@@ -48,8 +48,8 @@
                     <x-admin::form.control-group.control
                         type="textarea"
                         name="description"
-                        >{{ old('description', $resource_type->description) }}</x-admin::form.control-group.control>
-
+                        :value="old('description', $resource_type->description)"
+                    />
                     <x-admin::form.control-group.error control-name="description" />
                 </x-admin::form.control-group>
             </div>

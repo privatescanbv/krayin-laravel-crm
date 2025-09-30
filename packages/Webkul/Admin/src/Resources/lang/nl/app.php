@@ -1800,10 +1800,11 @@ return [
                 'delete-failed'   => 'Verwijderen van resourcetype mislukt.',
 
                 'datagrid' => [
-                    'id'     => 'ID',
-                    'name'   => 'Naam',
-                    'edit'   => 'Bewerken',
-                    'delete' => 'Verwijderen',
+                    'id'          => 'ID',
+                    'name'        => 'Naam',
+                    'description' => 'Omschrijving',
+                    'edit'        => 'Bewerken',
+                    'delete'      => 'Verwijderen',
                 ],
 
                 'edit' => [

@@ -26,9 +26,9 @@ test('clinics index returns datagrid json', function () {
 
 test('can create clinic', function () {
     $payload = [
-        'name'   => 'Test Clinic',
-        'emails' => ['info@testclinic.tld'],
-        'phones' => ['+31 10 123 4567'],
+        'name'  => 'Test Clinic',
+        'email' => 'info@testclinic.tld',
+        'phone' => '+31 10 123 4567',
     ];
 
     $response = $this->postJson(route('admin.settings.clinics.store'), $payload);
@@ -37,6 +37,13 @@ test('can create clinic', function () {
     $this->assertDatabaseHas('clinics', [
         'name' => 'Test Clinic',
     ]);
+    
+    // Verify emails and phones are stored correctly
+    $clinic = Clinic::where('name', 'Test Clinic')->first();
+    expect($clinic->emails)->toBeArray();
+    expect($clinic->emails[0]['value'])->toBe('info@testclinic.tld');
+    expect($clinic->phones)->toBeArray();
+    expect($clinic->phones[0]['value'])->toBe('+31 10 123 4567');
 });
 
 test('can update clinic', function () {
@@ -44,8 +51,8 @@ test('can update clinic', function () {
 
     $payload = [
         'name'    => 'Updated Clinic',
-        'emails'  => ['contact@updated.tld'],
-        'phones'  => ['+31 10 222 3333'],
+        'emails'  => [['value' => 'contact@updated.tld', 'label' => 'eigen', 'is_default' => true]],
+        'phones'  => [['value' => '+31 10 222 3333', 'label' => 'eigen', 'is_default' => true]],
         '_method' => 'put',
     ];
 
@@ -56,6 +63,13 @@ test('can update clinic', function () {
         'id'   => $clinic->id,
         'name' => 'Updated Clinic',
     ]);
+    
+    // Verify emails and phones are updated correctly
+    $clinic->refresh();
+    expect($clinic->emails)->toBeArray();
+    expect($clinic->emails[0]['value'])->toBe('contact@updated.tld');
+    expect($clinic->phones)->toBeArray();
+    expect($clinic->phones[0]['value'])->toBe('+31 10 222 3333');
 });
 
 test('can delete clinic', function () {

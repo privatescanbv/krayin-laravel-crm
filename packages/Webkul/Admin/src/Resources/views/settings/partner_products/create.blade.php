@@ -148,18 +148,17 @@
                         @lang('admin::app.settings.resources.index.title')
                     </x-admin::form.control-group.label>
 
-                    <x-admin::form.control-group.control
-                        type="select"
-                        name="resource_id"
-                        :label="trans('admin::app.settings.resources.index.title')"
+                    <select
+                        name="resources[]"
+                        multiple
+                        class="custom-select w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
                     >
-                        <option value="">@lang('admin::app.select')</option>
                         @foreach ($resources as $resource)
-                            <option value="{{ $resource->id }}">{{ $resource->name }}</option>
+                            <option value="{{ $resource->id }}" @selected(collect(old('resources', []))->contains($resource->id))>{{ $resource->name }}</option>
                         @endforeach
-                    </x-admin::form.control-group.control>
+                    </select>
 
-                    <x-admin::form.control-group.error control-name="resource_id" />
+                    <x-admin::form.control-group.error control-name="resources" />
                 </x-admin::form.control-group>
 
                 <x-admin::form.control-group>

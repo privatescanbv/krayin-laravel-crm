@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Clinic;
 use App\Models\PartnerProduct;
+use App\Models\Resource;
 use App\Models\ResourceType;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -39,6 +40,12 @@ class PartnerProductFactory extends Factory
                 $clinicId = Clinic::factory()->create()->id;
             }
             $partnerProduct->clinics()->sync([$clinicId]);
+
+            // Optionally attach resources if they exist
+            $resourceIds = Resource::query()->limit(2)->pluck('id')->toArray();
+            if (! empty($resourceIds)) {
+                $partnerProduct->resources()->sync($resourceIds);
+            }
         });
     }
 }

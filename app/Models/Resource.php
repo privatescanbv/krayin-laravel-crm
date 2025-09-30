@@ -45,6 +45,6 @@ class Resource extends Model
 
     public function partnerProducts()
     {
-        return $this->hasMany(PartnerProduct::class);
+        return $this->belongsToMany(PartnerProduct::class, 'partner_product_resource');
     }
 }

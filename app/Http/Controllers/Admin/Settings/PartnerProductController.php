@@ -72,6 +72,7 @@ class PartnerProductController extends SimpleEntityController
         $entity = $this->partnerProductRepository->create($this->transformPayload($request->all()));
 
         $entity->clinics()->sync($request->input('clinics', []));
+        $entity->resources()->sync($request->input('resources', []));
         $entity->relatedProducts()->sync($request->input('related_products', []));
 
         Event::dispatch("settings.{$this->entityName}.create.after", $entity);
@@ -97,6 +98,7 @@ class PartnerProductController extends SimpleEntityController
         $entity = $this->partnerProductRepository->update($this->transformPayload($request->all(), $id), $id);
 
         $entity->clinics()->sync($request->input('clinics', []));
+        $entity->resources()->sync($request->input('resources', []));
         $entity->relatedProducts()->sync($request->input('related_products', []));
 
         Event::dispatch("settings.{$this->entityName}.update.after", $entity);
@@ -164,7 +166,6 @@ class PartnerProductController extends SimpleEntityController
             'description'         => 'nullable|string',
             'discount_info'       => 'nullable|string',
             'resource_type_id'    => 'required|integer|exists:resource_types,id',
-            'resource_id'         => 'nullable|integer|exists:resources,id',
 
             // partner fields
             'partner_name'        => [
@@ -178,6 +179,8 @@ class PartnerProductController extends SimpleEntityController
             // relations
             'clinics'             => 'required|array|min:1',
             'clinics.*'           => 'integer|exists:clinics,id',
+            'resources'           => 'nullable|array',
+            'resources.*'         => 'integer|exists:resources,id',
             'related_products'    => 'nullable|array',
             'related_products.*'  => 'integer|exists:partner_products,id',
         ];
@@ -189,10 +192,6 @@ class PartnerProductController extends SimpleEntityController
 
         if (array_key_exists('resource_type_id', $payload)) {
             $payload['resource_type_id'] = $payload['resource_type_id'] === '' ? null : $payload['resource_type_id'];
-        }
-
-        if (array_key_exists('resource_id', $payload)) {
-            $payload['resource_id'] = $payload['resource_id'] === '' ? null : $payload['resource_id'];
         }
 
         if (array_key_exists('sales_price', $payload)) {

@@ -207,7 +207,6 @@ TABLE(PartnerProduct, "partner_product") {
   updated_at: datetime
   created_by: bigint
   updated_by: bigint
-  FOREIGN_KEY(resource_id): bigint
 }
 
 TABLE(Resource, "resource") {
@@ -479,7 +478,7 @@ Clinic "0..*" -- "n" Resource
 Clinic "0..*" -- "n" PartnerProduct
 Clinic "0..1" -- "1" Address
 Clinic "1" -- "n" Activity
-PartnerProduct "1" -- "1" Resource
+PartnerProduct "n" -- "n" Resource : "partner_product_resource"
 
 Resource "1" -- "1" ResourceType
 

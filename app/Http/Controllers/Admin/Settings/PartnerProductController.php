@@ -185,7 +185,6 @@ class PartnerProductController extends SimpleEntityController
             'resources.*'         => 'integer|exists:resources,id',
         ];
     }
-    }
 
     protected function transformPayload(array $payload, ?int $id = null): array
     {

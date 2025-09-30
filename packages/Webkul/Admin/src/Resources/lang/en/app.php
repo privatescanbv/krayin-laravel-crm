@@ -1862,7 +1862,6 @@ return [
 
                 'datagrid' => [
                     'id'            => 'ID',
-                    'partner_name'  => 'Partner Name',
                     'name'          => 'Name',
                     'currency'      => 'Currency',
                     'sales_price'   => 'Sales Price',
@@ -1882,7 +1881,6 @@ return [
                     'currency'      => 'Currency',
                     'sales_price'   => 'Sales Price',
                     'active'        => 'Active',
-                    'partner_name'  => 'Partner Name',
                     'description'   => 'Description',
                     'discount_info' => 'Discount info',
                     'resource_type' => 'Resource type',

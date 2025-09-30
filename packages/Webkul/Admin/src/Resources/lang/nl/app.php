@@ -1918,7 +1918,6 @@ return [
 
                 'datagrid' => [
                     'id'            => 'ID',
-                    'partner_name'  => 'Partnernaam',
                     'name'          => 'Naam',
                     'currency'      => 'Valuta',
                     'sales_price'   => 'Verkoopprijs',
@@ -1938,7 +1937,6 @@ return [
                     'currency'      => 'Valuta',
                     'sales_price'   => 'Verkoopprijs',
                     'active'        => 'Actief',
-                    'partner_name'  => 'Partnernaam',
                     'description'   => 'Omschrijving',
                     'discount_info' => 'Kortingsinformatie',
                     'resource_type' => 'Resourcetype',

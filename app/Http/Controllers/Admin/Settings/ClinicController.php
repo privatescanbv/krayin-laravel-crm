@@ -86,12 +86,7 @@ class ClinicController extends SimpleEntityController
     {
         // Filter en normaliseer emails
         if (isset($payload['emails']) && is_array($payload['emails'])) {
-            $payload['emails'] = array_values(array_filter($payload['emails'], function($email) {
-                // Filter out empty values
-                return isset($email['value']) && !empty(trim($email['value']));
-            }));
-            
-            // Normalize is_default to boolean
+            // First normalize is_default to boolean
             $payload['emails'] = array_map(function($email) {
                 if (isset($email['is_default'])) {
                     $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
@@ -100,16 +95,21 @@ class ClinicController extends SimpleEntityController
                 }
                 return $email;
             }, $payload['emails']);
+            
+            // Then filter out empty values
+            $payload['emails'] = array_values(array_filter($payload['emails'], function($email) {
+                return isset($email['value']) && trim($email['value']) !== '';
+            }));
+            
+            // If no valid emails remain, set to empty array
+            if (empty($payload['emails'])) {
+                $payload['emails'] = null;
+            }
         }
 
         // Filter en normaliseer phones
         if (isset($payload['phones']) && is_array($payload['phones'])) {
-            $payload['phones'] = array_values(array_filter($payload['phones'], function($phone) {
-                // Filter out empty values
-                return isset($phone['value']) && !empty(trim($phone['value']));
-            }));
-            
-            // Normalize is_default to boolean
+            // First normalize is_default to boolean
             $payload['phones'] = array_map(function($phone) {
                 if (isset($phone['is_default'])) {
                     $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
@@ -118,6 +118,16 @@ class ClinicController extends SimpleEntityController
                 }
                 return $phone;
             }, $payload['phones']);
+            
+            // Then filter out empty values
+            $payload['phones'] = array_values(array_filter($payload['phones'], function($phone) {
+                return isset($phone['value']) && trim($phone['value']) !== '';
+            }));
+            
+            // If no valid phones remain, set to empty array
+            if (empty($payload['phones'])) {
+                $payload['phones'] = null;
+            }
         }
 
         return $payload;

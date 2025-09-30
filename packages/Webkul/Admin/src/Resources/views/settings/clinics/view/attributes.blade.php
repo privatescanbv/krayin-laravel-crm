@@ -36,7 +36,7 @@
                 </div>
 
                 <!-- Emails -->
-                @if ($clinic->emails && count($clinic->emails) > 0)
+                @if (is_array($clinic->emails) && count($clinic->emails) > 0)
                     <div class="grid grid-cols-[1fr_2fr] items-start gap-1">
                         <div class="label dark:text-white">
                             @lang('admin::app.settings.clinics.view.attributes.emails')
@@ -50,7 +50,7 @@
                 @endif
 
                 <!-- Phones -->
-                @if ($clinic->phones && count($clinic->phones) > 0)
+                @if (is_array($clinic->phones) && count($clinic->phones) > 0)
                     <div class="grid grid-cols-[1fr_2fr] items-start gap-1">
                         <div class="label dark:text-white">
                             @lang('admin::app.settings.clinics.view.attributes.phones')

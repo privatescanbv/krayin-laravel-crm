@@ -24,7 +24,7 @@
                     </div>
                 @endif
 
-                @if ($clinic->emails && count($clinic->emails) > 0)
+                @if (is_array($clinic->emails) && count($clinic->emails) > 0)
                     <div class="grid grid-cols-[200px_1fr] gap-2">
                         <span class="font-medium text-gray-600 dark:text-gray-400">
                             @lang('admin::app.settings.clinics.view.overview.emails'):
@@ -37,7 +37,7 @@
                     </div>
                 @endif
 
-                @if ($clinic->phones && count($clinic->phones) > 0)
+                @if (is_array($clinic->phones) && count($clinic->phones) > 0)
                     <div class="grid grid-cols-[200px_1fr] gap-2">
                         <span class="font-medium text-gray-600 dark:text-gray-400">
                             @lang('admin::app.settings.clinics.view.overview.phones'):

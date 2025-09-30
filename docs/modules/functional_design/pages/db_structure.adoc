@@ -201,7 +201,6 @@ TABLE(ResourceType, "resourcetype") {
 
 TABLE(PartnerProduct, "partner_product") {
   PRIMARY_KEY(id): bigint
-  partner_name: string
   description: text
   created_at: datetime
   updated_at: datetime

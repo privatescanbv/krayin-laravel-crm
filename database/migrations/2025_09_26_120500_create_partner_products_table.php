@@ -22,14 +22,12 @@ return new class extends Migration
             $table->unsignedBigInteger('resource_type_id')->nullable();
 
             // Partner product only
-            $table->string('partner_name');
             $table->text('clinic_description')->nullable();
             $table->unsignedInteger('duration')->nullable(); // minutes
 
             $table->timestamps();
             AuditTrailMigrationHelper::addAuditTrailColumns($table);
 
-            $table->unique('partner_name');
             $table->foreign('resource_type_id')->references('id')->on('resource_types')->nullOnDelete();
         });
     }

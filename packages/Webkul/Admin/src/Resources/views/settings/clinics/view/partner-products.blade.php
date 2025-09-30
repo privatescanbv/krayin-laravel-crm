@@ -18,9 +18,6 @@
                                 @lang('admin::app.settings.clinics.view.partner-products.table.name')
                             </th>
                             <th class="p-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                @lang('admin::app.settings.clinics.view.partner-products.table.partner-name')
-                            </th>
-                            <th class="p-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
                                 @lang('admin::app.settings.clinics.view.partner-products.table.price')
                             </th>
                             <th class="p-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -36,9 +33,6 @@
                             <tr class="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800">
                                 <td class="p-2 dark:text-white">
                                     {{ $partnerProduct->name }}
-                                </td>
-                                <td class="p-2 dark:text-white">
-                                    {{ $partnerProduct->partner_name ?? '-' }}
                                 </td>
                                 <td class="p-2 dark:text-white">
                                     @if ($partnerProduct->sales_price)

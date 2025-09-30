@@ -52,7 +52,6 @@ namespace UiTests.Steps
             // Fill in required fields
             await _driver.Page.FillAsync("input[name='name']", _createdProductName);
             await _driver.Page.FillAsync("input[name='sales_price']", price);
-            await _driver.Page.FillAsync("input[name='partner_name']", $"Test Partner {Guid.NewGuid():N}");
 
             // Select currency (should default to EUR)
 
@@ -161,8 +160,8 @@ namespace UiTests.Steps
                 .Filter(new() { HasTextString = _createdProductName })
                 .First;
 
-            // In datagrid order: ID, Partnernaam, Naam, Valuta, Verkoopprijs, Actief, Acties
-            var priceCell = row.Locator("p.break-words").Nth(4);
+            // In datagrid order: ID, Naam, Valuta, Verkoopprijs, Actief, Acties
+            var priceCell = row.Locator("p.break-words").Nth(3);
 
             var entered = _newPrice;
             var dotVariant = _newPrice.Replace(',', '.');

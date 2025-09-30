@@ -21,7 +21,6 @@ class PartnerProduct extends BaseProduct
         'created_by',
         'updated_by',
         // partner specific
-        'partner_name',
         'clinic_description',
         'duration',
     ];

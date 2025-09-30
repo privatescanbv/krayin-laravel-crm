@@ -14,10 +14,6 @@
                     <h3 class="break-words text-lg font-bold dark:text-white">
                         {{ $partner_product->name }}
                     </h3>
-
-                    <p class="break-words text-sm font-normal dark:text-white">
-                        {{ $partner_product->partner_name }}
-                    </p>
                 </div>
 
                 <div class="flex flex-wrap gap-2">
@@ -77,7 +73,6 @@
                             >
                                 <div class="flex flex-col gap-1">
                                     <span class="font-medium text-gray-800 dark:text-white">{{ $relatedProduct->name }}</span>
-                                    <span class="text-xs text-gray-600 dark:text-gray-400">{{ $relatedProduct->partner_name }}</span>
                                 </div>
                                 <div class="text-right">
                                     <div class="font-semibold text-gray-800 dark:text-white">€ {{ number_format($relatedProduct->sales_price, 2, ',', '.') }}</div>

@@ -39,7 +39,6 @@ test('can create partner product', function () {
         'discount_info'      => 'Intro discount 10%',
         'resource_type_id'   => $resourceTypeId,
         'clinics'            => [$clinicId],
-        'partner_name'       => 'Acme Partner',
         'clinic_description' => 'Omschrijving kliniek',
         'duration'           => 60,
     ];
@@ -48,7 +47,7 @@ test('can create partner product', function () {
     $response->assertOk();
 
     $this->assertDatabaseHas('partner_products', [
-        'partner_name' => 'Acme Partner',
+        'name' => 'MRI Scan',
     ]);
 });
 
@@ -66,7 +65,6 @@ test('can update partner product', function () {
         'description'        => 'Updated description',
         'discount_info'      => null,
         'resource_type_id'   => $resourceTypeId,
-        'partner_name'       => 'Updated Partner Name',
         'clinic_description' => 'Nieuwe omschrijving kliniek',
         'duration'           => 45,
         'clinics'            => [$clinicId],
@@ -74,11 +72,11 @@ test('can update partner product', function () {
     ];
 
     $response = $this->postJson(route('admin.settings.partner_products.update', ['id' => $pp->id]), $payload);
-    $response->assertOk()->assertJsonPath('data.partner_name', 'Updated Partner Name');
+    $response->assertOk()->assertJsonPath('data.name', 'CT Scan');
 
     $this->assertDatabaseHas('partner_products', [
-        'id'           => $pp->id,
-        'partner_name' => 'Updated Partner Name',
+        'id'   => $pp->id,
+        'name' => 'CT Scan',
     ]);
 });
 

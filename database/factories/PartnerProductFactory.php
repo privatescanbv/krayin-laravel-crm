@@ -25,7 +25,6 @@ class PartnerProductFactory extends Factory
 
                 return $existingId ?? ResourceType::factory()->create()->id;
             },
-            'partner_name'       => $this->faker->unique()->company(),
             'clinic_description' => $this->faker->boolean(50) ? $this->faker->sentence(10) : null,
             'duration'           => $this->faker->numberBetween(15, 240),
         ];

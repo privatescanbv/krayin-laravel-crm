@@ -117,18 +117,14 @@ test('can create partner product with resources from selected clinics', function
     ];
 
     $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
-    
-    if ($response->status() !== 200) {
-        dump('Response status: ' . $response->status());
-        dump('Response body:', $response->json());
-    }
-    
     $response->assertOk();
 
-    // Verify the partner product was created
-    $partnerProduct = PartnerProduct::latest()->first();
-    expect($partnerProduct)->not->toBeNull();
-    expect($partnerProduct->partner_name)->toBe($uniquePartnerName);
+    // Verify the partner product was created with the correct partner_name
+    $partnerProduct = PartnerProduct::where('partner_name', $uniquePartnerName)->first();
+    expect($partnerProduct)->not->toBeNull('PartnerProduct should be created');
+    
+    // Verify the clinic relationship
+    expect($partnerProduct->clinics->pluck('id')->toArray())->toContain($clinic->id);
     
     // Verify the resource relationship
     expect($partnerProduct->resources->pluck('id')->toArray())->toContain($resource->id);

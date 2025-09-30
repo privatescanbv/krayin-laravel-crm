@@ -134,13 +134,6 @@
                         this.$emit('input', newPhones);
                     },
                     deep: true
-                },
-                // Re-process when parent updates value asynchronously
-                value: {
-                    handler(newVal) {
-                        this.phones = this.processPhones(newVal);
-                    },
-                    deep: true
                 }
             },
 
@@ -158,22 +151,19 @@
                         phones = [];
                     }
 
-                    // Filter out empty values and process the phones
-                    let validPhones = phones
-                        .filter(phone => phone && phone.value && phone.value.trim() !== '')
-                        .map(phone => ({
-                            ...phone,
-                            // default missing/empty label to CONTACT_LABEL_DEFAULT for proper select display
-                            label: (phone.label && String(phone.label).trim() !== '') ? phone.label : this.defaultLabel,
-                            is_default: phone.is_default === true || phone.is_default === 'on' || phone.is_default === '1'
-                        }));
+                    // Process all phones (including empty ones for user input)
+                    let processedPhones = phones.map(phone => ({
+                        value: phone?.value || '',
+                        label: (phone?.label && String(phone.label).trim() !== '') ? phone.label : this.defaultLabel,
+                        is_default: phone?.is_default === true || phone?.is_default === 'on' || phone?.is_default === '1'
+                    }));
 
-                    // If no valid phones, return a default empty phone
-                    if (validPhones.length === 0) {
+                    // If no phones at all, add one empty phone for user to fill
+                    if (processedPhones.length === 0) {
                         return [{value: '', label: this.defaultLabel, is_default: true}];
                     }
 
-                    return validPhones;
+                    return processedPhones;
                 },
 
                 addPhone() {

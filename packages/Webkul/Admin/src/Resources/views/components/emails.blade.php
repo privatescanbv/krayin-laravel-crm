@@ -130,13 +130,6 @@
                         this.$emit('input', newEmails);
                     },
                     deep: true
-                },
-                // Re-process when parent updates value asynchronously
-                value: {
-                    handler(newVal) {
-                        this.emails = this.processEmails(newVal);
-                    },
-                    deep: true
                 }
             },
 
@@ -154,22 +147,19 @@
                         emails = [];
                     }
 
-                    // Filter out empty values and process the emails
-                    let validEmails = emails
-                        .filter(email => email && email.value && email.value.trim() !== '')
-                        .map(email => ({
-                            ...email,
-                            // default missing/empty label to CONTACT_LABEL_DEFAULT for proper select display
-                            label: (email.label && String(email.label).trim() !== '') ? email.label : this.defaultLabel,
-                            is_default: email.is_default === true || email.is_default === 'on' || email.is_default === '1'
-                        }));
+                    // Process all emails (including empty ones for user input)
+                    let processedEmails = emails.map(email => ({
+                        value: email?.value || '',
+                        label: (email?.label && String(email.label).trim() !== '') ? email.label : this.defaultLabel,
+                        is_default: email?.is_default === true || email?.is_default === 'on' || email?.is_default === '1'
+                    }));
 
-                    // If no valid emails, return a default empty email
-                    if (validEmails.length === 0) {
+                    // If no emails at all, add one empty email for user to fill
+                    if (processedEmails.length === 0) {
                         return [{ value: '', label: this.defaultLabel, is_default: true }];
                     }
 
-                    return validEmails;
+                    return processedEmails;
                 },
 
                 addEmail() {

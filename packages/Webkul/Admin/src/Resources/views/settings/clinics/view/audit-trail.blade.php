@@ -1,6 +1,4 @@
 <div class="p-4">
-    {!! view_render_event('admin.settings.clinics.view.audit_trail.before', ['clinic' => $clinic]) !!}
-
     <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <h4 class="mb-4 text-lg font-semibold dark:text-white">
             @lang('admin::app.settings.clinics.view.audit-trail.title')
@@ -125,6 +123,4 @@
             </div>
         </div>
     </div>
-
-    {!! view_render_event('admin.settings.clinics.view.audit_trail.after', ['clinic' => $clinic]) !!}
 </div>

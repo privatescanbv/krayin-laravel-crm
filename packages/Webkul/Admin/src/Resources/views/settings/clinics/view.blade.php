@@ -6,8 +6,6 @@
     <!-- Content -->
     <div class="flex gap-4 max-lg:flex-wrap">
         <!-- Left Panel -->
-        {!! view_render_event('admin.settings.clinics.view.left.before', ['clinic' => $clinic]) !!}
-
         <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <!-- Clinic Information -->
             <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
@@ -19,8 +17,6 @@
                     />
                 </div>
 
-                {!! view_render_event('admin.settings.clinics.view.title.before', ['clinic' => $clinic]) !!}
-
                 <!-- Title -->
                 <div class="mb-2 flex flex-col gap-0.5">
                     <h3 class="break-words text-lg font-bold dark:text-white">
@@ -28,12 +24,8 @@
                     </h3>
                 </div>
 
-                {!! view_render_event('admin.settings.clinics.view.title.after', ['clinic' => $clinic]) !!}
-
                 <!-- Action Buttons -->
                 <div class="flex flex-wrap gap-2">
-                    {!! view_render_event('admin.settings.clinics.view.actions.before', ['clinic' => $clinic]) !!}
-
                     @if (bouncer()->hasPermission('settings.clinics.edit'))
                         <a
                             href="{{ route('admin.settings.clinics.edit', $clinic->id) }}"
@@ -44,8 +36,6 @@
                             @lang('admin::app.settings.clinics.view.edit-btn')
                         </a>
                     @endif
-
-                    {!! view_render_event('admin.settings.clinics.view.actions.after', ['clinic' => $clinic]) !!}
                 </div>
             </div>
 
@@ -77,14 +67,8 @@
             </div>
         </div>
 
-        {!! view_render_event('admin.settings.clinics.view.left.after', ['clinic' => $clinic]) !!}
-
-        {!! view_render_event('admin.settings.clinics.view.right.before', ['clinic' => $clinic]) !!}
-        
         <!-- Right Panel -->
         <div class="flex w-full flex-col gap-4 rounded-lg">
-            {!! view_render_event('admin.settings.clinics.view.right.content.before', ['clinic' => $clinic]) !!}
-
             <!-- Tabs/Sections Navigation -->
             <x-admin::activities
                 :endpoint="'#'" 
@@ -117,10 +101,6 @@
                     @include('admin::settings.clinics.view.audit-trail')
                 </x-slot>
             </x-admin::activities>
-
-            {!! view_render_event('admin.settings.clinics.view.right.content.after', ['clinic' => $clinic]) !!}
         </div>
-
-        {!! view_render_event('admin.settings.clinics.view.right.after', ['clinic' => $clinic]) !!}
     </div>    
 </x-admin::layouts>

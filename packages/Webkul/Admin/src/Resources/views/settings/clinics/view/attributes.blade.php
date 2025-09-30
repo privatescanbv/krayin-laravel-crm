@@ -1,5 +1,3 @@
-{!! view_render_event('admin.settings.clinics.view.attributes.before', ['clinic' => $clinic]) !!}
-
 <div class="flex w-full flex-col gap-4 border-b border-gray-200 p-4 dark:border-gray-800 dark:text-white">
     <x-admin::accordion class="select-none !border-none">
         <x-slot:header class="!p-0">
@@ -9,7 +7,6 @@
         </x-slot>
 
         <x-slot:content class="mt-4 !px-0 !pb-0">
-            {!! view_render_event('admin.settings.clinics.view.attributes.view.before', ['clinic' => $clinic]) !!}
     
             <!-- Attributes Listing -->
             <div class="flex flex-col gap-2">
@@ -96,10 +93,6 @@
                     </div>
                 @endif
             </div>
-            
-            {!! view_render_event('admin.settings.clinics.view.attributes.view.after', ['clinic' => $clinic]) !!}
         </x-slot>
     </x-admin::accordion>
 </div>
-
-{!! view_render_event('admin.settings.clinics.view.attributes.after', ['clinic' => $clinic]) !!}

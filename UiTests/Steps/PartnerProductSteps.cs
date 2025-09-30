@@ -22,15 +22,21 @@ namespace UiTests.Steps
         public async Task GivenIOpenThePartnerProductsPage()
         {
             var url = $"{TestConfig.BaseUrl}/admin/settings/partner-products";
-            await _driver.Page.GotoAsync(url);
+            await _driver.Page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle });
             await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/settings/partner-products$"));
+            
+            // Wait for the page content to be visible
+            await _driver.Page.WaitForSelectorAsync(".flex.flex-col.gap-4", new() { Timeout = 5000 });
         }
 
         [When("I click on create partner product")]
         public async Task WhenIClickOnCreatePartnerProduct()
         {
-            // Click the create button (it's an <a> tag with class="primary-button")
-            await _driver.Page.Locator("a.primary-button:has-text('Partnerproduct toevoegen')").ClickAsync();
+            // Wait for the button to be visible and clickable
+            var createButton = _driver.Page.Locator("a:has-text('Partnerproduct toevoegen'), a:has-text('Add Partner Product')");
+            await createButton.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
+            await createButton.ClickAsync();
+            
             await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/settings/partner-products/create$"));
         }
 
@@ -38,6 +44,9 @@ namespace UiTests.Steps
         public async Task WhenIFillInThePartnerProductForm(string name, string price)
         {
             _createdProductName = $"{name} {Guid.NewGuid():N}";
+            
+            // Wait for the form to be loaded
+            await _driver.Page.WaitForSelectorAsync("input[name='name']", new() { Timeout = 5000 });
             
             // Fill in required fields
             await _driver.Page.FillAsync("input[name='name']", _createdProductName);

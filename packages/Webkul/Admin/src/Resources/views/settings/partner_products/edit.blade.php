@@ -70,7 +70,7 @@
                             type="number"
                             step="0.01"
                             name="sales_price"
-                            value="{{ old('sales_price', $partner_products->sales_price) }}"
+                            value="{{ old('sales_price', number_format($partner_products->sales_price, 2, '.', '')) }}"
                             rules="required|numeric|min:0"
                             :label="trans('admin::app.settings.partner_products.index.create.sales_price')"
                             :placeholder="trans('admin::app.settings.partner_products.index.create.sales_price')"
@@ -155,18 +155,16 @@
                         @lang('admin::app.settings.clinics.index.title')
                     </x-admin::form.control-group.label>
 
-                    @php
-                        $selectedClinics = old('clinics', $partner_products->clinics->pluck('id')->toArray());
-                    @endphp
-
                     <x-admin::form.control-group.control
                         type="select"
                         name="clinics[]"
-                        ::value="'{{ json_encode($selectedClinics) }}'"
                         rules="required"
                         multiple
                         :label="trans('admin::app.settings.clinics.index.title')"
                     >
+                        @php
+                            $selectedClinics = old('clinics', $partner_products->clinics->pluck('id')->toArray());
+                        @endphp
                         @foreach ($clinics as $clinic)
                             <option value="{{ $clinic->id }}" @selected(in_array($clinic->id, $selectedClinics))>{{ $clinic->name }}</option>
                         @endforeach

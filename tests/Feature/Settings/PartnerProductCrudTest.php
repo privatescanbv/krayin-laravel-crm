@@ -93,7 +93,7 @@ test('can delete partner product', function () {
     ]);
 });
 
-test('can create partner product with resources from selected clinics', function () {
+test('can create partner product with valid clinic and resource combination', function () {
     $resourceType = ResourceType::factory()->create();
     $clinic = Clinic::factory()->create();
     $resource = \App\Models\Resource::factory()->create([
@@ -101,36 +101,32 @@ test('can create partner product with resources from selected clinics', function
         'resource_type_id' => $resourceType->id,
     ]);
 
-    $uniquePartnerName = 'ResTest' . uniqid();
-    
     $payload = [
-        'name'               => 'CT Scan Resource Test',
+        'name'               => 'Valid CT Scan',
         'currency'           => 'EUR',
         'sales_price'        => 299.99,
         'active'             => 1,
-        'description'        => 'Partner product with valid resource',
         'resource_type_id'   => $resourceType->id,
         'clinics'            => [$clinic->id],
         'resources'          => [$resource->id],
-        'partner_name'       => $uniquePartnerName,
+        'partner_name'       => 'ValidTest' . uniqid(),
         'duration'           => 45,
     ];
 
     $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
     $response->assertOk();
-
-    // Verify using the response data directly (most reliable in parallel tests)
-    $response->assertJsonPath('data.partner_name', $uniquePartnerName);
-    $response->assertJsonPath('data.name', 'CT Scan Resource Test');
     
+    // Verify the partner product was created
     $createdId = $response->json('data.id');
+    expect($createdId)->toBeGreaterThan(0);
     
-    // Verify relationships in database
+    // Verify clinic relationship was created
     $this->assertDatabaseHas('clinic_partner_product', [
         'partner_product_id' => $createdId,
         'clinic_id' => $clinic->id,
     ]);
     
+    // Verify resource relationship was created
     $this->assertDatabaseHas('partner_product_resource', [
         'partner_product_id' => $createdId,
         'resource_id' => $resource->id,

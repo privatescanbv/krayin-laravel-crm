@@ -262,40 +262,19 @@
 
     @push('scripts')
         <script>
-            (function() {
-                let isLoading = false;
-                let lastSelectedClinics = '';
-                let initialResourcesData = null;
+            document.addEventListener('DOMContentLoaded', function() {
+                const clinicsSelect = document.getElementById('clinics-select');
+                const resourcesSelect = document.getElementById('resources-select');
+                const resourcesHint = document.getElementById('resources-hint');
 
-                // Make function globally accessible for inline handlers
-                window.updateResourcesForClinics = function() {
-                    console.log('[updateResourcesForClinics] Function called');
-                    
-                    const clinicsSelect = document.getElementById('clinics-select');
-                    const resourcesSelect = document.getElementById('resources-select');
-                    const resourcesHint = document.getElementById('resources-hint');
+                if (!clinicsSelect || !resourcesSelect || !resourcesHint) {
+                    return;
+                }
 
-                    if (!clinicsSelect || !resourcesSelect || !resourcesHint) {
-                        console.error('[updateResourcesForClinics] Required elements not found');
-                        return;
-                    }
+                const initialResources = JSON.parse(resourcesSelect.dataset.initialResources || '[]');
 
-                    if (isLoading) {
-                        console.log('[updateResourcesForClinics] Already loading, skipping...');
-                        return;
-                    }
-
+                function loadResources() {
                     const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
-                    const currentKey = selectedClinics.sort().join(',');
-                    
-                    // Only reload if selection actually changed
-                    if (currentKey === lastSelectedClinics) {
-                        console.log('[updateResourcesForClinics] No change detected');
-                        return;
-                    }
-                    
-                    console.log('[updateResourcesForClinics] Clinic selection changed from "' + lastSelectedClinics + '" to "' + currentKey + '"');
-                    lastSelectedClinics = currentKey;
                     
                     if (selectedClinics.length === 0) {
                         resourcesSelect.disabled = true;
@@ -304,34 +283,13 @@
                         return;
                     }
 
-                    isLoading = true;
-
-                    // Store currently selected resources (or use initial on first load)
-                    let currentlySelected;
-                    if (initialResourcesData !== null) {
-                        currentlySelected = Array.from(resourcesSelect.selectedOptions).map(opt => opt.value);
-                        initialResourcesData = null; // Only use initial data once
-                    } else {
-                        currentlySelected = Array.from(resourcesSelect.selectedOptions).map(opt => opt.value);
-                    }
-
-                    // Fetch filtered resources
+                    const currentlySelected = Array.from(resourcesSelect.selectedOptions).map(opt => opt.value);
                     const params = new URLSearchParams();
                     selectedClinics.forEach(id => params.append('clinic_ids[]', id));
 
-                    const url = '{{ route("admin.settings.resources.filter_by_clinics") }}?' + params.toString();
-                    console.log('[updateResourcesForClinics] Fetching from:', url);
-
-                    fetch(url)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error('Network response was not ok');
-                            }
-                            return response.json();
-                        })
+                    fetch('{{ route("admin.settings.resources.filter_by_clinics") }}?' + params.toString())
+                        .then(response => response.json())
                         .then(data => {
-                            console.log('[updateResourcesForClinics] Received resources:', data.data);
-                            
                             resourcesSelect.innerHTML = '';
                             resourcesHint.style.display = 'block';
                             
@@ -340,18 +298,13 @@
                                     const option = document.createElement('option');
                                     option.value = resource.id;
                                     option.textContent = resource.name;
-                                    
-                                    // Reselect if it was previously selected and is still valid
-                                    if (currentlySelected.includes(resource.id.toString()) || 
-                                        currentlySelected.includes(resource.id)) {
+                                    if (currentlySelected.includes(resource.id.toString()) || currentlySelected.includes(resource.id)) {
                                         option.selected = true;
                                     }
-                                    
                                     resourcesSelect.appendChild(option);
                                 });
                                 resourcesSelect.disabled = false;
                             } else {
-                                // If no resources available, show message
                                 const option = document.createElement('option');
                                 option.disabled = true;
                                 option.textContent = 'Geen resources beschikbaar voor deze kliniek(en)';
@@ -360,34 +313,18 @@
                             }
                         })
                         .catch(error => {
-                            console.error('[updateResourcesForClinics] Error:', error);
-                            resourcesSelect.innerHTML = '<option disabled>Fout bij laden van resources</option>';
+                            console.error('Error loading resources:', error);
                             resourcesSelect.disabled = false;
-                        })
-                        .finally(() => {
-                            isLoading = false;
                         });
-                };
+                }
 
-                document.addEventListener('DOMContentLoaded', function() {
-                    console.log('[PartnerProduct] Script loaded');
-                    
-                    const clinicsSelect = document.getElementById('clinics-select');
-                    const resourcesSelect = document.getElementById('resources-select');
-                    
-                    if (resourcesSelect) {
-                        initialResourcesData = JSON.parse(resourcesSelect.dataset.initialResources || '[]');
-                    }
-                    
-                    if (clinicsSelect && clinicsSelect.selectedOptions.length > 0) {
-                        lastSelectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value).sort().join(',');
-                        window.updateResourcesForClinics();
-                    }
-                    
-                    // Also use polling as fallback
-                    setInterval(window.updateResourcesForClinics, 500);
-                });
-            })();
+                clinicsSelect.addEventListener('change', loadResources);
+                
+                // Load initial resources if clinics are pre-selected
+                if (clinicsSelect.selectedOptions.length > 0) {
+                    loadResources();
+                }
+            });
         </script>
     @endpush
 </x-admin::layouts>

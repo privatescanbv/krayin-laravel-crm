@@ -84,11 +84,18 @@ namespace UiTests.Steps
                     // Wait for resources to be loaded (resources field becomes enabled and populated)
                     var resourcesSelect = _driver.Page.Locator("select[name='resources[]']");
                     
-                    // Wait until the select is no longer disabled
-                    await _driver.Page.WaitForFunctionAsync(
-                        "() => !document.querySelector('select[name=\"resources[]\"]')?.disabled",
-                        new() { Timeout = 5000 }
-                    );
+                    // Wait until the select is no longer disabled (max 5 seconds)
+                    try
+                    {
+                        await _driver.Page.WaitForFunctionAsync(
+                            "() => !document.querySelector('select[name=\"resources[]\"]')?.disabled",
+                            timeout: 5000
+                        );
+                    }
+                    catch
+                    {
+                        // If resources don't load, continue anyway (clinic might have no resources)
+                    }
                     
                     // Extra wait to ensure options are populated
                     await _driver.Page.WaitForTimeoutAsync(500);

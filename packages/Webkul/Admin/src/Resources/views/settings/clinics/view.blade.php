@@ -11,10 +11,19 @@
             <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
                 <!-- Breadcrumbs and Actions -->
                 <div class="flex items-center justify-between">
-                    <x-admin::breadcrumbs
-                        name="settings.clinics.view"
-                        :entity="$clinic"
-                    />
+                    <div class="flex justify-start max-lg:hidden">
+                        <div class="flex items-center gap-x-3.5">
+                            <a href="{{ route('admin.settings.index') }}" class="text-gray-600 dark:text-gray-300">
+                                @lang('admin::app.layouts.settings')
+                            </a>
+                            <span class="text-gray-400">/</span>
+                            <a href="{{ route('admin.settings.clinics.index') }}" class="text-gray-600 dark:text-gray-300">
+                                @lang('admin::app.layouts.clinics')
+                            </a>
+                            <span class="text-gray-400">/</span>
+                            <span class="text-gray-800 dark:text-white">{{ $clinic->name }}</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Title -->

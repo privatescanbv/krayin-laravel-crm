@@ -33,6 +33,11 @@ trait NormalizesContactFields
             $incoming['phones'] = $this->normalizePhonesArray($incoming['phones']);
         }
         
+        // Normalize contact_numbers array (for backwards compatibility with Person)
+        if (isset($incoming['contact_numbers']) && is_array($incoming['contact_numbers'])) {
+            $incoming['contact_numbers'] = $this->normalizePhonesArray($incoming['contact_numbers']);
+        }
+        
         // Replace request data
         $request->replace($incoming);
     }

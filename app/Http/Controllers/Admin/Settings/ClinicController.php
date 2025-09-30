@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\DataGrids\Settings\ClinicDataGrid;
 use App\Repositories\ClinicRepository;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
+use App\Services\ClinicValidationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -84,20 +85,12 @@ class ClinicController extends SimpleEntityController
 
     protected function validateStore(Request $request): void
     {
-        $request->validate([
-            'name'   => 'required|unique:clinics,name|max:100',
-            'emails' => 'nullable|array',
-            'phones' => 'nullable|array',
-        ]);
+        $request->validate(ClinicValidationService::getCreateValidationRules());
     }
 
     protected function validateUpdate(Request $request, int $id): void
     {
-        $request->validate([
-            'name'   => 'required|max:100|unique:clinics,name,'.$id,
-            'emails' => 'nullable|array',
-            'phones' => 'nullable|array',
-        ]);
+        $request->validate(ClinicValidationService::getUpdateValidationRules($id));
     }
 
     protected function transformPayload(array $payload, ?int $id = null): array

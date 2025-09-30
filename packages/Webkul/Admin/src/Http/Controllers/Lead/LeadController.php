@@ -1318,22 +1318,6 @@ class LeadController extends Controller
         // Replaced by normalizeContactFields() from trait
         $this->normalizeContactFields($request);
     }
-        }
-
-        // Convert to lowercase and map common variations
-        $normalizedLabel = strtolower(trim($label));
-        return match ($normalizedLabel) {
-            'eigen' => ContactLabel::Eigen->value,
-            'relatie' => ContactLabel::Relatie->value,
-            'anders' => ContactLabel::Anders->value,
-            // legacy mappings
-            'work', 'werk', 'home', 'thuis', 'mobile', 'mobiel' => ContactLabel::Eigen->value,
-            'other' => ContactLabel::Anders->value,
-            default => ContactLabel::default()->value,
-        };
-    }
-
-    // moved contact validation to LeadValidationService
 
     /**
      * Detach person from lead.

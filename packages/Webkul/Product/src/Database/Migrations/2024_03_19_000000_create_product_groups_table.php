@@ -1,5 +1,6 @@
 <?php
 
+use App\Helpers\AuditTrailMigrationHelper;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,9 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->text('description')->nullable();
+            $table->foreignId('parent_id')->nullable()->constrained('product_groups')->onDelete('set null');
             $table->timestamps();
+            AuditTrailMigrationHelper::addAuditTrailColumns($table);
         });
 
         // Add product_group_id to products table

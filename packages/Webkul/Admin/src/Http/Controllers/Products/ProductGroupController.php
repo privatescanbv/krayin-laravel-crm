@@ -47,9 +47,13 @@ class ProductGroupController extends Controller
         $this->validate(request(), [
             'name'        => 'required|string|max:255',
             'description' => 'nullable|string',
+            'parent_id'   => 'nullable|exists:product_groups,id',
         ]);
 
-        $productGroup = $this->productGroupRepository->create(request()->all());
+        $data = request()->all();
+        $data['parent_id'] = isset($data['parent_id']) && $data['parent_id'] !== '' ? $data['parent_id'] : null;
+
+        $productGroup = $this->productGroupRepository->create($data);
 
         session()->flash('success', trans('admin::app.productgroups.index.create-success'));
 

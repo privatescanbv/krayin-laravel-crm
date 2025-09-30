@@ -236,6 +236,7 @@ TABLE(ProductGroup, "product_groups") {
   PRIMARY_KEY(id): bigint
   name: string
   description: text
+  FOREIGN_KEY(parent_id): bigint
   created_by: bigint
   updated_by: bigint
 }
@@ -473,6 +474,7 @@ Product "n" -- "0..*" ProductGroup
 Product "n" -- "0..*" PartnerProduct
 Product "1" -- "1" ResourceType
 Product "1" -- "1" ProductType
+ProductGroup "0..1" -- "n" ProductGroup : "parent"
 ProductCategory "0..1" -- "n" ProductCategory : "parent"
 Clinic "0..*" -- "n" Resource
 Clinic "0..*" -- "n" PartnerProduct

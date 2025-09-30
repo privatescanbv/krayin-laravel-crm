@@ -77,6 +77,21 @@ namespace UiTests.Steps
                 if (!string.IsNullOrEmpty(firstClinicValue))
                 {
                     await clinicSelect.SelectOptionAsync(new[] { firstClinicValue });
+                    
+                    // Trigger change event manually for the JavaScript to pick up the selection
+                    await clinicSelect.EvaluateAsync("(element) => element.dispatchEvent(new Event('change', { bubbles: true }))");
+                    
+                    // Wait for resources to be loaded (resources field becomes enabled and populated)
+                    var resourcesSelect = _driver.Page.Locator("select[name='resources[]']");
+                    
+                    // Wait until the select is no longer disabled
+                    await _driver.Page.WaitForFunctionAsync(
+                        "() => !document.querySelector('select[name=\"resources[]\"]')?.disabled",
+                        new() { Timeout = 5000 }
+                    );
+                    
+                    // Extra wait to ensure options are populated
+                    await _driver.Page.WaitForTimeoutAsync(500);
                 }
             }
 

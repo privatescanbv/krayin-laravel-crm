@@ -248,7 +248,7 @@
                 const resourcesSelect = document.getElementById('resources-select');
                 const resourcesHint = document.getElementById('resources-hint');
 
-                clinicsSelect.addEventListener('change', function() {
+                function loadResources() {
                     const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
                     
                     if (selectedClinics.length === 0) {
@@ -269,7 +269,6 @@
                         .then(response => response.json())
                         .then(data => {
                             resourcesSelect.innerHTML = '';
-                            resourcesSelect.disabled = false;
                             resourcesHint.style.display = 'block';
 
                             const availableResourceIds = data.data.map(r => r.id.toString());
@@ -287,18 +286,30 @@
                                 resourcesSelect.appendChild(option);
                             });
 
-                            // If no resources available, show message
+                            // If no resources available, show message but still enable the field
                             if (data.data.length === 0) {
                                 const option = document.createElement('option');
                                 option.disabled = true;
                                 option.textContent = 'Geen resources beschikbaar voor deze kliniek(en)';
                                 resourcesSelect.appendChild(option);
+                                resourcesSelect.disabled = false; // Still enable so form can be submitted
+                            } else {
+                                resourcesSelect.disabled = false;
                             }
                         })
                         .catch(error => {
                             console.error('Error fetching resources:', error);
+                            // On error, enable the field so form can still be submitted
+                            resourcesSelect.disabled = false;
                         });
-                });
+                }
+
+                clinicsSelect.addEventListener('change', loadResources);
+                
+                // Also trigger on load if clinics are already selected (for tests/automation)
+                if (clinicsSelect.selectedOptions.length > 0) {
+                    loadResources();
+                }
             });
         </script>
     @endpush

@@ -27,15 +27,40 @@
                     if (!is_array($emailList)) {
                         $emailList = [];
                     }
+                    $validEmails = collect($emailList)->filter(function($field) {
+                        if (is_array($field)) {
+                            return !empty($field['value']);
+                        }
+                        return !empty($field);
+                    });
                 @endphp
-                @if (count($emailList) > 0)
+                @if ($validEmails->count() > 0)
                     <div class="grid grid-cols-[200px_1fr] gap-2">
                         <span class="font-medium text-gray-600 dark:text-gray-400">
                             @lang('admin::app.settings.clinics.view.overview.emails'):
                         </span>
                         <div>
-                            @foreach ($emailList as $email)
-                                <div class="dark:text-white">{{ $email }}</div>
+                            @foreach ($validEmails as $field)
+                                @php
+                                    $value = is_array($field) ? ($field['value'] ?? '') : $field;
+                                    $fieldLabel = is_array($field) ? ($field['label'] ?? '') : '';
+                                    $isDefault = is_array($field) ? (!empty($field['is_default'])) : false;
+                                @endphp
+                                @if (!empty($value))
+                                    <div class="flex items-center gap-2 dark:text-white">
+                                        <a href="mailto:{{ $value }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                                            {{ $value }}
+                                        </a>
+                                        @if (!empty($fieldLabel))
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">({{ $fieldLabel }})</span>
+                                        @endif
+                                        @if ($isDefault)
+                                            <span class="text-xs rounded bg-blue-100 px-1.5 py-0.5 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                                standaard
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endif
                             @endforeach
                         </div>
                     </div>
@@ -46,15 +71,40 @@
                     if (!is_array($phoneList)) {
                         $phoneList = [];
                     }
+                    $validPhones = collect($phoneList)->filter(function($field) {
+                        if (is_array($field)) {
+                            return !empty($field['value']);
+                        }
+                        return !empty($field);
+                    });
                 @endphp
-                @if (count($phoneList) > 0)
+                @if ($validPhones->count() > 0)
                     <div class="grid grid-cols-[200px_1fr] gap-2">
                         <span class="font-medium text-gray-600 dark:text-gray-400">
                             @lang('admin::app.settings.clinics.view.overview.phones'):
                         </span>
                         <div>
-                            @foreach ($phoneList as $phone)
-                                <div class="dark:text-white">{{ $phone }}</div>
+                            @foreach ($validPhones as $field)
+                                @php
+                                    $value = is_array($field) ? ($field['value'] ?? '') : $field;
+                                    $fieldLabel = is_array($field) ? ($field['label'] ?? '') : '';
+                                    $isDefault = is_array($field) ? (!empty($field['is_default'])) : false;
+                                @endphp
+                                @if (!empty($value))
+                                    <div class="flex items-center gap-2 dark:text-white">
+                                        <a href="tel:{{ $value }}" class="text-blue-600 hover:text-blue-800 dark:text-blue-400">
+                                            {{ $value }}
+                                        </a>
+                                        @if (!empty($fieldLabel))
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">({{ $fieldLabel }})</span>
+                                        @endif
+                                        @if ($isDefault)
+                                            <span class="text-xs rounded bg-blue-100 px-1.5 py-0.5 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                                standaard
+                                            </span>
+                                        @endif
+                                    </div>
+                                @endif
                             @endforeach
                         </div>
                     </div>

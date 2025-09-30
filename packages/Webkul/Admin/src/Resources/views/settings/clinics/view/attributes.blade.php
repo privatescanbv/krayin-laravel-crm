@@ -32,44 +32,18 @@
                 </div>
 
                 <!-- Emails -->
-                @php
-                    $emailList = $clinic->emails ?? [];
-                    if (!is_array($emailList)) {
-                        $emailList = [];
-                    }
-                @endphp
-                @if (count($emailList) > 0)
-                    <div class="grid grid-cols-[1fr_2fr] items-start gap-1">
-                        <div class="label dark:text-white">
-                            @lang('admin::app.settings.clinics.view.attributes.emails')
-                        </div>
-                        <div class="font-medium dark:text-white">
-                            @foreach ($emailList as $email)
-                                <div>{{ $email }}</div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
+                <x-admin::clinic.contact-fields
+                    :label="trans('admin::app.settings.clinics.view.attributes.emails')"
+                    :fields="$clinic->emails"
+                    type="email"
+                />
 
                 <!-- Phones -->
-                @php
-                    $phoneList = $clinic->phones ?? [];
-                    if (!is_array($phoneList)) {
-                        $phoneList = [];
-                    }
-                @endphp
-                @if (count($phoneList) > 0)
-                    <div class="grid grid-cols-[1fr_2fr] items-start gap-1">
-                        <div class="label dark:text-white">
-                            @lang('admin::app.settings.clinics.view.attributes.phones')
-                        </div>
-                        <div class="font-medium dark:text-white">
-                            @foreach ($phoneList as $phone)
-                                <div>{{ $phone }}</div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
+                <x-admin::clinic.contact-fields
+                    :label="trans('admin::app.settings.clinics.view.attributes.phones')"
+                    :fields="$clinic->phones"
+                    type="phone"
+                />
 
                 <!-- Address -->
                 @if ($clinic->address)

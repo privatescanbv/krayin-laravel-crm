@@ -42,4 +42,9 @@ class Resource extends Model
     {
         return $this->hasMany(Shift::class);
     }
+
+    public function partnerProducts()
+    {
+        return $this->belongsToMany(PartnerProduct::class, 'partner_product_resource');
+    }
 }

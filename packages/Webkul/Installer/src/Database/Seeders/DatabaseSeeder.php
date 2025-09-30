@@ -26,5 +26,7 @@ class DatabaseSeeder extends Seeder
         $this->call(LeadSeeder::class, false, ['parameters' => $parameters]);
         $this->call(UserSeeder::class, false, ['parameters' => $parameters]);
         $this->call(WorkflowSeeder::class, false, ['parameters' => $parameters]);
+        $this->call(\Database\Seeders\ClinicSeeder::class);
+        $this->call(\Database\Seeders\ResourceTypeSeeder::class);
     }
 }

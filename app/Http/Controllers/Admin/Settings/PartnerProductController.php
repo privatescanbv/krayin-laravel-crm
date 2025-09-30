@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\DataGrids\Settings\PartnerProductDataGrid;
 use App\Enums\Currency;
 use App\Models\Clinic;
+use App\Models\Resource;
 use App\Models\ResourceType;
 use App\Repositories\PartnerProductRepository;
 use Illuminate\Database\Eloquent\Model;
@@ -72,6 +73,7 @@ class PartnerProductController extends SimpleEntityController
 
         $entity->clinics()->sync($request->input('clinics', []));
         $entity->relatedProducts()->sync($request->input('related_products', []));
+        $entity->resources()->sync($request->input('resources', []));
 
         Event::dispatch("settings.{$this->entityName}.create.after", $entity);
 
@@ -97,6 +99,7 @@ class PartnerProductController extends SimpleEntityController
 
         $entity->clinics()->sync($request->input('clinics', []));
         $entity->relatedProducts()->sync($request->input('related_products', []));
+        $entity->resources()->sync($request->input('resources', []));
 
         Event::dispatch("settings.{$this->entityName}.update.after", $entity);
 
@@ -119,6 +122,7 @@ class PartnerProductController extends SimpleEntityController
             'currencies'      => Currency::options(),
             'defaultCurrency' => Currency::default()->value,
             'clinics'         => Clinic::orderBy('name')->get(['id', 'name']),
+            'resources'       => Resource::orderBy('name')->get(['id', 'name']),
         ];
     }
 
@@ -129,6 +133,7 @@ class PartnerProductController extends SimpleEntityController
             'resourceTypes'    => ResourceType::orderBy('name')->get(['id', 'name']),
             'currencies'       => Currency::options(),
             'clinics'          => Clinic::orderBy('name')->get(['id', 'name']),
+            'resources'        => Resource::orderBy('name')->get(['id', 'name']),
         ];
     }
 
@@ -176,6 +181,8 @@ class PartnerProductController extends SimpleEntityController
             'clinics.*'           => 'integer|exists:clinics,id',
             'related_products'    => 'nullable|array',
             'related_products.*'  => 'integer|exists:partner_products,id',
+            'resources'           => 'nullable|array',
+            'resources.*'         => 'integer|exists:resources,id',
         ];
     }
 
@@ -192,6 +199,26 @@ class PartnerProductController extends SimpleEntityController
         }
 
         return parent::transformPayload($payload, $id);
+    }
+
+    protected function getCreateSuccessMessage(): string
+    {
+        return trans('admin::app.settings.partner_products.index.create-success');
+    }
+
+    protected function getUpdateSuccessMessage(): string
+    {
+        return trans('admin::app.settings.partner_products.index.update-success');
+    }
+
+    protected function getDestroySuccessMessage(): string
+    {
+        return trans('admin::app.settings.partner_products.index.destroy-success');
+    }
+
+    protected function getDeleteFailedMessage(): string
+    {
+        return trans('admin::app.settings.partner_products.index.delete-failed');
     }
 
     /**
@@ -223,25 +250,5 @@ class PartnerProductController extends SimpleEntityController
         }
 
         return $value;
-    }
-
-    protected function getCreateSuccessMessage(): string
-    {
-        return trans('admin::app.settings.partner_products.index.create-success');
-    }
-
-    protected function getUpdateSuccessMessage(): string
-    {
-        return trans('admin::app.settings.partner_products.index.update-success');
-    }
-
-    protected function getDestroySuccessMessage(): string
-    {
-        return trans('admin::app.settings.partner_products.index.destroy-success');
-    }
-
-    protected function getDeleteFailedMessage(): string
-    {
-        return trans('admin::app.settings.partner_products.index.delete-failed');
     }
 }

@@ -27,5 +27,3 @@ class ClinicSeeder extends BaseSeeder
         );
     }
 }
-
-

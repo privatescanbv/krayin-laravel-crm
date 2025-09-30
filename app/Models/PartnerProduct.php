@@ -49,4 +49,9 @@ class PartnerProduct extends BaseProduct
             'related_product_id'
         );
     }
+
+    public function resources()
+    {
+        return $this->belongsToMany(Resource::class, 'partner_product_resource');
+    }
 }

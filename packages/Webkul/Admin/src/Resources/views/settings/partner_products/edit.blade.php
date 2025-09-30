@@ -49,6 +49,7 @@
                         <x-admin::form.control-group.control
                             type="select"
                             name="currency"
+                            value="{{ old('currency', $partner_products->currency) }}"
                             rules="required"
                             :label="trans('admin::app.settings.partner_products.index.create.currency')"
                         >

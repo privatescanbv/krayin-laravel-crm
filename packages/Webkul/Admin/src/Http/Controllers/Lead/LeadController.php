@@ -6,6 +6,7 @@ use App\Enums\ContactLabel;
 use App\Enums\LostReason;
 use App\Enums\ActivityStatus;
 use App\Enums\PipelineDefaultKeys;
+use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Models\Anamnesis;
 use App\Models\Department;
 use Carbon\Carbon;
@@ -49,6 +50,8 @@ use App\Services\UserDefaultValueService;
 
 class LeadController extends Controller
 {
+    use NormalizesContactFields;
+
     /**
      * Const variable for supported types.
      */
@@ -1308,84 +1311,13 @@ class LeadController extends Controller
 
     /**
      * Normalize contact arrays to ensure proper data types
+     * @deprecated Use normalizeContactFields() from NormalizesContactFields trait instead
      */
     private function normalizeContactArrays($request)
     {
-        $requestData = $request->all();
-
-        // Normalize emails
-        if (isset($requestData['emails']) && is_array($requestData['emails'])) {
-            foreach ($requestData['emails'] as $index => $email) {
-                if (is_array($email)) {
-                    // Ensure label exists and normalize it
-                    if (!isset($email['label']) || empty($email['label'])) {
-                        $requestData['emails'][$index]['label'] = ContactLabel::default()->value;
-                    } else {
-                        $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
-                    }
-
-                    // Normalize is_default to boolean
-                    if (isset($email['is_default'])) {
-                        $requestData['emails'][$index]['is_default'] = $this->normalizeBoolean($email['is_default']);
-                    } else {
-                        $requestData['emails'][$index]['is_default'] = false;
-                    }
-                }
-            }
-        }
-
-        // Normalize phones
-        if (isset($requestData['phones']) && is_array($requestData['phones'])) {
-            foreach ($requestData['phones'] as $index => $phone) {
-                if (is_array($phone)) {
-                    // Ensure label exists and normalize it
-                    if (!isset($phone['label']) || empty($phone['label'])) {
-                        $requestData['phones'][$index]['label'] = ContactLabel::default()->value;
-                    } else {
-                        $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
-                    }
-
-                    // Normalize is_default to boolean
-                    if (isset($phone['is_default'])) {
-                        $requestData['phones'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
-                    } else {
-                        $requestData['phones'][$index]['is_default'] = false;
-                    }
-                }
-            }
-        }
-
-        // Replace the request data
-        $request->replace($requestData);
+        // Replaced by normalizeContactFields() from trait
+        $this->normalizeContactFields($request);
     }
-
-    /**
-     * Normalize various representations to boolean
-     */
-    private function normalizeBoolean($value)
-    {
-        if (is_bool($value)) {
-            return $value;
-        }
-
-        if (is_string($value)) {
-            return in_array(strtolower($value), ['true', '1', 'on', 'yes']);
-        }
-
-        if (is_numeric($value)) {
-            return (bool) $value;
-        }
-
-        return false;
-    }
-
-    /**
-     * Normalize label to lowercase and handle common variations
-     */
-    private function normalizeLabel(string $label): string
-    {
-        if (empty($label)) {
-            return ContactLabel::default()->value;
         }
 
         // Convert to lowercase and map common variations

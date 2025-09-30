@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\ClinicDataGrid;
 use App\Repositories\ClinicRepository;
+use App\Http\Controllers\Concerns\NormalizesContactFields;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,6 +12,7 @@ use Throwable;
 
 class ClinicController extends SimpleEntityController
 {
+    use NormalizesContactFields;
     public function __construct(protected ClinicRepository $clinicRepository)
     {
         parent::__construct($clinicRepository);
@@ -22,6 +24,22 @@ class ClinicController extends SimpleEntityController
         $this->editView = 'admin::settings.clinics.edit';
         $this->indexRoute = 'admin.settings.clinics.index';
         $this->permissionPrefix = 'settings.clinics';
+    }
+
+    public function store(Request $request): RedirectResponse|JsonResponse
+    {
+        // Normalize contact fields before validation
+        $this->normalizeContactFields($request);
+        
+        return parent::store($request);
+    }
+
+    public function update(Request $request, int $id): RedirectResponse|JsonResponse
+    {
+        // Normalize contact fields before validation
+        $this->normalizeContactFields($request);
+        
+        return parent::update($request, $id);
     }
 
     public function view(int $id)
@@ -84,52 +102,8 @@ class ClinicController extends SimpleEntityController
 
     protected function transformPayload(array $payload, ?int $id = null): array
     {
-        // Filter en normaliseer emails
-        if (isset($payload['emails']) && is_array($payload['emails'])) {
-            // First normalize is_default to boolean
-            $payload['emails'] = array_map(function($email) {
-                if (isset($email['is_default'])) {
-                    $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
-                } else {
-                    $email['is_default'] = false;
-                }
-                return $email;
-            }, $payload['emails']);
-            
-            // Then filter out empty values
-            $payload['emails'] = array_values(array_filter($payload['emails'], function($email) {
-                return isset($email['value']) && trim($email['value']) !== '';
-            }));
-            
-            // If no valid emails remain, set to empty array
-            if (empty($payload['emails'])) {
-                $payload['emails'] = null;
-            }
-        }
-
-        // Filter en normaliseer phones
-        if (isset($payload['phones']) && is_array($payload['phones'])) {
-            // First normalize is_default to boolean
-            $payload['phones'] = array_map(function($phone) {
-                if (isset($phone['is_default'])) {
-                    $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
-                } else {
-                    $phone['is_default'] = false;
-                }
-                return $phone;
-            }, $payload['phones']);
-            
-            // Then filter out empty values
-            $payload['phones'] = array_values(array_filter($payload['phones'], function($phone) {
-                return isset($phone['value']) && trim($phone['value']) !== '';
-            }));
-            
-            // If no valid phones remain, set to empty array
-            if (empty($payload['phones'])) {
-                $payload['phones'] = null;
-            }
-        }
-
+        // Contact fields are already normalized by normalizeContactFields() in store/update
+        // This method can be used for additional transformations if needed in the future
         return $payload;
     }
 

@@ -92,3 +92,140 @@ test('can delete partner product', function () {
         'id' => $pp->id,
     ]);
 });
+
+test('can create partner product with resources from selected clinics', function () {
+    $resourceType = ResourceType::factory()->create();
+    $clinic = Clinic::factory()->create();
+    $resource = \App\Models\Resource::factory()->create([
+        'clinic_id' => $clinic->id,
+        'resource_type_id' => $resourceType->id,
+    ]);
+
+    $payload = [
+        'name'               => 'CT Scan',
+        'currency'           => 'EUR',
+        'sales_price'        => 299.99,
+        'active'             => 1,
+        'description'        => 'Partner product with valid resource',
+        'resource_type_id'   => $resourceType->id,
+        'clinics'            => [$clinic->id],
+        'resources'          => [$resource->id],
+        'partner_name'       => 'Resource Match Test',
+        'duration'           => 45,
+    ];
+
+    $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
+    $response->assertOk();
+
+    $this->assertDatabaseHas('partner_products', [
+        'partner_name' => 'Resource Match Test',
+    ]);
+
+    $partnerProduct = PartnerProduct::where('partner_name', 'Resource Match Test')->first();
+    expect($partnerProduct->resources->pluck('id')->toArray())->toContain($resource->id);
+});
+
+test('cannot create partner product with resources from different clinics', function () {
+    $resourceType = ResourceType::factory()->create();
+    $clinicA = Clinic::factory()->create(['name' => 'Clinic A']);
+    $clinicB = Clinic::factory()->create(['name' => 'Clinic B']);
+    
+    $resourceFromClinicB = \App\Models\Resource::factory()->create([
+        'clinic_id' => $clinicB->id,
+        'resource_type_id' => $resourceType->id,
+    ]);
+
+    $payload = [
+        'name'               => 'Invalid Partner Product',
+        'currency'           => 'EUR',
+        'sales_price'        => 199.99,
+        'active'             => 1,
+        'resource_type_id'   => $resourceType->id,
+        'clinics'            => [$clinicA->id], // Clinic A selected
+        'resources'          => [$resourceFromClinicB->id], // Resource from Clinic B
+        'partner_name'       => 'Mismatch Test',
+        'duration'           => 30,
+    ];
+
+    $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors('resources');
+    
+    expect($response->json('errors.resources.0'))
+        ->toContain('Gekozen resource(s) horen niet bij de geselecteerde kliniek(en)');
+});
+
+test('cannot update partner product with resources from different clinics', function () {
+    $resourceType = ResourceType::factory()->create();
+    $clinicA = Clinic::factory()->create(['name' => 'Clinic A']);
+    $clinicB = Clinic::factory()->create(['name' => 'Clinic B']);
+    
+    $resourceFromClinicA = \App\Models\Resource::factory()->create([
+        'clinic_id' => $clinicA->id,
+        'resource_type_id' => $resourceType->id,
+    ]);
+    
+    $resourceFromClinicB = \App\Models\Resource::factory()->create([
+        'clinic_id' => $clinicB->id,
+        'resource_type_id' => $resourceType->id,
+    ]);
+
+    $pp = PartnerProduct::factory()->create();
+    $pp->clinics()->sync([$clinicA->id]);
+    $pp->resources()->sync([$resourceFromClinicA->id]);
+
+    $payload = [
+        'name'               => $pp->name,
+        'currency'           => 'EUR',
+        'sales_price'        => 199.99,
+        'active'             => 1,
+        'resource_type_id'   => $resourceType->id,
+        'clinics'            => [$clinicA->id], // Still Clinic A
+        'resources'          => [$resourceFromClinicB->id], // Try to switch to resource from Clinic B
+        'partner_name'       => $pp->partner_name,
+        'duration'           => 30,
+        '_method'            => 'put',
+    ];
+
+    $response = $this->postJson(route('admin.settings.partner_products.update', ['id' => $pp->id]), $payload);
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors('resources');
+});
+
+test('can update partner product with resources from multiple selected clinics', function () {
+    $resourceType = ResourceType::factory()->create();
+    $clinicA = Clinic::factory()->create(['name' => 'Clinic A']);
+    $clinicB = Clinic::factory()->create(['name' => 'Clinic B']);
+    
+    $resourceFromClinicA = \App\Models\Resource::factory()->create([
+        'clinic_id' => $clinicA->id,
+        'resource_type_id' => $resourceType->id,
+    ]);
+    
+    $resourceFromClinicB = \App\Models\Resource::factory()->create([
+        'clinic_id' => $clinicB->id,
+        'resource_type_id' => $resourceType->id,
+    ]);
+
+    $pp = PartnerProduct::factory()->create();
+
+    $payload = [
+        'name'               => 'Multi-Clinic Product',
+        'currency'           => 'EUR',
+        'sales_price'        => 199.99,
+        'active'             => 1,
+        'resource_type_id'   => $resourceType->id,
+        'clinics'            => [$clinicA->id, $clinicB->id], // Both clinics
+        'resources'          => [$resourceFromClinicA->id, $resourceFromClinicB->id], // Resources from both
+        'partner_name'       => $pp->partner_name,
+        'duration'           => 30,
+        '_method'            => 'put',
+    ];
+
+    $response = $this->postJson(route('admin.settings.partner_products.update', ['id' => $pp->id]), $payload);
+    $response->assertOk();
+
+    $pp->refresh();
+    expect($pp->clinics->pluck('id')->toArray())->toContain($clinicA->id, $clinicB->id);
+    expect($pp->resources->pluck('id')->toArray())->toContain($resourceFromClinicA->id, $resourceFromClinicB->id);
+});

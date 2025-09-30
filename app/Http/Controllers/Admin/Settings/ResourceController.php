@@ -8,6 +8,7 @@ use App\Repositories\ResourceRepository;
 use App\Repositories\ResourceTypeRepository;
 use App\Repositories\ShiftRepository;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -47,6 +48,28 @@ class ResourceController extends SimpleEntityController
             'scheduleSummary'  => $this->buildMergedWeeklySummary($allShifts->all()), // keep for potential partials
             'periodSummaries'  => $periodSummaries,
         ]);
+    }
+
+    /**
+     * Filter resources by clinic IDs.
+     */
+    public function filterByClinics(Request $request): JsonResponse
+    {
+        $clinicIds = $request->input('clinic_ids', []);
+
+        if (empty($clinicIds)) {
+            return response()->json(['data' => []]);
+        }
+
+        $resources = $this->resourceRepository
+            ->scopeQuery(function ($query) use ($clinicIds) {
+                return $query->whereIn('clinic_id', $clinicIds)
+                    ->orderBy('name')
+                    ->select('id', 'name', 'clinic_id');
+            })
+            ->all();
+
+        return response()->json(['data' => $resources]);
     }
 
     /**

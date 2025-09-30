@@ -181,9 +181,36 @@ class PartnerProductController extends SimpleEntityController
             'clinics.*'           => 'integer|exists:clinics,id',
             'related_products'    => 'nullable|array',
             'related_products.*'  => 'integer|exists:partner_products,id',
-            'resources'           => 'nullable|array',
+            'resources'           => [
+                'nullable',
+                'array',
+                function ($attribute, $value, $fail) {
+                    $this->validateResourcesBelongToClinics($value, request()->input('clinics', []), $fail);
+                },
+            ],
             'resources.*'         => 'integer|exists:resources,id',
         ];
+    }
+
+    /**
+     * Validate that all selected resources belong to at least one of the selected clinics.
+     */
+    protected function validateResourcesBelongToClinics(array $resourceIds, array $clinicIds, $fail): void
+    {
+        if (empty($resourceIds) || empty($clinicIds)) {
+            return;
+        }
+
+        $validResources = Resource::whereIn('id', $resourceIds)
+            ->whereIn('clinic_id', $clinicIds)
+            ->pluck('id')
+            ->toArray();
+
+        $invalidResources = array_diff($resourceIds, $validResources);
+
+        if (!empty($invalidResources)) {
+            $fail('Gekozen resource(s) horen niet bij de geselecteerde kliniek(en).');
+        }
     }
 
     protected function transformPayload(array $payload, ?int $id = null): array

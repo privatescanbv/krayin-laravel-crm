@@ -158,6 +158,7 @@
                         $selectedClinics = old('clinics', $partner_products->clinics->pluck('id')->toArray());
                     @endphp
                     <select
+                        id="clinics-select"
                         name="clinics[]"
                         multiple
                         class="custom-select w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
@@ -179,14 +180,20 @@
                         $selectedResources = old('resources', $partner_products->resources->pluck('id')->toArray());
                     @endphp
                     <select
+                        id="resources-select"
                         name="resources[]"
                         multiple
-                        class="custom-select w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+                        class="custom-select w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                        data-initial-resources="{{ json_encode($selectedResources) }}"
                     >
                         @foreach ($resources as $resource)
                             <option value="{{ $resource->id }}" @selected(in_array($resource->id, $selectedResources))>{{ $resource->name }}</option>
                         @endforeach
                     </select>
+
+                    <p id="resources-hint" class="mt-1 text-xs text-gray-600 dark:text-gray-400" style="display: none;">
+                        Gefilterd op gekozen kliniek(en)
+                    </p>
 
                     <x-admin::form.control-group.error control-name="resources" />
                 </x-admin::form.control-group>
@@ -252,5 +259,75 @@
             </div>
         </div>
     </x-admin::form>
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const clinicsSelect = document.getElementById('clinics-select');
+                const resourcesSelect = document.getElementById('resources-select');
+                const resourcesHint = document.getElementById('resources-hint');
+                const initialResources = JSON.parse(resourcesSelect.dataset.initialResources || '[]');
+
+                // Load initial resources based on selected clinics
+                const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
+                if (selectedClinics.length > 0) {
+                    loadResources(selectedClinics, initialResources);
+                }
+
+                clinicsSelect.addEventListener('change', function() {
+                    const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
+                    
+                    if (selectedClinics.length === 0) {
+                        resourcesSelect.disabled = true;
+                        resourcesSelect.innerHTML = '';
+                        resourcesHint.style.display = 'none';
+                        return;
+                    }
+
+                    // Store currently selected resources
+                    const currentlySelected = Array.from(resourcesSelect.selectedOptions).map(opt => opt.value);
+                    loadResources(selectedClinics, currentlySelected);
+                });
+
+                function loadResources(clinicIds, selectedResourceIds) {
+                    const params = new URLSearchParams();
+                    clinicIds.forEach(id => params.append('clinic_ids[]', id));
+
+                    fetch('{{ route("admin.settings.resources.filter_by_clinics") }}?' + params.toString())
+                        .then(response => response.json())
+                        .then(data => {
+                            resourcesSelect.innerHTML = '';
+                            resourcesSelect.disabled = false;
+                            resourcesHint.style.display = 'block';
+                            
+                            data.data.forEach(resource => {
+                                const option = document.createElement('option');
+                                option.value = resource.id;
+                                option.textContent = resource.name;
+                                
+                                // Reselect if it was previously selected and is still valid
+                                if (selectedResourceIds.includes(resource.id.toString()) || 
+                                    selectedResourceIds.includes(resource.id)) {
+                                    option.selected = true;
+                                }
+                                
+                                resourcesSelect.appendChild(option);
+                            });
+
+                            // If no resources available, show message
+                            if (data.data.length === 0) {
+                                const option = document.createElement('option');
+                                option.disabled = true;
+                                option.textContent = 'Geen resources beschikbaar voor deze kliniek(en)';
+                                resourcesSelect.appendChild(option);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching resources:', error);
+                        });
+                }
+            });
+        </script>
+    @endpush
 </x-admin::layouts>
 

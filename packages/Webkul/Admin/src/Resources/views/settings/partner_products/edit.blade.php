@@ -224,8 +224,8 @@
                 <x-admin::partner-product-lookup
                     src="{{ route('admin.settings.partner_products.search') }}"
                     name="related_products"
-                    :label="trans('admin::app.settings.partner_products.index.create.related_products')"
-                    :search-placeholder="trans('admin::app.settings.partner_products.index.create.search_related_products')"
+                    label="@lang('admin::app.settings.partner_products.index.create.related_products')"
+                    search-placeholder="@lang('admin::app.settings.partner_products.index.create.search_related_products')"
                     :value="$partner_products->relatedProducts->map(fn($p) => ['id' => $p->id, 'name' => $p->name])->toArray()"
                     :exclude-id="$partner_products->id"
                 />

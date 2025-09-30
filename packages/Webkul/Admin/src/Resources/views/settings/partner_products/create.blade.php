@@ -214,8 +214,8 @@
                 <x-admin::partner-product-lookup
                     src="{{ route('admin.settings.partner_products.search') }}"
                     name="related_products"
-                    :label="trans('admin::app.settings.partner_products.index.create.related_products')"
-                    :search-placeholder="trans('admin::app.settings.partner_products.index.create.search_related_products')"
+                    label="@lang('admin::app.settings.partner_products.index.create.related_products')"
+                    search-placeholder="@lang('admin::app.settings.partner_products.index.create.search_related_products')"
                     :value="[]"
                 />
             </div>

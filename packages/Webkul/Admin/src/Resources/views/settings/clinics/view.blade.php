@@ -135,6 +135,13 @@
                     <div class="border-b border-gray-200 dark:border-gray-800">
                         <div class="flex gap-4 px-4">
                             <button
+                                @click="activeTab = 'activities'"
+                                :class="activeTab === 'activities' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
+                                class="py-3 text-sm font-medium transition"
+                            >
+                                @lang('admin::app.settings.clinics.view.tabs.activities')
+                            </button>
+                            <button
                                 @click="activeTab = 'overview'"
                                 :class="activeTab === 'overview' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
                                 class="py-3 text-sm font-medium transition"
@@ -167,6 +174,10 @@
 
                     <!-- Tab Content -->
                     <div>
+                        <div v-show="activeTab === 'activities'">
+                            <slot name="activities"></slot>
+                        </div>
+
                         <div v-show="activeTab === 'overview'">
                             <slot name="overview"></slot>
                         </div>
@@ -193,7 +204,7 @@
 
                 data() {
                     return {
-                        activeTab: 'overview'
+                        activeTab: 'activities'
                     };
                 }
             });

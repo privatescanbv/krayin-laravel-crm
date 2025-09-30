@@ -1713,6 +1713,7 @@ return [
                 'updated-at' => 'Laatst bijgewerkt op',
 
                 'tabs' => [
+                    'activities' => 'Activiteiten',
                     'overview' => 'Overzicht',
                     'partner-products' => 'Partner Producten',
                     'resources' => 'Resources',

@@ -168,11 +168,6 @@ class PartnerProductController extends SimpleEntityController
             'resource_type_id'    => 'required|integer|exists:resource_types,id',
 
             // partner fields
-            'partner_name'        => [
-                'required',
-                'max:100',
-                Rule::unique('partner_products', 'partner_name')->ignore($id),
-            ],
             'clinic_description'  => 'nullable|string',
             'duration'            => 'nullable|integer|min:0',
 

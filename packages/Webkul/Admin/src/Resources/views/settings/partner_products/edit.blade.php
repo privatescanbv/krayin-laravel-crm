@@ -192,23 +192,6 @@
                 </x-admin::form.control-group>
 
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.partner_products.index.create.partner_name')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="partner_name"
-                        value="{{ old('partner_name', $partner_products->partner_name) }}"
-                        rules="required|min:1|max:100"
-                        :label="trans('admin::app.settings.partner_products.index.create.partner_name')"
-                        :placeholder="trans('admin::app.settings.partner_products.index.create.partner_name')"
-                    />
-
-                    <x-admin::form.control-group.error control-name="partner_name" />
-                </x-admin::form.control-group>
-
-                <x-admin::form.control-group>
                     <x-admin::form.control-group.label>
                         @lang('admin::app.settings.partner_products.index.create.clinic_description')
                     </x-admin::form.control-group.label>

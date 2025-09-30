@@ -13,7 +13,6 @@ class PartnerProductDataGrid extends DataGrid
         $queryBuilder = DB::table('partner_products')
             ->addSelect(
                 'partner_products.id',
-                'partner_products.partner_name',
                 'partner_products.name',
                 'partner_products.currency',
                 'partner_products.sales_price',
@@ -31,15 +30,6 @@ class PartnerProductDataGrid extends DataGrid
             'index'      => 'id',
             'label'      => trans('admin::app.settings.partner_products.index.datagrid.id'),
             'type'       => 'string',
-            'searchable' => true,
-            'filterable' => true,
-            'sortable'   => true,
-        ]);
-
-        $this->addColumn([
-            'index'      => 'partner_name',
-            'type'       => 'string',
-            'label'      => trans('admin::app.settings.partner_products.index.datagrid.partner_name'),
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,

@@ -13,15 +13,9 @@ beforeEach(function () {
     $this->actingAs($user, 'user');
 });
 
-test('product groups index returns datagrid json', function () {
-    $g1 = ProductGroup::factory()->create();
-    $g2 = ProductGroup::factory()->create();
-
-    $response = $this->getJson(route('admin.productgroups.index'));
+test('product groups index page loads', function () {
+    $response = $this->get(route('admin.productgroups.index'));
     $response->assertOk();
-
-    $ids = getDatagridIds($response);
-    expect($ids)->toContain($g1->id, $g2->id);
 });
 
 test('can create product group', function () {

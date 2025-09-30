@@ -51,7 +51,7 @@ class ProductGroupController extends Controller
         ]);
 
         $data = request()->all();
-        $data['parent_id'] = $data['parent_id'] ?: null;
+        $data['parent_id'] = isset($data['parent_id']) && $data['parent_id'] !== '' ? $data['parent_id'] : null;
 
         $productGroup = $this->productGroupRepository->create($data);
 

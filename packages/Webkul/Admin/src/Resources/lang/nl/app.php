@@ -1789,7 +1789,23 @@ return [
                 ],
             ],
         ],
+        'product_types' => [
+            'index' => [
+                'title'       => 'Producttypes',
+                'create-btn'  => 'Producttype aanmaken',
+                'create'      => [
+                    'title'    => 'Producttype aanmaken',
+                    'save-btn' => 'Opslaan',
+                ],
+            ],
 
+            'edit' => [
+                'title'      => 'Producttype bewerken',
+                'name'       => 'Naam',
+                'description'=> 'Beschrijving',
+                'save-btn'   => 'Opslaan',
+            ],
+        ],
         'resource_types' => [
             'index' => [
                 'title'           => 'Resourcetypen',

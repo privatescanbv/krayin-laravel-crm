@@ -13,7 +13,8 @@ class ProductTypeDataGrid extends DataGrid
         $queryBuilder = DB::table('product_types')
             ->addSelect(
                 'product_types.id',
-                'product_types.name'
+                'product_types.name',
+                'product_types.description'
             );
 
         $this->addFilter('id', 'product_types.id');
@@ -36,6 +37,15 @@ class ProductTypeDataGrid extends DataGrid
             'index'      => 'name',
             'type'       => 'string',
             'label'      => trans('admin::app.settings.product_types.index.datagrid.name'),
+            'searchable' => true,
+            'filterable' => true,
+            'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'description',
+            'type'       => 'string',
+            'label'      => trans('admin::app.settings.resource_types.index.datagrid.description'),
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,

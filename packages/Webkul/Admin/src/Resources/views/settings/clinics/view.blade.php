@@ -35,6 +35,30 @@
 
                 <!-- Action Buttons -->
                 <div class="flex flex-wrap gap-2">
+                    <!-- Mail Activity Action -->
+                    <x-admin::activities.actions.mail
+                        :entity="$clinic"
+                        entity-control-name="clinic_id"
+                    />
+
+                    <!-- File Activity Action -->
+                    <x-admin::activities.actions.file
+                        :entity="$clinic"
+                        entity-control-name="clinic_id"
+                    />
+
+                    <!-- Note Activity Action -->
+                    <x-admin::activities.actions.note
+                        :entity="$clinic"
+                        entity-control-name="clinic_id"
+                    />
+
+                    <!-- Activity Action -->
+                    <x-admin::activities.actions.activity
+                        :entity="$clinic"
+                        entity-control-name="clinic_id"
+                    />
+
                     @if (bouncer()->hasPermission('settings.clinics.edit'))
                         <a
                             href="{{ route('admin.settings.clinics.edit', $clinic->id) }}"
@@ -78,6 +102,13 @@
 
         <!-- Right Panel with Tabs -->
         <v-clinic-tabs>
+            <div slot="activities">
+                <x-admin::activities
+                    :endpoint="route('admin.settings.clinics.activities.index', $clinic->id)"
+                    :activeType="'planned'"
+                />
+            </div>
+
             <div slot="overview">
                 @include('admin::settings.clinics.view.overview')
             </div>

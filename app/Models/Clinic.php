@@ -43,4 +43,9 @@ class Clinic extends Model
     {
         return $this->hasMany(Resource::class);
     }
+
+    public function activities()
+    {
+        return $this->hasMany(\Webkul\Activity\Models\Activity::class);
+    }
 }

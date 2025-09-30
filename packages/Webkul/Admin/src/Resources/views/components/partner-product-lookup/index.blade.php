@@ -1,4 +1,20 @@
-<v-partner-product-lookup {{ $attributes }}></v-partner-product-lookup>
+@props([
+    'src' => '',
+    'name' => '',
+    'label' => 'Related Products',
+    'searchPlaceholder' => 'Search products...',
+    'value' => [],
+    'excludeId' => null,
+])
+
+<v-partner-product-lookup
+    src="{{ $src }}"
+    name="{{ $name }}"
+    label="{{ $label }}"
+    search-placeholder="{{ $searchPlaceholder }}"
+    :value='@json($value)'
+    :exclude-id="{{ $excludeId }}"
+></v-partner-product-lookup>
 
 @pushOnce('scripts')
     <script

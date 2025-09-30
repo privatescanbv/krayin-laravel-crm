@@ -2,16 +2,31 @@
 
 namespace Webkul\Product\Models;
 
+use App\Traits\HasAuditTrail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Product\Contracts\ProductGroup as ProductGroupContract;
 
 class ProductGroup extends Model implements ProductGroupContract
 {
+    use HasAuditTrail;
+    use HasFactory;
+
     protected $fillable = [
         'name',
         'description',
         'parent_id',
+        'created_by',
+        'updated_by',
     ];
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return \Webkul\Product\Database\Factories\ProductGroupFactory::new();
+    }
 
     /**
      * Get the products for the product group.

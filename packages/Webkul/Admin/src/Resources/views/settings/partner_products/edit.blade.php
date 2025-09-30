@@ -272,7 +272,17 @@
                     return;
                 }
 
+                console.log('Clinics select initialized:', clinicsSelect);
+
                 const initialResources = JSON.parse(resourcesSelect.dataset.initialResources || '[]');
+                let lastSelectedClinics = '';
+
+                function getSelectedClinicsKey() {
+                    return Array.from(clinicsSelect.selectedOptions)
+                        .map(opt => opt.value)
+                        .sort()
+                        .join(',');
+                }
 
                 function loadResources(clinicIds, selectedResourceIds) {
                     if (!clinicIds || clinicIds.length === 0) {
@@ -282,7 +292,7 @@
                         return;
                     }
 
-                    console.log('Loading resources for clinics:', clinicIds);
+                    console.log('loadResources called, clinics:', clinicIds);
                     
                     const params = new URLSearchParams();
                     clinicIds.forEach(id => params.append('clinic_ids[]', id));
@@ -334,23 +344,45 @@
                         });
                 }
 
+                function checkForChanges() {
+                    const currentKey = getSelectedClinicsKey();
+                    if (currentKey !== lastSelectedClinics) {
+                        console.log('Clinic selection changed from', lastSelectedClinics, 'to', currentKey);
+                        lastSelectedClinics = currentKey;
+                        
+                        const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
+                        const currentlySelected = Array.from(resourcesSelect.selectedOptions).map(opt => opt.value);
+                        loadResources(selectedClinics, currentlySelected);
+                    }
+                }
+
                 // Load initial resources based on selected clinics
+                lastSelectedClinics = getSelectedClinicsKey();
                 const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
                 if (selectedClinics.length > 0) {
                     loadResources(selectedClinics, initialResources);
                 }
 
-                // Listen to multiple events to catch all changes
-                clinicsSelect.addEventListener('change', function() {
-                    const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
-                    const currentlySelected = Array.from(resourcesSelect.selectedOptions).map(opt => opt.value);
-                    loadResources(selectedClinics, currentlySelected);
+                // Listen to multiple events
+                clinicsSelect.addEventListener('change', function(e) {
+                    console.log('Change event triggered');
+                    checkForChanges();
+                });
+                
+                clinicsSelect.addEventListener('click', function(e) {
+                    console.log('Click event triggered');
+                    // Delay check to allow selection to update
+                    setTimeout(checkForChanges, 100);
+                });
+                
+                clinicsSelect.addEventListener('blur', function(e) {
+                    console.log('Blur event triggered');
+                    checkForChanges();
                 });
 
-                clinicsSelect.addEventListener('input', function() {
-                    const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
-                    const currentlySelected = Array.from(resourcesSelect.selectedOptions).map(opt => opt.value);
-                    loadResources(selectedClinics, currentlySelected);
+                clinicsSelect.addEventListener('input', function(e) {
+                    console.log('Input event triggered');
+                    checkForChanges();
                 });
             });
         </script>

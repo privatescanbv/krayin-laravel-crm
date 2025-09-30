@@ -1886,6 +1886,8 @@ return [
                     'resource_type' => 'Resource type',
                     'clinic_description' => 'Clinic description',
                     'duration'      => 'Duration (minutes)',
+                    'related_products' => 'Related Products',
+                    'search_related_products' => 'Search products often bought together...',
                     'save-btn'      => 'Save',
                 ],
             ],

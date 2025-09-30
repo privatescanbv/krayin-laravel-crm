@@ -210,6 +210,14 @@
 
                     <x-admin::form.control-group.error control-name="duration" />
                 </x-admin::form.control-group>
+
+                <x-admin::partner-product-lookup
+                    src="{{ route('admin.settings.partner_products.search') }}"
+                    name="related_products"
+                    :label="trans('admin::app.settings.partner_products.index.create.related_products')"
+                    :search-placeholder="trans('admin::app.settings.partner_products.index.create.search_related_products')"
+                    :value="[]"
+                />
             </div>
         </div>
     </x-admin::form>

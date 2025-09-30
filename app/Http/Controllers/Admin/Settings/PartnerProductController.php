@@ -39,6 +39,29 @@ class PartnerProductController extends SimpleEntityController
         ]);
     }
 
+    public function search(Request $request): JsonResponse
+    {
+        $query = $request->input('query', '');
+
+        $products = $this->partnerProductRepository
+            ->scopeQuery(function ($q) use ($query) {
+                return $q->where('active', true)
+                    ->where('name', 'like', '%' . $query . '%')
+                    ->orderBy('name')
+                    ->limit(50);
+            })
+            ->all();
+
+        $data = $products->map(function ($product) {
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+            ];
+        });
+
+        return response()->json(['data' => $data]);
+    }
+
     public function store(Request $request): RedirectResponse|JsonResponse
     {
         $this->validateStore($request);
@@ -48,6 +71,7 @@ class PartnerProductController extends SimpleEntityController
         $entity = $this->partnerProductRepository->create($this->transformPayload($request->all()));
 
         $entity->clinics()->sync($request->input('clinics', []));
+        $entity->relatedProducts()->sync($request->input('related_products', []));
 
         Event::dispatch("settings.{$this->entityName}.create.after", $entity);
 
@@ -72,6 +96,7 @@ class PartnerProductController extends SimpleEntityController
         $entity = $this->partnerProductRepository->update($this->transformPayload($request->all(), $id), $id);
 
         $entity->clinics()->sync($request->input('clinics', []));
+        $entity->relatedProducts()->sync($request->input('related_products', []));
 
         Event::dispatch("settings.{$this->entityName}.update.after", $entity);
 
@@ -141,6 +166,8 @@ class PartnerProductController extends SimpleEntityController
             // relations
             'clinics'             => 'required|array|min:1',
             'clinics.*'           => 'integer|exists:clinics,id',
+            'related_products'    => 'nullable|array',
+            'related_products.*'  => 'integer|exists:partner_products,id',
         ];
     }
 

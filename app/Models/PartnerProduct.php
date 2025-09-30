@@ -39,4 +39,14 @@ class PartnerProduct extends BaseProduct
     {
         return $this->belongsToMany(Clinic::class, 'clinic_partner_product');
     }
+
+    public function relatedProducts()
+    {
+        return $this->belongsToMany(
+            PartnerProduct::class,
+            'partner_product_related',
+            'partner_product_id',
+            'related_product_id'
+        );
+    }
 }

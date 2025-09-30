@@ -1852,6 +1852,8 @@ return [
                 'resource_type' => 'Resourcetype',
                 'clinic_description' => 'Omschrijving kliniek (AFB)',
                 'duration'      => 'Duur (minuten)',
+                'related_products' => 'Gerelateerde producten',
+                'search_related_products' => 'Zoek producten die vaak samen worden gekocht...',
                 'save-btn'      => 'Opslaan',
             ],
         ],

@@ -137,6 +137,7 @@
                     <x-admin::form.control-group.control
                         type="select"
                         name="resource_type_id"
+                        value="{{ old('resource_type_id', $partner_products->resource_type_id) }}"
                         rules="required|numeric"
                         :label="trans('admin::app.settings.partner_products.index.create.resource_type')"
                     >
@@ -154,16 +155,18 @@
                         @lang('admin::app.settings.clinics.index.title')
                     </x-admin::form.control-group.label>
 
+                    @php
+                        $selectedClinics = old('clinics', $partner_products->clinics->pluck('id')->toArray());
+                    @endphp
+
                     <x-admin::form.control-group.control
                         type="select"
                         name="clinics[]"
+                        ::value="'{{ json_encode($selectedClinics) }}'"
                         rules="required"
                         multiple
                         :label="trans('admin::app.settings.clinics.index.title')"
                     >
-                        @php
-                            $selectedClinics = old('clinics', $partner_products->clinics->pluck('id')->toArray());
-                        @endphp
                         @foreach ($clinics as $clinic)
                             <option value="{{ $clinic->id }}" @selected(in_array($clinic->id, $selectedClinics))>{{ $clinic->name }}</option>
                         @endforeach

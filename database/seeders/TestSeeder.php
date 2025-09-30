@@ -20,6 +20,8 @@ class TestSeeder extends BaseSeeder
             DepartmentSeeder::class,
             TypeSeeder::class,
             SourceSeeder::class,
+            ResourceTypeSeeder::class,
+            ClinicSeeder::class,
         ], $parameters);
 
         // Ensure departments and groups are properly linked for testing

@@ -1,29 +1,26 @@
-<x-admin::layouts>
-    <x-slot:title>
-        @lang('admin::app.settings.product_types.index.title')
-    </x-slot>
+@extends('admin::layouts.master')
 
-    <div class="flex flex-col gap-4">
-        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-            <div class="flex flex-col gap-2">
-                <x-admin::breadcrumbs name="settings" />
+@section('page_title')
+    {{ trans('admin::app.settings.product_types.index.title') }}
+@endsection
 
-                <div class="text-xl font-bold dark:text-gray-300">
-                    @lang('admin::app.settings.product_types.index.title')
-                </div>
+@section('content')
+    <div class="content full-page">
+        <div class="page-header">
+            <div class="page-title">
+                <h1>{{ trans('admin::app.settings.product_types.index.title') }}</h1>
             </div>
 
-            <div class="flex items-center gap-x-2.5">
+            <div class="page-action">
                 @if (bouncer()->hasPermission('settings.product_types.create'))
-                    <a href="{{ route('admin.settings.product_types.create') }}" class="primary-button">
-                        @lang('admin::app.settings.product_types.index.create-btn')
+                    <a href="{{ route('admin.settings.product_types.create') }}" class="btn btn-lg btn-primary">
+                        {{ trans('admin::app.settings.product_types.index.create-btn') }}
                     </a>
                 @endif
             </div>
         </div>
 
-        <x-admin::datagrid :src="route('admin.settings.product_types.index')" ref="datagrid" />
+        {!! datagrid('App\\DataGrids\\Settings\\ProductTypeDataGrid')->render() !!}
     </div>
-
-</x-admin::layouts>
+@endsection
 

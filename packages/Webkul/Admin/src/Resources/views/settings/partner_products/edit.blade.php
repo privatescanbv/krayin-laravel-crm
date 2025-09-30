@@ -162,6 +162,8 @@
                         name="clinics[]"
                         multiple
                         class="custom-select w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+                        onchange="window.updateResourcesForClinics && window.updateResourcesForClinics()"
+                        onclick="setTimeout(() => window.updateResourcesForClinics && window.updateResourcesForClinics(), 100)"
                     >
                         @foreach ($clinics as $clinic)
                             <option value="{{ $clinic->id }}" @selected(in_array($clinic->id, $selectedClinics))>{{ $clinic->name }}</option>
@@ -262,36 +264,42 @@
 
     @push('scripts')
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const clinicsSelect = document.getElementById('clinics-select');
-                const resourcesSelect = document.getElementById('resources-select');
-                const resourcesHint = document.getElementById('resources-hint');
-
-                if (!clinicsSelect || !resourcesSelect || !resourcesHint) {
-                    console.error('Required elements not found');
-                    return;
-                }
-
-                console.log('Clinics select initialized:', clinicsSelect);
-
-                const initialResources = JSON.parse(resourcesSelect.dataset.initialResources || '[]');
-                let lastSelectedClinics = '';
+            (function() {
                 let isLoading = false;
+                let lastSelectedClinics = '';
+                let initialResourcesData = null;
 
-                function getSelectedClinicsKey() {
-                    return Array.from(clinicsSelect.selectedOptions)
-                        .map(opt => opt.value)
-                        .sort()
-                        .join(',');
-                }
+                // Make function globally accessible for inline handlers
+                window.updateResourcesForClinics = function() {
+                    console.log('[updateResourcesForClinics] Function called');
+                    
+                    const clinicsSelect = document.getElementById('clinics-select');
+                    const resourcesSelect = document.getElementById('resources-select');
+                    const resourcesHint = document.getElementById('resources-hint');
 
-                function loadResources(clinicIds, selectedResourceIds) {
-                    if (isLoading) {
-                        console.log('Already loading, skipping...');
+                    if (!clinicsSelect || !resourcesSelect || !resourcesHint) {
+                        console.error('[updateResourcesForClinics] Required elements not found');
                         return;
                     }
 
-                    if (!clinicIds || clinicIds.length === 0) {
+                    if (isLoading) {
+                        console.log('[updateResourcesForClinics] Already loading, skipping...');
+                        return;
+                    }
+
+                    const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
+                    const currentKey = selectedClinics.sort().join(',');
+                    
+                    // Only reload if selection actually changed
+                    if (currentKey === lastSelectedClinics) {
+                        console.log('[updateResourcesForClinics] No change detected');
+                        return;
+                    }
+                    
+                    console.log('[updateResourcesForClinics] Clinic selection changed from "' + lastSelectedClinics + '" to "' + currentKey + '"');
+                    lastSelectedClinics = currentKey;
+                    
+                    if (selectedClinics.length === 0) {
                         resourcesSelect.disabled = true;
                         resourcesSelect.innerHTML = '';
                         resourcesHint.style.display = 'none';
@@ -300,13 +308,21 @@
 
                     isLoading = true;
 
-                    console.log('loadResources called, clinics:', clinicIds);
-                    
+                    // Store currently selected resources (or use initial on first load)
+                    let currentlySelected;
+                    if (initialResourcesData !== null) {
+                        currentlySelected = Array.from(resourcesSelect.selectedOptions).map(opt => opt.value);
+                        initialResourcesData = null; // Only use initial data once
+                    } else {
+                        currentlySelected = Array.from(resourcesSelect.selectedOptions).map(opt => opt.value);
+                    }
+
+                    // Fetch filtered resources
                     const params = new URLSearchParams();
-                    clinicIds.forEach(id => params.append('clinic_ids[]', id));
+                    selectedClinics.forEach(id => params.append('clinic_ids[]', id));
 
                     const url = '{{ route("admin.settings.resources.filter_by_clinics") }}?' + params.toString();
-                    console.log('Fetching from:', url);
+                    console.log('[updateResourcesForClinics] Fetching from:', url);
 
                     fetch(url)
                         .then(response => {
@@ -316,7 +332,7 @@
                             return response.json();
                         })
                         .then(data => {
-                            console.log('Received resources:', data.data);
+                            console.log('[updateResourcesForClinics] Received resources:', data.data);
                             
                             resourcesSelect.innerHTML = '';
                             resourcesHint.style.display = 'block';
@@ -328,8 +344,8 @@
                                     option.textContent = resource.name;
                                     
                                     // Reselect if it was previously selected and is still valid
-                                    if (selectedResourceIds.includes(resource.id.toString()) || 
-                                        selectedResourceIds.includes(resource.id)) {
+                                    if (currentlySelected.includes(resource.id.toString()) || 
+                                        currentlySelected.includes(resource.id)) {
                                         option.selected = true;
                                     }
                                     
@@ -346,60 +362,34 @@
                             }
                         })
                         .catch(error => {
-                            console.error('Error fetching resources:', error);
+                            console.error('[updateResourcesForClinics] Error:', error);
                             resourcesSelect.innerHTML = '<option disabled>Fout bij laden van resources</option>';
                             resourcesSelect.disabled = false;
                         })
                         .finally(() => {
                             isLoading = false;
                         });
-                }
+                };
 
-                function checkForChanges() {
-                    const currentKey = getSelectedClinicsKey();
-                    if (currentKey !== lastSelectedClinics) {
-                        console.log('Clinic selection changed from "' + lastSelectedClinics + '" to "' + currentKey + '"');
-                        lastSelectedClinics = currentKey;
-                        
-                        const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
-                        const currentlySelected = Array.from(resourcesSelect.selectedOptions).map(opt => opt.value);
-                        loadResources(selectedClinics, currentlySelected);
+                document.addEventListener('DOMContentLoaded', function() {
+                    console.log('[PartnerProduct] Script loaded');
+                    
+                    const clinicsSelect = document.getElementById('clinics-select');
+                    const resourcesSelect = document.getElementById('resources-select');
+                    
+                    if (resourcesSelect) {
+                        initialResourcesData = JSON.parse(resourcesSelect.dataset.initialResources || '[]');
                     }
-                }
-
-                // Load initial resources based on selected clinics
-                lastSelectedClinics = getSelectedClinicsKey();
-                const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
-                if (selectedClinics.length > 0) {
-                    loadResources(selectedClinics, initialResources);
-                }
-
-                // Listen to multiple events with capture phase
-                ['change', 'input', 'click', 'mouseup', 'keyup', 'blur', 'focus'].forEach(eventType => {
-                    clinicsSelect.addEventListener(eventType, function(e) {
-                        console.log(eventType + ' event triggered on clinics select');
-                        setTimeout(checkForChanges, 50);
-                    }, true); // Use capture phase
+                    
+                    if (clinicsSelect && clinicsSelect.selectedOptions.length > 0) {
+                        lastSelectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value).sort().join(',');
+                        window.updateResourcesForClinics();
+                    }
+                    
+                    // Also use polling as fallback
+                    setInterval(window.updateResourcesForClinics, 500);
                 });
-
-                // Add listeners to the parent form as well
-                const form = clinicsSelect.closest('form');
-                if (form) {
-                    console.log('Adding listeners to form');
-                    form.addEventListener('click', function(e) {
-                        if (e.target === clinicsSelect || e.target.closest('#clinics-select')) {
-                            console.log('Click detected on or near clinics select via form');
-                            setTimeout(checkForChanges, 100);
-                        }
-                    }, true);
-                }
-                
-                // Polling as ultimate fallback - check every 500ms
-                console.log('Starting polling interval');
-                setInterval(function() {
-                    checkForChanges();
-                }, 500);
-            });
+            })();
         </script>
     @endpush
 </x-admin::layouts>

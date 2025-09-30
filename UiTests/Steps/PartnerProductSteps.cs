@@ -81,24 +81,34 @@ namespace UiTests.Steps
                     // Trigger change event manually for the JavaScript to pick up the selection
                     await clinicSelect.EvaluateAsync("(element) => element.dispatchEvent(new Event('change', { bubbles: true }))");
                     
-                    // Wait for resources to be loaded (resources field becomes enabled and populated)
+                    // Wait for resources to be loaded via polling mechanism (max 3 seconds)
+                    // The page uses a 500ms polling interval, so we give it time to detect changes and load resources
                     var resourcesSelect = _driver.Page.Locator("select[name='resources[]']");
                     
-                    // Wait until the select is no longer disabled (max 5 seconds)
                     try
                     {
-                        await _driver.Page.WaitForFunctionAsync(
-                            "() => !document.querySelector('select[name=\"resources[]\"]')?.disabled",
-                            new PageWaitForFunctionOptions { Timeout = 5000 }
-                        );
+                        // Wait for the hint text to appear, indicating resources have been loaded
+                        var hint = _driver.Page.Locator("#resources-hint");
+                        await hint.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 3000 });
                     }
                     catch
                     {
-                        // If resources don't load, continue anyway (clinic might have no resources)
+                        // Fallback: just wait for resources field to be enabled
+                        try
+                        {
+                            await _driver.Page.WaitForFunctionAsync(
+                                "() => !document.querySelector('select[name=\"resources[]\"]')?.disabled",
+                                new PageWaitForFunctionOptions { Timeout = 3000 }
+                            );
+                        }
+                        catch
+                        {
+                            // If resources still don't load, clinic might have no resources - continue anyway
+                        }
                     }
                     
-                    // Extra wait to ensure options are populated
-                    await _driver.Page.WaitForTimeoutAsync(500);
+                    // Extra wait to ensure everything is fully loaded
+                    await _driver.Page.WaitForTimeoutAsync(1000);
                 }
             }
 
@@ -109,22 +119,38 @@ namespace UiTests.Steps
         [When("I save the partner product")]
         public async Task WhenISaveThePartnerProduct()
         {
+            // Log current form state before saving
+            var clinicsSelected = await _driver.Page.Locator("select[name='clinics[]']").EvaluateAsync<string[]>("(el) => Array.from(el.selectedOptions).map(o => o.value)");
+            var resourcesSelected = await _driver.Page.Locator("select[name='resources[]']").EvaluateAsync<string[]>("(el) => Array.from(el.selectedOptions).map(o => o.value)");
+            Console.WriteLine($"[DEBUG] Clinics selected: [{string.Join(", ", clinicsSelected)}]");
+            Console.WriteLine($"[DEBUG] Resources selected: [{string.Join(", ", resourcesSelected)}]");
+            
             await _driver.Page.GetByRole(AriaRole.Button, new() { NameRegex = new Regex("^(Opslaan|Save)$") }).ClickAsync();
 
-            // Wait for a likely success indicator or network idle to ensure save completed
-            try
+            // Wait for network activity to complete
+            await _driver.Page.WaitForLoadStateAsync(LoadState.NetworkIdle, new() { Timeout = 10000 });
+            
+            // Give it extra time for any redirects or success messages
+            await _driver.Page.WaitForTimeoutAsync(1000);
+            
+            // Log any validation errors if present
+            var errors = _driver.Page.Locator(".control-error, .text-red-600");
+            var errorCount = await errors.CountAsync();
+            if (errorCount > 0)
             {
-                // Dutch and English success toasts
-                var successToast = _driver.Page.Locator(
-                    "text=Partnerproduct succesvol bijgewerkt."
-                );
-                await successToast.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5000 });
+                Console.WriteLine($"[DEBUG] Found {errorCount} validation errors:");
+                for (var i = 0; i < errorCount; i++)
+                {
+                    var errorText = await errors.Nth(i).InnerTextAsync();
+                    Console.WriteLine($"[DEBUG] Error {i + 1}: {errorText}");
+                }
             }
-            catch
+            else
             {
-                // Fallback: wait for network idle
-                await _driver.Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                Console.WriteLine("[DEBUG] No validation errors found");
             }
+            
+            Console.WriteLine($"[DEBUG] Current URL after save: {_driver.Page.Url}");
         }
 
         [Then("I should be redirected to the partner products overview")]

@@ -153,6 +153,8 @@
                         name="clinics[]"
                         multiple
                         class="custom-select w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+                        onchange="window.updateResourcesForClinics && window.updateResourcesForClinics()"
+                        onclick="setTimeout(() => window.updateResourcesForClinics && window.updateResourcesForClinics(), 100)"
                     >
                         @foreach ($clinics as $clinic)
                             <option value="{{ $clinic->id }}" @selected(collect(old('clinics', []))->contains($clinic->id))>{{ $clinic->name }}</option>
@@ -243,37 +245,39 @@
 
     @push('scripts')
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const clinicsSelect = document.getElementById('clinics-select');
-                const resourcesSelect = document.getElementById('resources-select');
-                const resourcesHint = document.getElementById('resources-hint');
-
-                if (!clinicsSelect || !resourcesSelect || !resourcesHint) {
-                    console.error('Required elements not found');
-                    return;
-                }
-
-                console.log('Clinics select initialized:', clinicsSelect);
-
-                let lastSelectedClinics = '';
+            (function() {
                 let isLoading = false;
+                let lastSelectedClinics = '';
 
-                function getSelectedClinicsKey() {
-                    return Array.from(clinicsSelect.selectedOptions)
-                        .map(opt => opt.value)
-                        .sort()
-                        .join(',');
-                }
+                // Make function globally accessible for inline handlers
+                window.updateResourcesForClinics = function() {
+                    console.log('[updateResourcesForClinics] Function called');
+                    
+                    const clinicsSelect = document.getElementById('clinics-select');
+                    const resourcesSelect = document.getElementById('resources-select');
+                    const resourcesHint = document.getElementById('resources-hint');
 
-                function loadResources() {
+                    if (!clinicsSelect || !resourcesSelect || !resourcesHint) {
+                        console.error('[updateResourcesForClinics] Required elements not found');
+                        return;
+                    }
+
                     if (isLoading) {
-                        console.log('Already loading, skipping...');
+                        console.log('[updateResourcesForClinics] Already loading, skipping...');
                         return;
                     }
 
                     const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
+                    const currentKey = selectedClinics.sort().join(',');
                     
-                    console.log('loadResources called, selected clinics:', selectedClinics);
+                    // Only reload if selection actually changed
+                    if (currentKey === lastSelectedClinics) {
+                        console.log('[updateResourcesForClinics] No change detected');
+                        return;
+                    }
+                    
+                    console.log('[updateResourcesForClinics] Clinic selection changed from "' + lastSelectedClinics + '" to "' + currentKey + '"');
+                    lastSelectedClinics = currentKey;
                     
                     if (selectedClinics.length === 0) {
                         resourcesSelect.disabled = true;
@@ -292,7 +296,7 @@
                     selectedClinics.forEach(id => params.append('clinic_ids[]', id));
 
                     const url = '{{ route("admin.settings.resources.filter_by_clinics") }}?' + params.toString();
-                    console.log('Fetching from:', url);
+                    console.log('[updateResourcesForClinics] Fetching from:', url);
 
                     fetch(url)
                         .then(response => {
@@ -302,7 +306,7 @@
                             return response.json();
                         })
                         .then(data => {
-                            console.log('Received resources:', data.data);
+                            console.log('[updateResourcesForClinics] Received resources:', data.data);
                             
                             resourcesSelect.innerHTML = '';
                             resourcesHint.style.display = 'block';
@@ -331,56 +335,28 @@
                             }
                         })
                         .catch(error => {
-                            console.error('Error fetching resources:', error);
+                            console.error('[updateResourcesForClinics] Error:', error);
                             resourcesSelect.innerHTML = '<option disabled>Fout bij laden van resources</option>';
                             resourcesSelect.disabled = false;
                         })
                         .finally(() => {
                             isLoading = false;
                         });
-                }
+                };
 
-                function checkForChanges() {
-                    const currentKey = getSelectedClinicsKey();
-                    if (currentKey !== lastSelectedClinics) {
-                        console.log('Clinic selection changed from "' + lastSelectedClinics + '" to "' + currentKey + '"');
-                        lastSelectedClinics = currentKey;
-                        loadResources();
+                document.addEventListener('DOMContentLoaded', function() {
+                    console.log('[PartnerProduct] Script loaded');
+                    
+                    const clinicsSelect = document.getElementById('clinics-select');
+                    if (clinicsSelect && clinicsSelect.selectedOptions.length > 0) {
+                        lastSelectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value).sort().join(',');
+                        window.updateResourcesForClinics();
                     }
-                }
-
-                // Listen to multiple events with capture phase
-                ['change', 'input', 'click', 'mouseup', 'keyup', 'blur', 'focus'].forEach(eventType => {
-                    clinicsSelect.addEventListener(eventType, function(e) {
-                        console.log(eventType + ' event triggered on clinics select');
-                        setTimeout(checkForChanges, 50);
-                    }, true); // Use capture phase
+                    
+                    // Also use polling as fallback
+                    setInterval(window.updateResourcesForClinics, 500);
                 });
-
-                // Add listeners to the parent form as well
-                const form = clinicsSelect.closest('form');
-                if (form) {
-                    console.log('Adding listeners to form');
-                    form.addEventListener('click', function(e) {
-                        if (e.target === clinicsSelect || e.target.closest('#clinics-select')) {
-                            console.log('Click detected on or near clinics select via form');
-                            setTimeout(checkForChanges, 100);
-                        }
-                    }, true);
-                }
-                
-                // Polling as ultimate fallback - check every 500ms
-                console.log('Starting polling interval');
-                setInterval(function() {
-                    checkForChanges();
-                }, 500);
-                
-                // Also trigger on load if clinics are already selected
-                lastSelectedClinics = getSelectedClinicsKey();
-                if (clinicsSelect.selectedOptions.length > 0) {
-                    loadResources();
-                }
-            });
+            })();
         </script>
     @endpush
 </x-admin::layouts>

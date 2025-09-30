@@ -3,7 +3,7 @@
 <div class="flex flex-col gap-4">
 
     <v-emails-component
-        :name="'emails'"
+        name="{{ $name ?? 'emails' }}"
         :value='@json($value ?? [])'
         :errors='@json($errors->getMessages() ?? [])'
     ></v-emails-component>

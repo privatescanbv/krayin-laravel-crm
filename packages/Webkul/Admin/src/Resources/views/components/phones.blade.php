@@ -4,7 +4,7 @@
 <div class="flex flex-col gap-4">
 
     <v-phones-component
-        :name="'phones'"
+        name="{{ $name ?? 'phones' }}"
         :value='@json($value ?? [])'
         :errors='@json($errors->getMessages() ?? [])'
     ></v-phones-component>

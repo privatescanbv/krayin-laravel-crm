@@ -115,6 +115,11 @@ test('can create partner product with resources from selected clinics', function
     ];
 
     $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
+    
+    if ($response->status() !== 200) {
+        dump($response->json());
+    }
+    
     $response->assertOk();
 
     $this->assertDatabaseHas('partner_products', [

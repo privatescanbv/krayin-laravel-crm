@@ -256,6 +256,7 @@
                 console.log('Clinics select initialized:', clinicsSelect);
 
                 let lastSelectedClinics = '';
+                let isLoading = false;
 
                 function getSelectedClinicsKey() {
                     return Array.from(clinicsSelect.selectedOptions)
@@ -265,6 +266,11 @@
                 }
 
                 function loadResources() {
+                    if (isLoading) {
+                        console.log('Already loading, skipping...');
+                        return;
+                    }
+
                     const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
                     
                     console.log('loadResources called, selected clinics:', selectedClinics);
@@ -275,6 +281,8 @@
                         resourcesHint.style.display = 'none';
                         return;
                     }
+
+                    isLoading = true;
 
                     // Store currently selected resources
                     const currentlySelected = Array.from(resourcesSelect.selectedOptions).map(opt => opt.value);
@@ -326,6 +334,9 @@
                             console.error('Error fetching resources:', error);
                             resourcesSelect.innerHTML = '<option disabled>Fout bij laden van resources</option>';
                             resourcesSelect.disabled = false;
+                        })
+                        .finally(() => {
+                            isLoading = false;
                         });
                 }
 
@@ -339,25 +350,23 @@
                 }
 
                 // Listen to multiple events
-                clinicsSelect.addEventListener('change', function(e) {
-                    console.log('Change event triggered');
-                    checkForChanges();
+                ['change', 'input', 'click', 'mouseup', 'keyup'].forEach(eventType => {
+                    clinicsSelect.addEventListener(eventType, function(e) {
+                        console.log(eventType + ' event triggered on clinics select');
+                        setTimeout(checkForChanges, 50);
+                    });
                 });
                 
-                clinicsSelect.addEventListener('click', function(e) {
-                    console.log('Click event triggered');
-                    // Delay check to allow selection to update
-                    setTimeout(checkForChanges, 100);
+                // Use MutationObserver to detect any changes to the select element
+                const observer = new MutationObserver(function(mutations) {
+                    console.log('MutationObserver detected change');
+                    setTimeout(checkForChanges, 50);
                 });
                 
-                clinicsSelect.addEventListener('blur', function(e) {
-                    console.log('Blur event triggered');
-                    checkForChanges();
-                });
-
-                clinicsSelect.addEventListener('input', function(e) {
-                    console.log('Input event triggered');
-                    checkForChanges();
+                observer.observe(clinicsSelect, {
+                    attributes: true,
+                    childList: true,
+                    subtree: true
                 });
                 
                 // Also trigger on load if clinics are already selected

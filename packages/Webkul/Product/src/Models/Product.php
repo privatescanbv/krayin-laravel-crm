@@ -31,7 +31,6 @@ class Product extends Model implements ProductContract
         'currency',
         'description',
         'product_group_id',
-        'quantity',
         'price',
         'resource_type_id',
         'product_type_id',

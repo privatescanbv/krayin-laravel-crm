@@ -2,6 +2,8 @@
 
 namespace Webkul\Installer\Database\Seeders;
 
+use Database\Seeders\ClinicSeeder;
+use Database\Seeders\ResourceTypeSeeder;
 use Illuminate\Database\Seeder;
 use Webkul\Installer\Database\Seeders\Attribute\DatabaseSeeder as AttributeSeeder;
 use Webkul\Installer\Database\Seeders\Core\DatabaseSeeder as CoreSeeder;
@@ -26,7 +28,7 @@ class DatabaseSeeder extends Seeder
         $this->call(LeadSeeder::class, false, ['parameters' => $parameters]);
         $this->call(UserSeeder::class, false, ['parameters' => $parameters]);
         $this->call(WorkflowSeeder::class, false, ['parameters' => $parameters]);
-        $this->call(\Database\Seeders\ClinicSeeder::class);
-        $this->call(\Database\Seeders\ResourceTypeSeeder::class);
+        $this->call(ClinicSeeder::class);
+        $this->call(ResourceTypeSeeder::class);
     }
 }

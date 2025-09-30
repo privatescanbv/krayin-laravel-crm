@@ -135,12 +135,12 @@ class Installer extends Command
         $this->warn('Step: Migrating all tables...');
         $this->call('migrate:fresh', ['--seed' => true]);
 
-        $this->warn('Step: Seeding basic data for Krayin kickstart...');
-        app(KrayinDatabaseSeeder::class)->run(['parameters' => [
-            'locale' => $applicationDetails['locale'] ?? 'en',
-            'currency' => $applicationDetails['currency'] ?? 'USD',
-        ]]);
-        $this->warn('Step: Publishing assets and configurations...');
+//        $this->warn('Step: Seeding basic data for Krayin kickstart...');
+//        app(KrayinDatabaseSeeder::class)->run(['parameters' => [
+//            'locale' => $applicationDetails['locale'] ?? 'en',
+//            'currency' => $applicationDetails['currency'] ?? 'USD',
+//        ]]);
+//        $this->warn('Step: Publishing assets and configurations...');
         $result = $this->call('vendor:publish', ['--provider' => CoreServiceProvider::class, '--force' => true]);
         $this->info($result);
 

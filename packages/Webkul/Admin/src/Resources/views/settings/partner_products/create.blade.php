@@ -253,10 +253,21 @@
                     return;
                 }
 
+                console.log('Clinics select initialized:', clinicsSelect);
+
+                let lastSelectedClinics = '';
+
+                function getSelectedClinicsKey() {
+                    return Array.from(clinicsSelect.selectedOptions)
+                        .map(opt => opt.value)
+                        .sort()
+                        .join(',');
+                }
+
                 function loadResources() {
                     const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
                     
-                    console.log('Loading resources for clinics:', selectedClinics);
+                    console.log('loadResources called, selected clinics:', selectedClinics);
                     
                     if (selectedClinics.length === 0) {
                         resourcesSelect.disabled = true;
@@ -318,11 +329,39 @@
                         });
                 }
 
-                // Listen to multiple events to catch all changes
-                clinicsSelect.addEventListener('change', loadResources);
-                clinicsSelect.addEventListener('input', loadResources);
+                function checkForChanges() {
+                    const currentKey = getSelectedClinicsKey();
+                    if (currentKey !== lastSelectedClinics) {
+                        console.log('Clinic selection changed from', lastSelectedClinics, 'to', currentKey);
+                        lastSelectedClinics = currentKey;
+                        loadResources();
+                    }
+                }
+
+                // Listen to multiple events
+                clinicsSelect.addEventListener('change', function(e) {
+                    console.log('Change event triggered');
+                    checkForChanges();
+                });
                 
-                // Also trigger on load if clinics are already selected (for tests/automation)
+                clinicsSelect.addEventListener('click', function(e) {
+                    console.log('Click event triggered');
+                    // Delay check to allow selection to update
+                    setTimeout(checkForChanges, 100);
+                });
+                
+                clinicsSelect.addEventListener('blur', function(e) {
+                    console.log('Blur event triggered');
+                    checkForChanges();
+                });
+
+                clinicsSelect.addEventListener('input', function(e) {
+                    console.log('Input event triggered');
+                    checkForChanges();
+                });
+                
+                // Also trigger on load if clinics are already selected
+                lastSelectedClinics = getSelectedClinicsKey();
                 if (clinicsSelect.selectedOptions.length > 0) {
                     loadResources();
                 }

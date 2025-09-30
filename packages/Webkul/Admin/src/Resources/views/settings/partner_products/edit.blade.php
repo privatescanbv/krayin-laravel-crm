@@ -226,8 +226,8 @@
                     name="related_products"
                     :label="trans('admin::app.settings.partner_products.index.create.related_products')"
                     :search-placeholder="trans('admin::app.settings.partner_products.index.create.search_related_products')"
-                    :value="{{ json_encode($partner_products->relatedProducts->map(fn($p) => ['id' => $p->id, 'name' => $p->name])) }}"
-                    :exclude-id="{{ $partner_products->id }}"
+                    :value="$partner_products->relatedProducts->map(fn($p) => ['id' => $p->id, 'name' => $p->name])->toArray()"
+                    :exclude-id="$partner_products->id"
                 />
             </div>
         </div>

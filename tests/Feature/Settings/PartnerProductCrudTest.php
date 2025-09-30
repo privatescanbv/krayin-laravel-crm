@@ -101,6 +101,8 @@ test('can create partner product with resources from selected clinics', function
         'resource_type_id' => $resourceType->id,
     ]);
 
+    $uniquePartnerName = 'ResourceTest' . uniqid();
+    
     $payload = [
         'name'               => 'CT Scan with Resource',
         'currency'           => 'EUR',
@@ -110,15 +112,25 @@ test('can create partner product with resources from selected clinics', function
         'resource_type_id'   => $resourceType->id,
         'clinics'            => [$clinic->id],
         'resources'          => [$resource->id],
-        'partner_name'       => 'Resource Match Test ' . uniqid(),
+        'partner_name'       => $uniquePartnerName,
         'duration'           => 45,
     ];
 
     $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
+    
+    if ($response->status() !== 200) {
+        dump('Response status: ' . $response->status());
+        dump('Response body:', $response->json());
+    }
+    
     $response->assertOk();
 
-    $partnerProduct = PartnerProduct::where('name', 'CT Scan with Resource')->first();
+    // Verify the partner product was created
+    $partnerProduct = PartnerProduct::latest()->first();
     expect($partnerProduct)->not->toBeNull();
+    expect($partnerProduct->partner_name)->toBe($uniquePartnerName);
+    
+    // Verify the resource relationship
     expect($partnerProduct->resources->pluck('id')->toArray())->toContain($resource->id);
 });
 

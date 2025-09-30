@@ -157,6 +157,8 @@ class PartnerProductController extends SimpleEntityController
 
     protected function getValidationRules(?int $id = null): array
     {
+        $request = request();
+        
         return [
             // base fields
             'currency'            => 'required|in:'.implode(',', Currency::codes()),
@@ -184,8 +186,8 @@ class PartnerProductController extends SimpleEntityController
             'resources'           => [
                 'nullable',
                 'array',
-                function ($attribute, $value, $fail) {
-                    $this->validateResourcesBelongToClinics($value, request()->input('clinics', []), $fail);
+                function ($attribute, $value, $fail) use ($request) {
+                    $this->validateResourcesBelongToClinics($value, $request->input('clinics', []), $fail);
                 },
             ],
             'resources.*'         => 'integer|exists:resources,id',

@@ -101,98 +101,107 @@
         </div>
 
         <!-- Right Panel with Tabs -->
-        <v-clinic-tabs>
-            <div slot="activities">
-                <x-admin::activities
-                    :endpoint="route('admin.settings.clinics.activities.index', $clinic->id)"
-                    :activeType="'planned'"
-                />
-            </div>
+        <div class="flex w-full flex-col gap-4 rounded-lg">
+            <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                <v-clinic-tabs>
+                    <!-- Tab Navigation will be rendered by Vue -->
+                    
+                    <!-- Activities Tab Content -->
+                    <template #activities>
+                        <x-admin::activities
+                            :endpoint="route('admin.settings.clinics.activities.index', $clinic->id)"
+                            :activeType="'planned'"
+                        />
+                    </template>
 
-            <div slot="overview">
-                @include('admin::settings.clinics.view.overview')
-            </div>
+                    <!-- Overview Tab Content -->
+                    <template #overview>
+                        @include('admin::settings.clinics.view.overview')
+                    </template>
 
-            <div slot="partner-products">
-                @include('admin::settings.clinics.view.partner-products')
-            </div>
+                    <!-- Partner Products Tab Content -->
+                    <template #partner-products>
+                        @include('admin::settings.clinics.view.partner-products')
+                    </template>
 
-            <div slot="resources">
-                @include('admin::settings.clinics.view.resources')
-            </div>
+                    <!-- Resources Tab Content -->
+                    <template #resources>
+                        @include('admin::settings.clinics.view.resources')
+                    </template>
 
-            <div slot="audit-trail">
-                @include('admin::settings.clinics.view.audit-trail')
+                    <!-- Audit Trail Tab Content -->
+                    <template #audit-trail>
+                        @include('admin::settings.clinics.view.audit-trail')
+                    </template>
+                </v-clinic-tabs>
             </div>
-        </v-clinic-tabs>
+        </div>
     </div>
 
     @pushOnce('scripts')
         <script type="text/x-template" id="v-clinic-tabs-template">
-            <div class="flex w-full flex-col gap-4 rounded-lg">
-                <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-                    <!-- Tabs Navigation -->
-                    <div class="border-b border-gray-200 dark:border-gray-800">
-                        <div class="flex gap-4 px-4">
-                            <button
-                                @click="activeTab = 'activities'"
-                                :class="activeTab === 'activities' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
-                                class="py-3 text-sm font-medium transition"
-                            >
-                                @lang('admin::app.settings.clinics.view.tabs.activities')
-                            </button>
-                            <button
-                                @click="activeTab = 'overview'"
-                                :class="activeTab === 'overview' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
-                                class="py-3 text-sm font-medium transition"
-                            >
-                                @lang('admin::app.settings.clinics.view.tabs.overview')
-                            </button>
-                            <button
-                                @click="activeTab = 'partner-products'"
-                                :class="activeTab === 'partner-products' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
-                                class="py-3 text-sm font-medium transition"
-                            >
-                                @lang('admin::app.settings.clinics.view.tabs.partner-products')
-                            </button>
-                            <button
-                                @click="activeTab = 'resources'"
-                                :class="activeTab === 'resources' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
-                                class="py-3 text-sm font-medium transition"
-                            >
-                                @lang('admin::app.settings.clinics.view.tabs.resources')
-                            </button>
-                            <button
-                                @click="activeTab = 'audit-trail'"
-                                :class="activeTab === 'audit-trail' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
-                                class="py-3 text-sm font-medium transition"
-                            >
-                                @lang('admin::app.settings.clinics.view.tabs.audit-trail')
-                            </button>
-                        </div>
+            <div>
+                <!-- Tabs Navigation -->
+                <div class="border-b border-gray-200 dark:border-gray-800">
+                    <div class="flex gap-4 px-4">
+                        <button
+                            @click="activeTab = 'activities'"
+                            :class="activeTab === 'activities' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
+                            class="py-3 text-sm font-medium transition"
+                        >
+                            @lang('admin::app.settings.clinics.view.tabs.activities')
+                        </button>
+                        <button
+                            @click="activeTab = 'overview'"
+                            :class="activeTab === 'overview' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
+                            class="py-3 text-sm font-medium transition"
+                        >
+                            @lang('admin::app.settings.clinics.view.tabs.overview')
+                        </button>
+                        <button
+                            @click="activeTab = 'partner-products'"
+                            :class="activeTab === 'partner-products' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
+                            class="py-3 text-sm font-medium transition"
+                        >
+                            @lang('admin::app.settings.clinics.view.tabs.partner-products')
+                        </button>
+                        <button
+                            @click="activeTab = 'resources'"
+                            :class="activeTab === 'resources' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
+                            class="py-3 text-sm font-medium transition"
+                        >
+                            @lang('admin::app.settings.clinics.view.tabs.resources')
+                        </button>
+                        <button
+                            @click="activeTab = 'audit-trail'"
+                            :class="activeTab === 'audit-trail' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
+                            class="py-3 text-sm font-medium transition"
+                        >
+                            @lang('admin::app.settings.clinics.view.tabs.audit-trail')
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab Content Slots -->
+                <div>
+                    <div v-show="activeTab === 'activities'">
+                        <slot name="activities"></slot>
                     </div>
 
-                    <!-- Tab Content -->
-                    <div>
-                        <div v-show="activeTab === 'activities'">
-                            <slot name="activities"></slot>
-                        </div>
+                    <div v-show="activeTab === 'overview'">
+                        <slot name="overview"></slot>
+                    </div>
 
-                        <div v-show="activeTab === 'overview'">
-                            <slot name="overview"></slot>
-                        </div>
+                    <div v-show="activeTab === 'partner-products'">
+                        <slot name="partner-products"></slot>
+                    </div>
 
-                        <div v-show="activeTab === 'partner-products'">
-                            <slot name="partner-products"></slot>
-                        </div>
+                    <div v-show="activeTab === 'resources'">
+                        <slot name="resources"></slot>
+                    </div>
 
-                        <div v-show="activeTab === 'resources'">
-                            <slot name="resources"></slot>
-                        </div>
-
-                        <div v-show="activeTab === 'audit-trail'">
-                            <slot name="audit-trail"></slot>
-                        </div>
+                    <div v-show="activeTab === 'audit-trail'">
+                        <slot name="audit-trail"></slot>
                     </div>
                 </div>
             </div>

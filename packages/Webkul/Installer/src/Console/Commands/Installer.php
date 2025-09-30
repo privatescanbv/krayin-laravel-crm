@@ -133,7 +133,7 @@ class Installer extends Command
         $this->call('key:generate');
 
         $this->warn('Step: Migrating all tables...');
-        $this->call('migrate:fresh');
+        $this->call('migrate:fresh -seed');
 
         $this->warn('Step: Seeding basic data for Krayin kickstart...');
         app(KrayinDatabaseSeeder::class)->run(['parameters' => [

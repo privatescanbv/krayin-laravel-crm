@@ -12,6 +12,7 @@ namespace UiTests.Steps
     {
         private readonly BrowserDriver _driver;
         private string _createdProductName = "";
+        private string _newPrice = "";
 
         public PartnerProductSteps(BrowserDriver driver)
         {
@@ -102,11 +103,15 @@ namespace UiTests.Steps
         public async Task WhenIEditTheFirstPartnerProduct()
         {
             // Wait for the datagrid to load
-            await _driver.Page.WaitForSelectorAsync("table tbody tr", new() { Timeout = 10000 });
-            
-            // Find the row with our created product and click edit icon
-            var row = _driver.Page.Locator($"table tbody tr:has-text('{_createdProductName}')").First;
-            await row.Locator("a.icon-edit").ClickAsync();
+            await _driver.Page.WaitForSelectorAsync(".table-responsive .row:has(.icon-edit)", new() { Timeout = 10000 });
+
+            // Find the row with our created product and click the edit action icon
+            var row = _driver.Page
+                .Locator(".table-responsive .row.max-lg\\:hidden")
+                .Filter(new() { HasTextString = _createdProductName })
+                .First;
+
+            await row.Locator(".icon-edit").ClickAsync();
             
             await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/settings/partner-products/edit/\\d+$"));
         }
@@ -114,6 +119,7 @@ namespace UiTests.Steps
         [When(@"I change the price to ""(.*)""")]
         public async Task WhenIChangeThePriceTo(string newPrice)
         {
+            _newPrice = newPrice;
             var priceInput = _driver.Page.Locator("input[name='sales_price']");
             await priceInput.FillAsync("");
             await priceInput.FillAsync(newPrice);
@@ -129,8 +135,19 @@ namespace UiTests.Steps
             await Assertions.Expect(_driver.Page.Locator("text=succesvol bijgewerkt")).ToBeVisibleAsync(new() { Timeout = 5000 });
             
             // Verify the updated price is visible in the table
-            var row = _driver.Page.Locator($"table tbody tr:has-text('{_createdProductName}')").First;
-            await Assertions.Expect(row.Locator("text=175,50")).ToBeVisibleAsync();
+            var row = _driver.Page
+                .Locator(".table-responsive .row.max-lg\\:hidden")
+                .Filter(new() { HasTextString = _createdProductName })
+                .First;
+
+            // In datagrid order: ID, Partnernaam, Naam, Valuta, Verkoopprijs, Actief, Acties
+            var priceCell = row.Locator("p.break-words").Nth(4);
+
+            var entered = _newPrice;
+            var dotVariant = _newPrice.Replace(',', '.');
+            var pricePattern = new Regex($"^(?:{Regex.Escape(entered)}|{Regex.Escape(dotVariant)})$");
+
+            await Assertions.Expect(priceCell).ToHaveTextAsync(pricePattern, new() { Timeout = 5000 });
         }
     }
 }

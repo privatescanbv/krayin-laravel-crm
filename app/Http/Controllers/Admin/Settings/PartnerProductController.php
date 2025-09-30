@@ -134,11 +134,19 @@ class PartnerProductController extends SimpleEntityController
 
     protected function validateStore(Request $request): void
     {
+        $request->merge([
+            'sales_price' => $this->normalizePrice($request->input('sales_price')),
+        ]);
+
         $request->validate($this->getValidationRules());
     }
 
     protected function validateUpdate(Request $request, int $id): void
     {
+        $request->merge([
+            'sales_price' => $this->normalizePrice($request->input('sales_price')),
+        ]);
+
         $request->validate($this->getValidationRules($id));
     }
 
@@ -179,7 +187,42 @@ class PartnerProductController extends SimpleEntityController
             $payload['resource_type_id'] = $payload['resource_type_id'] === '' ? null : $payload['resource_type_id'];
         }
 
+        if (array_key_exists('sales_price', $payload)) {
+            $payload['sales_price'] = $this->normalizePrice($payload['sales_price']);
+        }
+
         return parent::transformPayload($payload, $id);
+    }
+
+    /**
+     * Normalize price strings like "1.234,56" or "45,00" to "1234.56".
+     */
+    private function normalizePrice($value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = (string) $value;
+        $value = preg_replace('/\s+/', '', $value ?? '');
+
+        if ($value === '') {
+            return $value;
+        }
+
+        $hasComma = str_contains($value, ',');
+        $hasDot = str_contains($value, '.');
+
+        if ($hasComma && $hasDot) {
+            // Assume dot is thousands separator and comma is decimal separator
+            $value = str_replace('.', '', $value);
+            $value = str_replace(',', '.', $value);
+        } elseif ($hasComma && ! $hasDot) {
+            // Only comma present -> treat as decimal separator
+            $value = str_replace(',', '.', $value);
+        }
+
+        return $value;
     }
 
     protected function getCreateSuccessMessage(): string

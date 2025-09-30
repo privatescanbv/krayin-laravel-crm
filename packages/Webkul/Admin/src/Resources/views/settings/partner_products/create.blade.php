@@ -65,10 +65,9 @@
                         </x-admin::form.control-group.label>
 
                         <x-admin::form.control-group.control
-                            type="number"
-                            step="0.01"
+                            type="price"
                             name="sales_price"
-                            rules="required|numeric|min:0"
+                            rules="required"
                             :label="trans('admin::app.settings.partner_products.index.create.sales_price')"
                             :placeholder="trans('admin::app.settings.partner_products.index.create.sales_price')"
                         />
@@ -149,17 +148,15 @@
                         @lang('admin::app.settings.clinics.index.title')
                     </x-admin::form.control-group.label>
 
-                    <x-admin::form.control-group.control
-                        type="select"
+                    <select
                         name="clinics[]"
-                        rules="required"
                         multiple
-                        :label="trans('admin::app.settings.clinics.index.title')"
+                        class="custom-select w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
                     >
                         @foreach ($clinics as $clinic)
                             <option value="{{ $clinic->id }}" @selected(collect(old('clinics', []))->contains($clinic->id))>{{ $clinic->name }}</option>
                         @endforeach
-                    </x-admin::form.control-group.control>
+                    </select>
 
                     <x-admin::form.control-group.error control-name="clinics" />
                 </x-admin::form.control-group>

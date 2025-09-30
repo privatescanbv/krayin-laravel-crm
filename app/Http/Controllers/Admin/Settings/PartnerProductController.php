@@ -46,7 +46,7 @@ class PartnerProductController extends SimpleEntityController
         $products = $this->partnerProductRepository
             ->scopeQuery(function ($q) use ($query) {
                 return $q->where('active', true)
-                    ->where('name', 'like', '%' . $query . '%')
+                    ->where('name', 'like', '%'.$query.'%')
                     ->orderBy('name')
                     ->limit(50);
             })
@@ -54,7 +54,7 @@ class PartnerProductController extends SimpleEntityController
 
         $data = $products->map(function ($product) {
             return [
-                'id' => $product->id,
+                'id'   => $product->id,
                 'name' => $product->name,
             ];
         });

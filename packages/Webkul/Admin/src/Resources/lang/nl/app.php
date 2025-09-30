@@ -1802,6 +1802,50 @@ return [
             'delete-success' => 'Dienst succesvol verwijderd.',
             'delete-failed'  => 'Verwijderen van dienst mislukt.',
         ],
+
+        'partner_products' => [
+            'index' => [
+                'title'           => 'Partnerproducten',
+                'create-btn'      => 'Partnerproduct toevoegen',
+                'create-success'  => 'Partnerproduct succesvol aangemaakt.',
+                'update-success'  => 'Partnerproduct succesvol bijgewerkt.',
+                'destroy-success' => 'Partnerproduct succesvol verwijderd.',
+                'delete-failed'   => 'Verwijderen van partnerproduct mislukt.',
+
+                'datagrid' => [
+                    'id'            => 'ID',
+                    'partner_name'  => 'Partnernaam',
+                    'name'          => 'Naam',
+                    'currency'      => 'Valuta',
+                    'sales_price'   => 'Verkoopprijs',
+                    'active'        => 'Actief',
+                    'view'          => 'Bekijken',
+                    'edit'          => 'Bewerken',
+                    'delete'        => 'Verwijderen',
+                ],
+
+                'edit' => [
+                    'title' => 'Partnerproduct bewerken',
+                ],
+
+                'create' => [
+                    'title'         => 'Partnerproduct aanmaken',
+                    'name'          => 'Naam',
+                    'currency'      => 'Valuta',
+                    'sales_price'   => 'Verkoopprijs',
+                    'active'        => 'Actief',
+                    'partner_name'  => 'Partnernaam',
+                    'description'   => 'Omschrijving',
+                    'discount_info' => 'Kortingsinformatie',
+                    'resource_type' => 'Resourcetype',
+                    'clinic_description' => 'Omschrijving kliniek (AFB)',
+                    'duration'      => 'Duur (minuten)',
+                    'related_products' => 'Gerelateerde producten',
+                    'search_related_products' => 'Zoek producten die vaak samen worden gekocht...',
+                    'save-btn'      => 'Opslaan',
+                ],
+            ],
+        ],
     ],
 
     // Weekday labels (used in shifts forms)
@@ -1815,50 +1859,6 @@ return [
     'friday'    => 'Vrijdag',
     'saturday'  => 'Zaterdag',
     'sunday'    => 'Zondag',
-
-    'partner_products' => [
-        'index' => [
-            'title'           => 'Partnerproducten',
-            'create-btn'      => 'Partnerproduct toevoegen',
-            'create-success'  => 'Partnerproduct succesvol aangemaakt.',
-            'update-success'  => 'Partnerproduct succesvol bijgewerkt.',
-            'destroy-success' => 'Partnerproduct succesvol verwijderd.',
-            'delete-failed'   => 'Verwijderen van partnerproduct mislukt.',
-
-            'datagrid' => [
-                'id'            => 'ID',
-                'partner_name'  => 'Partnernaam',
-                'name'          => 'Naam',
-                'currency'      => 'Valuta',
-                'sales_price'   => 'Verkoopprijs',
-                'active'        => 'Actief',
-                'view'          => 'Bekijken',
-                'edit'          => 'Bewerken',
-                'delete'        => 'Verwijderen',
-            ],
-
-            'edit' => [
-                'title' => 'Partnerproduct bewerken',
-            ],
-
-            'create' => [
-                'title'         => 'Partnerproduct aanmaken',
-                'name'          => 'Naam',
-                'currency'      => 'Valuta',
-                'sales_price'   => 'Verkoopprijs',
-                'active'        => 'Actief',
-                'partner_name'  => 'Partnernaam',
-                'description'   => 'Omschrijving',
-                'discount_info' => 'Kortingsinformatie',
-                'resource_type' => 'Resourcetype',
-                'clinic_description' => 'Omschrijving kliniek (AFB)',
-                'duration'      => 'Duur (minuten)',
-                'related_products' => 'Gerelateerde producten',
-                'search_related_products' => 'Zoek producten die vaak samen worden gekocht...',
-                'save-btn'      => 'Opslaan',
-            ],
-        ],
-    ],
 
     'activities' => [
         'index' => [

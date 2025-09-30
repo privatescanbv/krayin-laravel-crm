@@ -16,14 +16,14 @@ return new class extends Migration
                 ->references('id')
                 ->on('partner_products')
                 ->onDelete('cascade');
-            
+
             $table->foreign('related_product_id')
                 ->references('id')
                 ->on('partner_products')
                 ->onDelete('cascade');
 
             $table->primary(['partner_product_id', 'related_product_id'], 'partner_product_related_primary');
-            
+
             // Prevent duplicate entries in reverse order
             $table->unique(['related_product_id', 'partner_product_id'], 'partner_product_related_unique');
         });

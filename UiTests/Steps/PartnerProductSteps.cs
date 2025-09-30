@@ -89,7 +89,7 @@ namespace UiTests.Steps
                     {
                         await _driver.Page.WaitForFunctionAsync(
                             "() => !document.querySelector('select[name=\"resources[]\"]')?.disabled",
-                            timeout: 5000
+                            new PageWaitForFunctionOptions { Timeout = 5000 }
                         );
                     }
                     catch

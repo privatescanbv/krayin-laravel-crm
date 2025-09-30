@@ -76,40 +76,96 @@
             </div>
         </div>
 
-        <!-- Right Panel -->
-        <div class="flex w-full flex-col gap-4 rounded-lg">
-            <!-- Tabs/Sections Navigation -->
-            <x-admin::activities
-                :endpoint="'#'" 
-                :types="[]"
-                :extra-types="[
-                    ['name' => 'overview', 'label' => trans('admin::app.settings.clinics.view.tabs.overview')],
-                    ['name' => 'partner-products', 'label' => trans('admin::app.settings.clinics.view.tabs.partner-products')],
-                    ['name' => 'resources', 'label' => trans('admin::app.settings.clinics.view.tabs.resources')],
-                    ['name' => 'audit-trail', 'label' => trans('admin::app.settings.clinics.view.tabs.audit-trail')],
-                ]"
-                :activeType="'overview'"
-            >
-                <!-- Overview Tab -->
-                <x-slot:overview>
-                    @include('admin::settings.clinics.view.overview')
-                </x-slot>
+        <!-- Right Panel with Tabs -->
+        <v-clinic-tabs>
+            <div slot="overview">
+                @include('admin::settings.clinics.view.overview')
+            </div>
 
-                <!-- Partner Products Tab -->
-                <x-slot:partner-products>
-                    @include('admin::settings.clinics.view.partner-products')
-                </x-slot>
+            <div slot="partner-products">
+                @include('admin::settings.clinics.view.partner-products')
+            </div>
 
-                <!-- Resources Tab -->
-                <x-slot:resources>
-                    @include('admin::settings.clinics.view.resources')
-                </x-slot>
+            <div slot="resources">
+                @include('admin::settings.clinics.view.resources')
+            </div>
 
-                <!-- Audit Trail Tab -->
-                <x-slot:audit-trail>
-                    @include('admin::settings.clinics.view.audit-trail')
-                </x-slot>
-            </x-admin::activities>
-        </div>
-    </div>    
+            <div slot="audit-trail">
+                @include('admin::settings.clinics.view.audit-trail')
+            </div>
+        </v-clinic-tabs>
+    </div>
+
+    @pushOnce('scripts')
+        <script type="text/x-template" id="v-clinic-tabs-template">
+            <div class="flex w-full flex-col gap-4 rounded-lg">
+                <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+                    <!-- Tabs Navigation -->
+                    <div class="border-b border-gray-200 dark:border-gray-800">
+                        <div class="flex gap-4 px-4">
+                            <button
+                                @click="activeTab = 'overview'"
+                                :class="activeTab === 'overview' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
+                                class="py-3 text-sm font-medium transition"
+                            >
+                                @lang('admin::app.settings.clinics.view.tabs.overview')
+                            </button>
+                            <button
+                                @click="activeTab = 'partner-products'"
+                                :class="activeTab === 'partner-products' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
+                                class="py-3 text-sm font-medium transition"
+                            >
+                                @lang('admin::app.settings.clinics.view.tabs.partner-products')
+                            </button>
+                            <button
+                                @click="activeTab = 'resources'"
+                                :class="activeTab === 'resources' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
+                                class="py-3 text-sm font-medium transition"
+                            >
+                                @lang('admin::app.settings.clinics.view.tabs.resources')
+                            </button>
+                            <button
+                                @click="activeTab = 'audit-trail'"
+                                :class="activeTab === 'audit-trail' ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400' : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white'"
+                                class="py-3 text-sm font-medium transition"
+                            >
+                                @lang('admin::app.settings.clinics.view.tabs.audit-trail')
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tab Content -->
+                    <div>
+                        <div v-show="activeTab === 'overview'">
+                            <slot name="overview"></slot>
+                        </div>
+
+                        <div v-show="activeTab === 'partner-products'">
+                            <slot name="partner-products"></slot>
+                        </div>
+
+                        <div v-show="activeTab === 'resources'">
+                            <slot name="resources"></slot>
+                        </div>
+
+                        <div v-show="activeTab === 'audit-trail'">
+                            <slot name="audit-trail"></slot>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </script>
+
+        <script type="module">
+            app.component('v-clinic-tabs', {
+                template: '#v-clinic-tabs-template',
+
+                data() {
+                    return {
+                        activeTab: 'overview'
+                    };
+                }
+            });
+        </script>
+    @endPushOnce
 </x-admin::layouts>

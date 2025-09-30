@@ -49,15 +49,16 @@ namespace UiTests.Steps
             // Wait for the form to be loaded
             await _driver.Page.WaitForSelectorAsync("input[name='name']", new() { Timeout = 5000 });
 
-            // Fill in required fields
-            await _driver.Page.FillAsync("input[name='name']", _createdProductName);
-            await _driver.Page.FillAsync("input[name='sales_price']", price);
+            // Fill in required fields with explicit waits
+            await _driver.Page.Locator("input[name='name']").FillAsync(_createdProductName);
+            await _driver.Page.Locator("input[name='sales_price']").FillAsync(price);
+            await _driver.Page.Locator("input[name='partner_name']").FillAsync($"Test Partner {Guid.NewGuid():N}");
 
-            // Select currency (should default to EUR)
-
-            // Select resource type - select the first non-empty option
+            // Select resource type - wait for it to be visible first
             var resourceTypeSelect = _driver.Page.Locator("select[name='resource_type_id']");
-            var resourceTypeOptions = await resourceTypeSelect.Locator("option[value]:not([value=''])").AllAsync();
+            await resourceTypeSelect.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5000 });
+
+            var resourceTypeOptions = await resourceTypeSelect.Locator("option:not([value=''])").AllAsync();
             if (resourceTypeOptions.Count > 0)
             {
                 var firstResourceTypeValue = await resourceTypeOptions[0].GetAttributeAsync("value");
@@ -67,8 +68,10 @@ namespace UiTests.Steps
                 }
             }
 
-            // Select at least one clinic - select the first available option
+            // Select at least one clinic
             var clinicSelect = _driver.Page.Locator("select[name='clinics[]']");
+            await clinicSelect.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5000 });
+
             var clinicOptions = await clinicSelect.Locator("option").AllAsync();
             if (clinicOptions.Count > 0)
             {
@@ -76,32 +79,64 @@ namespace UiTests.Steps
                 if (!string.IsNullOrEmpty(firstClinicValue))
                 {
                     await clinicSelect.SelectOptionAsync(new[] { firstClinicValue });
+
+                    // Trigger change event
+                    await clinicSelect.EvaluateAsync("(element) => element.dispatchEvent(new Event('change', { bubbles: true }))");
+
+                    // Wait for resources hint to appear (indicates resources loaded)
+                    try
+                    {
+                        var hint = _driver.Page.Locator("#resources-hint");
+                        await hint.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5000 });
+                    }
+                    catch
+                    {
+                        // Resources might not exist for this clinic, that's okay
+                    }
                 }
             }
 
             // Check active checkbox
-            await _driver.Page.CheckAsync("input[name='active'][value='1']");
+            var activeCheckbox = _driver.Page.Locator("input[name='active'][value='1']");
+            await activeCheckbox.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5000 });
+            await activeCheckbox.CheckAsync();
         }
 
         [When("I save the partner product")]
         public async Task WhenISaveThePartnerProduct()
         {
+            // Log current form state before saving
+            var clinicsSelected = await _driver.Page.Locator("select[name='clinics[]']").EvaluateAsync<string[]>("(el) => Array.from(el.selectedOptions).map(o => o.value)");
+            var resourcesSelected = await _driver.Page.Locator("select[name='resources[]']").EvaluateAsync<string[]>("(el) => Array.from(el.selectedOptions).map(o => o.value)");
+            Console.WriteLine($"[DEBUG] Clinics selected: [{string.Join(", ", clinicsSelected)}]");
+            Console.WriteLine($"[DEBUG] Resources selected: [{string.Join(", ", resourcesSelected)}]");
+
             await _driver.Page.GetByRole(AriaRole.Button, new() { NameRegex = new Regex("^(Opslaan|Save)$") }).ClickAsync();
 
-            // Wait for a likely success indicator or network idle to ensure save completed
-            try
+            // Wait for network activity to complete
+            await _driver.Page.WaitForLoadStateAsync(LoadState.NetworkIdle, new() { Timeout = 10000 });
+
+            // Give it extra time for any redirects or success messages
+            await _driver.Page.WaitForTimeoutAsync(1000);
+
+            // Log any validation errors if present
+            var errors = _driver.Page.Locator(".control-error, .text-red-600");
+            var errorCount = await errors.CountAsync();
+            if (errorCount > 0)
             {
-                // Dutch and English success toasts
-                var successToast = _driver.Page.Locator(
-                    "text=Partnerproduct succesvol bijgewerkt."
-                );
-                await successToast.First.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5000 });
+                Console.WriteLine($"[DEBUG] Found {errorCount} validation errors:");
+                for (var i = 0; i < errorCount; i++)
+                {
+                    var errorText = await errors.Nth(i).InnerTextAsync();
+                    Console.WriteLine($"[DEBUG] Error {i + 1}: {errorText}");
+                }
             }
-            catch
+            else
             {
-                // Fallback: wait for network idle
-                await _driver.Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+                Console.WriteLine("[DEBUG] No validation errors found");
             }
+
+            Console.WriteLine($"[DEBUG] Current URL after save: {_driver.Page.Url}");
         }
 
         [Then("I should be redirected to the partner products overview")]

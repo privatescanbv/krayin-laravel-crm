@@ -125,6 +125,7 @@ Route::prefix('settings')->group(function () {
      */
     Route::controller(ResourceController::class)->prefix('resources')->group(function () {
         Route::get('', 'index')->name('admin.settings.resources.index');
+        Route::get('filter-by-clinics', 'filterByClinics')->name('admin.settings.resources.filter_by_clinics');
         Route::get('create', 'create')->name('admin.settings.resources.create');
         Route::post('create', 'store')->name('admin.settings.resources.store');
         Route::get('edit/{id}', 'edit')->name('admin.settings.resources.edit');

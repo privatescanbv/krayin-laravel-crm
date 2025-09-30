@@ -144,6 +144,9 @@ class PartnerProductController extends SimpleEntityController
         ]);
 
         $request->validate($this->getValidationRules());
+
+        // Additional validation: resources must belong to selected clinics
+        $this->validateResourcesMatchClinics($request);
     }
 
     protected function validateUpdate(Request $request, int $id): void
@@ -153,6 +156,9 @@ class PartnerProductController extends SimpleEntityController
         ]);
 
         $request->validate($this->getValidationRules($id));
+
+        // Additional validation: resources must belong to selected clinics
+        $this->validateResourcesMatchClinics($request);
     }
 
     protected function getValidationRules(?int $id = null): array
@@ -179,6 +185,32 @@ class PartnerProductController extends SimpleEntityController
             'resources'           => 'nullable|array',
             'resources.*'         => 'integer|exists:resources,id',
         ];
+    }
+
+    /**
+     * Validate that resources belong to selected clinics.
+     */
+    protected function validateResourcesMatchClinics(Request $request): void
+    {
+        $resourceIds = $request->input('resources', []);
+        $clinicIds = $request->input('clinics', []);
+
+        if (empty($resourceIds) || empty($clinicIds)) {
+            return;
+        }
+
+        $validResources = Resource::whereIn('id', $resourceIds)
+            ->whereIn('clinic_id', $clinicIds)
+            ->pluck('id')
+            ->toArray();
+
+        $invalidResources = array_diff($resourceIds, $validResources);
+
+        if (! empty($invalidResources)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'resources' => ['Gekozen resource(s) horen niet bij de geselecteerde kliniek(en).'],
+            ]);
+        }
     }
 
     protected function transformPayload(array $payload, ?int $id = null): array

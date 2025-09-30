@@ -143,41 +143,11 @@
                         <x-admin::form.control-group.error control-name="resource_type_id" />
                     </x-admin::form.control-group>
 
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        @lang('admin::app.settings.clinics.index.title')
-                    </x-admin::form.control-group.label>
-
-                    <select
-                        name="clinics[]"
-                        multiple
-                        class="custom-select w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
-                    >
-                        @foreach ($clinics as $clinic)
-                            <option value="{{ $clinic->id }}" @selected(collect(old('clinics', []))->contains($clinic->id))>{{ $clinic->name }}</option>
-                        @endforeach
-                    </select>
-
-                    <x-admin::form.control-group.error control-name="clinics" />
-                </x-admin::form.control-group>
-
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        @lang('admin::app.settings.resources.index.title')
-                    </x-admin::form.control-group.label>
-
-                    <select
-                        name="resources[]"
-                        multiple
-                        class="custom-select w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
-                    >
-                        @foreach ($resources as $resource)
-                            <option value="{{ $resource->id }}" @selected(collect(old('resources', []))->contains($resource->id))>{{ $resource->name }}</option>
-                        @endforeach
-                    </select>
-
-                    <x-admin::form.control-group.error control-name="resources" />
-                </x-admin::form.control-group>
+                <x-admin::clinic-resource-selector
+                    :clinics="$clinics"
+                    :selected-clinics="old('clinics', [])"
+                    :selected-resources="old('resources', [])"
+                />
 
                 <x-admin::form.control-group>
                     <x-admin::form.control-group.label>

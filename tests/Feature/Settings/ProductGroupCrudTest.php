@@ -86,7 +86,7 @@ test('can update product group', function () {
 test('can delete product group', function () {
     $group = ProductGroup::factory()->create();
 
-    $response = $this->deleteJson(route('admin.productgroups.destroy', ['id' => $group->id]));
+    $response = $this->deleteJson(route('admin.productgroups.delete', ['id' => $group->id]));
     $response->assertOk();
 
     $this->assertDatabaseMissing('product_groups', [
@@ -98,7 +98,7 @@ test('deleting parent sets children parent_id to null', function () {
     $parent = ProductGroup::factory()->create();
     $child = ProductGroup::factory()->withParent($parent)->create();
 
-    $this->deleteJson(route('admin.productgroups.destroy', ['id' => $parent->id]));
+    $this->deleteJson(route('admin.productgroups.delete', ['id' => $parent->id]));
 
     $child->refresh();
     expect($child->parent_id)->toBeNull();

@@ -248,8 +248,15 @@
                 const resourcesSelect = document.getElementById('resources-select');
                 const resourcesHint = document.getElementById('resources-hint');
 
+                if (!clinicsSelect || !resourcesSelect || !resourcesHint) {
+                    console.error('Required elements not found');
+                    return;
+                }
+
                 function loadResources() {
                     const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
+                    
+                    console.log('Loading resources for clinics:', selectedClinics);
                     
                     if (selectedClinics.length === 0) {
                         resourcesSelect.disabled = true;
@@ -265,46 +272,55 @@
                     const params = new URLSearchParams();
                     selectedClinics.forEach(id => params.append('clinic_ids[]', id));
 
-                    fetch('{{ route("admin.settings.resources.filter_by_clinics") }}?' + params.toString())
-                        .then(response => response.json())
+                    const url = '{{ route("admin.settings.resources.filter_by_clinics") }}?' + params.toString();
+                    console.log('Fetching from:', url);
+
+                    fetch(url)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.json();
+                        })
                         .then(data => {
+                            console.log('Received resources:', data.data);
+                            
                             resourcesSelect.innerHTML = '';
                             resourcesHint.style.display = 'block';
-
-                            const availableResourceIds = data.data.map(r => r.id.toString());
                             
-                            data.data.forEach(resource => {
-                                const option = document.createElement('option');
-                                option.value = resource.id;
-                                option.textContent = resource.name;
-                                
-                                // Reselect if it was previously selected and is still valid
-                                if (currentlySelected.includes(resource.id.toString())) {
-                                    option.selected = true;
-                                }
-                                
-                                resourcesSelect.appendChild(option);
-                            });
-
-                            // If no resources available, show message but still enable the field
-                            if (data.data.length === 0) {
+                            if (data.data && data.data.length > 0) {
+                                data.data.forEach(resource => {
+                                    const option = document.createElement('option');
+                                    option.value = resource.id;
+                                    option.textContent = resource.name;
+                                    
+                                    // Reselect if it was previously selected and is still valid
+                                    if (currentlySelected.includes(resource.id.toString())) {
+                                        option.selected = true;
+                                    }
+                                    
+                                    resourcesSelect.appendChild(option);
+                                });
+                                resourcesSelect.disabled = false;
+                            } else {
+                                // If no resources available, show message but still enable the field
                                 const option = document.createElement('option');
                                 option.disabled = true;
                                 option.textContent = 'Geen resources beschikbaar voor deze kliniek(en)';
                                 resourcesSelect.appendChild(option);
-                                resourcesSelect.disabled = false; // Still enable so form can be submitted
-                            } else {
                                 resourcesSelect.disabled = false;
                             }
                         })
                         .catch(error => {
                             console.error('Error fetching resources:', error);
-                            // On error, enable the field so form can still be submitted
+                            resourcesSelect.innerHTML = '<option disabled>Fout bij laden van resources</option>';
                             resourcesSelect.disabled = false;
                         });
                 }
 
+                // Listen to multiple events to catch all changes
                 clinicsSelect.addEventListener('change', loadResources);
+                clinicsSelect.addEventListener('input', loadResources);
                 
                 // Also trigger on load if clinics are already selected (for tests/automation)
                 if (clinicsSelect.selectedOptions.length > 0) {

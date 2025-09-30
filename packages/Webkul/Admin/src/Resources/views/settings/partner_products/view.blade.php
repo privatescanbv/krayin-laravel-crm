@@ -7,7 +7,7 @@
         <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
                 <div class="flex items-center justify-between">
-                    <x-admin::breadcrumbs name="settings.partner_products" />
+                    <x-admin::breadcrumbs name="settings.partner_products.view" :entity="$partner_product" />
                 </div>
 
                 <div class="mb-2 flex flex-col gap-0.5">

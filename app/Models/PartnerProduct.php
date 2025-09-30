@@ -18,6 +18,7 @@ class PartnerProduct extends BaseProduct
         'description',
         'discount_info',
         'resource_type_id',
+        'resource_id',
         'created_by',
         'updated_by',
         // partner specific
@@ -30,6 +31,7 @@ class PartnerProduct extends BaseProduct
         'sales_price'      => 'decimal:2',
         'active'           => 'boolean',
         'resource_type_id' => 'integer',
+        'resource_id'      => 'integer',
         'created_by'       => 'integer',
         'updated_by'       => 'integer',
         'duration'         => 'integer',
@@ -48,5 +50,10 @@ class PartnerProduct extends BaseProduct
             'partner_product_id',
             'related_product_id'
         );
+    }
+
+    public function resource()
+    {
+        return $this->belongsTo(Resource::class);
     }
 }

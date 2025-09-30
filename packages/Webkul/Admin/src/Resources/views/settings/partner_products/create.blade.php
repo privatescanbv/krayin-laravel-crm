@@ -143,6 +143,25 @@
                         <x-admin::form.control-group.error control-name="resource_type_id" />
                     </x-admin::form.control-group>
 
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            @lang('admin::app.settings.resources.index.title')
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="select"
+                            name="resource_id"
+                            :label="trans('admin::app.settings.resources.index.title')"
+                        >
+                            <option value="">@lang('admin::app.select')</option>
+                            @foreach ($resources as $resource)
+                                <option value="{{ $resource->id }}">{{ $resource->name }}</option>
+                            @endforeach
+                        </x-admin::form.control-group.control>
+
+                        <x-admin::form.control-group.error control-name="resource_id" />
+                    </x-admin::form.control-group>
+
                 <x-admin::form.control-group>
                     <x-admin::form.control-group.label>
                         @lang('admin::app.settings.clinics.index.title')

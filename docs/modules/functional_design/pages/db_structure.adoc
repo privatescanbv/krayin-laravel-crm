@@ -207,6 +207,7 @@ TABLE(PartnerProduct, "partner_product") {
   updated_at: datetime
   created_by: bigint
   updated_by: bigint
+  FOREIGN_KEY(resource_id): bigint
 }
 
 TABLE(Resource, "resource") {

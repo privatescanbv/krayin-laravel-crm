@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\DataGrids\Settings\PartnerProductDataGrid;
 use App\Enums\Currency;
 use App\Models\Clinic;
+use App\Models\Resource;
 use App\Models\ResourceType;
 use App\Repositories\PartnerProductRepository;
 use Illuminate\Database\Eloquent\Model;
@@ -116,6 +117,7 @@ class PartnerProductController extends SimpleEntityController
     {
         return [
             'resourceTypes'   => ResourceType::orderBy('name')->get(['id', 'name']),
+            'resources'       => Resource::orderBy('name')->get(['id', 'name']),
             'currencies'      => Currency::options(),
             'defaultCurrency' => Currency::default()->value,
             'clinics'         => Clinic::orderBy('name')->get(['id', 'name']),
@@ -127,6 +129,7 @@ class PartnerProductController extends SimpleEntityController
         return [
             'partner_products' => $entity,
             'resourceTypes'    => ResourceType::orderBy('name')->get(['id', 'name']),
+            'resources'        => Resource::orderBy('name')->get(['id', 'name']),
             'currencies'       => Currency::options(),
             'clinics'          => Clinic::orderBy('name')->get(['id', 'name']),
         ];
@@ -161,6 +164,7 @@ class PartnerProductController extends SimpleEntityController
             'description'         => 'nullable|string',
             'discount_info'       => 'nullable|string',
             'resource_type_id'    => 'required|integer|exists:resource_types,id',
+            'resource_id'         => 'nullable|integer|exists:resources,id',
 
             // partner fields
             'partner_name'        => [
@@ -185,6 +189,10 @@ class PartnerProductController extends SimpleEntityController
 
         if (array_key_exists('resource_type_id', $payload)) {
             $payload['resource_type_id'] = $payload['resource_type_id'] === '' ? null : $payload['resource_type_id'];
+        }
+
+        if (array_key_exists('resource_id', $payload)) {
+            $payload['resource_id'] = $payload['resource_id'] === '' ? null : $payload['resource_id'];
         }
 
         if (array_key_exists('sales_price', $payload)) {

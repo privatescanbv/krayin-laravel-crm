@@ -99,6 +99,7 @@ Route::prefix('settings')->group(function () {
         Route::put('edit/{id}', 'update')->name('admin.settings.partner_products.update');
         Route::delete('', 'destroy')->name('admin.settings.partner_products.delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.partner_products.delete');
+        Route::get('search', 'search')->name('admin.settings.partner_products.search');
 
         Route::controller(PartnerProductActivityController::class)->prefix('{id}/activities')->group(function () {
             Route::get('', 'index')->name('admin.settings.partner_products.activities.index');

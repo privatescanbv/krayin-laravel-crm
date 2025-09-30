@@ -7,7 +7,7 @@
         <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
                 <div class="flex items-center justify-between">
-                    <x-admin::breadcrumbs name="settings.partner_products" />
+                    <x-admin::breadcrumbs name="settings.partner_products.view" :entity="$partner_product" />
                 </div>
 
                 <div class="mb-2 flex flex-col gap-0.5">
@@ -62,6 +62,31 @@
                     </div>
                 @endif
             </div>
+
+            @if ($partner_product->relatedProducts->count() > 0)
+                <div class="flex flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
+                    <h4 class="font-semibold text-gray-800 dark:text-white">
+                        @lang('admin::app.settings.partner_products.index.create.related_products')
+                    </h4>
+                    
+                    <div class="flex flex-col gap-2">
+                        @foreach ($partner_product->relatedProducts as $relatedProduct)
+                            <a 
+                                href="{{ route('admin.settings.partner_products.view', $relatedProduct->id) }}"
+                                class="flex items-center justify-between rounded-lg border border-gray-200 p-3 text-sm transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-800"
+                            >
+                                <div class="flex flex-col gap-1">
+                                    <span class="font-medium text-gray-800 dark:text-white">{{ $relatedProduct->name }}</span>
+                                    <span class="text-xs text-gray-600 dark:text-gray-400">{{ $relatedProduct->partner_name }}</span>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-semibold text-gray-800 dark:text-white">€ {{ number_format($relatedProduct->sales_price, 2, ',', '.') }}</div>
+                                </div>
+                            </a>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
         </div>
 
         <div class="flex w-full flex-col gap-4 rounded-lg">

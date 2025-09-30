@@ -250,6 +250,12 @@ Breadcrumbs::for('settings.partner_products.view', function (BreadcrumbTrail $tr
     $trail->push('#'.$entity->id, route('admin.settings.partner_products.view', $entity->id));
 });
 
+// Settings > Partner Products > Edit
+Breadcrumbs::for('settings.partner_products.edit', function (BreadcrumbTrail $trail, $entity) {
+    $trail->parent('settings.partner_products');
+    $trail->push(trans('admin::app.settings.partner_products.index.edit.title'), route('admin.settings.partner_products.edit', $entity->id));
+});
+
 // Dashboard > Groups > Create Group
 Breadcrumbs::for('settings.groups.create', function (BreadcrumbTrail $trail) {
     $trail->parent('settings.groups');

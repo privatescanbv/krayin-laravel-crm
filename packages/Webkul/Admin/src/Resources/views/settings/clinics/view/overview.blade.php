@@ -13,7 +13,7 @@
                     <span class="dark:text-white">{{ $clinic->name }}</span>
                 </div>
 
-                @if ($clinic->external_id)
+                @if (!empty($clinic->external_id))
                     <div class="grid grid-cols-[200px_1fr] gap-2">
                         <span class="font-medium text-gray-600 dark:text-gray-400">
                             @lang('admin::app.settings.clinics.view.overview.external-id'):
@@ -22,26 +22,38 @@
                     </div>
                 @endif
 
-                @if (is_array($clinic->emails) && count($clinic->emails) > 0)
+                @php
+                    $emailList = $clinic->emails ?? [];
+                    if (!is_array($emailList)) {
+                        $emailList = [];
+                    }
+                @endphp
+                @if (count($emailList) > 0)
                     <div class="grid grid-cols-[200px_1fr] gap-2">
                         <span class="font-medium text-gray-600 dark:text-gray-400">
                             @lang('admin::app.settings.clinics.view.overview.emails'):
                         </span>
                         <div>
-                            @foreach ($clinic->emails as $email)
+                            @foreach ($emailList as $email)
                                 <div class="dark:text-white">{{ $email }}</div>
                             @endforeach
                         </div>
                     </div>
                 @endif
 
-                @if (is_array($clinic->phones) && count($clinic->phones) > 0)
+                @php
+                    $phoneList = $clinic->phones ?? [];
+                    if (!is_array($phoneList)) {
+                        $phoneList = [];
+                    }
+                @endphp
+                @if (count($phoneList) > 0)
                     <div class="grid grid-cols-[200px_1fr] gap-2">
                         <span class="font-medium text-gray-600 dark:text-gray-400">
                             @lang('admin::app.settings.clinics.view.overview.phones'):
                         </span>
                         <div>
-                            @foreach ($clinic->phones as $phone)
+                            @foreach ($phoneList as $phone)
                                 <div class="dark:text-white">{{ $phone }}</div>
                             @endforeach
                         </div>
@@ -54,26 +66,26 @@
                             @lang('admin::app.settings.clinics.view.overview.address'):
                         </span>
                         <div class="dark:text-white">
-                            @if ($clinic->address->address_line_1)
+                            @if (!empty($clinic->address->address_line_1))
                                 <div>{{ $clinic->address->address_line_1 }}</div>
                             @endif
-                            @if ($clinic->address->address_line_2)
+                            @if (!empty($clinic->address->address_line_2))
                                 <div>{{ $clinic->address->address_line_2 }}</div>
                             @endif
-                            @if ($clinic->address->postal_code || $clinic->address->city)
+                            @if (!empty($clinic->address->postal_code) || !empty($clinic->address->city))
                                 <div>
-                                    @if ($clinic->address->postal_code)
+                                    @if (!empty($clinic->address->postal_code))
                                         {{ $clinic->address->postal_code }}
                                     @endif
-                                    @if ($clinic->address->city)
+                                    @if (!empty($clinic->address->city))
                                         {{ $clinic->address->city }}
                                     @endif
                                 </div>
                             @endif
-                            @if ($clinic->address->state)
+                            @if (!empty($clinic->address->state))
                                 <div>{{ $clinic->address->state }}</div>
                             @endif
-                            @if ($clinic->address->country)
+                            @if (!empty($clinic->address->country))
                                 <div>{{ $clinic->address->country }}</div>
                             @endif
                         </div>

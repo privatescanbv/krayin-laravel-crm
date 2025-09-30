@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
 use App\Enums\ContactLabel;
+use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Models\Address;
 use BackedEnum;
 use Dotenv\Exception\ValidationException;
@@ -31,6 +32,7 @@ use App\Services\PersonValidationService;
 
 class PersonController extends Controller
 {
+    use NormalizesContactFields;
     private bool $enableLogging = false;
 
     /**
@@ -71,11 +73,9 @@ class PersonController extends Controller
      */
     public function store(AttributeForm $request): RedirectResponse|JsonResponse
     {
-        // Normalize contact arrays before validation
-        $this->normalizeContactArrays($request);
+        // Normalize contact fields before validation
+        $this->normalizeContactFields($request);
 
-        // Normalize contact arrays before validation
-        $this->normalizeContactArrays($request);
         $request->validate(PersonValidationService::getWebValidationRules($request));
         Event::dispatch('contacts.person.create.before');
 
@@ -103,49 +103,6 @@ class PersonController extends Controller
         // Handle empty unique_id field - convert empty string to null to avoid duplicate key errors
         if (isset($data['unique_id']) && empty($data['unique_id'])) {
             $data['unique_id'] = null;
-        }
-
-        // Filter out empty phone numbers
-        if (isset($data['phones']) && is_array($data['phones'])) {
-            $data['phones'] = array_filter($data['phones'], function ($phone) {
-                return isset($phone['value']) && !empty(trim($phone['value']));
-            });
-
-            // If no valid phones remain, set to empty array
-            if (empty($data['phones'])) {
-                $data['phones'] = [];
-            }
-        }
-
-        // Filter out empty email addresses
-        if (isset($data['emails']) && is_array($data['emails'])) {
-            $data['emails'] = array_filter($data['emails'], function ($email) {
-                return isset($email['value']) && !empty(trim($email['value']));
-            });
-
-            // If no valid emails remain, set to empty array
-            if (empty($data['emails'])) {
-                $data['emails'] = [];
-            }
-        }
-
-        // Normaliseer is_default naar boolean voor phones
-        if (isset($data['phones']) && is_array($data['phones'])) {
-            $data['phones'] = array_map(function ($phone) {
-                if (isset($phone['is_default'])) {
-                    $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
-                }
-                return $phone;
-            }, $data['phones']);
-        }
-        // Normaliseer is_default naar boolean voor emails
-        if (isset($data['emails']) && is_array($data['emails'])) {
-            $data['emails'] = array_map(function ($email) {
-                if (isset($email['is_default'])) {
-                    $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
-                }
-                return $email;
-            }, $data['emails']);
         }
 
         // Debug logging
@@ -225,8 +182,8 @@ class PersonController extends Controller
      */
     public function update(AttributeForm $request, int $id): RedirectResponse|JsonResponse
     {
-        // Normalize contact arrays before validation
-        $this->normalizeContactArrays($request);
+        // Normalize contact fields before validation
+        $this->normalizeContactFields($request);
 
         try {
             $request->validate(PersonValidationService::getWebValidationRules($request));
@@ -238,8 +195,7 @@ class PersonController extends Controller
             ]);
             throw $e;
         }
-        // Normalize contact arrays before validation
-        $this->normalizeContactArrays($request);
+        
         Event::dispatch('contacts.person.update.before', $id);
 
         $data = $request->all();
@@ -266,49 +222,6 @@ class PersonController extends Controller
         // Handle empty unique_id field - convert empty string to null to avoid duplicate key errors
         if (isset($data['unique_id']) && empty($data['unique_id'])) {
             $data['unique_id'] = null;
-        }
-
-        // Filter out empty phone numbers
-        if (isset($data['phones']) && is_array($data['phones'])) {
-            $data['phones'] = array_filter($data['phones'], function ($phone) {
-                return isset($phone['value']) && !empty(trim($phone['value']));
-            });
-
-            // If no valid phones remain, set to empty array
-            if (empty($data['phones'])) {
-                $data['phones'] = [];
-            }
-        }
-
-        // Filter out empty email addresses
-        if (isset($data['emails']) && is_array($data['emails'])) {
-            $data['emails'] = array_filter($data['emails'], function ($email) {
-                return isset($email['value']) && !empty(trim($email['value']));
-            });
-
-            // If no valid emails remain, set to empty array
-            if (empty($data['emails'])) {
-                $data['emails'] = [];
-            }
-        }
-
-        // Normaliseer is_default naar boolean voor phones
-        if (isset($data['phones']) && is_array($data['phones'])) {
-            $data['phones'] = array_map(function ($phone) {
-                if (isset($phone['is_default'])) {
-                    $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
-                }
-                return $phone;
-            }, $data['phones']);
-        }
-        // Normaliseer is_default naar boolean voor emails
-        if (isset($data['emails']) && is_array($data['emails'])) {
-            $data['emails'] = array_map(function ($email) {
-                if (isset($email['is_default'])) {
-                    $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
-                }
-                return $email;
-            }, $data['emails']);
         }
 
         $person = $this->personRepository->update($data, $id);
@@ -1391,117 +1304,11 @@ class PersonController extends Controller
 
     /**
      * Normalize contact arrays to ensure proper data types
+     * @deprecated Use normalizeContactFields() from NormalizesContactFields trait instead
      */
     private function normalizeContactArrays($request)
     {
-        $requestData = $request->all();
-
-        // Normalize emails
-        if (isset($requestData['emails']) && is_array($requestData['emails'])) {
-            foreach ($requestData['emails'] as $index => $email) {
-                if (is_array($email)) {
-                    // Ensure label exists and normalize it
-                    if (!isset($email['label']) || empty($email['label'])) {
-                        $requestData['emails'][$index]['label'] = ContactLabel::default()->value;
-                    } else {
-                        $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
-                    }
-
-                    // Normalize is_default to boolean
-                    if (isset($email['is_default'])) {
-                        $requestData['emails'][$index]['is_default'] = $this->normalizeBoolean($email['is_default']);
-                    } else {
-                        $requestData['emails'][$index]['is_default'] = false;
-                    }
-                }
-            }
-        }
-
-        // Normalize phones
-        if (isset($requestData['phones']) && is_array($requestData['phones'])) {
-            foreach ($requestData['phones'] as $index => $phone) {
-                if (is_array($phone)) {
-                    // Ensure label exists and normalize it
-                    if (!isset($phone['label']) || empty($phone['label'])) {
-                        $requestData['phones'][$index]['label'] = ContactLabel::default()->value;
-                    } else {
-                        $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
-                    }
-
-                    // Normalize is_default to boolean
-                    if (isset($phone['is_default'])) {
-                        $requestData['phones'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
-                    } else {
-                        $requestData['phones'][$index]['is_default'] = false;
-                    }
-                }
-            }
-        }
-
-        // Normalize contact_numbers (for backwards compatibility)
-        if (isset($requestData['contact_numbers']) && is_array($requestData['contact_numbers'])) {
-            foreach ($requestData['contact_numbers'] as $index => $phone) {
-                if (is_array($phone)) {
-                    // Ensure label exists and normalize it
-                    if (!isset($phone['label']) || empty($phone['label'])) {
-                        $requestData['contact_numbers'][$index]['label'] = ContactLabel::default()->value;
-                    } else {
-                        $requestData['contact_numbers'][$index]['label'] = $this->normalizeLabel($phone['label']);
-                    }
-
-                    // Normalize is_default to boolean
-                    if (isset($phone['is_default'])) {
-                        $requestData['contact_numbers'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
-                    } else {
-                        $requestData['contact_numbers'][$index]['is_default'] = false;
-                    }
-                }
-            }
-        }
-
-        // Replace the request data
-        $request->replace($requestData);
-    }
-
-    /**
-     * Normalize various representations to boolean
-     */
-    private function normalizeBoolean($value)
-    {
-        if (is_bool($value)) {
-            return $value;
-        }
-
-        if (is_string($value)) {
-            return in_array(strtolower($value), ['true', '1', 'on', 'yes']);
-        }
-
-        if (is_numeric($value)) {
-            return (bool) $value;
-        }
-
-        return false;
-    }
-
-    /**
-     * Normalize label to lowercase and handle common variations
-     */
-    private function normalizeLabel(string $label): string
-    {
-        if (empty($label)) {
-            return ContactLabel::default()->value;
-        }
-
-        $normalizedLabel = strtolower(trim($label));
-
-        return match ($normalizedLabel) {
-            'eigen' => ContactLabel::Eigen->value,
-            'relatie' => ContactLabel::Relatie->value,
-            'anders' => ContactLabel::Anders->value,
-            // legacy values mapped to enum
-            'work', 'werk', 'home', 'thuis', 'mobile', 'mobiel' => ContactLabel::Eigen->value,
-            'other' => ContactLabel::Anders->value,
-            default => ContactLabel::default()->value,
-        };
+        // Replaced by normalizeContactFields() from trait
+        $this->normalizeContactFields($request);
     }
 }

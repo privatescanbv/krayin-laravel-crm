@@ -60,11 +60,18 @@ Route::prefix('settings')->group(function () {
         Route::get('', 'index')->name('admin.settings.clinics.index');
         Route::get('create', 'create')->name('admin.settings.clinics.create');
         Route::post('create', 'store')->name('admin.settings.clinics.store');
+        Route::get('view/{id}', 'view')->name('admin.settings.clinics.view');
         Route::get('edit/{id}', 'edit')->name('admin.settings.clinics.edit');
         Route::put('edit/{id}', 'update')->name('admin.settings.clinics.update');
         // Some datagrid actions may send DELETE to base path; support both
         Route::delete('', 'destroy')->name('admin.settings.clinics.delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.clinics.delete');
+
+        // Clinic Activities
+        Route::controller(\App\Http\Controllers\Admin\Settings\Clinic\ActivityController::class)->prefix('{id}/activities')->group(function () {
+            Route::get('', 'index')->name('admin.settings.clinics.activities.index');
+            Route::post('', 'store')->name('admin.settings.clinics.activities.store');
+        });
     });
 
     /**

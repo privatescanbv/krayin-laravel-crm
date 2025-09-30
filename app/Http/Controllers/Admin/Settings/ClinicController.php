@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\ClinicDataGrid;
+use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Repositories\ClinicRepository;
+use App\Services\ClinicValidationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,6 +13,8 @@ use Throwable;
 
 class ClinicController extends SimpleEntityController
 {
+    use NormalizesContactFields;
+
     public function __construct(protected ClinicRepository $clinicRepository)
     {
         parent::__construct($clinicRepository);
@@ -22,6 +26,29 @@ class ClinicController extends SimpleEntityController
         $this->editView = 'admin::settings.clinics.edit';
         $this->indexRoute = 'admin.settings.clinics.index';
         $this->permissionPrefix = 'settings.clinics';
+    }
+
+    public function store(Request $request): RedirectResponse|JsonResponse
+    {
+        // Normalize contact fields before validation
+        $this->normalizeContactFields($request);
+
+        return parent::store($request);
+    }
+
+    public function update(Request $request, int $id): RedirectResponse|JsonResponse
+    {
+        // Normalize contact fields before validation
+        $this->normalizeContactFields($request);
+
+        return parent::update($request, $id);
+    }
+
+    public function view(int $id)
+    {
+        $clinic = $this->clinicRepository->with(['address', 'partnerProducts', 'resources.resourceType', 'creator', 'updater'])->findOrFail($id);
+
+        return view('admin::settings.clinics.view', compact('clinic'));
     }
 
     public function destroy(Request $request, ?int $id = null): RedirectResponse|JsonResponse
@@ -59,20 +86,19 @@ class ClinicController extends SimpleEntityController
 
     protected function validateStore(Request $request): void
     {
-        $request->validate([
-            'name'   => 'required|unique:clinics,name|max:100',
-            'emails' => 'nullable|array',
-            'phones' => 'nullable|array',
-        ]);
+        $request->validate(ClinicValidationService::getCreateValidationRules());
     }
 
     protected function validateUpdate(Request $request, int $id): void
     {
-        $request->validate([
-            'name'   => 'required|max:100|unique:clinics,name,'.$id,
-            'emails' => 'nullable|array',
-            'phones' => 'nullable|array',
-        ]);
+        $request->validate(ClinicValidationService::getUpdateValidationRules($id));
+    }
+
+    protected function transformPayload(array $payload, ?int $id = null): array
+    {
+        // Contact fields are already normalized by normalizeContactFields() in store/update
+        // This method can be used for additional transformations if needed in the future
+        return $payload;
     }
 
     protected function getCreateSuccessMessage(): string

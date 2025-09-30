@@ -284,6 +284,7 @@ TABLE(Activity, "activity") {
   FOREIGN_KEY(user_id): bigint
   FOREIGN_KEY(group_id): bigint
   FOREIGN_KEY(lead_id): bigint
+  FOREIGN_KEY(clinic_id): bigint
   FOREIGN_KEY(email_id): bigint
 }
 
@@ -449,6 +450,7 @@ OrderItem "1" -- "1" PartnerProduct
 Activity "1" --> "1" User
 Activity "0..1" --> "1" Group
 Activity "0..1" --> "1" Lead
+Activity "0..1" --> "1" Clinic
 Activity "1" -- "0..*" Email
 
 WorkflowLead "1" -- "n" Activity
@@ -475,6 +477,7 @@ ProductCategory "0..1" -- "n" ProductCategory : "parent"
 Clinic "0..*" -- "n" Resource
 Clinic "0..*" -- "n" PartnerProduct
 Clinic "0..1" -- "1" Address
+Clinic "1" -- "n" Activity
 PartnerProduct "1" -- "1" Resource
 
 Resource "1" -- "1" ResourceType

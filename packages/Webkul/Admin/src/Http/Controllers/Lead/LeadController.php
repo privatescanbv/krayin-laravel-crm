@@ -6,6 +6,7 @@ use App\Enums\ContactLabel;
 use App\Enums\LostReason;
 use App\Enums\ActivityStatus;
 use App\Enums\PipelineDefaultKeys;
+use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Models\Anamnesis;
 use App\Models\Department;
 use Carbon\Carbon;
@@ -49,6 +50,8 @@ use App\Services\UserDefaultValueService;
 
 class LeadController extends Controller
 {
+    use NormalizesContactFields;
+
     /**
      * Const variable for supported types.
      */
@@ -393,24 +396,7 @@ class LeadController extends Controller
                 $data['date_of_birth'] = null;
             }
 
-            // Normaliseer is_default naar boolean voor phones
-            if (isset($data['phones']) && is_array($data['phones'])) {
-                $data['phones'] = array_map(function($phone) {
-                    if (isset($phone['is_default'])) {
-                        $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
-                    }
-                    return $phone;
-                }, $data['phones']);
-            }
-            // Normaliseer is_default naar boolean voor emails
-            if (isset($data['emails']) && is_array($data['emails'])) {
-                $data['emails'] = array_map(function($email) {
-                    if (isset($email['is_default'])) {
-                        $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
-                    }
-                    return $email;
-                }, $data['emails']);
-            }
+            // Contact normalization is now handled by normalizeContactFields() in create() method
 
             $data['status'] = 1;
 
@@ -542,6 +528,9 @@ class LeadController extends Controller
      */
     public function update(LeadForm $request, int $id): RedirectResponse|JsonResponse
     {
+        // Normalize contact fields before validation
+        $this->normalizeContactFields($request);
+
         try {
             try {
                 $this->validate($request, LeadValidationService::getWebValidationRules($request, false));
@@ -559,24 +548,7 @@ class LeadController extends Controller
                 $data['date_of_birth'] = null;
             }
 
-            // Normaliseer is_default naar boolean voor phones
-            if (isset($data['phones']) && is_array($data['phones'])) {
-                $data['phones'] = array_map(function($phone) {
-                    if (isset($phone['is_default'])) {
-                        $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
-                    }
-                    return $phone;
-                }, $data['phones']);
-            }
-            // Normaliseer is_default naar boolean voor emails
-            if (isset($data['emails']) && is_array($data['emails'])) {
-                $data['emails'] = array_map(function($email) {
-                    if (isset($email['is_default'])) {
-                        $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
-                    }
-                    return $email;
-                }, $data['emails']);
-            }
+            // Contact normalization is now handled by normalizeContactFields() in update() method
 
             if (isset($data['lead_pipeline_stage_id'])) {
                 $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
@@ -1308,100 +1280,13 @@ class LeadController extends Controller
 
     /**
      * Normalize contact arrays to ensure proper data types
+     * @deprecated Use normalizeContactFields() from NormalizesContactFields trait instead
      */
     private function normalizeContactArrays($request)
     {
-        $requestData = $request->all();
-
-        // Normalize emails
-        if (isset($requestData['emails']) && is_array($requestData['emails'])) {
-            foreach ($requestData['emails'] as $index => $email) {
-                if (is_array($email)) {
-                    // Ensure label exists and normalize it
-                    if (!isset($email['label']) || empty($email['label'])) {
-                        $requestData['emails'][$index]['label'] = ContactLabel::default()->value;
-                    } else {
-                        $requestData['emails'][$index]['label'] = $this->normalizeLabel($email['label']);
-                    }
-
-                    // Normalize is_default to boolean
-                    if (isset($email['is_default'])) {
-                        $requestData['emails'][$index]['is_default'] = $this->normalizeBoolean($email['is_default']);
-                    } else {
-                        $requestData['emails'][$index]['is_default'] = false;
-                    }
-                }
-            }
-        }
-
-        // Normalize phones
-        if (isset($requestData['phones']) && is_array($requestData['phones'])) {
-            foreach ($requestData['phones'] as $index => $phone) {
-                if (is_array($phone)) {
-                    // Ensure label exists and normalize it
-                    if (!isset($phone['label']) || empty($phone['label'])) {
-                        $requestData['phones'][$index]['label'] = ContactLabel::default()->value;
-                    } else {
-                        $requestData['phones'][$index]['label'] = $this->normalizeLabel($phone['label']);
-                    }
-
-                    // Normalize is_default to boolean
-                    if (isset($phone['is_default'])) {
-                        $requestData['phones'][$index]['is_default'] = $this->normalizeBoolean($phone['is_default']);
-                    } else {
-                        $requestData['phones'][$index]['is_default'] = false;
-                    }
-                }
-            }
-        }
-
-        // Replace the request data
-        $request->replace($requestData);
+        // Replaced by normalizeContactFields() from trait
+        $this->normalizeContactFields($request);
     }
-
-    /**
-     * Normalize various representations to boolean
-     */
-    private function normalizeBoolean($value)
-    {
-        if (is_bool($value)) {
-            return $value;
-        }
-
-        if (is_string($value)) {
-            return in_array(strtolower($value), ['true', '1', 'on', 'yes']);
-        }
-
-        if (is_numeric($value)) {
-            return (bool) $value;
-        }
-
-        return false;
-    }
-
-    /**
-     * Normalize label to lowercase and handle common variations
-     */
-    private function normalizeLabel(string $label): string
-    {
-        if (empty($label)) {
-            return ContactLabel::default()->value;
-        }
-
-        // Convert to lowercase and map common variations
-        $normalizedLabel = strtolower(trim($label));
-        return match ($normalizedLabel) {
-            'eigen' => ContactLabel::Eigen->value,
-            'relatie' => ContactLabel::Relatie->value,
-            'anders' => ContactLabel::Anders->value,
-            // legacy mappings
-            'work', 'werk', 'home', 'thuis', 'mobile', 'mobiel' => ContactLabel::Eigen->value,
-            'other' => ContactLabel::Anders->value,
-            default => ContactLabel::default()->value,
-        };
-    }
-
-    // moved contact validation to LeadValidationService
 
     /**
      * Detach person from lead.

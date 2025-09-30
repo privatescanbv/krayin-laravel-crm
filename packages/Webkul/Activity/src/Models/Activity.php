@@ -65,6 +65,7 @@ class Activity extends Model implements ActivityContract
         'assigned_at',
         'group_id',
         'lead_id',
+        'clinic_id',
         'external_id',
     ];
 
@@ -92,6 +93,14 @@ class Activity extends Model implements ActivityContract
     public function lead()
     {
         return $this->belongsTo(LeadProxy::modelClass());
+    }
+
+    /**
+     * Get the clinic that owns the activity.
+     */
+    public function clinic()
+    {
+        return $this->belongsTo(\App\Models\Clinic::class);
     }
 
     /**

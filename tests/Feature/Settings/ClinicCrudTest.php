@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ContactLabel;
 use App\Models\Clinic;
 use Webkul\Installer\Http\Middleware\CanInstall;
 
@@ -26,9 +27,9 @@ test('clinics index returns datagrid json', function () {
 
 test('can create clinic', function () {
     $payload = [
-        'name'   => 'Test Clinic',
-        'emails' => ['info@testclinic.tld'],
-        'phones' => ['+31 10 123 4567'],
+        'name'  => 'Test Clinic',
+        'email' => 'info@testclinic.tld',
+        'phone' => '+31101234567',
     ];
 
     $response = $this->postJson(route('admin.settings.clinics.store'), $payload);
@@ -37,6 +38,13 @@ test('can create clinic', function () {
     $this->assertDatabaseHas('clinics', [
         'name' => 'Test Clinic',
     ]);
+
+    // Verify emails and phones are stored correctly
+    $clinic = Clinic::where('name', 'Test Clinic')->first();
+    expect($clinic->emails)->toBeArray();
+    expect($clinic->emails[0]['value'])->toBe('info@testclinic.tld');
+    expect($clinic->phones)->toBeArray();
+    expect($clinic->phones[0]['value'])->toBe('+31101234567');
 });
 
 test('can update clinic', function () {
@@ -44,8 +52,8 @@ test('can update clinic', function () {
 
     $payload = [
         'name'    => 'Updated Clinic',
-        'emails'  => ['contact@updated.tld'],
-        'phones'  => ['+31 10 222 3333'],
+        'emails'  => [['value' => 'contact@updated.tld', 'label' => 'eigen', 'is_default' => true]],
+        'phones'  => [['value' => '+31102223333', 'label' => 'eigen', 'is_default' => true]],
         '_method' => 'put',
     ];
 
@@ -56,6 +64,45 @@ test('can update clinic', function () {
         'id'   => $clinic->id,
         'name' => 'Updated Clinic',
     ]);
+
+    // Verify emails and phones are updated correctly
+    $clinic->refresh();
+    expect($clinic->emails)->toBeArray();
+    expect($clinic->emails[0]['value'])->toBe('contact@updated.tld');
+    expect($clinic->phones)->toBeArray();
+    expect($clinic->phones[0]['value'])->toBe('+31102223333');
+});
+
+test('can update clinic with empty email/phone values filtered out', function () {
+    $clinic = Clinic::factory()->create();
+
+    $payload = [
+        'name'    => 'Clinic With Filtered Contacts',
+        'emails'  => [
+            ['value' => 'valid@email.com', 'label' => ContactLabel::Relatie->value, 'is_default' => true],
+            ['value' => '', 'label' => ContactLabel::Eigen->value, 'is_default' => false], // Should be filtered out
+        ],
+        'phones'  => [
+            ['value' => '', 'label' => ContactLabel::Eigen->value, 'is_default' => true], // Should be filtered out
+            ['value' => '+31612345678', 'label' => ContactLabel::Relatie->value, 'is_default' => false],
+        ],
+        '_method' => 'put',
+    ];
+
+    $response = $this->postJson(route('admin.settings.clinics.update', ['id' => $clinic->id]), $payload);
+    $response->assertOk();
+
+    $clinic->refresh();
+
+    // Only valid email should remain
+    expect($clinic->emails)->toBeArray();
+    expect($clinic->emails)->toHaveCount(1);
+    expect($clinic->emails[0]['value'])->toBe('valid@email.com');
+
+    // Only valid phone should remain
+    expect($clinic->phones)->toBeArray();
+    expect($clinic->phones)->toHaveCount(1);
+    expect($clinic->phones[0]['value'])->toBe('+31612345678');
 });
 
 test('can delete clinic', function () {

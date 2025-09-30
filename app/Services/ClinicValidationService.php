@@ -15,15 +15,15 @@ class ClinicValidationService
     {
         return [
             // Required fields
-            'name' => $id 
-                ? 'required|max:100|unique:clinics,name,' . $id
+            'name' => $id
+                ? 'required|max:100|unique:clinics,name,'.$id
                 : 'required|unique:clinics,name|max:100',
 
             // Contact information
             'emails'         => ['nullable', new ContactArrayValidator('email')],
             'emails.*.value' => ['nullable', new EmailValidator],
             'emails.*.label' => 'nullable|string|max:50',
-            
+
             'phones'         => ['nullable', new ContactArrayValidator('telefoon')],
             'phones.*.value' => ['nullable', new PhoneValidator],
             'phones.*.label' => 'nullable|string|max:50',
@@ -36,7 +36,7 @@ class ClinicValidationService
             'address.city'                => 'nullable|string|max:255',
             'address.state'               => 'nullable|string|max:255',
             'address.country'             => 'nullable|string|max:255',
-            
+
             // System fields
             'external_id' => 'nullable|string|max:255',
         ];

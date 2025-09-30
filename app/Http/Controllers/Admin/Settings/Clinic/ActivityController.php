@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers\Admin\Settings\Clinic;
 
+use App\Repositories\ClinicRepository;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Repositories\ActivityRepository;
+use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
-use App\Repositories\ClinicRepository;
-use Webkul\Admin\Http\Controllers\Concerns\ConcatsEmailActivities;
 
 class ActivityController extends Controller
 {
@@ -22,27 +21,25 @@ class ActivityController extends Controller
      * @return void
      */
     public function __construct(
-        protected ActivityRepository   $activityRepository,
-        protected EmailRepository      $emailRepository,
+        protected ActivityRepository $activityRepository,
+        protected EmailRepository $emailRepository,
         protected AttachmentRepository $attachmentRepository,
-        protected ClinicRepository     $clinicRepository
-    )
-    {
-    }
+        protected ClinicRepository $clinicRepository
+    ) {}
 
     /**
      * Store a newly created activity in storage.
      */
     public function store(Request $request, int $id)
     {
-        $this->validate($request, [
-            'type' => 'required|in:task,meeting,call',
-            'comment' => 'required_if:type,note',
-            'description' => 'nullable|string',
-            'user_id' => 'nullable|exists:users,id',
+        request()->validate($request, [
+            'type'          => 'required|in:task,meeting,call',
+            'comment'       => 'required_if:type,note',
+            'description'   => 'nullable|string',
+            'user_id'       => 'nullable|exists:users,id',
             'schedule_from' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
-            'schedule_to' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
-            'file' => 'required_if:type,file',
+            'schedule_to'   => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
+            'file'          => 'required_if:type,file',
         ]);
         $request['comment'] = $request->description;
 
@@ -71,21 +68,21 @@ class ActivityController extends Controller
         if ($isDuplicate) {
             return response()->json([
                 'message' => 'Duplicate activity: same title exists for this clinic and is not done.',
-                'errors' => [
-                    'title' => ['Duplicate for this clinic while open (is_done = 0).']
-                ]
+                'errors'  => [
+                    'title' => ['Duplicate for this clinic while open (is_done = 0).'],
+                ],
             ], 409);
         }
 
         $activity = $this->activityRepository->create(array_merge($data, [
-            'is_done' => $request->type == 'note' ? 1 : 0,
-            'user_id' => $data['user_id'] ?? null,
-            'group_id' => $data['group_id'] ?? null,
+            'is_done'   => $request->type == 'note' ? 1 : 0,
+            'user_id'   => $data['user_id'] ?? null,
+            'group_id'  => $data['group_id'] ?? null,
             'clinic_id' => $id,
         ]));
 
         return response()->json([
-            'data' => new ActivityResource($activity),
+            'data'    => new ActivityResource($activity),
             'message' => trans('admin::app.activities.create-success'),
         ]);
     }
@@ -93,7 +90,7 @@ class ActivityController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @param int $id
+     * @param  int  $id
      * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection
      */
     public function index($id)

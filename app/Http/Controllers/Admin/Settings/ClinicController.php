@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\ClinicDataGrid;
-use App\Repositories\ClinicRepository;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
+use App\Repositories\ClinicRepository;
 use App\Services\ClinicValidationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -14,6 +14,7 @@ use Throwable;
 class ClinicController extends SimpleEntityController
 {
     use NormalizesContactFields;
+
     public function __construct(protected ClinicRepository $clinicRepository)
     {
         parent::__construct($clinicRepository);
@@ -31,7 +32,7 @@ class ClinicController extends SimpleEntityController
     {
         // Normalize contact fields before validation
         $this->normalizeContactFields($request);
-        
+
         return parent::store($request);
     }
 
@@ -39,7 +40,7 @@ class ClinicController extends SimpleEntityController
     {
         // Normalize contact fields before validation
         $this->normalizeContactFields($request);
-        
+
         return parent::update($request, $id);
     }
 

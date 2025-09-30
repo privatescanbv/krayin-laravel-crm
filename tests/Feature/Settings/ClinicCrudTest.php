@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ContactLabel;
 use App\Models\Clinic;
 use Webkul\Installer\Http\Middleware\CanInstall;
 
@@ -37,7 +38,7 @@ test('can create clinic', function () {
     $this->assertDatabaseHas('clinics', [
         'name' => 'Test Clinic',
     ]);
-    
+
     // Verify emails and phones are stored correctly
     $clinic = Clinic::where('name', 'Test Clinic')->first();
     expect($clinic->emails)->toBeArray();
@@ -63,7 +64,7 @@ test('can update clinic', function () {
         'id'   => $clinic->id,
         'name' => 'Updated Clinic',
     ]);
-    
+
     // Verify emails and phones are updated correctly
     $clinic->refresh();
     expect($clinic->emails)->toBeArray();
@@ -78,12 +79,12 @@ test('can update clinic with empty email/phone values filtered out', function ()
     $payload = [
         'name'    => 'Clinic With Filtered Contacts',
         'emails'  => [
-            ['value' => 'valid@email.com', 'label' => 'werk', 'is_default' => true],
-            ['value' => '', 'label' => 'eigen', 'is_default' => false], // Should be filtered out
+            ['value' => 'valid@email.com', 'label' => ContactLabel::Relatie->value, 'is_default' => true],
+            ['value' => '', 'label' => ContactLabel::Eigen->value, 'is_default' => false], // Should be filtered out
         ],
         'phones'  => [
-            ['value' => '', 'label' => 'eigen', 'is_default' => true], // Should be filtered out
-            ['value' => '+31612345678', 'label' => 'mobiel', 'is_default' => false],
+            ['value' => '', 'label' => ContactLabel::Eigen->value, 'is_default' => true], // Should be filtered out
+            ['value' => '+31612345678', 'label' => ContactLabel::Relatie->value, 'is_default' => false],
         ],
         '_method' => 'put',
     ];
@@ -92,12 +93,12 @@ test('can update clinic with empty email/phone values filtered out', function ()
     $response->assertOk();
 
     $clinic->refresh();
-    
+
     // Only valid email should remain
     expect($clinic->emails)->toBeArray();
     expect($clinic->emails)->toHaveCount(1);
     expect($clinic->emails[0]['value'])->toBe('valid@email.com');
-    
+
     // Only valid phone should remain
     expect($clinic->phones)->toBeArray();
     expect($clinic->phones)->toHaveCount(1);

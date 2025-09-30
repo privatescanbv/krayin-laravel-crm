@@ -44,6 +44,16 @@ class ClinicDataGrid extends DataGrid
 
     public function prepareActions(): void
     {
+        if (bouncer()->hasPermission('settings.clinics.view')) {
+            $this->addAction([
+                'index'  => 'view',
+                'icon'   => 'icon-eye',
+                'title'  => trans('admin::app.settings.clinics.index.datagrid.view'),
+                'method' => 'GET',
+                'url'    => fn ($row) => route('admin.settings.clinics.view', $row->id),
+            ]);
+        }
+
         $this->addAction([
             'index'  => 'view-resources',
             'icon'   => 'icon-setting',

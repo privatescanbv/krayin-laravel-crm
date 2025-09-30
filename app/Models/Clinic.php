@@ -38,4 +38,9 @@ class Clinic extends Model
     {
         return $this->belongsToMany(PartnerProduct::class, 'clinic_partner_product');
     }
+
+    public function resources()
+    {
+        return $this->hasMany(Resource::class);
+    }
 }

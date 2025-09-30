@@ -1,0 +1,126 @@
+<x-admin::layouts>
+    <x-slot:title>
+        {{ $clinic->name }}
+    </x-slot>
+
+    <!-- Content -->
+    <div class="flex gap-4 max-lg:flex-wrap">
+        <!-- Left Panel -->
+        {!! view_render_event('admin.settings.clinics.view.left.before', ['clinic' => $clinic]) !!}
+
+        <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+            <!-- Clinic Information -->
+            <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
+                <!-- Breadcrumbs and Actions -->
+                <div class="flex items-center justify-between">
+                    <x-admin::breadcrumbs
+                        name="settings.clinics.view"
+                        :entity="$clinic"
+                    />
+                </div>
+
+                {!! view_render_event('admin.settings.clinics.view.title.before', ['clinic' => $clinic]) !!}
+
+                <!-- Title -->
+                <div class="mb-2 flex flex-col gap-0.5">
+                    <h3 class="break-words text-lg font-bold dark:text-white">
+                        {{ $clinic->name }}
+                    </h3>
+                </div>
+
+                {!! view_render_event('admin.settings.clinics.view.title.after', ['clinic' => $clinic]) !!}
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-2">
+                    {!! view_render_event('admin.settings.clinics.view.actions.before', ['clinic' => $clinic]) !!}
+
+                    @if (bouncer()->hasPermission('settings.clinics.edit'))
+                        <a
+                            href="{{ route('admin.settings.clinics.edit', $clinic->id) }}"
+                            class="secondary-button"
+                            title="@lang('admin::app.settings.clinics.view.edit-btn')"
+                        >
+                            <i class="icon-edit text-xs"></i>
+                            @lang('admin::app.settings.clinics.view.edit-btn')
+                        </a>
+                    @endif
+
+                    {!! view_render_event('admin.settings.clinics.view.actions.after', ['clinic' => $clinic]) !!}
+                </div>
+            </div>
+
+            <!-- Clinic Attributes -->
+            @include ('admin::settings.clinics.view.attributes')
+
+            <!-- Footer with creation and modification dates -->
+            <div class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
+                @if ($clinic->creator)
+                    <div class="flex justify-between">
+                        <span>@lang('admin::app.settings.clinics.view.created-by'):</span>
+                        <span>{{ $clinic->creator->name }}</span>
+                    </div>
+                @endif
+                <div class="flex justify-between">
+                    <span>@lang('admin::app.settings.clinics.view.created-at'):</span>
+                    <span>{{ $clinic->created_at->format('d-m-Y H:i') }}</span>
+                </div>
+                @if ($clinic->updater)
+                    <div class="flex justify-between">
+                        <span>@lang('admin::app.settings.clinics.view.updated-by'):</span>
+                        <span>{{ $clinic->updater->name }}</span>
+                    </div>
+                @endif
+                <div class="flex justify-between">
+                    <span>@lang('admin::app.settings.clinics.view.updated-at'):</span>
+                    <span>{{ $clinic->updated_at->format('d-m-Y H:i') }}</span>
+                </div>
+            </div>
+        </div>
+
+        {!! view_render_event('admin.settings.clinics.view.left.after', ['clinic' => $clinic]) !!}
+
+        {!! view_render_event('admin.settings.clinics.view.right.before', ['clinic' => $clinic]) !!}
+        
+        <!-- Right Panel -->
+        <div class="flex w-full flex-col gap-4 rounded-lg">
+            {!! view_render_event('admin.settings.clinics.view.right.content.before', ['clinic' => $clinic]) !!}
+
+            <!-- Tabs/Sections Navigation -->
+            <x-admin::activities
+                :endpoint="'#'" 
+                :types="[]"
+                :extra-types="[
+                    ['name' => 'overview', 'label' => trans('admin::app.settings.clinics.view.tabs.overview')],
+                    ['name' => 'partner-products', 'label' => trans('admin::app.settings.clinics.view.tabs.partner-products')],
+                    ['name' => 'resources', 'label' => trans('admin::app.settings.clinics.view.tabs.resources')],
+                    ['name' => 'audit-trail', 'label' => trans('admin::app.settings.clinics.view.tabs.audit-trail')],
+                ]"
+                :activeType="'overview'"
+            >
+                <!-- Overview Tab -->
+                <x-slot:overview>
+                    @include('admin::settings.clinics.view.overview')
+                </x-slot>
+
+                <!-- Partner Products Tab -->
+                <x-slot:partner-products>
+                    @include('admin::settings.clinics.view.partner-products')
+                </x-slot>
+
+                <!-- Resources Tab -->
+                <x-slot:resources>
+                    @include('admin::settings.clinics.view.resources')
+                </x-slot>
+
+                <!-- Audit Trail Tab -->
+                <x-slot:audit-trail>
+                    @include('admin::settings.clinics.view.audit-trail')
+                </x-slot>
+            </x-admin::activities>
+
+            {!! view_render_event('admin.settings.clinics.view.right.content.after', ['clinic' => $clinic]) !!}
+        </div>
+
+        {!! view_render_event('admin.settings.clinics.view.right.after', ['clinic' => $clinic]) !!}
+    </div>    
+</x-admin::layouts>

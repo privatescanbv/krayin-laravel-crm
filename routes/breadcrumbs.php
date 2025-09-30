@@ -226,6 +226,12 @@ Breadcrumbs::for('settings.clinics.edit', function (BreadcrumbTrail $trail, $cli
     $trail->push(trans('admin::app.settings.clinics.index.edit.title'), route('admin.settings.clinics.edit', $clinic->id));
 });
 
+// Settings > Clinics > View
+Breadcrumbs::for('settings.clinics.view', function (BreadcrumbTrail $trail, $clinic) {
+    $trail->parent('settings.clinics');
+    $trail->push($clinic->name, route('admin.settings.clinics.view', $clinic->id));
+});
+
 // Settings > Partner Products
 Breadcrumbs::for('settings.partner_products', function (BreadcrumbTrail $trail) {
     $trail->parent('settings');

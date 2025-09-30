@@ -24,6 +24,13 @@ class ClinicController extends SimpleEntityController
         $this->permissionPrefix = 'settings.clinics';
     }
 
+    public function view(int $id)
+    {
+        $clinic = $this->clinicRepository->with(['address', 'partnerProducts', 'resources.resourceType', 'creator', 'updater'])->findOrFail($id);
+
+        return view('admin::settings.clinics.view', compact('clinic'));
+    }
+
     public function destroy(Request $request, ?int $id = null): RedirectResponse|JsonResponse
     {
         if (! $id) {

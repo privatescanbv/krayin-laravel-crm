@@ -117,29 +117,22 @@ test('can create partner product with resources from selected clinics', function
     ];
 
     $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
-    
-    if ($response->status() !== 200) {
-        dd([
-            'status' => $response->status(),
-            'errors' => $response->json('errors'),
-            'message' => $response->json('message'),
-        ]);
-    }
-    
     $response->assertOk();
 
-    // Use the response data to get the created ID
-    $createdId = $response->json('data.id');
-    expect($createdId)->not->toBeNull();
+    // Verify using the response data directly
+    $responseData = $response->json('data');
+    expect($responseData)->not->toBeNull();
+    expect($responseData['partner_name'])->toBe($uniquePartnerName);
     
-    $partnerProduct = PartnerProduct::find($createdId);
-    expect($partnerProduct)->not->toBeNull();
-    expect($partnerProduct->partner_name)->toBe($uniquePartnerName);
+    // Double-check in database
+    $this->assertDatabaseHas('partner_products', [
+        'partner_name' => $uniquePartnerName,
+        'name' => 'CT Scan Resource Test',
+    ]);
     
-    // Verify the clinic relationship
+    // Verify relationships
+    $partnerProduct = PartnerProduct::find($responseData['id']);
     expect($partnerProduct->clinics->pluck('id')->toArray())->toContain($clinic->id);
-    
-    // Verify the resource relationship
     expect($partnerProduct->resources->pluck('id')->toArray())->toContain($resource->id);
 });
 

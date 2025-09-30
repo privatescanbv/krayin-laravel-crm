@@ -13,7 +13,8 @@ class ResourceTypeDataGrid extends DataGrid
         $queryBuilder = DB::table('resource_types')
             ->addSelect(
                 'resource_types.id',
-                'resource_types.name'
+                'resource_types.name',
+                'resource_types.description'
             );
 
         $this->addFilter('id', 'resource_types.id');
@@ -36,6 +37,15 @@ class ResourceTypeDataGrid extends DataGrid
             'index'      => 'name',
             'type'       => 'string',
             'label'      => trans('admin::app.settings.resource_types.index.datagrid.name'),
+            'searchable' => true,
+            'filterable' => true,
+            'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'description',
+            'type'       => 'string',
+            'label'      => trans('admin::app.settings.resource_types.index.datagrid.description'),
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,

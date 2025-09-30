@@ -802,10 +802,11 @@ return [
                 'delete-failed'   => 'Failed to delete resource type.',
 
                 'datagrid' => [
-                    'id'     => 'ID',
-                    'name'   => 'Name',
-                    'edit'   => 'Edit',
-                    'delete' => 'Delete',
+                    'id'          => 'ID',
+                    'name'        => 'Name',
+                    'description' => 'Description',
+                    'edit'        => 'Edit',
+                    'delete'      => 'Delete',
                 ],
 
                 'edit' => [

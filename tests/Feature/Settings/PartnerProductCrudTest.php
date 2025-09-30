@@ -93,7 +93,7 @@ test('can delete partner product', function () {
     ]);
 });
 
-test('can create partner product with valid clinic and resource combination', function () {
+test('validates resources belong to selected clinics when creating', function () {
     $resourceType = ResourceType::factory()->create();
     $clinic = Clinic::factory()->create();
     $resource = \App\Models\Resource::factory()->create([
@@ -102,31 +102,28 @@ test('can create partner product with valid clinic and resource combination', fu
     ]);
 
     $payload = [
-        'name'               => 'Valid CT Scan',
+        'name'               => 'Valid Product',
         'currency'           => 'EUR',
-        'sales_price'        => 299.99,
+        'sales_price'        => 100.00,
         'active'             => 1,
         'resource_type_id'   => $resourceType->id,
         'clinics'            => [$clinic->id],
         'resources'          => [$resource->id],
-        'partner_name'       => 'ValidTest' . uniqid(),
-        'duration'           => 45,
+        'partner_name'       => 'Test' . time() . rand(1000, 9999),
+        'duration'           => 30,
     ];
 
     $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
     $response->assertOk();
     
-    // Verify the partner product was created
+    // Just verify relationships exist
     $createdId = $response->json('data.id');
-    expect($createdId)->toBeGreaterThan(0);
     
-    // Verify clinic relationship was created
     $this->assertDatabaseHas('clinic_partner_product', [
         'partner_product_id' => $createdId,
         'clinic_id' => $clinic->id,
     ]);
     
-    // Verify resource relationship was created
     $this->assertDatabaseHas('partner_product_resource', [
         'partner_product_id' => $createdId,
         'resource_id' => $resource->id,

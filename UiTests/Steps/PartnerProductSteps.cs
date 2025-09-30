@@ -49,16 +49,16 @@ namespace UiTests.Steps
             // Wait for the form to be loaded
             await _driver.Page.WaitForSelectorAsync("input[name='name']", new() { Timeout = 5000 });
 
-            // Fill in required fields
-            await _driver.Page.FillAsync("input[name='name']", _createdProductName);
-            await _driver.Page.FillAsync("input[name='sales_price']", price);
-            await _driver.Page.FillAsync("input[name='partner_name']", $"Test Partner {Guid.NewGuid():N}");
+            // Fill in required fields with explicit waits
+            await _driver.Page.Locator("input[name='name']").FillAsync(_createdProductName);
+            await _driver.Page.Locator("input[name='sales_price']").FillAsync(price);
+            await _driver.Page.Locator("input[name='partner_name']").FillAsync($"Test Partner {Guid.NewGuid():N}");
 
-            // Select currency (should default to EUR)
-
-            // Select resource type - select the first non-empty option
+            // Select resource type - wait for it to be visible first
             var resourceTypeSelect = _driver.Page.Locator("select[name='resource_type_id']");
-            var resourceTypeOptions = await resourceTypeSelect.Locator("option[value]:not([value=''])").AllAsync();
+            await resourceTypeSelect.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5000 });
+            
+            var resourceTypeOptions = await resourceTypeSelect.Locator("option:not([value=''])").AllAsync();
             if (resourceTypeOptions.Count > 0)
             {
                 var firstResourceTypeValue = await resourceTypeOptions[0].GetAttributeAsync("value");
@@ -68,8 +68,10 @@ namespace UiTests.Steps
                 }
             }
 
-            // Select at least one clinic - select the first available option
+            // Select at least one clinic
             var clinicSelect = _driver.Page.Locator("select[name='clinics[]']");
+            await clinicSelect.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5000 });
+            
             var clinicOptions = await clinicSelect.Locator("option").AllAsync();
             if (clinicOptions.Count > 0)
             {
@@ -78,42 +80,26 @@ namespace UiTests.Steps
                 {
                     await clinicSelect.SelectOptionAsync(new[] { firstClinicValue });
                     
-                    // Trigger change event manually for the JavaScript to pick up the selection
+                    // Trigger change event
                     await clinicSelect.EvaluateAsync("(element) => element.dispatchEvent(new Event('change', { bubbles: true }))");
                     
-                    // Wait for resources to be loaded via polling mechanism (max 3 seconds)
-                    // The page uses a 500ms polling interval, so we give it time to detect changes and load resources
-                    var resourcesSelect = _driver.Page.Locator("select[name='resources[]']");
-                    
+                    // Wait for resources hint to appear (indicates resources loaded)
                     try
                     {
-                        // Wait for the hint text to appear, indicating resources have been loaded
                         var hint = _driver.Page.Locator("#resources-hint");
-                        await hint.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 3000 });
+                        await hint.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5000 });
                     }
                     catch
                     {
-                        // Fallback: just wait for resources field to be enabled
-                        try
-                        {
-                            await _driver.Page.WaitForFunctionAsync(
-                                "() => !document.querySelector('select[name=\"resources[]\"]')?.disabled",
-                                new PageWaitForFunctionOptions { Timeout = 3000 }
-                            );
-                        }
-                        catch
-                        {
-                            // If resources still don't load, clinic might have no resources - continue anyway
-                        }
+                        // Resources might not exist for this clinic, that's okay
                     }
-                    
-                    // Extra wait to ensure everything is fully loaded
-                    await _driver.Page.WaitForTimeoutAsync(1000);
                 }
             }
 
             // Check active checkbox
-            await _driver.Page.CheckAsync("input[name='active'][value='1']");
+            var activeCheckbox = _driver.Page.Locator("input[name='active'][value='1']");
+            await activeCheckbox.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5000 });
+            await activeCheckbox.CheckAsync();
         }
 
         [When("I save the partner product")]

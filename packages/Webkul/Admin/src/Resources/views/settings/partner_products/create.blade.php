@@ -242,8 +242,22 @@
     </x-admin::form>
 
     @push('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
+        <script type="module">
+            // Use event delegation to handle changes even if DOM is replaced by Vue
+            document.addEventListener('change', function(e) {
+                if (e.target.id === 'clinics-select' || e.target.matches('select[name="clinics[]"]')) {
+                    loadResourcesForClinics();
+                }
+            }, true);
+
+            // Also listen for clicks on the select (for multi-select)
+            document.addEventListener('click', function(e) {
+                if (e.target.id === 'clinics-select' || e.target.matches('select[name="clinics[]"]')) {
+                    setTimeout(loadResourcesForClinics, 100);
+                }
+            }, true);
+
+            function loadResourcesForClinics() {
                 const clinicsSelect = document.getElementById('clinics-select');
                 const resourcesSelect = document.getElementById('resources-select');
                 const resourcesHint = document.getElementById('resources-hint');
@@ -252,56 +266,55 @@
                     return;
                 }
 
-                function loadResources() {
-                    const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
-                    
-                    if (selectedClinics.length === 0) {
-                        resourcesSelect.disabled = true;
-                        resourcesSelect.innerHTML = '';
-                        resourcesHint.style.display = 'none';
-                        return;
-                    }
-
-                    const currentlySelected = Array.from(resourcesSelect.selectedOptions).map(opt => opt.value);
-                    const params = new URLSearchParams();
-                    selectedClinics.forEach(id => params.append('clinic_ids[]', id));
-
-                    fetch('{{ route("admin.settings.resources.filter_by_clinics") }}?' + params.toString())
-                        .then(response => response.json())
-                        .then(data => {
-                            resourcesSelect.innerHTML = '';
-                            resourcesHint.style.display = 'block';
-                            
-                            if (data.data && data.data.length > 0) {
-                                data.data.forEach(resource => {
-                                    const option = document.createElement('option');
-                                    option.value = resource.id;
-                                    option.textContent = resource.name;
-                                    if (currentlySelected.includes(resource.id.toString())) {
-                                        option.selected = true;
-                                    }
-                                    resourcesSelect.appendChild(option);
-                                });
-                                resourcesSelect.disabled = false;
-                            } else {
-                                const option = document.createElement('option');
-                                option.disabled = true;
-                                option.textContent = 'Geen resources beschikbaar voor deze kliniek(en)';
-                                resourcesSelect.appendChild(option);
-                                resourcesSelect.disabled = false;
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error loading resources:', error);
-                            resourcesSelect.disabled = false;
-                        });
+                const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
+                
+                if (selectedClinics.length === 0) {
+                    resourcesSelect.disabled = true;
+                    resourcesSelect.innerHTML = '';
+                    resourcesHint.style.display = 'none';
+                    return;
                 }
 
-                clinicsSelect.addEventListener('change', loadResources);
-                
-                // Load initial resources if clinics are pre-selected
-                if (clinicsSelect.selectedOptions.length > 0) {
-                    loadResources();
+                const currentlySelected = Array.from(resourcesSelect.selectedOptions).map(opt => opt.value);
+                const params = new URLSearchParams();
+                selectedClinics.forEach(id => params.append('clinic_ids[]', id));
+
+                fetch('{{ route("admin.settings.resources.filter_by_clinics") }}?' + params.toString())
+                    .then(response => response.json())
+                    .then(data => {
+                        resourcesSelect.innerHTML = '';
+                        resourcesHint.style.display = 'block';
+                        
+                        if (data.data && data.data.length > 0) {
+                            data.data.forEach(resource => {
+                                const option = document.createElement('option');
+                                option.value = resource.id;
+                                option.textContent = resource.name;
+                                if (currentlySelected.includes(resource.id.toString())) {
+                                    option.selected = true;
+                                }
+                                resourcesSelect.appendChild(option);
+                            });
+                            resourcesSelect.disabled = false;
+                        } else {
+                            const option = document.createElement('option');
+                            option.disabled = true;
+                            option.textContent = 'Geen resources beschikbaar voor deze kliniek(en)';
+                            resourcesSelect.appendChild(option);
+                            resourcesSelect.disabled = false;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading resources:', error);
+                        resourcesSelect.disabled = false;
+                    });
+            }
+
+            // Initial load on DOMContentLoaded
+            document.addEventListener('DOMContentLoaded', function() {
+                const clinicsSelect = document.getElementById('clinics-select');
+                if (clinicsSelect && clinicsSelect.selectedOptions.length > 0) {
+                    loadResourcesForClinics();
                 }
             });
         </script>

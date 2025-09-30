@@ -28,6 +28,6 @@
                     <span class="text-xs text-gray-500">—</span>
                 @endif
             </div>
-            
+
         </div>
     @endfor

@@ -38,12 +38,14 @@ class ResourceController extends SimpleEntityController
             ->orderBy('period_start')
             ->get();
 
-        $scheduleSummary = $this->buildMergedWeeklySummary($allShifts->all());
+        // Build period-aware weekly summaries expected by the Blade view
+        $periodSummaries = $this->buildPeriodAwareWeeklySummaries($allShifts->all());
 
         return view('admin::settings.resources.show', [
-            'resource'       => $resource,
-            'upcomingShifts' => collect(),
-            'scheduleSummary'=> $scheduleSummary,
+            'resource'         => $resource,
+            'upcomingShifts'   => collect(),
+            'scheduleSummary'  => $this->buildMergedWeeklySummary($allShifts->all()), // keep for potential partials
+            'periodSummaries'  => $periodSummaries,
         ]);
     }
 

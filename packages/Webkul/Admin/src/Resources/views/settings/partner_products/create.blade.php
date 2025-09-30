@@ -343,31 +343,37 @@
                 function checkForChanges() {
                     const currentKey = getSelectedClinicsKey();
                     if (currentKey !== lastSelectedClinics) {
-                        console.log('Clinic selection changed from', lastSelectedClinics, 'to', currentKey);
+                        console.log('Clinic selection changed from "' + lastSelectedClinics + '" to "' + currentKey + '"');
                         lastSelectedClinics = currentKey;
                         loadResources();
                     }
                 }
 
-                // Listen to multiple events
-                ['change', 'input', 'click', 'mouseup', 'keyup'].forEach(eventType => {
+                // Listen to multiple events with capture phase
+                ['change', 'input', 'click', 'mouseup', 'keyup', 'blur', 'focus'].forEach(eventType => {
                     clinicsSelect.addEventListener(eventType, function(e) {
                         console.log(eventType + ' event triggered on clinics select');
                         setTimeout(checkForChanges, 50);
-                    });
+                    }, true); // Use capture phase
                 });
+
+                // Add listeners to the parent form as well
+                const form = clinicsSelect.closest('form');
+                if (form) {
+                    console.log('Adding listeners to form');
+                    form.addEventListener('click', function(e) {
+                        if (e.target === clinicsSelect || e.target.closest('#clinics-select')) {
+                            console.log('Click detected on or near clinics select via form');
+                            setTimeout(checkForChanges, 100);
+                        }
+                    }, true);
+                }
                 
-                // Use MutationObserver to detect any changes to the select element
-                const observer = new MutationObserver(function(mutations) {
-                    console.log('MutationObserver detected change');
-                    setTimeout(checkForChanges, 50);
-                });
-                
-                observer.observe(clinicsSelect, {
-                    attributes: true,
-                    childList: true,
-                    subtree: true
-                });
+                // Polling as ultimate fallback - check every 500ms
+                console.log('Starting polling interval');
+                setInterval(function() {
+                    checkForChanges();
+                }, 500);
                 
                 // Also trigger on load if clinics are already selected
                 lastSelectedClinics = getSelectedClinicsKey();

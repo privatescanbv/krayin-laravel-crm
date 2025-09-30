@@ -276,6 +276,7 @@
 
                 const initialResources = JSON.parse(resourcesSelect.dataset.initialResources || '[]');
                 let lastSelectedClinics = '';
+                let isLoading = false;
 
                 function getSelectedClinicsKey() {
                     return Array.from(clinicsSelect.selectedOptions)
@@ -285,12 +286,19 @@
                 }
 
                 function loadResources(clinicIds, selectedResourceIds) {
+                    if (isLoading) {
+                        console.log('Already loading, skipping...');
+                        return;
+                    }
+
                     if (!clinicIds || clinicIds.length === 0) {
                         resourcesSelect.disabled = true;
                         resourcesSelect.innerHTML = '';
                         resourcesHint.style.display = 'none';
                         return;
                     }
+
+                    isLoading = true;
 
                     console.log('loadResources called, clinics:', clinicIds);
                     
@@ -341,13 +349,16 @@
                             console.error('Error fetching resources:', error);
                             resourcesSelect.innerHTML = '<option disabled>Fout bij laden van resources</option>';
                             resourcesSelect.disabled = false;
+                        })
+                        .finally(() => {
+                            isLoading = false;
                         });
                 }
 
                 function checkForChanges() {
                     const currentKey = getSelectedClinicsKey();
                     if (currentKey !== lastSelectedClinics) {
-                        console.log('Clinic selection changed from', lastSelectedClinics, 'to', currentKey);
+                        console.log('Clinic selection changed from "' + lastSelectedClinics + '" to "' + currentKey + '"');
                         lastSelectedClinics = currentKey;
                         
                         const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
@@ -363,27 +374,31 @@
                     loadResources(selectedClinics, initialResources);
                 }
 
-                // Listen to multiple events
-                clinicsSelect.addEventListener('change', function(e) {
-                    console.log('Change event triggered');
-                    checkForChanges();
-                });
-                
-                clinicsSelect.addEventListener('click', function(e) {
-                    console.log('Click event triggered');
-                    // Delay check to allow selection to update
-                    setTimeout(checkForChanges, 100);
-                });
-                
-                clinicsSelect.addEventListener('blur', function(e) {
-                    console.log('Blur event triggered');
-                    checkForChanges();
+                // Listen to multiple events with capture phase
+                ['change', 'input', 'click', 'mouseup', 'keyup', 'blur', 'focus'].forEach(eventType => {
+                    clinicsSelect.addEventListener(eventType, function(e) {
+                        console.log(eventType + ' event triggered on clinics select');
+                        setTimeout(checkForChanges, 50);
+                    }, true); // Use capture phase
                 });
 
-                clinicsSelect.addEventListener('input', function(e) {
-                    console.log('Input event triggered');
+                // Add listeners to the parent form as well
+                const form = clinicsSelect.closest('form');
+                if (form) {
+                    console.log('Adding listeners to form');
+                    form.addEventListener('click', function(e) {
+                        if (e.target === clinicsSelect || e.target.closest('#clinics-select')) {
+                            console.log('Click detected on or near clinics select via form');
+                            setTimeout(checkForChanges, 100);
+                        }
+                    }, true);
+                }
+                
+                // Polling as ultimate fallback - check every 500ms
+                console.log('Starting polling interval');
+                setInterval(function() {
                     checkForChanges();
-                });
+                }, 500);
             });
         </script>
     @endpush

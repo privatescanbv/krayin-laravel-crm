@@ -20,8 +20,20 @@ namespace UiTests.Support
                 Headless = true   // zet op false voor visuele debugging
             });
 
-            _context = await _browser.NewContextAsync();
+            _context = await _browser.NewContextAsync(new BrowserNewContextOptions
+            {
+                Locale = "nl-NL",
+                ExtraHTTPHeaders = new System.Collections.Generic.Dictionary<string, string>
+                {
+                    { "Accept-Language", "nl-NL,nl;q=0.9" }
+                }
+            });
+
+            // Set generous defaults for CI flakiness
+            _context.SetDefaultTimeout(30000);
+
             Page = await _context.NewPageAsync();
+            Page.SetDefaultTimeout(30000);
         }
 
         public async ValueTask DisposeAsync()

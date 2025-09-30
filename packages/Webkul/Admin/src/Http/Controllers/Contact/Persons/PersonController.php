@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 
 use App\Enums\ContactLabel;
+use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Models\Address;
 use BackedEnum;
 use Dotenv\Exception\ValidationException;
@@ -31,6 +32,7 @@ use App\Services\PersonValidationService;
 
 class PersonController extends Controller
 {
+    use NormalizesContactFields;
     private bool $enableLogging = false;
 
     /**
@@ -71,11 +73,9 @@ class PersonController extends Controller
      */
     public function store(AttributeForm $request): RedirectResponse|JsonResponse
     {
-        // Normalize contact arrays before validation
-        $this->normalizeContactArrays($request);
+        // Normalize contact fields before validation
+        $this->normalizeContactFields($request);
 
-        // Normalize contact arrays before validation
-        $this->normalizeContactArrays($request);
         $request->validate(PersonValidationService::getWebValidationRules($request));
         Event::dispatch('contacts.person.create.before');
 
@@ -103,49 +103,6 @@ class PersonController extends Controller
         // Handle empty unique_id field - convert empty string to null to avoid duplicate key errors
         if (isset($data['unique_id']) && empty($data['unique_id'])) {
             $data['unique_id'] = null;
-        }
-
-        // Filter out empty phone numbers
-        if (isset($data['phones']) && is_array($data['phones'])) {
-            $data['phones'] = array_filter($data['phones'], function ($phone) {
-                return isset($phone['value']) && !empty(trim($phone['value']));
-            });
-
-            // If no valid phones remain, set to empty array
-            if (empty($data['phones'])) {
-                $data['phones'] = [];
-            }
-        }
-
-        // Filter out empty email addresses
-        if (isset($data['emails']) && is_array($data['emails'])) {
-            $data['emails'] = array_filter($data['emails'], function ($email) {
-                return isset($email['value']) && !empty(trim($email['value']));
-            });
-
-            // If no valid emails remain, set to empty array
-            if (empty($data['emails'])) {
-                $data['emails'] = [];
-            }
-        }
-
-        // Normaliseer is_default naar boolean voor phones
-        if (isset($data['phones']) && is_array($data['phones'])) {
-            $data['phones'] = array_map(function ($phone) {
-                if (isset($phone['is_default'])) {
-                    $phone['is_default'] = $phone['is_default'] === true || $phone['is_default'] === 'on' || $phone['is_default'] === '1';
-                }
-                return $phone;
-            }, $data['phones']);
-        }
-        // Normaliseer is_default naar boolean voor emails
-        if (isset($data['emails']) && is_array($data['emails'])) {
-            $data['emails'] = array_map(function ($email) {
-                if (isset($email['is_default'])) {
-                    $email['is_default'] = $email['is_default'] === true || $email['is_default'] === 'on' || $email['is_default'] === '1';
-                }
-                return $email;
-            }, $data['emails']);
         }
 
         // Debug logging

@@ -211,7 +211,6 @@ function createTestDataForRoutes(): array
 
     // Basic entities
     $data['lead'] = Lead::factory()->create([
-        'pipeline_id' => $pipeline->id,
         'lead_pipeline_id' => $pipeline->id,
         'lead_pipeline_stage_id' => $stage->id,
     ]);

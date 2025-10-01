@@ -28,6 +28,23 @@
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <x-admin::form.control-group>
                     <x-admin::form.control-group.label class="required">
+                        @lang('admin::app.settings.resources.index.create.name')
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.control
+                        type="text"
+                        name="name"
+                        value="{{ old('name', $resource->name) }}"
+                        rules="required|min:1|max:100"
+                        :label="trans('admin::app.settings.resources.index.create.name')"
+                        :placeholder="trans('admin::app.settings.resources.index.create.name')"
+                    />
+
+                    <x-admin::form.control-group.error control-name="name" />
+                </x-admin::form.control-group>
+
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label class="required">
                         @lang('admin::app.settings.resources.index.create.resource_type')
                     </x-admin::form.control-group.label>
 
@@ -70,22 +87,7 @@
 
 
 
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.label class="required">
-                        @lang('admin::app.settings.resources.index.create.name')
-                    </x-admin::form.control-group.label>
-
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="name"
-                        value="{{ old('name', $resource->name) }}"
-                        rules="required|min:1|max:100"
-                        :label="trans('admin::app.settings.resources.index.create.name')"
-                        :placeholder="trans('admin::app.settings.resources.index.create.name')"
-                    />
-
-                    <x-admin::form.control-group.error control-name="name" />
-                </x-admin::form.control-group>
+                
             </div>
         </div>
     </x-admin::form>

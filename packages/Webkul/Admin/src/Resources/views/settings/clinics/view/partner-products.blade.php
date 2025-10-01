@@ -95,7 +95,7 @@
                 <div v-else class="py-16 text-center">
                     <img
                         class="m-auto h-[120px] w-[120px] dark:mix-blend-exclusion dark:invert"
-                        src="{{ bagisto_asset('images/empty-product.svg', 'admin') }}"
+                        src="{{ vite()->asset('images/empty-placeholders/products.svg') }}"
                         alt="@lang('admin::app.settings.clinics.view.partner-products.no-products')"
                     />
 

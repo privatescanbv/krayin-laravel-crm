@@ -171,7 +171,11 @@
 </div>
 
 <!-- Attributes -->
-{!! view_render_event('admin.products.' . ($product ? 'edit' : 'create') . '.attributes.before', ['product' => $product]) !!}
+@if($product)
+    {!! view_render_event('admin.products.edit.attributes.before', ['product' => $product]) !!}
+@else
+    {!! view_render_event('admin.products.create.attributes.before') !!}
+@endif
 
 <x-admin::attributes
     :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
@@ -181,7 +185,11 @@
     :entity="$product"
 />
 
-{!! view_render_event('admin.products.' . ($product ? 'edit' : 'create') . '.attributes.after', ['product' => $product]) !!}
+@if($product)
+    {!! view_render_event('admin.products.edit.attributes.after', ['product' => $product]) !!}
+@else
+    {!! view_render_event('admin.products.create.attributes.after') !!}
+@endif
 
 <!-- Partner Products Selection -->
 <x-admin::partner-product-lookup

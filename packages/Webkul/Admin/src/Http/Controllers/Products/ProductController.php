@@ -45,7 +45,8 @@ class ProductController extends Controller
     public function create(): View
     {
         return view('admin::products.create', [
-            'currencies' => Currency::options(),
+            'currencies'      => Currency::options(),
+            'defaultCurrency' => Currency::default()->value,
         ]);
     }
 
@@ -58,7 +59,8 @@ class ProductController extends Controller
     {
         Event::dispatch('product.create.before');
 
-        $product = $this->productRepository->create($request->all());
+        $data = $this->cleanProductData($request->all());
+        $product = $this->productRepository->create($data);
 
         // Sync partner products if provided
         if ($request->has('partner_products')) {
@@ -102,7 +104,8 @@ class ProductController extends Controller
     {
         Event::dispatch('product.update.before', $id);
 
-        $product = $this->productRepository->update($request->all(), $id);
+        $data = $this->cleanProductData($request->all());
+        $product = $this->productRepository->update($data, $id);
 
         // Sync partner products if provided
         if ($request->has('partner_products')) {
@@ -186,5 +189,23 @@ class ProductController extends Controller
         return new JsonResponse([
             'message' => trans('admin::app.products.index.delete-success'),
         ]);
+    }
+
+    /**
+     * Clean product data before saving.
+     * Converts empty strings to null for foreign key fields.
+     */
+    protected function cleanProductData(array $data): array
+    {
+        // Convert empty strings to null for foreign key fields
+        $foreignKeyFields = ['product_group_id', 'product_type_id', 'resource_type_id'];
+        
+        foreach ($foreignKeyFields as $field) {
+            if (array_key_exists($field, $data) && $data[$field] === '') {
+                $data[$field] = null;
+            }
+        }
+
+        return $data;
     }
 }

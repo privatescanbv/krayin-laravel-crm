@@ -11,24 +11,41 @@
         <x-slot:content class="mt-4 !px-0 !pb-0">
             {!! view_render_event('admin.products.view.attributes.view.before', ['product' => $product]) !!}
     
+            <!-- Product Details -->
+            <div class="grid grid-cols-2 gap-2 text-sm mb-4">
+                <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.products.view.currency')</div>
+                <div class="dark:text-white">{{ $product->currency }}</div>
+
+                <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.products.view.price')</div>
+                <div class="dark:text-white">€ {{ number_format($product->price ?? 0, 2, ',', '.') }}</div>
+
+                <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.products.view.costs')</div>
+                <div class="dark:text-white">€ {{ number_format($product->costs ?? 0, 2, ',', '.') }}</div>
+
+                <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.products.view.product_type')</div>
+                <div class="dark:text-white">{{ optional($product->productType)->name ?? '-' }}</div>
+
+                <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.products.view.resource_type')</div>
+                <div class="dark:text-white">{{ optional($product->resourceType)->name ?? '-' }}</div>
+
+                <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.products.view.product_group')</div>
+                <div class="dark:text-white">{{ optional($product->productGroup)->name ?? '-' }}</div>
+            </div>
+
+            @if($product->description)
+                <div class="mb-4">
+                    <div class="text-gray-600 dark:text-gray-400 mb-1">@lang('admin::app.products.view.description')</div>
+                    <div class="dark:text-white">{{ $product->description }}</div>
+                </div>
+            @endif
+
             <!-- Attributes Listing -->
             <div>
-                <!-- Default Attributes --> 
-                <x-admin::attributes.view
-                    :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                        'entity_type' => 'products',
-                        ['code', 'IN', ['price', 'status']]
-                    ])->sortBy('sort_order')"
-                    :entity="$product"
-                    :url="route('admin.products.update', $product->id)"   
-                    :allow-edit="true"
-                />
-        
                 <!-- Custom Attributes --> 
                 <x-admin::attributes.view
                     :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
                         'entity_type' => 'products',
-                        ['code', 'NOTIN', ['price', 'status']]
+                        ['code', 'NOTIN', ['price', 'costs', 'product_type_id', 'resource_type_id', 'product_group_id', 'status']]
                     ])->sortBy('sort_order')"
                     :entity="$product"
                     :url="route('admin.products.update', $product->id)"   

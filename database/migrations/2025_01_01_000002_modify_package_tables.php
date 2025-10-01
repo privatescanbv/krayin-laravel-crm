@@ -150,17 +150,12 @@ return new class extends Migration
 
         // Modify Emails Table
         Schema::table('emails', function (Blueprint $table) {
-            if (Schema::hasColumn('emails', 'message_id')) {
-                $indexExists = DB::select("
-                    SELECT COUNT(*) as count 
-                    FROM information_schema.statistics 
-                    WHERE table_schema = DATABASE() 
-                    AND table_name = 'emails' 
-                    AND index_name = 'emails_message_id_unique'
-                ");
-                
-                if (isset($indexExists[0]) && $indexExists[0]->count > 0) {
+            // Try to drop unique index if it exists (SQLite compatibility)
+            if (Schema::hasColumn('emails', 'message_id') && DB::getDriverName() !== 'sqlite') {
+                try {
                     $table->dropUnique(['message_id']);
+                } catch (\Exception $e) {
+                    // Index doesn't exist, that's fine
                 }
             }
             
@@ -177,17 +172,14 @@ return new class extends Migration
 
         // Modify Products Table - Drop columns (SQLite compatibility)
         if (Schema::hasColumn('products', 'sku')) {
-            Schema::table('products', function (Blueprint $table) use (&$indexExists) {
-                $indexExists = DB::select("
-                    SELECT COUNT(*) as count 
-                    FROM information_schema.statistics 
-                    WHERE table_schema = DATABASE() 
-                    AND table_name = 'products' 
-                    AND index_name = 'products_sku_unique'
-                ");
-                
-                if (isset($indexExists[0]) && $indexExists[0]->count > 0) {
-                    $table->dropUnique(['sku']);
+            Schema::table('products', function (Blueprint $table) {
+                // Try to drop unique index if it exists (SQLite compatibility)
+                if (DB::getDriverName() !== 'sqlite') {
+                    try {
+                        $table->dropUnique(['sku']);
+                    } catch (\Exception $e) {
+                        // Index doesn't exist, that's fine
+                    }
                 }
                 $table->dropColumn('sku');
             });

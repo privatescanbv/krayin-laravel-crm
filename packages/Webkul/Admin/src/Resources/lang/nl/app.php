@@ -684,6 +684,8 @@ return [
             'price' => 'Prijs',
             'product-group' => 'Productgroep',
             'save-btn' => 'Product opslaan',
+            'partner_products' => 'Partnerproducten',
+            'search_partner_products' => 'Zoek partnerproducten...',
         ],
         'edit' => [
             'title' => 'Product bewerken',
@@ -691,6 +693,8 @@ return [
             'price' => 'Prijs',
             'product-group' => 'Productgroep',
             'save-btn' => 'Product opslaan',
+            'partner_products' => 'Partnerproducten',
+            'search_partner_products' => 'Zoek partnerproducten...',
         ],
         'view' => [
             'sku' => 'SKU',
@@ -699,6 +703,7 @@ return [
             'files' => 'Bestanden',
             'inventories' => 'Voorraad',
             'change-logs' => 'Wijzigingslog',
+            'partner_products' => 'Partnerproducten',
             'attributes' => [
                 'about-product' => 'Over product',
             ],

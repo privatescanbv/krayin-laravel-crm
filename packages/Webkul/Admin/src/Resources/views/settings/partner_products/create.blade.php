@@ -306,5 +306,66 @@
             </div>
         </div>
     </x-admin::form>
+
+    @push('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const purchasePriceFields = [
+                    'purchase_price_misc',
+                    'purchase_price_doctor',
+                    'purchase_price_cardiology',
+                    'purchase_price_clinic',
+                    'purchase_price_royal_doctors',
+                    'purchase_price_radiology'
+                ];
+
+                function parsePrice(value) {
+                    if (!value) return 0;
+                    // Remove spaces and convert comma to dot
+                    value = value.toString().replace(/\s+/g, '').replace(',', '.');
+                    // Remove thousand separators (dots before comma position)
+                    const parts = value.split('.');
+                    if (parts.length > 2) {
+                        value = parts.slice(0, -1).join('') + '.' + parts[parts.length - 1];
+                    }
+                    return parseFloat(value) || 0;
+                }
+
+                function formatPrice(value) {
+                    return new Intl.NumberFormat('nl-NL', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }).format(value);
+                }
+
+                function calculateTotal() {
+                    let total = 0;
+                    purchasePriceFields.forEach(fieldName => {
+                        const input = document.querySelector(`input[name="${fieldName}"]`);
+                        if (input) {
+                            total += parsePrice(input.value);
+                        }
+                    });
+
+                    const totalElement = document.getElementById('purchase-price-total');
+                    if (totalElement) {
+                        totalElement.textContent = '€ ' + formatPrice(total);
+                    }
+                }
+
+                // Add event listeners to all purchase price fields
+                purchasePriceFields.forEach(fieldName => {
+                    const input = document.querySelector(`input[name="${fieldName}"]`);
+                    if (input) {
+                        input.addEventListener('input', calculateTotal);
+                        input.addEventListener('change', calculateTotal);
+                    }
+                });
+
+                // Calculate initial total
+                calculateTotal();
+            });
+        </script>
+    @endpush
 </x-admin::layouts>
 

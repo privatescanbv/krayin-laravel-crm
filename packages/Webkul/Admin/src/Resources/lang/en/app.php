@@ -1866,6 +1866,8 @@ return [
                     'currency'      => 'Currency',
                     'sales_price'   => 'Sales Price',
                     'active'        => 'Active',
+                    'duration'      => 'Duration',
+                    'minutes'       => 'min',
                     'view'          => 'View',
                     'edit'          => 'Edit',
                     'delete'        => 'Delete',

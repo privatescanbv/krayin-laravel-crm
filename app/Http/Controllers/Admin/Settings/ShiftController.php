@@ -159,6 +159,11 @@ class ShiftController extends Controller
         // Normalize boolean checkbox
         $validated['available'] = $request->boolean('available', true);
 
+        // Convert empty period_end to null (oneindig geldig)
+        if (empty($validated['period_end'])) {
+            $validated['period_end'] = null;
+        }
+
         return $validated;
     }
 }

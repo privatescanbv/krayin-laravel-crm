@@ -273,6 +273,13 @@ function createTestDataForRoutes(): array
             'contact_name' => 'Test Contact',
             'contact_emails' => json_encode([['value' => 'test@warehouse.com', 'label' => 'work']]),
             'contact_numbers' => json_encode([['value' => '0612345678', 'label' => 'work']]),
+            'contact_address' => json_encode([
+                'address' => 'Test Street 1',
+                'city' => 'Test City',
+                'state' => 'Test State',
+                'country' => 'NL',
+                'postcode' => '1234AB',
+            ]),
         ]
     );
     $data['location'] = Location::firstOrCreate(

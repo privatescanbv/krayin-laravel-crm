@@ -296,7 +296,15 @@ function createTestDataForRoutes(): array
     // Web form - create directly
     $data['web_form'] = WebForm::firstOrCreate(
         ['title' => 'Test Form'],
-        ['form_id' => 'test-form-' . uniqid()]
+        [
+            'form_id' => 'test-form-' . uniqid(),
+            'submit_button_label' => 'Submit',
+            'submit_success_action' => 'message',
+            'submit_success_content' => 'Thank you for your submission',
+            'background_color' => '#FFFFFF',
+            'form_submit_button_color' => '#0000FF',
+            'attribute_form_text_color' => '#000000',
+        ]
     );
 
     // Workflow - create directly  

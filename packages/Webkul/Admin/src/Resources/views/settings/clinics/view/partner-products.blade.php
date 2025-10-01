@@ -72,18 +72,14 @@
                                 <!-- Actions -->
                                 <td class="px-4 py-3" v-if="available.actions.length">
                                     <div class="flex gap-2.5">
-                                        <div v-for="action in available.actions">
-                                            <a
-                                                :href="action.url.replace(':id', record.id || record.lead_id)"
-                                                v-if="action.index === 'view'"
-                                            >
-                                                <span
-                                                    :class="action.icon"
-                                                    class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 max-sm:place-self-center"
-                                                    :title="action.title"
-                                                ></span>
-                                            </a>
-                                        </div>
+                                        <span
+                                            class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
+                                            :class="action.icon"
+                                            :title="action.title"
+                                            v-for="action in record.actions"
+                                            @click="performAction(action)"
+                                        >
+                                        </span>
                                     </div>
                                 </td>
                             </tr>

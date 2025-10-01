@@ -194,19 +194,29 @@ it('tests all admin GET routes return valid HTTP status codes', function () {
             echo "    ├─ Tested URL:  {$failed['url']}\n";
             echo "    ├─ HTTP Status: {$failed['status']}\n";
             if (isset($failed['message'])) {
-                echo "    └─ Error:\n";
+                echo "    ├─ Error:\n";
                 // Shorten error message to first line for readability
                 $errorLines = explode("\n", $failed['message']);
-                echo "       " . trim($errorLines[0]) . "\n";
+                echo "    │  " . trim($errorLines[0]) . "\n";
                 if (count($errorLines) > 1) {
-                    echo "       (zie Laravel log voor volledige error)\n";
+                    echo "    │  (zie Laravel log voor volledige stack trace)\n";
                 }
+            }
+            if (isset($failed['file'])) {
+                echo "    └─ Location: {$failed['file']}\n";
             } else {
-                echo "    └─ (Geen error message beschikbaar)\n";
+                echo "    └─ (Open deze URL in browser voor details)\n";
             }
             echo "\n";
         }
         echo "================================================================================\n\n";
+        
+        // Add helpful instructions
+        echo "💡 HOE TE DEBUGGEN:\n";
+        echo "   1. Kopieer een URL hierboven\n";
+        echo "   2. Open in browser: http://localhost/[URL]\n";
+        echo "   3. Check Laravel debugbar of storage/logs/laravel.log\n";
+        echo "   4. Fix de controller/view waar de error optreedt\n\n";
     }
 
     // Report some successful tests
@@ -227,9 +237,20 @@ it('tests all admin GET routes return valid HTTP status codes', function () {
         echo sprintf("ℹ️  Routes with redirects (302): %d\n", count($redirectTests));
     }
 
-    // Show skipped routes if needed for debugging
-    if (count($skippedRoutes) > 5) {
-        echo sprintf("\nℹ️  %d routes were skipped (search, lookup, download, etc.)\n", count($skippedRoutes));
+    // Show skipped routes summary
+    if (count($skippedRoutes) > 0) {
+        echo sprintf("\nℹ️  %d routes were skipped (search, lookup, download, debug, etc.)\n", count($skippedRoutes));
+        
+        // Show first few skipped routes as examples
+        if (count($skippedRoutes) > 0) {
+            echo "   Examples:\n";
+            foreach (array_slice($skippedRoutes, 0, 5) as $skipped) {
+                echo sprintf("   • %s (reason: %s)\n", $skipped['name'], $skipped['reason']);
+            }
+            if (count($skippedRoutes) > 5) {
+                echo sprintf("   ... and %d more\n", count($skippedRoutes) - 5);
+            }
+        }
     }
 
     echo "\n";

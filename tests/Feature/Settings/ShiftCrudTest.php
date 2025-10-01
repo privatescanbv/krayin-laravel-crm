@@ -104,7 +104,7 @@ it('can create and edit shift with null period_end for infinite duration', funct
     // Verify shift was created with null period_end
     $shift = app(ShiftRepository::class)->forResource($resource->id)->first();
     expect($shift)->not()->toBeNull();
-    expect($shift->period_start)->toBe($payload['period_start']);
+    expect($shift->period_start->toDateString())->toBe($payload['period_start']);
     expect($shift->period_end)->toBeNull(); // Moet null zijn voor oneindig
     expect($shift->notes)->toBe('Standaard werkweek, oneindig geldig');
 
@@ -159,8 +159,8 @@ it('can create shift with period_end for finite duration', function () {
     // Verify shift was created with period_end
     $shift = app(ShiftRepository::class)->forResource($resource->id)->first();
     expect($shift)->not()->toBeNull();
-    expect($shift->period_start)->toBe($startDate);
-    expect($shift->period_end)->toBe($endDate);
+    expect($shift->period_start->toDateString())->toBe($startDate);
+    expect($shift->period_end->toDateString())->toBe($endDate);
 
     // Edit form should load correctly
     $editResp = get(route('admin.settings.resources.shifts.edit', [$resource->id, $shift->id]));

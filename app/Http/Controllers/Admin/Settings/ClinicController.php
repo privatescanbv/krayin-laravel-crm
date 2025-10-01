@@ -46,7 +46,7 @@ class ClinicController extends SimpleEntityController
 
     public function view(int $id)
     {
-        $clinic = $this->clinicRepository->with(['address', 'partnerProducts', 'resources.resourceType', 'creator', 'updater'])->findOrFail($id);
+        $clinic = $this->clinicRepository->with(['address', 'resources.resourceType', 'creator', 'updater'])->findOrFail($id);
 
         return view('admin::settings.clinics.view', ['clinic' => $clinic]);
     }

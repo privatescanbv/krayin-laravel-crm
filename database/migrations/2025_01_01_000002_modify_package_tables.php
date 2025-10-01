@@ -215,96 +215,12 @@ return new class extends Migration
 
     /**
      * Reverse the migrations.
+     * 
+     * Note: This migration is designed for fresh installs only.
+     * Rollback is not supported as we always use migrate:fresh.
      */
     public function down(): void
     {
-        // Revert changes (in reverse order)
-        
-        Schema::table('products', function (Blueprint $table) {
-            if (Schema::hasColumn('products', 'resource_type_id')) {
-                $table->dropForeign(['resource_type_id']);
-                $table->dropColumn('resource_type_id');
-            }
-            if (Schema::hasColumn('products', 'product_type_id')) {
-                $table->dropForeign(['product_type_id']);
-                $table->dropColumn('product_type_id');
-            }
-            $table->integer('quantity')->default(0);
-            $table->string('sku')->nullable();
-            if (Schema::hasColumn('products', 'currency')) {
-                $table->dropColumn('currency');
-            }
-        });
-
-        Schema::table('lead_pipelines', function (Blueprint $table) {
-            $table->dropColumn('type');
-        });
-
-        Schema::table('emails', function (Blueprint $table) {
-            if (Schema::hasColumn('emails', 'activity_id')) {
-                $table->dropForeign(['activity_id']);
-                $table->dropColumn('activity_id');
-            }
-        });
-
-        Schema::table('activities', function (Blueprint $table) {
-            $table->dropColumn('status');
-            if (Schema::hasColumn('activities', 'clinic_id')) {
-                $table->dropForeign(['clinic_id']);
-                $table->dropColumn('clinic_id');
-            }
-            if (Schema::hasColumn('activities', 'lead_id')) {
-                $table->dropForeign(['lead_id']);
-                $table->dropColumn('lead_id');
-            }
-            if (Schema::hasColumn('activities', 'group_id')) {
-                $table->dropForeign(['group_id']);
-                $table->dropColumn('group_id');
-            }
-            $table->dropColumn('assigned_at');
-            $table->dropIndex(['external_id']);
-            $table->dropColumn('external_id');
-        });
-
-        Schema::table('leads', function (Blueprint $table) {
-            $table->dropForeign(['created_by']);
-            $table->dropForeign(['updated_by']);
-            $table->dropColumn(['created_by', 'updated_by']);
-            $table->dropColumn('has_diagnosis_form');
-            $table->dropColumn('mri_status');
-            $table->dropColumn('combine_order');
-            $table->dropForeign(['organization_id']);
-            $table->dropColumn('organization_id');
-            $table->dropForeign(['department_id']);
-            $table->dropColumn('department_id');
-            $table->dropForeign(['lead_channel_id']);
-            $table->dropColumn('lead_channel_id');
-            $table->dropColumn(['phones', 'emails', 'gender', 'date_of_birth', 'initials', 'married_name_prefix', 'married_name', 'lastname_prefix', 'last_name', 'first_name', 'salutation']);
-            $table->dropIndex(['external_id']);
-            $table->dropColumn('external_id');
-        });
-
-        Schema::table('persons', function (Blueprint $table) {
-            $table->dropForeign(['created_by']);
-            $table->dropForeign(['updated_by']);
-            $table->dropColumn(['created_by', 'updated_by']);
-            $table->dropColumn('phones');
-            $table->dropColumn(['gender', 'date_of_birth', 'initials', 'married_name_prefix', 'married_name', 'lastname_prefix', 'last_name', 'first_name', 'salutation']);
-            $table->dropIndex(['external_id']);
-            $table->dropColumn('external_id');
-        });
-
-        Schema::table('groups', function (Blueprint $table) {
-            if (DB::getDriverName() !== 'sqlite') {
-                $table->dropForeign(['department_id']);
-            }
-            $table->dropColumn('department_id');
-        });
-
-        Schema::table('users', function (Blueprint $table) {
-            AuditTrailMigrationHelper::dropAuditTrailColumnsIfExists($table, 'users');
-            $table->dropIndex(['external_id']);
-            $table->dropColumn('external_id');
-        });
+        // Not implemented - this migration is for fresh installs only
     }
 };

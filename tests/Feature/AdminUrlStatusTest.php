@@ -269,7 +269,11 @@ function createTestDataForRoutes(): array
     // Warehouse - create if doesn't exist
     $data['warehouse'] = Warehouse::firstOrCreate(
         ['name' => 'Test Warehouse'],
-        ['contact_name' => 'Test Contact']
+        [
+            'contact_name' => 'Test Contact',
+            'contact_emails' => json_encode([['value' => 'test@warehouse.com', 'label' => 'work']]),
+            'contact_numbers' => json_encode([['value' => '0612345678', 'label' => 'work']]),
+        ]
     );
     $data['location'] = Location::firstOrCreate(
         ['name' => 'Test Location'],

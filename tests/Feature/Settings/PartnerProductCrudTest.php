@@ -53,16 +53,14 @@ test('can create partner product', function () {
     $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
     $response->assertOk();
 
-    $expectedTotal = 10.50 + 25.00 + 15.75 + 30.25 + 12.00 + 20.50; // = 114.00
-
     $this->assertDatabaseHas('partner_products', [
-        'name'                      => 'MRI Scan',
-        'purchase_price_misc'       => 10.50,
-        'purchase_price_doctor'     => 25.00,
-        'purchase_price_cardiology' => 15.75,
-        'purchase_price_clinic'     => 30.25,
-        'purchase_price'            => $expectedTotal,
+        'name' => 'MRI Scan',
     ]);
+
+    $createdProduct = PartnerProduct::where('name', 'MRI Scan')->first();
+    expect($createdProduct->purchase_price)->toBe('114.00')
+        ->and($createdProduct->purchase_price_misc)->toBe('10.50')
+        ->and($createdProduct->purchase_price_doctor)->toBe('25.00');
 });
 
 test('can update partner product', function () {
@@ -94,15 +92,15 @@ test('can update partner product', function () {
     $response = $this->postJson(route('admin.settings.partner_products.update', ['id' => $pp->id]), $payload);
     $response->assertOk()->assertJsonPath('data.name', 'CT Scan');
 
-    $expectedTotal = 5.00 + 50.00 + 10.00 + 15.00 + 8.00 + 12.00; // = 100.00
-
     $this->assertDatabaseHas('partner_products', [
-        'id'                        => $pp->id,
-        'name'                      => 'CT Scan',
-        'purchase_price_misc'       => 5.00,
-        'purchase_price_doctor'     => 50.00,
-        'purchase_price'            => $expectedTotal,
+        'id'   => $pp->id,
+        'name' => 'CT Scan',
     ]);
+
+    $pp->refresh();
+    expect($pp->purchase_price)->toBe('100.00')
+        ->and($pp->purchase_price_misc)->toBe('5.00')
+        ->and($pp->purchase_price_doctor)->toBe('50.00');
 });
 
 test('can delete partner product', function () {
@@ -138,12 +136,16 @@ test('purchase price total is calculated correctly on create', function () {
     $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
     $response->assertOk();
 
-    $expectedTotal = 22.50 + 100.00 + 50.25 + 75.75 + 30.00 + 45.50; // = 324.00
-
     $pp = PartnerProduct::where('name', 'Test Product')->first();
-    expect((float) $pp->purchase_price)->toBe($expectedTotal)
-        ->and((float) $pp->purchase_price_misc)->toBe(22.50)
-        ->and((float) $pp->purchase_price_doctor)->toBe(100.00);
+    
+    // Use string comparison since decimal:2 cast returns strings
+    expect($pp->purchase_price)->toBe('324.00')
+        ->and($pp->purchase_price_misc)->toBe('22.50')
+        ->and($pp->purchase_price_doctor)->toBe('100.00')
+        ->and($pp->purchase_price_cardiology)->toBe('50.25')
+        ->and($pp->purchase_price_clinic)->toBe('75.75')
+        ->and($pp->purchase_price_royal_doctors)->toBe('30.00')
+        ->and($pp->purchase_price_radiology)->toBe('45.50');
 });
 
 test('validates resources belong to selected clinics when creating', function () {

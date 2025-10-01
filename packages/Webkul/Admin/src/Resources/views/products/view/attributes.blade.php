@@ -23,13 +23,18 @@
                 <div class="dark:text-white">€ {{ number_format($product->costs ?? 0, 2, ',', '.') }}</div>
 
                 <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.products.view.product_type')</div>
-                <div class="dark:text-white">{{ optional($product->productType)->name ?? '-' }}</div>
+                <div class="dark:text-white">{{ $product->productType?->name ?? '-' }}</div>
 
                 <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.products.view.resource_type')</div>
-                <div class="dark:text-white">{{ optional($product->resourceType)->name ?? '-' }}</div>
+                <div class="dark:text-white">{{ $product->resourceType?->name ?? '-' }}</div>
 
                 <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.products.view.product_group')</div>
-                <div class="dark:text-white">{{ optional($product->productGroup)->name ?? '-' }}</div>
+                <div class="dark:text-white">
+                    @php
+                        $productGroup = $product->product_group_id ? app('Webkul\Product\Repositories\ProductGroupRepository')->find($product->product_group_id) : null;
+                    @endphp
+                    {{ $productGroup?->name ?? '-' }}
+                </div>
             </div>
 
             @if($product->description)

@@ -94,9 +94,10 @@ class ProductController extends Controller
         $product = $this->productRepository->findOrFail($id);
 
         $currencies = Currency::options();
+        $defaultCurrency = Currency::default()->value;
 
         // Inventory/warehouse logic removed for this deployment
-        return view('admin::products.edit', compact('product', 'currencies'));
+        return view('admin::products.edit', compact('product', 'currencies', 'defaultCurrency'));
     }
 
     /**

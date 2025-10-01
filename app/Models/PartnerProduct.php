@@ -33,12 +33,12 @@ class PartnerProduct extends BaseProduct
     ];
 
     protected $casts = [
-        'sales_price'      => 'decimal:2',
-        'active'           => 'boolean',
-        'resource_type_id' => 'integer',
-        'created_by'       => 'integer',
-        'updated_by'       => 'integer',
-        'duration'         => 'integer',
+        'sales_price'                  => 'decimal:2',
+        'active'                       => 'boolean',
+        'resource_type_id'             => 'integer',
+        'created_by'                   => 'integer',
+        'updated_by'                   => 'integer',
+        'duration'                     => 'integer',
         'purchase_price_misc'          => 'decimal:2',
         'purchase_price_doctor'        => 'decimal:2',
         'purchase_price_cardiology'    => 'decimal:2',

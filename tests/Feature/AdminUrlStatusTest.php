@@ -174,93 +174,82 @@ it('tests all admin GET routes return valid HTTP status codes', function () {
         }
     }
 
-    // Output summary
-    echo "\n\n";
-    echo "================================================================================\n";
-    echo "                        ADMIN URL STATUS TEST RESULTS\n";
-    echo "================================================================================\n";
-    echo sprintf("Total routes tested: %d\n", count($testedRoutes));
-    echo sprintf("Skipped routes: %d\n", count($skippedRoutes));
-    echo sprintf("Failed routes: %d\n", count($failedRoutes));
-    echo sprintf("Success rate: %.1f%%\n", count($testedRoutes) > 0 ? (count($testedRoutes) - count($failedRoutes)) / count($testedRoutes) * 100 : 0);
-    echo "================================================================================\n\n";
+    // Build detailed error message for PHPStorm visibility
+    $errorReport = "\n\n";
+    $errorReport .= "================================================================================\n";
+    $errorReport .= "                        ADMIN URL STATUS TEST RESULTS\n";
+    $errorReport .= "================================================================================\n";
+    $errorReport .= sprintf("Total routes tested: %d\n", count($testedRoutes));
+    $errorReport .= sprintf("Skipped routes: %d\n", count($skippedRoutes));
+    $errorReport .= sprintf("Failed routes: %d\n", count($failedRoutes));
+    $errorReport .= sprintf("Success rate: %.1f%%\n", count($testedRoutes) > 0 ? (count($testedRoutes) - count($failedRoutes)) / count($testedRoutes) * 100 : 0);
+    $errorReport .= "================================================================================\n\n";
 
     if (count($failedRoutes) > 0) {
-        echo "🚨 FAILED ROUTES (returning 500 or exceptions):\n";
-        echo "================================================================================\n\n";
+        $errorReport .= "🚨 FAILED ROUTES (returning 500 or exceptions):\n";
+        $errorReport .= "================================================================================\n\n";
         foreach ($failedRoutes as $index => $failed) {
-            echo sprintf("[%d] ❌ Route: %s\n", $index + 1, $failed['name']);
-            echo "    ├─ URI Pattern: {$failed['uri']}\n";
-            echo "    ├─ Tested URL:  {$failed['url']}\n";
-            echo "    ├─ HTTP Status: {$failed['status']}\n";
+            $errorReport .= sprintf("[%d] ❌ Route: %s\n", $index + 1, $failed['name']);
+            $errorReport .= "    ├─ URI Pattern: {$failed['uri']}\n";
+            $errorReport .= "    ├─ Tested URL:  {$failed['url']}\n";
+            $errorReport .= "    ├─ HTTP Status: {$failed['status']}\n";
             if (isset($failed['message'])) {
-                echo "    ├─ Error:\n";
-                // Shorten error message to first line for readability
+                $errorReport .= "    ├─ Error:\n";
+                // Show error message (truncate if too long)
                 $errorLines = explode("\n", $failed['message']);
-                echo "    │  " . trim($errorLines[0]) . "\n";
-                if (count($errorLines) > 1) {
-                    echo "    │  (zie Laravel log voor volledige stack trace)\n";
+                $errorMsg = trim($errorLines[0]);
+                if (strlen($errorMsg) > 150) {
+                    $errorMsg = substr($errorMsg, 0, 147) . '...';
                 }
+                $errorReport .= "    │  " . $errorMsg . "\n";
             }
             if (isset($failed['file'])) {
-                echo "    └─ Location: {$failed['file']}\n";
+                $errorReport .= "    └─ Location: {$failed['file']}\n";
             } else {
-                echo "    └─ (Open deze URL in browser voor details)\n";
+                $errorReport .= "    └─ (Open URL in browser voor details)\n";
             }
-            echo "\n";
+            $errorReport .= "\n";
         }
-        echo "================================================================================\n\n";
-        
-        // Add helpful instructions
-        echo "💡 HOE TE DEBUGGEN:\n";
-        echo "   1. Kopieer een URL hierboven\n";
-        echo "   2. Open in browser: http://localhost/[URL]\n";
-        echo "   3. Check Laravel debugbar of storage/logs/laravel.log\n";
-        echo "   4. Fix de controller/view waar de error optreedt\n\n";
+        $errorReport .= "================================================================================\n\n";
+        $errorReport .= "💡 DEBUG INSTRUCTIES:\n";
+        $errorReport .= "   1. Kopieer een Tested URL hierboven\n";
+        $errorReport .= "   2. Plak in browser (met /admin prefix)\n";
+        $errorReport .= "   3. Check Laravel debugbar/logs voor details\n";
+        $errorReport .= "   4. Fix de controller/view\n\n";
     }
 
-    // Report some successful tests
+    // Add successful samples to report
     $successfulTests = array_filter($testedRoutes, fn ($r) => $r['status'] === 200);
     if (count($successfulTests) > 0) {
-        echo "✅ SUCCESVOLLE ROUTES (sample):\n";
-        echo "--------------------------------------------------------------------------------\n";
-        foreach (array_slice($successfulTests, 0, 15) as $success) {
-            echo "   ✓ {$success['name']}\n";
-            echo "     → {$success['url']}\n";
+        $errorReport .= "✅ SUCCESVOLLE ROUTES (sample - eerste 10):\n";
+        $errorReport .= "--------------------------------------------------------------------------------\n";
+        foreach (array_slice($successfulTests, 0, 10) as $success) {
+            $errorReport .= "   ✓ {$success['name']}\n";
         }
-        echo "\n";
+        $errorReport .= "\n";
     }
 
-    // Show redirects (302)
+    // Add summary info
     $redirectTests = array_filter($testedRoutes, fn ($r) => $r['status'] === 302);
     if (count($redirectTests) > 0) {
-        echo sprintf("ℹ️  Routes with redirects (302): %d\n", count($redirectTests));
+        $errorReport .= sprintf("ℹ️  Routes with redirects (302): %d\n", count($redirectTests));
     }
-
-    // Show skipped routes summary
+    
     if (count($skippedRoutes) > 0) {
-        echo sprintf("\nℹ️  %d routes were skipped (search, lookup, download, debug, etc.)\n", count($skippedRoutes));
-        
-        // Show first few skipped routes as examples
-        if (count($skippedRoutes) > 0) {
-            echo "   Examples:\n";
-            foreach (array_slice($skippedRoutes, 0, 5) as $skipped) {
-                echo sprintf("   • %s (reason: %s)\n", $skipped['name'], $skipped['reason']);
-            }
-            if (count($skippedRoutes) > 5) {
-                echo sprintf("   ... and %d more\n", count($skippedRoutes) - 5);
-            }
-        }
+        $errorReport .= sprintf("ℹ️  Skipped routes: %d (search, lookup, download, debug routes)\n", count($skippedRoutes));
     }
 
-    echo "\n";
+    $errorReport .= "\n";
+
+    // Echo for terminal users AND use in expect message for PHPStorm users
+    echo $errorReport;
 
     // The test should fail if any route returns 500
-    expect(count($failedRoutes))
-        ->toBe(0, sprintf(
-            "%d admin route(s) returned 500 errors. Deze routes zijn broken en moeten gefixed worden!",
-            count($failedRoutes)
-        ));
+    if (count($failedRoutes) > 0) {
+        expect(count($failedRoutes))->toBe(0, $errorReport);
+    } else {
+        expect(count($failedRoutes))->toBe(0);
+    }
 });
 
 /**

@@ -234,7 +234,7 @@ Breadcrumbs::for('settings.clinics.view', function (BreadcrumbTrail $trail, $cli
 
 // Settings > Partner Products
 Breadcrumbs::for('settings.partner_products', function (BreadcrumbTrail $trail) {
-    $trail->parent('settings');
+    $trail->parent('settings.clinics');
     $trail->push(trans('admin::app.layouts.partner_products'), route('admin.settings.partner_products.index'));
 });
 
@@ -533,7 +533,7 @@ Breadcrumbs::for('settings.locations.edit', function (BreadcrumbTrail $trail, $l
 
 // Settings > Resources
 Breadcrumbs::for('settings.resources', function (BreadcrumbTrail $trail) {
-    $trail->parent('settings');
+    $trail->parent('settings.clinics');
     $trail->push(trans('admin::app.layouts.resources'), route('admin.settings.resources.index'));
 });
 

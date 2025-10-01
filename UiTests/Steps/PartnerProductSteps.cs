@@ -50,7 +50,19 @@ namespace UiTests.Steps
 
             // Fill in required fields with explicit waits
             await _driver.Page.Locator("input[name='name']").FillAsync(_createdProductName);
-            await _driver.Page.Locator("input[name='sales_price']").FillAsync(price);
+            // Normalize price for CI (comma decimal)
+            var ciPrice = price.Replace('.', ',');
+            var priceInput = _driver.Page.Locator("input[name='sales_price']");
+            await priceInput.FillAsync("");
+            await priceInput.FillAsync(ciPrice);
+            await priceInput.BlurAsync();
+
+            // Ensure currency = EUR if select exists
+            var currencySelect = _driver.Page.Locator("select[name='currency']");
+            if (await currencySelect.CountAsync() > 0)
+            {
+                await currencySelect.SelectOptionAsync(new[] { "EUR" });
+            }
 
             // Select resource type - wait for it to be visible first
             var resourceTypeSelect = _driver.Page.Locator("select[name='resource_type_id']");

@@ -1,0 +1,310 @@
+<?php
+
+use App\Helpers\AuditTrailMigrationHelper;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Webkul\Core\Models\CoreConfig;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations - Modify Webkul package tables.
+     */
+    public function up(): void
+    {
+        // Modify Users Table
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('external_id', 36)->nullable()->after('id')->index();
+            AuditTrailMigrationHelper::addAuditTrailColumnsIfNotExists($table, 'users');
+        });
+
+        // Modify Groups Table
+        Schema::table('groups', function (Blueprint $table) {
+            $table->unsignedBigInteger('department_id')->nullable();
+            $table->foreign('department_id')->references('id')->on('departments')->onDelete('set null');
+        });
+
+        // Link groups to departments if needed (data migration would be here, but skipped for fresh install)
+
+        // Modify Organizations Table
+        Schema::table('organizations', function (Blueprint $table) {
+            if (Schema::hasColumn('organizations', 'address')) {
+                $table->dropColumn('address');
+            }
+            AuditTrailMigrationHelper::addAuditTrailColumnsIfNotExists($table, 'organizations');
+        });
+
+        // Remove address attribute from organizations (data migration, skipped for fresh install)
+        $addressAttribute = DB::table('attributes')->where([
+            'code'        => 'address',
+            'entity_type' => 'organizations',
+        ])->first();
+
+        if ($addressAttribute) {
+            DB::table('attribute_values')->where([
+                'attribute_id' => $addressAttribute->id,
+                'entity_type'  => 'organizations',
+            ])->delete();
+
+            DB::table('attributes')->where('id', $addressAttribute->id)->delete();
+        }
+
+        // Modify Persons Table
+        Schema::table('persons', function (Blueprint $table) {
+            $table->string('name')->nullable()->change();
+            $table->string('emails')->nullable()->change();
+            $table->string('external_id')->nullable()->after('name');
+            $table->index('external_id');
+            $table->string('salutation')->nullable()->after('external_id');
+            $table->string('first_name')->nullable()->after('salutation');
+            $table->string('last_name')->nullable()->after('first_name');
+            $table->string('lastname_prefix')->nullable()->after('last_name');
+            $table->string('married_name')->nullable()->after('lastname_prefix');
+            $table->string('married_name_prefix')->nullable()->after('married_name');
+            $table->string('initials')->nullable()->after('married_name_prefix');
+            $table->date('date_of_birth')->nullable()->after('initials');
+            $table->string('gender')->nullable()->after('date_of_birth');
+            $table->json('phones')->nullable()->after('emails');
+            $table->unsignedInteger('created_by')->nullable();
+            $table->unsignedInteger('updated_by')->nullable();
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
+            
+            if (Schema::hasColumn('persons', 'contact_numbers')) {
+                $table->dropColumn('contact_numbers');
+            }
+        });
+
+        // Make person attributes not unique
+        if (Schema::hasTable('attributes') && Schema::hasColumn('attributes', 'is_unique') && Schema::hasColumn('attributes', 'entity_type')) {
+            DB::table('attributes')
+                ->where('entity_type', 'persons')
+                ->update(['is_unique' => 0]);
+        }
+
+        // Modify Leads Table
+        Schema::table('leads', function (Blueprint $table) {
+            if (Schema::hasColumn('leads', 'title')) {
+                $table->dropColumn('title');
+            }
+            
+            $table->string('external_id')->nullable()->after('id');
+            $table->index('external_id');
+            $table->string('salutation')->nullable();
+            $table->string('first_name')->nullable();
+            $table->string('last_name')->nullable();
+            $table->string('lastname_prefix')->nullable();
+            $table->string('married_name')->nullable();
+            $table->string('married_name_prefix')->nullable();
+            $table->string('initials')->nullable();
+            $table->date('date_of_birth')->nullable();
+            $table->string('gender')->nullable();
+            $table->json('emails')->nullable();
+            $table->json('phones')->nullable();
+            
+            $table->unsignedBigInteger('lead_channel_id')->nullable();
+            $table->foreign('lead_channel_id')->references('id')->on('lead_channels')->nullOnDelete();
+            
+            $table->unsignedBigInteger('department_id')->nullable();
+            $table->foreign('department_id')->references('id')->on('departments')->nullOnDelete();
+            
+            $table->integer('organization_id')->unsigned()->nullable();
+            $table->foreign('organization_id')->references('id')->on('organizations')->onDelete('set null');
+            
+            $table->boolean('combine_order')->default(true);
+            $table->string('mri_status')->nullable();
+            $table->boolean('has_diagnosis_form')->default(false);
+            
+            $table->unsignedInteger('created_by')->nullable();
+            $table->unsignedInteger('updated_by')->nullable();
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
+            
+            if (Schema::hasColumn('leads', 'lead_value')) {
+                $table->dropColumn('lead_value');
+            }
+        });
+
+        // Modify Activities Table
+        Schema::table('activities', function (Blueprint $table) {
+            $table->string('external_id', 36)->nullable()->after('id')->index();
+            $table->timestamp('assigned_at')->nullable()->after('user_id');
+            $table->unsignedInteger('group_id')->nullable();
+            $table->foreign('group_id')->references('id')->on('groups')->onDelete('set null');
+            $table->unsignedInteger('lead_id')->nullable();
+            $table->foreign('lead_id')->references('id')->on('leads')->onDelete('set null');
+            $table->unsignedBigInteger('clinic_id')->nullable();
+            $table->foreign('clinic_id')->references('id')->on('clinics')->onDelete('set null');
+            $table->string('status')->default('active')->after('type');
+        });
+
+        // Drop lead_activities pivot table if exists
+        Schema::dropIfExists('lead_activities');
+
+        // Modify Emails Table
+        Schema::table('emails', function (Blueprint $table) {
+            if (Schema::hasColumn('emails', 'message_id')) {
+                $indexExists = DB::select("
+                    SELECT COUNT(*) as count 
+                    FROM information_schema.statistics 
+                    WHERE table_schema = DATABASE() 
+                    AND table_name = 'emails' 
+                    AND index_name = 'emails_message_id_unique'
+                ");
+                
+                if (isset($indexExists[0]) && $indexExists[0]->count > 0) {
+                    $table->dropUnique(['message_id']);
+                }
+            }
+            
+            if (! Schema::hasColumn('emails', 'activity_id')) {
+                $table->unsignedInteger('activity_id')->nullable()->after('lead_id');
+                $table->foreign('activity_id')->references('id')->on('activities')->onDelete('set null');
+            }
+        });
+
+        // Modify Lead Pipelines Table
+        Schema::table('lead_pipelines', function (Blueprint $table) {
+            $table->enum('type', ['lead', 'workflow'])->default('lead')->after('is_default');
+        });
+
+        // Modify Products Table
+        Schema::table('products', function (Blueprint $table) {
+            if (! Schema::hasColumn('products', 'currency')) {
+                $table->string('currency', 3)->default('EUR')->after('name');
+            }
+            if (Schema::hasColumn('products', 'sku')) {
+                $indexExists = DB::select("
+                    SELECT COUNT(*) as count 
+                    FROM information_schema.statistics 
+                    WHERE table_schema = DATABASE() 
+                    AND table_name = 'products' 
+                    AND index_name = 'products_sku_unique'
+                ");
+                
+                if (isset($indexExists[0]) && $indexExists[0]->count > 0) {
+                    $table->dropUnique(['sku']);
+                }
+                $table->dropColumn('sku');
+            }
+            if (Schema::hasColumn('products', 'quantity')) {
+                $table->dropColumn('quantity');
+            }
+            if (! Schema::hasColumn('products', 'resource_type_id')) {
+                $table->unsignedBigInteger('resource_type_id')->nullable()->after('price');
+                $table->unsignedBigInteger('product_type_id')->nullable()->after('resource_type_id');
+                $table->foreign('resource_type_id')->references('id')->on('resource_types')->onDelete('set null');
+                $table->foreign('product_type_id')->references('id')->on('product_types')->onDelete('set null');
+            }
+        });
+
+        // Set default locale to Dutch
+        $config = CoreConfig::where('code', 'general.general.locale_settings.locale')->first();
+
+        if (! $config) {
+            CoreConfig::create([
+                'code'  => 'general.general.locale_settings.locale',
+                'value' => 'nl',
+            ]);
+        } else {
+            $config->update(['value' => 'nl']);
+        }
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        // Revert changes (in reverse order)
+        
+        Schema::table('products', function (Blueprint $table) {
+            if (Schema::hasColumn('products', 'resource_type_id')) {
+                $table->dropForeign(['resource_type_id']);
+                $table->dropColumn('resource_type_id');
+            }
+            if (Schema::hasColumn('products', 'product_type_id')) {
+                $table->dropForeign(['product_type_id']);
+                $table->dropColumn('product_type_id');
+            }
+            $table->integer('quantity')->default(0);
+            $table->string('sku')->nullable();
+            if (Schema::hasColumn('products', 'currency')) {
+                $table->dropColumn('currency');
+            }
+        });
+
+        Schema::table('lead_pipelines', function (Blueprint $table) {
+            $table->dropColumn('type');
+        });
+
+        Schema::table('emails', function (Blueprint $table) {
+            if (Schema::hasColumn('emails', 'activity_id')) {
+                $table->dropForeign(['activity_id']);
+                $table->dropColumn('activity_id');
+            }
+        });
+
+        Schema::table('activities', function (Blueprint $table) {
+            $table->dropColumn('status');
+            if (Schema::hasColumn('activities', 'clinic_id')) {
+                $table->dropForeign(['clinic_id']);
+                $table->dropColumn('clinic_id');
+            }
+            if (Schema::hasColumn('activities', 'lead_id')) {
+                $table->dropForeign(['lead_id']);
+                $table->dropColumn('lead_id');
+            }
+            if (Schema::hasColumn('activities', 'group_id')) {
+                $table->dropForeign(['group_id']);
+                $table->dropColumn('group_id');
+            }
+            $table->dropColumn('assigned_at');
+            $table->dropIndex(['external_id']);
+            $table->dropColumn('external_id');
+        });
+
+        Schema::table('leads', function (Blueprint $table) {
+            $table->dropForeign(['created_by']);
+            $table->dropForeign(['updated_by']);
+            $table->dropColumn(['created_by', 'updated_by']);
+            $table->dropColumn('has_diagnosis_form');
+            $table->dropColumn('mri_status');
+            $table->dropColumn('combine_order');
+            $table->dropForeign(['organization_id']);
+            $table->dropColumn('organization_id');
+            $table->dropForeign(['department_id']);
+            $table->dropColumn('department_id');
+            $table->dropForeign(['lead_channel_id']);
+            $table->dropColumn('lead_channel_id');
+            $table->dropColumn(['phones', 'emails', 'gender', 'date_of_birth', 'initials', 'married_name_prefix', 'married_name', 'lastname_prefix', 'last_name', 'first_name', 'salutation']);
+            $table->dropIndex(['external_id']);
+            $table->dropColumn('external_id');
+        });
+
+        Schema::table('persons', function (Blueprint $table) {
+            $table->dropForeign(['created_by']);
+            $table->dropForeign(['updated_by']);
+            $table->dropColumn(['created_by', 'updated_by']);
+            $table->dropColumn('phones');
+            $table->dropColumn(['gender', 'date_of_birth', 'initials', 'married_name_prefix', 'married_name', 'lastname_prefix', 'last_name', 'first_name', 'salutation']);
+            $table->dropIndex(['external_id']);
+            $table->dropColumn('external_id');
+        });
+
+        Schema::table('groups', function (Blueprint $table) {
+            if (DB::getDriverName() !== 'sqlite') {
+                $table->dropForeign(['department_id']);
+            }
+            $table->dropColumn('department_id');
+        });
+
+        Schema::table('users', function (Blueprint $table) {
+            AuditTrailMigrationHelper::dropAuditTrailColumnsIfExists($table, 'users');
+            $table->dropIndex(['external_id']);
+            $table->dropColumn('external_id');
+        });
+    }
+};

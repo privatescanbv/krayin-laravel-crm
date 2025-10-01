@@ -1844,7 +1844,11 @@ return [
                     'clinic' => 'Kliniek',
                 ],
                 'create' => [
-                    'clinic' => 'Kliniek',
+                    'title'        => 'Resource aanmaken',
+                    'clinic'       => 'Kliniek',
+                    'resource_type'=> 'Resourcetype',
+                    'name'         => 'Naam',
+                    'save-btn'     => 'Opslaan',
                 ],
             ],
             'show' => [
@@ -2774,6 +2778,11 @@ return [
             'save-btn' => 'Productgroep opslaan',
             'parent' => 'Bovenliggende groep',
             'select-parent' => 'Bovenliggende groep selecteren',
+        ],
+        'view' => [
+            'inventory' => [
+                'disabled' => 'Voorraadbeheer is uitgeschakeld in deze omgeving.',
+            ],
         ],
     ],
 

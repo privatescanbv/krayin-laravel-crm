@@ -61,16 +61,6 @@ class ProductGroupController extends Controller
     }
 
     /**
-     * Show the form for viewing the specified resource.
-     */
-    public function view(int $id): View
-    {
-        $productGroup = $this->productGroupRepository->findOrFail($id);
-
-        return view('admin::products.groups.view', compact('productGroup'));
-    }
-
-    /**
      * Show the form for editing the specified resource.
      */
     public function edit(int $id): View

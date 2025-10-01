@@ -502,7 +502,7 @@ return [
     ], [
         'key'   => 'settings.automation.events.edit',
         'name'  => 'admin::app.acl.edit',
-        'route' => ['admin.settings.marketing.events.edit', 'admin.settings.marketing.events.update'],
+        'route' => ['admin.settings.marketing.events.update'],
         'sort'  => 2,
     ], [
         'key'   => 'settings.automation.events.delete',

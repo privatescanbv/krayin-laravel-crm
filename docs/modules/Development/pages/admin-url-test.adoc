@@ -1,0 +1,228 @@
+= Admin URL Status Test
+
+== Overzicht
+
+De `AdminUrlStatusTest` is een geautomatiseerde test die **alle admin GET routes** dynamisch inleest uit de Laravel routing configuratie en controleert of ze geen 500 Internal Server Errors opleveren.
+
+== Functionaliteit
+
+=== Wat doet de test?
+
+* **Dynamische route discovery**: Leest automatisch alle admin routes in via `Route::getRoutes()`
+* **HTTP status code verificatie**: Controleert dat routes geen 500 errors retourneren
+* **Parameter resolution**: Lost automatisch route parameters op met testdata
+* **Toekomstbestendig**: Nieuwe routes worden automatisch meegenomen in de test
+
+=== Wat test het NIET?
+
+* **Inhoud van pagina's**: Alleen HTTP status codes, geen validatie van content
+* **POST/PUT/DELETE routes**: Alleen GET requests
+* **Business logic**: Alleen dat de pagina laadt, niet of de functionaliteit correct werkt
+
+== Gebruik
+
+=== Test uitvoeren
+
+[source,bash]
+----
+# Met Sail (development)
+./vendor/bin/sail artisan test --filter=AdminUrlStatusTest
+
+# Zonder Sail (als PHP lokaal geïnstalleerd is)
+php artisan test --filter=AdminUrlStatusTest
+
+# In CI/CD pipeline
+php artisan test
+----
+
+=== Test output
+
+De test geeft een gedetailleerde samenvatting:
+
+[source]
+----
+========================================
+Admin URL Status Test Summary
+========================================
+Total routes tested: 87
+Skipped routes: 23
+Failed routes: 0
+
+Sample of SUCCESSFUL routes (HTTP 200):
+----------------------------------------
+✅ admin.dashboard.index -> http://localhost/admin/dashboard
+✅ admin.leads.index -> http://localhost/admin/leads
+✅ admin.settings.clinics.index -> http://localhost/admin/settings/clinics
+...
+----
+
+Bij failures zie je:
+
+[source]
+----
+FAILED ROUTES (returning 500 or exceptions):
+----------------------------------------
+❌ admin.settings.clinics.edit
+   URI: admin/settings/clinics/edit/{id}
+   URL: http://localhost/admin/settings/clinics/edit/1
+   Status: 500
+   Error: Call to undefined method...
+----
+
+== Hoe werkt het?
+
+=== 1. Route Discovery
+
+De test leest alle geregistreerde routes in:
+
+[source,php]
+----
+$allRoutes = Route::getRoutes();
+$adminPrefix = config('app.admin_path', 'admin');
+
+foreach ($allRoutes as $route) {
+    if (in_array('GET', $route->methods()) && 
+        str_starts_with($route->uri(), $adminPrefix)) {
+        // Test deze route
+    }
+}
+----
+
+=== 2. Parameter Resolution
+
+Routes met parameters worden automatisch opgevuld met testdata:
+
+[source,php]
+----
+// Route: /admin/settings/clinics/edit/{id}
+// Wordt: /admin/settings/clinics/edit/1
+
+// Route: /admin/leads/view/{id}  
+// Wordt: /admin/leads/view/2
+----
+
+Test data wordt aangemaakt in `createTestDataForRoutes()`:
+
+* Leads, Persons, Organizations
+* Products, Quotes, Activities  
+* Clinics, Resources, Partner Products
+* Settings (Groups, Roles, Users, etc.)
+
+=== 3. Filters
+
+Bepaalde routes worden overgeslagen:
+
+* **Documentation routes** (bestandsdownloads)
+* **File upload endpoints** (require POST data)
+* **Search/lookup endpoints** (require query parameters)
+* **Mass action routes** (require selection)
+* **Debug routes**
+
+Zie `shouldSkipRoute()` voor de volledige lijst.
+
+== Nieuw scherm toevoegen
+
+Wanneer je een nieuw CRUD-scherm toevoegt, wordt dit **automatisch** meegenomen in de test!
+
+.Voorbeeld: Nieuw scherm "Treatments"
+[source,php]
+----
+// In routes/web.php of Admin route files
+Route::controller(TreatmentController::class)->prefix('treatments')->group(function () {
+    Route::get('', 'index')->name('admin.treatments.index');
+    Route::get('create', 'create')->name('admin.treatments.create');
+    Route::get('edit/{id}', 'edit')->name('admin.treatments.edit');
+});
+----
+
+De test zal automatisch:
+
+1. `admin.treatments.index` testen
+2. `admin.treatments.create` testen  
+3. `admin.treatments.edit` testen met een test-ID
+
+=== Testdata toevoegen (optioneel)
+
+Als je route speciale parameters of complexe data nodig heeft, voeg testdata toe in `createTestDataForRoutes()`:
+
+[source,php]
+----
+function createTestDataForRoutes(): array
+{
+    $data = [];
+    
+    // ... bestaande data ...
+    
+    // Nieuwe entiteit toevoegen
+    if (class_exists(Treatment::class)) {
+        $data['treatment'] = Treatment::factory()->create();
+    }
+    
+    return $data;
+}
+----
+
+En parameter mapping in `resolveParameterValue()`:
+
+[source,php]
+----
+$mappings = [
+    'id' => 'lead',
+    'treatment_id' => 'treatment',  // Nieuwe mapping
+    'treatmentId' => 'treatment',   // Alternatieve naam
+    // ... rest ...
+];
+----
+
+== Troubleshooting
+
+=== Test faalt met "Could not resolve parameters"
+
+**Probleem**: Route heeft parameter die niet gevuld kan worden.
+
+**Oplossing**: Voeg parameter mapping toe in `resolveParameterValue()`.
+
+=== Test faalt met 500 error op nieuwe route
+
+**Probleem**: Er is een bug in de controller of view.
+
+**Oplossing**: Fix de bug - dat is precies waar deze test voor is! 🎯
+
+=== Test neemt te lang
+
+**Probleem**: Veel routes, test duurt lang.
+
+**Oplossing**: 
+* Test alleen specifieke routes: `--filter="admin.settings"`
+* Optimize testdata aanmaak (cache seeders)
+
+=== Route wordt niet getest terwijl het zou moeten
+
+**Probleem**: Route wordt overgeslagen door filter.
+
+**Oplossing**: Check `shouldSkipRoute()` en pas filter aan indien nodig.
+
+== Best Practices
+
+. **Run voor elke PR**: Voorkom dat broken admin screens in production komen
+. **Check output**: Niet alleen PASS/FAIL, maar ook de details
+. **Fix 500 errors immediately**: Dit zijn echte bugs die users zien
+. **Update testdata**: Wanneer je nieuwe entiteiten toevoegt
+. **Document skipped routes**: Als je bewust routes overslaat, leg uit waarom
+
+== Integratie met CI/CD
+
+Voeg toe aan `.github/workflows/ci.yml`:
+
+[source,yaml]
+----
+- name: Run Admin URL Status Test
+  run: php artisan test --filter=AdminUrlStatusTest
+----
+
+== Vragen?
+
+Zie ook:
+
+* link:dev.html[Development Workflow]
+* link:../Testing/pages/testing-strategy.html[Testing Strategy]

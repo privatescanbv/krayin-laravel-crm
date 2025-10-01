@@ -187,23 +187,23 @@ Route::prefix('settings')->group(function () {
     });
 
     /**
-     * WebForms Routes.
+     * WebForms Routes. - DISABLED FOR NOW
      */
-    Route::controller(WebFormController::class)->prefix('web-forms')->group(function () {
-        Route::group(['middleware' => ['user']], function () {
-            Route::get('', 'index')->name('admin.settings.web_forms.index');
-
-            Route::get('create', 'create')->name('admin.settings.web_forms.create');
-
-            Route::post('create', 'store')->name('admin.settings.web_forms.store');
-
-            Route::get('edit/{id?}', 'edit')->name('admin.settings.web_forms.edit');
-
-            Route::put('edit/{id}', 'update')->name('admin.settings.web_forms.update');
-
-            Route::delete('{id}', 'destroy')->name('admin.settings.web_forms.delete');
-        });
-    });
+//    Route::controller(WebFormController::class)->prefix('web-forms')->group(function () {
+//        Route::group(['middleware' => ['user']], function () {
+//            Route::get('', 'index')->name('admin.settings.web_forms.index');
+//
+//            Route::get('create', 'create')->name('admin.settings.web_forms.create');
+//
+//            Route::post('create', 'store')->name('admin.settings.web_forms.store');
+//
+//            Route::get('edit/{id?}', 'edit')->name('admin.settings.web_forms.edit');
+//
+//            Route::put('edit/{id}', 'update')->name('admin.settings.web_forms.update');
+//
+//            Route::delete('{id}', 'destroy')->name('admin.settings.web_forms.delete');
+//        });
+//    });
 
     /**
      * Workflows Routes.
@@ -343,37 +343,37 @@ Route::prefix('settings')->group(function () {
     });
 
     /**
-     * Warehouses Routes.
+     * Warehouses Routes. DISABLED FOR NOW
      */
-    Route::controller(WarehouseController::class)->prefix('warehouses')->group(function () {
-        Route::put('edit/{id}', 'update')->name('admin.settings.warehouses.update');
-
-        Route::get('', 'index')->name('admin.settings.warehouses.index');
-
-        Route::get('search', 'search')->name('admin.settings.warehouses.search');
-
-        Route::get('{id}/products', 'products')->name('admin.settings.warehouses.products.index');
-
-        Route::get('create', 'create')->name('admin.settings.warehouses.create');
-
-        Route::post('create', 'store')->name('admin.settings.warehouses.store');
-
-        Route::get('view/{id}', 'view')->name('admin.settings.warehouses.view');
-
-        Route::get('edit/{id?}', 'edit')->name('admin.settings.warehouses.edit');
-
-        Route::delete('{id}', 'destroy')->name('admin.settings.warehouses.delete');
-
-        Route::controller(WarehouseTagController::class)->prefix('{id}/tags')->group(function () {
-            Route::post('', 'attach')->name('admin.settings.warehouses.tags.attach');
-
-            Route::delete('', 'detach')->name('admin.settings.warehouses.tags.detach');
-        });
-
-        Route::controller(ActivityController::class)->prefix('{id}/activities')->group(function () {
-            Route::get('', 'index')->name('admin.settings.warehouse.activities.index');
-        });
-    });
+//    Route::controller(WarehouseController::class)->prefix('warehouses')->group(function () {
+//        Route::put('edit/{id}', 'update')->name('admin.settings.warehouses.update');
+//
+//        Route::get('', 'index')->name('admin.settings.warehouses.index');
+//
+//        Route::get('search', 'search')->name('admin.settings.warehouses.search');
+//
+//        Route::get('{id}/products', 'products')->name('admin.settings.warehouses.products.index');
+//
+//        Route::get('create', 'create')->name('admin.settings.warehouses.create');
+//
+//        Route::post('create', 'store')->name('admin.settings.warehouses.store');
+//
+//        Route::get('view/{id}', 'view')->name('admin.settings.warehouses.view');
+//
+//        Route::get('edit/{id?}', 'edit')->name('admin.settings.warehouses.edit');
+//
+//        Route::delete('{id}', 'destroy')->name('admin.settings.warehouses.delete');
+//
+//        Route::controller(WarehouseTagController::class)->prefix('{id}/tags')->group(function () {
+//            Route::post('', 'attach')->name('admin.settings.warehouses.tags.attach');
+//
+//            Route::delete('', 'detach')->name('admin.settings.warehouses.tags.detach');
+//        });
+//
+//        Route::controller(ActivityController::class)->prefix('{id}/activities')->group(function () {
+//            Route::get('', 'index')->name('admin.settings.warehouse.activities.index');
+//        });
+//    });
 
     /**
      * Warehouses Location Routes.
@@ -414,9 +414,7 @@ Route::prefix('settings')->group(function () {
 
             Route::post('create', 'store')->name('admin.settings.marketing.events.store');
 
-            Route::get('edit/{id?}', 'edit')->name('admin.settings.marketing.events.edit');
-
-            Route::put('edit/{id}', 'update')->name('admin.settings.marketing.events.update');
+            Route::put('{id}', 'update')->name('admin.settings.marketing.events.update');
 
             Route::delete('{id}', 'destroy')->name('admin.settings.marketing.events.delete');
 

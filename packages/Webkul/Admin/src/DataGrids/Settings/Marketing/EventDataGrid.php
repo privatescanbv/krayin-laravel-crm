@@ -72,23 +72,15 @@ class EventDataGrid extends DataGrid
      */
     public function prepareActions()
     {
-        if (bouncer()->hasPermission('settings.automation.events.edit')) {
-            $this->addAction([
-                'index'  => 'edit',
-                'icon'   => 'icon-edit',
-                'title'  => trans('admin::app.settings.marketing.events.index.datagrid.edit'),
-                'method' => 'GET',
-                'url'    => fn ($row) => route('admin.settings.marketing.events.edit', $row->id),
-            ]);
-        }
+        // Note: Edit is handled via modal on the index page, no separate edit route needed
 
         if (bouncer()->hasPermission('settings.automation.events.delete')) {
             $this->addAction([
-                'index'          => 'delete',
-                'icon'           => 'icon-delete',
-                'title'          => trans('admin::app.settings.marketing.events.index.datagrid.delete'),
-                'method'         => 'DELETE',
-                'url'            => fn ($row) => route('admin.settings.marketing.events.delete', $row->id),
+                'index'  => 'delete',
+                'icon'   => 'icon-delete',
+                'title'  => trans('admin::app.settings.marketing.events.index.datagrid.delete'),
+                'method' => 'DELETE',
+                'url'    => fn ($row) => route('admin.settings.marketing.events.delete', $row->id),
             ]);
         }
     }

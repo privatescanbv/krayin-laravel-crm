@@ -53,10 +53,21 @@
                 </x-admin::form.control-group>
                 @include('admin::settings.shifts.partials.period', [
                     'periodStart' => old('period_start', optional($shift->period_start)->format('Y-m-d')),
-                    'periodEnd'   => old('period_end', optional($shift->period_end)->format('Y-m-d')),
+                    'periodEnd'   => old('period_end', optional($shift->period_end)->format('Y-m-d') ?? ''),
                 ])
 
-                @include('admin::settings.shifts.partials.time-blocks', ['weekdayBlocks' => old('weekday_time_blocks', $shift->weekday_time_blocks ?? [])])
+                @php
+                    // Ensure weekday_time_blocks is always an array (it's stored as JSON in DB)
+                    $weekdayBlocks = old('weekday_time_blocks');
+                    if (!$weekdayBlocks) {
+                        $weekdayBlocks = $shift->weekday_time_blocks;
+                        if (is_string($weekdayBlocks)) {
+                            $weekdayBlocks = json_decode($weekdayBlocks, true) ?: [];
+                        }
+                    }
+                    $weekdayBlocks = $weekdayBlocks ?: [];
+                @endphp
+                @include('admin::settings.shifts.partials.time-blocks', ['weekdayBlocks' => $weekdayBlocks])
 
                 <x-admin::form.control-group>
                     <x-admin::form.control-group.label>

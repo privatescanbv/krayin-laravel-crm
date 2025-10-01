@@ -1,5 +1,9 @@
 @php
     $weekdayBlocks = $weekdayBlocks ?? [];
+    // Ensure weekdayBlocks is always an array
+    if (!is_array($weekdayBlocks)) {
+        $weekdayBlocks = [];
+    }
 @endphp
 
 <x-admin::form.control-group>
@@ -9,7 +13,13 @@
 
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         @for($day=1; $day<=7; $day++)
-            @php $blocks = $weekdayBlocks[$day] ?? [['from' => '08:00', 'to' => '17:00']]; @endphp
+            @php 
+                $blocks = $weekdayBlocks[$day] ?? [['from' => '08:00', 'to' => '17:00']];
+                // Ensure blocks is always an array
+                if (!is_array($blocks)) {
+                    $blocks = [['from' => '08:00', 'to' => '17:00']];
+                }
+            @endphp
             <div class="rounded border border-gray-200 p-3 dark:border-gray-800">
                 <div class="mb-2 text-sm font-semibold">
                     {{ [1=>trans('admin::app.monday'),2=>trans('admin::app.tuesday'),3=>trans('admin::app.wednesday'),4=>trans('admin::app.thursday'),5=>trans('admin::app.friday'),6=>trans('admin::app.saturday'),7=>trans('admin::app.sunday')][$day] }}

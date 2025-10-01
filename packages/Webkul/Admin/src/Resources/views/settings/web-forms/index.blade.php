@@ -9,12 +9,12 @@
                 <div class="flex flex-col gap-2">
                     <!-- Bredcrumbs -->
                     <x-admin::breadcrumbs name="settings.web_forms" />
-        
+
                     <div class="text-xl font-bold dark:text-white">
                         @lang('admin::app.settings.webforms.index.title')
                     </div>
                 </div>
-        
+
                 <div class="flex items-center gap-x-2.5">
                     <!-- Create button for person -->
                     <div class="flex items-center gap-x-2.5">
@@ -29,7 +29,7 @@
                     </div>
                 </div>
             </div>
-        
+
             <!-- DataGrid Shimmer -->
             <x-admin::shimmer.settings.web-forms />
         </div>
@@ -45,7 +45,7 @@
                     <div class="flex flex-col gap-2">
                         <!-- Bredcrumbs -->
                         <x-admin::breadcrumbs name="settings.web_forms" />
-            
+
                         <div class="text-xl font-bold dark:text-white">
                             @lang('admin::app.settings.webforms.index.title')
                         </div>
@@ -53,58 +53,21 @@
 
                     <div class="flex items-center gap-x-2.5">
                         <!-- Create button for person -->
-                        <div class="flex items-center gap-x-2.5">
-                            {!! view_render_event('admin.settings.web_forms.index.create_button.before') !!}
-            
-                            @if (bouncer()->hasPermission('admin.settings.web_forms.create'))
-                                <a
-                                    href="{{ route('admin.settings.web_forms.create') }}"
-                                    class="primary-button"
-                                >
-                                    @lang('admin::app.settings.webforms.index.create-btn')
-                                </a>
-                            @endif
-
-                            {!! view_render_event('admin.settings.web_forms.index.create_button.after') !!}
-                        </div>
+                      @if (bouncer()->hasPermission('admin.settings.web_forms.create'))
+                            <a
+                                href="javascript:void(0);"
+                                class="primary-button opacity-50 cursor-not-allowed pointer-events-none"
+                                aria-disabled="true"
+                                tabindex="-1"
+                            >
+                                @lang('admin::app.settings.webforms.index.create-btn')
+                            </a>
+                        @endif
                     </div>
                 </div>
-            
-                {!! view_render_event('admin.settings.web_forms.index.datagrid.before') !!}
 
-                <!-- Datagrid -->
-                <x-admin::datagrid
-                    :src="route('admin.settings.web_forms.index')"
-                    ref="datagrid"
-                >
-                    <template #header="{
-                        isLoading,
-                        available,
-                        applied,
-                        selectAll,
-                        sort,
-                        performAction
-                    }">
-                        <template v-if="isLoading">
-                            <x-admin::shimmer.settings.web-forms.head />
-                        </template>
-                    </template>
+Disabled
 
-                    <template #body="{
-                        isLoading,
-                        available,
-                        applied,
-                        selectAll,
-                        sort,
-                        performAction
-                    }">
-                        <template v-if="isLoading">
-                            <x-admin::shimmer.settings.web-forms.body />
-                        </template>
-                    </template>
-                </x-admin::datagrid>
-
-                {!! view_render_event('admin.settings.web_forms.index.datagrid.after') !!}
             </div>
         </script>
 

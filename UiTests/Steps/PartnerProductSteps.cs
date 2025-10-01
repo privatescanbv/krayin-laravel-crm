@@ -12,7 +12,6 @@ namespace UiTests.Steps
     {
         private readonly BrowserDriver _driver;
         private string _createdProductName = "";
-        private string _newPrice = "";
 
         public PartnerProductSteps(BrowserDriver driver)
         {
@@ -44,7 +43,7 @@ namespace UiTests.Steps
         [When(@"I fill in the partner product form with name ""(.*)"" and price ""(.*)""")]
         public async Task WhenIFillInThePartnerProductForm(string name, string price)
         {
-            _createdProductName = $"{name} {Guid.NewGuid():N}";
+            _createdProductName = $"{name} {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
 
             // Wait for the form to be loaded
             await _driver.Page.WaitForSelectorAsync("input[name='name']", new() { Timeout = 5000 });
@@ -67,33 +66,23 @@ namespace UiTests.Steps
                 }
             }
 
-            // Select at least one clinic
+            // Select at least one clinic - fail early if none available
             var clinicSelect = _driver.Page.Locator("select[name='clinics[]']");
             await clinicSelect.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5000 });
 
-            var clinicOptions = await clinicSelect.Locator("option").AllAsync();
-            if (clinicOptions.Count > 0)
+            var clinicOptions = await clinicSelect.Locator("option[value]").AllAsync();
+            if (clinicOptions.Count == 0)
             {
-                var firstClinicValue = await clinicOptions[0].GetAttributeAsync("value");
-                if (!string.IsNullOrEmpty(firstClinicValue))
-                {
-                    await clinicSelect.SelectOptionAsync(new[] { firstClinicValue });
-
-                    // Trigger change event
-                    await clinicSelect.EvaluateAsync("(element) => element.dispatchEvent(new Event('change', { bubbles: true }))");
-
-                    // Wait for resources hint to appear (indicates resources loaded)
-                    try
-                    {
-                        var hint = _driver.Page.Locator("#resources-hint");
-                        await hint.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 5000 });
-                    }
-                    catch
-                    {
-                        // Resources might not exist for this clinic, that's okay
-                    }
-                }
+                throw new Exception("No clinic options available to select. Seed test data with at least one clinic.");
             }
+
+            var firstClinicValue = await clinicOptions[0].GetAttributeAsync("value");
+            if (string.IsNullOrEmpty(firstClinicValue))
+            {
+                throw new Exception("First clinic option has empty value. Seed test data properly.");
+            }
+
+            await clinicSelect.SelectOptionAsync(new[] { firstClinicValue });
 
             // Check active checkbox
             var activeCheckbox = _driver.Page.Locator("input[name='active'][value='1']");
@@ -112,39 +101,72 @@ namespace UiTests.Steps
 
             await _driver.Page.GetByRole(AriaRole.Button, new() { NameRegex = new Regex("^(Opslaan|Save)$") }).ClickAsync();
 
-            // Wait for network activity to complete
-            await _driver.Page.WaitForLoadStateAsync(LoadState.NetworkIdle, new() { Timeout = 10000 });
+            // Wait for either redirect to index or show validation errors
+            var indexUrlRegex = new Regex(".*/admin/settings/partner-products$");
+            var createUrlRegex = new Regex(".*/admin/settings/partner-products/create$");
 
-            // Give it extra time for any redirects or success messages
-            await _driver.Page.WaitForTimeoutAsync(1000);
+            // Small race: give the app time to navigate or render validation
+            await _driver.Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
 
-            // Log any validation errors if present
-            var errors = _driver.Page.Locator(".control-error, .text-red-600");
+            // If there are validation errors, surface them immediately
+            var errors = _driver.Page.Locator(".control-error, .text-red-600, .alert-error");
             var errorCount = await errors.CountAsync();
             if (errorCount > 0)
             {
-                Console.WriteLine($"[DEBUG] Found {errorCount} validation errors:");
+                string allErrors = string.Empty;
                 for (var i = 0; i < errorCount; i++)
                 {
-                    var errorText = await errors.Nth(i).InnerTextAsync();
-                    Console.WriteLine($"[DEBUG] Error {i + 1}: {errorText}");
+                    var text = await errors.Nth(i).InnerTextAsync();
+                    allErrors += $"\n- {text}";
                 }
-            }
-            else
-            {
-                Console.WriteLine("[DEBUG] No validation errors found");
-            }
 
-            Console.WriteLine($"[DEBUG] Current URL after save: {_driver.Page.Url}");
+                await CaptureDiagnosticsAsync("partner-product-save-validation-errors");
+                throw new Exception($"Validation errors after save:{allErrors}");
+            }
+            // Do not assert redirect here; the Then-step validates URL.
         }
 
         [Then("I should be redirected to the partner products overview")]
         public async Task ThenIShouldBeRedirectedToThePartnerProductsOverview()
         {
-            await Assertions.Expect(_driver.Page).ToHaveURLAsync(
-                new Regex(".*/admin/settings/partner-products$"),
-                new() { Timeout = 10000 }
-            );
+            var indexRegex = new Regex(".*/admin/settings/partner-products$");
+            var createRegex = new Regex(".*/admin/settings/partner-products/create$");
+
+            try
+            {
+                await Assertions.Expect(_driver.Page).ToHaveURLAsync(indexRegex, new() { Timeout = 10000 });
+            }
+            catch
+            {
+                if (createRegex.IsMatch(_driver.Page.Url))
+                {
+                    // Gather feedback: current URL, visible validation errors, and body excerpt
+                    var currentUrl = _driver.Page.Url;
+                    var errors = _driver.Page.Locator(".control-error, .text-red-600, .alert-error");
+                    var errorCount = await errors.CountAsync();
+
+                    string allErrors = errorCount > 0 ? "" : "(geen zichtbare validatiefouten gevonden)";
+                    for (var i = 0; i < errorCount; i++)
+                    {
+                        var text = await errors.Nth(i).InnerTextAsync();
+                        allErrors += $"\n- {text}";
+                    }
+
+                    string bodyExcerpt = string.Empty;
+                    try
+                    {
+                        var bodyText = await _driver.Page.EvaluateAsync<string>("() => document.body.innerText");
+                        bodyExcerpt = bodyText?.Length > 800 ? bodyText.Substring(0, 800) + "..." : bodyText ?? string.Empty;
+                    }
+                    catch { /* ignore */ }
+
+                    await CaptureDiagnosticsAsync("partner-product-still-on-create-after-save");
+
+                    throw new Exception($"Niet doorgestuurd naar overzicht.\nURL: {currentUrl}\nZichtbare fouten:{allErrors}\nBody excerpt:\n{bodyExcerpt}");
+                }
+
+                throw;
+            }
         }
 
         [When("I edit the first partner product")]
@@ -164,18 +186,20 @@ namespace UiTests.Steps
             await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/settings/partner-products/edit/\\d+$"));
         }
 
-        [When(@"I change the price to ""(.*)""")]
-        public async Task WhenIChangeThePriceTo(string newPrice)
+        [When(@"I change the name to ""(.*)""")]
+        public async Task WhenIChangeTheNameTo(string newName)
         {
-            _newPrice = newPrice;
-            var priceInput = _driver.Page.Locator("input[name='sales_price']");
-            await priceInput.FillAsync("");
-            await priceInput.FillAsync(newPrice);
-            await priceInput.BlurAsync();
+            var uniqueName = $"{newName} {DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+
+            var nameInput = _driver.Page.Locator("input[name='name']");
+            await nameInput.FillAsync("");
+            await nameInput.FillAsync(uniqueName);
+            await nameInput.BlurAsync();
+            _createdProductName = uniqueName;
         }
 
-        [Then("I should see the updated price in the overview")]
-        public async Task ThenIShouldSeeTheUpdatedPriceInTheOverview()
+        [Then("I should see the updated name in the overview")]
+        public async Task ThenIShouldSeeTheUpdatedNameInTheOverview()
         {
             // Ensure we are on the overview and data is fresh
             var indexUrl = $"{TestConfig.BaseUrl}/admin/settings/partner-products";
@@ -188,26 +212,19 @@ namespace UiTests.Steps
                 await _driver.Page.ReloadAsync(new() { WaitUntil = WaitUntilState.NetworkIdle });
             }
 
-            // Verify the updated price is visible in the table
+            // Verify the updated name is visible in the table
             var row = _driver.Page
                 .Locator(".table-responsive .row.max-lg\\:hidden")
                 .Filter(new() { HasTextString = _createdProductName })
                 .First;
 
-            // In datagrid order: ID, Naam, Valuta, Verkoopprijs, Actief, Acties
-            var priceCell = row.Locator("p.break-words").Nth(3);
-
-            var entered = _newPrice;
-            var dotVariant = _newPrice.Replace(',', '.');
-            var pricePattern = new Regex($"^(?:{Regex.Escape(entered)}|{Regex.Escape(dotVariant)})$");
-
             try
             {
-                await Assertions.Expect(priceCell).ToHaveTextAsync(pricePattern, new() { Timeout = 10000 });
+                await Assertions.Expect(row).ToContainTextAsync(_createdProductName, new() { Timeout = 10000 });
             }
             catch
             {
-                await CaptureDiagnosticsAsync("price-update-failed");
+                await CaptureDiagnosticsAsync("name-update-failed");
                 throw;
             }
         }

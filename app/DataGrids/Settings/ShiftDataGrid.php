@@ -78,6 +78,14 @@ class ShiftDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+            'closure'    => function ($row) {
+                // NULL means infinite duration (oneindig geldig)
+                if ($row->period_end === null || $row->period_end === '') {
+                    return ''; // Lege string voor oneindig
+                }
+
+                return $row->period_end;
+            },
         ]);
 
         $this->addColumn([

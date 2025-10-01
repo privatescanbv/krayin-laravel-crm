@@ -84,23 +84,10 @@ class ProductController extends Controller
     {
         $product = $this->productRepository->findOrFail($id);
 
-        $inventories = $product->inventories()
-            ->with('location')
-            ->get()
-            ->map(function ($inventory) {
-                return [
-                    'id'                    => $inventory->id,
-                    'name'                  => $inventory->location->name,
-                    'warehouse_id'          => $inventory->warehouse_id,
-                    'warehouse_location_id' => $inventory->warehouse_location_id,
-                    'in_stock'              => $inventory->in_stock,
-                    'allocated'             => $inventory->allocated,
-                ];
-            });
-
         $currencies = Currency::options();
 
-        return view('admin::products.edit', compact('product', 'inventories', 'currencies'));
+        // Inventory/warehouse logic removed for this deployment
+        return view('admin::products.edit', compact('product', 'currencies'));
     }
 
     /**
@@ -128,28 +115,7 @@ class ProductController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function storeInventories(int $id, ?int $warehouseId = null): JsonResponse
-    {
-        $this->validate(request(), [
-            'inventories'                         => 'array',
-            'inventories.*.warehouse_location_id' => 'required',
-            'inventories.*.warehouse_id'          => 'required',
-            'inventories.*.in_stock'              => 'required|integer|min:0',
-            'inventories.*.allocated'             => 'required|integer|min:0',
-        ]);
-
-        $product = $this->productRepository->findOrFail($id);
-
-        Event::dispatch('product.update.before', $id);
-
-        $this->productRepository->saveInventories(request()->all(), $id, $warehouseId);
-
-        Event::dispatch('product.update.after', $product);
-
-        return new JsonResponse([
-            'message' => trans('admin::app.products.index.update-success'),
-        ], 200);
-    }
+    // Inventory APIs removed (not supported)
 
     /**
      * Search product results
@@ -166,12 +132,7 @@ class ProductController extends Controller
     /**
      * Returns product inventories grouped by warehouse.
      */
-    public function warehouses(int $id): JsonResponse
-    {
-        $warehouses = $this->productRepository->getInventoriesGroupedByWarehouse($id);
-
-        return response()->json(array_values($warehouses));
-    }
+    // Warehouses endpoint removed (not supported)
 
     /**
      * Remove the specified resource from storage.

@@ -82,6 +82,7 @@
                                 <x-admin::form.control-group.control
                                     type="price"
                                     name="costs"
+                                    value="{{ old('costs') }}"
                                     :label="trans('admin::app.products.create.costs')"
                                     :placeholder="trans('admin::app.products.create.costs')"
                                 />
@@ -97,11 +98,12 @@
                                 <x-admin::form.control-group.control
                                     type="select"
                                     name="product_type_id"
+                                    value="{{ old('product_type_id') }}"
                                     :label="trans('admin::app.products.create.product_type')"
                                 >
                                     <option value="">@lang('admin::app.select')</option>
                                     @foreach (\App\Models\ProductType::orderBy('name')->get(['id', 'name']) as $type)
-                                        <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                        <option value="{{ $type->id }}" @selected(old('product_type_id') == $type->id)>{{ $type->name }}</option>
                                     @endforeach
                                 </x-admin::form.control-group.control>
 
@@ -116,11 +118,12 @@
                                 <x-admin::form.control-group.control
                                     type="select"
                                     name="resource_type_id"
+                                    value="{{ old('resource_type_id') }}"
                                     :label="trans('admin::app.products.create.resource_type')"
                                 >
                                     <option value="">@lang('admin::app.select')</option>
                                     @foreach (\App\Models\ResourceType::orderBy('name')->get(['id', 'name']) as $type)
-                                        <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                        <option value="{{ $type->id }}" @selected(old('resource_type_id') == $type->id)>{{ $type->name }}</option>
                                     @endforeach
                                 </x-admin::form.control-group.control>
 
@@ -135,11 +138,12 @@
                                 <x-admin::form.control-group.control
                                     type="select"
                                     name="product_group_id"
+                                    value="{{ old('product_group_id') }}"
                                     :label="trans('admin::app.products.create.product_group')"
                                 >
                                     <option value="">@lang('admin::app.select')</option>
                                     @foreach (app('Webkul\Product\Repositories\ProductGroupRepository')->orderBy('name')->all() as $group)
-                                        <option value="{{ $group->id }}">{{ $group->name }}</option>
+                                        <option value="{{ $group->id }}" @selected(old('product_group_id') == $group->id)>{{ $group->name }}</option>
                                     @endforeach
                                 </x-admin::form.control-group.control>
 
@@ -159,12 +163,19 @@
                         {!! view_render_event('admin.products.create.attributes.after') !!}
 
                         <!-- Partner Products Selection -->
+                        @php
+                            $oldPartnerProducts = collect(old('partner_products', []))->map(function($id) {
+                                $product = \App\Models\PartnerProduct::find($id);
+                                return $product ? ['id' => $product->id, 'name' => $product->name] : null;
+                            })->filter()->values()->toArray();
+                        @endphp
+
                         <x-admin::partner-product-lookup
                             :src="route('admin.settings.partner_products.search')"
                             name="partner_products"
                             :label="trans('admin::app.products.create.partner_products')"
                             :search-placeholder="trans('admin::app.products.create.search_partner_products')"
-                            :value="[]"
+                            :value="$oldPartnerProducts"
                         />
                     </div>
                 </div>

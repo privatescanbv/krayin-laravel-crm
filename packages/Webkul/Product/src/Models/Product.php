@@ -86,9 +86,9 @@ class Product extends Model implements ProductContract
     /**
      * Get the product group that owns the product.
      */
-    public function productGroup()
+    public function productGroup(): BelongsTo
     {
-        return $this->belongsTo(ProductGroupProxy::modelClass());
+        return $this->belongsTo(ProductGroup::class);
     }
 
     public function resourceType(): BelongsTo

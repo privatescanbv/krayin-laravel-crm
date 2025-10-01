@@ -139,7 +139,7 @@
                         <x-admin::form.control-group.control
                             type="price"
                             name="purchase_price_misc"
-                            value="0"
+                            value="{{ old('purchase_price_misc', '0') }}"
                             :label="trans('admin::app.settings.partner_products.index.create.purchase_price_misc')"
                             :placeholder="trans('admin::app.settings.partner_products.index.create.purchase_price_misc')"
                         />
@@ -155,7 +155,7 @@
                         <x-admin::form.control-group.control
                             type="price"
                             name="purchase_price_doctor"
-                            value="0"
+                            value="{{ old('purchase_price_doctor', '0') }}"
                             :label="trans('admin::app.settings.partner_products.index.create.purchase_price_doctor')"
                             :placeholder="trans('admin::app.settings.partner_products.index.create.purchase_price_doctor')"
                         />
@@ -171,7 +171,7 @@
                         <x-admin::form.control-group.control
                             type="price"
                             name="purchase_price_cardiology"
-                            value="0"
+                            value="{{ old('purchase_price_cardiology', '0') }}"
                             :label="trans('admin::app.settings.partner_products.index.create.purchase_price_cardiology')"
                             :placeholder="trans('admin::app.settings.partner_products.index.create.purchase_price_cardiology')"
                         />
@@ -187,7 +187,7 @@
                         <x-admin::form.control-group.control
                             type="price"
                             name="purchase_price_clinic"
-                            value="0"
+                            value="{{ old('purchase_price_clinic', '0') }}"
                             :label="trans('admin::app.settings.partner_products.index.create.purchase_price_clinic')"
                             :placeholder="trans('admin::app.settings.partner_products.index.create.purchase_price_clinic')"
                         />
@@ -203,7 +203,7 @@
                         <x-admin::form.control-group.control
                             type="price"
                             name="purchase_price_royal_doctors"
-                            value="0"
+                            value="{{ old('purchase_price_royal_doctors', '0') }}"
                             :label="trans('admin::app.settings.partner_products.index.create.purchase_price_royal_doctors')"
                             :placeholder="trans('admin::app.settings.partner_products.index.create.purchase_price_royal_doctors')"
                         />
@@ -219,7 +219,7 @@
                         <x-admin::form.control-group.control
                             type="price"
                             name="purchase_price_radiology"
-                            value="0"
+                            value="{{ old('purchase_price_radiology', '0') }}"
                             :label="trans('admin::app.settings.partner_products.index.create.purchase_price_radiology')"
                             :placeholder="trans('admin::app.settings.partner_products.index.create.purchase_price_radiology')"
                         />
@@ -247,12 +247,13 @@
                         <x-admin::form.control-group.control
                             type="select"
                             name="resource_type_id"
+                            value="{{ old('resource_type_id') }}"
                             rules="required|numeric"
                             :label="trans('admin::app.settings.partner_products.index.create.resource_type')"
                         >
                             <option value="">@lang('admin::app.select')</option>
                             @foreach ($resourceTypes as $type)
-                                <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                <option value="{{ $type->id }}" @selected(old('resource_type_id') == $type->id)>{{ $type->name }}</option>
                             @endforeach
                         </x-admin::form.control-group.control>
 
@@ -273,6 +274,7 @@
                     <x-admin::form.control-group.control
                         type="textarea"
                         name="clinic_description"
+                        value="{{ old('clinic_description') }}"
                         :label="trans('admin::app.settings.partner_products.index.create.clinic_description')"
                         :placeholder="trans('admin::app.settings.partner_products.index.create.clinic_description')"
                     />
@@ -288,7 +290,7 @@
                     <x-admin::form.control-group.control
                         type="number"
                         name="duration"
-                        
+                        value="{{ old('duration') }}"
                         :label="trans('admin::app.settings.partner_products.index.create.duration')"
                         :placeholder="trans('admin::app.settings.partner_products.index.create.duration')"
                     />
@@ -296,12 +298,19 @@
                     <x-admin::form.control-group.error control-name="duration" />
                 </x-admin::form.control-group>
 
+                @php
+                    $oldRelatedProducts = collect(old('related_products', []))->map(function($id) {
+                        $product = \App\Models\PartnerProduct::find($id);
+                        return $product ? ['id' => $product->id, 'name' => $product->name] : null;
+                    })->filter()->values()->toArray();
+                @endphp
+
                 <x-admin::partner-product-lookup
                     :src="route('admin.settings.partner_products.search')"
                     name="related_products"
                     :label="trans('admin::app.settings.partner_products.index.create.related_products')"
                     :search-placeholder="trans('admin::app.settings.partner_products.index.create.search_related_products')"
-                    :value="[]"
+                    :value="$oldRelatedProducts"
                 />
             </div>
         </div>

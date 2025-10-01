@@ -29,12 +29,7 @@
                 <div class="dark:text-white">{{ $product->resourceType?->name ?? '-' }}</div>
 
                 <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.products.view.product_group')</div>
-                <div class="dark:text-white">
-                    @php
-                        $productGroup = $product->product_group_id ? app('Webkul\Product\Repositories\ProductGroupRepository')->find($product->product_group_id) : null;
-                    @endphp
-                    {{ $productGroup?->name ?? '-' }}
-                </div>
+                <div class="dark:text-white">{{ $product->productGroup?->name ?? '-' }}</div>
             </div>
 
             @if($product->description)

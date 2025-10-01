@@ -150,22 +150,31 @@
                 </x-admin::form.control-group>
 
                 <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
+                    <x-admin::form.control-group.label class="required">
                         @lang('admin::app.settings.clinics.index.title')
                     </x-admin::form.control-group.label>
 
                     @php
                         $selectedClinics = old('clinics', $partner_products->clinics->pluck('id')->toArray());
                     @endphp
-                    <select
-                        name="clinics[]"
-                        multiple
-                        class="custom-select w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+                    <v-field
+                        name="clinics"
+                        rules="required"
+                        :label="trans('admin::app.settings.clinics.index.title')"
+                        v-slot="{ field, errors }"
                     >
-                        @foreach ($clinics as $clinic)
-                            <option value="{{ $clinic->id }}" @selected(in_array($clinic->id, $selectedClinics))>{{ $clinic->name }}</option>
-                        @endforeach
-                    </select>
+                        <select
+                            name="clinics[]"
+                            multiple
+                            v-bind="field"
+                            :class="[errors.length ? 'border !border-red-600 hover:border-red-600' : '']"
+                            class="custom-select w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
+                        >
+                            @foreach ($clinics as $clinic)
+                                <option value="{{ $clinic->id }}" @selected(in_array($clinic->id, $selectedClinics))>{{ $clinic->name }}</option>
+                            @endforeach
+                        </select>
+                    </v-field>
 
                     <x-admin::form.control-group.error control-name="clinics" />
                 </x-admin::form.control-group>

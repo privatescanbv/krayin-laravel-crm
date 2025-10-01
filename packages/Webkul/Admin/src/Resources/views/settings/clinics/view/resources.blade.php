@@ -1,12 +1,19 @@
 <div class="p-4">
     <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
         <div class="mb-4 flex items-center justify-between">
-            <h4 class="text-lg font-semibold dark:text-white">
-                @lang('admin::app.settings.clinics.view.resources.title')
-            </h4>
-            <span class="text-sm text-gray-600 dark:text-gray-400">
-                @lang('admin::app.settings.clinics.view.resources.total'): {{ $clinic->resources->count() }}
-            </span>
+            <div>
+                <h4 class="text-lg font-semibold dark:text-white">
+                    @lang('admin::app.settings.clinics.view.resources.title')
+                </h4>
+                <span class="text-sm text-gray-600 dark:text-gray-400">
+                    @lang('admin::app.settings.clinics.view.resources.total'): {{ $clinic->resources->count() }}
+                </span>
+            </div>
+            @if (bouncer()->hasPermission('settings.resources.create'))
+                <a href="{{ route('admin.settings.resources.create', ['clinic_id' => $clinic->id]) }}" class="primary-button">
+                    @lang('admin::app.settings.clinics.view.resources.add-btn')
+                </a>
+            @endif
         </div>
 
         @if ($clinic->resources->count() > 0)

@@ -1765,7 +1765,10 @@ return [
                 'partner-products' => [
                     'title' => 'Gekoppelde Partner Producten',
                     'total' => 'Totaal',
+                    'add-btn' => 'Partner Product Toevoegen',
                     'no-products' => 'Geen partner producten gekoppeld aan deze kliniek.',
+                    'detach-success' => 'Partner product succesvol losgekoppeld van kliniek.',
+                    'delete-success' => 'Partner product succesvol verwijderd.',
                     'table' => [
                         'name' => 'Naam',
                         'partner-name' => 'Partner Naam',
@@ -1775,12 +1778,15 @@ return [
                         'active' => 'Actief',
                         'inactive' => 'Inactief',
                         'view' => 'Bekijken',
+                        'edit' => 'Bewerken',
+                        'delete' => 'Verwijderen',
                     ],
                 ],
 
                 'resources' => [
                     'title' => 'Gekoppelde Resources',
                     'total' => 'Totaal',
+                    'add-btn' => 'Resource Toevoegen',
                     'no-resources' => 'Geen resources gekoppeld aan deze kliniek.',
                     'table' => [
                         'name' => 'Naam',

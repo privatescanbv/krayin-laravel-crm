@@ -1,4 +1,18 @@
 <div class="p-4">
+    <div class="mb-4 flex items-center justify-between">
+        <h4 class="text-lg font-semibold dark:text-white">
+            @lang('admin::app.settings.clinics.view.partner-products.title')
+        </h4>
+        @if (bouncer()->hasPermission('settings.partner_products.create'))
+            <a 
+                href="{{ route('admin.settings.partner_products.create', ['clinic_id' => $clinic->id, 'return_to' => 'clinic_view']) }}" 
+                class="primary-button"
+            >
+                @lang('admin::app.settings.clinics.view.partner-products.add-btn')
+            </a>
+        @endif
+    </div>
+
     <x-admin::datagrid :src="route('admin.settings.clinics.partner_products.index', $clinic->id)">
         <!-- Empty State -->
         <template #body="{ available, isLoading }">

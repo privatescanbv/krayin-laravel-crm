@@ -790,6 +790,43 @@ return [
                     'save-btn'    => 'Save',
                 ],
             ],
+
+            'view' => [
+                'resources' => [
+                    'title'    => 'Resources',
+                    'total'    => 'Total',
+                    'add-btn'  => 'Add Resource',
+                    'no-resources' => 'No resources found for this clinic.',
+
+                    'table' => [
+                        'name'          => 'Name',
+                        'resource-type' => 'Resource Type',
+                        'external-id'   => 'External ID',
+                        'actions'       => 'Actions',
+                        'edit'          => 'Edit',
+                        'view'          => 'View',
+                    ],
+                ],
+
+                'partner-products' => [
+                    'title'          => 'Partner Products',
+                    'add-btn'        => 'Add Partner Product',
+                    'no-products'    => 'No partner products found for this clinic.',
+                    'detach-success' => 'Partner product detached from clinic successfully.',
+                    'delete-success' => 'Partner product deleted successfully.',
+
+                    'table' => [
+                        'name'     => 'Name',
+                        'price'    => 'Price',
+                        'status'   => 'Status',
+                        'active'   => 'Active',
+                        'inactive' => 'Inactive',
+                        'view'     => 'View',
+                        'edit'     => 'Edit',
+                        'delete'   => 'Delete',
+                    ],
+                ],
+            ],
         ],
 
         'resource_types' => [

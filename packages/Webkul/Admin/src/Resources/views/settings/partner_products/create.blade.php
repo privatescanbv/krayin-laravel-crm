@@ -4,6 +4,11 @@
     </x-slot>
 
     <x-admin::form :action="route('admin.settings.partner_products.store')" method="POST">
+        <!-- Hidden field for return_to -->
+        @if(isset($returnTo))
+            <input type="hidden" name="return_to" value="{{ $returnTo }}" />
+        @endif
+
         <div class="flex flex-col gap-4">
             <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
@@ -27,10 +32,16 @@
                         $product = \App\Models\PartnerProduct::find($id);
                         return $product ? ['id' => $product->id, 'name' => $product->name] : null;
                     })->filter()->values()->toArray();
+
+                    // Pre-select clinic if provided
+                    $selectedClinics = old('clinics', []);
+                    if (empty($selectedClinics) && isset($preSelectedClinicId)) {
+                        $selectedClinics = [$preSelectedClinicId];
+                    }
                 @endphp
 
                 <x-admin::partner-product-form-fields
-                    :selected-clinics="old('clinics', [])"
+                    :selected-clinics="$selectedClinics"
                     :selected-resources="old('resources', [])"
                     :related-products="$oldRelatedProducts"
                 />

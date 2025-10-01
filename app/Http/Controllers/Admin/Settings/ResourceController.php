@@ -332,8 +332,9 @@ class ResourceController extends SimpleEntityController
     protected function getCreateViewData(Request $request): array
     {
         return [
-            'resourceTypes' => $this->resourceTypeRepository->all(),
-            'clinics'       => $this->clinicRepository->all(),
+            'resourceTypes'       => $this->resourceTypeRepository->all(),
+            'clinics'             => $this->clinicRepository->all(),
+            'preSelectedClinicId' => $request->query('clinic_id'),
         ];
     }
 

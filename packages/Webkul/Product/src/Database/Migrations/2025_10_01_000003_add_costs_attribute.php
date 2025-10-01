@@ -9,7 +9,7 @@ return new class extends Migration
     {
         DB::table('attributes')->insert([
             'code'            => 'costs',
-            'name'            => 'Costs',
+            'name'            => 'Kosten',
             'type'            => 'price',
             'entity_type'     => 'products',
             'lookup_type'     => null,

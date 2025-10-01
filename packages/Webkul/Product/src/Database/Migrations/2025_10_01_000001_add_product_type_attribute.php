@@ -9,7 +9,7 @@ return new class extends Migration
     {
         DB::table('attributes')->insert([
             'code'            => 'product_type_id',
-            'name'            => 'Product Type',
+            'name'            => 'Producttype',
             'type'            => 'lookup',
             'entity_type'     => 'products',
             'lookup_type'     => 'product_types',

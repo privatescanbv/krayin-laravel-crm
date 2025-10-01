@@ -52,7 +52,6 @@ namespace UiTests.Steps
             // Fill in required fields with explicit waits
             await _driver.Page.Locator("input[name='name']").FillAsync(_createdProductName);
             await _driver.Page.Locator("input[name='sales_price']").FillAsync(price);
-            await _driver.Page.Locator("input[name='partner_name']").FillAsync($"Test Partner {Guid.NewGuid():N}");
 
             // Select resource type - wait for it to be visible first
             var resourceTypeSelect = _driver.Page.Locator("select[name='resource_type_id']");

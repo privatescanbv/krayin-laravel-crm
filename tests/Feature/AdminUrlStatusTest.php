@@ -46,17 +46,17 @@ beforeEach(function () {
 it('tests all admin GET routes return valid HTTP status codes', function () {
     // Create admin user with full permissions
     $role = Role::factory()->create([
-        'name' => 'Administrator',
-        'description' => 'Full access administrator',
+        'name'            => 'Administrator',
+        'description'     => 'Full access administrator',
         'permission_type' => 'all',
-        'permissions' => null,
+        'permissions'     => null,
     ]);
 
     $admin = User::factory()->create([
-        'email' => 'admin_url_test@example.com',
-        'name' => 'Admin URL Tester',
-        'status' => 1,
-        'role_id' => $role->id,
+        'email'           => 'admin_url_test@example.com',
+        'name'            => 'Admin URL Tester',
+        'status'          => 1,
+        'role_id'         => $role->id,
         'view_permission' => 'global',
     ]);
 
@@ -93,23 +93,25 @@ it('tests all admin GET routes return valid HTTP status codes', function () {
         // Skip certain route patterns that are not meant to be tested directly
         if (shouldSkipRoute($routeName, $uri)) {
             $skippedRoutes[] = [
-                'name' => $routeName,
-                'uri' => $uri,
+                'name'   => $routeName,
+                'uri'    => $uri,
                 'reason' => 'Excluded pattern',
             ];
+
             continue;
         }
 
         // Build URL with test data for routes with parameters
         try {
             $url = buildUrlWithParameters($routeName, $uri, $testData);
-            
+
             if ($url === null) {
                 $skippedRoutes[] = [
-                    'name' => $routeName,
-                    'uri' => $uri,
+                    'name'   => $routeName,
+                    'uri'    => $uri,
                     'reason' => 'Could not resolve parameters',
                 ];
+
                 continue;
             }
 
@@ -123,25 +125,25 @@ it('tests all admin GET routes return valid HTTP status codes', function () {
             // But NOT 500 (internal server error)
             if ($statusCode === 500) {
                 $failedRoutes[] = [
-                    'name' => $routeName,
-                    'uri' => $uri,
-                    'url' => $url,
+                    'name'   => $routeName,
+                    'uri'    => $uri,
+                    'url'    => $url,
                     'status' => $statusCode,
                 ];
             }
 
             $testedRoutes[] = [
-                'name' => $routeName,
-                'uri' => $uri,
-                'url' => $url,
+                'name'   => $routeName,
+                'uri'    => $uri,
+                'url'    => $url,
                 'status' => $statusCode,
             ];
         } catch (\Exception $e) {
             $failedRoutes[] = [
-                'name' => $routeName,
-                'uri' => $uri,
-                'url' => $url ?? 'N/A',
-                'status' => 'EXCEPTION',
+                'name'    => $routeName,
+                'uri'     => $uri,
+                'url'     => $url ?? 'N/A',
+                'status'  => 'EXCEPTION',
                 'message' => $e->getMessage(),
             ];
         }
@@ -152,9 +154,9 @@ it('tests all admin GET routes return valid HTTP status codes', function () {
     echo "========================================\n";
     echo "Admin URL Status Test Summary\n";
     echo "========================================\n";
-    echo "Total routes tested: " . count($testedRoutes) . "\n";
-    echo "Skipped routes: " . count($skippedRoutes) . "\n";
-    echo "Failed routes: " . count($failedRoutes) . "\n";
+    echo 'Total routes tested: '.count($testedRoutes)."\n";
+    echo 'Skipped routes: '.count($skippedRoutes)."\n";
+    echo 'Failed routes: '.count($failedRoutes)."\n";
     echo "\n";
 
     if (count($failedRoutes) > 0) {
@@ -173,7 +175,7 @@ it('tests all admin GET routes return valid HTTP status codes', function () {
     }
 
     // Report some successful tests
-    $successfulTests = array_filter($testedRoutes, fn($r) => $r['status'] === 200);
+    $successfulTests = array_filter($testedRoutes, fn ($r) => $r['status'] === 200);
     echo "Sample of SUCCESSFUL routes (HTTP 200):\n";
     echo "----------------------------------------\n";
     foreach (array_slice($successfulTests, 0, 10) as $success) {
@@ -202,55 +204,55 @@ function createTestDataForRoutes(): array
     if (! $stage) {
         $stage = Stage::create([
             'lead_pipeline_id' => $pipeline->id,
-            'name' => 'Test Stage',
-            'code' => 'test',
-            'sort_order' => 1,
-            'probability' => 10,
+            'name'             => 'Test Stage',
+            'code'             => 'test',
+            'sort_order'       => 1,
+            'probability'      => 10,
         ]);
     }
 
     // Basic entities
     $data['lead'] = Lead::factory()->create([
-        'lead_pipeline_id' => $pipeline->id,
+        'lead_pipeline_id'       => $pipeline->id,
         'lead_pipeline_stage_id' => $stage->id,
     ]);
     $data['person'] = Person::factory()->create();
     $data['organization'] = Organization::factory()->create();
-    
+
     // Create product using direct creation (no factory available)
     $data['product'] = Product::create([
-        'name' => 'Test Product',
-        'sku' => 'TEST-SKU-' . uniqid(),
+        'name'        => 'Test Product',
+        'sku'         => 'TEST-SKU-'.uniqid(),
         'description' => 'Test product description',
-        'price' => 100.00,
-        'quantity' => 10,
+        'price'       => 100.00,
+        'quantity'    => 10,
     ]);
 
     // Create quote using direct creation
     $data['quote'] = Quote::create([
-        'user_id' => User::first()->id,
-        'person_id' => $data['person']->id,
-        'subject' => 'Test Quote',
-        'expired_at' => now()->addDays(30),
-        'sub_total' => 100.00,
-        'discount_amount' => 0,
-        'tax_amount' => 21.00,
+        'user_id'           => User::first()->id,
+        'person_id'         => $data['person']->id,
+        'subject'           => 'Test Quote',
+        'expired_at'        => now()->addDays(30),
+        'sub_total'         => 100.00,
+        'discount_amount'   => 0,
+        'tax_amount'        => 21.00,
         'adjustment_amount' => 0,
-        'grand_total' => 121.00,
-        'lead_id' => $data['lead']->id,
+        'grand_total'       => 121.00,
+        'lead_id'           => $data['lead']->id,
     ]);
 
     // Create activity using direct creation
     $group = Group::first();
     if ($group) {
         $data['activity'] = Activity::create([
-            'type' => 'call',
-            'user_id' => User::first()->id,
-            'title' => 'Test Activity',
+            'type'          => 'call',
+            'user_id'       => User::first()->id,
+            'title'         => 'Test Activity',
             'schedule_from' => now(),
-            'schedule_to' => now()->addHour(),
-            'is_done' => 0,
-            'group_id' => $group->id,
+            'schedule_to'   => now()->addHour(),
+            'is_done'       => 0,
+            'group_id'      => $group->id,
         ]);
     }
 
@@ -265,19 +267,19 @@ function createTestDataForRoutes(): array
         ['name' => 'Test Tag'],
         ['user_id' => User::first()->id, 'color' => '#0000FF']
     );
-    
+
     // Warehouse - create if doesn't exist
     $data['warehouse'] = Warehouse::firstOrCreate(
         ['name' => 'Test Warehouse'],
         [
-            'contact_name' => 'Test Contact',
-            'contact_emails' => json_encode([['value' => 'test@warehouse.com', 'label' => 'work']]),
+            'contact_name'    => 'Test Contact',
+            'contact_emails'  => json_encode([['value' => 'test@warehouse.com', 'label' => 'work']]),
             'contact_numbers' => json_encode([['value' => '0612345678', 'label' => 'work']]),
             'contact_address' => json_encode([
-                'address' => 'Test Street 1',
-                'city' => 'Test City',
-                'state' => 'Test State',
-                'country' => 'NL',
+                'address'  => 'Test Street 1',
+                'city'     => 'Test City',
+                'state'    => 'Test State',
+                'country'  => 'NL',
                 'postcode' => '1234AB',
             ]),
         ]
@@ -297,7 +299,7 @@ function createTestDataForRoutes(): array
     $data['web_form'] = WebForm::firstOrCreate(
         ['title' => 'Test Form'],
         [
-            'form_id' => 'test-form-' . uniqid(),
+            'form_id' => 'test-form-'.uniqid(),
             'submit_button_label' => 'Submit',
             'submit_success_action' => 'message',
             'submit_success_content' => 'Thank you for your submission',
@@ -307,7 +309,7 @@ function createTestDataForRoutes(): array
         ]
     );
 
-    // Workflow - create directly  
+    // Workflow - create directly
     $data['workflow'] = Workflow::firstOrCreate(
         ['name' => 'Test Workflow'],
         ['entity_type' => 'leads', 'event' => 'activity.create']
@@ -315,9 +317,9 @@ function createTestDataForRoutes(): array
 
     // Attribute - get from seeder
     $data['attribute'] = Attribute::first() ?? Attribute::create([
-        'code' => 'test_attribute',
-        'name' => 'Test Attribute',
-        'type' => 'text',
+        'code'        => 'test_attribute',
+        'name'        => 'Test Attribute',
+        'type'        => 'text',
         'entity_type' => 'leads',
     ]);
 
@@ -349,7 +351,7 @@ function createTestDataForRoutes(): array
     }
     if (class_exists(Anamnesis::class)) {
         $data['anamnesis'] = Anamnesis::factory()->create([
-            'lead_id' => $data['lead']->id,
+            'lead_id'   => $data['lead']->id,
             'person_id' => $data['person']->id,
         ]);
     }
@@ -428,7 +430,7 @@ function buildUrlWithParameters(string $routeName, string $uri, array $testData)
 
             // Try to find corresponding test data
             $value = resolveParameterValue($cleanParam, $testData);
-            
+
             if ($value === null) {
                 // Can't resolve this parameter, skip the route
                 return null;
@@ -456,19 +458,19 @@ function resolveParameterValue(string $param, array $testData): mixed
 
     // Try common parameter name patterns
     $mappings = [
-        'id' => 'lead', // Default ID to lead
-        'lead_id' => 'lead',
-        'person_id' => 'person',
-        'personId' => 'person',
-        'leadId' => 'lead',
-        'pipeline_id' => 'pipeline',
+        'id'           => 'lead', // Default ID to lead
+        'lead_id'      => 'lead',
+        'person_id'    => 'person',
+        'personId'     => 'person',
+        'leadId'       => 'lead',
+        'pipeline_id'  => 'pipeline',
         'warehouse_id' => 'warehouse',
-        'warehouseId' => 'warehouse',
-        'product_id' => 'product',
-        'quote_id' => 'quote',
-        'resourceId' => 'resource',
-        'token' => null, // Can't test password reset tokens
-        'path' => null, // Can't test file paths
+        'warehouseId'  => 'warehouse',
+        'product_id'   => 'product',
+        'quote_id'     => 'quote',
+        'resourceId'   => 'resource',
+        'token'        => null, // Can't test password reset tokens
+        'path'         => null, // Can't test file paths
     ];
 
     foreach ($mappings as $pattern => $dataKey) {
@@ -476,6 +478,7 @@ function resolveParameterValue(string $param, array $testData): mixed
             if ($dataKey === null) {
                 return null;
             }
+
             return $testData[$dataKey]->id ?? null;
         }
     }
@@ -484,7 +487,7 @@ function resolveParameterValue(string $param, array $testData): mixed
     if (str_ends_with($param, 'Id') || str_ends_with($param, '_id')) {
         $entityName = str_replace(['_id', 'Id'], '', $param);
         $entityName = strtolower($entityName);
-        
+
         if (isset($testData[$entityName])) {
             return $testData[$entityName]->id;
         }

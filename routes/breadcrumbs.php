@@ -442,10 +442,10 @@ Breadcrumbs::for('settings.tags.edit', function (BreadcrumbTrail $trail, $tag) {
 });
 
 // Settings > Web Form
-Breadcrumbs::for('settings.web_forms', function (BreadcrumbTrail $trail) {
-    $trail->parent('settings');
-    $trail->push(trans('admin::app.settings.webforms.index.title'), route('admin.settings.web_forms.index'));
-});
+//Breadcrumbs::for('settings.web_forms', function (BreadcrumbTrail $trail) {
+//    $trail->parent('settings');
+//    $trail->push(trans('admin::app.settings.webforms.index.title'), route('admin.settings.web_forms.index'));
+//});
 
 // Dashboard > Web Form > Create Web Form
 Breadcrumbs::for('settings.web_forms.create', function (BreadcrumbTrail $trail) {

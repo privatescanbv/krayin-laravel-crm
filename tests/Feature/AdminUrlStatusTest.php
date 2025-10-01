@@ -124,11 +124,35 @@ it('tests all admin GET routes return valid HTTP status codes', function () {
             // Accept 200, 302 (redirects), 404 (not found is OK for some routes)
             // But NOT 500 (internal server error)
             if ($statusCode === 500) {
+                // Try to extract error from response
+                $errorMessage = 'Internal Server Error (geen details beschikbaar)';
+                try {
+                    $content = $response->getContent();
+                    // Try to find error message in HTML/JSON
+                    if (preg_match('/<title>(.*?)<\/title>/i', $content, $matches)) {
+                        $titleError = strip_tags($matches[1]);
+                        if (! empty($titleError) && $titleError !== 'Server Error') {
+                            $errorMessage = $titleError;
+                        }
+                    }
+                    // Look for exception message in debug output
+                    if (preg_match('/class="exception-message"[^>]*>(.*?)<\//is', $content, $matches)) {
+                        $errorMessage = trim(strip_tags($matches[1]));
+                    }
+                    // Look for specific Laravel error patterns
+                    if (preg_match('/>\s*([A-Za-z\\\\]+Exception|Error):\s*([^<\n]+)/i', $content, $matches)) {
+                        $errorMessage = trim($matches[1] . ': ' . $matches[2]);
+                    }
+                } catch (\Exception $e) {
+                    // Ignore parsing errors
+                }
+
                 $failedRoutes[] = [
-                    'name'   => $routeName,
-                    'uri'    => $uri,
-                    'url'    => $url,
-                    'status' => $statusCode,
+                    'name'    => $routeName,
+                    'uri'     => $uri,
+                    'url'     => $url,
+                    'status'  => $statusCode,
+                    'message' => $errorMessage,
                 ];
             }
 
@@ -144,48 +168,78 @@ it('tests all admin GET routes return valid HTTP status codes', function () {
                 'uri'     => $uri,
                 'url'     => $url ?? 'N/A',
                 'status'  => 'EXCEPTION',
-                'message' => $e->getMessage(),
+                'message' => get_class($e) . ': ' . $e->getMessage(),
+                'file'    => basename($e->getFile()) . ':' . $e->getLine(),
             ];
         }
     }
 
     // Output summary
     echo "\n\n";
-    echo "========================================\n";
-    echo "Admin URL Status Test Summary\n";
-    echo "========================================\n";
-    echo 'Total routes tested: '.count($testedRoutes)."\n";
-    echo 'Skipped routes: '.count($skippedRoutes)."\n";
-    echo 'Failed routes: '.count($failedRoutes)."\n";
-    echo "\n";
+    echo "================================================================================\n";
+    echo "                        ADMIN URL STATUS TEST RESULTS\n";
+    echo "================================================================================\n";
+    echo sprintf("Total routes tested: %d\n", count($testedRoutes));
+    echo sprintf("Skipped routes: %d\n", count($skippedRoutes));
+    echo sprintf("Failed routes: %d\n", count($failedRoutes));
+    echo sprintf("Success rate: %.1f%%\n", count($testedRoutes) > 0 ? (count($testedRoutes) - count($failedRoutes)) / count($testedRoutes) * 100 : 0);
+    echo "================================================================================\n\n";
 
     if (count($failedRoutes) > 0) {
-        echo "FAILED ROUTES (returning 500 or exceptions):\n";
-        echo "----------------------------------------\n";
-        foreach ($failedRoutes as $failed) {
-            echo "❌ {$failed['name']}\n";
-            echo "   URI: {$failed['uri']}\n";
-            echo "   URL: {$failed['url']}\n";
-            echo "   Status: {$failed['status']}\n";
+        echo "🚨 FAILED ROUTES (returning 500 or exceptions):\n";
+        echo "================================================================================\n\n";
+        foreach ($failedRoutes as $index => $failed) {
+            echo sprintf("[%d] ❌ Route: %s\n", $index + 1, $failed['name']);
+            echo "    ├─ URI Pattern: {$failed['uri']}\n";
+            echo "    ├─ Tested URL:  {$failed['url']}\n";
+            echo "    ├─ HTTP Status: {$failed['status']}\n";
             if (isset($failed['message'])) {
-                echo "   Error: {$failed['message']}\n";
+                echo "    └─ Error:\n";
+                // Shorten error message to first line for readability
+                $errorLines = explode("\n", $failed['message']);
+                echo "       " . trim($errorLines[0]) . "\n";
+                if (count($errorLines) > 1) {
+                    echo "       (zie Laravel log voor volledige error)\n";
+                }
+            } else {
+                echo "    └─ (Geen error message beschikbaar)\n";
             }
             echo "\n";
         }
+        echo "================================================================================\n\n";
     }
 
     // Report some successful tests
     $successfulTests = array_filter($testedRoutes, fn ($r) => $r['status'] === 200);
-    echo "Sample of SUCCESSFUL routes (HTTP 200):\n";
-    echo "----------------------------------------\n";
-    foreach (array_slice($successfulTests, 0, 10) as $success) {
-        echo "✅ {$success['name']} -> {$success['url']}\n";
+    if (count($successfulTests) > 0) {
+        echo "✅ SUCCESVOLLE ROUTES (sample):\n";
+        echo "--------------------------------------------------------------------------------\n";
+        foreach (array_slice($successfulTests, 0, 15) as $success) {
+            echo "   ✓ {$success['name']}\n";
+            echo "     → {$success['url']}\n";
+        }
+        echo "\n";
     }
+
+    // Show redirects (302)
+    $redirectTests = array_filter($testedRoutes, fn ($r) => $r['status'] === 302);
+    if (count($redirectTests) > 0) {
+        echo sprintf("ℹ️  Routes with redirects (302): %d\n", count($redirectTests));
+    }
+
+    // Show skipped routes if needed for debugging
+    if (count($skippedRoutes) > 5) {
+        echo sprintf("\nℹ️  %d routes were skipped (search, lookup, download, etc.)\n", count($skippedRoutes));
+    }
+
     echo "\n";
 
     // The test should fail if any route returns 500
     expect(count($failedRoutes))
-        ->toBe(0, 'Some admin routes returned 500 errors or exceptions. Check output above.');
+        ->toBe(0, sprintf(
+            "%d admin route(s) returned 500 errors. Deze routes zijn broken en moeten gefixed worden!",
+            count($failedRoutes)
+        ));
 });
 
 /**

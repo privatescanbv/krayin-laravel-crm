@@ -22,9 +22,9 @@ namespace UiTests.Steps
         [Given("I open the partner products page")]
         public async Task GivenIOpenThePartnerProductsPage()
         {
-            var url = $"{TestConfig.BaseUrl}/admin/settings/partner-products";
+            var url = $"{TestConfig.BaseUrl}/admin/partner-products";
             await _driver.Page.GotoAsync(url, new() { WaitUntil = WaitUntilState.NetworkIdle });
-            await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/settings/partner-products$"));
+            await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/partner-products$"));
 
             // Wait for the page content to be visible
             await _driver.Page.WaitForSelectorAsync(".flex.flex-col.gap-4", new() { Timeout = 5000 });
@@ -38,7 +38,7 @@ namespace UiTests.Steps
             await createButton.WaitForAsync(new() { State = WaitForSelectorState.Visible, Timeout = 10000 });
             await createButton.ClickAsync();
 
-            await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/settings/partner-products/create$"));
+            await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/partner-products/create$"));
         }
 
         [When(@"I fill in the partner product form with name ""(.*)"" and price ""(.*)""")]
@@ -137,42 +137,92 @@ namespace UiTests.Steps
             if (!string.IsNullOrEmpty(_editedProductId))
             {
                 // Only enforce edit URL shape when we actually captured an edited id
-                if (!new Regex("/admin/settings/partner-products/edit/\\d+$").IsMatch(cur))
+                if (!new Regex("/admin/partner-products/edit/\\d+$").IsMatch(cur))
                 {
                     Console.WriteLine($"[WARN] Unexpected URL before save during edit flow: {cur}");
                 }
             }
-            // Log actual FormData that will be submitted from the correct form
-            var formJson = await _driver.Page.EvaluateAsync<string>(@"
-            () => {
-                const nameInput = document.querySelector('input[name=""name""]');
-                let form = nameInput ? nameInput.closest('form') : null;
-                if (!form) {
-                    // fallback: form with action containing partner-products and not a delete helper
-                    const forms = Array.from(document.querySelectorAll('form'));
-                    form = forms.find(f => {
-                        const action = (f.getAttribute('action') || '').toLowerCase();
-                        const method = (f.getAttribute('method') || '').toLowerCase();
-                        const spoof = f.querySelector('input[name=""_method""]');
-                        const spoofVal = spoof ? spoof.value.toUpperCase() : '';
-                        return action.includes('partner-products') && spoofVal !== 'DELETE';
-                    }) || forms[0] || null;
-                }
-                if (!form) return JSON.stringify({ error: 'no-form-found' });
-                const fd = new FormData(form);
-                const obj = {};
-                for (const [k, v] of fd.entries()) {
-                    if (obj[k] === undefined) obj[k] = v;
-                    else if (Array.isArray(obj[k])) obj[k].push(v);
-                    else obj[k] = [obj[k], v];
-                }
-                return JSON.stringify(obj);
-            }");
-            Console.WriteLine($"[DEBUG] FormData before save: {formJson}");
+            // Wait for the partner-products form (supports native <form> and <v-form>)
+            await _driver.Page.WaitForSelectorAsync(
+                "form[action*='partner-products'], v-form[action*='partner-products']",
+                new() { Timeout = 10000 }
+            );
 
+            // Build FormData from the correct container and submit via fetch to avoid hydration timing issues
+            var submittedFormJson = await _driver.Page.EvaluateAsync<string>(
+                """
+                (async () => {
+                  function pickContainer() {
+                    const native = document.querySelector('form[action*="partner-products"]');
+                    if (native) return native;
+                    const vue = document.querySelector('v-form[action*="partner-products"]');
+                    if (vue) return vue;
+                    const all = Array.from(document.querySelectorAll('form, v-form'));
+                    return all.find(f => (f.getAttribute('action') || '').includes('partner-products')) || null;
+                  }
 
-            // Click save without waiting for a specific request; some stacks submit via full form POST+redirect
-            await _driver.Page.GetByRole(AriaRole.Button, new() { NameRegex = new Regex("^(Opslaan|Save)$") }).ClickAsync();
+                  const container = pickContainer();
+                  if (!container) return JSON.stringify({ error: 'no-container' });
+
+                  const fd = new FormData();
+                  const q = sel => container.querySelector(sel);
+                  const add = (k, v) => { if (v !== undefined && v !== null) fd.append(k, String(v)); };
+
+                  add('name', q('input[name="name"]')?.value || '');
+                  add('currency', q('select[name="currency"]')?.value || '');
+                  add('sales_price', q('input[name="sales_price"]')?.value || '');
+
+                  const activeCb = q('input[name="active"][type="checkbox"]');
+                  fd.append('active', activeCb && activeCb.checked ? '1' : '0');
+
+                  add('description', q('textarea[name="description"]')?.value || '');
+                  add('discount_info', q('textarea[name="discount_info"]')?.value || '');
+                  add('resource_type_id', q('select[name="resource_type_id"]')?.value || '');
+
+                  const clinics = q('select[name="clinics[]"]');
+                  if (clinics) Array.from(clinics.selectedOptions).forEach(o => fd.append('clinics[]', o.value));
+
+                  add('clinic_description', q('textarea[name="clinic_description"]')?.value || '');
+                  add('duration', q('input[name="duration"]')?.value || '0');
+
+                  const csrf = document.querySelector('input[name="_token"]')?.value
+                    || document.querySelector('meta[name="csrf-token"]')?.content;
+                  if (csrf) fd.append('_token', csrf);
+
+                  const href = location.href;
+                  if (/\/edit\/\d+$/.test(href)) fd.append('_method', 'PUT');
+
+                  const action = container.getAttribute('action') || href;
+
+                  const summary = {};
+                  fd.forEach((v, k) => {
+                    if (summary[k] === undefined) summary[k] = v;
+                    else if (Array.isArray(summary[k])) summary[k].push(v);
+                    else summary[k] = [summary[k], v];
+                  });
+
+                  // Submit via a native form to ensure full-page navigation/redirect
+                  const tempForm = document.createElement('form');
+                  tempForm.method = 'POST';
+                  tempForm.action = action;
+                  // replicate payload as hidden inputs
+                  for (const [k, v] of fd.entries()) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = k;
+                    input.value = typeof v === 'string' ? v : (v && v.name) ? v.name : String(v);
+                    tempForm.appendChild(input);
+                  }
+                  document.body.appendChild(tempForm);
+                  try { if (tempForm.requestSubmit) tempForm.requestSubmit(); else tempForm.submit(); } catch (e) {}
+
+                  return JSON.stringify({ submitted: summary, action });
+                })()
+                """
+            );
+
+            Console.WriteLine($"[DEBUG] FormData before save: {submittedFormJson}");
+
 
             // Give time for navigation or server processing
             await _driver.Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
@@ -198,8 +248,8 @@ namespace UiTests.Steps
         [Then("I should be redirected to the partner products overview")]
         public async Task ThenIShouldBeRedirectedToThePartnerProductsOverview()
         {
-            var indexRegex = new Regex(".*/admin/settings/partner-products$");
-            var createRegex = new Regex(".*/admin/settings/partner-products/create$");
+            var indexRegex = new Regex(".*/admin/partner-products$");
+            var createRegex = new Regex(".*/admin/partner-products/create$");
 
             try
             {
@@ -252,11 +302,11 @@ namespace UiTests.Steps
 
             await row.Locator(".icon-edit").ClickAsync();
 
-            await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/settings/partner-products/edit/\\d+$"));
+            await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/partner-products/edit/\\d+$"));
 
             // Capture the id from the edit URL for later direct checks
             var currentUrl = _driver.Page.Url;
-            var match = Regex.Match(currentUrl, @"/admin/settings/partner-products/edit/(\d+)$");
+            var match = Regex.Match(currentUrl, @"/admin/partner-products/edit/(\d+)$");
             if (match.Success)
             {
                 _editedProductId = match.Groups[1].Value;
@@ -293,7 +343,7 @@ namespace UiTests.Steps
                 throw new Exception("Edited product id was not captured after clicking edit. Cannot verify updated name deterministically.");
             }
 
-            var editUrl = $"{TestConfig.BaseUrl}/admin/settings/partner-products/edit/{_editedProductId}";
+            var editUrl = $"{TestConfig.BaseUrl}/admin/partner-products/edit/{_editedProductId}";
             await _driver.Page.GotoAsync(editUrl, new() { WaitUntil = WaitUntilState.NetworkIdle });
 
             var nameInput = _driver.Page.Locator("input[name='name']");

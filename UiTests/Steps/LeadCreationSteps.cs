@@ -93,8 +93,80 @@ namespace UiTests.Steps
         [Then("I should be redirected to the lead view page")]
         public async Task ThenIShouldBeRedirectedToLeadView()
         {
+            // Wait a moment for any redirects to complete
+            await Task.Delay(1000);
+            
+            // Check if we're on the sync page first (new flow when person is selected)
+            var currentUrl = _driver.Page.Url;
+            Console.WriteLine($"[DEBUG] Current URL in ThenIShouldBeRedirectedToLeadView: {currentUrl}");
+            
+            if (currentUrl.Contains("/admin/leads/sync-lead-to-person/"))
+            {
+                Console.WriteLine("[DEBUG] Detected sync page, completing sync process");
+                // Complete the sync process
+                await CompleteLeadPersonSync();
+            }
+            
             // Expect url like /admin/leads/view/{id}
             await Assertions.Expect(_driver.Page).ToHaveURLAsync(new Regex(".*/admin/leads/view/\\d+$"), new() { Timeout = 30000 });
+        }
+
+        private async Task CompleteLeadPersonSync()
+        {
+            // Wait for the sync page to load
+            await _driver.Page.WaitForSelectorAsync("#sync-lead-to-person-form", new() { Timeout = 10000 });
+            
+            // Debug: Log current page content
+            var pageContent = await _driver.Page.ContentAsync();
+            Console.WriteLine($"[DEBUG] Sync page loaded. URL: {_driver.Page.Url}");
+            
+            // Check if there are field differences that need to be resolved
+            var hasFieldDifferences = await _driver.Page.Locator(".box-shadow table tbody tr").CountAsync() > 0;
+            Console.WriteLine($"[DEBUG] Has field differences: {hasFieldDifferences}");
+            
+            if (hasFieldDifferences)
+            {
+                // If there are differences, we need to make choices
+                // For simplicity, we'll choose the lead values (default behavior)
+                // The form should already have the correct defaults selected
+                
+                // Submit the sync form
+                Console.WriteLine("[DEBUG] Submitting sync form with differences");
+                await _driver.Page.ClickAsync("button[type='submit']");
+            }
+            else
+            {
+                // If no differences, check if there's a button to proceed
+                var proceedButton = _driver.Page.Locator("button:has-text('Gegevens overnemen'), button:has-text('Doorgaan'), a:has-text('Doorgaan')");
+                var buttonCount = await proceedButton.CountAsync();
+                Console.WriteLine($"[DEBUG] Proceed button count: {buttonCount}");
+                
+                if (buttonCount > 0)
+                {
+                    Console.WriteLine("[DEBUG] Clicking proceed button");
+                    await proceedButton.ClickAsync();
+                }
+                else
+                {
+                    // Try to find any submit button
+                    var submitButton = _driver.Page.Locator("button[type='submit']");
+                    var submitCount = await submitButton.CountAsync();
+                    Console.WriteLine($"[DEBUG] Submit button count: {submitCount}");
+                    
+                    if (submitCount > 0)
+                    {
+                        Console.WriteLine("[DEBUG] Clicking submit button");
+                        await submitButton.ClickAsync();
+                    }
+                }
+            }
+            
+            // Wait for the redirect to complete
+            Console.WriteLine("[DEBUG] Waiting for redirect to complete");
+            await _driver.Page.WaitForLoadStateAsync(LoadState.NetworkIdle);
+            
+            // Additional wait for any JavaScript redirects
+            await Task.Delay(2000);
         }
     }
 }

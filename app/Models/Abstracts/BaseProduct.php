@@ -24,6 +24,7 @@ abstract class BaseProduct extends Model
     ];
 
     protected $casts = [
+        'currency'         => 'string',
         'sales_price'      => 'decimal:2',
         'active'           => 'boolean',
         'resource_type_id' => 'integer',

@@ -32,16 +32,22 @@ test('can create partner product', function () {
     $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
     $clinicId = Clinic::query()->value('id') ?? Clinic::factory()->create()->id;
     $payload = [
-        'name'               => 'MRI Scan',
-        'currency'           => 'EUR',
-        'sales_price'        => 199.99,
-        'active'             => 1,
-        'description'        => 'Great partner product',
-        'discount_info'      => 'Intro discount 10%',
-        'resource_type_id'   => $resourceTypeId,
-        'clinics'            => [$clinicId],
-        'clinic_description' => 'Omschrijving kliniek',
-        'duration'           => 60,
+        'name'                         => 'MRI Scan',
+        'currency'                     => 'EUR',
+        'sales_price'                  => 199.99,
+        'active'                       => 1,
+        'description'                  => 'Great partner product',
+        'discount_info'                => 'Intro discount 10%',
+        'resource_type_id'             => $resourceTypeId,
+        'clinics'                      => [$clinicId],
+        'clinic_description'           => 'Omschrijving kliniek',
+        'duration'                     => 60,
+        'purchase_price_misc'          => 10.50,
+        'purchase_price_doctor'        => 25.00,
+        'purchase_price_cardiology'    => 15.75,
+        'purchase_price_clinic'        => 30.25,
+        'purchase_price_royal_doctors' => 12.00,
+        'purchase_price_radiology'     => 20.50,
     ];
 
     $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
@@ -50,6 +56,11 @@ test('can create partner product', function () {
     $this->assertDatabaseHas('partner_products', [
         'name' => 'MRI Scan',
     ]);
+
+    $createdProduct = PartnerProduct::where('name', 'MRI Scan')->first();
+    expect($createdProduct->purchase_price)->toBe('114.00')
+        ->and($createdProduct->purchase_price_misc)->toBe('10.50')
+        ->and($createdProduct->purchase_price_doctor)->toBe('25.00');
 });
 
 test('can update partner product', function () {
@@ -59,17 +70,23 @@ test('can update partner product', function () {
     $clinicId = Clinic::query()->value('id') ?? Clinic::factory()->create()->id;
 
     $payload = [
-        'name'               => 'CT Scan',
-        'currency'           => 'EUR',
-        'sales_price'        => 299.95,
-        'active'             => 0,
-        'description'        => 'Updated description',
-        'discount_info'      => null,
-        'resource_type_id'   => $resourceTypeId,
-        'clinic_description' => 'Nieuwe omschrijving kliniek',
-        'duration'           => 45,
-        'clinics'            => [$clinicId],
-        '_method'            => 'put',
+        'name'                         => 'CT Scan',
+        'currency'                     => 'EUR',
+        'sales_price'                  => 299.95,
+        'active'                       => 0,
+        'description'                  => 'Updated description',
+        'discount_info'                => null,
+        'resource_type_id'             => $resourceTypeId,
+        'clinic_description'           => 'Nieuwe omschrijving kliniek',
+        'duration'                     => 45,
+        'clinics'                      => [$clinicId],
+        'purchase_price_misc'          => 5.00,
+        'purchase_price_doctor'        => 50.00,
+        'purchase_price_cardiology'    => 10.00,
+        'purchase_price_clinic'        => 15.00,
+        'purchase_price_royal_doctors' => 8.00,
+        'purchase_price_radiology'     => 12.00,
+        '_method'                      => 'put',
     ];
 
     $response = $this->postJson(route('admin.settings.partner_products.update', ['id' => $pp->id]), $payload);
@@ -79,6 +96,11 @@ test('can update partner product', function () {
         'id'   => $pp->id,
         'name' => 'CT Scan',
     ]);
+
+    $pp->refresh();
+    expect($pp->purchase_price)->toBe('100.00')
+        ->and($pp->purchase_price_misc)->toBe('5.00')
+        ->and($pp->purchase_price_doctor)->toBe('50.00');
 });
 
 test('can delete partner product', function () {
@@ -90,6 +112,40 @@ test('can delete partner product', function () {
     $this->assertDatabaseMissing('partner_products', [
         'id' => $pp->id,
     ]);
+});
+
+test('purchase price total is calculated correctly on create', function () {
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+    $clinicId = Clinic::query()->value('id') ?? Clinic::factory()->create()->id;
+
+    $payload = [
+        'name'                         => 'Test Product',
+        'currency'                     => 'EUR',
+        'sales_price'                  => 500.00,
+        'active'                       => 1,
+        'resource_type_id'             => $resourceTypeId,
+        'clinics'                      => [$clinicId],
+        'purchase_price_misc'          => 22.50,
+        'purchase_price_doctor'        => 100.00,
+        'purchase_price_cardiology'    => 50.25,
+        'purchase_price_clinic'        => 75.75,
+        'purchase_price_royal_doctors' => 30.00,
+        'purchase_price_radiology'     => 45.50,
+    ];
+
+    $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
+    $response->assertOk();
+
+    $pp = PartnerProduct::where('name', 'Test Product')->first();
+
+    // Use string comparison since decimal:2 cast returns strings
+    expect($pp->purchase_price)->toBe('324.00')
+        ->and($pp->purchase_price_misc)->toBe('22.50')
+        ->and($pp->purchase_price_doctor)->toBe('100.00')
+        ->and($pp->purchase_price_cardiology)->toBe('50.25')
+        ->and($pp->purchase_price_clinic)->toBe('75.75')
+        ->and($pp->purchase_price_royal_doctors)->toBe('30.00')
+        ->and($pp->purchase_price_radiology)->toBe('45.50');
 });
 
 test('validates resources belong to selected clinics when creating', function () {

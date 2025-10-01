@@ -43,81 +43,15 @@
                 </div>
             </div>
 
-            <div class="flex gap-2.5 max-xl:flex-wrap">
-                <!-- Left sub-component -->
-                <div class="flex flex-1 flex-col gap-2 max-xl:flex-auto">
-                    <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-                        <p class="mb-4 text-base font-semibold text-gray-800 dark:text-white">
-                            @lang('admin::app.products.create.general')
-                        </p>
+            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <p class="mb-4 text-base font-semibold text-gray-800 dark:text-white">
+                    @lang('admin::app.products.create.general')
+                </p>
 
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.partner_products.index.create.currency')
-                            </x-admin::form.control-group.label>
-
-                            <x-admin::form.control-group.control
-                                type="select"
-                                name="currency"
-                                rules="required"
-                                :label="trans('admin::app.settings.partner_products.index.create.currency')"
-                            >
-                                @foreach ($currencies as $currency)
-                                    <option value="{{ $currency['code'] }}" @selected(old('currency', $product->currency) === $currency['code'])>{{ $currency['label'] }}</option>
-                                @endforeach
-                            </x-admin::form.control-group.control>
-
-                            <x-admin::form.control-group.error control-name="currency" />
-                        </x-admin::form.control-group>
-
-                        {!! view_render_event('admin.products.edit.attributes.before', ['product' => $product]) !!}
-
-                        <x-admin::attributes
-                            :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                'entity_type' => 'products',
-                                ['code', 'NOTIN', ['price']],
-                            ])"
-                            :entity="$product"
-                        />
-
-                        {!! view_render_event('admin.products.edit.attributes.after', ['product' => $product]) !!}
-                    </div>
-                </div>
-
-                <!-- Right sub-component -->
-                <div class="flex w-[360px] max-w-full flex-col gap-2 max-sm:w-full">
-                    {!! view_render_event('admin.products.edit.accordion.before', ['product' => $product]) !!}
-
-                    <x-admin::accordion >
-                        <x-slot:header>
-                            {!! view_render_event('admin.products.edit.accordion.header.before', ['product' => $product]) !!}
-
-                            <div class="flex items-center justify-between">
-                                <p class="p-2.5 text-base font-semibold text-gray-800 dark:text-white">
-                                    @lang('admin::app.products.create.price')
-                                </p>
-                            </div>
-
-                            {!! view_render_event('admin.products.edit.accordion.header.after', ['product' => $product]) !!}
-                        </x-slot>
-
-                        <x-slot:content>
-                            {!! view_render_event('admin.products.edit.accordion.content.attributes.before', ['product' => $product]) !!}
-
-                            <x-admin::attributes
-                                :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                    'entity_type' => 'products',
-                                    ['code', 'IN', ['price']],
-                                ])"
-                                :entity="$product"
-                            />
-
-                            {!! view_render_event('admin.products.edit.accordion.content.attributes.after', ['product' => $product]) !!}
-                        </x-slot>
-                    </x-admin::accordion>
-
-                    {!! view_render_event('admin.products.edit.accordion.after', ['product' => $product]) !!}
-                </div>
+                <x-admin::product-form-fields
+                    :product="$product"
+                    :selected-partner-products="$product->partnerProducts->map(fn($p) => ['id' => $p->id, 'name' => $p->name])->toArray()"
+                />
             </div>
         </div>
     </x-admin::form>

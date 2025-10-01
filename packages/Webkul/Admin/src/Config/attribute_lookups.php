@@ -54,6 +54,11 @@ return [
         'repository'   => 'Webkul\Warehouse\Repositories\LocationRepository',
     ],
 
+    'partner_products' => [
+        'name'         => 'Partner Products',
+        'repository'   => 'App\Repositories\PartnerProductRepository',
+        'label_column' => 'name',
+    ],
     'product_groups' => [
         'name'         => 'Product Groups',
         'repository'   => 'Webkul\Product\Repositories\ProductGroupRepository',

@@ -37,7 +37,12 @@ class Product extends Model implements ProductContract
     ];
 
     protected $casts = [
-        'currency' => 'string',
+        'currency'         => 'string',
+        'price'            => 'decimal:2',
+        'costs'            => 'decimal:2',
+        'product_group_id' => 'integer',
+        'product_type_id'  => 'integer',
+        'resource_type_id' => 'integer',
     ];
 
     /**
@@ -83,9 +88,9 @@ class Product extends Model implements ProductContract
     /**
      * Get the product group that owns the product.
      */
-    public function productGroup()
+    public function productGroup(): BelongsTo
     {
-        return $this->belongsTo(ProductGroupProxy::modelClass());
+        return $this->belongsTo(ProductGroup::class);
     }
 
     public function resourceType(): BelongsTo

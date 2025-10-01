@@ -22,18 +22,6 @@ return new class extends Migration
             $table->timestamp('failed_at')->useCurrent();
         });
 
-        // Personal Access Tokens
-        Schema::create('personal_access_tokens', function (Blueprint $table) {
-            $table->id();
-            $table->morphs('tokenable');
-            $table->string('name');
-            $table->string('token', 64)->unique();
-            $table->text('abilities')->nullable();
-            $table->timestamp('last_used_at')->nullable();
-            $table->timestamp('expires_at')->nullable();
-            $table->timestamps();
-        });
-
         // Job Batches
         Schema::create('job_batches', function (Blueprint $table) {
             $table->string('id')->primary();
@@ -67,7 +55,6 @@ return new class extends Migration
     {
         Schema::dropIfExists('jobs');
         Schema::dropIfExists('job_batches');
-        Schema::dropIfExists('personal_access_tokens');
         Schema::dropIfExists('failed_jobs');
     }
 };

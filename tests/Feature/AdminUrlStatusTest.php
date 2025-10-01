@@ -261,7 +261,10 @@ function createTestDataForRoutes(): array
     $data['pipeline'] = $pipeline;
     $data['type'] = Type::first() ?? Type::create(['name' => 'Test Type']);
     $data['source'] = Source::first() ?? Source::create(['name' => 'Test Source']);
-    $data['tag'] = Tag::firstOrCreate(['name' => 'Test Tag']);
+    $data['tag'] = Tag::firstOrCreate(
+        ['name' => 'Test Tag'],
+        ['user_id' => User::first()->id, 'color' => '#0000FF']
+    );
     
     // Warehouse - create if doesn't exist
     $data['warehouse'] = Warehouse::firstOrCreate(

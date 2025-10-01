@@ -84,12 +84,21 @@ return new class extends Migration
                 ->update(['is_unique' => 0]);
         }
 
-        // Modify Leads Table
-        Schema::table('leads', function (Blueprint $table) {
-            if (Schema::hasColumn('leads', 'title')) {
+        // Modify Leads Table - Drop columns first (SQLite compatibility)
+        if (Schema::hasColumn('leads', 'title')) {
+            Schema::table('leads', function (Blueprint $table) {
                 $table->dropColumn('title');
-            }
-            
+            });
+        }
+        
+        if (Schema::hasColumn('leads', 'lead_value')) {
+            Schema::table('leads', function (Blueprint $table) {
+                $table->dropColumn('lead_value');
+            });
+        }
+
+        // Modify Leads Table - Add new columns
+        Schema::table('leads', function (Blueprint $table) {
             $table->string('external_id')->nullable()->after('id');
             $table->index('external_id');
             $table->string('salutation')->nullable();
@@ -121,10 +130,6 @@ return new class extends Migration
             $table->unsignedInteger('updated_by')->nullable();
             $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
             $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
-            
-            if (Schema::hasColumn('leads', 'lead_value')) {
-                $table->dropColumn('lead_value');
-            }
         });
 
         // Modify Activities Table
@@ -170,12 +175,9 @@ return new class extends Migration
             $table->enum('type', ['lead', 'workflow'])->default('lead')->after('is_default');
         });
 
-        // Modify Products Table
-        Schema::table('products', function (Blueprint $table) {
-            if (! Schema::hasColumn('products', 'currency')) {
-                $table->string('currency', 3)->default('EUR')->after('name');
-            }
-            if (Schema::hasColumn('products', 'sku')) {
+        // Modify Products Table - Drop columns (SQLite compatibility)
+        if (Schema::hasColumn('products', 'sku')) {
+            Schema::table('products', function (Blueprint $table) use (&$indexExists) {
                 $indexExists = DB::select("
                     SELECT COUNT(*) as count 
                     FROM information_schema.statistics 
@@ -188,9 +190,19 @@ return new class extends Migration
                     $table->dropUnique(['sku']);
                 }
                 $table->dropColumn('sku');
-            }
-            if (Schema::hasColumn('products', 'quantity')) {
+            });
+        }
+        
+        if (Schema::hasColumn('products', 'quantity')) {
+            Schema::table('products', function (Blueprint $table) {
                 $table->dropColumn('quantity');
+            });
+        }
+
+        // Modify Products Table - Add columns
+        Schema::table('products', function (Blueprint $table) {
+            if (! Schema::hasColumn('products', 'currency')) {
+                $table->string('currency', 3)->default('EUR')->after('name');
             }
             if (! Schema::hasColumn('products', 'resource_type_id')) {
                 $table->unsignedBigInteger('resource_type_id')->nullable()->after('price');

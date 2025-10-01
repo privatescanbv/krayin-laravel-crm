@@ -19,18 +19,18 @@ class ShiftFactory extends Factory
         $periodEnd = (clone $periodStart)->modify('+7 days');
 
         return [
-            'resource_id' => Resource::factory(),
-            'period_start' => $periodStart,
-            'period_end' => $periodEnd,
-            'weekday_time_blocks' => json_encode([
-                '1' => [['from' => '08:00', 'to' => '12:00'], ['from' => '13:00', 'to' => '17:00']],
-                '2' => [['from' => '08:00', 'to' => '12:00'], ['from' => '13:00', 'to' => '17:00']],
-                '3' => [['from' => '08:00', 'to' => '12:00'], ['from' => '13:00', 'to' => '17:00']],
-                '4' => [['from' => '08:00', 'to' => '12:00'], ['from' => '13:00', 'to' => '17:00']],
-                '5' => [['from' => '08:00', 'to' => '12:00'], ['from' => '13:00', 'to' => '17:00']],
-            ]),
+            'resource_id'         => Resource::factory(),
+            'period_start'        => $periodStart,
+            'period_end'          => $periodEnd,
+            'weekday_time_blocks' => [
+                1 => [['from' => '08:00', 'to' => '12:00'], ['from' => '13:00', 'to' => '17:00']],
+                2 => [['from' => '08:00', 'to' => '12:00'], ['from' => '13:00', 'to' => '17:00']],
+                3 => [['from' => '08:00', 'to' => '12:00'], ['from' => '13:00', 'to' => '17:00']],
+                4 => [['from' => '08:00', 'to' => '12:00'], ['from' => '13:00', 'to' => '17:00']],
+                5 => [['from' => '08:00', 'to' => '12:00'], ['from' => '13:00', 'to' => '17:00']],
+            ],
             'available' => true,
-            'notes' => $this->faker->optional()->sentence(),
+            'notes'     => $this->faker->optional()->sentence(),
         ];
     }
 }

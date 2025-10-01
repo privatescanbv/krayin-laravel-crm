@@ -144,6 +144,12 @@ class AttributeController extends Controller
             'code' => request('attribute_code'),
         ]);
 
+        if (! $attribute) {
+            return response()->json([
+                'validated' => true,
+            ]);
+        }
+
         return response()->json([
             'validated' => $this->attributeValueRepository->isValueUnique(
                 request('entity_id'),

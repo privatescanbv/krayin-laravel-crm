@@ -13,6 +13,7 @@ use Database\Seeders\TestSeeder;
 use Illuminate\Support\Facades\Route;
 use Webkul\Activity\Models\Activity;
 use Webkul\Attribute\Models\Attribute;
+use Webkul\Automation\Models\Workflow;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\EmailTemplate\Models\EmailTemplate;
@@ -31,7 +32,6 @@ use Webkul\User\Models\User;
 use Webkul\Warehouse\Models\Location;
 use Webkul\Warehouse\Models\Warehouse;
 use Webkul\WebForm\Models\WebForm;
-use Webkul\Automation\Models\Workflow;
 
 /**
  * Test all admin URLs to ensure they don't return 500 errors.
@@ -141,7 +141,7 @@ it('tests all admin GET routes return valid HTTP status codes', function () {
                     }
                     // Look for specific Laravel error patterns
                     if (preg_match('/>\s*([A-Za-z\\\\]+Exception|Error):\s*([^<\n]+)/i', $content, $matches)) {
-                        $errorMessage = trim($matches[1] . ': ' . $matches[2]);
+                        $errorMessage = trim($matches[1].': '.$matches[2]);
                     }
                 } catch (\Exception $e) {
                     // Ignore parsing errors
@@ -168,8 +168,8 @@ it('tests all admin GET routes return valid HTTP status codes', function () {
                 'uri'     => $uri,
                 'url'     => $url ?? 'N/A',
                 'status'  => 'EXCEPTION',
-                'message' => get_class($e) . ': ' . $e->getMessage(),
-                'file'    => basename($e->getFile()) . ':' . $e->getLine(),
+                'message' => get_class($e).': '.$e->getMessage(),
+                'file'    => basename($e->getFile()).':'.$e->getLine(),
             ];
         }
     }
@@ -199,9 +199,9 @@ it('tests all admin GET routes return valid HTTP status codes', function () {
                 $errorLines = explode("\n", $failed['message']);
                 $errorMsg = trim($errorLines[0]);
                 if (strlen($errorMsg) > 150) {
-                    $errorMsg = substr($errorMsg, 0, 147) . '...';
+                    $errorMsg = substr($errorMsg, 0, 147).'...';
                 }
-                $errorReport .= "    │  " . $errorMsg . "\n";
+                $errorReport .= '    │  '.$errorMsg."\n";
             }
             if (isset($failed['file'])) {
                 $errorReport .= "    └─ Location: {$failed['file']}\n";
@@ -234,7 +234,7 @@ it('tests all admin GET routes return valid HTTP status codes', function () {
     if (count($redirectTests) > 0) {
         $errorReport .= sprintf("ℹ️  Routes with redirects (302): %d\n", count($redirectTests));
     }
-    
+
     if (count($skippedRoutes) > 0) {
         $errorReport .= sprintf("ℹ️  Skipped routes: %d (search, lookup, download, debug routes)\n", count($skippedRoutes));
     }
@@ -363,12 +363,12 @@ function createTestDataForRoutes(): array
     $data['web_form'] = WebForm::firstOrCreate(
         ['title' => 'Test Form'],
         [
-            'form_id' => 'test-form-'.uniqid(),
-            'submit_button_label' => 'Submit',
-            'submit_success_action' => 'message',
-            'submit_success_content' => 'Thank you for your submission',
-            'background_color' => '#FFFFFF',
-            'form_submit_button_color' => '#0000FF',
+            'form_id'                   => 'test-form-'.uniqid(),
+            'submit_button_label'       => 'Submit',
+            'submit_success_action'     => 'message',
+            'submit_success_content'    => 'Thank you for your submission',
+            'background_color'          => '#FFFFFF',
+            'form_submit_button_color'  => '#0000FF',
             'attribute_form_text_color' => '#000000',
         ]
     );

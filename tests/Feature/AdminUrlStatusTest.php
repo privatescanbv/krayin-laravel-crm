@@ -31,7 +31,7 @@ use Webkul\User\Models\User;
 use Webkul\Warehouse\Models\Location;
 use Webkul\Warehouse\Models\Warehouse;
 use Webkul\WebForm\Models\WebForm;
-use Webkul\Workflow\Models\Workflow;
+use Webkul\Automation\Models\Workflow;
 
 /**
  * Test all admin URLs to ensure they don't return 500 errors.

@@ -16,12 +16,12 @@
                 </div>
 
                 <div class="flex items-center gap-x-2.5">
-                    <x-admin::button
+                    <button
                         type="submit"
                         class="primary-button"
                     >
                         @lang('admin::app.productgroups.edit.save-btn')
-                    </x-admin::button>
+                    </button>
                 </div>
             </div>
 

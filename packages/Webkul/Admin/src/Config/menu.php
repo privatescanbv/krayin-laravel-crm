@@ -256,8 +256,8 @@ return [
     ], [
         'key'        => 'settings.warehouse.warehouses',
         'name'       => 'admin::app.layouts.warehouses',
-        'info'       => 'admin::app.layouts.warehouses-info',
-        'route'      => 'admin.settings.warehouses.index',
+        'info'       => 'Uitgeschakeld voor nu',
+        'route'      => 'admin.settings.clinics.index',
         'sort'       => 1,
         'icon-class' => 'icon-settings-warehouse',
     ], [

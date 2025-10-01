@@ -484,10 +484,10 @@ Breadcrumbs::for('settings.warehouses.view', function (BreadcrumbTrail $trail, $
 });
 
 // Dashboard > Settings > Warehouse > View Warehouse > Products
-Breadcrumbs::for('settings.warehouses.view.products', function (BreadcrumbTrail $trail, $warehouse) {
-    $trail->parent('settings.warehouses.view', $warehouse);
-    $trail->push(trans('admin::app.settings.warehouses.products'), route('admin.settings.warehouses.products.index', $warehouse->id));
-});
+//Breadcrumbs::for('settings.warehouses.view.products', function (BreadcrumbTrail $trail, $warehouse) {
+//    $trail->parent('settings.warehouses.view', $warehouse);
+//    $trail->push(trans('admin::app.settings.warehouses.products'), route('admin.settings.warehouses.products.index', $warehouse->id));
+//});
 
 // Settings > Resource Types
 Breadcrumbs::for('settings.resource_types', function (BreadcrumbTrail $trail) {

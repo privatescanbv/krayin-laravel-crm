@@ -2773,6 +2773,11 @@ return [
             'parent' => 'Bovenliggende groep',
             'select-parent' => 'Bovenliggende groep selecteren',
         ],
+        'view' => [
+            'inventory' => [
+                'disabled' => 'Voorraadbeheer is uitgeschakeld in deze omgeving.',
+            ],
+        ],
     ],
 
 ];

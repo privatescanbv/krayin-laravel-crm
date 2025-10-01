@@ -2725,5 +2725,10 @@ return [
             'parent'        => 'Parent Group',
             'select-parent' => 'Select Parent Group',
         ],
+        'view' => [
+            'inventory' => [
+                'disabled'   => 'Inventory management is disabled in this deployment.',
+            ],
+        ],
     ],
 ];

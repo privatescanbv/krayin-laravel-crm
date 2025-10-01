@@ -53,31 +53,105 @@
                             @lang('admin::app.products.create.general')
                         </p>
 
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label class="required">
-                                @lang('admin::app.settings.partner_products.index.create.currency')
-                            </x-admin::form.control-group.label>
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.partner_products.index.create.currency')
+                                </x-admin::form.control-group.label>
 
-                            <x-admin::form.control-group.control
-                                type="select"
-                                name="currency"
-                                rules="required"
-                                :label="trans('admin::app.settings.partner_products.index.create.currency')"
-                            >
-                                @foreach ($currencies as $currency)
-                                    <option value="{{ $currency['code'] }}" @selected(old('currency', 'EUR') === $currency['code'])>{{ $currency['label'] }}</option>
-                                @endforeach
-                            </x-admin::form.control-group.control>
+                                <x-admin::form.control-group.control
+                                    type="select"
+                                    name="currency"
+                                    rules="required"
+                                    :label="trans('admin::app.settings.partner_products.index.create.currency')"
+                                >
+                                    @foreach ($currencies as $currency)
+                                        <option value="{{ $currency['code'] }}" @selected(old('currency', 'EUR') === $currency['code'])>{{ $currency['label'] }}</option>
+                                    @endforeach
+                                </x-admin::form.control-group.control>
 
-                            <x-admin::form.control-group.error control-name="currency" />
-                        </x-admin::form.control-group>
+                                <x-admin::form.control-group.error control-name="currency" />
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    @lang('admin::app.products.create.costs')
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="price"
+                                    name="costs"
+                                    :label="trans('admin::app.products.create.costs')"
+                                    :placeholder="trans('admin::app.products.create.costs')"
+                                />
+
+                                <x-admin::form.control-group.error control-name="costs" />
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    @lang('admin::app.products.create.product_type')
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="select"
+                                    name="product_type_id"
+                                    :label="trans('admin::app.products.create.product_type')"
+                                >
+                                    <option value="">@lang('admin::app.select')</option>
+                                    @foreach (\App\Models\ProductType::orderBy('name')->get(['id', 'name']) as $type)
+                                        <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                    @endforeach
+                                </x-admin::form.control-group.control>
+
+                                <x-admin::form.control-group.error control-name="product_type_id" />
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    @lang('admin::app.products.create.resource_type')
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="select"
+                                    name="resource_type_id"
+                                    :label="trans('admin::app.products.create.resource_type')"
+                                >
+                                    <option value="">@lang('admin::app.select')</option>
+                                    @foreach (\App\Models\ResourceType::orderBy('name')->get(['id', 'name']) as $type)
+                                        <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                    @endforeach
+                                </x-admin::form.control-group.control>
+
+                                <x-admin::form.control-group.error control-name="resource_type_id" />
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    @lang('admin::app.products.create.product_group')
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="select"
+                                    name="product_group_id"
+                                    :label="trans('admin::app.products.create.product_group')"
+                                >
+                                    <option value="">@lang('admin::app.select')</option>
+                                    @foreach (\Webkul\Product\Models\ProductGroup::orderBy('name')->get(['id', 'name']) as $group)
+                                        <option value="{{ $group->id }}">{{ $group->name }}</option>
+                                    @endforeach
+                                </x-admin::form.control-group.control>
+
+                                <x-admin::form.control-group.error control-name="product_group_id" />
+                            </x-admin::form.control-group>
+                        </div>
 
                         {!! view_render_event('admin.products.create.attributes.before') !!}
 
                         <x-admin::attributes
                             :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
                                 'entity_type' => 'products',
-                                ['code', 'NOTIN', ['price']],
+                                ['code', 'NOTIN', ['price', 'costs', 'product_type_id', 'resource_type_id', 'product_group_id']],
                             ])"
                         />
 

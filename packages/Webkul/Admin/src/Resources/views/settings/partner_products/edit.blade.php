@@ -323,7 +323,7 @@
 
     @push('scripts')
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
+            function initPurchasePriceCalculator() {
                 const purchasePriceFields = [
                     'purchase_price_misc',
                     'purchase_price_doctor',
@@ -354,12 +354,21 @@
 
                 function calculateTotal() {
                     let total = 0;
+                    let foundInputs = 0;
+                    
                     purchasePriceFields.forEach(fieldName => {
                         const input = document.querySelector(`input[name="${fieldName}"]`);
                         if (input) {
-                            total += parsePrice(input.value);
+                            foundInputs++;
+                            const value = parsePrice(input.value);
+                            total += value;
+                            console.log(`${fieldName}: ${input.value} = ${value}`);
+                        } else {
+                            console.warn(`Input not found: ${fieldName}`);
                         }
                     });
+
+                    console.log(`Total: ${total}, Found inputs: ${foundInputs}`);
 
                     const totalElement = document.getElementById('purchase-price-total');
                     if (totalElement) {
@@ -367,18 +376,39 @@
                     }
                 }
 
-                // Add event listeners to all purchase price fields
-                purchasePriceFields.forEach(fieldName => {
-                    const input = document.querySelector(`input[name="${fieldName}"]`);
-                    if (input) {
-                        input.addEventListener('input', calculateTotal);
-                        input.addEventListener('change', calculateTotal);
-                    }
-                });
+                // Use event delegation on the form container
+                const form = document.querySelector('form');
+                if (form) {
+                    form.addEventListener('input', function(event) {
+                        if (event.target.matches('input[type="text"]')) {
+                            const fieldName = event.target.getAttribute('name');
+                            if (purchasePriceFields.includes(fieldName)) {
+                                calculateTotal();
+                            }
+                        }
+                    });
 
-                // Calculate initial total
-                calculateTotal();
-            });
+                    form.addEventListener('change', function(event) {
+                        if (event.target.matches('input[type="text"]')) {
+                            const fieldName = event.target.getAttribute('name');
+                            if (purchasePriceFields.includes(fieldName)) {
+                                calculateTotal();
+                            }
+                        }
+                    });
+                }
+
+                // Try to calculate after a delay to ensure Vue has rendered
+                setTimeout(calculateTotal, 500);
+                setTimeout(calculateTotal, 1000);
+            }
+
+            // Initialize when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initPurchasePriceCalculator);
+            } else {
+                initPurchasePriceCalculator();
+            }
         </script>
     @endpush
 </x-admin::layouts>

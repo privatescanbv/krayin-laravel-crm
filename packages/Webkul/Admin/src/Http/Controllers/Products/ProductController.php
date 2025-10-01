@@ -193,7 +193,7 @@ class ProductController extends Controller
 
     /**
      * Clean product data before saving.
-     * Converts empty strings to null for foreign key fields.
+     * Converts empty strings to null for foreign key and numeric fields.
      */
     protected function cleanProductData(array $data): array
     {
@@ -202,6 +202,15 @@ class ProductController extends Controller
         
         foreach ($foreignKeyFields as $field) {
             if (array_key_exists($field, $data) && $data[$field] === '') {
+                $data[$field] = null;
+            }
+        }
+
+        // Convert empty strings to null for decimal fields
+        $decimalFields = ['price', 'costs'];
+        
+        foreach ($decimalFields as $field) {
+            if (array_key_exists($field, $data) && ($data[$field] === '' || $data[$field] === null)) {
                 $data[$field] = null;
             }
         }

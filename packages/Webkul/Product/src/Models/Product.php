@@ -38,9 +38,12 @@ class Product extends Model implements ProductContract
     ];
 
     protected $casts = [
-        'currency' => 'string',
-        'price'    => 'decimal:2',
-        'costs'    => 'decimal:2',
+        'currency'         => 'string',
+        'price'            => 'decimal:2',
+        'costs'            => 'decimal:2',
+        'product_group_id' => 'integer',
+        'product_type_id'  => 'integer',
+        'resource_type_id' => 'integer',
     ];
 
     /**

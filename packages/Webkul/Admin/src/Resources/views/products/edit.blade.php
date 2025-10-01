@@ -79,7 +79,7 @@
                                 <x-admin::form.control-group.control
                                     type="price"
                                     name="costs"
-                                    value="{{ old('costs', number_format($product->costs ?? 0, 2, ',', '')) }}"
+                                    value="{{ old('costs', $product->costs ? number_format($product->costs, 2, ',', '') : '') }}"
                                     :label="trans('admin::app.products.create.costs')"
                                     :placeholder="trans('admin::app.products.create.costs')"
                                 />

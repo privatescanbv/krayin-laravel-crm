@@ -52,10 +52,11 @@
                     name="clinic_id"
                     rules="required|numeric"
                     :label="trans('admin::app.settings.resources.index.create.clinic')"
+                    :value="$preSelectedClinicId ?? ''"
                 >
                     <option value="">@lang('admin::app.select')</option>
                     @foreach ($clinics as $clinic)
-                        <option value="{{ $clinic->id }}">{{ $clinic->name }}</option>
+                        <option value="{{ $clinic->id }}" @selected(isset($preSelectedClinicId) && $preSelectedClinicId == $clinic->id)>{{ $clinic->name }}</option>
                     @endforeach
                 </x-admin::form.control-group.control>
 

@@ -790,6 +790,50 @@ return [
                     'save-btn'    => 'Save',
                 ],
             ],
+
+            'view' => [
+                'resources' => [
+                    'title'    => 'Resources',
+                    'total'    => 'Total',
+                    'add-btn'  => 'Add Resource',
+                    'no-resources' => 'No resources found for this clinic.',
+
+                    'table' => [
+                        'name'          => 'Name',
+                        'resource-type' => 'Resource Type',
+                        'external-id'   => 'External ID',
+                        'actions'       => 'Actions',
+                        'edit'          => 'Edit',
+                        'view'          => 'View',
+                    ],
+                ],
+
+                'partner-products' => [
+                    'title'          => 'Partner Products',
+                    'add-btn'        => 'Add Partner Product',
+                    'no-products'    => 'No partner products found for this clinic.',
+                    'attach-success' => 'Partner product(s) attached successfully.',
+                    'detach-success' => 'Partner product detached successfully.',
+
+                    'table' => [
+                        'name'     => 'Name',
+                        'price'    => 'Price',
+                        'status'   => 'Status',
+                        'active'   => 'Active',
+                        'inactive' => 'Inactive',
+                        'view'     => 'View',
+                        'edit'     => 'Edit',
+                        'detach'   => 'Detach',
+                    ],
+
+                    'modal' => [
+                        'title'           => 'Add Partner Products',
+                        'select-products' => 'Select Partner Products',
+                        'cancel'          => 'Cancel',
+                        'save'            => 'Add',
+                    ],
+                ],
+            ],
         ],
 
         'resource_types' => [

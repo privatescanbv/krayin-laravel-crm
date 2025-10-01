@@ -76,6 +76,8 @@ Route::prefix('settings')->group(function () {
         // Clinic Partner Products
         Route::controller(\App\Http\Controllers\Admin\Settings\Clinic\PartnerProductController::class)->prefix('{id}/partner-products')->group(function () {
             Route::get('', 'index')->name('admin.settings.clinics.partner_products.index');
+            Route::post('attach', 'attach')->name('admin.settings.clinics.partner_products.attach');
+            Route::delete('detach/{partner_product_id}', 'detach')->name('admin.settings.clinics.partner_products.detach');
         });
     });
 

@@ -334,6 +334,7 @@ class ResourceController extends SimpleEntityController
         return [
             'resourceTypes' => $this->resourceTypeRepository->all(),
             'clinics'       => $this->clinicRepository->all(),
+            'preSelectedClinicId' => $request->query('clinic_id'),
         ];
     }
 

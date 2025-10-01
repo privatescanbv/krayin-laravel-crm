@@ -12,6 +12,7 @@ return new class extends Migration
             if (! Schema::hasColumn('products', 'resource_type_id')) {
                 $table->unsignedBigInteger('resource_type_id')->nullable()->after('price');
                 $table->unsignedBigInteger('product_type_id')->nullable()->after('resource_type_id');
+                $table->decimal('costs', 12, 2)->nullable()->after('price');
                 $table->foreign('resource_type_id')->references('id')->on('resource_types')->onDelete('set null');
                 $table->foreign('product_type_id')->references('id')->on('product_types')->onDelete('set null');
             }

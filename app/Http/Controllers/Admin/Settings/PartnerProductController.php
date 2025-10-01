@@ -139,7 +139,13 @@ class PartnerProductController extends SimpleEntityController
     protected function validateStore(Request $request): void
     {
         $request->merge([
-            'sales_price' => $this->normalizePrice($request->input('sales_price')),
+            'sales_price'                  => $this->normalizePrice($request->input('sales_price')),
+            'purchase_price_misc'          => $this->normalizePrice($request->input('purchase_price_misc')),
+            'purchase_price_doctor'        => $this->normalizePrice($request->input('purchase_price_doctor')),
+            'purchase_price_cardiology'    => $this->normalizePrice($request->input('purchase_price_cardiology')),
+            'purchase_price_clinic'        => $this->normalizePrice($request->input('purchase_price_clinic')),
+            'purchase_price_royal_doctors' => $this->normalizePrice($request->input('purchase_price_royal_doctors')),
+            'purchase_price_radiology'     => $this->normalizePrice($request->input('purchase_price_radiology')),
         ]);
 
         $request->validate($this->getValidationRules());
@@ -151,7 +157,13 @@ class PartnerProductController extends SimpleEntityController
     protected function validateUpdate(Request $request, int $id): void
     {
         $request->merge([
-            'sales_price' => $this->normalizePrice($request->input('sales_price')),
+            'sales_price'                  => $this->normalizePrice($request->input('sales_price')),
+            'purchase_price_misc'          => $this->normalizePrice($request->input('purchase_price_misc')),
+            'purchase_price_doctor'        => $this->normalizePrice($request->input('purchase_price_doctor')),
+            'purchase_price_cardiology'    => $this->normalizePrice($request->input('purchase_price_cardiology')),
+            'purchase_price_clinic'        => $this->normalizePrice($request->input('purchase_price_clinic')),
+            'purchase_price_royal_doctors' => $this->normalizePrice($request->input('purchase_price_royal_doctors')),
+            'purchase_price_radiology'     => $this->normalizePrice($request->input('purchase_price_radiology')),
         ]);
 
         $request->validate($this->getValidationRules($id));
@@ -164,25 +176,33 @@ class PartnerProductController extends SimpleEntityController
     {
         return [
             // base fields
-            'currency'            => 'required|in:'.implode(',', Currency::codes()),
-            'sales_price'         => 'required|numeric|min:0',
-            'name'                => 'required|string|max:255',
-            'active'              => 'required|boolean',
-            'description'         => 'nullable|string',
-            'discount_info'       => 'nullable|string',
-            'resource_type_id'    => 'required|integer|exists:resource_types,id',
+            'currency'                     => 'required|in:'.implode(',', Currency::codes()),
+            'sales_price'                  => 'required|numeric|min:0',
+            'name'                         => 'required|string|max:255',
+            'active'                       => 'required|boolean',
+            'description'                  => 'nullable|string',
+            'discount_info'                => 'nullable|string',
+            'resource_type_id'             => 'required|integer|exists:resource_types,id',
+
+            // purchase price fields
+            'purchase_price_misc'          => 'nullable|numeric|min:0',
+            'purchase_price_doctor'        => 'nullable|numeric|min:0',
+            'purchase_price_cardiology'    => 'nullable|numeric|min:0',
+            'purchase_price_clinic'        => 'nullable|numeric|min:0',
+            'purchase_price_royal_doctors' => 'nullable|numeric|min:0',
+            'purchase_price_radiology'     => 'nullable|numeric|min:0',
 
             // partner fields
-            'clinic_description'  => 'nullable|string',
-            'duration'            => 'nullable|integer|min:0',
+            'clinic_description'           => 'nullable|string',
+            'duration'                     => 'nullable|integer|min:0',
 
             // relations
-            'clinics'             => 'required|array|min:1',
-            'clinics.*'           => 'integer|exists:clinics,id',
-            'related_products'    => 'nullable|array',
-            'related_products.*'  => 'integer|exists:partner_products,id',
-            'resources'           => 'nullable|array',
-            'resources.*'         => 'integer|exists:resources,id',
+            'clinics'                      => 'required|array|min:1',
+            'clinics.*'                    => 'integer|exists:clinics,id',
+            'related_products'             => 'nullable|array',
+            'related_products.*'           => 'integer|exists:partner_products,id',
+            'resources'                    => 'nullable|array',
+            'resources.*'                  => 'integer|exists:resources,id',
         ];
     }
 
@@ -223,6 +243,31 @@ class PartnerProductController extends SimpleEntityController
         if (array_key_exists('sales_price', $payload)) {
             $payload['sales_price'] = $this->normalizePrice($payload['sales_price']);
         }
+
+        // Normalize purchase price fields
+        $purchasePriceFields = [
+            'purchase_price_misc',
+            'purchase_price_doctor',
+            'purchase_price_cardiology',
+            'purchase_price_clinic',
+            'purchase_price_royal_doctors',
+            'purchase_price_radiology',
+        ];
+
+        foreach ($purchasePriceFields as $field) {
+            if (array_key_exists($field, $payload)) {
+                $payload[$field] = $this->normalizePrice($payload[$field]) ?? 0;
+            }
+        }
+
+        // Calculate total purchase price
+        $payload['purchase_price'] = 
+            ($payload['purchase_price_misc'] ?? 0) +
+            ($payload['purchase_price_doctor'] ?? 0) +
+            ($payload['purchase_price_cardiology'] ?? 0) +
+            ($payload['purchase_price_clinic'] ?? 0) +
+            ($payload['purchase_price_royal_doctors'] ?? 0) +
+            ($payload['purchase_price_radiology'] ?? 0);
 
         return parent::transformPayload($payload, $id);
     }

@@ -59,4 +59,22 @@ return [
         'repository'   => 'Webkul\Product\Repositories\ProductGroupRepository',
         'label_column' => 'name',
     ],
+
+    'product_types' => [
+        'name'         => 'Product Types',
+        'repository'   => 'App\Repositories\ProductTypeRepository',
+        'label_column' => 'name',
+    ],
+
+    'resource_types' => [
+        'name'         => 'Resource Types',
+        'repository'   => 'App\Repositories\ResourceTypeRepository',
+        'label_column' => 'name',
+    ],
+
+    'partner_products' => [
+        'name'         => 'Partner Products',
+        'repository'   => 'App\Repositories\PartnerProductRepository',
+        'label_column' => 'name',
+    ],
 ];

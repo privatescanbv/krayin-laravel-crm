@@ -28,7 +28,7 @@
                     <div class="dark:text-white">{{ $partner_product->currency }}</div>
 
                     <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.settings.partner_products.index.create.sales_price')</div>
-                    <div class="dark:text-white">{{ number_format($partner_product->sales_price, 2, ',', '.') }}</div>
+                    <div class="dark:text-white">€ {{ number_format($partner_product->sales_price, 2, ',', '.') }}</div>
 
                     <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.settings.partner_products.index.create.active')</div>
                     <div class="dark:text-white">{{ $partner_product->active ? trans('admin::app.common.yes') : trans('admin::app.common.no') }}</div>
@@ -57,6 +57,42 @@
                         <div class="dark:text-white">{{ $partner_product->duration }} min</div>
                     </div>
                 @endif
+            </div>
+
+            <!-- Purchase Price Section -->
+            <div class="flex flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
+                <h4 class="font-semibold text-gray-800 dark:text-white">
+                    @lang('admin::app.settings.partner_products.index.create.purchase_prices')
+                </h4>
+                
+                <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.settings.partner_products.index.create.purchase_price_misc')</div>
+                    <div class="dark:text-white">€ {{ number_format($partner_product->purchase_price_misc ?? 0, 2, ',', '.') }}</div>
+
+                    <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.settings.partner_products.index.create.purchase_price_doctor')</div>
+                    <div class="dark:text-white">€ {{ number_format($partner_product->purchase_price_doctor ?? 0, 2, ',', '.') }}</div>
+
+                    <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.settings.partner_products.index.create.purchase_price_cardiology')</div>
+                    <div class="dark:text-white">€ {{ number_format($partner_product->purchase_price_cardiology ?? 0, 2, ',', '.') }}</div>
+
+                    <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.settings.partner_products.index.create.purchase_price_clinic')</div>
+                    <div class="dark:text-white">€ {{ number_format($partner_product->purchase_price_clinic ?? 0, 2, ',', '.') }}</div>
+
+                    <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.settings.partner_products.index.create.purchase_price_royal_doctors')</div>
+                    <div class="dark:text-white">€ {{ number_format($partner_product->purchase_price_royal_doctors ?? 0, 2, ',', '.') }}</div>
+
+                    <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.settings.partner_products.index.create.purchase_price_radiology')</div>
+                    <div class="dark:text-white">€ {{ number_format($partner_product->purchase_price_radiology ?? 0, 2, ',', '.') }}</div>
+                </div>
+
+                <div class="mt-3 rounded-lg border-2 border-gray-300 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold text-gray-800 dark:text-white">
+                            @lang('admin::app.settings.partner_products.index.create.purchase_price_total')
+                        </span>
+                        <span class="text-lg font-bold text-gray-800 dark:text-white">€ {{ number_format($partner_product->purchase_price ?? 0, 2, ',', '.') }}</span>
+                    </div>
+                </div>
             </div>
 
             @if ($partner_product->relatedProducts->count() > 0)

@@ -32,12 +32,15 @@ class Product extends Model implements ProductContract
         'description',
         'product_group_id',
         'price',
+        'costs',
         'resource_type_id',
         'product_type_id',
     ];
 
     protected $casts = [
         'currency' => 'string',
+        'price'    => 'decimal:2',
+        'costs'    => 'decimal:2',
     ];
 
     /**
@@ -96,5 +99,13 @@ class Product extends Model implements ProductContract
     public function productType(): BelongsTo
     {
         return $this->belongsTo(ProductType::class);
+    }
+
+    /**
+     * The partner products that belong to the product.
+     */
+    public function partnerProducts(): BelongsToMany
+    {
+        return $this->belongsToMany(\App\Models\PartnerProduct::class, 'product_partner_product');
     }
 }

@@ -173,7 +173,10 @@ TABLE(Product, "product") {
   name: string
   description: text
   price: decimal
+  costs: decimal
+  currency: string
   FOREIGN_KEY(product_type_id): bigint
+  FOREIGN_KEY(product_group_id): bigint
   created_by: bigint
   updated_by: bigint
   FOREIGN_KEY(resource_type_id): bigint
@@ -201,7 +204,22 @@ TABLE(ResourceType, "resourcetype") {
 
 TABLE(PartnerProduct, "partner_product") {
   PRIMARY_KEY(id): bigint
+  name: string
   description: text
+  sales_price: decimal
+  purchase_price: decimal
+  purchase_price_misc: decimal
+  purchase_price_doctor: decimal
+  purchase_price_cardiology: decimal
+  purchase_price_clinic: decimal
+  purchase_price_royal_doctors: decimal
+  purchase_price_radiology: decimal
+  currency: string
+  active: boolean
+  discount_info: text
+  clinic_description: text
+  duration: integer
+  FOREIGN_KEY(resource_type_id): bigint
   created_at: datetime
   updated_at: datetime
   created_by: bigint
@@ -469,10 +487,10 @@ Address "0..1" -- "1" Lead
 Address "0..1" -- "1" Person
 Address "0..1" -- "1" Organization
 
-Product "n" -- "0..*" ProductGroup
-Product "n" -- "0..*" PartnerProduct
-Product "1" -- "1" ResourceType
-Product "1" -- "1" ProductType
+Product "n" -- "0..1" ProductGroup
+Product "n" -- "n" PartnerProduct
+Product "1" -- "0..1" ResourceType
+Product "1" -- "0..1" ProductType
 ProductGroup "0..1" -- "n" ProductGroup : "parent"
 ProductCategory "0..1" -- "n" ProductCategory : "parent"
 Clinic "0..*" -- "n" Resource

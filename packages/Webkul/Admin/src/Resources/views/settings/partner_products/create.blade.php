@@ -122,7 +122,123 @@
 
                     <x-admin::form.control-group.error control-name="discount_info" />
                 </x-admin::form.control-group>
+            </div>
 
+            <!-- Purchase Price Section -->
+            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-white">
+                    @lang('admin::app.settings.partner_products.index.create.purchase_prices')
+                </h3>
+
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            @lang('admin::app.settings.partner_products.index.create.purchase_price_misc')
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="price"
+                            name="purchase_price_misc"
+                            value="0"
+                            :label="trans('admin::app.settings.partner_products.index.create.purchase_price_misc')"
+                            :placeholder="trans('admin::app.settings.partner_products.index.create.purchase_price_misc')"
+                        />
+
+                        <x-admin::form.control-group.error control-name="purchase_price_misc" />
+                    </x-admin::form.control-group>
+
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            @lang('admin::app.settings.partner_products.index.create.purchase_price_doctor')
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="price"
+                            name="purchase_price_doctor"
+                            value="0"
+                            :label="trans('admin::app.settings.partner_products.index.create.purchase_price_doctor')"
+                            :placeholder="trans('admin::app.settings.partner_products.index.create.purchase_price_doctor')"
+                        />
+
+                        <x-admin::form.control-group.error control-name="purchase_price_doctor" />
+                    </x-admin::form.control-group>
+
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            @lang('admin::app.settings.partner_products.index.create.purchase_price_cardiology')
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="price"
+                            name="purchase_price_cardiology"
+                            value="0"
+                            :label="trans('admin::app.settings.partner_products.index.create.purchase_price_cardiology')"
+                            :placeholder="trans('admin::app.settings.partner_products.index.create.purchase_price_cardiology')"
+                        />
+
+                        <x-admin::form.control-group.error control-name="purchase_price_cardiology" />
+                    </x-admin::form.control-group>
+
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            @lang('admin::app.settings.partner_products.index.create.purchase_price_clinic')
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="price"
+                            name="purchase_price_clinic"
+                            value="0"
+                            :label="trans('admin::app.settings.partner_products.index.create.purchase_price_clinic')"
+                            :placeholder="trans('admin::app.settings.partner_products.index.create.purchase_price_clinic')"
+                        />
+
+                        <x-admin::form.control-group.error control-name="purchase_price_clinic" />
+                    </x-admin::form.control-group>
+
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            @lang('admin::app.settings.partner_products.index.create.purchase_price_royal_doctors')
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="price"
+                            name="purchase_price_royal_doctors"
+                            value="0"
+                            :label="trans('admin::app.settings.partner_products.index.create.purchase_price_royal_doctors')"
+                            :placeholder="trans('admin::app.settings.partner_products.index.create.purchase_price_royal_doctors')"
+                        />
+
+                        <x-admin::form.control-group.error control-name="purchase_price_royal_doctors" />
+                    </x-admin::form.control-group>
+
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            @lang('admin::app.settings.partner_products.index.create.purchase_price_radiology')
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="price"
+                            name="purchase_price_radiology"
+                            value="0"
+                            :label="trans('admin::app.settings.partner_products.index.create.purchase_price_radiology')"
+                            :placeholder="trans('admin::app.settings.partner_products.index.create.purchase_price_radiology')"
+                        />
+
+                        <x-admin::form.control-group.error control-name="purchase_price_radiology" />
+                    </x-admin::form.control-group>
+                </div>
+
+                <div class="mt-4 rounded-lg border border-gray-300 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold text-gray-800 dark:text-white">
+                            @lang('admin::app.settings.partner_products.index.create.purchase_price_total')
+                        </span>
+                        <span class="text-lg font-bold text-gray-800 dark:text-white" id="purchase-price-total">€ 0,00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                     <x-admin::form.control-group>
                         <x-admin::form.control-group.label>
                             @lang('admin::app.settings.partner_products.index.create.resource_type')

@@ -23,15 +23,30 @@ class PartnerProduct extends BaseProduct
         // partner specific
         'clinic_description',
         'duration',
+        // purchase price fields
+        'purchase_price',
+        'purchase_price_misc',
+        'purchase_price_doctor',
+        'purchase_price_cardiology',
+        'purchase_price_clinic',
+        'purchase_price_royal_doctors',
+        'purchase_price_radiology',
     ];
 
     protected $casts = [
-        'sales_price'      => 'decimal:2',
-        'active'           => 'boolean',
-        'resource_type_id' => 'integer',
-        'created_by'       => 'integer',
-        'updated_by'       => 'integer',
-        'duration'         => 'integer',
+        'sales_price'                   => 'decimal:2',
+        'active'                        => 'boolean',
+        'resource_type_id'              => 'integer',
+        'created_by'                    => 'integer',
+        'updated_by'                    => 'integer',
+        'duration'                      => 'integer',
+        'purchase_price'                => 'decimal:2',
+        'purchase_price_misc'           => 'decimal:2',
+        'purchase_price_doctor'         => 'decimal:2',
+        'purchase_price_cardiology'     => 'decimal:2',
+        'purchase_price_clinic'         => 'decimal:2',
+        'purchase_price_royal_doctors'  => 'decimal:2',
+        'purchase_price_radiology'      => 'decimal:2',
     ];
 
     public function clinics()
@@ -52,5 +67,10 @@ class PartnerProduct extends BaseProduct
     public function resources()
     {
         return $this->belongsToMany(Resource::class, 'partner_product_resource');
+    }
+
+    public function products()
+    {
+        return $this->belongsToMany(\Webkul\Product\Models\Product::class, 'product_partner_product');
     }
 }

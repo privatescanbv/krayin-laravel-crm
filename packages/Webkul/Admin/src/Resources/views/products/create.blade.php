@@ -82,6 +82,15 @@
                         />
 
                         {!! view_render_event('admin.products.create.attributes.after') !!}
+
+                        <!-- Partner Products Selection -->
+                        <x-admin::partner-product-lookup
+                            :src="route('admin.settings.partner_products.search')"
+                            name="partner_products"
+                            :label="trans('admin::app.products.create.partner_products')"
+                            :search-placeholder="trans('admin::app.products.create.search_partner_products')"
+                            :value="[]"
+                        />
                     </div>
                 </div>
 

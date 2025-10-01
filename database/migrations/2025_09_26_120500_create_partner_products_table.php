@@ -21,6 +21,15 @@ return new class extends Migration
             $table->text('discount_info')->nullable();
             $table->unsignedBigInteger('resource_type_id')->nullable();
 
+            // Purchase price fields
+            $table->decimal('purchase_price', 12, 2)->default(0)->comment('Sum of all purchase price components');
+            $table->decimal('purchase_price_misc', 12, 2)->default(0);
+            $table->decimal('purchase_price_doctor', 12, 2)->default(0);
+            $table->decimal('purchase_price_cardiology', 12, 2)->default(0);
+            $table->decimal('purchase_price_clinic', 12, 2)->default(0);
+            $table->decimal('purchase_price_royal_doctors', 12, 2)->default(0);
+            $table->decimal('purchase_price_radiology', 12, 2)->default(0);
+
             // Partner product only
             $table->text('clinic_description')->nullable();
             $table->unsignedInteger('duration')->nullable(); // minutes

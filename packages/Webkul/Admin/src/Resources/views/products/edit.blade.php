@@ -81,6 +81,15 @@
                         />
 
                         {!! view_render_event('admin.products.edit.attributes.after', ['product' => $product]) !!}
+
+                        <!-- Partner Products Selection -->
+                        <x-admin::partner-product-lookup
+                            :src="route('admin.settings.partner_products.search')"
+                            name="partner_products"
+                            :label="trans('admin::app.products.create.partner_products')"
+                            :search-placeholder="trans('admin::app.products.create.search_partner_products')"
+                            :value="$product->partnerProducts->map(fn($p) => ['id' => $p->id, 'name' => $p->name])->toArray()"
+                        />
                     </div>
                 </div>
 

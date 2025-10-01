@@ -60,6 +60,11 @@ class ProductController extends Controller
 
         $product = $this->productRepository->create($request->all());
 
+        // Sync partner products if provided
+        if ($request->has('partner_products')) {
+            $product->partnerProducts()->sync($request->input('partner_products', []));
+        }
+
         Event::dispatch('product.create.after', $product);
 
         session()->flash('success', trans('admin::app.products.index.create-success'));
@@ -98,6 +103,11 @@ class ProductController extends Controller
         Event::dispatch('product.update.before', $id);
 
         $product = $this->productRepository->update($request->all(), $id);
+
+        // Sync partner products if provided
+        if ($request->has('partner_products')) {
+            $product->partnerProducts()->sync($request->input('partner_products', []));
+        }
 
         Event::dispatch('product.update.after', $product);
 

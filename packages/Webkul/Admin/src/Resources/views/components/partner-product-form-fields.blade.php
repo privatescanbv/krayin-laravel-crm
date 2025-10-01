@@ -158,3 +158,42 @@
 
     <x-admin::form.control-group.error control-name="active" />
 </x-admin::form.control-group>
+
+<!-- Resource Type -->
+<x-admin::form.control-group>
+    <x-admin::form.control-group.label>
+        @lang('admin::app.settings.partner_products.index.create.resource_type')
+    </x-admin::form.control-group.label>
+
+    <x-admin::form.control-group.control
+        type="select"
+        name="resource_type_id"
+        value="{{ old('resource_type_id', $partnerProduct->resource_type_id ?? '') }}"
+        rules="required|numeric"
+        :label="trans('admin::app.settings.partner_products.index.create.resource_type')"
+    >
+        <option value="">@lang('admin::app.select')</option>
+        @foreach ($resourceTypes as $type)
+            <option value="{{ $type->id }}" @selected(old('resource_type_id', $partnerProduct->resource_type_id ?? '') == $type->id)>{{ $type->name }}</option>
+        @endforeach
+    </x-admin::form.control-group.control>
+
+    <x-admin::form.control-group.error control-name="resource_type_id" />
+</x-admin::form.control-group>
+
+<!-- Clinics and Resources -->
+<x-admin::clinic-resource-selector
+    :clinics="$clinics"
+    :selected-clinics="$selectedClinics"
+    :selected-resources="$selectedResources"
+/>
+
+<!-- Related Products -->
+<x-admin::partner-product-lookup
+    :src="route('admin.settings.partner_products.search')"
+    name="related_products"
+    :label="trans('admin::app.settings.partner_products.index.create.related_products')"
+    :search-placeholder="trans('admin::app.settings.partner_products.index.create.search_related_products')"
+    :value="$relatedProducts"
+    :exclude-id="$excludeId"
+/>

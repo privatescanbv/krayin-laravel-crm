@@ -1,17 +1,18 @@
+@php use App\Enums\Currency;use App\Models\ProductType;use App\Models\ResourceType; @endphp
 @props([
     'product' => null,
     'selectedPartnerProducts' => [],
 ])
 
 @php
-    $currencies = \App\Enums\Currency::options();
-    $defaultCurrency = \App\Enums\Currency::default()->value;
-    $productTypes = \App\Models\ProductType::orderBy('name')->get(['id', 'name']);
-    $resourceTypes = \App\Models\ResourceType::orderBy('name')->get(['id', 'name']);
+    $currencies = Currency::options();
+    $defaultCurrency = Currency::default()->value;
+    $productTypes = ProductType::orderBy('name')->get(['id', 'name']);
+    $resourceTypes = ResourceType::orderBy('name')->get(['id', 'name']);
     $productGroups = app('Webkul\Product\Repositories\ProductGroupRepository')->orderBy('name')->all();
 @endphp
 
-<!-- Naam -->
+    <!-- Naam -->
 <x-admin::form.control-group>
     <x-admin::form.control-group.label class="required">
         @lang('admin::app.products.create.name')
@@ -26,7 +27,7 @@
         :placeholder="trans('admin::app.products.create.name')"
     />
 
-    <x-admin::form.control-group.error control-name="name" />
+    <x-admin::form.control-group.error control-name="name"/>
 </x-admin::form.control-group>
 
 <!-- Omschrijving -->
@@ -43,7 +44,7 @@
         :placeholder="trans('admin::app.products.create.description')"
     />
 
-    <x-admin::form.control-group.error control-name="description" />
+    <x-admin::form.control-group.error control-name="description"/>
 </x-admin::form.control-group>
 
 <!-- Grid met 2 kolommen -->
@@ -61,11 +62,12 @@
             :label="trans('admin::app.settings.partner_products.index.create.currency')"
         >
             @foreach ($currencies as $currency)
-                <option value="{{ $currency['code'] }}" @selected(old('currency', $product->currency ?? $defaultCurrency) === $currency['code'])>{{ $currency['label'] }}</option>
+                <option
+                    value="{{ $currency['code'] }}" @selected(old('currency', $product->currency ?? $defaultCurrency) === $currency['code'])>{{ $currency['label'] }}</option>
             @endforeach
         </x-admin::form.control-group.control>
 
-        <x-admin::form.control-group.error control-name="currency" />
+        <x-admin::form.control-group.error control-name="currency"/>
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
@@ -81,7 +83,7 @@
             :placeholder="trans('admin::app.products.create.costs')"
         />
 
-        <x-admin::form.control-group.error control-name="costs" />
+        <x-admin::form.control-group.error control-name="costs"/>
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
@@ -97,11 +99,12 @@
         >
             <option value="">@lang('admin::app.select')</option>
             @foreach ($productTypes as $type)
-                <option value="{{ $type->id }}" @selected(old('product_type_id', $product->product_type_id ?? '') == $type->id)>{{ $type->name }}</option>
+                <option
+                    value="{{ $type->id }}" @selected(old('product_type_id', $product->product_type_id ?? '') == $type->id)>{{ $type->name }}</option>
             @endforeach
         </x-admin::form.control-group.control>
 
-        <x-admin::form.control-group.error control-name="product_type_id" />
+        <x-admin::form.control-group.error control-name="product_type_id"/>
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
@@ -117,11 +120,12 @@
         >
             <option value="">@lang('admin::app.select')</option>
             @foreach ($resourceTypes as $type)
-                <option value="{{ $type->id }}" @selected(old('resource_type_id', $product->resource_type_id ?? '') == $type->id)>{{ $type->name }}</option>
+                <option
+                    value="{{ $type->id }}" @selected(old('resource_type_id', $product->resource_type_id ?? '') == $type->id)>{{ $type->name }}</option>
             @endforeach
         </x-admin::form.control-group.control>
 
-        <x-admin::form.control-group.error control-name="resource_type_id" />
+        <x-admin::form.control-group.error control-name="resource_type_id"/>
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
@@ -137,11 +141,12 @@
         >
             <option value="">@lang('admin::app.select')</option>
             @foreach ($productGroups as $group)
-                <option value="{{ $group->id }}" @selected(old('product_group_id', $product->product_group_id ?? '') == $group->id)>{{ $group->name }}</option>
+                <option
+                    value="{{ $group->id }}" @selected(old('product_group_id', $product->product_group_id ?? '') == $group->id)>{{ $group->name }}</option>
             @endforeach
         </x-admin::form.control-group.control>
 
-        <x-admin::form.control-group.error control-name="product_group_id" />
+        <x-admin::form.control-group.error control-name="product_group_id"/>
     </x-admin::form.control-group>
 </div>
 

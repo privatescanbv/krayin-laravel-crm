@@ -137,7 +137,7 @@ test('purchase price total is calculated correctly on create', function () {
     $response->assertOk();
 
     $pp = PartnerProduct::where('name', 'Test Product')->first();
-    
+
     // Use string comparison since decimal:2 cast returns strings
     expect($pp->purchase_price)->toBe('324.00')
         ->and($pp->purchase_price_misc)->toBe('22.50')

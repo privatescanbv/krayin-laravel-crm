@@ -133,53 +133,6 @@ class AttributeSeeder extends Seeder
             ],
 
             /**
-             * Products Attributes
-             */
-            [
-                'code' => 'name',
-                'name' => 'Naam',
-                'type' => 'text',
-                'entity_type' => 'products',
-                'lookup_type' => null,
-                'validation' => null,
-                'sort_order' => '1',
-                'is_required' => '1',
-                'is_unique' => '0',
-                'quick_add' => '1',
-                'is_user_defined' => '0',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ], [
-                'code' => 'description',
-                'name' => 'Omschrijving',
-                'type' => 'textarea',
-                'entity_type' => 'products',
-                'lookup_type' => null,
-                'validation' => null,
-                'sort_order' => '2',
-                'is_required' => '0',
-                'is_unique' => '0',
-                'quick_add' => '1',
-                'is_user_defined' => '0',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],[
-                'code' => 'price',
-                'name' => 'Prijs',
-                'type' => 'price',
-                'entity_type' => 'products',
-                'lookup_type' => null,
-                'validation' => 'decimal',
-                'sort_order' => '5',
-                'is_required' => '1',
-                'is_unique' => '0',
-                'quick_add' => '1',
-                'is_user_defined' => '0',
-                'created_at' => $now,
-                'updated_at' => $now,
-            ],
-
-            /**
              * Quotes Attributes
              */
             [

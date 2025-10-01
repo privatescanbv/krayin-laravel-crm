@@ -1,3 +1,4 @@
+@php use App\Enums\Currency;use App\Models\Clinic;use App\Models\ResourceType; @endphp
 @props([
     'partnerProduct' => null,
     'selectedClinics' => [],
@@ -7,13 +8,13 @@
 ])
 
 @php
-    $resourceTypes = \App\Models\ResourceType::orderBy('name')->get(['id', 'name']);
-    $currencies = \App\Enums\Currency::options();
-    $defaultCurrency = \App\Enums\Currency::default()->value;
-    $clinics = \App\Models\Clinic::orderBy('name')->get(['id', 'name']);
+    $resourceTypes = ResourceType::orderBy('name')->get(['id', 'name']);
+    $currencies = Currency::options();
+    $defaultCurrency = Currency::default()->value;
+    $clinics = Clinic::orderBy('name')->get(['id', 'name']);
 @endphp
 
-<!-- Naam en Duur -->
+    <!-- Naam en Duur -->
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
     <x-admin::form.control-group>
         <x-admin::form.control-group.label class="required">
@@ -29,7 +30,7 @@
             :placeholder="trans('admin::app.settings.partner_products.index.create.name')"
         />
 
-        <x-admin::form.control-group.error control-name="name" />
+        <x-admin::form.control-group.error control-name="name"/>
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
@@ -45,7 +46,7 @@
             :placeholder="trans('admin::app.settings.partner_products.index.create.duration')"
         />
 
-        <x-admin::form.control-group.error control-name="duration" />
+        <x-admin::form.control-group.error control-name="duration"/>
     </x-admin::form.control-group>
 </div>
 
@@ -64,7 +65,7 @@
             :placeholder="trans('admin::app.settings.partner_products.index.create.description')"
         />
 
-        <x-admin::form.control-group.error control-name="description" />
+        <x-admin::form.control-group.error control-name="description"/>
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
@@ -80,7 +81,7 @@
             :placeholder="trans('admin::app.settings.partner_products.index.create.clinic_description')"
         />
 
-        <x-admin::form.control-group.error control-name="clinic_description" />
+        <x-admin::form.control-group.error control-name="clinic_description"/>
     </x-admin::form.control-group>
 </div>
 
@@ -99,11 +100,12 @@
             :label="trans('admin::app.settings.partner_products.index.create.currency')"
         >
             @foreach ($currencies as $currency)
-                <option value="{{ $currency['code'] }}" @selected(old('currency', $partnerProduct->currency ?? $defaultCurrency) === $currency['code'])>{{ $currency['label'] }}</option>
+                <option
+                    value="{{ $currency['code'] }}" @selected(old('currency', $partnerProduct->currency ?? $defaultCurrency) === $currency['code'])>{{ $currency['label'] }}</option>
             @endforeach
         </x-admin::form.control-group.control>
 
-        <x-admin::form.control-group.error control-name="currency" />
+        <x-admin::form.control-group.error control-name="currency"/>
     </x-admin::form.control-group>
 
     <x-admin::form.control-group>
@@ -120,7 +122,7 @@
             :placeholder="trans('admin::app.settings.partner_products.index.create.sales_price')"
         />
 
-        <x-admin::form.control-group.error control-name="sales_price" />
+        <x-admin::form.control-group.error control-name="sales_price"/>
     </x-admin::form.control-group>
 </div>
 
@@ -138,7 +140,7 @@
         :placeholder="trans('admin::app.settings.partner_products.index.create.discount_info')"
     />
 
-    <x-admin::form.control-group.error control-name="discount_info" />
+    <x-admin::form.control-group.error control-name="discount_info"/>
 </x-admin::form.control-group>
 
 <!-- Active checkbox -->
@@ -147,7 +149,7 @@
         @lang('admin::app.settings.partner_products.index.create.active')
     </x-admin::form.control-group.label>
 
-    <input type="hidden" name="active" value="0" />
+    <input type="hidden" name="active" value="0"/>
     <x-admin::form.control-group.control
         type="checkbox"
         name="active"
@@ -156,7 +158,7 @@
         :checked="old('active', $partnerProduct->active ?? 1)"
     />
 
-    <x-admin::form.control-group.error control-name="active" />
+    <x-admin::form.control-group.error control-name="active"/>
 </x-admin::form.control-group>
 
 <!-- Resource Type -->
@@ -174,11 +176,12 @@
     >
         <option value="">@lang('admin::app.select')</option>
         @foreach ($resourceTypes as $type)
-            <option value="{{ $type->id }}" @selected(old('resource_type_id', $partnerProduct->resource_type_id ?? '') == $type->id)>{{ $type->name }}</option>
+            <option
+                value="{{ $type->id }}" @selected(old('resource_type_id', $partnerProduct->resource_type_id ?? '') == $type->id)>{{ $type->name }}</option>
         @endforeach
     </x-admin::form.control-group.control>
 
-    <x-admin::form.control-group.error control-name="resource_type_id" />
+    <x-admin::form.control-group.error control-name="resource_type_id"/>
 </x-admin::form.control-group>
 
 <!-- Clinics and Resources -->

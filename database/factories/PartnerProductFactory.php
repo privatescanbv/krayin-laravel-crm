@@ -41,7 +41,7 @@ class PartnerProductFactory extends Factory
     {
         return $this->afterMaking(function (PartnerProduct $partnerProduct) {
             // Calculate total purchase price before saving
-            $partnerProduct->purchase_price = 
+            $partnerProduct->purchase_price =
                 ($partnerProduct->purchase_price_misc ?? 0) +
                 ($partnerProduct->purchase_price_doctor ?? 0) +
                 ($partnerProduct->purchase_price_cardiology ?? 0) +

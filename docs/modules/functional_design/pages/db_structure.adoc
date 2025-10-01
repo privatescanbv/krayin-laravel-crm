@@ -210,7 +210,6 @@ TABLE(PartnerProduct, "partner_product") {
 
 TABLE(Resource, "resource") {
   PRIMARY_KEY(id): bigint
-  type: string
   name: string
   created_at: datetime
   updated_at: datetime

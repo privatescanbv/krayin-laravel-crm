@@ -1844,7 +1844,11 @@ return [
                     'clinic' => 'Kliniek',
                 ],
                 'create' => [
-                    'clinic' => 'Kliniek',
+                    'title'        => 'Resource aanmaken',
+                    'clinic'       => 'Kliniek',
+                    'resource_type'=> 'Resourcetype',
+                    'name'         => 'Naam',
+                    'save-btn'     => 'Opslaan',
                 ],
             ],
             'show' => [

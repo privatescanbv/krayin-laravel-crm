@@ -36,10 +36,7 @@ jobs:
           tools: composer:v2
 
       - name: Install PHP dependencies
-        run: |
-          set -o pipefail
-          echo "" > ci_error.txt
-          composer install |& tee -a ci_error.txt
+        run: composer install
 
       - name: Configure environment
         run: |
@@ -64,15 +61,11 @@ jobs:
 
       - name: Install Admin frontend dependencies
         working-directory: packages/Webkul/Admin
-        run: |
-          set -o pipefail
-          npm ci |& tee -a ../../ci_error.txt
+        run: npm ci
 
       - name: Build Admin assets
         working-directory: packages/Webkul/Admin
-        run: |
-          set -o pipefail
-          npm run build |& tee -a ../../ci_error.txt
+        run: npm run build
 
       - name: Run backend tests
         run: |
@@ -102,14 +95,10 @@ jobs:
           dotnet-version: 8.0.x
 
       - name: Restore .NET dependencies
-        run: |
-          set -o pipefail
-          dotnet restore ./UiTests/UiTests.csproj |& tee -a ci_error.txt
+        run: dotnet restore ./UiTests/UiTests.csproj
 
       - name: Build UI tests
-        run: |
-          set -o pipefail
-          dotnet build ./UiTests/UiTests.csproj --configuration Release --nologo |& tee -a ci_error.txt
+        run: dotnet build ./UiTests/UiTests.csproj --configuration Release --nologo
 
       - name: Run UI tests
         run: |

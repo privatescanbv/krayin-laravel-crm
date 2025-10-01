@@ -47,8 +47,8 @@
     <x-admin::form.control-group.error control-name="description"/>
 </x-admin::form.control-group>
 
-<!-- Grid met 2 kolommen -->
-<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+<!-- Grid met 3 kolommen: Valuta, Kosten, Verkoopprijs -->
+<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
     <x-admin::form.control-group>
         <x-admin::form.control-group.label class="required">
             @lang('admin::app.settings.partner_products.index.create.currency')
@@ -85,6 +85,26 @@
 
         <x-admin::form.control-group.error control-name="costs"/>
     </x-admin::form.control-group>
+
+    <x-admin::form.control-group>
+        <x-admin::form.control-group.label>
+            @lang('admin::app.products.create.price')
+        </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.control
+            type="price"
+            name="price"
+            value="{{ old('price', $product && $product->price ? number_format($product->price, 2, ',', '') : '') }}"
+            :label="trans('admin::app.products.create.price')"
+            :placeholder="trans('admin::app.products.create.price')"
+        />
+
+        <x-admin::form.control-group.error control-name="price"/>
+    </x-admin::form.control-group>
+</div>
+
+<!-- Grid met 2 kolommen voor types en groep -->
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 
     <x-admin::form.control-group>
         <x-admin::form.control-group.label>

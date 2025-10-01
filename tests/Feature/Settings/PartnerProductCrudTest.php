@@ -141,9 +141,9 @@ test('purchase price total is calculated correctly on create', function () {
     $expectedTotal = 22.50 + 100.00 + 50.25 + 75.75 + 30.00 + 45.50; // = 324.00
 
     $pp = PartnerProduct::where('name', 'Test Product')->first();
-    expect($pp->purchase_price)->toBe($expectedTotal)
-        ->and($pp->purchase_price_misc)->toBe(22.50)
-        ->and($pp->purchase_price_doctor)->toBe(100.00);
+    expect((float) $pp->purchase_price)->toBe($expectedTotal)
+        ->and((float) $pp->purchase_price_misc)->toBe(22.50)
+        ->and((float) $pp->purchase_price_doctor)->toBe(100.00);
 });
 
 test('validates resources belong to selected clinics when creating', function () {

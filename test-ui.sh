@@ -11,7 +11,7 @@ if [[ "$answer" == "y" || "$answer" == "Y" ]]; then
   rm -rf bin obj
   dotnet restore
 fi
-
+export TestSettingsHeadless=true
 dotnet build
 dotnet test
 #dotnet test --filter "FullyQualifiedName~PartnerProduct"
@@ -19,3 +19,7 @@ dotnet test
 #dotnet test --filter "FullyQualifiedName~Lead"
 
 cd ..
+
+#
+#export PLAYWRIGHT_HEADLESS=1
+#dotnet test ./UiTests/UiTests.csproj

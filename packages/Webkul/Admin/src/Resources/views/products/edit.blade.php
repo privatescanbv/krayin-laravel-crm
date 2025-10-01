@@ -51,6 +51,23 @@
                             @lang('admin::app.products.create.general')
                         </p>
 
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label class="required">
+                                @lang('admin::app.products.create.name')
+                            </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="text"
+                                name="name"
+                                value="{{ old('name', $product->name) }}"
+                                rules="required|max:255"
+                                :label="trans('admin::app.products.create.name')"
+                                :placeholder="trans('admin::app.products.create.name')"
+                            />
+
+                            <x-admin::form.control-group.error control-name="name" />
+                        </x-admin::form.control-group>
+
                         <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label class="required">

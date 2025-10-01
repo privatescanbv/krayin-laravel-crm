@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\ClinicDataGrid;
+use App\DataGrids\Settings\ClinicPartnerProductDataGrid;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Repositories\ClinicRepository;
 use App\Services\ClinicValidationService;
@@ -49,6 +50,14 @@ class ClinicController extends SimpleEntityController
         $clinic = $this->clinicRepository->with(['address', 'partnerProducts', 'resources.resourceType', 'creator', 'updater'])->findOrFail($id);
 
         return view('admin::settings.clinics.view', ['clinic' => $clinic]);
+    }
+
+    public function partnerProducts(int $id): JsonResponse
+    {
+        // Verify clinic exists
+        $this->clinicRepository->findOrFail($id);
+
+        return datagrid(new ClinicPartnerProductDataGrid($id))->process();
     }
 
     public function destroy(Request $request, ?int $id = null): RedirectResponse|JsonResponse

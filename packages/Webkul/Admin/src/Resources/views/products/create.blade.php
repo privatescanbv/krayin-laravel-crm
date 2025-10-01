@@ -138,7 +138,7 @@
                                     :label="trans('admin::app.products.create.product_group')"
                                 >
                                     <option value="">@lang('admin::app.select')</option>
-                                    @foreach (\Webkul\Product\Models\ProductGroup::orderBy('name')->get(['id', 'name']) as $group)
+                                    @foreach (app('Webkul\Product\Repositories\ProductGroupRepository')->orderBy('name')->all() as $group)
                                         <option value="{{ $group->id }}">{{ $group->name }}</option>
                                     @endforeach
                                 </x-admin::form.control-group.control>

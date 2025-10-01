@@ -2,6 +2,7 @@
 
 namespace Webkul\Product\Models;
 
+use App\Models\PartnerProduct;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -37,7 +38,12 @@ class Product extends Model implements ProductContract
     ];
 
     protected $casts = [
-        'currency' => 'string',
+        'currency'         => 'string',
+        'price'            => 'decimal:2',
+        'costs'            => 'decimal:2',
+        'product_group_id' => 'integer',
+        'product_type_id'  => 'integer',
+        'resource_type_id' => 'integer',
     ];
 
     /**
@@ -83,9 +89,9 @@ class Product extends Model implements ProductContract
     /**
      * Get the product group that owns the product.
      */
-    public function productGroup()
+    public function productGroup(): BelongsTo
     {
-        return $this->belongsTo(ProductGroupProxy::modelClass());
+        return $this->belongsTo(ProductGroup::class);
     }
 
     public function resourceType(): BelongsTo
@@ -96,5 +102,13 @@ class Product extends Model implements ProductContract
     public function productType(): BelongsTo
     {
         return $this->belongsTo(ProductType::class);
+    }
+
+    /**
+     * Partner products linked to this product.
+     */
+    public function partnerProducts(): BelongsToMany
+    {
+        return $this->belongsToMany(PartnerProduct::class, 'product_partner_product', 'product_id', 'partner_product_id');
     }
 }

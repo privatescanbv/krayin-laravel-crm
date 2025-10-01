@@ -224,6 +224,34 @@ class PartnerProductController extends SimpleEntityController
             $payload['sales_price'] = $this->normalizePrice($payload['sales_price']);
         }
 
+        // Normalize purchase price fields
+        $purchasePriceFields = [
+            'purchase_price_misc',
+            'purchase_price_doctor',
+            'purchase_price_cardiology',
+            'purchase_price_clinic',
+            'purchase_price_royal_doctors',
+            'purchase_price_radiology',
+        ];
+
+        foreach ($purchasePriceFields as $field) {
+            if (array_key_exists($field, $payload)) {
+                $normalized = $this->normalizePrice($payload[$field]);
+                $payload[$field] = ($normalized === '' || $normalized === null) ? 0 : $normalized;
+            } else {
+                $payload[$field] = 0;
+            }
+        }
+
+        // Calculate total purchase price
+        $payload['purchase_price'] =
+            floatval($payload['purchase_price_misc'] ?? 0) +
+            floatval($payload['purchase_price_doctor'] ?? 0) +
+            floatval($payload['purchase_price_cardiology'] ?? 0) +
+            floatval($payload['purchase_price_clinic'] ?? 0) +
+            floatval($payload['purchase_price_royal_doctors'] ?? 0) +
+            floatval($payload['purchase_price_radiology'] ?? 0);
+
         return parent::transformPayload($payload, $id);
     }
 

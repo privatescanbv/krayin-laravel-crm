@@ -23,6 +23,13 @@ class PartnerProduct extends BaseProduct
         // partner specific
         'clinic_description',
         'duration',
+        'purchase_price_misc',
+        'purchase_price_doctor',
+        'purchase_price_cardiology',
+        'purchase_price_clinic',
+        'purchase_price_royal_doctors',
+        'purchase_price_radiology',
+        'purchase_price',
     ];
 
     protected $casts = [
@@ -32,6 +39,13 @@ class PartnerProduct extends BaseProduct
         'created_by'       => 'integer',
         'updated_by'       => 'integer',
         'duration'         => 'integer',
+        'purchase_price_misc'          => 'decimal:2',
+        'purchase_price_doctor'        => 'decimal:2',
+        'purchase_price_cardiology'    => 'decimal:2',
+        'purchase_price_clinic'        => 'decimal:2',
+        'purchase_price_royal_doctors' => 'decimal:2',
+        'purchase_price_radiology'     => 'decimal:2',
+        'purchase_price'               => 'decimal:2',
     ];
 
     public function clinics()

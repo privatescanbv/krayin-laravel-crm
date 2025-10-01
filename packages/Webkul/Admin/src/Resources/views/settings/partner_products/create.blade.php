@@ -307,95 +307,66 @@
         </div>
     </x-admin::form>
 
-    @push('scripts')
-        <script>
-            function initPurchasePriceCalculator() {
-                const purchasePriceFields = [
-                    'purchase_price_misc',
-                    'purchase_price_doctor',
-                    'purchase_price_cardiology',
-                    'purchase_price_clinic',
-                    'purchase_price_royal_doctors',
-                    'purchase_price_radiology'
-                ];
+@pushOnce('scripts')
+    <script type="module">
+        const purchasePriceFields = [
+            'purchase_price_misc',
+            'purchase_price_doctor',
+            'purchase_price_cardiology',
+            'purchase_price_clinic',
+            'purchase_price_royal_doctors',
+            'purchase_price_radiology'
+        ];
 
-                function parsePrice(value) {
-                    if (!value) return 0;
-                    // Remove spaces and convert comma to dot
-                    value = value.toString().replace(/\s+/g, '').replace(',', '.');
-                    // Remove thousand separators (dots before comma position)
-                    const parts = value.split('.');
-                    if (parts.length > 2) {
-                        value = parts.slice(0, -1).join('') + '.' + parts[parts.length - 1];
-                    }
-                    return parseFloat(value) || 0;
+        function parsePrice(value) {
+            if (!value) return 0;
+            value = value.toString().replace(/\s+/g, '').replace(',', '.');
+            return parseFloat(value) || 0;
+        }
+
+        function formatPrice(value) {
+            return new Intl.NumberFormat('nl-NL', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(value);
+        }
+
+        function calculatePurchasePriceTotal() {
+            let total = 0;
+            
+            purchasePriceFields.forEach(fieldName => {
+                const input = document.querySelector(`input[name="${fieldName}"]`);
+                if (input) {
+                    total += parsePrice(input.value);
                 }
+            });
 
-                function formatPrice(value) {
-                    return new Intl.NumberFormat('nl-NL', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }).format(value);
-                }
-
-                function calculateTotal() {
-                    let total = 0;
-                    let foundInputs = 0;
-                    
-                    purchasePriceFields.forEach(fieldName => {
-                        const input = document.querySelector(`input[name="${fieldName}"]`);
-                        if (input) {
-                            foundInputs++;
-                            const value = parsePrice(input.value);
-                            total += value;
-                            console.log(`${fieldName}: ${input.value} = ${value}`);
-                        } else {
-                            console.warn(`Input not found: ${fieldName}`);
-                        }
-                    });
-
-                    console.log(`Total: ${total}, Found inputs: ${foundInputs}`);
-
-                    const totalElement = document.getElementById('purchase-price-total');
-                    if (totalElement) {
-                        totalElement.textContent = '€ ' + formatPrice(total);
-                    }
-                }
-
-                // Use event delegation on the form container
-                const form = document.querySelector('form');
-                if (form) {
-                    form.addEventListener('input', function(event) {
-                        if (event.target.matches('input[type="text"]')) {
-                            const fieldName = event.target.getAttribute('name');
-                            if (purchasePriceFields.includes(fieldName)) {
-                                calculateTotal();
-                            }
-                        }
-                    });
-
-                    form.addEventListener('change', function(event) {
-                        if (event.target.matches('input[type="text"]')) {
-                            const fieldName = event.target.getAttribute('name');
-                            if (purchasePriceFields.includes(fieldName)) {
-                                calculateTotal();
-                            }
-                        }
-                    });
-                }
-
-                // Try to calculate after a delay to ensure Vue has rendered
-                setTimeout(calculateTotal, 500);
-                setTimeout(calculateTotal, 1000);
+            const totalElement = document.getElementById('purchase-price-total');
+            if (totalElement) {
+                totalElement.textContent = '€ ' + formatPrice(total);
             }
+        }
 
-            // Initialize when DOM is ready
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initPurchasePriceCalculator);
-            } else {
-                initPurchasePriceCalculator();
+        // Use event delegation on document
+        document.addEventListener('input', function(e) {
+            const fieldName = e.target.getAttribute('name');
+            if (fieldName && purchasePriceFields.includes(fieldName)) {
+                calculatePurchasePriceTotal();
             }
-        </script>
-    @endpush
+        }, true);
+
+        document.addEventListener('change', function(e) {
+            const fieldName = e.target.getAttribute('name');
+            if (fieldName && purchasePriceFields.includes(fieldName)) {
+                calculatePurchasePriceTotal();
+            }
+        }, true);
+
+        // Initial calculation
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(calculatePurchasePriceTotal, 300);
+        });
+    </script>
+@endPushOnce
 </x-admin::layouts>
 

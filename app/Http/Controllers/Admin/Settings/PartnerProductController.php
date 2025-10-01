@@ -256,18 +256,21 @@ class PartnerProductController extends SimpleEntityController
 
         foreach ($purchasePriceFields as $field) {
             if (array_key_exists($field, $payload)) {
-                $payload[$field] = $this->normalizePrice($payload[$field]) ?? 0;
+                $normalized = $this->normalizePrice($payload[$field]);
+                $payload[$field] = ($normalized === '' || $normalized === null) ? 0 : $normalized;
+            } else {
+                $payload[$field] = 0;
             }
         }
 
         // Calculate total purchase price
         $payload['purchase_price'] =
-            ($payload['purchase_price_misc'] ?? 0) +
-            ($payload['purchase_price_doctor'] ?? 0) +
-            ($payload['purchase_price_cardiology'] ?? 0) +
-            ($payload['purchase_price_clinic'] ?? 0) +
-            ($payload['purchase_price_royal_doctors'] ?? 0) +
-            ($payload['purchase_price_radiology'] ?? 0);
+            floatval($payload['purchase_price_misc'] ?? 0) +
+            floatval($payload['purchase_price_doctor'] ?? 0) +
+            floatval($payload['purchase_price_cardiology'] ?? 0) +
+            floatval($payload['purchase_price_clinic'] ?? 0) +
+            floatval($payload['purchase_price_royal_doctors'] ?? 0) +
+            floatval($payload['purchase_price_radiology'] ?? 0);
 
         return parent::transformPayload($payload, $id);
     }

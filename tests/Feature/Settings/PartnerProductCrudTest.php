@@ -32,23 +32,36 @@ test('can create partner product', function () {
     $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
     $clinicId = Clinic::query()->value('id') ?? Clinic::factory()->create()->id;
     $payload = [
-        'name'               => 'MRI Scan',
-        'currency'           => 'EUR',
-        'sales_price'        => 199.99,
-        'active'             => 1,
-        'description'        => 'Great partner product',
-        'discount_info'      => 'Intro discount 10%',
-        'resource_type_id'   => $resourceTypeId,
-        'clinics'            => [$clinicId],
-        'clinic_description' => 'Omschrijving kliniek',
-        'duration'           => 60,
+        'name'                         => 'MRI Scan',
+        'currency'                     => 'EUR',
+        'sales_price'                  => 199.99,
+        'active'                       => 1,
+        'description'                  => 'Great partner product',
+        'discount_info'                => 'Intro discount 10%',
+        'resource_type_id'             => $resourceTypeId,
+        'clinics'                      => [$clinicId],
+        'clinic_description'           => 'Omschrijving kliniek',
+        'duration'                     => 60,
+        'purchase_price_misc'          => 10.50,
+        'purchase_price_doctor'        => 25.00,
+        'purchase_price_cardiology'    => 15.75,
+        'purchase_price_clinic'        => 30.25,
+        'purchase_price_royal_doctors' => 12.00,
+        'purchase_price_radiology'     => 20.50,
     ];
 
     $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
     $response->assertOk();
 
+    $expectedTotal = 10.50 + 25.00 + 15.75 + 30.25 + 12.00 + 20.50; // = 114.00
+
     $this->assertDatabaseHas('partner_products', [
-        'name' => 'MRI Scan',
+        'name'                      => 'MRI Scan',
+        'purchase_price_misc'       => 10.50,
+        'purchase_price_doctor'     => 25.00,
+        'purchase_price_cardiology' => 15.75,
+        'purchase_price_clinic'     => 30.25,
+        'purchase_price'            => $expectedTotal,
     ]);
 });
 
@@ -59,25 +72,36 @@ test('can update partner product', function () {
     $clinicId = Clinic::query()->value('id') ?? Clinic::factory()->create()->id;
 
     $payload = [
-        'name'               => 'CT Scan',
-        'currency'           => 'EUR',
-        'sales_price'        => 299.95,
-        'active'             => 0,
-        'description'        => 'Updated description',
-        'discount_info'      => null,
-        'resource_type_id'   => $resourceTypeId,
-        'clinic_description' => 'Nieuwe omschrijving kliniek',
-        'duration'           => 45,
-        'clinics'            => [$clinicId],
-        '_method'            => 'put',
+        'name'                         => 'CT Scan',
+        'currency'                     => 'EUR',
+        'sales_price'                  => 299.95,
+        'active'                       => 0,
+        'description'                  => 'Updated description',
+        'discount_info'                => null,
+        'resource_type_id'             => $resourceTypeId,
+        'clinic_description'           => 'Nieuwe omschrijving kliniek',
+        'duration'                     => 45,
+        'clinics'                      => [$clinicId],
+        'purchase_price_misc'          => 5.00,
+        'purchase_price_doctor'        => 50.00,
+        'purchase_price_cardiology'    => 10.00,
+        'purchase_price_clinic'        => 15.00,
+        'purchase_price_royal_doctors' => 8.00,
+        'purchase_price_radiology'     => 12.00,
+        '_method'                      => 'put',
     ];
 
     $response = $this->postJson(route('admin.settings.partner_products.update', ['id' => $pp->id]), $payload);
     $response->assertOk()->assertJsonPath('data.name', 'CT Scan');
 
+    $expectedTotal = 5.00 + 50.00 + 10.00 + 15.00 + 8.00 + 12.00; // = 100.00
+
     $this->assertDatabaseHas('partner_products', [
-        'id'   => $pp->id,
-        'name' => 'CT Scan',
+        'id'                        => $pp->id,
+        'name'                      => 'CT Scan',
+        'purchase_price_misc'       => 5.00,
+        'purchase_price_doctor'     => 50.00,
+        'purchase_price'            => $expectedTotal,
     ]);
 });
 
@@ -90,6 +114,36 @@ test('can delete partner product', function () {
     $this->assertDatabaseMissing('partner_products', [
         'id' => $pp->id,
     ]);
+});
+
+test('purchase price total is calculated correctly on create', function () {
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+    $clinicId = Clinic::query()->value('id') ?? Clinic::factory()->create()->id;
+
+    $payload = [
+        'name'                         => 'Test Product',
+        'currency'                     => 'EUR',
+        'sales_price'                  => 500.00,
+        'active'                       => 1,
+        'resource_type_id'             => $resourceTypeId,
+        'clinics'                      => [$clinicId],
+        'purchase_price_misc'          => 22.50,
+        'purchase_price_doctor'        => 100.00,
+        'purchase_price_cardiology'    => 50.25,
+        'purchase_price_clinic'        => 75.75,
+        'purchase_price_royal_doctors' => 30.00,
+        'purchase_price_radiology'     => 45.50,
+    ];
+
+    $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
+    $response->assertOk();
+
+    $expectedTotal = 22.50 + 100.00 + 50.25 + 75.75 + 30.00 + 45.50; // = 324.00
+
+    $pp = PartnerProduct::where('name', 'Test Product')->first();
+    expect($pp->purchase_price)->toBe($expectedTotal)
+        ->and($pp->purchase_price_misc)->toBe(22.50)
+        ->and($pp->purchase_price_doctor)->toBe(100.00);
 });
 
 test('validates resources belong to selected clinics when creating', function () {

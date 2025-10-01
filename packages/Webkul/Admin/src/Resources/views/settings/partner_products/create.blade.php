@@ -148,18 +148,8 @@
                         @lang('admin::app.settings.clinics.index.title')
                     </x-admin::form.control-group.label>
 
-                    <!-- Hidden field for VeeValidate validation -->
-                    <x-admin::form.control-group.control
-                        type="hidden"
-                        name="clinics_validation"
-                        id="clinics_validation"
-                        rules="required"
-                        :label="trans('admin::app.settings.clinics.index.title')"
-                    />
-
                     <select
                         name="clinics[]"
-                        id="clinics_select"
                         multiple
                         class="custom-select w-full rounded border border-gray-200 px-2.5 py-2 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400"
                     >
@@ -168,7 +158,7 @@
                         @endforeach
                     </select>
 
-                    <x-admin::form.control-group.error control-name="clinics_validation" />
+                    <x-admin::form.control-group.error control-name="clinics" />
                 </x-admin::form.control-group>
 
                 <x-admin::form.control-group>
@@ -230,35 +220,5 @@
             </div>
         </div>
     </x-admin::form>
-
-    @pushOnce('scripts')
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const clinicsSelect = document.getElementById('clinics_select');
-                const clinicsValidation = document.getElementById('clinics_validation');
-                
-                if (clinicsSelect && clinicsValidation) {
-                    // Initialize: set validation field value if options are selected
-                    function syncValidationField() {
-                        const selectedOptions = Array.from(clinicsSelect.selectedOptions);
-                        if (selectedOptions.length > 0) {
-                            clinicsValidation.value = 'selected';
-                            // Trigger input event for VeeValidate
-                            clinicsValidation.dispatchEvent(new Event('input', { bubbles: true }));
-                        } else {
-                            clinicsValidation.value = '';
-                            clinicsValidation.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                    }
-                    
-                    // Sync on change
-                    clinicsSelect.addEventListener('change', syncValidationField);
-                    
-                    // Initial sync
-                    syncValidationField();
-                }
-            });
-        </script>
-    @endPushOnce
 </x-admin::layouts>
 

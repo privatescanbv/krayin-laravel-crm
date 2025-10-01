@@ -240,7 +240,7 @@
                         type="number"
                         name="duration"
                         value="{{ old('duration', $partner_products->duration) }}"
-                        
+
                         :label="trans('admin::app.settings.partner_products.index.create.duration')"
                         :placeholder="trans('admin::app.settings.partner_products.index.create.duration')"
                     />
@@ -282,55 +282,59 @@
                 const resourcesHint = document.getElementById('resources-hint');
 
                 if (!clinicsSelect || !resourcesSelect || !resourcesHint) {
+                    console.error('Could not find one or more select elements.');
                     return;
                 }
 
-                const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
-                
-                if (selectedClinics.length === 0) {
-                    resourcesSelect.disabled = true;
-                    resourcesSelect.innerHTML = '';
-                    resourcesHint.style.display = 'none';
-                    return;
-                }
+
+                    const selectedClinics = Array.from(clinicsSelect.selectedOptions).map(opt => opt.value);
+
+                    if (selectedClinics.length === 0) {
+                        resourcesSelect.disabled = true;
+                        resourcesSelect.innerHTML = '';
+                        resourcesHint.style.display = 'none';
+                        console.log('No clinics selected, resources select disabled.');
+                        return;
+                    }
 
                 const currentlySelected = Array.from(resourcesSelect.selectedOptions).map(opt => opt.value);
                 const params = new URLSearchParams();
                 selectedClinics.forEach(id => params.append('clinic_ids[]', id));
 
-                fetch('{{ route("admin.settings.resources.filter_by_clinics") }}?' + params.toString())
-                    .then(response => response.json())
-                    .then(data => {
-                        resourcesSelect.innerHTML = '';
-                        resourcesHint.style.display = 'block';
-                        
-                        if (data.data && data.data.length > 0) {
-                            data.data.forEach(resource => {
+                    fetch('{{ route("admin.settings.resources.filter_by_clinics") }}?' + params.toString())
+                        .then(response => response.json())
+                        .then(data => {
+                            resourcesSelect.innerHTML = '';
+                            resourcesHint.style.display = 'block';
+
+                            if (data.data && data.data.length > 0) {
+                                data.data.forEach(resource => {
+                                    const option = document.createElement('option');
+                                    option.value = resource.id;
+                                    option.textContent = resource.name;
+                                    if (currentlySelected.includes(resource.id.toString()) || currentlySelected.includes(resource.id)) {
+                                        option.selected = true;
+                                    }
+                                    resourcesSelect.appendChild(option);
+                                });
+                                resourcesSelect.disabled = false;
+                            } else {
                                 const option = document.createElement('option');
-                                option.value = resource.id;
-                                option.textContent = resource.name;
-                                if (currentlySelected.includes(resource.id.toString()) || currentlySelected.includes(resource.id)) {
-                                    option.selected = true;
-                                }
+                                option.disabled = true;
+                                option.textContent = 'Geen resources beschikbaar voor deze kliniek(en)';
                                 resourcesSelect.appendChild(option);
-                            });
+                                resourcesSelect.disabled = false;
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error loading resources:', error);
                             resourcesSelect.disabled = false;
-                        } else {
-                            const option = document.createElement('option');
-                            option.disabled = true;
-                            option.textContent = 'Geen resources beschikbaar voor deze kliniek(en)';
-                            resourcesSelect.appendChild(option);
-                            resourcesSelect.disabled = false;
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error loading resources:', error);
-                        resourcesSelect.disabled = false;
-                    });
-            }
+                        });
+                }
 
             // Initial load
             document.addEventListener('DOMContentLoaded', function() {
+
                 const clinicsSelect = document.getElementById('clinics-select');
                 if (clinicsSelect && clinicsSelect.selectedOptions.length > 0) {
                     loadResourcesForClinics();

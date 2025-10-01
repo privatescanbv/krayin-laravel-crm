@@ -144,7 +144,7 @@ class PartnerProductController extends SimpleEntityController
         ]);
 
         $request->validate($this->getValidationRules());
-        
+
         // Additional validation: resources must belong to selected clinics
         $this->validateResourcesMatchClinics($request);
     }
@@ -156,7 +156,7 @@ class PartnerProductController extends SimpleEntityController
         ]);
 
         $request->validate($this->getValidationRules($id));
-        
+
         // Additional validation: resources must belong to selected clinics
         $this->validateResourcesMatchClinics($request);
     }
@@ -211,7 +211,7 @@ class PartnerProductController extends SimpleEntityController
 
         $invalidResources = array_diff($resourceIds, $validResources);
 
-        if (!empty($invalidResources)) {
+        if (! empty($invalidResources)) {
             throw \Illuminate\Validation\ValidationException::withMessages([
                 'resources' => ['Gekozen resource(s) horen niet bij de geselecteerde kliniek(en).'],
             ]);

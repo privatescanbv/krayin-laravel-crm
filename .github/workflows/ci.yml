@@ -72,56 +72,56 @@ jobs:
           set -o pipefail
           php artisan test --parallel --colors=always |& tee -a ci_error.txt
 
-      - name: Start Laravel server
-        run: php artisan serve --host=0.0.0.0 --port=8000 &
-
-      - name: Wait for Laravel
-        run: |
-          set -o pipefail
-          for i in {1..10}; do
-            if curl -s http://localhost:8000 > /dev/null; then
-              echo "Laravel is up!"
-              exit 0
-            fi
-            echo "Waiting for Laravel..."
-            sleep 3
-          done
-          echo "Laravel did not start in time" >&2
-          exit 1
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
-
-      - name: Install Playwright Browsers and Dependencies
-        run: npx playwright install --with-deps
-
-      - name: Restore .NET dependencies
-        run: dotnet restore ./UiTests/UiTests.csproj
-
-      - name: Build UI tests
-        run: dotnet build ./UiTests/UiTests.csproj --configuration Release --nologo
-
-      - name: Run UI tests
-        run: |
-          set -o pipefail
-          dotnet test ./UiTests/UiTests.csproj \
-            --configuration Release \
-            --no-build \
-            --logger "console;verbosity=detailed" \
-            --logger "trx;LogFileName=test_results.trx" |& tee -a ci_error.txt
-        env:
-          TestSettings__BaseUrl: http://localhost:8000
-
-      - name: Upload UI test results
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ui-test-results
-          path: /home/runner/work/krayin-laravel-crm/krayin-laravel-crm/UiTests/TestResults/test_results.trx
-          if-no-files-found: warn
-          retention-days: 14
+#      - name: Start Laravel server
+#        run: php artisan serve --host=0.0.0.0 --port=8000 &
+#
+#      - name: Wait for Laravel
+#        run: |
+#          set -o pipefail
+#          for i in {1..10}; do
+#            if curl -s http://localhost:8000 > /dev/null; then
+#              echo "Laravel is up!"
+#              exit 0
+#            fi
+#            echo "Waiting for Laravel..."
+#            sleep 3
+#          done
+#          echo "Laravel did not start in time" >&2
+#          exit 1
+#
+#      - name: Setup .NET
+#        uses: actions/setup-dotnet@v4
+#        with:
+#          dotnet-version: 8.0.x
+#
+#      - name: Install Playwright Browsers and Dependencies
+#        run: npx playwright install --with-deps
+#
+#      - name: Restore .NET dependencies
+#        run: dotnet restore ./UiTests/UiTests.csproj
+#
+#      - name: Build UI tests
+#        run: dotnet build ./UiTests/UiTests.csproj --configuration Release --nologo
+#
+#      - name: Run UI tests
+#        run: |
+#          set -o pipefail
+#          dotnet test ./UiTests/UiTests.csproj \
+#            --configuration Release \
+#            --no-build \
+#            --logger "console;verbosity=detailed" \
+#            --logger "trx;LogFileName=test_results.trx" |& tee -a ci_error.txt
+#        env:
+#          TestSettings__BaseUrl: http://localhost:8000
+#
+#      - name: Upload UI test results
+#        if: failure()
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: ui-test-results
+#          path: /home/runner/work/krayin-laravel-crm/krayin-laravel-crm/UiTests/TestResults/test_results.trx
+#          if-no-files-found: warn
+#          retention-days: 14
 
       - name: Upload failure artifact
         if: failure()

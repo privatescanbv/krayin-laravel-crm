@@ -809,9 +809,11 @@ return [
                 ],
 
                 'partner-products' => [
-                    'title'       => 'Partner Products',
-                    'add-btn'     => 'Add Partner Product',
-                    'no-products' => 'No partner products found for this clinic.',
+                    'title'          => 'Partner Products',
+                    'add-btn'        => 'Add Partner Product',
+                    'no-products'    => 'No partner products found for this clinic.',
+                    'detach-success' => 'Partner product detached from clinic successfully.',
+                    'delete-success' => 'Partner product deleted successfully.',
 
                     'table' => [
                         'name'     => 'Name',
@@ -821,6 +823,7 @@ return [
                         'inactive' => 'Inactive',
                         'view'     => 'View',
                         'edit'     => 'Edit',
+                        'delete'   => 'Delete',
                     ],
                 ],
             ],

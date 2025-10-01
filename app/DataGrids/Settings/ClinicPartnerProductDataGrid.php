@@ -128,5 +128,17 @@ class ClinicPartnerProductDataGrid extends DataGrid
                 'url'    => fn ($row) => route('admin.settings.partner_products.edit', $row->id),
             ]);
         }
+        if (bouncer()->hasPermission('settings.partner_products.delete')) {
+            $this->addAction([
+                'index'  => 'delete',
+                'icon'   => 'icon-delete',
+                'title'  => trans('admin::app.settings.clinics.view.partner-products.table.delete'),
+                'method' => 'DELETE',
+                'url'    => fn ($row) => route('admin.settings.clinics.partner_products.delete', [
+                    'id' => request()->route('id'),
+                    'partner_product_id' => $row->id,
+                ]),
+            ]);
+        }
     }
 }

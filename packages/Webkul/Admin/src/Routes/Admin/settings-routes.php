@@ -72,6 +72,11 @@ Route::prefix('settings')->group(function () {
             Route::get('', 'index')->name('admin.settings.clinics.activities.index');
             Route::post('', 'store')->name('admin.settings.clinics.activities.store');
         });
+
+        // Clinic Partner Products
+        Route::controller(\App\Http\Controllers\Admin\Settings\Clinic\PartnerProductController::class)->prefix('{id}/partner-products')->group(function () {
+            Route::get('', 'index')->name('admin.settings.clinics.partner_products.index');
+        });
     });
 
     /**

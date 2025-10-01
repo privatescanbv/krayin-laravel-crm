@@ -1,79 +1,109 @@
 <div class="p-4">
-    <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div class="mb-4 flex items-center justify-between">
-            <h4 class="text-lg font-semibold dark:text-white">
-                @lang('admin::app.settings.clinics.view.partner-products.title')
-            </h4>
-            <span class="text-sm text-gray-600 dark:text-gray-400">
-                @lang('admin::app.settings.clinics.view.partner-products.total'): {{ $clinic->partnerProducts->count() }}
-            </span>
-        </div>
+    <x-admin::datagrid :src="route('admin.settings.clinics.partner_products.index', $clinic->id)">
+        <template #body="{
+            available,
+            applied,
+            isLoading,
+            selectAll,
+            sort,
+            performAction
+        }">
+            <template v-if="isLoading">
+                <x-admin::shimmer.datagrid />
+            </template>
 
-        @if ($clinic->partnerProducts->count() > 0)
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead>
-                        <tr class="border-b border-gray-200 dark:border-gray-800">
-                            <th class="p-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                @lang('admin::app.settings.clinics.view.partner-products.table.name')
-                            </th>
-                            <th class="p-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                @lang('admin::app.settings.clinics.view.partner-products.table.price')
-                            </th>
-                            <th class="p-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                @lang('admin::app.settings.clinics.view.partner-products.table.status')
-                            </th>
-                            <th class="p-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">
-                                @lang('admin::app.settings.clinics.view.partner-products.table.actions')
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($clinic->partnerProducts as $partnerProduct)
-                            <tr class="border-b border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800">
-                                <td class="p-2 dark:text-white">
-                                    {{ $partnerProduct->name }}
-                                </td>
-                                <td class="p-2 dark:text-white">
-                                    @if ($partnerProduct->sales_price)
-                                        {{ $partnerProduct->currency ?? '€' }} {{ number_format($partnerProduct->sales_price, 2) }}
-                                    @else
-                                        -
-                                    @endif
-                                </td>
-                                <td class="p-2">
-                                    @if ($partnerProduct->active)
-                                        <span class="rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
-                                            @lang('admin::app.settings.clinics.view.partner-products.table.active')
-                                        </span>
-                                    @else
-                                        <span class="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800 dark:bg-gray-900 dark:text-gray-200">
-                                            @lang('admin::app.settings.clinics.view.partner-products.table.inactive')
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="p-2">
-                                    @if (bouncer()->hasPermission('settings.partner_products.view'))
-                                        <a
-                                            href="{{ route('admin.settings.partner_products.view', $partnerProduct->id) }}"
-                                            class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                                            title="@lang('admin::app.settings.clinics.view.partner-products.table.view')"
-                                        >
-                                            <i class="icon-eye text-lg"></i>
-                                        </a>
-                                    @endif
+            <template v-else>
+                <div v-if="available.records.length">
+                    <!-- Datagrid Table -->
+                    <x-admin::datagrid.table>
+                        <template #header="{
+                            isLoading,
+                            available,
+                            applied,
+                            selectAll,
+                            sort,
+                            performAction
+                        }">
+                            <tr>
+                                <template v-for="column in available.columns">
+                                    <th
+                                        class="cursor-pointer select-none px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300"
+                                        :class="column.sortable ? 'cursor-pointer' : 'cursor-default'"
+                                        @click="sort(column)"
+                                        v-if="column.index !== 'id'"
+                                    >
+                                        <span v-html="column.label"></span>
+                                        <i
+                                            class="align-middle text-base text-gray-800 dark:text-white ltr:ml-1.5 rtl:mr-1.5"
+                                            :class="[applied.sort.column === column.index ? (applied.sort.order === 'asc' ? 'icon-down-stat' : 'icon-up-stat') : 'icon-sort']"
+                                            v-if="column.sortable"
+                                        ></i>
+                                    </th>
+                                </template>
+
+                                <!-- Actions -->
+                                <th class="px-4 py-3 text-left font-semibold text-gray-600 dark:text-gray-300" v-if="available.actions.length">
+                                    @lang('admin::app.components.datagrid.table.actions')
+                                </th>
+                            </tr>
+                        </template>
+
+                        <template #body="{
+                            isLoading,
+                            available,
+                            applied,
+                            selectAll,
+                            sort,
+                            performAction
+                        }">
+                            <tr
+                                class="hover:bg-gray-50 dark:hover:bg-gray-950"
+                                v-for="record in available.records"
+                            >
+                                <template v-for="column in available.columns">
+                                    <td
+                                        class="px-4 py-3 dark:text-white"
+                                        v-if="column.index !== 'id'"
+                                        v-html="record[column.index]"
+                                    >
+                                    </td>
+                                </template>
+
+                                <!-- Actions -->
+                                <td class="px-4 py-3" v-if="available.actions.length">
+                                    <div class="flex gap-2.5">
+                                        <div v-for="action in available.actions">
+                                            <a
+                                                :href="action.url.replace(':id', record.id || record.lead_id)"
+                                                v-if="action.index === 'view'"
+                                            >
+                                                <span
+                                                    :class="action.icon"
+                                                    class="cursor-pointer rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 max-sm:place-self-center"
+                                                    :title="action.title"
+                                                ></span>
+                                            </a>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @else
-            <div class="py-8 text-center">
-                <p class="text-gray-600 dark:text-gray-400">
-                    @lang('admin::app.settings.clinics.view.partner-products.no-products')
-                </p>
-            </div>
-        @endif
-    </div>
+                        </template>
+                    </x-admin::datagrid.table>
+                </div>
+
+                <!-- Empty State -->
+                <div v-else class="py-16 text-center">
+                    <img
+                        class="m-auto h-[120px] w-[120px] dark:mix-blend-exclusion dark:invert"
+                        src="{{ bagisto_asset('images/empty-product.svg', 'admin') }}"
+                        alt="@lang('admin::app.settings.clinics.view.partner-products.no-products')"
+                    />
+
+                    <p class="mt-4 text-base text-gray-600 dark:text-gray-300">
+                        @lang('admin::app.settings.clinics.view.partner-products.no-products')
+                    </p>
+                </div>
+            </template>
+        </template>
+    </x-admin::datagrid>
 </div>

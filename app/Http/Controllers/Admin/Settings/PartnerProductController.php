@@ -261,7 +261,7 @@ class PartnerProductController extends SimpleEntityController
         }
 
         // Calculate total purchase price
-        $payload['purchase_price'] = 
+        $payload['purchase_price'] =
             ($payload['purchase_price_misc'] ?? 0) +
             ($payload['purchase_price_doctor'] ?? 0) +
             ($payload['purchase_price_cardiology'] ?? 0) +

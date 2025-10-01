@@ -1,14 +1,17 @@
 @props([
     'partnerProduct' => null,
-    'resourceTypes' => [],
-    'currencies' => [],
-    'defaultCurrency' => 'EUR',
-    'clinics' => [],
     'selectedClinics' => [],
     'selectedResources' => [],
     'relatedProducts' => [],
     'excludeId' => null,
 ])
+
+@php
+    $resourceTypes = \App\Models\ResourceType::orderBy('name')->get(['id', 'name']);
+    $currencies = \App\Enums\Currency::options();
+    $defaultCurrency = \App\Enums\Currency::default()->value;
+    $clinics = \App\Models\Clinic::orderBy('name')->get(['id', 'name']);
+@endphp
 
 <!-- Naam en Duur -->
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

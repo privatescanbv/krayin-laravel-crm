@@ -30,10 +30,6 @@
 
                 <x-admin::partner-product-form-fields
                     :partner-product="$partner_products"
-                    :resource-types="$resourceTypes"
-                    :currencies="$currencies"
-                    :default-currency="'EUR'"
-                    :clinics="$clinics"
                     :selected-clinics="$selectedClinics"
                     :selected-resources="$selectedResources"
                     :related-products="$partner_products->relatedProducts->map(fn($p) => ['id' => $p->id, 'name' => $p->name])->toArray()"

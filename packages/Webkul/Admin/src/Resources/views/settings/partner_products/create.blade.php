@@ -30,10 +30,6 @@
                 @endphp
 
                 <x-admin::partner-product-form-fields
-                    :resource-types="$resourceTypes"
-                    :currencies="$currencies"
-                    :default-currency="$defaultCurrency"
-                    :clinics="$clinics"
                     :selected-clinics="old('clinics', [])"
                     :selected-resources="old('resources', [])"
                     :related-products="$oldRelatedProducts"

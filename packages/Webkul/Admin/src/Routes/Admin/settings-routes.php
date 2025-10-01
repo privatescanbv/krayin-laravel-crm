@@ -408,7 +408,7 @@ Route::prefix('settings')->group(function () {
 
             Route::post('create', 'store')->name('admin.settings.marketing.events.store');
 
-            Route::put('edit/{id}', 'update')->name('admin.settings.marketing.events.update');
+            Route::put('{id}', 'update')->name('admin.settings.marketing.events.update');
 
             Route::delete('{id}', 'destroy')->name('admin.settings.marketing.events.delete');
 

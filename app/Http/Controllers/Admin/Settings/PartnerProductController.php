@@ -83,6 +83,16 @@ class PartnerProductController extends SimpleEntityController
             ], 200);
         }
 
+        // Check if we should return to clinic view
+        if ($request->input('return_to') === 'clinic_view' && $request->input('clinics')) {
+            $clinicIds = $request->input('clinics');
+            $firstClinicId = is_array($clinicIds) ? reset($clinicIds) : $clinicIds;
+            
+            return redirect()
+                ->route('admin.settings.clinics.view', $firstClinicId)
+                ->with('success', $this->getCreateSuccessMessage());
+        }
+
         return redirect()
             ->route($this->indexRoute)
             ->with('success', $this->getCreateSuccessMessage());
@@ -117,11 +127,13 @@ class PartnerProductController extends SimpleEntityController
     protected function getCreateViewData(Request $request): array
     {
         return [
-            'resourceTypes'   => ResourceType::orderBy('name')->get(['id', 'name']),
-            'currencies'      => Currency::options(),
-            'defaultCurrency' => Currency::default()->value,
-            'clinics'         => Clinic::orderBy('name')->get(['id', 'name']),
-            'resources'       => Resource::orderBy('name')->get(['id', 'name']),
+            'resourceTypes'        => ResourceType::orderBy('name')->get(['id', 'name']),
+            'currencies'           => Currency::options(),
+            'defaultCurrency'      => Currency::default()->value,
+            'clinics'              => Clinic::orderBy('name')->get(['id', 'name']),
+            'resources'            => Resource::orderBy('name')->get(['id', 'name']),
+            'preSelectedClinicId'  => $request->query('clinic_id'),
+            'returnTo'             => $request->query('return_to'),
         ];
     }
 

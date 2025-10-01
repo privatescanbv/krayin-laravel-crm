@@ -809,11 +809,9 @@ return [
                 ],
 
                 'partner-products' => [
-                    'title'          => 'Partner Products',
-                    'add-btn'        => 'Add Partner Product',
-                    'no-products'    => 'No partner products found for this clinic.',
-                    'attach-success' => 'Partner product(s) attached successfully.',
-                    'detach-success' => 'Partner product detached successfully.',
+                    'title'       => 'Partner Products',
+                    'add-btn'     => 'Add Partner Product',
+                    'no-products' => 'No partner products found for this clinic.',
 
                     'table' => [
                         'name'     => 'Name',
@@ -823,14 +821,6 @@ return [
                         'inactive' => 'Inactive',
                         'view'     => 'View',
                         'edit'     => 'Edit',
-                        'detach'   => 'Detach',
-                    ],
-
-                    'modal' => [
-                        'title'           => 'Add Partner Products',
-                        'select-products' => 'Select Partner Products',
-                        'cancel'          => 'Cancel',
-                        'save'            => 'Add',
                     ],
                 ],
             ],

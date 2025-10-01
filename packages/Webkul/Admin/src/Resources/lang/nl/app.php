@@ -1767,8 +1767,6 @@ return [
                     'total' => 'Totaal',
                     'add-btn' => 'Partner Product Toevoegen',
                     'no-products' => 'Geen partner producten gekoppeld aan deze kliniek.',
-                    'attach-success' => 'Partner product(en) succesvol toegevoegd.',
-                    'detach-success' => 'Partner product succesvol losgekoppeld.',
                     'table' => [
                         'name' => 'Naam',
                         'partner-name' => 'Partner Naam',
@@ -1779,13 +1777,6 @@ return [
                         'inactive' => 'Inactief',
                         'view' => 'Bekijken',
                         'edit' => 'Bewerken',
-                        'detach' => 'Loskoppelen',
-                    ],
-                    'modal' => [
-                        'title' => 'Partner Producten Toevoegen',
-                        'select-products' => 'Selecteer Partner Producten',
-                        'cancel' => 'Annuleren',
-                        'save' => 'Toevoegen',
                     ],
                 ],
 

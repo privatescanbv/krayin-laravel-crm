@@ -1104,6 +1104,11 @@ test('imports email activities from sugarcrm', function () {
     $lead = Lead::where('external_id', $leadId)->first();
     expect($lead)->not->toBeNull();
     
+    // Debug: Check if user exists
+    $userFromDb = User::where('external_id', 'user-001')->first();
+    expect($userFromDb)->not->toBeNull()
+        ->and($userFromDb->id)->toBe($user->id);
+    
     // Check if lead has proper user_id set
     expect($lead->user_id)->not->toBeNull()
         ->and($lead->user_id)->toBe($user->id);

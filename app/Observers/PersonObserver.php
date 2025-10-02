@@ -131,7 +131,7 @@ class PersonObserver
                             'label' => $oldValue,
                         ],
                     ]),
-                    'user_id' => auth()->id() ?? 1,
+                    'user_id' => auth()->id() ?? $person->user_id ?? 1,
                 ]);
 
                 $person->activities()->attach($activity->id);

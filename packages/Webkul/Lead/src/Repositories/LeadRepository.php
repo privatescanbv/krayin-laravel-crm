@@ -470,7 +470,8 @@ class LeadRepository extends Repository
         return $this->model->where('id', '!=', $lead->id)
             ->where(function ($query) use ($field, $values) {
                 foreach ($values as $value) {
-                    $query->orWhereJsonContains($field, ['value' => $value]);
+                    $query->orWhereRaw("JSON_SEARCH(?, 'one', ?) IS NOT NULL", [$field, $value])
+                          ->orWhereRaw("JSON_SEARCH(JSON_EXTRACT(?, '$[*].value'), 'one', ?) IS NOT NULL", [$field, $value]);
                 }
             })
             ->get();

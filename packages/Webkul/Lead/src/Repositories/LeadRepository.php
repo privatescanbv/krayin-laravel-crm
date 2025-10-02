@@ -460,14 +460,14 @@ class LeadRepository extends Repository
         $uniqueDuplicates = $duplicates->unique('id');
         $debugInfo['total_duplicates_before_filter'] = $uniqueDuplicates->count();
         $debugInfo['unique_duplicate_ids'] = $uniqueDuplicates->pluck('id')->toArray();
-        
+
         $filteredDuplicates = $this->applyDuplicateFilters($lead, $uniqueDuplicates);
         $debugInfo['duplicates_after_filter'] = $filteredDuplicates->count();
         $debugInfo['final_duplicate_ids'] = $filteredDuplicates->pluck('id')->toArray();
-        
+
         // Log debug info
         Log::info('LeadDuplicateDetection Feature Test Debug', $debugInfo);
-        
+
         return $filteredDuplicates;
     }
 
@@ -542,23 +542,16 @@ class LeadRepository extends Repository
         $twoWeeksAgo = $leadCreatedAt->copy()->subWeeks(2);
         $twoWeeksLater = $leadCreatedAt->copy()->addWeeks(2);
 
-        // Load stage relationships for all duplicates
-        if ($duplicates->isNotEmpty()) {
-            $duplicates = Lead::whereIn('id', $duplicates->pluck('id'))->with('stage')->get();
-        }
-
         return $duplicates->filter(function ($duplicate) use ($twoWeeksAgo, $twoWeeksLater) {
             // Filter out leads in 'Won' status
             if ($duplicate->stage && $duplicate->stage->code === 'won') {
                 return false;
             }
 
-            // Temporarily disable time filtering for testing
-            return true;
-            
             // Filter out leads created more than 2 weeks apart
-            // $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
-            // return $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
+            $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
+
+          return $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
         });
     }
 

@@ -484,6 +484,21 @@ class LeadRepository extends Repository
             })
             ->get();
 
+        // Debug: throw exception with results info
+        if ($results->isEmpty()) {
+            $allLeads = $this->model->where('id', '!=', $lead->id)->get();
+            $debugInfo = [
+                'searching_for' => $values,
+                'in_field' => $field,
+                'lead_data' => $lead->$field,
+                'total_leads_in_db' => $allLeads->count(),
+                'all_leads_data' => $allLeads->map(function($l) use ($field) {
+                    return ['id' => $l->id, $field => $l->$field];
+                })->toArray()
+            ];
+            throw new \Exception("No duplicates found. Debug: " . json_encode($debugInfo));
+        }
+
         return $results;
     }
 

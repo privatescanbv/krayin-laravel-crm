@@ -26,7 +26,7 @@ function createLeadWithStage([$data = []) {
 
 test('it detects duplicate leads by email', function () {
     // Create the first lead
-    $lead1 = createLeadWithStage([[
+    $lead1 = createLeadWithStage([
         'first_name' => 'Marcus',
         'last_name'  => 'Emailtest',
         'emails'     => [
@@ -35,7 +35,7 @@ test('it detects duplicate leads by email', function () {
     ]);
 
     // Create a second lead with the same email but different name
-    $lead2 = createLeadWithStage([[
+    $lead2 = createLeadWithStage([
         'first_name' => 'Natasha',
         'last_name'  => 'Differentname',
         'emails'     => [
@@ -54,7 +54,7 @@ test('it detects duplicate leads by email', function () {
 
 test('it detects duplicate leads by phone', function () {
     // Create the first lead
-    $lead1 = createLeadWithStage([[
+    $lead1 = createLeadWithStage([
         'first_name' => 'Alexander',
         'last_name'  => 'Phonetest',
         'phones'     => [
@@ -63,7 +63,7 @@ test('it detects duplicate leads by phone', function () {
     ]);
 
     // Create a second lead with the same phone but different name
-    $lead2 = createLeadWithStage([[
+    $lead2 = createLeadWithStage([
         'first_name' => 'Bethany',
         'last_name'  => 'Differentname',
         'phones'     => [
@@ -80,13 +80,13 @@ test('it detects duplicate leads by phone', function () {
 
 test('it detects duplicate leads by full name', function () {
     // Create the first lead
-    $lead1 = createLeadWithStage([[
+    $lead1 = createLeadWithStage([
         'first_name' => 'Gabriel',
         'last_name'  => 'Fullnametest',
     ]);
 
     // Create a second lead with the exact same full name
-    $lead2 = createLeadWithStage([[
+    $lead2 = createLeadWithStage([
         'first_name' => 'Gabriel',
         'last_name'  => 'Fullnametest',
     ]);

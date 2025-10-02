@@ -18,6 +18,24 @@ beforeEach(function () {
     Lead::unsetEventDispatcher();
     $this->leadRepository = app(LeadRepository::class);
     $this->defaultStage = Stage::first();
+    if (!$this->defaultStage) {
+        // Ensure we have a default stage
+        $pipeline = \Webkul\Lead\Models\Pipeline::first();
+        if (!$pipeline) {
+            $pipeline = \Webkul\Lead\Models\Pipeline::create([
+                'name' => 'Test Pipeline',
+                'is_default' => true,
+                'type' => 'lead'
+            ]);
+        }
+        $this->defaultStage = \Webkul\Lead\Models\Stage::create([
+            'name' => 'New',
+            'code' => 'new',
+            'lead_pipeline_id' => $pipeline->id,
+            'sort_order' => 1,
+            'probability' => 10
+        ]);
+    }
 });
 
 // Helper function to create leads with proper stage
@@ -26,6 +44,24 @@ function createLeadWithStage($data = [])
     // Only set default stage if not already provided
     if (! isset($data['lead_pipeline_stage_id'])) {
         $stage = Stage::first();
+        if (!$stage) {
+            // If no stage exists, create a default one
+            $pipeline = \Webkul\Lead\Models\Pipeline::first();
+            if (!$pipeline) {
+                $pipeline = \Webkul\Lead\Models\Pipeline::create([
+                    'name' => 'Test Pipeline',
+                    'is_default' => true,
+                    'type' => 'lead'
+                ]);
+            }
+            $stage = \Webkul\Lead\Models\Stage::create([
+                'name' => 'New',
+                'code' => 'new',
+                'lead_pipeline_id' => $pipeline->id,
+                'sort_order' => 1,
+                'probability' => 10
+            ]);
+        }
         $data['lead_pipeline_stage_id'] = $stage->id;
     }
 

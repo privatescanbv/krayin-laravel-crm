@@ -459,21 +459,33 @@ class LeadRepository extends Repository
     {
         $fieldData = $lead->$field;
         if (empty($fieldData) || !is_array($fieldData)) {
+            \Log::info("No field data for {$field}", ['fieldData' => $fieldData]);
             return collect();
         }
 
         $values = collect($fieldData)->pluck('value')->filter()->toArray();
         if (empty($values)) {
+            \Log::info("No values extracted from {$field}", ['fieldData' => $fieldData]);
             return collect();
         }
 
-        return $this->model->where('id', '!=', $lead->id)
+        \Log::info("Searching for duplicates in {$field}", ['values' => $values, 'leadId' => $lead->id]);
+
+        // Try different approaches for JSON searching
+        $results = $this->model->where('id', '!=', $lead->id)
             ->where(function ($query) use ($field, $values) {
                 foreach ($values as $value) {
-                    $query->orWhereJsonContains($field, ['value' => $value]);
+                    // Try multiple approaches
+                    $query->orWhereJsonContains($field, ['value' => $value])
+                          ->orWhereRaw("JSON_SEARCH(?, 'one', ?) IS NOT NULL", [$field, $value])
+                          ->orWhereRaw("JSON_SEARCH(JSON_EXTRACT(?, '$[*].value'), 'one', ?) IS NOT NULL", [$field, $value]);
                 }
             })
             ->get();
+
+        \Log::info("Found duplicates in {$field}", ['count' => $results->count(), 'results' => $results->pluck('id')->toArray()]);
+
+        return $results;
     }
 
     /**
@@ -507,20 +519,42 @@ class LeadRepository extends Repository
         $twoWeeksAgo = $leadCreatedAt->copy()->subWeeks(2);
         $twoWeeksLater = $leadCreatedAt->copy()->addWeeks(2);
 
+        \Log::info("Applying filters", [
+            'leadId' => $lead->id,
+            'leadCreatedAt' => $leadCreatedAt,
+            'twoWeeksAgo' => $twoWeeksAgo,
+            'twoWeeksLater' => $twoWeeksLater,
+            'duplicatesBeforeFilter' => $duplicates->count()
+        ]);
+
         // Load stage relationships for all duplicates
         $duplicates->load('stage');
 
-        return $duplicates->filter(function ($duplicate) use ($twoWeeksAgo, $twoWeeksLater) {
+        $filtered = $duplicates->filter(function ($duplicate) use ($twoWeeksAgo, $twoWeeksLater) {
             // Filter out leads in 'Won' status
             if ($duplicate->stage && $duplicate->stage->code === 'won') {
+                \Log::info("Filtering out won lead", ['duplicateId' => $duplicate->id, 'stageCode' => $duplicate->stage->code]);
                 return false;
             }
 
             // Filter out leads created more than 2 weeks apart
             $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
+            $isInTimeRange = $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
+            
+            if (!$isInTimeRange) {
+                \Log::info("Filtering out lead outside time range", [
+                    'duplicateId' => $duplicate->id,
+                    'duplicateCreatedAt' => $duplicateCreatedAt,
+                    'isInRange' => $isInTimeRange
+                ]);
+            }
 
-            return $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
+            return $isInTimeRange;
         });
+
+        \Log::info("After filtering", ['duplicatesAfterFilter' => $filtered->count()]);
+
+        return $filtered;
     }
 
     /**

@@ -45,6 +45,12 @@ test('it detects duplicate leads by email', function () {
 
     // Test duplicate detection
     $duplicates = $this->leadRepository->findPotentialDuplicates($lead1);
+    
+    // Debug: Check what we're actually getting
+    dump("Lead1 emails: ", $lead1->emails);
+    dump("Lead2 emails: ", $lead2->emails);
+    dump("Duplicates found: ", $duplicates->count());
+    dump("All leads in DB: ", Lead::count());
 
     $this->assertCount(1, $duplicates);
     $this->assertEquals($lead2->id, $duplicates->first()->id);

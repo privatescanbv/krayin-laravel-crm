@@ -2794,6 +2794,7 @@ return [
                 'id' => 'ID',
                 'view' => 'Bekijken',
                 'name' => 'Naam',
+                'parent_path' => 'Parent pad',
                 'created_at' => 'Aangemaakt op',
             ],
             'create-success' => 'Productgroep succesvol aangemaakt.',

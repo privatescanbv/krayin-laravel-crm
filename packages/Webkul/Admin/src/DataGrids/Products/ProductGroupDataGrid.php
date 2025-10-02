@@ -15,16 +15,19 @@ class ProductGroupDataGrid extends DataGrid
     public function prepareQueryBuilder()
     {
         $queryBuilder = DB::table('product_groups')
+            ->leftJoin('product_groups as parent', 'product_groups.parent_id', '=', 'parent.id')
             ->addSelect(
-                'id',
-                'name',
-                'description',
-                'created_at'
+                'product_groups.id',
+                'product_groups.name',
+                'product_groups.description',
+                'product_groups.created_at',
+                DB::raw('parent.name as parent_path')
             );
 
-        $this->addFilter('id', 'id');
-        $this->addFilter('name', 'name');
-        $this->addFilter('created_at', 'created_at');
+        $this->addFilter('id', 'product_groups.id');
+        $this->addFilter('name', 'product_groups.name');
+        $this->addFilter('created_at', 'product_groups.created_at');
+        $this->addFilter('parent_path', 'parent.name');
 
         return $queryBuilder;
     }
@@ -55,6 +58,15 @@ class ProductGroupDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'description',
             'label'      => trans('admin::app.productgroups.index.datagrid.description'),
+            'type'       => 'string',
+            'searchable' => true,
+            'sortable'   => true,
+            'filterable' => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'parent_path',
+            'label'      => trans('admin::app.productgroups.index.datagrid.parent_path'),
             'type'       => 'string',
             'searchable' => true,
             'sortable'   => true,

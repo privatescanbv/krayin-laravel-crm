@@ -62,7 +62,7 @@ class ProductController extends Controller
 
         Event::dispatch('product.create.before');
 
-        $data = $this->cleanProductData($request->all());
+        $data = $this->cleanProductData($request->validated());
         $product = $this->productRepository->create($data);
 
         Event::dispatch('product.create.after', $product);
@@ -105,7 +105,7 @@ class ProductController extends Controller
 
         Event::dispatch('product.update.before', $id);
 
-        $data = $this->cleanProductData($request->all());
+        $data = $this->cleanProductData($request->validated());
         $product = $this->productRepository->update($data, $id);
 
         Event::dispatch('product.update.after', $product);
@@ -172,7 +172,8 @@ class ProductController extends Controller
      */
     public function massDestroy(MassDestroyRequest $massDestroyRequest): JsonResponse
     {
-        $indices = $massDestroyRequest->input('indices');
+        $validated = method_exists($massDestroyRequest, 'validated') ? $massDestroyRequest->validated() : [];
+        $indices = $validated['indices'] ?? (request()->input('indices') ?? []);
 
         foreach ($indices as $index) {
             Event::dispatch('product.delete.before', $index);
@@ -193,6 +194,9 @@ class ProductController extends Controller
     protected function validateStore(Request $request): void
     {
         $this->normalizePriceFields($request);
+        $request->merge([
+            'active' => (bool) $request->boolean('active', true),
+        ]);
         $request->validate($this->getValidationRules());
     }
 
@@ -202,6 +206,9 @@ class ProductController extends Controller
     protected function validateUpdate(Request $request, int $id): void
     {
         $this->normalizePriceFields($request);
+        $request->merge([
+            'active' => (bool) $request->boolean('active', true),
+        ]);
         $request->validate($this->getValidationRules($id));
     }
 
@@ -212,6 +219,7 @@ class ProductController extends Controller
     {
         return [
             'name'              => 'required|string|max:255',
+            'active'            => 'required|boolean',
             'currency'          => 'required|in:'.implode(',', Currency::codes()),
             'description'       => 'nullable|string',
             'price'             => 'nullable|numeric|min:0',
@@ -272,6 +280,13 @@ class ProductController extends Controller
      */
     protected function cleanProductData(array $data): array
     {
+        // Normalize active to boolean; default true
+        if (! array_key_exists('active', $data)) {
+            $data['active'] = true;
+        } else {
+            $data['active'] = (bool) $data['active'];
+        }
+
         // Convert empty strings to null for foreign key fields
         $foreignKeyFields = ['product_group_id', 'product_type_id', 'resource_type_id'];
 

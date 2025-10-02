@@ -104,6 +104,24 @@
     </x-admin::form.control-group>
 </div>
 
+<!-- Active checkbox -->
+<x-admin::form.control-group>
+    <x-admin::form.control-group.label>
+        @lang('admin::app.settings.partner_products.index.create.active')
+    </x-admin::form.control-group.label>
+
+    <input type="hidden" name="active" value="0"/>
+    <x-admin::form.control-group.control
+        type="checkbox"
+        name="active"
+        value="1"
+        :label="trans('admin::app.settings.partner_products.index.create.active')"
+        :checked="old('active', $product->active ?? 1)"
+    />
+
+    <x-admin::form.control-group.error control-name="active"/>
+</x-admin::form.control-group>
+
 <!-- Grid met 2 kolommen voor types en groep -->
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 

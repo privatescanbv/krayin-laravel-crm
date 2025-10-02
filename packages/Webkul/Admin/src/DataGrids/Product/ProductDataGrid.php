@@ -26,6 +26,7 @@ class ProductDataGrid extends DataGrid
                 'products.name',
                 'products.currency',
                 'products.price',
+                'products.active',
                 'tags.name as tag_name',
                 'product_groups.name as group_name'
             )
@@ -97,6 +98,15 @@ class ProductDataGrid extends DataGrid
             'index'      => 'group_name',
             'label'      => trans('admin::app.productgroups.title'),
             'type'       => 'string',
+            'searchable' => true,
+            'sortable'   => true,
+            'filterable' => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'active',
+            'label'      => trans('admin::app.settings.partner_products.index.datagrid.active'),
+            'type'       => 'boolean',
             'searchable' => true,
             'sortable'   => true,
             'filterable' => true,

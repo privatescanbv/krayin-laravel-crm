@@ -38,6 +38,7 @@ class Product extends Model implements ProductContract
      */
     protected $fillable = [
         'name',
+        'active',
         'currency',
         'description',
         'product_group_id',
@@ -49,6 +50,7 @@ class Product extends Model implements ProductContract
 
     protected $casts = [
         'currency'         => 'string',
+        'active'           => 'boolean',
         'price'            => 'decimal:2',
         'costs'            => 'decimal:2',
         'product_group_id' => 'integer',

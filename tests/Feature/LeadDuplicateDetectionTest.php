@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\ContactLabel;
-use App\Models\Address;
+use App\Enums\PipelineDefaultKeys;
 use Database\Seeders\TestSeeder;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
@@ -200,7 +200,7 @@ test('it ignores leads in won status as duplicates', function () {
     // Create a stage with 'won' code
     $wonStage = Stage::where(
         'code', 'won')->where(
-            'lead_pipeline_id', 1)
+            'lead_pipeline_id', PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value)
         ->first();
 
     // Create the first lead (active lead)
@@ -208,7 +208,7 @@ test('it ignores leads in won status as duplicates', function () {
         'first_name' => 'Marcus',
         'last_name'  => 'Wontest',
         'emails'     => [
-            ['value' => 'marcus.won@example.com', 'label' => ContactLabel::Eigen->value],
+            ['value' => 'marcus.newlead@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'created_at' => now(),
     ]);

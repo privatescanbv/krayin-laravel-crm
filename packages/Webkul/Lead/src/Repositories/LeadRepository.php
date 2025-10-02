@@ -520,13 +520,12 @@ class LeadRepository extends Repository
         $twoWeeksLater = $leadCreatedAt->copy()->addWeeks(2);
 
         $filteredDuplicates = collect();
-
         foreach ($duplicates as $duplicate) {
             // Filter out leads in 'Won' status
             // Get stage code directly from the lead's stage relationship
-            $stageCode = $duplicate->lead_pipeline_stage_id ? 
+            $stageCode = $duplicate->lead_pipeline_stage_id ?
                 \Webkul\Lead\Models\Stage::find($duplicate->lead_pipeline_stage_id)?->code : null;
-            
+
             if ($stageCode === 'won') {
                 continue;
             }

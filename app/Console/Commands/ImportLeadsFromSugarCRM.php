@@ -922,7 +922,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
     /**
      * Sanitize phone number and infer label
      */
-    private function sanitizePhoneAndInferLabel($phone, $defaultLabel): array
+    protected function sanitizePhoneAndInferLabel($phone, $defaultLabel): array
     {
         if (empty($phone)) {
             return [$defaultLabel, ''];

@@ -26,6 +26,9 @@ include::modules/continuous_delivery/pages/cd.adoc[]
 include::modules/continuous_delivery/pages/release.adoc[]
 
 
+== Privacy & AVG
+include::modules/privacy/pages/avg-gegevensgebruik.adoc[]
+
 == Beheer & Support
 include::modules/support/pages/support.adoc[]
 

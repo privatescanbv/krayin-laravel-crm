@@ -1,0 +1,540 @@
+=== AVG Gegevensgebruik en Verwerkingsregister
+
+Dit document beschrijft welke persoonsgegevens Privatescan CRM verwerkt en waarvoor deze gegevens worden gebruikt, conform de eisen van de Algemene Verordening Gegevensbescherming (AVG).
+
+==== Overzicht Verwerkingen
+
+===== 1. Lead Management (Prospect Beheer)
+
+[cols="2,3,2,2,1,2", options="header"]
+|===
+|Gegeven
+|Doel
+|Rechtsgrond
+|Bewaartermijn
+|Toegang
+|Categorie Betrokkenen
+
+|Naam (voornaam, achternaam, voorvoegsels, initialen)
+|Identificatie en communicatie met prospects
+|Gerechtvaardigd belang (commerciële doeleinden)
+|Tot 2 jaar na laatste contact of tot klant vraagt om verwijdering
+|Verkoopmedewerkers, backoffice medewerkers
+|Prospects, potentiële klanten
+
+|E-mailadres(sen)
+|Communicatie, offerte verzending, afspraakbevestigingen
+|Gerechtvaardigd belang (commerciële doeleinden)
+|Tot 2 jaar na laatste contact of tot klant vraagt om verwijdering
+|Verkoopmedewerkers, backoffice medewerkers
+|Prospects, potentiële klanten
+
+|Telefoonnummer(s)
+|Telefonische communicatie, afspraakbevestigingen per SMS
+|Gerechtvaardigd belang (commerciële doeleinden)
+|Tot 2 jaar na laatste contact of tot klant vraagt om verwijdering
+|Verkoopmedewerkers, backoffice medewerkers
+|Prospects, potentiële klanten
+
+|Geboortedatum
+|Leeftijdsverificatie voor bepaalde scans, planning
+|Gerechtvaardigd belang (medische veiligheid)
+|Tot 2 jaar na laatste contact of tot klant vraagt om verwijdering
+|Verkoopmedewerkers, backoffice medewerkers, kliniek medewerkers
+|Prospects, potentiële klanten
+
+|Geslacht
+|Planning en voorbereiding medische scans
+|Gerechtvaardigd belang (medische veiligheid)
+|Tot 2 jaar na laatste contact of tot klant vraagt om verwijdering
+|Verkoopmedewerkers, backoffice medewerkers, kliniek medewerkers
+|Prospects, potentiële klanten
+
+|Adresgegevens (straat, huisnummer, postcode, plaats, land)
+|Facturatie, verzending documenten, routebeschrijving
+|Uitvoering overeenkomst
+|Tot 2 jaar na laatste contact of tot klant vraagt om verwijdering
+|Verkoopmedewerkers, backoffice medewerkers
+|Prospects, potentiële klanten
+
+|Lead status en pipeline informatie
+|Procesoptimalisatie, klanttraject beheer
+|Gerechtvaardigd belang (bedrijfsvoering)
+|Tot 2 jaar na laatste contact of tot klant vraagt om verwijdering
+|Verkoopmedewerkers, backoffice medewerkers, management
+|Prospects, potentiële klanten
+
+|Lead bron (bijvoorbeeld: website, telefoon, verwijzing)
+|Marketing analyse, ROI bepaling
+|Gerechtvaardigd belang (bedrijfsvoering)
+|Tot 2 jaar na laatste contact of tot klant vraagt om verwijdering
+|Marketing team, management
+|Prospects, potentiële klanten
+|===
+
+===== 2. Medische Anamnese
+
+[cols="2,3,2,2,1,2", options="header"]
+|===
+|Gegeven
+|Doel
+|Rechtsgrond
+|Bewaartermijn
+|Toegang
+|Categorie Betrokkenen
+
+|Lengte en gewicht
+|Medische screening, dosering contrast bij sommige scans
+|Toestemming, vitaal belang
+|15 jaar na laatste scan (conform WGBO)
+|Kliniek medewerkers, radiologen
+|Patiënten
+
+|Metalen in lichaam (implantaten, pacemaker, etc.)
+|Veiligheid MRI scans, contra-indicatie bepaling
+|Toestemming, vitaal belang
+|15 jaar na laatste scan (conform WGBO)
+|Kliniek medewerkers, radiologen
+|Patiënten
+
+|Medicijngebruik
+|Contra-indicatie bepaling, interactie met contrast
+|Toestemming, vitaal belang
+|15 jaar na laatste scan (conform WGBO)
+|Kliniek medewerkers, radiologen
+|Patiënten
+
+|Glaucoom (oogdruk)
+|Contra-indicatie bepaling voor bepaalde scans
+|Toestemming, vitaal belang
+|15 jaar na laatste scan (conform WGBO)
+|Kliniek medewerkers, radiologen
+|Patiënten
+
+|Claustrofobie
+|Planning sedatie (dormicum), patiëntcomfort
+|Toestemming, vitaal belang
+|15 jaar na laatste scan (conform WGBO)
+|Kliniek medewerkers, radiologen
+|Patiënten
+
+|Hartoperaties en hartproblemen
+|Contra-indicatie bepaling, risico-inschatting
+|Toestemming, vitaal belang
+|15 jaar na laatste scan (conform WGBO)
+|Kliniek medewerkers, radiologen
+|Patiënten
+
+|Eerdere operaties
+|Medische context, risico-inschatting
+|Toestemming, vitaal belang
+|15 jaar na laatste scan (conform WGBO)
+|Kliniek medewerkers, radiologen
+|Patiënten
+
+|Erfelijke aandoeningen (hart, vaatziekten, tumoren)
+|Risico-inschatting, medische context
+|Toestemming, vitaal belang
+|15 jaar na laatste scan (conform WGBO)
+|Kliniek medewerkers, radiologen
+|Patiënten
+
+|Allergieën
+|Veiligheid contrast toediening, medicatie
+|Toestemming, vitaal belang
+|15 jaar na laatste scan (conform WGBO)
+|Kliniek medewerkers, radiologen
+|Patiënten
+
+|Rugklachten
+|Planning scan, patiënt positionering
+|Toestemming, vitaal belang
+|15 jaar na laatste scan (conform WGBO)
+|Kliniek medewerkers, radiologen
+|Patiënten
+
+|Rookgedrag
+|Risico-inschatting hart- en vaatziekten
+|Toestemming, vitaal belang
+|15 jaar na laatste scan (conform WGBO)
+|Kliniek medewerkers, radiologen
+|Patiënten
+
+|Diabetes
+|Contra-indicatie bepaling, risico-inschatting
+|Toestemming, vitaal belang
+|15 jaar na laatste scan (conform WGBO)
+|Kliniek medewerkers, radiologen
+|Patiënten
+
+|Spijsverteringsklachten
+|Medische context, planning scans
+|Toestemming, vitaal belang
+|15 jaar na laatste scan (conform WGBO)
+|Kliniek medewerkers, radiologen
+|Patiënten
+
+|Hartinfarct risico inschatting
+|Medische advisering, urgentie bepaling
+|Toestemming, vitaal belang
+|15 jaar na laatste scan (conform WGBO)
+|Kliniek medewerkers, radiologen
+|Patiënten
+
+|Opmerkingen kliniek en adviesnotities
+|Medische dossiervorming, continuïteit van zorg
+|Toestemming, vitaal belang
+|15 jaar na laatste scan (conform WGBO)
+|Kliniek medewerkers, radiologen
+|Patiënten
+|===
+
+===== 3. Contact Personen (Externe Contacten)
+
+[cols="2,3,2,2,1,2", options="header"]
+|===
+|Gegeven
+|Doel
+|Rechtsgrond
+|Bewaartermijn
+|Toegang
+|Categorie Betrokkenen
+
+|Naam (voornaam, achternaam, voorvoegsels, initialen)
+|Identificatie externe contactpersonen bij organisaties
+|Gerechtvaardigd belang (zakelijke communicatie)
+|Tot 2 jaar na beëindiging relatie
+|Verkoopmedewerkers, backoffice medewerkers
+|Zakelijke contactpersonen, verwijzers
+
+|E-mailadres(sen)
+|Zakelijke communicatie
+|Gerechtvaardigd belang (zakelijke communicatie)
+|Tot 2 jaar na beëindiging relatie
+|Verkoopmedewerkers, backoffice medewerkers
+|Zakelijke contactpersonen, verwijzers
+
+|Telefoonnummer(s)
+|Zakelijke communicatie
+|Gerechtvaardigd belang (zakelijke communicatie)
+|Tot 2 jaar na beëindiging relatie
+|Verkoopmedewerkers, backoffice medewerkers
+|Zakelijke contactpersonen, verwijzers
+
+|Functietitel
+|Context zakelijke relatie
+|Gerechtvaardigd belang (zakelijke communicatie)
+|Tot 2 jaar na beëindiging relatie
+|Verkoopmedewerkers, backoffice medewerkers
+|Zakelijke contactpersonen, verwijzers
+
+|Organisatie koppeling
+|Context zakelijke relatie
+|Gerechtvaardigd belang (zakelijke communicatie)
+|Tot 2 jaar na beëindiging relatie
+|Verkoopmedewerkers, backoffice medewerkers
+|Zakelijke contactpersonen, verwijzers
+|===
+
+===== 4. Orders en Facturatie
+
+[cols="2,3,2,2,1,2", options="header"]
+|===
+|Gegeven
+|Doel
+|Rechtsgrond
+|Bewaartermijn
+|Toegang
+|Categorie Betrokkenen
+
+|Naam klant
+|Facturatie, orderverwerking
+|Uitvoering overeenkomst
+|7 jaar (fiscale bewaarplicht)
+|Backoffice medewerkers, financiële administratie
+|Klanten, patiënten
+
+|Factuuradres en verzendadres
+|Facturatie, verzending documenten en producten
+|Uitvoering overeenkomst
+|7 jaar (fiscale bewaarplicht)
+|Backoffice medewerkers, financiële administratie
+|Klanten, patiënten
+
+|Order details (producten, prijzen)
+|Facturatie, orderverwerking, financiële administratie
+|Uitvoering overeenkomst
+|7 jaar (fiscale bewaarplicht)
+|Backoffice medewerkers, financiële administratie
+|Klanten, patiënten
+
+|Betaalgegevens (bedragen, kortingen, BTW)
+|Facturatie, financiële administratie
+|Wettelijke verplichting (fiscaal)
+|7 jaar (fiscale bewaarplicht)
+|Backoffice medewerkers, financiële administratie
+|Klanten, patiënten
+|===
+
+===== 5. Activiteiten en Communicatie
+
+[cols="2,3,2,2,1,2", options="header"]
+|===
+|Gegeven
+|Doel
+|Rechtsgrond
+|Bewaartermijn
+|Toegang
+|Categorie Betrokkenen
+
+|Afspraak details (type, locatie, datum/tijd)
+|Planning, afspraakbevestiging, procesoptimalisatie
+|Uitvoering overeenkomst
+|2 jaar na afspraak
+|Verkoopmedewerkers, backoffice medewerkers, planning
+|Prospects, klanten, patiënten
+
+|Gespreksnotities en opmerkingen
+|Klanthistorie, kwaliteit dienstverlening
+|Gerechtvaardigd belang (klantrelatie beheer)
+|2 jaar na laatste contact
+|Verkoopmedewerkers, backoffice medewerkers
+|Prospects, klanten, patiënten
+
+|Call status (bereikbaarheid, voicemail, gesproken)
+|Procesoptimalisatie, follow-up beheer
+|Gerechtvaardigd belang (klantrelatie beheer)
+|2 jaar na laatste contact
+|Verkoopmedewerkers, backoffice medewerkers
+|Prospects, klanten
+
+|Toegewezen gebruiker/groep
+|Werkverdelings beheer, verantwoordelijkheid
+|Gerechtvaardigd belang (bedrijfsvoering)
+|2 jaar na laatste contact
+|Verkoopmedewerkers, backoffice medewerkers, management
+|Prospects, klanten, patiënten
+|===
+
+===== 6. E-mail Communicatie
+
+[cols="2,3,2,2,1,2", options="header"]
+|===
+|Gegeven
+|Doel
+|Rechtsgrond
+|Bewaartermijn
+|Toegang
+|Categorie Betrokkenen
+
+|E-mail onderwerp en inhoud
+|Communicatie, klanthistorie, dienstverlening
+|Uitvoering overeenkomst / Gerechtvaardigd belang
+|2 jaar na laatste contact (commercieel) / 15 jaar (medisch gerelateerd)
+|Verkoopmedewerkers, backoffice medewerkers, kliniek medewerkers
+|Prospects, klanten, patiënten
+
+|Afzender en ontvangers (from, to, cc, bcc)
+|Communicatie routing, klanthistorie
+|Uitvoering overeenkomst / Gerechtvaardigd belang
+|2 jaar na laatste contact (commercieel) / 15 jaar (medisch gerelateerd)
+|Verkoopmedewerkers, backoffice medewerkers, kliniek medewerkers
+|Prospects, klanten, patiënten
+
+|Bijlagen
+|Offerte-uitwisseling, medische formulieren, informatieverstrekking
+|Uitvoering overeenkomst / Toestemming
+|2 jaar na laatste contact (commercieel) / 15 jaar (medisch gerelateerd)
+|Verkoopmedewerkers, backoffice medewerkers, kliniek medewerkers
+|Prospects, klanten, patiënten
+
+|Metadata (timestamp, message ID)
+|E-mail thread beheer, technische routing
+|Gerechtvaardigd belang (systeemfunctionaliteit)
+|2 jaar na laatste contact
+|Verkoopmedewerkers, backoffice medewerkers, IT
+|Prospects, klanten, patiënten
+|===
+
+===== 7. Gebruikers (Medewerkers)
+
+[cols="2,3,2,2,1,2", options="header"]
+|===
+|Gegeven
+|Doel
+|Rechtsgrond
+|Bewaartermijn
+|Toegang
+|Categorie Betrokkenen
+
+|Naam en e-mailadres
+|Authenticatie, communicatie, audit trail
+|Uitvoering arbeidsovereenkomst
+|Duur dienstverband + 2 jaar
+|Alle medewerkers (eigen gegevens), HR, management
+|Medewerkers
+
+|Wachtwoord (gehashed)
+|Authenticatie, beveiliging
+|Uitvoering arbeidsovereenkomst
+|Duur dienstverband + 2 jaar
+|IT afdeling (alleen voor reset), medewerker zelf
+|Medewerkers
+
+|Rol en permissies
+|Autorisatie, toegangsbeheer
+|Uitvoering arbeidsovereenkomst / Wettelijke verplichting (beveiliging)
+|Duur dienstverband + 2 jaar
+|HR, management, IT
+|Medewerkers
+
+|Groep en afdeling
+|Werkorganisatie, routering
+|Uitvoering arbeidsovereenkomst
+|Duur dienstverband + 2 jaar
+|HR, management
+|Medewerkers
+
+|Standaardwaarden (voorkeuren)
+|Gebruikerservaring, efficiëntie
+|Gerechtvaardigd belang (bedrijfsvoering)
+|Duur dienstverband + 2 jaar
+|Medewerker zelf, IT (voor support)
+|Medewerkers
+|===
+
+===== 8. Audit Trail
+
+[cols="2,3,2,2,1,2", options="header"]
+|===
+|Gegeven
+|Doel
+|Rechtsgrond
+|Bewaartermijn
+|Toegang
+|Categorie Betrokkenen
+
+|created_by, updated_by (gebruiker ID's)
+|Traceerbaarheid wijzigingen, beveiliging, compliance
+|Wettelijke verplichting (WGBO voor medische data), gerechtvaardigd belang (beveiliging)
+|15 jaar (medische data) / 7 jaar (overige data)
+|IT, compliance officer, management (beperkt)
+|Medewerkers, indirect: alle betrokkenen
+
+|created_at, updated_at (timestamps)
+|Traceerbaarheid wijzigingen, beveiliging, compliance
+|Wettelijke verplichting (WGBO voor medische data), gerechtvaardigd belang (beveiliging)
+|15 jaar (medische data) / 7 jaar (overige data)
+|IT, compliance officer, management (beperkt)
+|Medewerkers, indirect: alle betrokkenen
+|===
+
+==== Ontvangers van Gegevens
+
+===== Interne Ontvangers
+* Verkoopmedewerkers (leads, activiteiten, communicatie)
+* Backoffice medewerkers (orders, planning, workflow)
+* Kliniek medewerkers (anamnese, planning scans)
+* Radiologen (anamnese, medische context)
+* Financiële administratie (orders, facturatie)
+* Management (rapportages, statistieken - geanonimiseerd waar mogelijk)
+* IT afdeling (onderhoud, beveiliging, support)
+* HR afdeling (medewerkergegevens)
+
+===== Externe Ontvangers (Verwerkers)
+* Hosting provider (opslag data)
+* E-mail service provider
+* Back-up service provider
+* Eventuele externe IT-dienstverleners (onder verwerkersovereenkomst)
+
+==== Doorgifte Buiten EU
+
+Er vindt geen structurele doorgifte van persoonsgegevens plaats buiten de Europese Economische Ruimte (EER).
+
+Indien gebruik wordt gemaakt van diensten van leveranciers buiten de EER (bijvoorbeeld cloud services), worden hiervoor passende waarborgen getroffen conform AVG artikel 46, zoals:
+* EU Model Clauses (Standard Contractual Clauses)
+* Adequaatheidsbesluit van de Europese Commissie
+* Binding Corporate Rules
+
+==== Beveiliging
+
+De volgende technische en organisatorische maatregelen zijn getroffen:
+
+===== Technische Maatregelen
+* Toegangscontrole via authenticatie (e-mail en wachtwoord)
+* Autorisatie via rol-gebaseerd toegangssysteem
+* Wachtwoorden worden gehashed opgeslagen (bcrypt)
+* HTTPS encryptie voor data-transport
+* Database encryptie at-rest (waar van toepassing)
+* Regelmatige backups met encryptie
+* Audit trail voor alle wijzigingen (created_by, updated_by, timestamps)
+* Firewalls en netwerkbeveiliging
+
+===== Organisatorische Maatregelen
+* Toegang op basis van need-to-know principe
+* Verwerkersovereenkomsten met externe partijen
+* Privacy beleid en gebruikersvoorwaarden
+* Bewustwordingstraining medewerkers
+* Incident response procedure
+* Regelmatige beveiligingsaudits
+
+==== Rechten van Betrokkenen
+
+Betrokkenen hebben de volgende rechten onder de AVG:
+
+1. **Recht van inzage** (artikel 15 AVG): Inzage in welke persoonsgegevens worden verwerkt
+2. **Recht op rectificatie** (artikel 16 AVG): Correctie van onjuiste of onvolledige gegevens
+3. **Recht op verwijdering** ('recht op vergetelheid', artikel 17 AVG): Verwijdering van gegevens onder bepaalde voorwaarden
+4. **Recht op beperking** (artikel 18 AVG): Beperking van verwerking onder bepaalde voorwaarden
+5. **Recht op dataportabiliteit** (artikel 20 AVG): Overdracht van gegevens naar andere dienstverlener
+6. **Recht van bezwaar** (artikel 21 AVG): Bezwaar maken tegen verwerking op basis van gerechtvaardigd belang
+7. **Recht om niet onderworpen te zijn aan geautomatiseerde besluitvorming** (artikel 22 AVG)
+
+===== Uitoefening Rechten
+Betrokkenen kunnen hun rechten uitoefenen door contact op te nemen met:
+* E-mail: [privacy@privatescan.nl of relevante contactpersoon]
+* Reactie binnen 1 maand (verlengbaar met 2 maanden bij complexe verzoeken)
+
+===== Beperkingen
+Sommige rechten kunnen worden beperkt op basis van:
+* Wettelijke bewaarplichten (bijvoorbeeld fiscale bewaarplicht van 7 jaar)
+* WGBO bewaarplicht voor medische gegevens (15 jaar)
+* Gerechtvaardigd belang voor klachtafhandeling en juridische procedures
+
+==== Data Protection Impact Assessment (DPIA)
+
+Voor de verwerking van medische gegevens (anamnese) is een DPIA uitgevoerd, gezien:
+* De aard van de gegevens (bijzondere persoonsgegevens - gezondheidsgegevens)
+* Het risico voor de rechten en vrijheden van betrokkenen
+
+De DPIA concludeert dat met de getroffen beveiligingsmaatregelen en de beperkte toegang tot medische gegevens (alleen kliniek medewerkers en radiologen), het risico acceptabel is.
+
+==== Functionaris Gegevensbescherming (FG)
+
+[Vul hier in of er een FG is aangesteld en contactgegevens]
+
+Als er geen FG verplicht is: Verantwoordelijke voor privacy: [naam + contactgegevens]
+
+==== Meldplicht Datalekken
+
+Bij een datalek (artikel 33 AVG):
+* Melding aan Autoriteit Persoonsgegevens binnen 72 uur indien risico voor betrokkenen
+* Melding aan betrokkenen indien hoog risico voor hun rechten en vrijheden
+* Documentatie van alle datalekken (ook indien niet gemeld)
+
+==== Verwerkingsverantwoordelijke
+
+**Privatescan B.V.**
+[Vul aan met adres, KvK-nummer, contactgegevens]
+
+==== Privacy Verklaring
+
+Dit verwerkingsregister wordt aangevuld met een publieke privacy verklaring voor betrokkenen, waarin de verwerking in begrijpelijke taal wordt uitgelegd.
+
+==== Wijzigingen
+
+Dit document wordt periodiek herzien (minimaal jaarlijks) en geactualiseerd bij wijzigingen in de verwerking van persoonsgegevens.
+
+**Laatste update:** [datum]
+**Versie:** 1.0
+**Volgende review:** [datum + 1 jaar]

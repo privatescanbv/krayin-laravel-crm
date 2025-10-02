@@ -519,13 +519,8 @@ class LeadRepository extends Repository
         $twoWeeksAgo = $leadCreatedAt->copy()->subWeeks(2);
         $twoWeeksLater = $leadCreatedAt->copy()->addWeeks(2);
 
-        // Load stage relationships for all duplicates
-        if ($duplicates->isNotEmpty()) {
-            $duplicates = Lead::whereIn('id', $duplicates->pluck('id'))->with('stage')->get();
-        }
-
         $filteredDuplicates = collect();
-        
+
         foreach ($duplicates as $duplicate) {
             // Filter out leads in 'Won' status
             if ($duplicate->stage && $duplicate->stage->code === 'won') {
@@ -538,7 +533,7 @@ class LeadRepository extends Repository
                 $filteredDuplicates->push($duplicate);
             }
         }
-        
+
         return $filteredDuplicates;
     }
 

@@ -20,8 +20,12 @@ beforeEach(function () {
 
 // Helper function to create leads with proper stage
 function createLeadWithStage($data = []) {
-    $stage = \Webkul\Lead\Models\Stage::first();
-    return Lead::factory()->create(array_merge($data, ['lead_pipeline_stage_id' => $stage->id]));
+    // Only set default stage if not already provided
+    if (!isset($data['lead_pipeline_stage_id'])) {
+        $stage = \Webkul\Lead\Models\Stage::first();
+        $data['lead_pipeline_stage_id'] = $stage->id;
+    }
+    return Lead::factory()->create($data);
 }
 
 test('it detects duplicate leads by email', function () {

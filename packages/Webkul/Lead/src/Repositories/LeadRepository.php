@@ -477,7 +477,7 @@ class LeadRepository extends Repository
             ->where(function ($query) use ($field, $values) {
                 foreach ($values as $value) {
                     // Search for the value in the JSON array using JSON_SEARCH
-                    $query->orWhereRaw("JSON_SEARCH(?, 'one', ?) IS NOT NULL", [$field, $value]);
+                    $query->orWhereRaw("JSON_SEARCH(?, 'one', ?) IS NOT NULL", [$field, "'" . $value . "'"]);
                 }
             })
             ->get();
@@ -525,12 +525,9 @@ class LeadRepository extends Repository
                 return false;
             }
 
-            // Temporarily disable time filtering to test
-            return true;
-            
             // Filter out leads created more than 2 weeks apart
-            // $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
-            // return $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
+            $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
+            return $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
         });
     }
 

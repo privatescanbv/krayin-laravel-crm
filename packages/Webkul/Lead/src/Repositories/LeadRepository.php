@@ -449,6 +449,52 @@ class LeadRepository extends Repository
     }
 
     /**
+     * Find duplicates by JSON field (emails or phones).
+     *
+     * @param Lead $lead The lead to check duplicates for
+     * @param string $field The JSON field to check (emails or phones)
+     * @return Collection Collection of duplicate leads
+     */
+    private function findDuplicatesByJsonField($lead, string $field): Collection
+    {
+        $fieldData = $lead->$field;
+        if (empty($fieldData) || !is_array($fieldData)) {
+            return collect();
+        }
+
+        $values = collect($fieldData)->pluck('value')->filter()->toArray();
+        if (empty($values)) {
+            return collect();
+        }
+
+        return Lead::where('id', '!=', $lead->id)
+            ->where(function ($query) use ($field, $values) {
+                foreach ($values as $value) {
+                    $query->orWhereJsonContains($field, ['value' => $value]);
+                }
+            })
+            ->get();
+    }
+
+    /**
+     * Find duplicates by name similarity.
+     *
+     * @param Lead $lead The lead to check duplicates for
+     * @return Collection Collection of duplicate leads
+     */
+    private function findDuplicatesByName($lead): Collection
+    {
+        if (empty($lead->first_name) || empty($lead->last_name)) {
+            return collect();
+        }
+
+        return Lead::where('id', '!=', $lead->id)
+            ->where('first_name', $lead->first_name)
+            ->where('last_name', $lead->last_name)
+            ->get();
+    }
+
+    /**
      * Apply time and status filters to potential duplicates.
      *
      * @param Lead $lead The lead to check duplicates for
@@ -460,6 +506,9 @@ class LeadRepository extends Repository
         $leadCreatedAt = Carbon::parse($lead->created_at);
         $twoWeeksAgo = $leadCreatedAt->copy()->subWeeks(2);
         $twoWeeksLater = $leadCreatedAt->copy()->addWeeks(2);
+
+        // Load stage relationships for all duplicates
+        $duplicates->load('stage');
 
         return $duplicates->filter(function ($duplicate) use ($twoWeeksAgo, $twoWeeksLater) {
             // Filter out leads in 'Won' status

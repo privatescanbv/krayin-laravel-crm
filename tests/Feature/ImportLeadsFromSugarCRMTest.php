@@ -59,6 +59,7 @@ beforeEach(function () {
         $table->string('lead_source')->nullable();
         $table->string('salutation')->nullable();
         $table->date('birthdate')->nullable();
+        $table->string('assigned_user_id')->nullable(); // Add assigned_user_id column
     });
 
     Schema::connection('sugarcrm')->create('leads_cstm', function (Blueprint $table) {

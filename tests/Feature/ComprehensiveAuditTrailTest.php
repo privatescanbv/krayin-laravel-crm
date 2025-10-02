@@ -341,12 +341,15 @@ test('anamnesis_audit_trail', function () {
         'updated_by'             => $this->user1->id,
     ]);
 
+    // Create a person for the anamnesis
+    $person = Person::factory()->create(['user_id' => $this->user1->id]);
+
     // Act - Create anamnesis
     $anamnesis = Anamnesis::factory()->create([
         'id'        => Str::uuid(),
         'lead_id'   => $lead->id,
         'name'      => 'Test Anamnesis',
-        'person_id' => Person::factory()->create()->id,
+        'person_id' => $person->id,
         'height'    => 180,
         'weight'    => 75,
         'metals'    => true,
@@ -393,5 +396,5 @@ test('anamnesis_audit_trail', function () {
     expect($anamnesis->lead)->toBeInstanceOf(Lead::class)
         ->and($anamnesis->lead->id)->toBe($lead->id)
         ->and($anamnesis->person)->toBeInstanceOf(Person::class)
-        ->and($anamnesis->person->id)->toBe($this->user1->id);
+        ->and($anamnesis->person->id)->toBe($person->id);
 });

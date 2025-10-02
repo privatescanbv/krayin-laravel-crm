@@ -10,7 +10,9 @@ use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 
 test('it can create anamnesis with lead and retrieve relation', function () {
-    $lead = Lead::factory()->create();
+    $this->seed(TestSeeder::class);
+    $stage = \Webkul\Lead\Models\Stage::first();
+    $lead = Lead::factory()->create(['lead_pipeline_stage_id' => $stage->id]);
     $anamnesis = Anamnesis::factory()->create(['lead_id' => $lead->id]);
 
     $this->assertDatabaseHas('anamnesis', [
@@ -24,7 +26,9 @@ test('it can create anamnesis with lead and retrieve relation', function () {
 });
 
 test('anamnesis model uses english field names', function () {
-    $lead = Lead::factory()->create();
+    $this->seed(TestSeeder::class);
+    $stage = \Webkul\Lead\Models\Stage::first();
+    $lead = Lead::factory()->create(['lead_pipeline_stage_id' => $stage->id]);
     $anamnesis = Anamnesis::factory()->create([
         'lead_id'           => $lead->id,
         'height'            => 180,
@@ -52,7 +56,8 @@ test('it prevents duplicate anamnesis creation when attaching same person multip
     $this->seed(TestSeeder::class);
     $this->artisan('db:seed', ['--class' => LeadChannelSeeder::class]);
 
-    $lead = Lead::factory()->create();
+    $stage = \Webkul\Lead\Models\Stage::first();
+    $lead = Lead::factory()->create(['lead_pipeline_stage_id' => $stage->id]);
     $person = Person::factory()->create();
 
     // Attach the same person multiple times (simulating concurrent requests)
@@ -69,7 +74,9 @@ test('it prevents duplicate anamnesis creation when attaching same person multip
 });
 
 test('database constraint prevents duplicate anamnesis insertion', function () {
-    $lead = Lead::factory()->create();
+    $this->seed(TestSeeder::class);
+    $stage = \Webkul\Lead\Models\Stage::first();
+    $lead = Lead::factory()->create(['lead_pipeline_stage_id' => $stage->id]);
     $person = Person::factory()->create();
 
     // Create first anamnesis
@@ -110,8 +117,12 @@ test('it allows multiple anamnesis for different lead-person combinations', func
     $lead2->attachPersons([$person1->id]);
     $lead2->attachPersons([$person2->id]);
 
-    // Four different anamnesis should exist
-    expect(Anamnesis::count())->toBe(4)
+    // Check specific anamnesis counts for these leads only
+    $lead1AnamnesisCount = Anamnesis::where('lead_id', $lead1->id)->count();
+    $lead2AnamnesisCount = Anamnesis::where('lead_id', $lead2->id)->count();
+    $totalAnamnesisForTheseLeads = $lead1AnamnesisCount + $lead2AnamnesisCount;
+
+    expect($totalAnamnesisForTheseLeads)->toBe(4)
         ->and(Anamnesis::where('lead_id', $lead1->id)->where('person_id', $person1->id)->count())->toBe(1)
         ->and(Anamnesis::where('lead_id', $lead1->id)->where('person_id', $person2->id)->count())->toBe(1)
         ->and(Anamnesis::where('lead_id', $lead2->id)->where('person_id', $person1->id)->count())->toBe(1)

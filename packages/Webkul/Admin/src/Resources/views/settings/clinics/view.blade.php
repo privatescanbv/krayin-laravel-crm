@@ -1,7 +1,7 @@
 <x-admin::layouts>
     <x-slot:title>
         {{ $clinic->name }}
-    </x-slot>
+    </x-slot:title>
 
     <!-- Content -->
     <div class="flex gap-4 max-lg:flex-wrap">

@@ -519,6 +519,11 @@ class LeadRepository extends Repository
         $twoWeeksAgo = $leadCreatedAt->copy()->subWeeks(2);
         $twoWeeksLater = $leadCreatedAt->copy()->addWeeks(2);
 
+        // Load stage relationships for all duplicates
+        if ($duplicates->isNotEmpty()) {
+            $duplicates = Lead::whereIn('id', $duplicates->pluck('id'))->with('stage')->get();
+        }
+
         return $duplicates->filter(function ($duplicate) use ($twoWeeksAgo, $twoWeeksLater) {
             // Filter out leads in 'Won' status
             if ($duplicate->stage && $duplicate->stage->code === 'won') {
@@ -527,8 +532,7 @@ class LeadRepository extends Repository
 
             // Filter out leads created more than 2 weeks apart
             $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
-
-          return $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
+            return $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
         });
     }
 

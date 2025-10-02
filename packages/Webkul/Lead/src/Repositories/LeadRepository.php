@@ -551,16 +551,51 @@ class LeadRepository extends Repository
         // Load stage relationships for all duplicates
         $duplicates->load('stage');
 
-        return $duplicates->filter(function ($duplicate) use ($twoWeeksAgo, $twoWeeksLater) {
+        $debugInfo = [
+            'lead_id' => $lead->id,
+            'lead_created_at' => $lead->created_at,
+            'two_weeks_ago' => $twoWeeksAgo->toDateTimeString(),
+            'two_weeks_later' => $twoWeeksLater->toDateTimeString(),
+            'duplicates_before_filter' => $duplicates->count(),
+            'duplicate_details' => []
+        ];
+
+        $filteredDuplicates = $duplicates->filter(function ($duplicate) use ($twoWeeksAgo, $twoWeeksLater, &$debugInfo) {
+            $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
+            
+            $duplicateInfo = [
+                'id' => $duplicate->id,
+                'created_at' => $duplicate->created_at,
+                'stage_code' => $duplicate->stage ? $duplicate->stage->code : 'no_stage',
+                'is_won' => $duplicate->stage && $duplicate->stage->code === 'won',
+                'is_in_time_range' => $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater),
+                'filtered_out' => false
+            ];
+
             // Filter out leads in 'Won' status
             if ($duplicate->stage && $duplicate->stage->code === 'won') {
+                $duplicateInfo['filtered_out'] = true;
+                $duplicateInfo['filter_reason'] = 'won_status';
+                $debugInfo['duplicate_details'][] = $duplicateInfo;
                 return false;
             }
 
             // Filter out leads created more than 2 weeks apart
-            $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
-            return $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
+            if (!$duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater)) {
+                $duplicateInfo['filtered_out'] = true;
+                $duplicateInfo['filter_reason'] = 'time_range';
+                $debugInfo['duplicate_details'][] = $duplicateInfo;
+                return false;
+            }
+
+            $debugInfo['duplicate_details'][] = $duplicateInfo;
+            return true;
         });
+
+        $debugInfo['duplicates_after_filter'] = $filteredDuplicates->count();
+        \Log::info('LeadDuplicateFilters Debug', $debugInfo);
+
+        return $filteredDuplicates;
     }
 
     /**

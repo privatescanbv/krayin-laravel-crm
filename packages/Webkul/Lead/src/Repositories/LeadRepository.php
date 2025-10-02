@@ -543,7 +543,9 @@ class LeadRepository extends Repository
         $twoWeeksLater = $leadCreatedAt->copy()->addWeeks(2);
 
         // Load stage relationships for all duplicates
-        $duplicates->load('stage');
+        if ($duplicates->isNotEmpty()) {
+            $duplicates = Lead::whereIn('id', $duplicates->pluck('id'))->with('stage')->get();
+        }
 
         return $duplicates->filter(function ($duplicate) use ($twoWeeksAgo, $twoWeeksLater) {
             // Filter out leads in 'Won' status

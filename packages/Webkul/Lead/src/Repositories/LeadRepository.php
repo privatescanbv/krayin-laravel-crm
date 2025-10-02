@@ -524,16 +524,22 @@ class LeadRepository extends Repository
             $duplicates = Lead::whereIn('id', $duplicates->pluck('id'))->with('stage')->get();
         }
 
-        return $duplicates->filter(function ($duplicate) use ($twoWeeksAgo, $twoWeeksLater) {
+        $filteredDuplicates = collect();
+        
+        foreach ($duplicates as $duplicate) {
             // Filter out leads in 'Won' status
             if ($duplicate->stage && $duplicate->stage->code === 'won') {
-                return false;
+                continue;
             }
 
             // Filter out leads created more than 2 weeks apart
             $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
-            return $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
-        });
+            if ($duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater)) {
+                $filteredDuplicates->push($duplicate);
+            }
+        }
+        
+        return $filteredDuplicates;
     }
 
     /**

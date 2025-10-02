@@ -473,14 +473,19 @@ class LeadRepository extends Repository
         }
 
         // Use LIKE operator to search for values in JSON field
-        $results = $this->model->where('id', '!=', $lead->id)
-            ->where(function ($query) use ($field, $values) {
-                foreach ($values as $value) {
-                    // Search for the value in the JSON array using LIKE
-                    $query->orWhere($field, 'LIKE', '%"' . $value . '"%');
-                }
-            })
-            ->get();
+        try {
+            $results = $this->model->where('id', '!=', $lead->id)
+                ->where(function ($query) use ($field, $values) {
+                    foreach ($values as $value) {
+                        // Search for the value in the JSON array using LIKE
+                        $query->orWhere($field, 'LIKE', '%"' . $value . '"%');
+                    }
+                })
+                ->get();
+        } catch (\Exception $e) {
+            // Let it crash with clear error message
+            throw new \Exception("SQL Error in findDuplicatesByJsonField: " . $e->getMessage() . " | Field: {$field} | Values: " . json_encode($values));
+        }
 
         return $results;
     }

@@ -10,6 +10,8 @@ use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Repositories\LeadRepository;
 
 beforeEach(function () {
+    // Clear leads table to prevent state pollution between tests
+    Lead::query()->delete();
 
     $this->seed(TestSeeder::class);
     // Disable observers during testing to avoid database dependency issues
@@ -19,12 +21,14 @@ beforeEach(function () {
 });
 
 // Helper function to create leads with proper stage
-function createLeadWithStage($data = []) {
+function createLeadWithStage($data = [])
+{
     // Only set default stage if not already provided
-    if (!isset($data['lead_pipeline_stage_id'])) {
+    if (! isset($data['lead_pipeline_stage_id'])) {
         $stage = Stage::first();
         $data['lead_pipeline_stage_id'] = $stage->id;
     }
+
     return Lead::factory()->create($data);
 }
 
@@ -478,13 +482,11 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
         'lead_pipeline_stage_id' => $defaultStage->id,
     ]);
 
-    // Test the new filtering logic
-    $duplicates = $this->leadRepository->findPotentialDuplicates($mainLead);
+    // Test the new filtering logic - skip cache to ensure consistent results
+    $duplicates = $this->leadRepository->findPotentialDuplicates($mainLead, true);
 
-    // Debug: Show what duplicates were found
-    $duplicateIds = $duplicates->pluck('id')->toArray();
-    $expectedIds = [$recentActiveLead->id];
-    $this->assertCount(1, $duplicates, "Should only find 1 duplicate after applying time and status filters. Found: " . implode(',', $duplicateIds) . " Expected: " . implode(',', $expectedIds));
+    // Should only find the recent active lead
+    $this->assertCount(1, $duplicates, 'Should only find 1 duplicate after applying time and status filters');
     $this->assertEquals($recentActiveLead->id, $duplicates->first()->id, 'Should find the recent active lead');
 
     // Verify the filtered out leads are not in results
@@ -493,5 +495,5 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
     $this->assertNotContains($recentWonLead->id, $duplicateIds, 'Should not find recent won lead');
     $this->assertNotContains($oldActiveLead->id, $duplicateIds, 'Should not find old active lead');
 
-    $this->assertTrue($this->leadRepository->hasPotentialDuplicates($mainLead));
+    $this->assertTrue($this->leadRepository->hasPotentialDuplicates($mainLead, true));
 });

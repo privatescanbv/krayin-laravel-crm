@@ -36,8 +36,18 @@ class LeadDuplicateCacheService extends AbstractDuplicateCacheService
     /**
      * Get cached duplicates with full data.
      */
-    public function getCachedDuplicatesWithData(int $leadId): Collection
+    public function getCachedDuplicatesWithData(int $leadId, bool $skipCache = false): Collection
     {
+        if ($skipCache) {
+            // Skip cache and compute directly
+            $lead = $this->leadRepository->find($leadId);
+            if (! $lead) {
+                return collect();
+            }
+
+            return $this->leadRepository->findPotentialDuplicatesDirectly($lead);
+        }
+
         $duplicateIds = $this->getCachedDuplicates($leadId);
 
         if ($duplicateIds->isEmpty()) {

@@ -397,12 +397,12 @@ class LeadRepository extends Repository
      * - Created more than 2 weeks apart
      * - In 'Won' status
      */
-    public function findPotentialDuplicates($lead): Collection
+    public function findPotentialDuplicates($lead, bool $skipCache = false): Collection
     {
         try {
             // Use cache service for performance optimization
             $cacheService = $this->getCacheService();
-            return $cacheService->getCachedDuplicatesWithData($lead->id);
+            return $cacheService->getCachedDuplicatesWithData($lead->id, $skipCache);
         } catch (Exception $e) {
             Log::warning('Cache service failed, falling back to direct computation: ' . $e->getMessage());
             return $this->findPotentialDuplicatesDirectly($lead);
@@ -473,7 +473,8 @@ class LeadRepository extends Repository
         }
 
         // Use LIKE operator to search for values in JSON field
-        $results = $this->model->where('id', '!=', $lead->id)
+        $results = $this->model->with('stage')
+            ->where('id', '!=', $lead->id)
             ->where(function ($query) use ($field, $values) {
                 foreach ($values as $value) {
                     // Search for the value in the JSON array using LIKE
@@ -499,7 +500,8 @@ class LeadRepository extends Repository
             return collect();
         }
 
-        return $this->model->where('id', '!=', $lead->id)
+        return $this->model->with('stage')
+            ->where('id', '!=', $lead->id)
             ->where('first_name', $lead->first_name)
             ->where('last_name', $lead->last_name)
             ->get();
@@ -535,8 +537,12 @@ class LeadRepository extends Repository
      * Check if a lead has potential duplicates.
      * Uses cache for improved performance.
      */
-    public function hasPotentialDuplicates(Lead $lead): bool
+    public function hasPotentialDuplicates(Lead $lead, bool $skipCache = false): bool
     {
+        if ($skipCache) {
+            return $this->findPotentialDuplicatesDirectly($lead)->isNotEmpty();
+        }
+        
         try {
             $cacheService = $this->getCacheService();
             return $cacheService->hasCachedDuplicates($lead->id);

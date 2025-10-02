@@ -472,19 +472,44 @@ class LeadRepository extends Repository
             throw new \Exception('JSON duplicate detection is only supported on MySQL database');
         }
 
+        // Debug info
+        $debugInfo = [
+            'lead_id' => $lead->id,
+            'field' => $field,
+            'values' => $values,
+            'field_data' => $lead->$field,
+        ];
+
         // Use LIKE operator to search for values in JSON field
         try {
-            $results = $this->model->where('id', '!=', $lead->id)
-                ->where(function ($query) use ($field, $values) {
-                    foreach ($values as $value) {
-                        // Search for the value in the JSON array using LIKE
-                        $query->orWhere($field, 'LIKE', '%"' . $value . '"%');
-                    }
-                })
-                ->get();
+            $query = $this->model->where('id', '!=', $lead->id);
+            
+            $query->where(function ($subQuery) use ($field, $values) {
+                foreach ($values as $value) {
+                    // Search for the value in the JSON array using LIKE
+                    $subQuery->orWhere($field, 'LIKE', '%"' . $value . '"%');
+                }
+            });
+            
+            $sql = $query->toSql();
+            $bindings = $query->getBindings();
+            
+            $results = $query->get();
+            
+            // Debug output
+            $debugInfo['sql'] = $sql;
+            $debugInfo['bindings'] = $bindings;
+            $debugInfo['results_count'] = $results->count();
+            $debugInfo['result_ids'] = $results->pluck('id')->toArray();
+            
+            // Log debug info
+            \Log::info('LeadDuplicateDetection Debug', $debugInfo);
+            
         } catch (\Exception $e) {
             // Let it crash with clear error message
-            throw new \Exception("SQL Error in findDuplicatesByJsonField: " . $e->getMessage() . " | Field: {$field} | Values: " . json_encode($values));
+            $debugInfo['error'] = $e->getMessage();
+            \Log::error('LeadDuplicateDetection Error', $debugInfo);
+            throw new \Exception("SQL Error in findDuplicatesByJsonField: " . $e->getMessage() . " | Debug: " . json_encode($debugInfo));
         }
 
         return $results;

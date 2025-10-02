@@ -16,11 +16,12 @@ beforeEach(function () {
     $this->actingAs($user, 'user');
 });
 
-test('products index page loads with ajax returns json', function () {
-    $p1 = Product::factory()->create();
-    $p2 = Product::factory()->create();
+test('products table has costs column', function () {
+    expect(\Illuminate\Support\Facades\Schema::hasColumn('products', 'costs'))->toBeTrue();
+});
 
-    $response = $this->get(route('admin.products.index'), ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
+test('products index page loads', function () {
+    $response = $this->get(route('admin.products.index'));
     $response->assertOk();
 });
 

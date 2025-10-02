@@ -34,4 +34,64 @@ enum Currency: string
             ['code' => self::SEK->value, 'label' => 'Swedish Krona (SEK)'],
         ];
     }
+
+    /**
+     * Format amount with currency using NL style: comma decimals, dot thousands.
+     */
+    public static function formatMoney(?string $currencyCode, float $amount): string
+    {
+        $symbolMap = [
+            self::EUR->value => '€',
+            self::USD->value => '$',
+            self::GBP->value => '£',
+            self::CHF->value => 'CHF',
+            self::DKK->value => 'kr',
+            self::NOK->value => 'kr',
+            self::SEK->value => 'kr',
+        ];
+
+        $code = $currencyCode ?: self::default()->value;
+        $symbol = $symbolMap[$code] ?? $code;
+        $formatted = number_format($amount, 2, ',', '.');
+
+        if (in_array($code, [self::EUR->value, self::USD->value, self::GBP->value], true)) {
+            return $symbol.' '.$formatted;
+        }
+
+        if (isset($symbolMap[$code])) {
+            return $formatted.' '.$symbol;
+        }
+
+        return ($code ? $code.' ' : '').$formatted;
+    }
+
+    /**
+     * Normalize localized price strings to a dot-decimal string.
+     * Examples: "1.234,56" -> "1234.56", "45,00" -> "45.00".
+     */
+    public static function normalizePrice(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = (string) $value;
+        $value = preg_replace('/\s+/', '', $value ?? '');
+
+        if ($value === '') {
+            return null;
+        }
+
+        $hasComma = str_contains($value, ',');
+        $hasDot = str_contains($value, '.');
+
+        if ($hasComma && $hasDot) {
+            $value = str_replace('.', '', $value);
+            $value = str_replace(',', '.', $value);
+        } elseif ($hasComma && ! $hasDot) {
+            $value = str_replace(',', '.', $value);
+        }
+
+        return $value;
+    }
 }

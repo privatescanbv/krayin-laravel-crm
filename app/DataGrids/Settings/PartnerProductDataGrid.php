@@ -2,6 +2,7 @@
 
 namespace App\DataGrids\Settings;
 
+use App\Enums\Currency;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
@@ -45,12 +46,15 @@ class PartnerProductDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'currency',
+            'index'      => 'purchase_price',
             'type'       => 'string',
-            'label'      => trans('admin::app.settings.partner_products.index.datagrid.currency'),
+            'label'      => trans('admin::app.settings.partner_products.index.datagrid.purchase_price'),
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+            'closure'    => function ($row) {
+                return Currency::formatMoney($row->currency, (float) $row->sales_price);
+            },
         ]);
 
         $this->addColumn([
@@ -60,6 +64,9 @@ class PartnerProductDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+            'closure'    => function ($row) {
+                return Currency::formatMoney($row->currency, (float) $row->sales_price);
+            },
         ]);
 
         $this->addColumn([
@@ -102,4 +109,6 @@ class PartnerProductDataGrid extends DataGrid
             ]);
         }
     }
+
+    // Money formatting centralized in App\Enums\Currency::formatMoney
 }

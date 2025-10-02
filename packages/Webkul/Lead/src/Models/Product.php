@@ -16,11 +16,20 @@ class Product extends Model implements ProductContract
      * @var array
      */
     protected $fillable = [
-        'quantity',
+        'name',
+        'currency',
+        'description',
+        'product_group_id',
         'price',
-        'amount',
-        'product_id',
-        'lead_id',
+        'costs',           // ✓ TOEGEVOEGD
+        'resource_type_id',
+        'product_type_id',
+    ];
+
+    protected $casts = [
+        'currency'         => 'string',
+        'price'            => 'decimal:2',
+        'costs'            => 'decimal:2'
     ];
 
     /**

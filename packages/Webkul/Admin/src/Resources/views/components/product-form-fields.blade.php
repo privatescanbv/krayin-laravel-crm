@@ -95,7 +95,7 @@
             type="price"
             name="price"
             value="{{ old('price', $product && $product->price ? number_format($product->price, 2, ',', '') : '') }}"
-            rules="required|numeric|min:0"
+            rules="required"
             :label="trans('admin::app.products.create.price')"
             :placeholder="trans('admin::app.products.create.price')"
         />
@@ -103,6 +103,24 @@
         <x-admin::form.control-group.error control-name="price"/>
     </x-admin::form.control-group>
 </div>
+
+<!-- Active checkbox -->
+<x-admin::form.control-group>
+    <x-admin::form.control-group.label>
+        @lang('admin::app.settings.partner_products.index.create.active')
+    </x-admin::form.control-group.label>
+
+    <input type="hidden" name="active" value="0"/>
+    <x-admin::form.control-group.control
+        type="checkbox"
+        name="active"
+        value="1"
+        :label="trans('admin::app.settings.partner_products.index.create.active')"
+        :checked="old('active', $product->active ?? 1)"
+    />
+
+    <x-admin::form.control-group.error control-name="active"/>
+</x-admin::form.control-group>
 
 <!-- Grid met 2 kolommen voor types en groep -->
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -179,7 +197,7 @@
 <x-admin::attributes
     :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
         'entity_type' => 'products',
-        ['code', 'NOTIN', ['price', 'costs', 'product_type_id', 'resource_type_id', 'product_group_id']],
+        ['code', 'NOTIN', ['name', 'description', 'price', 'costs', 'product_type_id', 'resource_type_id', 'product_group_id']],
     ])"
     :entity="$product"
 />

@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Controllers\Products;
 
 use App\Enums\Currency;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -34,6 +35,16 @@ class ProductController extends Controller
     public function index(): View|JsonResponse
     {
         if (request()->ajax()) {
+            // Clear stale client-side sort (e.g., removed columns like total_in_stock)
+            if (request()->query->has('sort')) {
+                request()->query->remove('sort');
+            }
+
+            // Enforce a safe default sort
+            request()->merge(['sort' => [
+                ['field' => 'id', 'order' => 'desc']
+            ]]);
+
             return datagrid(ProductDataGrid::class)->process();
         }
 
@@ -62,7 +73,9 @@ class ProductController extends Controller
 
         Event::dispatch('product.create.before');
 
-        $data = $this->cleanProductData($request->all());
+        $payload = request()->all();
+        $payload['entity_type'] = 'products';
+        $data = $this->cleanProductData($payload);
         $product = $this->productRepository->create($data);
 
         Event::dispatch('product.create.after', $product);
@@ -105,7 +118,9 @@ class ProductController extends Controller
 
         Event::dispatch('product.update.before', $id);
 
-        $data = $this->cleanProductData($request->all());
+        $payload = request()->all();
+        $payload['entity_type'] = 'products';
+        $data = $this->cleanProductData($payload);
         $product = $this->productRepository->update($data, $id);
 
         Event::dispatch('product.update.after', $product);
@@ -160,7 +175,7 @@ class ProductController extends Controller
             return new JsonResponse([
                 'message' => trans('admin::app.products.index.delete-success'),
             ], 200);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return new JsonResponse([
                 'message' => trans('admin::app.products.index.delete-failed'),
             ], 400);
@@ -172,7 +187,8 @@ class ProductController extends Controller
      */
     public function massDestroy(MassDestroyRequest $massDestroyRequest): JsonResponse
     {
-        $indices = $massDestroyRequest->input('indices');
+        $validated = method_exists($massDestroyRequest, 'validated') ? $massDestroyRequest->validated() : [];
+        $indices = $validated['indices'] ?? (request()->input('indices') ?? []);
 
         foreach ($indices as $index) {
             Event::dispatch('product.delete.before', $index);
@@ -193,6 +209,9 @@ class ProductController extends Controller
     protected function validateStore(Request $request): void
     {
         $this->normalizePriceFields($request);
+        $request->merge([
+            'active' => (bool) $request->boolean('active', true),
+        ]);
         $request->validate($this->getValidationRules());
     }
 
@@ -202,6 +221,9 @@ class ProductController extends Controller
     protected function validateUpdate(Request $request, int $id): void
     {
         $this->normalizePriceFields($request);
+        $request->merge([
+            'active' => (bool) $request->boolean('active', true),
+        ]);
         $request->validate($this->getValidationRules($id));
     }
 
@@ -212,6 +234,7 @@ class ProductController extends Controller
     {
         return [
             'name'              => 'required|string|max:255',
+            'active'            => 'required|boolean',
             'currency'          => 'required|in:'.implode(',', Currency::codes()),
             'description'       => 'nullable|string',
             'price'             => 'nullable|numeric|min:0',
@@ -230,41 +253,15 @@ class ProductController extends Controller
     protected function normalizePriceFields(Request $request): void
     {
         $request->merge([
-            'price' => $this->normalizePrice($request->input('price')),
-            'costs' => $this->normalizePrice($request->input('costs')),
+            'price' => \App\Enums\Currency::normalizePrice($request->input('price')),
+            'costs' => \App\Enums\Currency::normalizePrice($request->input('costs')),
         ]);
     }
 
     /**
      * Normalize price strings like "1.234,56" or "45,00" to "1234.56".
      */
-    protected function normalizePrice($value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        $value = (string) $value;
-        $value = preg_replace('/\s+/', '', $value ?? '');
-
-        if ($value === '') {
-            return null;
-        }
-
-        $hasComma = str_contains($value, ',');
-        $hasDot = str_contains($value, '.');
-
-        if ($hasComma && $hasDot) {
-            // Assume dot is thousands separator and comma is decimal separator
-            $value = str_replace('.', '', $value);
-            $value = str_replace(',', '.', $value);
-        } elseif ($hasComma && ! $hasDot) {
-            // Only comma present -> treat as decimal separator
-            $value = str_replace(',', '.', $value);
-        }
-
-        return $value;
-    }
+    // Price normalization centralized in App\Enums\Currency::normalizePrice
 
     /**
      * Clean product data before saving.
@@ -272,6 +269,13 @@ class ProductController extends Controller
      */
     protected function cleanProductData(array $data): array
     {
+        // Normalize active to boolean; default true
+        if (! array_key_exists('active', $data)) {
+            $data['active'] = true;
+        } else {
+            $data['active'] = (bool) $data['active'];
+        }
+
         // Convert empty strings to null for foreign key fields
         $foreignKeyFields = ['product_group_id', 'product_type_id', 'resource_type_id'];
 

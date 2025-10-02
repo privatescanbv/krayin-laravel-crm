@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('description')->nullable();
             $table->integer('quantity')->default(0);
             $table->decimal('price', 12, 4)->nullable();
+            $table->decimal('costs', 12, 4)->nullable();
             $table->timestamps();
         });
     }

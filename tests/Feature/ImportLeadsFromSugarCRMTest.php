@@ -6,6 +6,7 @@ use App\Enums\ActivityStatus;
 use App\Enums\ActivityType;
 use App\Enums\ContactLabel;
 use App\Models\Address;
+use App\Models\Department;
 use App\Services\ActivityStatusService;
 use Database\Seeders\TestSeeder;
 use Illuminate\Database\Eloquent\Collection;

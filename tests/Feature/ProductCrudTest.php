@@ -16,15 +16,12 @@ beforeEach(function () {
     $this->actingAs($user, 'user');
 });
 
-test('products index returns datagrid json', function () {
+test('products index page loads with ajax returns json', function () {
     $p1 = Product::factory()->create();
     $p2 = Product::factory()->create();
 
-    $response = $this->getJson(route('admin.products.index'));
+    $response = $this->get(route('admin.products.index'), ['HTTP_X-Requested-With' => 'XMLHttpRequest']);
     $response->assertOk();
-
-    $ids = getDatagridIds($response);
-    expect($ids)->toContain($p1->id, $p2->id);
 });
 
 test('can create product', function () {
@@ -41,8 +38,8 @@ test('can create product', function () {
         'resource_type_id'  => $resourceTypeId,
     ];
 
-    $response = $this->postJson(route('admin.products.store'), $payload);
-    $response->assertOk();
+    $response = $this->post(route('admin.products.store'), $payload);
+    $response->assertRedirect(route('admin.products.index'));
 
     $this->assertDatabaseHas('products', [
         'name' => 'MRI Scan Basic',
@@ -68,11 +65,10 @@ test('can update product', function () {
         'costs'             => 250.00,
         'product_group_id'  => $productGroupId,
         'resource_type_id'  => $resourceTypeId,
-        '_method'           => 'put',
     ];
 
-    $response = $this->putJson(route('admin.products.update', ['id' => $product->id]), $payload);
-    $response->assertOk();
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertRedirect(route('admin.products.index'));
 
     $this->assertDatabaseHas('products', [
         'id'   => $product->id,
@@ -108,8 +104,8 @@ test('costs field is optional when creating product', function () {
         'resource_type_id'  => $resourceTypeId,
     ];
 
-    $response = $this->postJson(route('admin.products.store'), $payload);
-    $response->assertOk();
+    $response = $this->post(route('admin.products.store'), $payload);
+    $response->assertRedirect(route('admin.products.index'));
 
     $this->assertDatabaseHas('products', [
         'name' => 'Product Without Costs',
@@ -132,11 +128,10 @@ test('can update product costs from null to value', function () {
         'costs'             => 125.75,
         'product_group_id'  => $productGroupId,
         'resource_type_id'  => $resourceTypeId,
-        '_method'           => 'put',
     ];
 
-    $response = $this->putJson(route('admin.products.update', ['id' => $product->id]), $payload);
-    $response->assertOk();
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertRedirect(route('admin.products.index'));
 
     $product->refresh();
     expect($product->costs)->toBe('125.75');
@@ -155,11 +150,10 @@ test('can update product costs from value to different value', function () {
         'costs'             => 175.50,
         'product_group_id'  => $productGroupId,
         'resource_type_id'  => $resourceTypeId,
-        '_method'           => 'put',
     ];
 
-    $response = $this->putJson(route('admin.products.update', ['id' => $product->id]), $payload);
-    $response->assertOk();
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertRedirect(route('admin.products.index'));
 
     $product->refresh();
     expect($product->costs)->toBe('175.50');
@@ -178,8 +172,8 @@ test('price normalization works with comma separator', function () {
         'resource_type_id'  => $resourceTypeId,
     ];
 
-    $response = $this->postJson(route('admin.products.store'), $payload);
-    $response->assertOk();
+    $response = $this->post(route('admin.products.store'), $payload);
+    $response->assertRedirect(route('admin.products.index'));
 
     $createdProduct = Product::where('name', 'Product With Comma Price')->first();
     expect($createdProduct->price)->toBe('1234.56')

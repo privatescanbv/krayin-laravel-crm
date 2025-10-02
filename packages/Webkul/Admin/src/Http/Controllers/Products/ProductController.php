@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Controllers\Products;
 
 use App\Enums\Currency;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -34,6 +35,16 @@ class ProductController extends Controller
     public function index(): View|JsonResponse
     {
         if (request()->ajax()) {
+            // Clear stale client-side sort (e.g., removed columns like total_in_stock)
+            if (request()->query->has('sort')) {
+                request()->query->remove('sort');
+            }
+
+            // Enforce a safe default sort
+            request()->merge(['sort' => [
+                ['field' => 'id', 'order' => 'desc']
+            ]]);
+
             return datagrid(ProductDataGrid::class)->process();
         }
 
@@ -62,7 +73,9 @@ class ProductController extends Controller
 
         Event::dispatch('product.create.before');
 
-        $data = $this->cleanProductData($request->validated());
+        $payload = request()->all();
+        $payload['entity_type'] = 'products';
+        $data = $this->cleanProductData($payload);
         $product = $this->productRepository->create($data);
 
         Event::dispatch('product.create.after', $product);
@@ -105,7 +118,9 @@ class ProductController extends Controller
 
         Event::dispatch('product.update.before', $id);
 
-        $data = $this->cleanProductData($request->validated());
+        $payload = request()->all();
+        $payload['entity_type'] = 'products';
+        $data = $this->cleanProductData($payload);
         $product = $this->productRepository->update($data, $id);
 
         Event::dispatch('product.update.after', $product);
@@ -160,7 +175,7 @@ class ProductController extends Controller
             return new JsonResponse([
                 'message' => trans('admin::app.products.index.delete-success'),
             ], 200);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             return new JsonResponse([
                 'message' => trans('admin::app.products.index.delete-failed'),
             ], 400);

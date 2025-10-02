@@ -14,40 +14,31 @@ class ProductDataGrid extends DataGrid
      */
     public function prepareQueryBuilder(): Builder
     {
-        $tablePrefix = DB::getTablePrefix();
-
         $queryBuilder = DB::table('products')
-            ->leftJoin('product_inventories', 'products.id', '=', 'product_inventories.product_id')
             ->leftJoin('product_tags', 'products.id', '=', 'product_tags.product_id')
             ->leftJoin('tags', 'tags.id', '=', 'product_tags.tag_id')
             ->leftJoin('product_groups', 'products.product_group_id', '=', 'product_groups.id')
             ->select(
-                'products.id',
+                DB::raw('products.id as id'),
                 'products.name',
                 'products.currency',
                 'products.price',
                 'products.active',
-                'tags.name as tag_name',
+                DB::raw('MIN(tags.name) as tag_name'),
                 'product_groups.name as group_name'
             )
-            ->addSelect(DB::raw('SUM(product_inventories.in_stock) as total_in_stock'))
-            ->addSelect(DB::raw('SUM(product_inventories.allocated) as total_allocated'))
-            ->addSelect(DB::raw('SUM(product_inventories.in_stock - product_inventories.allocated) as total_on_hand'))
             ->groupBy('products.id');
 
-        if (request()->route('id')) {
-            $queryBuilder->where('product_inventories.warehouse_id', request()->route('id'));
-        }
-
         $this->addFilter('id', 'products.id');
-        $this->addFilter('total_in_stock', DB::raw('SUM('.$tablePrefix.'product_inventories.in_stock'));
-        $this->addFilter('total_allocated', DB::raw('SUM('.$tablePrefix.'product_inventories.allocated'));
-        $this->addFilter('total_on_hand', DB::raw('SUM('.$tablePrefix.'product_inventories.in_stock - '.$tablePrefix.'product_inventories.allocated'));
         $this->addFilter('tag_name', 'tags.name');
         $this->addFilter('group_name', 'product_groups.name');
 
-        return $queryBuilder;
+        // 🚨 reset alle automatisch toegevoegde order by’s en zet jouw eigen fallback
+        return $queryBuilder
+            ->reorder()                       // wist ALLE order by’s, ook die van datagrid
+            ->orderBy('products.id', 'desc'); // voeg expliciet jouw order toe
     }
+
 
     /**
      * Add columns.
@@ -55,6 +46,15 @@ class ProductDataGrid extends DataGrid
     public function prepareColumns(): void
     {
         // SKU removed per requirements
+
+        $this->addColumn([
+            'index'      => 'id',
+            'label'      => trans('admin::app.settings.partner_products.index.datagrid.id'),
+            'type'       => 'string',
+            'sortable'   => true,
+            'searchable' => true,
+            'filterable' => true,
+        ]);
 
         $this->addColumn([
             'index'      => 'name',

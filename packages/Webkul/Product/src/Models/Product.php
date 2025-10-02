@@ -6,18 +6,15 @@ use App\Models\PartnerProduct;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
 use Webkul\Product\Contracts\Product as ProductContract;
+use Webkul\Product\Database\Factories\ProductFactory;
 use Webkul\Tag\Models\TagProxy;
-use Webkul\Warehouse\Models\LocationProxy;
-use Webkul\Warehouse\Models\WarehouseProxy;
 use App\Models\ResourceType;
 use App\Models\ProductType;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Enums\Currency;
 
 class Product extends Model implements ProductContract
 {
@@ -28,7 +25,7 @@ class Product extends Model implements ProductContract
      */
     protected static function newFactory()
     {
-        return \Webkul\Product\Database\Factories\ProductFactory::new();
+        return ProductFactory::new();
     }
 
     /**
@@ -58,29 +55,6 @@ class Product extends Model implements ProductContract
         'resource_type_id' => 'integer',
     ];
 
-    /**
-     * Get the product warehouses that owns the product.
-     */
-    public function warehouses(): BelongsToMany
-    {
-        return $this->belongsToMany(WarehouseProxy::modelClass(), 'product_inventories');
-    }
-
-    /**
-     * Get the product locations that owns the product.
-     */
-    public function locations(): BelongsToMany
-    {
-        return $this->belongsToMany(LocationProxy::modelClass(), 'product_inventories', 'product_id', 'warehouse_location_id');
-    }
-
-    /**
-     * Get the product inventories that owns the product.
-     */
-    public function inventories(): HasMany
-    {
-        return $this->hasMany(ProductInventoryProxy::modelClass());
-    }
 
     /**
      * The tags that belong to the Products.

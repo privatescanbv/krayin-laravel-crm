@@ -69,7 +69,7 @@
                         <option value="">@lang('admin::app.productgroups.edit.select-parent')</option>
                         @foreach ($productGroups as $group)
                             <option value="{{ $group->id }}" {{ $productGroup->parent_id == $group->id ? 'selected' : '' }}>
-                                {{ $group->name }}
+                                {{ $group->path }}
                             </option>
                         @endforeach
                     </x-admin::form.control-group.control>

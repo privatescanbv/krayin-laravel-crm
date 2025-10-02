@@ -425,50 +425,27 @@ class LeadRepository extends Repository
     public function findPotentialDuplicatesDirectly($lead): Collection
     {
         $duplicates = collect();
-        $debugInfo = [
-            'lead_id' => $lead->id,
-            'lead_emails' => $lead->emails,
-            'lead_phones' => $lead->phones,
-            'lead_name' => $lead->first_name . ' ' . $lead->last_name,
-        ];
 
         try {
             // Check for email duplicates
             $emailDuplicates = $this->findDuplicatesByJsonField($lead, 'emails');
-            $debugInfo['email_duplicates_count'] = $emailDuplicates->count();
-            $debugInfo['email_duplicate_ids'] = $emailDuplicates->pluck('id')->toArray();
             $duplicates = $duplicates->merge($emailDuplicates);
 
             // Check for phone duplicates
             $phoneDuplicates = $this->findDuplicatesByJsonField($lead, 'phones');
-            $debugInfo['phone_duplicates_count'] = $phoneDuplicates->count();
-            $debugInfo['phone_duplicate_ids'] = $phoneDuplicates->pluck('id')->toArray();
             $duplicates = $duplicates->merge($phoneDuplicates);
 
             // Check for name similarity
             $nameDuplicates = $this->findDuplicatesByName($lead);
-            $debugInfo['name_duplicates_count'] = $nameDuplicates->count();
-            $debugInfo['name_duplicate_ids'] = $nameDuplicates->pluck('id')->toArray();
             $duplicates = $duplicates->merge($nameDuplicates);
 
         } catch (Exception $e) {
-            $debugInfo['error'] = $e->getMessage();
             Log::error('Error in duplicate detection: ' . $e->getMessage());
         }
 
         // Remove duplicates from the collection and apply time/status filters
         $uniqueDuplicates = $duplicates->unique('id');
-        $debugInfo['total_duplicates_before_filter'] = $uniqueDuplicates->count();
-        $debugInfo['unique_duplicate_ids'] = $uniqueDuplicates->pluck('id')->toArray();
-
-        $filteredDuplicates = $this->applyDuplicateFilters($lead, $uniqueDuplicates);
-        $debugInfo['duplicates_after_filter'] = $filteredDuplicates->count();
-        $debugInfo['final_duplicate_ids'] = $filteredDuplicates->pluck('id')->toArray();
-
-        // Log debug info
-        Log::info('LeadDuplicateDetection Feature Test Debug', $debugInfo);
-
-        return $filteredDuplicates;
+        return $this->applyDuplicateFilters($lead, $uniqueDuplicates);
     }
 
     /**

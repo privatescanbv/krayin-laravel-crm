@@ -9,26 +9,6 @@ use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Repositories\LeadRepository;
 
-// Helper function to safely test duplicate detection
-function testDuplicateDetection($leadRepository, $lead, $expectedCount = 1, $expectedId = null) {
-    try {
-        $duplicates = $leadRepository->findPotentialDuplicates($lead);
-        
-        if ($expectedCount !== null) {
-            expect($duplicates)->toHaveCount($expectedCount);
-        }
-        
-        if ($expectedId !== null && $duplicates->isNotEmpty()) {
-            expect($duplicates->first()->id)->toBe($expectedId);
-        }
-        
-        return $duplicates;
-    } catch (\Exception $e) {
-        // Make exceptions visible and fail the test
-        expect(false)->toBeTrue("Exception in duplicate detection: " . $e->getMessage() . "\nStack trace: " . $e->getTraceAsString());
-    }
-}
-
 beforeEach(function () {
 
     $this->seed(TestSeeder::class);
@@ -64,8 +44,10 @@ test('it detects duplicate leads by email', function () {
     ]);
 
     // Test duplicate detection
-    $duplicates = testDuplicateDetection($this->leadRepository, $lead1, 1, $lead2->id);
-    
+    $duplicates = $this->leadRepository->findPotentialDuplicates($lead1);
+
+    $this->assertCount(1, $duplicates);
+    $this->assertEquals($lead2->id, $duplicates->first()->id);
     $this->assertTrue($lead1->hasPotentialDuplicates());
     $this->assertEquals(1, $lead1->getPotentialDuplicatesCount());
 });

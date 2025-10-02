@@ -15,9 +15,19 @@ beforeEach(function () {
     // Disable observers during testing to avoid database dependency issues
     Lead::unsetEventDispatcher();
     $this->leadRepository = app(LeadRepository::class);
+    $this->defaultStage = Stage::first();
 });
 
+// Helper function to create leads with proper stage
+function createLeadWithStage($data = []) {
+    $stage = \Webkul\Lead\Models\Stage::first();
+    return Lead::factory()->create(array_merge($data, ['lead_pipeline_stage_id' => $stage->id]));
+}
+
 test('it detects duplicate leads by email', function () {
+    $this->seed(TestSeeder::class);
+    $stage = \Webkul\Lead\Models\Stage::first();
+    
     // Create the first lead
     $lead1 = Lead::factory()->create([
         'first_name' => 'Marcus',
@@ -25,6 +35,7 @@ test('it detects duplicate leads by email', function () {
         'emails'     => [
             ['value' => 'shared.email@example.com', 'label' => ContactLabel::Eigen->value],
         ],
+        'lead_pipeline_stage_id' => $stage->id,
     ]);
 
     // Create a second lead with the same email but different name
@@ -34,6 +45,7 @@ test('it detects duplicate leads by email', function () {
         'emails'     => [
             ['value' => 'shared.email@example.com', 'label' => ContactLabel::Relatie->value],
         ],
+        'lead_pipeline_stage_id' => $stage->id,
     ]);
 
     // Test duplicate detection
@@ -46,6 +58,9 @@ test('it detects duplicate leads by email', function () {
 });
 
 test('it detects duplicate leads by phone', function () {
+    $this->seed(TestSeeder::class);
+    $stage = \Webkul\Lead\Models\Stage::first();
+    
     // Create the first lead
     $lead1 = Lead::factory()->create([
         'first_name' => 'Alexander',
@@ -53,6 +68,7 @@ test('it detects duplicate leads by phone', function () {
         'phones'     => [
             ['value' => '+1234567890', 'label' => ContactLabel::Relatie->value],
         ],
+        'lead_pipeline_stage_id' => $stage->id,
     ]);
 
     // Create a second lead with the same phone but different name
@@ -62,6 +78,7 @@ test('it detects duplicate leads by phone', function () {
         'phones'     => [
             ['value' => '+1234567890', 'label' => ContactLabel::Eigen->value],
         ],
+        'lead_pipeline_stage_id' => $stage->id,
     ]);
 
     // Test duplicate detection

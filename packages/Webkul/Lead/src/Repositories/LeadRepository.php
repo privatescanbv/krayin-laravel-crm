@@ -472,13 +472,12 @@ class LeadRepository extends Repository
             throw new \Exception('JSON duplicate detection is only supported on MySQL database');
         }
 
-        // Use MySQL JSON_SEARCH function with proper escaping
+        // Use LIKE operator to search for values in JSON field
         $results = $this->model->where('id', '!=', $lead->id)
             ->where(function ($query) use ($field, $values) {
                 foreach ($values as $value) {
-                    // Search for the value in the JSON array using JSON_SEARCH
-                    $escapedValue = "'" . addslashes($value) . "'";
-                    $query->orWhereRaw("JSON_SEARCH(?, 'one', {$escapedValue}) IS NOT NULL", [$field]);
+                    // Search for the value in the JSON array using LIKE
+                    $query->orWhere($field, 'LIKE', '%"' . $value . '"%');
                 }
             })
             ->get();

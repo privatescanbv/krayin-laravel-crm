@@ -467,11 +467,16 @@ class LeadRepository extends Repository
             return collect();
         }
 
-        // Use a different approach - search for the value in the JSON array using LIKE
+        // Check if we're using MySQL, otherwise throw exception
+        if (DB::getDriverName() !== 'mysql') {
+            throw new \Exception('JSON duplicate detection is only supported on MySQL database');
+        }
+
+        // Use MySQL JSON_SEARCH function
         $results = $this->model->where('id', '!=', $lead->id)
             ->where(function ($query) use ($field, $values) {
                 foreach ($values as $value) {
-                    // Search for the value in the JSON array using LIKE
+                    // Search for the value in the JSON array using JSON_SEARCH
                     $query->orWhereRaw("JSON_SEARCH(?, 'one', ?) IS NOT NULL", [$field, $value]);
                 }
             })

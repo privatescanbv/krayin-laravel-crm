@@ -24,6 +24,7 @@ class ProductDataGrid extends DataGrid
             ->select(
                 'products.id',
                 'products.name',
+                'products.currency',
                 'products.price',
                 'tags.name as tag_name',
                 'product_groups.name as group_name'
@@ -70,30 +71,10 @@ class ProductDataGrid extends DataGrid
             'sortable'   => true,
             'searchable' => true,
             'filterable' => true,
-            'closure'    => fn ($row) => round($row->price, 2),
+            'closure'    => function ($row) {
+                return $this->formatMoney($row->currency, (float) $row->price);
+            },
         ]);
-
-        $this->addColumn([
-            'index'    => 'total_in_stock',
-            'label'    => trans('admin::app.products.index.datagrid.in-stock'),
-            'type'     => 'string',
-            'sortable' => true,
-        ]);
-
-        $this->addColumn([
-            'index'    => 'total_allocated',
-            'label'    => trans('admin::app.products.index.datagrid.allocated'),
-            'type'     => 'string',
-            'sortable' => true,
-        ]);
-
-        $this->addColumn([
-            'index'    => 'total_on_hand',
-            'label'    => trans('admin::app.products.index.datagrid.on-hand'),
-            'type'     => 'string',
-            'sortable' => true,
-        ]);
-
         $this->addColumn([
             'index'              => 'tag_name',
             'label'              => trans('admin::app.products.index.datagrid.tag-name'),
@@ -169,5 +150,33 @@ class ProductDataGrid extends DataGrid
             'method' => 'POST',
             'url'    => route('admin.products.mass_delete'),
         ]);
+    }
+
+    private function formatMoney(?string $currency, float $amount): string
+    {
+        $symbolMap = [
+            'EUR' => '€',
+            'USD' => '$',
+            'GBP' => '£',
+            'CHF' => 'CHF',
+            'DKK' => 'kr',
+            'NOK' => 'kr',
+            'SEK' => 'kr',
+        ];
+
+        $symbol = $symbolMap[$currency ?? 'EUR'] ?? $currency ?? '';
+
+        $formatted = number_format($amount, 2, ',', '.');
+
+        // Place symbol before amount for common currencies, otherwise append code
+        if (in_array($currency, ['EUR', 'USD', 'GBP'], true)) {
+            return $symbol . ' ' . $formatted;
+        }
+
+        if (isset($symbolMap[$currency ?? ''])) {
+            return $formatted . ' ' . $symbol;
+        }
+
+        return ($currency ? $currency . ' ' : '') . $formatted;
     }
 }

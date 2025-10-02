@@ -45,12 +45,15 @@ class PartnerProductDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'currency',
+            'index'      => 'purchase_price',
             'type'       => 'string',
-            'label'      => trans('admin::app.settings.partner_products.index.datagrid.currency'),
+            'label'      => trans('admin::app.settings.partner_products.index.datagrid.purchase_price'),
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+            'closure'    => function ($row) {
+                return $this->formatMoney($row->currency, (float) $row->sales_price);
+            },
         ]);
 
         $this->addColumn([
@@ -60,6 +63,9 @@ class PartnerProductDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+            'closure'    => function ($row) {
+                return $this->formatMoney($row->currency, (float) $row->sales_price);
+            },
         ]);
 
         $this->addColumn([
@@ -101,5 +107,32 @@ class PartnerProductDataGrid extends DataGrid
                 'url'    => fn ($row) => route('admin.settings.partner_products.delete', $row->id),
             ]);
         }
+    }
+
+    private function formatMoney(?string $currency, float $amount): string
+    {
+        $symbolMap = [
+            'EUR' => '€',
+            'USD' => '$',
+            'GBP' => '£',
+            'CHF' => 'CHF',
+            'DKK' => 'kr',
+            'NOK' => 'kr',
+            'SEK' => 'kr',
+        ];
+
+        $symbol = $symbolMap[$currency ?? 'EUR'] ?? $currency ?? '';
+
+        $formatted = number_format($amount, 2, ',', '.');
+
+        if (in_array($currency, ['EUR', 'USD', 'GBP'], true)) {
+            return $symbol . ' ' . $formatted;
+        }
+
+        if (isset($symbolMap[$currency ?? ''])) {
+            return $formatted . ' ' . $symbol;
+        }
+
+        return ($currency ? $currency . ' ' : '') . $formatted;
     }
 }

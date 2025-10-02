@@ -95,7 +95,7 @@
             type="price"
             name="price"
             value="{{ old('price', $product && $product->price ? number_format($product->price, 2, ',', '') : '') }}"
-            rules="required|numeric|min:0"
+            rules="required"
             :label="trans('admin::app.products.create.price')"
             :placeholder="trans('admin::app.products.create.price')"
         />

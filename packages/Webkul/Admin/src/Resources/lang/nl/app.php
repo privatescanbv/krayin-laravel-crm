@@ -1772,7 +1772,7 @@ return [
                     'table' => [
                         'name' => 'Naam',
                         'partner-name' => 'Partner Naam',
-                        'price' => 'Prijs',
+                        'price' => 'Verkoopprijs',
                         'status' => 'Status',
                         'actions' => 'Acties',
                         'active' => 'Actief',
@@ -1953,6 +1953,7 @@ return [
                     'name'          => 'Naam',
                     'currency'      => 'Valuta',
                     'sales_price'   => 'Verkoopprijs',
+                    'purchase_price'   => 'Inkoopprijs',
                     'active'        => 'Actief',
                     'duration'      => 'Duur',
                     'minutes'       => 'min',
@@ -2334,7 +2335,7 @@ return [
            'products' => [
                'product-name' => 'Productnaam',
                'quantity' => 'Aantal',
-               'price' => 'Prijs',
+               'price' => 'Verkoopprijs',
                'amount' => 'Bedrag',
                'action' => 'Actie',
                'add-more' => 'Meer toevoegen',
@@ -2376,7 +2377,7 @@ return [
            'products' => [
                'product-name' => 'Productnaam',
                'quantity' => 'Aantal',
-               'price' => 'Prijs',
+               'price' => 'Verkoopprijs',
                'amount' => 'Bedrag',
                'action' => 'Actie',
                'add-more' => 'Meer toevoegen',

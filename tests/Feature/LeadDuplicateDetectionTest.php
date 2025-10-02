@@ -19,14 +19,14 @@ beforeEach(function () {
 });
 
 // Helper function to create leads with proper stage
-function createLeadWithStage($data = []) {
+function createLeadWithStage([$data = []) {
     $stage = \Webkul\Lead\Models\Stage::first();
     return Lead::factory()->create(array_merge($data, ['lead_pipeline_stage_id' => $stage->id]));
 }
 
 test('it detects duplicate leads by email', function () {
     // Create the first lead
-    $lead1 = createLeadWithStage([
+    $lead1 = createLeadWithStage([[
         'first_name' => 'Marcus',
         'last_name'  => 'Emailtest',
         'emails'     => [
@@ -35,7 +35,7 @@ test('it detects duplicate leads by email', function () {
     ]);
 
     // Create a second lead with the same email but different name
-    $lead2 = createLeadWithStage([
+    $lead2 = createLeadWithStage([[
         'first_name' => 'Natasha',
         'last_name'  => 'Differentname',
         'emails'     => [
@@ -45,12 +45,6 @@ test('it detects duplicate leads by email', function () {
 
     // Test duplicate detection
     $duplicates = $this->leadRepository->findPotentialDuplicates($lead1);
-    
-    // Debug: Check what we're actually getting
-    dump("Lead1 emails: ", $lead1->emails);
-    dump("Lead2 emails: ", $lead2->emails);
-    dump("Duplicates found: ", $duplicates->count());
-    dump("All leads in DB: ", Lead::count());
 
     $this->assertCount(1, $duplicates);
     $this->assertEquals($lead2->id, $duplicates->first()->id);
@@ -60,7 +54,7 @@ test('it detects duplicate leads by email', function () {
 
 test('it detects duplicate leads by phone', function () {
     // Create the first lead
-    $lead1 = createLeadWithStage([
+    $lead1 = createLeadWithStage([[
         'first_name' => 'Alexander',
         'last_name'  => 'Phonetest',
         'phones'     => [
@@ -69,7 +63,7 @@ test('it detects duplicate leads by phone', function () {
     ]);
 
     // Create a second lead with the same phone but different name
-    $lead2 = createLeadWithStage([
+    $lead2 = createLeadWithStage([[
         'first_name' => 'Bethany',
         'last_name'  => 'Differentname',
         'phones'     => [
@@ -86,13 +80,13 @@ test('it detects duplicate leads by phone', function () {
 
 test('it detects duplicate leads by full name', function () {
     // Create the first lead
-    $lead1 = createLeadWithStage(
+    $lead1 = createLeadWithStage([[
         'first_name' => 'Gabriel',
         'last_name'  => 'Fullnametest',
     ]);
 
     // Create a second lead with the exact same full name
-    $lead2 = createLeadWithStage(
+    $lead2 = createLeadWithStage([[
         'first_name' => 'Gabriel',
         'last_name'  => 'Fullnametest',
     ]);
@@ -107,7 +101,7 @@ test('it detects duplicate leads by full name', function () {
 /** @test */
 test('it returns empty collection when no duplicates exist', function () {
     // Create a lead with very unique data that shouldn't match anything
-    $lead = createLeadWithStage(
+    $lead = createLeadWithStage([
         'first_name' => 'Zephyr',
         'last_name'  => 'Quintessential',
         'emails'     => [
@@ -128,7 +122,7 @@ test('it returns empty collection when no duplicates exist', function () {
 
 test('it excludes self from duplicate detection', function () {
     // Create a lead
-    $lead = createLeadWithStage(
+    $lead = createLeadWithStage([
         'first_name' => 'Selftest',
         'last_name'  => 'Exclusion',
         'emails'     => [
@@ -145,7 +139,7 @@ test('it excludes self from duplicate detection', function () {
 
 test('it detects duplicate leads with same name and address information', function () {
     // Create the first lead with address
-    $lead1 = createLeadWithStage(
+    $lead1 = createLeadWithStage([
         'first_name' => 'Sarah',
         'last_name'  => 'Addresstest',
         'emails'     => [
@@ -165,7 +159,7 @@ test('it detects duplicate leads with same name and address information', functi
     ]);
 
     // Create a second lead with same name but different email and same address details
-    $lead2 = createLeadWithStage(
+    $lead2 = createLeadWithStage([
         'first_name' => 'Sarah',
         'last_name'  => 'Addresstest',
         'emails'     => [
@@ -210,7 +204,7 @@ test('it ignores leads in won status as duplicates', function () {
         ->first();
 
     // Create the first lead (active lead)
-    $lead1 = createLeadWithStage(
+    $lead1 = createLeadWithStage([
         'first_name' => 'Marcus',
         'last_name'  => 'Wontest',
         'emails'     => [
@@ -220,7 +214,7 @@ test('it ignores leads in won status as duplicates', function () {
     ]);
 
     // Create a second lead with the same email but in 'Won' status
-    $lead2 = createLeadWithStage(
+    $lead2 = createLeadWithStage([
         'first_name' => 'Marcus',
         'last_name'  => 'Wontest',
         'emails'     => [
@@ -239,7 +233,7 @@ test('it ignores leads in won status as duplicates', function () {
 
 test('it ignores leads created more than 2 weeks apart as duplicates', function () {
     // Create the first lead (current lead)
-    $lead1 = createLeadWithStage(
+    $lead1 = createLeadWithStage([
         'first_name' => 'John',
         'last_name'  => 'Timetest',
         'emails'     => [
@@ -249,7 +243,7 @@ test('it ignores leads created more than 2 weeks apart as duplicates', function 
     ]);
 
     // Create a second lead with the same email but created 3 weeks ago (too old)
-    $lead2 = createLeadWithStage(
+    $lead2 = createLeadWithStage([
         'first_name' => 'John',
         'last_name'  => 'Timetest',
         'emails'     => [
@@ -259,7 +253,7 @@ test('it ignores leads created more than 2 weeks apart as duplicates', function 
     ]);
 
     // Create a third lead created 16 days ago (just over 2 weeks, should be ignored)
-    $lead3 = createLeadWithStage(
+    $lead3 = createLeadWithStage([
         'first_name' => 'John',
         'last_name'  => 'Timetest',
         'phones'     => [
@@ -277,7 +271,7 @@ test('it ignores leads created more than 2 weeks apart as duplicates', function 
 
 test('it finds leads created within 2 weeks as duplicates', function () {
     // Create the first lead
-    $lead1 = createLeadWithStage(
+    $lead1 = createLeadWithStage([
         'first_name' => 'Sarah',
         'last_name'  => 'Recenttest',
         'emails'     => [
@@ -287,7 +281,7 @@ test('it finds leads created within 2 weeks as duplicates', function () {
     ]);
 
     // Create a second lead with the same email created 1 week ago (within 2 weeks)
-    $lead2 = createLeadWithStage(
+    $lead2 = createLeadWithStage([
         'first_name' => 'Sarah',
         'last_name'  => 'Recenttest',
         'emails'     => [
@@ -297,7 +291,7 @@ test('it finds leads created within 2 weeks as duplicates', function () {
     ]);
 
     // Create a third lead with same phone created 10 days ago (within 2 weeks)
-    $lead3 = createLeadWithStage(
+    $lead3 = createLeadWithStage([
         'first_name' => 'Sarah',
         'last_name'  => 'Recenttest',
         'phones'     => [
@@ -325,7 +319,7 @@ test('it combines time and status filters correctly', function () {
         ->first();
 
     // Create the first lead
-    $lead1 = createLeadWithStage(
+    $lead1 = createLeadWithStage([
         'first_name' => 'Alice',
         'last_name'  => 'Combinedtest',
         'emails'     => [
@@ -335,7 +329,7 @@ test('it combines time and status filters correctly', function () {
     ]);
 
     // Create a second lead - recent but won status (should be ignored)
-    $lead2 = createLeadWithStage(
+    $lead2 = createLeadWithStage([
         'first_name' => 'Alice',
         'last_name'  => 'Combinedtest',
         'emails'     => [
@@ -346,7 +340,7 @@ test('it combines time and status filters correctly', function () {
     ]);
 
     // Create a third lead - not won status but too old (should be ignored)
-    $lead3 = createLeadWithStage(
+    $lead3 = createLeadWithStage([
         'first_name' => 'Alice',
         'last_name'  => 'Combinedtest',
         'emails'     => [
@@ -356,7 +350,7 @@ test('it combines time and status filters correctly', function () {
     ]);
 
     // Create a fourth lead - recent and not won (should be found as duplicate)
-    $lead4 = createLeadWithStage(
+    $lead4 = createLeadWithStage([
         'first_name' => 'Alice',
         'last_name'  => 'Combinedtest',
         'emails'     => [
@@ -375,7 +369,7 @@ test('it combines time and status filters correctly', function () {
 
 test('it handles edge case of exactly 2 weeks difference', function () {
     // Create the first lead
-    $lead1 = createLeadWithStage(
+    $lead1 = createLeadWithStage([
         'first_name' => 'Edge',
         'last_name'  => 'Case',
         'emails'     => [
@@ -385,7 +379,7 @@ test('it handles edge case of exactly 2 weeks difference', function () {
     ]);
 
     // Create a second lead exactly 2 weeks ago (should be included)
-    $lead2 = createLeadWithStage(
+    $lead2 = createLeadWithStage([
         'first_name' => 'Edge',
         'last_name'  => 'Case',
         'emails'     => [
@@ -395,7 +389,7 @@ test('it handles edge case of exactly 2 weeks difference', function () {
     ]);
 
     // Create a third lead exactly 2 weeks and 1 day ago (should be excluded)
-    $lead3 = createLeadWithStage(
+    $lead3 = createLeadWithStage([
         'first_name' => 'Edge',
         'last_name'  => 'Case',
         'emails'     => [
@@ -423,7 +417,7 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
     $defaultStage = Stage::where('lead_pipeline_id', 1)->where('code', '!=', 'won')->first();
 
     // Create the main lead (new inquiry)
-    $mainLead = createLeadWithStage(
+    $mainLead = createLeadWithStage([
         'first_name' => 'John',
         'last_name'  => 'Comprehensive',
         'emails'     => [
@@ -437,7 +431,7 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
     ]);
 
     // Scenario 1: Old lead from 6 months ago that was won (should be ignored - both filters apply)
-    $oldWonLead = createLeadWithStage(
+    $oldWonLead = createLeadWithStage([
         'first_name' => 'John',
         'last_name'  => 'Comprehensive',
         'emails'     => [
@@ -448,7 +442,7 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
     ]);
 
     // Scenario 2: Recent lead (1 week ago) that was won (should be ignored - won status filter)
-    $recentWonLead = createLeadWithStage(
+    $recentWonLead = createLeadWithStage([
         'first_name' => 'John',
         'last_name'  => 'Comprehensive',
         'phones'     => [
@@ -459,7 +453,7 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
     ]);
 
     // Scenario 3: Old lead (3 weeks ago) that is still active (should be ignored - time filter)
-    $oldActiveLead = createLeadWithStage(
+    $oldActiveLead = createLeadWithStage([
         'first_name' => 'John',
         'last_name'  => 'Comprehensive',
         'emails'     => [
@@ -470,7 +464,7 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
     ]);
 
     // Scenario 4: Recent lead (1 week ago) that is still active (should be found - passes both filters)
-    $recentActiveLead = createLeadWithStage(
+    $recentActiveLead = createLeadWithStage([
         'first_name' => 'John',
         'last_name'  => 'Comprehensive',
         'emails'     => [

@@ -22,7 +22,7 @@ beforeEach(function () {
 function createLeadWithStage($data = []) {
     // Only set default stage if not already provided
     if (!isset($data['lead_pipeline_stage_id'])) {
-        $stage = \Webkul\Lead\Models\Stage::first();
+        $stage = Stage::first();
         $data['lead_pipeline_stage_id'] = $stage->id;
     }
     return Lead::factory()->create($data);
@@ -430,7 +430,7 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
         'phones'     => [
             ['value' => '+1234567890', 'label' => ContactLabel::Relatie->value],
         ],
-        'created_at' => now(),
+        'created_at'             => now(),
         'lead_pipeline_stage_id' => $defaultStage->id,
     ]);
 
@@ -463,7 +463,7 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
         'emails'     => [
             ['value' => 'john.comprehensive@example.com', 'label' => ContactLabel::Eigen->value],
         ],
-        'created_at' => now()->subWeeks(3),
+        'created_at'             => now()->subWeeks(3),
         'lead_pipeline_stage_id' => $defaultStage->id,
     ]);
 
@@ -474,7 +474,7 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
         'emails'     => [
             ['value' => 'john.comprehensive@example.com', 'label' => 'work'],
         ],
-        'created_at' => now()->subWeek(1),
+        'created_at'             => now()->subWeek(1),
         'lead_pipeline_stage_id' => $defaultStage->id,
     ]);
 

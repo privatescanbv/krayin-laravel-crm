@@ -342,6 +342,29 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
     }
 
     /**
+     * Sanitize phone number and infer label
+     */
+    protected function sanitizePhoneAndInferLabel($phone, $defaultLabel): array
+    {
+        if (empty($phone)) {
+            return [$defaultLabel, ''];
+        }
+
+        // Clean the phone number
+        $cleanedPhone = preg_replace('/[^\d+]/', '', $phone);
+
+        // Infer label from phone content
+        $label = $defaultLabel;
+        if (strpos($phone, 'prive') !== false || strpos($phone, 'private') !== false) {
+            $label = ContactLabel::Eigen->value;
+        } elseif (strpos($phone, 'werk') !== false || strpos($phone, 'work') !== false) {
+            $label = ContactLabel::Relatie->value;
+        }
+
+        return [$label, $cleanedPhone];
+    }
+
+    /**
      * Show dry run results
      */
     private function showDryRunResults($records, $leadByPersonsByAnamnesis, $callActivities = [], $emailActivities = [], $meetingActivities = [], $emailAttachments = []): void
@@ -917,29 +940,6 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         }
 
         return $phones;
-    }
-
-    /**
-     * Sanitize phone number and infer label
-     */
-    protected function sanitizePhoneAndInferLabel($phone, $defaultLabel): array
-    {
-        if (empty($phone)) {
-            return [$defaultLabel, ''];
-        }
-
-        // Clean the phone number
-        $cleanedPhone = preg_replace('/[^\d+]/', '', $phone);
-        
-        // Infer label from phone content
-        $label = $defaultLabel;
-        if (strpos($phone, 'prive') !== false || strpos($phone, 'private') !== false) {
-            $label = ContactLabel::Eigen->value;
-        } elseif (strpos($phone, 'werk') !== false || strpos($phone, 'work') !== false) {
-            $label = ContactLabel::Relatie->value;
-        }
-
-        return [$label, $cleanedPhone];
     }
 
     /**

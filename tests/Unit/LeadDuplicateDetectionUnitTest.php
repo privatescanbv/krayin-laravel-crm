@@ -20,16 +20,16 @@ class LeadDuplicateDetectionUnitTest extends TestCase
         $this->leadRepository = app(LeadRepository::class);
     }
 
-    public function test_findDuplicatesByJsonField_works_with_emails()
+    public function test_find_duplicates_by_json_field_works_with_emails()
     {
         // Create stage
         $stage = Stage::first();
-        
+
         // Create first lead with email
         $lead1 = Lead::factory()->create([
             'first_name' => 'Test',
-            'last_name' => 'User1',
-            'emails' => [
+            'last_name'  => 'User1',
+            'emails'     => [
                 ['value' => 'test@example.com', 'label' => ContactLabel::Eigen->value],
             ],
             'lead_pipeline_stage_id' => $stage->id,
@@ -38,8 +38,8 @@ class LeadDuplicateDetectionUnitTest extends TestCase
         // Create second lead with same email
         $lead2 = Lead::factory()->create([
             'first_name' => 'Test',
-            'last_name' => 'User2',
-            'emails' => [
+            'last_name'  => 'User2',
+            'emails'     => [
                 ['value' => 'test@example.com', 'label' => ContactLabel::Relatie->value],
             ],
             'lead_pipeline_stage_id' => $stage->id,

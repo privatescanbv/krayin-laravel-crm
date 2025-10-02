@@ -348,13 +348,13 @@ test('imports lead with person but without anamnesis relations', function () {
     // Insert sugarcrm lead and related data (no anamnesis tables populated)
     $leadId = 'lead-no-anam-001';
     DB::connection('sugarcrm')->table('leads')->insert([
-        'id'            => $leadId,
-        'first_name'    => 'NoAnam',
-        'last_name'     => 'Person',
-        'status'        => 'New',
-        'date_entered'  => '2025-06-11 13:41:07',
-        'date_modified' => '2025-06-12 10:00:00',
-        'deleted'       => 0,
+        'id'               => $leadId,
+        'first_name'       => 'NoAnam',
+        'last_name'        => 'Person',
+        'status'           => 'New',
+        'date_entered'     => '2025-06-11 13:41:07',
+        'date_modified'    => '2025-06-12 10:00:00',
+        'deleted'          => 0,
         'assigned_user_id' => 'user-no-anam-001', // Add assigned user for proper mapping
     ]);
     DB::connection('sugarcrm')->table('leads_cstm')->insert([
@@ -373,15 +373,15 @@ test('imports lead with person but without anamnesis relations', function () {
         'deleted'             => 0,
     ]);
 
-        // Run import without transaction conflicts
-        // Note: SQLite doesn't support autocommit setting, so we skip this for SQLite
-        if (DB::connection('sugarcrm')->getDriverName() !== 'sqlite') {
-            try {
-                DB::connection('sugarcrm')->statement('SET autocommit=1');
-            } catch (\Exception $e) {
-                // Ignore autocommit errors
-            }
+    // Run import without transaction conflicts
+    // Note: SQLite doesn't support autocommit setting, so we skip this for SQLite
+    if (DB::connection('sugarcrm')->getDriverName() !== 'sqlite') {
+        try {
+            DB::connection('sugarcrm')->statement('SET autocommit=1');
+        } catch (\Exception $e) {
+            // Ignore autocommit errors
         }
+    }
     $exit = Artisan::call('import:leads', [
         '--connection' => 'sugarcrm',
         '--limit'      => 1,
@@ -556,13 +556,13 @@ test('imports lead with multiple persons correctly', function () {
     // Insert sugarcrm lead and related data
     $leadId = 'lead-multi-001';
     DB::connection('sugarcrm')->table('leads')->insert([
-        'id'            => $leadId,
-        'first_name'    => 'Multi',
-        'last_name'     => 'Person',
-        'status'        => 'New',
-        'date_entered'  => '2025-06-11 13:41:07',
-        'date_modified' => '2025-06-12 10:00:00',
-        'deleted'       => 0,
+        'id'               => $leadId,
+        'first_name'       => 'Multi',
+        'last_name'        => 'Person',
+        'status'           => 'New',
+        'date_entered'     => '2025-06-11 13:41:07',
+        'date_modified'    => '2025-06-12 10:00:00',
+        'deleted'          => 0,
         'assigned_user_id' => 'user-multi-001', // Add assigned user for proper mapping
     ]);
     DB::connection('sugarcrm')->table('leads_cstm')->insert([
@@ -721,15 +721,15 @@ test('imports call activities from sugarcrm', function () {
 
     // Insert SugarCRM lead data
     DB::connection('sugarcrm')->table('leads')->insert([
-        'id'            => $leadId,
-        'first_name'    => 'John',
-        'last_name'     => 'Doe',
-        'phone_work'    => '+31612345678 (prive)',
-        'phone_mobile'  => '+31612345678',
-        'date_entered'  => '2024-01-15 10:00:00',
-        'date_modified' => '2024-01-15 11:00:00',
-        'status'        => 'New',
-        'deleted'       => 0,
+        'id'               => $leadId,
+        'first_name'       => 'John',
+        'last_name'        => 'Doe',
+        'phone_work'       => '+31612345678 (prive)',
+        'phone_mobile'     => '+31612345678',
+        'date_entered'     => '2024-01-15 10:00:00',
+        'date_modified'    => '2024-01-15 11:00:00',
+        'status'           => 'New',
+        'deleted'          => 0,
         'assigned_user_id' => 'user-call-001', // Add assigned user for proper mapping
     ]);
 
@@ -833,12 +833,12 @@ test('imports call activities from sugarcrm', function () {
     // Verify lead was imported
     $lead = Lead::where('external_id', $leadId)->first();
     expect($lead)->not->toBeNull();
-    
+
     // Check if phones were imported
     expect($lead->phones)->not->toBeNull()
         ->and($lead->phones)->toBeArray()
         ->and(count($lead->phones))->toBeGreaterThan(0);
-    
+
     // Ensure phone label inferred and value cleaned
     $firstPhone = $lead->phones[0] ?? null;
     expect($firstPhone)->not->toBeNull()
@@ -895,13 +895,13 @@ test('imports email activities from sugarcrm', function () {
     $anamnesisId = 'anamnesis-001';
 
     DB::connection('sugarcrm')->table('leads')->insert([
-        'id'            => $leadId,
-        'first_name'    => 'John',
-        'last_name'     => 'Doe',
-        'status'        => 'New',
-        'date_entered'  => '2024-01-01 10:00:00',
-        'date_modified' => '2024-01-01 11:00:00',
-        'deleted'       => 0,
+        'id'               => $leadId,
+        'first_name'       => 'John',
+        'last_name'        => 'Doe',
+        'status'           => 'New',
+        'date_entered'     => '2024-01-01 10:00:00',
+        'date_modified'    => '2024-01-01 11:00:00',
+        'deleted'          => 0,
         'assigned_user_id' => 'user-001', // Add assigned user for proper mapping
     ]);
 
@@ -1107,11 +1107,11 @@ test('imports email activities from sugarcrm', function () {
     // Verify lead was imported
     $lead = Lead::where('external_id', $leadId)->first();
     expect($lead)->not->toBeNull();
-    
+
     // Debug: Check if user exists
     $userFromDb = User::where('external_id', 'user-001')->first();
     expect($userFromDb)->not->toBeNull();
-    
+
     // The user ID might be different due to test isolation, so just check that it's not null
     expect($lead->user_id)->not->toBeNull();
 
@@ -1178,14 +1178,14 @@ test('imports meeting activities from sugarcrm', function () {
 
     // Insert SugarCRM lead data
     DB::connection('sugarcrm')->table('leads')->insert([
-        'id'            => $leadId,
-        'first_name'    => 'Jane',
-        'last_name'     => 'Smith',
-        'phone_work'    => '+31612345679',
-        'date_entered'  => '2024-02-15 10:00:00',
-        'date_modified' => '2024-02-15 11:00:00',
-        'status'        => 'New',
-        'deleted'       => 0,
+        'id'               => $leadId,
+        'first_name'       => 'Jane',
+        'last_name'        => 'Smith',
+        'phone_work'       => '+31612345679',
+        'date_entered'     => '2024-02-15 10:00:00',
+        'date_modified'    => '2024-02-15 11:00:00',
+        'status'           => 'New',
+        'deleted'          => 0,
         'assigned_user_id' => 'user-meeting-001', // Add assigned user for proper mapping
     ]);
 

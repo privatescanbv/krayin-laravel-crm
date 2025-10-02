@@ -472,47 +472,17 @@ class LeadRepository extends Repository
             throw new \Exception('JSON duplicate detection is only supported on MySQL database');
         }
 
-        // Debug info
-        $debugInfo = [
-            'lead_id' => $lead->id,
-            'field' => $field,
-            'values' => $values,
-            'field_data' => $lead->$field,
-        ];
-
         // Use LIKE operator to search for values in JSON field
-        try {
-            $query = $this->model->where('id', '!=', $lead->id);
-            
-            $query->where(function ($subQuery) use ($field, $values) {
+        $results = $this->model->where('id', '!=', $lead->id)
+            ->where(function ($query) use ($field, $values) {
                 foreach ($values as $value) {
                     // Search for the value in the JSON array using LIKE
                     // Try both string and integer formats
-                    $subQuery->orWhere($field, 'LIKE', '%"' . $value . '"%')
-                            ->orWhere($field, 'LIKE', '%' . $value . '%');
+                    $query->orWhere($field, 'LIKE', '%"' . $value . '"%')
+                          ->orWhere($field, 'LIKE', '%' . $value . '%');
                 }
-            });
-            
-            $sql = $query->toSql();
-            $bindings = $query->getBindings();
-            
-            $results = $query->get();
-            
-            // Debug output
-            $debugInfo['sql'] = $sql;
-            $debugInfo['bindings'] = $bindings;
-            $debugInfo['results_count'] = $results->count();
-            $debugInfo['result_ids'] = $results->pluck('id')->toArray();
-            
-            // Log debug info
-            \Log::info('LeadDuplicateDetection Debug', $debugInfo);
-            
-        } catch (\Exception $e) {
-            // Let it crash with clear error message
-            $debugInfo['error'] = $e->getMessage();
-            \Log::error('LeadDuplicateDetection Error', $debugInfo);
-            throw new \Exception("SQL Error in findDuplicatesByJsonField: " . $e->getMessage() . " | Debug: " . json_encode($debugInfo));
-        }
+            })
+            ->get();
 
         return $results;
     }
@@ -551,51 +521,16 @@ class LeadRepository extends Repository
         // Load stage relationships for all duplicates
         $duplicates->load('stage');
 
-        $debugInfo = [
-            'lead_id' => $lead->id,
-            'lead_created_at' => $lead->created_at,
-            'two_weeks_ago' => $twoWeeksAgo->toDateTimeString(),
-            'two_weeks_later' => $twoWeeksLater->toDateTimeString(),
-            'duplicates_before_filter' => $duplicates->count(),
-            'duplicate_details' => []
-        ];
-
-        $filteredDuplicates = $duplicates->filter(function ($duplicate) use ($twoWeeksAgo, $twoWeeksLater, &$debugInfo) {
-            $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
-            
-            $duplicateInfo = [
-                'id' => $duplicate->id,
-                'created_at' => $duplicate->created_at,
-                'stage_code' => $duplicate->stage ? $duplicate->stage->code : 'no_stage',
-                'is_won' => $duplicate->stage && $duplicate->stage->code === 'won',
-                'is_in_time_range' => $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater),
-                'filtered_out' => false
-            ];
-
+        return $duplicates->filter(function ($duplicate) use ($twoWeeksAgo, $twoWeeksLater) {
             // Filter out leads in 'Won' status
             if ($duplicate->stage && $duplicate->stage->code === 'won') {
-                $duplicateInfo['filtered_out'] = true;
-                $duplicateInfo['filter_reason'] = 'won_status';
-                $debugInfo['duplicate_details'][] = $duplicateInfo;
                 return false;
             }
 
             // Filter out leads created more than 2 weeks apart
-            if (!$duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater)) {
-                $duplicateInfo['filtered_out'] = true;
-                $duplicateInfo['filter_reason'] = 'time_range';
-                $debugInfo['duplicate_details'][] = $duplicateInfo;
-                return false;
-            }
-
-            $debugInfo['duplicate_details'][] = $duplicateInfo;
-            return true;
+            $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
+            return $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
         });
-
-        $debugInfo['duplicates_after_filter'] = $filteredDuplicates->count();
-        \Log::info('LeadDuplicateFilters Debug', $debugInfo);
-
-        return $filteredDuplicates;
     }
 
     /**

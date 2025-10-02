@@ -9,10 +9,7 @@
     $defaultCurrency = Currency::default()->value;
     $productTypes = ProductType::orderBy('name')->get(['id', 'name']);
     $resourceTypes = ResourceType::orderBy('name')->get(['id', 'name']);
-    $productGroups = app('Webkul\Product\Repositories\ProductGroupRepository')
-        ->with('parent.parent.parent.parent.parent')
-        ->orderBy('name')
-        ->all();
+    $productGroups = app('Webkul\Product\Repositories\ProductGroupRepository')->getAllWithParents();
 @endphp
 
     <!-- Naam -->

@@ -69,11 +69,7 @@ class ProductGroupController extends Controller
     public function edit(int $id): View
     {
         $productGroup = $this->productGroupRepository->findOrFail($id);
-        $productGroups = $this->productGroupRepository
-            ->with('parent.parent.parent.parent.parent')
-            ->where('id', '!=', $id)
-            ->orderBy('name')
-            ->get();
+        $productGroups = $this->productGroupRepository->getAllWithParents()->where('id', '!=', $id);
 
         return view('admin::products.groups.edit', compact('productGroup', 'productGroups'));
     }

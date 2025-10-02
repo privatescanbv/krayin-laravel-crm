@@ -32,7 +32,10 @@ class ProductGroupController extends Controller
      */
     public function create()
     {
-        $productGroups = $this->productGroupRepository->all();
+        $productGroups = $this->productGroupRepository
+            ->with('parent.parent.parent.parent.parent')
+            ->orderBy('name')
+            ->all();
 
         return view('admin::products.groups.create', compact('productGroups'));
     }
@@ -66,7 +69,7 @@ class ProductGroupController extends Controller
     public function edit(int $id): View
     {
         $productGroup = $this->productGroupRepository->findOrFail($id);
-        $productGroups = $this->productGroupRepository->where('id', '!=', $id)->get();
+        $productGroups = $this->productGroupRepository->getAllWithParents()->where('id', '!=', $id);
 
         return view('admin::products.groups.edit', compact('productGroup', 'productGroups'));
     }

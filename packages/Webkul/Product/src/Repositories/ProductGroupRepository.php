@@ -14,4 +14,14 @@ class ProductGroupRepository extends Repository
     {
         return ProductGroup::class;
     }
+
+    /**
+     * Get all product groups with their parent hierarchy loaded
+     */
+    public function getAllWithParents()
+    {
+        return $this->with(['parent.parent.parent.parent.parent'])
+            ->orderBy('name')
+            ->all();
+    }
 }

@@ -41,7 +41,7 @@ class ProductGroup extends Model implements ProductGroupContract
      */
     public function parent()
     {
-        return $this->belongsTo(ProductGroupProxy::modelClass(), 'parent_id');
+        return $this->belongsTo(self::class, 'parent_id');
     }
 
     /**
@@ -49,7 +49,7 @@ class ProductGroup extends Model implements ProductGroupContract
      */
     public function children()
     {
-        return $this->hasMany(ProductGroupProxy::modelClass(), 'parent_id');
+        return $this->hasMany(self::class, 'parent_id');
     }
 
     /**
@@ -66,5 +66,26 @@ class ProductGroup extends Model implements ProductGroupContract
     public function ancestors()
     {
         return $this->parent()->with('ancestors');
+    }
+
+    /**
+     * Get the full hierarchical path of the group.
+     * Returns empty string for root level (no parent).
+     */
+    public function getPathAttribute(): string
+    {
+        if (!$this->parent_id) {
+            return $this->name;
+        }
+
+        $path = [$this->name];
+        $parent = $this->parent;
+
+        while ($parent) {
+            array_unshift($path, $parent->name);
+            $parent = $parent->parent;
+        }
+
+        return implode(' > ', $path);
     }
 }

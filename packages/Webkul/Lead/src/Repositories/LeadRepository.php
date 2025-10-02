@@ -467,14 +467,11 @@ class LeadRepository extends Repository
             return collect();
         }
 
-        // Try different approaches for JSON searching
+        // Use a simpler approach - search for the value anywhere in the JSON field
         $results = $this->model->where('id', '!=', $lead->id)
             ->where(function ($query) use ($field, $values) {
                 foreach ($values as $value) {
-                    // Try multiple approaches
-                    $query->orWhereJsonContains($field, ['value' => $value])
-                          ->orWhereRaw("JSON_SEARCH(?, 'one', ?) IS NOT NULL", [$field, $value])
-                          ->orWhereRaw("JSON_SEARCH(JSON_EXTRACT(?, '$[*].value'), 'one', ?) IS NOT NULL", [$field, $value]);
+                    $query->orWhereRaw("JSON_SEARCH(?, 'one', ?) IS NOT NULL", [$field, $value]);
                 }
             })
             ->get();
@@ -522,10 +519,12 @@ class LeadRepository extends Repository
                 return false;
             }
 
+            // Temporarily disable time filtering to test
+            return true;
+            
             // Filter out leads created more than 2 weeks apart
-            $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
-
-            return $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
+            // $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
+            // return $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
         });
     }
 

@@ -518,25 +518,17 @@ class LeadRepository extends Repository
         $twoWeeksAgo = $leadCreatedAt->copy()->subWeeks(2);
         $twoWeeksLater = $leadCreatedAt->copy()->addWeeks(2);
 
-        $filteredDuplicates = collect();
-        foreach ($duplicates as $duplicate) {
+        return $duplicates->filter(function ($duplicate) use ($twoWeeksAgo, $twoWeeksLater) {
             // Filter out leads in 'Won' status
-            // Get stage code directly from the lead's stage relationship
-            $stageCode = $duplicate->lead_pipeline_stage_id ?
-                \Webkul\Lead\Models\Stage::find($duplicate->lead_pipeline_stage_id)?->code : null;
-
-            if ($stageCode === 'won') {
-                continue;
+            if ($duplicate->stage && $duplicate->stage->code === 'won') {
+                return false;
             }
 
             // Filter out leads created more than 2 weeks apart
             $duplicateCreatedAt = Carbon::parse($duplicate->created_at);
-            if ($duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater)) {
-                $filteredDuplicates->push($duplicate);
-            }
-        }
 
-        return $filteredDuplicates;
+            return $duplicateCreatedAt->between($twoWeeksAgo, $twoWeeksLater);
+        });
     }
 
     /**

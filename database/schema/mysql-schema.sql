@@ -248,7 +248,6 @@ DROP TABLE IF EXISTS `clinics`;
 CREATE TABLE `clinics` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
-  `registration_form_clinic_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `external_id` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `emails` json DEFAULT NULL,
   `phones` json DEFAULT NULL,

@@ -22,6 +22,13 @@ use Webkul\User\Models\User;
 beforeEach(function () {
     $this->seed(TestSeeder::class);
 
+    // Check if SugarCRM connection is available
+    try {
+        DB::connection('sugarcrm')->getPdo();
+    } catch (\Exception $e) {
+        $this->markTestSkipped('SugarCRM connection not available: ' . $e->getMessage());
+    }
+
     // Clear main database tables to prevent test pollution
     DB::table('leads')->delete();
     DB::table('activities')->delete();

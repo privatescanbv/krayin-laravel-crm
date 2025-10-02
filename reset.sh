@@ -6,7 +6,6 @@ echo "2) Multiple leads (limit 1500 persons, limit 100 leads)"
 read -p "Enter your choice (1 or 2): " choice
 
 ./vendor/bin/sail artisan migrate:fresh --seed &&
-./vendor/bin/sail artisan migrate:fresh --database=mysql_testing &&
 ./vendor/bin/sail artisan import:users &&
 
 if [ "$choice" = "1" ]; then

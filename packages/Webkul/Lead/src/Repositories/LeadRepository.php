@@ -523,7 +523,11 @@ class LeadRepository extends Repository
 
         foreach ($duplicates as $duplicate) {
             // Filter out leads in 'Won' status
-            if ($duplicate->stage && $duplicate->stage->code === 'won') {
+            // Get stage code directly from the lead's stage relationship
+            $stageCode = $duplicate->lead_pipeline_stage_id ? 
+                \Webkul\Lead\Models\Stage::find($duplicate->lead_pipeline_stage_id)?->code : null;
+            
+            if ($stageCode === 'won') {
                 continue;
             }
 

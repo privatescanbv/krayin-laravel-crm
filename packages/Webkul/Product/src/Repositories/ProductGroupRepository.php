@@ -20,9 +20,8 @@ class ProductGroupRepository extends Repository
      */
     public function getAllWithParents()
     {
-        return $this->model
-            ->with('parent.parent.parent.parent.parent')
+        return $this->with(['parent.parent.parent.parent.parent'])
             ->orderBy('name')
-            ->get();
+            ->all();
     }
 }

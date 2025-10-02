@@ -19,7 +19,7 @@ beforeEach(function () {
 });
 
 // Helper function to create leads with proper stage
-function createLeadWithStage([$data = []) {
+function createLeadWithStage($data = []) {
     $stage = \Webkul\Lead\Models\Stage::first();
     return Lead::factory()->create(array_merge($data, ['lead_pipeline_stage_id' => $stage->id]));
 }

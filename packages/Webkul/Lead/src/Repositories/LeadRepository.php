@@ -487,7 +487,9 @@ class LeadRepository extends Repository
             $query->where(function ($subQuery) use ($field, $values) {
                 foreach ($values as $value) {
                     // Search for the value in the JSON array using LIKE
-                    $subQuery->orWhere($field, 'LIKE', '%"' . $value . '"%');
+                    // Try both string and integer formats
+                    $subQuery->orWhere($field, 'LIKE', '%"' . $value . '"%')
+                            ->orWhere($field, 'LIKE', '%' . $value . '%');
                 }
             });
             

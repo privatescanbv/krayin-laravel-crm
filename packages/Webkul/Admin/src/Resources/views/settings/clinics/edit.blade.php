@@ -40,6 +40,23 @@
                     <x-admin::form.control-group.error control-name="name" />
                 </x-admin::form.control-group>
 
+                <x-admin::form.control-group>
+                    <x-admin::form.control-group.label>
+                        AFB naam kliniek
+                    </x-admin::form.control-group.label>
+
+                    <x-admin::form.control-group.control
+                        type="text"
+                        name="registration_form_clinic_name"
+                        value="{{ old('registration_form_clinic_name', $clinic->registration_form_clinic_name) }}"
+                        rules="max:255"
+                        label="AFB naam kliniek"
+                        placeholder="AFB naam kliniek"
+                    />
+
+                    <x-admin::form.control-group.error control-name="registration_form_clinic_name" />
+                </x-admin::form.control-group>
+
                 <!-- Emails -->
                 @php
                     $__emailsVal = old('emails', $clinic->emails ?? []);

@@ -481,8 +481,10 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
     // Test the new filtering logic
     $duplicates = $this->leadRepository->findPotentialDuplicates($mainLead);
 
-    // Should only find the recent active lead
-    $this->assertCount(1, $duplicates, 'Should only find 1 duplicate after applying time and status filters');
+    // Debug: Show what duplicates were found
+    $duplicateIds = $duplicates->pluck('id')->toArray();
+    $expectedIds = [$recentActiveLead->id];
+    $this->assertCount(1, $duplicates, "Should only find 1 duplicate after applying time and status filters. Found: " . implode(',', $duplicateIds) . " Expected: " . implode(',', $expectedIds));
     $this->assertEquals($recentActiveLead->id, $duplicates->first()->id, 'Should find the recent active lead');
 
     // Verify the filtered out leads are not in results

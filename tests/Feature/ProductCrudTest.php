@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\ProductType;
 use App\Models\ResourceType;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Product\Models\Product;

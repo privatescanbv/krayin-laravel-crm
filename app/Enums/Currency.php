@@ -34,4 +34,34 @@ enum Currency: string
             ['code' => self::SEK->value, 'label' => 'Swedish Krona (SEK)'],
         ];
     }
+
+    /**
+     * Format amount with currency using NL style: comma decimals, dot thousands.
+     */
+    public static function formatMoney(?string $currencyCode, float $amount): string
+    {
+        $symbolMap = [
+            self::EUR->value => '€',
+            self::USD->value => '$',
+            self::GBP->value => '£',
+            self::CHF->value => 'CHF',
+            self::DKK->value => 'kr',
+            self::NOK->value => 'kr',
+            self::SEK->value => 'kr',
+        ];
+
+        $code = $currencyCode ?: self::default()->value;
+        $symbol = $symbolMap[$code] ?? $code;
+        $formatted = number_format($amount, 2, ',', '.');
+
+        if (in_array($code, [self::EUR->value, self::USD->value, self::GBP->value], true)) {
+            return $symbol.' '.$formatted;
+        }
+
+        if (isset($symbolMap[$code])) {
+            return $formatted.' '.$symbol;
+        }
+
+        return ($code ? $code.' ' : '').$formatted;
+    }
 }

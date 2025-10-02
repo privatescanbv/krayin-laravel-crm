@@ -4,6 +4,7 @@ namespace Webkul\Admin\DataGrids\Product;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
+use App\Enums\Currency;
 use Webkul\DataGrid\DataGrid;
 use Webkul\Tag\Repositories\TagRepository;
 
@@ -73,7 +74,7 @@ class ProductDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'closure'    => function ($row) {
-                return $this->formatMoney($row->currency, (float) $row->price);
+                return Currency::formatMoney($row->currency, (float) $row->price);
             },
         ]);
         $this->addColumn([
@@ -162,31 +163,5 @@ class ProductDataGrid extends DataGrid
         ]);
     }
 
-    private function formatMoney(?string $currency, float $amount): string
-    {
-        $symbolMap = [
-            'EUR' => '€',
-            'USD' => '$',
-            'GBP' => '£',
-            'CHF' => 'CHF',
-            'DKK' => 'kr',
-            'NOK' => 'kr',
-            'SEK' => 'kr',
-        ];
-
-        $symbol = $symbolMap[$currency ?? 'EUR'] ?? $currency ?? '';
-
-        $formatted = number_format($amount, 2, ',', '.');
-
-        // Place symbol before amount for common currencies, otherwise append code
-        if (in_array($currency, ['EUR', 'USD', 'GBP'], true)) {
-            return $symbol . ' ' . $formatted;
-        }
-
-        if (isset($symbolMap[$currency ?? ''])) {
-            return $formatted . ' ' . $symbol;
-        }
-
-        return ($currency ? $currency . ' ' : '') . $formatted;
-    }
+    // Money formatting centralized in App\Enums\Currency::formatMoney
 }

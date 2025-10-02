@@ -222,6 +222,7 @@ TABLE(Resource, "resource") {
 TABLE(Clinic, "clinic") {
   PRIMARY_KEY(id): bigint
   name: string
+  registration_form_clinic_name: string
   emails: json
   phones: json
   created_at: datetime

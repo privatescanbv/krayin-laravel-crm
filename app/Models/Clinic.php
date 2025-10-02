@@ -15,6 +15,7 @@ class Clinic extends Model
     protected $fillable = [
         'external_id',
         'name',
+        'registration_form_clinic_name',
         'emails',
         'phones',
         'address_id',

@@ -467,12 +467,12 @@ class LeadRepository extends Repository
             return collect();
         }
 
-        // Use Laravel's built-in JSON search functionality
+        // Use a different approach - search for the value in the JSON array using LIKE
         $results = $this->model->where('id', '!=', $lead->id)
             ->where(function ($query) use ($field, $values) {
                 foreach ($values as $value) {
-                    // Search for the value in the JSON array using orWhereJsonContains
-                    $query->orWhereJsonContains($field, $value);
+                    // Search for the value in the JSON array using LIKE
+                    $query->orWhereRaw("JSON_SEARCH(?, 'one', ?) IS NOT NULL", [$field, $value]);
                 }
             })
             ->get();

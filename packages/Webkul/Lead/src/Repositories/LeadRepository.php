@@ -484,7 +484,6 @@ class LeadRepository extends Repository
             })
             ->get();
 
-
         return $results;
     }
 

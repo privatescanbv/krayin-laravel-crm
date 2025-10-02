@@ -21,6 +21,7 @@ test('test_address_is_saved_when_creating_person', function () {
         'emails'                => [['value' => 'test1@example.com', 'label' => 'Work']],
         'phones'                => [['value' => '111111111', 'label' => 'Mobile']],
         'entity_type'           => 'persons',
+        'user_id'               => $user->id, // Ensure user_id is set
         'address'               => [
             'street'              => 'Hoofdstraat',
             'house_number'        => '123',
@@ -69,6 +70,7 @@ test('test_address_is_updated_when_updating_person', function () {
         'emails'                => [['value' => 'test2@example.com', 'label' => 'Work']],
         'phones'                => [['value' => '222222222', 'label' => 'Mobile']],
         'entity_type'           => 'persons',
+        'user_id'               => $user->id, // Ensure user_id is set
         'address'               => [
             'street'       => 'Oude Straat',
             'house_number' => '456',

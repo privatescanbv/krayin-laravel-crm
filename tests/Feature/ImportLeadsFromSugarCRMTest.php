@@ -354,6 +354,7 @@ test('imports lead with person but without anamnesis relations', function () {
         'date_entered'  => '2025-06-11 13:41:07',
         'date_modified' => '2025-06-12 10:00:00',
         'deleted'       => 0,
+        'assigned_user_id' => 'user-no-anam-001', // Add assigned user for proper mapping
     ]);
     DB::connection('sugarcrm')->table('leads_cstm')->insert([
         'id_c'              => $leadId,
@@ -371,7 +372,8 @@ test('imports lead with person but without anamnesis relations', function () {
         'deleted'             => 0,
     ]);
 
-    // Run import
+    // Run import without transaction conflicts
+    DB::connection('sugarcrm')->statement('SET autocommit=1');
     $exit = Artisan::call('import:leads', [
         '--connection' => 'sugarcrm',
         '--limit'      => 1,
@@ -553,6 +555,7 @@ test('imports lead with multiple persons correctly', function () {
         'date_entered'  => '2025-06-11 13:41:07',
         'date_modified' => '2025-06-12 10:00:00',
         'deleted'       => 0,
+        'assigned_user_id' => 'user-multi-001', // Add assigned user for proper mapping
     ]);
     DB::connection('sugarcrm')->table('leads_cstm')->insert([
         'id_c'              => $leadId,
@@ -714,10 +717,12 @@ test('imports call activities from sugarcrm', function () {
         'first_name'    => 'John',
         'last_name'     => 'Doe',
         'phone_work'    => '+31612345678 (prive)',
+        'phone_mobile'  => '+31612345678',
         'date_entered'  => '2024-01-15 10:00:00',
         'date_modified' => '2024-01-15 11:00:00',
         'status'        => 'New',
         'deleted'       => 0,
+        'assigned_user_id' => 'user-call-001', // Add assigned user for proper mapping
     ]);
 
     // Insert custom fields
@@ -883,6 +888,7 @@ test('imports email activities from sugarcrm', function () {
         'date_entered'  => '2024-01-01 10:00:00',
         'date_modified' => '2024-01-01 11:00:00',
         'deleted'       => 0,
+        'assigned_user_id' => 'user-001', // Add assigned user for proper mapping
     ]);
 
     DB::connection('sugarcrm')->table('leads_cstm')->insert([
@@ -1159,6 +1165,7 @@ test('imports meeting activities from sugarcrm', function () {
         'date_modified' => '2024-02-15 11:00:00',
         'status'        => 'New',
         'deleted'       => 0,
+        'assigned_user_id' => 'user-meeting-001', // Add assigned user for proper mapping
     ]);
 
     // Insert custom fields

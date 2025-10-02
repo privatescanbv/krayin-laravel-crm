@@ -126,7 +126,9 @@ test('API lead creation handles missing optional fields gracefully', function ()
     $response->assertStatus(201);
     $leadId = $response->json('data.id');
 
-    $this->assertTrue(Anamnesis::count() == 0, 'Anamnesis should not be created without a person');
+    // Check that no anamnesis was created for this lead specifically
+    $leadAnamnesisCount = Anamnesis::where('lead_id', $leadId)->count();
+    $this->assertEquals(0, $leadAnamnesisCount, 'Anamnesis should not be created without a person');
 });
 
 test('API lead creation fails gracefully with invalid data', function () {

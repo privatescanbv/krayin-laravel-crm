@@ -24,8 +24,9 @@ test('resource types index returns datagrid json', function () {
 });
 
 test('can create resource type', function () {
+    $uniqueId = uniqid();
     $payload = [
-        'name'        => 'MRI Scanner',
+        'name'        => "MRI Scanner {$uniqueId}",
         'description' => 'Magnetic resonance imaging',
     ];
 
@@ -33,16 +34,17 @@ test('can create resource type', function () {
     $response->assertRedirect(route('admin.settings.resource_types.index'));
 
     $this->assertDatabaseHas('resource_types', [
-        'name' => 'MRI Scanner',
+        'name' => "MRI Scanner {$uniqueId}",
     ]);
 });
 
 test('can update resource type', function () {
 
     $entity = ResourceType::factory()->create();
+    $uniqueId = uniqid();
 
     $payload = [
-        'name'        => 'CT Scanner',
+        'name'        => "CT Scanner {$uniqueId}",
         'description' => 'Computed tomography',
         '_method'     => 'put',
     ];
@@ -52,7 +54,7 @@ test('can update resource type', function () {
 
     $this->assertDatabaseHas('resource_types', [
         'id'   => $entity->id,
-        'name' => 'CT Scanner',
+        'name' => "CT Scanner {$uniqueId}",
     ]);
 });
 

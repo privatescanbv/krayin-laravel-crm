@@ -92,9 +92,9 @@ test('cascade delete removes lead_persons records when person is deleted', funct
 });
 
 test('lead_persons table has correct structure following existing pivot table pattern', function () {
-    // Check table structure (SQLite compatible)
-    $columns = DB::select('PRAGMA table_info(lead_persons)');
-    $columnNames = collect($columns)->pluck('name')->toArray();
+    // Check table structure (MySQL compatible)
+    $columns = DB::select('DESCRIBE lead_persons');
+    $columnNames = collect($columns)->pluck('Field')->toArray();
 
     // Should not have id column (following lead_activities pattern)
     expect($columnNames)->not->toContain('id');

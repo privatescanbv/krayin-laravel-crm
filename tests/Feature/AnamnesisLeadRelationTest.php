@@ -95,8 +95,12 @@ test('it allows multiple anamnesis for different lead-person combinations', func
     $this->seed(TestSeeder::class);
     $this->artisan('db:seed', ['--class' => LeadChannelSeeder::class]);
 
-    $lead1 = Lead::factory()->create();
-    $lead2 = Lead::factory()->create();
+    // Get the first stage from the seeded data
+    $stage = \Webkul\Lead\Models\Stage::first();
+    expect($stage)->not->toBeNull();
+
+    $lead1 = Lead::factory()->create(['lead_pipeline_stage_id' => $stage->id]);
+    $lead2 = Lead::factory()->create(['lead_pipeline_stage_id' => $stage->id]);
     $person1 = Person::factory()->create();
     $person2 = Person::factory()->create();
 

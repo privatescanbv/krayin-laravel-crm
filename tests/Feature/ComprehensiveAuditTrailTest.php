@@ -28,9 +28,11 @@ beforeEach(function () {
         'permissions'     => [],
     ]);
 
+    // Use unique emails to avoid constraint violations
+    $uniqueId = uniqid();
     $this->user1 = User::create([
         'name'     => 'Test User 1',
-        'email'    => 'user1@example.com',
+        'email'    => "user1-{$uniqueId}@example.com",
         'password' => bcrypt('password'),
         'status'   => 1,
         'role_id'  => $this->role->id,
@@ -38,7 +40,7 @@ beforeEach(function () {
 
     $this->user2 = User::create([
         'name'     => 'Test User 2',
-        'email'    => 'user2@example.com',
+        'email'    => "user2-{$uniqueId}@example.com",
         'password' => bcrypt('password'),
         'status'   => 1,
         'role_id'  => $this->role->id,

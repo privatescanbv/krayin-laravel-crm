@@ -406,6 +406,9 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
             'lead_pipeline_id', 1)
         ->first();
 
+    // Get the default stage for active leads
+    $defaultStage = Stage::where('lead_pipeline_id', 1)->where('code', '!=', 'won')->first();
+
     // Create the main lead (new inquiry)
     $mainLead = Lead::factory()->create([
         'first_name' => 'John',
@@ -417,6 +420,7 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
             ['value' => '+1234567890', 'label' => ContactLabel::Relatie->value],
         ],
         'created_at' => now(),
+        'lead_pipeline_stage_id' => $defaultStage->id,
     ]);
 
     // Scenario 1: Old lead from 6 months ago that was won (should be ignored - both filters apply)
@@ -449,7 +453,7 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
             ['value' => 'john.comprehensive@example.com', 'label' => ContactLabel::Eigen->value],
         ],
         'created_at' => now()->subWeeks(3),
-        // Default stage (not won)
+        'lead_pipeline_stage_id' => $defaultStage->id,
     ]);
 
     // Scenario 4: Recent lead (1 week ago) that is still active (should be found - passes both filters)
@@ -460,7 +464,7 @@ test('it proves the old behavior vs new behavior with comprehensive scenario', f
             ['value' => 'john.comprehensive@example.com', 'label' => 'work'],
         ],
         'created_at' => now()->subWeek(1),
-        // Default stage (not won)
+        'lead_pipeline_stage_id' => $defaultStage->id,
     ]);
 
     // Test the new filtering logic

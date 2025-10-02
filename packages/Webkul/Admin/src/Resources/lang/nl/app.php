@@ -681,7 +681,7 @@ return [
         'create' => [
             'title' => 'Product aanmaken',
             'general' => 'Algemeen',
-            'price' => 'Prijs',
+            'price' => 'Verkoopprijs',
             'costs' => 'Inkoopprijs',
             'product_type' => 'Producttype',
             'resource_type' => 'Resourcetype',
@@ -695,7 +695,7 @@ return [
         'edit' => [
             'title' => 'Product bewerken',
             'general' => 'Algemeen',
-            'price' => 'Prijs',
+            'price' => 'Verkoopprijs',
             'costs' => 'Inkoopprijs',
             'product_type' => 'Producttype',
             'resource_type' => 'Resourcetype',
@@ -714,7 +714,7 @@ return [
             'inventories' => 'Voorraad',
             'change-logs' => 'Wijzigingslog',
             'partner_products' => 'Partnerproducten',
-            'price' => 'Prijs',
+            'price' => 'Verkoopprijs',
             'costs' => 'Inkoopprijs',
             'product_type' => 'Producttype',
             'resource_type' => 'Resourcetype',

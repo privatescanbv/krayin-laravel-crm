@@ -33,6 +33,7 @@ class Product extends Model implements ProductContract
         'description',
         'product_group_id',
         'price',
+        'costs',
         'resource_type_id',
         'product_type_id',
     ];

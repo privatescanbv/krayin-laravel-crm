@@ -49,7 +49,7 @@ class AttributeValueRepository extends Repository
         }
 
         foreach ($attributes as $attribute) {
-            $typeColumn = $this->model::$attributeTypeFields[$attribute->type];
+            $typeColumn = \Webkul\Attribute\Models\AttributeValue::$attributeTypeFields[$attribute->type];
 
             if ($attribute->type === 'boolean') {
                 $data[$attribute->code] = isset($data[$attribute->code]) && $data[$attribute->code] ? 1 : 0;
@@ -59,11 +59,14 @@ class AttributeValueRepository extends Repository
                 continue;
             }
 
-            if ($attribute->type === 'price'
-                && isset($data[$attribute->code])
-                && $data[$attribute->code] === ''
-            ) {
-                $data[$attribute->code] = null;
+            if ($attribute->type === 'price') {
+                if (isset($data[$attribute->code]) && $data[$attribute->code] === '') {
+                    $data[$attribute->code] = null;
+                }
+
+                if (isset($data[$attribute->code]) && $data[$attribute->code] !== null) {
+                    $data[$attribute->code] = \App\Enums\Currency::normalizePrice($data[$attribute->code]);
+                }
             }
 
             if ($attribute->type === 'date' && $data[$attribute->code] === '') {
@@ -107,6 +110,8 @@ class AttributeValueRepository extends Repository
                         Storage::delete($attributeValue->text_value);
                     }
                 }
+
+    // Price normalization centralized in App\Enums\Currency::normalizePrice
             }
         }
     }
@@ -131,9 +136,9 @@ class AttributeValueRepository extends Repository
          * If the attribute type is email or phone, check the JSON value.
          */
         if (in_array($attribute->type, ['email', 'phone'])) {
-            $query->whereJsonContains($this->model::$attributeTypeFields[$attribute->type], [['value' => $value]]);
+            $query->whereJsonContains(\Webkul\Attribute\Models\AttributeValue::$attributeTypeFields[$attribute->type], [['value' => $value]]);
         } else {
-            $query->where($this->model::$attributeTypeFields[$attribute->type], $value);
+            $query->where(\Webkul\Attribute\Models\AttributeValue::$attributeTypeFields[$attribute->type], $value);
         }
 
         return $query->get()->count() ? false : true;

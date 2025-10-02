@@ -64,4 +64,34 @@ enum Currency: string
 
         return ($code ? $code.' ' : '').$formatted;
     }
+
+    /**
+     * Normalize localized price strings to a dot-decimal string.
+     * Examples: "1.234,56" -> "1234.56", "45,00" -> "45.00".
+     */
+    public static function normalizePrice(mixed $value): ?string
+    {
+        if ($value === null) {
+            return null;
+        }
+
+        $value = (string) $value;
+        $value = preg_replace('/\s+/', '', $value ?? '');
+
+        if ($value === '') {
+            return null;
+        }
+
+        $hasComma = str_contains($value, ',');
+        $hasDot = str_contains($value, '.');
+
+        if ($hasComma && $hasDot) {
+            $value = str_replace('.', '', $value);
+            $value = str_replace(',', '.', $value);
+        } elseif ($hasComma && ! $hasDot) {
+            $value = str_replace(',', '.', $value);
+        }
+
+        return $value;
+    }
 }

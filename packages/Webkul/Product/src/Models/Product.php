@@ -15,6 +15,7 @@ use Webkul\Tag\Models\TagProxy;
 use App\Models\ResourceType;
 use App\Models\ProductType;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Enums\Currency;
 
 class Product extends Model implements ProductContract
 {
@@ -96,5 +97,21 @@ class Product extends Model implements ProductContract
     public function partnerProducts(): BelongsToMany
     {
         return $this->belongsToMany(PartnerProduct::class, 'product_partner_product', 'product_id', 'partner_product_id');
+    }
+
+    /**
+     * Normalize price on set.
+     */
+    public function setPriceAttribute($value): void
+    {
+        $this->attributes['price'] = Currency::normalizePrice($value);
+    }
+
+    /**
+     * Normalize costs on set.
+     */
+    public function setCostsAttribute($value): void
+    {
+        $this->attributes['costs'] = Currency::normalizePrice($value);
     }
 }

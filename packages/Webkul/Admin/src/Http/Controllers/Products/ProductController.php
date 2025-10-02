@@ -253,41 +253,15 @@ class ProductController extends Controller
     protected function normalizePriceFields(Request $request): void
     {
         $request->merge([
-            'price' => $this->normalizePrice($request->input('price')),
-            'costs' => $this->normalizePrice($request->input('costs')),
+            'price' => \App\Enums\Currency::normalizePrice($request->input('price')),
+            'costs' => \App\Enums\Currency::normalizePrice($request->input('costs')),
         ]);
     }
 
     /**
      * Normalize price strings like "1.234,56" or "45,00" to "1234.56".
      */
-    protected function normalizePrice($value): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        $value = (string) $value;
-        $value = preg_replace('/\s+/', '', $value ?? '');
-
-        if ($value === '') {
-            return null;
-        }
-
-        $hasComma = str_contains($value, ',');
-        $hasDot = str_contains($value, '.');
-
-        if ($hasComma && $hasDot) {
-            // Assume dot is thousands separator and comma is decimal separator
-            $value = str_replace('.', '', $value);
-            $value = str_replace(',', '.', $value);
-        } elseif ($hasComma && ! $hasDot) {
-            // Only comma present -> treat as decimal separator
-            $value = str_replace(',', '.', $value);
-        }
-
-        return $value;
-    }
+    // Price normalization centralized in App\Enums\Currency::normalizePrice
 
     /**
      * Clean product data before saving.

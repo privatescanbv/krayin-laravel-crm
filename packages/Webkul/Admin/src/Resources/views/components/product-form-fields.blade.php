@@ -9,7 +9,10 @@
     $defaultCurrency = Currency::default()->value;
     $productTypes = ProductType::orderBy('name')->get(['id', 'name']);
     $resourceTypes = ResourceType::orderBy('name')->get(['id', 'name']);
-    $productGroups = app('Webkul\Product\Repositories\ProductGroupRepository')->orderBy('name')->all();
+    $productGroups = app('Webkul\Product\Repositories\ProductGroupRepository')
+        ->with('parent.parent.parent.parent.parent')
+        ->orderBy('name')
+        ->all();
 @endphp
 
     <!-- Naam -->
@@ -165,7 +168,7 @@
             <option value="">@lang('admin::app.select')</option>
             @foreach ($productGroups as $group)
                 <option
-                    value="{{ $group->id }}" @selected(old('product_group_id', $product->product_group_id ?? '') == $group->id)>{{ $group->name }}</option>
+                    value="{{ $group->id }}" @selected(old('product_group_id', $product->product_group_id ?? '') == $group->id)>{{ $group->path }}</option>
             @endforeach
         </x-admin::form.control-group.control>
 

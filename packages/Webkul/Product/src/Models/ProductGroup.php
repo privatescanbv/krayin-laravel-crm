@@ -67,4 +67,20 @@ class ProductGroup extends Model implements ProductGroupContract
     {
         return $this->parent()->with('ancestors');
     }
+
+    /**
+     * Get the full hierarchical path of the group.
+     */
+    public function getPathAttribute(): string
+    {
+        $path = [$this->name];
+        $parent = $this->parent;
+
+        while ($parent) {
+            array_unshift($path, $parent->name);
+            $parent = $parent->parent;
+        }
+
+        return implode(' > ', $path);
+    }
 }

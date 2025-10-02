@@ -373,8 +373,11 @@ test('imports lead with person but without anamnesis relations', function () {
         'deleted'             => 0,
     ]);
 
-    // Run import without transaction conflicts
-    DB::connection('sugarcrm')->statement('SET autocommit=1');
+        // Run import without transaction conflicts
+        // Note: SQLite doesn't support autocommit setting, so we skip this for SQLite
+        if (DB::connection('sugarcrm')->getDriverName() !== 'sqlite') {
+            DB::connection('sugarcrm')->statement('SET autocommit=1');
+        }
     $exit = Artisan::call('import:leads', [
         '--connection' => 'sugarcrm',
         '--limit'      => 1,
@@ -826,6 +829,12 @@ test('imports call activities from sugarcrm', function () {
     // Verify lead was imported
     $lead = Lead::where('external_id', $leadId)->first();
     expect($lead)->not->toBeNull();
+    
+    // Check if phones were imported
+    expect($lead->phones)->not->toBeNull()
+        ->and($lead->phones)->toBeArray()
+        ->and(count($lead->phones))->toBeGreaterThan(0);
+    
     // Ensure phone label inferred and value cleaned
     $firstPhone = $lead->phones[0] ?? null;
     expect($firstPhone)->not->toBeNull()
@@ -1094,6 +1103,10 @@ test('imports email activities from sugarcrm', function () {
     // Verify lead was imported
     $lead = Lead::where('external_id', $leadId)->first();
     expect($lead)->not->toBeNull();
+    
+    // Check if lead has proper user_id set
+    expect($lead->user_id)->not->toBeNull()
+        ->and($lead->user_id)->toBe($user->id);
 
     // Verify emails were imported as Email records (not activities)
     $emails = Email::where('lead_id', $lead->id)

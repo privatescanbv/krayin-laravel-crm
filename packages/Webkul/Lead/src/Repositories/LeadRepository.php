@@ -467,7 +467,7 @@ class LeadRepository extends Repository
             return collect();
         }
 
-        return Lead::where('id', '!=', $lead->id)
+        return $this->model->where('id', '!=', $lead->id)
             ->where(function ($query) use ($field, $values) {
                 foreach ($values as $value) {
                     $query->orWhereJsonContains($field, ['value' => $value]);
@@ -488,7 +488,7 @@ class LeadRepository extends Repository
             return collect();
         }
 
-        return Lead::where('id', '!=', $lead->id)
+        return $this->model->where('id', '!=', $lead->id)
             ->where('first_name', $lead->first_name)
             ->where('last_name', $lead->last_name)
             ->get();

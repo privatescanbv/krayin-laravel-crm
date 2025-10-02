@@ -63,7 +63,7 @@
 
                 @php
                     $oldPartnerProducts = collect(old('partner_products', []))->map(function($id) {
-                        $product = \App\Models\PartnerProduct::find($id);
+                        $product = PartnerProduct::find($id);
                         return $product ? ['id' => $product->id, 'name' => $product->name] : null;
                     })->filter()->values()->toArray();
                 @endphp

@@ -3,6 +3,7 @@
 namespace Webkul\Product\Models;
 
 use App\Models\PartnerProduct;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -20,7 +21,15 @@ use App\Enums\Currency;
 
 class Product extends Model implements ProductContract
 {
-    use CustomAttribute, LogsActivity;
+    use CustomAttribute, HasFactory, LogsActivity;
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return \Webkul\Product\Database\Factories\ProductFactory::new();
+    }
 
     /**
      * The attributes that are mass assignable.

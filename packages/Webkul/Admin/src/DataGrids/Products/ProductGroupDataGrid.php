@@ -68,7 +68,7 @@ class ProductGroupDataGrid extends DataGrid
             'index'      => 'parent_path',
             'label'      => trans('admin::app.productgroups.index.datagrid.parent_path'),
             'type'       => 'string',
-            'searchable' => true,
+            'searchable' => false,
             'sortable'   => true,
             'filterable' => true,
         ]);

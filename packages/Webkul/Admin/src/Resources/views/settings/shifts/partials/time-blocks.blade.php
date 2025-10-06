@@ -14,10 +14,10 @@
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         @for($day=1; $day<=7; $day++)
             @php 
-                $blocks = $weekdayBlocks[$day] ?? [['from' => '08:00', 'to' => '17:00']];
+                $blocks = $weekdayBlocks[$day] ?? [];
                 // Ensure blocks is always an array
                 if (!is_array($blocks)) {
-                    $blocks = [['from' => '08:00', 'to' => '17:00']];
+                    $blocks = [];
                 }
             @endphp
             <div class="rounded border border-gray-200 p-3 dark:border-gray-800">

@@ -180,6 +180,52 @@ Het systeem biedt uitgebreide monitoring via:
 - Error tracking en reporting
 - Performance metrics per sync
 
+## Log Cleanup
+
+### Automatische Cleanup
+
+Het systeem voert automatisch dagelijks een cleanup uit van oude email logs:
+
+```bash
+# Handmatige cleanup
+php artisan emails:cleanup-logs
+
+# Cleanup met aangepaste retentie periode
+php artisan emails:cleanup-logs --days=14
+```
+
+### Configuratie
+
+De retentie periode kan worden geconfigureerd in de `.env`:
+
+```env
+# Standaard: 7 dagen
+MAIL_LOG_RETENTION_DAYS=7
+```
+
+Of via de configuratie in `config/mail.php`:
+
+```php
+'log_retention_days' => env('MAIL_LOG_RETENTION_DAYS', 7),
+```
+
+### Scheduler
+
+De cleanup draait automatisch dagelijks via de Laravel scheduler:
+
+```php
+// In app/Console/Kernel.php
+$schedule->command('emails:cleanup-logs')->daily();
+```
+
+### Cleanup Features
+
+- **Batch Processing**: Verwijderd logs in batches van 1000 om memory issues te voorkomen
+- **Confirmation**: Vraagt bevestiging bij handmatige uitvoering
+- **Logging**: Logt alle cleanup activiteiten
+- **Configurable**: Aanpasbare retentie periode
+- **Safe**: Alleen logs ouder dan de opgegeven periode worden verwijderd
+
 ## Ondersteuning
 
 Voor vragen of problemen met de Microsoft Graph integratie, raadpleeg:

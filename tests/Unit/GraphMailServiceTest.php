@@ -85,7 +85,7 @@ class GraphMailServiceTest extends TestCase
         $method->invoke($this->service);
     }
 
-    public function test_fetch_unread_messages_success()
+    public function test_fetch_messages_success()
     {
         Http::fake([
             'login.microsoftonline.com/*' => Http::response([
@@ -126,7 +126,7 @@ class GraphMailServiceTest extends TestCase
         ]);
 
         $reflection = new \ReflectionClass($this->service);
-        $method = $reflection->getMethod('fetchUnreadMessages');
+        $method = $reflection->getMethod('fetchMessages');
         $method->setAccessible(true);
 
         $messages = $method->invoke($this->service);

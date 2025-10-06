@@ -57,9 +57,14 @@ playwright install --with-deps
 
 Na verloop van tijd zal het aantal migratie files groeien. Dit kan ervoor zorgen dat het opzetten van een nieuwe omgeving lang duurt. Laravel biedt de mogelijkheid om de huidige database structuur te dumpen naar een sql file en alle migratie files te verwijderen.
 
-1. run sail artisan schema:dump --prune
+1. run sail artisan schema:dump (zonder --prune)
 2. doe git add op de nieuw dump file (zie in database de sql file).
-3. Check in met git (als het goed is zijn alle migratie files ook verwijderd).
+3. Voeg deze toe aan Git
+
+Normaal gesproken zou je liever met de optie --prune willen draaien, zodat de migratiescripts ook worden verwijderd.
+In dit geval draaien de testcases echter op SQLite, omdat dit de uitvoering van de tests aanzienlijk versnelt.
+Het nadeel daarvan is dat SQLite niet werkt met de database dump file.
+Daarom gebruiken de testcases in dit scenario wél de migratiescripts.
 
 === Migratie instructies
 
@@ -92,6 +97,10 @@ Beter is rechtstreeks van de oude server naar de nieuwe met scp, maar er zijn no
 
 8. **Importeren in MySQL docker**
    - `sudo docker exec -i mysql mysql -u root -p[DB_PASSWORD] scrm_privatesuite9 -h 127.0.0.1 -P 3306 < ./scrm_privatesuite9_2025-09-02_1620.sql`
+(DB_PASSWORD is te vinden in .env.prod DB_PASSWORD)
+
+9. (optional) Copy file to local machine
+
 
 
 === Commands

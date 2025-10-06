@@ -5,3 +5,8 @@ langchain-community
 langchain-openai
 sqlalchemy
 pymysql
+cryptography
+# for pdf parsing
+pymupdf
+chromadb
+python-multipart

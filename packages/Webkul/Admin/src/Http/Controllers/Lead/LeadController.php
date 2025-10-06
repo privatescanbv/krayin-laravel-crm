@@ -196,17 +196,36 @@ class LeadController extends Controller
             $data[$stage->sort_order] = (new StageResource($stage))->jsonSerialize();
 
             // Load relationships - including persons for kanban display
+            // Optimize query by selecting only necessary fields and using eager loading
             $data[$stage->sort_order]['leads'] = [
-                'data' => LeadResource::collection($paginator = $query->with([
-                    'tags',
-                    'type',
-                    'source',
-                    'user',
-                    'organization',
-                    'pipeline',
-                    'pipeline.stages',
-                    'stage',
-                    'attribute_values',
+                'data' => LeadResource::collection($paginator = $query->select([
+                    'leads.id',
+                    'leads.first_name',
+                    'leads.last_name',
+                    'leads.name',
+                    'leads.created_at',
+                    'leads.lead_pipeline_stage_id',
+                    'leads.user_id',
+                    'leads.lead_type_id',
+                    'leads.lead_source_id',
+                    'leads.rotten_days',
+                    'leads.days_until_due_date',
+                    'leads.mri_status',
+                    'leads.mri_status_label',
+                    'leads.lost_reason_label',
+                    'leads.closed_at'
+                ])->with([
+                    'tags:id,name',
+                    'type:id,name',
+                    'source:id,name',
+                    'user:id,name',
+                    'organization:id,name',
+                    'pipeline:id,name',
+                    'pipeline.stages:id,lead_pipeline_id,code,name,sort_order',
+                    'stage:id,code,name,sort_order',
+                    'persons:id,first_name,last_name,married_name,name,organization_id',
+                    'persons.organization:id,name',
+                    'attribute_values:lead_id,attribute_id,value',
                 ])->paginate(10)),
 
                 'meta' => [

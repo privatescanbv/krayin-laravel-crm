@@ -13,6 +13,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         $schedule->command('inbound-emails:process')->everyMinute();
+        $schedule->command('emails:sync-graph')->everyFiveMinutes();
         $schedule->command('activities:release-overdue')->hourly();
 
         // Keep activity statuses in sync each hour
@@ -20,6 +21,9 @@ class Kernel extends ConsoleKernel
 
         // Refresh duplicate caches (leads & persons) every hour
         $schedule->command('duplicates:refresh-cache --clear')->hourly();
+
+        // Clean up old email logs daily
+        $schedule->command('emails:cleanup-logs')->daily();
     }
 
     /**

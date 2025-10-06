@@ -17,19 +17,37 @@ Op dit moment werkt het systeem met twee specifieke email accounts die elk een v
 * **Gebruik**: Voor het ontvangen van uitgaande berichten vanuit het CRM
 
 ===== CRM Inbox Account
-* **Email adres**: `privatescan@test.local`
+* **Email adres**: crm@privatescan.nl
 * **Functie**: Centrale inbox voor inkomende berichten
 * **Gebruik**: Automatische koppeling aan leads en contactpersonen
 * **Werking**: Functioneert als een ticket systeem
 
 [NOTE]
 ====
-* Het CRM systeem herkent automatisch inkomende berichten op `privatescan@test.local` en koppelt deze aan de juiste lead of contactpersoon op basis van de afzender en eerdere correspondentie.
+* Het CRM systeem herkent automatisch inkomende berichten op `link:mailto:crm@privatescan.nl[crm@privatescan.nl]` en koppelt deze aan de juiste lead of contactpersoon op basis van de afzender en eerdere correspondentie.
 
-* Dit e-mailadres 'privatescan@test.local' zal later een nieuw emailadres worden als crm-reply@privatescan.nl
+* Dit e-mailadres 'crm@privatescan.nl' zal later een nieuw emailadres worden als crm-reply@privatescan.nl
 
 * Patient Email Account; We ondersteunen nu 1 emailaccount, maar later is dit natuurlijk het e-mailadres van de patiënt zelf.
 
+====
+
+===== Microsoft Graph Email Integration
+
+De Microsoft Graph integratie vervangt de IMAP-communicatie door een moderne API-gebaseerde benadering voor het ophalen van e-mails. Dit biedt betere betrouwbaarheid, schaalbaarheid en ondersteuning voor moderne Microsoft 365 omgevingen. E-mailadressen worden beheerd door Steentjes.
+
+De volgende env vars zijn relevant:
+[NOTE]
+====
+GRAPH_CLIENT_ID=xxxx
+
+GRAPH_TENANT_ID=xxxx
+
+GRAPH_CLIENT_SECRET=xxxx
+
+GRAPH_MAILBOX=crm@privatescan.nl
+
+MAIL_RECEIVER_DRIVER=microsoft-graph
 ====
 
 ==== Hoe Email Koppeling Werkt

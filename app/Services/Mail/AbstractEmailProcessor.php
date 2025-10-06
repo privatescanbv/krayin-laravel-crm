@@ -110,39 +110,22 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
         // Link to existing entities based on email address
         $this->linkToExistingEntities($emailData, $this->getFromEmail($message));
 
-        try {
-            $email = $this->emailRepository->create($emailData);
+        $email = $this->emailRepository->create($emailData);
 
-            Log::info('Processed email', [
-                'message_id' => $messageId,
-                'email_id'   => $email->id,
-                'parent_id'  => $parentEmail?->id,
-                'processor'  => static::class,
-            ]);
+        Log::info('Processed email', [
+            'message_id' => $messageId,
+            'email_id'   => $email->id,
+            'parent_id'  => $parentEmail?->id,
+            'processor'  => static::class,
+        ]);
 
-            // Process attachments if any
-            if ($this->hasAttachments($message)) {
-                $this->processAttachments($email, $message);
-            }
-
-            // Mark message as read
-            $this->markMessageAsRead($message);
-        } catch (\Illuminate\Database\QueryException $e) {
-            // Handle duplicate key violations gracefully
-            if (($e->getCode() == 23000 || $e->getPrevious()?->getCode() == 23000) && 
-                str_contains($e->getMessage(), 'emails_unique_id_unique')) {
-                Log::warning('Email with same unique_id already exists, skipping', [
-                    'message_id' => $messageId,
-                    'unique_id'  => $emailData['unique_id'] ?? 'unknown',
-                    'error'      => $e->getMessage(),
-                    'processor'  => static::class,
-                ]);
-                return;
-            }
-            
-            // Re-throw if it's not a duplicate key error
-            throw $e;
+        // Process attachments if any
+        if ($this->hasAttachments($message)) {
+            $this->processAttachments($email, $message);
         }
+
+        // Mark message as read
+        $this->markMessageAsRead($message);
     }
 
     /**

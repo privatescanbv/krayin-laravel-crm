@@ -6,7 +6,6 @@ use App\Models\EmailLog;
 use App\Services\Mail\AbstractEmailProcessor;
 use App\Services\Mail\GraphMailService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Database\QueryException;
 use ReflectionClass;
 use Tests\TestCase;
 use Webkul\Email\Models\Email;
@@ -200,88 +199,6 @@ class AbstractEmailProcessorTest extends TestCase
         $this->processor->processMessage($message);
     }
 
-    public function test_process_message_handles_duplicate_key_violation_gracefully()
-    {
-        $messageId = '<test-message-id@example.com>';
-
-        // No existing email found by message_id or unique_id
-        $this->emailRepository
-            ->expects($this->exactly(2))
-            ->method('findOneByField')
-            ->willReturn(null);
-
-        // Create a mock QueryException that simulates a duplicate key violation
-        $duplicateException = $this->createMock(QueryException::class);
-        $duplicateException->method('getCode')->willReturn(23000);
-        $duplicateException->method('getMessage')->willReturn('SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry \'test-message-id@example.com\' for key \'emails.emails_unique_id_unique\'');
-        $duplicateException->method('getPrevious')->willReturn(null);
-
-        $this->emailRepository
-            ->expects($this->once())
-            ->method('create')
-            ->willThrowException($duplicateException);
-
-        // Create a mock message
-        $message = [
-            'id' => 'test-id',
-            'internetMessageId' => $messageId,
-            'from' => ['emailAddress' => ['address' => 'test@example.com', 'name' => 'Test User']],
-            'subject' => 'Test Subject',
-            'toRecipients' => [],
-            'ccRecipients' => [],
-            'bccRecipients' => [],
-            'replyTo' => [],
-            'isRead' => false,
-            'hasAttachments' => false,
-            'body' => ['content' => 'Test body', 'contentType' => 'text'],
-            'receivedDateTime' => now()->toISOString(),
-        ];
-
-        // Should not throw an exception
-        $this->processor->processMessage($message);
-    }
-
-    public function test_process_message_rethrows_non_duplicate_exceptions()
-    {
-        $messageId = '<test-message-id@example.com>';
-
-        // No existing email found
-        $this->emailRepository
-            ->expects($this->exactly(2))
-            ->method('findOneByField')
-            ->willReturn(null);
-
-        // Create throws a different exception
-        $otherException = $this->createMock(QueryException::class);
-        $otherException->method('getCode')->willReturn(42000);
-        $otherException->method('getMessage')->willReturn('SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax');
-        $otherException->method('getPrevious')->willReturn(null);
-
-        $this->emailRepository
-            ->expects($this->once())
-            ->method('create')
-            ->willThrowException($otherException);
-
-        // Create a mock message
-        $message = [
-            'id' => 'test-id',
-            'internetMessageId' => $messageId,
-            'from' => ['emailAddress' => ['address' => 'test@example.com', 'name' => 'Test User']],
-            'subject' => 'Test Subject',
-            'toRecipients' => [],
-            'ccRecipients' => [],
-            'bccRecipients' => [],
-            'replyTo' => [],
-            'isRead' => false,
-            'hasAttachments' => false,
-            'body' => ['content' => 'Test body', 'contentType' => 'text'],
-            'receivedDateTime' => now()->toISOString(),
-        ];
-
-        // Should rethrow the exception
-        $this->expectException(QueryException::class);
-        $this->processor->processMessage($message);
-    }
 
     public function test_process_message_creates_email_successfully()
     {

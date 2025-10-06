@@ -197,22 +197,23 @@ class LeadController extends Controller
 
             // Load relationships - including persons for kanban display
             // Optimize query by selecting only necessary fields and using eager loading
+            // Fixed: Removed computed attributes from select statement to prevent database errors
             $data[$stage->sort_order]['leads'] = [
                 'data' => LeadResource::collection($paginator = $query->select([
                     'leads.id',
                     'leads.first_name',
                     'leads.last_name',
-                    'leads.name',
+                    'leads.lastname_prefix',
+                    'leads.married_name',
+                    'leads.married_name_prefix',
                     'leads.created_at',
+                    'leads.lead_pipeline_id',
                     'leads.lead_pipeline_stage_id',
                     'leads.user_id',
                     'leads.lead_type_id',
                     'leads.lead_source_id',
-                    'leads.rotten_days',
-                    'leads.days_until_due_date',
                     'leads.mri_status',
-                    'leads.mri_status_label',
-                    'leads.lost_reason_label',
+                    'leads.lost_reason',
                     'leads.closed_at'
                 ])->with([
                     'tags:id,name',
@@ -220,7 +221,7 @@ class LeadController extends Controller
                     'source:id,name',
                     'user:id,name',
                     'organization:id,name',
-                    'pipeline:id,name',
+                    'pipeline:id,name,rotten_days',
                     'pipeline.stages:id,lead_pipeline_id,code,name,sort_order',
                     'stage:id,code,name,sort_order',
                     'persons:id,first_name,last_name,married_name,name,organization_id',

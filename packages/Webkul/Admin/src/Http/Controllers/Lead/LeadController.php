@@ -212,8 +212,7 @@ class LeadController extends Controller
                     'leads.lead_source_id',
                     'leads.days_until_due_date',
                     'leads.mri_status',
-                    'leads.mri_status_label',
-                    'leads.lost_reason_label',
+                    'leads.lost_reason',
                     'leads.closed_at'
                 ])->with([
                     'tags:id,name',

@@ -241,7 +241,7 @@ test('kanban board fails with proper error when invalid columns are selected', f
 test('direct database query with computed attributes fails', function () {
     // This test demonstrates that selecting computed attributes directly from the database
     // will fail, which is the behavior we want to prevent in the kanban query
-
+    
     $lead = Lead::factory()->create([
         'first_name'             => 'Test',
         'last_name'              => 'Lead',
@@ -266,12 +266,28 @@ test('direct database query with computed attributes fails', function () {
             ->get();
     })->toThrow(Exception::class);
 
+    // This should fail because 'mri_status_label' is not a database column
+    expect(function () use ($lead) {
+        DB::table('leads')
+            ->select(['id', 'first_name', 'last_name', 'mri_status_label']) // 'mri_status_label' is computed, not a DB column
+            ->where('id', $lead->id)
+            ->get();
+    })->toThrow(Exception::class);
+
+    // This should fail because 'lost_reason_label' is not a database column
+    expect(function () use ($lead) {
+        DB::table('leads')
+            ->select(['id', 'first_name', 'last_name', 'lost_reason_label']) // 'lost_reason_label' is computed, not a DB column
+            ->where('id', $lead->id)
+            ->get();
+    })->toThrow(Exception::class);
+
     // But this should work - selecting actual database columns
     $result = DB::table('leads')
-        ->select(['id', 'first_name', 'last_name', 'lastname_prefix', 'married_name', 'married_name_prefix'])
+        ->select(['id', 'first_name', 'last_name', 'lastname_prefix', 'married_name', 'married_name_prefix', 'mri_status', 'lost_reason'])
         ->where('id', $lead->id)
         ->get();
-
+    
     expect($result)->not->toBeEmpty();
     expect($result->first()->first_name)->toBe('Test');
     expect($result->first()->last_name)->toBe('Lead');
@@ -280,7 +296,7 @@ test('direct database query with computed attributes fails', function () {
 test('lead model correctly computes name and rotten_days attributes', function () {
     // This test verifies that the Lead model correctly computes the name and rotten_days
     // attributes when loaded from the database
-
+    
     $lead = Lead::factory()->create([
         'first_name'             => 'Jan',
         'last_name'              => 'Jansen',
@@ -294,13 +310,17 @@ test('lead model correctly computes name and rotten_days attributes', function (
 
     // Load the lead fresh from the database
     $loadedLead = Lead::find($lead->id);
-
+    
     // Verify computed attributes work correctly
     expect($loadedLead->name)->toBe('Jan van Jansen / van de Vries');
     expect($loadedLead->rotten_days)->toBeInt();
     expect($loadedLead->rotten_days)->toBeGreaterThanOrEqual(0);
-
+    
     // Verify the attributes are in the appends array
     expect($loadedLead->getAppends())->toContain('name');
     expect($loadedLead->getAppends())->toContain('rotten_days');
+    
+    // Verify other computed attributes work (these are not in appends but are accessors)
+    expect($loadedLead->mri_status_label)->toBeString();
+    expect($loadedLead->lost_reason_label)->toBeString();
 });

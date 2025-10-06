@@ -197,6 +197,7 @@ class LeadController extends Controller
 
             // Load relationships - including persons for kanban display
             // Optimize query by selecting only necessary fields and using eager loading
+            // Fixed: Removed computed attributes from select statement to prevent database errors
             $data[$stage->sort_order]['leads'] = [
                 'data' => LeadResource::collection($paginator = $query->select([
                     'leads.id',

@@ -9,11 +9,12 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Webkul\Email\Enums\SupportedFolderEnum;
+use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 use Webkul\Email\Models\Email;
 
-class GraphMailService
+class GraphMailService implements InboundEmailProcessor
 {
     protected string $accessToken;
     protected string $baseUrl = 'https://graph.microsoft.com/v1.0';
@@ -60,7 +61,7 @@ class GraphMailService
     /**
      * Process messages from Microsoft Graph
      */
-    public function processMessagesFromAllFolders(): void
+    public function processMessagesFromAllFolders()
     {
         try {
             $this->logSyncStart();
@@ -119,8 +120,12 @@ class GraphMailService
     /**
      * Process a single message
      */
-    public function processMessage(array $message): void
+    public function processMessage($message = null): void
     {
+        if (!$message || !is_array($message)) {
+            return;
+        }
+
         $messageId = $message['internetMessageId'] ?? $message['id'];
         
         // Check if email already exists

@@ -34,6 +34,11 @@ class GraphMailServiceTest extends TestCase
         );
     }
 
+    public function test_implements_inbound_email_processor_contract()
+    {
+        $this->assertInstanceOf(\Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor::class, $this->service);
+    }
+
     public function test_get_access_token_success()
     {
         Http::fake([
@@ -193,6 +198,32 @@ class GraphMailServiceTest extends TestCase
             ->method('create');
 
         $this->service->processMessage($message);
+    }
+
+    public function test_process_message_handles_null_input()
+    {
+        $this->emailRepository
+            ->expects($this->never())
+            ->method('findOneByField');
+
+        $this->emailRepository
+            ->expects($this->never())
+            ->method('create');
+
+        $this->service->processMessage(null);
+    }
+
+    public function test_process_message_handles_invalid_input()
+    {
+        $this->emailRepository
+            ->expects($this->never())
+            ->method('findOneByField');
+
+        $this->emailRepository
+            ->expects($this->never())
+            ->method('create');
+
+        $this->service->processMessage('invalid input');
     }
 
     public function test_extract_message_body_html()

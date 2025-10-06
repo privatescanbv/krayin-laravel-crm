@@ -19,9 +19,9 @@ class EmailLog extends Model
      * @var array
      */
     protected $casts = [
-        'started_at' => 'datetime',
+        'started_at'   => 'datetime',
         'completed_at' => 'datetime',
-        'metadata' => 'array',
+        'metadata'     => 'array',
     ];
 
     /**

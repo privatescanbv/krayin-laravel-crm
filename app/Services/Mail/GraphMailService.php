@@ -10,15 +10,18 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Webkul\Email\Enums\SupportedFolderEnum;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
+use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
-use Webkul\Email\Models\Email;
 
 class GraphMailService implements InboundEmailProcessor
 {
     protected string $accessToken;
+
     protected string $baseUrl = 'https://graph.microsoft.com/v1.0';
+
     protected string $mailbox;
+
     protected ?EmailLog $currentLog = null;
 
     public function __construct(
@@ -29,43 +32,13 @@ class GraphMailService implements InboundEmailProcessor
     }
 
     /**
-     * Get access token using client credentials flow
-     */
-    protected function getAccessToken(): string
-    {
-        if (isset($this->accessToken)) {
-            return $this->accessToken;
-        }
-
-        $tenantId = config('mail.graph.tenant_id');
-        $clientId = config('mail.graph.client_id');
-        $clientSecret = config('mail.graph.client_secret');
-
-        $response = Http::asForm()->post("https://login.microsoftonline.com/{$tenantId}/oauth2/v2.0/token", [
-            'client_id' => $clientId,
-            'client_secret' => $clientSecret,
-            'scope' => 'https://graph.microsoft.com/.default',
-            'grant_type' => 'client_credentials',
-        ]);
-
-        if (!$response->successful()) {
-            throw new Exception('Failed to get access token: ' . $response->body());
-        }
-
-        $data = $response->json();
-        $this->accessToken = $data['access_token'];
-
-        return $this->accessToken;
-    }
-
-    /**
      * Process messages from Microsoft Graph
      */
     public function processMessagesFromAllFolders()
     {
         try {
             $this->logSyncStart();
-            
+
             $messages = $this->fetchUnreadMessages();
             $processedCount = 0;
             $errorCount = 0;
@@ -78,7 +51,7 @@ class GraphMailService implements InboundEmailProcessor
                     $errorCount++;
                     Log::error('Failed to process message', [
                         'message_id' => $message['id'] ?? 'unknown',
-                        'error' => $e->getMessage()
+                        'error'      => $e->getMessage(),
                     ]);
                 }
             }
@@ -92,42 +65,16 @@ class GraphMailService implements InboundEmailProcessor
     }
 
     /**
-     * Fetch unread messages from Microsoft Graph
-     */
-    protected function fetchUnreadMessages(): array
-    {
-        $accessToken = $this->getAccessToken();
-        $mailbox = $this->mailbox;
-        
-        $url = "{$this->baseUrl}/users/{$mailbox}/mailFolders('Inbox')/messages";
-        
-        $response = Http::withToken($accessToken)
-            ->get($url, [
-                '$filter' => 'isRead eq false',
-                '$select' => 'id,subject,from,toRecipients,ccRecipients,bccRecipients,receivedDateTime,isRead,hasAttachments,body,attachments,internetMessageId,conversationId,replyTo',
-                '$orderby' => 'receivedDateTime desc',
-                '$top' => 50 // Limit to prevent timeout
-            ]);
-
-        if (!$response->successful()) {
-            throw new Exception('Failed to fetch messages: ' . $response->body());
-        }
-
-        $data = $response->json();
-        return $data['value'] ?? [];
-    }
-
-    /**
      * Process a single message
      */
     public function processMessage($message = null): void
     {
-        if (!$message || !is_array($message)) {
+        if (! $message || ! is_array($message)) {
             return;
         }
 
         $messageId = $message['internetMessageId'] ?? $message['id'];
-        
+
         // Check if email already exists
         $existingEmail = $this->emailRepository->findOneByField('message_id', $messageId);
         if ($existingEmail) {
@@ -143,7 +90,7 @@ class GraphMailService implements InboundEmailProcessor
         // Update parent email if found
         if ($parentEmail) {
             $this->emailRepository->update([
-                'folders' => array_unique(array_merge($parentEmail->folders, [$folderName])),
+                'folders'       => array_unique(array_merge($parentEmail->folders, [$folderName])),
                 'reference_ids' => array_merge($parentEmail->reference_ids ?? [], [$messageId]),
             ], $parentEmail->id);
         }
@@ -160,25 +107,25 @@ class GraphMailService implements InboundEmailProcessor
 
         // Create email record
         $emailData = [
-            'from' => $from['address'] ?? '',
-            'subject' => $message['subject'] ?? '',
-            'name' => $from['name'] ?? '',
-            'reply' => $body,
-            'is_read' => (int) ($message['isRead'] ?? false),
-            'folders' => [$folderName],
-            'reply_to' => $this->extractEmailAddresses($replyTo),
-            'cc' => $this->extractEmailAddresses($ccRecipients),
-            'bcc' => $this->extractEmailAddresses($bccRecipients),
-            'source' => 'email',
-            'user_type' => 'person',
-            'unique_id' => $messageId,
-            'message_id' => $messageId,
+            'from'          => $from['address'] ?? '',
+            'subject'       => $message['subject'] ?? '',
+            'name'          => $from['name'] ?? '',
+            'reply'         => $body,
+            'is_read'       => (int) ($message['isRead'] ?? false),
+            'folders'       => [$folderName],
+            'reply_to'      => $this->extractEmailAddresses($replyTo),
+            'cc'            => $this->extractEmailAddresses($ccRecipients),
+            'bcc'           => $this->extractEmailAddresses($bccRecipients),
+            'source'        => 'email',
+            'user_type'     => 'person',
+            'unique_id'     => $messageId,
+            'message_id'    => $messageId,
             'reference_ids' => [$messageId],
-            'created_at' => $this->parseDateTime($message['receivedDateTime'] ?? now()),
-            'parent_id' => $parentEmail?->id,
-            'activity_id' => $parentEmail?->activity_id,
-            'lead_id' => $parentEmail?->lead_id,
-            'person_id' => $parentEmail?->person_id,
+            'created_at'    => $this->parseDateTime($message['receivedDateTime'] ?? now()),
+            'parent_id'     => $parentEmail?->id,
+            'activity_id'   => $parentEmail?->activity_id,
+            'lead_id'       => $parentEmail?->lead_id,
+            'person_id'     => $parentEmail?->person_id,
         ];
 
         // Link to existing entities based on email address
@@ -188,8 +135,8 @@ class GraphMailService implements InboundEmailProcessor
 
         Log::info('Processed Graph email', [
             'message_id' => $messageId,
-            'email_id' => $email->id,
-            'parent_id' => $parentEmail?->id
+            'email_id'   => $email->id,
+            'parent_id'  => $parentEmail?->id,
         ]);
 
         // Process attachments if any
@@ -199,6 +146,63 @@ class GraphMailService implements InboundEmailProcessor
 
         // Mark message as read
         $this->markMessageAsRead($message['id']);
+    }
+
+    /**
+     * Get access token using client credentials flow
+     */
+    protected function getAccessToken(): string
+    {
+        if (isset($this->accessToken)) {
+            return $this->accessToken;
+        }
+
+        $tenantId = config('mail.graph.tenant_id');
+        $clientId = config('mail.graph.client_id');
+        $clientSecret = config('mail.graph.client_secret');
+
+        $response = Http::asForm()->post("https://login.microsoftonline.com/{$tenantId}/oauth2/v2.0/token", [
+            'client_id'     => $clientId,
+            'client_secret' => $clientSecret,
+            'scope'         => 'https://graph.microsoft.com/.default',
+            'grant_type'    => 'client_credentials',
+        ]);
+
+        if (! $response->successful()) {
+            throw new Exception('Failed to get access token: '.$response->body());
+        }
+
+        $data = $response->json();
+        $this->accessToken = $data['access_token'];
+
+        return $this->accessToken;
+    }
+
+    /**
+     * Fetch unread messages from Microsoft Graph
+     */
+    protected function fetchUnreadMessages(): array
+    {
+        $accessToken = $this->getAccessToken();
+        $mailbox = $this->mailbox;
+
+        $url = "{$this->baseUrl}/users/{$mailbox}/mailFolders('Inbox')/messages";
+
+        $response = Http::withToken($accessToken)
+            ->get($url, [
+                '$filter'  => 'isRead eq false',
+                '$select'  => 'id,subject,from,toRecipients,ccRecipients,bccRecipients,receivedDateTime,isRead,hasAttachments,body,attachments,internetMessageId,conversationId,replyTo',
+                '$orderby' => 'receivedDateTime desc',
+                '$top'     => 50, // Limit to prevent timeout
+            ]);
+
+        if (! $response->successful()) {
+            throw new Exception('Failed to fetch messages: '.$response->body());
+        }
+
+        $data = $response->json();
+
+        return $data['value'] ?? [];
     }
 
     /**
@@ -212,7 +216,7 @@ class GraphMailService implements InboundEmailProcessor
         // Check by conversation ID first
         if ($conversationId) {
             $parentEmail = $this->emailRepository->findOneWhere([
-                ['reference_ids', 'like', '%' . $conversationId . '%']
+                ['reference_ids', 'like', '%'.$conversationId.'%'],
             ]);
             if ($parentEmail) {
                 return $parentEmail;
@@ -237,11 +241,11 @@ class GraphMailService implements InboundEmailProcessor
     protected function extractMessageBody(array $message): string
     {
         $body = $message['body'] ?? [];
-        
+
         if (isset($body['contentType']) && $body['contentType'] === 'html') {
             return $body['content'] ?? '';
         }
-        
+
         return $body['content'] ?? '';
     }
 
@@ -251,7 +255,7 @@ class GraphMailService implements InboundEmailProcessor
     protected function extractEmailAddresses(array $recipients): array
     {
         return collect($recipients)
-            ->map(fn($recipient) => $recipient['emailAddress']['address'] ?? '')
+            ->map(fn ($recipient) => $recipient['emailAddress']['address'] ?? '')
             ->filter()
             ->values()
             ->toArray();
@@ -275,10 +279,10 @@ class GraphMailService implements InboundEmailProcessor
         }
 
         // Try to find existing person by email
-        $person = \Webkul\Contact\Models\Person::where('emails', 'like', '%' . $emailAddress . '%')->first();
+        $person = \Webkul\Contact\Models\Person::where('emails', 'like', '%'.$emailAddress.'%')->first();
         if ($person) {
             $emailData['person_id'] = $person->id;
-            
+
             // Try to find associated lead through lead_persons table
             $lead = $person->leads()->first();
             if ($lead) {
@@ -287,8 +291,8 @@ class GraphMailService implements InboundEmailProcessor
         }
 
         // Try to find existing lead by email if no person found
-        if (!isset($emailData['lead_id'])) {
-            $lead = \Webkul\Lead\Models\Lead::where('emails', 'like', '%' . $emailAddress . '%')->first();
+        if (! isset($emailData['lead_id'])) {
+            $lead = \Webkul\Lead\Models\Lead::where('emails', 'like', '%'.$emailAddress.'%')->first();
             if ($lead) {
                 $emailData['lead_id'] = $lead->id;
             }
@@ -310,13 +314,13 @@ class GraphMailService implements InboundEmailProcessor
     {
         try {
             $activityData = [
-                'title' => 'E-mail ontvangen: ' . ($emailData['subject'] ?: 'Geen onderwerp'),
-                'comment' => 'E-mail ontvangen via Microsoft Graph',
-                'type' => 'email',
+                'title'         => 'E-mail ontvangen: '.($emailData['subject'] ?: 'Geen onderwerp'),
+                'comment'       => 'E-mail ontvangen via Microsoft Graph',
+                'type'          => 'email',
                 'schedule_from' => $emailData['created_at'] ?? now(),
-                'schedule_to' => $emailData['created_at'] ?? now(),
-                'is_completed' => true,
-                'completed_at' => $emailData['created_at'] ?? now(),
+                'schedule_to'   => $emailData['created_at'] ?? now(),
+                'is_completed'  => true,
+                'completed_at'  => $emailData['created_at'] ?? now(),
             ];
 
             if (isset($emailData['lead_id'])) {
@@ -331,8 +335,9 @@ class GraphMailService implements InboundEmailProcessor
         } catch (Exception $e) {
             Log::error('Failed to create email activity', [
                 'email_data' => $emailData,
-                'error' => $e->getMessage()
+                'error'      => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -345,29 +350,29 @@ class GraphMailService implements InboundEmailProcessor
         try {
             $accessToken = $this->getAccessToken();
             $mailbox = $this->mailbox;
-            
+
             $url = "{$this->baseUrl}/users/{$mailbox}/messages/{$messageId}/attachments";
-            
+
             $response = Http::withToken($accessToken)->get($url);
-            
+
             if ($response->successful()) {
                 $attachments = $response->json()['value'] ?? [];
-                
+
                 foreach ($attachments as $attachment) {
                     $this->attachmentRepository->create([
-                        'email_id' => $email->id,
-                        'name' => $attachment['name'] ?? 'attachment',
+                        'email_id'     => $email->id,
+                        'name'         => $attachment['name'] ?? 'attachment',
                         'content_type' => $attachment['contentType'] ?? 'application/octet-stream',
-                        'size' => $attachment['size'] ?? 0,
-                        'content' => base64_decode($attachment['contentBytes'] ?? ''),
+                        'size'         => $attachment['size'] ?? 0,
+                        'content'      => base64_decode($attachment['contentBytes'] ?? ''),
                     ]);
                 }
             }
         } catch (Exception $e) {
             Log::error('Failed to process attachments', [
-                'email_id' => $email->id,
+                'email_id'   => $email->id,
                 'message_id' => $messageId,
-                'error' => $e->getMessage()
+                'error'      => $e->getMessage(),
             ]);
         }
     }
@@ -380,17 +385,17 @@ class GraphMailService implements InboundEmailProcessor
         try {
             $accessToken = $this->getAccessToken();
             $mailbox = $this->mailbox;
-            
+
             $url = "{$this->baseUrl}/users/{$mailbox}/messages/{$messageId}";
-            
+
             Http::withToken($accessToken)
                 ->patch($url, [
-                    'isRead' => true
+                    'isRead' => true,
                 ]);
         } catch (Exception $e) {
             Log::error('Failed to mark message as read', [
                 'message_id' => $messageId,
-                'error' => $e->getMessage()
+                'error'      => $e->getMessage(),
             ]);
         }
     }
@@ -401,17 +406,17 @@ class GraphMailService implements InboundEmailProcessor
     protected function logSyncStart(): void
     {
         $this->currentLog = EmailLog::create([
-            'sync_type' => 'graph',
+            'sync_type'  => 'graph',
             'started_at' => now(),
-            'metadata' => [
+            'metadata'   => [
                 'mailbox' => $this->mailbox,
-            ]
+            ],
         ]);
 
         Log::info('Starting Microsoft Graph email sync', [
-            'mailbox' => $this->mailbox,
-            'log_id' => $this->currentLog->id,
-            'timestamp' => now()
+            'mailbox'   => $this->mailbox,
+            'log_id'    => $this->currentLog->id,
+            'timestamp' => now(),
         ]);
     }
 
@@ -422,17 +427,17 @@ class GraphMailService implements InboundEmailProcessor
     {
         if ($this->currentLog) {
             $this->currentLog->update([
-                'completed_at' => now(),
+                'completed_at'    => now(),
                 'processed_count' => $processedCount,
-                'error_count' => $errorCount,
+                'error_count'     => $errorCount,
             ]);
         }
 
         Log::info('Microsoft Graph email sync completed', [
             'processed_count' => $processedCount,
-            'error_count' => $errorCount,
-            'log_id' => $this->currentLog?->id,
-            'timestamp' => now()
+            'error_count'     => $errorCount,
+            'log_id'          => $this->currentLog?->id,
+            'timestamp'       => now(),
         ]);
     }
 
@@ -443,15 +448,15 @@ class GraphMailService implements InboundEmailProcessor
     {
         if ($this->currentLog) {
             $this->currentLog->update([
-                'completed_at' => now(),
+                'completed_at'  => now(),
                 'error_message' => $error,
             ]);
         }
 
         Log::error('Microsoft Graph email sync failed', [
-            'error' => $error,
-            'log_id' => $this->currentLog?->id,
-            'timestamp' => now()
+            'error'     => $error,
+            'log_id'    => $this->currentLog?->id,
+            'timestamp' => now(),
         ]);
     }
 }

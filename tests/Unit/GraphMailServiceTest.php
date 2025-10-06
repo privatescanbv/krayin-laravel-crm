@@ -6,8 +6,8 @@ use App\Models\EmailLog;
 use App\Services\Mail\GraphMailService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use ReflectionClass;
 use Tests\TestCase;
 use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
@@ -18,16 +18,18 @@ class GraphMailServiceTest extends TestCase
     use RefreshDatabase;
 
     protected GraphMailService $service;
+
     protected EmailRepository $emailRepository;
+
     protected AttachmentRepository $attachmentRepository;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->emailRepository = $this->createMock(EmailRepository::class);
         $this->attachmentRepository = $this->createMock(AttachmentRepository::class);
-        
+
         $this->service = new GraphMailService(
             $this->emailRepository,
             $this->attachmentRepository
@@ -44,12 +46,12 @@ class GraphMailServiceTest extends TestCase
         Http::fake([
             'login.microsoftonline.com/*' => Http::response([
                 'access_token' => 'test-token',
-                'token_type' => 'Bearer',
-                'expires_in' => 3600
-            ], 200)
+                'token_type'   => 'Bearer',
+                'expires_in'   => 3600,
+            ], 200),
         ]);
 
-        $reflection = new \ReflectionClass($this->service);
+        $reflection = new ReflectionClass($this->service);
         $method = $reflection->getMethod('getAccessToken');
         $method->setAccessible(true);
 
@@ -62,12 +64,12 @@ class GraphMailServiceTest extends TestCase
     {
         Http::fake([
             'login.microsoftonline.com/*' => Http::response([
-                'error' => 'invalid_client',
-                'error_description' => 'Invalid client credentials'
-            ], 401)
+                'error'             => 'invalid_client',
+                'error_description' => 'Invalid client credentials',
+            ], 401),
         ]);
 
-        $reflection = new \ReflectionClass($this->service);
+        $reflection = new ReflectionClass($this->service);
         $method = $reflection->getMethod('getAccessToken');
         $method->setAccessible(true);
 
@@ -82,39 +84,39 @@ class GraphMailServiceTest extends TestCase
         Http::fake([
             'login.microsoftonline.com/*' => Http::response([
                 'access_token' => 'test-token',
-                'token_type' => 'Bearer',
-                'expires_in' => 3600
+                'token_type'   => 'Bearer',
+                'expires_in'   => 3600,
             ], 200),
             'graph.microsoft.com/*' => Http::response([
                 'value' => [
                     [
-                        'id' => 'msg-1',
+                        'id'                => 'msg-1',
                         'internetMessageId' => '<msg1@example.com>',
-                        'subject' => 'Test Subject',
-                        'from' => [
+                        'subject'           => 'Test Subject',
+                        'from'              => [
                             'emailAddress' => [
                                 'address' => 'sender@example.com',
-                                'name' => 'Test Sender'
-                            ]
+                                'name'    => 'Test Sender',
+                            ],
                         ],
                         'toRecipients' => [
                             [
                                 'emailAddress' => [
                                     'address' => 'recipient@example.com',
-                                    'name' => 'Test Recipient'
-                                ]
-                            ]
+                                    'name'    => 'Test Recipient',
+                                ],
+                            ],
                         ],
                         'receivedDateTime' => '2025-01-28T10:00:00Z',
-                        'isRead' => false,
-                        'hasAttachments' => false,
-                        'body' => [
+                        'isRead'           => false,
+                        'hasAttachments'   => false,
+                        'body'             => [
                             'contentType' => 'html',
-                            'content' => '<p>Test message body</p>'
-                        ]
-                    ]
-                ]
-            ], 200)
+                            'content'     => '<p>Test message body</p>',
+                        ],
+                    ],
+                ],
+            ], 200),
         ]);
 
         $reflection = new \ReflectionClass($this->service);
@@ -131,30 +133,30 @@ class GraphMailServiceTest extends TestCase
     public function test_process_message_creates_email()
     {
         $message = [
-            'id' => 'msg-1',
+            'id'                => 'msg-1',
             'internetMessageId' => '<msg1@example.com>',
-            'subject' => 'Test Subject',
-            'from' => [
+            'subject'           => 'Test Subject',
+            'from'              => [
                 'emailAddress' => [
                     'address' => 'sender@example.com',
-                    'name' => 'Test Sender'
-                ]
+                    'name'    => 'Test Sender',
+                ],
             ],
             'toRecipients' => [
                 [
                     'emailAddress' => [
                         'address' => 'recipient@example.com',
-                        'name' => 'Test Recipient'
-                    ]
-                ]
+                        'name'    => 'Test Recipient',
+                    ],
+                ],
             ],
             'receivedDateTime' => '2025-01-28T10:00:00Z',
-            'isRead' => false,
-            'hasAttachments' => false,
-            'body' => [
+            'isRead'           => false,
+            'hasAttachments'   => false,
+            'body'             => [
                 'contentType' => 'html',
-                'content' => '<p>Test message body</p>'
-            ]
+                'content'     => '<p>Test message body</p>',
+            ],
         ];
 
         $this->emailRepository
@@ -171,7 +173,7 @@ class GraphMailServiceTest extends TestCase
                        $data['from'] === 'sender@example.com' &&
                        $data['message_id'] === '<msg1@example.com>';
             }))
-            ->willReturn(new Email());
+            ->willReturn(new Email);
 
         $this->service->processMessage($message);
     }
@@ -179,12 +181,12 @@ class GraphMailServiceTest extends TestCase
     public function test_process_message_skips_existing_email()
     {
         $message = [
-            'id' => 'msg-1',
+            'id'                => 'msg-1',
             'internetMessageId' => '<msg1@example.com>',
-            'subject' => 'Test Subject',
+            'subject'           => 'Test Subject',
         ];
 
-        $existingEmail = new Email();
+        $existingEmail = new Email;
         $existingEmail->id = 1;
 
         $this->emailRepository
@@ -231,8 +233,8 @@ class GraphMailServiceTest extends TestCase
         $message = [
             'body' => [
                 'contentType' => 'html',
-                'content' => '<p>Test HTML content</p>'
-            ]
+                'content'     => '<p>Test HTML content</p>',
+            ],
         ];
 
         $reflection = new \ReflectionClass($this->service);
@@ -249,8 +251,8 @@ class GraphMailServiceTest extends TestCase
         $message = [
             'body' => [
                 'contentType' => 'text',
-                'content' => 'Test text content'
-            ]
+                'content'     => 'Test text content',
+            ],
         ];
 
         $reflection = new \ReflectionClass($this->service);
@@ -268,15 +270,15 @@ class GraphMailServiceTest extends TestCase
             [
                 'emailAddress' => [
                     'address' => 'test1@example.com',
-                    'name' => 'Test 1'
-                ]
+                    'name'    => 'Test 1',
+                ],
             ],
             [
                 'emailAddress' => [
                     'address' => 'test2@example.com',
-                    'name' => 'Test 2'
-                ]
-            ]
+                    'name'    => 'Test 2',
+                ],
+            ],
         ];
 
         $reflection = new \ReflectionClass($this->service);
@@ -299,7 +301,7 @@ class GraphMailServiceTest extends TestCase
         $carbon = $method->invoke($this->service, $dateTime);
 
         $this->assertInstanceOf(Carbon::class, $carbon);
-        
+
         // Test that the timezone conversion works correctly
         // The Z indicates UTC, so we expect it to be converted to the app timezone (Europe/Amsterdam = UTC+1)
         $expectedTime = Carbon::parse($dateTime)->setTimezone('Europe/Amsterdam');
@@ -316,16 +318,16 @@ class GraphMailServiceTest extends TestCase
         $method->invoke($this->service);
 
         $this->assertDatabaseHas('email_logs', [
-            'sync_type' => 'graph',
+            'sync_type'       => 'graph',
             'processed_count' => 0,
-            'error_count' => 0,
+            'error_count'     => 0,
         ]);
     }
 
     public function test_log_sync_complete_updates_email_log()
     {
         $emailLog = EmailLog::create([
-            'sync_type' => 'graph',
+            'sync_type'  => 'graph',
             'started_at' => now(),
         ]);
 

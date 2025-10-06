@@ -49,10 +49,12 @@ class SyncGraphEmails extends Command
             $graphService->processMessagesFromAllFolders();
 
             $this->info('Microsoft Graph email sync completed successfully.');
+
             return Command::SUCCESS;
 
         } catch (\Exception $e) {
-            $this->error('Microsoft Graph email sync failed: ' . $e->getMessage());
+            $this->error('Microsoft Graph email sync failed: '.$e->getMessage());
+
             return Command::FAILURE;
         }
     }

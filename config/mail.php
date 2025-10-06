@@ -35,13 +35,13 @@ return [
 
     'mailers' => [
         'smtp' => [
-            'transport' => 'smtp',
-            'host' => env('MAIL_HOST', 'smtp.mailgun.org'),
-            'port' => env('MAIL_PORT', 587),
-            'encryption' => env('MAIL_ENCRYPTION', 'tls'),
-            'username' => env('MAIL_USERNAME'),
-            'password' => env('MAIL_PASSWORD'),
-            'timeout' => null,
+            'transport'    => 'smtp',
+            'host'         => env('MAIL_HOST', 'smtp.mailgun.org'),
+            'port'         => env('MAIL_PORT', 587),
+            'encryption'   => env('MAIL_ENCRYPTION', 'tls'),
+            'username'     => env('MAIL_USERNAME'),
+            'password'     => env('MAIL_PASSWORD'),
+            'timeout'      => null,
             'local_domain' => env('MAIL_EHLO_DOMAIN'),
         ],
 
@@ -59,7 +59,7 @@ return [
 
         'failover' => [
             'transport' => 'failover',
-            'mailers' => [
+            'mailers'   => [
                 'smtp',
                 'log',
             ],
@@ -67,7 +67,7 @@ return [
 
         'log' => [
             'transport' => 'log',
-            'channel' => env('MAIL_LOG_CHANNEL'),
+            'channel'   => env('MAIL_LOG_CHANNEL'),
         ],
 
         'array' => [
@@ -76,7 +76,7 @@ return [
 
         'roundrobin' => [
             'transport' => 'roundrobin',
-            'mailers' => [
+            'mailers'   => [
                 'smtp',
                 'log',
             ],
@@ -96,7 +96,7 @@ return [
 
     'from' => [
         'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
-        'name' => env('MAIL_FROM_NAME', 'Example'),
+        'name'    => env('MAIL_FROM_NAME', 'Example'),
     ],
 
     /*
@@ -128,10 +128,10 @@ return [
     */
 
     'graph' => [
-        'client_id' => env('GRAPH_CLIENT_ID'),
-        'tenant_id' => env('GRAPH_TENANT_ID'),
+        'client_id'     => env('GRAPH_CLIENT_ID'),
+        'tenant_id'     => env('GRAPH_TENANT_ID'),
         'client_secret' => env('GRAPH_CLIENT_SECRET'),
-        'mailbox' => env('GRAPH_MAILBOX', 'crm@privatescan.nl'),
+        'mailbox'       => env('GRAPH_MAILBOX', 'crm@privatescan.nl'),
     ],
 
     /*

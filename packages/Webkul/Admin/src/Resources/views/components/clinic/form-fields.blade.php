@@ -38,6 +38,40 @@
         <x-admin::form.control-group.error control-name="registration_form_clinic_name" />
     </x-admin::form.control-group>
 
+    <x-admin::form.control-group>
+        <x-admin::form.control-group.label>
+            Website
+        </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.control
+            type="text"
+            name="website_url"
+            value="{{ old('website_url', $clinic->website_url ?? '') }}"
+            rules="url|max:255"
+            label="Website URL"
+            placeholder="https://www.voorbeeld.nl"
+        />
+
+        <x-admin::form.control-group.error control-name="website_url" />
+    </x-admin::form.control-group>
+
+    <x-admin::form.control-group>
+        <x-admin::form.control-group.label>
+            Opmerking orderbevestiging
+        </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.control
+            type="textarea"
+            name="order_confirmation_note"
+            value="{{ old('order_confirmation_note', $clinic->order_confirmation_note ?? '') }}"
+            rules="max:1000"
+            label="Opmerking orderbevestiging"
+            placeholder="Informatie waar patiënt zich kan melden"
+        />
+
+        <x-admin::form.control-group.error control-name="order_confirmation_note" />
+    </x-admin::form.control-group>
+
     <!-- Emails -->
     @php
         $__emailsVal = old('emails', $clinic->emails ?? []);

@@ -23,7 +23,8 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                             {--table=contacts : Source table name}
                             {--limit=-1 : Number of records to import}
                             {--person-ids=* : Specific person IDs to import (ignores limit)}
-                            {--dry-run : Show what would be imported without actually importing}';
+                            {--dry-run : Show what would be imported without actually importing}
+                            {--list-invalid-phones : List only persons failing phone validation and exit}';
 
     /**
      * The console command description.
@@ -42,6 +43,7 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
         $limit = (int) $this->option('limit');
         $personIds = $this->option('person-ids');
         $dryRun = $this->option('dry-run');
+        $listInvalidPhones = (bool) $this->option('list-invalid-phones');
 
         $this->info('Starting import from SugarCRM...');
         $this->infoV("Connection: {$connection}");
@@ -54,7 +56,7 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
         $this->infoV('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
         try {
-            return $this->executeImport($dryRun, function () use ($connection, $table, $limit, $personIds, $dryRun) {
+            return $this->executeImport($dryRun, function () use ($connection, $table, $limit, $personIds, $dryRun, $listInvalidPhones) {
                 // Test connection
                 $this->testConnection($connection);
 
@@ -105,7 +107,14 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
 
                 // If specific person IDs are provided, filter by them and ignore limit
                 if (! empty($personIds)) {
-                    $sql = $sql->whereIn('c.id', $personIds);
+                    // Normalize IDs: support repeated --person-ids options and a single
+                    // quoted value with space/comma separated IDs
+                    if (is_array($personIds)) {
+                        $personIds = implode(' ', $personIds);
+                    }
+                    $normalizedIds = preg_split('/[\s,]+/', (string) $personIds, -1, PREG_SPLIT_NO_EMPTY);
+
+                    $sql = $sql->whereIn('c.id', $normalizedIds);
                 } else {
                     $sql = $sql->groupBy('c.id')
                         ->orderBy('c.date_entered', 'desc'); // Nieuwste eerst
@@ -113,9 +122,16 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                         $sql = $sql->limit($limit);
                     }
                 }
+                $this->infoVV($sql->toRawSql());
                 $records = $sql->get();
 
                 $this->info('Found '.$records->count().' records to import');
+
+                if ($listInvalidPhones) {
+                    $this->showInvalidPhoneRecords($records);
+
+                    return;
+                }
 
                 if ($dryRun) {
                     $this->showDryRunResults($records);
@@ -176,6 +192,52 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
         if ($invalidCount > 0) {
             $this->warn("Would skip {$invalidCount} invalid persons (missing required fields)");
         }
+    }
+
+    /**
+     * Show only persons that fail phone validation
+     */
+    private function showInvalidPhoneRecords($records)
+    {
+        $this->info("\n=== INVALID PHONE RECORDS ===");
+
+        $headers = ['External ID', 'First Name', 'Last Name', 'Field', 'Raw', 'Error'];
+        $rows = [];
+        $count = 0;
+
+        foreach ($records as $record) {
+            $fields = ['phone_work', 'phone_mobile', 'phone_home', 'phone_other'];
+            foreach ($fields as $field) {
+                $raw = $record->{$field} ?? null;
+                if (empty($raw)) {
+                    continue;
+                }
+                try {
+                    // Reuse the same sanitization/validation logic used during import
+                    $this->sanitizePhoneAndInferLabel($raw, ContactLabel::Eigen->value);
+                } catch (Exception $e) {
+                    $rows[] = [
+                        $record->id ?? 'N/A',
+                        $record->first_name ?? 'N/A',
+                        $record->last_name ?? 'N/A',
+                        $field,
+                        $raw,
+                        $e->getMessage(),
+                    ];
+                    $count++;
+                    // List each person once (first failing field is enough)
+                    break;
+                }
+            }
+        }
+
+        if (empty($rows)) {
+            $this->info('No invalid phone records found.');
+            return;
+        }
+
+        $this->table($headers, $rows);
+        $this->info("Total persons with invalid phones: {$count}");
     }
 
     /**

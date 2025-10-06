@@ -254,8 +254,10 @@ abstract class AbstractSugarCRMImport extends Command
             }
         }
 
-        // 5) Validate using existing PhoneValidator rule only if E.164-like (+...) or normalized 06
+        // 5) Normalize E.164 formatting: keep leading '+' and strip all non-digits afterwards
+        //    This turns "+31 6 12 34 56 78" into "+31612345678" before validation.
         if (str_starts_with($value, '+')) {
+            $value = '+'.preg_replace('/\D+/', '', substr($value, 1));
             $validator = new PhoneValidator;
             $failed = false;
             $failMessage = '';

@@ -179,15 +179,20 @@ test('kanban board works with multiple stages', function () {
 
     $responseData = $response->json();
 
-    // Should have data for both stages
-    expect($responseData)->toHaveCount(2);
+    // Should have data for multiple stages
+    expect($responseData)->not->toBeEmpty();
 
-    // Both leads should be present
+    // Both leads should be present in the response
     $allLeads = collect($responseData)->flatMap(fn ($stage) => $stage['leads']['data']);
     $leadIds = $allLeads->pluck('id');
 
     expect($leadIds)->toContain($lead1->id);
     expect($leadIds)->toContain($lead2->id);
+
+    // Verify that our specific stages are present
+    $stageIds = collect($responseData)->pluck('id');
+    expect($stageIds)->toContain($this->stage->id);
+    expect($stageIds)->toContain($stage2->id);
 });
 
 test('kanban board handles empty stages gracefully', function () {

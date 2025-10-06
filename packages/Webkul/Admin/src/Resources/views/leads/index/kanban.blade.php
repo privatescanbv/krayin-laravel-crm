@@ -44,11 +44,7 @@
                                 </span>
 
                                 <div class="flex items-center gap-1">
-                                    <span 
-                                        class="inline-flex items-center justify-center rounded-full bg-white text-[10px] leading-none min-w-[18px] h-[18px] px-1" 
-                                        style="color: var(--brand-blue);"
-                                        v-if="stage.leads.meta.total > 0"
-                                    >
+                                    <span class="inline-flex items-center justify-center rounded-full bg-white text-[10px] leading-none min-w-[18px] h-[18px] px-1" style="color: var(--brand-blue);">
                                         @{{ stage.leads.meta.total }}
                                     </span>
 
@@ -562,7 +558,6 @@
                         pipeline_id: "{{ request('pipeline_id') }}",
                         limit: 10,
                         exclude_won_lost: this.hideWonLost, // Performance optimization: exclude won/lost stages when hidden
-                        include_total_counts: true, // Include total counts for counters (can be disabled for performance)
                     };
 
                     // Carry search params from URL (so Mega Search deep-linking preserves filters)

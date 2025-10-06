@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
+use Webkul\Core\Contracts\Validations\EmailValidator;
 use Webkul\Core\Contracts\Validations\PhoneValidator;
 
 abstract class AbstractSugarCRMImport extends Command
@@ -190,88 +191,119 @@ abstract class AbstractSugarCRMImport extends Command
      */
     protected function sanitizePhoneAndInferLabel(?string $raw, string $defaultLabel): array
     {
-        $value = trim($raw ?? '');
-        if ($value === '') {
-            return [$defaultLabel, $value];
+        try {
+            $value = trim($raw ?? '');
+            if ($value === '') {
+                return [$defaultLabel, $value];
+            }
+
+            // Known label keywords and their mapped labels used in our system
+            $labelMap = [
+                'prive'  => 'home',
+                'privé'  => 'home',
+                'werk'   => 'work',
+                'work'   => 'work',
+                'thuis'  => 'home',
+                'home'   => 'home',
+                'mobiel' => 'mobile',
+                'mobile' => 'mobile',
+                'gsm'    => 'mobile',
+                'other'  => 'other',
+                'overig' => 'other',
+            ];
+
+            $detectedLabel = $defaultLabel;
+
+            // 1) Remove parenthesized label fragments like "(prive)" or "(werk)"
+            $value = preg_replace_callback('/\(([^)]*)\)/u', function ($m) use (&$detectedLabel, $labelMap) {
+                $inner = strtolower(trim($m[1] ?? ''));
+                if ($inner !== '' && isset($labelMap[$inner])) {
+                    $detectedLabel = $labelMap[$inner];
+                }
+
+                return '';
+            }, $value);
+
+            // 2) Check for label words at start or end and strip them
+            foreach ($labelMap as $keyword => $mapped) {
+                // Start: "prive +31..." or "mobiel 06-..."
+                if (preg_match('/^\s*'.preg_quote($keyword, '/').'\s+/iu', $value)) {
+                    $detectedLabel = $mapped;
+                    $value = preg_replace('/^\s*'.preg_quote($keyword, '/').'\s+/iu', '', $value);
+                }
+
+                // End: "+31... prive" or "+31... mobiel"
+                if (preg_match('/\s+'.preg_quote($keyword, '/').'\s*$/iu', $value)) {
+                    $detectedLabel = $mapped;
+                    $value = preg_replace('/\s+'.preg_quote($keyword, '/').'\s*$/iu', '', $value);
+                }
+            }
+
+            // 3) Collapse extra whitespace and trim common trailing punctuation leftover
+            $value = preg_replace('/\s{2,}/u', ' ', $value ?? '');
+            $value = trim($value, " \t\n\r\0\x0B-;:,.");
+
+            // 4) Normalize Dutch mobile 06 numbers to +316XXXXXXXX
+            $digitsOnly = preg_replace('/\D+/', '', $value);
+            if ($digitsOnly !== null && $digitsOnly !== '') {
+                // If it looks like a Dutch mobile starting with 06 and followed by 8 digits
+                if (preg_match('/^06(\d{8})$/', $digitsOnly, $m)) {
+                    $value = '+316'.$m[1];
+                    $detectedLabel = 'mobile';
+                } elseif (preg_match('/^06/', $digitsOnly)) {
+                    // 06 present but not in valid 06XXXXXXXX format -> invalid
+                    throw new Exception('Ongeldig 06-nummer: verwacht exact 8 cijfers na 06');
+                }
+            }
+
+            // 5) Normalize E.164 formatting: keep leading '+' and strip all non-digits afterwards
+            //    This turns "+31 6 12 34 56 78" into "+31612345678" before validation.
+            if (str_starts_with($value, '+')) {
+                $value = '+'.preg_replace('/\D+/', '', substr($value, 1));
+                $validator = new PhoneValidator;
+                $failed = false;
+                $failMessage = '';
+                $validator->validate('phone', $value, function ($message) use (&$failed, &$failMessage) {
+                    $failed = true;
+                    $failMessage = (string) $message;
+                });
+
+                if ($failed) {
+                    throw new Exception($failMessage ?: 'Ongeldig telefoonnummer');
+                }
+            }
+
+            return [$detectedLabel, $value];
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage().' With: '.$raw.' Label: '.$defaultLabel);
+        }
+    }
+
+    /**
+     * Validate email using EmailValidator and throw with raw context on failure
+     */
+    protected function validateEmailOrFail(?string $email, ?string $which = null): void
+    {
+        if ($email === null || $email === '') {
+            return;
         }
 
-        // Known label keywords and their mapped labels used in our system
-        $labelMap = [
-            'prive'  => 'home',
-            'privé'  => 'home',
-            'werk'   => 'work',
-            'work'   => 'work',
-            'thuis'  => 'home',
-            'home'   => 'home',
-            'mobiel' => 'mobile',
-            'mobile' => 'mobile',
-            'gsm'    => 'mobile',
-            'other'  => 'other',
-            'overig' => 'other',
-        ];
+        $validator = new EmailValidator;
+        $failed = false;
+        $failMessage = '';
+        $validator->validate('email', $email, function ($message) use (&$failed, &$failMessage) {
+            $failed = true;
+            $failMessage = (string) $message;
+        });
 
-        $detectedLabel = $defaultLabel;
-
-        // 1) Remove parenthesized label fragments like "(prive)" or "(werk)"
-        $value = preg_replace_callback('/\(([^)]*)\)/u', function ($m) use (&$detectedLabel, $labelMap) {
-            $inner = strtolower(trim($m[1] ?? ''));
-            if ($inner !== '' && isset($labelMap[$inner])) {
-                $detectedLabel = $labelMap[$inner];
+        if ($failed) {
+            $prefix = 'Ongeldig e-mailadres';
+            if ($which) {
+                $prefix .= ' ('.$which.') tijdens import';
             }
 
-            return '';
-        }, $value);
-
-        // 2) Check for label words at start or end and strip them
-        foreach ($labelMap as $keyword => $mapped) {
-            // Start: "prive +31..." or "mobiel 06-..."
-            if (preg_match('/^\s*'.preg_quote($keyword, '/').'\s+/iu', $value)) {
-                $detectedLabel = $mapped;
-                $value = preg_replace('/^\s*'.preg_quote($keyword, '/').'\s+/iu', '', $value);
-            }
-
-            // End: "+31... prive" or "+31... mobiel"
-            if (preg_match('/\s+'.preg_quote($keyword, '/').'\s*$/iu', $value)) {
-                $detectedLabel = $mapped;
-                $value = preg_replace('/\s+'.preg_quote($keyword, '/').'\s*$/iu', '', $value);
-            }
+            throw new Exception(($prefix ?: 'Ongeldig e-mailadres').' With: '.$email);
         }
-
-        // 3) Collapse extra whitespace and trim common trailing punctuation leftover
-        $value = preg_replace('/\s{2,}/u', ' ', $value ?? '');
-        $value = trim($value, " \t\n\r\0\x0B-;:,.");
-
-        // 4) Normalize Dutch mobile 06 numbers to +316XXXXXXXX
-        $digitsOnly = preg_replace('/\D+/', '', $value);
-        if ($digitsOnly !== null && $digitsOnly !== '') {
-            // If it looks like a Dutch mobile starting with 06 and followed by 8 digits
-            if (preg_match('/^06(\d{8})$/', $digitsOnly, $m)) {
-                $value = '+316'.$m[1];
-                $detectedLabel = 'mobile';
-            } elseif (preg_match('/^06/', $digitsOnly)) {
-                // 06 present but not in valid 06XXXXXXXX format -> invalid
-                throw new Exception('Ongeldig 06-nummer: verwacht exact 8 cijfers na 06');
-            }
-        }
-
-        // 5) Normalize E.164 formatting: keep leading '+' and strip all non-digits afterwards
-        //    This turns "+31 6 12 34 56 78" into "+31612345678" before validation.
-        if (str_starts_with($value, '+')) {
-            $value = '+'.preg_replace('/\D+/', '', substr($value, 1));
-            $validator = new PhoneValidator;
-            $failed = false;
-            $failMessage = '';
-            $validator->validate('phone', $value, function ($message) use (&$failed, &$failMessage) {
-                $failed = true;
-                $failMessage = (string) $message;
-            });
-
-            if ($failed) {
-                throw new Exception($failMessage ?: 'Ongeldig telefoonnummer');
-            }
-        }
-
-        return [$detectedLabel, $value];
     }
 
     /**

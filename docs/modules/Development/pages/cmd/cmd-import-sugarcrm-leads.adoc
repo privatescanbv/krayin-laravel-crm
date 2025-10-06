@@ -172,10 +172,13 @@ sail artisan import:leads --dry-run
 sail artisan import:leads --limit=50
 
 # Import specifieke lead IDs
-sail artisan import:leads --lead-ids=abc123 def456 ghi789
+sail artisan import:leads --lead-ids="abc123 def456 ghi789"
 
 # Import met andere database connectie
 sail artisan import:leads --connection=sugarcrm_prod
+
+# Import personen vóór elke lead-batch (helpt bij person-matching)
+sail artisan import:leads --import-persons -vv
 ----
 
 ===== Parameters
@@ -198,6 +201,10 @@ sail artisan import:leads --connection=sugarcrm_prod
 
 |`--dry-run`
 |Test de import zonder daadwerkelijk data op te slaan
+|`false`
+
+|`--import-persons`
+|Importeer gerelateerde personen per batch vóór lead import (gebruikt `import:persons` met spatie-gescheiden `--person-ids` en geeft dezelfde verbosity door)
 |`false`
 |===
 

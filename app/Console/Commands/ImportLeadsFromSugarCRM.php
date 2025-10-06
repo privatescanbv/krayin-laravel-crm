@@ -13,11 +13,11 @@ use App\Services\Importers\SugarCRM\ActivityImporter;
 use App\Services\Importers\SugarCRM\AttachmentImporter;
 use App\Services\Importers\SugarCRM\MeetingImporter;
 use Exception;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Webkul\Contact\Models\Person;
-use Webkul\Core\Contracts\Validations\EmailValidator;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
 use Webkul\User\Models\User;
@@ -53,7 +53,8 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                             {--connection=sugarcrm : Database connection name}
                             {--limit=-1 : Number of records to import (optional, defaults to all)}
                             {--lead-ids=* : Specific lead IDs to import (ignores limit)}
-                            {--dry-run : Show what would be imported without actually importing}';
+                            {--dry-run : Show what would be imported without actually importing}
+                            {--import-persons : Import related persons before importing each lead batch}';
 
     /**
      * The console command description.
@@ -165,6 +166,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $limit = (int) $this->option('limit');
         $leadIds = $this->option('lead-ids');
         $dryRun = $this->option('dry-run');
+        $importPersons = (bool) $this->option('import-persons');
 
         $this->info('Starting lead import from SugarCRM...');
         $this->infoV("Connection: {$connection}");
@@ -183,7 +185,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         // user import needs to be run first
         $this->ensureUserImportRan();
 
-        return $this->executeImport($dryRun, function () use ($connection, $limit, $leadIds, $dryRun) {
+        return $this->executeImport($dryRun, function () use ($connection, $limit, $leadIds, $dryRun, $importPersons) {
             // Test connection
             $this->testConnection($connection);
 
@@ -209,7 +211,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             $this->bar = $this->output->createProgressBar($idQuery->count());
             $this->bar->start();
 
-            $idQuery->select('l.id')->chunkById($batchSize, function ($rows) use ($limit, $connection, $dryRun, &$processed) {
+            $idQuery->select('l.id')->chunkById($batchSize, function ($rows) use ($limit, $connection, $dryRun, $importPersons, &$processed) {
                 if ($rows->isEmpty()) {
                     $this->info('No more leads to process, exiting chunk loop');
 
@@ -315,6 +317,34 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                 $records = $sqlBatch->get();
                 $this->infoV('Fetched '.($records ? $records->count() : 0).' lead records');
                 $leadByPersons = $this->extractPerson($records);
+                // Optionally import related persons first
+                if ($importPersons) {
+                    // Gather unique related person external IDs from this batch
+                    $personIdsForBatch = [];
+                    foreach ($leadByPersons as $leadId => $relPersonIds) {
+                        foreach ((array) $relPersonIds as $pid) {
+                            if (! empty($pid)) {
+                                $personIdsForBatch[$pid] = true;
+                            }
+                        }
+                    }
+                    $personIdsForBatch = array_keys($personIdsForBatch);
+                    if (! empty($personIdsForBatch)) {
+                        if ($dryRun) {
+                            $this->infoV('Would import related persons first: '.implode(', ', $personIdsForBatch));
+                        } else {
+                            $this->info('Importing related persons first: '.implode(', ', $personIdsForBatch));
+                            // Call the persons importer with the same connection
+                            $personIdsArg = implode(' ', $personIdsForBatch);
+                            Artisan::call('import:persons', [
+                                '--connection' => $connection,
+                                '--person-ids' => $personIdsArg,
+                            ], $this->output);
+                        }
+                    } else {
+                        $this->infoV('No related persons to import for this batch.');
+                    }
+                }
                 $leadByPersonsByAnamnesis = $this->extractAnamenesis($leadByPersons);
 
                 $callActivities = $this->activityImporter->extractCallActivities($leadIdsBatch);
@@ -547,6 +577,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
         foreach ($records as $record) {
             try {
+                $lead = null; // initialize for linter and downstream usage
                 // Check if lead already exists by external_id
                 $existingLead = Lead::where('external_id', $record->id)->first();
                 if ($existingLead) {
@@ -678,6 +709,15 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
                         $this->infoV('No related persons for lead '.$record->id.'; lead imported without person attachments.');
                     }
                 });
+
+                // Ensure lead was created
+                if (! $lead) {
+                    $errors++;
+                    $this->error("Lead not created for record {$record->id}, skipping activity imports.");
+                    $this->bar->advance();
+
+                    continue;
+                }
 
                 // Import call activities for this lead (outside main transaction)
                 try {
@@ -841,14 +881,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
         if ($primary) {
             // Validate primary email
-            $emailValidator = new EmailValidator;
-            $failed = false;
-            $emailValidator->validate('email', $primary, function ($message) use (&$failed) {
-                $failed = true;
-            });
-            if ($failed) {
-                throw new Exception('Ongeldig e-mailadres (primary) tijdens import');
-            }
+            $this->validateEmailOrFail($primary, 'primary');
             $emails[] = [
                 'label'      => ContactLabel::Eigen->value,
                 'value'      => $primary,
@@ -858,14 +891,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
         if ($any && $any !== $primary) {
             // Validate secondary email
-            $emailValidator = new EmailValidator;
-            $failed = false;
-            $emailValidator->validate('email', $any, function ($message) use (&$failed) {
-                $failed = true;
-            });
-            if ($failed) {
-                throw new Exception('Ongeldig e-mailadres (secundair) tijdens import');
-            }
+            $this->validateEmailOrFail($any, 'secundair');
             $emails[] = [
                 'label'      => ContactLabel::Eigen->value,
                 'value'      => $any,

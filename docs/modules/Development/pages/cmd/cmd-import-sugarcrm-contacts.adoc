@@ -45,8 +45,10 @@ sail artisan import:persons
 # Import specifiek aantal contactpersonen
 sail artisan import:persons --limit=100
 
-# Import specifieke person IDs
-sail artisan import:persons --person-ids=abc123 def456 ghi789
+# Import specifieke person IDs (spatie- of komma-gescheiden of optie herhalen)
+sail artisan import:persons --person-ids="abc123 def456 ghi789"
+sail artisan import:persons --person-ids="abc123,def456,ghi789"
+sail artisan import:persons --person-ids=abc123 --person-ids=def456 --person-ids=ghi789
 
 # Import alle contactpersonen
 sail artisan import:persons --limit=10000
@@ -67,8 +69,8 @@ sail artisan import:persons --limit=10000
 |`--dry-run`
 |Test de import zonder daadwerkelijk data op te slaan
 
-|`--force`
-|Overschrijf bestaande contactpersonen met hetzelfde email adres
+|`--list-invalid-phones`
+|Toon alleen personen met ongeldige telefoonvelden en stop (geen import)
 |===
 
 ===== Voorbeeld Output

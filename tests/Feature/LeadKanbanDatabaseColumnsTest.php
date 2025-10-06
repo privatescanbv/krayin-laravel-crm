@@ -60,6 +60,12 @@ test('kanban board loads without database column errors', function () {
         'pipeline_id' => $this->pipeline->id,
     ]));
 
+    // Debug: If it fails, let's see what the error is
+    if ($response->status() !== 200) {
+        dump('Response status: ' . $response->status());
+        dump('Response content: ' . $response->content());
+    }
+
     $response->assertOk();
 
     // Verify the response structure

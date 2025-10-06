@@ -25,24 +25,24 @@ return [
     | you and you are free to add your own as your application requires.
     |
     | Laravel supports a variety of mail "transport" drivers to be used while
-    | sending an e-mail. You will specify which one you are using for your
-    | mailers below. You are free to add additional mailers as required.
+    | sending an e-mail. You may specify which one you're using throughout
+    | your configuration file. You may also add additional drivers as required.
     |
-    | Supported: "smtp", "sendmail", "mailgun", "ses",
-    |            "postmark", "log", "array", "failover"
+    | Supported: "smtp", "sendmail", "mailgun", "ses", "ses-v2",
+    |            "postmark", "log", "array", "failover", "roundrobin"
     |
     */
 
     'mailers' => [
         'smtp' => [
-            'transport'   => 'smtp',
-            'host'        => env('MAIL_HOST', 'smtp.mailgun.org'),
-            'port'        => env('MAIL_PORT', 587),
-            'encryption'  => env('MAIL_ENCRYPTION', 'tls'),
-            'username'    => env('MAIL_USERNAME'),
-            'password'    => env('MAIL_PASSWORD'),
-            'timeout'     => null,
-            'verify_peer' => false,
+            'transport' => 'smtp',
+            'host' => env('MAIL_HOST', 'smtp.mailgun.org'),
+            'port' => env('MAIL_PORT', 587),
+            'encryption' => env('MAIL_ENCRYPTION', 'tls'),
+            'username' => env('MAIL_USERNAME'),
+            'password' => env('MAIL_PASSWORD'),
+            'timeout' => null,
+            'local_domain' => env('MAIL_EHLO_DOMAIN'),
         ],
 
         'ses' => [
@@ -51,29 +51,32 @@ return [
 
         'mailgun' => [
             'transport' => 'mailgun',
+            // 'domain' => env('MAILGUN_DOMAIN'),
+            // 'secret' => env('MAILGUN_SECRET'),
+            // 'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
+            // 'scheme' => 'https',
         ],
 
-        'postmark' => [
-            'transport' => 'postmark',
-        ],
-
-        'sendmail' => [
-            'transport' => 'sendmail',
-            'path'      => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i'),
+        'failover' => [
+            'transport' => 'failover',
+            'mailers' => [
+                'smtp',
+                'log',
+            ],
         ],
 
         'log' => [
             'transport' => 'log',
-            'channel'   => env('MAIL_LOG_CHANNEL'),
+            'channel' => env('MAIL_LOG_CHANNEL'),
         ],
 
         'array' => [
             'transport' => 'array',
         ],
 
-        'failover' => [
-            'transport' => 'failover',
-            'mailers'   => [
+        'roundrobin' => [
+            'transport' => 'roundrobin',
+            'mailers' => [
                 'smtp',
                 'log',
             ],
@@ -92,21 +95,9 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS'),
-        'name'    => env('MAIL_FROM_NAME'),
+        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
+        'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Default Mailer Domain
-    |--------------------------------------------------------------------------
-    |
-    | This option controls the domain for email message_id that is used to send email
-    | messages sent by your application.
-    |
-    */
-
-    'domain' => env('MAIL_DOMAIN', 'webkul.com'),
 
     /*
     |--------------------------------------------------------------------------
@@ -126,5 +117,32 @@ return [
             resource_path('views/vendor/mail'),
         ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Microsoft Graph Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for Microsoft Graph API integration
+    |
+    */
+
+    'graph' => [
+        'client_id' => env('GRAPH_CLIENT_ID'),
+        'tenant_id' => env('GRAPH_TENANT_ID'),
+        'client_secret' => env('GRAPH_CLIENT_SECRET'),
+        'mailbox' => env('GRAPH_MAILBOX', 'crm@privatescan.nl'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Domain Configuration
+    |--------------------------------------------------------------------------
+    |
+    | The domain used for generating unique email IDs
+    |
+    */
+
+    'domain' => env('MAIL_DOMAIN', 'example.com'),
 
 ];

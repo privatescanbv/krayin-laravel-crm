@@ -78,6 +78,8 @@
                             group="leads"
                             @scroll="handleScroll(stage, $event)"
                             @change="updateStage(stage, $event)"
+                            :scroll-sensitivity="100"
+                            :force-fallback="false"
                         >
                             <template #header>
                                 <div
@@ -418,6 +420,7 @@
                     hideWonLost: true,
                     wonLostLabel: 'Toon gewonnen/verloren',
                     currentStageUpdate: null,
+                    scrollTimeouts: {},
                 };
             },
 
@@ -432,6 +435,13 @@
                 src() {
                     const pipelineId = "{{ request('pipeline_id') ?? '' }}";
                     return `{{ route('admin.leads.index') }}${pipelineId ? '?pipeline_id=' + pipelineId : ''}`;
+                },
+
+                /**
+                 * Get the current pipeline ID for localStorage key
+                 */
+                currentPipelineId() {
+                    return "{{ request('pipeline_id') ?? '' }}";
                 }
             },
 
@@ -508,6 +518,17 @@
                             return;
                         }
                     }
+
+                    // Check for pipeline-specific won/lost setting
+                    const pipelineSpecificKey = `kanban_hideWonLost_pipeline_${this.currentPipelineId}`;
+                    const pipelineSpecificSetting = localStorage.getItem(pipelineSpecificKey);
+                    if (pipelineSpecificSetting !== null) {
+                        this.hideWonLost = JSON.parse(pipelineSpecificSetting);
+                    } else {
+                        // Default to hidden for performance (70k leads)
+                        this.hideWonLost = true;
+                    }
+                    this.setWonLostButtonText();
 
                     this.get()
                         .then(response => {
@@ -832,30 +853,43 @@
                 },
 
                 /**
-                 * Handles the scroll event on the stage leads.
+                 * Handles the scroll event on the stage leads with debouncing for performance.
                  *
                  * @param {object} stage - The stage object.
                  * @param {object} event - The scroll event.
                  * @returns {void}
                  */
                 handleScroll(stage, event) {
-                    const element = event.target;
-                    const bottom = Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) < 1;
-
-                    if (! bottom) {
-                        return;
+                    // Clear existing timeout for this stage
+                    if (this.scrollTimeouts && this.scrollTimeouts[stage.id]) {
+                        clearTimeout(this.scrollTimeouts[stage.id]);
                     }
 
-                    if (this.stageLeads[stage.sort_order].leads.meta.current_page == this.stageLeads[stage.sort_order].leads.meta.last_page) {
-                        return;
+                    // Initialize scrollTimeouts if not exists
+                    if (!this.scrollTimeouts) {
+                        this.scrollTimeouts = {};
                     }
 
-                    this.append({
-                        pipeline_stage_id: stage.id,
-                        pipeline_id: stage.lead_pipeline_id,
-                        page: this.stageLeads[stage.sort_order].leads.meta.current_page + 1,
-                        limit: 10,
-                    });
+                    // Debounce scroll handling
+                    this.scrollTimeouts[stage.id] = setTimeout(() => {
+                        const element = event.target;
+                        const bottom = Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) < 1;
+
+                        if (! bottom) {
+                            return;
+                        }
+
+                        if (this.stageLeads[stage.sort_order].leads.meta.current_page == this.stageLeads[stage.sort_order].leads.meta.last_page) {
+                            return;
+                        }
+
+                        this.append({
+                            pipeline_stage_id: stage.id,
+                            pipeline_id: stage.lead_pipeline_id,
+                            page: this.stageLeads[stage.sort_order].leads.meta.current_page + 1,
+                            limit: 10,
+                        });
+                    }, 150); // 150ms debounce
                 },
 
                 //=======================================================================================
@@ -954,6 +988,10 @@
                 toggleWonLost() {
                     this.hideWonLost = !this.hideWonLost;
                     this.updateKanbans();
+
+                    // Store pipeline-specific setting
+                    const pipelineSpecificKey = `kanban_hideWonLost_pipeline_${this.currentPipelineId}`;
+                    localStorage.setItem(pipelineSpecificKey, JSON.stringify(this.hideWonLost));
 
                     // Update button text
                     this.setWonLostButtonText();

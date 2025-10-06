@@ -12,14 +12,6 @@ class CleanupEmailLogsTest extends TestCase
 {
     use RefreshDatabase;
 
-    protected CleanupEmailLogs $command;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->command = new CleanupEmailLogs();
-    }
-
     public function test_cleanup_removes_old_logs()
     {
         // Create old logs (8 days ago)
@@ -52,7 +44,9 @@ class CleanupEmailLogsTest extends TestCase
         $this->assertDatabaseCount('email_logs', 3);
 
         // Run cleanup with 7 days retention
-        $this->command->handle();
+        $this->artisan('emails:cleanup-logs')
+            ->expectsConfirmation('Are you sure you want to delete 1 email logs?', 'yes')
+            ->assertExitCode(0);
 
         // Should only keep logs from 3 days ago and 1 day ago
         $this->assertDatabaseCount('email_logs', 2);
@@ -98,12 +92,9 @@ class CleanupEmailLogsTest extends TestCase
         $this->assertDatabaseCount('email_logs', 2);
 
         // Run cleanup with 3 days retention
-        $this->command->setLaravel($this->app);
-        $this->command->option = function($key) {
-            return $key === 'days' ? '3' : null;
-        };
-
-        $this->command->handle();
+        $this->artisan('emails:cleanup-logs', ['--days' => '3'])
+            ->expectsConfirmation('Are you sure you want to delete 1 email logs?', 'yes')
+            ->assertExitCode(0);
 
         // Should only keep logs from 2 days ago
         $this->assertDatabaseCount('email_logs', 1);
@@ -125,33 +116,22 @@ class CleanupEmailLogsTest extends TestCase
     {
         $this->assertDatabaseCount('email_logs', 0);
 
-        $this->command->handle();
+        $this->artisan('emails:cleanup-logs')
+            ->assertExitCode(0);
 
         $this->assertDatabaseCount('email_logs', 0);
     }
 
     public function test_cleanup_with_invalid_days_option()
     {
-        $this->command->setLaravel($this->app);
-        $this->command->option = function($key) {
-            return $key === 'days' ? 'invalid' : null;
-        };
-
-        $result = $this->command->handle();
-
-        $this->assertEquals(1, $result); // Command::FAILURE
+        $this->artisan('emails:cleanup-logs', ['--days' => 'invalid'])
+            ->assertExitCode(1);
     }
 
     public function test_cleanup_with_negative_days_option()
     {
-        $this->command->setLaravel($this->app);
-        $this->command->option = function($key) {
-            return $key === 'days' ? '-1' : null;
-        };
-
-        $result = $this->command->handle();
-
-        $this->assertEquals(1, $result); // Command::FAILURE
+        $this->artisan('emails:cleanup-logs', ['--days' => '-1'])
+            ->assertExitCode(1);
     }
 
     public function test_cleanup_uses_config_default()
@@ -179,7 +159,9 @@ class CleanupEmailLogsTest extends TestCase
 
         $this->assertDatabaseCount('email_logs', 2);
 
-        $this->command->handle();
+        $this->artisan('emails:cleanup-logs')
+            ->expectsConfirmation('Are you sure you want to delete 1 email logs?', 'yes')
+            ->assertExitCode(0);
 
         // Should only keep logs from 3 days ago
         $this->assertDatabaseCount('email_logs', 1);

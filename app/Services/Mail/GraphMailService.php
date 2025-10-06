@@ -257,7 +257,7 @@ class GraphMailService
      */
     protected function parseDateTime(string $dateTime): Carbon
     {
-        return Carbon::parse($dateTime)->setTimezone(config('app.timezone'));
+        return Carbon::parse($dateTime)->setTimezone(config('app.timezone', 'UTC'));
     }
 
     /**

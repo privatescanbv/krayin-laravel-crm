@@ -268,7 +268,12 @@ class GraphMailServiceTest extends TestCase
         $carbon = $method->invoke($this->service, $dateTime);
 
         $this->assertInstanceOf(Carbon::class, $carbon);
-        $this->assertEquals('2025-01-28 10:00:00', $carbon->format('Y-m-d H:i:s'));
+        
+        // Test that the timezone conversion works correctly
+        // The Z indicates UTC, so we expect it to be converted to the app timezone (Europe/Amsterdam = UTC+1)
+        $expectedTime = Carbon::parse($dateTime)->setTimezone('Europe/Amsterdam');
+        $this->assertEquals($expectedTime->format('Y-m-d H:i:s'), $carbon->format('Y-m-d H:i:s'));
+        $this->assertEquals('Europe/Amsterdam', $carbon->getTimezone()->getName());
     }
 
     public function test_log_sync_start_creates_email_log()

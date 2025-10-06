@@ -223,6 +223,8 @@ TABLE(Clinic, "clinic") {
   PRIMARY_KEY(id): bigint
   name: string
   registration_form_clinic_name: string
+  website_url: string
+  order_confirmation_note: text
   emails: json
   phones: json
   created_at: datetime

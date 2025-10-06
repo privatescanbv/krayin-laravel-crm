@@ -27,16 +27,20 @@ test('clinics index returns datagrid json', function () {
 
 test('can create clinic', function () {
     $payload = [
-        'name'  => 'Test Clinic',
-        'email' => 'info@testclinic.tld',
-        'phone' => '+31101234567',
+        'name'                    => 'Test Clinic',
+        'email'                   => 'info@testclinic.tld',
+        'phone'                   => '+31101234567',
+        'website_url'             => 'https://www.testclinic.nl',
+        'order_confirmation_note' => 'Meld je bij de receptie',
     ];
 
     $response = $this->postJson(route('admin.settings.clinics.store'), $payload);
     $response->assertOk();
 
     $this->assertDatabaseHas('clinics', [
-        'name' => 'Test Clinic',
+        'name'                    => 'Test Clinic',
+        'website_url'             => 'https://www.testclinic.nl',
+        'order_confirmation_note' => 'Meld je bij de receptie',
     ]);
 
     // Verify emails and phones are stored correctly
@@ -51,18 +55,22 @@ test('can update clinic', function () {
     $clinic = Clinic::factory()->create();
 
     $payload = [
-        'name'    => 'Updated Clinic',
-        'emails'  => [['value' => 'contact@updated.tld', 'label' => 'eigen', 'is_default' => true]],
-        'phones'  => [['value' => '+31102223333', 'label' => 'eigen', 'is_default' => true]],
-        '_method' => 'put',
+        'name'                    => 'Updated Clinic',
+        'website_url'             => 'https://www.updated-clinic.com',
+        'order_confirmation_note' => 'Nieuwe opmerking voor patiënten',
+        'emails'                  => [['value' => 'contact@updated.tld', 'label' => 'eigen', 'is_default' => true]],
+        'phones'                  => [['value' => '+31102223333', 'label' => 'eigen', 'is_default' => true]],
+        '_method'                 => 'put',
     ];
 
     $response = $this->postJson(route('admin.settings.clinics.update', ['id' => $clinic->id]), $payload);
     $response->assertOk()->assertJsonPath('data.name', 'Updated Clinic');
 
     $this->assertDatabaseHas('clinics', [
-        'id'   => $clinic->id,
-        'name' => 'Updated Clinic',
+        'id'                      => $clinic->id,
+        'name'                    => 'Updated Clinic',
+        'website_url'             => 'https://www.updated-clinic.com',
+        'order_confirmation_note' => 'Nieuwe opmerking voor patiënten',
     ]);
 
     // Verify emails and phones are updated correctly
@@ -103,6 +111,34 @@ test('can update clinic with empty email/phone values filtered out', function ()
     expect($clinic->phones)->toBeArray();
     expect($clinic->phones)->toHaveCount(1);
     expect($clinic->phones[0]['value'])->toBe('+31612345678');
+});
+
+test('validates website url is a valid url', function () {
+    $payload = [
+        'name'        => 'Test Clinic URL Validation',
+        'email'       => 'info@testclinic.tld',
+        'website_url' => 'not-a-valid-url',
+    ];
+
+    $response = $this->postJson(route('admin.settings.clinics.store'), $payload);
+    $response->assertStatus(422);
+    $response->assertJsonValidationErrors(['website_url']);
+});
+
+test('accepts valid http and https urls', function () {
+    $payload = [
+        'name'        => 'Test Clinic Valid URL',
+        'email'       => 'info@testclinic.tld',
+        'website_url' => 'https://www.testclinic.nl',
+    ];
+
+    $response = $this->postJson(route('admin.settings.clinics.store'), $payload);
+    $response->assertOk();
+
+    $this->assertDatabaseHas('clinics', [
+        'name'        => 'Test Clinic Valid URL',
+        'website_url' => 'https://www.testclinic.nl',
+    ]);
 });
 
 test('can delete clinic', function () {

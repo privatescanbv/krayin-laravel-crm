@@ -16,6 +16,8 @@ class Clinic extends Model
         'external_id',
         'name',
         'registration_form_clinic_name',
+        'website_url',
+        'order_confirmation_note',
         'emails',
         'phones',
         'address_id',

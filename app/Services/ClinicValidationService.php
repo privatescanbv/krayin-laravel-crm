@@ -19,6 +19,10 @@ class ClinicValidationService
                 ? 'required|max:100|unique:clinics,name,'.$id
                 : 'required|unique:clinics,name|max:100',
 
+            // Website and order confirmation
+            'website_url'             => 'nullable|url|max:255',
+            'order_confirmation_note' => 'nullable|string|max:1000',
+
             // Contact information
             'emails'         => ['nullable', new ContactArrayValidator('email')],
             'emails.*.value' => ['nullable', new EmailValidator],

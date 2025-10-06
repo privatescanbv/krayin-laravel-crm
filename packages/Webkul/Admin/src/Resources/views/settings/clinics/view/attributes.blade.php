@@ -31,6 +31,32 @@
                     </div>
                 </div>
 
+                <!-- Website URL -->
+                @if (!empty($clinic->website_url))
+                    <div class="grid grid-cols-[1fr_2fr] items-center gap-1">
+                        <div class="label dark:text-white">
+                            Website URL
+                        </div>
+                        <div class="font-medium dark:text-white">
+                            <a href="{{ $clinic->website_url }}" target="_blank" class="text-blue-600 hover:underline dark:text-blue-400">
+                                {{ $clinic->website_url }}
+                            </a>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Order Confirmation Note -->
+                @if (!empty($clinic->order_confirmation_note))
+                    <div class="grid grid-cols-[1fr_2fr] items-start gap-1">
+                        <div class="label dark:text-white">
+                            Opmerking orderbevestiging
+                        </div>
+                        <div class="font-medium dark:text-white">
+                            {{ $clinic->order_confirmation_note }}
+                        </div>
+                    </div>
+                @endif
+
                 <!-- Emails -->
                 <x-admin::clinic.contact-fields
                     :label="trans('admin::app.settings.clinics.view.attributes.emails')"

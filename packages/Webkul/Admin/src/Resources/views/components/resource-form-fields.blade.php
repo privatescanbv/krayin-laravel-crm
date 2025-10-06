@@ -1,11 +1,18 @@
 @php use App\Models\Clinic;use App\Models\ResourceType; @endphp
 @props([
     'resource' => null,
+    'preSelectedClinicId' => null,
 ])
 
 @php
     $resourceTypes = ResourceType::orderBy('name')->get(['id', 'name']);
     $clinics = Clinic::orderBy('name')->get(['id', 'name']);
+    
+    // Pre-select clinic if provided
+    $selectedClinicId = old('clinic_id', $resource->clinic_id ?? '');
+    if (empty($selectedClinicId) && isset($preSelectedClinicId)) {
+        $selectedClinicId = $preSelectedClinicId;
+    }
 @endphp
 
 <!-- Naam -->
@@ -57,13 +64,13 @@
     <x-admin::form.control-group.control
         type="select"
         name="clinic_id"
-        value="{{ old('clinic_id', $resource->clinic_id ?? '') }}"
+        value="{{ $selectedClinicId }}"
         rules="required|numeric"
         :label="trans('admin::app.settings.resources.index.create.clinic')"
     >
         <option value="">@lang('admin::app.select')</option>
         @foreach ($clinics as $clinic)
-            <option value="{{ $clinic->id }}" @selected(old('clinic_id', $resource->clinic_id ?? '') == $clinic->id)>{{ $clinic->name }}</option>
+            <option value="{{ $clinic->id }}" @selected($selectedClinicId == $clinic->id)>{{ $clinic->name }}</option>
         @endforeach
     </x-admin::form.control-group.control>
 

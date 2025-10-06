@@ -17,6 +17,18 @@
             <div class="flex items-center gap-x-2.5">
                 {!! view_render_event('admin.products.index.create_button.before') !!}
 
+                <!-- Button for Product Groups -->
+                @if (bouncer()->hasPermission('productgroups'))
+                    <div class="flex items-center gap-x-2.5">
+                        <a
+                            href="{{ route('admin.productgroups.index') }}"
+                            class="secondary-button"
+                        >
+                            @lang('admin::app.layouts.product-groups')
+                        </a>
+                    </div>
+                @endif
+
                 <!-- Create button for Product -->
                 @if (bouncer()->hasPermission('products.create'))
                     <div class="flex items-center gap-x-2.5">

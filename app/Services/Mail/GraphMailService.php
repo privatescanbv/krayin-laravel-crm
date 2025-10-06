@@ -5,15 +5,18 @@ namespace App\Services\Mail;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Webkul\Email\Enums\SupportedFolderEnum;
+use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
-use Webkul\Email\Models\Email;
 
 class GraphMailService extends AbstractEmailProcessor
 {
     protected string $accessToken;
+
     protected string $baseUrl = 'https://graph.microsoft.com/v1.0';
+
     protected string $mailbox;
 
     public function __construct(
@@ -38,14 +41,14 @@ class GraphMailService extends AbstractEmailProcessor
         $clientSecret = config('mail.graph.client_secret');
 
         $response = Http::asForm()->post("https://login.microsoftonline.com/{$tenantId}/oauth2/v2.0/token", [
-            'client_id' => $clientId,
+            'client_id'     => $clientId,
             'client_secret' => $clientSecret,
-            'scope' => 'https://graph.microsoft.com/.default',
-            'grant_type' => 'client_credentials',
+            'scope'         => 'https://graph.microsoft.com/.default',
+            'grant_type'    => 'client_credentials',
         ]);
 
-        if (!$response->successful()) {
-            throw new Exception('Failed to get access token: ' . $response->body());
+        if (! $response->successful()) {
+            throw new Exception('Failed to get access token: '.$response->body());
         }
 
         $data = $response->json();
@@ -59,22 +62,23 @@ class GraphMailService extends AbstractEmailProcessor
     protected function fetchMessages(): array
     {
         $accessToken = $this->getAccessToken();
-        
+
         $url = "{$this->baseUrl}/users/{$this->mailbox}/mailFolders('Inbox')/messages";
-        
+
         $response = Http::withToken($accessToken)
             ->get($url, [
-                '$filter' => 'isRead eq false',
-                '$select' => 'id,subject,from,toRecipients,ccRecipients,bccRecipients,receivedDateTime,isRead,hasAttachments,body,attachments,internetMessageId,conversationId,replyTo',
+                '$filter'  => 'isRead eq false',
+                '$select'  => 'id,subject,from,toRecipients,ccRecipients,bccRecipients,receivedDateTime,isRead,hasAttachments,body,attachments,internetMessageId,conversationId,replyTo',
                 '$orderby' => 'receivedDateTime desc',
-                '$top' => 50 // Limit to prevent timeout
+                '$top'     => 50, // Limit to prevent timeout
             ]);
 
-        if (!$response->successful()) {
-            throw new Exception('Failed to fetch messages: ' . $response->body());
+        if (! $response->successful()) {
+            throw new Exception('Failed to fetch messages: '.$response->body());
         }
 
         $data = $response->json();
+
         return $data['value'] ?? [];
     }
 
@@ -110,25 +114,25 @@ class GraphMailService extends AbstractEmailProcessor
         $body = $this->extractMessageBody($message);
 
         return [
-            'from' => $from['address'] ?? '',
-            'subject' => $message['subject'] ?? '',
-            'name' => $from['name'] ?? '',
-            'reply' => $body,
-            'is_read' => (int) ($message['isRead'] ?? false),
-            'folders' => [$folderName],
-            'reply_to' => $this->extractEmailAddresses($replyTo),
-            'cc' => $this->extractEmailAddresses($ccRecipients),
-            'bcc' => $this->extractEmailAddresses($bccRecipients),
-            'source' => 'email',
-            'user_type' => 'person',
-            'unique_id' => $this->getMessageId($message),
-            'message_id' => $this->getMessageId($message),
+            'from'          => $from['address'] ?? '',
+            'subject'       => $message['subject'] ?? '',
+            'name'          => $from['name'] ?? '',
+            'reply'         => $body,
+            'is_read'       => (int) ($message['isRead'] ?? false),
+            'folders'       => [$folderName],
+            'reply_to'      => $this->extractEmailAddresses($replyTo),
+            'cc'            => $this->extractEmailAddresses($ccRecipients),
+            'bcc'           => $this->extractEmailAddresses($bccRecipients),
+            'source'        => 'email',
+            'user_type'     => 'person',
+            'unique_id'     => $this->getMessageId($message),
+            'message_id'    => $this->getMessageId($message),
             'reference_ids' => [$this->getMessageId($message)],
-            'created_at' => $this->parseDateTime($message['receivedDateTime'] ?? now()),
-            'parent_id' => $parentEmail?->id,
-            'activity_id' => $parentEmail?->activity_id,
-            'lead_id' => $parentEmail?->lead_id,
-            'person_id' => $parentEmail?->person_id,
+            'created_at'    => $this->parseDateTime($message['receivedDateTime'] ?? now()),
+            'parent_id'     => $parentEmail?->id,
+            'activity_id'   => $parentEmail?->activity_id,
+            'lead_id'       => $parentEmail?->lead_id,
+            'person_id'     => $parentEmail?->person_id,
         ];
     }
 
@@ -157,29 +161,29 @@ class GraphMailService extends AbstractEmailProcessor
         try {
             $accessToken = $this->getAccessToken();
             $messageId = $message['id'];
-            
+
             $url = "{$this->baseUrl}/users/{$this->mailbox}/messages/{$messageId}/attachments";
-            
+
             $response = Http::withToken($accessToken)->get($url);
-            
+
             if ($response->successful()) {
                 $attachments = $response->json()['value'] ?? [];
-                
+
                 foreach ($attachments as $attachment) {
                     $this->attachmentRepository->create([
-                        'email_id' => $email->id,
-                        'name' => $attachment['name'] ?? 'attachment',
+                        'email_id'     => $email->id,
+                        'name'         => $attachment['name'] ?? 'attachment',
                         'content_type' => $attachment['contentType'] ?? 'application/octet-stream',
-                        'size' => $attachment['size'] ?? 0,
-                        'content' => base64_decode($attachment['contentBytes'] ?? ''),
+                        'size'         => $attachment['size'] ?? 0,
+                        'content'      => base64_decode($attachment['contentBytes'] ?? ''),
                     ]);
                 }
             }
         } catch (Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Failed to process attachments', [
-                'email_id' => $email->id,
+            Log::error('Failed to process attachments', [
+                'email_id'   => $email->id,
                 'message_id' => $message['id'],
-                'error' => $e->getMessage()
+                'error'      => $e->getMessage(),
             ]);
         }
     }
@@ -189,17 +193,17 @@ class GraphMailService extends AbstractEmailProcessor
         try {
             $accessToken = $this->getAccessToken();
             $messageId = $message['id'];
-            
+
             $url = "{$this->baseUrl}/users/{$this->mailbox}/messages/{$messageId}";
-            
+
             Http::withToken($accessToken)
                 ->patch($url, [
-                    'isRead' => true
+                    'isRead' => true,
                 ]);
         } catch (Exception $e) {
-            \Illuminate\Support\Facades\Log::error('Failed to mark message as read', [
+            Log::error('Failed to mark message as read', [
                 'message_id' => $message['id'],
-                'error' => $e->getMessage()
+                'error'      => $e->getMessage(),
             ]);
         }
     }
@@ -229,11 +233,11 @@ class GraphMailService extends AbstractEmailProcessor
     protected function extractMessageBody(array $message): string
     {
         $body = $message['body'] ?? [];
-        
+
         if (isset($body['contentType']) && $body['contentType'] === 'html') {
             return $body['content'] ?? '';
         }
-        
+
         return $body['content'] ?? '';
     }
 
@@ -243,7 +247,7 @@ class GraphMailService extends AbstractEmailProcessor
     protected function extractEmailAddresses(array $recipients): array
     {
         return collect($recipients)
-            ->map(fn($recipient) => $recipient['emailAddress']['address'] ?? '')
+            ->map(fn ($recipient) => $recipient['emailAddress']['address'] ?? '')
             ->filter()
             ->values()
             ->toArray();

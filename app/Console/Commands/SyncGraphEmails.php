@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\Mail\GraphMailService;
+use Exception;
 use Illuminate\Console\Command;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
@@ -52,7 +53,7 @@ class SyncGraphEmails extends Command
 
             return Command::SUCCESS;
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error('Microsoft Graph email sync failed: '.$e->getMessage());
 
             return Command::FAILURE;

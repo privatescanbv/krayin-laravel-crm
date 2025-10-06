@@ -15,16 +15,18 @@ class AbstractEmailProcessorTest extends TestCase
     use RefreshDatabase;
 
     protected AbstractEmailProcessor $processor;
+
     protected EmailRepository $emailRepository;
+
     protected AttachmentRepository $attachmentRepository;
 
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->emailRepository = $this->createMock(EmailRepository::class);
         $this->attachmentRepository = $this->createMock(AttachmentRepository::class);
-        
+
         // Use GraphMailService as a concrete implementation for testing
         $this->processor = new GraphMailService(
             $this->emailRepository,
@@ -72,16 +74,16 @@ class AbstractEmailProcessorTest extends TestCase
         $method->invoke($this->processor);
 
         $this->assertDatabaseHas('email_logs', [
-            'sync_type' => 'graph',
+            'sync_type'       => 'graph',
             'processed_count' => 0,
-            'error_count' => 0,
+            'error_count'     => 0,
         ]);
     }
 
     public function test_log_sync_complete_updates_email_log()
     {
         $emailLog = EmailLog::create([
-            'sync_type' => 'graph',
+            'sync_type'  => 'graph',
             'started_at' => now(),
         ]);
 
@@ -104,7 +106,7 @@ class AbstractEmailProcessorTest extends TestCase
     public function test_log_sync_error_updates_email_log()
     {
         $emailLog = EmailLog::create([
-            'sync_type' => 'graph',
+            'sync_type'  => 'graph',
             'started_at' => now(),
         ]);
 

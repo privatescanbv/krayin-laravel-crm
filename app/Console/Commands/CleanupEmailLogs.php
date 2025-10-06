@@ -30,21 +30,23 @@ class CleanupEmailLogs extends Command
     public function handle()
     {
         $days = $this->option('days') ?: config('mail.log_retention_days', 7);
-        
-        if (!is_numeric($days) || $days < 0) {
+
+        if (! is_numeric($days) || $days < 0) {
             $this->error('Days must be a positive number.');
+
             return Command::FAILURE;
         }
 
         $cutoffDate = Carbon::now()->subDays($days);
-        
+
         $this->info("Cleaning up email logs older than {$days} days (before {$cutoffDate->format('Y-m-d H:i:s')})...");
 
         // Count logs to be deleted
         $logsToDelete = EmailLog::where('created_at', '<', $cutoffDate)->count();
-        
+
         if ($logsToDelete === 0) {
             $this->info('No email logs found to delete.');
+
             return Command::SUCCESS;
         }
 
@@ -54,29 +56,29 @@ class CleanupEmailLogs extends Command
             // Delete logs in batches to avoid memory issues
             $deletedCount = 0;
             $batchSize = 1000;
-            
+
             do {
                 $deleted = EmailLog::where('created_at', '<', $cutoffDate)
                     ->limit($batchSize)
                     ->delete();
-                
+
                 $deletedCount += $deleted;
-                
+
                 if ($deleted > 0) {
                     $this->info("Deleted {$deleted} logs... (Total: {$deletedCount})");
                 }
-                
+
             } while ($deleted > 0);
 
             $this->info("Successfully deleted {$deletedCount} email logs older than {$days} days.");
-            
+
             // Log the cleanup action
             \Illuminate\Support\Facades\Log::info('Email logs cleanup completed', [
-                'deleted_count' => $deletedCount,
+                'deleted_count'  => $deletedCount,
                 'retention_days' => $days,
-                'cutoff_date' => $cutoffDate->toDateTimeString(),
+                'cutoff_date'    => $cutoffDate->toDateTimeString(),
             ]);
-            
+
         } else {
             $this->info('Cleanup cancelled.');
         }

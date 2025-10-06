@@ -2,15 +2,14 @@
 
 namespace App\Services\Mail;
 
-use Carbon\Carbon;
 use Exception;
-use Schema;
+use Illuminate\Support\Facades\Schema;
 use Webklex\IMAP\Facades\Client;
 use Webklex\PHPIMAP\Message;
 use Webkul\Email\Enums\SupportedFolderEnum;
+use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
-use Webkul\Email\Models\Email;
 
 class ImapEmailProcessor extends AbstractEmailProcessor
 {
@@ -21,16 +20,17 @@ class ImapEmailProcessor extends AbstractEmailProcessor
         AttachmentRepository $attachmentRepository
     ) {
         parent::__construct($emailRepository, $attachmentRepository);
-        
+
         // Skip IMAP connection during testing or when database is not available
-        if (!$this->isDatabaseAvailable()) {
+        if (! $this->isDatabaseAvailable()) {
             logger()->warning('Skipping IMAP when database is not available.');
+
             return;
         }
         try {
             $this->reconnect();
         } catch (Exception $e) {
-            logger()->error('Reconnect fail for email processing: ' . $e->getMessage());
+            logger()->error('Reconnect fail for email processing: '.$e->getMessage());
         }
     }
 
@@ -44,42 +44,23 @@ class ImapEmailProcessor extends AbstractEmailProcessor
         }
     }
 
-    /**
-     * @throws Exception, with email client connection errors
-     */
-    private function reconnect(): void
-    {
-        if (!$this->client) {
-            logger()->info('Reconnecting: Establishing IMAP connection...', ['config' => $this->getDefaultConfigs()]);
-            $this->client = Client::make($this->getDefaultConfigs());
-
-            $this->client->connect();
-
-            if (!$this->client->isConnected()) {
-                // reset client for next attempt
-                $this->client = null;
-                logger()->error('Failed to connect to the mail server.');
-                throw new Exception('Failed to connect to the mail server.');
-            }
-        }
-    }
-
     // Abstract method implementations
 
     protected function fetchMessages(): array
     {
         $this->reconnect();
-        if (!$this->client) {
+        if (! $this->client) {
             logger()->warning('IMAP client is not initialized. Skipping email processing.');
+
             return [];
         }
 
         try {
             $rootFolders = $this->client->getFolders();
             $messages = [];
-            
+
             $this->collectMessagesFromFolders($rootFolders, $messages);
-            
+
             return $messages;
         } catch (Exception $e) {
             throw new Exception($e->getMessage());
@@ -94,12 +75,14 @@ class ImapEmailProcessor extends AbstractEmailProcessor
     protected function getMessageId($message): string
     {
         $attributes = $message->getAttributes();
+
         return $attributes['message_id']->first();
     }
 
     protected function getConversationId($message): ?string
     {
         $attributes = $message->getAttributes();
+
         return $attributes['in_reply_to']->first() ?? null;
     }
 
@@ -154,12 +137,14 @@ class ImapEmailProcessor extends AbstractEmailProcessor
     protected function getFromEmail($message): string
     {
         $attributes = $message->getAttributes();
+
         return $attributes['from']->first()->mail;
     }
 
     protected function getToRecipients($message): array
     {
         $attributes = $message->getAttributes();
+
         return $this->getEmailsByAttributeCode($attributes, 'to');
     }
 
@@ -200,7 +185,7 @@ class ImapEmailProcessor extends AbstractEmailProcessor
     protected function getSyncMetadata(): array
     {
         return [
-            'host' => config('imap.accounts.default.host'),
+            'host'     => config('imap.accounts.default.host'),
             'username' => config('imap.accounts.default.username'),
         ];
     }
@@ -213,8 +198,9 @@ class ImapEmailProcessor extends AbstractEmailProcessor
     protected function collectMessagesFromFolders($rootFoldersCollection, &$messages): void
     {
         $rootFoldersCollection->each(function ($folder) use (&$messages) {
-            if (!$folder->children->isEmpty()) {
+            if (! $folder->children->isEmpty()) {
                 $this->collectMessagesFromFolders($folder->children, $messages);
+
                 return;
             }
 
@@ -279,8 +265,29 @@ class ImapEmailProcessor extends AbstractEmailProcessor
             // Check if the core_config table exists
             return Schema::hasTable('core_config');
         } catch (Exception $e) {
-            logger()->error('Database is not available: ' . $e->getMessage());
+            logger()->error('Database is not available: '.$e->getMessage());
+
             return false;
+        }
+    }
+
+    /**
+     * @throws Exception, with email client connection errors
+     */
+    private function reconnect(): void
+    {
+        if (! $this->client) {
+            logger()->info('Reconnecting: Establishing IMAP connection...', ['config' => $this->getDefaultConfigs()]);
+            $this->client = Client::make($this->getDefaultConfigs());
+
+            $this->client->connect();
+
+            if (! $this->client->isConnected()) {
+                // reset client for next attempt
+                $this->client = null;
+                logger()->error('Failed to connect to the mail server.');
+                throw new Exception('Failed to connect to the mail server.');
+            }
         }
     }
 }

@@ -152,7 +152,7 @@ Het idee is om een eenvoudige mail server lokaal op te zetten. Later gaan we dit
 In de opzet maken wij 2 mail accounts aan:
 
  * user1@test.local -> Hier mail naar toe sturen vanuit CRM, simuleert een patient.
- * privatescan@test.local -> CRM leest deze mailbox en zal ze verwerken na en commando (Lees later een cronjob om de 5 minuten)
+ * crm@privatescan.nl -> CRM leest deze mailbox en zal ze verwerken na en commando (Lees later een cronjob om de 5 minuten)
 
 test.local is een gekozen opzet, certificaten zijn hiervoor gemaakt voor communicatie met de mailserver.
 
@@ -164,7 +164,7 @@ NOTE: Op dit moment is deze opzet ook uitgerold op de test omgeving.
    * docker run --rm -v "$(pwd)/docker/config":/tmp/docker-mailserver \
       mailserver/docker-mailserver setup email add user1@test.local test1234
    * docker run --rm -v "$(pwd)/docker/config":/tmp/docker-mailserver \
-      mailserver/docker-mailserver setup email add privatescan@test.local test1234
+      mailserver/docker-mailserver setup email add crm@privatescan.nl test1234
 2. rainbow config aanpassen (na opstarten):
     * http://localhost:8888/?admin
     * Inloggen met admin / 12345

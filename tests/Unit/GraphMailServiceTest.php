@@ -6,6 +6,7 @@ use App\Models\EmailLog;
 use App\Services\Mail\AbstractEmailProcessor;
 use App\Services\Mail\GraphMailService;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use ReflectionClass;
@@ -79,7 +80,7 @@ class GraphMailServiceTest extends TestCase
         $method = $reflection->getMethod('getAccessToken');
         $method->setAccessible(true);
 
-        $this->expectException(\Exception::class);
+        $this->expectException(Exception::class);
         $this->expectExceptionMessage('Failed to get access token');
 
         $method->invoke($this->service);
@@ -125,7 +126,7 @@ class GraphMailServiceTest extends TestCase
             ], 200),
         ]);
 
-        $reflection = new \ReflectionClass($this->service);
+        $reflection = new ReflectionClass($this->service);
         $method = $reflection->getMethod('fetchMessages');
         $method->setAccessible(true);
 

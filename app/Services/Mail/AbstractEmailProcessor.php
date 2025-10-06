@@ -3,14 +3,12 @@
 namespace App\Services\Mail;
 
 use App\Models\EmailLog;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Log;
-use Webkul\Email\Enums\SupportedFolderEnum;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
+use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
-use Webkul\Email\Models\Email;
 
 abstract class AbstractEmailProcessor implements InboundEmailProcessor
 {
@@ -30,7 +28,7 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
     {
         try {
             $this->logSyncStart();
-            
+
             $messages = $this->fetchMessages();
             $processedCount = 0;
             $errorCount = 0;
@@ -43,7 +41,7 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
                     $errorCount++;
                     Log::error('Failed to process message', [
                         'message_id' => $this->getMessageId($message),
-                        'error' => $e->getMessage()
+                        'error'      => $e->getMessage(),
                     ]);
                 }
             }
@@ -61,12 +59,12 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
      */
     public function processMessage($message = null): void
     {
-        if (!$message || !$this->isValidMessage($message)) {
+        if (! $message || ! $this->isValidMessage($message)) {
             return;
         }
 
         $messageId = $this->getMessageId($message);
-        
+
         // Check if email already exists
         $existingEmail = $this->emailRepository->findOneByField('message_id', $messageId);
         if ($existingEmail) {
@@ -82,7 +80,7 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
         // Update parent email if found
         if ($parentEmail) {
             $this->emailRepository->update([
-                'folders' => array_unique(array_merge($parentEmail->folders, [$folderName])),
+                'folders'       => array_unique(array_merge($parentEmail->folders, [$folderName])),
                 'reference_ids' => array_merge($parentEmail->reference_ids ?? [], [$messageId]),
             ], $parentEmail->id);
         }
@@ -97,9 +95,9 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
 
         Log::info('Processed email', [
             'message_id' => $messageId,
-            'email_id' => $email->id,
-            'parent_id' => $parentEmail?->id,
-            'processor' => static::class
+            'email_id'   => $email->id,
+            'parent_id'  => $parentEmail?->id,
+            'processor'  => static::class,
         ]);
 
         // Process attachments if any
@@ -122,7 +120,7 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
         // Check by conversation ID first
         if ($conversationId) {
             $parentEmail = $this->emailRepository->findOneWhere([
-                ['reference_ids', 'like', '%' . $conversationId . '%']
+                ['reference_ids', 'like', '%'.$conversationId.'%'],
             ]);
             if ($parentEmail) {
                 return $parentEmail;
@@ -151,10 +149,10 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
         }
 
         // Try to find existing person by email
-        $person = \Webkul\Contact\Models\Person::where('emails', 'like', '%' . $emailAddress . '%')->first();
+        $person = \Webkul\Contact\Models\Person::where('emails', 'like', '%'.$emailAddress.'%')->first();
         if ($person) {
             $emailData['person_id'] = $person->id;
-            
+
             // Try to find associated lead through lead_persons table
             $lead = $person->leads()->first();
             if ($lead) {
@@ -163,8 +161,8 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
         }
 
         // Try to find existing lead by email if no person found
-        if (!isset($emailData['lead_id'])) {
-            $lead = \Webkul\Lead\Models\Lead::where('emails', 'like', '%' . $emailAddress . '%')->first();
+        if (! isset($emailData['lead_id'])) {
+            $lead = \Webkul\Lead\Models\Lead::where('emails', 'like', '%'.$emailAddress.'%')->first();
             if ($lead) {
                 $emailData['lead_id'] = $lead->id;
             }
@@ -186,13 +184,13 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
     {
         try {
             $activityData = [
-                'title' => 'E-mail ontvangen: ' . ($emailData['subject'] ?: 'Geen onderwerp'),
-                'comment' => 'E-mail ontvangen via ' . $this->getProcessorName(),
-                'type' => 'email',
+                'title'         => 'E-mail ontvangen: '.($emailData['subject'] ?: 'Geen onderwerp'),
+                'comment'       => 'E-mail ontvangen via '.$this->getProcessorName(),
+                'type'          => 'email',
                 'schedule_from' => $emailData['created_at'] ?? now(),
-                'schedule_to' => $emailData['created_at'] ?? now(),
-                'is_completed' => true,
-                'completed_at' => $emailData['created_at'] ?? now(),
+                'schedule_to'   => $emailData['created_at'] ?? now(),
+                'is_completed'  => true,
+                'completed_at'  => $emailData['created_at'] ?? now(),
             ];
 
             if (isset($emailData['lead_id'])) {
@@ -207,8 +205,9 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
         } catch (Exception $e) {
             Log::error('Failed to create email activity', [
                 'email_data' => $emailData,
-                'error' => $e->getMessage()
+                'error'      => $e->getMessage(),
             ]);
+
             return null;
         }
     }
@@ -219,15 +218,15 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
     protected function logSyncStart(): void
     {
         $this->currentLog = EmailLog::create([
-            'sync_type' => $this->getSyncType(),
+            'sync_type'  => $this->getSyncType(),
             'started_at' => now(),
-            'metadata' => $this->getSyncMetadata(),
+            'metadata'   => $this->getSyncMetadata(),
         ]);
 
         Log::info('Starting email sync', [
             'processor' => static::class,
-            'log_id' => $this->currentLog->id,
-            'timestamp' => now()
+            'log_id'    => $this->currentLog->id,
+            'timestamp' => now(),
         ]);
     }
 
@@ -238,18 +237,18 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
     {
         if ($this->currentLog) {
             $this->currentLog->update([
-                'completed_at' => now(),
+                'completed_at'    => now(),
                 'processed_count' => $processedCount,
-                'error_count' => $errorCount,
+                'error_count'     => $errorCount,
             ]);
         }
 
         Log::info('Email sync completed', [
-            'processor' => static::class,
+            'processor'       => static::class,
             'processed_count' => $processedCount,
-            'error_count' => $errorCount,
-            'log_id' => $this->currentLog?->id,
-            'timestamp' => now()
+            'error_count'     => $errorCount,
+            'log_id'          => $this->currentLog?->id,
+            'timestamp'       => now(),
         ]);
     }
 
@@ -260,16 +259,16 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
     {
         if ($this->currentLog) {
             $this->currentLog->update([
-                'completed_at' => now(),
+                'completed_at'  => now(),
                 'error_message' => $error,
             ]);
         }
 
         Log::error('Email sync failed', [
             'processor' => static::class,
-            'error' => $error,
-            'log_id' => $this->currentLog?->id,
-            'timestamp' => now()
+            'error'     => $error,
+            'log_id'    => $this->currentLog?->id,
+            'timestamp' => now(),
         ]);
     }
 

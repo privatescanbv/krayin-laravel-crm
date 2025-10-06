@@ -210,17 +210,11 @@ class AbstractEmailProcessorTest extends TestCase
             ->method('findOneByField')
             ->willReturn(null);
 
-        // Create throws a duplicate key exception
-        $pdoException = new \PDOException('SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry \'test-message-id@example.com\' for key \'emails.emails_unique_id_unique\'');
-        $pdoException->errorInfo = [23000, 1062, 'Duplicate entry \'test-message-id@example.com\' for key \'emails.emails_unique_id_unique\''];
-        
-        $duplicateException = new QueryException(
-            'mysql',
-            'insert into `emails` (`unique_id`, ...) values (?, ...)',
-            [],
-            $pdoException
-        );
-        $duplicateException->getCode = function() { return 23000; };
+        // Create a mock QueryException that simulates a duplicate key violation
+        $duplicateException = $this->createMock(QueryException::class);
+        $duplicateException->method('getCode')->willReturn(23000);
+        $duplicateException->method('getMessage')->willReturn('SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry \'test-message-id@example.com\' for key \'emails.emails_unique_id_unique\'');
+        $duplicateException->method('getPrevious')->willReturn(null);
 
         $this->emailRepository
             ->expects($this->once())
@@ -258,15 +252,10 @@ class AbstractEmailProcessorTest extends TestCase
             ->willReturn(null);
 
         // Create throws a different exception
-        $pdoException = new \PDOException('SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax');
-        $pdoException->errorInfo = [42000, 1064, 'You have an error in your SQL syntax'];
-        
-        $otherException = new QueryException(
-            'mysql',
-            'insert into `emails` (`unique_id`, ...) values (?, ...)',
-            [],
-            $pdoException
-        );
+        $otherException = $this->createMock(QueryException::class);
+        $otherException->method('getCode')->willReturn(42000);
+        $otherException->method('getMessage')->willReturn('SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax');
+        $otherException->method('getPrevious')->willReturn(null);
 
         $this->emailRepository
             ->expects($this->once())

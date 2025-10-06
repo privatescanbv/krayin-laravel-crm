@@ -226,7 +226,7 @@ class LeadController extends Controller
                     'stage:id,code,name,sort_order',
                     'persons:id,first_name,last_name,married_name,name,organization_id',
                     'persons.organization:id,name',
-                    'attribute_values:lead_id,attribute_id,value',
+                    'attribute_values:entity_id,attribute_id,value',
                 ])->paginate(10)),
 
                 'meta' => [

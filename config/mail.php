@@ -145,4 +145,15 @@ return [
 
     'domain' => env('MAIL_DOMAIN', 'example.com'),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Email Log Retention
+    |--------------------------------------------------------------------------
+    |
+    | Number of days to keep email logs before cleanup
+    |
+    */
+
+    'log_retention_days' => env('MAIL_LOG_RETENTION_DAYS', 7),
+
 ];

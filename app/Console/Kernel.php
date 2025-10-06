@@ -21,6 +21,9 @@ class Kernel extends ConsoleKernel
 
         // Refresh duplicate caches (leads & persons) every hour
         $schedule->command('duplicates:refresh-cache --clear')->hourly();
+
+        // Clean up old email logs daily
+        $schedule->command('emails:cleanup-logs')->daily();
     }
 
     /**

@@ -2,15 +2,15 @@
 
 /**
  * LeadKanbanDatabaseColumnsTest
- * 
+ *
  * This test suite ensures that the kanban board functionality works correctly
  * without database column errors. It specifically tests that:
- * 
+ *
  * 1. The kanban endpoint loads without trying to select computed attributes
  *    like 'leads.name' or 'leads.rotten_days' directly from the database
  * 2. Computed attributes are properly handled by the Lead model
  * 3. The kanban board works with various lead data scenarios
- * 
+ *
  * These tests would fail if someone accidentally tries to select computed
  * attributes directly in database queries, preventing regression of the
  * "Unknown column 'leads.name' in 'field list'" error.
@@ -33,7 +33,7 @@ beforeEach(function () {
     $this->actingAs($this->user, 'user');
     // voorkom auth-redirects in deze test
     $this->withoutMiddleware(Authenticate::class);
-    
+
     // Ensure we have a pipeline and stage
     $this->pipeline = Pipeline::first();
     $this->stage = Stage::first();
@@ -57,11 +57,11 @@ test('kanban board loads without database column errors', function () {
 
     // Test the kanban endpoint that was previously failing
     $response = $this->getJson(route('admin.leads.get', [
-        'pipeline_id' => $this->pipeline->id
+        'pipeline_id' => $this->pipeline->id,
     ]));
 
     $response->assertOk();
-    
+
     // Verify the response structure
     $response->assertJsonStructure([
         '*' => [
@@ -81,8 +81,8 @@ test('kanban board loads without database column errors', function () {
                         'type',
                         'source',
                         'tags',
-                        'persons'
-                    ]
+                        'persons',
+                    ],
                 ],
                 'meta' => [
                     'current_page',
@@ -90,19 +90,19 @@ test('kanban board loads without database column errors', function () {
                     'last_page',
                     'per_page',
                     'to',
-                    'total'
-                ]
-            ]
-        ]
+                    'total',
+                ],
+            ],
+        ],
     ]);
 
     // Verify that the lead data is present and name is computed correctly
     $responseData = $response->json();
     $stageData = collect($responseData)->first();
     $leads = $stageData['leads']['data'];
-    
+
     expect($leads)->not->toBeEmpty();
-    
+
     $foundLead = collect($leads)->firstWhere('id', $lead->id);
     expect($foundLead)->not->toBeNull();
     expect($foundLead['name'])->toBe('Jan van Jansen / van de Vries');
@@ -125,15 +125,15 @@ test('kanban board handles leads with minimal name data', function () {
     ]);
 
     $response = $this->getJson(route('admin.leads.get', [
-        'pipeline_id' => $this->pipeline->id
+        'pipeline_id' => $this->pipeline->id,
     ]));
 
     $response->assertOk();
-    
+
     $responseData = $response->json();
     $stageData = collect($responseData)->first();
     $leads = $stageData['leads']['data'];
-    
+
     $foundLead = collect($leads)->firstWhere('id', $lead->id);
     expect($foundLead)->not->toBeNull();
     expect($foundLead['name'])->toBe('Piet Pietersen');
@@ -143,9 +143,9 @@ test('kanban board works with multiple stages', function () {
     // Create another stage in the same pipeline
     $stage2 = Stage::factory()->create([
         'lead_pipeline_id' => $this->pipeline->id,
-        'name' => 'Second Stage',
-        'code' => 'second_stage',
-        'sort_order' => 2,
+        'name'             => 'Second Stage',
+        'code'             => 'second_stage',
+        'sort_order'       => 2,
     ]);
 
     // Create leads in both stages
@@ -166,20 +166,20 @@ test('kanban board works with multiple stages', function () {
     ]);
 
     $response = $this->getJson(route('admin.leads.get', [
-        'pipeline_id' => $this->pipeline->id
+        'pipeline_id' => $this->pipeline->id,
     ]));
 
     $response->assertOk();
-    
+
     $responseData = $response->json();
-    
+
     // Should have data for both stages
     expect($responseData)->toHaveCount(2);
-    
+
     // Both leads should be present
-    $allLeads = collect($responseData)->flatMap(fn($stage) => $stage['leads']['data']);
+    $allLeads = collect($responseData)->flatMap(fn ($stage) => $stage['leads']['data']);
     $leadIds = $allLeads->pluck('id');
-    
+
     expect($leadIds)->toContain($lead1->id);
     expect($leadIds)->toContain($lead2->id);
 });
@@ -188,22 +188,22 @@ test('kanban board handles empty stages gracefully', function () {
     // Create a stage with no leads
     $emptyStage = Stage::factory()->create([
         'lead_pipeline_id' => $this->pipeline->id,
-        'name' => 'Empty Stage',
-        'code' => 'empty_stage',
-        'sort_order' => 2,
+        'name'             => 'Empty Stage',
+        'code'             => 'empty_stage',
+        'sort_order'       => 2,
     ]);
 
     $response = $this->getJson(route('admin.leads.get', [
-        'pipeline_id' => $this->pipeline->id
+        'pipeline_id' => $this->pipeline->id,
     ]));
 
     $response->assertOk();
-    
+
     $responseData = $response->json();
-    
+
     // Should have data for both stages
     expect($responseData)->toHaveCount(2);
-    
+
     // Find the empty stage
     $emptyStageData = collect($responseData)->firstWhere('id', $emptyStage->id);
     expect($emptyStageData)->not->toBeNull();
@@ -212,9 +212,9 @@ test('kanban board handles empty stages gracefully', function () {
 });
 
 test('kanban board fails with proper error when invalid columns are selected', function () {
-    // This test would fail if someone tries to select 'leads.name' or 'leads.rotten_days' 
+    // This test would fail if someone tries to select 'leads.name' or 'leads.rotten_days'
     // directly from the database, as these are computed attributes
-    
+
     // Create a lead
     $lead = Lead::factory()->create([
         'first_name'             => 'Test',
@@ -226,12 +226,12 @@ test('kanban board fails with proper error when invalid columns are selected', f
 
     // The kanban endpoint should work without errors
     $response = $this->getJson(route('admin.leads.get', [
-        'pipeline_id' => $this->pipeline->id
+        'pipeline_id' => $this->pipeline->id,
     ]));
 
     // Should not return a 500 error due to unknown column
     $response->assertOk();
-    
+
     // Should not contain SQL error messages
     $response->assertDontSee('Unknown column');
     $response->assertDontSee('leads.name');
@@ -241,7 +241,7 @@ test('kanban board fails with proper error when invalid columns are selected', f
 test('direct database query with computed attributes fails', function () {
     // This test demonstrates that selecting computed attributes directly from the database
     // will fail, which is the behavior we want to prevent in the kanban query
-    
+
     $lead = Lead::factory()->create([
         'first_name'             => 'Test',
         'last_name'              => 'Lead',
@@ -271,7 +271,7 @@ test('direct database query with computed attributes fails', function () {
         ->select(['id', 'first_name', 'last_name', 'lastname_prefix', 'married_name', 'married_name_prefix'])
         ->where('id', $lead->id)
         ->get();
-    
+
     expect($result)->not->toBeEmpty();
     expect($result->first()->first_name)->toBe('Test');
     expect($result->first()->last_name)->toBe('Lead');
@@ -280,7 +280,7 @@ test('direct database query with computed attributes fails', function () {
 test('lead model correctly computes name and rotten_days attributes', function () {
     // This test verifies that the Lead model correctly computes the name and rotten_days
     // attributes when loaded from the database
-    
+
     $lead = Lead::factory()->create([
         'first_name'             => 'Jan',
         'last_name'              => 'Jansen',
@@ -294,12 +294,12 @@ test('lead model correctly computes name and rotten_days attributes', function (
 
     // Load the lead fresh from the database
     $loadedLead = Lead::find($lead->id);
-    
+
     // Verify computed attributes work correctly
     expect($loadedLead->name)->toBe('Jan van Jansen / van de Vries');
     expect($loadedLead->rotten_days)->toBeInt();
     expect($loadedLead->rotten_days)->toBeGreaterThanOrEqual(0);
-    
+
     // Verify the attributes are in the appends array
     expect($loadedLead->getAppends())->toContain('name');
     expect($loadedLead->getAppends())->toContain('rotten_days');

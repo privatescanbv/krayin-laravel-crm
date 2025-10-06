@@ -129,7 +129,8 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
             $this->markMessageAsRead($message);
         } catch (\Illuminate\Database\QueryException $e) {
             // Handle duplicate key violations gracefully
-            if ($e->getCode() == 23000 && str_contains($e->getMessage(), 'emails_unique_id_unique')) {
+            if (($e->getCode() == 23000 || $e->getPrevious()?->getCode() == 23000) && 
+                str_contains($e->getMessage(), 'emails_unique_id_unique')) {
                 Log::warning('Email with same unique_id already exists, skipping', [
                     'message_id' => $messageId,
                     'unique_id'  => $emailData['unique_id'] ?? 'unknown',

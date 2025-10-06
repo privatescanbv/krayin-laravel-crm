@@ -211,13 +211,15 @@ class AbstractEmailProcessorTest extends TestCase
             ->willReturn(null);
 
         // Create throws a duplicate key exception
+        $pdoException = new \PDOException('SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry \'test-message-id@example.com\' for key \'emails.emails_unique_id_unique\'');
+        $pdoException->errorInfo = [23000, 1062, 'Duplicate entry \'test-message-id@example.com\' for key \'emails.emails_unique_id_unique\''];
+        
         $duplicateException = new QueryException(
             'mysql',
             'insert into `emails` (`unique_id`, ...) values (?, ...)',
             [],
-            new \PDOException('SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry \'test-message-id@example.com\' for key \'emails.emails_unique_id_unique\'')
+            $pdoException
         );
-        $duplicateException->errorInfo = [23000, 1062, 'Duplicate entry \'test-message-id@example.com\' for key \'emails.emails_unique_id_unique\''];
         $duplicateException->getCode = function() { return 23000; };
 
         $this->emailRepository
@@ -256,14 +258,15 @@ class AbstractEmailProcessorTest extends TestCase
             ->willReturn(null);
 
         // Create throws a different exception
+        $pdoException = new \PDOException('SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax');
+        $pdoException->errorInfo = [42000, 1064, 'You have an error in your SQL syntax'];
+        
         $otherException = new QueryException(
             'mysql',
             'insert into `emails` (`unique_id`, ...) values (?, ...)',
             [],
-            new \PDOException('SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax')
+            $pdoException
         );
-        $otherException->errorInfo = [42000, 1064, 'You have an error in your SQL syntax'];
-        $otherException->getCode = function() { return 42000; };
 
         $this->emailRepository
             ->expects($this->once())

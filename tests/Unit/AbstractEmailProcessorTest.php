@@ -165,17 +165,16 @@ class AbstractEmailProcessorTest extends TestCase
     public function test_process_message_skips_duplicate_by_unique_id()
     {
         $messageId = '<test-message-id@example.com>';
-        $uniqueId = '<test-unique-id@example.com>';
-        $existingEmail = new Email(['id' => 1, 'unique_id' => $uniqueId]);
+        $existingEmail = new Email(['id' => 1, 'unique_id' => $messageId]);
 
         // First call returns null (no existing email by message_id)
-        // Second call returns existing email by unique_id
+        // Second call returns existing email by unique_id (which is the same as message_id)
         $this->emailRepository
             ->expects($this->exactly(2))
             ->method('findOneByField')
             ->willReturnMap([
                 ['message_id', $messageId, null],
-                ['unique_id', $uniqueId, $existingEmail],
+                ['unique_id', $messageId, $existingEmail],
             ]);
 
         $this->emailRepository
@@ -204,7 +203,6 @@ class AbstractEmailProcessorTest extends TestCase
     public function test_process_message_handles_duplicate_key_violation_gracefully()
     {
         $messageId = '<test-message-id@example.com>';
-        $uniqueId = '<test-unique-id@example.com>';
 
         // No existing email found by message_id or unique_id
         $this->emailRepository
@@ -214,11 +212,12 @@ class AbstractEmailProcessorTest extends TestCase
 
         // Create throws a duplicate key exception
         $duplicateException = new QueryException(
+            'mysql',
             'insert into `emails` (`unique_id`, ...) values (?, ...)',
             [],
-            new \PDOException('SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry \'test-unique-id@example.com\' for key \'emails.emails_unique_id_unique\'')
+            new \PDOException('SQLSTATE[23000]: Integrity constraint violation: 1062 Duplicate entry \'test-message-id@example.com\' for key \'emails.emails_unique_id_unique\'')
         );
-        $duplicateException->errorInfo = [23000, 1062, 'Duplicate entry \'test-unique-id@example.com\' for key \'emails.emails_unique_id_unique\''];
+        $duplicateException->errorInfo = [23000, 1062, 'Duplicate entry \'test-message-id@example.com\' for key \'emails.emails_unique_id_unique\''];
         $duplicateException->getCode = function() { return 23000; };
 
         $this->emailRepository
@@ -258,6 +257,7 @@ class AbstractEmailProcessorTest extends TestCase
 
         // Create throws a different exception
         $otherException = new QueryException(
+            'mysql',
             'insert into `emails` (`unique_id`, ...) values (?, ...)',
             [],
             new \PDOException('SQLSTATE[42000]: Syntax error or access violation: 1064 You have an error in your SQL syntax')
@@ -294,8 +294,7 @@ class AbstractEmailProcessorTest extends TestCase
     public function test_process_message_creates_email_successfully()
     {
         $messageId = '<test-message-id@example.com>';
-        $uniqueId = '<test-unique-id@example.com>';
-        $createdEmail = new Email(['id' => 1, 'message_id' => $messageId, 'unique_id' => $uniqueId]);
+        $createdEmail = new Email(['id' => 1, 'message_id' => $messageId, 'unique_id' => $messageId]);
 
         // No existing email found
         $this->emailRepository

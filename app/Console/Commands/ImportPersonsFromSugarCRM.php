@@ -105,7 +105,14 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
 
                 // If specific person IDs are provided, filter by them and ignore limit
                 if (! empty($personIds)) {
-                    $sql = $sql->whereIn('c.id', $personIds);
+                    // Normalize IDs: support repeated --person-ids options and a single
+                    // quoted value with space/comma separated IDs
+                    if (is_array($personIds)) {
+                        $personIds = implode(' ', $personIds);
+                    }
+                    $normalizedIds = preg_split('/[\s,]+/', (string) $personIds, -1, PREG_SPLIT_NO_EMPTY);
+
+                    $sql = $sql->whereIn('c.id', $normalizedIds);
                 } else {
                     $sql = $sql->groupBy('c.id')
                         ->orderBy('c.date_entered', 'desc'); // Nieuwste eerst
@@ -113,6 +120,7 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                         $sql = $sql->limit($limit);
                     }
                 }
+                $this->infoVV($sql->toRawSql());
                 $records = $sql->get();
 
                 $this->info('Found '.$records->count().' records to import');

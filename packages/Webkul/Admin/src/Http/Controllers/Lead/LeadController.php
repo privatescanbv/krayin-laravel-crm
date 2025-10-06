@@ -210,7 +210,6 @@ class LeadController extends Controller
                     'leads.user_id',
                     'leads.lead_type_id',
                     'leads.lead_source_id',
-                    'leads.days_until_due_date',
                     'leads.mri_status',
                     'leads.lost_reason',
                     'leads.closed_at'

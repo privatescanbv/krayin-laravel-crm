@@ -331,7 +331,8 @@ class Lead extends Model implements LeadContract
      */
     public function quotes()
     {
-        return $this->belongsToMany(QuoteProxy::modelClass(), 'lead_quotes');
+        return $this->belongsToMany(QuoteProxy::modelClass(), 'lead_quotes')
+            ->withPivot(['lead_id', 'quote_id']);
     }
 
     /**
@@ -339,7 +340,8 @@ class Lead extends Model implements LeadContract
      */
     public function tags()
     {
-        return $this->belongsToMany(TagProxy::modelClass(), 'lead_tags');
+        return $this->belongsToMany(TagProxy::modelClass(), 'lead_tags')
+            ->withPivot(['lead_id', 'tag_id']);
     }
 
     /**
@@ -347,7 +349,8 @@ class Lead extends Model implements LeadContract
      */
     public function persons()
     {
-        return $this->belongsToMany(Person::class, 'lead_persons', 'lead_id', 'person_id');
+        return $this->belongsToMany(Person::class, 'lead_persons', 'lead_id', 'person_id')
+            ->withPivot(['lead_id', 'person_id']);
     }
 
     /**

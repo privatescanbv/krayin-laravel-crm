@@ -5,10 +5,13 @@ namespace App\Services\Mail;
 use App\Models\EmailLog;
 use Exception;
 use Illuminate\Support\Facades\Log;
+use Webkul\Activity\Models\Activity;
+use Webkul\Contact\Models\Person;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
 use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
+use Webkul\Lead\Models\Lead;
 
 abstract class AbstractEmailProcessor implements InboundEmailProcessor
 {
@@ -170,7 +173,7 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
         }
 
         // Try to find existing person by email
-        $person = \Webkul\Contact\Models\Person::where('emails', 'like', '%'.$emailAddress.'%')->first();
+        $person = Person::where('emails', 'like', '%'.$emailAddress.'%')->first();
         if ($person) {
             $emailData['person_id'] = $person->id;
 
@@ -183,7 +186,7 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
 
         // Try to find existing lead by email if no person found
         if (! isset($emailData['lead_id'])) {
-            $lead = \Webkul\Lead\Models\Lead::where('emails', 'like', '%'.$emailAddress.'%')->first();
+            $lead = Lead::where('emails', 'like', '%'.$emailAddress.'%')->first();
             if ($lead) {
                 $emailData['lead_id'] = $lead->id;
             }
@@ -201,7 +204,7 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
     /**
      * Create activity for the email
      */
-    protected function createEmailActivity(array $emailData): ?\Webkul\Activity\Models\Activity
+    protected function createEmailActivity(array $emailData): ?Activity
     {
         try {
             $activityData = [
@@ -222,7 +225,7 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
                 $activityData['person_id'] = $emailData['person_id'];
             }
 
-            return \Webkul\Activity\Models\Activity::create($activityData);
+            return Activity::create($activityData);
         } catch (Exception $e) {
             Log::error('Failed to create email activity', [
                 'email_data' => $emailData,

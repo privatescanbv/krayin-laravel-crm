@@ -216,7 +216,7 @@ class LeadController extends Controller
                     'leads.lost_reason',
                     'leads.closed_at'
                 ])->with([
-                    'tags:id,name',
+                    'tags',
                     'type:id,name',
                     'source:id,name',
                     'user:id,name',
@@ -224,9 +224,7 @@ class LeadController extends Controller
                     'pipeline:id,name,rotten_days',
                     'pipeline.stages:id,lead_pipeline_id,code,name,sort_order',
                     'stage:id,code,name,sort_order',
-                    'persons:id,first_name,last_name,married_name,name,organization_id',
-                    'persons.organization:id,name',
-                    'attribute_values:lead_id,attribute_id,value',
+                    'attribute_values',
                 ])->paginate(10)),
 
                 'meta' => [

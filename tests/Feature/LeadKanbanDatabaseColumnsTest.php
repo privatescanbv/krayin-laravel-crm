@@ -19,6 +19,7 @@
 use Database\Seeders\TestSeeder;
 use Illuminate\Auth\Middleware\Authenticate;
 use Illuminate\Support\Facades\DB;
+use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Stage;
@@ -110,11 +111,11 @@ test('kanban board loads without database column errors', function () {
     expect($leads)->not->toBeEmpty();
 
     $foundLead = collect($leads)->firstWhere('id', $lead->id);
-    expect($foundLead)->not->toBeNull();
-    expect($foundLead['name'])->toBe('Jan van Jansen / van de Vries');
-    expect($foundLead['first_name'])->toBe('Jan');
-    expect($foundLead['last_name'])->toBe('Jansen');
-    expect($foundLead['rotten_days'])->toBeInt();
+    expect($foundLead)->not->toBeNull()
+        ->and($foundLead['name'])->toBe('Jan van Jansen / van de Vries')
+        ->and($foundLead['first_name'])->toBe('Jan')
+        ->and($foundLead['last_name'])->toBe('Jansen')
+        ->and($foundLead['rotten_days'])->toBeInt();
 });
 
 test('kanban board handles leads with minimal name data', function () {
@@ -141,8 +142,8 @@ test('kanban board handles leads with minimal name data', function () {
     $leads = $stageData['leads']['data'];
 
     $foundLead = collect($leads)->firstWhere('id', $lead->id);
-    expect($foundLead)->not->toBeNull();
-    expect($foundLead['name'])->toBe('Piet Pietersen');
+    expect($foundLead)->not->toBeNull()
+        ->and($foundLead['name'])->toBe('Piet Pietersen');
 });
 
 test('kanban board works with multiple stages', function () {
@@ -186,13 +187,84 @@ test('kanban board works with multiple stages', function () {
     $allLeads = collect($responseData)->flatMap(fn ($stage) => $stage['leads']['data']);
     $leadIds = $allLeads->pluck('id');
 
-    expect($leadIds)->toContain($lead1->id);
-    expect($leadIds)->toContain($lead2->id);
+    expect($leadIds)->toContain($lead1->id)
+        ->and($leadIds)->toContain($lead2->id);
 
     // Verify that our specific stages are present
     $stageIds = collect($responseData)->pluck('id');
-    expect($stageIds)->toContain($this->stage->id);
-    expect($stageIds)->toContain($stage2->id);
+    expect($stageIds)->toContain($this->stage->id)
+        ->and($stageIds)->toContain($stage2->id);
+});
+
+test('kanban board works when leads have attached persons', function () {
+    $lead = Lead::factory()->create([
+        'first_name'             => 'Karel',
+        'last_name'              => 'Klant',
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
+        'user_id'                => $this->user->id,
+    ]);
+
+    $person = Person::factory()->create([
+        'first_name' => 'Piet',
+        'last_name'  => 'Persoon',
+        'user_id'    => $this->user->id,
+    ]);
+
+    // Attach via model helper to ensure pivot is populated correctly
+    $lead->attachPersons([$person->id]);
+
+    $response = $this->getJson(route('admin.leads.get', [
+        'pipeline_id' => $this->pipeline->id,
+    ]));
+
+    $response->assertOk();
+
+    $responseData = $response->json();
+    $stageData = collect($responseData)->firstWhere('id', $this->stage->id) ?? collect($responseData)->first();
+    $leads = $stageData['leads']['data'];
+
+    $foundLead = collect($leads)->firstWhere('id', $lead->id);
+    expect($foundLead)->not->toBeNull();
+    // Persons should be included and contain our attached person
+    $personIds = collect($foundLead['persons'] ?? [])->pluck('id');
+    expect($personIds)->toContain($person->id);
+});
+
+test('kanban board works when custom attribute_values exist for leads', function () {
+    $lead = Lead::factory()->create([
+        'first_name'             => 'Anna',
+        'last_name'              => 'Attribuut',
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
+        'user_id'                => $this->user->id,
+    ]);
+
+    // Create a simple custom attribute for leads
+    $attributeId = DB::table('attributes')->insertGetId([
+        'code'        => 'custom_text',
+        'name'        => 'Custom Text',
+        'type'        => 'text',
+        'entity_type' => 'leads',
+        'is_required' => 0,
+        'created_at'  => now(),
+        'updated_at'  => now(),
+    ]);
+
+    // Insert corresponding attribute value using the correct storage column (text_value)
+    DB::table('attribute_values')->insert([
+        'entity_type'    => 'leads',
+        'entity_id'      => $lead->id,
+        'attribute_id'   => $attributeId,
+        'text_value'     => 'Hello World',
+    ]);
+
+    // Hitting the endpoint should succeed and not attempt to select an invalid generic `value` column
+    $response = $this->getJson(route('admin.leads.get', [
+        'pipeline_id' => $this->pipeline->id,
+    ]));
+
+    $response->assertOk();
 });
 
 test('kanban board handles empty stages gracefully', function () {
@@ -217,9 +289,9 @@ test('kanban board handles empty stages gracefully', function () {
 
     // Find the empty stage
     $emptyStageData = collect($responseData)->firstWhere('id', $emptyStage->id);
-    expect($emptyStageData)->not->toBeNull();
-    expect($emptyStageData['leads']['data'])->toBeEmpty();
-    expect($emptyStageData['leads']['meta']['total'])->toBe(0);
+    expect($emptyStageData)->not->toBeNull()
+        ->and($emptyStageData['leads']['data'])->toBeEmpty()
+        ->and($emptyStageData['leads']['meta']['total'])->toBe(0);
 });
 
 test('kanban board fails with proper error when invalid columns are selected', function () {
@@ -284,9 +356,9 @@ test('direct database query with computed attributes fails', function () {
         ->where('id', $lead->id)
         ->get();
 
-    expect($result)->not->toBeEmpty();
-    expect($result->first()->first_name)->toBe('Test');
-    expect($result->first()->last_name)->toBe('Lead');
+    expect($result)->not->toBeEmpty()
+        ->and($result->first()->first_name)->toBe('Test')
+        ->and($result->first()->last_name)->toBe('Lead');
 });
 
 test('lead model correctly computes name and rotten_days attributes', function () {
@@ -308,15 +380,15 @@ test('lead model correctly computes name and rotten_days attributes', function (
     $loadedLead = Lead::find($lead->id);
 
     // Verify computed attributes work correctly
-    expect($loadedLead->name)->toBe('Jan van Jansen / van de Vries');
-    expect($loadedLead->rotten_days)->toBeInt();
+    expect($loadedLead->name)->toBe('Jan van Jansen / van de Vries')
+        ->and($loadedLead->rotten_days)->toBeInt()
+        ->and($loadedLead->getAppends())->toContain('name')
+        ->and($loadedLead->getAppends())->toContain('rotten_days')
+        ->and($loadedLead->mri_status_label)->toBeString()
+        ->and($loadedLead->lost_reason_label)->toBeString();
     // rotten_days can be negative for old leads, so just check it's an integer
 
     // Verify the attributes are in the appends array
-    expect($loadedLead->getAppends())->toContain('name');
-    expect($loadedLead->getAppends())->toContain('rotten_days');
 
     // Verify other computed attributes work (these are not in appends but are accessors)
-    expect($loadedLead->mri_status_label)->toBeString();
-    expect($loadedLead->lost_reason_label)->toBeString();
 });

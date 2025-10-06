@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use App\Services\Mail\GraphMailService;
+use App\Services\Mail\ImapEmailProcessor;
 use Webkul\Email\Console\Commands\ProcessInboundEmails;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
 use Webkul\Email\InboundEmailProcessor\SendgridEmailProcessor;
@@ -34,6 +35,10 @@ class EmailServiceProvider extends ServiceProvider
 
             if ($driver === 'webklex-imap') {
                 return $app->make(WebklexImapEmailProcessor::class);
+            }
+
+            if ($driver === 'imap') {
+                return $app->make(ImapEmailProcessor::class);
             }
 
             if ($driver === 'microsoft-graph') {

@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Models\EmailLog;
+use App\Services\Mail\AbstractEmailProcessor;
 use App\Services\Mail\GraphMailService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -39,6 +40,11 @@ class GraphMailServiceTest extends TestCase
     public function test_implements_inbound_email_processor_contract()
     {
         $this->assertInstanceOf(\Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor::class, $this->service);
+    }
+
+    public function test_extends_abstract_email_processor()
+    {
+        $this->assertInstanceOf(AbstractEmailProcessor::class, $this->service);
     }
 
     public function test_get_access_token_success()

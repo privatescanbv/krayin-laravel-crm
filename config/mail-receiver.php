@@ -9,7 +9,7 @@ return [
     | This option controls the default mail receiver that is used to receive any email
     | messages sent by third party application.
     |
-    | Supported: "webklex-imap", "sendgrid", "microsoft-graph"
+    | Supported: "webklex-imap", "imap", "sendgrid", "microsoft-graph"
     |
     */
 

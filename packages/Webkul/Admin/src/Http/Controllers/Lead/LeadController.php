@@ -207,6 +207,7 @@ class LeadController extends Controller
                     'leads.married_name',
                     'leads.married_name_prefix',
                     'leads.created_at',
+                    'leads.lead_pipeline_id',
                     'leads.lead_pipeline_stage_id',
                     'leads.user_id',
                     'leads.lead_type_id',

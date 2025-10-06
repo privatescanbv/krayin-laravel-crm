@@ -147,6 +147,9 @@ class LeadController extends Controller
 
         // Check if we should exclude won/lost stages for performance optimization
         $excludeWonLost = filter_var(request()->query('exclude_won_lost', false), FILTER_VALIDATE_BOOLEAN);
+        
+        // Check if we should include total counts (expensive for large datasets)
+        $includeTotalCounts = filter_var(request()->query('include_total_counts', true), FILTER_VALIDATE_BOOLEAN);
 
         if (request()->query('pipeline_stage_id')) {
             $stages = $pipeline->stages->where('id', request()->query('pipeline_stage_id'));
@@ -197,36 +200,38 @@ class LeadController extends Controller
 
             // Load relationships - including persons for kanban display
             // Optimize query by selecting only necessary fields and using eager loading
+            $paginator = $query->select([
+                'leads.id',
+                'leads.first_name',
+                'leads.last_name',
+                'leads.name',
+                'leads.created_at',
+                'leads.lead_pipeline_stage_id',
+                'leads.user_id',
+                'leads.lead_type_id',
+                'leads.lead_source_id',
+                'leads.rotten_days',
+                'leads.days_until_due_date',
+                'leads.mri_status',
+                'leads.mri_status_label',
+                'leads.lost_reason_label',
+                'leads.closed_at'
+            ])->with([
+                'tags:id,name',
+                'type:id,name',
+                'source:id,name',
+                'user:id,name',
+                'organization:id,name',
+                'pipeline:id,name',
+                'pipeline.stages:id,lead_pipeline_id,code,name,sort_order',
+                'stage:id,code,name,sort_order',
+                'persons:id,first_name,last_name,married_name,name,organization_id',
+                'persons.organization:id,name',
+                'attribute_values:lead_id,attribute_id,value',
+            ])->paginate(10);
+
             $data[$stage->sort_order]['leads'] = [
-                'data' => LeadResource::collection($paginator = $query->select([
-                    'leads.id',
-                    'leads.first_name',
-                    'leads.last_name',
-                    'leads.name',
-                    'leads.created_at',
-                    'leads.lead_pipeline_stage_id',
-                    'leads.user_id',
-                    'leads.lead_type_id',
-                    'leads.lead_source_id',
-                    'leads.rotten_days',
-                    'leads.days_until_due_date',
-                    'leads.mri_status',
-                    'leads.mri_status_label',
-                    'leads.lost_reason_label',
-                    'leads.closed_at'
-                ])->with([
-                    'tags:id,name',
-                    'type:id,name',
-                    'source:id,name',
-                    'user:id,name',
-                    'organization:id,name',
-                    'pipeline:id,name',
-                    'pipeline.stages:id,lead_pipeline_id,code,name,sort_order',
-                    'stage:id,code,name,sort_order',
-                    'persons:id,first_name,last_name,married_name,name,organization_id',
-                    'persons.organization:id,name',
-                    'attribute_values:lead_id,attribute_id,value',
-                ])->paginate(10)),
+                'data' => LeadResource::collection($paginator),
 
                 'meta' => [
                     'current_page' => $paginator->currentPage(),
@@ -234,7 +239,8 @@ class LeadController extends Controller
                     'last_page' => $paginator->lastPage(),
                     'per_page' => $paginator->perPage(),
                     'to' => $paginator->lastItem(),
-                    'total' => $paginator->total(),
+                    // Only calculate expensive total count if requested and needed
+                    'total' => $includeTotalCounts ? $paginator->total() : $paginator->count(),
                 ],
             ];
         }

@@ -220,7 +220,7 @@ class LeadController extends Controller
                     'source:id,name',
                     'user:id,name',
                     'organization:id,name',
-                    'pipeline:id,name',
+                    'pipeline:id,name,rotten_days',
                     'pipeline.stages:id,lead_pipeline_id,code,name,sort_order',
                     'stage:id,code,name,sort_order',
                     'persons:id,first_name,last_name,married_name,name,organization_id',

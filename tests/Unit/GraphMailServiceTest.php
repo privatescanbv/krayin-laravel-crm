@@ -167,10 +167,12 @@ class GraphMailServiceTest extends TestCase
         ];
 
         $this->emailRepository
-            ->expects($this->once())
+            ->expects($this->exactly(2))
             ->method('findOneByField')
-            ->with('message_id', '<msg1@example.com>')
-            ->willReturn(null);
+            ->willReturnMap([
+                ['message_id', '<msg1@example.com>', null],
+                ['unique_id', '<msg1@example.com>', null],
+            ]);
 
         $this->emailRepository
             ->expects($this->once())
@@ -201,6 +203,32 @@ class GraphMailServiceTest extends TestCase
             ->method('findOneByField')
             ->with('message_id', '<msg1@example.com>')
             ->willReturn($existingEmail);
+
+        $this->emailRepository
+            ->expects($this->never())
+            ->method('create');
+
+        $this->service->processMessage($message);
+    }
+
+    public function test_process_message_skips_existing_email_by_unique_id()
+    {
+        $message = [
+            'id'                => 'msg-1',
+            'internetMessageId' => '<msg1@example.com>',
+            'subject'           => 'Test Subject',
+        ];
+
+        $existingEmail = new Email;
+        $existingEmail->id = 1;
+
+        $this->emailRepository
+            ->expects($this->exactly(2))
+            ->method('findOneByField')
+            ->willReturnMap([
+                ['message_id', '<msg1@example.com>', null],
+                ['unique_id', '<msg1@example.com>', $existingEmail],
+            ]);
 
         $this->emailRepository
             ->expects($this->never())

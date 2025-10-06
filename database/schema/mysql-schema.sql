@@ -399,7 +399,6 @@ CREATE TABLE `emails` (
   `updated_at` timestamp NULL DEFAULT NULL,
   `parent_id` int unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `emails_unique_id_unique` (`unique_id`),
   KEY `emails_person_id_foreign` (`person_id`),
   KEY `emails_lead_id_foreign` (`lead_id`),
   KEY `emails_parent_id_foreign` (`parent_id`),

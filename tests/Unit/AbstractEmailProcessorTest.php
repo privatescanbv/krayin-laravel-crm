@@ -8,6 +8,7 @@ use App\Services\Mail\GraphMailService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use ReflectionClass;
 use Tests\TestCase;
+use Webkul\Email\Models\Email;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 
@@ -124,5 +125,114 @@ class AbstractEmailProcessorTest extends TestCase
         $emailLog->refresh();
         $this->assertEquals('Test error message', $emailLog->error_message);
         $this->assertNotNull($emailLog->completed_at);
+    }
+
+    public function test_process_message_skips_duplicate_by_message_id()
+    {
+        $messageId = '<test-message-id@example.com>';
+        $existingEmail = new Email(['id' => 1, 'message_id' => $messageId]);
+
+        $this->emailRepository
+            ->expects($this->once())
+            ->method('findOneByField')
+            ->with('message_id', $messageId)
+            ->willReturn($existingEmail);
+
+        $this->emailRepository
+            ->expects($this->never())
+            ->method('create');
+
+        // Create a mock message
+        $message = [
+            'id'                => 'test-id',
+            'internetMessageId' => $messageId,
+            'from'              => ['emailAddress' => ['address' => 'test@example.com', 'name' => 'Test User']],
+            'subject'           => 'Test Subject',
+            'toRecipients'      => [],
+            'ccRecipients'      => [],
+            'bccRecipients'     => [],
+            'replyTo'           => [],
+            'isRead'            => false,
+            'hasAttachments'    => false,
+            'body'              => ['content' => 'Test body', 'contentType' => 'text'],
+            'receivedDateTime'  => now()->toISOString(),
+        ];
+
+        $this->processor->processMessage($message);
+    }
+
+    public function test_process_message_skips_duplicate_by_unique_id()
+    {
+        $messageId = '<test-message-id@example.com>';
+        $existingEmail = new Email(['id' => 1, 'unique_id' => $messageId]);
+
+        // First call returns null (no existing email by message_id)
+        // Second call returns existing email by unique_id (which is the same as message_id)
+        $this->emailRepository
+            ->expects($this->exactly(2))
+            ->method('findOneByField')
+            ->willReturnMap([
+                ['message_id', $messageId, null],
+                ['unique_id', $messageId, $existingEmail],
+            ]);
+
+        $this->emailRepository
+            ->expects($this->never())
+            ->method('create');
+
+        // Create a mock message
+        $message = [
+            'id'                => 'test-id',
+            'internetMessageId' => $messageId,
+            'from'              => ['emailAddress' => ['address' => 'test@example.com', 'name' => 'Test User']],
+            'subject'           => 'Test Subject',
+            'toRecipients'      => [],
+            'ccRecipients'      => [],
+            'bccRecipients'     => [],
+            'replyTo'           => [],
+            'isRead'            => false,
+            'hasAttachments'    => false,
+            'body'              => ['content' => 'Test body', 'contentType' => 'text'],
+            'receivedDateTime'  => now()->toISOString(),
+        ];
+
+        $this->processor->processMessage($message);
+    }
+
+    public function test_process_message_creates_email_successfully()
+    {
+        $messageId = '<test-message-id@example.com>';
+        $createdEmail = new Email(['id' => 1, 'message_id' => $messageId, 'unique_id' => $messageId]);
+
+        // No existing email found
+        $this->emailRepository
+            ->expects($this->exactly(2))
+            ->method('findOneByField')
+            ->willReturn(null);
+
+        // Create succeeds
+        $this->emailRepository
+            ->expects($this->once())
+            ->method('create')
+            ->willReturn($createdEmail);
+
+        // Create a mock message
+        $message = [
+            'id'                => 'test-id',
+            'internetMessageId' => $messageId,
+            'from'              => ['emailAddress' => ['address' => 'test@example.com', 'name' => 'Test User']],
+            'subject'           => 'Test Subject',
+            'toRecipients'      => [],
+            'ccRecipients'      => [],
+            'bccRecipients'     => [],
+            'replyTo'           => [],
+            'isRead'            => false,
+            'hasAttachments'    => false,
+            'body'              => ['content' => 'Test body', 'contentType' => 'text'],
+            'receivedDateTime'  => now()->toISOString(),
+        ];
+
+        // Should not throw an exception
+        $this->processor->processMessage($message);
     }
 }

@@ -73,3 +73,15 @@ test('can delete resource', function () {
         'id' => $resource->id,
     ]);
 });
+
+test('resource create page pre-selects clinic when clinic_id parameter is provided', function () {
+    $clinic = Clinic::factory()->create();
+    $resourceType = ResourceType::factory()->create();
+
+    $response = $this->get(route('admin.settings.resources.create', ['clinic_id' => $clinic->id]));
+    $response->assertOk();
+
+    // Check that the clinic is pre-selected in the form
+    $response->assertSee('value="'.$clinic->id.'"', false);
+    $response->assertSee($clinic->name, false);
+});

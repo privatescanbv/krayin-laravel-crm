@@ -598,7 +598,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=http://crm/api/workflow-leads",
+        "url": "=http://crm/api/sales-leads",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -1121,7 +1121,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "0f37430c-8c77-4f8e-98ce-85548af27ed5",
+  "versionId": "b4ba7f35-a36b-40c8-97df-02ff52bb39ad",
   "meta": {
     "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },

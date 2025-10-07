@@ -314,18 +314,18 @@ class SalesLeadController extends Controller
     public function search()
     {
         $search = request()->query('search', '');
-        
+
         $query = SalesLead::with(['pipelineStage', 'lead', 'user']);
-        
+
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
-        
+
         $salesLeads = $query->limit(10)->get();
-        
+
         return response()->json($salesLeads->map(function ($salesLead) {
             return [
                 'id'          => $salesLead->id,

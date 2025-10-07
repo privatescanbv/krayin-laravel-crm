@@ -19,7 +19,6 @@ use Illuminate\Support\Str;
 use Throwable;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
-use Webkul\Attribute\Traits\CustomAttribute;
 use Webkul\Contact\Models\Organization;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\EmailProxy;
@@ -34,7 +33,7 @@ use App\Services\LeadStatusTransitionValidator;
 
 class Lead extends Model implements LeadContract
 {
-    use CustomAttribute, LogsActivity, HasFactory;
+    use LogsActivity, HasFactory;
 
     protected $casts = [
         'closed_at'           => 'datetime',

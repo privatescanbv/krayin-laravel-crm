@@ -178,3 +178,86 @@ test('price normalization works with comma separator', function () {
     expect($createdProduct->price)->toBe('1234.56')
         ->and($createdProduct->costs)->toBe('567.89');
 });
+
+test('can link partner products to product', function () {
+    $product = Product::factory()->create();
+    $partnerProduct1 = \App\Models\PartnerProduct::factory()->create(['product_id' => null]);
+    $partnerProduct2 = \App\Models\PartnerProduct::factory()->create(['product_id' => null]);
+
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+
+    $payload = [
+        'name'              => $product->name,
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => $resourceTypeId,
+        'partner_products'  => [$partnerProduct1->id, $partnerProduct2->id],
+    ];
+
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertRedirect(route('admin.products.index'));
+
+    $partnerProduct1->refresh();
+    $partnerProduct2->refresh();
+
+    expect($partnerProduct1->product_id)->toBe($product->id)
+        ->and($partnerProduct2->product_id)->toBe($product->id);
+});
+
+test('can unlink partner products from product', function () {
+    $product = Product::factory()->create();
+    $partnerProduct1 = \App\Models\PartnerProduct::factory()->create(['product_id' => $product->id]);
+    $partnerProduct2 = \App\Models\PartnerProduct::factory()->create(['product_id' => $product->id]);
+
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+
+    // Update product without partner_products (should unlink all)
+    $payload = [
+        'name'              => $product->name,
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => $resourceTypeId,
+        'partner_products'  => [],
+    ];
+
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertRedirect(route('admin.products.index'));
+
+    $partnerProduct1->refresh();
+    $partnerProduct2->refresh();
+
+    expect($partnerProduct1->product_id)->toBeNull()
+        ->and($partnerProduct2->product_id)->toBeNull();
+});
+
+test('can change partner product selection', function () {
+    $product = Product::factory()->create();
+    $partnerProduct1 = \App\Models\PartnerProduct::factory()->create(['product_id' => $product->id]);
+    $partnerProduct2 = \App\Models\PartnerProduct::factory()->create(['product_id' => null]);
+
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+
+    // Change from partnerProduct1 to partnerProduct2
+    $payload = [
+        'name'              => $product->name,
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => $resourceTypeId,
+        'partner_products'  => [$partnerProduct2->id],
+    ];
+
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertRedirect(route('admin.products.index'));
+
+    $partnerProduct1->refresh();
+    $partnerProduct2->refresh();
+
+    expect($partnerProduct1->product_id)->toBeNull()
+        ->and($partnerProduct2->product_id)->toBe($product->id);
+});

@@ -56,6 +56,8 @@ class ProductRepository extends Repository
             'entity_id' => $product->id,
         ]));
 
+        $this->syncPartnerProducts($product, $data);
+
         return $product;
     }
 
@@ -95,6 +97,8 @@ class ProductRepository extends Repository
             'entity_id' => $product->id,
         ]));
 
+        $this->syncPartnerProducts($product, $data);
+
         return $product;
     }
 
@@ -106,6 +110,31 @@ class ProductRepository extends Repository
      * @return void
      */
     // Inventory methods removed
+
+    /**
+     * Sync partner products relationship.
+     *
+     * @param  \Webkul\Product\Contracts\Product  $product
+     * @param  array  $data
+     * @return void
+     */
+    protected function syncPartnerProducts($product, array $data): void
+    {
+        if (! array_key_exists('partner_products', $data)) {
+            return;
+        }
+
+        $partnerProductIds = $data['partner_products'] ?? [];
+
+        // Reset product_id for all partner products that were previously linked to this product
+        $product->partnerProducts()->update(['product_id' => null]);
+
+        // Set product_id for the selected partner products
+        if (! empty($partnerProductIds)) {
+            \App\Models\PartnerProduct::whereIn('id', $partnerProductIds)
+                ->update(['product_id' => $product->id]);
+        }
+    }
 
     /**
      * Retrieves customers count based on date.

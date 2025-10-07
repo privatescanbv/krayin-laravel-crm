@@ -5,7 +5,6 @@ namespace App\Observers;
 use App\Enums\WebhookType;
 use App\Models\SalesLead;
 use App\Services\WebhookService;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -25,11 +24,6 @@ class SalesLeadObserver
      */
     public function created(SalesLead $salesLead): void
     {
-        // Set created_by if not already set
-        if (is_null($salesLead->created_by) && auth()->check()) {
-            DB::table('salesleads')->where('id', $salesLead->id)->update(['created_by' => auth()->id()]);
-        }
-
         Log::info('CREATE sales lead', [
             'sales_lead_id' => $salesLead->id,
             'stage'         => $salesLead->pipelineStage?->name,
@@ -43,11 +37,6 @@ class SalesLeadObserver
      */
     public function updated(SalesLead $salesLead): void
     {
-        // Set updated_by if authenticated user exists
-        if (auth()->check()) {
-            DB::table('salesleads')->where('id', $salesLead->id)->update(['updated_by' => auth()->id()]);
-        }
-
         // Send webhook if stage has changed and the stage is actually different
         if ($salesLead->isDirty('pipeline_stage_id') && $salesLead->pipeline_stage_id !== $salesLead->getOriginal('pipeline_stage_id') && $salesLead->pipelineStage) {
 

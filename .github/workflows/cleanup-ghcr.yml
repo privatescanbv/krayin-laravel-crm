@@ -14,7 +14,9 @@ jobs:
         with:
           account: privatescanbv
           token: ${{ secrets.GHCR_PAT }}
-          image-names: "krayin-laravel-crm/krayincrm"
+          image-names: |
+            krayin-laravel-crm/krayincrm
+            krayin-laravel-crm/crmsyncn8n
           image-tags: "!latest"
           keep-n-most-recent: 3
           dry-run: false
@@ -26,7 +28,9 @@ jobs:
         with:
           account: privatescanbv
           token: ${{ secrets.GHCR_PAT }}
-          image-names: "krayin-laravel-crm/krayincrm"
+          image-names: |
+            krayin-laravel-crm/krayincrm
+            krayin-laravel-crm/crmsyncn8n
           tag-selection: untagged
           dry-run: false
           cut-off: '4d'

@@ -6,6 +6,7 @@ use App\DataGrids\Settings\ImportRunDataGrid;
 use App\Repositories\ImportRunRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 
 class ImportRunController extends SimpleEntityController
 {
@@ -25,6 +26,26 @@ class ImportRunController extends SimpleEntityController
         $importRun = $this->importRunRepository->with(['importLogs', 'creator', 'updater'])->findOrFail($id);
 
         return view('admin::settings.import-runs.view', ['importRun' => $importRun]);
+    }
+
+    protected function validateStore(Request $request): void
+    {
+        // Import runs are created programmatically, not via form
+    }
+
+    protected function validateUpdate(Request $request, int $id): void
+    {
+        // Import runs are not editable via UI
+    }
+
+    protected function getCreateSuccessMessage(): string
+    {
+        return 'Import run created successfully';
+    }
+
+    protected function getUpdateSuccessMessage(): string
+    {
+        return 'Import run updated successfully';
     }
 
     protected function getDestroySuccessMessage(): string

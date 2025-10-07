@@ -44,13 +44,13 @@ class SendImportRunReport extends Command
         } else {
             $importRun = ImportRun::with('importLogs')->latest('id')->first();
             if (! $importRun) {
-                $this->error('No import runs found.');
+                $this->info('No import runs found. Skipping report.');
 
-                return 1;
+                return 0;
             }
         }
 
-        $this->info("Sending import run report for run #{$importRun->id} ({$importRun->import_type}) to {$email}...");
+        $this->info("Preparing import run report for run #{$importRun->id} ({$importRun->import_type})...");
 
         // Prepare email content
         $subject = "Import Run Report #{$importRun->id} - {$importRun->import_type}";
@@ -100,8 +100,9 @@ class SendImportRunReport extends Command
             }
         }
 
-        // Send email
+        // Try to send email, but don't fail if mail is not configured
         try {
+            $this->info("Sending report to {$email}...");
             Mail::raw($body, function ($message) use ($email, $subject) {
                 $message->to($email)
                     ->subject($subject);
@@ -111,9 +112,28 @@ class SendImportRunReport extends Command
 
             return 0;
         } catch (Exception $e) {
-            $this->error('Failed to send email: '.$e->getMessage());
+            $this->warn('⚠ Could not send email (mail not configured): '.$e->getMessage());
+            $this->info('💡 Report is saved in database and can be viewed via the admin panel.');
+            $this->newLine();
+            $this->info('Summary:');
+            $this->info("  Import Run: #{$importRun->id} ({$importRun->import_type})");
+            $this->info("  Status: {$importRun->status}");
+            $this->info("  Errors: {$errorCount}, Warnings: {$warningCount}, Info: {$infoCount}");
 
-            return 1;
+            // Log the report to Laravel log as fallback
+            \Log::info("Import Run Report #{$importRun->id}", [
+                'import_type'        => $importRun->import_type,
+                'status'             => $importRun->status,
+                'records_processed'  => $importRun->records_processed,
+                'records_imported'   => $importRun->records_imported,
+                'records_skipped'    => $importRun->records_skipped,
+                'records_errored'    => $importRun->records_errored,
+                'error_count'        => $errorCount,
+                'warning_count'      => $warningCount,
+                'info_count'         => $infoCount,
+            ]);
+
+            return 0; // Don't fail the script if email fails
         }
     }
 }

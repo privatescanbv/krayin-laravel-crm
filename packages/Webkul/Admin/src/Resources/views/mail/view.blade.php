@@ -980,6 +980,71 @@
             </div>
         </script>
 
+        <!-- Sales Lead Lookup Template -->
+        <script
+            type="text/x-template"
+            id="v-sales-lead-lookup-template"
+        >
+            <div>
+                <div class="relative" ref="lookup">
+                    <div class="relative inline-block w-full" @click="toggle">
+                        <div class="w-full cursor-pointer rounded-md border border-gray-300 px-3 py-2 text-gray-800 dark:border-gray-800 dark:text-gray-300">
+                            @{{ selectedItem.name ?? 'Zoek een sales lead'}}
+                        </div>
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                            <i class="fas fa-chevron-down text-gray-400"></i>
+                        </div>
+                    </div>
+
+                    <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                        <div class="flex items-center justify-center space-x-1">
+                            <i class="text-2xl" :class="showPopup ? 'icon-up-arrow': 'icon-down-arrow'"></i>
+                        </div>
+                    </span>
+
+                    <div v-if="showPopup" class="absolute top-full z-10 mt-1 flex w-full origin-top transform flex-col gap-2 rounded-lg border border-gray-200 bg-white p-2 shadow-lg transition-transform dark:border-gray-900 dark:bg-gray-800">
+                        <div class="relative">
+                            <input
+                                type="text"
+                                v-model.lazy="searchTerm"
+                                v-debounce="500"
+                                class="w-full rounded border border-gray-200 px-2.5 py-2 pr-10 text-sm font-normal text-gray-800 transition-all hover:border-gray-400 focus:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 dark:hover:border-gray-400 dark:focus:border-gray-400"
+                                placeholder="Zoeken..."
+                                ref="searchInput"
+                                @keyup="search"
+                            />
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                <div class="flex items-center justify-center space-x-1">
+                                    <div class="relative" v-if="isSearching">
+                                        <x-admin::spinner />
+                                    </div>
+                                    <i class="fas fa-search text-gray-500"></i>
+                                </div>
+                            </span>
+                        </div>
+
+                        <ul class="max-h-40 divide-y divide-gray-100 overflow-y-auto dark:divide-gray-700">
+                            <li
+                                v-for="salesLead in salesLeads"
+                                :key="salesLead.id"
+                                class="flex cursor-pointer gap-2 px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900"
+                                @click="linkSalesLead(salesLead)"
+                            >
+                                <x-admin::avatar ::name="salesLead.name" />
+                                <div class="flex flex-col gap-1">
+                                    <span>@{{ salesLead.name }}</span>
+                                    <span class="text-xs text-gray-500">@{{ salesLead.stage?.name }}</span>
+                                </div>
+                            </li>
+                            <li v-if="salesLeads.length === 0" class="px-4 py-2 text-gray-800 dark:text-gray-300">
+                                Geen resultaten gevonden
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </script>
+
         <!-- Create Contact Template -->
         <script
             type="text/x-template"
@@ -1314,6 +1379,56 @@
                             :email="email"
                             @link-activity="linkActivity"
                         ></v-activity-lookup>
+                    </template>
+                @endif
+
+                <!-- Sales Lead Lookup -->
+                @if (bouncer()->hasPermission('leads.view'))
+                    <label class="font-semibold text-gray-800 dark:text-gray-300">
+                        @{{ email?.sales_lead_id ? "Gekoppelde Sales Lead" : "Koppel aan Sales Lead" }}
+                    </label>
+
+                    <!-- When a sales lead is already linked -->
+                    <template v-if="email?.sales_lead_id && email?.sales_lead">
+                        <div class="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+                            <div class="flex items-center gap-3">
+                                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100 text-purple-600 dark:bg-purple-900 dark:text-purple-300">
+                                    <x-admin::avatar ::name="email.sales_lead?.name" />
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-900 dark:text-gray-100">
+                                        @{{ email.sales_lead?.name }}
+                                    </div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                                        @{{ email.sales_lead?.pipeline_stage?.name }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <a
+                                    :href="'{{ route('admin.workflow-leads.view', ':id') }}'.replace(':id', email.sales_lead_id)"
+                                    target="_blank"
+                                    class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                                    title="Sales Lead bekijken"
+                                >
+                                    <span class="icon-right-arrow text-sm"></span>
+                                </a>
+                                <button
+                                    type="button"
+                                    class="icon-delete flex h-8 w-8 items-center justify-center rounded-md text-2xl hover:bg-gray-200 dark:hover:bg-gray-700"
+                                    title="Koppeling verwijderen"
+                                    @click="unlinkSalesLead()"
+                                ></button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- Otherwise, show sales lead search -->
+                    <template v-else>
+                        <v-sales-lead-lookup
+                            @link-sales-lead="linkSalesLead"
+                            :email="email"
+                        ></v-sales-lead-lookup>
                     </template>
                 @endif
 
@@ -2104,6 +2219,11 @@
                     @if ($email->lead)
                         this.email.lead = @json($email->lead);
                     @endif
+
+                    @if ($email->salesLead)
+                        this.email.sales_lead = @json($email->salesLead);
+                        this.email.sales_lead_id = {{ $email->sales_lead_id ?? 'null' }};
+                    @endif
                 },
 
                 methods: {
@@ -2211,6 +2331,36 @@
                         });
                     },
 
+                    linkSalesLead(salesLead) {
+                        this.email['sales_lead'] = salesLead;
+                        this.email['sales_lead_id'] = salesLead.id;
+
+                        this.$axios.post('{{ route('admin.mail.update', $email->id) }}', {
+                            _method: 'PUT',
+                            sales_lead_id: salesLead.id,
+                        })
+                            .then (response => {
+                                this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                            })
+                            .catch (error => {});
+                    },
+
+                    unlinkSalesLead() {
+                        this.$emitter.emit('open-confirm-modal', {
+                            agree: () => {
+                                this.$axios.post('{{ route('admin.mail.update', $email->id) }}', {
+                                    _method: 'PUT',
+                                    sales_lead_id: null,
+                                })
+                                    .then (response => {
+                                        this.email['sales_lead'] = this.email['sales_lead_id'] = null;
+                                        this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                                    })
+                                    .catch (error => {});
+                            },
+                        });
+                    },
+
                     openContactModal() {
                         this.$refs.createContact.$refs.contactModal.open();
                     },
@@ -2218,6 +2368,78 @@
                     openLeadModal() {
                         this.$refs.createLead.$refs.leadModal.open();
                     },
+                },
+            });
+        </script>
+
+        <!-- Sales Lead Lookup Component -->
+        <script type="module">
+            app.component('v-sales-lead-lookup', {
+                template: '#v-sales-lead-lookup-template',
+
+                props: ['email'],
+
+                data() {
+                    return {
+                        showPopup: false,
+                        isSearching: false,
+                        searchTerm: '',
+                        salesLeads: [],
+                        selectedItem: {},
+                    };
+                },
+
+                methods: {
+                    toggle() {
+                        this.showPopup = !this.showPopup;
+
+                        if (this.showPopup) {
+                            this.$nextTick(() => {
+                                this.$refs.searchInput.focus();
+                            });
+                        }
+                    },
+
+                    search() {
+                        this.isSearching = true;
+
+                        this.$axios.get('{{ route('admin.workflow-leads.search') }}', {
+                            params: {
+                                search: this.searchTerm,
+                            }
+                        })
+                            .then(response => {
+                                this.salesLeads = response.data;
+                            })
+                            .catch(error => {
+                                this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
+                            })
+                            .finally(() => {
+                                this.isSearching = false;
+                            });
+                    },
+
+                    linkSalesLead(salesLead) {
+                        this.$emit('link-sales-lead', salesLead);
+                        this.showPopup = false;
+                        this.selectedItem = salesLead;
+                    },
+                },
+
+                mounted() {
+                    document.addEventListener('click', this.handleClick);
+                },
+
+                beforeUnmount() {
+                    document.removeEventListener('click', this.handleClick);
+                },
+
+                updated() {
+                    this.handleClick = (event) => {
+                        if (!this.$refs.lookup.contains(event.target)) {
+                            this.showPopup = false;
+                        }
+                    };
                 },
             });
         </script>

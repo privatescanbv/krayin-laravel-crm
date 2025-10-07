@@ -5,8 +5,8 @@
     <x-admin::shimmer.datagrid />
 
     <x-slot:toolbar-right-after>
-        @include('admin.workflow_leads.index.view-switcher')
+        @include('admin.sales_leads.index.view-switcher')
     </x-slot>
 </x-admin::datagrid>
 
-{!! view_render_event('admin.workflow-leads.index.table.after') !!} 
+{!! view_render_event('admin.workflow-leads.index.table.after') !!}

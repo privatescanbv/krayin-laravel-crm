@@ -68,6 +68,7 @@ class Email extends Model implements EmailContract
         'person_id',
         'parent_id',
         'lead_id',
+        'sales_lead_id',
         'activity_id',
         'created_at',
         'updated_at',
@@ -102,6 +103,14 @@ class Email extends Model implements EmailContract
     public function lead()
     {
         return $this->belongsTo(LeadProxy::modelClass());
+    }
+
+    /**
+     * Get the sales lead.
+     */
+    public function salesLead()
+    {
+        return $this->belongsTo(\App\Models\SalesLead::class, 'sales_lead_id');
     }
 
     /**

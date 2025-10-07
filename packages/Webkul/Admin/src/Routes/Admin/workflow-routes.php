@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\SalesLeadController;
+use App\Http\Controllers\Admin\SalesLeadEmailController;
 use Illuminate\Support\Facades\File;
 
 /**
@@ -16,13 +17,17 @@ Route::group(['middleware' => ['user']], function () {
     Route::get('workflow-leads/view/{id}', [SalesLeadController::class, 'view'])->name('admin.workflow-leads.view');
     Route::put('workflow-leads/{id}/stage', [SalesLeadController::class, 'updateStage'])->name('admin.workflow-leads.stage.update');
     Route::delete('workflow-leads/{id}', [SalesLeadController::class, 'delete'])->name('admin.workflow-leads.delete');
+    Route::get('workflow-leads/search', [SalesLeadController::class, 'search'])->name('admin.workflow-leads.search');
     
     // Activity routes
     Route::get('workflow-leads/{id}/activities', [SalesLeadController::class, 'activities'])->name('admin.workflow-leads.activities.index');
     Route::post('workflow-leads/{id}/activities', [SalesLeadController::class, 'storeActivity'])->name('admin.workflow-leads.activities.store');
     
-    // Email routes (placeholder for now)
-    Route::delete('workflow-leads/{id}/emails/{emailId}', [SalesLeadController::class, 'detachEmail'])->name('admin.workflow-leads.emails.detach');
+    // Email routes
+    Route::controller(SalesLeadEmailController::class)->prefix('workflow-leads/{id}/emails')->group(function () {
+        Route::post('', 'store')->name('admin.workflow-leads.emails.store');
+        Route::delete('', 'detach')->name('admin.workflow-leads.emails.detach');
+    });
 
     // Temporary debug route
     Route::get('workflow-leads/debug/{id}', [SalesLeadController::class, 'debug'])->name('admin.workflow-leads.debug');

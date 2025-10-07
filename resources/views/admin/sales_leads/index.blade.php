@@ -25,7 +25,7 @@
             @endif
 
             <!-- Pipeline Switcher -->
-            @include('admin.workflow_leads.index.view-switcher')
+            @include('admin.sales_leads.index.view-switcher')
 
             <!-- Create button for Workflow Leads -->
             <div class="flex items-center gap-x-2.5">
@@ -50,9 +50,9 @@
     <!-- Content -->
     <div class="[&>*>*>*.toolbarRight]:max-lg:w-full [&>*>*>*.toolbarRight]:max-lg:justify-between [&>*>*>*.toolbarRight]:max-md:gap-y-2 [&>*>*>*.toolbarRight]:max-md:flex-wrap mt-3.5 [&>*>*:nth-child(1)]:max-lg:!flex-wrap">
         @if ((request()->view_type ?? "kanban") == "table")
-            @include('admin.workflow_leads.index.table')
+            @include('admin.sales_leads.index.table')
         @else
-            @include('admin.workflow_leads.index.kanban')
+            @include('admin.sales_leads.index.kanban')
         @endif
     </div>
 

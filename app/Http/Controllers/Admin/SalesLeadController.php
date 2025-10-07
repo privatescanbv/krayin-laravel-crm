@@ -45,7 +45,7 @@ class SalesLeadController extends Controller
             ];
         })->toArray();
 
-        return view('admin.workflow_leads.index', [
+        return view('admin.sales_leads.index', [
             'pipeline' => $pipeline,
             'columns'  => $this->getKanbanColumns(),
             'stages'   => $stages,
@@ -139,7 +139,7 @@ class SalesLeadController extends Controller
 
     public function create(Request $request)
     {
-        return view('admin.workflow_leads.create');
+        return view('admin.sales_leads.create');
     }
 
     public function store(Request $request)
@@ -170,7 +170,7 @@ class SalesLeadController extends Controller
             'description' => $salesLead->description,
         ]);
 
-        return view('admin.workflow_leads.edit', ['workflowLead' => $salesLead]);
+        return view('admin.sales_leads.edit', ['workflowLead' => $salesLead]);
     }
 
     public function update(Request $request, $id)
@@ -229,7 +229,7 @@ class SalesLeadController extends Controller
             ], 404);
         }
 
-        return view('admin.workflow_leads.view', [
+        return view('admin.sales_leads.view', [
             'workflowLead' => $salesLead,
             'lead'         => $lead,
         ]);
@@ -306,6 +306,37 @@ class SalesLeadController extends Controller
 
         return redirect()->route('admin.workflow-leads.index')
             ->with('success', 'Workflow lead deleted successfully.');
+    }
+
+    /**
+     * Search sales leads.
+     */
+    public function search()
+    {
+        $search = request()->query('search', '');
+
+        $query = SalesLead::with(['pipelineStage', 'lead', 'user']);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        $salesLeads = $query->limit(10)->get();
+
+        return response()->json($salesLeads->map(function ($salesLead) {
+            return [
+                'id'          => $salesLead->id,
+                'name'        => $salesLead->name,
+                'description' => $salesLead->description,
+                'stage'       => $salesLead->pipelineStage ? [
+                    'id'   => $salesLead->pipelineStage->id,
+                    'name' => $salesLead->pipelineStage->name,
+                ] : null,
+            ];
+        }));
     }
 
     /**

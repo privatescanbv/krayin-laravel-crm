@@ -17,6 +17,7 @@ Route::group(['middleware' => ['user']], function () {
     Route::get('workflow-leads/view/{id}', [SalesLeadController::class, 'view'])->name('admin.workflow-leads.view');
     Route::put('workflow-leads/{id}/stage', [SalesLeadController::class, 'updateStage'])->name('admin.workflow-leads.stage.update');
     Route::delete('workflow-leads/{id}', [SalesLeadController::class, 'delete'])->name('admin.workflow-leads.delete');
+    Route::get('workflow-leads/search', [SalesLeadController::class, 'search'])->name('admin.workflow-leads.search');
     
     // Activity routes
     Route::get('workflow-leads/{id}/activities', [SalesLeadController::class, 'activities'])->name('admin.workflow-leads.activities.index');

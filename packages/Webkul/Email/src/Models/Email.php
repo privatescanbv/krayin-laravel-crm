@@ -68,7 +68,7 @@ class Email extends Model implements EmailContract
         'person_id',
         'parent_id',
         'lead_id',
-        'workflow_lead_id',
+        'sales_lead_id',
         'activity_id',
         'created_at',
         'updated_at',
@@ -106,11 +106,11 @@ class Email extends Model implements EmailContract
     }
 
     /**
-     * Get the workflow lead (sales lead).
+     * Get the sales lead.
      */
-    public function workflowLead()
+    public function salesLead()
     {
-        return $this->belongsTo(\App\Models\SalesLead::class, 'workflow_lead_id');
+        return $this->belongsTo(\App\Models\SalesLead::class, 'sales_lead_id');
     }
 
     /**

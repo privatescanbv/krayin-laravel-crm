@@ -36,7 +36,7 @@ class SalesLeadEmailController extends BaseEmailController
         Event::dispatch('email.update.before', request()->input('email_id'));
 
         $email = $this->emailRepository->update([
-            'workflow_lead_id' => null,
+            'sales_lead_id' => null,
         ], request()->input('email_id'));
 
         Event::dispatch('email.update.after', $email);

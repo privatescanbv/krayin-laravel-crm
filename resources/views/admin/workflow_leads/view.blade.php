@@ -95,7 +95,7 @@
                         <!-- Mail Activity Action -->
                         <x-admin::activities.actions.mail
                             :entity="$workflowLead"
-                            entity-control-name="workflow_lead_id"
+                            entity-control-name="sales_lead_id"
                         />
                     @endif
 
@@ -103,19 +103,19 @@
                         <!-- File Activity Action -->
                         <x-admin::activities.actions.file
                             :entity="$workflowLead"
-                            entity-control-name="workflow_lead_id"
+                            entity-control-name="sales_lead_id"
                         />
 
                         <!-- Note Activity Action -->
                         <x-admin::activities.actions.note
                             :entity="$workflowLead"
-                            entity-control-name="workflow_lead_id"
+                            entity-control-name="sales_lead_id"
                         />
 
                         <!-- Activity Action -->
                         <x-admin::activities.actions.activity
                             :entity="$workflowLead"
-                            entity-control-name="workflow_lead_id"
+                            entity-control-name="sales_lead_id"
                         />
                     @endif
 

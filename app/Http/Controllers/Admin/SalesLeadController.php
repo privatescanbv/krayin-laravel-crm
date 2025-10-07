@@ -309,6 +309,37 @@ class SalesLeadController extends Controller
     }
 
     /**
+     * Search sales leads.
+     */
+    public function search()
+    {
+        $search = request()->query('search', '');
+        
+        $query = SalesLead::with(['pipelineStage', 'lead', 'user']);
+        
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+        
+        $salesLeads = $query->limit(10)->get();
+        
+        return response()->json($salesLeads->map(function ($salesLead) {
+            return [
+                'id'          => $salesLead->id,
+                'name'        => $salesLead->name,
+                'description' => $salesLead->description,
+                'stage'       => $salesLead->pipelineStage ? [
+                    'id'   => $salesLead->pipelineStage->id,
+                    'name' => $salesLead->pipelineStage->name,
+                ] : null,
+            ];
+        }));
+    }
+
+    /**
      * Temporary debug method to test data structure
      */
     public function debug($id)

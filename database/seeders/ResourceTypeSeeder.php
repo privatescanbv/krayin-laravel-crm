@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ResourceType as ResourceTypeEnum;
 use App\Models\ResourceType;
 
 class ResourceTypeSeeder extends BaseSeeder
@@ -11,11 +12,12 @@ class ResourceTypeSeeder extends BaseSeeder
         $this->truncateTables(['resource_types']);
 
         $defaults = [
-            ['name' => 'MRI Scanner', 'description' => 'Magnetic resonance imaging device'],
-            ['name' => 'CT Scanner', 'description' => 'Computed tomography device'],
-            ['name' => 'X-Ray', 'description' => 'Radiography imaging equipment'],
-            ['name' => 'Ultrasound', 'description' => 'Diagnostic ultrasound system'],
-            ['name' => 'Mammography', 'description' => 'Breast imaging system'],
+            ['name' => ResourceTypeEnum::MRI_SCANNER->label()],
+            ['name' => ResourceTypeEnum::CT_SCANNER->label()],
+            ['name' => ResourceTypeEnum::PET_CT_SCANNER->label()],
+            ['name' => ResourceTypeEnum::ARTSEN->label()],
+            ['name' => ResourceTypeEnum::OTHER->label()],
+            ['name' => ResourceTypeEnum::CARDIOLOGIE->label()],
         ];
 
         foreach ($defaults as $data) {

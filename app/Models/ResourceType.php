@@ -13,7 +13,6 @@ class ResourceType extends Model
     protected $table = 'resource_types';
 
     protected $fillable = [
-        'external_id',
         'name',
         'description',
         'created_by',

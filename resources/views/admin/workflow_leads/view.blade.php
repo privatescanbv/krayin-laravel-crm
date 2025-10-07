@@ -162,7 +162,7 @@
 
             <x-admin::activities
                 :endpoint="route('admin.workflow-leads.activities.index', $workflowLead->id)"
-                :email-detach-endpoint="route('admin.workflow-leads.emails.detach', $workflowLead->id)"
+                :email-detach-endpoint="route('admin.workflow-leads.emails.detach', ['id' => $workflowLead->id, 'emailId' => '__EMAIL_ID__'])"
                 :activeType="request()->query('from') === 'quotes' ? 'quotes' : 'planned'"
                 :extra-types="[
                     ['name' => 'description', 'label' => trans('admin::app.leads.view.tabs.description')],

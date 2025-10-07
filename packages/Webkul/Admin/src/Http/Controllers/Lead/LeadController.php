@@ -224,7 +224,6 @@ class LeadController extends Controller
                     'pipeline:id,name,rotten_days',
                     'pipeline.stages:id,lead_pipeline_id,code,name,sort_order',
                     'stage:id,code,name,sort_order',
-                    'attribute_values',
                 ])->paginate(10)),
 
                 'meta' => [
@@ -626,29 +625,6 @@ class LeadController extends Controller
             }
             return redirect()->back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }
-    }
-
-    /**
-     * Update the lead attributes.
-     */
-    public function updateAttributes(int $id)
-    {
-        $data = request()->all();
-
-        $attributes = $this->attributeRepository->findWhere([
-            'entity_type' => 'leads',
-            ['code', 'NOTIN', ['description']],
-        ]);
-
-        Event::dispatch('lead.update.before', $id);
-
-        $lead = $this->leadRepository->update($data, $id, $attributes);
-
-        Event::dispatch('lead.update.after', $lead);
-
-        return response()->json([
-            'message' => trans('admin::app.leads.update-success'),
-        ]);
     }
 
     /**

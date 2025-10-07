@@ -15,7 +15,6 @@ use App\Services\Importers\SugarCRM\MeetingImporter;
 use Exception;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -186,6 +185,11 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $this->ensureUserImportRan();
 
         return $this->executeImport($dryRun, function () use ($connection, $limit, $leadIds, $dryRun, $importPersons) {
+            // Start import run tracking
+            if (! $dryRun) {
+                $this->startImportRun('leads');
+            }
+
             // Test connection
             $this->testConnection($connection);
 
@@ -367,6 +371,14 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             // After processing all chunks, print a single consolidated summary
             if (! $dryRun) {
                 $this->printImportSummary();
+
+                // Complete import run tracking
+                $this->completeImportRun([
+                    'processed' => $this->totalImported + $this->totalSkipped + $this->totalErrors,
+                    'imported'  => $this->totalImported,
+                    'skipped'   => $this->totalSkipped,
+                    'errored'   => $this->totalErrors,
+                ]);
             }
         });
     }
@@ -761,8 +773,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
 
             } catch (Exception $e) {
                 $errors++;
-                $this->error("\nFailed to import lead {$record->id}: ".$e->getMessage());
-                Log::error('Failed to import lead', [
+                $this->logError('Failed to import lead', [
                     'record_id' => $record->id ?? 'unknown',
                     'error'     => $e->getMessage(),
                     'trace'     => $e->getTraceAsString(),

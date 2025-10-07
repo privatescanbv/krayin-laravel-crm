@@ -254,13 +254,30 @@ return [
     ],
 
     /**
+     * Reports Import Runs (submenu under configuration).
+     */
+    [
+        'key'  => 'report',
+        'name' => 'Reports',
+        'info' => '',
+        'sort' => 2,
+    ], [
+        'key'  => 'report.import',
+        'name' => 'Import Runs',
+        'info' => 'View all import runs performed in the system.',
+        'route'      => 'admin.settings.import-runs.index',
+        'icon' => 'icon-setting',
+        'sort' => 1,
+    ],
+
+    /**
      * Email.
      */
     [
         'key'  => 'email',
         'name' => 'admin::app.configuration.index.email.title',
         'info' => 'admin::app.configuration.index.email.info',
-        'sort' => 2,
+        'sort' => 3,
     ], [
         'key'  => 'email.imap',
         'name' => 'admin::app.configuration.index.email.imap.title',

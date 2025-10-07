@@ -4,13 +4,14 @@ namespace App\Console\Commands;
 
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
+use App\Models\ImportLog;
+use App\Models\ImportRun;
 use DateTimeInterface;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 use Webkul\Core\Contracts\Validations\EmailValidator;
@@ -18,6 +19,8 @@ use Webkul\Core\Contracts\Validations\PhoneValidator;
 
 abstract class AbstractSugarCRMImport extends Command
 {
+    protected ?ImportRun $currentImportRun = null;
+
     /**
      * Verbose info helper (-v)
      */
@@ -48,6 +51,27 @@ abstract class AbstractSugarCRMImport extends Command
                 throw new Exception("Missing table: {$table}");
             }
         }
+    }
+
+    /**
+     * Log warning with context to database and console
+     */
+    public function warn($string, $verbosity = null): void
+    {
+        parent::warn($string, $verbosity);
+        $this->logImportWarning($string);
+    }
+
+    public function info($string, $verbosity = null): void
+    {
+        parent::info($string, $verbosity);
+        $this->logImportInfo($string);
+    }
+
+    public function error($string, $verbosity = null): void
+    {
+        parent::error($string, $verbosity);
+        $this->logImportError($string);
     }
 
     /**
@@ -115,12 +139,63 @@ abstract class AbstractSugarCRMImport extends Command
     }
 
     /**
-     * Log error with context
+     * Start a new import run
+     */
+    protected function startImportRun(string $importType): ImportRun
+    {
+        $this->currentImportRun = ImportRun::create([
+            'started_at'  => now(),
+            'status'      => 'running',
+            'import_type' => $importType,
+        ]);
+
+        $this->info("📊 Import Run #{$this->currentImportRun->id} started");
+
+        return $this->currentImportRun;
+    }
+
+    /**
+     * Complete the current import run
+     */
+    protected function completeImportRun(array $stats = []): void
+    {
+        if ($this->currentImportRun) {
+            $this->currentImportRun->update([
+                'completed_at'       => now(),
+                'status'             => 'completed',
+                'records_processed'  => $stats['processed'] ?? 0,
+                'records_imported'   => $stats['imported'] ?? 0,
+                'records_skipped'    => $stats['skipped'] ?? 0,
+                'records_errored'    => $stats['errored'] ?? 0,
+            ]);
+        }
+    }
+
+    /**
+     * Fail the current import run
+     */
+    protected function failImportRun(string $reason = ''): void
+    {
+        if ($this->currentImportRun) {
+            $this->currentImportRun->update([
+                'completed_at' => now(),
+                'status'       => 'failed',
+            ]);
+
+            if ($reason) {
+                $this->logImportError($reason);
+            }
+        }
+    }
+
+    /**
+     * Console log and create import log entry for error.
+     * This method is needed, if you want to log errors with context.
      */
     protected function logError(string $message, array $context = []): void
     {
-        $this->error("\n{$message}");
-        Log::error($message, $context);
+        parent::error($message . ' - ' . print_r($context, true));
+        $this->logImportError($message, $context);
     }
 
     /**
@@ -307,6 +382,43 @@ abstract class AbstractSugarCRMImport extends Command
     }
 
     /**
+     * Log import error to database
+     */
+    private function logImportError(string $message, array $context = []): void
+    {
+        $this->logImport($message, $context, 'error');
+    }
+
+    /**
+     * Log import warning to database
+     */
+    private function logImportWarning(string $message, array $context = []): void
+    {
+        $this->logImport($message, $context, 'warning');
+    }
+
+    /**
+     * Log import info to database
+     */
+    private function logImportInfo(string $message, array $context = []): void
+    {
+        $this->logImport($message, $context, 'info');
+    }
+
+    private function logImport(string $message, array $context = [], string $logLevel = 'error'): void
+    {
+        if ($this->ensureLogRunHasStarted()) {
+            ImportLog::create([
+                'import_run_id' => $this->currentImportRun->id,
+                'level'         => $logLevel,
+                'message'       => $message,
+                'context'       => $context,
+                'record_id'     => $context['record_id'] ?? null,
+            ]);
+        }
+    }
+
+    /**
      * Disable webhooks during import operations
      */
     private function disableWebhooks(): void
@@ -325,5 +437,14 @@ abstract class AbstractSugarCRMImport extends Command
     {
         Config::set('webhook.enabled', true);
         $this->info('🔔 Webhooks re-enabled after import operation');
+    }
+
+    private function ensureLogRunHasStarted(): bool
+    {
+        if (! $this->currentImportRun) {
+            parent::warn('Logging, will import operation has not been started yet');
+        }
+
+        return ! is_null($this->currentImportRun);
     }
 }

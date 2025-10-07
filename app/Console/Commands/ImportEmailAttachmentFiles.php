@@ -50,7 +50,13 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
             $this->info('Attachment IDs: '.implode(', ', $attachmentIds));
         }
 
-        return $this->executeImport($dryRun, function () use ($limit, $attachmentIds, $dryRun) {// Check if upload_sugarcrm directory exists
+        return $this->executeImport($dryRun, function () use ($limit, $attachmentIds, $dryRun) {
+            // Start import run tracking
+            if (! $dryRun) {
+                $this->startImportRun('email-attachments');
+            }
+
+            // Check if upload_sugarcrm directory exists
             $uploadDir = '/var/www/html/upload_sugarcrm';
             if (! File::exists($uploadDir)) {
                 throw new Exception("Upload directory does not exist: {$uploadDir}");
@@ -83,7 +89,7 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
                 return;
             }
 
-            $this->processAttachments($attachments, $uploadDir);
+            $this->processAttachments($attachments, $uploadDir, $dryRun);
         });
     }
 
@@ -148,7 +154,7 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
     /**
      * Process attachments and copy files
      */
-    private function processAttachments($attachments, string $uploadDir): int
+    private function processAttachments($attachments, string $uploadDir, bool $dryRun): int
     {
         $bar = $this->output->createProgressBar($attachments->count());
         $bar->start();
@@ -207,6 +213,16 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
         $this->info("✓ Copied: {$copied}");
         $this->info("⚠ Skipped: {$skipped}");
         $this->info("✗ Errors: {$errors}");
+
+        // Complete import run tracking
+        if (! $dryRun) {
+            $this->completeImportRun([
+                'processed' => $copied + $skipped + $errors,
+                'imported'  => $copied,
+                'skipped'   => $skipped,
+                'errored'   => $errors,
+            ]);
+        }
 
         return $errors > 0 ? 1 : 0;
     }

@@ -418,6 +418,35 @@ TABLE(ResourceAvailability, "resource_availability") {
   updated_at: datetime
 }
 
+TABLE(ImportRun, "import_runs") {
+  PRIMARY_KEY(id): bigint
+  started_at: datetime
+  completed_at: datetime
+  status: string
+  import_type: string
+  records_processed: int
+  records_imported: int
+  records_skipped: int
+  records_errored: int
+  created_at: datetime
+  updated_at: datetime
+  created_by: bigint
+  updated_by: bigint
+}
+
+TABLE(ImportLog, "import_logs") {
+  PRIMARY_KEY(id): bigint
+  FOREIGN_KEY(import_run_id): bigint
+  level: string
+  message: text
+  context: json
+  record_id: string
+  created_at: datetime
+  updated_at: datetime
+  created_by: bigint
+  updated_by: bigint
+}
+
 ' Relationships
 User "1" -- "n" Lead
 User "1" -- "n" Order
@@ -503,6 +532,8 @@ Email "0..1" --> "1" Activity
 
 ResourceAvailability "n" -- "1" Resource
 
+ImportRun "1" -- "n" ImportLog
+
 note right of Pipeline
   Verkoopfunnel met geordende fasen voor lead.
   Initiële records:
@@ -564,6 +595,16 @@ end note
 
 note right of ResourceAvailability
     Weekday: 0=Sunday, 1=Monday, ...
+end note
+
+note right of ImportRun
+  SugarCRM import run logging voor leads, persons, users en email-attachments.
+  Status: running, completed, failed.
+end note
+
+note right of ImportLog
+  Individuele log entries (error, warning, info) voor een ImportRun.
+  Context bevat extra informatie zoals record_id en error details.
 end note
 
 @enduml

@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\Settings\ClinicController;
+use App\Http\Controllers\Admin\Settings\ImportLogController;
+use App\Http\Controllers\Admin\Settings\ImportRunController;
 use App\Http\Controllers\Admin\Settings\PartnerProductController;
 use Webkul\Admin\Http\Controllers\Settings\PartnerProducts\ActivityController as PartnerProductActivityController;
 use Illuminate\Support\Facades\Route;
@@ -91,6 +93,26 @@ Route::prefix('settings')->group(function () {
         Route::put('edit/{id}', 'update')->name('admin.settings.product_types.update');
         Route::delete('', 'destroy')->name('admin.settings.product_types.delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.product_types.delete');
+    });
+
+    /**
+     * Import Runs routes.
+     */
+    Route::controller(ImportRunController::class)->prefix('import-runs')->group(function () {
+        Route::get('', 'index')->name('admin.settings.import-runs.index');
+        Route::get('view/{id}', 'view')->name('admin.settings.import-runs.view');
+        Route::delete('', 'destroy')->name('admin.settings.import-runs.delete');
+        Route::delete('{id}', 'destroy')->name('admin.settings.import-runs.delete');
+    });
+
+    /**
+     * Import Logs routes.
+     */
+    Route::controller(ImportLogController::class)->prefix('import-logs')->group(function () {
+        Route::get('', 'index')->name('admin.settings.import-logs.index');
+        Route::get('view/{id}', 'view')->name('admin.settings.import-logs.view');
+        Route::delete('', 'destroy')->name('admin.settings.import-logs.delete');
+        Route::delete('{id}', 'destroy')->name('admin.settings.import-logs.delete');
     });
 
     /**

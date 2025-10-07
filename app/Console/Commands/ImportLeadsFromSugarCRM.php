@@ -177,6 +177,11 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         }
         $this->infoV('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
+        // Start import run tracking
+        if (! $dryRun) {
+            $this->startImportRun('leads');
+        }
+
         // Initialize importers
         $this->activityImporter = new ActivityImporter($this, $connection);
         $this->attachmentImporter = new AttachmentImporter($this, $connection);
@@ -367,6 +372,14 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             // After processing all chunks, print a single consolidated summary
             if (! $dryRun) {
                 $this->printImportSummary();
+
+                // Complete import run tracking
+                $this->completeImportRun([
+                    'processed' => $this->totalImported + $this->totalSkipped + $this->totalErrors,
+                    'imported'  => $this->totalImported,
+                    'skipped'   => $this->totalSkipped,
+                    'errored'   => $this->totalErrors,
+                ]);
             }
         });
     }
@@ -762,7 +775,7 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
             } catch (Exception $e) {
                 $errors++;
                 $this->error("\nFailed to import lead {$record->id}: ".$e->getMessage());
-                Log::error('Failed to import lead', [
+                $this->logImportError('Failed to import lead', [
                     'record_id' => $record->id ?? 'unknown',
                     'error'     => $e->getMessage(),
                     'trace'     => $e->getTraceAsString(),

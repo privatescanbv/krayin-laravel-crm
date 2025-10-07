@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
+use App\Models\ImportLog;
+use App\Models\ImportRun;
 use DateTimeInterface;
 use Exception;
 use Illuminate\Console\Command;
@@ -18,6 +20,7 @@ use Webkul\Core\Contracts\Validations\PhoneValidator;
 
 abstract class AbstractSugarCRMImport extends Command
 {
+    protected ?ImportRun $currentImportRun = null;
     /**
      * Verbose info helper (-v)
      */
@@ -115,12 +118,109 @@ abstract class AbstractSugarCRMImport extends Command
     }
 
     /**
-     * Log error with context
+     * Start a new import run
+     */
+    protected function startImportRun(string $importType): ImportRun
+    {
+        $this->currentImportRun = ImportRun::create([
+            'started_at'  => now(),
+            'status'      => 'running',
+            'import_type' => $importType,
+        ]);
+
+        return $this->currentImportRun;
+    }
+
+    /**
+     * Complete the current import run
+     */
+    protected function completeImportRun(array $stats = []): void
+    {
+        if ($this->currentImportRun) {
+            $this->currentImportRun->update([
+                'completed_at'       => now(),
+                'status'             => 'completed',
+                'records_processed'  => $stats['processed'] ?? 0,
+                'records_imported'   => $stats['imported'] ?? 0,
+                'records_skipped'    => $stats['skipped'] ?? 0,
+                'records_errored'    => $stats['errored'] ?? 0,
+            ]);
+        }
+    }
+
+    /**
+     * Fail the current import run
+     */
+    protected function failImportRun(string $reason = ''): void
+    {
+        if ($this->currentImportRun) {
+            $this->currentImportRun->update([
+                'completed_at' => now(),
+                'status'       => 'failed',
+            ]);
+
+            if ($reason) {
+                $this->logImportError($reason);
+            }
+        }
+    }
+
+    /**
+     * Log error with context to database and Laravel log
      */
     protected function logError(string $message, array $context = []): void
     {
         $this->error("\n{$message}");
         Log::error($message, $context);
+        $this->logImportError($message, $context);
+    }
+
+    /**
+     * Log import error to database
+     */
+    protected function logImportError(string $message, array $context = []): void
+    {
+        if ($this->currentImportRun) {
+            ImportLog::create([
+                'import_run_id' => $this->currentImportRun->id,
+                'level'         => 'error',
+                'message'       => $message,
+                'context'       => $context,
+                'record_id'     => $context['record_id'] ?? null,
+            ]);
+        }
+    }
+
+    /**
+     * Log import warning to database
+     */
+    protected function logImportWarning(string $message, array $context = []): void
+    {
+        if ($this->currentImportRun) {
+            ImportLog::create([
+                'import_run_id' => $this->currentImportRun->id,
+                'level'         => 'warning',
+                'message'       => $message,
+                'context'       => $context,
+                'record_id'     => $context['record_id'] ?? null,
+            ]);
+        }
+    }
+
+    /**
+     * Log import info to database
+     */
+    protected function logImportInfo(string $message, array $context = []): void
+    {
+        if ($this->currentImportRun) {
+            ImportLog::create([
+                'import_run_id' => $this->currentImportRun->id,
+                'level'         => 'info',
+                'message'       => $message,
+                'context'       => $context,
+                'record_id'     => $context['record_id'] ?? null,
+            ]);
+        }
     }
 
     /**

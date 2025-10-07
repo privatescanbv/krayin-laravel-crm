@@ -50,6 +50,11 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
             $this->info('Attachment IDs: '.implode(', ', $attachmentIds));
         }
 
+        // Start import run tracking
+        if (! $dryRun) {
+            $this->startImportRun('email-attachments');
+        }
+
         return $this->executeImport($dryRun, function () use ($limit, $attachmentIds, $dryRun) {// Check if upload_sugarcrm directory exists
             $uploadDir = '/var/www/html/upload_sugarcrm';
             if (! File::exists($uploadDir)) {
@@ -207,6 +212,14 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
         $this->info("✓ Copied: {$copied}");
         $this->info("⚠ Skipped: {$skipped}");
         $this->info("✗ Errors: {$errors}");
+
+        // Complete import run tracking
+        $this->completeImportRun([
+            'processed' => $copied + $skipped + $errors,
+            'imported'  => $copied,
+            'skipped'   => $skipped,
+            'errored'   => $errors,
+        ]);
 
         return $errors > 0 ? 1 : 0;
     }

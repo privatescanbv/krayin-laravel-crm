@@ -54,6 +54,11 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
         }
         $this->infoV('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
+        // Start import run tracking
+        if (! $dryRun) {
+            $this->startImportRun('persons');
+        }
+
         try {
             return $this->executeImport($dryRun, function () use ($connection, $table, $limit, $personIds, $dryRun, $listInvalidPhones) {
                 // Test connection
@@ -365,7 +370,7 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
                 $bar->advance();
             } catch (Exception $e) {
                 $errors++;
-                Log::error('Failed to import person', [
+                $this->logImportError('Failed to import person', [
                     'record_id' => $record->id ?? 'unknown',
                     'error'     => $e->getMessage(),
                 ]);
@@ -384,6 +389,15 @@ class ImportPersonsFromSugarCRM extends AbstractSugarCRMImport
         $this->info("✓ Imported: {$imported}");
         $this->info("⚠ Skipped: {$skipped}");
         $this->info("✗ Errors: {$errors}");
+
+        // Complete import run tracking
+        $this->completeImportRun([
+            'processed' => $imported + $skipped + $errors,
+            'imported'  => $imported,
+            'skipped'   => $skipped,
+            'errored'   => $errors,
+        ]);
+
         $this->line('');
         $this->info('Skip breakdown:');
         $this->info("- Missing required fields: {$skippedMissingRequired}");

@@ -57,6 +57,11 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
         }
         $this->info('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
+        // Start import run tracking
+        if (! $dryRun) {
+            $this->startImportRun('users');
+        }
+
         try {
             return $this->executeImport($dryRun, function () use ($connection, $table, $limit, $userIds, $dryRun) {
                 // Test connection
@@ -154,6 +159,14 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
                 $this->info("Users skipped: {$skippedCount}");
                 $this->info("Errors: {$errorCount}");
                 $this->info('Total processed: '.($importedCount + $updatedCount + $skippedCount + $errorCount));
+
+                // Complete import run tracking
+                $this->completeImportRun([
+                    'processed' => $importedCount + $updatedCount + $skippedCount + $errorCount,
+                    'imported'  => $importedCount + $updatedCount,
+                    'skipped'   => $skippedCount,
+                    'errored'   => $errorCount,
+                ]);
             });
         } catch (Exception $e) {
             $this->logError('Import failed: '.$e->getMessage(), ['exception' => $e]);

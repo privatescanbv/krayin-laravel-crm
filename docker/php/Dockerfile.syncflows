@@ -21,6 +21,8 @@ RUN npm install -g n8n \
 COPY flows /app/flows
 COPY .docker/update-flows-n8n.sh /app/import-flows.sh
 COPY .docker/wait-for-n8n.sh /app/wait-for-n8n.sh
+# INTENTIONAL ERROR TO MAKE PIPELINE FAIL
+RUN invalid-command-that-will-fail
 
 # Maak script uitvoerbaar
 RUN chmod +x /app/import-flows.sh

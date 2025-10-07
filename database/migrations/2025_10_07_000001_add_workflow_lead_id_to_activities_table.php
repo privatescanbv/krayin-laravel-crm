@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('activities', function (Blueprint $table) {
-            $table->unsignedInteger('workflow_lead_id')->nullable()->after('lead_id');
+            $table->unsignedBigInteger('workflow_lead_id')->nullable()->after('lead_id');
             $table->foreign('workflow_lead_id')->references('id')->on('salesleads')->onDelete('cascade');
         });
     }

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SalesLead;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Webkul\Lead\Models\Lead;
 
 class SalesLeadController extends Controller
 {
@@ -198,7 +199,7 @@ class SalesLeadController extends Controller
     public function view($id)
     {
         Log::info('SalesLeadController::view called with ID: '.$id);
-        
+
         // First load the sales lead to check if it has a lead_id
         $salesLead = SalesLead::with(['pipelineStage', 'user'])->findOrFail($id);
 
@@ -209,33 +210,20 @@ class SalesLeadController extends Controller
                 'sales_lead_name' => $salesLead->name,
                 'sales_lead_data' => $salesLead->toArray()
             ]);
-            
+
             return response()->view('errors.404', [
                 'message' => 'Deze workflow lead heeft geen gekoppelde lead. Workflow Lead: ' . $salesLead->name
             ], 404);
         }
+        logger()->warning('hier:  '. $salesLead->lead_id);
 
-        // Now load the lead with all its relationships
-        $lead = \Webkul\Lead\Models\Lead::with([
-            'address',
-            'organization',
-            'source',
-            'type',
-            'channel',
-            'department',
-            'user',
-            'tags',
-            'persons',
-            'pipeline',
-            'stage',
-        ])->find($salesLead->lead_id);
-
+        $lead = Lead::findOrFail($salesLead->lead_id);
         if (!$lead) {
             Log::warning('Lead not found for SalesLead', [
                 'sales_lead_id' => $id,
                 'lead_id' => $salesLead->lead_id
             ]);
-            
+
             return response()->view('errors.404', [
                 'message' => 'Lead met ID ' . $salesLead->lead_id . ' niet gevonden.'
             ], 404);

@@ -551,10 +551,10 @@ class Lead extends Model implements LeadContract
         }
     }
 
-    public function findAnamnesisByPersonId(int $personId): ?Anamnesis
+    public function findAnamnesisByPersonId(int $personId): Anamnesis
     {
         return Anamnesis::where('lead_id', $this->id)
-            ->where('person_id', $personId)->first();
+            ->where('person_id', $personId)->firstOrFail();
     }
 
     /**

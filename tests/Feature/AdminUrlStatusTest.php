@@ -8,6 +8,7 @@ use App\Models\PartnerProduct;
 use App\Models\ProductType;
 use App\Models\Resource;
 use App\Models\ResourceType;
+use App\Models\SalesLead;
 use App\Models\Shift;
 use Database\Seeders\TestSeeder;
 use Illuminate\Support\Facades\Route;
@@ -41,6 +42,20 @@ use Webkul\WebForm\Models\WebForm;
 beforeEach(function () {
     // Seed essential test data (pipelines, attributes, departments, etc.)
     $this->seed(TestSeeder::class);
+
+    $lead = Lead::factory()->create([
+        'lead_pipeline_id'       => 3,
+        'lead_pipeline_stage_id' => 2,
+        'user_id'                => User::factory()->create()->id,
+    ]);
+    // Create a couple of SalesLeads in the same stage
+    $wl1 = SalesLead::create([
+        'name'              => 'Workflow One',
+        'description'       => 'Test 1',
+        'pipeline_stage_id' => 13,
+        'lead_id'           => $lead->id,
+        'user_id'           => $lead->user->id,
+    ]);
 });
 
 it('tests all admin GET routes return valid HTTP status codes', function () {

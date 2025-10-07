@@ -8,9 +8,6 @@ use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
 use Webkul\Quote\Models\Quote;
 
-/**
- * TODO: rename to backoffice (equal to lead, used in workflow)
- */
 class SalesLead extends Model
 {
     /**

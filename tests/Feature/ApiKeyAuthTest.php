@@ -117,7 +117,7 @@ test('GET request to leads index requires API key', function () {
 
 test('workflow-leads endpoint requires API key', function () {
     // Test without API key
-    $response = $this->postJson('/api/workflow-leads', [
+    $response = $this->postJson('/api/sales-leads', [
         'title'      => 'Test Workflow Lead',
         'first_name' => 'Test',
         'last_name'  => 'User',
@@ -128,7 +128,7 @@ test('workflow-leads endpoint requires API key', function () {
     $response = $this->withHeaders([
         'X-API-KEY' => 'valid-api-key-123',
         'Accept'    => 'application/json',
-    ])->postJson('/api/workflow-leads', [
+    ])->postJson('/api/sales-leads', [
         'title'      => 'Test Workflow Lead',
         'first_name' => 'Test',
         'last_name'  => 'User',

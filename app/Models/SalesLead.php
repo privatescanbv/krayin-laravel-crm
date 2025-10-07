@@ -8,9 +8,6 @@ use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
 use Webkul\Quote\Models\Quote;
 
-/**
- * TODO: rename to backoffice (equal to lead, used in workflow)
- */
 class SalesLead extends Model
 {
     /**
@@ -73,5 +70,13 @@ class SalesLead extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the activities associated with the workflow lead.
+     */
+    public function activities()
+    {
+        return $this->hasMany(\Webkul\Activity\Models\Activity::class, 'workflow_lead_id');
     }
 }

@@ -45,7 +45,7 @@ class SalesLeadController extends Controller
             ];
         })->toArray();
 
-        return view('admin.workflow_leads.index', [
+        return view('admin.sales_leads.index', [
             'pipeline' => $pipeline,
             'columns'  => $this->getKanbanColumns(),
             'stages'   => $stages,
@@ -139,7 +139,7 @@ class SalesLeadController extends Controller
 
     public function create(Request $request)
     {
-        return view('admin.workflow_leads.create');
+        return view('admin.sales_leads.create');
     }
 
     public function store(Request $request)
@@ -170,7 +170,7 @@ class SalesLeadController extends Controller
             'description' => $salesLead->description,
         ]);
 
-        return view('admin.workflow_leads.edit', ['workflowLead' => $salesLead]);
+        return view('admin.sales_leads.edit', ['workflowLead' => $salesLead]);
     }
 
     public function update(Request $request, $id)
@@ -229,7 +229,7 @@ class SalesLeadController extends Controller
             ], 404);
         }
 
-        return view('admin.workflow_leads.view', [
+        return view('admin.sales_leads.view', [
             'workflowLead' => $salesLead,
             'lead'         => $lead,
         ]);

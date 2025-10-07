@@ -232,6 +232,30 @@ Breadcrumbs::for('settings.clinics.view', function (BreadcrumbTrail $trail, $cli
     $trail->push($clinic->name, route('admin.settings.clinics.view', $clinic->id));
 });
 
+// Settings > Import Runs
+Breadcrumbs::for('settings.import-runs', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings');
+    $trail->push('Import Runs', route('admin.settings.import-runs.index'));
+});
+
+// Settings > Import Runs > View
+Breadcrumbs::for('settings.import-runs.view', function (BreadcrumbTrail $trail, $importRun) {
+    $trail->parent('settings.import-runs');
+    $trail->push('#'.$importRun->id, route('admin.settings.import-runs.view', $importRun->id));
+});
+
+// Settings > Import Logs
+Breadcrumbs::for('settings.import-logs', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings');
+    $trail->push('Import Logs', route('admin.settings.import-logs.index'));
+});
+
+// Settings > Import Logs > View
+Breadcrumbs::for('settings.import-logs.view', function (BreadcrumbTrail $trail, $importLog) {
+    $trail->parent('settings.import-logs');
+    $trail->push('#'.$importLog->id, route('admin.settings.import-logs.view', $importLog->id));
+});
+
 // Settings > Partner Products
 Breadcrumbs::for('settings.partner_products', function (BreadcrumbTrail $trail) {
     $trail->parent('settings.clinics');

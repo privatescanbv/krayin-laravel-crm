@@ -169,6 +169,7 @@
                     ['name' => 'products', 'label' => trans('admin::app.leads.view.tabs.products')],
                     ['name' => 'quotes', 'label' => trans('admin::app.leads.view.tabs.quotes')],
                 ]"
+                ref="activities"
             >
                 <!-- Products -->
                 <x-slot:products>

@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Controllers\Products;
 
 use App\Enums\Currency;
+use App\Rules\PartnerProductsMatchResourceType;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -232,6 +233,8 @@ class ProductController extends Controller
      */
     protected function getValidationRules(?int $id = null): array
     {
+        $resourceTypeId = request()->input('resource_type_id');
+
         return [
             'name'              => 'required|string|max:255',
             'active'            => 'required|boolean',
@@ -242,7 +245,7 @@ class ProductController extends Controller
             'product_group_id'  => 'required|integer|exists:product_groups,id',
             'product_type_id'   => 'nullable|integer|exists:product_types,id',
             'resource_type_id'  => 'nullable|integer|exists:resource_types,id',
-            'partner_products'  => 'nullable|array',
+            'partner_products'  => ['nullable', 'array', new PartnerProductsMatchResourceType($resourceTypeId)],
             'partner_products.*' => 'integer|exists:partner_products,id',
         ];
     }

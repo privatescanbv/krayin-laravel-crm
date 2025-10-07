@@ -178,3 +178,155 @@ test('price normalization works with comma separator', function () {
     expect($createdProduct->price)->toBe('1234.56')
         ->and($createdProduct->costs)->toBe('567.89');
 });
+
+test('can link partner products to product', function () {
+    $product = Product::factory()->create();
+    $partnerProduct1 = \App\Models\PartnerProduct::factory()->create(['product_id' => null]);
+    $partnerProduct2 = \App\Models\PartnerProduct::factory()->create(['product_id' => null]);
+
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+
+    $payload = [
+        'name'              => $product->name,
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => $resourceTypeId,
+        'partner_products'  => [$partnerProduct1->id, $partnerProduct2->id],
+    ];
+
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertRedirect(route('admin.products.index'));
+
+    $partnerProduct1->refresh();
+    $partnerProduct2->refresh();
+
+    expect($partnerProduct1->product_id)->toBe($product->id)
+        ->and($partnerProduct2->product_id)->toBe($product->id);
+});
+
+test('can unlink partner products from product', function () {
+    $product = Product::factory()->create();
+    $partnerProduct1 = \App\Models\PartnerProduct::factory()->create(['product_id' => $product->id]);
+    $partnerProduct2 = \App\Models\PartnerProduct::factory()->create(['product_id' => $product->id]);
+
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+
+    // Update product without partner_products (should unlink all)
+    $payload = [
+        'name'              => $product->name,
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => $resourceTypeId,
+        'partner_products'  => [],
+    ];
+
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertRedirect(route('admin.products.index'));
+
+    $partnerProduct1->refresh();
+    $partnerProduct2->refresh();
+
+    expect($partnerProduct1->product_id)->toBeNull()
+        ->and($partnerProduct2->product_id)->toBeNull();
+});
+
+test('can change partner product selection', function () {
+    $product = Product::factory()->create();
+    $partnerProduct1 = \App\Models\PartnerProduct::factory()->create(['product_id' => $product->id]);
+    $partnerProduct2 = \App\Models\PartnerProduct::factory()->create(['product_id' => null]);
+
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+
+    // Change from partnerProduct1 to partnerProduct2
+    $payload = [
+        'name'              => $product->name,
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => $resourceTypeId,
+        'partner_products'  => [$partnerProduct2->id],
+    ];
+
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertRedirect(route('admin.products.index'));
+
+    $partnerProduct1->refresh();
+    $partnerProduct2->refresh();
+
+    expect($partnerProduct1->product_id)->toBeNull()
+        ->and($partnerProduct2->product_id)->toBe($product->id);
+});
+
+test('validation fails when partner product has different resource type', function () {
+    $resourceType1 = ResourceType::factory()->create();
+    $resourceType2 = ResourceType::factory()->create();
+
+    $product = Product::factory()->create(['resource_type_id' => $resourceType1->id]);
+    $partnerProduct = \App\Models\PartnerProduct::factory()->create([
+        'resource_type_id' => $resourceType2->id,
+        'product_id'       => null,
+    ]);
+
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+
+    $payload = [
+        'name'              => $product->name,
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => $resourceType1->id,
+        'partner_products'  => [$partnerProduct->id],
+    ];
+
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertSessionHasErrors('partner_products');
+});
+
+test('validation passes when partner product has same resource type', function () {
+    $resourceType = ResourceType::factory()->create();
+
+    $product = Product::factory()->create(['resource_type_id' => $resourceType->id]);
+    $partnerProduct = \App\Models\PartnerProduct::factory()->create([
+        'resource_type_id' => $resourceType->id,
+        'product_id'       => null,
+    ]);
+
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+
+    $payload = [
+        'name'              => $product->name,
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => $resourceType->id,
+        'partner_products'  => [$partnerProduct->id],
+    ];
+
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertRedirect(route('admin.products.index'));
+
+    $partnerProduct->refresh();
+    expect($partnerProduct->product_id)->toBe($product->id);
+});
+
+test('validation fails when resource type is not set but partner products are selected', function () {
+    $partnerProduct = \App\Models\PartnerProduct::factory()->create();
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+
+    $payload = [
+        'name'              => 'Test Product',
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => null,
+        'partner_products'  => [$partnerProduct->id],
+    ];
+
+    $response = $this->post(route('admin.products.store'), $payload);
+    $response->assertSessionHasErrors('partner_products');
+});

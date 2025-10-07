@@ -202,6 +202,7 @@ TABLE(ResourceType, "resourcetype") {
 TABLE(PartnerProduct, "partner_product") {
   PRIMARY_KEY(id): bigint
   description: text
+  FOREIGN_KEY(product_id): bigint
   created_at: datetime
   updated_at: datetime
   created_by: bigint
@@ -472,7 +473,7 @@ Address "0..1" -- "1" Person
 Address "0..1" -- "1" Organization
 
 Product "n" -- "0..*" ProductGroup
-Product "n" -- "0..*" PartnerProduct
+Product "1" -- "0..*" PartnerProduct
 Product "1" -- "1" ResourceType
 Product "1" -- "1" ProductType
 ProductGroup "0..1" -- "n" ProductGroup : "parent"

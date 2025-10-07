@@ -39,6 +39,9 @@ jobs:
 
   docker-sync-flows:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -56,4 +59,6 @@ jobs:
       - name: Build and push sync flows image using build_image_sync_flows.sh
         run: |
           chmod +x ./build_image_sync_flows.sh
+          echo "Building sync flows image..."
           ./build_image_sync_flows.sh
+          echo "Sync flows image build completed successfully"

@@ -261,3 +261,72 @@ test('can change partner product selection', function () {
     expect($partnerProduct1->product_id)->toBeNull()
         ->and($partnerProduct2->product_id)->toBe($product->id);
 });
+
+test('validation fails when partner product has different resource type', function () {
+    $resourceType1 = ResourceType::factory()->create();
+    $resourceType2 = ResourceType::factory()->create();
+    
+    $product = Product::factory()->create(['resource_type_id' => $resourceType1->id]);
+    $partnerProduct = \App\Models\PartnerProduct::factory()->create([
+        'resource_type_id' => $resourceType2->id,
+        'product_id' => null,
+    ]);
+
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+
+    $payload = [
+        'name'              => $product->name,
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => $resourceType1->id,
+        'partner_products'  => [$partnerProduct->id],
+    ];
+
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertSessionHasErrors('partner_products');
+});
+
+test('validation passes when partner product has same resource type', function () {
+    $resourceType = ResourceType::factory()->create();
+    
+    $product = Product::factory()->create(['resource_type_id' => $resourceType->id]);
+    $partnerProduct = \App\Models\PartnerProduct::factory()->create([
+        'resource_type_id' => $resourceType->id,
+        'product_id' => null,
+    ]);
+
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+
+    $payload = [
+        'name'              => $product->name,
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => $resourceType->id,
+        'partner_products'  => [$partnerProduct->id],
+    ];
+
+    $response = $this->put(route('admin.products.update', ['id' => $product->id]), $payload);
+    $response->assertRedirect(route('admin.products.index'));
+
+    $partnerProduct->refresh();
+    expect($partnerProduct->product_id)->toBe($product->id);
+});
+
+test('validation fails when resource type is not set but partner products are selected', function () {
+    $partnerProduct = \App\Models\PartnerProduct::factory()->create();
+    $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
+
+    $payload = [
+        'name'              => 'Test Product',
+        'currency'          => 'EUR',
+        'price'             => 299.99,
+        'product_group_id'  => $productGroupId,
+        'resource_type_id'  => null,
+        'partner_products'  => [$partnerProduct->id],
+    ];
+
+    $response = $this->post(route('admin.products.store'), $payload);
+    $response->assertSessionHasErrors('partner_products');
+});

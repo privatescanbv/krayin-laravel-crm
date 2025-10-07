@@ -737,6 +737,10 @@ return [
                 'save' => 'Opslaan',
             ],
         ],
+        'validation' => [
+            'resource-type-required-for-partner-products' => 'Resourcetype is verplicht wanneer partnerproducten worden geselecteerd.',
+            'partner-products-resource-type-mismatch' => 'De volgende partnerproducten hebben een ander resourcetype: :products',
+        ],
     ],
 
     'settings' => [

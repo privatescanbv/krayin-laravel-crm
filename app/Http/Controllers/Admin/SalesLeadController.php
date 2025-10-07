@@ -201,7 +201,7 @@ class SalesLeadController extends Controller
         Log::info('SalesLeadController::view called with ID: '.$id);
 
         // First load the sales lead to check if it has a lead_id
-        $salesLead = SalesLead::with(['pipelineStage', 'user'])->findOrFail($id);
+        $salesLead = SalesLead::with(['pipelineStage.pipeline.stages', 'user'])->findOrFail($id);
 
         // If there's no related lead_id, return 404
         if (!$salesLead->lead_id) {
@@ -232,6 +232,22 @@ class SalesLeadController extends Controller
         return view('admin.workflow_leads.view', [
             'workflowLead' => $salesLead,
             'lead' => $lead
+        ]);
+    }
+
+    public function updateStage($id)
+    {
+        request()->validate([
+            'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
+        ]);
+
+        $salesLead = SalesLead::findOrFail($id);
+        $salesLead->update([
+            'pipeline_stage_id' => request('lead_pipeline_stage_id'),
+        ]);
+
+        return response()->json([
+            'message' => 'Workflow lead stage updated successfully.',
         ]);
     }
 

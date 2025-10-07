@@ -11,7 +11,6 @@ use Database\Seeders\BaseSeeder;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Webkul\Lead\Models\Stage;
-use App\Services\LeadStatusTransitionValidator;
 
 class PipelineSeeder extends BaseSeeder
 {
@@ -181,7 +180,28 @@ class PipelineSeeder extends BaseSeeder
             ], [
                 'id' => ++$stageId,
                 'code' => 'order-verzonden',
-                'name' => 'Order verzonden',
+                'name' => 'Order verzonden | Wachten akkoord',
+                'probability' => 100,
+                'sort_order' => $stageId,
+                'lead_pipeline_id' => $privateScanWorkflowPipelineId,
+            ],[
+                'id' => ++$stageId,
+                'code' => 'order-confirmed',
+                'name' => 'Order Akkoord',
+                'probability' => 100,
+                'sort_order' => $stageId,
+                'lead_pipeline_id' => $privateScanWorkflowPipelineId,
+            ],[
+                'id' => ++$stageId,
+                'code' => 'order-lost',
+                'name' => 'Order Verloren',
+                'probability' => 100,
+                'sort_order' => $stageId,
+                'lead_pipeline_id' => $privateScanWorkflowPipelineId,
+            ],[
+                'id' => ++$stageId,
+                'code' => 'order-won',
+                'name' => 'Order Gewonnen',
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $privateScanWorkflowPipelineId,
@@ -201,8 +221,22 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaWorkflowPipelineId,
+            ],[
+                'id' => ++$stageId,
+                'code' => 'order-lost-hernia',
+                'name' => 'Order Verloren',
+                'probability' => 100,
+                'sort_order' => $stageId,
+                'lead_pipeline_id' => $herniaWorkflowPipelineId,
+            ],[
+                'id' => ++$stageId,
+                'code' => 'order-won-hernia',
+                'name' => 'Order Gewonnen',
+                'probability' => 100,
+                'sort_order' => $stageId,
+                'lead_pipeline_id' => $herniaWorkflowPipelineId,
             ],
-            // workflow tech pipline
+            // workflow tech pipeline
             [
                 'id' => ++$stageId,
                 'code' => 'no-pipeline',

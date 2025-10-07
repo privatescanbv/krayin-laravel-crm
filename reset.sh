@@ -2,7 +2,7 @@
 
 echo "Do you want to import a single lead or multiple leads?"
 echo "1) Single lead (current setup)"
-echo "2) Multiple leads (limit 1500 persons, limit 100 leads)"
+echo "2) Multiple leads (limit 500 leads)"
 read -p "Enter your choice (1 or 2): " choice
 
 ./vendor/bin/sail artisan migrate:fresh --seed &&
@@ -15,7 +15,7 @@ if [ "$choice" = "1" ]; then
     ./vendor/bin/sail artisan import:email-attachment-files
 elif [ "$choice" = "2" ]; then
     echo "Importing multiple leads setup..."
-    ./vendor/bin/sail artisan import:leads --import-persons --limit=3000 &&
+    ./vendor/bin/sail artisan import:leads --import-persons --limit=500 &&
     ./vendor/bin/sail artisan import:email-attachment-files
 else
     echo "Invalid choice. Please run the script again and choose 1 or 2."

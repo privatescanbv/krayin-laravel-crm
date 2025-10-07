@@ -251,6 +251,57 @@ class SalesLeadController extends Controller
         ]);
     }
 
+    public function activities($id)
+    {
+        $salesLead = SalesLead::findOrFail($id);
+        
+        // Get activities related to this sales lead
+        $activities = \Webkul\Activity\Models\Activity::where('workflow_lead_id', $id)
+            ->with(['user', 'participants'])
+            ->orderBy('schedule_from', 'desc')
+            ->paginate(10);
+
+        return response()->json($activities);
+    }
+
+    public function storeActivity($id)
+    {
+        request()->validate([
+            'type' => 'required|in:task,meeting,call',
+            'title' => 'required|string',
+            'description' => 'nullable|string',
+            'user_id' => 'nullable|exists:users,id',
+            'schedule_from' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
+            'schedule_to' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
+        ]);
+
+        $salesLead = SalesLead::findOrFail($id);
+
+        $activity = \Webkul\Activity\Models\Activity::create([
+            'type' => request('type'),
+            'title' => request('title'),
+            'comment' => request('description'),
+            'user_id' => request('user_id') ?? auth()->id(),
+            'workflow_lead_id' => $id,
+            'schedule_from' => request('schedule_from'),
+            'schedule_to' => request('schedule_to'),
+            'is_done' => 0,
+        ]);
+
+        return response()->json([
+            'message' => 'Activity created successfully.',
+            'data' => $activity,
+        ]);
+    }
+
+    public function detachEmail($id, $emailId)
+    {
+        // Placeholder for email detachment
+        return response()->json([
+            'message' => 'Email detached successfully.',
+        ]);
+    }
+
     public function delete($id)
     {
         $salesLead = SalesLead::findOrFail($id);

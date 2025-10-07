@@ -94,28 +94,28 @@
                     @if (bouncer()->hasPermission('mail.compose'))
                         <!-- Mail Activity Action -->
                         <x-admin::activities.actions.mail
-                            :entity="$lead"
-                            entity-control-name="lead_id"
+                            :entity="$workflowLead"
+                            entity-control-name="workflow_lead_id"
                         />
                     @endif
 
                     @if (bouncer()->hasPermission('activities.create'))
                         <!-- File Activity Action -->
                         <x-admin::activities.actions.file
-                            :entity="$lead"
-                            entity-control-name="lead_id"
+                            :entity="$workflowLead"
+                            entity-control-name="workflow_lead_id"
                         />
 
                         <!-- Note Activity Action -->
                         <x-admin::activities.actions.note
-                            :entity="$lead"
-                            entity-control-name="lead_id"
+                            :entity="$workflowLead"
+                            entity-control-name="workflow_lead_id"
                         />
 
                         <!-- Activity Action -->
                         <x-admin::activities.actions.activity
-                            :entity="$lead"
-                            entity-control-name="lead_id"
+                            :entity="$workflowLead"
+                            entity-control-name="workflow_lead_id"
                         />
                     @endif
 
@@ -161,8 +161,8 @@
             {!! view_render_event('admin.leads.view.activities.before', ['lead' => $lead]) !!}
 
             <x-admin::activities
-                :endpoint="route('admin.leads.activities.index', $lead->id)"
-                :email-detach-endpoint="route('admin.leads.emails.detach', $lead->id)"
+                :endpoint="route('admin.workflow-leads.activities.index', $workflowLead->id)"
+                :email-detach-endpoint="route('admin.workflow-leads.emails.detach', $workflowLead->id)"
                 :activeType="request()->query('from') === 'quotes' ? 'quotes' : 'planned'"
                 :extra-types="[
                     ['name' => 'description', 'label' => trans('admin::app.leads.view.tabs.description')],

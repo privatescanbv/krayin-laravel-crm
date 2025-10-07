@@ -71,4 +71,12 @@ class SalesLead extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Get the activities associated with the workflow lead.
+     */
+    public function activities()
+    {
+        return $this->hasMany(\Webkul\Activity\Models\Activity::class, 'workflow_lead_id');
+    }
 }

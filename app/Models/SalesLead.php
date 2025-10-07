@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\WorkflowType;
 use App\Traits\HasAuditTrail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
@@ -11,7 +12,7 @@ use Webkul\Quote\Models\Quote;
 
 class SalesLead extends Model
 {
-    use HasAuditTrail;
+    use HasAuditTrail, HasFactory;
 
     /**
      * The table associated with the model.

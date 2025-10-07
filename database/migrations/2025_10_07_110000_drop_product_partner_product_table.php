@@ -8,6 +8,11 @@ return new class extends Migration
 {
     public function up(): void
     {
+        Schema::dropIfExists('product_partner_product');
+    }
+
+    public function down(): void
+    {
         Schema::create('product_partner_product', function (Blueprint $table) {
             $table->unsignedInteger('product_id');
             $table->unsignedBigInteger('partner_product_id');
@@ -17,10 +22,5 @@ return new class extends Migration
 
             $table->primary(['product_id', 'partner_product_id'], 'product_partner_product_primary');
         });
-    }
-
-    public function down(): void
-    {
-        Schema::dropIfExists('product_partner_product');
     }
 };

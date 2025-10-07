@@ -18,6 +18,7 @@ class PartnerProduct extends BaseProduct
         'description',
         'discount_info',
         'resource_type_id',
+        'product_id',
         'created_by',
         'updated_by',
         // partner specific
@@ -36,6 +37,7 @@ class PartnerProduct extends BaseProduct
         'sales_price'                  => 'decimal:2',
         'active'                       => 'boolean',
         'resource_type_id'             => 'integer',
+        'product_id'                   => 'integer',
         'created_by'                   => 'integer',
         'updated_by'                   => 'integer',
         'duration'                     => 'integer',
@@ -66,5 +68,10 @@ class PartnerProduct extends BaseProduct
     public function resources()
     {
         return $this->belongsToMany(Resource::class, 'partner_product_resource');
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(\Webkul\Product\Models\Product::class);
     }
 }

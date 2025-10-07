@@ -6,6 +6,7 @@ use App\Models\PartnerProduct;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
 use Webkul\Attribute\Traits\CustomAttribute;
@@ -94,9 +95,9 @@ class Product extends Model implements ProductContract
     /**
      * Partner products linked to this product.
      */
-    public function partnerProducts(): BelongsToMany
+    public function partnerProducts(): HasMany
     {
-        return $this->belongsToMany(PartnerProduct::class, 'product_partner_product', 'product_id', 'partner_product_id');
+        return $this->hasMany(PartnerProduct::class);
     }
 
     /**

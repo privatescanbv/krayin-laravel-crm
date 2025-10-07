@@ -180,8 +180,8 @@ class PipelineSeeder extends BaseSeeder
                 'lead_pipeline_id' => $privateScanWorkflowPipelineId,
             ], [
                 'id' => ++$stageId,
-                'code' => 'doe-nog-iets',
-                'name' => 'Doe nog iets',
+                'code' => 'order-verzonden',
+                'name' => 'Order verzonden',
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $privateScanWorkflowPipelineId,
@@ -190,14 +190,14 @@ class PipelineSeeder extends BaseSeeder
             [
                 'id' => ++$stageId,
                 'code' => 'bestelling-voorbereiden-hernia',
-                'name' => 'Bestelling voorbereiden Hernia',
+                'name' => 'Bestelling voorbereiden',
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaWorkflowPipelineId,
             ], [
                 'id' => ++$stageId,
-                'code' => 'doe-nog-iets-hernia',
-                'name' => 'Doe nog iets Hernia',
+                'code' => 'order-verzenden-hernia',
+                'name' => 'Order is verzonden',
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaWorkflowPipelineId,

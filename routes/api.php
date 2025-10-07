@@ -41,7 +41,7 @@ Route::middleware('api.key')->group(function () {
     Route::get('groups/byDepartment/{departmentName}', [GroupController::class, 'findByDepartment']);
 
     // Workflow Leads API
-    Route::prefix('workflow-leads')->group(function () {
+    Route::prefix('sales-leads')->group(function () {
         Route::post('/', [SalesLeadController::class, 'store']);
     });
 });

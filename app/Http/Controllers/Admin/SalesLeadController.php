@@ -20,6 +20,11 @@ class SalesLeadController extends Controller
             $pipeline = app('Webkul\Lead\Repositories\PipelineRepository')->getDefaultPipelineByType(PipelineType::BACKOFFICE);
         }
 
+        // Remember selected pipeline for subsequent data requests
+        if ($pipeline) {
+            session(['workflow_pipeline_id' => $pipeline->id]);
+        }
+
         $stages = $pipeline->stages->map(function ($stage) {
             return [
                 'id'         => $stage->id,
@@ -59,7 +64,11 @@ class SalesLeadController extends Controller
         if ($request->filled('pipeline_id')) {
             $pipeline = $pipelineRepository->find($request->pipeline_id);
         } else {
-            $pipeline = $pipelineRepository->getDefaultPipelineByType(PipelineType::BACKOFFICE);
+            // Fallback to last selected pipeline from session
+            $selectedPipelineId = session('workflow_pipeline_id');
+            $pipeline = $selectedPipelineId
+                ? $pipelineRepository->find($selectedPipelineId)
+                : $pipelineRepository->getDefaultPipelineByType(PipelineType::BACKOFFICE);
         }
 
         if (! $pipeline) {
@@ -74,11 +83,13 @@ class SalesLeadController extends Controller
         $data = [];
 
         foreach ($stages as $stage) {
-            $query = SalesLead::with(['pipelineStage', 'lead.person', 'user'])
+            $query = SalesLead::with(['pipelineStage', 'lead', 'user'])
                 ->where('pipeline_stage_id', $stage->id);
             $salesLeads = $query->get();
 
             $salesLeads = $salesLeads->map(function ($salesLead) {
+                $person = $salesLead->lead ? $salesLead->lead->persons()->first() : null;
+
                 return [
                     'id'                => $salesLead->id,
                     'name'              => $salesLead->name,
@@ -91,9 +102,9 @@ class SalesLeadController extends Controller
                     'lead' => $salesLead->lead ? [
                         'id'     => $salesLead->lead->id,
                         'title'  => $salesLead->lead->title,
-                        'person' => $salesLead->lead->person ? [
-                            'id'   => $salesLead->lead->person->id,
-                            'name' => $salesLead->lead->person->name.'123',
+                        'person' => $person ? [
+                            'id'   => $person->id,
+                            'name' => $person->name,
                         ] : null,
                     ] : null,
                     'user' => $salesLead->user ? [
@@ -207,7 +218,9 @@ class SalesLeadController extends Controller
      */
     public function debug($id)
     {
-        $salesLead = SalesLead::with(['pipelineStage', 'lead.person', 'user'])->findOrFail($id);
+        $salesLead = SalesLead::with(['pipelineStage', 'lead', 'user'])->findOrFail($id);
+
+        $person = $salesLead->lead ? $salesLead->lead->persons()->first() : null;
 
         return response()->json([
             'workflow_lead' => [
@@ -217,9 +230,9 @@ class SalesLeadController extends Controller
                 'lead'        => $salesLead->lead ? [
                     'id'     => $salesLead->lead->id,
                     'title'  => $salesLead->lead->title,
-                    'person' => $salesLead->lead->person ? [
-                        'id'   => $salesLead->lead->person->id,
-                        'name' => $salesLead->lead->person->name,
+                    'person' => $person ? [
+                        'id'   => $person->id,
+                        'name' => $person->name,
                     ] : null,
                 ] : null,
                 'user' => $salesLead->user ? [
@@ -276,7 +289,7 @@ class SalesLeadController extends Controller
                 'search_field'          => 'in',
                 'filterable'            => true,
                 'filterable_type'       => 'dropdown',
-                'filterable_options'    => app('Webkul\Lead\Repositories\StageRepository')->all(['name as label', 'id as value'])->toArray(),
+                'filterable_options'    => app('Webkul\\Lead\\Repositories\\StageRepository')->all(['name as label', 'id as value'])->toArray(),
                 'allow_multiple_values' => true,
                 'sortable'              => true,
                 'visibility'            => true,

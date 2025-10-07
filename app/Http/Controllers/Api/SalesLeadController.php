@@ -18,7 +18,7 @@ class SalesLeadController extends Controller
         $validated = $request->validate([
             'name'              => 'nullable|string|max:255',
             'description'       => 'nullable|string',
-            'pipeline_id'       => ['nullable', 'exists:lead_pipeline_stages,id'],
+            'pipeline_id'       => ['nullable', 'exists:lead_pipelines,id'],
             'pipeline_stage_id' => ['nullable', 'exists:lead_pipeline_stages,id'],
             'lead_id'           => ['required', 'exists:leads,id'],
             'user_id'           => ['nullable', 'exists:users,id'],
@@ -26,7 +26,7 @@ class SalesLeadController extends Controller
 
         $lead = Lead::find($validated['lead_id']);
         if ($lead && empty($validated['name'])) {
-            $validated['name'] = $lead->title;
+            $validated['name'] = $lead->name;
             $validated['user_id'] = $lead->user_id;
         }
         // TODO choose hernia or privatescan

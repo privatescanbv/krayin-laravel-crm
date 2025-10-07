@@ -197,11 +197,41 @@ class SalesLeadController extends Controller
 
     public function view($id)
     {
-        Log::info('SalesLeadController::edit called with ID 1111: '.$id);
-        $salesLead = SalesLead::with(['pipelineStage', 'lead', 'user'])->findOrFail($id);
-        Log::info('SalesLeadController::edit called with ID: '.$id);
+        Log::info('SalesLeadController::view called with ID: '.$id);
+        
+        // Load sales lead with related lead and all its relationships
+        $salesLead = SalesLead::with([
+            'pipelineStage',
+            'user',
+            'lead' => function ($query) {
+                $query->with([
+                    'address',
+                    'organization',
+                    'source',
+                    'type',
+                    'channel',
+                    'department',
+                    'user',
+                    'tags',
+                    'persons',
+                    'pipeline',
+                    'stage',
+                ]);
+            }
+        ])->findOrFail($id);
 
-        return view('admin.workflow_leads.view', ['workflowLead' => $salesLead]);
+        // If there's no related lead, return 404 or create error view
+        if (!$salesLead->lead) {
+            Log::warning('SalesLead found but no related lead', ['sales_lead_id' => $id]);
+            abort(404, 'Related lead not found');
+        }
+
+        $lead = $salesLead->lead;
+
+        return view('admin.workflow_leads.view', [
+            'workflowLead' => $salesLead,
+            'lead' => $lead
+        ]);
     }
 
     public function delete($id)

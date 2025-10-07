@@ -257,7 +257,7 @@ class SalesLeadController extends Controller
         
         // Get activities related to this sales lead
         $activities = \Webkul\Activity\Models\Activity::where('workflow_lead_id', $id)
-            ->with(['user', 'participants'])
+            ->with(['user', 'persons'])
             ->orderBy('schedule_from', 'desc')
             ->paginate(10);
 

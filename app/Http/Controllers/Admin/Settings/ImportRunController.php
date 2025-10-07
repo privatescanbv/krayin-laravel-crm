@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\ImportRunDataGrid;
 use App\Repositories\ImportRunRepository;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class ImportRunController extends SimpleEntityController

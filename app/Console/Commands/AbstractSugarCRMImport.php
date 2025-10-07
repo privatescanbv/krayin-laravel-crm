@@ -21,6 +21,7 @@ use Webkul\Core\Contracts\Validations\PhoneValidator;
 abstract class AbstractSugarCRMImport extends Command
 {
     protected ?ImportRun $currentImportRun = null;
+
     /**
      * Verbose info helper (-v)
      */

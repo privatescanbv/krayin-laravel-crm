@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\ImportRun;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 
@@ -13,7 +14,7 @@ class SendImportRunReport extends Command
      *
      * @var string
      */
-    protected $signature = 'import:send-report 
+    protected $signature = 'import:send-report
                             {--import-run-id= : Specific import run ID to report (defaults to latest)}
                             {--email=mark.bulthuis@mbsoftware.nl : Email address to send report to}';
 
@@ -93,7 +94,7 @@ class SendImportRunReport extends Command
                     $body .= "Record ID: {$log->record_id}\n";
                 }
                 if ($log->context) {
-                    $body .= "Context: ".json_encode($log->context, JSON_PRETTY_PRINT)."\n";
+                    $body .= 'Context: '.json_encode($log->context, JSON_PRETTY_PRINT)."\n";
                 }
                 $body .= str_repeat('-', 80)."\n\n";
             }
@@ -109,7 +110,7 @@ class SendImportRunReport extends Command
             $this->info('✓ Import run report sent successfully!');
 
             return 0;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error('Failed to send email: '.$e->getMessage());
 
             return 1;

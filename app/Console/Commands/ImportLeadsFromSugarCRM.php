@@ -15,7 +15,6 @@ use App\Services\Importers\SugarCRM\MeetingImporter;
 use Exception;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;

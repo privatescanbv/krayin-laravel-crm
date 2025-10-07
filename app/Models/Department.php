@@ -6,6 +6,7 @@ use App\Enums\Departments;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\Group;
 
 class Department extends Model
@@ -91,26 +92,24 @@ class Department extends Model
      *
      * @throws Exception if lead has no department or no group found
      */
-    public static function getGroupIdForLead($lead): int
+    public static function getGroupIdForLead(Lead $lead): int
     {
-        if (! $lead) {
-            throw new Exception('Lead cannot be null');
-        }
-
         if (! $lead->department_id) {
-            throw new Exception("Lead {$lead->id} has no department_id");
+            logger()->warning("Lead {$lead->id} has no department_id, defaulting to Privatescan group");
+            // Resolve Privatescan department's default group id
+            $privatescanDepartmentId = self::findPrivateScanId();
+
+            return Group::query()
+                ->where('department_id', $privatescanDepartmentId)
+                ->value('id');
         }
 
         // Find group by department_id for efficient lookup
-        $group = Group::query()
+        return Group::query()
+            ->select(['id'])
             ->where('department_id', $lead->department_id)
-            ->first();
-
-        if (! $group) {
-            throw new Exception("No group found for department_id: {$lead->department_id} (lead: {$lead->id})");
-        }
-
-        return $group->id;
+            ->firstOrFail()
+            ->id;
     }
 
     /**

@@ -721,9 +721,9 @@ class LeadController extends Controller
         if (!empty($data['close_open_activities'])) {
             try {
                 $this->completeAllOpenActivitiesForLead($leadId);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 // Log but don't fail the stage update response
-                \Log::warning('Failed to complete open activities during stage update', [
+                Log::warning('Failed to complete open activities during stage update', [
                     'lead_id' => $leadId,
                     'error' => $e->getMessage(),
                 ]);

@@ -14,7 +14,15 @@ Route::group(['middleware' => ['user']], function () {
     Route::get('workflow-leads/edit/{id}', [SalesLeadController::class, 'edit'])->name('admin.workflow-leads.edit');
     Route::put('workflow-leads/edit/{id}', [SalesLeadController::class, 'update'])->name('admin.workflow-leads.update');
     Route::get('workflow-leads/view/{id}', [SalesLeadController::class, 'view'])->name('admin.workflow-leads.view');
+    Route::put('workflow-leads/{id}/stage', [SalesLeadController::class, 'updateStage'])->name('admin.workflow-leads.stage.update');
     Route::delete('workflow-leads/{id}', [SalesLeadController::class, 'delete'])->name('admin.workflow-leads.delete');
+    
+    // Activity routes
+    Route::get('workflow-leads/{id}/activities', [SalesLeadController::class, 'activities'])->name('admin.workflow-leads.activities.index');
+    Route::post('workflow-leads/{id}/activities', [SalesLeadController::class, 'storeActivity'])->name('admin.workflow-leads.activities.store');
+    
+    // Email routes (placeholder for now)
+    Route::delete('workflow-leads/{id}/emails/{emailId}', [SalesLeadController::class, 'detachEmail'])->name('admin.workflow-leads.emails.detach');
 
     // Temporary debug route
     Route::get('workflow-leads/debug/{id}', [SalesLeadController::class, 'debug'])->name('admin.workflow-leads.debug');

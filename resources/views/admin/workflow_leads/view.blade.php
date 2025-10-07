@@ -1,95 +1,197 @@
 <x-admin::layouts>
     <x-slot:title>
-        View Workflow Lead
+        {{ $lead->name }}
     </x-slot>
 
-    <!-- Header -->
-    <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-        <div class="flex flex-col gap-2">
-            <!-- Breadcrumb's -->
-            <x-admin::breadcrumbs name="workflow-leads.view" :entity="$workflowLead" />
-
-            <div class="text-xl font-bold dark:text-white">
-                View Workflow Lead
-            </div>
-        </div>
-
-        <div class="flex items-center gap-x-2.5">
-            @if (bouncer()->hasPermission('workflow-leads.edit'))
-                <a
-                    href="{{ route('admin.workflow-leads.edit', $workflowLead->id) }}"
-                    class="primary-button"
-                >
-                    Edit Workflow Lead
-                </a>
-            @endif
-        </div>
-    </div>
-
     <!-- Content -->
-    <div class="mt-3.5">
-        <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <!-- Basic Information -->
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Basic Information</h3>
+    <div class="relative flex gap-4 max-lg:flex-wrap">
+        <!-- Left Panel -->
+        {!! view_render_event('admin.leads.view.left.before', ['lead' => $lead]) !!}
 
-                    <dl class="space-y-3">
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">ID</dt>
-                            <dd class="text-sm text-gray-900 dark:text-white">{{ $workflowLead->id }}</dd>
-                        </div>
-
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Name</dt>
-                            <dd class="text-sm text-gray-900 dark:text-white">{{ $workflowLead->name }}</dd>
-                        </div>
-
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Description</dt>
-                            <dd class="text-sm text-gray-900 dark:text-white">{{ $workflowLead->description ?: 'No description' }}</dd>
-                        </div>
-                    </dl>
+        <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+            <!-- Lead Information -->
+            <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
+                <!-- Breadcrumb's -->
+                <div class="flex items-center justify-between">
+                    <x-admin::breadcrumbs
+                        name="workflow-leads.view"
+                        :entity="$workflowLead"
+                    />
                 </div>
 
-                <!-- Related Information -->
-                <div>
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Related Information</h3>
+                <div class="mb-2">
+                    @if (($days = $lead->rotten_days) > 0)
+                        @php
+                            $lead->tags->prepend([
+                                'name'  => '<span class="icon-rotten text-base"></span>' . trans('admin::app.leads.view.rotten-days', ['days' => $days]),
+                                'color' => '#FEE2E2'
+                            ]);
+                        @endphp
+                    @endif
 
-                    <dl class="space-y-3">
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Pipeline Stage</dt>
-                            <dd class="text-sm text-gray-900 dark:text-white">
-                                {{ $workflowLead->pipelineStage ? $workflowLead->pipelineStage->name : 'No stage assigned' }}
-                            </dd>
-                        </div>
+                    {!! view_render_event('admin.leads.view.tags.before', ['lead' => $lead]) !!}
 
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Lead</dt>
-                            <dd class="text-sm text-gray-900 dark:text-white">
-                                {{ $workflowLead->lead ? $workflowLead->lead->title : 'No lead assigned' }}
-                            </dd>
-                        </div>
+                    <!-- Tags -->
+                    <x-admin::tags
+                        :attach-endpoint="route('admin.leads.tags.attach', $lead->id)"
+                        :detach-endpoint="route('admin.leads.tags.detach', $lead->id)"
+                        :added-tags="$lead->tags"
+                    />
 
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">User</dt>
-                            <dd class="text-sm text-gray-900 dark:text-white">
-                                {{ $workflowLead->user ? $workflowLead->user->name : 'No user assigned' }}
-                            </dd>
-                        </div>
+                    {!! view_render_event('admin.leads.view.tags.after', ['lead' => $lead]) !!}
+                </div>
 
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Created At</dt>
-                            <dd class="text-sm text-gray-900 dark:text-white">{{ $workflowLead->created_at->format('M d, Y H:i') }}</dd>
-                        </div>
 
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Updated At</dt>
-                            <dd class="text-sm text-gray-900 dark:text-white">{{ $workflowLead->updated_at->format('M d, Y H:i') }}</dd>
+                {!! view_render_event('admin.leads.view.title.before', ['lead' => $lead]) !!}
+
+                <!-- Title -->
+{{--                <h3 class="text-lg font-bold dark:text-white">--}}
+{{--                    {{ $lead->name }}--}}
+{{--                </h3>--}}
+
+                {!! view_render_event('admin.leads.view.title.after', ['lead' => $lead]) !!}
+
+                <!-- Duplicate Detection -->
+                @if ($lead->hasPotentialDuplicates())
+                    <div class="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="icon-warning text-orange-600"></span>
+                                <span class="text-sm font-medium text-orange-800 dark:text-orange-200">
+                                    Potentiële duplicaten gevonden ({{ $lead->getPotentialDuplicatesCount() }} leads{{ $lead->getPotentialDuplicatesCount() > 1 ? 's' : '' }})
+                                </span>
+                            </div>
+                            <a
+                                href="{{ route('admin.leads.duplicates.index', $lead->id) }}"
+                                class="rounded bg-orange-600 px-3 py-1 text-xs text-white hover:bg-orange-700"
+                            >
+                                Duplicaten samenvoegen
+                            </a>
                         </div>
-                    </dl>
+                    </div>
+                @endif
+
+                <!-- No Open Activities Warning (shown directly below duplicate block) -->
+                @php
+                    $stageCode = strtolower($lead->stage->code ?? '');
+                    $isWonOrLost = str_starts_with($stageCode, 'won') || str_starts_with($stageCode, 'lost');
+                @endphp
+                @if (($lead->open_activities_count ?? $lead->openActivitiesCount ?? $lead->open_activities_count) === 0 && ! $isWonOrLost)
+                    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
+                        <div class="flex items-center gap-2">
+                            <span class="icon-warning text-red-600"></span>
+                            <span class="text-sm font-medium text-red-800 dark:text-red-200">
+                                Geen open activiteiten voor deze lead
+                            </span>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Activity Actions -->
+                <div class="flex flex-wrap gap-2">
+                    {!! view_render_event('admin.leads.view.actions.before', ['lead' => $lead]) !!}
+
+                    @if (bouncer()->hasPermission('mail.compose'))
+                        <!-- Mail Activity Action -->
+                        <x-admin::activities.actions.mail
+                            :entity="$workflowLead"
+                            entity-control-name="workflow_lead_id"
+                        />
+                    @endif
+
+                    @if (bouncer()->hasPermission('activities.create'))
+                        <!-- File Activity Action -->
+                        <x-admin::activities.actions.file
+                            :entity="$workflowLead"
+                            entity-control-name="workflow_lead_id"
+                        />
+
+                        <!-- Note Activity Action -->
+                        <x-admin::activities.actions.note
+                            :entity="$workflowLead"
+                            entity-control-name="workflow_lead_id"
+                        />
+
+                        <!-- Activity Action -->
+                        <x-admin::activities.actions.activity
+                            :entity="$workflowLead"
+                            entity-control-name="workflow_lead_id"
+                        />
+                    @endif
+
+                    {!! view_render_event('admin.leads.view.actions.after', ['lead' => $lead]) !!}
+                </div>
+            </div>
+
+            @include('admin::leads.common.card', ['lead' => $lead, 'show_actions'=>false])
+
+            <!-- Lead Overview (compact overview with all information) -->
+            @include('admin::leads.view.compact-overview')
+
+            <!-- Contact Person -->
+            @include('admin::leads.view.person')
+
+            <!-- Footer with creation and modification dates -->
+            <div class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
+                <div class="flex justify-between">
+                    <span>Aangemaakt:</span>
+                    <span>{{ $lead->created_at->format('d-m-Y') }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Laatst gewijzigd:</span>
+                    <span>{{ $lead->updated_at->format('d-m-Y') }}</span>
                 </div>
             </div>
         </div>
+
+        {!! view_render_event('admin.leads.view.left.after', ['lead' => $lead]) !!}
+
+        {!! view_render_event('admin.leads.view.right.before', ['lead' => $lead]) !!}
+
+        <!-- Right Panel -->
+        <div class="flex w-full flex-col gap-4 rounded-lg">
+            <!-- Stages Navigation -->
+            @include ('admin::leads.view.stages', [
+                'overridePipeline' => $workflowLead->pipelineStage->pipeline ?? $lead->pipeline,
+                'overrideStage' => $workflowLead->pipelineStage ?? $lead->stage,
+                'overrideUpdateUrl' => route('admin.workflow-leads.stage.update', $workflowLead->id)
+            ])
+
+            <!-- Activities -->
+            {!! view_render_event('admin.leads.view.activities.before', ['lead' => $lead]) !!}
+
+            <x-admin::activities
+                :endpoint="route('admin.workflow-leads.activities.index', $workflowLead->id)"
+                :email-detach-endpoint="route('admin.workflow-leads.emails.detach', ['id' => $workflowLead->id, 'emailId' => '__EMAIL_ID__'])"
+                :activeType="request()->query('from') === 'quotes' ? 'quotes' : 'planned'"
+                :extra-types="[
+                    ['name' => 'description', 'label' => trans('admin::app.leads.view.tabs.description')],
+                    ['name' => 'products', 'label' => trans('admin::app.leads.view.tabs.products')],
+                    ['name' => 'quotes', 'label' => trans('admin::app.leads.view.tabs.quotes')],
+                ]"
+                ref="activities"
+            >
+                <!-- Products -->
+                <x-slot:products>
+                    @include('admin::leads.view.products')
+                </x-slot>
+
+                <!-- Quotes -->
+                <x-slot:quotes>
+                    @include('admin::leads.view.quotes')
+                </x-slot>
+
+                <!-- Description -->
+                <x-slot:description>
+                    <div class="p-4 dark:text-white">
+                        {{ $lead->description }}
+                    </div>
+                </x-slot>
+            </x-admin::activities>
+
+            {!! view_render_event('admin.leads.view.activities.after', ['lead' => $lead]) !!}
+        </div>
+
+        {!! view_render_event('admin.leads.view.right.after', ['lead' => $lead]) !!}
     </div>
 </x-admin::layouts>

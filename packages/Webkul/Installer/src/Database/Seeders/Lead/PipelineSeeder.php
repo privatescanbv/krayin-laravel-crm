@@ -194,14 +194,14 @@ class PipelineSeeder extends BaseSeeder
             ],[
                 'id' => ++$stageId,
                 'code' => 'order-lost',
-                'name' => 'Order Verloren',
+                'name' => 'Verloren',
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $privateScanWorkflowPipelineId,
             ],[
                 'id' => ++$stageId,
                 'code' => 'order-won',
-                'name' => 'Order Gewonnen',
+                'name' => 'Gewonnen',
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $privateScanWorkflowPipelineId,
@@ -224,14 +224,14 @@ class PipelineSeeder extends BaseSeeder
             ],[
                 'id' => ++$stageId,
                 'code' => 'order-lost-hernia',
-                'name' => 'Order Verloren',
+                'name' => 'Verloren',
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaWorkflowPipelineId,
             ],[
                 'id' => ++$stageId,
                 'code' => 'order-won-hernia',
-                'name' => 'Order Gewonnen',
+                'name' => 'Gewonnen',
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaWorkflowPipelineId,

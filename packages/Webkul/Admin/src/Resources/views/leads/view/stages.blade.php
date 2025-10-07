@@ -1,9 +1,17 @@
+@php
+    // Allow override of pipeline and current stage for workflow leads
+    $displayPipeline = $overridePipeline ?? $lead->pipeline;
+    $displayStage = $overrideStage ?? $lead->stage;
+    $updateUrl = $overrideUpdateUrl ?? route('admin.leads.stage.update', $lead->id);
+    $isWorkflowLead = isset($workflowLead);
+@endphp
+
 <!-- Stages Navigation -->
 {!! view_render_event('admin.leads.view.stages.before', ['lead' => $lead]) !!}
 
 <!-- Stages Vue Component -->
 <v-lead-stages>
-    <x-admin::shimmer.leads.view.stages :count="$lead->pipeline->stages->count() - 1" />
+    <x-admin::shimmer.leads.view.stages :count="$displayPipeline->stages->count() - 1" />
 </v-lead-stages>
 
 {!! view_render_event('admin.leads.view.stages.after', ['lead' => $lead]) !!}
@@ -183,11 +191,11 @@
                 return {
                     isUpdating: false,
 
-                    currentStage: @json($lead->stage),
+                    currentStage: @json($displayStage),
 
                     nextStage: null,
 
-                    stages: @json($lead->pipeline->stages),
+                    stages: @json($displayPipeline->stages),
 
                     stageToggler: '',
                 }
@@ -240,13 +248,15 @@
 
                     const performUpdate = async (extra = {}) => {
                         try {
-                            const response = await this.$axios.put("{{ route('admin.leads.stage.update', $lead->id) }}", params ?? {
+                            const response = await this.$axios.put("{!! $updateUrl !!}", params ?? {
                                 'lead_pipeline_stage_id': stage.id,
                                 ...extra,
                             });
                             this.isUpdating = false;
                             this.currentStage = stage;
-                            this.$parent.$refs.activities.get();
+                            if (this.$parent.$refs.activities) {
+                                this.$parent.$refs.activities.get();
+                            }
                             this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
                         } catch (error) {
                             this.isUpdating = false;

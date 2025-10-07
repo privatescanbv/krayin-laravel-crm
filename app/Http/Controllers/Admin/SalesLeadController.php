@@ -8,6 +8,9 @@ use App\Http\Controllers\Controller;
 use App\Models\SalesLead;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Webkul\Activity\Models\Activity;
+use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Repositories\StageRepository;
 
 class SalesLeadController extends Controller
 {
@@ -197,11 +200,103 @@ class SalesLeadController extends Controller
 
     public function view($id)
     {
-        Log::info('SalesLeadController::edit called with ID 1111: '.$id);
-        $salesLead = SalesLead::with(['pipelineStage', 'lead', 'user'])->findOrFail($id);
-        Log::info('SalesLeadController::edit called with ID: '.$id);
+        Log::info('SalesLeadController::view called with ID: '.$id);
 
-        return view('admin.workflow_leads.view', ['workflowLead' => $salesLead]);
+        // First load the sales lead to check if it has a lead_id
+        $salesLead = SalesLead::with(['pipelineStage.pipeline.stages', 'user'])->findOrFail($id);
+
+        // If there's no related lead_id, return 404
+        if (! $salesLead->lead_id) {
+            Log::warning('SalesLead found but no lead_id set', [
+                'sales_lead_id'   => $id,
+                'sales_lead_name' => $salesLead->name,
+                'sales_lead_data' => $salesLead->toArray(),
+            ]);
+
+            return response()->view('errors.404', [
+                'message' => 'Deze workflow lead heeft geen gekoppelde lead. Workflow Lead: '.$salesLead->name,
+            ], 404);
+        }
+        $lead = Lead::findOrFail($salesLead->lead_id);
+        if (! $lead) {
+            Log::warning('Lead not found for SalesLead', [
+                'sales_lead_id' => $id,
+                'lead_id'       => $salesLead->lead_id,
+            ]);
+
+            return response()->view('errors.404', [
+                'message' => 'Lead met ID '.$salesLead->lead_id.' niet gevonden.',
+            ], 404);
+        }
+
+        return view('admin.workflow_leads.view', [
+            'workflowLead' => $salesLead,
+            'lead'         => $lead,
+        ]);
+    }
+
+    public function updateStage($id)
+    {
+        request()->validate([
+            'lead_pipeline_stage_id' => 'required|exists:lead_pipeline_stages,id',
+        ]);
+
+        $salesLead = SalesLead::findOrFail($id);
+        $salesLead->update([
+            'pipeline_stage_id' => request('lead_pipeline_stage_id'),
+        ]);
+
+        return response()->json([
+            'message' => 'Workflow lead stage updated successfully.',
+        ]);
+    }
+
+    public function activities($id)
+    {
+        // Get activities related to this sales lead (not paginated, same as lead activities)
+        $activities = Activity::where('workflow_lead_id', $id)
+            ->with('emails')
+            ->get();
+
+        return \Webkul\Admin\Http\Resources\ActivityResource::collection($activities);
+    }
+
+    public function storeActivity($id)
+    {
+        request()->validate([
+            'type'          => 'required|in:task,meeting,call',
+            'title'         => 'required|string',
+            'description'   => 'nullable|string',
+            'user_id'       => 'nullable|exists:users,id',
+            'schedule_from' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
+            'schedule_to'   => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
+        ]);
+
+        $salesLead = SalesLead::findOrFail($id);
+
+        $activity = Activity::create([
+            'type'             => request('type'),
+            'title'            => request('title'),
+            'comment'          => request('description'),
+            'user_id'          => request('user_id') ?? auth()->id(),
+            'workflow_lead_id' => $id,
+            'schedule_from'    => request('schedule_from'),
+            'schedule_to'      => request('schedule_to'),
+            'is_done'          => 0,
+        ]);
+
+        return response()->json([
+            'message' => 'Activity created successfully.',
+            'data'    => $activity,
+        ]);
+    }
+
+    public function detachEmail($id, $emailId)
+    {
+        // Placeholder for email detachment
+        return response()->json([
+            'message' => 'Email detached successfully.',
+        ]);
     }
 
     public function delete($id)
@@ -289,7 +384,7 @@ class SalesLeadController extends Controller
                 'search_field'          => 'in',
                 'filterable'            => true,
                 'filterable_type'       => 'dropdown',
-                'filterable_options'    => app('Webkul\\Lead\\Repositories\\StageRepository')->all(['name as label', 'id as value'])->toArray(),
+                'filterable_options'    => app(StageRepository::class)->all(['name as label', 'id as value'])->toArray(),
                 'allow_multiple_values' => true,
                 'sortable'              => true,
                 'visibility'            => true,

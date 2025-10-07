@@ -306,13 +306,25 @@
                         });
                 },
 
-                save(params) {
+                save(params, { setErrors }) {
                     this.isStoring = true;
 
-                    // Use lead-specific route if this is for a lead
+                    // Use entity-specific route based on entity control name
                     let url = "{{ route('admin.activities.store') }}";
                     if (this.entityControlName === 'lead_id' && this.entity.id) {
                         url = `/admin/leads/${this.entity.id}/activities`;
+                    } else if (this.entityControlName === 'workflow_lead_id' && this.entity.id) {
+                        url = `/admin/workflow-leads/${this.entity.id}/activities`;
+                    }
+
+                    // Format dates to Y-m-d H:i:s format
+                    if (params.schedule_from) {
+                        const fromDate = new Date(params.schedule_from);
+                        params.schedule_from = this.formatDateTime(fromDate);
+                    }
+                    if (params.schedule_to) {
+                        const toDate = new Date(params.schedule_to);
+                        params.schedule_to = this.formatDateTime(toDate);
                     }
 
                     this.$axios.post(url, params)
@@ -336,6 +348,16 @@
                                 this.$refs.activityModal.close();
                             }
                         });
+                },
+
+                formatDateTime(date) {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    const seconds = String(date.getSeconds()).padStart(2, '0');
+                    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
                 },
             },
         });

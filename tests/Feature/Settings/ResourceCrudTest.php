@@ -83,5 +83,5 @@ test('resource create page pre-selects clinic when clinic_id parameter is provid
 
     // Check that the clinic is pre-selected in the form
     $response->assertSee('value="'.$clinic->id.'"', false);
-    $response->assertSee($clinic->name, false);
+    $response->assertSee(e($clinic->name), false);
 });

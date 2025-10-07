@@ -255,13 +255,12 @@ class SalesLeadController extends Controller
     {
         $salesLead = SalesLead::findOrFail($id);
         
-        // Get activities related to this sales lead
+        // Get activities related to this sales lead (not paginated, same as lead activities)
         $activities = \Webkul\Activity\Models\Activity::where('workflow_lead_id', $id)
-            ->with(['user', 'persons'])
-            ->orderBy('schedule_from', 'desc')
-            ->paginate(10);
+            ->with('emails')
+            ->get();
 
-        return response()->json($activities);
+        return \Webkul\Admin\Http\Resources\ActivityResource::collection($activities);
     }
 
     public function storeActivity($id)

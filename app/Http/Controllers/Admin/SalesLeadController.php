@@ -222,8 +222,15 @@ class SalesLeadController extends Controller
 
         // If there's no related lead, return 404 or create error view
         if (!$salesLead->lead) {
-            Log::warning('SalesLead found but no related lead', ['sales_lead_id' => $id]);
-            abort(404, 'Related lead not found');
+            Log::warning('SalesLead found but no related lead', [
+                'sales_lead_id' => $id,
+                'sales_lead_name' => $salesLead->name,
+                'sales_lead_data' => $salesLead->toArray()
+            ]);
+            
+            return response()->view('errors.404', [
+                'message' => 'Deze workflow lead heeft geen gekoppelde lead. Workflow Lead: ' . $salesLead->name
+            ], 404);
         }
 
         $lead = $salesLead->lead;

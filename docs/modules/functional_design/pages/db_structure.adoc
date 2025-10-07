@@ -311,7 +311,7 @@ TABLE(Email, "email") {
   FOREIGN_KEY(person_id): bigint
   FOREIGN_KEY(parent_id): bigint
   FOREIGN_KEY(lead_id): bigint
-  FOREIGN_KEY(sales_lead_id): bigint
+  FOREIGN_KEY(workflow_lead_id): bigint
   created_at: datetime
   updated_at: datetime
 }

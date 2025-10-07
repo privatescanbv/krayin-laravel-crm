@@ -85,6 +85,6 @@ class SalesLead extends Model
      */
     public function emails()
     {
-        return $this->hasMany(\Webkul\Email\Models\Email::class, 'sales_lead_id');
+        return $this->hasMany(\Webkul\Email\Models\Email::class, 'workflow_lead_id');
     }
 }

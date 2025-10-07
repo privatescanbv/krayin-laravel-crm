@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'default' => env('MAIL_MAILER', 'smtp'),
+    'default' => env('MAIL_MAILER', 'failover'),
 
     /*
     |--------------------------------------------------------------------------
@@ -34,6 +34,10 @@ return [
     */
 
     'mailers' => [
+        'microsoft-graph' => [
+            'transport' => 'microsoft-graph',
+        ],
+
         'smtp' => [
             'transport'    => 'smtp',
             'host'         => env('MAIL_HOST', 'smtp.mailgun.org'),
@@ -60,6 +64,7 @@ return [
         'failover' => [
             'transport' => 'failover',
             'mailers'   => [
+                'microsoft-graph',
                 'smtp',
                 'log',
             ],
@@ -132,6 +137,7 @@ return [
         'tenant_id'     => env('GRAPH_TENANT_ID'),
         'client_secret' => env('GRAPH_CLIENT_SECRET'),
         'mailbox'       => env('GRAPH_MAILBOX', 'crm@privatescan.nl'),
+        'sender_domain' => env('GRAPH_SENDER_DOMAIN', 'crm.private-scan.nl'),
     ],
 
     /*

@@ -199,6 +199,7 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
         App\Providers\LeadDuplicateCacheServiceProvider::class,
+        App\Providers\MicrosoftGraphMailServiceProvider::class,
 
         /*
          * Webkul Service Providers...

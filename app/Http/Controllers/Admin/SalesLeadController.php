@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\DataGrids\WorkflowLeadDataGrid;
+use App\DataGrids\SalesLeadDataGrid;
 use App\Enums\PipelineType;
 use App\Http\Controllers\Controller;
-use App\Models\WorkflowLead;
+use App\Models\SalesLead;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-class WorkflowLeadController extends Controller
+class SalesLeadController extends Controller
 {
     public function index(Request $request)
     {
@@ -47,7 +47,7 @@ class WorkflowLeadController extends Controller
     public function get(Request $request)
     {
         if ($request->has('view_type') && $request->view_type === 'table') {
-            $dataGrid = app(WorkflowLeadDataGrid::class);
+            $dataGrid = app(SalesLeadDataGrid::class);
 
             return $dataGrid->toJson();
         }
@@ -74,33 +74,33 @@ class WorkflowLeadController extends Controller
         $data = [];
 
         foreach ($stages as $stage) {
-            $query = WorkflowLead::with(['pipelineStage', 'lead.person', 'user'])
+            $query = SalesLead::with(['pipelineStage', 'lead.person', 'user'])
                 ->where('pipeline_stage_id', $stage->id);
-            $workflowLeads = $query->get();
+            $salesLeads = $query->get();
 
-            $workflowLeads = $workflowLeads->map(function ($workflowLead) {
+            $salesLeads = $salesLeads->map(function ($salesLead) {
                 return [
-                    'id'                => $workflowLead->id,
-                    'name'              => $workflowLead->name,
-                    'description'       => $workflowLead->description,
-                    'pipeline_stage_id' => $workflowLead->pipeline_stage_id,
-                    'pipeline_stage'    => $workflowLead->pipelineStage ? [
-                        'id'   => $workflowLead->pipelineStage->id,
-                        'name' => $workflowLead->pipelineStage->name,
+                    'id'                => $salesLead->id,
+                    'name'              => $salesLead->name,
+                    'description'       => $salesLead->description,
+                    'pipeline_stage_id' => $salesLead->pipeline_stage_id,
+                    'pipeline_stage'    => $salesLead->pipelineStage ? [
+                        'id'   => $salesLead->pipelineStage->id,
+                        'name' => $salesLead->pipelineStage->name,
                     ] : null,
-                    'lead' => $workflowLead->lead ? [
-                        'id'     => $workflowLead->lead->id,
-                        'title'  => $workflowLead->lead->title,
-                        'person' => $workflowLead->lead->person ? [
-                            'id'   => $workflowLead->lead->person->id,
-                            'name' => $workflowLead->lead->person->name.'123',
+                    'lead' => $salesLead->lead ? [
+                        'id'     => $salesLead->lead->id,
+                        'title'  => $salesLead->lead->title,
+                        'person' => $salesLead->lead->person ? [
+                            'id'   => $salesLead->lead->person->id,
+                            'name' => $salesLead->lead->person->name.'123',
                         ] : null,
                     ] : null,
-                    'user' => $workflowLead->user ? [
-                        'id'   => $workflowLead->user->id,
-                        'name' => $workflowLead->user->name,
+                    'user' => $salesLead->user ? [
+                        'id'   => $salesLead->user->id,
+                        'name' => $salesLead->user->name,
                     ] : null,
-                    'created_at' => $workflowLead->created_at,
+                    'created_at' => $salesLead->created_at,
                 ];
             });
 
@@ -109,9 +109,9 @@ class WorkflowLeadController extends Controller
                 'name'       => $stage->name,
                 'sort_order' => $stage->sort_order,
                 'leads'      => [
-                    'data' => $workflowLeads,
+                    'data' => $salesLeads,
                     'meta' => [
-                        'total'        => $workflowLeads->count(),
+                        'total'        => $salesLeads->count(),
                         'current_page' => 1,
                         'per_page'     => 10,
                         'last_page'    => 1,
@@ -138,7 +138,7 @@ class WorkflowLeadController extends Controller
             'user_id'           => 'nullable|exists:users,id',
         ]);
 
-        $workflowLead = WorkflowLead::create($request->all());
+        $salesLead = SalesLead::create($request->all());
 
         return redirect()->route('admin.workflow-leads.index')
             ->with('success', 'Workflow lead created successfully.');
@@ -146,17 +146,17 @@ class WorkflowLeadController extends Controller
 
     public function edit($id)
     {
-        Log::info('WorkflowLeadController::edit called with ID: '.$id);
+        Log::info('SalesLeadController::edit called with ID: '.$id);
 
-        $workflowLead = WorkflowLead::findOrFail($id);
+        $salesLead = SalesLead::findOrFail($id);
 
-        Log::info('WorkflowLead found: ', [
-            'id'          => $workflowLead->id,
-            'name'        => $workflowLead->name,
-            'description' => $workflowLead->description,
+        Log::info('SalesLead found: ', [
+            'id'          => $salesLead->id,
+            'name'        => $salesLead->name,
+            'description' => $salesLead->description,
         ]);
 
-        return view('admin.workflow_leads.edit', ['workflowLead' => $workflowLead]);
+        return view('admin.workflow_leads.edit', ['workflowLead' => $salesLead]);
     }
 
     public function update(Request $request, $id)
@@ -169,14 +169,14 @@ class WorkflowLeadController extends Controller
             'user_id'           => 'nullable|exists:users,id',
         ]);
 
-        $workflowLead = WorkflowLead::findOrFail($id);
-        $workflowLead->update($request->all());
+        $salesLead = SalesLead::findOrFail($id);
+        $salesLead->update($request->all());
 
         // If this is an AJAX request (like from kanban drag & drop), return JSON
         if ($request->ajax()) {
             return response()->json([
                 'message'       => 'Workflow lead updated successfully.',
-                'workflow_lead' => $workflowLead,
+                'workflow_lead' => $salesLead,
             ]);
         }
 
@@ -186,17 +186,17 @@ class WorkflowLeadController extends Controller
 
     public function view($id)
     {
-        Log::info('WorkflowLeadController::edit called with ID 1111: '.$id);
-        $workflowLead = WorkflowLead::with(['pipelineStage', 'lead', 'user'])->findOrFail($id);
-        Log::info('WorkflowLeadController::edit called with ID: '.$id);
+        Log::info('SalesLeadController::edit called with ID 1111: '.$id);
+        $salesLead = SalesLead::with(['pipelineStage', 'lead', 'user'])->findOrFail($id);
+        Log::info('SalesLeadController::edit called with ID: '.$id);
 
-        return view('admin.workflow_leads.view', ['workflowLead' => $workflowLead]);
+        return view('admin.workflow_leads.view', ['workflowLead' => $salesLead]);
     }
 
     public function delete($id)
     {
-        $workflowLead = WorkflowLead::findOrFail($id);
-        $workflowLead->delete();
+        $salesLead = SalesLead::findOrFail($id);
+        $salesLead->delete();
 
         return redirect()->route('admin.workflow-leads.index')
             ->with('success', 'Workflow lead deleted successfully.');
@@ -207,24 +207,24 @@ class WorkflowLeadController extends Controller
      */
     public function debug($id)
     {
-        $workflowLead = WorkflowLead::with(['pipelineStage', 'lead.person', 'user'])->findOrFail($id);
+        $salesLead = SalesLead::with(['pipelineStage', 'lead.person', 'user'])->findOrFail($id);
 
         return response()->json([
             'workflow_lead' => [
-                'id'          => $workflowLead->id,
-                'name'        => $workflowLead->name,
-                'description' => $workflowLead->description,
-                'lead'        => $workflowLead->lead ? [
-                    'id'     => $workflowLead->lead->id,
-                    'title'  => $workflowLead->lead->title,
-                    'person' => $workflowLead->lead->person ? [
-                        'id'   => $workflowLead->lead->person->id,
-                        'name' => $workflowLead->lead->person->name,
+                'id'          => $salesLead->id,
+                'name'        => $salesLead->name,
+                'description' => $salesLead->description,
+                'lead'        => $salesLead->lead ? [
+                    'id'     => $salesLead->lead->id,
+                    'title'  => $salesLead->lead->title,
+                    'person' => $salesLead->lead->person ? [
+                        'id'   => $salesLead->lead->person->id,
+                        'name' => $salesLead->lead->person->name,
                     ] : null,
                 ] : null,
-                'user' => $workflowLead->user ? [
-                    'id'   => $workflowLead->user->id,
-                    'name' => $workflowLead->user->name,
+                'user' => $salesLead->user ? [
+                    'id'   => $salesLead->user->id,
+                    'name' => $salesLead->user->name,
                 ] : null,
             ],
         ]);

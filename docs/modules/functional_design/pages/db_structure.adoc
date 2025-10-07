@@ -260,7 +260,7 @@ TABLE(OrderItem, "orderItem") {
   updated_by: bigint
 }
 
-TABLE(WorkflowLead, "workflow_lead (backoffice)") {
+TABLE(SalesLead, "sales_lead (backoffice)") {
   PRIMARY_KEY(id): bigint
   name: string
   description: text
@@ -419,7 +419,7 @@ TABLE(ResourceAvailability, "resource_availability") {
 ' Relationships
 User "1" -- "n" Lead
 User "1" -- "n" Order
-User "1" -- "n" WorkflowLead
+User "1" -- "n" SalesLead
 User "1" -- "n" Activity
 User "1" -- "n" CallStatus
 User "1" -- "n" UserDefaultValue
@@ -432,7 +432,7 @@ Group "n" -- "1" Department
 Pipeline "1" -- "n" Stage
 Stage "1" -- "n" Lead
 Stage "1" -- "n" Order
-Stage "1" -- "n" WorkflowLead
+Stage "1" -- "n" SalesLead
 Stage "1" -- "n" Activity
 
 Lead "1" -- "n" Order
@@ -455,10 +455,10 @@ Activity "0..1" --> "1" Lead
 Activity "0..1" --> "1" Clinic
 Activity "1" -- "0..*" Email
 
-WorkflowLead "1" -- "n" Activity
-WorkflowLead "0..1" -- "1" Order
-WorkflowLead "0..1" -- "1" Lead
-WorkflowLead "1" --> "1" User
+SalesLead "1" -- "n" Activity
+SalesLead "0..1" -- "1" Order
+SalesLead "0..1" -- "1" Lead
+SalesLead "1" --> "1" User
 
 Person "1" -- "0..1" User
 Person "1" -- "0..1" Organization
@@ -519,13 +519,13 @@ note right of Order
   Ondersteunt nu factuur- en verzendadressen.
 end note
 
-note right of WorkflowLead
+note right of SalesLead
   Automatiseringsflow gekoppeld aan een pipeline-fase.
   Vervangt de oude "Backoffice" entiteit.
 end note
 
 note right of Activity
-  Telefoongesprek | Taak of geautomatiseerde stap in een WorkflowLead, optioneel toegewezen aan een gebruiker of groep.
+  Telefoongesprek | Taak of geautomatiseerde stap in een SalesLead, optioneel toegewezen aan een gebruiker of groep.
   Kan nu direct gekoppeld zijn aan een lead en meerdere e-mails.
 end note
 

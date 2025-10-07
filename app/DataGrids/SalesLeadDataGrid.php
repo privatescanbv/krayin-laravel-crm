@@ -2,15 +2,15 @@
 
 namespace App\DataGrids;
 
-use App\Models\WorkflowLead;
+use App\Models\SalesLead;
 use Illuminate\Support\Facades\Log;
 use Webkul\DataGrid\DataGrid;
 
-class WorkflowLeadDataGrid extends DataGrid
+class SalesLeadDataGrid extends DataGrid
 {
     public function prepareQueryBuilder()
     {
-        $queryBuilder = WorkflowLead::query()
+        $queryBuilder = SalesLead::query()
             ->with(['pipelineStage', 'lead', 'user']);
 
         // Filter by pipeline if pipeline_id is provided
@@ -23,8 +23,8 @@ class WorkflowLeadDataGrid extends DataGrid
         }
 
         // Debug: Log de query
-        Log::info('WorkflowLeadDataGrid Query: '.$queryBuilder->toSql());
-        Log::info('WorkflowLeadDataGrid Bindings: '.json_encode($queryBuilder->getBindings()));
+        Log::info('SalesLeadDataGrid Query: '.$queryBuilder->toSql());
+        Log::info('SalesLeadDataGrid Bindings: '.json_encode($queryBuilder->getBindings()));
 
         $this->addFilter('id', 'id');
         $this->addFilter('name', 'name');

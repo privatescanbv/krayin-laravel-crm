@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Api\WorkflowLeadController;
+use App\Http\Controllers\Api\SalesLeadController;
 use App\Http\Controllers\LeadNoteController;
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Lead\ActivityController;
@@ -42,6 +42,6 @@ Route::middleware('api.key')->group(function () {
 
     // Workflow Leads API
     Route::prefix('workflow-leads')->group(function () {
-        Route::post('/', [WorkflowLeadController::class, 'store']);
+        Route::post('/', [SalesLeadController::class, 'store']);
     });
 });

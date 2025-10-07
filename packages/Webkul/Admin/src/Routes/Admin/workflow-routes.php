@@ -1,23 +1,23 @@
 <?php
 
-use App\Http\Controllers\Admin\WorkflowLeadController;
+use App\Http\Controllers\Admin\SalesLeadController;
 use Illuminate\Support\Facades\File;
 
 /**
  * Workflow routes.
  */
 Route::group(['middleware' => ['user']], function () {
-    Route::get('workflow-leads', [WorkflowLeadController::class, 'index'])->name('admin.workflow-leads.index');
-    Route::get('workflow-leads/get', [WorkflowLeadController::class, 'get'])->name('admin.workflow-leads.get');
-    Route::get('workflow-leads/create', [WorkflowLeadController::class, 'create'])->name('admin.workflow-leads.create');
-    Route::post('workflow-leads/create', [WorkflowLeadController::class, 'store'])->name('admin.workflow-leads.store');
-    Route::get('workflow-leads/edit/{id}', [WorkflowLeadController::class, 'edit'])->name('admin.workflow-leads.edit');
-    Route::put('workflow-leads/edit/{id}', [WorkflowLeadController::class, 'update'])->name('admin.workflow-leads.update');
-    Route::get('workflow-leads/view/{id}', [WorkflowLeadController::class, 'view'])->name('admin.workflow-leads.view');
-    Route::delete('workflow-leads/{id}', [WorkflowLeadController::class, 'delete'])->name('admin.workflow-leads.delete');
+    Route::get('workflow-leads', [SalesLeadController::class, 'index'])->name('admin.workflow-leads.index');
+    Route::get('workflow-leads/get', [SalesLeadController::class, 'get'])->name('admin.workflow-leads.get');
+    Route::get('workflow-leads/create', [SalesLeadController::class, 'create'])->name('admin.workflow-leads.create');
+    Route::post('workflow-leads/create', [SalesLeadController::class, 'store'])->name('admin.workflow-leads.store');
+    Route::get('workflow-leads/edit/{id}', [SalesLeadController::class, 'edit'])->name('admin.workflow-leads.edit');
+    Route::put('workflow-leads/edit/{id}', [SalesLeadController::class, 'update'])->name('admin.workflow-leads.update');
+    Route::get('workflow-leads/view/{id}', [SalesLeadController::class, 'view'])->name('admin.workflow-leads.view');
+    Route::delete('workflow-leads/{id}', [SalesLeadController::class, 'delete'])->name('admin.workflow-leads.delete');
 
     // Temporary debug route
-    Route::get('workflow-leads/debug/{id}', [WorkflowLeadController::class, 'debug'])->name('admin.workflow-leads.debug');
+    Route::get('workflow-leads/debug/{id}', [SalesLeadController::class, 'debug'])->name('admin.workflow-leads.debug');
 });
 
 /**

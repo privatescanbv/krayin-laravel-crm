@@ -3,12 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\WorkflowLead;
+use App\Models\SalesLead;
 use Illuminate\Http\Request;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
 
-class WorkflowLeadController extends Controller
+class SalesLeadController extends Controller
 {
     /**
      * Store a newly created workflow lead via API.
@@ -36,11 +36,11 @@ class WorkflowLeadController extends Controller
             ->orderByDesc('sort_order')
             ->firstOrFail()->id;
 
-        $workflowLead = WorkflowLead::create($validated);
+        $salesLead = SalesLead::create($validated);
 
         return response()->json([
             'success' => true,
-            'data'    => $workflowLead,
+            'data'    => $salesLead,
         ], 201);
     }
 }

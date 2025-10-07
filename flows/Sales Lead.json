@@ -1,0 +1,433 @@
+{
+  "name": "Sales Lead",
+  "nodes": [
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "b51f7598-1156-49da-a455-f89566ec30c9",
+                    "leftValue": "={{ $json.body.status }}",
+                    "rightValue": "bestelling-voorbereiden",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "bestelling-voorbereiden"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "version": 2,
+                  "leftValue": "",
+                  "caseSensitive": true,
+                  "typeValidation": "strict"
+                },
+                "conditions": [
+                  {
+                    "id": "4d9daf3c-31d5-4c7c-b3de-c07c35c7b0df",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "leftValue": "={{ $json.body.status }}",
+                    "rightValue": "=order-verzonden"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "order-verzonden"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "7dafe14b-ff6d-4e11-8fa9-77e6878fdd59",
+                    "leftValue": "={{ $json.body.status }}",
+                    "rightValue": "order-confirmed",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "order-confirmed"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "02ac07b0-ba78-46fe-8196-a10553ea11ea",
+                    "leftValue": "={{ $json.body.status }}",
+                    "rightValue": "bestelling-voorbereiden-hernia",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "bestelling-voorbereiden-hernia"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "44cd9898-8e1c-4de3-af4e-fa825de1e704",
+                    "leftValue": "={{ $json.body.status }}",
+                    "rightValue": "order-verzenden-hernia",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "order-verzenden-hernia"
+            }
+          ]
+        },
+        "options": {
+          "allMatchingOutputs": true
+        }
+      },
+      "id": "9e831572-801d-40d3-a5c5-211e4e020051",
+      "name": "Route based on call_status",
+      "type": "n8n-nodes-base.switch",
+      "position": [
+        -1168,
+        256
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "0de7745d-64c8-410b-9d23-f98f4b9c3787",
+        "options": {}
+      },
+      "id": "ff36351f-8a7e-44fe-8259-5d990046f95b",
+      "name": "Webhook - lead status change",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        -1616,
+        272
+      ],
+      "webhookId": "0de7745d-64c8-410b-9d23-f98f4b9c3787",
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "FoL6phxyuOVrAwz5",
+          "mode": "list",
+          "cachedResultName": "Create Task"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "task_title",
+              "displayName": "task_title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "task_description",
+              "displayName": "task_description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "group_id",
+              "displayName": "group_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "task_type",
+              "displayName": "task_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        96,
+        400
+      ],
+      "id": "07416e85-e2e5-4b2d-9ef5-f134ef58fb22",
+      "name": "Create task"
+    },
+    {
+      "parameters": {
+        "content": "## Lead Status change\n- maak taak aan op basis van nieuwe status\n- Maak backoffice status aan bij lead status won",
+        "height": 120,
+        "width": 340
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1632,
+        448
+      ],
+      "id": "195b8021-7035-4e4a-bc13-90ebd60e0bbb",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'order opstellen')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        -96
+      ],
+      "id": "3c6773e0-7bf0-4c92-83db-d5ae5f612345",
+      "name": "order_opstellen"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Wacht op akkoord')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        128
+      ],
+      "id": "7afa5ad4-414c-47d6-aeb5-01c7ad9878c0",
+      "name": "order_verzonden"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Order Akkoord - handel af')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        352
+      ],
+      "id": "05c92d98-7f0e-45cd-b1f2-b5f7b74dba3b",
+      "name": "order_confirmed"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Maak Order')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        576
+      ],
+      "id": "61f2b247-62e9-4b25-9b09-d175333310da",
+      "name": "order_opstellen_hernia"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Order verzonden | wacht op akkoord')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -528,
+        800
+      ],
+      "id": "317e6081-f9c7-4625-b5e6-ce8d4906b167",
+      "name": "order_verzonden_hernia"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Route based on call_status": {
+      "main": [
+        [
+          {
+            "node": "order_opstellen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "order_verzonden",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "order_confirmed",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "order_opstellen_hernia",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "order_verzonden_hernia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - lead status change": {
+      "main": [
+        [
+          {
+            "node": "Route based on call_status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "order_opstellen": {
+      "main": [
+        [
+          {
+            "node": "Create task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "order_verzonden": {
+      "main": [
+        [
+          {
+            "node": "Create task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "order_confirmed": {
+      "main": [
+        [
+          {
+            "node": "Create task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "order_opstellen_hernia": {
+      "main": [
+        [
+          {
+            "node": "Create task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "order_verzonden_hernia": {
+      "main": [
+        [
+          {
+            "node": "Create task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "ab774c9d-b1ac-467f-b96b-3691accd2d77",
+  "meta": {
+    "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
+  },
+  "id": "WF5aRPkLpxjzSo2t",
+  "tags": []
+}

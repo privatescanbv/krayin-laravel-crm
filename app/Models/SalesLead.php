@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\WorkflowType;
+use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
@@ -10,6 +11,8 @@ use Webkul\Quote\Models\Quote;
 
 class SalesLead extends Model
 {
+    use HasAuditTrail;
+
     /**
      * The table associated with the model.
      *
@@ -29,6 +32,8 @@ class SalesLead extends Model
         'lead_id',
         'quote_id',
         'user_id',
+        'created_by',
+        'updated_by',
     ];
 
     /**
@@ -38,6 +43,8 @@ class SalesLead extends Model
      */
     protected $casts = [
         'workflow_type' => WorkflowType::class,
+        'created_by'    => 'integer',
+        'updated_by'    => 'integer',
     ];
 
     /**

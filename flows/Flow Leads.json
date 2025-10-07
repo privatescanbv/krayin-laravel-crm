@@ -589,8 +589,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1120,
-        1248
+        -1136,
+        1216
       ],
       "id": "6d05462a-e513-4005-9fec-29810509b3bf",
       "name": "set lead_id and group_id1"
@@ -648,8 +648,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1120,
-        944
+        -1136,
+        992
       ],
       "id": "4fde4b6f-2d01-4b29-beae-1318008e1d08",
       "name": "set lead_id and group_id"
@@ -721,8 +721,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        -896,
-        944
+        -512,
+        592
       ],
       "id": "57eab30a-c3fa-4e7f-8d11-aa6d091bb1d1",
       "name": "Create task"
@@ -735,7 +735,7 @@
       "typeVersion": 2,
       "position": [
         -1136,
-        720
+        768
       ],
       "id": "f32055a5-327d-4921-b5b2-3e6dea6c8a5c",
       "name": "set lead_id and group_id2"
@@ -809,8 +809,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1120,
-        672
+        -1072,
+        704
       ],
       "id": "48aeaa36-23e7-4f06-949f-43e713b74325",
       "name": "Sticky Note3"
@@ -825,7 +825,7 @@
       "typeVersion": 1,
       "position": [
         -1088,
-        880
+        928
       ],
       "id": "ddd8e401-e541-428f-8f80-61c46910f2c9",
       "name": "Sticky Note4"
@@ -839,8 +839,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1104,
-        1184
+        -1072,
+        1152
       ],
       "id": "e5741c30-675c-411f-9790-6c0651cc3814",
       "name": "Sticky Note5"
@@ -852,8 +852,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1056,
-        528
+        -1136,
+        544
       ],
       "id": "d66a1ad5-da70-4eb0-b4c5-811dc3fa26fb",
       "name": "set lead_id and group_id3"
@@ -867,8 +867,8 @@
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        -1040,
-        464
+        -1072,
+        480
       ],
       "id": "cce03068-29d6-4bb2-a7b2-b2020aa370df",
       "name": "Sticky Note6"
@@ -880,7 +880,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1088,
+        -1136,
         320
       ],
       "id": "8c66755c-a80f-4cbd-9322-0f81af5c065a",
@@ -908,7 +908,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -1088,
+        -1136,
         96
       ],
       "id": "0cf34fb6-e930-46d8-9000-948135451497",
@@ -1121,7 +1121,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "b4ba7f35-a36b-40c8-97df-02ff52bb39ad",
+  "versionId": "b8dec605-a3e1-48ab-873f-67f0a4417ee4",
   "meta": {
     "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },

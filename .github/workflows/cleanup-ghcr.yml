@@ -14,7 +14,9 @@ jobs:
         with:
           account: privatescanbv
           token: ${{ secrets.GHCR_PAT }}
-          image-names: "krayin-laravel-crm/krayincrm"
+          image-names: |
+            krayin-laravel-crm/krayincrm
+            krayin-laravel-crm/crmsyncn8n
           image-tags: "!latest"
           keep-n-most-recent: 3
           dry-run: false
@@ -26,29 +28,9 @@ jobs:
         with:
           account: privatescanbv
           token: ${{ secrets.GHCR_PAT }}
-          image-names: "krayin-laravel-crm/krayincrm"
-          tag-selection: untagged
-          dry-run: false
-          cut-off: '4d'
-          rust-log: info
-      - name: Reinig GHCR container images (n8n flows)
-        uses: snok/container-retention-policy@v3.0.0
-        with:
-          account: privatescanbv
-          token: ${{ secrets.GHCR_PAT }}
-          image-names: "krayin-laravel-crm/crmsyncn8n"
-          image-tags: "!latest"
-          keep-n-most-recent: 3
-          dry-run: false
-          tag-selection: both
-          cut-off: '2w'
-          rust-log: info
-      - name: Verwijder ongetagde GHCR images (n8n flows)
-        uses: snok/container-retention-policy@v3.0.0
-        with:
-          account: privatescanbv
-          token: ${{ secrets.GHCR_PAT }}
-          image-names: "krayin-laravel-crm/crmsyncn8n"
+          image-names: |
+            krayin-laravel-crm/krayincrm
+            krayin-laravel-crm/crmsyncn8n
           tag-selection: untagged
           dry-run: false
           cut-off: '4d'

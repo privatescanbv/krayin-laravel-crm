@@ -199,30 +199,12 @@ class SalesLeadController extends Controller
     {
         Log::info('SalesLeadController::view called with ID: '.$id);
         
-        // Load sales lead with related lead and all its relationships
-        $salesLead = SalesLead::with([
-            'pipelineStage',
-            'user',
-            'lead' => function ($query) {
-                $query->with([
-                    'address',
-                    'organization',
-                    'source',
-                    'type',
-                    'channel',
-                    'department',
-                    'user',
-                    'tags',
-                    'persons',
-                    'pipeline',
-                    'stage',
-                ]);
-            }
-        ])->findOrFail($id);
+        // First load the sales lead to check if it has a lead_id
+        $salesLead = SalesLead::with(['pipelineStage', 'user'])->findOrFail($id);
 
-        // If there's no related lead, return 404 or create error view
-        if (!$salesLead->lead) {
-            Log::warning('SalesLead found but no related lead', [
+        // If there's no related lead_id, return 404
+        if (!$salesLead->lead_id) {
+            Log::warning('SalesLead found but no lead_id set', [
                 'sales_lead_id' => $id,
                 'sales_lead_name' => $salesLead->name,
                 'sales_lead_data' => $salesLead->toArray()
@@ -233,7 +215,31 @@ class SalesLeadController extends Controller
             ], 404);
         }
 
-        $lead = $salesLead->lead;
+        // Now load the lead with all its relationships
+        $lead = \Webkul\Lead\Models\Lead::with([
+            'address',
+            'organization',
+            'source',
+            'type',
+            'channel',
+            'department',
+            'user',
+            'tags',
+            'persons',
+            'pipeline',
+            'stage',
+        ])->find($salesLead->lead_id);
+
+        if (!$lead) {
+            Log::warning('Lead not found for SalesLead', [
+                'sales_lead_id' => $id,
+                'lead_id' => $salesLead->lead_id
+            ]);
+            
+            return response()->view('errors.404', [
+                'message' => 'Lead met ID ' . $salesLead->lead_id . ' niet gevonden.'
+            ], 404);
+        }
 
         return view('admin.workflow_leads.view', [
             'workflowLead' => $salesLead,

@@ -188,7 +188,8 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
         $userData = $this->mapUserData($sugarUser);
 
         if ($dryRun) {
-            $this->info("DRY RUN: Would import user: {$userData['name']} ({$userData['email']})");
+            $fullName = trim("{$userData['first_name']} {$userData['last_name']}");
+            $this->info("DRY RUN: Would import user: {$fullName} ({$userData['email']})");
 
             return 'imported';
         }
@@ -202,20 +203,24 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
             unset($userData['email']);
             // Update existing user
             $existingUser->update($userData);
-            $this->info("Updated user by external_id: {$userData['name']}");
+            $fullName = trim("{$userData['first_name']} {$userData['last_name']}");
+            $this->info("Updated user by external_id: {$fullName}");
 
             return 'updated';
         }
 
-        // Check if user exists by exact name match
-        $existingUserByName = User::where('name', $userData['name'])->first();
+        // Check if user exists by first_name and last_name match
+        $existingUserByName = User::where('first_name', $userData['first_name'])
+            ->where('last_name', $userData['last_name'])
+            ->first();
         if ($existingUserByName) {
             // don't update password and email for existing users
             unset($userData['password']);
             unset($userData['email']);
             // Synchronize the existing user with SugarCRM data
             $existingUserByName->update($userData);
-            $this->info("Synchronized existing user by name: {$userData['name']}");
+            $fullName = trim("{$userData['first_name']} {$userData['last_name']}");
+            $this->info("Synchronized existing user by name: {$fullName}");
 
             return 'updated';
         }
@@ -239,10 +244,15 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
      */
     private function mapUserData($sugarUser): array
     {
-        // Build full name from first_name and last_name
-        $name = trim(($sugarUser->first_name ?? '').' '.($sugarUser->last_name ?? ''));
-        if (empty($name)) {
-            $name = $sugarUser->user_name ?? 'Unknown User';
+        // Get first_name and last_name from SugarCRM
+        $firstName = trim($sugarUser->first_name ?? '');
+        $lastName = trim($sugarUser->last_name ?? '');
+
+        // Fallback to username if no names provided
+        if (empty($firstName) && empty($lastName)) {
+            $parts = explode('.', $sugarUser->user_name ?? 'Unknown User');
+            $firstName = ucfirst($parts[0] ?? 'Unknown');
+            $lastName = ucfirst($parts[1] ?? 'User');
         }
 
         // Generate email if not available (using user_name as base)
@@ -253,7 +263,8 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
 
         return [
             'external_id'     => $sugarUser->id,
-            'name'            => $name,
+            'first_name'      => $firstName,
+            'last_name'       => $lastName,
             'email'           => $email,
             'status'          => $status,
             'role_id'         => $this->determineRoleId($sugarUser),

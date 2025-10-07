@@ -18,6 +18,18 @@ class Common extends Mailable
      */
     public function build()
     {
+        // Set from address if provided in data
+        if (isset($this->data['from'])) {
+            if (is_array($this->data['from'])) {
+                $email = array_key_first($this->data['from']);
+                $name = $this->data['from'][$email];
+                $this->from($email, $name);
+            } else {
+                $this->from($this->data['from']);
+            }
+        }
+        // Otherwise, the Transport will set the from address dynamically
+
         $message = $this
             ->to($this->data['to'])
             ->subject($this->data['subject'])

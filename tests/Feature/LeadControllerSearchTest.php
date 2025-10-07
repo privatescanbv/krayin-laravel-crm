@@ -13,8 +13,8 @@ use Webkul\User\Models\User;
 beforeEach(function () {
     $this->seed(TestSeeder::class);
 
-    // Create and authenticate a back-office user
-    $this->user = User::factory()->create(['name' => 'Admin Tester']);
+    // Create and authenticate a back-office user (first/last name fields)
+    $this->user = User::factory()->create(['first_name' => 'Admin', 'last_name' => 'Tester']);
     // Authenticate on the admin guard used by backend routes
     $this->actingAs($this->user, 'user');
     // voorkom auth-redirects in deze test
@@ -39,8 +39,7 @@ test('lead search with name and whitelisted fields works and person.name works',
     ]);
 
     // Lead found via assigned user's name like (use the authenticated user to avoid authorization filtering)
-    $this->user->name = 'Kuh Sales';
-    $this->user->save();
+    $this->user->update(['first_name' => 'Kuh', 'last_name' => 'Sales']);
     $leadByUser = Lead::factory()->create([
         'first_name'             => 'Alice',
         'last_name'              => 'Smith',
@@ -78,13 +77,15 @@ test('lead search with name and whitelisted fields works and person.name works',
     $idsName = collect($respName->json('data'))->pluck('id');
     expect($idsName)->toContain($leadByName->id);
 
-    // user.name lookup finds lead assigned to the matching user
+    // user first/last name lookup finds lead assigned to the matching user
     $respUser = $this->getJson(route('admin.leads.search', [
-        'search'       => 'user.name:Kuh;',
-        'searchFields' => 'user.name:like;',
+        'search'       => 'user.first_name:Kuh;user.last_name:Kuh;',
+        'searchFields' => 'user.first_name:like;user.last_name:like;',
+        'searchJoin'   => 'or',
     ]));
     $respUser->assertOk();
     $idsUser = collect($respUser->json('data'))->pluck('id');
+    logger()->info('Search by user.name response', $respUser->json(), ['user' => $this->user->toArray(), 'idsUser'=>$idsUser->toArray()]);
     expect($idsUser)->toContain($leadByUser->id);
 });
 

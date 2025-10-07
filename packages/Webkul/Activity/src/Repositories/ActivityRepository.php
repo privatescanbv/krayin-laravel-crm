@@ -88,7 +88,7 @@ class ActivityRepository extends Repository
             'activities.title',
             'activities.schedule_from as start',
             'activities.schedule_to as end',
-            'users.name as user_name',
+            DB::raw("CONCAT(users.first_name, ' ', users.last_name) as user_name"),
         )
             ->addSelect(DB::raw('IF(activities.is_done, "done", "") as class'))
             ->leftJoin('users', 'activities.user_id', '=', 'users.id')

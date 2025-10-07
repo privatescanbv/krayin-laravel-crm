@@ -1,0 +1,178 @@
+= Microsoft Graph E-mailverzending
+
+== Overzicht
+
+Het CRM gebruikt Microsoft Graph API voor het verzenden van alle uitgaande e-mails. Dit zorgt voor:
+
+* Consistente e-mailafzending via het domein `crm.private-scan.nl`
+* Dynamische afzendergegevens gebaseerd op de ingelogde gebruiker
+* Automatische fallback naar SMTP bij problemen met Microsoft Graph
+* Volledige integratie met Azure AD
+
+== Configuratie
+
+=== Omgevingsvariabelen
+
+Voeg de volgende variabelen toe aan je `.env` bestand:
+
+[source,bash]
+----
+# Mail Mailer (gebruik microsoft-graph of failover voor automatische fallback)
+MAIL_MAILER=microsoft-graph
+
+# Microsoft Graph Credentials
+GRAPH_CLIENT_ID=your-client-id
+GRAPH_TENANT_ID=your-tenant-id
+GRAPH_CLIENT_SECRET=your-client-secret
+GRAPH_MAILBOX=crm@privatescan.nl
+GRAPH_SENDER_DOMAIN=crm.private-scan.nl
+----
+
+=== Azure AD Setup
+
+1. Registreer een applicatie in Azure AD
+2. Configureer de volgende API permissions:
+   * `Mail.Send` (Application permission)
+   * `Mail.ReadWrite` (Application permission)
+3. Creëer een client secret
+4. Grant admin consent voor de permissions
+
+== Afzenderinformatie
+
+=== Dynamische Afzender
+
+Het systeem genereert automatisch een e-mailadres voor elke gebruiker op basis van:
+
+* **Voornaam** (`first_name` veld in users tabel)
+* **Achternaam** (`last_name` veld in users tabel)
+* **Domein** (`GRAPH_SENDER_DOMAIN` configuratie)
+
+Voorbeeld:
+
+[source]
+----
+Gebruiker: Jan de Vries
+first_name: Jan
+last_name: Vries
+Gegenereerd e-mailadres: jan.vries@crm.private-scan.nl
+----
+
+=== Fallback Mechanisme
+
+Als een gebruiker geen `first_name` en `last_name` heeft:
+
+1. Gebruikt het systeem het `name` veld als afzendernaam
+2. Gebruikt het systeem `MAIL_FROM_ADDRESS` als e-mailadres
+
+== Architectuur
+
+=== Componenten
+
+==== MicrosoftGraphMailTransport
+
+Locatie: `app/Services/Mail/MicrosoftGraphMailTransport.php`
+
+Deze class implementeert Symfony's `TransportInterface` en verzorgt:
+
+* OAuth2 authenticatie met Microsoft Graph
+* Omzetting van Symfony Mail objecten naar Graph API requests
+* Attachment handling
+* Error handling en logging
+
+==== MicrosoftGraphMailServiceProvider
+
+Locatie: `app/Providers/MicrosoftGraphMailServiceProvider.php`
+
+Deze Service Provider registreert de `microsoft-graph` mail transport in Laravel's mail systeem.
+
+=== Failover Configuratie
+
+De failover mailer is geconfigureerd om automatisch over te schakelen naar SMTP als Microsoft Graph niet beschikbaar is:
+
+[source,php]
+----
+'failover' => [
+    'transport' => 'failover',
+    'mailers'   => [
+        'microsoft-graph',
+        'smtp',
+        'log',
+    ],
+],
+----
+
+== Gebruik
+
+Het systeem gebruikt automatisch Microsoft Graph voor alle uitgaande e-mails. Er zijn geen codewijzigingen nodig in bestaande mailables:
+
+[source,php]
+----
+// Werkt automatisch met Microsoft Graph
+Mail::send(new Email($email));
+
+// Queue ook ondersteund
+Mail::queue(new Common([
+    'to'      => 'recipient@example.com',
+    'subject' => 'Test Email',
+    'body'    => 'Email body',
+]));
+----
+
+== Logging
+
+Alle e-mailverzendingen worden gelogd met:
+
+* Success/failure status
+* E-mailadres van afzender en ontvangers
+* Subject
+* Eventuele errors
+
+Logs zijn te vinden in:
+
+* Laravel log bestanden (`storage/logs/`)
+* Microsoft Graph API logs in Azure Portal
+
+== Troubleshooting
+
+=== Token Errors
+
+Als er token errors optreden:
+
+1. Controleer of `GRAPH_CLIENT_ID`, `GRAPH_TENANT_ID` en `GRAPH_CLIENT_SECRET` correct zijn
+2. Controleer of de application permissions correct zijn geconfigureerd in Azure AD
+3. Controleer of admin consent is gegeven
+
+=== Mail Verzenden Mislukt
+
+Als e-mails niet verzonden worden:
+
+1. Check de logs in `storage/logs/laravel.log`
+2. Controleer of de mailbox (`GRAPH_MAILBOX`) bestaat in Azure AD
+3. Controleer of de gebruiker `first_name` en `last_name` heeft ingevuld
+4. Test de fallback door `MAIL_MAILER=failover` te gebruiken
+
+=== Gebruiker Heeft Geen first_name/last_name
+
+Voor bestaande gebruikers zonder `first_name` en `last_name`:
+
+1. Voer de migratie uit: `php artisan migrate`
+2. Update gebruikers in de database of via de UI
+3. Het systeem gebruikt automatisch het `name` veld als fallback
+
+== Database Wijzigingen
+
+=== Migratie
+
+Migratie: `database/migrations/2025_10_07_100000_add_first_name_last_name_to_users_table.php`
+
+Voegt de volgende velden toe aan de `users` tabel:
+
+* `first_name` (nullable string)
+* `last_name` (nullable string)
+
+Voer de migratie uit met:
+
+[source,bash]
+----
+php artisan migrate
+----

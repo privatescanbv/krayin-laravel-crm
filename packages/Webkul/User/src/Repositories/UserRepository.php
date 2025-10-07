@@ -10,7 +10,8 @@ class UserRepository extends Repository
      * Searchable fields
      */
     protected $fieldSearchable = [
-        'name',
+        'first_name',
+        'last_name',
         'email',
         'status',
         'view_permission',

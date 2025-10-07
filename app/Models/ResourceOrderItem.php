@@ -41,4 +41,3 @@ class ResourceOrderItem extends Model
         return $this->belongsTo(OrderRegel::class, 'orderitem_id');
     }
 }
-

@@ -18,7 +18,8 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name',
+        'first_name',
+        'last_name',
         'email',
         'password',
         'created_by',
@@ -45,6 +46,47 @@ class User extends Authenticatable
         'created_by'        => 'integer',
         'updated_by'        => 'integer',
     ];
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = [
+        'name',
+    ];
+
+    /**
+     * Get the user's full name.
+     */
+    public function getNameAttribute(): string
+    {
+        if ($this->first_name && $this->last_name) {
+            return trim("{$this->first_name} {$this->last_name}");
+        }
+
+        if ($this->first_name) {
+            return $this->first_name;
+        }
+
+        if ($this->last_name) {
+            return $this->last_name;
+        }
+
+        return $this->email ?? 'Unknown User';
+    }
+
+    /**
+     * Set the user's name by splitting into first and last name.
+     */
+    public function setNameAttribute($value): void
+    {
+        if (! empty($value)) {
+            $nameParts = explode(' ', $value, 2);
+            $this->attributes['first_name'] = $nameParts[0] ?? '';
+            $this->attributes['last_name'] = $nameParts[1] ?? '';
+        }
+    }
 
     /**
      * Get the role that owns the user.

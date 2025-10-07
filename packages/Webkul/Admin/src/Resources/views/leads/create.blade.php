@@ -473,7 +473,13 @@
                                     <!-- Owner -->
                                     <div class="flex-1">
                                         @php
-                                            $userOptions = User::query()->pluck('name', 'id')->toArray();
+                                            $userOptions = User::query()
+                                                ->selectRaw("id, TRIM(CONCAT(COALESCE(first_name,''),' ',COALESCE(last_name,''))) as full_name")
+                                                ->orderBy('first_name')
+                                                ->orderBy('last_name')
+                                                ->get()
+                                                ->pluck('full_name', 'id')
+                                                ->toArray();
                                             $currentUserId = null;
                                         @endphp
                                         <x-admin::form.control-group>

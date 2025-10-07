@@ -8,15 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('order_regels', function (Blueprint $table) {
-            $table->string('status')->default('nieuw')->after('total_price');
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('name');
         });
     }
 
     public function down(): void
     {
-        Schema::table('order_regels', function (Blueprint $table) {
-            $table->dropColumn('status');
+        Schema::table('users', function (Blueprint $table) {
+            $table->string('name')->after('id');
         });
     }
 };

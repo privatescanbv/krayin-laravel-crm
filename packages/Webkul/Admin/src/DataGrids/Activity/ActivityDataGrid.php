@@ -27,7 +27,7 @@ class ActivityDataGrid extends DataGrid
                 'activities.*',
                 'leads.lead_pipeline_id',
                 'users.id as assigned_user_id',
-                'users.name as created_by',
+                DB::raw("CONCAT(users.first_name, ' ', users.last_name) as created_by"),
                 'groups.name as group_name',
                 // Also select related entity names where possible
                 'persons.name as person_name',
@@ -139,8 +139,8 @@ class ActivityDataGrid extends DataGrid
         $this->addFilter('type', 'activities.type');
         $this->addFilter('status', 'activities.status');
         $this->addFilter('is_done', 'activities.is_done');
-        $this->addFilter('created_by', 'users.name');
-        $this->addFilter('assigned_user_id', 'users.name');
+        $this->addFilter('created_by', DB::raw("CONCAT(users.first_name, ' ', users.last_name)"));
+        $this->addFilter('assigned_user_id', 'users.id');
         $this->addFilter('created_at', 'activities.created_at');
         $this->addFilter('days_until_deadline', 'days_until_deadline');
         $this->addFilter('group', 'groups.name');

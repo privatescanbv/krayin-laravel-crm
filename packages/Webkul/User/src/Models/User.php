@@ -20,7 +20,8 @@ class User extends Authenticatable implements UserContract
      * @var array
      */
     protected $fillable = [
-        'name',
+        'first_name',
+        'last_name',
         'email',
         'image',
         'password',
@@ -40,6 +41,15 @@ class User extends Authenticatable implements UserContract
         'password',
         'api_token',
         'remember_token',
+    ];
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = [
+        'name',
     ];
 
     /**
@@ -72,6 +82,38 @@ class User extends Authenticatable implements UserContract
         $array['image_url'] = $this->image_url;
 
         return $array;
+    }
+
+    /**
+     * Get the user's full name.
+     */
+    public function getNameAttribute(): string
+    {
+        if ($this->first_name && $this->last_name) {
+            return trim("{$this->first_name} {$this->last_name}");
+        }
+
+        if ($this->first_name) {
+            return $this->first_name;
+        }
+
+        if ($this->last_name) {
+            return $this->last_name;
+        }
+
+        return $this->email ?? 'Unknown User';
+    }
+
+    /**
+     * Set the user's name by splitting into first and last name.
+     */
+    public function setNameAttribute($value): void
+    {
+        if (!empty($value)) {
+            $nameParts = explode(' ', $value, 2);
+            $this->attributes['first_name'] = $nameParts[0] ?? '';
+            $this->attributes['last_name'] = $nameParts[1] ?? '';
+        }
     }
 
     /**

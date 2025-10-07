@@ -240,24 +240,45 @@
 
                             {!! view_render_event('admin.settings.users.index.form.name.before') !!}
 
-                            <!-- Name -->
-                            <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
-                                    @lang('admin::app.settings.users.index.create.name')
-                                </x-admin::form.control-group.label>
+                            <div class="flex gap-4">
+                                <!-- First Name -->
+                                <x-admin::form.control-group class="flex-1">
+                                    <x-admin::form.control-group.label class="required">
+                                        @lang('admin::app.settings.users.index.create.first-name')
+                                    </x-admin::form.control-group.label>
 
-                                <x-admin::form.control-group.control
-                                    type="text"
-                                    id="name"
-                                    name="name"
-                                    rules="required"
-                                    v-model="user.name"
-                                    :label="trans('admin::app.settings.users.index.create.name')"
-                                    :placeholder="trans('admin::app.settings.users.index.create.name')"
-                                />
+                                    <x-admin::form.control-group.control
+                                        type="text"
+                                        id="first_name"
+                                        name="first_name"
+                                        rules="required"
+                                        v-model="user.first_name"
+                                        :label="trans('admin::app.settings.users.index.create.first-name')"
+                                        :placeholder="trans('admin::app.settings.users.index.create.first-name')"
+                                    />
 
-                                <x-admin::form.control-group.error control-name="name" />
-                            </x-admin::form.control-group>
+                                    <x-admin::form.control-group.error control-name="first_name" />
+                                </x-admin::form.control-group>
+
+                                <!-- Last Name -->
+                                <x-admin::form.control-group class="flex-1">
+                                    <x-admin::form.control-group.label class="required">
+                                        @lang('admin::app.settings.users.index.create.last-name')
+                                    </x-admin::form.control-group.label>
+
+                                    <x-admin::form.control-group.control
+                                        type="text"
+                                        id="last_name"
+                                        name="last_name"
+                                        rules="required"
+                                        v-model="user.last_name"
+                                        :label="trans('admin::app.settings.users.index.create.last-name')"
+                                        :placeholder="trans('admin::app.settings.users.index.create.last-name')"
+                                    />
+
+                                    <x-admin::form.control-group.error control-name="last_name" />
+                                </x-admin::form.control-group>
+                            </div>
 
                             {!! view_render_event('admin.settings.users.index.form.name.after') !!}
 

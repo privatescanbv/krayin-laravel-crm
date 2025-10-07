@@ -191,7 +191,6 @@ TABLE(ProductType, "product_type") {
 
 TABLE(ResourceType, "resourcetype") {
   PRIMARY_KEY(id): bigint
-  external_id: string // (ResourceType: "mri_scanner", "ct_scanner", "pet_ct_scanner", "artsen", "other", "cardiologie")
   name: string
   description: text
   created_at: datetime

@@ -12,12 +12,12 @@ class ResourceTypeSeeder extends BaseSeeder
         $this->truncateTables(['resource_types']);
 
         $defaults = [
-            ['external_id' => ResourceTypeEnum::MRI_SCANNER->value, 'name' => ResourceTypeEnum::MRI_SCANNER->label()],
-            ['external_id' => ResourceTypeEnum::CT_SCANNER->value, 'name' => ResourceTypeEnum::CT_SCANNER->label()],
-            ['external_id' => ResourceTypeEnum::PET_CT_SCANNER->value, 'name' => ResourceTypeEnum::PET_CT_SCANNER->label()],
-            ['external_id' => ResourceTypeEnum::ARTSEN->value, 'name' => ResourceTypeEnum::ARTSEN->label()],
-            ['external_id' => ResourceTypeEnum::OTHER->value, 'name' => ResourceTypeEnum::OTHER->label()],
-            ['external_id' => ResourceTypeEnum::CARDIOLOGIE->value, 'name' => ResourceTypeEnum::CARDIOLOGIE->label()],
+            ['name' => ResourceTypeEnum::MRI_SCANNER->label()],
+            ['name' => ResourceTypeEnum::CT_SCANNER->label()],
+            ['name' => ResourceTypeEnum::PET_CT_SCANNER->label()],
+            ['name' => ResourceTypeEnum::ARTSEN->label()],
+            ['name' => ResourceTypeEnum::OTHER->label()],
+            ['name' => ResourceTypeEnum::CARDIOLOGIE->label()],
         ];
 
         foreach ($defaults as $data) {

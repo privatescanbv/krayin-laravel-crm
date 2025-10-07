@@ -11,14 +11,14 @@ use Webkul\Quote\Models\Quote;
 /**
  * TODO: rename to backoffice (equal to lead, used in workflow)
  */
-class WorkflowLead extends Model
+class SalesLead extends Model
 {
     /**
      * The table associated with the model.
      *
      * @var string
      */
-    protected $table = 'workflowleads';
+    protected $table = 'salesleads';
 
     /**
      * The attributes that are mass assignable.

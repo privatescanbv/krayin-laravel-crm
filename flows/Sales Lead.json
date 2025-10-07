@@ -144,22 +144,6 @@
     },
     {
       "parameters": {
-        "httpMethod": "POST",
-        "path": "0de7745d-64c8-410b-9d23-f98f4b9c3787",
-        "options": {}
-      },
-      "id": "ff36351f-8a7e-44fe-8259-5d990046f95b",
-      "name": "Webhook - lead status change",
-      "type": "n8n-nodes-base.webhook",
-      "position": [
-        -1616,
-        272
-      ],
-      "webhookId": "0de7745d-64c8-410b-9d23-f98f4b9c3787",
-      "typeVersion": 2
-    },
-    {
-      "parameters": {
         "workflowId": {
           "__rl": true,
           "value": "FoL6phxyuOVrAwz5",
@@ -310,6 +294,22 @@
       ],
       "id": "317e6081-f9c7-4625-b5e6-ce8d4906b167",
       "name": "order_verzonden_hernia"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ca89fcba-8047-462a-9eaa-d17383e214b8",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1408,
+        304
+      ],
+      "id": "da3713a7-8a03-473f-9ede-27362ee9bcf8",
+      "name": "Webhook change sales lead status",
+      "webhookId": "ca89fcba-8047-462a-9eaa-d17383e214b8"
     }
   ],
   "pinData": {},
@@ -347,17 +347,6 @@
         [
           {
             "node": "order_verzonden_hernia",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Webhook - lead status change": {
-      "main": [
-        [
-          {
-            "node": "Route based on call_status",
             "type": "main",
             "index": 0
           }
@@ -418,13 +407,24 @@
           }
         ]
       ]
+    },
+    "Webhook change sales lead status": {
+      "main": [
+        [
+          {
+            "node": "Route based on call_status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "ab774c9d-b1ac-467f-b96b-3691accd2d77",
+  "versionId": "0268d5f3-1ef8-4392-8690-812a147e1cae",
   "meta": {
     "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },

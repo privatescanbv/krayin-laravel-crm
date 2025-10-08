@@ -1,6 +1,6 @@
 <x-admin::layouts>
     <x-slot:title>
-        Import Runs
+        Import Runs - Reports
     </x-slot>
 
     <div class="flex flex-col gap-4">
@@ -9,8 +9,11 @@
                 <x-admin::breadcrumbs name="settings.import-runs" />
 
                 <div class="text-xl font-bold dark:text-gray-300">
-                    Import Runs
+                    Import Run Reports
                 </div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Overzicht van alle SugarCRM import runs met errors en warnings
+                </p>
             </div>
         </div>
 

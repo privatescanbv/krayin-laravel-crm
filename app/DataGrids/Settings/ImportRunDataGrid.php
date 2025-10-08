@@ -21,7 +21,8 @@ class ImportRunDataGrid extends DataGrid
                 'import_runs.records_imported',
                 'import_runs.records_skipped',
                 'import_runs.records_errored'
-            );
+            )
+            ->orderBy('import_runs.id', 'desc');
 
         $this->addFilter('id', 'import_runs.id');
 
@@ -32,7 +33,7 @@ class ImportRunDataGrid extends DataGrid
     {
         $this->addColumn([
             'index'      => 'id',
-            'label'      => 'ID',
+            'label'      => '#',
             'type'       => 'integer',
             'searchable' => true,
             'filterable' => true,
@@ -42,7 +43,7 @@ class ImportRunDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'import_type',
             'type'       => 'string',
-            'label'      => 'Import Type',
+            'label'      => 'Type',
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
@@ -55,12 +56,22 @@ class ImportRunDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+            'closure'    => function ($row) {
+                $statusColors = [
+                    'completed' => 'success',
+                    'running'   => 'warning',
+                    'failed'    => 'danger',
+                ];
+                $color = $statusColors[$row->status] ?? 'secondary';
+
+                return "<span class='label label-{$color}'>".ucfirst($row->status).'</span>';
+            },
         ]);
 
         $this->addColumn([
             'index'      => 'started_at',
             'type'       => 'datetime',
-            'label'      => 'Started At',
+            'label'      => 'Gestart',
             'searchable' => false,
             'filterable' => true,
             'sortable'   => true,
@@ -69,7 +80,7 @@ class ImportRunDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'records_processed',
             'type'       => 'integer',
-            'label'      => 'Processed',
+            'label'      => 'Verwerkt',
             'searchable' => false,
             'filterable' => false,
             'sortable'   => true,
@@ -78,7 +89,7 @@ class ImportRunDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'records_imported',
             'type'       => 'integer',
-            'label'      => 'Imported',
+            'label'      => 'Geïmporteerd',
             'searchable' => false,
             'filterable' => false,
             'sortable'   => true,
@@ -87,10 +98,17 @@ class ImportRunDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'records_errored',
             'type'       => 'integer',
-            'label'      => 'Errors',
+            'label'      => 'Fouten',
             'searchable' => false,
             'filterable' => false,
             'sortable'   => true,
+            'closure'    => function ($row) {
+                if ($row->records_errored > 0) {
+                    return "<span class='text-red-600 font-semibold'>{$row->records_errored}</span>";
+                }
+
+                return "<span class='text-green-600'>0</span>";
+            },
         ]);
     }
 

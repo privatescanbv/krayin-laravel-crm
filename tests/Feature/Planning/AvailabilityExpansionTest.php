@@ -91,12 +91,19 @@ class AvailabilityExpansionTest extends TestCase
         
         // Booking: Mon 10:00-12:00 (should split availability)
         $monday = $start->copy()->addDay(); // Monday of the current week
-        ResourceOrderItem::query()->create([
+        $booking = ResourceOrderItem::query()->create([
             'resource_id'  => $resource->id,
             'orderitem_id' => $orderItem->id,
             'from'         => $monday->copy()->setTime(10, 0),
             'to'           => $monday->copy()->setTime(12, 0),
         ]);
+        
+        // Verify booking was created
+        $this->assertDatabaseHas('resource_orderitems', [
+            'resource_id' => $resource->id,
+            'orderitem_id' => $orderItem->id,
+        ]);
+        
         $resp = $this->getJson(route('admin.planning.order_item.availability', [
             'orderItemId'      => $orderItem->id,
             'start'            => $start->toIso8601String(),
@@ -108,6 +115,7 @@ class AvailabilityExpansionTest extends TestCase
         // Assert
         $resp->assertOk();
         $data = $resp->json();
+        
         $avail = $data['availability'][(string)$resource->id] ?? $data['availability'][$resource->id] ?? [];
         $occupancy = $data['occupancy'][(string)$resource->id] ?? $data['occupancy'][$resource->id] ?? [];
         
@@ -115,6 +123,11 @@ class AvailabilityExpansionTest extends TestCase
         $this->assertArrayHasKey('availability', $data, 'Response should have availability key');
         $this->assertArrayHasKey('occupancy', $data, 'Response should have occupancy key');
         $this->assertNotEmpty($data['availability'], 'Availability should not be empty');
+        
+        // Debug: Check if occupancy is found
+        if (empty($occupancy)) {
+            $this->fail('No occupancy found for resource ' . $resource->id . '. Full occupancy data: ' . json_encode($data['occupancy']));
+        }
         
         // Should have 2 availability blocks: 08:00-10:00 and 12:00-17:00
         $this->assertCount(2, $avail, 'Should have 2 availability blocks after booking subtraction. Got: ' . json_encode($avail));

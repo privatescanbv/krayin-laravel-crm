@@ -163,18 +163,18 @@ class OrderItemPlanningController extends Controller
                             continue;
                         }
                         
-                        // Complete overlap - remove segment
+                        // Complete overlap - remove segment entirely
                         if ($of->lessThanOrEqualTo($segStart) && $ot->greaterThanOrEqualTo($segEnd)) {
                             continue;
                         }
                         
                         // Partial overlap - split segment
-                        // Left part (before occupancy)
+                        // Left part (before occupancy) - only if there's space before
                         if ($of->greaterThan($segStart)) {
                             $next[] = [ 'from' => $segStart, 'to' => $of ];
                         }
                         
-                        // Right part (after occupancy)
+                        // Right part (after occupancy) - only if there's space after
                         if ($ot->lessThan($segEnd)) {
                             $next[] = [ 'from' => $ot, 'to' => $segEnd ];
                         }

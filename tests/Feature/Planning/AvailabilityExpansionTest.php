@@ -111,9 +111,14 @@ class AvailabilityExpansionTest extends TestCase
         $avail = $data['availability'][(string)$resource->id] ?? $data['availability'][$resource->id] ?? [];
         $occupancy = $data['occupancy'][(string)$resource->id] ?? $data['occupancy'][$resource->id] ?? [];
         
+        // Debug output
+        $this->assertArrayHasKey('availability', $data, 'Response should have availability key');
+        $this->assertArrayHasKey('occupancy', $data, 'Response should have occupancy key');
+        $this->assertNotEmpty($data['availability'], 'Availability should not be empty');
+        
         // Should have 2 availability blocks: 08:00-10:00 and 12:00-17:00
-        $this->assertCount(2, $avail, 'Should have 2 availability blocks after booking subtraction');
-        $this->assertCount(1, $occupancy, 'Should have 1 occupancy block');
+        $this->assertCount(2, $avail, 'Should have 2 availability blocks after booking subtraction. Got: ' . json_encode($avail));
+        $this->assertCount(1, $occupancy, 'Should have 1 occupancy block. Got: ' . json_encode($occupancy));
         
         // Verify the split availability
         $hasEarlyBlock = collect($avail)->contains(function ($a) {

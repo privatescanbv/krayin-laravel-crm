@@ -11,7 +11,7 @@ beforeEach(function () {
     $this->seed(TestSeeder::class);
 
     // Authenticate on admin guard
-    $this->user = User::factory()->create(['first_name' => 'Admin', 'last_name' => 'Tester']);
+    $this->user = User::factory()->create(['name' => 'Admin Tester']);
     $this->actingAs($this->user, 'user');
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
     $this->withoutMiddleware(Authenticate::class);

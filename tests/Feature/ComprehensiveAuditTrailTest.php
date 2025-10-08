@@ -29,21 +29,19 @@ beforeEach(function () {
     ]);
 
     $this->user1 = User::create([
-        'first_name' => 'Test',
-        'last_name'  => 'User 1',
-        'email'      => 'user1@example.com',
-        'password'   => bcrypt('password'),
-        'status'     => 1,
-        'role_id'    => $this->role->id,
+        'name'     => 'Test User 1',
+        'email'    => 'user1@example.com',
+        'password' => bcrypt('password'),
+        'status'   => 1,
+        'role_id'  => $this->role->id,
     ]);
 
     $this->user2 = User::create([
-        'first_name' => 'Test',
-        'last_name'  => 'User 2',
-        'email'      => 'user2@example.com',
-        'password'   => bcrypt('password'),
-        'status'     => 1,
-        'role_id'    => $this->role->id,
+        'name'     => 'Test User 2',
+        'email'    => 'user2@example.com',
+        'password' => bcrypt('password'),
+        'status'   => 1,
+        'role_id'  => $this->role->id,
     ]);
 
     // Create Lead dependencies
@@ -280,12 +278,11 @@ test('user_audit_trail', function () {
 
     // Act - Create user (audit trail should be handled automatically)
     $newUser = User::create([
-        'first_name' => 'New',
-        'last_name'  => 'User',
-        'email'      => 'newuser@example.com',
-        'password'   => bcrypt('password'),
-        'status'     => 1,
-        'role_id'    => $this->role->id,
+        'name'     => 'New User',
+        'email'    => 'newuser@example.com',
+        'password' => bcrypt('password'),
+        'status'   => 1,
+        'role_id'  => $this->role->id,
     ]);
 
     // Assert - Creation audit

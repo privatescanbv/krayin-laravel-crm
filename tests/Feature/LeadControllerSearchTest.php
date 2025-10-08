@@ -14,7 +14,7 @@ beforeEach(function () {
     $this->seed(TestSeeder::class);
 
     // Create and authenticate a back-office user
-    $this->user = User::factory()->create(['first_name' => 'Admin', 'last_name' => 'Tester']);
+    $this->user = User::factory()->create(['name' => 'Admin Tester']);
     // Authenticate on the admin guard used by backend routes
     $this->actingAs($this->user, 'user');
     // voorkom auth-redirects in deze test

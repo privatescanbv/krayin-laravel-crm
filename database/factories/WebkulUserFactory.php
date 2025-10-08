@@ -44,6 +44,22 @@ class WebkulUserFactory extends Factory
     }
 
     /**
+     * Configure the model factory with attributes.
+     */
+    public function configure()
+    {
+        return $this->afterMaking(function (User $user) {
+            // If 'name' was passed in attributes, split it into first_name and last_name
+            if (isset($this->attributes['name'])) {
+                $nameParts = explode(' ', $this->attributes['name'], 2);
+                $user->first_name = $nameParts[0] ?? '';
+                $user->last_name = $nameParts[1] ?? '';
+                unset($this->attributes['name']);
+            }
+        });
+    }
+
+    /**
      * Indicate that the user is active.
      *
      * @return \Illuminate\Database\Eloquent\Factories\Factory

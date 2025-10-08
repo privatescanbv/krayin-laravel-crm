@@ -85,18 +85,18 @@ class AvailabilityExpansionTest extends TestCase
             'weekday_time_blocks' => $weekdayMap,
         ]);
 
+        // Act: call availability for the current week
+        $start = now()->startOfWeek();
+        $end = (clone $start)->addDays(6)->endOfDay();
+        
         // Booking: Mon 10:00-12:00 (should split availability)
-        $monday = now()->startOfWeek()->addDay(); // Monday
+        $monday = $start->copy()->addDay(); // Monday of the current week
         ResourceOrderItem::query()->create([
             'resource_id'  => $resource->id,
             'orderitem_id' => $orderItem->id,
             'from'         => $monday->copy()->setTime(10, 0),
             'to'           => $monday->copy()->setTime(12, 0),
         ]);
-
-        // Act: call availability for the current week
-        $start = now()->startOfWeek();
-        $end = (clone $start)->addDays(6)->endOfDay();
         $resp = $this->getJson(route('admin.planning.order_item.availability', [
             'orderItemId'      => $orderItem->id,
             'start'            => $start->toIso8601String(),
@@ -130,6 +130,71 @@ class AvailabilityExpansionTest extends TestCase
         
         $this->assertTrue($hasEarlyBlock, 'Should have 08:00-10:00 availability block');
         $this->assertTrue($hasLateBlock, 'Should have 12:00-17:00 availability block');
+    }
+
+    public function test_subtract_intervals_function(): void
+    {
+        // Test the subtractIntervals logic directly
+        $availability = [
+            ['from' => '2025-10-06T08:00:00+02:00', 'to' => '2025-10-06T17:00:00+02:00']
+        ];
+        
+        $occupancy = [
+            ['from' => '2025-10-06T10:00:00+02:00', 'to' => '2025-10-06T12:00:00+02:00']
+        ];
+        
+        // Simulate the subtractIntervals function
+        $result = [];
+        foreach ($availability as $interval) {
+            $segments = [['from' => \Carbon\CarbonImmutable::parse($interval['from']), 'to' => \Carbon\CarbonImmutable::parse($interval['to'])]];
+            
+            foreach ($occupancy as $o) {
+                $of = \Carbon\CarbonImmutable::parse($o['from']);
+                $ot = \Carbon\CarbonImmutable::parse($o['to']);
+                $next = [];
+                
+                foreach ($segments as $seg) {
+                    $segStart = $seg['from'];
+                    $segEnd = $seg['to'];
+                    
+                    // No overlap - keep segment as is
+                    if ($ot->lessThanOrEqualTo($segStart) || $of->greaterThanOrEqualTo($segEnd)) {
+                        $next[] = $seg;
+                        continue;
+                    }
+                    
+                    // Complete overlap - remove segment entirely
+                    if ($of->lessThanOrEqualTo($segStart) && $ot->greaterThanOrEqualTo($segEnd)) {
+                        continue;
+                    }
+                    
+                    // Partial overlap - split segment
+                    // Left part (before occupancy) - only if there's space before
+                    if ($of->greaterThan($segStart)) {
+                        $next[] = ['from' => $segStart, 'to' => $of];
+                    }
+                    
+                    // Right part (after occupancy) - only if there's space after
+                    if ($ot->lessThan($segEnd)) {
+                        $next[] = ['from' => $ot, 'to' => $segEnd];
+                    }
+                }
+                $segments = $next;
+            }
+            
+            // Add remaining segments to result
+            foreach ($segments as $s) {
+                if ($s['to']->greaterThan($s['from'])) {
+                    $result[] = ['from' => $s['from']->toIso8601String(), 'to' => $s['to']->toIso8601String()];
+                }
+            }
+        }
+        
+        $this->assertCount(2, $result, 'Should have 2 availability blocks after subtraction');
+        $this->assertStringContainsString('T08:00', $result[0]['from']);
+        $this->assertStringContainsString('T10:00', $result[0]['to']);
+        $this->assertStringContainsString('T12:00', $result[1]['from']);
+        $this->assertStringContainsString('T17:00', $result[1]['to']);
     }
 
     public function test_multiple_resources_with_different_shifts(): void

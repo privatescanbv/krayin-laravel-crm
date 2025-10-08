@@ -58,6 +58,7 @@ class OrderItemPlanningController extends Controller
             })
             ->get()
             ->groupBy('resource_id');
+        
         // Shifts in the window
         $shifts = Shift::query()
             ->whereIn('resource_id', $resources->pluck('id'))
@@ -204,6 +205,7 @@ class OrderItemPlanningController extends Controller
                 ];
             }
         }
+        
 
         // Compute final availability (availability - occupied)
         $finalAvailability = [];
@@ -211,7 +213,6 @@ class OrderItemPlanningController extends Controller
             $rid = $resource->id;
             $finalAvailability[$rid] = $subtractIntervals($availabilityByResource[$rid] ?? [], $occupiedByResource[$rid] ?? []);
         }
-        logger()->info('final availability',[ 'av' =>print_r($finalAvailability, true)]);
 
         return response()->json([
             'resources'   => $resources->map(fn($r) => [

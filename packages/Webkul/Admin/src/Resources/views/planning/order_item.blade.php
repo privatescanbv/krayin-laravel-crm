@@ -55,7 +55,6 @@
                         <div class="text-sm">@{{ weekLabel }}</div>
                         <button class="secondary-button" @click="nextWeek">Volgende week</button>
                         <button class="primary-button" @click="loadAvailability">Zoeken</button>
-                        <button class="secondary-button" @click="debugEnabled = !debugEnabled">@{{ debugEnabled ? 'Debug uit' : 'Debug aan' }}</button>
                     </div>
                 </div>
 
@@ -98,7 +97,7 @@
                 </div>
 
                 <!-- Debug panel -->
-                <div v-if="debugEnabled" class="mt-4 rounded border border-yellow-300 bg-yellow-50 p-3 text-xs text-yellow-900">
+                <div class="mt-4 rounded border border-yellow-300 bg-yellow-50 p-3 text-xs text-yellow-900">
                     <div class="font-semibold mb-2">Debug</div>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div>
@@ -166,7 +165,7 @@
                         rawOccupancy: {},
                         form: { resource_id: null, from: '', to: '' },
                         hours: Array.from({ length: 24 }, (_, i) => i),
-                        debugEnabled: false,
+                        debugEnabled: true,
                         debugState: { dayOffset: 0, availableCount: 0, occupiedCount: 0 },
                     };
                 },

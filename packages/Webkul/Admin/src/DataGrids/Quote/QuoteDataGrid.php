@@ -27,7 +27,7 @@ class QuoteDataGrid extends DataGrid
                 'quotes.grand_total',
                 'quotes.created_at',
                 'users.id as user_id',
-                'users.name as sales_person',
+                DB::raw("CONCAT(users.first_name, ' ', users.last_name) as sales_person"),
                 'persons.id as person_id',
                 'persons.name as person_name',
                 'quotes.expired_at as expired_quotes'
@@ -41,7 +41,7 @@ class QuoteDataGrid extends DataGrid
 
         $this->addFilter('id', 'quotes.id');
         $this->addFilter('user', 'quotes.user_id');
-        $this->addFilter('sales_person', 'users.name');
+        $this->addFilter('sales_person', DB::raw("CONCAT(users.first_name, ' ', users.last_name)"));
         $this->addFilter('person_name', 'persons.name');
         $this->addFilter('expired_at', 'quotes.expired_at');
         $this->addFilter('created_at', 'quotes.created_at');

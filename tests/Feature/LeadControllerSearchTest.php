@@ -39,8 +39,7 @@ test('lead search with name and whitelisted fields works and person.name works',
     ]);
 
     // Lead found via assigned user's name like (use the authenticated user to avoid authorization filtering)
-    $this->user->name = 'Kuh Sales';
-    $this->user->save();
+    $this->user->update(['first_name' => 'Kuh', 'last_name' => 'Sales']);
     $leadByUser = Lead::factory()->create([
         'first_name'             => 'Alice',
         'last_name'              => 'Smith',

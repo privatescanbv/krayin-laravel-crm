@@ -36,14 +36,8 @@
                     name="sales_lead_id"
                     value="{{ $orders->sales_lead_id ?? '' }}"
                     rules="required|integer|exists:salesleads,id"
-                >
-                    <option value="">Selecteer een Sales Lead</option>
-                    @foreach(SalesLead::with('lead')->get() as $salesLead)
-                        <option value="{{ $salesLead->id }}" {{ $orders->sales_lead_id == $salesLead->id ? 'selected' : '' }}>
-                            {{ $salesLead->name }} ({{ $salesLead->lead?->name ?? 'Geen lead' }})
-                        </option>
-                    @endforeach
-                </x-admin::form.control-group.control>
+                    :options="isset($salesLeads) ? $salesLeads : []"
+                />
             </x-admin::form.control-group>
 
             @include('admin::orders.partials.items', ['order' => $orders])

@@ -53,6 +53,7 @@
                         <div class="text-sm">@{{ weekLabel }}</div>
                         <button class="secondary-button" @click="nextWeek">Volgende week</button>
                         <button class="primary-button" @click="loadAvailability">Zoeken</button>
+                        <button class="secondary-button" @click="debugEnabled = !debugEnabled">@{{ debugEnabled ? 'Debug uit' : 'Debug aan' }}</button>
                     </div>
                 </div>
 
@@ -92,6 +93,26 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Debug panel -->
+                <div v-if="debugEnabled" class="mt-4 rounded border border-yellow-300 bg-yellow-50 p-3 text-xs text-yellow-900">
+                    <div class="font-semibold mb-2">Debug</div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <div class="font-semibold">Resources (@{{ resources.length }})</div>
+                            <pre class="whitespace-pre-wrap">@{{ safeStringify(resources).slice(0, 1000) }}</pre>
+                        </div>
+                        <div>
+                            <div class="font-semibold">Shifts keys (@{{ Object.keys(rawShifts||{}).length }})</div>
+                            <pre class="whitespace-pre-wrap">@{{ safeStringify(Object.fromEntries(Object.entries(rawShifts||{}).slice(0,3))).slice(0, 1000) }}</pre>
+                        </div>
+                        <div>
+                            <div class="font-semibold">Occupancy keys (@{{ Object.keys(rawOccupancy||{}).length }})</div>
+                            <pre class="whitespace-pre-wrap">@{{ safeStringify(Object.fromEntries(Object.entries(rawOccupancy||{}).slice(0,3))).slice(0, 1000) }}</pre>
+                        </div>
+                    </div>
+                    <div class="mt-2">Dag @{{ debugState.dayOffset }} — available: @{{ debugState.availableCount }}, occupied: @{{ debugState.occupiedCount }}</div>
                 </div>
 
                 <!-- Book modal -->
@@ -143,6 +164,8 @@
                         rawOccupancy: {},
                         form: { resource_id: null, from: '', to: '' },
                         hours: Array.from({ length: 24 }, (_, i) => i),
+                        debugEnabled: false,
+                        debugState: { dayOffset: 0, availableCount: 0, occupiedCount: 0 },
                     };
                 },
                 computed: {
@@ -209,6 +232,9 @@
                             normOcc[rid] = arr.map(o => ({ ...o }));
                         });
                         this.rawOccupancy = normOcc;
+                        if (this.debugEnabled) {
+                            try { console.log('[planning] availability', { resources: this.resources, shifts: this.rawShifts, occupancy: this.rawOccupancy }); } catch (e) {}
+                        }
                     },
                     blocksFromShift(resourceId, shift) {
                         // weekday_time_blocks: [{ weekday: 0..6 (0=Sun), from: "09:00", to: "17:00" }]
@@ -261,6 +287,7 @@
                             const free = this.splitByOccupancy(byDay, occDay).map((p, idx) => ({ key: `${r.id}-a-${weekdayOffset}-${idx}`, resourceId: r.id, ...p }));
                             res.push(...free);
                         }
+                        if (this.debugEnabled) { this.debugState.dayOffset = weekdayOffset; this.debugState.availableCount = res.length; }
                         return res;
                     },
                     occupiedBlocksByDay(weekdayOffset) {
@@ -274,8 +301,10 @@
                             }).map((o, idx) => ({ key: `${r.id}-o-${weekdayOffset}-${idx}`, resourceId: r.id, ...o }));
                             res.push(...occDay);
                         }
+                        if (this.debugEnabled) { this.debugState.occupiedCount = res.length; }
                         return res;
                     },
+                    safeStringify(obj) { try { return JSON.stringify(obj, null, 2); } catch (e) { return String(obj); } },
                     openBook(resourceId, from, to) {
                         this.form.resource_id = resourceId;
                         const pad = (n) => String(n).padStart(2,'0');

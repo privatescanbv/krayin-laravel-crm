@@ -22,6 +22,20 @@
     </div>
 
     @pushOnce('scripts')
+        <style>
+            .calendar-container { display: grid; grid-template-columns: 60px repeat(7, 1fr); }
+            .calendar-header { display: contents; }
+            .calendar-day-header { padding: 6px 8px; border-bottom: 1px solid var(--tw-prose-td-borders, #e5e7eb); font-weight: 600; font-size: 12px; }
+            .calendar-body { display: contents; }
+            .time-gutter { position: relative; }
+            .time-gutter .hour { height: 60px; font-size: 10px; color: #6b7280; padding-right: 6px; text-align: right; }
+            .day-column { position: relative; border-left: 1px solid var(--tw-prose-td-borders, #e5e7eb); }
+            .day-column .hour-slot { height: 60px; border-bottom: 1px dashed #e5e7eb; }
+            .block { position: absolute; left: 6px; right: 6px; border-radius: 6px; padding: 2px 6px; font-size: 11px; overflow: hidden; }
+            .block-available { background: rgba(16, 185, 129, 0.15); color: #065f46; border: 1px solid rgba(16,185,129,0.3); cursor: pointer; }
+            .block-occupied { background: rgba(107, 114, 128, 0.25); color: #374151; border: 1px solid rgba(107,114,128,0.35); pointer-events: none; }
+        </style>
+
         <script type="text/x-template" id="v-order-item-planning-template">
             <div class="flex flex-col gap-4">
                 <!-- Filters -->
@@ -51,34 +65,33 @@
                     </span>
                 </div>
 
-                <!-- Week grid -->
-                <div class="overflow-x-auto">
-                    <table class="w-full text-xs border-collapse">
-                        <thead>
-                            <tr>
-                                <th class="p-2 text-left">Resource</th>
-                                <th v-for="d in 7" :key="d" class="p-2 text-left">@{{ dayLabel(d-1) }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="r in resources" :key="r.id" class="align-top">
-                                <td class="p-2 whitespace-nowrap text-sm">@{{ r.name }}<div class="text-gray-500">@{{ r.clinic }}</div></td>
-                                <td v-for="d in 7" :key="r.id + '-' + d" class="p-1">
-                                    <div class="flex flex-col gap-1">
-                                        <!-- Available blocks -->
-                                        <div v-for="block in availableBlocks(r.id, d-1)" :key="block.key" class="bg-green-100 dark:bg-green-900 text-green-900 dark:text-green-100 rounded px-2 py-1 cursor-pointer"
-                                             @click="openBook(r.id, block.from, block.to)">
-                                            @{{ timeRange(block.from, block.to) }}
-                                        </div>
-                                        <!-- Occupied blocks -->
-                                        <div v-for="occ in occupiedBlocks(r.id, d-1)" :key="occ.key" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded px-2 py-1 opacity-70">
-                                            @{{ timeRange(occ.from, occ.to) }}
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <!-- Week calendar grid -->
+                <div class="calendar-container overflow-x-auto">
+                    <!-- Header Row -->
+                    <div class="calendar-header">
+                        <div></div>
+                        <div v-for="d in 7" :key="d" class="calendar-day-header">@{{ dayLabel(d-1) }}</div>
+                    </div>
+                    <!-- Body Rows as columns -->
+                    <div class="calendar-body">
+                        <!-- Time gutter -->
+                        <div class="time-gutter">
+                            <div v-for="h in hours" :key="h" class="hour">@{{ hourLabel(h) }}</div>
+                        </div>
+                        <!-- Day columns -->
+                        <div v-for="d in 7" :key="'col-'+d" class="day-column">
+                            <!-- Hour slots -->
+                            <div v-for="h in hours" :key="'slot-'+d+'-'+h" class="hour-slot"></div>
+                            <!-- Occupied blocks (readonly) -->
+                            <div v-for="occ in occupiedBlocksByDay(d-1)" :key="occ.key" class="block block-occupied" :style="blockStyle(occ)">
+                                @{{ timeRange(occ.from, occ.to) }}
+                            </div>
+                            <!-- Available blocks (clickable) -->
+                            <div v-for="blk in availableBlocksByDay(d-1)" :key="blk.key" class="block block-available" :style="blockStyle(blk)" @click="openBook(blk.resourceId, blk.from, blk.to)">
+                                @{{ timeRange(blk.from, blk.to) }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Book modal -->
@@ -129,6 +142,7 @@
                         rawShifts: {},
                         rawOccupancy: {},
                         form: { resource_id: null, from: '', to: '' },
+                        hours: Array.from({ length: 24 }, (_, i) => i),
                     };
                 },
                 computed: {
@@ -145,12 +159,19 @@
                     },
                     nextWeek() { const s = new Date(this.window.start); s.setDate(s.getDate()+7); this.window.start = this.startOfWeek(s); const e = new Date(this.window.start); e.setDate(e.getDate()+6); this.window.end = e; this.loadAvailability(); },
                     prevWeek() { const s = new Date(this.window.start); s.setDate(s.getDate()-7); this.window.start = this.startOfWeek(s); const e = new Date(this.window.start); e.setDate(e.getDate()+6); this.window.end = e; this.loadAvailability(); },
-                    dayLabel(offset) {
-                        const d = new Date(this.window.start); d.setDate(d.getDate()+offset); return d.toLocaleDateString(undefined, { weekday: 'short', day:'2-digit', month:'2-digit' });
+                    dayDate(offset) { const d = new Date(this.window.start); d.setDate(d.getDate()+offset); return d; },
+                    dayLabel(offset) { const d = this.dayDate(offset); return d.toLocaleDateString(undefined, { weekday: 'short', day:'2-digit', month:'2-digit' }); },
+                    minuteOfDay(date) { return date.getHours()*60 + date.getMinutes(); },
+                    hourLabel(hour) { return `${hour}:00`; },
+                    blockStyle(block) {
+                        // position within day-column: top by minutes since 00:00, height by duration
+                        const minutesPerHourHeight = 60; // 60px per hour
+                        const from = new Date(block.from), to = new Date(block.to);
+                        const top = this.minuteOfDay(from) * (minutesPerHourHeight/60);
+                        const height = Math.max(18, (to - from) / (1000*60) * (minutesPerHourHeight/60));
+                        return { top: top + 'px', height: height + 'px' };
                     },
-                    timeRange(from, to) {
-                        const f = new Date(from); const t = new Date(to); return f.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + '–' + t.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-                    },
+                    timeRange(from, to) { const f = new Date(from); const t = new Date(to); return f.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + '–' + t.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); },
                     async loadAvailability() {
                         const url = `${"{{ route('admin.planning.order_item.availability', ['orderItemId' => $orderItem->id]) }}"}?start=${this.window.start.toISOString()}&end=${this.window.end.toISOString()}&resource_type_id=${this.filters.resource_type_id||''}&clinic_id=${this.filters.clinic_id||''}`;
                         const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
@@ -159,31 +180,29 @@
                         this.rawShifts = data.shifts || {};
                         this.rawOccupancy = data.occupancy || {};
                     },
-                    blocksFromShift(shift) {
-                        // weekday_time_blocks: [{ weekday: 0..6, from: "09:00", to: "17:00" }, ...]
+                    blocksFromShift(resourceId, shift) {
+                        // weekday_time_blocks: [{ weekday: 0..6 (0=Sun), from: "09:00", to: "17:00" }]
                         const blocks = [];
                         const start = new Date(this.window.start);
                         for (let i=0;i<7;i++) {
                             const day = new Date(start); day.setDate(day.getDate()+i);
-                            const weekday = (i+1)%7; // Mon=1..Sun=0 mapping
-                            const tbs = (shift.weekday_time_blocks||[]).filter(b => b.weekday === weekday && shift.available !== false);
+                            const weekdaySun0 = day.getDay();
+                            const tbs = (shift.weekday_time_blocks||[]).filter(b => b.weekday === weekdaySun0 && shift.available !== false);
                             for (const tb of tbs) {
                                 const from = new Date(day); const [fh,fm] = (tb.from||'09:00').split(':'); from.setHours(+fh, +fm, 0, 0);
                                 const to = new Date(day); const [th,tm] = (tb.to||'17:00').split(':'); to.setHours(+th, +tm, 0, 0);
-                                blocks.push({ from, to });
+                                blocks.push({ resourceId, from, to });
                             }
                         }
                         return blocks;
                     },
                     splitByOccupancy(blocks, occupancy) {
-                        // subtract occupancy intervals from blocks
                         const result = [];
                         for (const block of blocks) {
                             let parts = [ { from: new Date(block.from), to: new Date(block.to) } ];
                             for (const occ of occupancy) {
                                 const of = new Date(occ.from), ot = new Date(occ.to);
                                 parts = parts.flatMap(p => {
-                                    // no overlap
                                     if (ot <= p.from || of >= p.to) return [p];
                                     const segs = [];
                                     if (of > p.from) segs.push({ from: p.from, to: new Date(of) });
@@ -191,37 +210,42 @@
                                     return segs;
                                 });
                             }
-                            result.push(...parts.filter(p => p.to > p.from));
+                            for (const p of parts) { if (p.to > p.from) result.push({ resourceId: block.resourceId, from: p.from, to: p.to }); }
                         }
                         return result;
                     },
-                    availableBlocks(resourceId, weekdayOffset) {
-                        const shifts = (this.rawShifts[resourceId]||[]);
-                        const occ = (this.rawOccupancy[resourceId]||[]);
-                        const blocks = shifts.flatMap(s => this.blocksFromShift(s));
-                        const byDay = blocks.filter(b => {
-                            const d = new Date(this.window.start); d.setDate(d.getDate()+weekdayOffset);
-                            return b.from.toDateString() === d.toDateString();
-                        });
-                        const occDay = occ.filter(o => {
-                            const d = new Date(this.window.start); d.setDate(d.getDate()+weekdayOffset);
-                            const of = new Date(o.from), ot = new Date(o.to);
-                            return of.toDateString() === d.toDateString() || ot.toDateString() === d.toDateString();
-                        });
-                        const free = this.splitByOccupancy(byDay, occDay).map((p, idx) => ({ key: `${resourceId}-a-${weekdayOffset}-${idx}`, ...p }));
-                        return free;
+                    availableBlocksByDay(weekdayOffset) {
+                        const day = this.dayDate(weekdayOffset);
+                        const res = [];
+                        for (const r of this.resources) {
+                            const shifts = (this.rawShifts[r.id]||[]);
+                            const occ = (this.rawOccupancy[r.id]||[]);
+                            const blocks = shifts.flatMap(s => this.blocksFromShift(r.id, s));
+                            const byDay = blocks.filter(b => b.from.toDateString() === day.toDateString());
+                            const occDay = occ.filter(o => {
+                                const of = new Date(o.from), ot = new Date(o.to);
+                                return of.toDateString() === day.toDateString() || ot.toDateString() === day.toDateString();
+                            });
+                            const free = this.splitByOccupancy(byDay, occDay).map((p, idx) => ({ key: `${r.id}-a-${weekdayOffset}-${idx}`, resourceId: r.id, ...p }));
+                            res.push(...free);
+                        }
+                        return res;
                     },
-                    occupiedBlocks(resourceId, weekdayOffset) {
-                        const occ = (this.rawOccupancy[resourceId]||[]);
-                        const d = new Date(this.window.start); d.setDate(d.getDate()+weekdayOffset);
-                        return occ.filter(o => {
-                            const of = new Date(o.from), ot = new Date(o.to);
-                            return of.toDateString() === d.toDateString() || ot.toDateString() === d.toDateString();
-                        }).map((o, idx) => ({ key: `${resourceId}-o-${weekdayOffset}-${idx}`, ...o }));
+                    occupiedBlocksByDay(weekdayOffset) {
+                        const day = this.dayDate(weekdayOffset);
+                        const res = [];
+                        for (const r of this.resources) {
+                            const occ = (this.rawOccupancy[r.id]||[]);
+                            const occDay = occ.filter(o => {
+                                const of = new Date(o.from), ot = new Date(o.to);
+                                return of.toDateString() === day.toDateString() || ot.toDateString() === day.toDateString();
+                            }).map((o, idx) => ({ key: `${r.id}-o-${weekdayOffset}-${idx}`, resourceId: r.id, ...o }));
+                            res.push(...occDay);
+                        }
+                        return res;
                     },
                     openBook(resourceId, from, to) {
                         this.form.resource_id = resourceId;
-                        // preset within clicked block
                         const pad = (n) => String(n).padStart(2,'0');
                         const toLocal = (dt) => `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
                         this.form.from = toLocal(new Date(from));

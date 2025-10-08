@@ -135,6 +135,7 @@ Breadcrumbs::for('contacts.organizations.edit', function (BreadcrumbTrail $trail
 // Products group
 Breadcrumbs::for('productgroups', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');
+    $trail->parent('products');
     $trail->push(trans('admin::app.layouts.products'), route('admin.productgroups.index'));
 });
 // Dashboard > productgroups > Create Product

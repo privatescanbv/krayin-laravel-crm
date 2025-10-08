@@ -178,20 +178,37 @@
                         Inboeken
                     </x-slot:header>
                     <x-slot:content>
-                        <div class="space-y-6">
+                        <div class="space-y-6" style="pointer-events: auto; z-index: 1000; position: relative;">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Resource</label>
-                                <select v-model.number="form.resource_id" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer">
+                                <select 
+                                    v-model.number="form.resource_id" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
+                                    style="pointer-events: auto; z-index: 10; position: relative;"
+                                    @click.stop
+                                >
                                     <option v-for="r in resources" :key="r.id" :value="r.id">@{{ r.name }} (@{{ r.clinic }})</option>
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Van</label>
-                                <input type="datetime-local" v-model="form.from" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer" />
+                                <input 
+                                    type="datetime-local" 
+                                    v-model="form.from" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
+                                    style="pointer-events: auto; z-index: 10; position: relative;"
+                                    @click.stop
+                                />
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tot</label>
-                                <input type="datetime-local" v-model="form.to" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer" />
+                                <input 
+                                    type="datetime-local" 
+                                    v-model="form.to" 
+                                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
+                                    style="pointer-events: auto; z-index: 10; position: relative;"
+                                    @click.stop
+                                />
                             </div>
                         </div>
                     </x-slot:content>
@@ -376,6 +393,17 @@
                         const toLocal = (dt) => `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
                         this.form.from = toLocal(new Date(from));
                         this.form.to = toLocal(new Date(to));
+                        
+                        // Debug logging
+                        console.log('openBook debug:', {
+                            resourceId: resourceId,
+                            from: from,
+                            to: to,
+                            formFrom: this.form.from,
+                            formTo: this.form.to,
+                            formResourceId: this.form.resource_id
+                        });
+                        
                         this.$refs.bookModal.toggle();
                     },
                     async submitBooking() {

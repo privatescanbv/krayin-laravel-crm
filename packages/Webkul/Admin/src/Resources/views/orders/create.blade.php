@@ -1,3 +1,4 @@
+@php use App\Models\SalesLead; @endphp
 <x-admin::layouts>
     <x-slot:title>
         Order aanmaken
@@ -28,16 +29,22 @@
 
             <x-admin::form.control-group>
                 <x-admin::form.control-group.label class="required">Sales Lead</x-admin::form.control-group.label>
-                <x-admin::form.control-group.control 
-                    type="select" 
-                    name="sales_lead_id" 
+                <x-admin::form.control-group.control
+                    type="select"
+                    name="sales_lead_id"
                     value="{{ $salesLeadId ?? old('sales_lead_id') ?? '' }}"
                     rules="required|integer|exists:salesleads,id"
-                    :options="isset($salesLeads) ? $salesLeads : []"
-                />
+                >
+                    <option value="">Selecteer een Sales Lead</option>
+                    @foreach(SalesLead::with('lead')->get() as $salesLead)
+                        <option value="{{ $salesLead->id }}" {{ ($salesLeadId ?? old('sales_lead_id')) == $salesLead->id ? 'selected' : '' }}>
+                            {{ $salesLead->name }} ({{ $salesLead->lead?->name ?? 'Geen lead' }})
+                        </option>
+                    @endforeach
+                </x-admin::form.control-group.control>
             </x-admin::form.control-group>
 
-            
+
 
             @include('admin::orders.partials.items')
         </div>

@@ -116,7 +116,7 @@ class OrderController extends SimpleEntityController
         // Eager-load relations needed for planning button visibility per orderregel
         $entity->load([
             'orderRegels.product.partnerProducts' => function ($q) {
-                $q->select('partner_products.id');
+                $q->select('partner_products.id', 'partner_products.product_id');
             },
         ]);
 

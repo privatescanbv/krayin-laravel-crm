@@ -18,6 +18,7 @@ elif [ "$choice" = "2" ]; then
     ./vendor/bin/sail artisan import:leads --import-persons --limit=500 &&
     ./vendor/bin/sail artisan import:email-attachment-files
     ./vendor/bin/sail artisan import:send-report
+    ./vendor/bin/sail artisan planning:create-test-data
 else
     echo "Invalid choice. Please run the script again and choose 1 or 2."
     exit 1

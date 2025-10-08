@@ -54,6 +54,27 @@ abstract class AbstractSugarCRMImport extends Command
     }
 
     /**
+     * Log warning with context to database and console
+     */
+    public function warn($string, $verbosity = null): void
+    {
+        parent::warn($string, $verbosity);
+        $this->logImportWarning($string);
+    }
+
+    public function info($string, $verbosity = null): void
+    {
+        parent::info($string, $verbosity);
+        $this->logImportInfo($string);
+    }
+
+    public function error($string, $verbosity = null): void
+    {
+        parent::error($string, $verbosity);
+        $this->logImportError($string);
+    }
+
+    /**
      * Parse SugarCRM date format to our timezone
      */
     protected function parseSugarDate($value): ?string
@@ -165,27 +186,6 @@ abstract class AbstractSugarCRMImport extends Command
                 $this->logImportError($reason);
             }
         }
-    }
-
-    /**
-     * Log warning with context to database and console
-     */
-    public function warn($string, $verbosity = null): void
-    {
-        parent::warn($string, $verbosity);
-        $this->logImportWarning($string);
-    }
-
-    public function info($string, $verbosity = null): void
-    {
-        parent::info($string, $verbosity);
-        $this->logImportInfo($string);
-    }
-
-    public function error($string, $verbosity = null): void
-    {
-        parent::error($string, $verbosity);
-        $this->logImportError($string);
     }
 
     /**
@@ -400,10 +400,10 @@ abstract class AbstractSugarCRMImport extends Command
         if ($this->ensureLogRunHasStarted()) {
             ImportLog::create([
                 'import_run_id' => $this->currentImportRun->id,
-                'level' => $logLevel,
-                'message' => $message,
-                'context' => $context,
-                'record_id' => $context['record_id'] ?? null,
+                'level'         => $logLevel,
+                'message'       => $message,
+                'context'       => $context,
+                'record_id'     => $context['record_id'] ?? null,
             ]);
         }
     }
@@ -434,6 +434,7 @@ abstract class AbstractSugarCRMImport extends Command
         if (! $this->currentImportRun) {
             parent::warn('Logging, will import operation has not been started yet');
         }
-        return !is_null($this->currentImportRun);
+
+        return ! is_null($this->currentImportRun);
     }
 }

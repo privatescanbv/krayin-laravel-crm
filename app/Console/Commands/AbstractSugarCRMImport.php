@@ -169,34 +169,24 @@ abstract class AbstractSugarCRMImport extends Command
     }
 
     /**
-     * Log error with context to database and Laravel log
-     */
-    protected function logError(string $message, array $context = []): void
-    {
-        $this->error("\n{$message}");
-        Log::error($message, $context);
-        $this->logImportError($message, $context);
-    }
-
-    /**
      * Log warning with context to database and console
      */
-    protected function warn(string $message, array $context = []): void
+    public function warn($string, $verbosity = null): void
     {
-        parent::warn($message);
-        $this->logImportWarning($message, $context);
+        parent::warn($string, $verbosity);
+        $this->logImportWarning($string);
     }
 
-    /**
-     * Log info with context to database (optional)
-     */
-    protected function logInfo(string $message, array $context = []): void
+    public function info($string, $verbosity = null): void
     {
-        $this->info($message);
-        // Only log important info messages to database to avoid clutter
-        if (!empty($context)) {
-            $this->logImportInfo($message, $context);
-        }
+        parent::info($string, $verbosity);
+        $this->logImportInfo($string);
+    }
+
+    public function error($string, $verbosity = null): void
+    {
+        parent::error($string, $verbosity);
+        $this->logImportError($string);
     }
 
     /**
@@ -204,50 +194,15 @@ abstract class AbstractSugarCRMImport extends Command
      */
     protected function logImportError(string $message, array $context = []): void
     {
-        if ($this->currentImportRun) {
-            try {
-                ImportLog::create([
-                    'import_run_id' => $this->currentImportRun->id,
-                    'level'         => 'error',
-                    'message'       => $message,
-                    'context'       => $context,
-                    'record_id'     => $context['record_id'] ?? null,
-                ]);
-            } catch (\Exception $e) {
-                // Fallback to Laravel log if database logging fails
-                Log::error('Failed to log import error to database: '.$e->getMessage(), [
-                    'original_message' => $message,
-                    'original_context' => $context,
-                ]);
-            }
-        } else {
-            Log::warning('logImportError called but no currentImportRun is set', [
-                'message' => $message,
-                'context' => $context,
-            ]);
-        }
+        $this->logImport($message, $context, 'error');
     }
+
     /**
      * Log import warning to database
      */
     protected function logImportWarning(string $message, array $context = []): void
     {
-        $this->ensureLogRunHasStarted();
-            try {
-                ImportLog::create([
-                    'import_run_id' => $this->currentImportRun->id,
-                    'level'         => 'warning',
-                    'message'       => $message,
-                    'context'       => $context,
-                    'record_id'     => $context['record_id'] ?? null,
-                ]);
-            } catch (\Exception $e) {
-                // Fallback to Laravel log if database logging fails
-                Log::warning('Failed to log import warning to database: '.$e->getMessage(), [
-                    'original_message' => $message,
-                    'original_context' => $context,
-                ]);
-            }
+        $this->logImport($message, $context, 'warning');
     }
 
     /**
@@ -255,22 +210,7 @@ abstract class AbstractSugarCRMImport extends Command
      */
     protected function logImportInfo(string $message, array $context = []): void
     {
-        $this->ensureLogRunHasStarted();
-        try {
-            ImportLog::create([
-                'import_run_id' => $this->currentImportRun->id,
-                'level'         => 'info',
-                'message'       => $message,
-                'context'       => $context,
-                'record_id'     => $context['record_id'] ?? null,
-            ]);
-        } catch (\Exception $e) {
-            // Fallback to Laravel log if database logging fails
-            Log::info('Failed to log import info to database: '.$e->getMessage(), [
-                'original_message' => $message,
-                'original_context' => $context,
-            ]);
-        }
+        $this->logImport($message, $context, 'info');
     }
 
     /**
@@ -456,6 +396,19 @@ abstract class AbstractSugarCRMImport extends Command
         }
     }
 
+    private function logImport(string $message, array $context = [], string $logLevel = 'error'): void
+    {
+        if ($this->ensureLogRunHasStarted()) {
+            ImportLog::create([
+                'import_run_id' => $this->currentImportRun->id,
+                'level' => $logLevel,
+                'message' => $message,
+                'context' => $context,
+                'record_id' => $context['record_id'] ?? null,
+            ]);
+        }
+    }
+
     /**
      * Disable webhooks during import operations
      */
@@ -475,5 +428,13 @@ abstract class AbstractSugarCRMImport extends Command
     {
         Config::set('webhook.enabled', true);
         $this->info('🔔 Webhooks re-enabled after import operation');
+    }
+
+    private function ensureLogRunHasStarted(): bool
+    {
+        if (! $this->currentImportRun) {
+            parent::warn('Logging, will import operation has not been started yet');
+        }
+        return !is_null($this->currentImportRun);
     }
 }

@@ -142,7 +142,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
                         }
                     } catch (Exception $e) {
                         $errorCount++;
-                        $this->logError("Error importing user {$sugarUser->id}: {$e->getMessage()}", [
+                        $this->error("Error importing user {$sugarUser->id}: {$e->getMessage()}", [
                             'sugar_user_id' => $sugarUser->id,
                             'user_name'     => $sugarUser->user_name,
                             'exception'     => $e,
@@ -169,7 +169,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
                 ]);
             });
         } catch (Exception $e) {
-            $this->logError('Import failed: '.$e->getMessage(), ['exception' => $e]);
+            $this->error('Import failed: '.$e->getMessage(), ['exception' => $e]);
 
             return 1;
         }

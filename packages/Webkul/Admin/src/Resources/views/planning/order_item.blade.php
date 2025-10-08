@@ -176,9 +176,39 @@
                         const url = `${"{{ route('admin.planning.order_item.availability', ['orderItemId' => $orderItem->id]) }}"}?start=${this.window.start.toISOString()}&end=${this.window.end.toISOString()}&resource_type_id=${this.filters.resource_type_id||''}&clinic_id=${this.filters.clinic_id||''}`;
                         const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
                         const data = await res.json();
-                        this.resources = data.resources || [];
-                        this.rawShifts = data.shifts || {};
-                        this.rawOccupancy = data.occupancy || {};
+                        this.resources = Array.isArray(data.resources) ? data.resources : [];
+                        // Normalize shifts per resource to ensure weekday_time_blocks is an array
+                        const normalizeBlocks = (val) => {
+                            if (!val) return [];
+                            if (Array.isArray(val)) return val;
+                            if (typeof val === 'string') {
+                                try { const parsed = JSON.parse(val); return Array.isArray(parsed) ? parsed : []; } catch (e) { return []; }
+                            }
+                            if (typeof val === 'object') {
+                                // Allow single block object
+                                return [val];
+                            }
+                            return [];
+                        };
+                        const shifts = data.shifts || {};
+                        const normShifts = {};
+                        Object.keys(shifts || {}).forEach((rid) => {
+                            const arr = Array.isArray(shifts[rid]) ? shifts[rid] : [];
+                            normShifts[rid] = arr.map(s => ({
+                                ...s,
+                                weekday_time_blocks: normalizeBlocks(s.weekday_time_blocks),
+                                available: s.available !== false,
+                            }));
+                        });
+                        this.rawShifts = normShifts;
+                        // Normalize occupancy list per resource
+                        const occ = data.occupancy || {};
+                        const normOcc = {};
+                        Object.keys(occ || {}).forEach((rid) => {
+                            const arr = Array.isArray(occ[rid]) ? occ[rid] : [];
+                            normOcc[rid] = arr.map(o => ({ ...o }));
+                        });
+                        this.rawOccupancy = normOcc;
                     },
                     blocksFromShift(resourceId, shift) {
                         // weekday_time_blocks: [{ weekday: 0..6 (0=Sun), from: "09:00", to: "17:00" }]
@@ -187,7 +217,9 @@
                         for (let i=0;i<7;i++) {
                             const day = new Date(start); day.setDate(day.getDate()+i);
                             const weekdaySun0 = day.getDay();
-                            const tbs = (shift.weekday_time_blocks||[]).filter(b => b.weekday === weekdaySun0 && shift.available !== false);
+                            const source = shift && shift.weekday_time_blocks;
+                            const blockList = Array.isArray(source) ? source : [];
+                            const tbs = blockList.filter(b => Number(b.weekday) === weekdaySun0 && shift.available !== false);
                             for (const tb of tbs) {
                                 const from = new Date(day); const [fh,fm] = (tb.from||'09:00').split(':'); from.setHours(+fh, +fm, 0, 0);
                                 const to = new Date(day); const [th,tm] = (tb.to||'17:00').split(':'); to.setHours(+th, +tm, 0, 0);

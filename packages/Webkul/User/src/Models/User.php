@@ -44,6 +44,15 @@ class User extends Authenticatable implements UserContract
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = [
+        'name',
+    ];
+
+    /**
      * Get image url for the product image.
      */
     public function image_url()

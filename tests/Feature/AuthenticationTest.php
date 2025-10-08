@@ -18,7 +18,8 @@ beforeEach(function () {
         // Zorg dat er een default admin user bestaat voor elke test
         User::factory()->create([
             'email'           => $this->adminUserEmail,
-            'name'            => 'Admin',
+            'first_name'      => 'Admin',
+            'last_name'       => 'User',
             'status'          => 1,
             'role_id'         => $role->id,
             'view_permission' => 'global',

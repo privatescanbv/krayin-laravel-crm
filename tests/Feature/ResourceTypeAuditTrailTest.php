@@ -14,19 +14,21 @@ test('resource_type_audit_trail_uses_user_guard', function () {
     ]);
 
     $user1 = User::create([
-        'name'     => 'Audit User 1',
-        'email'    => 'audit.user1@example.com',
-        'password' => bcrypt('password'),
-        'status'   => 1,
-        'role_id'  => $role->id,
+        'first_name' => 'Audit',
+        'last_name'  => 'User 1',
+        'email'      => 'audit.user1@example.com',
+        'password'   => bcrypt('password'),
+        'status'     => 1,
+        'role_id'    => $role->id,
     ]);
 
     $user2 = User::create([
-        'name'     => 'Audit User 2',
-        'email'    => 'audit.user2@example.com',
-        'password' => bcrypt('password'),
-        'status'   => 1,
-        'role_id'  => $role->id,
+        'first_name' => 'Audit',
+        'last_name'  => 'User 2',
+        'email'      => 'audit.user2@example.com',
+        'password'   => bcrypt('password'),
+        'status'     => 1,
+        'role_id'    => $role->id,
     ]);
 
     // Act - authenticate via the "user" guard and create a resource type

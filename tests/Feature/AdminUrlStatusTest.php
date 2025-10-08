@@ -69,7 +69,8 @@ it('tests all admin GET routes return valid HTTP status codes', function () {
 
     $admin = User::factory()->create([
         'email'           => 'admin_url_test@example.com',
-        'name'            => 'Admin URL Tester',
+        'first_name'      => 'Admin',
+        'last_name'       => 'URL Tester',
         'status'          => 1,
         'role_id'         => $role->id,
         'view_permission' => 'global',

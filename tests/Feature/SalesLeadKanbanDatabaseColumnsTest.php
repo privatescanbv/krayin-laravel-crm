@@ -12,7 +12,7 @@ beforeEach(function () {
     $this->seed(TestSeeder::class);
 
     // Authenticate a back-office user on the correct guard
-    $this->user = User::factory()->create(['name' => 'Admin Tester']);
+    $this->user = User::factory()->create(['first_name' => 'Admin', 'last_name' => 'Tester']);
     $this->actingAs($this->user, 'user');
     $this->withoutMiddleware(Authenticate::class);
 

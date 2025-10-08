@@ -23,4 +23,3 @@ class OrderRegelFactory extends Factory
         ];
     }
 }
-

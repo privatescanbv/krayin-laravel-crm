@@ -95,4 +95,3 @@ class OrderRegelDataGrid extends DataGrid
         }
     }
 }
-

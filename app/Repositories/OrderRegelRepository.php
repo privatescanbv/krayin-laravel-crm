@@ -12,4 +12,3 @@ class OrderRegelRepository extends Repository
         return OrderRegel::class;
     }
 }
-

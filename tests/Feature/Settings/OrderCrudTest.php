@@ -70,4 +70,3 @@ test('can delete order', function () {
         'id' => $order->id,
     ]);
 });
-

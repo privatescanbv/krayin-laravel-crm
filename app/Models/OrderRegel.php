@@ -41,4 +41,3 @@ class OrderRegel extends Model
         return $this->belongsTo(\Webkul\Product\Models\Product::class);
     }
 }
-

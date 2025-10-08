@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\OrderDataGrid;
 use App\Repositories\OrderRepository;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class OrderController extends SimpleEntityController
@@ -57,4 +55,3 @@ class OrderController extends SimpleEntityController
         return 'Verwijderen mislukt.';
     }
 }
-

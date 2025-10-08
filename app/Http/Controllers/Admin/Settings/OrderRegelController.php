@@ -56,4 +56,3 @@ class OrderRegelController extends SimpleEntityController
         return 'Verwijderen mislukt.';
     }
 }
-

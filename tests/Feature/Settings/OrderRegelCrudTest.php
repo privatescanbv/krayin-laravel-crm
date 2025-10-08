@@ -78,4 +78,3 @@ test('can delete order_regel', function () {
         'id' => $regel->id,
     ]);
 });
-

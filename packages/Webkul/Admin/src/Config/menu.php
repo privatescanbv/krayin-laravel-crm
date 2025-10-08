@@ -327,17 +327,6 @@ return [
     ],
 
     /**
-     * Import Runs (submenu under configuration).
-     */
-    [
-        'key'        => 'configuration.import-runs',
-        'name'       => 'Import Runs',
-        'route'      => 'admin.settings.import-runs.index',
-        'sort'       => 1,
-        'icon-class' => '',
-    ],
-
-    /**
      * Documentation.
      */
     [

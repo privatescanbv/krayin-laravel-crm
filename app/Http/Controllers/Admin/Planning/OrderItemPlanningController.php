@@ -46,16 +46,6 @@ class OrderItemPlanningController extends Controller
         }
         $resources = $resourcesQuery->get();
 
-        // Shifts (availability) in the week window
-        $shifts = Shift::query()
-            ->whereIn('resource_id', $resources->pluck('id'))
-            ->where(function ($q) use ($start, $end) {
-                $q->whereDate('period_start', '<=', $end->toDateString())
-                  ->whereDate('period_end', '>=', $start->toDateString());
-            })
-            ->get()
-            ->groupBy('resource_id');
-
         // Occupancy (bookings) in the window
         $occupancy = ResourceOrderItem::query()
             ->whereIn('resource_id', $resources->pluck('id'))
@@ -68,17 +58,119 @@ class OrderItemPlanningController extends Controller
             })
             ->get()
             ->groupBy('resource_id');
+        // Shifts in the window
+        $shifts = Shift::query()
+            ->whereIn('resource_id', $resources->pluck('id'))
+            ->where(function ($q) use ($start, $end) {
+                $q->whereDate('period_start', '<=', $end->toDateString())
+                  ->whereDate('period_end', '>=', $start->toDateString());
+            })
+            ->get()
+            ->groupBy('resource_id');
+
+        // Build availability blocks per resource by expanding weekday_time_blocks across the requested week
+        $availabilityByResource = [];
+        foreach ($resources as $resource) {
+            $rid = $resource->id;
+            $availabilityByResource[$rid] = [];
+            $resourceShifts = $shifts->get($rid) ?? collect();
+            for ($i = 0; $i < 7; $i++) {
+                $day = $start->addDays($i);
+                foreach ($resourceShifts as $shift) {
+                    $blocks = $shift->weekday_time_blocks;
+                    if (empty($blocks) || $shift->available === false) {
+                        continue;
+                    }
+                    // Normalize blocks to array of arrays
+                    if (! is_array($blocks)) {
+                        $blocks = [$blocks];
+                    }
+                    foreach ($blocks as $tb) {
+                        $weekday = (int) ($tb['weekday'] ?? -1); // 0=Sun .. 6=Sat
+                        if ($weekday !== (int) $day->dayOfWeek) {
+                            continue;
+                        }
+                        $fromStr = $tb['from'] ?? '09:00';
+                        $toStr = $tb['to'] ?? '17:00';
+                        $from = CarbonImmutable::parse($day->format('Y-m-d') . ' ' . $fromStr);
+                        $to   = CarbonImmutable::parse($day->format('Y-m-d') . ' ' . $toStr);
+                        if ($to->lessThanOrEqualTo($from)) {
+                            continue;
+                        }
+                        $availabilityByResource[$rid][] = [
+                            'from' => $from->toIso8601String(),
+                            'to'   => $to->toIso8601String(),
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Helper to subtract occupancy intervals from availability intervals
+        $subtractIntervals = function (array $avail, array $occ) {
+            $result = [];
+            foreach ($avail as $interval) {
+                $segments = [ [ 'from' => CarbonImmutable::parse($interval['from']), 'to' => CarbonImmutable::parse($interval['to']) ] ];
+                foreach ($occ as $o) {
+                    $of = CarbonImmutable::parse($o['from']);
+                    $ot = CarbonImmutable::parse($o['to']);
+                    $next = [];
+                    foreach ($segments as $seg) {
+                        // No overlap
+                        if ($ot <= $seg['from'] || $of >= $seg['to']) {
+                            $next[] = $seg;
+                            continue;
+                        }
+                        // Left segment
+                        if ($of > $seg['from']) {
+                            $next[] = [ 'from' => $seg['from'], 'to' => $of ];
+                        }
+                        // Right segment
+                        if ($ot < $seg['to']) {
+                            $next[] = [ 'from' => $ot, 'to' => $seg['to'] ];
+                        }
+                    }
+                    $segments = $next;
+                }
+                foreach ($segments as $s) {
+                    if ($s['to'] > $s['from']) {
+                        $result[] = [ 'from' => $s['from']->toIso8601String(), 'to' => $s['to']->toIso8601String() ];
+                    }
+                }
+            }
+            return $result;
+        };
+
+        // Prepare flat occupied list per resource (ISO strings)
+        $occupiedByResource = [];
+        foreach ($resources as $resource) {
+            $rid = $resource->id;
+            $occupiedByResource[$rid] = [];
+            foreach ($occupancy->get($rid, collect()) as $o) {
+                $occupiedByResource[$rid][] = [
+                    'from' => CarbonImmutable::parse($o->from)->toIso8601String(),
+                    'to'   => CarbonImmutable::parse($o->to)->toIso8601String(),
+                ];
+            }
+        }
+
+        // Compute final availability (availability - occupied)
+        $finalAvailability = [];
+        foreach ($resources as $resource) {
+            $rid = $resource->id;
+            $finalAvailability[$rid] = $subtractIntervals($availabilityByResource[$rid] ?? [], $occupiedByResource[$rid] ?? []);
+        }
 
         return response()->json([
-            'resources'  => $resources->map(fn($r) => [
+            'resources'   => $resources->map(fn($r) => [
                 'id'             => $r->id,
                 'name'           => $r->name,
                 'clinic'         => $r->clinic?->name,
                 'resource_type'  => $r->resourceType?->name,
             ])->values(),
-            'shifts'     => $shifts,
-            'occupancy'  => $occupancy,
-            'window'     => [ 'start' => $start->toIso8601String(), 'end' => $end->toIso8601String() ],
+            'availability'=> $finalAvailability,
+            'occupancy'   => $occupiedByResource,
+            'window'      => [ 'start' => $start->toIso8601String(), 'end' => $end->toIso8601String() ],
         ]);
     }
 

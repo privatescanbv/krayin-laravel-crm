@@ -226,10 +226,15 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
      */
     private function mapUserData($sugarUser): array
     {
-        // Build full name from first_name and last_name
-        $name = trim(($sugarUser->first_name ?? '').' '.($sugarUser->last_name ?? ''));
-        if (empty($name)) {
-            $name = $sugarUser->user_name ?? 'Unknown User';
+        // Get first_name and last_name from SugarCRM
+        $firstName = trim($sugarUser->first_name ?? '');
+        $lastName = trim($sugarUser->last_name ?? '');
+        
+        // Fallback to username if no names provided
+        if (empty($firstName) && empty($lastName)) {
+            $parts = explode('.', $sugarUser->user_name ?? 'Unknown User');
+            $firstName = ucfirst($parts[0] ?? 'Unknown');
+            $lastName = ucfirst($parts[1] ?? 'User');
         }
 
         // Generate email if not available (using user_name as base)
@@ -240,7 +245,8 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
 
         return [
             'external_id'     => $sugarUser->id,
-            'name'            => $name,
+            'first_name'      => $firstName,
+            'last_name'       => $lastName,
             'email'           => $email,
             'status'          => $status,
             'role_id'         => $this->determineRoleId($sugarUser),

@@ -145,48 +145,57 @@ class OrderItemPlanningController extends Controller
 
         // Helper to subtract occupancy intervals from availability intervals
         $subtractIntervals = function (array $avail, array $occ) {
+            if (empty($occ)) {
+                return $avail; // No occupancy to subtract
+            }
+            
             $result = [];
             foreach ($avail as $interval) {
-                $segments = [ [ 'from' => CarbonImmutable::parse($interval['from']), 'to' => CarbonImmutable::parse($interval['to']) ] ];
+                $intervalStart = CarbonImmutable::parse($interval['from']);
+                $intervalEnd = CarbonImmutable::parse($interval['to']);
+                $segments = [[$intervalStart, $intervalEnd]];
                 
                 foreach ($occ as $o) {
-                    $of = CarbonImmutable::parse($o['from']);
-                    $ot = CarbonImmutable::parse($o['to']);
-                    $next = [];
+                    $occStart = CarbonImmutable::parse($o['from']);
+                    $occEnd = CarbonImmutable::parse($o['to']);
+                    $newSegments = [];
                     
-                    foreach ($segments as $seg) {
-                        $segStart = $seg['from'];
-                        $segEnd = $seg['to'];
+                    foreach ($segments as $segment) {
+                        $segStart = $segment[0];
+                        $segEnd = $segment[1];
                         
-                        // No overlap - keep segment as is
-                        if ($ot->lessThanOrEqualTo($segStart) || $of->greaterThanOrEqualTo($segEnd)) {
-                            $next[] = $seg;
+                        // No overlap - keep segment
+                        if ($occEnd->lessThanOrEqualTo($segStart) || $occStart->greaterThanOrEqualTo($segEnd)) {
+                            $newSegments[] = $segment;
                             continue;
                         }
                         
-                        // Complete overlap - remove segment entirely
-                        if ($of->lessThanOrEqualTo($segStart) && $ot->greaterThanOrEqualTo($segEnd)) {
+                        // Complete overlap - remove segment
+                        if ($occStart->lessThanOrEqualTo($segStart) && $occEnd->greaterThanOrEqualTo($segEnd)) {
                             continue;
                         }
                         
                         // Partial overlap - split segment
-                        // Left part (before occupancy) - only if there's space before
-                        if ($of->greaterThan($segStart)) {
-                            $next[] = [ 'from' => $segStart, 'to' => $of ];
+                        // Left part (before occupancy)
+                        if ($occStart->greaterThan($segStart)) {
+                            $newSegments[] = [$segStart, $occStart];
                         }
                         
-                        // Right part (after occupancy) - only if there's space after
-                        if ($ot->lessThan($segEnd)) {
-                            $next[] = [ 'from' => $ot, 'to' => $segEnd ];
+                        // Right part (after occupancy)
+                        if ($occEnd->lessThan($segEnd)) {
+                            $newSegments[] = [$occEnd, $segEnd];
                         }
                     }
-                    $segments = $next;
+                    $segments = $newSegments;
                 }
                 
                 // Add remaining segments to result
-                foreach ($segments as $s) {
-                    if ($s['to']->greaterThan($s['from'])) {
-                        $result[] = [ 'from' => $s['from']->toIso8601String(), 'to' => $s['to']->toIso8601String() ];
+                foreach ($segments as $segment) {
+                    if ($segment[1]->greaterThan($segment[0])) {
+                        $result[] = [
+                            'from' => $segment[0]->toIso8601String(),
+                            'to' => $segment[1]->toIso8601String()
+                        ];
                     }
                 }
             }

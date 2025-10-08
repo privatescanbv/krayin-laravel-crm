@@ -128,6 +128,7 @@ class AvailabilityExpansionTest extends TestCase
         // Should have 1 occupancy block
         $this->assertCount(1, $occupancy, 'Should have 1 occupancy block. Got: ' . json_encode($occupancy));
         
+        
         // Should have 2 availability blocks: 08:00-10:00 and 12:00-17:00
         $this->assertCount(2, $avail, 'Should have 2 availability blocks after booking subtraction. Got: ' . json_encode($avail));
         

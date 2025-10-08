@@ -17,7 +17,7 @@ class OrderRegelController extends SimpleEntityController
         $this->indexView = 'admin::order_regels.index';
         $this->createView = 'admin::order_regels.create';
         $this->editView = 'admin::order_regels.edit';
-        $this->indexRoute = 'admin.settings.order_regels.index';
+        $this->indexRoute = 'admin.order_regels.index';
         $this->permissionPrefix = 'settings.order_regels';
     }
 

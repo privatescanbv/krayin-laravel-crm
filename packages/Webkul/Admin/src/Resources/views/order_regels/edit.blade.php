@@ -3,7 +3,7 @@
         Orderregel bewerken
     </x-slot>
 
-    <x-admin::form :action="route('admin.settings.order_regels.update', ['id' => $order_regels->id])" method="POST">
+    <x-admin::form :action="route('admin.order_regels.update', ['id' => $order_regels->id])" method="POST">
         <input type="hidden" name="_method" value="put">
 
         <div class="flex flex-col gap-4">

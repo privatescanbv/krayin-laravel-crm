@@ -1,4 +1,4 @@
-<?php
+THIS SHOULD BE A LINTER ERROR<?php
 
 namespace Tests\Feature\Settings;
 
@@ -20,7 +20,7 @@ test('order_regels index returns datagrid json', function () {
     $r1 = OrderRegel::factory()->create(['order_id' => $o->id]);
     $r2 = OrderRegel::factory()->create(['order_id' => $o->id]);
 
-    $response = $this->getJson(route('admin.settings.order_regels.index'));
+    $response = $this->getJson(route('admin.order_regels.index'));
     $response->assertOk();
 
     $ids = getDatagridIds($response);
@@ -38,7 +38,7 @@ test('can create order_regel', function () {
         'total_price' => 200,
     ];
 
-    $response = $this->postJson(route('admin.settings.order_regels.store'), $payload);
+    $response = $this->postJson(route('admin.order_regels.store'), $payload);
     $response->assertOk();
 
     $this->assertDatabaseHas('order_regels', [
@@ -59,7 +59,7 @@ test('can update order_regel', function () {
         '_method'     => 'put',
     ];
 
-    $response = $this->postJson(route('admin.settings.order_regels.update', ['id' => $regel->id]), $payload);
+    $response = $this->postJson(route('admin.order_regels.update', ['id' => $regel->id]), $payload);
     $response->assertOk()->assertJsonPath('data.quantity', 5);
 
     $this->assertDatabaseHas('order_regels', [
@@ -71,7 +71,7 @@ test('can update order_regel', function () {
 test('can delete order_regel', function () {
     $regel = OrderRegel::factory()->create();
 
-    $response = $this->deleteJson(route('admin.settings.order_regels.delete', ['id' => $regel->id]));
+    $response = $this->deleteJson(route('admin.order_regels.delete', ['id' => $regel->id]));
     $response->assertOk();
 
     $this->assertDatabaseMissing('order_regels', [

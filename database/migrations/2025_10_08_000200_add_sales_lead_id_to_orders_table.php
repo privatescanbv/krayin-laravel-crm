@@ -1,4 +1,4 @@
-<?php
+THIS SHOULD BE A LINTER ERROR<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            $table->unsignedBigInteger('sales_lead_id')->nullable()->after('sales_order_id');
+            $table->unsignedBigInteger('sales_lead_id')->nullable()->after('title');
             $table->foreign('sales_lead_id')->references('id')->on('salesleads')->onDelete('set null');
         });
     }

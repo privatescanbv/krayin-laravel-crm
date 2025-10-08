@@ -28,10 +28,7 @@
                 <x-admin::form.control-group.control type="text" name="title" :value="$orders->title" rules="required" />
             </x-admin::form.control-group>
 
-            <x-admin::form.control-group>
-                <x-admin::form.control-group.label>Sales Order ID</x-admin::form.control-group.label>
-                <x-admin::form.control-group.control type="text" name="sales_order_id" :value="$orders->sales_order_id" />
-            </x-admin::form.control-group>
+            
 
             <x-admin::form.control-group>
                 <x-admin::form.control-group.label>Totale prijs</x-admin::form.control-group.label>

@@ -26,17 +26,15 @@ test('orders index returns datagrid json', function () {
 
 test('can create order', function () {
     $payload = [
-        'title'          => 'Test Order',
-        'sales_order_id' => 'SO-10001',
-        'total_price'    => 123.45,
+        'title'       => 'Test Order',
+        'total_price' => 123.45,
     ];
 
     $response = $this->postJson(route('admin.settings.orders.store'), $payload);
     $response->assertOk();
 
     $this->assertDatabaseHas('orders', [
-        'title'          => 'Test Order',
-        'sales_order_id' => 'SO-10001',
+        'title' => 'Test Order',
     ]);
 });
 
@@ -44,19 +42,17 @@ test('can update order', function () {
     $order = Order::factory()->create();
 
     $payload = [
-        'title'          => 'Updated Order',
-        'sales_order_id' => 'SO-99999',
-        'total_price'    => 999.99,
-        '_method'        => 'put',
+        'title'       => 'Updated Order',
+        'total_price' => 999.99,
+        '_method'     => 'put',
     ];
 
     $response = $this->postJson(route('admin.settings.orders.update', ['id' => $order->id]), $payload);
     $response->assertOk()->assertJsonPath('data.title', 'Updated Order');
 
     $this->assertDatabaseHas('orders', [
-        'id'             => $order->id,
-        'title'          => 'Updated Order',
-        'sales_order_id' => 'SO-99999',
+        'id'    => $order->id,
+        'title' => 'Updated Order',
     ]);
 });
 

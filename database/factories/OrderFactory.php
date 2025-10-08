@@ -16,7 +16,6 @@ class OrderFactory extends Factory
     {
         return [
             'title'          => $this->faker->sentence(3),
-            'sales_order_id' => $this->faker->unique()->bothify('SO-#####'),
             'total_price'    => $this->faker->randomFloat(2, 10, 5000),
         ];
     }

@@ -12,7 +12,6 @@ return new class extends Migration
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->string('title');
-            $table->string('sales_order_id')->nullable();
             $table->decimal('total_price', 12, 2)->default(0);
             AuditTrailMigrationHelper::addAuditTrailColumns($table);
             $table->timestamps();

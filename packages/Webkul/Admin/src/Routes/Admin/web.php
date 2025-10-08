@@ -35,10 +35,7 @@ require 'contacts-routes.php';
  */
 require 'activities-routes.php';
 
-/**
- * Quotes routes.
- */
-require 'quote-routes.php';
+// Quotes removed
 
 /**
  * Workflow routes.

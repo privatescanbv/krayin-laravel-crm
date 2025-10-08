@@ -31,16 +31,7 @@ return [
         'icon-class' => 'icon-setting',
     ],
 
-    /**
-     * Quotes.
-     */
-    [
-        'key'        => 'quotes',
-        'name'       => 'admin::app.layouts.quotes',
-        'route'      => 'admin.quotes.index',
-        'sort'       => 4,
-        'icon-class' => 'icon-quote',
-    ],
+    // Quotes removed
 
     /**
      * Emails.

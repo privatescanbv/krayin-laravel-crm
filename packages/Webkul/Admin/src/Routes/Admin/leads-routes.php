@@ -5,7 +5,6 @@ use Webkul\Admin\Http\Controllers\Lead\ActivityController;
 use Webkul\Admin\Http\Controllers\Lead\DuplicateController;
 use Webkul\Admin\Http\Controllers\Lead\EmailController;
 use Webkul\Admin\Http\Controllers\Lead\LeadController;
-use Webkul\Admin\Http\Controllers\Lead\QuoteController;
 use Webkul\Admin\Http\Controllers\Lead\TagController;
 use App\Http\Controllers\Admin\AnamnesisController;
 
@@ -66,9 +65,7 @@ Route::controller(LeadController::class)->prefix('leads')->group(function () {
         Route::delete('', 'detach')->name('admin.leads.emails.detach');
     });
 
-    Route::controller(QuoteController::class)->prefix('{id}/quotes')->group(function () {
-        Route::delete('{quote_id?}', 'delete')->name('admin.leads.quotes.delete');
-    });
+    // Quotes routes removed
 
     // Duplicate management routes
     Route::controller(DuplicateController::class)->prefix('{id}/duplicates')->group(function () {

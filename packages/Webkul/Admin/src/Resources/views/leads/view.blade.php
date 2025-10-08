@@ -159,11 +159,10 @@
             <x-admin::activities
                 :endpoint="route('admin.leads.activities.index', $lead->id)"
                 :email-detach-endpoint="route('admin.leads.emails.detach', $lead->id)"
-                :activeType="request()->query('from') === 'quotes' ? 'quotes' : 'planned'"
+                :activeType="'planned'"
                 :extra-types="[
                     ['name' => 'description', 'label' => trans('admin::app.leads.view.tabs.description')],
                     ['name' => 'products', 'label' => trans('admin::app.leads.view.tabs.products')],
-                    ['name' => 'quotes', 'label' => trans('admin::app.leads.view.tabs.quotes')],
                 ]"
             >
                 <!-- Products -->
@@ -171,10 +170,7 @@
                     @include ('admin::leads.view.products')
                 </x-slot>
 
-                <!-- Quotes -->
-                <x-slot:quotes>
-                    @include ('admin::leads.view.quotes')
-                </x-slot>
+                
 
                 <!-- Description -->
                 <x-slot:description>

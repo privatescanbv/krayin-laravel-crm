@@ -41,7 +41,7 @@
                     </x-admin::form.control-group>
 
                     <div class="w-2/12 text-right font-medium">
-                        {{ '{{ formatPrice(row.total) }}' }}
+                        @{{ formatPrice(row.total) }}
                     </div>
 
                     <button type="button" class="icon-button !p-1" @click="removeRow(index)">
@@ -58,7 +58,7 @@
         <div class="flex items-center justify-end gap-6 border-t border-gray-200 px-4 py-3 text-sm dark:border-gray-800">
             <div class="flex items-center gap-2">
                 <span class="text-gray-600 dark:text-gray-300">@lang('admin::app.quotes.create.subtotal')</span>
-                <span class="font-semibold">{{ '{{ formatPrice(subtotal) }}' }}</span>
+                <span class="font-semibold">@{{ formatPrice(subtotal) }}</span>
             </div>
         </div>
     </div>

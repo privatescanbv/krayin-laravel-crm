@@ -84,12 +84,14 @@ class OrderItemPlanningController extends Controller
                         continue;
                     }
                     if (is_array($blocks)) {
-                        // Shape B: first element is a weekday map: [{ '1': [{from,to}], '2': [...] }]
-                        if (isset($blocks[0]) && is_array($blocks[0]) && array_keys($blocks[0]) !== range(0, count($blocks[0]) - 1)) {
-                            $map = $blocks[0];
-                            foreach ($map as $wk => $entries) {
-                                $weekday = (int) $wk; // 0..6 or 1..7
-                                $weekdayNormalized = $weekday === 7 ? 0 : $weekday;
+                        // Check if this is a weekday map (keys are numeric weekdays: '1', '2', etc.)
+                        $isWeekdayMap = !empty($blocks) && array_keys($blocks) !== range(0, count($blocks) - 1);
+                        
+                        if ($isWeekdayMap) {
+                            // Direct weekday map: { '1': [{from,to}], '2': [...] }
+                            foreach ($blocks as $wk => $entries) {
+                                $weekday = (int) $wk; // 1=Mon, 2=Tue, etc.
+                                $weekdayNormalized = $weekday === 7 ? 0 : $weekday; // Convert Sun=7 to Sun=0
                                 if ($weekdayNormalized !== (int) $day->dayOfWeek) {
                                     continue;
                                 }
@@ -112,7 +114,7 @@ class OrderItemPlanningController extends Controller
                                 }
                             }
                         } else {
-                            // Shape A: flat blocks array with 'weekday'
+                            // Flat blocks array with 'weekday' field
                             foreach ($blocks as $tb) {
                                 if (! is_array($tb)) { continue; }
                                 $weekday = (int) ($tb['weekday'] ?? -1);

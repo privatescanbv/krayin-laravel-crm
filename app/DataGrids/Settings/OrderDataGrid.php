@@ -14,7 +14,8 @@ class OrderDataGrid extends DataGrid
             ->addSelect(
                 'orders.id',
                 'orders.title',
-                'orders.total_price'
+                'orders.total_price',
+                'orders.status'
             );
 
         $this->addFilter('id', 'orders.id');
@@ -46,6 +47,15 @@ class OrderDataGrid extends DataGrid
             'index'      => 'total_price',
             'type'       => 'float',
             'label'      => 'Totale prijs',
+            'searchable' => true,
+            'filterable' => true,
+            'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'status',
+            'type'       => 'string',
+            'label'      => 'Status',
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,

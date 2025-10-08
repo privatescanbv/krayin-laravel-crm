@@ -1,3 +1,4 @@
+@php use App\Models\SalesLead; @endphp
 <x-admin::layouts>
     <x-slot:title>
         Order bewerken
@@ -7,9 +8,10 @@
         <input type="hidden" name="_method" value="put">
 
         <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div
+                class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
-                    <x-admin::breadcrumbs name="orders.edit" :entity="$orders" />
+                    <x-admin::breadcrumbs name="orders.edit" :entity="$orders"/>
 
                     <div class="text-xl font-bold dark:text-gray-300">
                         Order bewerken
@@ -24,8 +26,21 @@
             </div>
 
             <x-admin::form.control-group>
-                <x-admin::form.control-group.label>Titel</x-admin::form.control-group.label>
-                <x-admin::form.control-group.control type="text" name="title" :value="$orders->title" rules="required" />
+                <x-admin::form.control-group.label class="required">Titel</x-admin::form.control-group.label>
+                <x-admin::form.control-group.control type="text" name="title" :value="$orders->title" rules="required"/>
+            </x-admin::form.control-group>
+
+            <x-admin::form.control-group>
+                <x-admin::form.control-group.label class="required">Sales Lead</x-admin::form.control-group.label>
+                <x-admin::form.control-group.control
+                    type="select"
+                    name="sales_lead_id"
+                    value="{{ $orders->sales_lead_id ?? '' }}"
+                    rules="required|integer|exists:salesleads,id"
+                    :options="SalesLead::with('lead')->get()->mapWithKeys(function($salesLead) {
+                        return [$salesLead->id => $salesLead->name . ' (' . ($salesLead->lead?->name ?? 'Geen lead') . ')'];
+                    })->toArray()"
+                />
             </x-admin::form.control-group>
 
             @include('admin::orders.partials.items', ['order' => $orders])

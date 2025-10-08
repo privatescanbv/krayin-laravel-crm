@@ -17,6 +17,7 @@ class OrderFactory extends Factory
         return [
             'title'          => $this->faker->sentence(3),
             'total_price'    => $this->faker->randomFloat(2, 10, 5000),
+            'sales_lead_id'  => \App\Models\SalesLead::factory(),
         ];
     }
 }

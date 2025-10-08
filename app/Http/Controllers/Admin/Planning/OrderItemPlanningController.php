@@ -34,10 +34,10 @@ class OrderItemPlanningController extends Controller
         $orderItem = OrderRegel::with(['product', 'order'])->findOrFail($orderItemId);
 
         $start = CarbonImmutable::parse($request->query('start', Carbon::now()->startOfWeek()));
-        $end   = CarbonImmutable::parse($request->query('end', $start->addDays(6)->endOfDay()));
+        $end = CarbonImmutable::parse($request->query('end', $start->addDays(6)->endOfDay()));
 
         $resourceTypeId = (int) $request->query('resource_type_id', $orderItem->product?->resource_type_id);
-        $clinicId       = $request->query('clinic_id');
+        $clinicId = $request->query('clinic_id');
 
         $resourcesQuery = Resource::query()->with('clinic', 'resourceType')
             ->where('resource_type_id', $resourceTypeId);
@@ -48,23 +48,24 @@ class OrderItemPlanningController extends Controller
 
         // Occupancy (bookings) in the window
         $occupancy = ResourceOrderItem::query()
+            ->with(['orderItem.order.salesLead.lead'])
             ->whereIn('resource_id', $resources->pluck('id'))
             ->where(function ($q) use ($start, $end) {
                 $q->whereBetween('from', [$start, $end])
-                  ->orWhereBetween('to', [$start, $end])
-                  ->orWhere(function ($q2) use ($start, $end) {
-                      $q2->where('from', '<=', $start)->where('to', '>=', $end);
-                  });
+                    ->orWhereBetween('to', [$start, $end])
+                    ->orWhere(function ($q2) use ($start, $end) {
+                        $q2->where('from', '<=', $start)->where('to', '>=', $end);
+                    });
             })
             ->get()
             ->groupBy('resource_id');
-        
+
         // Shifts in the window
         $shifts = Shift::query()
             ->whereIn('resource_id', $resources->pluck('id'))
             ->where(function ($q) use ($start, $end) {
                 $q->whereDate('period_start', '<=', $end->toDateString())
-                  ->whereDate('period_end', '>=', $start->toDateString());
+                    ->whereDate('period_end', '>=', $start->toDateString());
             })
             ->get()
             ->groupBy('resource_id');
@@ -75,26 +76,26 @@ class OrderItemPlanningController extends Controller
             $rid = $resource->id;
             $availabilityByResource[$rid] = [];
             $resourceShifts = $shifts->get($rid) ?? collect();
-            
+
             for ($i = 0; $i < 7; $i++) {
                 $day = $start->addDays($i);
-                
+
                 foreach ($resourceShifts as $shift) {
                     $blocks = $shift->weekday_time_blocks;
-                    
+
                     if (empty($blocks) || $shift->available === false) {
                         continue;
                     }
                     if (is_array($blocks)) {
                         // Check if this is a weekday map (keys are numeric weekdays: '1', '2', etc.)
-                        $isWeekdayMap = !empty($blocks) && array_keys($blocks) !== range(0, count($blocks) - 1);
-                        
+                        $isWeekdayMap = ! empty($blocks) && array_keys($blocks) !== range(0, count($blocks) - 1);
+
                         if ($isWeekdayMap) {
                             // Direct weekday map: { '1': [{from,to}], '2': [...] }
                             foreach ($blocks as $wk => $entries) {
                                 $weekday = (int) $wk; // 1=Mon, 2=Tue, etc.
                                 $weekdayNormalized = $weekday === 7 ? 0 : $weekday; // Convert Sun=7 to Sun=0
-                                
+
                                 if ($weekdayNormalized !== (int) $day->dayOfWeek) {
                                     continue;
                                 }
@@ -102,11 +103,13 @@ class OrderItemPlanningController extends Controller
                                     continue;
                                 }
                                 foreach ($entries as $tb) {
-                                    if (! is_array($tb)) { continue; }
+                                    if (! is_array($tb)) {
+                                        continue;
+                                    }
                                     $fromStr = $tb['from'] ?? '09:00';
                                     $toStr = $tb['to'] ?? '17:00';
-                                    $from = CarbonImmutable::parse($day->format('Y-m-d') . ' ' . $fromStr);
-                                    $to   = CarbonImmutable::parse($day->format('Y-m-d') . ' ' . $toStr);
+                                    $from = CarbonImmutable::parse($day->format('Y-m-d').' '.$fromStr);
+                                    $to = CarbonImmutable::parse($day->format('Y-m-d').' '.$toStr);
                                     if ($to->lessThanOrEqualTo($from)) {
                                         continue;
                                     }
@@ -119,7 +122,9 @@ class OrderItemPlanningController extends Controller
                         } else {
                             // Flat blocks array with 'weekday' field
                             foreach ($blocks as $tb) {
-                                if (! is_array($tb)) { continue; }
+                                if (! is_array($tb)) {
+                                    continue;
+                                }
                                 $weekday = (int) ($tb['weekday'] ?? -1);
                                 $weekdayNormalized = $weekday === 7 ? 0 : $weekday;
                                 if ($weekdayNormalized !== (int) $day->dayOfWeek) {
@@ -127,8 +132,8 @@ class OrderItemPlanningController extends Controller
                                 }
                                 $fromStr = $tb['from'] ?? '09:00';
                                 $toStr = $tb['to'] ?? '17:00';
-                                $from = CarbonImmutable::parse($day->format('Y-m-d') . ' ' . $fromStr);
-                                $to   = CarbonImmutable::parse($day->format('Y-m-d') . ' ' . $toStr);
+                                $from = CarbonImmutable::parse($day->format('Y-m-d').' '.$fromStr);
+                                $to = CarbonImmutable::parse($day->format('Y-m-d').' '.$toStr);
                                 if ($to->lessThanOrEqualTo($from)) {
                                     continue;
                                 }
@@ -148,39 +153,40 @@ class OrderItemPlanningController extends Controller
             if (empty($occ)) {
                 return $avail; // No occupancy to subtract
             }
-            
+
             $result = [];
             foreach ($avail as $interval) {
                 $intervalStart = CarbonImmutable::parse($interval['from']);
                 $intervalEnd = CarbonImmutable::parse($interval['to']);
                 $segments = [[$intervalStart, $intervalEnd]];
-                
+
                 foreach ($occ as $o) {
                     $occStart = CarbonImmutable::parse($o['from']);
                     $occEnd = CarbonImmutable::parse($o['to']);
                     $newSegments = [];
-                    
+
                     foreach ($segments as $segment) {
                         $segStart = $segment[0];
                         $segEnd = $segment[1];
-                        
+
                         // No overlap - keep segment
                         if ($occEnd->lessThanOrEqualTo($segStart) || $occStart->greaterThanOrEqualTo($segEnd)) {
                             $newSegments[] = $segment;
+
                             continue;
                         }
-                        
+
                         // Complete overlap - remove segment
                         if ($occStart->lessThanOrEqualTo($segStart) && $occEnd->greaterThanOrEqualTo($segEnd)) {
                             continue;
                         }
-                        
+
                         // Partial overlap - split segment
                         // Left part (before occupancy)
                         if ($occStart->greaterThan($segStart)) {
                             $newSegments[] = [$segStart, $occStart];
                         }
-                        
+
                         // Right part (after occupancy)
                         if ($occEnd->lessThan($segEnd)) {
                             $newSegments[] = [$occEnd, $segEnd];
@@ -188,17 +194,18 @@ class OrderItemPlanningController extends Controller
                     }
                     $segments = $newSegments;
                 }
-                
+
                 // Add remaining segments to result
                 foreach ($segments as $segment) {
                     if ($segment[1]->greaterThan($segment[0])) {
                         $result[] = [
                             'from' => $segment[0]->toIso8601String(),
-                            'to' => $segment[1]->toIso8601String()
+                            'to'   => $segment[1]->toIso8601String(),
                         ];
                     }
                 }
             }
+
             return $result;
         };
 
@@ -208,13 +215,16 @@ class OrderItemPlanningController extends Controller
             $rid = $resource->id;
             $occupiedByResource[$rid] = [];
             foreach ($occupancy->get($rid, collect()) as $o) {
+                $leadName = $o->orderItem?->order?->salesLead?->lead?->name ??
+                           $o->orderItem?->order?->salesLead?->name ??
+                           'Onbekend';
                 $occupiedByResource[$rid][] = [
-                    'from' => CarbonImmutable::parse($o->from)->toIso8601String(),
-                    'to'   => CarbonImmutable::parse($o->to)->toIso8601String(),
+                    'from'      => CarbonImmutable::parse($o->from)->toIso8601String(),
+                    'to'        => CarbonImmutable::parse($o->to)->toIso8601String(),
+                    'lead_name' => $leadName,
                 ];
             }
         }
-        
 
         // Compute final availability (availability - occupied)
         $finalAvailability = [];
@@ -222,12 +232,12 @@ class OrderItemPlanningController extends Controller
             $rid = $resource->id;
             $originalAvailability = $availabilityByResource[$rid] ?? [];
             $occupancyForResource = $occupiedByResource[$rid] ?? [];
-            
+
             $finalAvailability[$rid] = $subtractIntervals($originalAvailability, $occupancyForResource);
         }
 
         return response()->json([
-            'resources'   => $resources->map(fn($r) => [
+            'resources'   => $resources->map(fn ($r) => [
                 'id'             => $r->id,
                 'name'           => $r->name,
                 'clinic'         => $r->clinic?->name,
@@ -235,7 +245,7 @@ class OrderItemPlanningController extends Controller
             ])->values(),
             'availability'=> $finalAvailability,
             'occupancy'   => $occupiedByResource,
-            'window'      => [ 'start' => $start->toIso8601String(), 'end' => $end->toIso8601String() ],
+            'window'      => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
         ]);
     }
 
@@ -262,4 +272,3 @@ class OrderItemPlanningController extends Controller
         ], 201);
     }
 }
-

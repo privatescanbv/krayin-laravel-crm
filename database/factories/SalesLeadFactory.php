@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Models\SalesLead;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Stage;
 use Webkul\User\Models\User;
 
@@ -30,7 +31,19 @@ class SalesLeadFactory extends Factory
         // Get or create required related models
         $stage = Stage::first();
         if (! $stage) {
-            throw new \Exception('No pipeline stages found. Please seed the database first.');
+            // Create a default pipeline and stage for testing
+            $pipeline = Pipeline::first() ?? Pipeline::create([
+                'name'        => 'Default Pipeline',
+                'is_default'  => 1,
+                'rotten_days' => 30,
+            ]);
+
+            $stage = Stage::create([
+                'name'             => 'New',
+                'code'             => 'new',
+                'lead_pipeline_id' => $pipeline->id,
+                'sort_order'       => 1,
+            ]);
         }
 
         return [

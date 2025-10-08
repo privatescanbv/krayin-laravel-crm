@@ -34,7 +34,7 @@ Route::controller(OrderRegelController::class)->prefix('order-regels')->group(fu
 /**
  * Planning routes.
  */
-Route::controller(OrderItemPlanningController::class)->prefix('planning')->group(function () {
+Route::middleware(['user'])->controller(OrderItemPlanningController::class)->prefix('planning')->group(function () {
     Route::get('order-item/{orderItemId}', 'show')->name('admin.planning.order_item.show');
     Route::get('order-item/{orderItemId}/availability', 'availability')->name('admin.planning.order_item.availability');
     Route::post('order-item/{orderItemId}/book', 'book')->name('admin.planning.order_item.book');

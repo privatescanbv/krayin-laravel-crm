@@ -2,9 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Models\OrderRegel;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
-use App\Models\OrderRegel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ResourceOrderItemFactory extends Factory
@@ -24,4 +24,3 @@ class ResourceOrderItemFactory extends Factory
         ];
     }
 }
-

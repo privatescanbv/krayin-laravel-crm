@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\OrderDataGrid;
 use App\Repositories\OrderRepository;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\View\View;
 
 class OrderController extends SimpleEntityController
 {
@@ -24,18 +26,11 @@ class OrderController extends SimpleEntityController
         $this->permissionPrefix = 'orders';
     }
 
-    protected function getEditViewData(\Illuminate\Http\Request $request, \Illuminate\Database\Eloquent\Model $entity): array
+    public function create(Request $request): View
     {
-        // Eager-load relations needed for planning button visibility per orderregel
-        $entity->load([
-            'orderRegels.product.partnerProducts' => function ($q) {
-                $q->select('partner_products.id');
-            },
-        ]);
+        $salesLeadId = $request->get('sales_lead_id');
 
-        return [
-            $this->entityName => $entity,
-        ];
+        return view($this->createView, ['salesLeadId'=>$salesLeadId]);
     }
 
     public function store(Request $request): JsonResponse|RedirectResponse
@@ -109,11 +104,26 @@ class OrderController extends SimpleEntityController
         return redirect()->route($this->indexRoute)->with('success', $this->getUpdateSuccessMessage());
     }
 
+    protected function getEditViewData(Request $request, Model $entity): array
+    {
+        // Eager-load relations needed for planning button visibility per orderregel
+        $entity->load([
+            'orderRegels.product.partnerProducts' => function ($q) {
+                $q->select('partner_products.id');
+            },
+        ]);
+
+        return [
+            $this->entityName => $entity,
+        ];
+    }
+
     protected function validateStore(Request $request): void
     {
         $request->validate([
             'title'               => ['required', 'string', 'max:255'],
             'total_price'         => ['nullable', 'numeric', 'min:0'],
+            'sales_lead_id'       => ['required', 'integer', 'exists:salesleads,id'],
             'items'               => ['nullable', 'array'],
             'items.*.product_id'  => ['nullable', 'integer', 'exists:products,id'],
             'items.*.quantity'    => ['nullable', 'integer', 'min:1'],

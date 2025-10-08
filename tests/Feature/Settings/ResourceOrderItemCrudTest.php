@@ -31,4 +31,3 @@ class ResourceOrderItemCrudTest extends TestCase
         ]);
     }
 }
-

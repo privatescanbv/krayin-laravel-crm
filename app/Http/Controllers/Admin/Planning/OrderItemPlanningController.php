@@ -68,6 +68,8 @@ class OrderItemPlanningController extends Controller
             ->get()
             ->groupBy('resource_id');
 
+        logger()->info('Shifts found',[ 'av' =>print_r($shifts, true)]);
+
         // Build availability blocks per resource by expanding weekday_time_blocks across the requested week
         $availabilityByResource = [];
         foreach ($resources as $resource) {
@@ -190,6 +192,7 @@ class OrderItemPlanningController extends Controller
             $rid = $resource->id;
             $finalAvailability[$rid] = $subtractIntervals($availabilityByResource[$rid] ?? [], $occupiedByResource[$rid] ?? []);
         }
+        logger()->info('final availability',[ 'av' =>print_r($finalAvailability, true)]);
 
         return response()->json([
             'resources'   => $resources->map(fn($r) => [

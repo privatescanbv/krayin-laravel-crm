@@ -33,6 +33,9 @@ class LeadRepository extends Repository
         'status',
         'user_id',
         'user.name',
+        // New explicit user fields for first/last name search
+        'user.first_name',
+        'user.last_name',
         // Support both singular and plural relation keys for backward compatibility
         'person.name',
         'persons.name',

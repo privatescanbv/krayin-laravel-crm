@@ -794,6 +794,9 @@ class LeadController extends Controller
             }
         }
 
+        // Normalize user.name (compact UI token) to first_name/last_name
+        $this->normalizeUserNameSearch();
+
         // Normalize convenience tokens for email/phone to underlying JSON columns
         $search = request()->query('search', '');
         if ($search && (str_contains($search, 'email:') || str_contains($search, 'phone:'))) {
@@ -902,6 +905,53 @@ class LeadController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Normalize `user.name:term` into `user.first_name:term;user.last_name:term` with like semantics.
+     */
+    private function normalizeUserNameSearch(): void
+    {
+        $search = request()->query('search', '');
+        $searchFields = request()->query('searchFields', '');
+
+        if (!$search || !str_contains($search, 'user.name:')) {
+            return;
+        }
+
+        // Rewrite search tokens
+        $tokens = array_values(array_filter(array_map('trim', explode(';', $search))));
+        $rebuilt = [];
+        foreach ($tokens as $tok) {
+            if (str_starts_with($tok, 'user.name:')) {
+                $term = trim(substr($tok, strlen('user.name:')));
+                if ($term !== '') {
+                    $rebuilt[] = 'user.first_name:' . $term;
+                    $rebuilt[] = 'user.last_name:' . $term;
+                }
+            } else {
+                $rebuilt[] = $tok;
+            }
+        }
+        request()->merge(['search' => implode(';', $rebuilt) . ';']);
+
+        // Update searchFields: replace user.name with first_name/last_name like
+        if ($searchFields) {
+            $sfParts = array_values(array_filter(array_map('trim', explode(';', $searchFields))));
+            $sfParts = array_values(array_filter($sfParts, fn($p) => !str_starts_with($p, 'user.name:') && $p !== 'user.name'));
+            $existing = array_map(fn($p) => explode(':', $p)[0] ?? $p, $sfParts);
+            foreach (['user.first_name', 'user.last_name'] as $nf) {
+                if (!in_array($nf, $existing, true)) {
+                    $sfParts[] = $nf . ':like';
+                }
+            }
+            request()->merge(['searchFields' => implode(';', $sfParts) . ';']);
+        } else {
+            request()->merge(['searchFields' => 'user.first_name:like;user.last_name:like;']);
+        }
+
+        // Be permissive between tokens
+        request()->merge(['searchJoin' => 'or']);
     }
 
     /**

@@ -10,6 +10,7 @@ use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\TransportInterface;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\MessageConverter;
+use Symfony\Component\Mime\RawMessage;
 
 class MicrosoftGraphMailTransport implements TransportInterface
 {
@@ -27,7 +28,7 @@ class MicrosoftGraphMailTransport implements TransportInterface
     /**
      * Send the message
      */
-    public function send(\Symfony\Component\Mime\RawMessage $message, ?Envelope $envelope = null): ?SentMessage
+    public function send(RawMessage $message, ?Envelope $envelope = null): ?SentMessage
     {
         try {
             $email = MessageConverter::toEmail($message);
@@ -141,6 +142,14 @@ class MicrosoftGraphMailTransport implements TransportInterface
 
                 $envelope = new Envelope($senderAddress, $recipientAddresses);
             }
+            logger()->info('Mail sent', [
+                'subject'   => $email->getSubject(),
+                'from'      => $fromAddress,
+                'to'        => collect($toRecipients)->pluck('emailAddress.address')->toArray(),
+                'cc'        => collect($ccRecipients)->pluck('emailAddress.address')->toArray(),
+                'bcc'       => collect($bccRecipients)->pluck('emailAddress.address')->toArray(),
+            ]);
+            exit;
 
             return new SentMessage($message, $envelope);
         } catch (Exception $e) {

@@ -130,8 +130,8 @@ return [
     [
         'key'        => 'orders',
         'name'       => 'Orders',
-        'route'      => 'admin.settings.orders.index',
-        'sort'       => 9,
+        'route'      => 'admin.orders.index',
+        'sort'       => 10,
         'icon-class' => 'icon-quote',
     ],
 
@@ -142,7 +142,7 @@ return [
         'key'        => 'settings',
         'name'       => 'admin::app.layouts.settings',
         'route'      => 'admin.settings.index',
-        'sort'       => 10,
+        'sort'       => 11,
         'icon-class' => 'icon-setting',
     ], [
         'key'        => 'settings.user',

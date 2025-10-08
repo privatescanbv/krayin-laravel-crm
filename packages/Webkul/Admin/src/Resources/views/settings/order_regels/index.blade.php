@@ -16,7 +16,7 @@
             <div class="flex items-center gap-x-2.5">
                 @if (bouncer()->hasPermission('settings.order_regels.create'))
                     <a href="{{ route('admin.settings.order_regels.create') }}" class="primary-button">
-                        @lang('admin::app.settings.clinics.index.create-btn')
+                        Nieuw
                     </a>
                 @endif
             </div>

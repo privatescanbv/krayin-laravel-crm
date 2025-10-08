@@ -64,6 +64,7 @@
     </div>
 </script>
 
+@verbatim
 <script type="module">
     app.component('v-quote-item-list', {
         template: '#v-quote-item-list-template',
@@ -138,4 +139,5 @@
         template: '<input class="form-input" @change="$emit(\'selected\', { id: 1, name: \"Product\", price: 0 })" />'
     });
 </script>
+@endverbatim
 

@@ -14,7 +14,6 @@ class OrderDataGrid extends DataGrid
             ->addSelect(
                 'orders.id',
                 'orders.title',
-                'orders.sales_order_id',
                 'orders.total_price'
             );
 
@@ -44,15 +43,6 @@ class OrderDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'sales_order_id',
-            'type'       => 'string',
-            'label'      => 'Sales Order ID',
-            'searchable' => true,
-            'filterable' => true,
-            'sortable'   => true,
-        ]);
-
-        $this->addColumn([
             'index'      => 'total_price',
             'type'       => 'float',
             'label'      => 'Totale prijs',
@@ -64,23 +54,23 @@ class OrderDataGrid extends DataGrid
 
     public function prepareActions(): void
     {
-        if (bouncer()->hasPermission('settings.orders.edit')) {
+        if (bouncer()->hasPermission('orders.edit')) {
             $this->addAction([
                 'index'  => 'edit',
                 'icon'   => 'icon-edit',
                 'title'  => 'Bewerken',
                 'method' => 'GET',
-                'url'    => fn ($row) => route('admin.settings.orders.edit', $row->id),
+                'url'    => fn ($row) => route('admin.orders.edit', $row->id),
             ]);
         }
 
-        if (bouncer()->hasPermission('settings.orders.delete')) {
+        if (bouncer()->hasPermission('orders.delete')) {
             $this->addAction([
                 'index'  => 'delete',
                 'icon'   => 'icon-delete',
                 'title'  => 'Verwijderen',
                 'method' => 'DELETE',
-                'url'    => fn ($row) => route('admin.settings.orders.delete', $row->id),
+                'url'    => fn ($row) => route('admin.orders.delete', $row->id),
             ]);
         }
     }

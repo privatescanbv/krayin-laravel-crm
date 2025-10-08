@@ -17,7 +17,7 @@ test('orders index returns datagrid json', function () {
     $o1 = Order::factory()->create();
     $o2 = Order::factory()->create();
 
-    $response = $this->getJson(route('admin.settings.orders.index'));
+    $response = $this->getJson(route('admin.orders.index'));
     $response->assertOk();
 
     $ids = getDatagridIds($response);
@@ -30,7 +30,7 @@ test('can create order', function () {
         'total_price' => 123.45,
     ];
 
-    $response = $this->postJson(route('admin.settings.orders.store'), $payload);
+    $response = $this->postJson(route('admin.orders.store'), $payload);
     $response->assertOk();
 
     $this->assertDatabaseHas('orders', [
@@ -47,7 +47,7 @@ test('can update order', function () {
         '_method'     => 'put',
     ];
 
-    $response = $this->postJson(route('admin.settings.orders.update', ['id' => $order->id]), $payload);
+    $response = $this->postJson(route('admin.orders.update', ['id' => $order->id]), $payload);
     $response->assertOk()->assertJsonPath('data.title', 'Updated Order');
 
     $this->assertDatabaseHas('orders', [
@@ -59,7 +59,7 @@ test('can update order', function () {
 test('can delete order', function () {
     $order = Order::factory()->create();
 
-    $response = $this->deleteJson(route('admin.settings.orders.delete', ['id' => $order->id]));
+    $response = $this->deleteJson(route('admin.orders.delete', ['id' => $order->id]));
     $response->assertOk();
 
     $this->assertDatabaseMissing('orders', [

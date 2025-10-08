@@ -88,26 +88,26 @@ Route::prefix('settings')->group(function () {
      * Orders routes.
      */
     Route::controller(OrderController::class)->prefix('orders')->group(function () {
-        Route::get('', 'index')->name('admin.settings.orders.index');
-        Route::get('create', 'create')->name('admin.settings.orders.create');
-        Route::post('create', 'store')->name('admin.settings.orders.store');
-        Route::get('edit/{id}', 'edit')->name('admin.settings.orders.edit');
-        Route::put('edit/{id}', 'update')->name('admin.settings.orders.update');
-        Route::delete('', 'destroy')->name('admin.settings.orders.delete');
-        Route::delete('{id}', 'destroy')->name('admin.settings.orders.delete');
+        Route::get('', 'index')->name('admin.orders.index');
+        Route::get('create', 'create')->name('admin.orders.create');
+        Route::post('create', 'store')->name('admin.orders.store');
+        Route::get('edit/{id}', 'edit')->name('admin.orders.edit');
+        Route::put('edit/{id}', 'update')->name('admin.orders.update');
+        Route::delete('', 'destroy')->name('admin.orders.delete');
+        Route::delete('{id}', 'destroy')->name('admin.orders.delete');
     });
 
     /**
      * Order regels routes.
      */
     Route::controller(OrderRegelController::class)->prefix('order-regels')->group(function () {
-        Route::get('', 'index')->name('admin.settings.order_regels.index');
-        Route::get('create', 'create')->name('admin.settings.order_regels.create');
-        Route::post('create', 'store')->name('admin.settings.order_regels.store');
-        Route::get('edit/{id}', 'edit')->name('admin.settings.order_regels.edit');
-        Route::put('edit/{id}', 'update')->name('admin.settings.order_regels.update');
-        Route::delete('', 'destroy')->name('admin.settings.order_regels.delete');
-        Route::delete('{id}', 'destroy')->name('admin.settings.order_regels.delete');
+        Route::get('', 'index')->name('admin.order_regels.index');
+        Route::get('create', 'create')->name('admin.order_regels.create');
+        Route::post('create', 'store')->name('admin.order_regels.store');
+        Route::get('edit/{id}', 'edit')->name('admin.order_regels.edit');
+        Route::put('edit/{id}', 'update')->name('admin.order_regels.update');
+        Route::delete('', 'destroy')->name('admin.order_regels.delete');
+        Route::delete('{id}', 'destroy')->name('admin.order_regels.delete');
     });
 
     /**

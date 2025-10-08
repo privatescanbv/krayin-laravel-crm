@@ -14,9 +14,9 @@
             </div>
 
             <div class="flex items-center gap-x-2.5">
-                @if (bouncer()->hasPermission('settings.orders.create'))
+                @if (bouncer()->hasPermission('orders.create'))
                     <a href="{{ route('admin.orders.create') }}" class="primary-button">
-                        Nieuw
+                        Nieuwe Order
                     </a>
                 @endif
             </div>

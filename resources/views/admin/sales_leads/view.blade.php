@@ -99,8 +99,8 @@
                         />
                     @endif
 
-                    @if (bouncer()->hasPermission('settings.orders.create'))
-                        <a href="{{ route('admin.settings.orders.create', ['sales_lead_id' => $workflowLead->id]) }}" class="primary-button">
+                    @if (bouncer()->hasPermission('orders.create'))
+                        <a href="{{ route('admin.orders.create', ['sales_lead_id' => $workflowLead->id]) }}" class="primary-button">
                             Order aanmaken
                         </a>
                     @endif
@@ -210,10 +210,9 @@
                                             <tr class="border-b dark:border-gray-800">
                                                 <td class="py-2 pr-4">{{ $order->id }}</td>
                                                 <td class="py-2 pr-4">{{ $order->title }}</td>
-                                                <td class="py-2 pr-4">{{ $order->sales_order_id }}</td>
                                                 <td class="py-2 pr-4">€ {{ number_format((float) $order->total_price, 2, ',', '.') }}</td>
                                                 <td class="py-2 pr-4">
-                                                    <a href="{{ route('admin.settings.orders.edit', $order->id) }}" class="text-blue-600 hover:underline">Bewerken</a>
+                                                    <a href="{{ route('admin.orders.edit', $order->id) }}" class="text-blue-600 hover:underline">Bewerken</a>
                                                 </td>
                                             </tr>
                                         @endforeach

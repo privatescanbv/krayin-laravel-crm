@@ -129,6 +129,8 @@ abstract class AbstractSugarCRMImport extends Command
             'import_type' => $importType,
         ]);
 
+        $this->info("📊 Import Run #{$this->currentImportRun->id} started");
+
         return $this->currentImportRun;
     }
 
@@ -182,12 +184,25 @@ abstract class AbstractSugarCRMImport extends Command
     protected function logImportError(string $message, array $context = []): void
     {
         if ($this->currentImportRun) {
-            ImportLog::create([
-                'import_run_id' => $this->currentImportRun->id,
-                'level'         => 'error',
-                'message'       => $message,
-                'context'       => $context,
-                'record_id'     => $context['record_id'] ?? null,
+            try {
+                ImportLog::create([
+                    'import_run_id' => $this->currentImportRun->id,
+                    'level'         => 'error',
+                    'message'       => $message,
+                    'context'       => $context,
+                    'record_id'     => $context['record_id'] ?? null,
+                ]);
+            } catch (\Exception $e) {
+                // Fallback to Laravel log if database logging fails
+                Log::error('Failed to log import error to database: '.$e->getMessage(), [
+                    'original_message' => $message,
+                    'original_context' => $context,
+                ]);
+            }
+        } else {
+            Log::warning('logImportError called but no currentImportRun is set', [
+                'message' => $message,
+                'context' => $context,
             ]);
         }
     }

@@ -127,6 +127,14 @@ return [
         'icon-class' => 'icon-product',
     ],
 
+    [
+        'key'        => 'orders',
+        'name'       => 'Orders',
+        'route'      => 'admin.settings.orders.index',
+        'sort'       => 9,
+        'icon-class' => 'icon-quote',
+    ],
+
     /**
      * Settings.
      */

@@ -99,6 +99,12 @@
                         />
                     @endif
 
+                    @if (bouncer()->hasPermission('settings.orders.create'))
+                        <a href="{{ route('admin.settings.orders.create', ['sales_lead_id' => $workflowLead->id]) }}" class="primary-button">
+                            Order aanmaken
+                        </a>
+                    @endif
+
                     @if (bouncer()->hasPermission('activities.create'))
                         <!-- File Activity Action -->
                         <x-admin::activities.actions.file
@@ -168,6 +174,7 @@
                     ['name' => 'description', 'label' => trans('admin::app.leads.view.tabs.description')],
                     ['name' => 'products', 'label' => trans('admin::app.leads.view.tabs.products')],
                     ['name' => 'quotes', 'label' => trans('admin::app.leads.view.tabs.quotes')],
+                    ['name' => 'orders', 'label' => 'Orders'],
                 ]"
                 ref="activities"
             >
@@ -180,6 +187,42 @@
                 <x-slot:quotes>
                     @include('admin::leads.view.quotes')
                 </x-slot>
+
+                <!-- Orders -->
+                <x-slot:orders>
+                    <div class="p-4 dark:text-white">
+                        @if (($orders ?? collect())->isEmpty())
+                            <div class="text-sm text-gray-500">Geen orders gekoppeld.</div>
+                        @else
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="text-left border-b dark:border-gray-800">
+                                            <th class="py-2 pr-4">ID</th>
+                                            <th class="py-2 pr-4">Titel</th>
+                                            <th class="py-2 pr-4">Sales Order ID</th>
+                                            <th class="py-2 pr-4">Totale prijs</th>
+                                            <th class="py-2 pr-4"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($orders as $order)
+                                            <tr class="border-b dark:border-gray-800">
+                                                <td class="py-2 pr-4">{{ $order->id }}</td>
+                                                <td class="py-2 pr-4">{{ $order->title }}</td>
+                                                <td class="py-2 pr-4">{{ $order->sales_order_id }}</td>
+                                                <td class="py-2 pr-4">€ {{ number_format((float) $order->total_price, 2, ',', '.') }}</td>
+                                                <td class="py-2 pr-4">
+                                                    <a href="{{ route('admin.settings.orders.edit', $order->id) }}" class="text-blue-600 hover:underline">Bewerken</a>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                </x-slot:orders>
 
                 <!-- Description -->
                 <x-slot:description>

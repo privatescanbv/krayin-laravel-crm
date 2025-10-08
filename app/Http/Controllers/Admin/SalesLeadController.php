@@ -229,9 +229,13 @@ class SalesLeadController extends Controller
             ], 404);
         }
 
+        // Load related orders
+        $orders = \App\Models\Order::where('sales_lead_id', $salesLead->id)->get();
+
         return view('admin.sales_leads.view', [
             'workflowLead' => $salesLead,
             'lead'         => $lead,
+            'orders'       => $orders,
         ]);
     }
 

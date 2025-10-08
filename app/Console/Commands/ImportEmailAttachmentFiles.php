@@ -207,22 +207,25 @@ class ImportEmailAttachmentFiles extends AbstractSugarCRMImport
             $bar->advance();
         }
 
-        $bar->finish();
-        $this->newLine(2);
-        $this->info('Import completed!');
-        $this->info("✓ Copied: {$copied}");
-        $this->info("⚠ Skipped: {$skipped}");
-        $this->info("✗ Errors: {$errors}");
+            $bar->finish();
+            $this->newLine(2);
+            $this->info('Import completed!');
+            $this->info("✓ Copied: {$copied}");
+            $this->info("⚠ Skipped: {$skipped}");
+            $this->info("✗ Errors: {$errors}");
 
-        // Complete import run tracking
-        $this->completeImportRun([
-            'processed' => $copied + $skipped + $errors,
-            'imported'  => $copied,
-            'skipped'   => $skipped,
-            'errored'   => $errors,
-        ]);
+            // Complete import run tracking
+            if (! $dryRun) {
+                $this->completeImportRun([
+                    'processed' => $copied + $skipped + $errors,
+                    'imported'  => $copied,
+                    'skipped'   => $skipped,
+                    'errored'   => $errors,
+                ]);
+            }
 
-        return $errors > 0 ? 1 : 0;
+            return $errors > 0 ? 1 : 0;
+        });
     }
 
     /**

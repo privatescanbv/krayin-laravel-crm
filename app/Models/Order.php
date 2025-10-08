@@ -16,12 +16,14 @@ class Order extends Model
     protected $fillable = [
         'title',
         'total_price',
+        'status',
         'created_by',
         'updated_by',
     ];
 
     protected $casts = [
         'total_price' => 'decimal:2',
+        'status'      => \App\Enums\OrderStatus::class,
         'created_by'  => 'integer',
         'updated_by'  => 'integer',
     ];

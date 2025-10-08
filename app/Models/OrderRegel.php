@@ -18,6 +18,7 @@ class OrderRegel extends Model
         'product_id',
         'quantity',
         'total_price',
+        'status',
         'created_by',
         'updated_by',
     ];
@@ -27,6 +28,7 @@ class OrderRegel extends Model
         'product_id'  => 'integer',
         'quantity'    => 'integer',
         'total_price' => 'decimal:2',
+        'status'      => \App\Enums\OrderItemStatus::class,
         'created_by'  => 'integer',
         'updated_by'  => 'integer',
     ];

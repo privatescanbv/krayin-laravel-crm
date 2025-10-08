@@ -147,29 +147,44 @@ class OrderItemPlanningController extends Controller
             $result = [];
             foreach ($avail as $interval) {
                 $segments = [ [ 'from' => CarbonImmutable::parse($interval['from']), 'to' => CarbonImmutable::parse($interval['to']) ] ];
+                
                 foreach ($occ as $o) {
                     $of = CarbonImmutable::parse($o['from']);
                     $ot = CarbonImmutable::parse($o['to']);
                     $next = [];
+                    
                     foreach ($segments as $seg) {
-                        // No overlap
-                        if ($ot <= $seg['from'] || $of >= $seg['to']) {
+                        $segStart = $seg['from'];
+                        $segEnd = $seg['to'];
+                        
+                        // No overlap - keep segment as is
+                        if ($ot->lessThanOrEqualTo($segStart) || $of->greaterThanOrEqualTo($segEnd)) {
                             $next[] = $seg;
                             continue;
                         }
-                        // Left segment
-                        if ($of > $seg['from']) {
-                            $next[] = [ 'from' => $seg['from'], 'to' => $of ];
+                        
+                        // Complete overlap - remove segment
+                        if ($of->lessThanOrEqualTo($segStart) && $ot->greaterThanOrEqualTo($segEnd)) {
+                            continue;
                         }
-                        // Right segment
-                        if ($ot < $seg['to']) {
-                            $next[] = [ 'from' => $ot, 'to' => $seg['to'] ];
+                        
+                        // Partial overlap - split segment
+                        // Left part (before occupancy)
+                        if ($of->greaterThan($segStart)) {
+                            $next[] = [ 'from' => $segStart, 'to' => $of ];
+                        }
+                        
+                        // Right part (after occupancy)
+                        if ($ot->lessThan($segEnd)) {
+                            $next[] = [ 'from' => $ot, 'to' => $segEnd ];
                         }
                     }
                     $segments = $next;
                 }
+                
+                // Add remaining segments to result
                 foreach ($segments as $s) {
-                    if ($s['to'] > $s['from']) {
+                    if ($s['to']->greaterThan($s['from'])) {
                         $result[] = [ 'from' => $s['from']->toIso8601String(), 'to' => $s['to']->toIso8601String() ];
                     }
                 }

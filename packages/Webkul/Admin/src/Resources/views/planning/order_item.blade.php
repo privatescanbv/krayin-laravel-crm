@@ -122,26 +122,28 @@
                         Inboeken
                     </x-slot:header>
                     <x-slot:content>
-                        <div class="flex flex-col gap-3">
+                        <div class="space-y-4">
                             <div>
-                                <label class="block text-xs mb-1">Resource</label>
-                                <select v-model.number="form.resource_id" class="control">
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Resource</label>
+                                <select v-model.number="form.resource_id" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
                                     <option v-for="r in resources" :key="r.id" :value="r.id">@{{ r.name }} (@{{ r.clinic }})</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs mb-1">Van</label>
-                                <input type="datetime-local" v-model="form.from" class="control" />
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Van</label>
+                                <input type="datetime-local" v-model="form.from" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white" />
                             </div>
                             <div>
-                                <label class="block text-xs mb-1">Tot</label>
-                                <input type="datetime-local" v-model="form.to" class="control" />
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tot</label>
+                                <input type="datetime-local" v-model="form.to" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white" />
                             </div>
                         </div>
                     </x-slot:content>
                     <x-slot:footer>
-                        <button class="secondary-button" @click="$refs.bookModal.toggle()">Annuleren</button>
-                        <button class="primary-button" @click="submitBooking">Opslaan</button>
+                        <div class="flex justify-end gap-3">
+                            <button class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700" @click="$refs.bookModal.toggle()">Annuleren</button>
+                            <button class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500" @click="submitBooking">Opslaan</button>
+                        </div>
                     </x-slot:footer>
                 </x-admin::modal>
             </div>

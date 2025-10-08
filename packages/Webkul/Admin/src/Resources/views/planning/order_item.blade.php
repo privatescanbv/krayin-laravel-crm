@@ -34,12 +34,14 @@
             .block { position: absolute; left: 6px; right: 6px; border-radius: 6px; padding: 2px 6px; font-size: 11px; overflow: hidden; }
             .block-available { background: rgba(16, 185, 129, 0.15); color: #065f46; border: 1px solid rgba(16,185,129,0.3); cursor: pointer; }
             .block-occupied { background: rgba(107, 114, 128, 0.25); color: #374151; border: 1px solid rgba(107,114,128,0.35); pointer-events: none; }
+            .filters-bar { position: relative; z-index: 10; }
+            .calendar-container { position: relative; z-index: 0; }
         </style>
 
         <script type="text/x-template" id="v-order-item-planning-template">
             <div class="flex flex-col gap-4">
                 <!-- Filters -->
-                <div class="flex flex-wrap items-end gap-3">
+                <div class="flex flex-wrap items-end gap-3 filters-bar">
                     <div>
                         <label class="block text-xs mb-1">Resource type</label>
                         <input type="number" v-model.number="filters.resource_type_id" class="control" />
@@ -82,13 +84,13 @@
                         <!-- Day columns -->
                         <div v-for="d in 7" :key="'col-'+d" class="day-column">
                             <!-- Hour slots -->
-                            <div v-for="h in hours" :key="'slot-'+d+'-'+h" class="hour-slot"></div>
+                            <div v-for="h in hours" :key="'slot-'+d+'-'+h" class="hour-slot pointer-events-none"></div>
                             <!-- Occupied blocks (readonly) -->
                             <div v-for="occ in occupiedBlocksByDay(d-1)" :key="occ.key" class="block block-occupied" :style="blockStyle(occ)">
                                 @{{ timeRange(occ.from, occ.to) }}
                             </div>
                             <!-- Available blocks (clickable) -->
-                            <div v-for="blk in availableBlocksByDay(d-1)" :key="blk.key" class="block block-available" :style="blockStyle(blk)" @click="openBook(blk.resourceId, blk.from, blk.to)">
+                            <div v-for="blk in availableBlocksByDay(d-1)" :key="blk.key" class="block block-available" :style="blockStyle(blk)" @click.stop="openBook(blk.resourceId, blk.from, blk.to)">
                                 @{{ timeRange(blk.from, blk.to) }}
                             </div>
                         </div>

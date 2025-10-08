@@ -123,18 +123,6 @@
                     const ppCamel = product && Array.isArray(product.partnerProducts) ? product.partnerProducts : null;
                     const hasPartnerProducts = (ppSnake && ppSnake.length > 0) || (ppCamel && ppCamel.length > 0);
                     const precomputed = Number(this.item.partner_product_count || this.item.partnerProductsCount || 0) > 0;
-                    
-                    // Debug logging
-                    console.log('canPlan debug:', {
-                        itemId: this.item.id,
-                        product: product,
-                        ppSnake: ppSnake,
-                        ppCamel: ppCamel,
-                        hasPartnerProducts: hasPartnerProducts,
-                        precomputed: precomputed,
-                        canPlan: !!(this.item.id && (hasPartnerProducts || precomputed))
-                    });
-                    
                     return !!(this.item.id && (hasPartnerProducts || precomputed));
                 },
             },

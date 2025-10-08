@@ -2,7 +2,7 @@
     <x-slot:title>
         Planning - Orderregel #{{ $orderItem->id }}
     </x-slot>
-    
+
     @push('meta')
         <meta name="csrf-token" content="{{ csrf_token() }}">
     @endpush
@@ -38,7 +38,7 @@
             .block { position: absolute; left: 6px; right: 6px; border-radius: 6px; padding: 2px 6px; font-size: 11px; overflow: hidden; transition: all 0.2s ease; }
             .block-available { cursor: pointer; }
             .block-available:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-            .block-occupied { 
+            .block-occupied {
                 background: repeating-linear-gradient(
                     45deg,
                     rgba(107, 114, 128, 0.3),
@@ -46,9 +46,9 @@
                     rgba(107, 114, 128, 0.1) 4px,
                     rgba(107, 114, 128, 0.1) 8px
                 );
-                color: #374151; 
-                border: 1px solid rgba(107,114,128,0.6); 
-                pointer-events: none; 
+                color: #374151;
+                border: 1px solid rgba(107,114,128,0.6);
+                pointer-events: none;
                 position: relative;
                 z-index: 2;
                 min-height: 20px;
@@ -81,7 +81,7 @@
                             <input type="number" v-model.number="filters.clinic_id" class="control"/>
                         </div>
                     </div>
-                    
+
                     <div class="flex items-center gap-2">
                         <button class="secondary-button" @click="prevWeek">Vorige week</button>
                         <div class="text-sm text-gray-700">@{{ weekLabel }}</div>
@@ -95,8 +95,8 @@
                     <span class="font-semibold">Resources:</span>
                     <span v-for="(r, idx) in resources" :key="r.id" class="inline-flex items-center gap-1 ml-2">
                         <template v-if="idx">, </template>
-                        <span 
-                            class="inline-block w-3 h-3 rounded-sm border" 
+                        <span
+                            class="inline-block w-3 h-3 rounded-sm border"
                             :style="getResourceColorStyle(r)"
                         ></span>
                         @{{ r.name }} (@{{ r.clinic }})
@@ -181,8 +181,8 @@
                         <div class="space-y-6" style="pointer-events: auto; z-index: 1000; position: relative;">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Resource</label>
-                                <select 
-                                    v-model.number="form.resource_id" 
+                                <select
+                                    v-model.number="form.resource_id"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
                                     style="pointer-events: auto; z-index: 10; position: relative;"
                                     @click.stop
@@ -192,9 +192,9 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Van</label>
-                                <input 
-                                    type="datetime-local" 
-                                    v-model="form.from" 
+                                <input
+                                    type="datetime-local"
+                                    v-model="form.from"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
                                     style="pointer-events: auto; z-index: 10; position: relative;"
                                     @click.stop
@@ -202,9 +202,9 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tot</label>
-                                <input 
-                                    type="datetime-local" 
-                                    v-model="form.to" 
+                                <input
+                                    type="datetime-local"
+                                    v-model="form.to"
                                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
                                     style="pointer-events: auto; z-index: 10; position: relative;"
                                     @click.stop
@@ -303,12 +303,37 @@
                     },
                     timeRange(from, to) { const f = new Date(from); const t = new Date(to); return f.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + '–' + t.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); },
                     async loadAvailability() {
+                        console.log('🔄 loadAvailability called', { loading: this.loading, resourcesCount: this.resources?.length });
+
+                        // Prevent multiple simultaneous requests
+                        if (this.loading) {
+                            console.log('⚠️ loadAvailability already in progress, skipping...');
+                            return;
+                        }
+
+                        console.log('✅ Starting loadAvailability');
                         this.loading = true;
                         this.errorMessage = '';
 
                         try {
                             const url = `${"{{ route('admin.planning.order_item.availability', ['orderItemId' => $orderItem->id]) }}"}?start=${this.window.start.toISOString()}&end=${this.window.end.toISOString()}&resource_type_id=${this.filters.resource_type_id||''}&clinic_id=${this.filters.clinic_id||''}`;
-                            const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+
+                            console.log('🌐 Fetching availability from:', url);
+
+                            // Add timeout to prevent hanging
+                            const controller = new AbortController();
+                            const timeoutId = setTimeout(() => {
+                                console.log('⏰ Request timeout after 10 seconds');
+                                controller.abort();
+                            }, 10000); // 10 second timeout
+
+                            const res = await fetch(url, {
+                                headers: { 'Accept': 'application/json' },
+                                signal: controller.signal
+                            });
+
+                            clearTimeout(timeoutId);
+                            console.log('📡 Response received:', { status: res.status, ok: res.ok });
 
                             if (!res.ok) {
                                 const errorData = await res.json().catch(() => ({}));
@@ -316,7 +341,14 @@
                             }
 
                             const data = await res.json();
+                            console.log('📊 Raw data received:', {
+                                resourcesCount: data.resources?.length,
+                                availabilityKeys: Object.keys(data.availability || {}),
+                                occupancyKeys: Object.keys(data.occupancy || {})
+                            });
+
                             this.resources = Array.isArray(data.resources) ? data.resources : [];
+                            console.log('👥 Resources set:', this.resources.length);
 
                             // Server returns final availability already split: { [resourceId]: [{from,to}] }
                             const availability = data.availability || {};
@@ -326,6 +358,7 @@
                                 normAvail[rid] = arr.map(a => ({ from: a.from, to: a.to }));
                             });
                             this.availabilityByResource = normAvail;
+                            console.log('📅 Availability processed:', Object.keys(normAvail).length, 'resources');
 
                             // Normalize occupancy list per resource
                             const occ = data.occupancy || {};
@@ -335,14 +368,24 @@
                                 normOcc[rid] = arr.map(o => ({ ...o }));
                             });
                             this.rawOccupancy = normOcc;
+                            console.log('🏠 Occupancy processed:', Object.keys(normOcc).length, 'resources');
 
-                            if (this.debugEnabled) {
-                                try { console.log('[planning] availability', { resources: this.resources, availability: this.availabilityByResource, occupancy: this.rawOccupancy }); } catch (e) {}
-                            }
+                            console.log('🎯 Final state set:', {
+                                resources: this.resources.length,
+                                availabilityKeys: Object.keys(this.availabilityByResource),
+                                occupancyKeys: Object.keys(this.rawOccupancy)
+                            });
                         } catch (error) {
-                            this.errorMessage = `Fout bij laden van beschikbaarheid: ${error.message}`;
-                            console.error('[planning] loadAvailability error:', error);
+                            console.error('❌ loadAvailability error:', error);
+                            if (error.name === 'AbortError') {
+                                this.errorMessage = 'Timeout bij laden van beschikbaarheid. Probeer opnieuw.';
+                                console.log('⏰ Request was aborted (timeout)');
+                            } else {
+                                this.errorMessage = `Fout bij laden van beschikbaarheid: ${error.message}`;
+                                console.log('💥 Other error occurred:', error.message);
+                            }
                         } finally {
+                            console.log('🏁 loadAvailability finished, setting loading = false');
                             this.loading = false;
                         }
                     },
@@ -361,19 +404,43 @@
                         return res;
                     },
                     occupiedBlocksByDay(weekdayOffset) {
+                        // Early return if no resources or occupancy data
+                        if (!this.resources || this.resources.length === 0 || !this.rawOccupancy) {
+                            return [];
+                        }
+
                         const day = this.dayDate(weekdayOffset);
                         const res = [];
-                        for (const r of this.resources) {
-                            const occ = (this.rawOccupancy[r.id]||[]);
+
+                        // Use forEach instead of for...of for better performance
+                        this.resources.forEach((r, index) => {
+                            const occ = this.rawOccupancy[r.id] || [];
+                            
+                            if (occ.length === 0) {
+                                return; // Skip if no occupancy for this resource
+                            }
+                            
                             const occDay = occ.filter(o => {
-                                const of = new Date(o.from), ot = new Date(o.to);
-                                const dayStr = day.toDateString();
-                                const fromStr = of.toDateString();
-                                const toStr = ot.toDateString();
-                                
-                                // Check if the occupied period overlaps with this day
-                                return fromStr === dayStr || toStr === dayStr || 
-                                       (of <= day && ot >= new Date(day.getTime() + 24*60*60*1000));
+                                try {
+                                    const of = new Date(o.from);
+                                    const ot = new Date(o.to);
+                                    
+                                    // Validate dates
+                                    if (isNaN(of.getTime()) || isNaN(ot.getTime())) {
+                                        return false;
+                                    }
+                                    
+                                    const dayStr = day.toDateString();
+                                    const fromStr = of.toDateString();
+                                    const toStr = ot.toDateString();
+                                    
+                                    // Check if the occupied period overlaps with this day
+                                    return fromStr === dayStr || toStr === dayStr || 
+                                           (of <= day && ot >= new Date(day.getTime() + 24*60*60*1000));
+                                } catch (error) {
+                                    console.warn('Error processing occupied block:', error, o);
+                                    return false;
+                                }
                             }).map((o, idx) => ({ 
                                 key: `${r.id}-o-${weekdayOffset}-${idx}`, 
                                 resourceId: r.id, 
@@ -381,8 +448,10 @@
                                 to: o.to,
                                 lead_name: o.lead_name || 'Onbekend'
                             }));
+                            
                             res.push(...occDay);
-                        }
+                        });
+
                         if (this.debugEnabled) { this.debugState.occupiedCount = res.length; }
                         return res;
                     },
@@ -393,56 +462,73 @@
                         const toLocal = (dt) => `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
                         this.form.from = toLocal(new Date(from));
                         this.form.to = toLocal(new Date(to));
-                        
-                        // Debug logging
-                        console.log('openBook debug:', {
-                            resourceId: resourceId,
-                            from: from,
-                            to: to,
-                            formFrom: this.form.from,
-                            formTo: this.form.to,
-                            formResourceId: this.form.resource_id
-                        });
-                        
                         this.$refs.bookModal.toggle();
                     },
                     async submitBooking() {
+                        console.log('🚀 submitBooking called', { loading: this.loading, form: this.form });
+
+                        // Prevent multiple submissions
+                        if (this.loading) {
+                            console.log('⚠️ Booking already in progress, skipping...');
+                            return;
+                        }
+
+                        console.log('✅ Starting booking process');
                         this.loading = true;
                         try {
                             const url = "{{ route('admin.planning.order_item.book', ['orderItemId' => $orderItem->id]) }}";
-                            
+
                             // Get CSRF token from meta tag or cookie
-                            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
-                                             this.getCookie('XSRF-TOKEN') || 
+                            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
+                                             this.getCookie('XSRF-TOKEN') ||
                                              document.querySelector('input[name="_token"]')?.value;
-                            
+
                             if (!csrfToken) {
                                 throw new Error('CSRF token niet gevonden');
                             }
-                            
+
                             const res = await fetch(url, {
                                 method: 'POST',
-                                headers: { 
-                                    'Content-Type': 'application/json', 
-                                    'Accept': 'application/json', 
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
                                     'X-CSRF-TOKEN': csrfToken,
                                     'X-Requested-With': 'XMLHttpRequest'
                                 },
                                 body: JSON.stringify({ resource_id: this.form.resource_id, from: this.form.from, to: this.form.to })
                             });
-                            
+
                             if (res.ok) {
+                                const responseData = await res.json().catch(() => ({}));
+                                console.log('🎉 Booking successful:', responseData);
                                 this.$refs.bookModal.toggle();
-                                await this.loadAvailability();
                                 this.$emitter.emit('add-flash', { type: 'success', message: 'Ingeboekt' });
+                                // Reset form
+                                this.form = { resource_id: null, from: '', to: '' };
+                                console.log('🔄 Scheduling availability reload in 100ms');
+                                // Reload availability after a short delay to avoid race conditions
+                                setTimeout(() => {
+                                    console.log('⏰ Timeout triggered - reloading availability');
+                                    // Reset loading state before reloading availability
+                                    this.loading = false;
+                                    this.loadAvailability().catch(error => {
+                                        console.error('❌ Error reloading availability:', error);
+                                        this.loading = false; // Ensure loading state is reset
+                                    });
+                                }, 100);
                             } else {
                                 const data = await res.json().catch(() => ({}));
+                                console.error('Booking failed:', { status: res.status, statusText: res.statusText, data });
                                 this.$emitter.emit('add-flash', { type: 'error', message: data.message || `HTTP ${res.status}: ${res.statusText}` });
                             }
                         } catch (error) {
                             this.$emitter.emit('add-flash', { type: 'error', message: `Fout bij inboeken: ${error.message}` });
                         } finally {
                             this.loading = false;
+                            // Ensure loading state is always reset
+                            this.$nextTick(() => {
+                                this.loading = false;
+                            });
                         }
                     },
                     // Helper methods for colors and tooltips

@@ -251,24 +251,48 @@ class OrderItemPlanningController extends Controller
 
     public function book(Request $request, int $orderItemId): JsonResponse
     {
-        $request->validate([
-            'resource_id' => ['required', 'integer', 'exists:resources,id'],
-            'from'        => ['required', 'date'],
-            'to'          => ['required', 'date', 'after:from'],
-        ]);
+        try {
+            $request->validate([
+                'resource_id' => ['required', 'integer', 'exists:resources,id'],
+                'from'        => ['required', 'date'],
+                'to'          => ['required', 'date', 'after:from'],
+            ]);
 
-        $orderItem = OrderRegel::findOrFail($orderItemId);
+            $orderItem = OrderRegel::findOrFail($orderItemId);
 
-        $booking = ResourceOrderItem::create([
-            'resource_id'  => (int) $request->input('resource_id'),
-            'orderitem_id' => $orderItem->id,
-            'from'         => Carbon::parse($request->input('from')),
-            'to'           => Carbon::parse($request->input('to')),
-        ]);
+            \Log::info('Creating ResourceOrderItem', [
+                'resource_id' => (int) $request->input('resource_id'),
+                'orderitem_id' => $orderItem->id,
+                'from' => $request->input('from'),
+                'to' => $request->input('to'),
+                'user_id' => auth()->id(),
+            ]);
 
-        return response()->json([
-            'message' => 'Ingeboekt',
-            'data'    => $booking,
-        ], 201);
+            $booking = ResourceOrderItem::create([
+                'resource_id'  => (int) $request->input('resource_id'),
+                'orderitem_id' => $orderItem->id,
+                'from'         => Carbon::parse($request->input('from')),
+                'to'           => Carbon::parse($request->input('to')),
+                'created_by'   => auth()->id(),
+                'updated_by'   => auth()->id(),
+            ]);
+
+            \Log::info('ResourceOrderItem created successfully', ['booking_id' => $booking->id]);
+
+            return response()->json([
+                'message' => 'Ingeboekt',
+                'data'    => $booking,
+            ], 201);
+        } catch (\Exception $e) {
+            \Log::error('Error creating ResourceOrderItem', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+            ]);
+
+            return response()->json([
+                'message' => 'Fout bij inboeken: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 }

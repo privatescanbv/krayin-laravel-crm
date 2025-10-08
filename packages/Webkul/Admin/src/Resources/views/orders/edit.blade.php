@@ -1,3 +1,4 @@
+@php use App\Models\SalesLead; @endphp
 <x-admin::layouts>
     <x-slot:title>
         Order bewerken

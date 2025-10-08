@@ -23,48 +23,6 @@ class MicrosoftGraphMailTransport implements TransportInterface
     }
 
     /**
-     * Get access token using client credentials flow
-     */
-    protected function getAccessToken(): string
-    {
-        if ($this->accessToken) {
-            return $this->accessToken;
-        }
-
-        $tenantId = config('mail.graph.tenant_id');
-        $clientId = config('mail.graph.client_id');
-        $clientSecret = config('mail.graph.client_secret');
-
-        if (! $tenantId || ! $clientId || ! $clientSecret) {
-            throw new Exception('Microsoft Graph credentials not configured');
-        }
-
-        try {
-            $response = Http::asForm()->post("https://login.microsoftonline.com/{$tenantId}/oauth2/v2.0/token", [
-                'client_id'     => $clientId,
-                'client_secret' => $clientSecret,
-                'scope'         => 'https://graph.microsoft.com/.default',
-                'grant_type'    => 'client_credentials',
-            ]);
-
-            if (! $response->successful()) {
-                throw new Exception('Failed to get access token: '.$response->body());
-            }
-
-            $data = $response->json();
-            $this->accessToken = $data['access_token'];
-
-            return $this->accessToken;
-        } catch (Exception $e) {
-            Log::error('Failed to get Microsoft Graph access token', [
-                'error' => $e->getMessage(),
-            ]);
-
-            throw $e;
-        }
-    }
-
-    /**
      * Send the message
      */
     public function send(\Symfony\Component\Mime\RawMessage $message, ?\Symfony\Component\Mime\Address $envelope = null): ?SentMessage
@@ -171,6 +129,48 @@ class MicrosoftGraphMailTransport implements TransportInterface
             Log::error('Microsoft Graph mail transport error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
+            ]);
+
+            throw $e;
+        }
+    }
+
+    /**
+     * Get access token using client credentials flow
+     */
+    protected function getAccessToken(): string
+    {
+        if ($this->accessToken) {
+            return $this->accessToken;
+        }
+
+        $tenantId = config('mail.graph.tenant_id');
+        $clientId = config('mail.graph.client_id');
+        $clientSecret = config('mail.graph.client_secret');
+
+        if (! $tenantId || ! $clientId || ! $clientSecret) {
+            throw new Exception('Microsoft Graph credentials not configured');
+        }
+
+        try {
+            $response = Http::asForm()->post("https://login.microsoftonline.com/{$tenantId}/oauth2/v2.0/token", [
+                'client_id'     => $clientId,
+                'client_secret' => $clientSecret,
+                'scope'         => 'https://graph.microsoft.com/.default',
+                'grant_type'    => 'client_credentials',
+            ]);
+
+            if (! $response->successful()) {
+                throw new Exception('Failed to get access token: '.$response->body());
+            }
+
+            $data = $response->json();
+            $this->accessToken = $data['access_token'];
+
+            return $this->accessToken;
+        } catch (Exception $e) {
+            Log::error('Failed to get Microsoft Graph access token', [
+                'error' => $e->getMessage(),
             ]);
 
             throw $e;

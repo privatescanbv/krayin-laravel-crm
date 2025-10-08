@@ -22,7 +22,8 @@ test('spoken does not reschedule activity', function () {
     ]);
 
     $userId = DB::table('users')->insertGetId([
-        'name'       => 'Test User',
+        'first_name' => 'Test',
+        'last_name'  => 'User',
         'email'      => 'test@example.com',
         'password'   => bcrypt('secret'),
         'status'     => 1,
@@ -63,7 +64,8 @@ test('not spoken defaults to 7 days when empty', function () {
     ]);
 
     $userId = DB::table('users')->insertGetId([
-        'name'       => 'Test User 2',
+        'first_name' => 'Test',
+        'last_name'  => 'User 2',
         'email'      => 'test2@example.com',
         'password'   => bcrypt('secret'),
         'status'     => 1,
@@ -104,7 +106,8 @@ test('call status with send_email returns email data', function () {
     ]);
 
     $userId = DB::table('users')->insertGetId([
-        'name'       => 'Test User 3',
+        'first_name' => 'Test',
+        'last_name'  => 'User 3',
         'email'      => 'test3@example.com',
         'password'   => bcrypt('secret'),
         'status'     => 1,
@@ -160,7 +163,8 @@ test('activity can be linked to email', function () {
     ]);
 
     $userId = DB::table('users')->insertGetId([
-        'name'       => 'Test User 4',
+        'first_name' => 'Test',
+        'last_name'  => 'User 4',
         'email'      => 'test4@example.com',
         'password'   => bcrypt('secret'),
         'status'     => 1,
@@ -212,7 +216,8 @@ test('activity email relationship works correctly', function () {
     ]);
 
     $userId = DB::table('users')->insertGetId([
-        'name'       => 'Test User 5',
+        'first_name' => 'Test',
+        'last_name'  => 'User 5',
         'email'      => 'test5@example.com',
         'password'   => bcrypt('secret'),
         'status'     => 1,

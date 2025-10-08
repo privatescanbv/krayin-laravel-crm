@@ -227,13 +227,12 @@ abstract class AbstractSugarCRMImport extends Command
             ]);
         }
     }
-
     /**
      * Log import warning to database
      */
     protected function logImportWarning(string $message, array $context = []): void
     {
-        if ($this->currentImportRun) {
+        $this->ensureLogRunHasStarted();
             try {
                 ImportLog::create([
                     'import_run_id' => $this->currentImportRun->id,
@@ -249,7 +248,6 @@ abstract class AbstractSugarCRMImport extends Command
                     'original_context' => $context,
                 ]);
             }
-        }
     }
 
     /**
@@ -257,22 +255,21 @@ abstract class AbstractSugarCRMImport extends Command
      */
     protected function logImportInfo(string $message, array $context = []): void
     {
-        if ($this->currentImportRun) {
-            try {
-                ImportLog::create([
-                    'import_run_id' => $this->currentImportRun->id,
-                    'level'         => 'info',
-                    'message'       => $message,
-                    'context'       => $context,
-                    'record_id'     => $context['record_id'] ?? null,
-                ]);
-            } catch (\Exception $e) {
-                // Fallback to Laravel log if database logging fails
-                Log::info('Failed to log import info to database: '.$e->getMessage(), [
-                    'original_message' => $message,
-                    'original_context' => $context,
-                ]);
-            }
+        $this->ensureLogRunHasStarted();
+        try {
+            ImportLog::create([
+                'import_run_id' => $this->currentImportRun->id,
+                'level'         => 'info',
+                'message'       => $message,
+                'context'       => $context,
+                'record_id'     => $context['record_id'] ?? null,
+            ]);
+        } catch (\Exception $e) {
+            // Fallback to Laravel log if database logging fails
+            Log::info('Failed to log import info to database: '.$e->getMessage(), [
+                'original_message' => $message,
+                'original_context' => $context,
+            ]);
         }
     }
 

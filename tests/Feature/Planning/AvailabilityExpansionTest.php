@@ -59,18 +59,28 @@ class AvailabilityExpansionTest extends TestCase
         // Assert
         $resp->assertOk();
         $data = $resp->json();
-        $this->assertArrayHasKey('availability', $data);
+        $this->assertArrayHasKey('blocks', $data);
         $this->assertArrayHasKey('resources', $data);
         $this->assertNotEmpty($data['resources'], 'Should have resources');
 
-        $avail = $data['availability'][(string) $resource->id] ?? $data['availability'][$resource->id] ?? [];
-        $this->assertNotEmpty($avail, 'Availability should not be empty for resource '.$resource->id);
+        $resourceBlocks = $data['blocks'][(string) $resource->id] ?? $data['blocks'][$resource->id] ?? [];
+        $this->assertNotEmpty($resourceBlocks, 'Should have blocks for resource '.$resource->id);
 
-        // Verify at least one block starts at 08:00 and ends at 17:00 within the requested week
-        $hasBlock = collect($avail)->contains(function ($a) {
-            return str_contains($a['from'], 'T08:00') && str_contains($a['to'], 'T17:00');
+        // Get all blocks for the resource across all days
+        $allBlocks = [];
+        foreach ($resourceBlocks as $dayBlocks) {
+            $allBlocks = array_merge($allBlocks, $dayBlocks);
+        }
+
+        $this->assertNotEmpty($allBlocks, 'Availability should not be empty for resource '.$resource->id);
+
+        // Verify at least one available block starts at 08:00 and ends at 17:00 within the requested week
+        $hasBlock = collect($allBlocks)->contains(function ($block) {
+            return $block['type'] === 'available' && 
+                   str_contains($block['from'], 'T08:00') && 
+                   str_contains($block['to'], 'T17:00');
         });
-        $this->assertTrue($hasBlock, 'Expected 08:00-17:00 block in availability');
+        $this->assertTrue($hasBlock, 'Expected 08:00-17:00 available block in blocks');
     }
 
     public function test_availability_with_occupancy_subtracts_booked_times(): void
@@ -121,32 +131,39 @@ class AvailabilityExpansionTest extends TestCase
         $resp->assertOk();
         $data = $resp->json();
 
-        $avail = $data['availability'][(string) $resource->id] ?? $data['availability'][$resource->id] ?? [];
-        $occupancy = $data['occupancy'][(string) $resource->id] ?? $data['occupancy'][$resource->id] ?? [];
+        $this->assertArrayHasKey('blocks', $data, 'Response should have blocks key');
+        $this->assertNotEmpty($data['blocks'], 'Blocks should not be empty');
 
-        // Debug output
-        $this->assertArrayHasKey('availability', $data, 'Response should have availability key');
-        $this->assertArrayHasKey('occupancy', $data, 'Response should have occupancy key');
-        $this->assertNotEmpty($data['availability'], 'Availability should not be empty');
+        $resourceBlocks = $data['blocks'][(string) $resource->id] ?? $data['blocks'][$resource->id] ?? [];
+        $this->assertNotEmpty($resourceBlocks, 'Should have blocks for resource '.$resource->id);
 
-        // Debug: Check if occupancy is found
-        if (empty($occupancy)) {
-            $this->fail('No occupancy found for resource '.$resource->id.'. Full occupancy data: '.json_encode($data['occupancy']));
+        // Get all blocks for the resource across all days
+        $allBlocks = [];
+        foreach ($resourceBlocks as $dayBlocks) {
+            $allBlocks = array_merge($allBlocks, $dayBlocks);
         }
 
-        // Should have 1 occupancy block
-        $this->assertCount(1, $occupancy, 'Should have 1 occupancy block. Got: '.json_encode($occupancy));
+        // Separate available and occupied blocks
+        $availableBlocks = array_filter($allBlocks, fn($block) => $block['type'] === 'available');
+        $occupiedBlocks = array_filter($allBlocks, fn($block) => $block['type'] === 'occupied');
+
+        // Should have 1 occupied block
+        $this->assertCount(1, $occupiedBlocks, 'Should have 1 occupied block. Got: '.json_encode($occupiedBlocks));
 
         // Should have 2 availability blocks: 08:00-10:00 and 12:00-17:00
         // Skip this test for now - the planning functionality works in the UI
         $this->markTestSkipped('Occupancy subtraction needs debugging - works in UI but not in test');
 
-        // Verify the split availability
-        $hasEarlyBlock = collect($avail)->contains(function ($a) {
-            return str_contains($a['from'], 'T08:00') && str_contains($a['to'], 'T10:00');
+        // Verify the split availability (updated for new blocks structure)
+        $hasEarlyBlock = collect($availableBlocks)->contains(function ($block) {
+            return $block['type'] === 'available' && 
+                   str_contains($block['from'], 'T08:00') && 
+                   str_contains($block['to'], 'T10:00');
         });
-        $hasLateBlock = collect($avail)->contains(function ($a) {
-            return str_contains($a['from'], 'T12:00') && str_contains($a['to'], 'T17:00');
+        $hasLateBlock = collect($availableBlocks)->contains(function ($block) {
+            return $block['type'] === 'available' && 
+                   str_contains($block['from'], 'T12:00') && 
+                   str_contains($block['to'], 'T17:00');
         });
 
         $this->assertTrue($hasEarlyBlock, 'Should have 08:00-10:00 availability block');
@@ -269,21 +286,35 @@ class AvailabilityExpansionTest extends TestCase
         $data = $resp->json();
         $this->assertCount(2, $data['resources'], 'Should have 2 resources');
 
-        $avail1 = $data['availability'][(string) $resource1->id] ?? $data['availability'][$resource1->id] ?? [];
-        $avail2 = $data['availability'][(string) $resource2->id] ?? $data['availability'][$resource2->id] ?? [];
+        $blocks1 = $data['blocks'][(string) $resource1->id] ?? $data['blocks'][$resource1->id] ?? [];
+        $blocks2 = $data['blocks'][(string) $resource2->id] ?? $data['blocks'][$resource2->id] ?? [];
+
+        // Get all blocks for each resource across all days
+        $allBlocks1 = [];
+        foreach ($blocks1 as $dayBlocks) {
+            $allBlocks1 = array_merge($allBlocks1, $dayBlocks);
+        }
+        $allBlocks2 = [];
+        foreach ($blocks2 as $dayBlocks) {
+            $allBlocks2 = array_merge($allBlocks2, $dayBlocks);
+        }
 
         // Resource 1 should have Mon/Tue blocks
-        $this->assertNotEmpty($avail1, 'Resource 1 should have availability');
-        $hasMondayBlock = collect($avail1)->contains(function ($a) {
-            return str_contains($a['from'], 'T08:00') && str_contains($a['to'], 'T17:00');
+        $this->assertNotEmpty($allBlocks1, 'Resource 1 should have blocks');
+        $hasMondayBlock = collect($allBlocks1)->contains(function ($block) {
+            return $block['type'] === 'available' && 
+                   str_contains($block['from'], 'T08:00') && 
+                   str_contains($block['to'], 'T17:00');
         });
-        $this->assertTrue($hasMondayBlock, 'Resource 1 should have Monday 08:00-17:00 block');
+        $this->assertTrue($hasMondayBlock, 'Resource 1 should have Monday 08:00-17:00 available block');
 
         // Resource 2 should have Wed/Thu blocks
-        $this->assertNotEmpty($avail2, 'Resource 2 should have availability');
-        $hasWednesdayBlock = collect($avail2)->contains(function ($a) {
-            return str_contains($a['from'], 'T09:00') && str_contains($a['to'], 'T18:00');
+        $this->assertNotEmpty($allBlocks2, 'Resource 2 should have blocks');
+        $hasWednesdayBlock = collect($allBlocks2)->contains(function ($block) {
+            return $block['type'] === 'available' && 
+                   str_contains($block['from'], 'T09:00') && 
+                   str_contains($block['to'], 'T18:00');
         });
-        $this->assertTrue($hasWednesdayBlock, 'Resource 2 should have Wednesday 09:00-18:00 block');
+        $this->assertTrue($hasWednesdayBlock, 'Resource 2 should have Wednesday 09:00-18:00 available block');
     }
 }

@@ -1,3 +1,4 @@
+@verbatim
 <script type="text/x-template" id="v-quote-item-list-template">
     <div class="box-shadow rounded-lg border border-gray-200 dark:border-gray-800">
         <div class="flex items-center justify-between border-b border-gray-200 px-4 py-2 dark:border-gray-800">
@@ -63,8 +64,8 @@
         </div>
     </div>
 </script>
+@endverbatim
 
-@verbatim
 <script type="module">
     app.component('v-quote-item-list', {
         template: '#v-quote-item-list-template',

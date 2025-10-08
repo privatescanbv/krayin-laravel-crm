@@ -81,26 +81,56 @@ class OrderItemPlanningController extends Controller
                     if (empty($blocks) || $shift->available === false) {
                         continue;
                     }
-                    // Normalize blocks to array of arrays
-                    if (! is_array($blocks)) {
-                        $blocks = [$blocks];
-                    }
-                    foreach ($blocks as $tb) {
-                        $weekday = (int) ($tb['weekday'] ?? -1); // 0=Sun .. 6=Sat
-                        if ($weekday !== (int) $day->dayOfWeek) {
-                            continue;
+                    if (is_array($blocks)) {
+                        // Shape B: first element is a weekday map: [{ '1': [{from,to}], '2': [...] }]
+                        if (isset($blocks[0]) && is_array($blocks[0]) && array_keys($blocks[0]) !== range(0, count($blocks[0]) - 1)) {
+                            $map = $blocks[0];
+                            foreach ($map as $wk => $entries) {
+                                $weekday = (int) $wk; // 0..6 or 1..7
+                                $weekdayNormalized = $weekday === 7 ? 0 : $weekday;
+                                if ($weekdayNormalized !== (int) $day->dayOfWeek) {
+                                    continue;
+                                }
+                                if (! is_array($entries)) {
+                                    continue;
+                                }
+                                foreach ($entries as $tb) {
+                                    if (! is_array($tb)) { continue; }
+                                    $fromStr = $tb['from'] ?? '09:00';
+                                    $toStr = $tb['to'] ?? '17:00';
+                                    $from = CarbonImmutable::parse($day->format('Y-m-d') . ' ' . $fromStr);
+                                    $to   = CarbonImmutable::parse($day->format('Y-m-d') . ' ' . $toStr);
+                                    if ($to->lessThanOrEqualTo($from)) {
+                                        continue;
+                                    }
+                                    $availabilityByResource[$rid][] = [
+                                        'from' => $from->toIso8601String(),
+                                        'to'   => $to->toIso8601String(),
+                                    ];
+                                }
+                            }
+                        } else {
+                            // Shape A: flat blocks array with 'weekday'
+                            foreach ($blocks as $tb) {
+                                if (! is_array($tb)) { continue; }
+                                $weekday = (int) ($tb['weekday'] ?? -1);
+                                $weekdayNormalized = $weekday === 7 ? 0 : $weekday;
+                                if ($weekdayNormalized !== (int) $day->dayOfWeek) {
+                                    continue;
+                                }
+                                $fromStr = $tb['from'] ?? '09:00';
+                                $toStr = $tb['to'] ?? '17:00';
+                                $from = CarbonImmutable::parse($day->format('Y-m-d') . ' ' . $fromStr);
+                                $to   = CarbonImmutable::parse($day->format('Y-m-d') . ' ' . $toStr);
+                                if ($to->lessThanOrEqualTo($from)) {
+                                    continue;
+                                }
+                                $availabilityByResource[$rid][] = [
+                                    'from' => $from->toIso8601String(),
+                                    'to'   => $to->toIso8601String(),
+                                ];
+                            }
                         }
-                        $fromStr = $tb['from'] ?? '09:00';
-                        $toStr = $tb['to'] ?? '17:00';
-                        $from = CarbonImmutable::parse($day->format('Y-m-d') . ' ' . $fromStr);
-                        $to   = CarbonImmutable::parse($day->format('Y-m-d') . ' ' . $toStr);
-                        if ($to->lessThanOrEqualTo($from)) {
-                            continue;
-                        }
-                        $availabilityByResource[$rid][] = [
-                            'from' => $from->toIso8601String(),
-                            'to'   => $to->toIso8601String(),
-                        ];
                     }
                 }
             }

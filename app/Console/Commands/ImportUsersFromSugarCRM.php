@@ -194,15 +194,18 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
             return 'updated';
         }
 
-        // Check if user exists by exact name match
-        $existingUserByName = User::where('name', $userData['name'])->first();
+        // Check if user exists by first_name and last_name match
+        $existingUserByName = User::where('first_name', $userData['first_name'])
+            ->where('last_name', $userData['last_name'])
+            ->first();
         if ($existingUserByName) {
             // don't update password and email for existing users
             unset($userData['password']);
             unset($userData['email']);
             // Synchronize the existing user with SugarCRM data
             $existingUserByName->update($userData);
-            $this->info("Synchronized existing user by name: {$userData['name']}");
+            $fullName = trim("{$userData['first_name']} {$userData['last_name']}");
+            $this->info("Synchronized existing user by name: {$fullName}");
 
             return 'updated';
         }

@@ -96,6 +96,18 @@ class User extends Authenticatable implements UserContract
     }
 
     /**
+     * Set the user's name by splitting into first and last name.
+     */
+    public function setNameAttribute($value): void
+    {
+        if (!empty($value)) {
+            $nameParts = explode(' ', $value, 2);
+            $this->attributes['first_name'] = $nameParts[0] ?? '';
+            $this->attributes['last_name'] = $nameParts[1] ?? '';
+        }
+    }
+
+    /**
      * Get the role that owns the user.
      */
     public function role()

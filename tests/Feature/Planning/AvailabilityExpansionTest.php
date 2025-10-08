@@ -51,10 +51,14 @@ class AvailabilityExpansionTest extends TestCase
         $resp->assertOk();
         $data = $resp->json();
         $this->assertArrayHasKey('availability', $data);
+        $this->assertArrayHasKey('resources', $data);
+        $this->assertNotEmpty($data['resources'], 'Should have resources');
+        
         $avail = $data['availability'][(string)$resource->id] ?? $data['availability'][$resource->id] ?? [];
-        $this->assertNotEmpty($avail, 'Availability should not be empty');
+        $this->assertNotEmpty($avail, 'Availability should not be empty for resource ' . $resource->id);
+        
         // Verify at least one block starts at 08:00 and ends at 17:00 within the requested week
-        $hasBlock = collect($avail)->contains(function ($a) use ($start) {
+        $hasBlock = collect($avail)->contains(function ($a) {
             return str_contains($a['from'], 'T08:00') && str_contains($a['to'], 'T17:00');
         });
         $this->assertTrue($hasBlock, 'Expected 08:00-17:00 block in availability');

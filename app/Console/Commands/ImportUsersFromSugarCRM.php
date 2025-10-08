@@ -175,7 +175,8 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
         $userData = $this->mapUserData($sugarUser);
 
         if ($dryRun) {
-            $this->info("DRY RUN: Would import user: {$userData['name']} ({$userData['email']})");
+            $fullName = trim("{$userData['first_name']} {$userData['last_name']}");
+            $this->info("DRY RUN: Would import user: {$fullName} ({$userData['email']})");
 
             return 'imported';
         }
@@ -189,7 +190,8 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
             unset($userData['email']);
             // Update existing user
             $existingUser->update($userData);
-            $this->info("Updated user by external_id: {$userData['name']}");
+            $fullName = trim("{$userData['first_name']} {$userData['last_name']}");
+            $this->info("Updated user by external_id: {$fullName}");
 
             return 'updated';
         }

@@ -123,16 +123,26 @@ class AttributeRepository extends Repository
             $userRepository = app($lookup['repository'])->where('status', 1);
 
             $currentUser = auth()->guard('user')->user();
+            
+            $searchTerm = '%'.urldecode($query).'%';
 
             if ($currentUser?->view_permission === 'group') {
                 return $userRepository->leftJoin('user_groups', 'users.id', '=', 'user_groups.user_id')
-                    ->where('users.name', 'like', '%'.urldecode($query).'%')
+                    ->where(function($q) use ($searchTerm) {
+                        $q->where('users.first_name', 'like', $searchTerm)
+                          ->orWhere('users.last_name', 'like', $searchTerm)
+                          ->orWhereRaw("CONCAT(users.first_name, ' ', users.last_name) LIKE ?", [$searchTerm]);
+                    })
                     ->get();
             } elseif ($currentUser?->view_permission === 'individual') {
                 return $userRepository->where('users.id', $currentUser->id);
             }
 
-            return $userRepository->where('users.name', 'like', '%'.urldecode($query).'%')->get();
+            return $userRepository->where(function($q) use ($searchTerm) {
+                $q->where('users.first_name', 'like', $searchTerm)
+                  ->orWhere('users.last_name', 'like', $searchTerm)
+                  ->orWhereRaw("CONCAT(users.first_name, ' ', users.last_name) LIKE ?", [$searchTerm]);
+            })->get();
         }
 
         // For leads: use Eloquent models and getNameAttribute accessor

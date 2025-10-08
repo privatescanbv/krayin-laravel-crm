@@ -46,6 +46,7 @@ class WebhookService
                     'has_n8n_api_key' => $hasN8nApiKey,
                     'headers'         => ['X-N8N-API-KEY' => config('webhook.n8n_api_key')],
                     'data'            => $data,
+                    'url'             => $url,
                     'response'        => $response->body(),
                 ]);
 

@@ -108,6 +108,11 @@ class MicrosoftGraphMailTransport implements TransportInterface
             $accessToken = $this->getAccessToken();
             $url = "{$this->baseUrl}/users/{$this->mailbox}/sendMail";
 
+            logger()->info('Sending email via Microsoft Graph', [
+                'to'      => collect($toRecipients)->pluck('emailAddress.address')->toArray(),
+                'from'    => $fromAddress,
+                'subject' => $email->getSubject(),
+            ]);
             $response = Http::withToken($accessToken)
                 ->post($url, $payload);
 
@@ -142,14 +147,6 @@ class MicrosoftGraphMailTransport implements TransportInterface
 
                 $envelope = new Envelope($senderAddress, $recipientAddresses);
             }
-            logger()->info('Mail sent', [
-                'subject'   => $email->getSubject(),
-                'from'      => $fromAddress,
-                'to'        => collect($toRecipients)->pluck('emailAddress.address')->toArray(),
-                'cc'        => collect($ccRecipients)->pluck('emailAddress.address')->toArray(),
-                'bcc'       => collect($bccRecipients)->pluck('emailAddress.address')->toArray(),
-            ]);
-            exit;
 
             return new SentMessage($message, $envelope);
         } catch (Exception $e) {

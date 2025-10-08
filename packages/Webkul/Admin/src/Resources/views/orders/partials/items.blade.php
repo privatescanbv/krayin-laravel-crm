@@ -117,9 +117,13 @@
                     return id ? { id, name } : {};
                 },
                 canPlan() {
-                    const product = this.item.product || {};
-                    const hasPartnerProducts = Array.isArray(product.partner_products) && product.partner_products.length > 0;
-                    return !!(this.item.id && (hasPartnerProducts || this.item.partner_product_count > 0));
+                    // Accept different shapes coming from backend
+                    const product = this.item.product || this.item.product_data || {};
+                    const ppSnake = product && Array.isArray(product.partner_products) ? product.partner_products : null;
+                    const ppCamel = product && Array.isArray(product.partnerProducts) ? product.partnerProducts : null;
+                    const hasPartnerProducts = (ppSnake && ppSnake.length > 0) || (ppCamel && ppCamel.length > 0);
+                    const precomputed = Number(this.item.partner_product_count || this.item.partnerProductsCount || 0) > 0;
+                    return !!(this.item.id && (hasPartnerProducts || precomputed));
                 },
             },
             methods: {

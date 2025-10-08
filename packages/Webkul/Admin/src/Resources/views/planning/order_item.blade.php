@@ -36,7 +36,7 @@
                     </div>
                     <div class="ml-auto flex items-center gap-2">
                         <button class="secondary-button" @click="prevWeek">Vorige week</button>
-                        <div class="text-sm">{{ weekLabel }}</div>
+                        <div class="text-sm">@{{ weekLabel }}</div>
                         <button class="secondary-button" @click="nextWeek">Volgende week</button>
                         <button class="primary-button" @click="loadAvailability">Zoeken</button>
                     </div>
@@ -47,7 +47,7 @@
                     <span class="font-semibold">Resources:</span>
                     <span v-for="(r, idx) in resources" :key="r.id">
                         <template v-if="idx">, </template>
-                        {{ r.name }} ({{ r.clinic }})
+                        @{{ r.name }} (@{{ r.clinic }})
                     </span>
                 </div>
 
@@ -57,22 +57,22 @@
                         <thead>
                             <tr>
                                 <th class="p-2 text-left">Resource</th>
-                                <th v-for="d in 7" :key="d" class="p-2 text-left">{{ dayLabel(d-1) }}</th>
+                                <th v-for="d in 7" :key="d" class="p-2 text-left">@{{ dayLabel(d-1) }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="r in resources" :key="r.id" class="align-top">
-                                <td class="p-2 whitespace-nowrap text-sm">{{ r.name }}<div class="text-gray-500">{{ r.clinic }}</div></td>
+                                <td class="p-2 whitespace-nowrap text-sm">@{{ r.name }}<div class="text-gray-500">@{{ r.clinic }}</div></td>
                                 <td v-for="d in 7" :key="r.id + '-' + d" class="p-1">
                                     <div class="flex flex-col gap-1">
                                         <!-- Available blocks -->
                                         <div v-for="block in availableBlocks(r.id, d-1)" :key="block.key" class="bg-green-100 dark:bg-green-900 text-green-900 dark:text-green-100 rounded px-2 py-1 cursor-pointer"
                                              @click="openBook(r.id, block.from, block.to)">
-                                            {{ timeRange(block.from, block.to) }}
+                                            @{{ timeRange(block.from, block.to) }}
                                         </div>
                                         <!-- Occupied blocks -->
                                         <div v-for="occ in occupiedBlocks(r.id, d-1)" :key="occ.key" class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded px-2 py-1 opacity-70">
-                                            {{ timeRange(occ.from, occ.to) }}
+                                            @{{ timeRange(occ.from, occ.to) }}
                                         </div>
                                     </div>
                                 </td>
@@ -91,7 +91,7 @@
                             <div>
                                 <label class="block text-xs mb-1">Resource</label>
                                 <select v-model.number="form.resource_id" class="control">
-                                    <option v-for="r in resources" :key="r.id" :value="r.id">{{ r.name }} ({{ r.clinic }})</option>
+                                    <option v-for="r in resources" :key="r.id" :value="r.id">@{{ r.name }} (@{{ r.clinic }})</option>
                                 </select>
                             </div>
                             <div>

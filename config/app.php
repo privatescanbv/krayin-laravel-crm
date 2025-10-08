@@ -217,7 +217,6 @@ return [
         Webkul\Installer\Providers\InstallerServiceProvider::class,
         Webkul\Lead\Providers\LeadServiceProvider::class,
         Webkul\Product\Providers\ProductServiceProvider::class,
-        Webkul\Quote\Providers\QuoteServiceProvider::class,
         Webkul\Tag\Providers\TagServiceProvider::class,
         Webkul\User\Providers\UserServiceProvider::class,
         Webkul\Warehouse\Providers\WarehouseServiceProvider::class,

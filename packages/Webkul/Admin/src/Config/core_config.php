@@ -81,12 +81,6 @@ return [
                 'default'    => 'Leads',
                 'validation' => 'max:20',
             ], [
-                'name'       => 'quotes',
-                'title'      => 'admin::app.configuration.index.general.settings.menu.quotes',
-                'type'       => 'text',
-                'default'    => 'Quotes',
-                'validation' => 'max:20',
-            ], [
                 'name'       => 'mail.mail',
                 'title'      => 'admin::app.configuration.index.general.settings.menu.mail',
                 'type'       => 'text',

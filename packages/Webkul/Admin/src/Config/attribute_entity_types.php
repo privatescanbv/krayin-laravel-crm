@@ -21,11 +21,6 @@ return [
         'repository' => 'Webkul\Product\Repositories\ProductRepository',
     ],
 
-    'quotes'      => [
-        'name'       => 'admin::app.quotes.index.title',
-        'repository' => 'Webkul\Quote\Repositories\QuoteRepository',
-    ],
-
     'warehouses'      => [
         'name'       => 'admin::app.settings.warehouses.index.title',
         'repository' => 'Webkul\Warehouse\Repositories\WarehouseRepository',

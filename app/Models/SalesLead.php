@@ -8,7 +8,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
-use Webkul\Quote\Models\Quote;
+
+// Quote entity removed
 
 class SalesLead extends Model
 {
@@ -31,7 +32,6 @@ class SalesLead extends Model
         'description',
         'pipeline_stage_id',
         'lead_id',
-        'quote_id',
         'user_id',
         'created_by',
         'updated_by',
@@ -64,13 +64,7 @@ class SalesLead extends Model
         return $this->belongsTo(Lead::class);
     }
 
-    /**
-     * Get the order associated with the workflow.
-     */
-    public function quote()
-    {
-        return $this->belongsTo(Quote::class);
-    }
+    // Quote relation removed
 
     /**
      * Get the user associated with the workflow.

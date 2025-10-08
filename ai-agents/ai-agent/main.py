@@ -28,7 +28,7 @@ db = SQLDatabase.from_uri(
     db_url,
     include_tables=[
         "lead_channels", "lead_persons", "lead_pipeline_stages",
-        "lead_pipelines", "lead_products", "lead_quotes", "lead_sources",
+        "lead_pipelines", "lead_products", "lead_sources",
         "lead_stages", "lead_tags", "lead_types", "leads", "emails",
         "lead_types", "users", "persons"
     ],

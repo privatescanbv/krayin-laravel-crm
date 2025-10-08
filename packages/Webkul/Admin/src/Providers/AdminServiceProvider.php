@@ -48,7 +48,6 @@ class AdminServiceProvider extends ServiceProvider
             'organizations' => \Webkul\Contact\Models\Organization::class,
             'persons'       => \Webkul\Contact\Models\Person::class,
             'products'      => \Webkul\Product\Models\Product::class,
-            'quotes'        => \Webkul\Quote\Models\Quote::class,
             'warehouses'    => \Webkul\Warehouse\Models\Warehouse::class,
         ]);
 

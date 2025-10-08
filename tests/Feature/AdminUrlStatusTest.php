@@ -25,7 +25,7 @@ use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Models\Type;
 use Webkul\Product\Models\Product;
 use Webkul\Product\Models\ProductGroup;
-use Webkul\Quote\Models\Quote;
+// Quote entity removed
 use Webkul\Tag\Models\Tag;
 use Webkul\User\Models\Group;
 use Webkul\User\Models\Role;
@@ -307,19 +307,7 @@ function createTestDataForRoutes(): array
         'quantity'    => 10,
     ]);
 
-    // Create quote using direct creation
-    $data['quote'] = Quote::create([
-        'user_id'           => User::first()->id,
-        'person_id'         => $data['person']->id,
-        'subject'           => 'Test Quote',
-        'expired_at'        => now()->addDays(30),
-        'sub_total'         => 100.00,
-        'discount_amount'   => 0,
-        'tax_amount'        => 21.00,
-        'adjustment_amount' => 0,
-        'grand_total'       => 121.00,
-        'lead_id'           => $data['lead']->id,
-    ]);
+    // Quote entity removed: no quote test data
 
     // Create activity using direct creation
     $group = Group::first();
@@ -546,7 +534,7 @@ function resolveParameterValue(string $param, array $testData): mixed
         'warehouse_id' => 'warehouse',
         'warehouseId'  => 'warehouse',
         'product_id'   => 'product',
-        'quote_id'     => 'quote',
+        // 'quote_id' mapping removed
         'resourceId'   => 'resource',
         'token'        => null, // Can't test password reset tokens
         'path'         => null, // Can't test file paths

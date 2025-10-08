@@ -6,7 +6,6 @@ use App\Models\SalesLead;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
-use Webkul\Quote\Models\Quote;
 use Webkul\User\Models\User;
 
 /**
@@ -39,7 +38,6 @@ class SalesLeadFactory extends Factory
             'description'        => $this->faker->optional()->paragraph(),
             'pipeline_stage_id'  => $stage->id,
             'lead_id'            => null, // Optional - can be set when creating
-            'quote_id'           => null, // Optional - can be set when creating
             'user_id'            => User::first()?->id, // Optional - assign to first user if available
         ];
     }
@@ -52,18 +50,6 @@ class SalesLeadFactory extends Factory
         return $this->state(function (array $attributes) use ($lead) {
             return [
                 'lead_id' => $lead?->id ?? Lead::factory()->create()->id,
-            ];
-        });
-    }
-
-    /**
-     * Indicate that the sales lead should have a quote.
-     */
-    public function withQuote(?Quote $quote = null): static
-    {
-        return $this->state(function (array $attributes) use ($quote) {
-            return [
-                'quote_id' => $quote?->id ?? Quote::factory()->create()->id,
             ];
         });
     }

@@ -24,7 +24,6 @@ use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\EmailProxy;
 use Webkul\Lead\Contracts\Lead as LeadContract;
 use Webkul\Lead\Repositories\LeadRepository;
-use Webkul\Quote\Models\QuoteProxy;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
 use Database\Factories\LeadFactory;
@@ -323,15 +322,6 @@ class Lead extends Model implements LeadContract
     public function emails()
     {
         return $this->hasMany(EmailProxy::modelClass());
-    }
-
-    /**
-     * The quotes that belong to the lead.
-     */
-    public function quotes()
-    {
-        return $this->belongsToMany(QuoteProxy::modelClass(), 'lead_quotes')
-            ->withPivot(['lead_id', 'quote_id']);
     }
 
     /**

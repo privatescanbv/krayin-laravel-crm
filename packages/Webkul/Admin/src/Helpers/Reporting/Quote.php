@@ -2,7 +2,6 @@
 
 namespace Webkul\Admin\Helpers\Reporting;
 
-use Webkul\Quote\Repositories\QuoteRepository;
 
 class Quote extends AbstractReporting
 {
@@ -11,8 +10,9 @@ class Quote extends AbstractReporting
      *
      * @return void
      */
-    public function __construct(protected QuoteRepository $quoteRepository)
+    public function __construct()
     {
+        //protected QuoteRepository $quoteRepository
         parent::__construct();
     }
 
@@ -21,11 +21,12 @@ class Quote extends AbstractReporting
      */
     public function getTotalQuotesProgress(): array
     {
-        return [
-            'previous' => $previous = $this->getTotalQuotes($this->lastStartDate, $this->lastEndDate),
-            'current'  => $current = $this->getTotalQuotes($this->startDate, $this->endDate),
-            'progress' => $this->getPercentageChange($previous, $current),
-        ];
+        return [];
+//        return [
+//            'previous' => $previous = $this->getTotalQuotes($this->lastStartDate, $this->lastEndDate),
+//            'current'  => $current = $this->getTotalQuotes($this->startDate, $this->endDate),
+//            'progress' => $this->getPercentageChange($previous, $current),
+//        ];
     }
 
     /**
@@ -36,9 +37,10 @@ class Quote extends AbstractReporting
      */
     public function getTotalQuotes($startDate, $endDate): int
     {
-        return $this->quoteRepository
-            ->resetModel()
-            ->whereBetween('created_at', [$startDate, $endDate])
-            ->count();
+        return 0;
+//        return $this->quoteRepository
+//            ->resetModel()
+//            ->whereBetween('created_at', [$startDate, $endDate])
+//            ->count();
     }
 }

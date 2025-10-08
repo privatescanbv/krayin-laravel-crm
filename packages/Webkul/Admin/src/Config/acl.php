@@ -12,11 +12,6 @@ return [
         'route' => 'admin.leads.index',
         'sort'  => 2,
     ], [
-        'key'   => 'quotes',
-        'name'  => 'admin::app.acl.quotes',
-        'route' => 'admin.quotes.index',
-        'sort'  => 3,
-    ], [
         'key'           => 'products',
         'name'          => 'Products',
         'route'         => 'admin.products.index',
@@ -53,26 +48,6 @@ return [
         'key'   => 'leads.delete',
         'name'  => 'admin::app.acl.delete',
         'route' => ['admin.leads.delete', 'admin.leads.mass_delete'],
-        'sort'  => 4,
-    ], [
-        'key'   => 'quotes.create',
-        'name'  => 'admin::app.acl.create',
-        'route' => ['admin.quotes.create', 'admin.quotes.store'],
-        'sort'  => 1,
-    ], [
-        'key'   => 'quotes.edit',
-        'name'  => 'admin::app.acl.edit',
-        'route' => ['admin.quotes.edit', 'admin.quotes.update'],
-        'sort'  => 2,
-    ], [
-        'key'   => 'quotes.print',
-        'name'  => 'admin::app.acl.print',
-        'route' => 'admin.quotes.print',
-        'sort'  => 3,
-    ], [
-        'key'   => 'quotes.delete',
-        'name'  => 'admin::app.acl.delete',
-        'route' => ['admin.quotes.delete', 'admin.quotes.mass_delete'],
         'sort'  => 4,
     ], [
         'key'   => 'mail.inbox',

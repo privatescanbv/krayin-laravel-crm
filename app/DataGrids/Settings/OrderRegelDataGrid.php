@@ -80,7 +80,7 @@ class OrderRegelDataGrid extends DataGrid
                 'icon'   => 'icon-edit',
                 'title'  => 'Bewerken',
                 'method' => 'GET',
-                'url'    => fn ($row) => route('admin.settings.order_regels.edit', $row->id),
+                'url'    => fn ($row) => route('admin.order_regels.edit', $row->id),
             ]);
         }
 
@@ -90,7 +90,7 @@ class OrderRegelDataGrid extends DataGrid
                 'icon'   => 'icon-delete',
                 'title'  => 'Verwijderen',
                 'method' => 'DELETE',
-                'url'    => fn ($row) => route('admin.settings.order_regels.delete', $row->id),
+                'url'    => fn ($row) => route('admin.order_regels.delete', $row->id),
             ]);
         }
     }

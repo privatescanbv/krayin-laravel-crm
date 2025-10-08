@@ -36,11 +36,6 @@ require 'contacts-routes.php';
 require 'activities-routes.php';
 
 /**
- * Quotes routes.
- */
-require 'quote-routes.php';
-
-/**
  * Workflow routes.
  */
 require 'workflow-routes.php';
@@ -54,5 +49,10 @@ require 'configuration-routes.php';
  * Rest routes.
  */
 require 'rest-routes.php';
+
+/**
+ * Orders routes.
+ */
+require 'orders-routes.php';
 
 require 'address-routes.php';

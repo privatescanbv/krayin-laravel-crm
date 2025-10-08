@@ -610,18 +610,7 @@ CREATE TABLE `lead_products` (
   CONSTRAINT `lead_products_product_id_foreign` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-DROP TABLE IF EXISTS `lead_quotes`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `lead_quotes` (
-  `quote_id` int unsigned NOT NULL,
-  `lead_id` int unsigned NOT NULL,
-  KEY `lead_quotes_quote_id_foreign` (`quote_id`),
-  KEY `lead_quotes_lead_id_foreign` (`lead_id`),
-  CONSTRAINT `lead_quotes_lead_id_foreign` FOREIGN KEY (`lead_id`) REFERENCES `leads` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `lead_quotes_quote_id_foreign` FOREIGN KEY (`quote_id`) REFERENCES `quotes` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
+-- lead_quotes table removed due to deprecation of Quote entity and its linkage to Lead
 DROP TABLE IF EXISTS `lead_sources`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
@@ -1486,7 +1475,6 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (30,'2021_05_25_072
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (31,'2021_06_07_162808_add_lead_view_permission_column_in_users_table',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (32,'2021_07_01_230345_create_quotes_table',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (33,'2021_07_01_231317_create_quote_items_table',1);
-INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (34,'2021_07_02_201822_create_lead_quotes_table',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (35,'2021_08_26_133538_create_workflows_table',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (36,'2021_09_03_172713_create_email_templates_table',1);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (37,'2021_09_22_194103_add_unique_index_to_name_in_organizations_table',1);

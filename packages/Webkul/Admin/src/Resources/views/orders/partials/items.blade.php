@@ -34,7 +34,14 @@
         <x-admin::table.thead.tr>
             <x-admin::table.td>
                 <x-admin::form.control-group class="!mb-0">
-                    <x-admin::lookup ::src="src" ::name="`${inputName}[product_id]`" placeholder="Zoek product" @on-selected="(product) => selectProduct(product)" />
+                    <x-admin::product-lookup
+                        ::src="src"
+                        ::name="`${inputName}[product_id]`"
+                        placeholder="Zoek product"
+                        ::key="(item.id ? item.id : ('new-' + index)) + '-' + (item.product_id ? item.product_id : '')"
+                        ::value="displayValue"
+                        @on-selected="(product) => selectProduct(product)"
+                    />
                 </x-admin::form.control-group>
             </x-admin::table.td>
             <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
@@ -98,12 +105,20 @@
                 src() {
                     return "{{ route('admin.products.search') }}";
                 },
+                displayValue() {
+                    const id = this.item.product_id || this.item.id || null;
+                    const name = this.item.product_name || this.item.name || '';
+                    return id ? { id, name } : {};
+                },
             },
             methods: {
                 selectProduct(result) {
+                    try { console.log('[v-order-item] selectProduct', result); } catch (e) {}
                     this.item.product_id = result.id;
+                    this.item.product_name = result.name;
                 },
                 removeItem() {
+                    try { console.log('[v-order-item] removeItem'); } catch (e) {}
                     this.$emit('onRemoveItem', this.item);
                 },
             },

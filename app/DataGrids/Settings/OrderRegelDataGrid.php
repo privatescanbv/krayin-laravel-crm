@@ -64,7 +64,7 @@ class OrderRegelDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'total_price',
-            'type'       => 'decimal',
+            'type'       => 'float',
             'label'      => 'Totale prijs',
             'searchable' => true,
             'filterable' => true,

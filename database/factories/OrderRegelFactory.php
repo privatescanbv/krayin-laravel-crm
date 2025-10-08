@@ -17,7 +17,7 @@ class OrderRegelFactory extends Factory
     {
         return [
             'order_id'    => Order::factory(),
-            'product_id'  => 1,
+            'product_id'  => \Webkul\Product\Models\Product::factory(),
             'quantity'    => $this->faker->numberBetween(1, 10),
             'total_price' => $this->faker->randomFloat(2, 5, 1000),
         ];

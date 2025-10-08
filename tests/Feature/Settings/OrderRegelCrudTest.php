@@ -5,6 +5,7 @@ namespace Tests\Feature\Settings;
 use App\Models\Order;
 use App\Models\OrderRegel;
 use Webkul\Installer\Http\Middleware\CanInstall;
+use Webkul\Product\Models\Product;
 
 beforeEach(function () {
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
@@ -16,6 +17,7 @@ beforeEach(function () {
 
 test('order_regels index returns datagrid json', function () {
     $o = Order::factory()->create();
+    $p = Product::factory()->create();
     $r1 = OrderRegel::factory()->create(['order_id' => $o->id]);
     $r2 = OrderRegel::factory()->create(['order_id' => $o->id]);
 
@@ -31,7 +33,7 @@ test('can create order_regel', function () {
 
     $payload = [
         'order_id'    => $o->id,
-        'product_id'  => 1,
+        'product_id'  => $p->id,
         'quantity'    => 2,
         'total_price' => 200,
     ];

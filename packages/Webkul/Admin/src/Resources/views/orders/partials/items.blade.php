@@ -16,7 +16,7 @@
                         <x-admin::table.th>Product</x-admin::table.th>
                         <x-admin::table.th class="text-center">Aantal</x-admin::table.th>
                         <x-admin::table.th class="text-center">Totaal</x-admin::table.th>
-                        <x-admin::table.th class="text-center"></x-admin::table.th>
+                    <x-admin::table.th class="text-center">Plan</x-admin::table.th>
                     </x-admin::table.thead.tr>
                 </x-admin::table.thead>
                 <x-admin::table.tbody>
@@ -55,9 +55,12 @@
                 </x-admin::form.control-group>
             </x-admin::table.td>
             <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
-                <x-admin::form.control-group class="!mb-0">
+                <div class="flex items-center justify-end gap-2">
+                    <button v-if="canPlan" type="button" class="secondary-button" @click="openPlanning">
+                        Inplannen
+                    </button>
                     <i @click="removeItem" class="icon-delete cursor-pointer text-2xl"></i>
-                </x-admin::form.control-group>
+                </div>
             </x-admin::table.td>
         </x-admin::table.thead.tr>
     </script>
@@ -73,7 +76,10 @@
                         product_id: r.product_id ?? null,
                         quantity: r.quantity ?? 1,
                         total_price: r.total_price ?? 0,
-                    })) : [{ id: null, product_id: null, quantity: 1, total_price: 0 }],
+                        // include product and partner products info if present (server eager-loaded)
+                        product: r.product || null,
+                        partner_product_count: (r.product && Array.isArray(r.product.partner_products)) ? r.product.partner_products.length : 0,
+                    })) : [{ id: null, product_id: null, quantity: 1, total_price: 0, product: null, partner_product_count: 0 }],
                 };
             },
             methods: {
@@ -110,6 +116,15 @@
                     const name = this.item.product_name || this.item.name || '';
                     return id ? { id, name } : {};
                 },
+                canPlan() {
+                    // Accept different shapes coming from backend
+                    const product = this.item.product || this.item.product_data || {};
+                    const ppSnake = product && Array.isArray(product.partner_products) ? product.partner_products : null;
+                    const ppCamel = product && Array.isArray(product.partnerProducts) ? product.partnerProducts : null;
+                    const hasPartnerProducts = (ppSnake && ppSnake.length > 0) || (ppCamel && ppCamel.length > 0);
+                    const precomputed = Number(this.item.partner_product_count || this.item.partnerProductsCount || 0) > 0;
+                    return !!(this.item.id && (hasPartnerProducts || precomputed));
+                },
             },
             methods: {
                 selectProduct(result) {
@@ -120,6 +135,12 @@
                 removeItem() {
                     try { console.log('[v-order-item] removeItem'); } catch (e) {}
                     this.$emit('onRemoveItem', this.item);
+                },
+                openPlanning() {
+                    const id = this.item.id;
+                    if (!id) return;
+                    const url = "{{ route('admin.planning.order_item.show', ['orderItemId' => '___ID___']) }}".replace('___ID___', id);
+                    window.location.href = url;
                 },
             },
         });

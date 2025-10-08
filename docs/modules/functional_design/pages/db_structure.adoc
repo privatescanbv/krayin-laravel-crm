@@ -286,6 +286,18 @@ TABLE(OrderRegel, "order_regels") {
   updated_by: bigint
 }
 
+TABLE(ResourceOrderItem, "resource_orderitem") {
+  PRIMARY_KEY(id): bigint
+  FOREIGN_KEY(resource_id): bigint
+  FOREIGN_KEY(orderitem_id): bigint
+  from: datetime
+  to: datetime
+  created_at: datetime
+  updated_at: datetime
+  created_by: bigint
+  updated_by: bigint
+}
+
 TABLE(SalesLead, "sales_lead (backoffice)") {
   PRIMARY_KEY(id): bigint
   name: string
@@ -542,6 +554,9 @@ Clinic "0..*" -- "n" PartnerProduct
 Clinic "0..1" -- "1" Address
 Clinic "1" -- "n" Activity
 PartnerProduct "n" -- "n" Resource
+
+ResourceOrderItem "n" -- "1" Resource
+ResourceOrderItem "n" -- "1" OrderRegel
 
 Resource "1" -- "1" ResourceType
 

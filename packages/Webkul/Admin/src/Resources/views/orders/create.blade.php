@@ -22,11 +22,30 @@
             </div>
 
             <x-admin::form.control-group>
-                <x-admin::form.control-group.label>Titel</x-admin::form.control-group.label>
+                <x-admin::form.control-group.label class="required">Titel</x-admin::form.control-group.label>
                 <x-admin::form.control-group.control type="text" name="title" rules="required" />
             </x-admin::form.control-group>
 
-            
+            <x-admin::form.control-group>
+                <x-admin::form.control-group.label class="required">Sales Lead</x-admin::form.control-group.label>
+                <x-admin::form.control-group.control 
+                    type="select" 
+                    name="sales_lead_id" 
+                    value="{{ $salesLeadId ?? old('sales_lead_id') ?? '' }}"
+                    rules="required|integer|exists:salesleads,id"
+                >
+                    <option value="">Selecteer een Sales Lead</option>
+                    @if(isset($salesLeads))
+                        @foreach($salesLeads as $id => $name)
+                            <option value="{{ $id }}" {{ ($salesLeadId ?? old('sales_lead_id')) == $id ? 'selected' : '' }}>
+                                {{ $name }}
+                            </option>
+                        @endforeach
+                    @endif
+                </x-admin::form.control-group.control>
+            </x-admin::form.control-group>
+
+
 
             @include('admin::orders.partials.items')
         </div>

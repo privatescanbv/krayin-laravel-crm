@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\PartnerProduct;
 use App\Models\ResourceType;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Product\Models\Product;
@@ -181,8 +182,8 @@ test('price normalization works with comma separator', function () {
 
 test('can link partner products to product', function () {
     $product = Product::factory()->create();
-    $partnerProduct1 = \App\Models\PartnerProduct::factory()->create(['product_id' => null]);
-    $partnerProduct2 = \App\Models\PartnerProduct::factory()->create(['product_id' => null]);
+    $partnerProduct1 = PartnerProduct::factory()->create(['product_id' => null]);
+    $partnerProduct2 = PartnerProduct::factory()->create(['product_id' => null]);
 
     $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
     $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
@@ -208,8 +209,8 @@ test('can link partner products to product', function () {
 
 test('can unlink partner products from product', function () {
     $product = Product::factory()->create();
-    $partnerProduct1 = \App\Models\PartnerProduct::factory()->create(['product_id' => $product->id]);
-    $partnerProduct2 = \App\Models\PartnerProduct::factory()->create(['product_id' => $product->id]);
+    $partnerProduct1 = PartnerProduct::factory()->create(['product_id' => $product->id]);
+    $partnerProduct2 = PartnerProduct::factory()->create(['product_id' => $product->id]);
 
     $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
     $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
@@ -236,8 +237,8 @@ test('can unlink partner products from product', function () {
 
 test('can change partner product selection', function () {
     $product = Product::factory()->create();
-    $partnerProduct1 = \App\Models\PartnerProduct::factory()->create(['product_id' => $product->id]);
-    $partnerProduct2 = \App\Models\PartnerProduct::factory()->create(['product_id' => null]);
+    $partnerProduct1 = PartnerProduct::factory()->create(['product_id' => $product->id]);
+    $partnerProduct2 = PartnerProduct::factory()->create(['product_id' => null]);
 
     $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
     $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
@@ -267,7 +268,7 @@ test('validation fails when partner product has different resource type', functi
     $resourceType2 = ResourceType::factory()->create();
 
     $product = Product::factory()->create(['resource_type_id' => $resourceType1->id]);
-    $partnerProduct = \App\Models\PartnerProduct::factory()->create([
+    $partnerProduct = PartnerProduct::factory()->create([
         'resource_type_id' => $resourceType2->id,
         'product_id'       => null,
     ]);
@@ -291,7 +292,7 @@ test('validation passes when partner product has same resource type', function (
     $resourceType = ResourceType::factory()->create();
 
     $product = Product::factory()->create(['resource_type_id' => $resourceType->id]);
-    $partnerProduct = \App\Models\PartnerProduct::factory()->create([
+    $partnerProduct = PartnerProduct::factory()->create([
         'resource_type_id' => $resourceType->id,
         'product_id'       => null,
     ]);
@@ -315,7 +316,7 @@ test('validation passes when partner product has same resource type', function (
 });
 
 test('validation fails when resource type is not set but partner products are selected', function () {
-    $partnerProduct = \App\Models\PartnerProduct::factory()->create();
+    $partnerProduct = PartnerProduct::factory()->create();
     $productGroupId = ProductGroup::query()->value('id') ?? ProductGroup::factory()->create()->id;
 
     $payload = [

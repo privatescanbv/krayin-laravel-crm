@@ -214,24 +214,7 @@ class OrderItemPlanningController extends Controller
             $originalAvailability = $availabilityByResource[$rid] ?? [];
             $occupancyForResource = $occupiedByResource[$rid] ?? [];
             
-            // Debug logging
-            if (!empty($originalAvailability) && !empty($occupancyForResource)) {
-                \Log::info('Subtracting occupancy from availability', [
-                    'resource_id' => $rid,
-                    'original_availability' => $originalAvailability,
-                    'occupancy' => $occupancyForResource
-                ]);
-            }
-            
             $finalAvailability[$rid] = $subtractIntervals($originalAvailability, $occupancyForResource);
-            
-            // Debug logging for result
-            if (!empty($originalAvailability) && !empty($occupancyForResource)) {
-                \Log::info('Subtraction result', [
-                    'resource_id' => $rid,
-                    'final_availability' => $finalAvailability[$rid]
-                ]);
-            }
         }
 
         return response()->json([

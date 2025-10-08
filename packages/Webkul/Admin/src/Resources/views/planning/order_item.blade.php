@@ -161,7 +161,7 @@
                         },
                         window: { start, end },
                         resources: [],
-                        rawShifts: {},
+                        availabilityByResource: {},
                         rawOccupancy: {},
                         form: { resource_id: null, from: '', to: '' },
                         hours: Array.from({ length: 24 }, (_, i) => i),
@@ -201,30 +201,14 @@
                         const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
                         const data = await res.json();
                         this.resources = Array.isArray(data.resources) ? data.resources : [];
-                        // Normalize shifts per resource to ensure weekday_time_blocks is an array
-                        const normalizeBlocks = (val) => {
-                            if (!val) return [];
-                            if (Array.isArray(val)) return val;
-                            if (typeof val === 'string') {
-                                try { const parsed = JSON.parse(val); return Array.isArray(parsed) ? parsed : []; } catch (e) { return []; }
-                            }
-                            if (typeof val === 'object') {
-                                // Allow single block object
-                                return [val];
-                            }
-                            return [];
-                        };
-                        const shifts = data.shifts || {};
-                        const normShifts = {};
-                        Object.keys(shifts || {}).forEach((rid) => {
-                            const arr = Array.isArray(shifts[rid]) ? shifts[rid] : [];
-                            normShifts[rid] = arr.map(s => ({
-                                ...s,
-                                weekday_time_blocks: normalizeBlocks(s.weekday_time_blocks),
-                                available: s.available !== false,
-                            }));
+                        // Server returns final availability already split: { [resourceId]: [{from,to}] }
+                        const availability = data.availability || {};
+                        const normAvail = {};
+                        Object.keys(availability).forEach((rid) => {
+                            const arr = Array.isArray(availability[rid]) ? availability[rid] : [];
+                            normAvail[rid] = arr.map(a => ({ from: a.from, to: a.to }));
                         });
-                        this.rawShifts = normShifts;
+                        this.availabilityByResource = normAvail;
                         // Normalize occupancy list per resource
                         const occ = data.occupancy || {};
                         const normOcc = {};
@@ -234,59 +218,19 @@
                         });
                         this.rawOccupancy = normOcc;
                         if (this.debugEnabled) {
-                            try { console.log('[planning] availability', { resources: this.resources, shifts: this.rawShifts, occupancy: this.rawOccupancy }); } catch (e) {}
+                            try { console.log('[planning] availability', { resources: this.resources, availability: this.availabilityByResource, occupancy: this.rawOccupancy }); } catch (e) {}
                         }
-                    },
-                    blocksFromShift(resourceId, shift) {
-                        // weekday_time_blocks: [{ weekday: 0..6 (0=Sun), from: "09:00", to: "17:00" }]
-                        const blocks = [];
-                        const start = new Date(this.window.start);
-                        for (let i=0;i<7;i++) {
-                            const day = new Date(start); day.setDate(day.getDate()+i);
-                            const weekdaySun0 = day.getDay();
-                            const source = shift && shift.weekday_time_blocks;
-                            const blockList = Array.isArray(source) ? source : [];
-                            const tbs = blockList.filter(b => Number(b.weekday) === weekdaySun0 && shift.available !== false);
-                            for (const tb of tbs) {
-                                const from = new Date(day); const [fh,fm] = (tb.from||'09:00').split(':'); from.setHours(+fh, +fm, 0, 0);
-                                const to = new Date(day); const [th,tm] = (tb.to||'17:00').split(':'); to.setHours(+th, +tm, 0, 0);
-                                blocks.push({ resourceId, from, to });
-                            }
-                        }
-                        return blocks;
-                    },
-                    splitByOccupancy(blocks, occupancy) {
-                        const result = [];
-                        for (const block of blocks) {
-                            let parts = [ { from: new Date(block.from), to: new Date(block.to) } ];
-                            for (const occ of occupancy) {
-                                const of = new Date(occ.from), ot = new Date(occ.to);
-                                parts = parts.flatMap(p => {
-                                    if (ot <= p.from || of >= p.to) return [p];
-                                    const segs = [];
-                                    if (of > p.from) segs.push({ from: p.from, to: new Date(of) });
-                                    if (ot < p.to) segs.push({ from: new Date(ot), to: p.to });
-                                    return segs;
-                                });
-                            }
-                            for (const p of parts) { if (p.to > p.from) result.push({ resourceId: block.resourceId, from: p.from, to: p.to }); }
-                        }
-                        return result;
                     },
                     availableBlocksByDay(weekdayOffset) {
                         const day = this.dayDate(weekdayOffset);
                         const res = [];
                         for (const r of this.resources) {
-                            const shifts = (this.rawShifts[r.id]||[]);
-                            const occ = (this.rawOccupancy[r.id]||[]);
-                            const blocks = shifts.flatMap(s => this.blocksFromShift(r.id, s));
-                            const byDay = blocks.filter(b => b.from.toDateString() === day.toDateString());
-                            const occDay = occ.filter(o => {
-                                const of = new Date(o.from), ot = new Date(o.to);
-                                return of.toDateString() === day.toDateString() || ot.toDateString() === day.toDateString();
-                            });
-                            const free = this.splitByOccupancy(byDay, occDay).map((p, idx) => ({ key: `${r.id}-a-${weekdayOffset}-${idx}`, resourceId: r.id, ...p }));
-                            res.push(...free);
+                            const avail = (this.availabilityByResource[r.id]||[]);
+                            const byDay = avail.filter(a => {
+                                const f = new Date(a.from), t = new Date(a.to);
+                                return f.toDateString() === day.toDateString() || t.toDateString() === day.toDateString();
+                            }).map((a, idx) => ({ key: `${r.id}-a-${weekdayOffset}-${idx}`, resourceId: r.id, from: a.from, to: a.to }));
+                            res.push(...byDay);
                         }
                         if (this.debugEnabled) { this.debugState.dayOffset = weekdayOffset; this.debugState.availableCount = res.length; }
                         return res;

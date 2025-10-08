@@ -70,6 +70,7 @@
     {!! view_render_event('admin.contacts.quotes.create.form_controls.after') !!}
 
     @pushOnce('scripts')
+        @verbatim
         <script
             type="text/x-template"
             id="v-quote-template"
@@ -325,6 +326,7 @@
             });
 
         </script>
+        @endverbatim
 
         {{-- Items partial (create mode) --}}
         @include('admin::quotes.partials.items', ['isEdit' => false])

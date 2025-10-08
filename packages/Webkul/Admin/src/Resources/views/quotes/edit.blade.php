@@ -51,6 +51,7 @@
     {!! view_render_event('admin.contacts.quotes.edit.form_controls.after', ['quote' => $quote]) !!}
 
     @pushOnce('scripts')
+        @verbatim
         <script
             type="text/x-template"
             id="v-quote-template"
@@ -311,6 +312,7 @@
             });
 
         </script>
+        @endverbatim
 
         {{-- Items partial (edit mode) --}}
         @include('admin::quotes.partials.items', [

@@ -1,4 +1,4 @@
-THIS SHOULD BE A LINTER ERROR<?php
+<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;

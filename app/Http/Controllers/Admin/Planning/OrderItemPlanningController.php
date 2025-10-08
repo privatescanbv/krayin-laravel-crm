@@ -76,22 +76,38 @@ class OrderItemPlanningController extends Controller
             $rid = $resource->id;
             $availabilityByResource[$rid] = [];
             $resourceShifts = $shifts->get($rid) ?? collect();
+            
+            \Log::info('Processing resource', ['rid' => $rid, 'shifts_count' => $resourceShifts->count()]);
+            
             for ($i = 0; $i < 7; $i++) {
                 $day = $start->addDays($i);
+                \Log::info('Processing day', ['day' => $day->format('Y-m-d'), 'dayOfWeek' => $day->dayOfWeek]);
+                
                 foreach ($resourceShifts as $shift) {
                     $blocks = $shift->weekday_time_blocks;
+                    \Log::info('Shift blocks', ['blocks' => $blocks, 'available' => $shift->available]);
+                    
                     if (empty($blocks) || $shift->available === false) {
                         continue;
                     }
                     if (is_array($blocks)) {
                         // Check if this is a weekday map (keys are numeric weekdays: '1', '2', etc.)
                         $isWeekdayMap = !empty($blocks) && array_keys($blocks) !== range(0, count($blocks) - 1);
+                        \Log::info('Weekday map check', ['isWeekdayMap' => $isWeekdayMap, 'keys' => array_keys($blocks)]);
                         
                         if ($isWeekdayMap) {
                             // Direct weekday map: { '1': [{from,to}], '2': [...] }
                             foreach ($blocks as $wk => $entries) {
                                 $weekday = (int) $wk; // 1=Mon, 2=Tue, etc.
                                 $weekdayNormalized = $weekday === 7 ? 0 : $weekday; // Convert Sun=7 to Sun=0
+                                \Log::info('Weekday comparison', [
+                                    'wk' => $wk, 
+                                    'weekday' => $weekday, 
+                                    'weekdayNormalized' => $weekdayNormalized, 
+                                    'dayOfWeek' => $day->dayOfWeek,
+                                    'match' => $weekdayNormalized === (int) $day->dayOfWeek
+                                ]);
+                                
                                 if ($weekdayNormalized !== (int) $day->dayOfWeek) {
                                     continue;
                                 }
@@ -111,6 +127,7 @@ class OrderItemPlanningController extends Controller
                                         'from' => $from->toIso8601String(),
                                         'to'   => $to->toIso8601String(),
                                     ];
+                                    \Log::info('Added availability block', ['from' => $from->toIso8601String(), 'to' => $to->toIso8601String()]);
                                 }
                             }
                         } else {

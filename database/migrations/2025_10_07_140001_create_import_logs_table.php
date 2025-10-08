@@ -1,6 +1,5 @@
 <?php
 
-use App\Helpers\AuditTrailMigrationHelper;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -17,7 +16,6 @@ return new class extends Migration
             $table->json('context')->nullable();
             $table->string('record_id')->nullable();
             $table->timestamps();
-            AuditTrailMigrationHelper::addAuditTrailColumns($table);
 
             $table->foreign('import_run_id')->references('id')->on('import_runs')->onDelete('cascade');
         });

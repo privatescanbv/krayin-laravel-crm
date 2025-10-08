@@ -2,13 +2,12 @@
 
 namespace App\Models;
 
-use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ImportLog extends Model
 {
-    use HasAuditTrail, HasFactory;
+    use HasFactory;
 
     protected $table = 'import_logs';
 
@@ -18,15 +17,11 @@ class ImportLog extends Model
         'message',
         'context',
         'record_id',
-        'created_by',
-        'updated_by',
     ];
 
     protected $casts = [
         'context'        => 'array',
         'import_run_id'  => 'integer',
-        'created_by'     => 'integer',
-        'updated_by'     => 'integer',
     ];
 
     public function importRun()

@@ -176,11 +176,6 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         }
         $this->infoV('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
-        // Start import run tracking
-        if (! $dryRun) {
-            $this->startImportRun('leads');
-        }
-
         // Initialize importers
         $this->activityImporter = new ActivityImporter($this, $connection);
         $this->attachmentImporter = new AttachmentImporter($this, $connection);
@@ -190,6 +185,11 @@ class ImportLeadsFromSugarCRM extends AbstractSugarCRMImport
         $this->ensureUserImportRan();
 
         return $this->executeImport($dryRun, function () use ($connection, $limit, $leadIds, $dryRun, $importPersons) {
+            // Start import run tracking
+            if (! $dryRun) {
+                $this->startImportRun('leads');
+            }
+
             // Test connection
             $this->testConnection($connection);
 

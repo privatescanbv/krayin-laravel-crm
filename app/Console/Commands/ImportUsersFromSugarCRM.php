@@ -57,13 +57,13 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
         }
         $this->info('Dry run: '.($dryRun ? 'Yes' : 'No'));
 
-        // Start import run tracking
-        if (! $dryRun) {
-            $this->startImportRun('users');
-        }
-
         try {
             return $this->executeImport($dryRun, function () use ($connection, $table, $limit, $userIds, $dryRun) {
+                // Start import run tracking
+                if (! $dryRun) {
+                    $this->startImportRun('users');
+                }
+
                 // Test connection
                 $this->testConnection($connection);
 

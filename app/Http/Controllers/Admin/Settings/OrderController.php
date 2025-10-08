@@ -24,6 +24,20 @@ class OrderController extends SimpleEntityController
         $this->permissionPrefix = 'orders';
     }
 
+    protected function getEditViewData(\Illuminate\Http\Request $request, \Illuminate\Database\Eloquent\Model $entity): array
+    {
+        // Eager-load relations needed for planning button visibility per orderregel
+        $entity->load([
+            'orderRegels.product.partnerProducts' => function ($q) {
+                $q->select('partner_products.id');
+            },
+        ]);
+
+        return [
+            $this->entityName => $entity,
+        ];
+    }
+
     public function store(Request $request): JsonResponse|RedirectResponse
     {
         $this->validateStore($request);

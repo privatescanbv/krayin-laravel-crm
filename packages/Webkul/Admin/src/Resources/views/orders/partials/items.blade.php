@@ -16,7 +16,7 @@
                         <x-admin::table.th>Product</x-admin::table.th>
                         <x-admin::table.th class="text-center">Aantal</x-admin::table.th>
                         <x-admin::table.th class="text-center">Totaal</x-admin::table.th>
-                        <x-admin::table.th class="text-center"></x-admin::table.th>
+                    <x-admin::table.th class="text-center">Plan</x-admin::table.th>
                     </x-admin::table.thead.tr>
                 </x-admin::table.thead>
                 <x-admin::table.tbody>
@@ -55,9 +55,12 @@
                 </x-admin::form.control-group>
             </x-admin::table.td>
             <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
-                <x-admin::form.control-group class="!mb-0">
+                <div class="flex items-center justify-end gap-2">
+                    <button v-if="canPlan" type="button" class="secondary-button" @click="openPlanning">
+                        Inplannen
+                    </button>
                     <i @click="removeItem" class="icon-delete cursor-pointer text-2xl"></i>
-                </x-admin::form.control-group>
+                </div>
             </x-admin::table.td>
         </x-admin::table.thead.tr>
     </script>
@@ -110,6 +113,11 @@
                     const name = this.item.product_name || this.item.name || '';
                     return id ? { id, name } : {};
                 },
+                canPlan() {
+                    const product = this.item.product || {};
+                    const hasPartnerProducts = Array.isArray(product.partner_products) && product.partner_products.length > 0;
+                    return !!(this.item.id && (hasPartnerProducts || this.item.partner_product_count > 0));
+                },
             },
             methods: {
                 selectProduct(result) {
@@ -120,6 +128,12 @@
                 removeItem() {
                     try { console.log('[v-order-item] removeItem'); } catch (e) {}
                     this.$emit('onRemoveItem', this.item);
+                },
+                openPlanning() {
+                    const id = this.item.id;
+                    if (!id) return;
+                    const url = "{{ route('admin.planning.order_item.show', ['orderItemId' => '___ID___']) }}".replace('___ID___', id);
+                    window.location.href = url;
                 },
             },
         });

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\Settings\OrderController;
 use App\Http\Controllers\Admin\Settings\OrderRegelController;
+use App\Http\Controllers\Admin\Planning\OrderItemPlanningController;
 
 /**
  * Orders routes (top-level, not under settings).
@@ -28,6 +29,15 @@ Route::controller(OrderRegelController::class)->prefix('order-regels')->group(fu
     Route::put('edit/{id}', 'update')->name('admin.order_regels.update');
     Route::delete('', 'destroy')->name('admin.order_regels.delete');
     Route::delete('{id}', 'destroy')->name('admin.order_regels.delete');
+});
+
+/**
+ * Planning routes.
+ */
+Route::controller(OrderItemPlanningController::class)->prefix('planning')->group(function () {
+    Route::get('order-item/{orderItemId}', 'show')->name('admin.planning.order_item.show');
+    Route::get('order-item/{orderItemId}/availability', 'availability')->name('admin.planning.order_item.availability');
+    Route::post('order-item/{orderItemId}/book', 'book')->name('admin.planning.order_item.book');
 });
 
 

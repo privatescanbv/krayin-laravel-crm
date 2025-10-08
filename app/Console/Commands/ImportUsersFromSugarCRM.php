@@ -234,7 +234,7 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
         // Get first_name and last_name from SugarCRM
         $firstName = trim($sugarUser->first_name ?? '');
         $lastName = trim($sugarUser->last_name ?? '');
-        
+
         // Fallback to username if no names provided
         if (empty($firstName) && empty($lastName)) {
             $parts = explode('.', $sugarUser->user_name ?? 'Unknown User');

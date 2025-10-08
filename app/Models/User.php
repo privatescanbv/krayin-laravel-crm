@@ -81,7 +81,7 @@ class User extends Authenticatable
      */
     public function setNameAttribute($value): void
     {
-        if (!empty($value)) {
+        if (! empty($value)) {
             $nameParts = explode(' ', $value, 2);
             $this->attributes['first_name'] = $nameParts[0] ?? '';
             $this->attributes['last_name'] = $nameParts[1] ?? '';

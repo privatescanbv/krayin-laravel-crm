@@ -15,6 +15,7 @@ class AvailabilityExpansionTest extends TestCase
 
     public function test_weekday_map_blocks_expand_to_availability(): void
     {
+        $this->withoutMiddleware();
         // Arrange: resource, order, order item, and shift with weekday map for Mon/Tue/Wed 08:00-17:00
         $order = Order::factory()->create();
         $orderItem = OrderRegel::factory()->create([ 'order_id' => $order->id ]);
@@ -41,8 +42,8 @@ class AvailabilityExpansionTest extends TestCase
             'orderItemId'      => $orderItem->id,
             'start'            => $start->toIso8601String(),
             'end'              => $end->toIso8601String(),
-            'resource_type_id' => $resource->resource_type_id ?? 1,
-            'clinic_id'        => $resource->clinic_id ?? null,
+            'resource_type_id' => $resource->resource_type_id,
+            'clinic_id'        => $resource->clinic_id,
         ]));
 
         // Assert

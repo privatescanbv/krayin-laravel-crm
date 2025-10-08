@@ -26,7 +26,6 @@
                 <x-admin::form.control-group.control type="text" name="title" rules="required" />
             </x-admin::form.control-group>
 
-@php use App\Models\SalesLead; @endphp
             <x-admin::form.control-group>
                 <x-admin::form.control-group.label class="required">Sales Lead</x-admin::form.control-group.label>
                 <x-admin::form.control-group.control 
@@ -34,9 +33,7 @@
                     name="sales_lead_id" 
                     value="{{ $salesLeadId ?? old('sales_lead_id') ?? '' }}"
                     rules="required|integer|exists:salesleads,id"
-                    :options="SalesLead::with('lead')->get()->mapWithKeys(function($salesLead) {
-                        return [$salesLead->id => $salesLead->name . ' (' . ($salesLead->lead?->name ?? 'Geen lead') . ')'];
-                    })->toArray()"
+                    :options="$salesLeads ?? []"
                 />
             </x-admin::form.control-group>
 

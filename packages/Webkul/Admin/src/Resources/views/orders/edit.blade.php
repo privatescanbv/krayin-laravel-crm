@@ -1,4 +1,3 @@
-@php use App\Models\SalesLead; @endphp
 <x-admin::layouts>
     <x-slot:title>
         Order bewerken
@@ -37,9 +36,7 @@
                     name="sales_lead_id"
                     value="{{ $orders->sales_lead_id ?? '' }}"
                     rules="required|integer|exists:salesleads,id"
-                    :options="SalesLead::with('lead')->get()->mapWithKeys(function($salesLead) {
-                        return [$salesLead->id => $salesLead->name . ' (' . ($salesLead->lead?->name ?? 'Geen lead') . ')'];
-                    })->toArray()"
+                    :options="$salesLeads ?? []"
                 />
             </x-admin::form.control-group>
 

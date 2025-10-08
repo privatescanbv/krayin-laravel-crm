@@ -25,9 +25,12 @@ test('orders index returns datagrid json', function () {
 });
 
 test('can create order', function () {
+    $salesLead = \App\Models\SalesLead::factory()->create();
+    
     $payload = [
-        'title'       => 'Test Order',
-        'total_price' => 123.45,
+        'title'         => 'Test Order',
+        'total_price'   => 123.45,
+        'sales_lead_id' => $salesLead->id,
     ];
 
     $response = $this->postJson(route('admin.orders.store'), $payload);
@@ -40,11 +43,13 @@ test('can create order', function () {
 
 test('can update order', function () {
     $order = Order::factory()->create();
+    $salesLead = \App\Models\SalesLead::factory()->create();
 
     $payload = [
-        'title'       => 'Updated Order',
-        'total_price' => 999.99,
-        '_method'     => 'put',
+        'title'         => 'Updated Order',
+        'total_price'   => 999.99,
+        'sales_lead_id' => $salesLead->id,
+        '_method'       => 'put',
     ];
 
     $response = $this->postJson(route('admin.orders.update', ['id' => $order->id]), $payload);

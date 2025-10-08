@@ -5,8 +5,10 @@ namespace App\Services\Mail;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\Mailer\Envelope;
 use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mailer\Transport\TransportInterface;
+use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\MessageConverter;
 
 class MicrosoftGraphMailTransport implements TransportInterface
@@ -25,7 +27,7 @@ class MicrosoftGraphMailTransport implements TransportInterface
     /**
      * Send the message
      */
-    public function send(\Symfony\Component\Mime\RawMessage $message, ?\Symfony\Component\Mime\Address $envelope = null): ?SentMessage
+    public function send(\Symfony\Component\Mime\RawMessage $message, ?Envelope $envelope = null): ?SentMessage
     {
         try {
             $email = MessageConverter::toEmail($message);
@@ -124,7 +126,23 @@ class MicrosoftGraphMailTransport implements TransportInterface
                 'from'    => $fromAddress,
             ]);
 
-            return new SentMessage($message, $envelope ?? $from);
+            // Build default Envelope when not provided
+            if ($envelope === null) {
+                $senderAddress = new Address($fromAddress, $fromName);
+                $allRecipients = array_merge($toRecipients, $ccRecipients, $bccRecipients);
+                $recipientAddresses = [];
+                foreach ($allRecipients as $recipient) {
+                    $addr = $recipient['emailAddress']['address'] ?? null;
+                    $name = $recipient['emailAddress']['name'] ?? null;
+                    if ($addr) {
+                        $recipientAddresses[] = new Address($addr, $name);
+                    }
+                }
+
+                $envelope = new Envelope($senderAddress, $recipientAddresses);
+            }
+
+            return new SentMessage($message, $envelope);
         } catch (Exception $e) {
             Log::error('Microsoft Graph mail transport error', [
                 'error' => $e->getMessage(),

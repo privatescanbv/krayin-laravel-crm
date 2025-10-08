@@ -76,7 +76,10 @@
                         product_id: r.product_id ?? null,
                         quantity: r.quantity ?? 1,
                         total_price: r.total_price ?? 0,
-                    })) : [{ id: null, product_id: null, quantity: 1, total_price: 0 }],
+                        // include product and partner products info if present (server eager-loaded)
+                        product: r.product || null,
+                        partner_product_count: (r.product && Array.isArray(r.product.partner_products)) ? r.product.partner_products.length : 0,
+                    })) : [{ id: null, product_id: null, quantity: 1, total_price: 0, product: null, partner_product_count: 0 }],
                 };
             },
             methods: {

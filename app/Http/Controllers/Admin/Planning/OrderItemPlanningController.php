@@ -33,11 +33,22 @@ class OrderItemPlanningController extends Controller
     {
         $orderItem = OrderRegel::with(['product', 'order'])->findOrFail($orderItemId);
 
+        $viewType = $request->query('view', 'week'); // 'week' or 'month'
+        
+        if ($viewType === 'month') {
+            return $this->getMonthAvailability($request, $orderItem);
+        }
+        
+        return $this->getWeekAvailability($request, $orderItem);
+    }
+
+    private function getWeekAvailability(Request $request, OrderRegel $orderItem): JsonResponse
+    {
         $start = CarbonImmutable::parse($request->query('start', Carbon::now()->startOfWeek()));
-        $end = CarbonImmutable::parse($request->query('end', $start->addDays(6)->endOfDay()));
+        $end   = CarbonImmutable::parse($request->query('end', $start->addDays(6)->endOfDay()));
 
         $resourceTypeId = (int) $request->query('resource_type_id', $orderItem->product?->resource_type_id);
-        $clinicId = $request->query('clinic_id');
+        $clinicId       = $request->query('clinic_id');
 
         $resourcesQuery = Resource::query()->with('clinic', 'resourceType')
             ->where('resource_type_id', $resourceTypeId);
@@ -46,207 +57,355 @@ class OrderItemPlanningController extends Controller
         }
         $resources = $resourcesQuery->get();
 
-        // Occupancy (bookings) in the window
-        $occupancy = ResourceOrderItem::query()
-            ->with(['orderItem.order.salesLead.lead'])
-            ->whereIn('resource_id', $resources->pluck('id'))
-            ->where(function ($q) use ($start, $end) {
-                $q->whereBetween('from', [$start, $end])
-                    ->orWhereBetween('to', [$start, $end])
-                    ->orWhere(function ($q2) use ($start, $end) {
-                        $q2->where('from', '<=', $start)->where('to', '>=', $end);
-                    });
-            })
-            ->get()
-            ->groupBy('resource_id');
+        // Get occupancy and shifts
+        $occupancy = $this->getOccupancy($resources, $start, $end);
+        $shifts = $this->getShifts($resources, $start, $end);
 
-        // Shifts in the window
-        $shifts = Shift::query()
-            ->whereIn('resource_id', $resources->pluck('id'))
-            ->where(function ($q) use ($start, $end) {
-                $q->whereDate('period_start', '<=', $end->toDateString())
-                    ->whereDate('period_end', '>=', $start->toDateString());
-            })
-            ->get()
-            ->groupBy('resource_id');
-
-        // Build availability blocks per resource by expanding weekday_time_blocks across the requested week
-        $availabilityByResource = [];
+        // Build rendered blocks per resource per day
+        $renderedBlocks = [];
         foreach ($resources as $resource) {
             $rid = $resource->id;
-            $availabilityByResource[$rid] = [];
-            $resourceShifts = $shifts->get($rid) ?? collect();
-
+            $renderedBlocks[$rid] = [];
+            
+            // Generate blocks for each day of the week
             for ($i = 0; $i < 7; $i++) {
                 $day = $start->addDays($i);
-
-                foreach ($resourceShifts as $shift) {
-                    $blocks = $shift->weekday_time_blocks;
-
-                    if (empty($blocks) || $shift->available === false) {
-                        continue;
-                    }
-                    if (is_array($blocks)) {
-                        // Check if this is a weekday map (keys are numeric weekdays: '1', '2', etc.)
-                        $isWeekdayMap = ! empty($blocks) && array_keys($blocks) !== range(0, count($blocks) - 1);
-
-                        if ($isWeekdayMap) {
-                            // Direct weekday map: { '1': [{from,to}], '2': [...] }
-                            foreach ($blocks as $wk => $entries) {
-                                $weekday = (int) $wk; // 1=Mon, 2=Tue, etc.
-                                $weekdayNormalized = $weekday === 7 ? 0 : $weekday; // Convert Sun=7 to Sun=0
-
-                                if ($weekdayNormalized !== (int) $day->dayOfWeek) {
-                                    continue;
-                                }
-                                if (! is_array($entries)) {
-                                    continue;
-                                }
-                                foreach ($entries as $tb) {
-                                    if (! is_array($tb)) {
-                                        continue;
-                                    }
-                                    $fromStr = $tb['from'] ?? '09:00';
-                                    $toStr = $tb['to'] ?? '17:00';
-                                    $from = CarbonImmutable::parse($day->format('Y-m-d').' '.$fromStr);
-                                    $to = CarbonImmutable::parse($day->format('Y-m-d').' '.$toStr);
-                                    if ($to->lessThanOrEqualTo($from)) {
-                                        continue;
-                                    }
-                                    $availabilityByResource[$rid][] = [
-                                        'from' => $from->toIso8601String(),
-                                        'to'   => $to->toIso8601String(),
-                                    ];
-                                }
-                            }
-                        } else {
-                            // Flat blocks array with 'weekday' field
-                            foreach ($blocks as $tb) {
-                                if (! is_array($tb)) {
-                                    continue;
-                                }
-                                $weekday = (int) ($tb['weekday'] ?? -1);
-                                $weekdayNormalized = $weekday === 7 ? 0 : $weekday;
-                                if ($weekdayNormalized !== (int) $day->dayOfWeek) {
-                                    continue;
-                                }
-                                $fromStr = $tb['from'] ?? '09:00';
-                                $toStr = $tb['to'] ?? '17:00';
-                                $from = CarbonImmutable::parse($day->format('Y-m-d').' '.$fromStr);
-                                $to = CarbonImmutable::parse($day->format('Y-m-d').' '.$toStr);
-                                if ($to->lessThanOrEqualTo($from)) {
-                                    continue;
-                                }
-                                $availabilityByResource[$rid][] = [
-                                    'from' => $from->toIso8601String(),
-                                    'to'   => $to->toIso8601String(),
-                                ];
-                            }
-                        }
-                    }
-                }
+                $dayKey = $day->format('Y-m-d');
+                
+                $dayBlocks = $this->renderDayBlocks(
+                    $resource, 
+                    $day, 
+                    $shifts->get($rid, collect()), 
+                    $occupancy->get($rid, collect())
+                );
+                
+                $renderedBlocks[$rid][$dayKey] = $dayBlocks;
             }
-        }
-
-        // Helper to subtract occupancy intervals from availability intervals
-        $subtractIntervals = function (array $avail, array $occ) {
-            if (empty($occ)) {
-                return $avail; // No occupancy to subtract
-            }
-
-            $result = [];
-            foreach ($avail as $interval) {
-                $intervalStart = CarbonImmutable::parse($interval['from']);
-                $intervalEnd = CarbonImmutable::parse($interval['to']);
-                $segments = [[$intervalStart, $intervalEnd]];
-
-                foreach ($occ as $o) {
-                    $occStart = CarbonImmutable::parse($o['from']);
-                    $occEnd = CarbonImmutable::parse($o['to']);
-                    $newSegments = [];
-
-                    foreach ($segments as $segment) {
-                        $segStart = $segment[0];
-                        $segEnd = $segment[1];
-
-                        // No overlap - keep segment
-                        if ($occEnd->lessThanOrEqualTo($segStart) || $occStart->greaterThanOrEqualTo($segEnd)) {
-                            $newSegments[] = $segment;
-
-                            continue;
-                        }
-
-                        // Complete overlap - remove segment
-                        if ($occStart->lessThanOrEqualTo($segStart) && $occEnd->greaterThanOrEqualTo($segEnd)) {
-                            continue;
-                        }
-
-                        // Partial overlap - split segment
-                        // Left part (before occupancy)
-                        if ($occStart->greaterThan($segStart)) {
-                            $newSegments[] = [$segStart, $occStart];
-                        }
-
-                        // Right part (after occupancy)
-                        if ($occEnd->lessThan($segEnd)) {
-                            $newSegments[] = [$occEnd, $segEnd];
-                        }
-                    }
-                    $segments = $newSegments;
-                }
-
-                // Add remaining segments to result
-                foreach ($segments as $segment) {
-                    if ($segment[1]->greaterThan($segment[0])) {
-                        $result[] = [
-                            'from' => $segment[0]->toIso8601String(),
-                            'to'   => $segment[1]->toIso8601String(),
-                        ];
-                    }
-                }
-            }
-
-            return $result;
-        };
-
-        // Prepare flat occupied list per resource (ISO strings)
-        $occupiedByResource = [];
-        foreach ($resources as $resource) {
-            $rid = $resource->id;
-            $occupiedByResource[$rid] = [];
-            foreach ($occupancy->get($rid, collect()) as $o) {
-                $leadName = $o->orderItem?->order?->salesLead?->lead?->name ??
-                           $o->orderItem?->order?->salesLead?->name ??
-                           'Onbekend';
-                $occupiedByResource[$rid][] = [
-                    'from'      => CarbonImmutable::parse($o->from)->toIso8601String(),
-                    'to'        => CarbonImmutable::parse($o->to)->toIso8601String(),
-                    'lead_name' => $leadName,
-                ];
-            }
-        }
-
-        // Compute final availability (availability - occupied)
-        $finalAvailability = [];
-        foreach ($resources as $resource) {
-            $rid = $resource->id;
-            $originalAvailability = $availabilityByResource[$rid] ?? [];
-            $occupancyForResource = $occupiedByResource[$rid] ?? [];
-
-            $finalAvailability[$rid] = $subtractIntervals($originalAvailability, $occupancyForResource);
         }
 
         return response()->json([
-            'resources'   => $resources->map(fn ($r) => [
+            'view_type' => 'week',
+            'resources' => $resources->map(fn($r) => [
                 'id'             => $r->id,
                 'name'           => $r->name,
                 'clinic'         => $r->clinic?->name,
                 'resource_type'  => $r->resourceType?->name,
             ])->values(),
-            'availability'=> $finalAvailability,
-            'occupancy'   => $occupiedByResource,
-            'window'      => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
+            'blocks'    => $renderedBlocks,
+            'window'    => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
         ]);
+    }
+
+    private function getMonthAvailability(Request $request, OrderRegel $orderItem): JsonResponse
+    {
+        $start = CarbonImmutable::parse($request->query('start', Carbon::now()->startOfMonth()));
+        $end   = CarbonImmutable::parse($request->query('end', $start->endOfMonth()));
+
+        $resourceTypeId = (int) $request->query('resource_type_id', $orderItem->product?->resource_type_id);
+        $clinicId       = $request->query('clinic_id');
+
+        $resourcesQuery = Resource::query()->with('clinic', 'resourceType')
+            ->where('resource_type_id', $resourceTypeId);
+        if ($clinicId !== null && $clinicId !== '') {
+            $resourcesQuery->where('clinic_id', (int) $clinicId);
+        }
+        $resources = $resourcesQuery->get();
+
+        // Get occupancy and shifts
+        $occupancy = $this->getOccupancy($resources, $start, $end);
+        $shifts = $this->getShifts($resources, $start, $end);
+
+        // Build merged blocks per resource per day for month view
+        $renderedBlocks = [];
+        foreach ($resources as $resource) {
+            $rid = $resource->id;
+            $renderedBlocks[$rid] = [];
+            
+            // Generate blocks for each day of the month
+            $currentDay = $start->copy();
+            while ($currentDay->lte($end)) {
+                $dayKey = $currentDay->format('Y-m-d');
+                
+                $dayBlocks = $this->renderDayBlocks(
+                    $resource, 
+                    $currentDay, 
+                    $shifts->get($rid, collect()), 
+                    $occupancy->get($rid, collect()),
+                    true // merge adjacent blocks for month view
+                );
+                
+                $renderedBlocks[$rid][$dayKey] = $dayBlocks;
+                $currentDay = $currentDay->addDay();
+            }
+        }
+
+        return response()->json([
+            'view_type' => 'month',
+            'resources' => $resources->map(fn($r) => [
+                'id'             => $r->id,
+                'name'           => $r->name,
+                'clinic'         => $r->clinic?->name,
+                'resource_type'  => $r->resourceType?->name,
+            ])->values(),
+            'blocks'    => $renderedBlocks,
+            'window'    => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
+        ]);
+    }
+
+    private function getOccupancy($resources, CarbonImmutable $start, CarbonImmutable $end)
+    {
+        return ResourceOrderItem::query()
+            ->with(['orderItem.order.salesLead.lead'])
+            ->whereIn('resource_id', $resources->pluck('id'))
+            ->where(function ($q) use ($start, $end) {
+                $q->whereBetween('from', [$start, $end])
+                  ->orWhereBetween('to', [$start, $end])
+                  ->orWhere(function ($q2) use ($start, $end) {
+                      $q2->where('from', '<=', $start)->where('to', '>=', $end);
+                  });
+            })
+            ->get()
+            ->groupBy('resource_id');
+    }
+
+    private function getShifts($resources, CarbonImmutable $start, CarbonImmutable $end)
+    {
+        return Shift::query()
+            ->whereIn('resource_id', $resources->pluck('id'))
+            ->where(function ($q) use ($start, $end) {
+                $q->whereDate('period_start', '<=', $end->toDateString())
+                  ->whereDate('period_end', '>=', $start->toDateString());
+            })
+            ->get()
+            ->groupBy('resource_id');
+    }
+
+    private function renderDayBlocks($resource, CarbonImmutable $day, $resourceShifts, $resourceOccupancy, bool $mergeAdjacent = false): array
+    {
+        $blocks = [];
+        
+        // Generate availability blocks from shifts
+        foreach ($resourceShifts as $shift) {
+            $shiftBlocks = $this->getShiftBlocksForDay($shift, $day);
+            foreach ($shiftBlocks as $block) {
+                $blocks[] = [
+                    'type' => 'available',
+                    'from' => $block['from']->toIso8601String(),
+                    'to' => $block['to']->toIso8601String(),
+                    'resource_id' => $resource->id,
+                    'resource_name' => $resource->name,
+                    'clickable' => true,
+                ];
+            }
+        }
+
+        // Generate occupancy blocks
+        foreach ($resourceOccupancy as $occupancy) {
+            $occStart = CarbonImmutable::parse($occupancy->from);
+            $occEnd = CarbonImmutable::parse($occupancy->to);
+            
+            // Only include if it overlaps with this day
+            if ($occStart->lt($day->endOfDay()) && $occEnd->gt($day->startOfDay())) {
+                $blockStart = $occStart->gt($day->startOfDay()) ? $occStart : $day->startOfDay();
+                $blockEnd = $occEnd->lt($day->endOfDay()) ? $occEnd : $day->endOfDay();
+                
+                $leadName = $occupancy->orderItem?->order?->salesLead?->lead?->name ??
+                           $occupancy->orderItem?->order?->salesLead?->name ??
+                           'Onbekend';
+                
+                $blocks[] = [
+                    'type' => 'occupied',
+                    'from' => $blockStart->toIso8601String(),
+                    'to' => $blockEnd->toIso8601String(),
+                    'resource_id' => $resource->id,
+                    'resource_name' => $resource->name,
+                    'clickable' => false,
+                    'booking_id' => $occupancy->id,
+                    'lead_name' => $leadName,
+                ];
+            }
+        }
+
+        // Subtract occupancy from availability
+        $blocks = $this->subtractOccupancyFromAvailability($blocks);
+
+        // Merge adjacent blocks if requested (for month view)
+        if ($mergeAdjacent) {
+            $blocks = $this->mergeAdjacentBlocks($blocks);
+        }
+
+        // Sort blocks by start time
+        usort($blocks, fn($a, $b) => strcmp($a['from'], $b['from']));
+
+        return $blocks;
+    }
+
+    private function getShiftBlocksForDay($shift, CarbonImmutable $day): array
+    {
+        $blocks = [];
+        $shiftBlocks = $shift->weekday_time_blocks;
+        
+        if (empty($shiftBlocks) || $shift->available === false) {
+            return $blocks;
+        }
+
+        if (is_array($shiftBlocks)) {
+            $isWeekdayMap = !empty($shiftBlocks) && array_keys($shiftBlocks) !== range(0, count($shiftBlocks) - 1);
+            
+            if ($isWeekdayMap) {
+                // Direct weekday map: { '1': [{from,to}], '2': [...] }
+                foreach ($shiftBlocks as $wk => $entries) {
+                    $weekday = (int) $wk;
+                    $weekdayNormalized = $weekday === 7 ? 0 : $weekday;
+                    
+                    if ($weekdayNormalized !== (int) $day->dayOfWeek) {
+                        continue;
+                    }
+                    
+                    if (!is_array($entries)) {
+                        continue;
+                    }
+                    
+                    foreach ($entries as $tb) {
+                        if (!is_array($tb)) {
+                            continue;
+                        }
+                        
+                        $fromStr = $tb['from'] ?? '09:00';
+                        $toStr = $tb['to'] ?? '17:00';
+                        $from = CarbonImmutable::parse($day->format('Y-m-d') . ' ' . $fromStr);
+                        $to = CarbonImmutable::parse($day->format('Y-m-d') . ' ' . $toStr);
+                        
+                        if ($to->gt($from)) {
+                            $blocks[] = ['from' => $from, 'to' => $to];
+                        }
+                    }
+                }
+            } else {
+                // Flat blocks array with 'weekday' field
+                foreach ($shiftBlocks as $tb) {
+                    if (!is_array($tb)) {
+                        continue;
+                    }
+                    
+                    $weekday = (int) ($tb['weekday'] ?? -1);
+                    $weekdayNormalized = $weekday === 7 ? 0 : $weekday;
+                    
+                    if ($weekdayNormalized !== (int) $day->dayOfWeek) {
+                        continue;
+                    }
+                    
+                    $fromStr = $tb['from'] ?? '09:00';
+                    $toStr = $tb['to'] ?? '17:00';
+                    $from = CarbonImmutable::parse($day->format('Y-m-d') . ' ' . $fromStr);
+                    $to = CarbonImmutable::parse($day->format('Y-m-d') . ' ' . $toStr);
+                    
+                    if ($to->gt($from)) {
+                        $blocks[] = ['from' => $from, 'to' => $to];
+                    }
+                }
+            }
+        }
+
+        return $blocks;
+    }
+
+    private function subtractOccupancyFromAvailability(array $blocks): array
+    {
+        $availableBlocks = array_filter($blocks, fn($b) => $b['type'] === 'available');
+        $occupiedBlocks = array_filter($blocks, fn($b) => $b['type'] === 'occupied');
+        
+        $result = $occupiedBlocks; // Keep all occupied blocks
+        
+        foreach ($availableBlocks as $availBlock) {
+            $availStart = CarbonImmutable::parse($availBlock['from']);
+            $availEnd = CarbonImmutable::parse($availBlock['to']);
+            $segments = [[$availStart, $availEnd]];
+            
+            foreach ($occupiedBlocks as $occBlock) {
+                $occStart = CarbonImmutable::parse($occBlock['from']);
+                $occEnd = CarbonImmutable::parse($occBlock['to']);
+                $newSegments = [];
+                
+                foreach ($segments as $segment) {
+                    $segStart = $segment[0];
+                    $segEnd = $segment[1];
+                    
+                    // No overlap - keep segment
+                    if ($occEnd->lte($segStart) || $occStart->gte($segEnd)) {
+                        $newSegments[] = $segment;
+                        continue;
+                    }
+                    
+                    // Complete overlap - remove segment
+                    if ($occStart->lte($segStart) && $occEnd->gte($segEnd)) {
+                        continue;
+                    }
+                    
+                    // Partial overlap - split segment
+                    if ($occStart->gt($segStart)) {
+                        $newSegments[] = [$segStart, $occStart];
+                    }
+                    if ($occEnd->lt($segEnd)) {
+                        $newSegments[] = [$occEnd, $segEnd];
+                    }
+                }
+                $segments = $newSegments;
+            }
+            
+            // Add remaining segments as available blocks
+            foreach ($segments as $segment) {
+                if ($segment[1]->gt($segment[0])) {
+                    $result[] = [
+                        'type' => 'available',
+                        'from' => $segment[0]->toIso8601String(),
+                        'to' => $segment[1]->toIso8601String(),
+                        'resource_id' => $availBlock['resource_id'],
+                        'resource_name' => $availBlock['resource_name'],
+                        'clickable' => true,
+                    ];
+                }
+            }
+        }
+        
+        return $result;
+    }
+
+    private function mergeAdjacentBlocks(array $blocks): array
+    {
+        $merged = [];
+        $availableBlocks = array_filter($blocks, fn($b) => $b['type'] === 'available');
+        $occupiedBlocks = array_filter($blocks, fn($b) => $b['type'] === 'occupied');
+        
+        // Sort available blocks by start time
+        usort($availableBlocks, fn($a, $b) => strcmp($a['from'], $b['from']));
+        
+        // Merge adjacent available blocks
+        $current = null;
+        foreach ($availableBlocks as $block) {
+            if ($current === null) {
+                $current = $block;
+            } else {
+                $currentEnd = CarbonImmutable::parse($current['to']);
+                $blockStart = CarbonImmutable::parse($block['from']);
+                
+                // If blocks are adjacent (within 1 minute), merge them
+                if ($blockStart->diffInMinutes($currentEnd) <= 1) {
+                    $current['to'] = $block['to'];
+                } else {
+                    $merged[] = $current;
+                    $current = $block;
+                }
+            }
+        }
+        if ($current !== null) {
+            $merged[] = $current;
+        }
+        
+        // Add occupied blocks
+        $merged = array_merge($merged, $occupiedBlocks);
+        
+        return $merged;
     }
 
     public function book(Request $request, int $orderItemId): JsonResponse

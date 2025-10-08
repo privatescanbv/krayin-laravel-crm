@@ -38,23 +38,26 @@
             .block { position: absolute; left: 6px; right: 6px; border-radius: 6px; padding: 2px 6px; font-size: 11px; overflow: hidden; transition: all 0.2s ease; }
             .block-available { cursor: pointer; }
             .block-available:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-            .block-occupied {
-                /* Remove conflicting background and border - let inline styles take precedence */
-                pointer-events: none;
-                min-height: 20px;
-            }
+            .block-occupied { pointer-events: none; min-height: 20px; }
             .filters-bar { position: relative; z-index: 10; }
             .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 20; }
             .loading-spinner { width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
             @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
             .error-message { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 8px 12px; border-radius: 6px; margin: 8px 0; }
+            
+            /* Month view styles */
+            .month-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
+            .month-day { min-height: 120px; border: 1px solid #e5e7eb; padding: 4px; position: relative; }
+            .month-day-header { font-weight: 600; font-size: 12px; margin-bottom: 4px; }
+            .month-block { margin: 1px 0; padding: 2px 4px; border-radius: 3px; font-size: 10px; cursor: pointer; }
+            .month-block:hover { opacity: 0.8; }
+            .month-block-available { background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.4); }
+            .month-block-occupied { background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); cursor: not-allowed; }
         </style>
 
         <script type="text/x-template" id="v-order-item-planning-template">
-
-
             <div class="flex flex-col gap-4">
-                <!-- Filters -->
+                <!-- Filters and View Controls -->
                 <div class="flex flex-wrap items-end justify-between gap-4 filters-bar">
                     <div class="flex flex-wrap items-end gap-4">
                         <div class="flex flex-col min-w-[150px]">
@@ -68,9 +71,26 @@
                     </div>
 
                     <div class="flex items-center gap-2">
-                        <button class="secondary-button" @click="prevWeek">Vorige week</button>
-                        <div class="text-sm text-gray-700">@{{ weekLabel }}</div>
-                        <button class="secondary-button" @click="nextWeek">Volgende week</button>
+                        <!-- View type toggle -->
+                        <div class="flex border border-gray-300 rounded-md overflow-hidden">
+                            <button 
+                                @click="setViewType('week')" 
+                                :class="['px-3 py-1 text-sm', viewType === 'week' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50']"
+                            >
+                                Week
+                            </button>
+                            <button 
+                                @click="setViewType('month')" 
+                                :class="['px-3 py-1 text-sm', viewType === 'month' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50']"
+                            >
+                                Maand
+                            </button>
+                        </div>
+
+                        <!-- Navigation buttons -->
+                        <button class="secondary-button" @click="prevPeriod">Vorige</button>
+                        <div class="text-sm text-gray-700">@{{ periodLabel }}</div>
+                        <button class="secondary-button" @click="nextPeriod">Volgende</button>
                         <button class="primary-button" @click="loadAvailability">Zoeken</button>
                     </div>
                 </div>
@@ -93,8 +113,8 @@
                     @{{ errorMessage }}
                 </div>
 
-                <!-- Week calendar grid -->
-                <div class="calendar-container overflow-x-auto relative">
+                <!-- Week Calendar View -->
+                <div v-if="viewType === 'week'" class="calendar-container overflow-x-auto relative">
                     <!-- Loading overlay -->
                     <div v-if="loading" class="loading-overlay">
                         <div class="loading-spinner"></div>
@@ -105,29 +125,62 @@
                         <div></div>
                         <div v-for="d in 7" :key="d" class="calendar-day-header">@{{ dayLabel(d-1) }}</div>
                     </div>
+                    
                     <!-- Body Rows as columns -->
                     <div class="calendar-body">
                         <!-- Time gutter -->
                         <div class="time-gutter">
                             <div v-for="h in hours" :key="h" class="hour" :style="{ height: pixelsPerHour + 'px' }">@{{ hourLabel(h) }}</div>
                         </div>
+                        
                         <!-- Day columns -->
                         <div v-for="d in 7" :key="'col-'+d" class="day-column">
                             <!-- Hour slots -->
                             <div v-for="h in hours" :key="'slot-'+d+'-'+h" class="hour-slot pointer-events-none" :style="{ height: pixelsPerHour + 'px' }"></div>
-                            <!-- Occupied blocks (readonly) -->
-                            <div v-for="occ in occupiedBlocksByDay(d-1)" :key="occ.key" class="block block-occupied" :style="blockStyle(occ)">
-                                <div class="font-semibold text-xs">@{{ occ.lead_name || 'Onbekend' }}</div>
-                                <div class="text-xs opacity-75">@{{ timeRange(occ.from, occ.to) }}</div>
-                            </div>
-                            <!-- Available blocks (clickable) -->
-                            <div v-for="blk in availableBlocksByDay(d-1)" :key="blk.key" class="block block-available" :style="blockStyle(blk)" :title="getResourceTooltip(blk)" @click.stop="openBook(blk.resourceId, blk.from, blk.to)">
-                                @{{ timeRange(blk.from, blk.to) }}
+                            
+                            <!-- Rendered blocks from server -->
+                            <div v-for="block in getBlocksForDay(d-1)" :key="block.key" 
+                                 :class="['block', block.clickable ? 'block-available' : 'block-occupied']" 
+                                 :style="blockStyle(block)" 
+                                 :title="getBlockTooltip(block)"
+                                 @click="block.clickable ? openBook(block.resource_id, block.from, block.to) : null">
+                                <div v-if="block.type === 'occupied'" class="font-semibold text-xs">@{{ block.lead_name || 'Onbekend' }}</div>
+                                <div class="text-xs" :class="block.type === 'occupied' ? 'opacity-75' : ''">@{{ timeRange(block.from, block.to) }}</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- Month Calendar View -->
+                <div v-if="viewType === 'month'" class="month-calendar overflow-x-auto relative">
+                    <!-- Loading overlay -->
+                    <div v-if="loading" class="loading-overlay">
+                        <div class="loading-spinner"></div>
+                    </div>
+
+                    <!-- Month header -->
+                    <div class="month-day-header">Ma</div>
+                    <div class="month-day-header">Di</div>
+                    <div class="month-day-header">Wo</div>
+                    <div class="month-day-header">Do</div>
+                    <div class="month-day-header">Vr</div>
+                    <div class="month-day-header">Za</div>
+                    <div class="month-day-header">Zo</div>
+
+                    <!-- Month days -->
+                    <div v-for="day in monthDays" :key="day.date" class="month-day">
+                        <div class="month-day-header">@{{ day.dayNumber }}</div>
+                        
+                        <!-- Blocks for this day -->
+                        <div v-for="block in getBlocksForMonthDay(day.date)" :key="block.key"
+                             :class="['month-block', block.clickable ? 'month-block-available' : 'month-block-occupied']"
+                             :title="getBlockTooltip(block)"
+                             @click="block.clickable ? openBook(block.resource_id, block.from, block.to) : null">
+                            <div v-if="block.type === 'occupied'" class="font-semibold">@{{ block.lead_name || 'Onbekend' }}</div>
+                            <div class="text-xs">@{{ timeRange(block.from, block.to) }}</div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Book modal -->
                 <x-admin::modal ref="bookModal">
@@ -185,21 +238,23 @@
                 props: ['orderItemId', 'defaultResourceTypeId', 'defaultClinicId'],
                 data() {
                     const start = this.startOfWeek(new Date());
-                    const end = new Date(start); end.setDate(start.getDate() + 6);
+                    const end = new Date(start); 
+                    end.setDate(start.getDate() + 6);
+                    
                     return {
+                        viewType: 'week', // 'week' or 'month'
                         filters: {
                             resource_type_id: this.defaultResourceTypeId || null,
                             clinic_id: this.defaultClinicId || null,
                         },
                         window: { start, end },
                         resources: [],
-                        availabilityByResource: {},
-                        rawOccupancy: {},
+                        blocks: {}, // Server-rendered blocks: { [resourceId]: { [date]: [blocks] } }
                         form: { resource_id: null, from: '', to: '' },
                         hours: Array.from({ length: 24 }, (_, i) => i),
                         loading: false,
                         errorMessage: '',
-                        pixelsPerHour: 60, // Will be calculated dynamically
+                        pixelsPerHour: 60,
                         resourceColors: [
                             '#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6',
                             '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
@@ -207,9 +262,37 @@
                     };
                 },
                 computed: {
-                    weekLabel() {
-                        return this.window.start.toLocaleDateString() + ' - ' + this.window.end.toLocaleDateString();
+                    periodLabel() {
+                        if (this.viewType === 'week') {
+                            return this.window.start.toLocaleDateString() + ' - ' + this.window.end.toLocaleDateString();
+                        } else {
+                            return this.window.start.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
+                        }
                     },
+                    monthDays() {
+                        if (this.viewType !== 'month') return [];
+                        
+                        const days = [];
+                        const start = new Date(this.window.start);
+                        const end = new Date(this.window.end);
+                        
+                        // Add empty days for the first week if month doesn't start on Monday
+                        const firstDay = new Date(start);
+                        const firstMonday = new Date(firstDay);
+                        firstMonday.setDate(firstDay.getDate() - (firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1));
+                        
+                        const current = new Date(firstMonday);
+                        while (current <= end) {
+                            days.push({
+                                date: current.toISOString().split('T')[0],
+                                dayNumber: current.getDate(),
+                                isCurrentMonth: current.getMonth() === start.getMonth()
+                            });
+                            current.setDate(current.getDate() + 1);
+                        }
+                        
+                        return days;
+                    }
                 },
                 mounted() {
                     this.calculateDynamicScaling();
@@ -217,63 +300,100 @@
                     this.scrollToCurrentTime();
                 },
                 methods: {
+                    setViewType(type) {
+                        this.viewType = type;
+                        if (type === 'month') {
+                            this.window.start = this.startOfMonth(new Date());
+                            this.window.end = this.endOfMonth(new Date());
+                        } else {
+                            this.window.start = this.startOfWeek(new Date());
+                            const end = new Date(this.window.start);
+                            end.setDate(this.window.start.getDate() + 6);
+                            this.window.end = end;
+                        }
+                        this.loadAvailability();
+                    },
                     startOfWeek(date) {
-                        const d = new Date(date); const day = d.getDay(); const diff = (day === 0 ? -6 : 1) - day; d.setDate(d.getDate() + diff); d.setHours(0,0,0,0); return d;
+                        const d = new Date(date);
+                        const day = d.getDay();
+                        const diff = (day === 0 ? -6 : 1) - day;
+                        d.setDate(d.getDate() + diff);
+                        d.setHours(0, 0, 0, 0);
+                        return d;
                     },
-                    nextWeek() { const s = new Date(this.window.start); s.setDate(s.getDate()+7); this.window.start = this.startOfWeek(s); const e = new Date(this.window.start); e.setDate(e.getDate()+6); this.window.end = e; this.loadAvailability(); },
-                    prevWeek() { const s = new Date(this.window.start); s.setDate(s.getDate()-7); this.window.start = this.startOfWeek(s); const e = new Date(this.window.start); e.setDate(e.getDate()+6); this.window.end = e; this.loadAvailability(); },
-                    dayDate(offset) { const d = new Date(this.window.start); d.setDate(d.getDate()+offset); return d; },
-                    dayLabel(offset) { const d = this.dayDate(offset); return d.toLocaleDateString(undefined, { weekday: 'short', day:'2-digit', month:'2-digit' }); },
-                    minuteOfDay(date) { return date.getHours()*60 + date.getMinutes(); },
-                    hourLabel(hour) { return `${hour}:00`; },
-                    blockStyle(block) {
-                        // position within day-column: top by minutes since 00:00, height by duration
-                        const from = new Date(block.from), to = new Date(block.to);
-                        const top = this.minuteOfDay(from) * (this.pixelsPerHour/60);
-                        const height = Math.max(18, (to - from) / (1000*60) * (this.pixelsPerHour/60));
-
-                        // Check if this is an occupied block
-                        if (block.lead_name) {
-                            return {
-                                top: top + 'px',
-                                height: height + 'px',
-                                backgroundColor: 'rgba(239, 68, 68, 0.6)', // Red background for occupied blocks
-                                borderColor: 'rgba(239, 68, 68, 0.8)',
-                                color: '#ffffff',
-                                border: '2px solid rgba(239, 68, 68, 0.8)',
-                                zIndex: '10'
-                            };
+                    startOfMonth(date) {
+                        const d = new Date(date);
+                        d.setDate(1);
+                        d.setHours(0, 0, 0, 0);
+                        return d;
+                    },
+                    endOfMonth(date) {
+                        const d = new Date(date);
+                        d.setMonth(d.getMonth() + 1, 0);
+                        d.setHours(23, 59, 59, 999);
+                        return d;
+                    },
+                    nextPeriod() {
+                        if (this.viewType === 'week') {
+                            const s = new Date(this.window.start);
+                            s.setDate(s.getDate() + 7);
+                            this.window.start = this.startOfWeek(s);
+                            const e = new Date(this.window.start);
+                            e.setDate(e.getDate() + 6);
+                            this.window.end = e;
+                        } else {
+                            const s = new Date(this.window.start);
+                            s.setMonth(s.getMonth() + 1);
+                            this.window.start = this.startOfMonth(s);
+                            this.window.end = this.endOfMonth(s);
                         }
-
-                        // Get resource color for available blocks
-                        const resource = this.resources.find(r => r.id === block.resourceId);
-                        const colorIndex = this.resources.indexOf(resource) % this.resourceColors.length;
-                        const color = this.resourceColors[colorIndex];
-
-                        return {
-                            top: top + 'px',
-                            height: height + 'px',
-                            backgroundColor: `rgba(${this.hexToRgb(color)}, 0.15)`,
-                            borderColor: `rgba(${this.hexToRgb(color)}, 0.3)`,
-                            color: this.getContrastColor(color)
-                        };
+                        this.loadAvailability();
                     },
-                    timeRange(from, to) { const f = new Date(from); const t = new Date(to); return f.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + '–' + t.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); },
+                    prevPeriod() {
+                        if (this.viewType === 'week') {
+                            const s = new Date(this.window.start);
+                            s.setDate(s.getDate() - 7);
+                            this.window.start = this.startOfWeek(s);
+                            const e = new Date(this.window.start);
+                            e.setDate(e.getDate() + 6);
+                            this.window.end = e;
+                        } else {
+                            const s = new Date(this.window.start);
+                            s.setMonth(s.getMonth() - 1);
+                            this.window.start = this.startOfMonth(s);
+                            this.window.end = this.endOfMonth(s);
+                        }
+                        this.loadAvailability();
+                    },
+                    dayDate(offset) {
+                        const d = new Date(this.window.start);
+                        d.setDate(d.getDate() + offset);
+                        return d;
+                    },
+                    dayLabel(offset) {
+                        const d = this.dayDate(offset);
+                        return d.toLocaleDateString(undefined, { weekday: 'short', day: '2-digit', month: '2-digit' });
+                    },
+                    hourLabel(hour) {
+                        return `${hour}:00`;
+                    },
+                    timeRange(from, to) {
+                        const f = new Date(from);
+                        const t = new Date(to);
+                        return f.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '–' + 
+                               t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    },
                     async loadAvailability() {
-                        // Prevent multiple simultaneous requests
-                        if (this.loading) {
-                            return;
-                        }
+                        if (this.loading) return;
 
                         this.loading = true;
                         this.errorMessage = '';
 
                         try {
-                            const url = `${"{{ route('admin.planning.order_item.availability', ['orderItemId' => $orderItem->id]) }}"}?start=${this.window.start.toISOString()}&end=${this.window.end.toISOString()}&resource_type_id=${this.filters.resource_type_id||''}&clinic_id=${this.filters.clinic_id||''}`;
+                            const url = `${"{{ route('admin.planning.order_item.availability', ['orderItemId' => $orderItem->id]) }}"}?view=${this.viewType}&start=${this.window.start.toISOString()}&end=${this.window.end.toISOString()}&resource_type_id=${this.filters.resource_type_id || ''}&clinic_id=${this.filters.clinic_id || ''}`;
 
-                            // Add timeout to prevent hanging
                             const controller = new AbortController();
-                            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+                            const timeoutId = setTimeout(() => controller.abort(), 10000);
 
                             const res = await fetch(url, {
                                 headers: { 'Accept': 'application/json' },
@@ -289,24 +409,9 @@
 
                             const data = await res.json();
                             this.resources = Array.isArray(data.resources) ? data.resources : [];
-
-                            // Server returns final availability already split: { [resourceId]: [{from,to}] }
-                            const availability = data.availability || {};
-                            const normAvail = {};
-                            Object.keys(availability).forEach((rid) => {
-                                const arr = Array.isArray(availability[rid]) ? availability[rid] : [];
-                                normAvail[rid] = arr.map(a => ({ from: a.from, to: a.to }));
-                            });
-                            this.availabilityByResource = normAvail;
-
-                            // Normalize occupancy list per resource
-                            const occ = data.occupancy || {};
-                            const normOcc = {};
-                            Object.keys(occ || {}).forEach((rid) => {
-                                const arr = Array.isArray(occ[rid]) ? occ[rid] : [];
-                                normOcc[rid] = arr.map(o => ({ ...o }));
-                            });
-                            this.rawOccupancy = normOcc;
+                            
+                            // Server now returns pre-rendered blocks
+                            this.blocks = data.blocks || {};
 
                         } catch (error) {
                             if (error.name === 'AbortError') {
@@ -319,91 +424,102 @@
                             this.loading = false;
                         }
                     },
-                    availableBlocksByDay(weekdayOffset) {
+                    getBlocksForDay(weekdayOffset) {
                         const day = this.dayDate(weekdayOffset);
-                        const res = [];
-                        for (const r of this.resources) {
-                            const avail = (this.availabilityByResource[r.id]||[]);
-                            const byDay = avail.filter(a => {
-                                const f = new Date(a.from), t = new Date(a.to);
-                                return f.toDateString() === day.toDateString() || t.toDateString() === day.toDateString();
-                            }).map((a, idx) => ({ key: `${r.id}-a-${weekdayOffset}-${idx}`, resourceId: r.id, from: a.from, to: a.to }));
-                            res.push(...byDay);
+                        const dayKey = day.toISOString().split('T')[0];
+                        const blocks = [];
+                        
+                        for (const resource of this.resources) {
+                            const resourceBlocks = this.blocks[resource.id] || {};
+                            const dayBlocks = resourceBlocks[dayKey] || [];
+                            
+                            dayBlocks.forEach((block, idx) => {
+                                blocks.push({
+                                    ...block,
+                                    key: `${resource.id}-${dayKey}-${idx}`
+                                });
+                            });
                         }
-                        return res;
+                        
+                        return blocks.sort((a, b) => new Date(a.from) - new Date(b.from));
                     },
-                    occupiedBlocksByDay(weekdayOffset) {
-                        // Early return if no resources or occupancy data
-                        if (!this.resources || this.resources.length === 0 || !this.rawOccupancy) {
-                            return [];
+                    getBlocksForMonthDay(date) {
+                        const blocks = [];
+                        
+                        for (const resource of this.resources) {
+                            const resourceBlocks = this.blocks[resource.id] || {};
+                            const dayBlocks = resourceBlocks[date] || [];
+                            
+                            dayBlocks.forEach((block, idx) => {
+                                blocks.push({
+                                    ...block,
+                                    key: `${resource.id}-${date}-${idx}`
+                                });
+                            });
+                        }
+                        
+                        return blocks.sort((a, b) => new Date(a.from) - new Date(b.from));
+                    },
+                    blockStyle(block) {
+                        if (this.viewType === 'month') {
+                            return {}; // Month blocks use CSS classes
+                        }
+                        
+                        // Week view positioning
+                        const from = new Date(block.from);
+                        const to = new Date(block.to);
+                        const top = this.minuteOfDay(from) * (this.pixelsPerHour / 60);
+                        const height = Math.max(18, (to - from) / (1000 * 60) * (this.pixelsPerHour / 60));
+
+                        if (block.type === 'occupied') {
+                            return {
+                                top: top + 'px',
+                                height: height + 'px',
+                                backgroundColor: 'rgba(239, 68, 68, 0.6)',
+                                borderColor: 'rgba(239, 68, 68, 0.8)',
+                                color: '#ffffff',
+                                border: '2px solid rgba(239, 68, 68, 0.8)',
+                                zIndex: '10'
+                            };
                         }
 
-                        const day = this.dayDate(weekdayOffset);
-                        const res = [];
+                        // Available block styling
+                        const resource = this.resources.find(r => r.id === block.resource_id);
+                        const colorIndex = this.resources.indexOf(resource) % this.resourceColors.length;
+                        const color = this.resourceColors[colorIndex];
 
-                        // Use forEach instead of for...of for better performance
-                        this.resources.forEach((r, index) => {
-                            const occ = this.rawOccupancy[r.id] || [];
-
-                            if (occ.length === 0) {
-                                return; // Skip if no occupancy for this resource
-                            }
-
-                            const occDay = occ.filter(o => {
-                                try {
-                                    const of = new Date(o.from);
-                                    const ot = new Date(o.to);
-
-                                    // Validate dates
-                                    if (isNaN(of.getTime()) || isNaN(ot.getTime())) {
-                                        return false;
-                                    }
-
-                                    const dayStr = day.toDateString();
-                                    const fromStr = of.toDateString();
-                                    const toStr = ot.toDateString();
-
-                                    // Check if the occupied period overlaps with this day
-                                    return fromStr === dayStr || toStr === dayStr ||
-                                           (of <= day && ot >= new Date(day.getTime() + 24*60*60*1000));
-                                } catch (error) {
-                                    console.warn('Error processing occupied block:', error, o);
-                                    return false;
-                                }
-                            }).map((o, idx) => ({
-                                key: `${r.id}-o-${weekdayOffset}-${idx}`,
-                                resourceId: r.id,
-                                from: o.from,
-                                to: o.to,
-                                lead_name: o.lead_name || 'Onbekend'
-                            }));
-
-                            res.push(...occDay);
-                        });
-                        return res;
+                        return {
+                            top: top + 'px',
+                            height: height + 'px',
+                            backgroundColor: `rgba(${this.hexToRgb(color)}, 0.15)`,
+                            borderColor: `rgba(${this.hexToRgb(color)}, 0.3)`,
+                            color: this.getContrastColor(color)
+                        };
+                    },
+                    minuteOfDay(date) {
+                        return date.getHours() * 60 + date.getMinutes();
+                    },
+                    getBlockTooltip(block) {
+                        const resource = this.resources.find(r => r.id === block.resource_id);
+                        const from = new Date(block.from);
+                        const to = new Date(block.to);
+                        return `${resource?.name || 'Onbekend'} - ${from.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} tot ${to.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
                     },
                     openBook(resourceId, from, to) {
                         this.form.resource_id = resourceId;
-                        const pad = (n) => String(n).padStart(2,'0');
-                        const toLocal = (dt) => `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+                        const pad = (n) => String(n).padStart(2, '0');
+                        const toLocal = (dt) => `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
                         this.form.from = toLocal(new Date(from));
                         this.form.to = toLocal(new Date(to));
                         this.$refs.bookModal.toggle();
                     },
                     async submitBooking() {
-                        // Prevent multiple submissions
-                        if (this.loading) {
-                            return;
-                        }
+                        if (this.loading) return;
 
                         this.loading = true;
                         try {
                             const url = "{{ route('admin.planning.order_item.book', ['orderItemId' => $orderItem->id]) }}";
-
-                            // Get CSRF token from meta tag or cookie
-                            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
-                                             this.getCookie('XSRF-TOKEN') ||
-                                             document.querySelector('input[name="_token"]')?.value;
+                            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
                             if (!csrfToken) {
                                 throw new Error('CSRF token niet gevonden');
@@ -417,40 +533,35 @@
                                     'X-CSRF-TOKEN': csrfToken,
                                     'X-Requested-With': 'XMLHttpRequest'
                                 },
-                                body: JSON.stringify({ resource_id: this.form.resource_id, from: this.form.from, to: this.form.to })
+                                body: JSON.stringify({
+                                    resource_id: this.form.resource_id,
+                                    from: this.form.from,
+                                    to: this.form.to
+                                })
                             });
 
                             if (res.ok) {
-                                const responseData = await res.json().catch(() => ({}));
                                 this.$refs.bookModal.toggle();
                                 this.$emitter.emit('add-flash', { type: 'success', message: 'Ingeboekt' });
-                                // Reset form
                                 this.form = { resource_id: null, from: '', to: '' };
-                                // Reload availability after a short delay to avoid race conditions
                                 setTimeout(() => {
-                                    // Reset loading state before reloading availability
                                     this.loading = false;
                                     this.loadAvailability().catch(error => {
                                         console.error('Error reloading availability:', error);
-                                        this.loading = false; // Ensure loading state is reset
+                                        this.loading = false;
                                     });
                                 }, 100);
                             } else {
                                 const data = await res.json().catch(() => ({}));
-                                console.error('Booking failed:', { status: res.status, statusText: res.statusText, data });
                                 this.$emitter.emit('add-flash', { type: 'error', message: data.message || `HTTP ${res.status}: ${res.statusText}` });
                             }
                         } catch (error) {
                             this.$emitter.emit('add-flash', { type: 'error', message: `Fout bij inboeken: ${error.message}` });
                         } finally {
                             this.loading = false;
-                            // Ensure loading state is always reset
-                            this.$nextTick(() => {
-                                this.loading = false;
-                            });
                         }
                     },
-                    // Helper methods for colors and tooltips
+                    // Helper methods
                     hexToRgb(hex) {
                         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
                         return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0, 0, 0';
@@ -460,12 +571,6 @@
                         const brightness = (rgb[0] * 299 + rgb[1] * 587 + rgb[2] * 114) / 1000;
                         return brightness > 128 ? '#000000' : '#ffffff';
                     },
-                    getResourceTooltip(block) {
-                        const resource = this.resources.find(r => r.id === block.resourceId);
-                        const from = new Date(block.from);
-                        const to = new Date(block.to);
-                        return `${resource?.name || 'Onbekend'} - ${from.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} tot ${to.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}`;
-                    },
                     getResourceColorStyle(resource) {
                         const colorIndex = this.resources.indexOf(resource) % this.resourceColors.length;
                         const color = this.resourceColors[colorIndex];
@@ -474,37 +579,28 @@
                             borderColor: `rgba(${this.hexToRgb(color)}, 0.3)`,
                         };
                     },
-                    getCookie(name) {
-                        const value = `; ${document.cookie}`;
-                        const parts = value.split(`; ${name}=`);
-                        if (parts.length === 2) return parts.pop().split(';').shift();
-                        return null;
-                    },
-                    // Dynamic scaling based on container height
                     calculateDynamicScaling() {
                         this.$nextTick(() => {
                             const container = this.$el.querySelector('.calendar-container');
                             if (container) {
                                 const containerHeight = container.clientHeight;
-                                const visibleHoursCount = 24; // Full day view
+                                const visibleHoursCount = 24;
                                 this.pixelsPerHour = Math.max(30, Math.floor(containerHeight / visibleHoursCount));
                             }
                         });
                     },
-                    // Scroll to current time
                     scrollToCurrentTime() {
                         this.$nextTick(() => {
                             const now = new Date();
-                            const y = this.minuteOfDay(now) * (this.pixelsPerHour/60);
+                            const y = this.minuteOfDay(now) * (this.pixelsPerHour / 60);
                             const container = this.$el.querySelector('.calendar-container');
                             if (container) {
                                 container.scrollTop = Math.max(0, y - 200);
                             }
                         });
-                    },
+                    }
                 }
             });
         </script>
-    @endPushOnce
+    @endpushOnce
 </x-admin::layouts>
-

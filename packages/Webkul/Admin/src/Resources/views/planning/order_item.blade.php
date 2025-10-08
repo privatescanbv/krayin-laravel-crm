@@ -39,26 +39,11 @@
             .block-available { cursor: pointer; }
             .block-available:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
             .block-occupied {
-                background: repeating-linear-gradient(
-                    45deg,
-                    rgba(107, 114, 128, 0.3),
-                    rgba(107, 114, 128, 0.3) 4px,
-                    rgba(107, 114, 128, 0.1) 4px,
-                    rgba(107, 114, 128, 0.1) 8px
-                );
-                color: #374151;
-                border: 1px solid rgba(107,114,128,0.6);
+                /* Remove conflicting background and border - let inline styles take precedence */
                 pointer-events: none;
-                position: relative;
-                z-index: 2;
                 min-height: 20px;
             }
-            /* Fallback for occupied blocks if gradient doesn't work */
-            .block-occupied:not([style*="background"]) {
-                background-color: rgba(107, 114, 128, 0.4) !important;
-            }
             .filters-bar { position: relative; z-index: 10; }
-            .calendar-container { position: relative; z-index: 0; }
             .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 20; }
             .loading-spinner { width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
             @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -143,34 +128,6 @@
                     </div>
                 </div>
 
-                <!-- Debug panel -->
-                <div v-if="debugEnabled" class="mt-4 rounded border border-yellow-300 bg-yellow-50 p-3 text-xs text-yellow-900">
-                    <div class="font-semibold mb-2">Debug</div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div>
-                            <div class="font-semibold">Resources (@{{ resources.length }})</div>
-                            <pre class="whitespace-pre-wrap">@{{ safeStringify(resources).slice(0, 1000) }}</pre>
-                        </div>
-                        <div>
-                            <div class="font-semibold">Occupancy (@{{ Object.keys(rawOccupancy||{}).length }})</div>
-                            <pre class="whitespace-pre-wrap">@{{ safeStringify(rawOccupancy).slice(0, 1000) }}</pre>
-                        </div>
-                        <div>
-                            <div class="font-semibold">Availability (@{{ Object.keys(availabilityByResource||{}).length }})</div>
-                            <pre class="whitespace-pre-wrap">@{{ safeStringify(availabilityByResource).slice(0, 1000) }}</pre>
-                        </div>
-                    </div>
-                    <div class="mt-2">Dag @{{ debugState.dayOffset }} — available: @{{ debugState.availableCount }}, occupied: @{{ debugState.occupiedCount }}</div>
-                    <div class="mt-2">
-                        <strong>Occupied blocks per day:</strong>
-                        <div v-for="d in 7" :key="'debug-'+d" class="text-xs">
-                            Dag @{{ d-1 }}: @{{ occupiedBlocksByDay(d-1).length }} blokken
-                            <div v-for="occ in occupiedBlocksByDay(d-1)" :key="'debug-occ-'+occ.key" class="ml-2">
-                                - @{{ occ.lead_name }} (@{{ timeRange(occ.from, occ.to) }})
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Book modal -->
                 <x-admin::modal ref="bookModal">
@@ -240,8 +197,6 @@
                         rawOccupancy: {},
                         form: { resource_id: null, from: '', to: '' },
                         hours: Array.from({ length: 24 }, (_, i) => i),
-                        debugEnabled: true,
-                        debugState: { dayOffset: 0, availableCount: 0, occupiedCount: 0 },
                         loading: false,
                         errorMessage: '',
                         pixelsPerHour: 60, // Will be calculated dynamically
@@ -282,9 +237,11 @@
                             return {
                                 top: top + 'px',
                                 height: height + 'px',
-                                backgroundColor: 'rgba(107, 114, 128, 0.4)',
-                                borderColor: 'rgba(107, 114, 128, 0.6)',
-                                color: '#374151'
+                                backgroundColor: 'rgba(239, 68, 68, 0.6)', // Red background for occupied blocks
+                                borderColor: 'rgba(239, 68, 68, 0.8)',
+                                color: '#ffffff',
+                                border: '2px solid rgba(239, 68, 68, 0.8)',
+                                zIndex: '10'
                             };
                         }
 
@@ -303,29 +260,20 @@
                     },
                     timeRange(from, to) { const f = new Date(from); const t = new Date(to); return f.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) + '–' + t.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); },
                     async loadAvailability() {
-                        console.log('🔄 loadAvailability called', { loading: this.loading, resourcesCount: this.resources?.length });
-
                         // Prevent multiple simultaneous requests
                         if (this.loading) {
-                            console.log('⚠️ loadAvailability already in progress, skipping...');
                             return;
                         }
 
-                        console.log('✅ Starting loadAvailability');
                         this.loading = true;
                         this.errorMessage = '';
 
                         try {
                             const url = `${"{{ route('admin.planning.order_item.availability', ['orderItemId' => $orderItem->id]) }}"}?start=${this.window.start.toISOString()}&end=${this.window.end.toISOString()}&resource_type_id=${this.filters.resource_type_id||''}&clinic_id=${this.filters.clinic_id||''}`;
 
-                            console.log('🌐 Fetching availability from:', url);
-
                             // Add timeout to prevent hanging
                             const controller = new AbortController();
-                            const timeoutId = setTimeout(() => {
-                                console.log('⏰ Request timeout after 10 seconds');
-                                controller.abort();
-                            }, 10000); // 10 second timeout
+                            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
                             const res = await fetch(url, {
                                 headers: { 'Accept': 'application/json' },
@@ -333,7 +281,6 @@
                             });
 
                             clearTimeout(timeoutId);
-                            console.log('📡 Response received:', { status: res.status, ok: res.ok });
 
                             if (!res.ok) {
                                 const errorData = await res.json().catch(() => ({}));
@@ -341,14 +288,7 @@
                             }
 
                             const data = await res.json();
-                            console.log('📊 Raw data received:', {
-                                resourcesCount: data.resources?.length,
-                                availabilityKeys: Object.keys(data.availability || {}),
-                                occupancyKeys: Object.keys(data.occupancy || {})
-                            });
-
                             this.resources = Array.isArray(data.resources) ? data.resources : [];
-                            console.log('👥 Resources set:', this.resources.length);
 
                             // Server returns final availability already split: { [resourceId]: [{from,to}] }
                             const availability = data.availability || {};
@@ -358,7 +298,6 @@
                                 normAvail[rid] = arr.map(a => ({ from: a.from, to: a.to }));
                             });
                             this.availabilityByResource = normAvail;
-                            console.log('📅 Availability processed:', Object.keys(normAvail).length, 'resources');
 
                             // Normalize occupancy list per resource
                             const occ = data.occupancy || {};
@@ -368,24 +307,15 @@
                                 normOcc[rid] = arr.map(o => ({ ...o }));
                             });
                             this.rawOccupancy = normOcc;
-                            console.log('🏠 Occupancy processed:', Object.keys(normOcc).length, 'resources');
 
-                            console.log('🎯 Final state set:', {
-                                resources: this.resources.length,
-                                availabilityKeys: Object.keys(this.availabilityByResource),
-                                occupancyKeys: Object.keys(this.rawOccupancy)
-                            });
                         } catch (error) {
-                            console.error('❌ loadAvailability error:', error);
                             if (error.name === 'AbortError') {
                                 this.errorMessage = 'Timeout bij laden van beschikbaarheid. Probeer opnieuw.';
-                                console.log('⏰ Request was aborted (timeout)');
                             } else {
                                 this.errorMessage = `Fout bij laden van beschikbaarheid: ${error.message}`;
-                                console.log('💥 Other error occurred:', error.message);
                             }
+                            console.error('[planning] loadAvailability error:', error);
                         } finally {
-                            console.log('🏁 loadAvailability finished, setting loading = false');
                             this.loading = false;
                         }
                     },
@@ -400,7 +330,6 @@
                             }).map((a, idx) => ({ key: `${r.id}-a-${weekdayOffset}-${idx}`, resourceId: r.id, from: a.from, to: a.to }));
                             res.push(...byDay);
                         }
-                        if (this.debugEnabled) { this.debugState.dayOffset = weekdayOffset; this.debugState.availableCount = res.length; }
                         return res;
                     },
                     occupiedBlocksByDay(weekdayOffset) {
@@ -415,47 +344,44 @@
                         // Use forEach instead of for...of for better performance
                         this.resources.forEach((r, index) => {
                             const occ = this.rawOccupancy[r.id] || [];
-                            
+
                             if (occ.length === 0) {
                                 return; // Skip if no occupancy for this resource
                             }
-                            
+
                             const occDay = occ.filter(o => {
                                 try {
                                     const of = new Date(o.from);
                                     const ot = new Date(o.to);
-                                    
+
                                     // Validate dates
                                     if (isNaN(of.getTime()) || isNaN(ot.getTime())) {
                                         return false;
                                     }
-                                    
+
                                     const dayStr = day.toDateString();
                                     const fromStr = of.toDateString();
                                     const toStr = ot.toDateString();
-                                    
+
                                     // Check if the occupied period overlaps with this day
-                                    return fromStr === dayStr || toStr === dayStr || 
+                                    return fromStr === dayStr || toStr === dayStr ||
                                            (of <= day && ot >= new Date(day.getTime() + 24*60*60*1000));
                                 } catch (error) {
                                     console.warn('Error processing occupied block:', error, o);
                                     return false;
                                 }
-                            }).map((o, idx) => ({ 
-                                key: `${r.id}-o-${weekdayOffset}-${idx}`, 
-                                resourceId: r.id, 
+                            }).map((o, idx) => ({
+                                key: `${r.id}-o-${weekdayOffset}-${idx}`,
+                                resourceId: r.id,
                                 from: o.from,
                                 to: o.to,
                                 lead_name: o.lead_name || 'Onbekend'
                             }));
-                            
+
                             res.push(...occDay);
                         });
-
-                        if (this.debugEnabled) { this.debugState.occupiedCount = res.length; }
                         return res;
                     },
-                    safeStringify(obj) { try { return JSON.stringify(obj, null, 2); } catch (e) { return String(obj); } },
                     openBook(resourceId, from, to) {
                         this.form.resource_id = resourceId;
                         const pad = (n) => String(n).padStart(2,'0');
@@ -465,15 +391,11 @@
                         this.$refs.bookModal.toggle();
                     },
                     async submitBooking() {
-                        console.log('🚀 submitBooking called', { loading: this.loading, form: this.form });
-
                         // Prevent multiple submissions
                         if (this.loading) {
-                            console.log('⚠️ Booking already in progress, skipping...');
                             return;
                         }
 
-                        console.log('✅ Starting booking process');
                         this.loading = true;
                         try {
                             const url = "{{ route('admin.planning.order_item.book', ['orderItemId' => $orderItem->id]) }}";
@@ -500,19 +422,16 @@
 
                             if (res.ok) {
                                 const responseData = await res.json().catch(() => ({}));
-                                console.log('🎉 Booking successful:', responseData);
                                 this.$refs.bookModal.toggle();
                                 this.$emitter.emit('add-flash', { type: 'success', message: 'Ingeboekt' });
                                 // Reset form
                                 this.form = { resource_id: null, from: '', to: '' };
-                                console.log('🔄 Scheduling availability reload in 100ms');
                                 // Reload availability after a short delay to avoid race conditions
                                 setTimeout(() => {
-                                    console.log('⏰ Timeout triggered - reloading availability');
                                     // Reset loading state before reloading availability
                                     this.loading = false;
                                     this.loadAvailability().catch(error => {
-                                        console.error('❌ Error reloading availability:', error);
+                                        console.error('Error reloading availability:', error);
                                         this.loading = false; // Ensure loading state is reset
                                     });
                                 }, 100);

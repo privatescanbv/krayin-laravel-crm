@@ -8,9 +8,12 @@ class ClinicSeeder extends BaseSeeder
 {
     public function run(): void
     {
-        $this->truncateTables(['clinics']);
+        // If clinics already exist (seeded by installer or previous runs), skip to avoid duplicates
+        if (Clinic::count() > 0) {
+            return;
+        }
 
-        Clinic::firstOrCreate(
+        Clinic::updateOrCreate(
             ['name' => 'Default Clinic'],
             [
                 'emails' => ['default.clinic@example.com'],
@@ -18,7 +21,7 @@ class ClinicSeeder extends BaseSeeder
             ]
         );
 
-        Clinic::firstOrCreate(
+        Clinic::updateOrCreate(
             ['name' => 'Second Clinic'],
             [
                 'emails' => ['second.clinic@example.com'],

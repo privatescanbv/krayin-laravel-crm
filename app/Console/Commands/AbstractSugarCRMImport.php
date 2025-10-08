@@ -194,7 +194,7 @@ abstract class AbstractSugarCRMImport extends Command
      */
     protected function logError(string $message, array $context = []): void
     {
-        parent::error($message . ' - ' . print_r($context, true));
+        parent::error($message.' - '.print_r($context, true));
         $this->logImportError($message, $context);
     }
 

@@ -26,7 +26,8 @@ class UserForm extends FormRequest
     public function rules()
     {
         $this->rules = [
-            'name'                  => 'required',
+            'first_name'            => 'required',
+            'last_name'             => 'required',
             'email'                 => 'email|unique:users,email',
             'password'              => 'nullable',
             'password_confirmation' => 'nullable|required_with:password|same:password',

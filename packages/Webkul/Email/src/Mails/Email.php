@@ -26,17 +26,7 @@ class Email extends Mailable
     public function build()
     {
         $from = $this->email->from;
-        $user = auth()->guard('user')->user();
-        
-        // Generate name from user
-        $name = 'Privatescan medewerker';
-        if ($user) {
-            if ($user->first_name && $user->last_name) {
-                $name = trim("{$user->first_name} {$user->last_name}");
-            } elseif ($user->name) {
-                $name = $user->name;
-            }
-        }
+        $name = auth()->guard('user')->user()->name ?? 'Privatescan medewerker';
 
         // Als from een array is (oude situatie)
         if (is_array($from)) {

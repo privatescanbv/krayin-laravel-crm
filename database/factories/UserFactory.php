@@ -32,7 +32,8 @@ class UserFactory extends Factory
         ]);
 
         return [
-            'name'              => $this->faker->name,
+            'first_name'        => $this->faker->firstName,
+            'last_name'         => $this->faker->lastName,
             'email'             => $this->faker->unique()->safeEmail,
             'status'            => 1,
             'role_id'           => $role->id,

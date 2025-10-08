@@ -59,7 +59,8 @@ class UserSeeder extends Seeder
         // Define users with their group assignments
         $users = [
             [
-                'name'            => 'Mark Bulthuis',
+                'first_name'      => 'Mark',
+                'last_name'       => 'Bulthuis',
                 'email'           => 'mark.bulthuis@privatescan.nl',
                 'password'        => '8AAZ5jc%e&AF',
                 'status'          => 1,
@@ -68,7 +69,8 @@ class UserSeeder extends Seeder
                 'group_id'        => null, // Admin has no specific group
             ],
             [
-                'name'            => 'Mark Klaucke',
+                'first_name'      => 'Mark',
+                'last_name'       => 'Klaucke',
                 'email'           => 'mark.klaucke@privatescan.nl',
                 'password'        => '8AAZ5jc%e&Ad',
                 'status'          => 1,
@@ -77,7 +79,8 @@ class UserSeeder extends Seeder
                 'group_id'        => null, // Admin has no specific group
             ],
             [
-                'name'            => 'Linda Meijer',
+                'first_name'      => 'Linda',
+                'last_name'       => 'Meijer',
                 'email'           => 'linda@privatescan.nl',
                 'password'        => '8AAZ5jc%e&3d',
                 'status'          => 1,
@@ -86,7 +89,8 @@ class UserSeeder extends Seeder
                 'group_id'        => null,
             ],
             [
-                'name'            => 'Petra Nijhof',
+                'first_name'      => 'Petra',
+                'last_name'       => 'Nijhof',
                 'email'           => 'petra@privatescan.nl',
                 'password'        => '8BBZ5jc%e&Ad',
                 'status'          => 1,
@@ -95,7 +99,8 @@ class UserSeeder extends Seeder
                 'group_id'        => $groupPrivatescanId,
             ],
             [
-                'name'            => 'Wout Lansink',
+                'first_name'      => 'Wout',
+                'last_name'       => 'Lansink',
                 'email'           => 'wout@privatescan.nl',
                 'password'        => '8EEZ5jc%e&Ad',
                 'status'          => 1,
@@ -104,7 +109,8 @@ class UserSeeder extends Seeder
                 'group_id'        => $groupHerniaId,
             ],
             [
-                'name'            => 'Lars Kamphuis',
+                'first_name'      => 'Lars',
+                'last_name'       => 'Kamphuis',
                 'email'           => 'lars@privatescan.nl',
                 'password'        => '8A4Z5jc%d3Ad',
                 'status'          => 1,
@@ -113,7 +119,8 @@ class UserSeeder extends Seeder
                 'group_id'        => $groupHerniaId,
             ],
             [
-                'name'            => 'Frank Hefti',
+                'first_name'      => 'Frank',
+                'last_name'       => 'Hefti',
                 'email'           => 'frank@privatescan.nl',
                 'password'        => '8A115dc@d3Ad',
                 'status'          => 1,
@@ -132,7 +139,8 @@ class UserSeeder extends Seeder
             $user = User::updateOrCreate(
                 ['email' => $userData['email']],
                 [
-                    'name'            => $userData['name'],
+                    'first_name'      => $userData['first_name'],
+                    'last_name'       => $userData['last_name'],
                     'password'        => bcrypt($userData['password']),
                     'created_at'      => date('Y-m-d H:i:s'),
                     'updated_at'      => date('Y-m-d H:i:s'),

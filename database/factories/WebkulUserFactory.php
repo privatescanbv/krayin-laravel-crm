@@ -34,11 +34,12 @@ class WebkulUserFactory extends Factory
         ]);
 
         return [
-            'name'     => $this->faker->name,
-            'email'    => $this->faker->unique()->safeEmail,
-            'password' => bcrypt('password'), // Default password
-            'status'   => true,
-            'role_id'  => $role->id,
+            'first_name' => $this->faker->firstName,
+            'last_name'  => $this->faker->lastName,
+            'email'      => $this->faker->unique()->safeEmail,
+            'password'   => bcrypt('password'), // Default password
+            'status'     => true,
+            'role_id'    => $role->id,
         ];
     }
 

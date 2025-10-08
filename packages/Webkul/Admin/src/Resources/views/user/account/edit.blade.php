@@ -74,22 +74,40 @@
                         @lang('admin::app.account.edit.upload-image-info')
                     </p>
 
-                    <!-- Name -->
+                    <!-- First Name -->
                     <x-admin::form.control-group>
                         <x-admin::form.control-group.label class="required">
-                            @lang('admin::app.account.edit.name')
+                            @lang('admin::app.account.edit.first-name')
                         </x-admin::form.control-group.label>
 
                         <x-admin::form.control-group.control
                             type="text"
-                            name="name"
+                            name="first_name"
                             rules="required"
-                            :value="old('name') ?: $user->name"
-                            :label="trans('admin::app.account.edit.name')"
-                            :placeholder="trans('admin::app.account.edit.name')"
+                            :value="old('first_name') ?: $user->first_name"
+                            :label="trans('admin::app.account.edit.first-name')"
+                            :placeholder="trans('admin::app.account.edit.first-name')"
                         />
 
-                        <x-admin::form.control-group.error control-name="name" />
+                        <x-admin::form.control-group.error control-name="first_name" />
+                    </x-admin::form.control-group>
+
+                    <!-- Last Name -->
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label class="required">
+                            @lang('admin::app.account.edit.last-name')
+                        </x-admin::form.control-group.label>
+
+                        <x-admin::form.control-group.control
+                            type="text"
+                            name="last_name"
+                            rules="required"
+                            :value="old('last_name') ?: $user->last_name"
+                            :label="trans('admin::app.account.edit.last-name')"
+                            :placeholder="trans('admin::app.account.edit.last-name')"
+                        />
+
+                        <x-admin::form.control-group.error control-name="last_name" />
                     </x-admin::form.control-group>
 
                     <!-- Email -->

@@ -198,15 +198,7 @@ class MicrosoftGraphMailTransport implements TransportInterface
     {
         $user = auth()->guard('user')->user();
 
-        if ($user && $user->first_name && $user->last_name) {
-            return trim("{$user->first_name} {$user->last_name}");
-        }
-
-        if ($user && $user->name) {
-            return $user->name;
-        }
-
-        return config('mail.from.name', 'CRM Private Scan');
+        return $user?->name ?? config('mail.from.name', 'CRM Private Scan');
     }
 
     /**

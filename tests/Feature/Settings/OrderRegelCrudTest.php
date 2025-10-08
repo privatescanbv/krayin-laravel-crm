@@ -17,7 +17,6 @@ beforeEach(function () {
 
 test('order_regels index returns datagrid json', function () {
     $o = Order::factory()->create();
-    $p = Product::factory()->create();
     $r1 = OrderRegel::factory()->create(['order_id' => $o->id]);
     $r2 = OrderRegel::factory()->create(['order_id' => $o->id]);
 
@@ -30,6 +29,7 @@ test('order_regels index returns datagrid json', function () {
 
 test('can create order_regel', function () {
     $o = Order::factory()->create();
+    $p = Product::factory()->create();
 
     $payload = [
         'order_id'    => $o->id,
@@ -43,7 +43,7 @@ test('can create order_regel', function () {
 
     $this->assertDatabaseHas('order_regels', [
         'order_id'   => $o->id,
-        'product_id' => 1,
+        'product_id' => $p->id,
         'quantity'   => 2,
     ]);
 });

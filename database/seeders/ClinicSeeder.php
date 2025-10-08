@@ -8,6 +8,10 @@ class ClinicSeeder extends BaseSeeder
 {
     public function run(): void
     {
+        // If clinics already exist (seeded by installer or previous runs), skip to avoid duplicates
+        if (Clinic::count() > 0) {
+            return;
+        }
         $clinics = [
             [
                 'external_id'                   => 'db0c47c3-aaf8-ce22-a112-4d9abef87a8f',

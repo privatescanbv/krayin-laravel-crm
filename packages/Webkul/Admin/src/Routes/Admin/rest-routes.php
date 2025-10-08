@@ -6,6 +6,7 @@ use Webkul\Admin\Http\Controllers\DataGrid\SavedFilterController;
 use Webkul\Admin\Http\Controllers\DataGridController;
 use Webkul\Admin\Http\Controllers\TinyMCEController;
 use Webkul\Admin\Http\Controllers\User\AccountController;
+use App\Http\Controllers\Admin\Settings\OrderController;
 
 /**
  * Dashboard routes.
@@ -37,6 +38,19 @@ Route::prefix('datagrid')->group(function () {
      * Lookup routes.
      */
     Route::get('datagrid/look-up', [DataGridController::class, 'lookUp'])->name('admin.datagrid.look_up');
+});
+
+/**
+ * Orders routes (top-level menu, not under settings).
+ */
+Route::controller(OrderController::class)->prefix('orders')->group(function () {
+    Route::get('', 'index')->name('admin.orders.index');
+    Route::get('create', 'create')->name('admin.orders.create');
+    Route::post('create', 'store')->name('admin.orders.store');
+    Route::get('edit/{id}', 'edit')->name('admin.orders.edit');
+    Route::put('edit/{id}', 'update')->name('admin.orders.update');
+    Route::delete('', 'destroy')->name('admin.orders.delete');
+    Route::delete('{id}', 'destroy')->name('admin.orders.delete');
 });
 
 /**

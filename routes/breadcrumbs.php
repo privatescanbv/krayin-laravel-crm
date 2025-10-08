@@ -196,6 +196,24 @@ Breadcrumbs::for('products.edit', function (BreadcrumbTrail $trail, $product) {
     $trail->push(trans('admin::app.products.edit.title'), route('admin.products.edit', $product->id));
 });
 
+// Orders (top-level)
+Breadcrumbs::for('orders', function (BreadcrumbTrail $trail) {
+    $trail->parent('dashboard');
+    $trail->push('Orders', route('admin.orders.index'));
+});
+
+// Orders > Create
+Breadcrumbs::for('orders.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('orders');
+    $trail->push('Order aanmaken', route('admin.orders.create'));
+});
+
+// Orders > Edit
+Breadcrumbs::for('orders.edit', function (BreadcrumbTrail $trail, $order) {
+    $trail->parent('orders');
+    $trail->push('Order bewerken', route('admin.orders.edit', $order->id));
+});
+
 // Settings
 Breadcrumbs::for('settings', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');

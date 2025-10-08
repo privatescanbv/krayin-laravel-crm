@@ -261,6 +261,29 @@ TABLE(OrderItem, "orderItem") {
   updated_by: bigint
 }
 
+TABLE(Order, "orders") {
+  PRIMARY_KEY(id): bigint
+  title: string
+  sales_order_id: string
+  total_price: decimal
+  created_at: datetime
+  updated_at: datetime
+  created_by: bigint
+  updated_by: bigint
+}
+
+TABLE(OrderRegel, "order_regels") {
+  PRIMARY_KEY(id): bigint
+  FOREIGN_KEY(order_id): bigint
+  FOREIGN_KEY(product_id): bigint
+  quantity: int
+  total_price: decimal
+  created_at: datetime
+  updated_at: datetime
+  created_by: bigint
+  updated_by: bigint
+}
+
 TABLE(SalesLead, "sales_lead (backoffice)") {
   PRIMARY_KEY(id): bigint
   name: string
@@ -479,6 +502,10 @@ Order "1" -- "n" OrderItem
 
 OrderItem "n" -- "1" Order
 OrderItem "1" -- "1" PartnerProduct
+
+Order "1" -- "n" OrderRegel
+OrderRegel "n" -- "1" Order
+OrderRegel "1" -- "1" Product
 
 Activity "1" --> "1" User
 Activity "0..1" --> "1" Group

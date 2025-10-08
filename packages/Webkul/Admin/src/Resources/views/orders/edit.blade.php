@@ -36,7 +36,7 @@
                     name="sales_lead_id"
                     value="{{ $orders->sales_lead_id ?? '' }}"
                     rules="required|integer|exists:salesleads,id"
-                    :options="$salesLeads ?? []"
+                    :options="isset($salesLeads) ? $salesLeads : []"
                 />
             </x-admin::form.control-group>
 

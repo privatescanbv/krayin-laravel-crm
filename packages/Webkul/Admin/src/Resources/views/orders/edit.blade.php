@@ -36,7 +36,7 @@
                     type="select"
                     name="sales_lead_id"
                     value="{{ $orders->sales_lead_id ?? '' }}"
-                    rules="required|integer|exists:salesleads,id"
+                    rules="required"
                 >
                     <option value="">Selecteer een Sales Lead</option>
                     @if(isset($salesLeads))

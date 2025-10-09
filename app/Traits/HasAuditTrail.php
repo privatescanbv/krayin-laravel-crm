@@ -26,16 +26,6 @@ trait HasAuditTrail
                 $model->updated_by = $auth->id();
             }
         });
-
-        static::saving(function (Model $model) {
-            // Only set updated_by if the model is being updated (not created)
-            if ($model->exists) {
-                $auth = auth()->guard('user')->check() ? auth()->guard('user') : auth();
-                if ($auth->check()) {
-                    $model->updated_by = $auth->id();
-                }
-            }
-        });
     }
 
     /**

@@ -45,7 +45,7 @@
             @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
             .error-message { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 8px 12px; border-radius: 6px; margin: 8px 0; }
             /* Responsive viewport container for calendar - compact for 08:00-17:00 only */
-            .calendar-viewport { height: auto; max-height: 600px; min-height: 560px; }
+            .calendar-viewport { height: auto; max-height: 600px; min-height: 360px; }
             @media (max-width: 1024px) { .calendar-viewport { max-height: 550px; min-height: 500px; } }
             @media (max-width: 768px) { .calendar-viewport { max-height: 500px; min-height: 450px; } }
 

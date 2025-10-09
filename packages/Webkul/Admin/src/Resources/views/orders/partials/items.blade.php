@@ -16,7 +16,9 @@
                         <x-admin::table.th>Product</x-admin::table.th>
                         <x-admin::table.th class="text-center">Aantal</x-admin::table.th>
                         <x-admin::table.th class="text-center">Totaal</x-admin::table.th>
-                    <x-admin::table.th class="text-center">Plan</x-admin::table.th>
+                        <x-admin::table.th class="text-center">Status</x-admin::table.th>
+                        <x-admin::table.th>Planning</x-admin::table.th>
+                        <x-admin::table.th class="text-center">Actie</x-admin::table.th>
                     </x-admin::table.thead.tr>
                 </x-admin::table.thead>
                 <x-admin::table.tbody>
@@ -54,6 +56,21 @@
                     <x-admin::form.control-group.control type="inline" ::name="`${inputName}[total_price]`" ::value="item.total_price" rules="required|decimal:2" ::errors="errors" label="Totaal" placeholder="Totaal" @on-change="(e) => item.total_price = e.value" position="center" />
                 </x-admin::form.control-group>
             </x-admin::table.td>
+            <x-admin::table.td class="!px-2 text-center">
+                <span v-if="item.status" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full" :class="getStatusClass(item.status)">
+                    @{{ getStatusLabel(item.status) }}
+                </span>
+                <span v-else class="text-gray-400 text-xs">-</span>
+            </x-admin::table.td>
+            <x-admin::table.td class="!px-2">
+                <div v-if="item.planning_summary" class="text-xs text-gray-700 dark:text-gray-300">
+                    <div v-for="(booking, idx) in item.planning_summary" :key="idx" class="mb-1">
+                        <strong>@{{ booking.resource }}</strong><br>
+                        @{{ booking.from }} - @{{ booking.to }}
+                    </div>
+                </div>
+                <span v-else class="text-gray-400 text-xs">Niet ingepland</span>
+            </x-admin::table.td>
             <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
                 <div class="flex items-center justify-end gap-2">
                     <button v-if="canPlan" type="button" class="secondary-button" @click="openPlanning">
@@ -76,10 +93,12 @@
                         product_id: r.product_id ?? null,
                         quantity: r.quantity ?? 1,
                         total_price: r.total_price ?? 0,
+                        status: r.status ?? null,
                         // include product and partner products info if present (server eager-loaded)
                         product: r.product || null,
                         partner_product_count: (r.product && Array.isArray(r.product.partner_products)) ? r.product.partner_products.length : 0,
-                    })) : [{ id: null, product_id: null, quantity: 1, total_price: 0, product: null, partner_product_count: 0 }],
+                        planning_summary: this.formatPlanningSummary(r.resource_order_items || []),
+                    })) : [{ id: null, product_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null }],
                 };
             },
             methods: {
@@ -90,13 +109,31 @@
                     this.$emitter.emit('open-confirm-modal', {
                         agree: () => {
                             if (this.items.length === 1) {
-                                this.items = [{ id: null, product_id: null, quantity: 1, total_price: 0 }];
+                                this.items = [{ id: null, product_id: null, quantity: 1, total_price: 0, status: null, planning_summary: null }];
                             } else {
                                 const index = this.items.indexOf(item);
                                 if (index !== -1) this.items.splice(index, 1);
                             }
                         },
                     });
+                },
+                formatPlanningSummary(bookings) {
+                    if (!bookings || !bookings.length) return null;
+                    return bookings.map(b => ({
+                        resource: b.resource?.name || 'Onbekend',
+                        from: this.formatDateTime(b.from),
+                        to: this.formatDateTime(b.to)
+                    }));
+                },
+                formatDateTime(dateStr) {
+                    if (!dateStr) return '';
+                    const date = new Date(dateStr);
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const year = date.getFullYear();
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    return `${day}-${month}-${year} ${hours}:${minutes}`;
                 },
             },
         });
@@ -141,6 +178,22 @@
                     if (!id) return;
                     const url = "{{ route('admin.planning.order_item.show', ['orderItemId' => '___ID___']) }}".replace('___ID___', id);
                     window.location.href = url;
+                },
+                getStatusLabel(status) {
+                    const labels = {
+                        'nieuw': 'Nieuw',
+                        'moet_worden_ingepland': 'Moet worden ingepland',
+                        'ingepland': 'Ingepland'
+                    };
+                    return labels[status] || status;
+                },
+                getStatusClass(status) {
+                    const classes = {
+                        'nieuw': 'bg-gray-100 text-gray-800',
+                        'moet_worden_ingepland': 'bg-yellow-100 text-yellow-800',
+                        'ingepland': 'bg-green-100 text-green-800'
+                    };
+                    return classes[status] || 'bg-gray-100 text-gray-800';
                 },
             },
         });

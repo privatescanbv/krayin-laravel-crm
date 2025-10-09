@@ -6,6 +6,7 @@ use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class OrderRegel extends Model
 {
@@ -41,5 +42,10 @@ class OrderRegel extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(\Webkul\Product\Models\Product::class);
+    }
+
+    public function resourceOrderItems(): HasMany
+    {
+        return $this->hasMany(ResourceOrderItem::class, 'orderitem_id');
     }
 }

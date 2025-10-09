@@ -59,6 +59,7 @@ class OrderController extends SimpleEntityController
                     'product_id'  => (int) $item['product_id'],
                     'quantity'    => (int) $item['quantity'],
                     'total_price' => (float) ($item['total_price'] ?? 0),
+                    'status'      => \App\Enums\OrderItemStatus::NIEUW,
                 ]);
             }
         }
@@ -95,6 +96,7 @@ class OrderController extends SimpleEntityController
                     'product_id'  => (int) $item['product_id'],
                     'quantity'    => (int) $item['quantity'],
                     'total_price' => (float) ($item['total_price'] ?? 0),
+                    'status'      => \App\Enums\OrderItemStatus::NIEUW,
                 ]);
             }
         }
@@ -113,11 +115,12 @@ class OrderController extends SimpleEntityController
 
     protected function getEditViewData(Request $request, Model $entity): array
     {
-        // Eager-load relations needed for planning button visibility per orderregel
+        // Eager-load relations needed for planning button visibility and planning info
         $entity->load([
             'orderRegels.product.partnerProducts' => function ($q) {
                 $q->select('partner_products.id', 'partner_products.product_id');
             },
+            'orderRegels.resourceOrderItems.resource',
         ]);
 
         $salesLeads = \App\Models\SalesLead::with('lead')->get()->mapWithKeys(function ($salesLead) {
@@ -146,6 +149,29 @@ class OrderController extends SimpleEntityController
     protected function validateUpdate(Request $request, int $id): void
     {
         $this->validateStore($request);
+
+        // Validate status transition
+        if ($request->has('status')) {
+            $this->validateOrderStatus($request->input('status'), $id);
+        }
+    }
+
+    protected function validateOrderStatus(string $requestedStatus, int $orderId): void
+    {
+        // If trying to set status to INGEPLAND, check if all order items are ready
+        if ($requestedStatus === \App\Enums\OrderStatus::INGEPLAND->value) {
+            $order = $this->orderRepository->findOrFail($orderId);
+
+            $hasItemsNeedingPlanning = $order->orderRegels()
+                ->where('status', \App\Enums\OrderItemStatus::MOET_WORDEN_INGEPLAND->value)
+                ->exists();
+
+            if ($hasItemsNeedingPlanning) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => 'Order kan niet op INGEPLAND gezet worden: er zijn nog orderregels die moeten worden ingepland.',
+                ]);
+            }
+        }
     }
 
     protected function transformPayload(array $payload, ?int $id = null): array

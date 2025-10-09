@@ -2,9 +2,15 @@
 
 namespace App\Providers;
 
+use App\Models\Order;
+use App\Models\OrderRegel;
+use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
 use App\Observers\LeadObserver;
+use App\Observers\OrderObserver;
+use App\Observers\OrderRegelObserver;
 use App\Observers\PersonObserver;
+use App\Observers\ResourceOrderItemObserver;
 use App\Observers\SalesLeadObserver;
 use Illuminate\Support\ServiceProvider;
 use Webkul\Contact\Models\Person;
@@ -28,5 +34,8 @@ class AppServiceProvider extends ServiceProvider
         Lead::observe(LeadObserver::class);
         Person::observe(PersonObserver::class);
         SalesLead::observe(SalesLeadObserver::class);
+        Order::observe(OrderObserver::class);
+        OrderRegel::observe(OrderRegelObserver::class);
+        ResourceOrderItem::observe(ResourceOrderItemObserver::class);
     }
 }

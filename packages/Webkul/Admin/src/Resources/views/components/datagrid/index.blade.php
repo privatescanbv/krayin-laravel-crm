@@ -561,6 +561,8 @@
                                         requestCount: ++datagrid.requestCount,
                                         available: this.available,
                                         applied: this.applied,
+                                        // refresh timestamp on each update so it slides the expiry window
+                                        savedAt: Date.now(),
                                     };
                                 }
 
@@ -587,6 +589,8 @@
                         requestCount: 0,
                         available: this.available,
                         applied: this.applied,
+                        // timestamp to support expiry of stored preferences
+                        savedAt: Date.now(),
                     };
                 },
 
@@ -605,11 +609,33 @@
                  * @returns {Array} Datagrids stored in local storage.
                  */
                 getDatagrids() {
-                    let datagrids = localStorage.getItem(
+                    let raw = localStorage.getItem(
                         this.getDatagridsStorageKey()
                     );
 
-                    return JSON.parse(datagrids) ?? [];
+                    let datagrids = [];
+
+                    try {
+                        datagrids = JSON.parse(raw) ?? [];
+                    } catch (e) {
+                        datagrids = [];
+                    }
+
+                    // Purge expired entries (default TTL = 10 hours)
+                    const now = Date.now();
+                    const ttlMs = 10 * 60 * 60 * 1000;
+
+                    const valid = datagrids.filter(dg => {
+                        // If no timestamp, treat as expired to avoid persisting stale state indefinitely
+                        return typeof dg?.savedAt === 'number' && (now - dg.savedAt) <= ttlMs;
+                    });
+
+                    // If anything was purged, write back the cleaned array
+                    if (valid.length !== datagrids.length) {
+                        this.setDatagrids(valid);
+                    }
+
+                    return valid;
                 },
 
                 /**

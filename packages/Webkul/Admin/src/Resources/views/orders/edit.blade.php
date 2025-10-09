@@ -36,7 +36,7 @@
                     type="select"
                     name="sales_lead_id"
                     value="{{ $orders->sales_lead_id ?? '' }}"
-                    rules="required|integer|exists:salesleads,id"
+                    rules="required"
                 >
                     <option value="">Selecteer een Sales Lead</option>
                     @if(isset($salesLeads))
@@ -46,6 +46,22 @@
                             </option>
                         @endforeach
                     @endif
+                </x-admin::form.control-group.control>
+            </x-admin::form.control-group>
+
+            <x-admin::form.control-group>
+                <x-admin::form.control-group.label class="required">Status</x-admin::form.control-group.label>
+                <x-admin::form.control-group.control
+                    type="select"
+                    name="status"
+                    value="{{ $orders->status->value ?? '' }}"
+                    rules="required"
+                >
+                    @foreach(\App\Enums\OrderStatus::cases() as $status)
+                        <option value="{{ $status->value }}" {{ $orders->status === $status ? 'selected' : '' }}>
+                            {{ $status->label() }}
+                        </option>
+                    @endforeach
                 </x-admin::form.control-group.control>
             </x-admin::form.control-group>
 

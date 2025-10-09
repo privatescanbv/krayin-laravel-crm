@@ -10,7 +10,7 @@
     <div class="flex flex-col gap-4">
         <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-1">
-                <div class="text-xl font-bold">Resoruce Planning</div>
+                <div class="text-xl font-bold">Resource Planning</div>
                 <div class="text-sm text-gray-600 dark:text-gray-400">Orderregel #{{ $orderItem->id }}</div>
             </div>
             <a href="{{ route('admin.orders.edit', ['id' => $orderItem->order_id]) }}" class="secondary-button">Terug naar order</a>
@@ -44,10 +44,10 @@
             .loading-spinner { width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
             @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
             .error-message { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 8px 12px; border-radius: 6px; margin: 8px 0; }
-            /* Responsive viewport container for calendar */
-            .calendar-viewport { height: 70vh; min-height: 480px; }
-            @media (max-width: 1024px) { .calendar-viewport { height: 75vh; min-height: 420px; } }
-            @media (max-width: 768px) { .calendar-viewport { height: 80vh; min-height: 380px; } }
+            /* Responsive viewport container for calendar - compact for 08:00-17:00 only */
+            .calendar-viewport { height: auto; max-height: 600px; min-height: 360px; }
+            @media (max-width: 1024px) { .calendar-viewport { max-height: 550px; min-height: 500px; } }
+            @media (max-width: 768px) { .calendar-viewport { max-height: 500px; min-height: 450px; } }
 
             /* Month view styles */
             .month-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
@@ -294,11 +294,10 @@
                         resources: [],
                         blocks: {}, // Server-rendered blocks: { [resourceId]: { [date]: [blocks] } }
                         form: { resource_id: null, from: '', to: '', replace_existing: true },
-                        hours: Array.from({ length: 24 }, (_, i) => i),
+                        hours: Array.from({ length: 10 }, (_, i) => i + 8), // 08:00 - 17:00
                         loading: false,
                         errorMessage: '',
-                        pixelsPerHour: 56, // base unit for business hours
-                        halfPixelsPerHour: 28, // half height for non-business hours
+                        pixelsPerHour: 50, // pixels per hour (compacter voor 08:00-17:00)
                         resourceColors: [
                             '#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6',
                             '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
@@ -344,22 +343,19 @@
                     this.scrollToCurrentTime();
                 },
                 methods: {
-                    // Height per hour with halved height outside business hours (08:00-17:00)
+                    // Height per hour (08:00-17:00 only)
                     slotHeightPx(hour) {
-                        return (hour >= 8 && hour < 17) ? this.pixelsPerHour : this.halfPixelsPerHour;
+                        return this.pixelsPerHour;
                     },
-                    // Compute top offset in pixels considering variable hour heights
+                    // Compute top offset in pixels (08:00-17:00 only)
                     topOffsetPx(date) {
                         const h = date.getHours();
                         const m = date.getMinutes();
-                        // Sum heights for full hours before current hour
-                        let sum = 0;
-                        for (let i = 0; i < h; i++) {
-                            sum += this.slotHeightPx(i);
-                        }
+                        // Calculate offset from 08:00
+                        const hoursSince8 = Math.max(0, h - 8);
+                        let sum = hoursSince8 * this.pixelsPerHour;
                         // Add minutes portion within the current hour
-                        const currentHourHeight = this.slotHeightPx(h);
-                        sum += (m / 60) * currentHourHeight;
+                        sum += (m / 60) * this.pixelsPerHour;
                         return sum;
                     },
                     setViewType(type) {

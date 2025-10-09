@@ -148,6 +148,29 @@ class OrderController extends SimpleEntityController
     protected function validateUpdate(Request $request, int $id): void
     {
         $this->validateStore($request);
+        
+        // Validate status transition
+        if ($request->has('status')) {
+            $this->validateOrderStatus($request->input('status'), $id);
+        }
+    }
+    
+    protected function validateOrderStatus(string $requestedStatus, int $orderId): void
+    {
+        // If trying to set status to INGEPLAND, check if all order items are ready
+        if ($requestedStatus === \App\Enums\OrderStatus::INGEPLAND->value) {
+            $order = $this->orderRepository->findOrFail($orderId);
+            
+            $hasItemsNeedingPlanning = $order->orderRegels()
+                ->where('status', \App\Enums\OrderItemStatus::MOET_WORDEN_INGEPLAND->value)
+                ->exists();
+            
+            if ($hasItemsNeedingPlanning) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'status' => 'Order kan niet op INGEPLAND gezet worden: er zijn nog orderregels die moeten worden ingepland.',
+                ]);
+            }
+        }
     }
 
     protected function transformPayload(array $payload, ?int $id = null): array

@@ -14,8 +14,8 @@ class OrderObserver
      */
     public function updated(Order $order): void
     {
-        // Don't auto-update if status was manually set (is dirty)
-        if ($order->isDirty('status') && $order->status !== null) {
+        // Don't auto-update if status was manually changed
+        if ($order->wasChanged('status')) {
             return;
         }
 

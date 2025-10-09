@@ -62,38 +62,41 @@
         <script type="text/x-template" id="v-order-item-planning-template">
             <div class="flex flex-col gap-4">
                 <!-- Filters and View Controls -->
-                <div class="flex flex-wrap items-end justify-between gap-4 filters-bar">
-                    <div class="flex flex-wrap items-end gap-4">
-                        <div class="flex flex-col min-w-[150px]">
+                <div class="filters-bar rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60 p-3 md:p-4 md:grid md:grid-cols-3 md:items-center gap-3">
+                    <!-- Left: Filters -->
+                    <div class="flex flex-wrap items-end gap-4 md:col-span-1">
+                        <div class="flex flex-col w-56 md:w-64">
                             <label class="block text-xs mb-1 text-gray-600">Resource type</label>
                             <input type="number" v-model.number="filters.resource_type_id" class="control"/>
                         </div>
-                        <div class="flex flex-col min-w-[150px]">
+                        <div class="flex flex-col w-56 md:w-64">
                             <label class="block text-xs mb-1 text-gray-600">Kliniek</label>
                             <input type="number" v-model.number="filters.clinic_id" class="control"/>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-2">
-                        <!-- View type toggle -->
-                        <div class="flex border border-gray-300 rounded-md overflow-hidden">
+                    <!-- Center: View toggle + period label -->
+                    <div class="flex items-center justify-center gap-3 md:col-span-1 mt-3 md:mt-0">
+                        <div class="flex border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden">
                             <button 
                                 @click="setViewType('week')" 
-                                :class="['px-3 py-1 text-sm', viewType === 'week' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50']"
+                                :class="['px-3 py-1 text-sm', viewType === 'week' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
                             >
                                 Week
                             </button>
                             <button 
                                 @click="setViewType('month')" 
-                                :class="['px-3 py-1 text-sm', viewType === 'month' ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50']"
+                                :class="['px-3 py-1 text-sm', viewType === 'month' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
                             >
                                 Maand
                             </button>
                         </div>
+                        <div class="text-sm font-medium text-gray-800 dark:text-gray-200">@{{ periodLabel }}</div>
+                    </div>
 
-                        <!-- Navigation buttons -->
+                    <!-- Right: Navigation & actions -->
+                    <div class="flex items-center justify-end gap-2 md:col-span-1 mt-3 md:mt-0">
                         <button class="secondary-button" @click="prevPeriod">Vorige</button>
-                        <div class="text-sm text-gray-700">@{{ periodLabel }}</div>
                         <button class="secondary-button" @click="nextPeriod">Volgende</button>
                         <button class="primary-button" @click="loadAvailability">Zoeken</button>
                     </div>

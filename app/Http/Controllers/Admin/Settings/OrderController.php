@@ -59,6 +59,7 @@ class OrderController extends SimpleEntityController
                     'product_id'  => (int) $item['product_id'],
                     'quantity'    => (int) $item['quantity'],
                     'total_price' => (float) ($item['total_price'] ?? 0),
+                    'status'      => \App\Enums\OrderItemStatus::NIEUW,
                 ]);
             }
         }
@@ -95,6 +96,7 @@ class OrderController extends SimpleEntityController
                     'product_id'  => (int) $item['product_id'],
                     'quantity'    => (int) $item['quantity'],
                     'total_price' => (float) ($item['total_price'] ?? 0),
+                    'status'      => \App\Enums\OrderItemStatus::NIEUW,
                 ]);
             }
         }

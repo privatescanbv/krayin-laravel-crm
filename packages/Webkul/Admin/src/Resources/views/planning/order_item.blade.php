@@ -216,6 +216,15 @@
                     </x-slot:header>
                     <x-slot:content>
                         <div class="space-y-6" style="pointer-events: auto; z-index: 1000; position: relative;">
+                            <!-- Existing bookings summary -->
+                            <div v-if="existingForOrderItem && existingForOrderItem.length" class="rounded border border-amber-300 bg-amber-50 text-amber-900 p-3 text-sm">
+                                <div class="font-semibold mb-1">Bestaande afspraken voor deze orderregel</div>
+                                <ul class="list-disc ml-5">
+                                    <li v-for="b in existingForOrderItem" :key="b.id">
+                                        @{{ b.resource_name || 'Onbekende resource' }} — @{{ timeRange(b.from, b.to) }}
+                                    </li>
+                                </ul>
+                            </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Resource</label>
                                 <select
@@ -247,6 +256,10 @@
                                     @click.stop
                                 />
                             </div>
+                            <div class="flex items-center gap-2">
+                                <input id="replace_existing" type="checkbox" v-model="form.replace_existing" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                                <label for="replace_existing" class="text-sm text-gray-700 dark:text-gray-300">Vervang bestaande afspraak (verwijdert eerdere boekingen voor deze orderregel)</label>
+                            </div>
                         </div>
                     </x-slot:content>
                     <x-slot:footer>
@@ -277,7 +290,7 @@
                         window: { start, end },
                         resources: [],
                         blocks: {}, // Server-rendered blocks: { [resourceId]: { [date]: [blocks] } }
-                        form: { resource_id: null, from: '', to: '' },
+                        form: { resource_id: null, from: '', to: '', replace_existing: true },
                         hours: Array.from({ length: 24 }, (_, i) => i),
                         loading: false,
                         errorMessage: '',
@@ -458,6 +471,7 @@
 
                             // Server now returns pre-rendered blocks
                             this.blocks = data.blocks || {};
+                            this.existingForOrderItem = data.existing_bookings_for_order_item || [];
 
                             // Ensure clinic default selection
                             try {
@@ -603,14 +617,15 @@
                                 body: JSON.stringify({
                                     resource_id: this.form.resource_id,
                                     from: this.form.from,
-                                    to: this.form.to
+                                    to: this.form.to,
+                                    replace_existing: !!this.form.replace_existing
                                 })
                             });
 
                             if (res.ok) {
                                 this.$refs.bookModal.toggle();
                                 this.$emitter.emit('add-flash', { type: 'success', message: 'Ingeboekt' });
-                                this.form = { resource_id: null, from: '', to: '' };
+                                this.form = { resource_id: null, from: '', to: '', replace_existing: true };
                                 setTimeout(() => {
                                     this.loading = false;
                                     this.loadAvailability().catch(error => {

@@ -12,6 +12,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\DB;
 
 class OrderItemPlanningController extends Controller
 {
@@ -83,6 +84,19 @@ class OrderItemPlanningController extends Controller
             }
         }
 
+        // Existing bookings for this order item (summary)
+        $existingForOrderItem = ResourceOrderItem::with('resource')
+            ->where('orderitem_id', $orderItem->id)
+            ->orderBy('from')
+            ->get()
+            ->map(fn($b) => [
+                'id' => $b->id,
+                'resource_id' => $b->resource_id,
+                'resource_name' => $b->resource?->name,
+                'from' => CarbonImmutable::parse($b->from)->toIso8601String(),
+                'to' => CarbonImmutable::parse($b->to)->toIso8601String(),
+            ]);
+
         return response()->json([
             'view_type' => 'week',
             'resources' => $resources->map(fn($r) => [
@@ -94,6 +108,7 @@ class OrderItemPlanningController extends Controller
             ])->values(),
             'blocks'    => $renderedBlocks,
             'window'    => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
+            'existing_bookings_for_order_item' => $existingForOrderItem,
         ]);
     }
 
@@ -140,6 +155,19 @@ class OrderItemPlanningController extends Controller
             }
         }
 
+        // Existing bookings for this order item (summary)
+        $existingForOrderItem = ResourceOrderItem::with('resource')
+            ->where('orderitem_id', $orderItem->id)
+            ->orderBy('from')
+            ->get()
+            ->map(fn($b) => [
+                'id' => $b->id,
+                'resource_id' => $b->resource_id,
+                'resource_name' => $b->resource?->name,
+                'from' => CarbonImmutable::parse($b->from)->toIso8601String(),
+                'to' => CarbonImmutable::parse($b->to)->toIso8601String(),
+            ]);
+
         return response()->json([
             'view_type' => 'month',
             'resources' => $resources->map(fn($r) => [
@@ -151,6 +179,7 @@ class OrderItemPlanningController extends Controller
             ])->values(),
             'blocks'    => $renderedBlocks,
             'window'    => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
+            'existing_bookings_for_order_item' => $existingForOrderItem,
         ]);
     }
 
@@ -417,31 +446,30 @@ class OrderItemPlanningController extends Controller
                 'resource_id' => ['required', 'integer', 'exists:resources,id'],
                 'from'        => ['required', 'date'],
                 'to'          => ['required', 'date', 'after:from'],
+                'replace_existing' => ['sometimes', 'boolean'],
             ]);
 
             $orderItem = OrderRegel::findOrFail($orderItemId);
 
-            \Log::info('Creating ResourceOrderItem', [
-                'resource_id' => (int) $request->input('resource_id'),
-                'orderitem_id' => $orderItem->id,
-                'from' => $request->input('from'),
-                'to' => $request->input('to'),
-                'user_id' => auth()->id(),
-            ]);
+            $replace = $request->boolean('replace_existing', true);
 
-            $booking = ResourceOrderItem::create([
-                'resource_id'  => (int) $request->input('resource_id'),
-                'orderitem_id' => $orderItem->id,
-                'from'         => Carbon::parse($request->input('from')),
-                'to'           => Carbon::parse($request->input('to')),
-                'created_by'   => auth()->id(),
-                'updated_by'   => auth()->id(),
-            ]);
+            $booking = DB::transaction(function () use ($request, $orderItem, $replace) {
+                if ($replace) {
+                    ResourceOrderItem::where('orderitem_id', $orderItem->id)->delete();
+                }
 
-            \Log::info('ResourceOrderItem created successfully', ['booking_id' => $booking->id]);
+                return ResourceOrderItem::create([
+                    'resource_id'  => (int) $request->input('resource_id'),
+                    'orderitem_id' => $orderItem->id,
+                    'from'         => Carbon::parse($request->input('from')),
+                    'to'           => Carbon::parse($request->input('to')),
+                    'created_by'   => auth()->id(),
+                    'updated_by'   => auth()->id(),
+                ]);
+            });
 
             return response()->json([
-                'message' => 'Ingeboekt',
+                'message' => $replace ? 'Ingeboekt (vorige afspraak vervangen)' : 'Ingeboekt',
                 'data'    => $booking,
             ], 201);
         } catch (\Exception $e) {

@@ -56,7 +56,7 @@ class OrderObserver
         $allReady = true;
         foreach ($orderRegels as $orderRegel) {
             $status = $orderRegel->status;
-            
+
             // If any item needs to be planned (MOET_WORDEN_INGEPLAND), order is not ready
             if ($status === OrderItemStatus::MOET_WORDEN_INGEPLAND->value) {
                 $allReady = false;

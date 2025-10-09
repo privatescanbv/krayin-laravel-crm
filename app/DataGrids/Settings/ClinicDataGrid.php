@@ -8,6 +8,18 @@ use Webkul\DataGrid\DataGrid;
 
 class ClinicDataGrid extends DataGrid
 {
+
+    /**
+     * @param string $sortColumn
+     * @param string $sortOrder
+     */
+    public function __construct()
+    {
+        $this->sortColumn = 'clinics.name';
+        $this->sortOrder = 'asc';
+    }
+
+
     public function prepareQueryBuilder(): Builder
     {
         $queryBuilder = DB::table('clinics')

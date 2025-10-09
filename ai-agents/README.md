@@ -1,6 +1,7 @@
 http://localhost:8501
 
 ## voorbeeld vragen
+vanuit welke kanalen zijn de meeste leads binnen gekomen in de afgelopen 2 maanden
 Toon mij de leads per maand in een grafiek
 Toon mij de leads per maand
 

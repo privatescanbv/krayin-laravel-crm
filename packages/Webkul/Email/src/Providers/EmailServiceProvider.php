@@ -25,7 +25,7 @@ class EmailServiceProvider extends ServiceProvider
 
         $this->app->bind(InboundEmailProcessor::class, function ($app) {
             $driver = config('mail-receiver.default');
-            if (!$driver || !Str::contains($driver, 'webklex')) {
+            if (!$driver || !Str::contains($driver, 'microsoft-graph')) {
                 logger()->warning('Binding InboundEmailProcessor with driver: '.$driver);
             }
 

@@ -29,7 +29,7 @@ class ResourceOrderItemObserver
      */
     private function updateOrderRegelStatus(ResourceOrderItem $resourceOrderItem): void
     {
-        if (!$resourceOrderItem->orderitem_id) {
+        if (! $resourceOrderItem->orderitem_id) {
             return;
         }
 
@@ -69,7 +69,7 @@ class ResourceOrderItemObserver
             ->where('id', $orderRegelId)
             ->first();
 
-        if (!$orderRegel || !$orderRegel->product_id) {
+        if (! $orderRegel || ! $orderRegel->product_id) {
             return OrderItemStatus::NIEUW;
         }
 

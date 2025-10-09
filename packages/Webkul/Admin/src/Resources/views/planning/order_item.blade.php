@@ -44,6 +44,10 @@
             .loading-spinner { width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
             @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
             .error-message { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 8px 12px; border-radius: 6px; margin: 8px 0; }
+            /* Responsive viewport container for calendar */
+            .calendar-viewport { height: 70vh; min-height: 480px; }
+            @media (max-width: 1024px) { .calendar-viewport { height: 75vh; min-height: 420px; } }
+            @media (max-width: 768px) { .calendar-viewport { height: 80vh; min-height: 380px; } }
             
             /* Month view styles */
             .month-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
@@ -114,7 +118,8 @@
                 </div>
 
                 <!-- Week Calendar View -->
-                <div v-if="viewType === 'week'" class="calendar-container overflow-x-auto relative">
+                <div v-if="viewType === 'week'" class="calendar-viewport overflow-x-auto relative">
+                    <div class="calendar-container" style="height: 100%;">
                     <!-- Loading overlay -->
                     <div v-if="loading" class="loading-overlay">
                         <div class="loading-spinner"></div>
@@ -130,13 +135,13 @@
                     <div class="calendar-body">
                         <!-- Time gutter -->
                         <div class="time-gutter">
-                            <div v-for="h in hours" :key="h" class="hour" :style="{ height: pixelsPerHour + 'px' }">@{{ hourLabel(h) }}</div>
+                            <div v-for="h in hours" :key="h" class="hour" :style="{ height: slotHeightPx(h) + 'px' }">@{{ hourLabel(h) }}</div>
                         </div>
                         
                         <!-- Day columns -->
                         <div v-for="d in 7" :key="'col-'+d" class="day-column">
                             <!-- Hour slots -->
-                            <div v-for="h in hours" :key="'slot-'+d+'-'+h" class="hour-slot pointer-events-none" :style="{ height: pixelsPerHour + 'px' }"></div>
+                            <div v-for="h in hours" :key="'slot-'+d+'-'+h" class="hour-slot pointer-events-none" :style="{ height: slotHeightPx(h) + 'px' }"></div>
                             
                             <!-- Rendered blocks from server -->
                             <div v-for="block in getBlocksForDay(d-1)" :key="block.key" 
@@ -148,6 +153,7 @@
                                 <div class="text-xs" :class="block.type === 'occupied' ? 'opacity-75' : ''">@{{ timeRange(block.from, block.to) }}</div>
                             </div>
                         </div>
+                    </div>
                     </div>
                 </div>
 
@@ -254,7 +260,8 @@
                         hours: Array.from({ length: 24 }, (_, i) => i),
                         loading: false,
                         errorMessage: '',
-                        pixelsPerHour: 60,
+                        pixelsPerHour: 56, // base unit for business hours
+                        halfPixelsPerHour: 28, // half height for non-business hours
                         resourceColors: [
                             '#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6',
                             '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
@@ -300,6 +307,24 @@
                     this.scrollToCurrentTime();
                 },
                 methods: {
+                    // Height per hour with halved height outside business hours (08:00-17:00)
+                    slotHeightPx(hour) {
+                        return (hour >= 8 && hour < 17) ? this.pixelsPerHour : this.halfPixelsPerHour;
+                    },
+                    // Compute top offset in pixels considering variable hour heights
+                    topOffsetPx(date) {
+                        const h = date.getHours();
+                        const m = date.getMinutes();
+                        // Sum heights for full hours before current hour
+                        let sum = 0;
+                        for (let i = 0; i < h; i++) {
+                            sum += this.slotHeightPx(i);
+                        }
+                        // Add minutes portion within the current hour
+                        const currentHourHeight = this.slotHeightPx(h);
+                        sum += (m / 60) * currentHourHeight;
+                        return sum;
+                    },
                     setViewType(type) {
                         this.viewType = type;
                         if (type === 'month') {
@@ -468,8 +493,9 @@
                         // Week view positioning
                         const from = new Date(block.from);
                         const to = new Date(block.to);
-                        const top = this.minuteOfDay(from) * (this.pixelsPerHour / 60);
-                        const height = Math.max(18, (to - from) / (1000 * 60) * (this.pixelsPerHour / 60));
+                        const top = this.topOffsetPx(from);
+                        // Height is sum of variable hour heights across interval
+                        const height = Math.max(18, this.topOffsetPx(to) - this.topOffsetPx(from));
 
                         if (block.type === 'occupied') {
                             return {
@@ -581,19 +607,25 @@
                     },
                     calculateDynamicScaling() {
                         this.$nextTick(() => {
-                            const container = this.$el.querySelector('.calendar-container');
+                            const container = this.$el.querySelector('.calendar-viewport');
                             if (container) {
                                 const containerHeight = container.clientHeight;
-                                const visibleHoursCount = 24;
-                                this.pixelsPerHour = Math.max(30, Math.floor(containerHeight / visibleHoursCount));
+                                // Allocate a bit more space to business hours (9 hours) vs non-business (15 hours at half height)
+                                // Effective total height units = 9 * 1 + 15 * 0.5 = 16.5 units
+                                const effectiveUnits = 16.5;
+                                const unit = Math.max(22, Math.floor(containerHeight / effectiveUnits));
+                                this.pixelsPerHour = unit;            // for 08:00-17:00
+                                this.halfPixelsPerHour = Math.max(14, Math.floor(unit / 2)); // others
                             }
                         });
+                        // Recalculate on resize for responsiveness
+                        window.addEventListener('resize', this.calculateDynamicScaling, { passive: true });
                     },
                     scrollToCurrentTime() {
                         this.$nextTick(() => {
                             const now = new Date();
-                            const y = this.minuteOfDay(now) * (this.pixelsPerHour / 60);
-                            const container = this.$el.querySelector('.calendar-container');
+                            const y = this.topOffsetPx(now);
+                            const container = this.$el.querySelector('.calendar-viewport');
                             if (container) {
                                 container.scrollTop = Math.max(0, y - 200);
                             }

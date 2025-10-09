@@ -42,9 +42,15 @@ class Order extends Model
         ];
     }
 
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
+    // Keep the old method for backward compatibility during transition
     public function orderRegels(): HasMany
     {
-        return $this->hasMany(OrderRegel::class);
+        return $this->hasMany(OrderItem::class);
     }
 
     public function salesLead(): BelongsTo

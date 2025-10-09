@@ -10,11 +10,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Product\Models\Product;
 
-class OrderRegel extends Model
+class OrderItem extends Model
 {
     use HasAuditTrail, HasFactory;
 
-    protected $table = 'order_regels';
+    protected $table = 'order_items';
 
     protected $fillable = [
         'order_id',
@@ -48,6 +48,6 @@ class OrderRegel extends Model
 
     public function resourceOrderItems(): HasMany
     {
-        return $this->hasMany(ResourceOrderItem::class, 'orderitem_id');
+        return $this->hasMany(ResourceOrderItem::class, 'order_item_id');
     }
 }

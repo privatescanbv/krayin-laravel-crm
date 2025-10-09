@@ -13,7 +13,7 @@ class ResourceOrderItemObserver
      */
     public function created(ResourceOrderItem $resourceOrderItem): void
     {
-        $this->updateOrderRegelStatus($resourceOrderItem);
+        $this->updateOrderItemStatus($resourceOrderItem);
     }
 
     /**
@@ -21,61 +21,61 @@ class ResourceOrderItemObserver
      */
     public function deleted(ResourceOrderItem $resourceOrderItem): void
     {
-        $this->updateOrderRegelStatus($resourceOrderItem);
+        $this->updateOrderItemStatus($resourceOrderItem);
     }
 
     /**
-     * Update the OrderRegel status when a ResourceOrderItem is created or deleted.
+     * Update the OrderItem status when a ResourceOrderItem is created or deleted.
      */
-    private function updateOrderRegelStatus(ResourceOrderItem $resourceOrderItem): void
+    private function updateOrderItemStatus(ResourceOrderItem $resourceOrderItem): void
     {
-        if (! $resourceOrderItem->orderitem_id) {
+        if (! $resourceOrderItem->order_item_id) {
             return;
         }
 
-        // Check if there are still ResourceOrderItems for this OrderRegel
+        // Check if there are still ResourceOrderItems for this OrderItem
         $hasResourceOrderItem = DB::table('resource_orderitem')
-            ->where('orderitem_id', $resourceOrderItem->orderitem_id)
+            ->where('order_item_id', $resourceOrderItem->order_item_id)
             ->exists();
 
         $newStatus = $hasResourceOrderItem
             ? OrderItemStatus::INGEPLAND
-            : $this->calculateStatusWithoutPlanning($resourceOrderItem->orderitem_id);
+            : $this->calculateStatusWithoutPlanning($resourceOrderItem->order_item_id);
 
-        // Update the OrderRegel status
-        DB::table('order_regels')
-            ->where('id', $resourceOrderItem->orderitem_id)
+        // Update the OrderItem status
+        DB::table('order_items')
+            ->where('id', $resourceOrderItem->order_item_id)
             ->update(['status' => $newStatus->value]);
 
         // Trigger parent order status update
-        $orderRegel = DB::table('order_regels')
-            ->where('id', $resourceOrderItem->orderitem_id)
+        $orderItem = DB::table('order_items')
+            ->where('id', $resourceOrderItem->order_item_id)
             ->first();
 
-        if ($orderRegel && $orderRegel->order_id) {
+        if ($orderItem && $orderItem->order_id) {
             // Touch the order to trigger status update
             DB::table('orders')
-                ->where('id', $orderRegel->order_id)
+                ->where('id', $orderItem->order_id)
                 ->update(['updated_at' => now()]);
         }
     }
 
     /**
-     * Calculate status for an OrderRegel without planning.
+     * Calculate status for an OrderItem without planning.
      */
-    private function calculateStatusWithoutPlanning(int $orderRegelId): OrderItemStatus
+    private function calculateStatusWithoutPlanning(int $orderItemId): OrderItemStatus
     {
-        $orderRegel = DB::table('order_regels')
-            ->where('id', $orderRegelId)
+        $orderItem = DB::table('order_items')
+            ->where('id', $orderItemId)
             ->first();
 
-        if (! $orderRegel || ! $orderRegel->product_id) {
+        if (! $orderItem || ! $orderItem->product_id) {
             return OrderItemStatus::NIEUW;
         }
 
         // Check if product has partner products
         $hasPartnerProducts = DB::table('partner_products')
-            ->where('product_id', $orderRegel->product_id)
+            ->where('product_id', $orderItem->product_id)
             ->exists();
 
         return $hasPartnerProducts

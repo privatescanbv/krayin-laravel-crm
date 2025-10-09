@@ -15,7 +15,7 @@ class ResourceOrderItem extends Model
 
     protected $fillable = [
         'resource_id',
-        'orderitem_id',
+        'order_item_id',
         'from',
         'to',
         'created_by',
@@ -23,12 +23,12 @@ class ResourceOrderItem extends Model
     ];
 
     protected $casts = [
-        'resource_id'  => 'integer',
-        'orderitem_id' => 'integer',
-        'from'         => 'datetime',
-        'to'           => 'datetime',
-        'created_by'   => 'integer',
-        'updated_by'   => 'integer',
+        'resource_id'   => 'integer',
+        'order_item_id' => 'integer',
+        'from'          => 'datetime',
+        'to'            => 'datetime',
+        'created_by'    => 'integer',
+        'updated_by'    => 'integer',
     ];
 
     public function resource(): BelongsTo
@@ -38,6 +38,6 @@ class ResourceOrderItem extends Model
 
     public function orderItem(): BelongsTo
     {
-        return $this->belongsTo(OrderRegel::class, 'orderitem_id');
+        return $this->belongsTo(OrderItem::class, 'order_item_id');
     }
 }

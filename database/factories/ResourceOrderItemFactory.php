@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\OrderRegel;
+use App\Models\OrderItem;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -17,10 +17,10 @@ class ResourceOrderItemFactory extends Factory
         $to = (clone $from)->modify('+1 hour');
 
         return [
-            'resource_id'  => Resource::factory(),
-            'orderitem_id' => OrderRegel::factory(),
-            'from'         => $from,
-            'to'           => $to,
+            'resource_id'   => Resource::factory(),
+            'order_item_id' => OrderItem::factory(),
+            'from'          => $from,
+            'to'            => $to,
         ];
     }
 }

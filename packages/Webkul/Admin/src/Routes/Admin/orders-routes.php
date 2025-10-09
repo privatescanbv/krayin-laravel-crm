@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\Settings\OrderController;
-use App\Http\Controllers\Admin\Settings\OrderRegelController;
+use App\Http\Controllers\Admin\Settings\OrderItemController;
 use App\Http\Controllers\Admin\Planning\OrderItemPlanningController;
 use App\Http\Controllers\Admin\Planning\ResourcePlanningMonitorController;
 
@@ -20,16 +20,16 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
 });
 
 /**
- * Order regels routes (top-level, not under settings).
+ * Order items routes (top-level, not under settings).
  */
-Route::controller(OrderRegelController::class)->prefix('order-regels')->group(function () {
-    Route::get('', 'index')->name('admin.order_regels.index');
-    Route::get('create', 'create')->name('admin.order_regels.create');
-    Route::post('create', 'store')->name('admin.order_regels.store');
-    Route::get('edit/{id}', 'edit')->name('admin.order_regels.edit');
-    Route::put('edit/{id}', 'update')->name('admin.order_regels.update');
-    Route::delete('', 'destroy')->name('admin.order_regels.delete');
-    Route::delete('{id}', 'destroy')->name('admin.order_regels.delete');
+Route::controller(OrderItemController::class)->prefix('order-items')->group(function () {
+    Route::get('', 'index')->name('admin.order_items.index');
+    Route::get('create', 'create')->name('admin.order_items.create');
+    Route::post('create', 'store')->name('admin.order_items.store');
+    Route::get('edit/{id}', 'edit')->name('admin.order_items.edit');
+    Route::put('edit/{id}', 'update')->name('admin.order_items.update');
+    Route::delete('', 'destroy')->name('admin.order_items.delete');
+    Route::delete('{id}', 'destroy')->name('admin.order_items.delete');
 });
 
 /**

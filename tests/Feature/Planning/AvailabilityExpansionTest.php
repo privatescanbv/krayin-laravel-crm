@@ -3,7 +3,7 @@
 namespace Tests\Feature\Planning;
 
 use App\Models\Order;
-use App\Models\OrderRegel;
+use App\Models\OrderItem;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
@@ -28,7 +28,7 @@ class AvailabilityExpansionTest extends TestCase
         $this->withoutMiddleware();
         // Arrange: resource, order, order item, and shift with weekday map for Mon/Tue/Wed 08:00-17:00
         $order = Order::factory()->create(['sales_lead_id' => $this->salesLead->id]);
-        $orderItem = OrderRegel::factory()->create(['order_id' => $order->id]);
+        $orderItem = OrderItem::factory()->create(['order_id' => $order->id]);
         $resource = Resource::factory()->create();
 
         $weekdayMap = [
@@ -88,7 +88,7 @@ class AvailabilityExpansionTest extends TestCase
         $this->withoutMiddleware();
         // Arrange: resource with shift and existing booking
         $order = Order::factory()->create(['sales_lead_id' => $this->salesLead->id]);
-        $orderItem = OrderRegel::factory()->create(['order_id' => $order->id]);
+        $orderItem = OrderItem::factory()->create(['order_id' => $order->id]);
         $resource = Resource::factory()->create();
 
         // Shift: Mon 08:00-17:00
@@ -111,10 +111,10 @@ class AvailabilityExpansionTest extends TestCase
         // Booking: Mon 10:00-12:00 (should split availability)
         $monday = $start->copy()->addDay(); // Monday of the current week
         $booking = ResourceOrderItem::query()->create([
-            'resource_id'  => $resource->id,
-            'orderitem_id' => $orderItem->id,
-            'from'         => $monday->copy()->setTime(10, 0),
-            'to'           => $monday->copy()->setTime(12, 0),
+            'resource_id'   => $resource->id,
+            'order_item_id' => $orderItem->id,
+            'from'          => $monday->copy()->setTime(10, 0),
+            'to'            => $monday->copy()->setTime(12, 0),
         ]);
 
         // Booking should be created successfully (no database check needed for this test)
@@ -241,7 +241,7 @@ class AvailabilityExpansionTest extends TestCase
         $this->withoutMiddleware();
         // Arrange: 2 resources with different shifts
         $order = Order::factory()->create(['sales_lead_id' => $this->salesLead->id]);
-        $orderItem = OrderRegel::factory()->create(['order_id' => $order->id]);
+        $orderItem = OrderItem::factory()->create(['order_id' => $order->id]);
 
         $resource1 = Resource::factory()->create();
         $resource2 = Resource::factory()->create();

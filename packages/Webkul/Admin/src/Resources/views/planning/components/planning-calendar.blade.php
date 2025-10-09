@@ -40,6 +40,11 @@
         <div class="flex flex-col gap-4">
             <slot name="filters"></slot>
 
+            <!-- Period label display -->
+            <div v-if="periodLabel" class="text-center text-sm font-medium text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 rounded-lg px-4 py-2">
+                @{{ periodLabel }}
+            </div>
+
             <!-- Resource summary -->
             <div v-if="resources.length" class="text-sm text-gray-700 dark:text-gray-300">
                 <span class="font-semibold">Resources:</span>

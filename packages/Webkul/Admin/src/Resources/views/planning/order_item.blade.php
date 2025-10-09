@@ -44,10 +44,10 @@
             .loading-spinner { width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
             @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
             .error-message { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 8px 12px; border-radius: 6px; margin: 8px 0; }
-            /* Responsive viewport container for calendar */
-            .calendar-viewport { height: 70vh; min-height: 480px; }
-            @media (max-width: 1024px) { .calendar-viewport { height: 75vh; min-height: 420px; } }
-            @media (max-width: 768px) { .calendar-viewport { height: 80vh; min-height: 380px; } }
+            /* Responsive viewport container for calendar - compact for 08:00-17:00 only */
+            .calendar-viewport { height: auto; max-height: 600px; min-height: 560px; }
+            @media (max-width: 1024px) { .calendar-viewport { max-height: 550px; min-height: 500px; } }
+            @media (max-width: 768px) { .calendar-viewport { max-height: 500px; min-height: 450px; } }
 
             /* Month view styles */
             .month-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
@@ -297,7 +297,7 @@
                         hours: Array.from({ length: 10 }, (_, i) => i + 8), // 08:00 - 17:00
                         loading: false,
                         errorMessage: '',
-                        pixelsPerHour: 56, // pixels per hour
+                        pixelsPerHour: 50, // pixels per hour (compacter voor 08:00-17:00)
                         resourceColors: [
                             '#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6',
                             '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'

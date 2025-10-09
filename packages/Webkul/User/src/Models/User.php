@@ -2,6 +2,7 @@
 
 namespace Webkul\User\Models;
 
+use App\Traits\HasAuditTrail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Storage;
@@ -12,7 +13,7 @@ use Database\Factories\WebkulUserFactory;
 
 class User extends Authenticatable implements UserContract
 {
-    use HasApiTokens, Notifiable, HasFactory;
+    use HasApiTokens, Notifiable, HasFactory, HasAuditTrail;
 
     /**
      * The attributes that are mass assignable.
@@ -30,6 +31,8 @@ class User extends Authenticatable implements UserContract
         'status',
         'external_id',
         'view_permission',
+        'created_by',
+        'updated_by',
     ];
 
     /**
@@ -50,6 +53,16 @@ class User extends Authenticatable implements UserContract
      */
     protected $appends = [
         'name',
+    ];
+
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'created_by' => 'integer',
+        'updated_by' => 'integer',
     ];
 
     /**

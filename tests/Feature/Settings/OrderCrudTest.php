@@ -3,6 +3,7 @@
 namespace Tests\Feature\Settings;
 
 use App\Models\Order;
+use App\Models\SalesLead;
 use Webkul\Installer\Http\Middleware\CanInstall;
 
 beforeEach(function () {
@@ -25,8 +26,8 @@ test('orders index returns datagrid json', function () {
 });
 
 test('can create order', function () {
-    $salesLead = \App\Models\SalesLead::factory()->create();
-    
+    $salesLead = SalesLead::factory()->create();
+
     $payload = [
         'title'         => 'Test Order',
         'total_price'   => 123.45,
@@ -43,7 +44,7 @@ test('can create order', function () {
 
 test('can update order', function () {
     $order = Order::factory()->create();
-    $salesLead = \App\Models\SalesLead::factory()->create();
+    $salesLead = SalesLead::factory()->create();
 
     $payload = [
         'title'         => 'Updated Order',

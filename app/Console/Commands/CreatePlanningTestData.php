@@ -4,9 +4,9 @@ namespace App\Console\Commands;
 
 use App\Models\Clinic;
 use App\Models\PartnerProduct;
+use App\Models\ProductType;
 use App\Models\Resource;
 use App\Models\ResourceType;
-use App\Models\ProductType;
 use Illuminate\Console\Command;
 use Webkul\Product\Models\Product;
 use Webkul\Product\Models\ProductGroup;
@@ -63,7 +63,7 @@ class CreatePlanningTestData extends Command
 
         // 7. Resources aanmaken
         $resources = $this->createResources($clinic, $resourceType);
-        $this->info("✅ Resources aangemaakt: " . count($resources));
+        $this->info('✅ Resources aangemaakt: '.count($resources));
 
         // 8. Koppelingen maken
         $this->createRelationships($partnerProduct, $clinic, $resources);
@@ -77,7 +77,7 @@ class CreatePlanningTestData extends Command
         $this->info("   • Product Group: {$productGroup->name} (ID: {$productGroup->id})");
         $this->info("   • Product: {$product->name} (ID: {$product->id})");
         $this->info("   • Partner Product: {$partnerProduct->name} (ID: {$partnerProduct->id})");
-        $this->info("   • Resources: " . count($resources) . " stuks");
+        $this->info('   • Resources: '.count($resources).' stuks');
         $this->info('');
         $this->info('🔗 Je kunt nu plannen met:');
         $this->info("   • Resource Type ID: {$resourceType->id}");
@@ -90,21 +90,22 @@ class CreatePlanningTestData extends Command
 
         if ($clinicId) {
             $clinic = Clinic::find($clinicId);
-            if (!$clinic) {
+            if (! $clinic) {
                 $this->error("Kliniek met ID {$clinicId} niet gevonden!");
                 exit(1);
             }
+
             return $clinic;
         }
 
         // Zoek bestaande kliniek of maak nieuwe aan
         $clinic = Clinic::first();
-        if (!$clinic) {
+        if (! $clinic) {
             $clinic = Clinic::create([
-                'name' => 'Test Kliniek Amsterdam',
+                'name'        => 'Test Kliniek Amsterdam',
                 'website_url' => 'https://testkliniek.nl',
-                'emails' => ['info@testkliniek.nl'],
-                'phones' => ['+31 20 123 4567'],
+                'emails'      => ['info@testkliniek.nl'],
+                'phones'      => ['+31 20 123 4567'],
             ]);
         }
 
@@ -116,9 +117,9 @@ class CreatePlanningTestData extends Command
         $resourceTypeName = $this->option('resource-type');
 
         $resourceType = ResourceType::where('name', $resourceTypeName)->first();
-        if (!$resourceType) {
+        if (! $resourceType) {
             $resourceType = ResourceType::create([
-                'name' => $resourceTypeName,
+                'name'        => $resourceTypeName,
                 'description' => "Test resource type: {$resourceTypeName}",
             ]);
         }
@@ -129,9 +130,9 @@ class CreatePlanningTestData extends Command
     private function getOrCreateProductType(): ProductType
     {
         $productType = ProductType::where('name', 'Medische Dienst')->first();
-        if (!$productType) {
+        if (! $productType) {
             $productType = ProductType::create([
-                'name' => 'Medische Dienst',
+                'name'        => 'Medische Dienst',
                 'description' => 'Test product type voor medische diensten',
             ]);
         }
@@ -142,7 +143,7 @@ class CreatePlanningTestData extends Command
     private function createProductGroup(): ProductGroup
     {
         return ProductGroup::create([
-            'name' => 'Test Planning Producten',
+            'name'        => 'Test Planning Producten',
             'description' => 'Product groep voor planning test data',
         ]);
     }
@@ -150,30 +151,30 @@ class CreatePlanningTestData extends Command
     private function createProduct(ProductGroup $productGroup, ResourceType $resourceType, ProductType $productType): Product
     {
         return Product::create([
-            'name' => 'MRI Scan Planning',
-            'description' => 'MRI scan die kan worden ingepland',
-            'active' => true,
-            'currency' => 'EUR',
-            'price' => 450.00,
-            'costs' => 200.00,
+            'name'             => 'MRI Scan Planning',
+            'description'      => 'MRI scan die kan worden ingepland',
+            'active'           => true,
+            'currency'         => 'EUR',
+            'price'            => 450.00,
+            'costs'            => 200.00,
             'product_group_id' => $productGroup->id,
             'resource_type_id' => $resourceType->id,
-            'product_type_id' => $productType->id,
+            'product_type_id'  => $productType->id,
         ]);
     }
 
     private function createPartnerProduct(Product $product, ResourceType $resourceType): PartnerProduct
     {
         return PartnerProduct::create([
-            'name' => 'MRI Scan - Partner Product',
-            'description' => 'Partner product voor MRI scan planning',
-            'active' => true,
-            'currency' => 'EUR',
-            'sales_price' => 450.00,
-            'duration' => 60, // 60 minuten
-            'resource_type_id' => $resourceType->id,
-            'product_id' => $product->id,
-            'purchase_price' => 200.00,
+            'name'                  => 'MRI Scan - Partner Product',
+            'description'           => 'Partner product voor MRI scan planning',
+            'active'                => true,
+            'currency'              => 'EUR',
+            'sales_price'           => 450.00,
+            'duration'              => 60, // 60 minuten
+            'resource_type_id'      => $resourceType->id,
+            'product_id'            => $product->id,
+            'purchase_price'        => 200.00,
             'purchase_price_clinic' => 180.00,
         ]);
     }
@@ -185,9 +186,9 @@ class CreatePlanningTestData extends Command
 
         for ($i = 1; $i <= $count; $i++) {
             $resources[] = Resource::create([
-                'name' => "Test {$resourceType->name} {$i}",
+                'name'             => "Test {$resourceType->name} {$i}",
                 'resource_type_id' => $resourceType->id,
-                'clinic_id' => $clinic->id,
+                'clinic_id'        => $clinic->id,
             ]);
         }
 
@@ -203,8 +204,8 @@ class CreatePlanningTestData extends Command
         $resourceIds = collect($resources)->pluck('id')->toArray();
         $partnerProduct->resources()->attach($resourceIds);
 
-        $this->info("✅ Koppelingen gemaakt:");
-        $this->info("   • Partner Product gekoppeld aan Kliniek");
-        $this->info("   • Partner Product gekoppeld aan " . count($resources) . " Resources");
+        $this->info('✅ Koppelingen gemaakt:');
+        $this->info('   • Partner Product gekoppeld aan Kliniek');
+        $this->info('   • Partner Product gekoppeld aan '.count($resources).' Resources');
     }
 }

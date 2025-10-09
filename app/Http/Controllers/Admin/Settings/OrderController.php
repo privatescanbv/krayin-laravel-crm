@@ -29,14 +29,14 @@ class OrderController extends SimpleEntityController
     public function create(Request $request): View
     {
         $salesLeadId = $request->get('sales_lead_id');
-        
-        $salesLeads = \App\Models\SalesLead::with('lead')->get()->mapWithKeys(function($salesLead) {
-            return [$salesLead->id => $salesLead->name . ' (' . ($salesLead->lead?->name ?? 'Geen lead') . ')'];
+
+        $salesLeads = \App\Models\SalesLead::with('lead')->get()->mapWithKeys(function ($salesLead) {
+            return [$salesLead->id => $salesLead->name.' ('.($salesLead->lead?->name ?? 'Geen lead').')'];
         })->toArray();
 
         return view($this->createView, [
             'salesLeadId' => $salesLeadId,
-            'salesLeads' => $salesLeads
+            'salesLeads'  => $salesLeads,
         ]);
     }
 
@@ -120,13 +120,13 @@ class OrderController extends SimpleEntityController
             },
         ]);
 
-        $salesLeads = \App\Models\SalesLead::with('lead')->get()->mapWithKeys(function($salesLead) {
-            return [$salesLead->id => $salesLead->name . ' (' . ($salesLead->lead?->name ?? 'Geen lead') . ')'];
+        $salesLeads = \App\Models\SalesLead::with('lead')->get()->mapWithKeys(function ($salesLead) {
+            return [$salesLead->id => $salesLead->name.' ('.($salesLead->lead?->name ?? 'Geen lead').')'];
         })->toArray();
 
         return [
             $this->entityName => $entity,
-            'salesLeads' => $salesLeads,
+            'salesLeads'      => $salesLeads,
         ];
     }
 

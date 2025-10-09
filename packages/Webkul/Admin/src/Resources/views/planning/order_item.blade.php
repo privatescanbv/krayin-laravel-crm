@@ -62,9 +62,9 @@
         <script type="text/x-template" id="v-order-item-planning-template">
             <div class="flex flex-col gap-4">
                 <!-- Filters and View Controls -->
-                <div class="filters-bar rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60 p-3 md:p-4 md:grid md:grid-cols-2 md:grid-rows-2 md:items-center gap-3">
+                <div class="filters-bar rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60 p-3 md:p-4 md:grid md:grid-cols-2 md:gap-3">
                     <!-- Left: Filters (side-by-side) -->
-                    <div class="flex flex-wrap items-end gap-3 md:col-span-1">
+                    <div class="flex flex-wrap items-end gap-3 md:col-span-1 md:row-span-2">
                         <div class="flex flex-col w-56 md:w-64">
                             <label class="block text-xs mb-1 text-gray-600">Resource type</label>
                             <div class="w-40 md:w-48 px-3 py-1.5 border border-gray-300 rounded-md text-sm bg-gray-50 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 cursor-not-allowed select-none">
@@ -87,29 +87,32 @@
                     </div>
 
                     <!-- Right: View toggle (top-right) -->
-                    <div class="flex items-center justify-end gap-3 md:col-span-1 md:col-start-2 md:row-start-1 mt-3 md:mt-0">
-                        <div class="flex border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden">
-                            <button
-                                @click="setViewType('week')"
-                                :class="['px-3 py-1 text-sm', viewType === 'week' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
-                            >
-                                Week
-                            </button>
-                            <button
-                                @click="setViewType('month')"
-                                :class="['px-3 py-1 text-sm', viewType === 'month' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
-                            >
-                                Maand
-                            </button>
+                    <div class="md:col-span-1 md:grid md:grid-rows-2 md:gap-3">
+                        <!-- Right: View toggle (top-right) -->
+                        <div class="flex items-center justify-end gap-3 mt-3 md:mt-0 pb-3">
+                            <div class="flex border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden">
+                                <button
+                                    @click="setViewType('week')"
+                                    :class="['px-3 py-1 text-sm', viewType === 'week' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
+                                >
+                                    Week
+                                </button>
+                                <button
+                                    @click="setViewType('month')"
+                                    :class="['px-3 py-1 text-sm', viewType === 'month' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
+                                >
+                                    Maand
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
-                    <!-- Bottom-right: Calendar controls inside filter bar -->
-                    <div class="flex items-center justify-end gap-2 md:col-start-2 md:row-start-2">
-                        <button class="secondary-button" @click="prevPeriod">Vorige</button>
-                        <div class="text-sm font-medium text-gray-800 dark:text-gray-200">@{{ periodLabel }}</div>
-                        <button class="secondary-button" @click="nextPeriod">Volgende</button>
-                        <button class="primary-button" @click="loadAvailability">Zoeken</button>
+                        <!-- Bottom-right: Calendar controls inside filter bar -->
+                        <div class="flex items-center justify-end gap-2">
+                            <button class="secondary-button" @click="prevPeriod">Vorige</button>
+                            <div class="text-sm font-medium text-gray-800 dark:text-gray-200">@{{ periodLabel }}</div>
+                            <button class="secondary-button" @click="nextPeriod">Volgende</button>
+                            <button class="primary-button" @click="loadAvailability">Zoeken</button>
+                        </div>
                     </div>
                 </div>
 

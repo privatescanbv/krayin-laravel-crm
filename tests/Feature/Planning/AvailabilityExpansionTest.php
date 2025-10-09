@@ -76,8 +76,8 @@ class AvailabilityExpansionTest extends TestCase
 
         // Verify at least one available block starts at 08:00 and ends at 17:00 within the requested week
         $hasBlock = collect($allBlocks)->contains(function ($block) {
-            return $block['type'] === 'available' && 
-                   str_contains($block['from'], 'T08:00') && 
+            return $block['type'] === 'available' &&
+                   str_contains($block['from'], 'T08:00') &&
                    str_contains($block['to'], 'T17:00');
         });
         $this->assertTrue($hasBlock, 'Expected 08:00-17:00 available block in blocks');
@@ -144,8 +144,8 @@ class AvailabilityExpansionTest extends TestCase
         }
 
         // Separate available and occupied blocks
-        $availableBlocks = array_filter($allBlocks, fn($block) => $block['type'] === 'available');
-        $occupiedBlocks = array_filter($allBlocks, fn($block) => $block['type'] === 'occupied');
+        $availableBlocks = array_filter($allBlocks, fn ($block) => $block['type'] === 'available');
+        $occupiedBlocks = array_filter($allBlocks, fn ($block) => $block['type'] === 'occupied');
 
         // Should have 1 occupied block
         $this->assertCount(1, $occupiedBlocks, 'Should have 1 occupied block. Got: '.json_encode($occupiedBlocks));
@@ -156,14 +156,14 @@ class AvailabilityExpansionTest extends TestCase
 
         // Verify the split availability (updated for new blocks structure)
         $hasEarlyBlock = collect($availableBlocks)->contains(function ($block) {
-            return $block['type'] === 'available' && 
-                   str_contains($block['from'], 'T08:00') && 
-                   str_contains($block['to'], 'T10:00');
+            return $block['type'] === 'available' &&
+                str_contains($block['from'], 'T08:00') &&
+                str_contains($block['to'], 'T10:00');
         });
         $hasLateBlock = collect($availableBlocks)->contains(function ($block) {
-            return $block['type'] === 'available' && 
-                   str_contains($block['from'], 'T12:00') && 
-                   str_contains($block['to'], 'T17:00');
+            return $block['type'] === 'available' &&
+                str_contains($block['from'], 'T12:00') &&
+                str_contains($block['to'], 'T17:00');
         });
 
         $this->assertTrue($hasEarlyBlock, 'Should have 08:00-10:00 availability block');
@@ -302,8 +302,8 @@ class AvailabilityExpansionTest extends TestCase
         // Resource 1 should have Mon/Tue blocks
         $this->assertNotEmpty($allBlocks1, 'Resource 1 should have blocks');
         $hasMondayBlock = collect($allBlocks1)->contains(function ($block) {
-            return $block['type'] === 'available' && 
-                   str_contains($block['from'], 'T08:00') && 
+            return $block['type'] === 'available' &&
+                   str_contains($block['from'], 'T08:00') &&
                    str_contains($block['to'], 'T17:00');
         });
         $this->assertTrue($hasMondayBlock, 'Resource 1 should have Monday 08:00-17:00 available block');
@@ -311,8 +311,8 @@ class AvailabilityExpansionTest extends TestCase
         // Resource 2 should have Wed/Thu blocks
         $this->assertNotEmpty($allBlocks2, 'Resource 2 should have blocks');
         $hasWednesdayBlock = collect($allBlocks2)->contains(function ($block) {
-            return $block['type'] === 'available' && 
-                   str_contains($block['from'], 'T09:00') && 
+            return $block['type'] === 'available' &&
+                   str_contains($block['from'], 'T09:00') &&
                    str_contains($block['to'], 'T18:00');
         });
         $this->assertTrue($hasWednesdayBlock, 'Resource 2 should have Wednesday 09:00-18:00 available block');

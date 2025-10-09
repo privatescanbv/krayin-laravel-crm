@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\DataGrids\SalesLeadDataGrid;
 use App\Enums\PipelineType;
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use App\Models\SalesLead;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -230,7 +231,7 @@ class SalesLeadController extends Controller
         }
 
         // Load related orders
-        $orders = \App\Models\Order::where('sales_lead_id', $salesLead->id)->get();
+        $orders = Order::where('sales_lead_id', $salesLead->id)->get();
 
         return view('admin.sales_leads.view', [
             'workflowLead' => $salesLead,

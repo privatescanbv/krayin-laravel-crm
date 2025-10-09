@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Models\ImportRun;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class SendImportRunReport extends Command
@@ -121,7 +122,7 @@ class SendImportRunReport extends Command
             $this->info("  Errors: {$errorCount}, Warnings: {$warningCount}, Info: {$infoCount}");
 
             // Log the report to Laravel log as fallback
-            \Log::info("Import Run Report #{$importRun->id}", [
+            Log::info("Import Run Report #{$importRun->id}", [
                 'import_type'        => $importRun->import_type,
                 'status'             => $importRun->status,
                 'records_processed'  => $importRun->records_processed,

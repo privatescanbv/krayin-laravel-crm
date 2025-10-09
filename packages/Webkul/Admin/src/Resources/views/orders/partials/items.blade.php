@@ -106,22 +106,6 @@
                         },
                     });
                 },
-                getStatusLabel(status) {
-                    const labels = {
-                        'nieuw': 'Nieuw',
-                        'moet_worden_ingepland': 'Moet worden ingepland',
-                        'ingepland': 'Ingepland'
-                    };
-                    return labels[status] || status;
-                },
-                getStatusClass(status) {
-                    const classes = {
-                        'nieuw': 'bg-gray-100 text-gray-800',
-                        'moet_worden_ingepland': 'bg-yellow-100 text-yellow-800',
-                        'ingepland': 'bg-green-100 text-green-800'
-                    };
-                    return classes[status] || 'bg-gray-100 text-gray-800';
-                },
             },
         });
 
@@ -165,6 +149,22 @@
                     if (!id) return;
                     const url = "{{ route('admin.planning.order_item.show', ['orderItemId' => '___ID___']) }}".replace('___ID___', id);
                     window.location.href = url;
+                },
+                getStatusLabel(status) {
+                    const labels = {
+                        'nieuw': 'Nieuw',
+                        'moet_worden_ingepland': 'Moet worden ingepland',
+                        'ingepland': 'Ingepland'
+                    };
+                    return labels[status] || status;
+                },
+                getStatusClass(status) {
+                    const classes = {
+                        'nieuw': 'bg-gray-100 text-gray-800',
+                        'moet_worden_ingepland': 'bg-yellow-100 text-yellow-800',
+                        'ingepland': 'bg-green-100 text-green-800'
+                    };
+                    return classes[status] || 'bg-gray-100 text-gray-800';
                 },
             },
         });

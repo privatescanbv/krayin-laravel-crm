@@ -3,109 +3,48 @@
 namespace App\Http\Controllers\Admin\Planning;
 
 use App\Http\Controllers\Controller;
-use App\Models\OrderRegel;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use App\Models\Shift;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
-use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
-class OrderItemPlanningController extends Controller
+class ResourcePlanningMonitorController extends Controller
 {
-    public function show(Request $request, int $orderItemId): View
+    public function index(Request $request): View
     {
-        $orderItem = OrderRegel::with(['product.partnerProducts', 'order'])->findOrFail($orderItemId);
+        $resourceTypes = \App\Models\ResourceType::all(['id', 'name']);
+        $resources = \App\Models\Resource::with('clinic')->get(['id', 'name', 'clinic_id', 'resource_type_id']);
+        $clinics = \App\Models\Clinic::all(['id', 'name']);
 
-        $defaultResourceTypeId = $orderItem->product?->resource_type_id;
-        $defaultClinicId = $orderItem->order?->clinic_id ?? null;
-
-        return view('admin::planning.order_item', [
-            'orderItem'            => $orderItem,
-            'defaultResourceTypeId'=> $defaultResourceTypeId,
-            'defaultClinicId'      => $defaultClinicId,
+        return view('admin::planning.monitor', [
+            'resourceTypes' => $resourceTypes,
+            'resources'     => $resources,
+            'clinics'       => $clinics,
         ]);
     }
 
-    public function availability(Request $request, int $orderItemId): JsonResponse
+    public function availability(Request $request): JsonResponse
     {
-        $orderItem = OrderRegel::with(['product', 'order'])->findOrFail($orderItemId);
-
         $viewType = $request->query('view', 'week'); // 'week' or 'month'
 
         if ($viewType === 'month') {
-            return $this->getMonthAvailability($request, $orderItem);
+            return $this->getMonthAvailability($request);
         }
 
-        return $this->getWeekAvailability($request, $orderItem);
+        return $this->getWeekAvailability($request);
     }
 
-    public function book(Request $request, int $orderItemId): JsonResponse
-    {
-        try {
-            $request->validate([
-                'resource_id'      => ['required', 'integer', 'exists:resources,id'],
-                'from'             => ['required', 'date'],
-                'to'               => ['required', 'date', 'after:from'],
-                'replace_existing' => ['sometimes', 'boolean'],
-            ]);
-
-            $orderItem = OrderRegel::findOrFail($orderItemId);
-
-            $replace = $request->boolean('replace_existing', true);
-
-            $booking = DB::transaction(function () use ($request, $orderItem, $replace) {
-                if ($replace) {
-                    ResourceOrderItem::where('orderitem_id', $orderItem->id)->delete();
-                }
-
-                return ResourceOrderItem::create([
-                    'resource_id'  => (int) $request->input('resource_id'),
-                    'orderitem_id' => $orderItem->id,
-                    'from'         => Carbon::parse($request->input('from')),
-                    'to'           => Carbon::parse($request->input('to')),
-                    'created_by'   => auth()->id(),
-                    'updated_by'   => auth()->id(),
-                ]);
-            });
-
-            return response()->json([
-                'message' => $replace ? 'Ingeboekt (vorige afspraak vervangen)' : 'Ingeboekt',
-                'data'    => $booking,
-            ], 201);
-        } catch (Exception $e) {
-            Log::error('Error creating ResourceOrderItem', [
-                'error'        => $e->getMessage(),
-                'trace'        => $e->getTraceAsString(),
-                'request_data' => $request->all(),
-            ]);
-
-            return response()->json([
-                'message' => 'Fout bij inboeken: '.$e->getMessage(),
-            ], 500);
-        }
-    }
-
-    private function getWeekAvailability(Request $request, OrderRegel $orderItem): JsonResponse
+    private function getWeekAvailability(Request $request): JsonResponse
     {
         $start = CarbonImmutable::parse($request->query('start', Carbon::now()->startOfWeek()));
         $end = CarbonImmutable::parse($request->query('end', $start->addDays(6)->endOfDay()));
 
-        $resourceTypeId = (int) $request->query('resource_type_id', $orderItem->product?->resource_type_id);
-        $clinicId = $request->query('clinic_id');
-
-        $resourcesQuery = Resource::query()->with('clinic', 'resourceType')
-            ->where('resource_type_id', $resourceTypeId);
-        if ($clinicId !== null && $clinicId !== '') {
-            $resourcesQuery->where('clinic_id', (int) $clinicId);
-        }
-        $resources = $resourcesQuery->get();
+        $resources = $this->getFilteredResources($request);
+        $showAvailableOnly = $request->query('show_available_only') === '1';
 
         // Get occupancy and shifts
         $occupancy = $this->getOccupancy($resources, $start, $end);
@@ -126,55 +65,37 @@ class OrderItemPlanningController extends Controller
                     $resource,
                     $day,
                     $shifts->get($rid, collect()),
-                    $occupancy->get($rid, collect())
+                    $occupancy->get($rid, collect()),
+                    false,
+                    $showAvailableOnly
                 );
 
                 $renderedBlocks[$rid][$dayKey] = $dayBlocks;
             }
         }
 
-        // Existing bookings for this order item (summary)
-        $existingForOrderItem = ResourceOrderItem::with('resource')
-            ->where('orderitem_id', $orderItem->id)
-            ->orderBy('from')
-            ->get()
-            ->map(fn ($b) => [
-                'id'            => $b->id,
-                'resource_id'   => $b->resource_id,
-                'resource_name' => $b->resource?->name,
-                'from'          => CarbonImmutable::parse($b->from)->toIso8601String(),
-                'to'            => CarbonImmutable::parse($b->to)->toIso8601String(),
-            ]);
-
         return response()->json([
             'view_type' => 'week',
             'resources' => $resources->map(fn ($r) => [
-                'id'             => $r->id,
-                'name'           => $r->name,
-                'clinic_id'      => $r->clinic_id,
-                'clinic'         => $r->clinic?->name,
-                'resource_type'  => $r->resourceType?->name,
+                'id'               => $r->id,
+                'name'             => $r->name,
+                'clinic_id'        => $r->clinic_id,
+                'clinic'           => $r->clinic?->name,
+                'resource_type'    => $r->resourceType?->name,
+                'resource_type_id' => $r->resource_type_id,
             ])->values(),
-            'blocks'                           => $renderedBlocks,
-            'window'                           => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
-            'existing_bookings_for_order_item' => $existingForOrderItem,
+            'blocks'   => $renderedBlocks,
+            'window'   => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
         ]);
     }
 
-    private function getMonthAvailability(Request $request, OrderRegel $orderItem): JsonResponse
+    private function getMonthAvailability(Request $request): JsonResponse
     {
         $start = CarbonImmutable::parse($request->query('start', Carbon::now()->startOfMonth()));
         $end = CarbonImmutable::parse($request->query('end', $start->endOfMonth()));
 
-        $resourceTypeId = (int) $request->query('resource_type_id', $orderItem->product?->resource_type_id);
-        $clinicId = $request->query('clinic_id');
-
-        $resourcesQuery = Resource::query()->with('clinic', 'resourceType')
-            ->where('resource_type_id', $resourceTypeId);
-        if ($clinicId !== null && $clinicId !== '') {
-            $resourcesQuery->where('clinic_id', (int) $clinicId);
-        }
-        $resources = $resourcesQuery->get();
+        $resources = $this->getFilteredResources($request);
+        $showAvailableOnly = $request->query('show_available_only') === '1';
 
         // Get occupancy and shifts
         $occupancy = $this->getOccupancy($resources, $start, $end);
@@ -196,7 +117,8 @@ class OrderItemPlanningController extends Controller
                     $currentDay,
                     $shifts->get($rid, collect()),
                     $occupancy->get($rid, collect()),
-                    true // merge adjacent blocks for month view
+                    true, // merge adjacent blocks for month view
+                    $showAvailableOnly
                 );
 
                 $renderedBlocks[$rid][$dayKey] = $dayBlocks;
@@ -204,35 +126,47 @@ class OrderItemPlanningController extends Controller
             }
         }
 
-        // Existing bookings for this order item (summary)
-        $existingForOrderItem = ResourceOrderItem::with('resource')
-            ->where('orderitem_id', $orderItem->id)
-            ->orderBy('from')
-            ->get()
-            ->map(fn ($b) => [
-                'id'            => $b->id,
-                'resource_id'   => $b->resource_id,
-                'resource_name' => $b->resource?->name,
-                'from'          => CarbonImmutable::parse($b->from)->toIso8601String(),
-                'to'            => CarbonImmutable::parse($b->to)->toIso8601String(),
-            ]);
-
         return response()->json([
             'view_type' => 'month',
             'resources' => $resources->map(fn ($r) => [
-                'id'             => $r->id,
-                'name'           => $r->name,
-                'clinic_id'      => $r->clinic_id,
-                'clinic'         => $r->clinic?->name,
-                'resource_type'  => $r->resourceType?->name,
+                'id'               => $r->id,
+                'name'             => $r->name,
+                'clinic_id'        => $r->clinic_id,
+                'clinic'           => $r->clinic?->name,
+                'resource_type'    => $r->resourceType?->name,
+                'resource_type_id' => $r->resource_type_id,
             ])->values(),
-            'blocks'                           => $renderedBlocks,
-            'window'                           => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
-            'existing_bookings_for_order_item' => $existingForOrderItem,
+            'blocks'   => $renderedBlocks,
+            'window'   => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
         ]);
     }
 
-    private function getOccupancy($resources, CarbonImmutable $start, CarbonImmutable $end): Collection
+    private function getFilteredResources(Request $request)
+    {
+        $resourcesQuery = Resource::query()->with('clinic', 'resourceType');
+
+        // Filter by resource types (multi-select)
+        if ($request->filled('resource_type_ids')) {
+            $resourceTypeIds = explode(',', $request->query('resource_type_ids'));
+            $resourcesQuery->whereIn('resource_type_id', array_map('intval', $resourceTypeIds));
+        }
+
+        // Filter by clinics (multi-select)
+        if ($request->filled('clinic_ids')) {
+            $clinicIds = explode(',', $request->query('clinic_ids'));
+            $resourcesQuery->whereIn('clinic_id', array_map('intval', $clinicIds));
+        }
+
+        // Filter by resources (multi-select)
+        if ($request->filled('resource_ids')) {
+            $resourceIds = explode(',', $request->query('resource_ids'));
+            $resourcesQuery->whereIn('id', array_map('intval', $resourceIds));
+        }
+
+        return $resourcesQuery->get();
+    }
+
+    private function getOccupancy($resources, CarbonImmutable $start, CarbonImmutable $end)
     {
         return ResourceOrderItem::query()
             ->with(['orderItem.order.salesLead.lead'])
@@ -248,7 +182,7 @@ class OrderItemPlanningController extends Controller
             ->groupBy('resource_id');
     }
 
-    private function getShifts($resources, CarbonImmutable $start, CarbonImmutable $end): Collection
+    private function getShifts($resources, CarbonImmutable $start, CarbonImmutable $end)
     {
         return Shift::query()
             ->whereIn('resource_id', $resources->pluck('id'))
@@ -260,7 +194,7 @@ class OrderItemPlanningController extends Controller
             ->groupBy('resource_id');
     }
 
-    private function renderDayBlocks($resource, CarbonImmutable $day, $resourceShifts, $resourceOccupancy, bool $mergeAdjacent = false): array
+    private function renderDayBlocks($resource, CarbonImmutable $day, $resourceShifts, $resourceOccupancy, bool $mergeAdjacent = false, bool $showAvailableOnly = false): array
     {
         $blocks = [];
 
@@ -274,42 +208,42 @@ class OrderItemPlanningController extends Controller
                     'to'            => $block['to']->toIso8601String(),
                     'resource_id'   => $resource->id,
                     'resource_name' => $resource->name,
-                    'clickable'     => true,
-                ];
-            }
-        }
-
-        // Generate occupancy blocks
-        foreach ($resourceOccupancy as $occupancy) {
-            $occStart = CarbonImmutable::parse($occupancy->from);
-            $occEnd = CarbonImmutable::parse($occupancy->to);
-
-            // Only include if it overlaps with this day
-            if ($occStart->lt($day->endOfDay()) && $occEnd->gt($day->startOfDay())) {
-                $blockStart = $occStart->gt($day->startOfDay()) ? $occStart : $day->startOfDay();
-                $blockEnd = $occEnd->lt($day->endOfDay()) ? $occEnd : $day->endOfDay();
-
-                $leadName = $occupancy->orderItem?->order?->salesLead?->lead?->name ??
-                           $occupancy->orderItem?->order?->salesLead?->name ??
-                           'Onbekend';
-                $productName = $occupancy->orderItem?->product?->name;
-                $leadName .= ' - '.$productName;
-
-                $blocks[] = [
-                    'type'          => 'occupied',
-                    'from'          => $blockStart->toIso8601String(),
-                    'to'            => $blockEnd->toIso8601String(),
-                    'resource_id'   => $resource->id,
-                    'resource_name' => $resource->name,
                     'clickable'     => false,
-                    'booking_id'    => $occupancy->id,
-                    'lead_name'     => $leadName,
                 ];
             }
         }
 
-        // Subtract occupancy from availability
-        $blocks = $this->subtractOccupancyFromAvailability($blocks);
+        // Generate occupancy blocks (only if not showing available only)
+        if (! $showAvailableOnly) {
+            foreach ($resourceOccupancy as $occupancy) {
+                $occStart = CarbonImmutable::parse($occupancy->from);
+                $occEnd = CarbonImmutable::parse($occupancy->to);
+
+                // Only include if it overlaps with this day
+                if ($occStart->lt($day->endOfDay()) && $occEnd->gt($day->startOfDay())) {
+                    $blockStart = $occStart->gt($day->startOfDay()) ? $occStart : $day->startOfDay();
+                    $blockEnd = $occEnd->lt($day->endOfDay()) ? $occEnd : $day->endOfDay();
+
+                    $leadName = $occupancy->orderItem?->order?->salesLead?->lead?->name ??
+                               $occupancy->orderItem?->order?->salesLead?->name ??
+                               'Onbekend';
+
+                    $blocks[] = [
+                        'type'          => 'occupied',
+                        'from'          => $blockStart->toIso8601String(),
+                        'to'            => $blockEnd->toIso8601String(),
+                        'resource_id'   => $resource->id,
+                        'resource_name' => $resource->name,
+                        'clickable'     => false,
+                        'booking_id'    => $occupancy->id,
+                        'lead_name'     => $leadName,
+                    ];
+                }
+            }
+        }
+
+        // Subtract occupancy from availability (always subtract, even if not showing occupied)
+        $blocks = $this->subtractOccupancyFromAvailability($blocks, $resourceOccupancy, $day);
 
         // Merge adjacent blocks if requested (for month view)
         if ($mergeAdjacent) {
@@ -392,21 +326,48 @@ class OrderItemPlanningController extends Controller
         return $blocks;
     }
 
-    private function subtractOccupancyFromAvailability(array $blocks): array
+    private function subtractOccupancyFromAvailability(array $blocks, $resourceOccupancy = null, $day = null): array
     {
         $availableBlocks = array_filter($blocks, fn ($b) => $b['type'] === 'available');
         $occupiedBlocks = array_filter($blocks, fn ($b) => $b['type'] === 'occupied');
 
         $result = $occupiedBlocks; // Keep all occupied blocks
 
+        // Build occupancy list for subtraction
+        $occupancyList = [];
+        if ($resourceOccupancy !== null && $day !== null) {
+            foreach ($resourceOccupancy as $occupancy) {
+                $occStart = CarbonImmutable::parse($occupancy->from);
+                $occEnd = CarbonImmutable::parse($occupancy->to);
+
+                if ($occStart->lt($day->endOfDay()) && $occEnd->gt($day->startOfDay())) {
+                    $blockStart = $occStart->gt($day->startOfDay()) ? $occStart : $day->startOfDay();
+                    $blockEnd = $occEnd->lt($day->endOfDay()) ? $occEnd : $day->endOfDay();
+
+                    $occupancyList[] = [
+                        'from' => $blockStart,
+                        'to'   => $blockEnd,
+                    ];
+                }
+            }
+        } else {
+            // Fallback to occupied blocks
+            foreach ($occupiedBlocks as $occBlock) {
+                $occupancyList[] = [
+                    'from' => CarbonImmutable::parse($occBlock['from']),
+                    'to'   => CarbonImmutable::parse($occBlock['to']),
+                ];
+            }
+        }
+
         foreach ($availableBlocks as $availBlock) {
             $availStart = CarbonImmutable::parse($availBlock['from']);
             $availEnd = CarbonImmutable::parse($availBlock['to']);
             $segments = [[$availStart, $availEnd]];
 
-            foreach ($occupiedBlocks as $occBlock) {
-                $occStart = CarbonImmutable::parse($occBlock['from']);
-                $occEnd = CarbonImmutable::parse($occBlock['to']);
+            foreach ($occupancyList as $occ) {
+                $occStart = $occ['from'];
+                $occEnd = $occ['to'];
                 $newSegments = [];
 
                 foreach ($segments as $segment) {
@@ -445,7 +406,7 @@ class OrderItemPlanningController extends Controller
                         'to'            => $segment[1]->toIso8601String(),
                         'resource_id'   => $availBlock['resource_id'],
                         'resource_name' => $availBlock['resource_name'],
-                        'clickable'     => true,
+                        'clickable'     => false,
                     ];
                 }
             }

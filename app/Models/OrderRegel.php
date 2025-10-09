@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Enums\OrderItemStatus;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Webkul\Product\Models\Product;
 
 class OrderRegel extends Model
 {
@@ -29,7 +31,7 @@ class OrderRegel extends Model
         'product_id'  => 'integer',
         'quantity'    => 'integer',
         'total_price' => 'decimal:2',
-        'status'      => \App\Enums\OrderItemStatus::class,
+        'status'      => OrderItemStatus::class,
         'created_by'  => 'integer',
         'updated_by'  => 'integer',
     ];
@@ -41,7 +43,7 @@ class OrderRegel extends Model
 
     public function product(): BelongsTo
     {
-        return $this->belongsTo(\Webkul\Product\Models\Product::class);
+        return $this->belongsTo(Product::class);
     }
 
     public function resourceOrderItems(): HasMany

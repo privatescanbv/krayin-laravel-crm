@@ -122,6 +122,12 @@ return [
         'route'      => 'admin.orders.index',
         'sort'       => 10,
         'icon-class' => 'icon-quote',
+    ], [
+        'key'        => 'monitor',
+        'name'       => 'Monitor resource planning',
+        'route'      => 'admin.planning.monitor.index',
+        'sort'       => 11,
+        'icon-class' => 'icon-activity',
     ],
 
     /**
@@ -131,7 +137,7 @@ return [
         'key'        => 'settings',
         'name'       => 'admin::app.layouts.settings',
         'route'      => 'admin.settings.index',
-        'sort'       => 11,
+        'sort'       => 12,
         'icon-class' => 'icon-setting',
     ], [
         'key'        => 'settings.user',
@@ -319,7 +325,7 @@ return [
         'key'        => 'configuration',
         'name'       => 'admin::app.layouts.configuration',
         'route'      => 'admin.configuration.index',
-        'sort'       => 12,
+        'sort'       => 13,
         'icon-class' => 'icon-configuration',
     ],
 
@@ -330,7 +336,7 @@ return [
         'key'        => 'documentation',
         'name'       => 'Documentation',
         'route'      => 'admin.docs.index',
-        'sort'       => 13,
+        'sort'       => 14,
         'icon-class' => 'icon-file',
     ],
 

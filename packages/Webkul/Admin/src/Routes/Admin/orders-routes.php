@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\Settings\OrderController;
 use App\Http\Controllers\Admin\Settings\OrderRegelController;
 use App\Http\Controllers\Admin\Planning\OrderItemPlanningController;
+use App\Http\Controllers\Admin\Planning\ResourcePlanningMonitorController;
 
 /**
  * Orders routes (top-level, not under settings).
@@ -38,6 +39,14 @@ Route::middleware(['user'])->controller(OrderItemPlanningController::class)->pre
     Route::get('order-item/{orderItemId}', 'show')->name('admin.planning.order_item.show');
     Route::get('order-item/{orderItemId}/availability', 'availability')->name('admin.planning.order_item.availability');
     Route::post('order-item/{orderItemId}/book', 'book')->name('admin.planning.order_item.book');
+});
+
+/**
+ * Planning Monitor routes.
+ */
+Route::middleware(['user'])->controller(ResourcePlanningMonitorController::class)->prefix('planning/monitor')->group(function () {
+    Route::get('', 'index')->name('admin.planning.monitor.index');
+    Route::get('availability', 'availability')->name('admin.planning.monitor.availability');
 });
 
 

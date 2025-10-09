@@ -38,6 +38,7 @@ RUN apt-get update \
     wget \
     vim \
     supervisor \
+    logrotate \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 #    bash \
@@ -122,16 +123,21 @@ RUN mkdir -p ./storage && touch ./storage/installed
 # Voeg de cronjob toe
 # Bijvoorbeeld: draai elke minuut een Laravel schedule commando
 
-RUN echo "* * * * * /usr/local/bin/php /usr/share/nginx/html/artisan schedule:run >> /var/log/laravel-cron.log 2>&1" > /etc/cron.d/laravel-cron
+RUN echo "* * * * * www-data /usr/local/bin/php /usr/share/nginx/html/artisan schedule:run >> /usr/share/nginx/html/storage/logs/laravel-cron.log 2>&1" > /etc/cron.d/laravel-cron
 
 # Inbound email processor
-RUN echo "* * * * * /usr/local/bin/php /usr/share/nginx/html/artisan inbound-emails:process >> /var/log/inbound-emails.log 2>&1" > /etc/cron.d/inbound-emails
+RUN echo "* * * * * www-data /usr/local/bin/php /usr/share/nginx/html/artisan inbound-emails:process >> /usr/share/nginx/html/storage/logs/inbound-emails.log 2>&1" > /etc/cron.d/inbound-emails
+
+# Log rotation cron job
+RUN echo "0 2 * * * root /usr/sbin/logrotate /etc/logrotate.d/laravel" > /etc/cron.d/logrotate-laravel
 
 # Zorg dat de cron-bestanden correct permissies hebben
 RUN chmod 0644 /etc/cron.d/laravel-cron && \
     chmod 0644 /etc/cron.d/inbound-emails && \
+    chmod 0644 /etc/cron.d/logrotate-laravel && \
     crontab /etc/cron.d/laravel-cron && \
-    crontab -l | cat - /etc/cron.d/inbound-emails | crontab -
+    crontab -l | cat - /etc/cron.d/inbound-emails | crontab - && \
+    crontab -l | cat - /etc/cron.d/logrotate-laravel | crontab -
 
 COPY .docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # temporary for mail server
@@ -143,7 +149,9 @@ COPY .docker/execute-folder-scripts.sh ./execute-folder-scripts.sh
 RUN chmod 0755 ./execute-folder-scripts.sh
 
 COPY .docker/start.sh /start.sh
-RUN chmod +x /start.sh
+COPY .docker/health-check.sh /health-check.sh
+COPY .docker/monitor-logs.sh /usr/share/nginx/html/.docker/monitor-logs.sh
+RUN chmod +x /start.sh /health-check.sh /usr/share/nginx/html/.docker/monitor-logs.sh
 ENTRYPOINT ["/bin/bash", "/start.sh"]
 
 EXPOSE 8080

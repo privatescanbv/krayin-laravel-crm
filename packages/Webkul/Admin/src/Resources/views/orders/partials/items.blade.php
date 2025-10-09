@@ -17,7 +17,8 @@
                         <x-admin::table.th class="text-center">Aantal</x-admin::table.th>
                         <x-admin::table.th class="text-center">Totaal</x-admin::table.th>
                         <x-admin::table.th class="text-center">Status</x-admin::table.th>
-                        <x-admin::table.th class="text-center">Plan</x-admin::table.th>
+                        <x-admin::table.th>Planning</x-admin::table.th>
+                        <x-admin::table.th class="text-center">Actie</x-admin::table.th>
                     </x-admin::table.thead.tr>
                 </x-admin::table.thead>
                 <x-admin::table.tbody>
@@ -61,6 +62,15 @@
                 </span>
                 <span v-else class="text-gray-400 text-xs">-</span>
             </x-admin::table.td>
+            <x-admin::table.td class="!px-2">
+                <div v-if="item.planning_summary" class="text-xs text-gray-700 dark:text-gray-300">
+                    <div v-for="(booking, idx) in item.planning_summary" :key="idx" class="mb-1">
+                        <strong>@{{ booking.resource }}</strong><br>
+                        @{{ booking.from }} - @{{ booking.to }}
+                    </div>
+                </div>
+                <span v-else class="text-gray-400 text-xs">Niet ingepland</span>
+            </x-admin::table.td>
             <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
                 <div class="flex items-center justify-end gap-2">
                     <button v-if="canPlan" type="button" class="secondary-button" @click="openPlanning">
@@ -87,7 +97,8 @@
                         // include product and partner products info if present (server eager-loaded)
                         product: r.product || null,
                         partner_product_count: (r.product && Array.isArray(r.product.partner_products)) ? r.product.partner_products.length : 0,
-                    })) : [{ id: null, product_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0 }],
+                        planning_summary: this.formatPlanningSummary(r.resource_order_items || []),
+                    })) : [{ id: null, product_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null }],
                 };
             },
             methods: {
@@ -98,13 +109,31 @@
                     this.$emitter.emit('open-confirm-modal', {
                         agree: () => {
                             if (this.items.length === 1) {
-                                this.items = [{ id: null, product_id: null, quantity: 1, total_price: 0, status: null }];
+                                this.items = [{ id: null, product_id: null, quantity: 1, total_price: 0, status: null, planning_summary: null }];
                             } else {
                                 const index = this.items.indexOf(item);
                                 if (index !== -1) this.items.splice(index, 1);
                             }
                         },
                     });
+                },
+                formatPlanningSummary(bookings) {
+                    if (!bookings || !bookings.length) return null;
+                    return bookings.map(b => ({
+                        resource: b.resource?.name || 'Onbekend',
+                        from: this.formatDateTime(b.from),
+                        to: this.formatDateTime(b.to)
+                    }));
+                },
+                formatDateTime(dateStr) {
+                    if (!dateStr) return '';
+                    const date = new Date(dateStr);
+                    const day = String(date.getDate()).padStart(2, '0');
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const year = date.getFullYear();
+                    const hours = String(date.getHours()).padStart(2, '0');
+                    const minutes = String(date.getMinutes()).padStart(2, '0');
+                    return `${day}-${month}-${year} ${hours}:${minutes}`;
                 },
             },
         });

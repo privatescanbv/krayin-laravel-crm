@@ -115,11 +115,12 @@ class OrderController extends SimpleEntityController
 
     protected function getEditViewData(Request $request, Model $entity): array
     {
-        // Eager-load relations needed for planning button visibility per orderregel
+        // Eager-load relations needed for planning button visibility and planning info
         $entity->load([
             'orderRegels.product.partnerProducts' => function ($q) {
                 $q->select('partner_products.id', 'partner_products.product_id');
             },
+            'orderRegels.resourceOrderItems.resource',
         ]);
 
         $salesLeads = \App\Models\SalesLead::with('lead')->get()->mapWithKeys(function ($salesLead) {

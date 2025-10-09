@@ -294,11 +294,10 @@
                         resources: [],
                         blocks: {}, // Server-rendered blocks: { [resourceId]: { [date]: [blocks] } }
                         form: { resource_id: null, from: '', to: '', replace_existing: true },
-                        hours: Array.from({ length: 24 }, (_, i) => i),
+                        hours: Array.from({ length: 10 }, (_, i) => i + 8), // 08:00 - 17:00
                         loading: false,
                         errorMessage: '',
-                        pixelsPerHour: 56, // base unit for business hours
-                        halfPixelsPerHour: 28, // half height for non-business hours
+                        pixelsPerHour: 56, // pixels per hour
                         resourceColors: [
                             '#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6',
                             '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
@@ -344,22 +343,19 @@
                     this.scrollToCurrentTime();
                 },
                 methods: {
-                    // Height per hour with halved height outside business hours (08:00-17:00)
+                    // Height per hour (08:00-17:00 only)
                     slotHeightPx(hour) {
-                        return (hour >= 8 && hour < 17) ? this.pixelsPerHour : this.halfPixelsPerHour;
+                        return this.pixelsPerHour;
                     },
-                    // Compute top offset in pixels considering variable hour heights
+                    // Compute top offset in pixels (08:00-17:00 only)
                     topOffsetPx(date) {
                         const h = date.getHours();
                         const m = date.getMinutes();
-                        // Sum heights for full hours before current hour
-                        let sum = 0;
-                        for (let i = 0; i < h; i++) {
-                            sum += this.slotHeightPx(i);
-                        }
+                        // Calculate offset from 08:00
+                        const hoursSince8 = Math.max(0, h - 8);
+                        let sum = hoursSince8 * this.pixelsPerHour;
                         // Add minutes portion within the current hour
-                        const currentHourHeight = this.slotHeightPx(h);
-                        sum += (m / 60) * currentHourHeight;
+                        sum += (m / 60) * this.pixelsPerHour;
                         return sum;
                     },
                     setViewType(type) {

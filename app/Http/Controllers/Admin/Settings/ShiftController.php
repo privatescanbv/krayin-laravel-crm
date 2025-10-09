@@ -149,6 +149,21 @@ class ShiftController extends Controller
                                 trans('admin::app.settings.shifts.validation.timeblock_order')
                             );
                         }
+
+                        // Validate time range is within 08:00 - 17:00
+                        if ($fh < 8 || $fh >= 17 || ($fh == 17 && $fm > 0)) {
+                            $validator->errors()->add(
+                                "weekday_time_blocks.$day.$index.from",
+                                'Starttijd moet tussen 08:00 en 17:00 zijn.'
+                            );
+                        }
+
+                        if ($th < 8 || $th > 17 || ($th == 17 && $tm > 0)) {
+                            $validator->errors()->add(
+                                "weekday_time_blocks.$day.$index.to",
+                                'Eindtijd moet tussen 08:00 en 17:00 zijn.'
+                            );
+                        }
                     }
                 }
             }

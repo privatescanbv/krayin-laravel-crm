@@ -293,7 +293,7 @@ test('user_audit_trail', function () {
 
     // Act - Update as different user
     $this->actingAs($this->user2);
-    $newUser->update(['name' => 'Updated User Name']);
+    $newUser->update(['first_name' => 'Updated User Name']);
 
     // Assert - Update audit
     expect($newUser->created_by)->toBe($this->user1->id)

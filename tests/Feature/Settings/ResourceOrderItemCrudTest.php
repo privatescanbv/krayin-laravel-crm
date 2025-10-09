@@ -24,7 +24,7 @@ class ResourceOrderItemCrudTest extends TestCase
             'to'            => now()->addDay()->addHour(),
         ]);
 
-        $this->assertDatabaseHas('resource_orderitem', [
+        $this->assertDatabaseHas('resource_order_items', [
             'id'            => $roi->id,
             'resource_id'   => $resource->id,
             'order_item_id' => $orderItem->id,

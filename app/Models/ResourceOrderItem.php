@@ -11,7 +11,7 @@ class ResourceOrderItem extends Model
 {
     use HasAuditTrail, HasFactory;
 
-    protected $table = 'resource_orderitem';
+    protected $table = 'resource_order_items';
 
     protected $fillable = [
         'resource_id',

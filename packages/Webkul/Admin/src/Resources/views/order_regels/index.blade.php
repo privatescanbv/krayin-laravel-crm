@@ -14,15 +14,15 @@
             </div>
 
             <div class="flex items-center gap-x-2.5">
-                @if (bouncer()->hasPermission('settings.order_regels.create'))
-                    <a href="{{ route('admin.order_regels.create') }}" class="primary-button">
+                @if (bouncer()->hasPermission('settings.order_items.create'))
+                    <a href="{{ route('admin.order_items.create') }}" class="primary-button">
                         Nieuw
                     </a>
                 @endif
             </div>
         </div>
 
-        <x-admin::datagrid :src="route('admin.order_regels.index')" ref="datagrid" />
+        <x-admin::datagrid :src="route('admin.order_items.index')" ref="datagrid" />
     </div>
 
 </x-admin::layouts>

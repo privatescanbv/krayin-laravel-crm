@@ -9,15 +9,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('resource_orderitem', function (Blueprint $table) {
+        Schema::create('resource_order_items', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('resource_id');
-            $table->unsignedBigInteger('orderitem_id');
+            $table->unsignedBigInteger('order_item_id');
             $table->dateTime('from');
             $table->dateTime('to');
 
             $table->foreign('resource_id')->references('id')->on('resources')->onDelete('cascade');
-            $table->foreign('orderitem_id')->references('id')->on('order_regels')->onDelete('cascade');
+            $table->foreign('order_item_id')->references('id')->on('order_items')->onDelete('cascade');
 
             AuditTrailMigrationHelper::addAuditTrailColumns($table);
             $table->timestamps();
@@ -26,10 +26,10 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('resource_orderitem', function (Blueprint $table) {
-            AuditTrailMigrationHelper::dropAuditTrailColumnsIfExists($table, 'resource_orderitem');
+        Schema::table('resource_order_items', function (Blueprint $table) {
+            AuditTrailMigrationHelper::dropAuditTrailColumnsIfExists($table, 'resource_order_items');
         });
 
-        Schema::dropIfExists('resource_orderitem');
+        Schema::dropIfExists('resource_order_items');
     }
 };

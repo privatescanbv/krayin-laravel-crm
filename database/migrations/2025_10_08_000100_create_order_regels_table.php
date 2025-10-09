@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('order_regels', function (Blueprint $table) {
+        Schema::create('order_items', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('order_id');
             $table->unsignedInteger('product_id');
@@ -24,10 +24,10 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('order_regels', function (Blueprint $table) {
-            AuditTrailMigrationHelper::dropAuditTrailColumnsIfExists($table, 'order_regels');
+        Schema::table('order_items', function (Blueprint $table) {
+            AuditTrailMigrationHelper::dropAuditTrailColumnsIfExists($table, 'order_items');
         });
 
-        Schema::dropIfExists('order_regels');
+        Schema::dropIfExists('order_items');
     }
 };

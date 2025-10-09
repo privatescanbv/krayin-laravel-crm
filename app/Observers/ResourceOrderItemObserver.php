@@ -34,7 +34,7 @@ class ResourceOrderItemObserver
         }
 
         // Check if there are still ResourceOrderItems for this OrderItem
-        $hasResourceOrderItem = DB::table('resource_orderitem')
+        $hasResourceOrderItem = DB::table('resource_order_items')
             ->where('order_item_id', $resourceOrderItem->order_item_id)
             ->exists();
 

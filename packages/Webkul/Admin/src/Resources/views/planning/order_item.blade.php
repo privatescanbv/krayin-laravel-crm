@@ -10,7 +10,7 @@
     <div class="flex flex-col gap-4">
         <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-1">
-                <div class="text-xl font-bold">Planning</div>
+                <div class="text-xl font-bold">Resoruce Planning</div>
                 <div class="text-sm text-gray-600 dark:text-gray-400">Orderregel #{{ $orderItem->id }}</div>
             </div>
             <a href="{{ route('admin.orders.edit', ['id' => $orderItem->order_id]) }}" class="secondary-button">Terug naar order</a>
@@ -35,10 +35,10 @@
             .time-gutter .hour { font-size: 10px; color: #6b7280; padding-right: 6px; text-align: right; }
             .day-column { position: relative; border-left: 1px solid var(--tw-prose-td-borders, #e5e7eb); }
             .day-column .hour-slot { border-bottom: 1px dashed #e5e7eb; }
-            .block { position: absolute; left: 6px; right: 6px; border-radius: 6px; padding: 2px 6px; font-size: 11px; overflow: hidden; transition: all 0.2s ease; }
-            .block-available { cursor: pointer; }
-            .block-available:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-            .block-occupied { pointer-events: none; min-height: 20px; }
+            .calendar-block { position: absolute; left: 6px; right: 6px; border-radius: 6px; padding: 2px 6px; font-size: 11px; overflow: hidden; transition: all 0.2s ease; }
+            .calendar-block-available { cursor: pointer; }
+            .calendar-block-available:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+            .calendar-block-occupied { pointer-events: none; min-height: 20px; }
             .filters-bar { position: relative; z-index: 10; }
             .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 20; }
             .loading-spinner { width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
@@ -48,7 +48,7 @@
             .calendar-viewport { height: 70vh; min-height: 480px; }
             @media (max-width: 1024px) { .calendar-viewport { height: 75vh; min-height: 420px; } }
             @media (max-width: 768px) { .calendar-viewport { height: 80vh; min-height: 380px; } }
-            
+
             /* Month view styles */
             .month-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; }
             .month-day { min-height: 120px; border: 1px solid #e5e7eb; padding: 4px; position: relative; }
@@ -62,41 +62,52 @@
         <script type="text/x-template" id="v-order-item-planning-template">
             <div class="flex flex-col gap-4">
                 <!-- Filters and View Controls -->
-                <div class="filters-bar rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60 p-3 md:p-4 md:grid md:grid-cols-3 md:items-center gap-3">
-                    <!-- Left: Filters -->
-                    <div class="flex flex-wrap items-end gap-4 md:col-span-1">
+                <div class="filters-bar rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60 p-3 md:p-4 md:grid md:grid-cols-2 md:grid-rows-2 md:items-center gap-3">
+                    <!-- Left: Filters (side-by-side) -->
+                    <div class="flex flex-wrap items-end gap-3 md:col-span-1">
                         <div class="flex flex-col w-56 md:w-64">
                             <label class="block text-xs mb-1 text-gray-600">Resource type</label>
-                            <input type="number" v-model.number="filters.resource_type_id" class="control"/>
+                            <div class="w-40 md:w-48 px-3 py-1.5 border border-gray-300 rounded-md text-sm bg-gray-50 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 cursor-not-allowed select-none">
+                                @{{ resources[0]?.resource_type || 'Onbekend' }}
+                            </div>
                         </div>
                         <div class="flex flex-col w-56 md:w-64">
                             <label class="block text-xs mb-1 text-gray-600">Kliniek</label>
-                            <input type="number" v-model.number="filters.clinic_id" class="control"/>
+                            <select
+                                v-model.number="filters.clinic_id"
+                                class="w-40 md:w-48 px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                            >
+                                <option
+                                    v-for="c in Array.from(new Map(resources.map(r => [r.clinic_id, { id: r.clinic_id, name: r.clinic }]) ).values())"
+                                    :key="c.id"
+                                    :value="c.id"
+                                >@{{ c.name || ('Kliniek #' + c.id) }}</option>
+                            </select>
                         </div>
                     </div>
 
-                    <!-- Center: View toggle + period label -->
-                    <div class="flex items-center justify-center gap-3 md:col-span-1 mt-3 md:mt-0">
+                    <!-- Right: View toggle (top-right) -->
+                    <div class="flex items-center justify-end gap-3 md:col-span-1 md:col-start-2 md:row-start-1 mt-3 md:mt-0">
                         <div class="flex border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden">
-                            <button 
-                                @click="setViewType('week')" 
+                            <button
+                                @click="setViewType('week')"
                                 :class="['px-3 py-1 text-sm', viewType === 'week' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
                             >
                                 Week
                             </button>
-                            <button 
-                                @click="setViewType('month')" 
+                            <button
+                                @click="setViewType('month')"
                                 :class="['px-3 py-1 text-sm', viewType === 'month' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
                             >
                                 Maand
                             </button>
                         </div>
-                        <div class="text-sm font-medium text-gray-800 dark:text-gray-200">@{{ periodLabel }}</div>
                     </div>
 
-                    <!-- Right: Navigation & actions -->
-                    <div class="flex items-center justify-end gap-2 md:col-span-1 mt-3 md:mt-0">
+                    <!-- Bottom-right: Calendar controls inside filter bar -->
+                    <div class="flex items-center justify-end gap-2 md:col-start-2 md:row-start-2">
                         <button class="secondary-button" @click="prevPeriod">Vorige</button>
+                        <div class="text-sm font-medium text-gray-800 dark:text-gray-200">@{{ periodLabel }}</div>
                         <button class="secondary-button" @click="nextPeriod">Volgende</button>
                         <button class="primary-button" @click="loadAvailability">Zoeken</button>
                     </div>
@@ -111,7 +122,13 @@
                             class="inline-block w-3 h-3 rounded-sm border"
                             :style="getResourceColorStyle(r)"
                         ></span>
-                        @{{ r.name }} (@{{ r.clinic }})
+                        <a
+                            :href="`${'{{ route('admin.settings.resources.show', ['id' => 'REPLACE']) }}'.replace('REPLACE', r.id)}`"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="text-blue-600 hover:text-blue-800"
+                        >@{{ r.name }}</a>
+                        <span v-if="r.clinic">(@{{ r.clinic }})</span>
                     </span>
                 </div>
 
@@ -133,23 +150,23 @@
                         <div></div>
                         <div v-for="d in 7" :key="d" class="calendar-day-header">@{{ dayLabel(d-1) }}</div>
                     </div>
-                    
+
                     <!-- Body Rows as columns -->
                     <div class="calendar-body">
                         <!-- Time gutter -->
                         <div class="time-gutter">
                             <div v-for="h in hours" :key="h" class="hour" :style="{ height: slotHeightPx(h) + 'px' }">@{{ hourLabel(h) }}</div>
                         </div>
-                        
+
                         <!-- Day columns -->
                         <div v-for="d in 7" :key="'col-'+d" class="day-column">
                             <!-- Hour slots -->
                             <div v-for="h in hours" :key="'slot-'+d+'-'+h" class="hour-slot pointer-events-none" :style="{ height: slotHeightPx(h) + 'px' }"></div>
-                            
+
                             <!-- Rendered blocks from server -->
-                            <div v-for="block in getBlocksForDay(d-1)" :key="block.key" 
-                                 :class="['block', block.clickable ? 'block-available' : 'block-occupied']" 
-                                 :style="blockStyle(block)" 
+                            <div v-for="block in getBlocksForDay(d-1)" :key="block.key"
+                                 :class="['calendar-block', block.clickable ? 'calendar-block-available' : 'calendar-block-occupied']"
+                                 :style="blockStyle(block)"
                                  :title="getBlockTooltip(block)"
                                  @click="block.clickable ? openBook(block.resource_id, block.from, block.to) : null">
                                 <div v-if="block.type === 'occupied'" class="font-semibold text-xs">@{{ block.lead_name || 'Onbekend' }}</div>
@@ -179,16 +196,17 @@
                     <!-- Month days -->
                     <div v-for="day in monthDays" :key="day.date" class="month-day">
                         <div class="month-day-header">@{{ day.dayNumber }}</div>
-                        
+
                         <!-- Blocks for this day -->
                         <div v-for="block in getBlocksForMonthDay(day.date)" :key="block.key"
-                             :class="['month-block', block.clickable ? 'month-block-available' : 'month-block-occupied']"
+                             :class="['month-block', block.clickable ? 'calendar-block-available' : 'calendar-block-occupied']"
                              :title="getBlockTooltip(block)"
                              @click="block.clickable ? openBook(block.resource_id, block.from, block.to) : null">
                             <div v-if="block.type === 'occupied'" class="font-semibold">@{{ block.lead_name || 'Onbekend' }}</div>
                             <div class="text-xs">@{{ timeRange(block.from, block.to) }}</div>
                         </div>
                     </div>
+
                 </div>
 
                 <!-- Book modal -->
@@ -247,9 +265,9 @@
                 props: ['orderItemId', 'defaultResourceTypeId', 'defaultClinicId'],
                 data() {
                     const start = this.startOfWeek(new Date());
-                    const end = new Date(start); 
+                    const end = new Date(start);
                     end.setDate(start.getDate() + 6);
-                    
+
                     return {
                         viewType: 'week', // 'week' or 'month'
                         filters: {
@@ -281,16 +299,16 @@
                     },
                     monthDays() {
                         if (this.viewType !== 'month') return [];
-                        
+
                         const days = [];
                         const start = new Date(this.window.start);
                         const end = new Date(this.window.end);
-                        
+
                         // Add empty days for the first week if month doesn't start on Monday
                         const firstDay = new Date(start);
                         const firstMonday = new Date(firstDay);
                         firstMonday.setDate(firstDay.getDate() - (firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1));
-                        
+
                         const current = new Date(firstMonday);
                         while (current <= end) {
                             days.push({
@@ -300,7 +318,7 @@
                             });
                             current.setDate(current.getDate() + 1);
                         }
-                        
+
                         return days;
                     }
                 },
@@ -408,7 +426,7 @@
                     timeRange(from, to) {
                         const f = new Date(from);
                         const t = new Date(to);
-                        return f.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '–' + 
+                        return f.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + '–' +
                                t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     },
                     async loadAvailability() {
@@ -437,9 +455,29 @@
 
                             const data = await res.json();
                             this.resources = Array.isArray(data.resources) ? data.resources : [];
-                            
+
                             // Server now returns pre-rendered blocks
                             this.blocks = data.blocks || {};
+
+                            // Ensure clinic default selection
+                            try {
+                                const clinicIds = Array.from(new Set(this.resources
+                                    .map(r => r.clinic_id)
+                                    .filter(id => id !== null && id !== undefined)));
+
+                                const hasDefaultClinic = this.defaultClinicId && clinicIds.includes(this.defaultClinicId);
+                                const hasCurrentClinic = this.filters.clinic_id !== null && this.filters.clinic_id !== '' && clinicIds.includes(this.filters.clinic_id);
+
+                                if (!hasCurrentClinic) {
+                                    if (hasDefaultClinic) {
+                                        this.filters.clinic_id = this.defaultClinicId;
+                                    } else if (clinicIds.length === 1) {
+                                        this.filters.clinic_id = clinicIds[0];
+                                    }
+                                }
+                            } catch (e) {
+                                // no-op
+                            }
 
                         } catch (error) {
                             if (error.name === 'AbortError') {
@@ -456,11 +494,11 @@
                         const day = this.dayDate(weekdayOffset);
                         const dayKey = day.toISOString().split('T')[0];
                         const blocks = [];
-                        
+
                         for (const resource of this.resources) {
                             const resourceBlocks = this.blocks[resource.id] || {};
                             const dayBlocks = resourceBlocks[dayKey] || [];
-                            
+
                             dayBlocks.forEach((block, idx) => {
                                 blocks.push({
                                     ...block,
@@ -468,16 +506,16 @@
                                 });
                             });
                         }
-                        
+
                         return blocks.sort((a, b) => new Date(a.from) - new Date(b.from));
                     },
                     getBlocksForMonthDay(date) {
                         const blocks = [];
-                        
+
                         for (const resource of this.resources) {
                             const resourceBlocks = this.blocks[resource.id] || {};
                             const dayBlocks = resourceBlocks[date] || [];
-                            
+
                             dayBlocks.forEach((block, idx) => {
                                 blocks.push({
                                     ...block,
@@ -485,14 +523,14 @@
                                 });
                             });
                         }
-                        
+
                         return blocks.sort((a, b) => new Date(a.from) - new Date(b.from));
                     },
                     blockStyle(block) {
                         if (this.viewType === 'month') {
                             return {}; // Month blocks use CSS classes
                         }
-                        
+
                         // Week view positioning
                         const from = new Date(block.from);
                         const to = new Date(block.to);

@@ -88,6 +88,7 @@ class OrderItemPlanningController extends Controller
             'resources' => $resources->map(fn($r) => [
                 'id'             => $r->id,
                 'name'           => $r->name,
+                'clinic_id'      => $r->clinic_id,
                 'clinic'         => $r->clinic?->name,
                 'resource_type'  => $r->resourceType?->name,
             ])->values(),
@@ -144,6 +145,7 @@ class OrderItemPlanningController extends Controller
             'resources' => $resources->map(fn($r) => [
                 'id'             => $r->id,
                 'name'           => $r->name,
+                'clinic_id'      => $r->clinic_id,
                 'clinic'         => $r->clinic?->name,
                 'resource_type'  => $r->resourceType?->name,
             ])->values(),

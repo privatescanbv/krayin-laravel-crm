@@ -219,7 +219,7 @@ class LeadController extends Controller
                     'tags',
                     'type:id,name',
                     'source:id,name',
-                    'user:id,name',
+                    'user:id,first_name,last_name',
                     'organization:id,name',
                     'pipeline:id,name,rotten_days',
                     'pipeline.stages:id,lead_pipeline_id,code,name,sort_order',
@@ -1138,7 +1138,7 @@ class LeadController extends Controller
                 'filterable_options' => [
                     'repository' => UserRepository::class,
                     'column' => [
-                        'label' => 'name',
+                        'label' => DB::raw("CONCAT(users.first_name, ' ', users.last_name)"),
                         'value' => 'id',
                     ],
                 ],
@@ -1161,7 +1161,7 @@ class LeadController extends Controller
                 'filterable_options' => [
                     'repository' => PersonRepository::class,
                     'column' => [
-                        'label' => 'name',
+                        'label' => DB::raw("CONCAT_WS(' ', persons.first_name, persons.lastname_prefix, persons.last_name)"),
                         'value' => 'id',
                     ],
                 ],

@@ -2,6 +2,7 @@
 
 namespace Webkul\Contact\Models;
 
+use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -12,7 +13,7 @@ use Webkul\User\Models\UserProxy;
 
 class Organization extends Model implements OrganizationContract
 {
-    use CustomAttribute, hasFactory;
+    use CustomAttribute, HasFactory, HasAuditTrail;
 
 
 
@@ -24,6 +25,8 @@ class Organization extends Model implements OrganizationContract
     protected $fillable = [
         'name',
         'user_id',
+        'created_by',
+        'updated_by',
     ];
 
     /**

@@ -282,15 +282,19 @@ class ActivityController extends Controller
 
         // Validate that assigned user is active
         if (request()->has('user_id') && request('user_id')) {
-            $user = \Webkul\User\Models\User::find(request('user_id'));
-            if (!$user || $user->status != 1) {
+            $validator = \Illuminate\Support\Facades\Validator::make(
+                ['user_id' => request('user_id')],
+                ['user_id' => 'active_user']
+            );
+            
+            if ($validator->fails()) {
                 if (request()->ajax()) {
                     return response()->json([
-                        'message' => 'De geselecteerde gebruiker is niet actief.',
+                        'message' => $validator->errors()->first('user_id'),
                     ], 422);
                 }
 
-                session()->flash('error', 'De geselecteerde gebruiker is niet actief.');
+                session()->flash('error', $validator->errors()->first('user_id'));
                 return redirect()->back();
             }
         }

@@ -337,6 +337,7 @@ class LeadController extends Controller
             'prefilledPersons' => $prefilledPersons,
             'prefilledLeadPerson' => $prefilledLeadPerson,
             'userDefaults' => $userDefaults,
+            'currentUserId' => $user->id,
         ]);
     }
 

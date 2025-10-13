@@ -210,30 +210,24 @@
 
                     return parts.join(', ');
                 }
-            },
-            mounted() {
-                this.registerAddressLookupButtons();
-            },
+            }
+        });
+    </script>
 
-            methods: {
-                // Registreer knoppen
-                registerAddressLookupButtons() {
-                    const addressId = '{{ $addressId }}';
-                    const button = document.querySelector('#' + addressId + '-lookup-btn');
+    <script>
+        // Direct initialization for address lookup buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const addressId = '{{ $addressId }}';
+            const button = document.querySelector('#' + addressId + '-lookup-btn');
 
-                    if (button && !button.hasAttribute('data-lookup-initialized')) {
-                        console.log('Initializing button:', button.id);
-                        button.setAttribute('data-lookup-initialized', 'true');
-                        button.addEventListener('click', this.handleAddressLookup);
-                    }
-                },
-
-                handleAddressLookup(e) {
+            if (button && !button.hasAttribute('data-lookup-initialized')) {
+                console.log('Initializing button:', button.id);
+                button.setAttribute('data-lookup-initialized', 'true');
+                button.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
 
                     const lookupBtn = e.target;
-                    const addressId = '{{ $addressId }}';
                     const addressConfig = window.addressComponents[addressId];
                     
                     if (!addressConfig) {
@@ -303,9 +297,8 @@
                             lookupBtn.disabled = false;
                             lookupBtn.textContent = 'Adres opzoeken';
                         });
-                }
+                });
             }
-
         });
     </script>
 @endPushOnce

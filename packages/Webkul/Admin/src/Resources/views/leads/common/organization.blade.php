@@ -245,24 +245,42 @@ function cancelOrganizationForm() {
 }
 
 function clearOrganizationForm() {
-    document.getElementById('new_organization_name').value = '';
-    document.getElementById('new_org_address_postal_code').value = '';
-    document.getElementById('new_org_address_house_number').value = '';
-    document.getElementById('new_org_address_street').value = '';
-    document.getElementById('new_org_address_house_number_suffix').value = '';
-    document.getElementById('new_org_address_city').value = '';
-    document.getElementById('new_org_address_state').value = '';
-    document.getElementById('new_org_address_country').value = 'Nederland';
+    const nameField = document.getElementById('new_organization_name');
+    const postcodeField = document.getElementById('new_org_address_postal_code');
+    const houseNumberField = document.getElementById('new_org_address_house_number');
+    const streetField = document.getElementById('new_org_address_street');
+    const suffixField = document.getElementById('new_org_address_house_number_suffix');
+    const cityField = document.getElementById('new_org_address_city');
+    const stateField = document.getElementById('new_org_address_state');
+    const countryField = document.getElementById('new_org_address_country');
+    
+    if (nameField) nameField.value = '';
+    if (postcodeField) postcodeField.value = '';
+    if (houseNumberField) houseNumberField.value = '';
+    if (streetField) streetField.value = '';
+    if (suffixField) suffixField.value = '';
+    if (cityField) cityField.value = '';
+    if (stateField) stateField.value = '';
+    if (countryField) countryField.value = 'Nederland';
 }
 
 async function saveNewOrganization() {
-    const name = document.getElementById('new_organization_name').value.trim();
-    const postalCode = document.getElementById('new_org_address_postal_code').value.trim();
-    const houseNumber = document.getElementById('new_org_address_house_number').value.trim();
-    const street = document.getElementById('new_org_address_street').value.trim();
-    const city = document.getElementById('new_org_address_city').value.trim();
-    const state = document.getElementById('new_org_address_state').value.trim();
-    const country = document.getElementById('new_org_address_country').value.trim();
+    const nameField = document.getElementById('new_organization_name');
+    const postalCodeField = document.getElementById('new_org_address_postal_code');
+    const houseNumberField = document.getElementById('new_org_address_house_number');
+    const streetField = document.getElementById('new_org_address_street');
+    const cityField = document.getElementById('new_org_address_city');
+    const stateField = document.getElementById('new_org_address_state');
+    const countryField = document.getElementById('new_org_address_country');
+    const suffixField = document.getElementById('new_org_address_house_number_suffix');
+    
+    const name = nameField ? nameField.value.trim() : '';
+    const postalCode = postalCodeField ? postalCodeField.value.trim() : '';
+    const houseNumber = houseNumberField ? houseNumberField.value.trim() : '';
+    const street = streetField ? streetField.value.trim() : '';
+    const city = cityField ? cityField.value.trim() : '';
+    const state = stateField ? stateField.value.trim() : '';
+    const country = countryField ? countryField.value.trim() : '';
 
     // Basic validation
     if (!name || !postalCode || !houseNumber || !street || !city || !state || !country) {
@@ -281,7 +299,7 @@ async function saveNewOrganization() {
         formData.append('address[postal_code]', postalCode);
         formData.append('address[house_number]', houseNumber);
         formData.append('address[street]', street);
-        formData.append('address[house_number_suffix]', document.getElementById('new_org_address_house_number_suffix').value.trim());
+        formData.append('address[house_number_suffix]', suffixField ? suffixField.value.trim() : '');
         formData.append('address[city]', city);
         formData.append('address[state]', state);
         formData.append('address[country]', country);
@@ -343,6 +361,7 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             e.stopPropagation();
 
+            // Use the correct IDs for the new organization form
             const postcode = document.getElementById('new_org_address_postal_code');
             const huisnummer = document.getElementById('new_org_address_house_number');
             const street = document.getElementById('new_org_address_street');

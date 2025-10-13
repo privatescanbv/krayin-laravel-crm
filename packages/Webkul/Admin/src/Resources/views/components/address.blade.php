@@ -218,13 +218,27 @@
         // Direct initialization for address lookup buttons
         document.addEventListener('DOMContentLoaded', function() {
             const addressId = '{{ $addressId }}';
-            console.log('registerAddressLookupButtons met '+addressId);
-                    const button = document.querySelector('#' + addressId + '-lookup-btn');
+            const buttonId = addressId + '-lookup-btn';
+            console.log('Looking for button with ID:', buttonId);
+            console.log('AddressId:', addressId);
+            
+            const button = document.querySelector('#' + buttonId);
+            console.log('Button found:', button);
+            
+            // Also try to find the button in hidden elements
+            let targetButton = button;
+            if (!button) {
+                const allButtons = document.querySelectorAll('button[id*="lookup-btn"]');
+                console.log('All lookup buttons found:', allButtons);
+                const hiddenButton = Array.from(allButtons).find(btn => btn.id === buttonId);
+                console.log('Hidden button found:', hiddenButton);
+                targetButton = hiddenButton;
+            }
 
-            if (button && !button.hasAttribute('data-lookup-initialized')) {
-                console.log('Initializing button:', button.id);
-                button.setAttribute('data-lookup-initialized', 'true');
-                button.addEventListener('click', function(e) {
+            if (targetButton && !targetButton.hasAttribute('data-lookup-initialized')) {
+                console.log('Initializing button:', targetButton.id);
+                targetButton.setAttribute('data-lookup-initialized', 'true');
+                targetButton.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
 

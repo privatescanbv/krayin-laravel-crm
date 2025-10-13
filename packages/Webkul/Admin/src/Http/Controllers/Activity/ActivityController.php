@@ -280,6 +280,21 @@ class ActivityController extends Controller
             }
         }
 
+        // Validate that assigned user is active
+        if (request()->has('user_id') && request('user_id')) {
+            $user = \Webkul\User\Models\User::find(request('user_id'));
+            if (!$user || $user->status != 1) {
+                if (request()->ajax()) {
+                    return response()->json([
+                        'message' => 'De geselecteerde gebruiker is niet actief.',
+                    ], 422);
+                }
+
+                session()->flash('error', 'De geselecteerde gebruiker is niet actief.');
+                return redirect()->back();
+            }
+        }
+
         Event::dispatch('activity.update.before', $id);
 
         $data = request()->all();

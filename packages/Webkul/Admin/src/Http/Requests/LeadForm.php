@@ -214,6 +214,7 @@ class LeadForm extends FormRequest
 
         return [
             ...$this->rules,
+            'user_id'               => 'nullable|exists:users,id|active_user',
             'products'              => 'array',
             'products.*.product_id' => 'sometimes|required|exists:products,id',
             'products.*.name'       => 'required_with:products.*.product_id',

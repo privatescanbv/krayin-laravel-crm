@@ -474,6 +474,7 @@
                                     <div class="flex-1">
                                         @php
                                             $userOptions = User::query()
+                                                ->where('status', 1)
                                                 ->selectRaw("id, TRIM(CONCAT(COALESCE(first_name,''),' ',COALESCE(last_name,''))) as full_name")
                                                 ->orderBy('first_name')
                                                 ->orderBy('last_name')

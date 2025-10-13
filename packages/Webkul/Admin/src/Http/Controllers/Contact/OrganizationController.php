@@ -123,32 +123,33 @@ class OrganizationController extends Controller
             return redirect()->back()->with('error', 'Name is required');
         }
 
-        $organization = $this->organizationRepository->update($data, $id);
+        try {
+            $organization = $this->organizationRepository->update($data, $id);
 
-        if (!$organization) {
-            if (request()->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Organization not found'
-                ], 404);
-            }
-            return redirect()->back()->with('error', 'Organization not found');
-        }
-
-        // Handle address update
-        if (isset($data['address'])) {
-            // Get fresh organization instance with address relationship
-            $organization = $this->organizationRepository->find($id);
             if (!$organization) {
                 if (request()->ajax()) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Organization not found after update'
+                        'message' => 'Organization not found'
                     ], 404);
                 }
-                return redirect()->back()->with('error', 'Organization not found after update');
+                return redirect()->back()->with('error', 'Organization not found');
             }
-            $existingAddress = $organization->address;
+
+            // Handle address update
+            if (isset($data['address'])) {
+                // Get fresh organization instance with address relationship
+                $organization = $this->organizationRepository->find($id);
+                if (!$organization) {
+                    if (request()->ajax()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Organization not found after update'
+                        ], 404);
+                    }
+                    return redirect()->back()->with('error', 'Organization not found after update');
+                }
+                $existingAddress = $organization->address;
 
             if (!empty(array_filter($data['address']))) {
                 $addressData = array_merge($data['address'], [

@@ -20,8 +20,6 @@ trait NormalizesContactFields
     {
         $incoming = $request->all();
 
-        logger()->info('Normalizing contact fields', $incoming);
-
         // Map single email/phone to array structure
         $incoming = $this->mapSingleFieldsToArrays($incoming);
 

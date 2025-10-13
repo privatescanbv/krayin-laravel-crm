@@ -223,7 +223,7 @@ class LeadRepository extends Repository
     public function update(array $data, $id, $attributes = []): Lead
     {
         // Debug: Log what data is received
-        Log::info('LeadRepository update received data', [
+        Log::debug('LeadRepository update received data', [
             'lead_id' => $id,
             'has_persons' => array_key_exists('persons', $data),
             'has_person_ids' => array_key_exists('person_ids', $data),

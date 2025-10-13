@@ -10,6 +10,8 @@ use Webkul\Admin\DataGrids\Contact\OrganizationDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Webkul\Admin\Http\Resources\OrganizationResource;
 use Webkul\Contact\Repositories\OrganizationRepository;
 use Webkul\Contact\Models\Organization;
 use App\Models\Address;
@@ -49,12 +51,12 @@ class OrganizationController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(AttributeForm $request): RedirectResponse
+    public function store(AttributeForm $request): RedirectResponse|JsonResponse
     {
         Event::dispatch('contacts.organization.create.before');
 
         $data = request()->all();
-        
+
         $organization = $this->organizationRepository->create($data);
 
         // Handle address creation
@@ -66,6 +68,13 @@ class OrganizationController extends Controller
         }
 
         Event::dispatch('contacts.organization.create.after', $organization);
+
+        if (request()->expectsJson() || request()->ajax()) {
+            return response()->json([
+                'data'    => new OrganizationResource($organization),
+                'message' => trans('admin::app.contacts.organizations.index.create-success'),
+            ], 200);
+        }
 
         session()->flash('success', trans('admin::app.contacts.organizations.index.create-success'));
 
@@ -91,7 +100,7 @@ class OrganizationController extends Controller
         Event::dispatch('contacts.organization.update.before', $id);
 
         $data = request()->all();
-        
+
         $organization = $this->organizationRepository->update($data, $id);
 
         // Handle address update
@@ -99,12 +108,12 @@ class OrganizationController extends Controller
             // Get fresh organization instance with address relationship
             $organization = $this->organizationRepository->find($id);
             $existingAddress = $organization->address;
-            
+
             if (!empty(array_filter($data['address']))) {
                 $addressData = array_merge($data['address'], [
                     'organization_id' => $organization->id
                 ]);
-                
+
                 if ($existingAddress && is_object($existingAddress)) {
                     $existingAddress->update($addressData);
                 } else {
@@ -152,7 +161,7 @@ class OrganizationController extends Controller
      */
     public function massDestroy(MassDestroyRequest $massDestroyRequest): JsonResponse
     {
-        $organizations = $this->organizationRepository->findWhereIn('id', $massDestroyRequest->input('indices'));
+        $organizations = $this->organizationRepository->findWhereIn('id', request()->input('indices'));
 
         foreach ($organizations as $organization) {
             Event::dispatch('contact.organization.delete.before', $organization);
@@ -184,6 +193,6 @@ class OrganizationController extends Controller
                 ->all();
         }
 
-        return \Webkul\Admin\Http\Resources\OrganizationResource::collection($organizations);
+        return OrganizationResource::collection($organizations);
     }
 }

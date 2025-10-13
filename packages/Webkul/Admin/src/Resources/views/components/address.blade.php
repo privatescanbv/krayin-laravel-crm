@@ -218,18 +218,14 @@
             methods: {
                 // Registreer knoppen
                 registerAddressLookupButtons() {
-                    const buttons = document.querySelectorAll('.address-lookup-button');
+                    const addressId = '{{ $addressId }}';
+                    const button = document.querySelector('#' + addressId + '-lookup-btn');
 
-                    buttons.forEach((lookupBtn) => {
-                        if (lookupBtn.hasAttribute('data-lookup-initialized')) {
-                            console.log('Button already initialized');
-                            return;
-                        }
-
-                        console.log('Initializing button:', lookupBtn.id);
-                        lookupBtn.setAttribute('data-lookup-initialized', 'true');
-                        lookupBtn.addEventListener('click', this.handleAddressLookup);
-                    });
+                    if (button && !button.hasAttribute('data-lookup-initialized')) {
+                        console.log('Initializing button:', button.id);
+                        button.setAttribute('data-lookup-initialized', 'true');
+                        button.addEventListener('click', this.handleAddressLookup);
+                    }
                 },
 
                 handleAddressLookup(e) {
@@ -245,11 +241,13 @@
                         return;
                     }
                     
-                    const postcode = document.querySelector('#' + addressConfig.postalCodeId);
-                    const huisnummer = document.querySelector('#' + addressConfig.houseNumberId);
-                    const street = document.querySelector('#' + addressConfig.streetId);
-                    const city = document.querySelector('#' + addressConfig.cityId);
-                    const state = document.querySelector('#' + addressConfig.stateId);
+                    // Only target fields within this specific address component
+                    const addressContainer = lookupBtn.closest('.flex.flex-col.gap-4');
+                    const postcode = addressContainer.querySelector('#' + addressConfig.postalCodeId);
+                    const huisnummer = addressContainer.querySelector('#' + addressConfig.houseNumberId);
+                    const street = addressContainer.querySelector('#' + addressConfig.streetId);
+                    const city = addressContainer.querySelector('#' + addressConfig.cityId);
+                    const state = addressContainer.querySelector('#' + addressConfig.stateId);
 
                     if (!postcode || !huisnummer) {
                         alert('Adresvelden niet gevonden');

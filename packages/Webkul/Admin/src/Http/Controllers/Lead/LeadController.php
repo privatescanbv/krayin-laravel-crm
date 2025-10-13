@@ -368,6 +368,21 @@ class LeadController extends Controller
 
             // Na aanmaken: ga naar de lead detailpagina in plaats van het kanban bord
             return redirect()->route('admin.leads.view', $lead->id);
+        } catch (ValidationException $e) {
+            Log::warning('Lead creation failed - Validation error', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all(),
+                'user_id' => auth()->guard('user')->id(),
+            ]);
+
+            if (request()->ajax()) {
+                return response()->json([
+                    'message' => 'Validatiefouten gevonden',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+
+            return redirect()->back()->withInput()->withErrors($e->errors());
         } catch (InvalidArgumentException $e) {
             Log::error('Lead creation failed - InvalidArgumentException', [
                 'error' => $e->getMessage(),
@@ -377,12 +392,10 @@ class LeadController extends Controller
             ]);
 
             if (request()->ajax()) {
-                throw new ValidationException(
-                    Validator::make([], []),
-                    response()->json([
-                        'message' => $e->getMessage(),
-                    ], 422)
-                );
+                return response()->json([
+                    'message' => $e->getMessage(),
+                    'errors' => ['error' => [$e->getMessage()]]
+                ], 422);
             }
 
             return redirect()->back()->withInput()->withErrors(['error' => $e->getMessage()]);
@@ -650,14 +663,27 @@ class LeadController extends Controller
             session()->flash('success', trans('admin::app.leads.update-success'));
             // After edit: go to lead view page
             return redirect()->route('admin.leads.view', $lead->id);
+        } catch (ValidationException $e) {
+            Log::warning('Lead update failed - Validation error', [
+                'errors' => $e->errors(),
+                'request_data' => $request->all(),
+                'user_id' => auth()->guard('user')->id(),
+            ]);
+
+            if (request()->ajax()) {
+                return response()->json([
+                    'message' => 'Validatiefouten gevonden',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+
+            return redirect()->back()->withInput()->withErrors($e->errors());
         } catch (InvalidArgumentException $e) {
             if (request()->ajax()) {
-                throw new ValidationException(
-                    Validator::make([], []),
-                    response()->json([
-                        'message' => $e->getMessage(),
-                    ], 422)
-                );
+                return response()->json([
+                    'message' => $e->getMessage(),
+                    'errors' => ['error' => [$e->getMessage()]]
+                ], 422);
             }
             return redirect()->back()->withInput()->withErrors(['error' => $e->getMessage()]);
         }

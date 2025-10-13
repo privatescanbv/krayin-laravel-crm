@@ -225,6 +225,11 @@
                 getPhoneError(index) {
                     const errorKey = this.name + '.' + index + '.value';
                     return this.errors[errorKey] ? this.errors[errorKey][0] : null;
+                },
+
+                // Method to update errors from parent component
+                updateErrors(newErrors) {
+                    this.errors = newErrors || {};
                 }
             }
         });

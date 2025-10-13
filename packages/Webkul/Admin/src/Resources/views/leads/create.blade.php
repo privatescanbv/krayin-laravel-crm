@@ -283,7 +283,7 @@
                                     </div>
 
                                     <!-- Emails -->
-                                    <div class="mt-4">
+                                    <div class="mt-4" ref="emailsSection">
                                         @php
                                             $__emailsVal = old('emails', $prefilledLeadPerson['emails'] ?? []);
                                             if (!is_array($__emailsVal)) { $__emailsVal = []; }
@@ -299,7 +299,7 @@
                                     </div>
 
                                     <!-- Phones -->
-                                    <div class="mt-4">
+                                    <div class="mt-4" ref="phonesSection">
                                         @php
                                             $__phonesVal = old('phones', $prefilledLeadPerson['phones'] ?? []);
                                             if (!is_array($__phonesVal)) { $__phonesVal = []; }
@@ -769,18 +769,30 @@
                         } catch (error) {
                             console.error('Error submitting form:', error);
 
-                            let errorMessage = 'Er is een fout opgetreden bij het aanmaken van de lead.';
-                            if (error.response?.data?.message) {
-                                errorMessage = error.response.data.message;
-                            } else if (error.response?.data?.errors) {
-                                const errors = Object.values(error.response.data.errors).flat();
-                                errorMessage = errors.join(', ');
-                            }
+                            // Handle validation errors
+                            if (error.response?.status === 422 && error.response?.data?.errors) {
+                                const errors = error.response.data.errors;
+                                
+                                // Display validation errors in the form
+                                this.displayValidationErrors(errors);
+                                
+                                // Show a general error message
+                                this.$emitter.emit('add-flash', {
+                                    type: 'error',
+                                    message: error.response.data.message || 'Validatiefouten gevonden. Controleer de ingevulde gegevens.'
+                                });
+                            } else {
+                                // Handle other errors
+                                let errorMessage = 'Er is een fout opgetreden bij het aanmaken van de lead.';
+                                if (error.response?.data?.message) {
+                                    errorMessage = error.response.data.message;
+                                }
 
-                            this.$emitter.emit('add-flash', {
-                                type: 'error',
-                                message: errorMessage
-                            });
+                                this.$emitter.emit('add-flash', {
+                                    type: 'error',
+                                    message: errorMessage
+                                });
+                            }
                         } finally {
                             this.isSubmitting = false;
                         }
@@ -836,6 +848,120 @@
                             }
                         }
                         return false;
+                    },
+
+                    displayValidationErrors(errors) {
+                        // Clear existing error styling
+                        this.clearValidationErrors();
+                        
+                        // Update phones component with errors
+                        if (this.$refs.phonesSection) {
+                            const phonesComponent = this.$refs.phonesSection.querySelector('v-phones-component');
+                            if (phonesComponent && phonesComponent.__vue__) {
+                                phonesComponent.__vue__.updateErrors(errors);
+                            }
+                        }
+                        
+                        // Update emails component with errors
+                        if (this.$refs.emailsSection) {
+                            const emailsComponent = this.$refs.emailsSection.querySelector('v-emails-component');
+                            if (emailsComponent && emailsComponent.__vue__) {
+                                emailsComponent.__vue__.updateErrors(errors);
+                            }
+                        }
+                        
+                        // Display errors for each field
+                        Object.keys(errors).forEach(fieldName => {
+                            const fieldErrors = errors[fieldName];
+                            if (Array.isArray(fieldErrors) && fieldErrors.length > 0) {
+                                this.showFieldError(fieldName, fieldErrors[0]);
+                            }
+                        });
+                    },
+
+                    clearValidationErrors() {
+                        if (!this.$refs.leadForm) return;
+                        
+                        // Remove error styling from all inputs
+                        const inputs = this.$refs.leadForm.querySelectorAll('input, select, textarea');
+                        inputs.forEach(input => {
+                            input.classList.remove('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+                            input.classList.add('border-gray-300', 'focus:border-blue-500', 'focus:ring-blue-500');
+                        });
+                        
+                        // Remove existing error messages
+                        const errorMessages = this.$refs.leadForm.querySelectorAll('.field-error-message');
+                        errorMessages.forEach(msg => msg.remove());
+                    },
+
+                    showFieldError(fieldName, errorMessage) {
+                        if (!this.$refs.leadForm) return;
+                        
+                        // Handle phone validation errors
+                        if (fieldName.startsWith('phones.')) {
+                            const phoneIndex = fieldName.match(/phones\.(\d+)\.value/);
+                            if (phoneIndex) {
+                                const index = phoneIndex[1];
+                                const phoneInput = this.$refs.leadForm.querySelector(`input[name="phones[${index}][value]"]`);
+                                if (phoneInput) {
+                                    phoneInput.classList.remove('border-gray-300', 'focus:border-blue-500', 'focus:ring-blue-500');
+                                    phoneInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+                                    
+                                    // Add error message below the input
+                                    const existingError = phoneInput.parentNode.querySelector('.field-error-message');
+                                    if (existingError) {
+                                        existingError.remove();
+                                    }
+                                    
+                                    const errorDiv = document.createElement('div');
+                                    errorDiv.className = 'field-error-message mt-1 text-sm text-red-600';
+                                    errorDiv.textContent = errorMessage;
+                                    phoneInput.parentNode.appendChild(errorDiv);
+                                }
+                            }
+                        }
+                        // Handle email validation errors
+                        else if (fieldName.startsWith('emails.')) {
+                            const emailIndex = fieldName.match(/emails\.(\d+)\.value/);
+                            if (emailIndex) {
+                                const index = emailIndex[1];
+                                const emailInput = this.$refs.leadForm.querySelector(`input[name="emails[${index}][value]"]`);
+                                if (emailInput) {
+                                    emailInput.classList.remove('border-gray-300', 'focus:border-blue-500', 'focus:ring-blue-500');
+                                    emailInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+                                    
+                                    // Add error message below the input
+                                    const existingError = emailInput.parentNode.querySelector('.field-error-message');
+                                    if (existingError) {
+                                        existingError.remove();
+                                    }
+                                    
+                                    const errorDiv = document.createElement('div');
+                                    errorDiv.className = 'field-error-message mt-1 text-sm text-red-600';
+                                    errorDiv.textContent = errorMessage;
+                                    emailInput.parentNode.appendChild(errorDiv);
+                                }
+                            }
+                        }
+                        // Handle other field errors
+                        else {
+                            const fieldInput = this.$refs.leadForm.querySelector(`[name="${fieldName}"]`);
+                            if (fieldInput) {
+                                fieldInput.classList.remove('border-gray-300', 'focus:border-blue-500', 'focus:ring-blue-500');
+                                fieldInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+                                
+                                // Add error message below the input
+                                const existingError = fieldInput.parentNode.querySelector('.field-error-message');
+                                if (existingError) {
+                                    existingError.remove();
+                                }
+                                
+                                const errorDiv = document.createElement('div');
+                                errorDiv.className = 'field-error-message mt-1 text-sm text-red-600';
+                                errorDiv.textContent = errorMessage;
+                                fieldInput.parentNode.appendChild(errorDiv);
+                            }
+                        }
                     }
                 }
             });

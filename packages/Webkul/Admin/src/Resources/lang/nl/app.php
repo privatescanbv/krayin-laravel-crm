@@ -2544,7 +2544,7 @@ return [
         'data_transfer_info' => 'Beheer instellingen voor gegevensoverdracht van personen, producten en leads in de CRM',
         'product-groups' => 'Productgroepen',
         'products' => 'Producten',
-        'workflow-leads' => 'Sales',
+        'sales-leads' => 'Sales',
         'clinics' => 'Klinieken',
         'clinics-info' => 'Beheer klinieken',
         'partner_products' => 'Partnerproducten',

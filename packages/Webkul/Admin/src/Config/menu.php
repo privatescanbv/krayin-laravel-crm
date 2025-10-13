@@ -24,9 +24,9 @@ return [
     ],
 
     [
-        'key'        => 'workflow-leads',
-        'name'       => 'admin::app.layouts.workflow-leads',
-        'route'      => 'admin.workflow-leads.index',
+        'key'        => 'sales-leads',
+        'name'       => 'admin::app.layouts.sales-leads',
+        'route'      => 'admin.sales-leads.index',
         'sort'       => 3,
         'icon-class' => 'icon-setting',
     ],

@@ -588,24 +588,24 @@ return [
         'sort'  => 9,
     ],
     [
-        'key'   => 'workflow-leads',
+        'key'   => 'sales-leads',
         'name'  => 'Sales order',
-        'route' => 'admin.workflow-leads.index',
+        'route' => 'admin.sales-leads.index',
         'sort'  => 99, // of een andere gewenste volgorde
     ], [
-        'key'   => 'workflow-leads.create',
+        'key'   => 'sales-leads.create',
         'name'  => 'admin::app.acl.create',
-        'route' => ['admin.workflow-leads.create', 'admin.workflow-leads.store'],
+        'route' => ['admin.sales-leads.create', 'admin.sales-leads.store'],
         'sort'  => 1,
     ], [
-        'key'   => 'workflow-leads.edit',
+        'key'   => 'sales-leads.edit',
         'name'  => 'admin::app.acl.edit',
-        'route' => ['admin.workflow-leads.edit', 'admin.workflow-leads.update'],
+        'route' => ['admin.sales-leads.edit', 'admin.sales-leads.update'],
         'sort'  => 2,
     ], [
-        'key'   => 'workflow-leads.delete',
+        'key'   => 'sales-leads.delete',
         'name'  => 'admin::app.acl.delete',
-        'route' => 'admin.workflow-leads.delete',
+        'route' => 'admin.sales-leads.delete',
         'sort'  => 3,
     ], [
         'key'   => 'documentation',

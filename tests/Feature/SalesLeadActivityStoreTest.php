@@ -41,7 +41,7 @@ test('creating activity on sales lead stores sales_lead_id and appears as planne
         'schedule_to'   => $now->copy()->addHour()->format('Y-m-d H:i:s'),
     ];
 
-    $response = $this->postJson(route('admin.workflow-leads.activities.store', ['id' => $salesLead->id]), $payload);
+    $response = $this->postJson(route('admin.sales-leads.activities.store', ['id' => $salesLead->id]), $payload);
     $response->assertOk();
 
     // Assert saved with sales_lead_id and not done
@@ -52,7 +52,7 @@ test('creating activity on sales lead stores sales_lead_id and appears as planne
     ]);
 
     // Fetch activities endpoint and ensure the item is returned
-    $get = $this->getJson(route('admin.workflow-leads.activities.index', ['id' => $salesLead->id]));
+    $get = $this->getJson(route('admin.sales-leads.activities.index', ['id' => $salesLead->id]));
     $get->assertOk();
     $json = $get->json('data');
     $titles = collect($json)->pluck('title');

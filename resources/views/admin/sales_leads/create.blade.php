@@ -7,7 +7,7 @@
     <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
         <div class="flex flex-col gap-2">
             <!-- Breadcrumb's -->
-            <x-admin::breadcrumbs name="workflow-leads.create" />
+            <x-admin::breadcrumbs name="sales-leads.create" />
 
             <div class="text-xl font-bold dark:text-white">
                 Sales order aanmaken
@@ -18,7 +18,7 @@
     <!-- Content -->
     <div class="mt-3.5">
         <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-            <form action="{{ route('admin.workflow-leads.store') }}" method="POST">
+            <form action="{{ route('admin.sales-leads.store') }}" method="POST">
                 @csrf
 
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

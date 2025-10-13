@@ -1,9 +1,9 @@
 @php
-    // Allow override of pipeline and current stage for workflow leads
+    // Allow override of pipeline and current stage for sales leads
     $displayPipeline = $overridePipeline ?? $lead->pipeline;
     $displayStage = $overrideStage ?? $lead->stage;
     $updateUrl = $overrideUpdateUrl ?? route('admin.leads.stage.update', $lead->id);
-    $isWorkflowLead = isset($workflowLead);
+    $isSalesLead = isset($salesLead);
 @endphp
 
 <!-- Stages Navigation -->
@@ -267,15 +267,15 @@
                     };
 
                     try {
-                        // Compute open activities depending on context (lead vs sales (workflow) lead)
+                        // Compute open activities depending on context (lead vs sales lead)
                         let openCount;
                         let entityIdForConfirm;
                         let confirmOptions;
-                        @if ($isWorkflowLead)
+                        @if ($isSalesLead)
                             // Strictly use sales lead activities; do not fallback to lead counters
-                            entityIdForConfirm = {{ $workflowLead->id }};
-                            confirmOptions = { type: 'workflow' };
-                            const tmpl = "{{ route('admin.workflow-leads.activities.index', $workflowLead->id) }}";
+                            entityIdForConfirm = {{ $salesLead->id }};
+                            confirmOptions = { type: 'sales' };
+                            const tmpl = "{{ route('admin.sales-leads.activities.index', $salesLead->id) }}";
                             const res = await this.$axios.get(tmpl, { params: { is_done: 0 } });
                             const all = Array.isArray(res?.data?.data) ? res.data.data : [];
                             openCount = all.length;

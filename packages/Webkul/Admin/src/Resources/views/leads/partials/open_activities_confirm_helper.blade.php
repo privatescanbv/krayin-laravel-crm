@@ -6,8 +6,8 @@
             try {
                 let activities = [];
                 if (options && options.type === 'workflow') {
-                    // Fetch only open activities for workflow lead (server-side filter)
-                    const tmpl = "{{ route('admin.workflow-leads.activities.index', 0) }}"; // .../workflow-leads/0/activities
+                    // Fetch only open activities for sales lead (server-side filter)
+                    const tmpl = "{{ route('admin.sales-leads.activities.index', 0) }}"; // .../sales-leads/0/activities
                     const endpoint = tmpl.replace('/0/', `/${entityId}/`);
                     const res = await axiosInstance.get(endpoint, { params: { is_done: 0 } });
                     const all = res?.data?.data || [];
@@ -34,7 +34,7 @@
                 // Ignore fetch errors; present basic message without titles
             }
 
-            const suffix = options && options.type === 'workflow' ? ' op deze workflow lead' : ' op deze lead';
+            const suffix = options && options.type === 'sales' ? ' op deze sales lead' : ' op deze lead';
             return `Er staan nog ${openCount} open activiteit(en)${suffix}. Wil je deze afronden en de status wijzigen?${titlesList}`;
         }
     </script>

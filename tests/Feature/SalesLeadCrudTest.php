@@ -73,7 +73,7 @@ test('workflow leads get returns kanban json with created leads', function () {
         'lead_id'           => $lead2->id,
     ]);
 
-    $response = $this->getJson(route('admin.workflow-leads.get').'?pipeline_id='.test()->pipeline->id);
+    $response = $this->getJson(route('admin.sales-leads.get').'?pipeline_id='.test()->pipeline->id);
     $response->assertOk();
 
     $ids = getKanbanLeadIds($response);
@@ -84,18 +84,18 @@ test('can create workflow lead', function () {
     $lead = Lead::factory()->create();
 
     $payload = [
-        'name'              => 'Created Workflow Lead',
+        'name'              => 'Created Sales Lead',
         'description'       => 'Created via test',
         'pipeline_stage_id' => test()->stage->id,
         'lead_id'           => $lead->id,
     ];
 
-    $response = $this->postJson(route('admin.workflow-leads.store'), $payload);
+    $response = $this->postJson(route('admin.sales-leads.store'), $payload);
     // Controller redirects on success; assert redirect and DB has row
     $response->assertStatus(302);
 
     $this->assertDatabaseHas('salesleads', [
-        'name'              => 'Created Workflow Lead',
+        'name'              => 'Created Sales Lead',
         'pipeline_stage_id' => test()->stage->id,
     ]);
 });
@@ -109,19 +109,19 @@ test('can update workflow lead (ajax json)', function () {
     ]);
 
     $payload = [
-        'name'        => 'Updated Workflow Lead',
+        'name'        => 'Updated Sales Lead',
         'description' => 'Now updated',
         '_method'     => 'put',
     ];
 
     $response = $this->withHeaders(['HTTP_X-Requested-With' => 'XMLHttpRequest'])
-        ->postJson(route('admin.workflow-leads.update', ['id' => $salesLead->id]), $payload);
+        ->postJson(route('admin.sales-leads.update', ['id' => $salesLead->id]), $payload);
 
-    $response->assertOk()->assertJsonPath('message', 'Workflow lead updated successfully.');
+    $response->assertOk()->assertJsonPath('message', 'Sales lead updated successfully.');
 
     $this->assertDatabaseHas('salesleads', [
         'id'   => $salesLead->id,
-        'name' => 'Updated Workflow Lead',
+        'name' => 'Updated Sales Lead',
     ]);
 });
 
@@ -133,7 +133,7 @@ test('can delete workflow lead', function () {
         'lead_id'           => $lead->id,
     ]);
 
-    $response = $this->deleteJson(route('admin.workflow-leads.delete', ['id' => $salesLead->id]));
+    $response = $this->deleteJson(route('admin.sales-leads.delete', ['id' => $salesLead->id]));
     // Controller redirects; just assert it didn't fail and row is gone
     $response->assertStatus(302);
 

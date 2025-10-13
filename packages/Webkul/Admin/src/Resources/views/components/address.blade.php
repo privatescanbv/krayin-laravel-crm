@@ -166,6 +166,7 @@
             stateId: '{{ $addressId }}_state'
         };
     </script>
+    
     @verbatim
         <script type="text/x-template" id="v-address-preview-template">
             <div v-if="fullAddress" class="mt-4 p-3 bg-gray-50 rounded border" style="display: none;">
@@ -173,140 +174,140 @@
                 <div class="text-sm text-gray-600">{{ fullAddress }}</div>
             </div>
         </script>
+    @endverbatim
 
-        <script type="module">
-            app.component('v-address-preview', {
-                template: '#v-address-preview-template',
+    <script type="module">
+        app.component('v-address-preview', {
+            template: '#v-address-preview-template',
 
-                props: ['address'],
+            props: ['address'],
 
-                computed: {
-                    fullAddress() {
-                        if (!this.address) return '';
+            computed: {
+                fullAddress() {
+                    if (!this.address) return '';
 
-                        const parts = [];
+                    const parts = [];
 
-                        if (this.address.street && this.address.house_number) {
-                            let streetPart = this.address.street + ' ' + this.address.house_number;
-                            if (this.address.house_number_suffix) {
-                                streetPart += ' ' + this.address.house_number_suffix;
-                            }
-                            parts.push(streetPart);
+                    if (this.address.street && this.address.house_number) {
+                        let streetPart = this.address.street + ' ' + this.address.house_number;
+                        if (this.address.house_number_suffix) {
+                            streetPart += ' ' + this.address.house_number_suffix;
                         }
-
-                        if (this.address.postal_code && this.address.city) {
-                            parts.push(this.address.postal_code + ' ' + this.address.city);
-                        }
-
-                        if (this.address.state) {
-                            parts.push(this.address.state);
-                        }
-
-                        if (this.address.country) {
-                            parts.push(this.address.country);
-                        }
-
-                        return parts.join(', ');
+                        parts.push(streetPart);
                     }
+
+                    if (this.address.postal_code && this.address.city) {
+                        parts.push(this.address.postal_code + ' ' + this.address.city);
+                    }
+
+                    if (this.address.state) {
+                        parts.push(this.address.state);
+                    }
+
+                    if (this.address.country) {
+                        parts.push(this.address.country);
+                    }
+
+                    return parts.join(', ');
+                }
+            },
+            mounted() {
+                this.registerAddressLookupButtons();
+            },
+
+            methods: {
+                // Registreer knoppen
+                registerAddressLookupButtons() {
+                    const buttons = document.querySelectorAll('.address-lookup-button');
+
+                    buttons.forEach((lookupBtn) => {
+                        if (lookupBtn.hasAttribute('data-lookup-initialized')) {
+                            console.log('Button already initialized');
+                            return;
+                        }
+
+                        console.log('Initializing button:', lookupBtn.id);
+                        lookupBtn.setAttribute('data-lookup-initialized', 'true');
+                        lookupBtn.addEventListener('click', this.handleAddressLookup);
+                    });
                 },
-                mounted() {
-                    this.registerAddressLookupButtons();
-                },
 
-                methods: {
-                    // Registreer knoppen
-                    registerAddressLookupButtons() {
-                        const buttons = document.querySelectorAll('.address-lookup-button');
+                handleAddressLookup(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
 
-                        buttons.forEach((lookupBtn) => {
-                            if (lookupBtn.hasAttribute('data-lookup-initialized')) {
-                                console.log('Button already initialized');
-                                return;
-                            }
+                    const lookupBtn = e.target;
+                    const addressId = '{{ $addressId }}';
+                    const addressConfig = window.addressComponents[addressId];
+                    
+                    if (!addressConfig) {
+                        console.error('Address component config not found for:', addressId);
+                        return;
+                    }
+                    
+                    const postcode = document.querySelector('#' + addressConfig.postalCodeId);
+                    const huisnummer = document.querySelector('#' + addressConfig.houseNumberId);
+                    const street = document.querySelector('#' + addressConfig.streetId);
+                    const city = document.querySelector('#' + addressConfig.cityId);
+                    const state = document.querySelector('#' + addressConfig.stateId);
 
-                            console.log('Initializing button:', lookupBtn.id);
-                            lookupBtn.setAttribute('data-lookup-initialized', 'true');
-                            lookupBtn.addEventListener('click', this.handleAddressLookup);
-                        });
-                    },
+                    if (!postcode || !huisnummer) {
+                        alert('Adresvelden niet gevonden');
+                        return;
+                    }
 
-                    handleAddressLookup(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
+                    const postcodeValue = postcode.value.trim();
+                    const huisnummerValue = huisnummer.value.trim();
 
-                        const lookupBtn = e.target;
-                        const addressId = '{{ $addressId }}';
-                        const addressConfig = window.addressComponents[addressId];
-                        
-                        if (!addressConfig) {
-                            console.error('Address component config not found for:', addressId);
-                            return;
+                    if (!postcodeValue || !huisnummerValue) {
+                        alert('Vul eerst postcode en huisnummer in.');
+                        return;
+                    }
+
+                    lookupBtn.disabled = true;
+                    lookupBtn.textContent = 'Zoeken...';
+
+                    fetch('/admin/address/lookup?postcode=' + encodeURIComponent(postcodeValue) + '&huisnummer=' + encodeURIComponent(huisnummerValue), {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
                         }
-                        
-                        const postcode = document.querySelector('#' + addressConfig.postalCodeId);
-                        const huisnummer = document.querySelector('#' + addressConfig.houseNumberId);
-                        const street = document.querySelector('#' + addressConfig.streetId);
-                        const city = document.querySelector('#' + addressConfig.cityId);
-                        const state = document.querySelector('#' + addressConfig.stateId);
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Lookup response:', data);
+                            if (data.success) {
 
-                        if (!postcode || !huisnummer) {
-                            alert('Adresvelden niet gevonden');
-                            return;
-                        }
-
-                        const postcodeValue = postcode.value.trim();
-                        const huisnummerValue = huisnummer.value.trim();
-
-                        if (!postcodeValue || !huisnummerValue) {
-                            alert('Vul eerst postcode en huisnummer in.');
-                            return;
-                        }
-
-                        lookupBtn.disabled = true;
-                        lookupBtn.textContent = 'Zoeken...';
-
-                        fetch('/admin/address/lookup?postcode=' + encodeURIComponent(postcodeValue) + '&huisnummer=' + encodeURIComponent(huisnummerValue), {
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Accept': 'application/json',
+                                if (street) {
+                                    street.value = data.street || '';
+                                    // Trigger input event to notify any listeners
+                                    street.dispatchEvent(new Event('input', { bubbles: true }));
+                                }
+                                if (city) {
+                                    city.value = data.city || '';
+                                    // Trigger input event to notify any listeners
+                                    city.dispatchEvent(new Event('input', { bubbles: true }));
+                                }
+                                if (state) {
+                                    state.value = data.state || '';
+                                    // Trigger input event to notify any listeners
+                                    state.dispatchEvent(new Event('input', { bubbles: true }));
+                                }
+                            } else {
+                                alert(data.message || 'Adres niet gevonden.');
                             }
                         })
-                            .then(response => response.json())
-                            .then(data => {
-                                console.log('Lookup response:', data);
-                                if (data.success) {
-
-                                    if (street) {
-                                        street.value = data.street || '';
-                                        // Trigger input event to notify any listeners
-                                        street.dispatchEvent(new Event('input', { bubbles: true }));
-                                    }
-                                    if (city) {
-                                        city.value = data.city || '';
-                                        // Trigger input event to notify any listeners
-                                        city.dispatchEvent(new Event('input', { bubbles: true }));
-                                    }
-                                    if (state) {
-                                        state.value = data.state || '';
-                                        // Trigger input event to notify any listeners
-                                        state.dispatchEvent(new Event('input', { bubbles: true }));
-                                    }
-                                } else {
-                                    alert(data.message || 'Adres niet gevonden.');
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                alert('Fout bij opzoeken adres: ' + error.message);
-                            })
-                            .finally(() => {
-                                lookupBtn.disabled = false;
-                                lookupBtn.textContent = 'Adres opzoeken';
-                            });
-                    }
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Fout bij opzoeken adres: ' + error.message);
+                        })
+                        .finally(() => {
+                            lookupBtn.disabled = false;
+                            lookupBtn.textContent = 'Adres opzoeken';
+                        });
                 }
+            }
 
-            });
-        </script>
-    @endverbatim
+        });
+    </script>
 @endPushOnce

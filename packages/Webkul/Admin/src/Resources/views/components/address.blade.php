@@ -218,14 +218,10 @@
         // Function to initialize address lookup button
         function initializeAddressLookupButton(addressId) {
             const buttonId = addressId + '-lookup-btn';
-            console.log('Looking for button with ID:', buttonId);
-            console.log('AddressId:', addressId);
-            
+
             const button = document.querySelector('#' + buttonId);
-            console.log('Button found:', button);
-            
+
             if (button && !button.hasAttribute('data-lookup-initialized')) {
-                console.log('Initializing button:', button.id);
                 button.setAttribute('data-lookup-initialized', 'true');
                 button.addEventListener('click', function(e) {
                     e.preventDefault();
@@ -238,8 +234,6 @@
                         console.error('Address component config not found for:', addressId);
                         return;
                     }
-                    console.log('street id = '+addressConfig.streetId);
-
                     // Only target fields within this specific address component
                     const addressContainer = lookupBtn.closest('.flex.flex-col.gap-4');
                     const postcode = addressContainer.querySelector('#' + addressConfig.postalCodeId);
@@ -272,7 +266,6 @@
                     })
                         .then(response => response.json())
                         .then(data => {
-                            console.log('Lookup response:', data);
                             if (data.success) {
 
                                 if (street) {
@@ -311,14 +304,13 @@
             // Wait a bit for all elements to be loaded
             setTimeout(function() {
                 initializeAddressLookupButton('{{ $addressId }}');
-                
+
                 // Also try to initialize any other address buttons that might exist
                 const allAddressButtons = document.querySelectorAll('button[id*="lookup-btn"]');
                 allAddressButtons.forEach(function(button) {
                     if (!button.hasAttribute('data-lookup-initialized')) {
                         const buttonId = button.id;
                         const addressId = buttonId.replace('-lookup-btn', '');
-                        console.log('Found uninitialized button:', buttonId, 'for address:', addressId);
                         initializeAddressLookupButton(addressId);
                     }
                 });
@@ -340,7 +332,6 @@
                             cityId: 'new_org_address_city',
                             stateId: 'new_org_address_state'
                         };
-                        console.log('Created address config for new_org_address');
                     }
                     initializeAddressLookupButton('new_org_address');
                 }, 100);
@@ -355,7 +346,7 @@
                     const buttonId = button.id;
                     const addressId = buttonId.replace('-lookup-btn', '');
                     console.log('Fallback: Found uninitialized button:', buttonId, 'for address:', addressId);
-                    
+
                     // Create config if it doesn't exist
                     if (!window.addressComponents[addressId]) {
                         window.addressComponents[addressId] = {
@@ -366,9 +357,8 @@
                             cityId: addressId + '_city',
                             stateId: addressId + '_state'
                         };
-                        console.log('Created address config for', addressId);
                     }
-                    
+
                     initializeAddressLookupButton(addressId);
                 }
             });

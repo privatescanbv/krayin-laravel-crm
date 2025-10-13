@@ -538,6 +538,7 @@ return [
             ],
             'create' => [
                 'title' => 'Organisatie aanmaken',
+                'name' => 'Naam',
                 'save-btn' => 'Organisatie opslaan',
                 'address' => 'Adres',
             ],

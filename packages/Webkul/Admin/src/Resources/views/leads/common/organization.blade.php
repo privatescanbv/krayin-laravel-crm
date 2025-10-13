@@ -1,1 +1,1 @@
-@include('admin::leads.common.organization-vue')
+@include('admin::leads.common.organization-vue', ['selectedOrganization' => $organization ?? null])

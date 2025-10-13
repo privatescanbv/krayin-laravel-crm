@@ -103,8 +103,13 @@ class LeadValidationService
         }
 
         // Enforce: at least one contact (email or phone) must be provided
-        // Add a custom validation rule for contact requirement
-        $rules['contact_requirement'] = [
+        // Attach as a closure on a guaranteed field so it always runs
+        $baseFirstNameRules = is_string($rules['first_name'])
+            ? array_filter(explode('|', $rules['first_name']))
+            : (array) $rules['first_name'];
+
+        $rules['first_name'] = [
+            ...$baseFirstNameRules,
             function ($attribute, $value, $fail) use ($request) {
                 $data = $request?->all() ?? request()->all();
 

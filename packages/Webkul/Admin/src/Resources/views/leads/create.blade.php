@@ -890,106 +890,57 @@
                         });
                         
                         // Remove existing error messages
-                        const errorMessages = this.$refs.leadForm.querySelectorAll('.field-error-message');
+                        const errorMessages = this.$refs.leadForm.querySelectorAll('.field-error-message, .contact-error');
                         errorMessages.forEach(msg => msg.remove());
                     },
 
                     showFieldError(fieldName, errorMessage) {
                         if (!this.$refs.leadForm) return;
                         
-                        // Handle contact requirement error - show it in both email and phone sections
-                        if (fieldName === 'contact_requirement') {
-                            this.showContactRequirementError(errorMessage);
+                        // If it's the contact requirement error on first_name, show it in phone/email sections instead
+                        if (fieldName === 'first_name' && errorMessage.includes('e-mail of telefoonnummer')) {
+                            this.showContactError(errorMessage);
                             return;
                         }
                         
-                        // Handle phone validation errors
-                        if (fieldName.startsWith('phones.')) {
-                            const phoneIndex = fieldName.match(/phones\.(\d+)\.value/);
-                            if (phoneIndex) {
-                                const index = phoneIndex[1];
-                                const phoneInput = this.$refs.leadForm.querySelector(`input[name="phones[${index}][value]"]`);
-                                if (phoneInput) {
-                                    phoneInput.classList.remove('border-gray-300', 'focus:border-blue-500', 'focus:ring-blue-500');
-                                    phoneInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
-                                    
-                                    // Add error message below the input
-                                    const existingError = phoneInput.parentNode.querySelector('.field-error-message');
-                                    if (existingError) {
-                                        existingError.remove();
-                                    }
-                                    
-                                    const errorDiv = document.createElement('div');
-                                    errorDiv.className = 'field-error-message mt-1 text-sm text-red-600';
-                                    errorDiv.textContent = errorMessage;
-                                    phoneInput.parentNode.appendChild(errorDiv);
-                                }
+                        // Handle other field errors normally
+                        const fieldInput = this.$refs.leadForm.querySelector(`[name="${fieldName}"]`);
+                        if (fieldInput) {
+                            fieldInput.classList.remove('border-gray-300', 'focus:border-blue-500', 'focus:ring-blue-500');
+                            fieldInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
+                            
+                            const existingError = fieldInput.parentNode.querySelector('.field-error-message');
+                            if (existingError) {
+                                existingError.remove();
                             }
-                        }
-                        // Handle email validation errors
-                        else if (fieldName.startsWith('emails.')) {
-                            const emailIndex = fieldName.match(/emails\.(\d+)\.value/);
-                            if (emailIndex) {
-                                const index = emailIndex[1];
-                                const emailInput = this.$refs.leadForm.querySelector(`input[name="emails[${index}][value]"]`);
-                                if (emailInput) {
-                                    emailInput.classList.remove('border-gray-300', 'focus:border-blue-500', 'focus:ring-blue-500');
-                                    emailInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
-                                    
-                                    // Add error message below the input
-                                    const existingError = emailInput.parentNode.querySelector('.field-error-message');
-                                    if (existingError) {
-                                        existingError.remove();
-                                    }
-                                    
-                                    const errorDiv = document.createElement('div');
-                                    errorDiv.className = 'field-error-message mt-1 text-sm text-red-600';
-                                    errorDiv.textContent = errorMessage;
-                                    emailInput.parentNode.appendChild(errorDiv);
-                                }
-                            }
-                        }
-                        // Handle other field errors
-                        else {
-                            const fieldInput = this.$refs.leadForm.querySelector(`[name="${fieldName}"]`);
-                            if (fieldInput) {
-                                fieldInput.classList.remove('border-gray-300', 'focus:border-blue-500', 'focus:ring-blue-500');
-                                fieldInput.classList.add('border-red-500', 'focus:border-red-500', 'focus:ring-red-500');
-                                
-                                // Add error message below the input
-                                const existingError = fieldInput.parentNode.querySelector('.field-error-message');
-                                if (existingError) {
-                                    existingError.remove();
-                                }
-                                
-                                const errorDiv = document.createElement('div');
-                                errorDiv.className = 'field-error-message mt-1 text-sm text-red-600';
-                                errorDiv.textContent = errorMessage;
-                                fieldInput.parentNode.appendChild(errorDiv);
-                            }
+                            
+                            const errorDiv = document.createElement('div');
+                            errorDiv.className = 'field-error-message mt-1 text-sm text-red-600';
+                            errorDiv.textContent = errorMessage;
+                            fieldInput.parentNode.appendChild(errorDiv);
                         }
                     },
 
-                    showContactRequirementError(errorMessage) {
+                    showContactError(errorMessage) {
                         // Show error in both email and phone sections
                         if (this.$refs.emailsSection) {
-                            this.addSectionError(this.$refs.emailsSection, errorMessage);
+                            this.addErrorToSection(this.$refs.emailsSection, errorMessage);
                         }
                         if (this.$refs.phonesSection) {
-                            this.addSectionError(this.$refs.phonesSection, errorMessage);
+                            this.addErrorToSection(this.$refs.phonesSection, errorMessage);
                         }
                     },
 
-                    addSectionError(section, errorMessage) {
-                        // Remove existing contact requirement error
-                        const existingError = section.querySelector('.contact-requirement-error');
+                    addErrorToSection(section, errorMessage) {
+                        // Remove existing error
+                        const existingError = section.querySelector('.contact-error');
                         if (existingError) {
                             existingError.remove();
                         }
                         
-                        // Add error message at the top of the section
+                        // Add error message
                         const errorDiv = document.createElement('div');
-                        errorDiv.className = 'contact-requirement-error mb-2 rounded border border-red-400 bg-red-100 px-3 py-2 text-red-800 dark:bg-red-900 dark:text-red-200';
+                        errorDiv.className = 'contact-error mb-2 rounded border border-red-400 bg-red-100 px-3 py-2 text-red-800';
                         errorDiv.textContent = errorMessage;
                         section.insertBefore(errorDiv, section.firstChild);
                     }

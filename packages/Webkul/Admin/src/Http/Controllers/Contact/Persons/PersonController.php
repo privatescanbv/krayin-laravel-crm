@@ -376,8 +376,8 @@ class PersonController extends Controller
                 $isFieldedSearch = str_contains($searchTerm, ':');
 
                 if (!$clientProvidedSearchFields && !$isFieldedSearch) {
-                    // Free-text input: include emails/phones plus name fields and add JSON-aware matching
-                    $searchFields = 'first_name:like;last_name:like;married_name:like;emails:like;phones:like';
+                    // Free-text input: include name fields only, handle emails/phones separately with JSON-aware matching
+                    $searchFields = 'first_name:like;last_name:like;married_name:like';
 
                     request()->merge([
                         'search' => $searchTerm,
@@ -385,14 +385,17 @@ class PersonController extends Controller
                         'searchJoin' => 'or',
                     ]);
 
-                    // Improve JSON emails/phones matching by targeting the value key inside the JSON arrays
+                    // Add JSON-aware matching for emails/phones separately to avoid conflicts
                     $this->personRepository->scopeQuery(function ($q) use ($searchTerm) {
                         $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $searchTerm);
                         $jsonLike = '%"value":"%' . $escaped . '%"%';
 
-                        return $q->where(function ($qb) use ($jsonLike) {
+                        return $q->where(function ($qb) use ($jsonLike, $searchTerm) {
+                            // Add OR conditions for JSON fields
                             $qb->orWhere('emails', 'like', $jsonLike)
-                                ->orWhere('phones', 'like', $jsonLike);
+                                ->orWhere('phones', 'like', $jsonLike)
+                                ->orWhere('emails', 'like', '%' . $searchTerm . '%')
+                                ->orWhere('phones', 'like', '%' . $searchTerm . '%');
                         });
                     });
                 } else {

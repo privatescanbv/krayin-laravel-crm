@@ -16,7 +16,7 @@
             src="{{ route('admin.contacts.organizations.search') }}"
             name="organization_id"
             label="Naam"
-            value="{{ json_encode($organization) }}"
+            value="{{ $organization ? json_encode($organization) : '' }}"
             placeholder="Zoek organisatie..."
             :can-add-new="false"
         />
@@ -222,6 +222,8 @@
 
 @pushOnce('scripts')
 <script>
+const ORGANIZATION_STORE_URL = '{{ route("admin.contacts.organizations.store") }}';
+
 function toggleOrganizationForm() {
     const form = document.getElementById('organization-form');
     const btn = document.getElementById('add-organization-btn');
@@ -304,7 +306,7 @@ async function saveNewOrganization() {
         formData.append('address[state]', state);
         formData.append('address[country]', country);
 
-        const response = await fetch('{{ route("admin.contacts.organizations.store") }}', {
+        const response = await fetch(ORGANIZATION_STORE_URL, {
             method: 'POST',
             body: formData,
             headers: {

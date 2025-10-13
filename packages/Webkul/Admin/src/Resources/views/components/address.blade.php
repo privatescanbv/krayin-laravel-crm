@@ -19,7 +19,7 @@
                         name="address[postal_code]"
                         :value="old('address.postal_code', $entity?->address?->postal_code ?? '')"
                         placeholder="1234 AB"
-                        :id="$id ?? 'address_postal_code'"
+                        id="address_postal_code"
                     />
                     <x-admin::form.control-group.error control-name="address.postal_code"/>
                 </x-admin::form.control-group>
@@ -34,7 +34,7 @@
                         name="address[house_number]"
                         :value="old('address.house_number', $entity?->address?->house_number ?? '')"
                         placeholder="123"
-                        :id="($id ?? 'address') . '_house_number'"
+                        id="address_house_number"
                     />
                     <x-admin::form.control-group.error control-name="address.house_number"/>
                 </x-admin::form.control-group>
@@ -43,7 +43,7 @@
             <!-- Lookup button -->
             <div class="flex-shrink-0 flex flex-col justify-end">
                 <div class="mb-4 flex items-end h-full">
-                <button type="button" :id="($id ?? 'address') . '-lookup-btn'"
+                <button type="button" id="address-lookup-btn"
                         class="address-lookup-button px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-w-[120px]">
                     Adres opzoeken
                 </button>

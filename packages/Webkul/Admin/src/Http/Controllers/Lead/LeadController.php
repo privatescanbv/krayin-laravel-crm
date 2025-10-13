@@ -681,7 +681,7 @@ class LeadController extends Controller
                 LeadStatusTransitionValidator::validateTransition($lead, $data['lead_pipeline_stage_id']);
             } catch (ValidationException $e) {
                 return response()->json([
-                    'message' => 'Status transitie validatie gefaald',
+                    'message' => 'Status transitie validatie gefaald: '.$e->getMessage(),
                     'errors' => $e->errors(),
                 ], 422);
             }

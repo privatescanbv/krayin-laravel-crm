@@ -215,9 +215,14 @@
 
                     this.nextStage = stage;
 
-                    // Default 'Gesloten op' (closed_at) to today in d-m-YYYY (nl-NL) only if empty for any 'lost*' stage
-                    if (this.nextStage?.code && String(this.nextStage.code).toLowerCase().startsWith('lost') && !this.nextStage.closed_at) {
-                        this.nextStage.closed_at = new Date().toLocaleDateString('nl-NL');
+                    // Default 'Gesloten op' (closed_at) to today in d-m-YYYY (nl-NL)
+                    // - when transitioning to any 'lost*' stage
+                    // - when transitioning to any 'won*' stage
+                    if (this.nextStage?.code && !this.nextStage.closed_at) {
+                        const code = String(this.nextStage.code).toLowerCase();
+                        if (code.startsWith('lost') || code.startsWith('won')) {
+                            this.nextStage.closed_at = new Date().toLocaleDateString('nl-NL');
+                        }
                     }
 
                     this.$refs.stageUpdateModal.open();

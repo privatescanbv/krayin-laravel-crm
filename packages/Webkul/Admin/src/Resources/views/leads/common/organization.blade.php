@@ -26,12 +26,6 @@
         <div id="selected-organization-info" class="mt-2 text-sm text-green-600 dark:text-green-400" style="display: none;">
             <i class="icon-check-circle"></i> <span id="selected-org-name"></span>
         </div>
-        
-        <script>
-        console.log('DEBUG: HTML elements check:');
-        console.log('DEBUG: selected-organization-info:', document.getElementById('selected-organization-info'));
-        console.log('DEBUG: selected-org-name:', document.getElementById('selected-org-name'));
-        </script>
     </div>
 
     <!-- Add New Organization Button -->
@@ -175,8 +169,8 @@ function showSelectedOrganization(orgName) {
     console.log('DEBUG: showSelectedOrganization called with:', orgName);
     const selectedOrgInfo = document.getElementById('selected-organization-info');
     const selectedOrgName = document.getElementById('selected-org-name');
-    console.log('DEBUG: selectedOrgInfo found:', selectedOrgInfo);
-    console.log('DEBUG: selectedOrgName found:', selectedOrgName);
+    console.log('DEBUG: selectedOrgInfo found:', !!selectedOrgInfo);
+    console.log('DEBUG: selectedOrgName found:', !!selectedOrgName);
     if (selectedOrgInfo && selectedOrgName && orgName) {
         selectedOrgName.textContent = orgName;
         selectedOrgInfo.style.display = 'block';
@@ -277,8 +271,8 @@ async function saveNewOrganization() {
                 console.log('DEBUG: Trying to show selected organization info');
                 const selectedOrgInfo = document.getElementById('selected-organization-info');
                 const selectedOrgName = document.getElementById('selected-org-name');
-                console.log('DEBUG: selectedOrgInfo found:', selectedOrgInfo);
-                console.log('DEBUG: selectedOrgName found:', selectedOrgName);
+                console.log('DEBUG: selectedOrgInfo found:', !!selectedOrgInfo);
+                console.log('DEBUG: selectedOrgName found:', !!selectedOrgName);
                 console.log('DEBUG: result.data.name:', result.data.name);
                 if (selectedOrgInfo && selectedOrgName && result.data.name) {
                     selectedOrgName.textContent = result.data.name;
@@ -377,5 +371,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Debug: Check if HTML elements exist
+console.log('DEBUG: HTML elements check:');
+console.log('DEBUG: selected-organization-info:', document.getElementById('selected-organization-info'));
+console.log('DEBUG: selected-org-name:', document.getElementById('selected-org-name'));
 </script>
 @endPushOnce

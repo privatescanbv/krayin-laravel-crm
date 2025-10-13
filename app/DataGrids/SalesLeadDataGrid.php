@@ -108,14 +108,14 @@ class SalesLeadDataGrid extends DataGrid
         $this->addAction([
             'title'  => 'Edit',
             'method' => 'GET',
-            'route'  => 'admin.workflow-leads.edit',
+            'route'  => 'admin.sales-leads.edit',
             'icon'   => 'icon-edit',
         ]);
 
         $this->addAction([
             'title'  => 'Delete',
             'method' => 'DELETE',
-            'route'  => 'admin.workflow-leads.delete',
+            'route'  => 'admin.sales-leads.delete',
             'icon'   => 'icon-delete',
         ]);
     }

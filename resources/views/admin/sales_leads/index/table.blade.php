@@ -1,6 +1,6 @@
-{!! view_render_event('admin.workflow-leads.index.table.before') !!}
+{!! view_render_event('admin.sales-leads.index.table.before') !!}
 
-<x-admin::datagrid :src="route('admin.workflow-leads.index', ['view_type' => 'table'])">
+<x-admin::datagrid :src="route('admin.sales-leads.index', ['view_type' => 'table'])">
     <!-- DataGrid Shimmer -->
     <x-admin::shimmer.datagrid />
 
@@ -9,4 +9,4 @@
     </x-slot>
 </x-admin::datagrid>
 
-{!! view_render_event('admin.workflow-leads.index.table.after') !!}
+{!! view_render_event('admin.sales-leads.index.table.after') !!}

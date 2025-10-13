@@ -16,8 +16,8 @@
                 <!-- Breadcrumb's -->
                 <div class="flex items-center justify-between">
                     <x-admin::breadcrumbs
-                        name="workflow-leads.view"
-                        :entity="$workflowLead"
+                        name="sales-leads.view"
+                        :entity="$salesLead"
                     />
                 </div>
 
@@ -76,10 +76,10 @@
 
                 <!-- No Open Activities Warning for Sales Lead -->
                 @php
-                    $stageCode = strtolower($workflowLead->pipelineStage->code ?? '');
+                    $stageCode = strtolower($salesLead->pipelineStage->code ?? '');
                     $isWonOrLost = str_starts_with($stageCode, 'won') || str_starts_with($stageCode, 'lost');
                 @endphp
-                @if (($workflowLead->open_activities_count ?? 0) === 0 && ! $isWonOrLost)
+                @if (($salesLead->open_activities_count ?? 0) === 0 && ! $isWonOrLost)
                     <div
                         class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
                         <div class="flex items-center gap-2">
@@ -98,13 +98,13 @@
                     @if (bouncer()->hasPermission('mail.compose'))
                         <!-- Mail Activity Action -->
                         <x-admin::activities.actions.mail
-                            :entity="$workflowLead"
+                            :entity="$salesLead"
                             entity-control-name="sales_lead_id"
                         />
                     @endif
 
                     @if (bouncer()->hasPermission('orders.create'))
-                        <a href="{{ route('admin.orders.create', ['sales_lead_id' => $workflowLead->id]) }}"
+                        <a href="{{ route('admin.orders.create', ['sales_lead_id' => $salesLead->id]) }}"
                            class="primary-button">
                             Order aanmaken
                         </a>
@@ -113,19 +113,19 @@
                     @if (bouncer()->hasPermission('activities.create'))
                         <!-- File Activity Action -->
                         <x-admin::activities.actions.file
-                            :entity="$workflowLead"
+                            :entity="$salesLead"
                             entity-control-name="sales_lead_id"
                         />
 
                         <!-- Note Activity Action -->
                         <x-admin::activities.actions.note
-                            :entity="$workflowLead"
+                            :entity="$salesLead"
                             entity-control-name="sales_lead_id"
                         />
 
                         <!-- Activity Action -->
                         <x-admin::activities.actions.activity
-                            :entity="$workflowLead"
+                            :entity="$salesLead"
                             entity-control-name="sales_lead_id"
                         />
                     @endif
@@ -174,18 +174,18 @@
         <div class="flex w-full flex-col gap-4 rounded-lg">
             <!-- Stages Navigation -->
             @include('admin::leads.view.stages',[
-                'overridePipeline' => $workflowLead->pipelineStage->pipeline ?? $lead->pipeline,
-                'overrideStage' => $workflowLead->pipelineStage ?? $lead->stage,
-                'overrideUpdateUrl' => route('admin.workflow-leads.stage.update', $workflowLead->id),
-                'workflowLead' => $workflowLead,
+                'overridePipeline' => $salesLead->pipelineStage->pipeline ?? $lead->pipeline,
+                'overrideStage' => $salesLead->pipelineStage ?? $lead->stage,
+                'overrideUpdateUrl' => route('admin.sales-leads.stage.update', $salesLead->id),
+                'salesLead' => $salesLead,
             ])
 
             <!-- Activities -->
             {!! view_render_event('admin.leads.view.activities.before', ['lead' => $lead]) !!}
 
             <x-admin::activities
-                :endpoint="route('admin.workflow-leads.activities.index', $workflowLead->id)"
-                :email-detach-endpoint="route('admin.workflow-leads.emails.detach', ['id' => $workflowLead->id, 'emailId' => '__EMAIL_ID__'])"
+                :endpoint="route('admin.sales-leads.activities.index', $salesLead->id)"
+                :email-detach-endpoint="route('admin.sales-leads.emails.detach', ['id' => $salesLead->id, 'emailId' => '__EMAIL_ID__'])"
                 :activeType="request()->query('from') === 'quotes' ? 'quotes' : 'planned'"
                 :extra-types="[
                     ['name' => 'description', 'label' => trans('admin::app.leads.view.tabs.description')],
@@ -276,7 +276,7 @@
                                 }
 
                                 this.isSubmittingSalesLead = true;
-                                const url = "{{ route('admin.workflow-leads.lost', $workflowLead->id) }}";
+                                const url = "{{ route('admin.sales-leads.lost', $salesLead->id) }}";
                                 this.$axios.put(url, {
                                     lost_reason: this.salesLeadAfvoerenData.lost_reason,
                                     closed_at: this.salesLeadAfvoerenData.closed_at,

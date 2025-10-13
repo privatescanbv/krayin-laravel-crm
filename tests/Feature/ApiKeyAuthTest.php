@@ -115,7 +115,7 @@ test('GET request to leads index requires API key', function () {
     $response->assertStatus(200);
 });
 
-test('workflow-leads endpoint requires API key', function () {
+test('sales-leads endpoint requires API key', function () {
     // Test without API key
     $response = $this->postJson('/api/sales-leads', [
         'title'      => 'Test Workflow Lead',

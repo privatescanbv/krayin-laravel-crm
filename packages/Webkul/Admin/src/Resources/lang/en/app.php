@@ -2502,7 +2502,7 @@ return [
         'product-groups'       => 'Product Groups',
         'products'             => 'Products',
         'product-groups'       => 'Product Groups',  // Nieuwe taal key
-        'workflow-leads'       => 'Backoffice',
+        'sales-leads'       => 'Backoffice',
         'clinics'              => 'Clinics',
         'clinics-info'         => 'Manage clinics',
         'partner_products'     => 'Partner Products',

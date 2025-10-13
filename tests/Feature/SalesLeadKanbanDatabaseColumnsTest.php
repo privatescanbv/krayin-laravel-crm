@@ -26,7 +26,7 @@ beforeEach(function () {
 
 function getSalesLeadKanban(string $pipelineId)
 {
-    return test()->getJson(route('admin.workflow-leads.get', [
+    return test()->getJson(route('admin.sales-leads.get', [
         'pipeline_id' => $pipelineId,
     ]));
 }

@@ -5,33 +5,33 @@ use App\Http\Controllers\Admin\SalesLeadEmailController;
 use Illuminate\Support\Facades\File;
 
 /**
- * Workflow routes.
+ * Sales Lead routes.
  */
 Route::group(['middleware' => ['user']], function () {
-    Route::get('workflow-leads', [SalesLeadController::class, 'index'])->name('admin.workflow-leads.index');
-    Route::get('workflow-leads/get', [SalesLeadController::class, 'get'])->name('admin.workflow-leads.get');
-    Route::get('workflow-leads/create', [SalesLeadController::class, 'create'])->name('admin.workflow-leads.create');
-    Route::post('workflow-leads/create', [SalesLeadController::class, 'store'])->name('admin.workflow-leads.store');
-    Route::get('workflow-leads/edit/{id}', [SalesLeadController::class, 'edit'])->name('admin.workflow-leads.edit');
-    Route::put('workflow-leads/edit/{id}', [SalesLeadController::class, 'update'])->name('admin.workflow-leads.update');
-    Route::get('workflow-leads/view/{id}', [SalesLeadController::class, 'view'])->name('admin.workflow-leads.view');
-    Route::put('workflow-leads/{id}/stage', [SalesLeadController::class, 'updateStage'])->name('admin.workflow-leads.stage.update');
-    Route::put('workflow-leads/{id}/lost', [SalesLeadController::class, 'lost'])->name('admin.workflow-leads.lost');
-    Route::delete('workflow-leads/{id}', [SalesLeadController::class, 'delete'])->name('admin.workflow-leads.delete');
-    Route::get('workflow-leads/search', [SalesLeadController::class, 'search'])->name('admin.workflow-leads.search');
+    Route::get('sales-leads', [SalesLeadController::class, 'index'])->name('admin.sales-leads.index');
+    Route::get('sales-leads/get', [SalesLeadController::class, 'get'])->name('admin.sales-leads.get');
+    Route::get('sales-leads/create', [SalesLeadController::class, 'create'])->name('admin.sales-leads.create');
+    Route::post('sales-leads/create', [SalesLeadController::class, 'store'])->name('admin.sales-leads.store');
+    Route::get('sales-leads/edit/{id}', [SalesLeadController::class, 'edit'])->name('admin.sales-leads.edit');
+    Route::put('sales-leads/edit/{id}', [SalesLeadController::class, 'update'])->name('admin.sales-leads.update');
+    Route::get('sales-leads/view/{id}', [SalesLeadController::class, 'view'])->name('admin.sales-leads.view');
+    Route::put('sales-leads/{id}/stage', [SalesLeadController::class, 'updateStage'])->name('admin.sales-leads.stage.update');
+    Route::put('sales-leads/{id}/lost', [SalesLeadController::class, 'lost'])->name('admin.sales-leads.lost');
+    Route::delete('sales-leads/{id}', [SalesLeadController::class, 'delete'])->name('admin.sales-leads.delete');
+    Route::get('sales-leads/search', [SalesLeadController::class, 'search'])->name('admin.sales-leads.search');
     
     // Activity routes
-    Route::get('workflow-leads/{id}/activities', [SalesLeadController::class, 'activities'])->name('admin.workflow-leads.activities.index');
-    Route::post('workflow-leads/{id}/activities', [SalesLeadController::class, 'storeActivity'])->name('admin.workflow-leads.activities.store');
+    Route::get('sales-leads/{id}/activities', [SalesLeadController::class, 'activities'])->name('admin.sales-leads.activities.index');
+    Route::post('sales-leads/{id}/activities', [SalesLeadController::class, 'storeActivity'])->name('admin.sales-leads.activities.store');
     
     // Email routes
-    Route::controller(SalesLeadEmailController::class)->prefix('workflow-leads/{id}/emails')->group(function () {
-        Route::post('', 'store')->name('admin.workflow-leads.emails.store');
-        Route::delete('', 'detach')->name('admin.workflow-leads.emails.detach');
+    Route::controller(SalesLeadEmailController::class)->prefix('sales-leads/{id}/emails')->group(function () {
+        Route::post('', 'store')->name('admin.sales-leads.emails.store');
+        Route::delete('', 'detach')->name('admin.sales-leads.emails.detach');
     });
 
     // Temporary debug route
-    Route::get('workflow-leads/debug/{id}', [SalesLeadController::class, 'debug'])->name('admin.workflow-leads.debug');
+    Route::get('sales-leads/debug/{id}', [SalesLeadController::class, 'debug'])->name('admin.sales-leads.debug');
 });
 
 /**

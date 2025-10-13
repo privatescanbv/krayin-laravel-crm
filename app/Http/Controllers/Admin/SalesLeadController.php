@@ -73,7 +73,7 @@ class SalesLeadController extends Controller
             return $dataGrid->toJson();
         }
 
-        // For kanban view, return workflow leads grouped by pipeline stages
+        // For kanban view, return sales leads grouped by pipeline stages
         $pipelineRepository = app('Webkul\Lead\Repositories\PipelineRepository');
 
         // Get selected pipeline or default workflow pipeline
@@ -88,7 +88,7 @@ class SalesLeadController extends Controller
         }
 
         if (! $pipeline) {
-            Log::error('No default pipeline found for workflow leads.');
+            Log::error('No default pipeline found for sales leads.');
 
             return response()->json([
                 'error' => 'No workflow pipeline found for this request.',
@@ -167,8 +167,8 @@ class SalesLeadController extends Controller
 
         $salesLead = SalesLead::create($request->all());
 
-        return redirect()->route('admin.workflow-leads.index')
-            ->with('success', 'Workflow lead created successfully.');
+        return redirect()->route('admin.sales-leads.index')
+            ->with('success', 'Sales lead created successfully.');
     }
 
     public function edit($id)
@@ -181,7 +181,7 @@ class SalesLeadController extends Controller
             'description' => $salesLead->description,
         ]);
 
-        return view('admin.sales_leads.edit', ['workflowLead' => $salesLead]);
+        return view('admin.sales_leads.edit', ['salesLead' => $salesLead]);
     }
 
     public function update(Request $request, $id)
@@ -200,13 +200,13 @@ class SalesLeadController extends Controller
         // If this is an AJAX request (like from kanban drag & drop), return JSON
         if ($request->ajax()) {
             return response()->json([
-                'message'       => 'Workflow lead updated successfully.',
-                'workflow_lead' => $salesLead,
+                'message'       => 'Sales lead updated successfully.',
+                'sales_lead' => $salesLead,
             ]);
         }
 
-        return redirect()->route('admin.workflow-leads.index')
-            ->with('success', 'Workflow lead updated successfully.');
+        return redirect()->route('admin.sales-leads.index')
+            ->with('success', 'Sales lead updated successfully.');
     }
 
     public function view($id)
@@ -225,7 +225,7 @@ class SalesLeadController extends Controller
             ]);
 
             return response()->view('errors.404', [
-                'message' => 'Deze workflow lead heeft geen gekoppelde lead. Workflow Lead: '.$salesLead->name,
+                'message' => 'Deze sales lead heeft geen gekoppelde lead. Sales Lead: '.$salesLead->name,
             ], 404);
         }
         $lead = Lead::findOrFail($salesLead->lead_id);
@@ -244,7 +244,7 @@ class SalesLeadController extends Controller
         $orders = Order::where('sales_lead_id', $salesLead->id)->get();
 
         return view('admin.sales_leads.view', [
-            'workflowLead' => $salesLead,
+            'salesLead' => $salesLead,
             'lead'         => $lead,
             'orders'       => $orders,
         ]);
@@ -261,7 +261,7 @@ class SalesLeadController extends Controller
             'pipeline_stage_id' => request('lead_pipeline_stage_id'),
         ]);
 
-        // Optionally close open activities for this workflow lead when requested (parity with lead stage update)
+        // Optionally close open activities for this sales lead when requested (parity with lead stage update)
         if (request()->boolean('close_open_activities')) {
             Activity::where('sales_lead_id', $salesLead->id)
                 ->where('is_done', 0)
@@ -269,7 +269,7 @@ class SalesLeadController extends Controller
         }
 
         return response()->json([
-            'message' => 'Workflow lead stage updated successfully.',
+            'message' => 'Sales lead stage updated successfully.',
         ]);
     }
 
@@ -384,8 +384,8 @@ class SalesLeadController extends Controller
         $salesLead = SalesLead::findOrFail($id);
         $salesLead->delete();
 
-        return redirect()->route('admin.workflow-leads.index')
-            ->with('success', 'Workflow lead deleted successfully.');
+        return redirect()->route('admin.sales-leads.index')
+            ->with('success', 'Sales lead deleted successfully.');
     }
 
     /**
@@ -429,7 +429,7 @@ class SalesLeadController extends Controller
         $person = $salesLead->lead ? $salesLead->lead->persons()->first() : null;
 
         return response()->json([
-            'workflow_lead' => [
+            'sales_lead' => [
                 'id'          => $salesLead->id,
                 'name'        => $salesLead->name,
                 'description' => $salesLead->description,

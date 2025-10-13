@@ -1,9 +1,9 @@
-{!! view_render_event('admin.workflow-leads.index.view_switcher.before') !!}
+{!! view_render_event('admin.sales-leads.index.view_switcher.before') !!}
 
 <div class="flex items-center gap-4 max-md:w-full max-md:!justify-between">
     <x-admin::dropdown>
         <x-slot:toggle>
-            {!! view_render_event('admin.workflow-leads.index.view_switcher.pipeline.button.before') !!}
+            {!! view_render_event('admin.sales-leads.index.view_switcher.pipeline.button.before') !!}
 
             <button
                 type="button"
@@ -16,20 +16,20 @@
                 <span class="icon-down-arrow text-2xl"></span>
             </button>
 
-            {!! view_render_event('admin.workflow-leads.index.view_switcher.pipeline.button.after') !!}
+            {!! view_render_event('admin.sales-leads.index.view_switcher.pipeline.button.after') !!}
         </x-slot>
 
         <x-slot:content class="!p-0">
-            {!! view_render_event('admin.workflow-leads.index.view_switcher.pipeline.content.header.before') !!}
+            {!! view_render_event('admin.sales-leads.index.view_switcher.pipeline.content.header.before') !!}
 
-            {!! view_render_event('admin.workflow-leads.index.view_switcher.pipeline.content.header.after') !!}
+            {!! view_render_event('admin.sales-leads.index.view_switcher.pipeline.content.header.after') !!}
 
             <!-- Pipeline Links -->
             @foreach (app('Webkul\Lead\Repositories\PipelineRepository')->getWorkflowPipelines() as $tempPipeline)
-                {!! view_render_event('admin.workflow-leads.index.view_switcher.pipeline.content.before', ['tempPipeline' => $tempPipeline]) !!}
+                {!! view_render_event('admin.sales-leads.index.view_switcher.pipeline.content.before', ['tempPipeline' => $tempPipeline]) !!}
 
                 <a
-                    href="{{ route('admin.workflow-leads.index', [
+                    href="{{ route('admin.sales-leads.index', [
                         'pipeline_id' => $tempPipeline->id,
                         'view_type'   => request('view_type')
                     ]) }}"
@@ -38,10 +38,10 @@
                     {{ $tempPipeline->name }}
                 </a>
 
-                {!! view_render_event('admin.workflow-leads.index.view_switcher.pipeline.content.after', ['tempPipeline' => $tempPipeline]) !!}
+                {!! view_render_event('admin.sales-leads.index.view_switcher.pipeline.content.after', ['tempPipeline' => $tempPipeline]) !!}
             @endforeach
 
-            {!! view_render_event('admin.workflow-leads.index.view_switcher.pipeline.content.footer.before') !!}
+            {!! view_render_event('admin.sales-leads.index.view_switcher.pipeline.content.footer.before') !!}
 
             <!-- Footer -->
             <a
@@ -54,17 +54,17 @@
                 </span>
             </a>
 
-            {!! view_render_event('admin.workflow-leads.index.view_switcher.pipeline.content.footer.after') !!}
+            {!! view_render_event('admin.sales-leads.index.view_switcher.pipeline.content.footer.after') !!}
         </x-slot>
     </x-admin::dropdown>
 
     <div class="flex items-center gap-0.5">
-        {!! view_render_event('admin.workflow-leads.index.view_switcher.pipeline.view_type.before') !!}
+        {!! view_render_event('admin.sales-leads.index.view_switcher.pipeline.view_type.before') !!}
 
         @if (request('view_type'))
             <a
                 class="flex"
-                href="{{ route('admin.workflow-leads.index', ['pipeline_id' => request('pipeline_id')]) }}"
+                href="{{ route('admin.sales-leads.index', ['pipeline_id' => request('pipeline_id')]) }}"
             >
                 <span class="icon-kanban p-2 text-2xl"></span>
             </a>
@@ -74,7 +74,7 @@
             <span class="icon-kanban rounded-md bg-white p-2 text-2xl dark:bg-gray-900"></span>
 
             <a
-                href="{{ route('admin.workflow-leads.index', [
+                href="{{ route('admin.sales-leads.index', [
                     'view_type' => 'table',
                     'pipeline_id' => request('pipeline_id')
                 ]) }}"
@@ -84,8 +84,8 @@
             </a>
         @endif
 
-        {!! view_render_event('admin.workflow-leads.index.view_switcher.pipeline.view_type.after') !!}
+        {!! view_render_event('admin.sales-leads.index.view_switcher.pipeline.view_type.after') !!}
     </div>
 </div>
 
-{!! view_render_event('admin.workflow-leads.index.view_switcher.after') !!}
+{!! view_render_event('admin.sales-leads.index.view_switcher.after') !!}

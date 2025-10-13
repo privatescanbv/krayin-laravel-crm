@@ -203,17 +203,21 @@ async function saveNewOrganization() {
         });
 
         const result = await response.json();
+        console.log('Save response:', result);
 
         if (response.ok && result.data) {
             // Update the organization lookup with the new organization
             const organizationLookup = document.querySelector('[name="organization_id"]');
             if (organizationLookup) {
                 // Set the value to the new organization
-                document.getElementById('selected_organization_id').value = result.data.id;
+                const selectedOrgId = document.getElementById('selected_organization_id');
+                if (selectedOrgId && result.data.id) {
+                    selectedOrgId.value = result.data.id;
+                }
 
                 // Update the lookup display (this depends on the lookup component implementation)
                 const lookupInput = organizationLookup.closest('.lookup-container')?.querySelector('input[type="text"]');
-                if (lookupInput) {
+                if (lookupInput && result.data.name) {
                     lookupInput.value = result.data.name;
                 }
             }
@@ -231,6 +235,7 @@ async function saveNewOrganization() {
                 alert('Organisatie succesvol aangemaakt!');
             }
         } else {
+            console.error('Save failed:', result);
             throw new Error(result.message || 'Er is een fout opgetreden bij het aanmaken van de organisatie.');
         }
     } catch (error) {

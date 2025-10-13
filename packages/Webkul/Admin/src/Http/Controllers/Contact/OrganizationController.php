@@ -82,7 +82,12 @@ class OrganizationController extends Controller
 
         if (request()->expectsJson() || request()->ajax()) {
             return response()->json([
-                'data'    => new OrganizationResource($organization),
+                'success' => true,
+                'data'    => [
+                    'id' => $organization->id,
+                    'name' => $organization->name,
+                    'address' => $organization->address
+                ],
                 'message' => trans('admin::app.contacts.organizations.index.create-success'),
             ], 200);
         }
@@ -106,7 +111,7 @@ class OrganizationController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(AttributeForm $request, int $id): RedirectResponse
+    public function update(AttributeForm $request, int $id): RedirectResponse|JsonResponse
     {
         Event::dispatch('contacts.organization.update.before', $id);
 

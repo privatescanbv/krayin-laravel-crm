@@ -19,7 +19,7 @@
                         name="address[postal_code]"
                         :value="old('address.postal_code', $entity?->address?->postal_code ?? '')"
                         placeholder="1234 AB"
-                        id="address_postal_code"
+                        :id="$id ?? 'address_postal_code'"
                     />
                     <x-admin::form.control-group.error control-name="address.postal_code"/>
                 </x-admin::form.control-group>
@@ -34,7 +34,7 @@
                         name="address[house_number]"
                         :value="old('address.house_number', $entity?->address?->house_number ?? '')"
                         placeholder="123"
-                        id="address_house_number"
+                        :id="($id ?? 'address') . '_house_number'"
                     />
                     <x-admin::form.control-group.error control-name="address.house_number"/>
                 </x-admin::form.control-group>

@@ -263,7 +263,7 @@ class SalesLeadController extends Controller
 
         // Optionally close open activities for this workflow lead when requested (parity with lead stage update)
         if (request()->boolean('close_open_activities')) {
-            \Webkul\Activity\Models\Activity::where('sales_lead_id', $salesLead->id)
+            Activity::where('sales_lead_id', $salesLead->id)
                 ->where('is_done', 0)
                 ->update(['is_done' => 1]);
         }

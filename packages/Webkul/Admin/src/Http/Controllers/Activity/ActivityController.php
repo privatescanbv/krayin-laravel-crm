@@ -119,7 +119,7 @@ class ActivityController extends Controller
      */
     public function view(int $id): View
     {
-        $activity = $this->activityRepository->with('emails', 'lead')->findOrFail($id);
+        $activity = $this->activityRepository->with('emails', 'lead', 'workflowLead', 'clinic')->findOrFail($id);
 
         $callStatuses = CallStatus::where('activity_id', $activity->id)
             ->with('creator')

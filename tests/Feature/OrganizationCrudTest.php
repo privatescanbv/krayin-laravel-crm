@@ -49,13 +49,13 @@ test('can create organization with address', function () {
 
     // Verify address is created
     $organization = Organization::where('name', 'Test Organization')->first();
-    expect($organization->address)->not->toBeNull();
-    expect($organization->address->postal_code)->toBe('1234 AB');
-    expect($organization->address->house_number)->toBe('123');
-    expect($organization->address->street)->toBe('Teststraat');
-    expect($organization->address->city)->toBe('Amsterdam');
-    expect($organization->address->state)->toBe('Noord-Holland');
-    expect($organization->address->country)->toBe('Nederland');
+    expect($organization->address)->not->toBeNull()
+        ->and($organization->address->postal_code)->toBe('1234AB')
+        ->and($organization->address->house_number)->toBe('123')
+        ->and($organization->address->street)->toBe('Teststraat')
+        ->and($organization->address->city)->toBe('Amsterdam')
+        ->and($organization->address->state)->toBe('Noord-Holland')
+        ->and($organization->address->country)->toBe('Nederland');
 });
 
 test('can create organization via ajax', function () {
@@ -116,11 +116,11 @@ test('can update organization with address', function () {
 
     // Verify address is updated
     $organization->refresh();
-    expect($organization->address)->not->toBeNull();
-    expect($organization->address->postal_code)->toBe('9999 ZZ');
-    expect($organization->address->house_number)->toBe('999');
-    expect($organization->address->street)->toBe('Updated Straat');
-    expect($organization->address->city)->toBe('Rotterdam');
+    expect($organization->address)->not->toBeNull()
+        ->and($organization->address->postal_code)->toBe('9999 ZZ')
+        ->and($organization->address->house_number)->toBe('999')
+        ->and($organization->address->street)->toBe('Updated Straat')
+        ->and($organization->address->city)->toBe('Rotterdam');
 });
 
 test('can update organization and remove address', function () {
@@ -174,7 +174,7 @@ test('can search organizations', function () {
 
     $data = $response->json('data');
     expect($data)->toHaveCount(2);
-    
+
     $names = collect($data)->pluck('name')->toArray();
     expect($names)->toContain('Test Company A', 'Test Company B');
     expect($names)->not->toContain('Different Company');

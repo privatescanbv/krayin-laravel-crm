@@ -222,7 +222,9 @@ test('validates required name field', function () {
         ],
     ];
 
-    $response = $this->postJson(route('admin.contacts.organizations.store'), $payload);
+    $response = $this->postJson(route('admin.contacts.organizations.store'), $payload, [
+        'X-Requested-With' => 'XMLHttpRequest'
+    ]);
     $response->assertStatus(422);
     $response->assertJsonValidationErrors(['name']);
 });
@@ -241,7 +243,9 @@ test('validates max length for name field', function () {
         ],
     ];
 
-    $response = $this->postJson(route('admin.contacts.organizations.store'), $payload);
+    $response = $this->postJson(route('admin.contacts.organizations.store'), $payload, [
+        'X-Requested-With' => 'XMLHttpRequest'
+    ]);
     $response->assertStatus(422);
     $response->assertJsonValidationErrors(['name']);
 });

@@ -103,6 +103,16 @@ class OrganizationController extends Controller
 
         $organization = $this->organizationRepository->update($data, $id);
 
+        if (!$organization) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Organization not found'
+                ], 404);
+            }
+            return redirect()->back()->with('error', 'Organization not found');
+        }
+
         // Handle address update
         if (isset($data['address'])) {
             // Get fresh organization instance with address relationship
@@ -192,23 +202,23 @@ class OrganizationController extends Controller
         $searchTerm = request('search');
         
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
-            $query = $this->organizationRepository
-                ->pushCriteria(app(RequestCriteria::class))
+            $organizations = $this->organizationRepository
                 ->with(['address'])
                 ->findWhereIn('user_id', $userIds);
         } else {
-            $query = $this->organizationRepository
-                ->pushCriteria(app(RequestCriteria::class))
+            $organizations = $this->organizationRepository
                 ->with(['address'])
                 ->all();
         }
 
         // If search term is provided, filter by name
         if (!empty($searchTerm)) {
-            $query = $query->where('name', 'like', '%' . $searchTerm . '%');
+            $organizations = $organizations->filter(function($organization) use ($searchTerm) {
+                return stripos($organization->name, $searchTerm) !== false;
+            });
         }
 
-        return OrganizationResource::collection($query);
+        return OrganizationResource::collection($organizations);
     }
 
 

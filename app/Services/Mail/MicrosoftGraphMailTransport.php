@@ -89,6 +89,7 @@ class MicrosoftGraphMailTransport implements TransportInterface
                 ],
                 'saveToSentItems' => true,
             ];
+            logger()->info('Mail payload ', ['payload'=>$payload]);
 
             // Add attachments if any
             $attachments = $email->getAttachments();
@@ -203,16 +204,13 @@ class MicrosoftGraphMailTransport implements TransportInterface
 
     /**
      * Get the default from address
+     * Always use the service account mailbox to avoid SendAs permission issues
      */
     protected function getDefaultFromAddress(): string
     {
-        $user = auth()->guard('user')->user();
-
-        if ($user && $user->first_name && $user->last_name) {
-            return $this->generateEmailFromUser($user);
-        }
-
-        return config('mail.from.address', 'info@crm.private-scan.nl');
+        // Always use the configured mailbox to avoid SendAs permission issues
+        // The from name will still be personalized based on the user
+        return config('mail.graph.mailbox', 'crm@privatescan.nl');
     }
 
     /**

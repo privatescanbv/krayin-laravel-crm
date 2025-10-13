@@ -41,11 +41,10 @@ GRAPH_SENDER_DOMAIN=crm.private-scan.nl
 
 === Dynamische Afzender
 
-Het systeem genereert automatisch een e-mailadres voor elke gebruiker op basis van:
+Het systeem gebruikt altijd het service account e-mailadres (`crm@privatescan.nl`) om SendAs permission issues te voorkomen, maar personaliseert de afzendernaam op basis van:
 
 * **Voornaam** (`first_name` veld in users tabel)
 * **Achternaam** (`last_name` veld in users tabel)
-* **Domein** (`GRAPH_SENDER_DOMAIN` configuratie)
 
 Voorbeeld:
 
@@ -54,7 +53,8 @@ Voorbeeld:
 Gebruiker: Jan de Vries
 first_name: Jan
 last_name: Vries
-Gegenereerd e-mailadres: jan.vries@crm.private-scan.nl
+E-mailadres: crm@privatescan.nl (service account)
+Afzendernaam: Jan Vries
 ----
 
 === Fallback Mechanisme
@@ -150,6 +150,20 @@ Als e-mails niet verzonden worden:
 2. Controleer of de mailbox (`GRAPH_MAILBOX`) bestaat in Azure AD
 3. Controleer of de gebruiker `first_name` en `last_name` heeft ingevuld
 4. Test de fallback door `MAIL_MAILER=failover` te gebruiken
+
+=== SendAs Permission Errors
+
+**Probleem**: `ErrorSendAsDenied` - The user account does not have the right to send mail on behalf of the specified sending account
+
+**Oorzaak**: De applicatie probeert e-mails te versturen namens een ander e-mailadres dan het service account.
+
+**Oplossing**:
+1. **Gebruik altijd het service account e-mailadres** (`crm@privatescan.nl`) als afzender
+2. **Personaliseer alleen de afzendernaam** op basis van de gebruiker
+3. **Controleer Azure AD permissions**: Zorg dat de applicatie `Mail.Send` application permission heeft
+4. **Grant admin consent** voor alle Microsoft Graph permissions
+
+**Implementatie**: Het systeem gebruikt nu automatisch het geconfigureerde mailbox account als afzender, maar behoudt de personalisatie van de afzendernaam.
 
 === Gebruiker Heeft Geen first_name/last_name
 

@@ -6,6 +6,7 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Webkul\DataGrid\DataGrid;
+use Webkul\DataGrid\Enums\ColumnTypeEnum;
 
 class UserDataGrid extends DataGrid
 {
@@ -142,5 +143,60 @@ class UserDataGrid extends DataGrid
                 ],
             ],
         ]);
+    }
+
+    /**
+     * Override the processRequestedFilters method to handle name search properly.
+     */
+    protected function processRequestedFilters(array $requestedFilters)
+    {
+        foreach ($requestedFilters as $requestedColumn => $requestedValues) {
+            if ($requestedColumn === 'all') {
+                $this->queryBuilder->where(function ($scopeQueryBuilder) use ($requestedValues) {
+                    foreach ($requestedValues as $value) {
+                        collect($this->columns)
+                            ->filter(fn ($column) => $column->getSearchable() && ! in_array($column->getType(), [
+                                ColumnTypeEnum::BOOLEAN->value,
+                                ColumnTypeEnum::AGGREGATE->value,
+                            ]))
+                            ->each(function ($column) use ($scopeQueryBuilder, $value) {
+                                if ($column->getIndex() === 'name') {
+                                    // Handle name search with first_name and last_name
+                                    $scopeQueryBuilder->orWhere(function ($nameQuery) use ($value) {
+                                        $nameQuery->where('users.first_name', 'LIKE', '%'.$value.'%')
+                                                 ->orWhere('users.last_name', 'LIKE', '%'.$value.'%')
+                                                 ->orWhereRaw("CONCAT(users.first_name, ' ', users.last_name) LIKE ?", ['%'.$value.'%']);
+                                    });
+                                } else {
+                                    $scopeQueryBuilder->orWhere($column->getColumnName(), 'LIKE', '%'.$value.'%');
+                                }
+                            });
+                    }
+                });
+            } else {
+                $column = collect($this->columns)
+                    ->first(fn ($column) => $column->getIndex() === $requestedColumn);
+
+                // Gracefully skip unknown filter keys instead of crashing
+                if ($column) {
+                    if ($column->getIndex() === 'name') {
+                        // Handle name search with first_name and last_name
+                        $this->queryBuilder->where(function ($nameQuery) use ($requestedValues) {
+                            foreach ($requestedValues as $value) {
+                                $nameQuery->where(function ($subQuery) use ($value) {
+                                    $subQuery->where('users.first_name', 'LIKE', '%'.$value.'%')
+                                             ->orWhere('users.last_name', 'LIKE', '%'.$value.'%')
+                                             ->orWhereRaw("CONCAT(users.first_name, ' ', users.last_name) LIKE ?", ['%'.$value.'%']);
+                                });
+                            }
+                        });
+                    } else {
+                        $column->processFilter($this->queryBuilder, $requestedValues);
+                    }
+                }
+            }
+        }
+
+        return $this->queryBuilder;
     }
 }

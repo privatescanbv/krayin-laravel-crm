@@ -16,6 +16,8 @@
 
 {!! view_render_event('admin.leads.view.stages.after', ['lead' => $lead]) !!}
 
+@include('admin::leads.partials.open_activities_confirm_helper')
+
 @pushOnce('scripts')
     <script type="text/x-template" id="v-lead-stages-template">
         <!-- Stages Container -->
@@ -265,9 +267,27 @@
                     };
 
                     try {
-                        const openCount = Number({{ $lead->open_activities_count ?? $lead->openActivitiesCount ?? 0 }});
+                        // Compute open activities depending on context (lead vs sales (workflow) lead)
+                        let openCount;
+                        let entityIdForConfirm;
+                        let confirmOptions;
+                        @if ($isWorkflowLead)
+                            // Strictly use sales lead activities; do not fallback to lead counters
+                            entityIdForConfirm = {{ $workflowLead->id }};
+                            confirmOptions = { type: 'workflow' };
+                            const tmpl = "{{ route('admin.workflow-leads.activities.index', $workflowLead->id) }}";
+                            const res = await this.$axios.get(tmpl, { params: { is_done: 0 } });
+                            const all = Array.isArray(res?.data?.data) ? res.data.data : [];
+                            openCount = all.length;
+                        @else
+                            // Regular lead context
+                            openCount = Number({{ $lead->open_activities_count ?? $lead->openActivitiesCount ?? 0 }});
+                            entityIdForConfirm = {{ $lead->id }};
+                            confirmOptions = { type: 'lead' };
+                        @endif
                         if (openCount > 0) {
-                            const agree = window.confirm(`Er staan nog ${openCount} open activiteit(en). Wil je deze afronden en de status wijzigen?`);
+                            const message = await window.buildOpenActivitiesConfirmMessage(this.$axios, entityIdForConfirm, openCount, confirmOptions);
+                            const agree = window.confirm(message);
                             if (!agree) {
                                 this.isUpdating = false;
                                 return;

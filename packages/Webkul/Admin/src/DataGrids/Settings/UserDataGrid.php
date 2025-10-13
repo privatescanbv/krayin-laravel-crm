@@ -18,7 +18,7 @@ class UserDataGrid extends DataGrid
             ->distinct()
             ->addSelect(
                 'id',
-                'name',
+                DB::raw("TRIM(CONCAT(COALESCE(first_name, ''), ' ', COALESCE(last_name, ''))) as name"),
                 'email',
                 'image',
                 'status',

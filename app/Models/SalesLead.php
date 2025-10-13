@@ -6,6 +6,8 @@ use App\Enums\WorkflowType;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Webkul\Activity\Models\Activity;
+use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
 
@@ -30,6 +32,8 @@ class SalesLead extends Model
     protected $fillable = [
         'name',
         'description',
+        'lost_reason',
+        'closed_at',
         'pipeline_stage_id',
         'lead_id',
         'user_id',
@@ -46,6 +50,7 @@ class SalesLead extends Model
         'workflow_type' => WorkflowType::class,
         'created_by'    => 'integer',
         'updated_by'    => 'integer',
+        'closed_at'     => 'date',
     ];
 
     /**
@@ -79,7 +84,7 @@ class SalesLead extends Model
      */
     public function activities()
     {
-        return $this->hasMany(\Webkul\Activity\Models\Activity::class, 'workflow_lead_id');
+        return $this->hasMany(Activity::class, 'sales_lead_id');
     }
 
     /**
@@ -87,6 +92,14 @@ class SalesLead extends Model
      */
     public function emails()
     {
-        return $this->hasMany(\Webkul\Email\Models\Email::class, 'sales_lead_id');
+        return $this->hasMany(Email::class, 'sales_lead_id');
+    }
+
+    /**
+     * Count open activities for this sales lead.
+     */
+    public function getOpenActivitiesCountAttribute(): int
+    {
+        return (int) $this->activities()->where('is_done', 0)->count();
     }
 }

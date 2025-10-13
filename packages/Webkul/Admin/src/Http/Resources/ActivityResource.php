@@ -27,10 +27,11 @@ class ActivityResource extends JsonResource
             'additional'      => is_array($this->resource->additional) ? $this->resource->additional : json_decode($this->resource->additional, true),
             'schedule_from'   => $this->schedule_from,
             'schedule_to'     => $this->schedule_to,
-            'is_done'         => $this->is_done,
+            'is_done'         => (int) $this->is_done,
             'user'            => $this->user ? new UserResource($this->user) : null,
             'user_id'         => $this->user_id ?? null,
             'lead_id'         => $this->lead_id ?? null,
+            'sales_lead_id'   => $this->sales_lead_id ?? null,
             // Emails: support both Eloquent models (relationLoaded) and stdClass/arrays used for email-activities
             'emails'          => (function () {
                 try {

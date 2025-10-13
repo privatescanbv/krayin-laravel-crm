@@ -65,7 +65,7 @@ class Activity extends Model implements ActivityContract
         'assigned_at',
         'group_id',
         'lead_id',
-        'workflow_lead_id',
+        'sales_lead_id',
         'clinic_id',
         'external_id',
     ];
@@ -99,9 +99,12 @@ class Activity extends Model implements ActivityContract
     /**
      * Get the workflow lead (sales lead) that owns the activity.
      */
-    public function workflowLead()
+    /**
+     * Get the sales lead that owns the activity.
+     */
+    public function salesLead()
     {
-        return $this->belongsTo(\App\Models\SalesLead::class, 'workflow_lead_id');
+        return $this->belongsTo(\App\Models\SalesLead::class, 'sales_lead_id');
     }
 
     /**

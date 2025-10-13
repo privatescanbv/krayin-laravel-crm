@@ -31,6 +31,7 @@ use Webkul\Admin\Http\Requests\MassUpdateRequest;
 use Webkul\Admin\Http\Resources\LeadResource;
 use Webkul\Admin\Http\Resources\StageResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
+use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Lead\Helpers\MagicAI;
 use Webkul\Lead\Repositories\LeadRepository;
@@ -853,7 +854,7 @@ class LeadController extends Controller
     /**
      * Return open leads for a given person (exclude won/lost stages).
      */
-    public function openByPerson(\Webkul\Contact\Models\Person $person): AnonymousResourceCollection
+    public function openByPerson(Person $person): AnonymousResourceCollection
     {
         $results = $this->leadRepository
             ->with(['stage'])
@@ -1443,39 +1444,32 @@ class LeadController extends Controller
 
         $lead = $this->leadRepository->findOrFail($id);
 
-        try {
-            // Find the lost stage for this lead's pipeline
-            $lostStage = $lead->pipeline->stages()
-                ->where('code', 'like', 'lost%')
-                ->first();
+        // Find the lost stage for this lead's pipeline
+        $lostStage = $lead->pipeline->stages()
+            ->where('code', 'like', 'lost%')
+            ->first();
 
-            if (!$lostStage) {
-                return response()->json([
-                    'message' => 'Geen "Verloren" status gevonden voor deze pipeline.',
-                ], 422);
-            }
-
-            // Update lead to lost status
-            $leadData = [
-                'lead_pipeline_stage_id' => $lostStage->id,
-                'lost_reason' => request('lost_reason'),
-                'closed_at' => request('closed_at') ?: now(),
-            ];
-
-            $lead->update($leadData);
-
-            // Complete all open activities for this lead
-            $this->completeAllOpenActivitiesForLead($lead->id);
-
+        if (!$lostStage) {
             return response()->json([
-                'message' => 'Lead succesvol afgevoerd en alle opstaande activiteiten zijn afgerond.',
-            ]);
-
-        } catch (Exception $e) {
-            return response()->json([
-                'message' => 'Er is een fout opgetreden bij het afvoeren van de lead: ' . $e->getMessage(),
-            ], 500);
+                'message' => 'Geen "Verloren" status gevonden voor deze pipeline.',
+            ], 422);
         }
+
+        // Update lead to lost status
+        $leadData = [
+            'lead_pipeline_stage_id' => $lostStage->id,
+            'lost_reason' => request('lost_reason'),
+            'closed_at' => request('closed_at') ?: now(),
+        ];
+
+        $lead->update($leadData);
+
+        // Complete all open activities for this lead
+        $this->completeAllOpenActivitiesForLead($lead->id);
+
+        return response()->json([
+            'message' => 'Lead succesvol afgevoerd en alle opstaande activiteiten zijn afgerond.',
+        ]);
     }
 
     /**

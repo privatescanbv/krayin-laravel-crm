@@ -11,6 +11,7 @@
 {!! view_render_event('admin.leads.index.kanban.after') !!}
 
 @pushOnce('scripts')
+    @include('admin::leads.partials.open_activities_confirm_helper')
     <script
         type="text/x-template"
         id="v-leads-kanban-template"
@@ -811,9 +812,8 @@
                         const openCount = Number(lead.open_activities_count || 0);
 
                         if (openCount > 0) {
+                            const message = await window.buildOpenActivitiesConfirmMessage(this.$axios, lead.id, openCount);
                             const confirmClose = await new Promise((resolve) => {
-                                const message = `Er staan nog ${openCount} open activiteit(en) op deze lead. Wil je deze afronden en de status wijzigen?`;
-                                // Use built-in confirm for simplicity; could be replaced by modal later
                                 resolve(window.confirm(message));
                             });
 

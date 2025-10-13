@@ -3,19 +3,30 @@
 namespace App\Http\Controllers\Admin;
 
 use App\DataGrids\SalesLeadDataGrid;
+use App\Enums\ActivityStatus;
+use App\Enums\LostReason;
 use App\Enums\PipelineType;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\SalesLead;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rules\Enum;
 use Webkul\Activity\Models\Activity;
+use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Resources\ActivityResource;
+use Webkul\Installer\Database\Seeders\Lead\PipelineSeeder;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Repositories\StageRepository;
 
 class SalesLeadController extends Controller
 {
+    /**
+     * Const variable for won/lost stage codes.
+     */
+    const WON_LOST_STAGE_CODES = ['won', 'lost', 'won-hernia', 'lost-hernia'];
+
     public function index(Request $request)
     {
         // Get selected pipeline or default workflow pipeline
@@ -162,8 +173,6 @@ class SalesLeadController extends Controller
 
     public function edit($id)
     {
-        Log::info('SalesLeadController::edit called with ID: '.$id);
-
         $salesLead = SalesLead::findOrFail($id);
 
         Log::info('SalesLead found: ', [
@@ -252,17 +261,82 @@ class SalesLeadController extends Controller
             'pipeline_stage_id' => request('lead_pipeline_stage_id'),
         ]);
 
+        // Optionally close open activities for this workflow lead when requested (parity with lead stage update)
+        if (request()->boolean('close_open_activities')) {
+            \Webkul\Activity\Models\Activity::where('sales_lead_id', $salesLead->id)
+                ->where('is_done', 0)
+                ->update(['is_done' => 1]);
+        }
+
         return response()->json([
             'message' => 'Workflow lead stage updated successfully.',
+        ]);
+    }
+
+    /**
+     * Mark sales lead as lost with reason and closed_at; do not touch linked lead.
+     */
+    public function lost($id)
+    {
+        request()->validate([
+            'lost_reason' => ['required', new Enum(LostReason::class)],
+            'closed_at'   => 'nullable|date',
+        ]);
+
+        $salesLead = SalesLead::findOrFail($id);
+
+        // Find the lost stage for this sales lead's pipeline (relations required)
+        $pipelineStage = $salesLead->pipelineStage;
+        if (! $pipelineStage) {
+            return response()->json([
+                'message' => 'Sales lead heeft geen pipeline stage.',
+            ], 422);
+        }
+
+        $pipeline = $pipelineStage->pipeline;
+        if (! $pipeline) {
+            return response()->json([
+                'message' => 'Pipeline niet gevonden voor de huidige stage.',
+            ], 422);
+        }
+
+        $lostStage = $pipeline->stages()->where('code', 'like', PipelineSeeder::STAGE_ORDER_LOST_PREFIX.'%')->first();
+
+        if (! $lostStage) {
+            return response()->json([
+                'message' => 'Geen "Verloren" status gevonden voor deze pipeline.',
+            ], 422);
+        }
+
+        // Update lead to lost status
+        $leadData = [
+            'pipeline_stage_id' => $lostStage->id,
+            'lost_reason'       => request('lost_reason'),
+            'closed_at'         => request('closed_at') ?: now(),
+        ];
+
+        $salesLead->update($leadData);
+
+        // Complete all open activities for this lead
+        $this->completeAllOpenActivitiesForLead($salesLead->id);
+
+        return response()->json([
+            'message' => 'Sales lead is afgevoerd.',
         ]);
     }
 
     public function activities($id)
     {
         // Get activities related to this sales lead (not paginated, same as lead activities)
-        $activities = Activity::where('workflow_lead_id', $id)
-            ->with('emails')
-            ->get();
+        $query = Activity::where('sales_lead_id', $id)->with('emails');
+
+        // Optional filter for efficiency: is_done=0 (open) or 1 (done)
+        if (request()->has('is_done')) {
+            $isDone = (int) request('is_done') === 1 ? 1 : 0;
+            $query->where('is_done', $isDone);
+        }
+
+        $activities = $query->get();
 
         return ActivityResource::collection($activities);
     }
@@ -285,7 +359,7 @@ class SalesLeadController extends Controller
             'title'            => request('title'),
             'comment'          => request('description'),
             'user_id'          => request('user_id') ?? auth()->id(),
-            'workflow_lead_id' => $id,
+            'sales_lead_id'    => $id,
             'schedule_from'    => request('schedule_from'),
             'schedule_to'      => request('schedule_to'),
             'is_done'          => 0,
@@ -427,5 +501,25 @@ class SalesLeadController extends Controller
                 'visibility'            => true,
             ],
         ];
+    }
+
+    /**
+     * Complete all open activities for a lead
+     */
+    private function completeAllOpenActivitiesForLead(int $salesLeadId): void
+    {
+        $activityRepository = app(ActivityRepository::class);
+
+        $openActivities = $activityRepository
+            ->where('sales_lead_id', $salesLeadId)
+            ->where('is_done', 0)
+            ->get();
+
+        foreach ($openActivities as $activity) {
+            $activityRepository->update([
+                'is_done' => 1,
+                'status'  => ActivityStatus::DONE->value,
+            ], $activity->id);
+        }
     }
 }

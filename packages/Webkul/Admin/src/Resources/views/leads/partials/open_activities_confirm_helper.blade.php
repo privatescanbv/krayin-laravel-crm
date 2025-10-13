@@ -1,0 +1,43 @@
+@pushOnce('scripts')
+    <script>
+        // Shared helper to build confirmation message with open activity titles
+        window.buildOpenActivitiesConfirmMessage = async function(axiosInstance, entityId, openCount, options = { type: 'lead' }) {
+            let titlesList = '';
+            try {
+                let activities = [];
+                if (options && options.type === 'workflow') {
+                    // Fetch only open activities for workflow lead (server-side filter)
+                    const tmpl = "{{ route('admin.workflow-leads.activities.index', 0) }}"; // .../workflow-leads/0/activities
+                    const endpoint = tmpl.replace('/0/', `/${entityId}/`);
+                    const res = await axiosInstance.get(endpoint, { params: { is_done: 0 } });
+                    const all = res?.data?.data || [];
+                    activities = Array.isArray(all) ? all : [];
+                } else {
+                    // Default: fetch open activities for lead
+                    const tmpl = "{{ route('admin.activities.by_lead_open', 0) }}"; // .../by-lead/0/open
+                    const endpoint = tmpl.replace('/0/', `/${entityId}/`);
+                    const res = await axiosInstance.get(endpoint);
+                    activities = res?.data?.data || [];
+                }
+
+                const titles = activities
+                    .map(a => (a.title || '').trim())
+                    .filter(t => t.length > 0)
+                    .slice(0, 10);
+                if (titles.length > 0) {
+                    titlesList = '\n\nActies:\n- ' + titles.join('\n- ');
+                    if (activities.length > titles.length) {
+                        titlesList += `\n- (+${activities.length - titles.length} meer)`;
+                    }
+                }
+            } catch (e) {
+                // Ignore fetch errors; present basic message without titles
+            }
+
+            const suffix = options && options.type === 'workflow' ? ' op deze workflow lead' : ' op deze lead';
+            return `Er staan nog ${openCount} open activiteit(en)${suffix}. Wil je deze afronden en de status wijzigen?${titlesList}`;
+        }
+    </script>
+@endPushOnce
+
+

@@ -25,7 +25,7 @@ CREATE TABLE `activities` (
   `location` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `group_id` int unsigned DEFAULT NULL,
   `lead_id` int unsigned DEFAULT NULL,
-  `workflow_lead_id` bigint unsigned DEFAULT NULL,
+  `sales_lead_id` bigint unsigned DEFAULT NULL,
   `clinic_id` bigint unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `activities_user_id_foreign` (`user_id`),
@@ -33,12 +33,12 @@ CREATE TABLE `activities` (
   KEY `activities_lead_id_foreign` (`lead_id`),
   KEY `activities_external_id_index` (`external_id`),
   KEY `activities_clinic_id_foreign` (`clinic_id`),
-  KEY `activities_workflow_lead_id_foreign` (`workflow_lead_id`),
+  KEY `activities_sales_lead_id_foreign` (`sales_lead_id`),
   CONSTRAINT `activities_clinic_id_foreign` FOREIGN KEY (`clinic_id`) REFERENCES `clinics` (`id`) ON DELETE SET NULL,
   CONSTRAINT `activities_group_id_foreign` FOREIGN KEY (`group_id`) REFERENCES `groups` (`id`) ON DELETE SET NULL,
   CONSTRAINT `activities_lead_id_foreign` FOREIGN KEY (`lead_id`) REFERENCES `leads` (`id`) ON DELETE SET NULL,
   CONSTRAINT `activities_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
-  CONSTRAINT `activities_workflow_lead_id_foreign` FOREIGN KEY (`workflow_lead_id`) REFERENCES `salesleads` (`id`) ON DELETE CASCADE
+  CONSTRAINT `activities_sales_lead_id_foreign` FOREIGN KEY (`sales_lead_id`) REFERENCES `salesleads` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 DROP TABLE IF EXISTS `activity_files`;

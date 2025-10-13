@@ -38,7 +38,7 @@ require 'activities-routes.php';
 /**
  * Workflow routes.
  */
-require 'workflow-routes.php';
+require 'sales-leads-routes.php';
 
 /**
  * Configuration routes.

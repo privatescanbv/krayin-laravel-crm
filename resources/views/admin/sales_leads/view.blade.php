@@ -1,3 +1,4 @@
+@php use App\Enums\LostReason; @endphp
 <x-admin::layouts>
     <x-slot:title>
         {{ $lead->name }}
@@ -8,7 +9,8 @@
         <!-- Left Panel -->
         {!! view_render_event('admin.leads.view.left.before', ['lead' => $lead]) !!}
 
-        <div class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+        <div
+            class="max-lg:min-w-full max-lg:max-w-full [&>div:last-child]:border-b-0 lg:sticky lg:top-[73px] flex min-w-[394px] max-w-[394px] flex-col self-start rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
             <!-- Lead Information -->
             <div class="flex w-full flex-col gap-2 border-b border-gray-200 p-4 dark:border-gray-800">
                 <!-- Breadcrumb's -->
@@ -45,15 +47,16 @@
                 {!! view_render_event('admin.leads.view.title.before', ['lead' => $lead]) !!}
 
                 <!-- Title -->
-{{--                <h3 class="text-lg font-bold dark:text-white">--}}
-{{--                    {{ $lead->name }}--}}
-{{--                </h3>--}}
+                {{--                <h3 class="text-lg font-bold dark:text-white">--}}
+                {{--                    {{ $lead->name }}--}}
+                {{--                </h3>--}}
 
                 {!! view_render_event('admin.leads.view.title.after', ['lead' => $lead]) !!}
 
                 <!-- Duplicate Detection -->
                 @if ($lead->hasPotentialDuplicates())
-                    <div class="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
+                    <div
+                        class="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <span class="icon-warning text-orange-600"></span>
@@ -71,17 +74,18 @@
                     </div>
                 @endif
 
-                <!-- No Open Activities Warning (shown directly below duplicate block) -->
+                <!-- No Open Activities Warning for Sales Lead -->
                 @php
-                    $stageCode = strtolower($lead->stage->code ?? '');
+                    $stageCode = strtolower($workflowLead->pipelineStage->code ?? '');
                     $isWonOrLost = str_starts_with($stageCode, 'won') || str_starts_with($stageCode, 'lost');
                 @endphp
-                @if (($lead->open_activities_count ?? $lead->openActivitiesCount ?? $lead->open_activities_count) === 0 && ! $isWonOrLost)
-                    <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
+                @if (($workflowLead->open_activities_count ?? 0) === 0 && ! $isWonOrLost)
+                    <div
+                        class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">
                         <div class="flex items-center gap-2">
                             <span class="icon-warning text-red-600"></span>
                             <span class="text-sm font-medium text-red-800 dark:text-red-200">
-                                Geen open activiteiten voor deze lead
+                                Geen open activiteiten voor deze sales lead
                             </span>
                         </div>
                     </div>
@@ -100,7 +104,8 @@
                     @endif
 
                     @if (bouncer()->hasPermission('orders.create'))
-                        <a href="{{ route('admin.orders.create', ['sales_lead_id' => $workflowLead->id]) }}" class="primary-button">
+                        <a href="{{ route('admin.orders.create', ['sales_lead_id' => $workflowLead->id]) }}"
+                           class="primary-button">
                             Order aanmaken
                         </a>
                     @endif
@@ -125,6 +130,16 @@
                         />
                     @endif
 
+                    @if (bouncer()->hasPermission('leads.edit'))
+                        <button
+                            type="button"
+                            class="secondary-button"
+                            @click="$refs.salesLeadAfvoerenModal.open()"
+                        >
+                            Sales lead afvoeren
+                        </button>
+                    @endif
+
                     {!! view_render_event('admin.leads.view.actions.after', ['lead' => $lead]) !!}
                 </div>
             </div>
@@ -138,7 +153,8 @@
             @include('admin::leads.view.person')
 
             <!-- Footer with creation and modification dates -->
-            <div class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
+            <div
+                class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
                 <div class="flex justify-between">
                     <span>Aangemaakt:</span>
                     <span>{{ $lead->created_at->format('d-m-Y') }}</span>
@@ -160,7 +176,8 @@
             @include('admin::leads.view.stages',[
                 'overridePipeline' => $workflowLead->pipelineStage->pipeline ?? $lead->pipeline,
                 'overrideStage' => $workflowLead->pipelineStage ?? $lead->stage,
-                'overrideUpdateUrl' => route('admin.workflow-leads.stage.update', $workflowLead->id)
+                'overrideUpdateUrl' => route('admin.workflow-leads.stage.update', $workflowLead->id),
+                'workflowLead' => $workflowLead,
             ])
 
             <!-- Activities -->
@@ -183,11 +200,6 @@
                     @include('admin::leads.view.products')
                 </x-slot>
 
-                <!-- Quotes -->
-                <x-slot:quotes>
-                    @include('admin::leads.view.quotes')
-                </x-slot>
-
                 <!-- Orders -->
                 <x-slot:orders>
                     <div class="p-4 dark:text-white">
@@ -197,25 +209,27 @@
                             <div class="overflow-x-auto">
                                 <table class="w-full text-sm">
                                     <thead>
-                                        <tr class="text-left border-b dark:border-gray-800">
-                                            <th class="py-2 pr-4">ID</th>
-                                            <th class="py-2 pr-4">Titel</th>
-                                            <th class="py-2 pr-4">Sales Order ID</th>
-                                            <th class="py-2 pr-4">Totale prijs</th>
-                                            <th class="py-2 pr-4"></th>
-                                        </tr>
+                                    <tr class="text-left border-b dark:border-gray-800">
+                                        <th class="py-2 pr-4">ID</th>
+                                        <th class="py-2 pr-4">Titel</th>
+                                        <th class="py-2 pr-4">Sales Order ID</th>
+                                        <th class="py-2 pr-4">Totale prijs</th>
+                                        <th class="py-2 pr-4"></th>
+                                    </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($orders as $order)
-                                            <tr class="border-b dark:border-gray-800">
-                                                <td class="py-2 pr-4">{{ $order->id }}</td>
-                                                <td class="py-2 pr-4">{{ $order->title }}</td>
-                                                <td class="py-2 pr-4">€ {{ number_format((float) $order->total_price, 2, ',', '.') }}</td>
-                                                <td class="py-2 pr-4">
-                                                    <a href="{{ route('admin.orders.edit', $order->id) }}" class="text-blue-600 hover:underline">Bewerken</a>
-                                                </td>
-                                            </tr>
-                                        @endforeach
+                                    @foreach ($orders as $order)
+                                        <tr class="border-b dark:border-gray-800">
+                                            <td class="py-2 pr-4">{{ $order->id }}</td>
+                                            <td class="py-2 pr-4">{{ $order->title }}</td>
+                                            <td class="py-2 pr-4">
+                                                € {{ number_format((float) $order->total_price, 2, ',', '.') }}</td>
+                                            <td class="py-2 pr-4">
+                                                <a href="{{ route('admin.orders.edit', $order->id) }}"
+                                                   class="text-blue-600 hover:underline">Bewerken</a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
                                     </tbody>
                                 </table>
                             </div>
@@ -236,4 +250,126 @@
 
         {!! view_render_event('admin.leads.view.right.after', ['lead' => $lead]) !!}
     </div>
+
+    @pushOnce('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (typeof app !== 'undefined') {
+                    app.mixin({
+                        data() {
+                            return {
+                                salesLeadAfvoerenData: {
+                                    lost_reason: '',
+                                    closed_at: new Date().toISOString().split('T')[0],
+                                },
+                                isSubmittingSalesLead: false,
+                            };
+                        },
+                        methods: {
+                            submitSalesLeadAfvoeren() {
+                                if (!this.salesLeadAfvoerenData.lost_reason.trim()) {
+                                    this.$emitter.emit('add-flash', {
+                                        type: 'error',
+                                        message: 'Reden van verlies is verplicht'
+                                    });
+                                    return;
+                                }
+
+                                this.isSubmittingSalesLead = true;
+                                const url = "{{ route('admin.workflow-leads.lost', $workflowLead->id) }}";
+                                this.$axios.put(url, {
+                                    lost_reason: this.salesLeadAfvoerenData.lost_reason,
+                                    closed_at: this.salesLeadAfvoerenData.closed_at,
+                                })
+                                    .then(() => {
+                                        this.isSubmittingSalesLead = false;
+                                        this.$refs.salesLeadAfvoerenModal.close();
+                                        this.$emitter.emit('add-flash', {
+                                            type: 'success',
+                                            message: 'Sales lead is afgevoerd.'
+                                        });
+                                        window.location.reload();
+                                    })
+                                    .catch((error) => {
+                                        this.isSubmittingSalesLead = false;
+                                        this.$emitter.emit('add-flash', {
+                                            type: 'error',
+                                            message: error.response?.data?.message || 'Er is een fout opgetreden'
+                                        });
+                                    });
+                            }
+                        }
+                    });
+                }
+            });
+        </script>
+    @endPushOnce
+
+    <!-- Sales Lead Afvoeren Modal -->
+    <x-admin::modal ref="salesLeadAfvoerenModal">
+        <x-slot:header>
+            <h3 class="text-base font-semibold dark:text-white">
+                Sales lead afvoeren
+            </h3>
+        </x-slot>
+
+        <x-slot:content>
+            <div class="mb-4">
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Weet je zeker dat je deze sales lead wilt afvoeren? Dit zet de sales lead op status "Verloren" en
+                    slaat de gekozen reden op. De gekoppelde lead blijft ongewijzigd.
+                </p>
+            </div>
+
+            <x-admin::form.control-group>
+                <x-admin::form.control-group.label>
+                    Reden van verlies
+                </x-admin::form.control-group.label>
+
+                <select
+                    name="lost_reason"
+                    class="!w-full min-h-[38px] border border-gray-300 dark:border-gray-700 rounded px-2 py-1 bg-white dark:bg-gray-900 text-sm"
+                    v-model="salesLeadAfvoerenData.lost_reason"
+                    required
+                >
+                    <option value="">Selecteer reden...</option>
+                    @foreach (LostReason::cases() as $reason)
+                        <option value="{{ $reason->value }}">{{ $reason->label() }}</option>
+                    @endforeach
+                </select>
+            </x-admin::form.control-group>
+
+            <x-admin::form.control-group>
+                <x-admin::form.control-group.label>
+                    Gesloten op
+                </x-admin::form.control-group.label>
+
+                <x-admin::form.control-group.control
+                    type="date"
+                    name="closed_at"
+                    v-model="salesLeadAfvoerenData.closed_at"
+                />
+            </x-admin::form.control-group>
+        </x-slot>
+
+        <x-slot:footer>
+            <button
+                type="button"
+                class="secondary-button"
+                @click="$refs.salesLeadAfvoerenModal.close()"
+            >
+                Annuleren
+            </button>
+
+            <button
+                type="button"
+                class="primary-button"
+                @click="submitSalesLeadAfvoeren"
+                :disabled="!salesLeadAfvoerenData.lost_reason || isSubmittingSalesLead"
+            >
+                <span v-if="isSubmittingSalesLead">Bezig...</span>
+                <span v-else>Sales lead afvoeren</span>
+            </button>
+        </x-slot>
+    </x-admin::modal>
 </x-admin::layouts>

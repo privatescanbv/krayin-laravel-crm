@@ -289,8 +289,20 @@
 
                                 this.isSubmitting = true;
 
-                                // Submit to the new route
-                                this.$axios.put('{{ route("admin.leads.lost", $activity->lead_id) }}', {
+                                // Submit to the lead lost route (only when a lead is linked)
+                                const leadId = {{ (int) ($activity->lead_id ?? 0) }};
+                                if (!leadId) {
+                                    this.isSubmitting = false;
+                                    this.$emitter.emit('add-flash', {
+                                        type: 'error',
+                                        message: 'Geen gekoppelde lead om af te voeren.'
+                                    });
+                                    return;
+                                }
+
+                                const lostUrl = "{{ route('admin.leads.lost', 'REPLACE_ID') }}".replace('REPLACE_ID', String(leadId));
+
+                                this.$axios.put(lostUrl, {
                                     lost_reason: this.leadAfvoerenData.lost_reason,
                                     closed_at: this.leadAfvoerenData.closed_at
                                 })
@@ -304,7 +316,8 @@
                                     });
 
                                     // Redirect to lead view
-                                    window.location.href = '{{ route("admin.leads.view", $activity->lead_id) }}';
+                                    const viewUrl = "{{ route('admin.leads.view', 'REPLACE_ID') }}".replace('REPLACE_ID', String(leadId));
+                                    window.location.href = viewUrl;
                                 })
                                 .catch(error => {
                                     this.isSubmitting = false;
@@ -331,6 +344,7 @@
         <input type="hidden" name="status" value="done"/>
     </form>
 
+    @if($activity->lead)
     <!-- Lead Afvoeren Modal -->
     <x-admin::modal ref="leadAfvoerenModal">
         <x-slot:header>
@@ -397,5 +411,6 @@
             </button>
         </x-slot>
     </x-admin::modal>
+    @endif
 </x-admin::layouts>
 

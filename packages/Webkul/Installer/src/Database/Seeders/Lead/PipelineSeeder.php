@@ -14,6 +14,7 @@ use Webkul\Lead\Models\Stage;
 
 class PipelineSeeder extends BaseSeeder
 {
+    const STAGE_ORDER_LOST_PREFIX = 'order-lost';
     /**
      * Seed the application's database.
      *
@@ -193,7 +194,7 @@ class PipelineSeeder extends BaseSeeder
                 'lead_pipeline_id' => $privateScanWorkflowPipelineId,
             ],[
                 'id' => ++$stageId,
-                'code' => 'order-lost',
+                'code' => self::STAGE_ORDER_LOST_PREFIX,
                 'name' => 'Verloren',
                 'probability' => 100,
                 'sort_order' => $stageId,
@@ -223,7 +224,7 @@ class PipelineSeeder extends BaseSeeder
                 'lead_pipeline_id' => $herniaWorkflowPipelineId,
             ],[
                 'id' => ++$stageId,
-                'code' => 'order-lost-hernia',
+                'code' => self::STAGE_ORDER_LOST_PREFIX . '-hernia',
                 'name' => 'Verloren',
                 'probability' => 100,
                 'sort_order' => $stageId,

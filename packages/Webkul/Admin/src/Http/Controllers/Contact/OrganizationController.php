@@ -169,19 +169,28 @@ class OrganizationController extends Controller
             }
         }
 
-        Event::dispatch('contacts.organization.update.after', $organization);
+            Event::dispatch('contacts.organization.update.after', $organization);
 
-        session()->flash('success', trans('admin::app.contacts.organizations.index.update-success'));
+            session()->flash('success', trans('admin::app.contacts.organizations.index.update-success'));
 
-        if (request()->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => trans('admin::app.contacts.organizations.index.update-success'),
-                'data' => $organization->load('address')
-            ]);
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => trans('admin::app.contacts.organizations.index.update-success'),
+                    'data' => $organization->load('address')
+                ]);
+            }
+
+            return redirect()->route('admin.contacts.organizations.index');
+        } catch (\Exception $e) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error updating organization: ' . $e->getMessage()
+                ], 500);
+            }
+            return redirect()->back()->with('error', 'Error updating organization: ' . $e->getMessage());
         }
-
-        return redirect()->route('admin.contacts.organizations.index');
     }
 
     /**

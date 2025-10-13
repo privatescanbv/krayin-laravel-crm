@@ -1,116 +1,122 @@
 {!! view_render_event('admin.leads.organization.before') !!}
 
 <!-- Lead Organization Section -->
-<div id="organization" class="flex flex-col gap-4">
-    <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-        <div class="flex flex-col gap-2">
-            <x-admin::form.control-group.label>
-                @lang('admin::app.leads.common.organization.title')
-            </x-admin::form.control-group.label>
-
-            <p class="text-sm text-gray-600 dark:text-gray-400">
-                <i>Koppel een organisatie voor facturatie doeleinden (optioneel)</i>
-            </p>
-        </div>
-    </div>
-
-    <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div class="grid grid-cols-1 gap-4">
-            <!-- Organization Lookup -->
-            <div class="mb-4">
-                <x-admin::lookup
-                    src="{{ route('admin.contacts.organizations.search') }}"
-                    name="organization_lookup"
-                    label="Naam"
-                    :value="$selectedOrganization"
-                    placeholder="Zoek organisatie..."
-                    :can-add-new="false"
-                    @on-selected="selectOrganization"
-                />
-                <x-admin::form.control-group.error control-name="organization_id" />
-                
-                <!-- Selected Organization Info -->
-                <div v-if="selectedOrganization" class="mt-2 p-2 bg-green-100 border border-green-300 rounded text-sm text-green-800">
-                    <i class="icon-check-circle"></i> <span>@{{ selectedOrganization.name }}</span>
-                </div>
-            </div>
-
-            <!-- Add New Organization Button -->
-            <div class="mb-4">
-                <button
-                    type="button"
-                    id="add-organization-btn"
-                    class="flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    @click="showOrganizationForm = !showOrganizationForm"
-                >
-                    <i class="icon-plus text-xs mr-1"></i>Nieuwe organisatie toevoegen
-                </button>
-            </div>
-
-            <!-- New Organization Form -->
-            <div v-if="showOrganizationForm" id="new-organization-form" class="bg-gray-50 border border-gray-200 rounded-lg p-4 dark:bg-gray-800 dark:border-gray-700">
-                <div class="grid grid-cols-1 gap-4">
-                    <!-- Organization Name -->
-                    <x-admin::form.control-group>
-                        <x-admin::form.control-group.label>
-                            @lang('admin::app.contacts.organizations.create.name')
-                        </x-admin::form.control-group.label>
-                        
-                        <x-admin::form.control-group.control
-                            type="text"
-                            name="new_organization_name"
-                            id="new_organization_name"
-                            rules="required"
-                            :placeholder="trans('admin::app.contacts.organizations.create.name')"
-                        />
-                        <x-admin::form.control-group.error control-name="new_organization_name" />
-                    </x-admin::form.control-group>
-
-                    <!-- Address Component -->
-                    <div class="mt-2">
-                        @include('admin::components.address', [
-                            'id' => 'new_org_address',
-                            'namePrefix' => 'new_organization_address',
-                            'entity' => null,
-                            'hideTitle' => true
-                        ])
-                    </div>
-
-                    <!-- Form Actions -->
-                    <div class="flex justify-end gap-2">
-                        <button
-                            type="button"
-                            class="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                            @click="cancelOrganizationForm"
-                        >
-                            Annuleren
-                        </button>
-                        
-                        <button
-                            type="button"
-                            id="save-organization-btn"
-                            class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                            @click="saveNewOrganization"
-                        >
-                            Organisatie opslaan
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Hidden field for selected organization ID -->
-<input type="hidden" name="organization_id" :value="selectedOrganization?.id || ''" />
+<v-organization></v-organization>
 
 {!! view_render_event('admin.leads.organization.after') !!}
 
 @pushOnce('scripts')
+<script type="text/x-template" id="v-organization-template">
+    <div class="flex flex-col gap-4">
+        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div class="flex flex-col gap-2">
+                <x-admin::form.control-group.label>
+                    @lang('admin::app.leads.common.organization.title')
+                </x-admin::form.control-group.label>
+
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    <i>Koppel een organisatie voor facturatie doeleinden (optioneel)</i>
+                </p>
+            </div>
+        </div>
+
+        <div class="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div class="grid grid-cols-1 gap-4">
+                <!-- Organization Lookup -->
+                <div class="mb-4">
+                    <x-admin::lookup
+                        src="{{ route('admin.contacts.organizations.search') }}"
+                        name="organization_lookup"
+                        label="Naam"
+                        :value="$selectedOrganization"
+                        placeholder="Zoek organisatie..."
+                        :can-add-new="false"
+                        @on-selected="selectOrganization"
+                    />
+                    <x-admin::form.control-group.error control-name="organization_id" />
+                    
+                    <!-- Selected Organization Info -->
+                    <div v-if="selectedOrganization" class="mt-2 p-2 bg-green-100 border border-green-300 rounded text-sm text-green-800">
+                        <i class="icon-check-circle"></i> <span>@{{ selectedOrganization.name }}</span>
+                    </div>
+                </div>
+
+                <!-- Add New Organization Button -->
+                <div class="mb-4">
+                    <button
+                        type="button"
+                        id="add-organization-btn"
+                        class="flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        @click="showOrganizationForm = !showOrganizationForm"
+                    >
+                        <i class="icon-plus text-xs mr-1"></i>Nieuwe organisatie toevoegen
+                    </button>
+                </div>
+
+                <!-- New Organization Form -->
+                <div v-if="showOrganizationForm" id="new-organization-form" class="bg-gray-50 border border-gray-200 rounded-lg p-4 dark:bg-gray-800 dark:border-gray-700">
+                    <div class="grid grid-cols-1 gap-4">
+                        <!-- Organization Name -->
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>
+                                @lang('admin::app.contacts.organizations.create.name')
+                            </x-admin::form.control-group.label>
+                            
+                            <x-admin::form.control-group.control
+                                type="text"
+                                name="new_organization_name"
+                                id="new_organization_name"
+                                rules="required"
+                                :placeholder="trans('admin::app.contacts.organizations.create.name')"
+                            />
+                            <x-admin::form.control-group.error control-name="new_organization_name" />
+                        </x-admin::form.control-group>
+
+                        <!-- Address Component -->
+                        <div class="mt-2">
+                            @include('admin::components.address', [
+                                'id' => 'new_org_address',
+                                'namePrefix' => 'new_organization_address',
+                                'entity' => null,
+                                'hideTitle' => true
+                            ])
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="flex justify-end gap-2">
+                            <button
+                                type="button"
+                                class="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                                @click="cancelOrganizationForm"
+                            >
+                                Annuleren
+                            </button>
+                            
+                            <button
+                                type="button"
+                                id="save-organization-btn"
+                                class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                                @click="saveNewOrganization"
+                            >
+                                Organisatie opslaan
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden field for selected organization ID -->
+        <input type="hidden" name="organization_id" :value="selectedOrganization?.id || ''" />
+    </div>
+</script>
+
 <script>
 const ORGANIZATION_STORE_URL = '{{ route("admin.contacts.organizations.store") }}';
 
-Vue.createApp({
+// Register the organization component with the main app
+app.component('v-organization', {
+    template: '#v-organization-template',
     data() {
         return {
             selectedOrganization: @json($selectedOrganization ?? null),
@@ -243,6 +249,6 @@ Vue.createApp({
         console.log('Organization Vue component mounted');
         console.log('Selected organization:', this.selectedOrganization);
     }
-}).mount('#organization');
+});
 </script>
 @endPushOnce

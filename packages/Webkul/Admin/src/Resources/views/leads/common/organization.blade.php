@@ -295,6 +295,12 @@ async function saveNewOrganization() {
                 organizationForm.style.display = 'none';
             }
             
+            // Also hide the "Add New Organization" button
+            const addButton = document.getElementById('add-organization-btn');
+            if (addButton) {
+                addButton.style.display = 'none';
+            }
+            
             // Clear form fields but keep organization info visible
             const nameField = document.getElementById('new_organization_name');
             const postcodeField = document.getElementById('new_org_address_postal_code');

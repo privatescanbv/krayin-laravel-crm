@@ -20,11 +20,17 @@
             placeholder="Zoek organisatie..."
             :can-add-new="false"
         />
+        
+        <script>
+        console.log('DEBUG: Organization data:', @json($organization));
+        console.log('DEBUG: Organization ID:', '{{ $organization?->id ?? "null" }}');
+        console.log('DEBUG: Organization name:', '{{ $organization?->name ?? "null" }}');
+        </script>
         <x-admin::form.control-group.error control-name="organization_id" />
         
         <!-- Selected Organization Info -->
-        <div id="selected-organization-info" class="mt-2 p-2 bg-green-100 border border-green-300 rounded text-sm text-green-800" style="display: none;">
-            <i class="icon-check-circle"></i> <span id="selected-org-name">Geen organisatie geselecteerd</span>
+        <div id="selected-organization-info" class="mt-2 p-2 bg-green-100 border border-green-300 rounded text-sm text-green-800" style="{{ $organization ? 'display: block;' : 'display: none;' }}">
+            <i class="icon-check-circle"></i> <span id="selected-org-name">{{ $organization?->name ?? 'Geen organisatie geselecteerd' }}</span>
         </div>
     </div>
 
@@ -132,9 +138,15 @@ function toggleOrganizationForm() {
 }
 
 function cancelOrganizationForm() {
-    const form = document.getElementById('organization-form');
-    form.classList.add('hidden');
-    document.getElementById('add-organization-btn').innerHTML = '<i class="icon-plus text-xs mr-1"></i>Nieuwe organisatie toevoegen';
+    const form = document.getElementById('new-organization-form');
+    if (form) {
+        form.style.display = 'none';
+    }
+    const addButton = document.getElementById('add-organization-btn');
+    if (addButton) {
+        addButton.innerHTML = '<i class="icon-plus text-xs mr-1"></i>Nieuwe organisatie toevoegen';
+        addButton.style.display = 'block';
+    }
     clearOrganizationForm();
 }
 

@@ -376,8 +376,8 @@ class PersonController extends Controller
                 $isFieldedSearch = str_contains($searchTerm, ':');
 
                 if (!$clientProvidedSearchFields && !$isFieldedSearch) {
-                    // Free-text input: include name fields only, handle emails/phones separately with JSON-aware matching
-                    $searchFields = 'first_name:like;last_name:like;married_name:like';
+                    // Free-text input: include all searchable fields with proper JSON handling
+                    $searchFields = 'first_name:like;last_name:like;married_name:like;emails:like;phones:like';
 
                     request()->merge([
                         'search' => $searchTerm,
@@ -385,17 +385,22 @@ class PersonController extends Controller
                         'searchJoin' => 'or',
                     ]);
 
-                    // Add JSON-aware matching for emails/phones separately to avoid conflicts
+                    // Override the default search behavior to handle JSON fields properly
                     $this->personRepository->scopeQuery(function ($q) use ($searchTerm) {
                         $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $searchTerm);
                         $jsonLike = '%"value":"%' . $escaped . '%"%';
+                        $basicLike = '%' . $searchTerm . '%';
 
-                        return $q->where(function ($qb) use ($jsonLike, $searchTerm) {
-                            // Add OR conditions for JSON fields
-                            $qb->orWhere('emails', 'like', $jsonLike)
-                                ->orWhere('phones', 'like', $jsonLike)
-                                ->orWhere('emails', 'like', '%' . $searchTerm . '%')
-                                ->orWhere('phones', 'like', '%' . $searchTerm . '%');
+                        return $q->where(function ($qb) use ($jsonLike, $basicLike) {
+                            // Name fields
+                            $qb->where('first_name', 'like', $basicLike)
+                               ->orWhere('last_name', 'like', $basicLike)
+                               ->orWhere('married_name', 'like', $basicLike)
+                               // JSON fields with both patterns
+                               ->orWhere('emails', 'like', $jsonLike)
+                               ->orWhere('phones', 'like', $jsonLike)
+                               ->orWhere('emails', 'like', $basicLike)
+                               ->orWhere('phones', 'like', $basicLike);
                         });
                     });
                 } else {

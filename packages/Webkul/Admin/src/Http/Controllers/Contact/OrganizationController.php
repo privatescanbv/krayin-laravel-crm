@@ -131,6 +131,14 @@ class OrganizationController extends Controller
 
         session()->flash('success', trans('admin::app.contacts.organizations.index.update-success'));
 
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => trans('admin::app.contacts.organizations.index.update-success'),
+                'data' => $organization->load('address')
+            ]);
+        }
+
         return redirect()->route('admin.contacts.organizations.index');
     }
 
@@ -194,5 +202,48 @@ class OrganizationController extends Controller
         }
 
         return OrganizationResource::collection($organizations);
+    }
+
+    /**
+     * Search organizations
+     */
+    public function search(): JsonResponse
+    {
+        $searchTerm = request('search');
+        
+        if (empty($searchTerm)) {
+            return response()->json(['data' => []]);
+        }
+
+        $organizations = $this->organizationRepository
+            ->where('name', 'like', '%' . $searchTerm . '%')
+            ->with(['address'])
+            ->get();
+
+        return OrganizationResource::collection($organizations);
+    }
+
+    /**
+     * Mass delete organizations
+     */
+    public function massDestroy(): JsonResponse
+    {
+        $indices = request('indices', []);
+        
+        if (empty($indices)) {
+            return response()->json(['success' => false, 'message' => 'No organizations selected']);
+        }
+
+        $deletedCount = 0;
+        foreach ($indices as $id) {
+            if ($this->organizationRepository->delete($id)) {
+                $deletedCount++;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully deleted {$deletedCount} organization(s)"
+        ]);
     }
 }

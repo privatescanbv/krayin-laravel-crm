@@ -115,7 +115,9 @@ test('can update organization with address', function () {
         '_method' => 'put',
     ];
 
-    $response = $this->postJson(route('admin.contacts.organizations.update', ['id' => $organization->id]), $payload);
+    $response = $this->postJson(route('admin.contacts.organizations.update', ['id' => $organization->id]), $payload, [
+        'X-Requested-With' => 'XMLHttpRequest'
+    ]);
     $response->assertOk();
 
     $this->assertDatabaseHas('organizations', [
@@ -150,7 +152,9 @@ test('can update organization and remove address', function () {
         '_method' => 'put',
     ];
 
-    $response = $this->postJson(route('admin.contacts.organizations.update', ['id' => $organization->id]), $payload);
+    $response = $this->postJson(route('admin.contacts.organizations.update', ['id' => $organization->id]), $payload, [
+        'X-Requested-With' => 'XMLHttpRequest'
+    ]);
     $response->assertOk();
 
     $this->assertDatabaseHas('organizations', [
@@ -207,6 +211,7 @@ test('can search organizations', function () {
 test('validates required name field', function () {
     $payload = [
         'name' => '',
+        'entity_type' => 'organizations',
         'address' => [
             'postal_code' => '1234 AB',
             'house_number' => '123',
@@ -225,6 +230,7 @@ test('validates required name field', function () {
 test('validates max length for name field', function () {
     $payload = [
         'name' => str_repeat('A', 101), // Exceeds max length of 100
+        'entity_type' => 'organizations',
         'address' => [
             'postal_code' => '1234 AB',
             'house_number' => '123',
@@ -274,7 +280,7 @@ test('can mass delete organizations', function () {
         'indices' => [$org1->id, $org2->id],
     ];
 
-    $response = $this->postJson(route('admin.contacts.organizations.mass_delete'), $payload);
+    $response = $this->putJson(route('admin.contacts.organizations.mass_delete'), $payload);
     $response->assertOk();
 
     $this->assertDatabaseMissing('organizations', [

@@ -26,6 +26,12 @@
         <div id="selected-organization-info" class="mt-2 text-sm text-green-600 dark:text-green-400" style="display: none;">
             <i class="icon-check-circle"></i> <span id="selected-org-name"></span>
         </div>
+        
+        <script>
+        console.log('DEBUG: HTML elements check:');
+        console.log('DEBUG: selected-organization-info:', document.getElementById('selected-organization-info'));
+        console.log('DEBUG: selected-org-name:', document.getElementById('selected-org-name'));
+        </script>
     </div>
 
     <!-- Add New Organization Button -->
@@ -166,15 +172,22 @@ function clearOrganizationForm() {
 
 // Show selected organization info when organization is selected via lookup
 function showSelectedOrganization(orgName) {
+    console.log('DEBUG: showSelectedOrganization called with:', orgName);
     const selectedOrgInfo = document.getElementById('selected-organization-info');
     const selectedOrgName = document.getElementById('selected-org-name');
+    console.log('DEBUG: selectedOrgInfo found:', selectedOrgInfo);
+    console.log('DEBUG: selectedOrgName found:', selectedOrgName);
     if (selectedOrgInfo && selectedOrgName && orgName) {
         selectedOrgName.textContent = orgName;
         selectedOrgInfo.style.display = 'block';
+        console.log('DEBUG: Organization info displayed');
+    } else {
+        console.log('DEBUG: Could not display organization info');
     }
 }
 
 async function saveNewOrganization() {
+    console.log('DEBUG: saveNewOrganization called');
     const nameField = document.getElementById('new_organization_name');
     const postalCodeField = document.getElementById('new_org_address_postal_code');
     const houseNumberField = document.getElementById('new_org_address_house_number');
@@ -261,11 +274,18 @@ async function saveNewOrganization() {
                 }
 
                 // Show selected organization info
+                console.log('DEBUG: Trying to show selected organization info');
                 const selectedOrgInfo = document.getElementById('selected-organization-info');
                 const selectedOrgName = document.getElementById('selected-org-name');
+                console.log('DEBUG: selectedOrgInfo found:', selectedOrgInfo);
+                console.log('DEBUG: selectedOrgName found:', selectedOrgName);
+                console.log('DEBUG: result.data.name:', result.data.name);
                 if (selectedOrgInfo && selectedOrgName && result.data.name) {
                     selectedOrgName.textContent = result.data.name;
                     selectedOrgInfo.style.display = 'block';
+                    console.log('DEBUG: Organization info should now be visible');
+                } else {
+                    console.log('DEBUG: Could not show organization info - missing elements or data');
                 }
             }
 

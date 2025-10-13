@@ -107,7 +107,7 @@ class Column
 
         $this->setClosure($column['closure'] ?? $this->closure);
 
-        $this->setColumnName($this->index);
+        $this->setColumnName($column['columnName'] ?? $this->index);
     }
 
     /**

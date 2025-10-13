@@ -198,7 +198,6 @@ async function saveNewOrganization() {
                          document.querySelector('input[name="_token"]')?.value ||
                          '';
         
-        console.log('CSRF Token found:', csrfToken);
         
         // Add CSRF token to form data as well
         if (csrfToken) {
@@ -215,7 +214,6 @@ async function saveNewOrganization() {
         });
 
         const result = await response.json();
-        console.log('Save response:', result);
 
         if (response.ok && result.data) {
             // Update the organization lookup with the new organization
@@ -227,31 +225,35 @@ async function saveNewOrganization() {
                     selectedOrgId.value = result.data.id;
                 }
 
-                // Update the lookup display (this depends on the lookup component implementation)
+                // Update the lookup display
                 const lookupInput = organizationLookup.closest('.lookup-container')?.querySelector('input[type="text"]');
                 if (lookupInput && result.data.name) {
                     lookupInput.value = result.data.name;
+                    // Trigger change event to update any Vue components
+                    lookupInput.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+
+                // Also try to update the hidden input directly
+                if (organizationLookup && result.data.id) {
+                    organizationLookup.value = result.data.id;
+                    organizationLookup.dispatchEvent(new Event('change', { bubbles: true }));
                 }
             }
-
-            // Hide the form and clear it
-            cancelOrganizationForm();
 
             // Show success message
             if (window.$emitter) {
                 window.$emitter.emit('add-flash', {
                     type: 'success',
-                    message: 'Organisatie succesvol aangemaakt!'
+                    message: 'Organisatie succesvol aangemaakt en geselecteerd!'
                 });
-            } else {
-                alert('Organisatie succesvol aangemaakt!');
             }
+
+            // Hide the form and clear it
+            cancelOrganizationForm();
         } else {
-            console.error('Save failed:', result);
             throw new Error(result.message || 'Er is een fout opgetreden bij het aanmaken van de organisatie.');
         }
     } catch (error) {
-        console.error('Error saving organization:', error);
         alert('Fout bij opslaan: ' + error.message);
     } finally {
         saveBtn.disabled = false;

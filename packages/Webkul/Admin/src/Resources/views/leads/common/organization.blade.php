@@ -23,7 +23,7 @@
         <x-admin::form.control-group.error control-name="organization_id" />
         
         <!-- Selected Organization Info -->
-        <div id="selected-organization-info" class="mt-2 text-sm text-green-600 dark:text-green-400" style="display: none;">
+        <div id="selected-organization-info" class="mt-2 p-2 bg-green-100 border border-green-300 rounded text-sm text-green-800" style="display: none;">
             <i class="icon-check-circle"></i> <span id="selected-org-name"></span>
         </div>
     </div>
@@ -278,6 +278,9 @@ async function saveNewOrganization() {
                     selectedOrgName.textContent = result.data.name;
                     selectedOrgInfo.style.display = 'block';
                     console.log('DEBUG: Organization info should now be visible');
+                    console.log('DEBUG: Element display style:', selectedOrgInfo.style.display);
+                    console.log('DEBUG: Element computed style:', window.getComputedStyle(selectedOrgInfo).display);
+                    console.log('DEBUG: Element visibility:', window.getComputedStyle(selectedOrgInfo).visibility);
                 } else {
                     console.log('DEBUG: Could not show organization info - missing elements or data');
                 }
@@ -376,5 +379,15 @@ document.addEventListener('DOMContentLoaded', function() {
 console.log('DEBUG: HTML elements check:');
 console.log('DEBUG: selected-organization-info:', document.getElementById('selected-organization-info'));
 console.log('DEBUG: selected-org-name:', document.getElementById('selected-org-name'));
+
+// Test: Make element visible for debugging
+setTimeout(() => {
+    const testElement = document.getElementById('selected-organization-info');
+    if (testElement) {
+        testElement.style.display = 'block';
+        testElement.innerHTML = '<i class="icon-check-circle"></i> TEST ORGANISATIE';
+        console.log('DEBUG: Test element made visible');
+    }
+}, 2000);
 </script>
 @endPushOnce

@@ -5,11 +5,13 @@
 @endphp
 
 <div class="flex flex-col gap-4">
+    @if(!isset($hideTitle) || !$hideTitle)
     <div class="flex flex-col gap-1">
         <p class="text-base font-semibold dark:text-white">
             Adresgegevens
         </p>
     </div>
+    @endif
 
     <!-- Address Lookup Panel -->
     <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 dark:bg-gray-800 dark:border-gray-700">
@@ -153,6 +155,17 @@
 {!! view_render_event('admin.address.after') !!}
 
 @pushOnce('scripts')
+    <script>
+        window.addressComponents = window.addressComponents || {};
+        window.addressComponents['{{ $addressId }}'] = {
+            id: '{{ $addressId }}',
+            postalCodeId: '{{ $addressId }}_postal_code',
+            houseNumberId: '{{ $addressId }}_house_number',
+            streetId: '{{ $addressId }}_street',
+            cityId: '{{ $addressId }}_city',
+            stateId: '{{ $addressId }}_state'
+        };
+    </script>
     @verbatim
         <script type="text/x-template" id="v-address-preview-template">
             <div v-if="fullAddress" class="mt-4 p-3 bg-gray-50 rounded border" style="display: none;">
@@ -223,11 +236,18 @@
 
                         const lookupBtn = e.target;
                         const addressId = '{{ $addressId }}';
-                        const postcode = document.querySelector('#' + addressId + '_postal_code');
-                        const huisnummer = document.querySelector('#' + addressId + '_house_number');
-                        const street = document.querySelector('#' + addressId + '_street');
-                        const city = document.querySelector('#' + addressId + '_city');
-                        const state = document.querySelector('#' + addressId + '_state');
+                        const addressConfig = window.addressComponents[addressId];
+                        
+                        if (!addressConfig) {
+                            console.error('Address component config not found for:', addressId);
+                            return;
+                        }
+                        
+                        const postcode = document.querySelector('#' + addressConfig.postalCodeId);
+                        const huisnummer = document.querySelector('#' + addressConfig.houseNumberId);
+                        const street = document.querySelector('#' + addressConfig.streetId);
+                        const city = document.querySelector('#' + addressConfig.cityId);
+                        const state = document.querySelector('#' + addressConfig.stateId);
 
                         if (!postcode || !huisnummer) {
                             alert('Adresvelden niet gevonden');

@@ -74,7 +74,8 @@
                 @include('admin::components.address', [
                     'id' => 'new_org_address',
                     'namePrefix' => 'new_organization_address',
-                    'entity' => null
+                    'entity' => null,
+                    'hideTitle' => true
                 ])
             </div>
         </div>

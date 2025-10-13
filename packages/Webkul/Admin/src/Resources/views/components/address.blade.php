@@ -316,6 +316,18 @@
             if (e.target && e.target.id === 'add-organization-btn') {
                 // Wait a bit for the form to be shown
                 setTimeout(function() {
+                    // Ensure the address component config exists
+                    if (!window.addressComponents['new_org_address']) {
+                        window.addressComponents['new_org_address'] = {
+                            id: 'new_org_address',
+                            postalCodeId: 'new_org_address_postal_code',
+                            houseNumberId: 'new_org_address_house_number',
+                            streetId: 'new_org_address_street',
+                            cityId: 'new_org_address_city',
+                            stateId: 'new_org_address_state'
+                        };
+                        console.log('Created address config for new_org_address');
+                    }
                     initializeAddressLookupButton('new_org_address');
                 }, 100);
             }

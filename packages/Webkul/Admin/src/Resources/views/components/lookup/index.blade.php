@@ -186,7 +186,12 @@
 
             mounted() {
                 if (this.value) {
-                    this.selectedItem = this.value;
+                    // Handle both array and object formats
+                    if (Array.isArray(this.value) && this.value.length > 0) {
+                        this.selectedItem = this.value[0];
+                    } else if (typeof this.value === 'object' && this.value.id) {
+                        this.selectedItem = this.value;
+                    }
                 }
             },
 
@@ -201,6 +206,21 @@
             watch: {
                 searchTerm(newVal, oldVal) {
                     this.search();
+                },
+
+                value: {
+                    handler(newVal) {
+                        if (newVal) {
+                            // Handle both array and object formats
+                            if (Array.isArray(newVal) && newVal.length > 0) {
+                                this.selectedItem = newVal[0];
+                            } else if (typeof newVal === 'object' && newVal.id) {
+                                this.selectedItem = newVal;
+                            }
+                        }
+                    },
+                    immediate: true,
+                    deep: true
                 },
             },
 

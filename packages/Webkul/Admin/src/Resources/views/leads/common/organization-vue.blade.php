@@ -28,17 +28,12 @@
                         src="{{ route('admin.contacts.organizations.search') }}"
                         name="organization_lookup"
                         label="Naam"
-                        :value="$selectedOrganization"
+                        ::value="selectedOrganization"
                         placeholder="Zoek organisatie..."
-                        :can-add-new="false"
+                        ::can-add-new="false"
                         @on-selected="selectOrganization"
                     />
                     <x-admin::form.control-group.error control-name="organization_id" />
-                    
-                    <!-- Selected Organization Info -->
-                    <div v-if="selectedOrganization" class="mt-2 p-2 bg-green-100 border border-green-300 rounded text-sm text-green-800">
-                        <i class="icon-check-circle"></i> <span>@{{ selectedOrganization.name }}</span>
-                    </div>
                 </div>
 
                 <!-- Add New Organization Button -->
@@ -61,7 +56,7 @@
                             <x-admin::form.control-group.label>
                                 @lang('admin::app.contacts.organizations.create.name')
                             </x-admin::form.control-group.label>
-                            
+
                             <x-admin::form.control-group.control
                                 type="text"
                                 name="new_organization_name"
@@ -91,7 +86,7 @@
                             >
                                 Annuleren
                             </button>
-                            
+
                             <button
                                 type="button"
                                 id="save-organization-btn"
@@ -111,7 +106,7 @@
     </div>
 </script>
 
-<script>
+<script type="module">
 const ORGANIZATION_STORE_URL = '{{ route("admin.contacts.organizations.store") }}';
 
 // Register the organization component with the main app
@@ -123,18 +118,18 @@ app.component('v-organization', {
             showOrganizationForm: false
         }
     },
-    
+
     methods: {
         selectOrganization(org) {
             this.selectedOrganization = org;
             console.log('Organization selected:', org);
         },
-        
+
         cancelOrganizationForm() {
             this.showOrganizationForm = false;
             this.clearOrganizationForm();
         },
-        
+
         clearOrganizationForm() {
             const nameField = document.getElementById('new_organization_name');
             const postcodeField = document.getElementById('new_org_address_postal_code');
@@ -154,7 +149,7 @@ app.component('v-organization', {
             if (stateField) stateField.value = '';
             if (countryField) countryField.value = 'Nederland';
         },
-        
+
         async saveNewOrganization() {
             const nameField = document.getElementById('new_organization_name');
             const postalCodeField = document.getElementById('new_org_address_postal_code');
@@ -196,10 +191,10 @@ app.component('v-organization', {
                 formData.append('address[country]', countryField ? countryField.value.trim() : 'Nederland');
 
                 // Get CSRF token safely
-                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
                                  document.querySelector('input[name="_token"]')?.value ||
                                  '';
-                
+
                 if (csrfToken) {
                     formData.append('_token', csrfToken);
                 }
@@ -244,10 +239,9 @@ app.component('v-organization', {
             }
         }
     },
-    
+
     mounted() {
-        console.log('Organization Vue component mounted');
-        console.log('Selected organization:', this.selectedOrganization);
+        // mounted
     }
 });
 </script>

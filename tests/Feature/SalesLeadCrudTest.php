@@ -117,7 +117,7 @@ test('can update workflow lead (ajax json)', function () {
     $response = $this->withHeaders(['HTTP_X-Requested-With' => 'XMLHttpRequest'])
         ->postJson(route('admin.sales-leads.update', ['id' => $salesLead->id]), $payload);
 
-    $response->assertOk()->assertJsonPath('message', 'Workflow lead updated successfully.');
+    $response->assertOk()->assertJsonPath('message', 'Sales lead updated successfully.');
 
     $this->assertDatabaseHas('salesleads', [
         'id'   => $salesLead->id,

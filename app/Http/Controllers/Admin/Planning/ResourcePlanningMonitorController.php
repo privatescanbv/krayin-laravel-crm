@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Admin\Planning;
 
 use App\Http\Controllers\Controller;
+use App\Models\Clinic;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
+use App\Models\ResourceType;
 use App\Models\Shift;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
@@ -16,9 +18,9 @@ class ResourcePlanningMonitorController extends Controller
 {
     public function index(Request $request): View
     {
-        $resourceTypes = \App\Models\ResourceType::all(['id', 'name']);
-        $resources = \App\Models\Resource::with('clinic')->get(['id', 'name', 'clinic_id', 'resource_type_id']);
-        $clinics = \App\Models\Clinic::all(['id', 'name']);
+        $resourceTypes = ResourceType::all(['id', 'name']);
+        $resources = Resource::with('clinic')->get(['id', 'name', 'clinic_id', 'resource_type_id']);
+        $clinics = Clinic::all(['id', 'name']);
 
         return view('admin::planning.monitor', [
             'resourceTypes' => $resourceTypes,

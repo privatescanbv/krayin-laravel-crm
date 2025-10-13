@@ -157,7 +157,7 @@
         <!-- Right Panel -->
         <div class="flex w-full flex-col gap-4 rounded-lg">
             <!-- Stages Navigation -->
-            @include ('admin::leads.view.stages', [
+            @include('admin::leads.view.stages',[
                 'overridePipeline' => $workflowLead->pipelineStage->pipeline ?? $lead->pipeline,
                 'overrideStage' => $workflowLead->pipelineStage ?? $lead->stage,
                 'overrideUpdateUrl' => route('admin.workflow-leads.stage.update', $workflowLead->id)

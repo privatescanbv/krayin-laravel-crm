@@ -10,6 +10,7 @@ use App\Models\SalesLead;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Models\Activity;
+use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\StageRepository;
 
@@ -263,7 +264,7 @@ class SalesLeadController extends Controller
             ->with('emails')
             ->get();
 
-        return \Webkul\Admin\Http\Resources\ActivityResource::collection($activities);
+        return ActivityResource::collection($activities);
     }
 
     public function storeActivity($id)

@@ -8,6 +8,7 @@ use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
 use App\Models\Shift;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -184,11 +185,11 @@ class AvailabilityExpansionTest extends TestCase
         // Simulate the subtractIntervals function
         $result = [];
         foreach ($availability as $interval) {
-            $segments = [['from' => \Carbon\CarbonImmutable::parse($interval['from']), 'to' => \Carbon\CarbonImmutable::parse($interval['to'])]];
+            $segments = [['from' => CarbonImmutable::parse($interval['from']), 'to' => CarbonImmutable::parse($interval['to'])]];
 
             foreach ($occupancy as $o) {
-                $of = \Carbon\CarbonImmutable::parse($o['from']);
-                $ot = \Carbon\CarbonImmutable::parse($o['to']);
+                $of = CarbonImmutable::parse($o['from']);
+                $ot = CarbonImmutable::parse($o['to']);
                 $next = [];
 
                 foreach ($segments as $seg) {

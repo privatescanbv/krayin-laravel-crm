@@ -34,6 +34,84 @@ test('person search by name fields works', function () {
     expect($ids)->toContain($p->id);
 });
 
+test('person search by phone token works', function () {
+    $p = Person::factory()->create([
+        'first_name' => 'Jane',
+        'last_name'  => 'Tester',
+        'phones'     => [
+            ['value' => '0687654321', 'label' => ContactLabel::Eigen->value, 'is_default' => true],
+        ],
+        'user_id'    => $this->user->id,
+    ]);
+
+    // Use the convenience token path ("phone:") to ensure normalization is exercised
+    $resp = $this->getJson(route('admin.contacts.persons.search', [
+        'search' => 'phone:0687654321;',
+    ]));
+
+    $resp->assertOk();
+    $ids = collect($resp->json('data'))->pluck('id');
+    expect($ids)->toContain($p->id);
+});
+
+test('person search accepts plain email via query param', function () {
+    $email = 'jane.query@example.com';
+    $p = Person::factory()->create([
+        'first_name' => 'Jane',
+        'last_name'  => 'Query',
+        'emails'     => [
+            ['value' => $email, 'label' => ContactLabel::Eigen->value, 'is_default' => true],
+        ],
+        'user_id'    => $this->user->id,
+    ]);
+
+    // Send as plain query so backend's email-normalization path is exercised
+    $resp = $this->getJson(route('admin.contacts.persons.search', [
+        'query' => $email,
+    ]));
+
+    $resp->assertOk();
+    $ids = collect($resp->json('data'))->pluck('id');
+    expect($ids)->toContain($p->id);
+});
+
+test('person search accepts plain name via query param', function () {
+    $p = Person::factory()->create([
+        'first_name' => 'Karel',
+        'last_name'  => 'Zoeker',
+        'user_id'    => $this->user->id,
+    ]);
+
+    $resp = $this->getJson(route('admin.contacts.persons.search', [
+        'query' => 'Karel Zoek',
+    ]));
+
+    $resp->assertOk();
+    $ids = collect($resp->json('data'))->pluck('id');
+    expect($ids)->toContain($p->id);
+});
+
+test('person search matches partial email via query param', function () {
+    $email = 'harmkevdmeer@outlook.com';
+    $p = Person::factory()->create([
+        'first_name' => 'Harmke',
+        'last_name'  => 'vd Meer',
+        'emails'     => [
+            ['value' => $email, 'label' => ContactLabel::Eigen->value, 'is_default' => true],
+        ],
+        'user_id'    => $this->user->id,
+    ]);
+
+    // Search by partial local-part of the email (as users often do)
+    $resp = $this->getJson(route('admin.contacts.persons.search', [
+        'query' => 'harmkev',
+    ]));
+
+    $resp->assertOk();
+    $ids = collect($resp->json('data'))->pluck('id');
+    expect($ids)->toContain($p->id);
+});
+
 test('person search by organization.name works', function () {
     $org = Organization::factory()->create(['name' => 'Kuijer BV']);
     $p = Person::factory()->create([

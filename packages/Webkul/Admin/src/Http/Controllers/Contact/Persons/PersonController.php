@@ -195,7 +195,7 @@ class PersonController extends Controller
             ]);
             throw $e;
         }
-        
+
         Event::dispatch('contacts.person.update.before', $id);
 
         $data = $request->all();
@@ -371,13 +371,33 @@ class PersonController extends Controller
                     });
                 });
             } else {
-                // Single-token: delegate to RequestCriteria with explicit fields
-                $searchFields = 'first_name:like;last_name:like;married_name:like';
+                // Single-token input
+                $clientProvidedSearchFields = trim((string) request()->query('searchFields', '')) !== '';
+                $isFieldedSearch = str_contains($searchTerm, ':');
 
-                request()->merge([
-                    'search'       => $searchTerm,
-                    'searchFields' => $searchFields,
-                ]);
+                if (!$clientProvidedSearchFields && !$isFieldedSearch) {
+                    // Free-text input: include emails/phones plus name fields and add JSON-aware matching
+                    $searchFields = 'first_name:like;last_name:like;married_name:like;emails:like;phones:like';
+
+                    request()->merge([
+                        'search' => $searchTerm,
+                        'searchFields' => $searchFields,
+                        'searchJoin' => 'or',
+                    ]);
+
+                    // Improve JSON emails/phones matching by targeting the value key inside the JSON arrays
+                    $this->personRepository->scopeQuery(function ($q) use ($searchTerm) {
+                        $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $searchTerm);
+                        $jsonLike = '%"value":"%' . $escaped . '%"%';
+
+                        return $q->where(function ($qb) use ($jsonLike) {
+                            $qb->orWhere('emails', 'like', $jsonLike)
+                                ->orWhere('phones', 'like', $jsonLike);
+                        });
+                    });
+                } else {
+                    logger()->warning('Search term mismatched, no search');
+                }
             }
         }
         if ($userIds = bouncer()->getAuthorizedUserIds()) {

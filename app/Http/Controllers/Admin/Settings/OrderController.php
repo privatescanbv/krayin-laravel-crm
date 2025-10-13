@@ -3,12 +3,16 @@
 namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\OrderDataGrid;
+use App\Enums\OrderItemStatus;
+use App\Enums\OrderStatus;
+use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class OrderController extends SimpleEntityController
@@ -30,7 +34,7 @@ class OrderController extends SimpleEntityController
     {
         $salesLeadId = $request->get('sales_lead_id');
 
-        $salesLeads = \App\Models\SalesLead::with('lead')->get()->mapWithKeys(function ($salesLead) {
+        $salesLeads = SalesLead::with('lead')->get()->mapWithKeys(function ($salesLead) {
             return [$salesLead->id => $salesLead->name.' ('.($salesLead->lead?->name ?? 'Geen lead').')'];
         })->toArray();
 
@@ -59,7 +63,7 @@ class OrderController extends SimpleEntityController
                     'product_id'  => (int) $item['product_id'],
                     'quantity'    => (int) $item['quantity'],
                     'total_price' => (float) ($item['total_price'] ?? 0),
-                    'status'      => \App\Enums\OrderItemStatus::NIEUW,
+                    'status'      => OrderItemStatus::NIEUW,
                 ]);
             }
         }
@@ -96,7 +100,7 @@ class OrderController extends SimpleEntityController
                     'product_id'  => (int) $item['product_id'],
                     'quantity'    => (int) $item['quantity'],
                     'total_price' => (float) ($item['total_price'] ?? 0),
-                    'status'      => \App\Enums\OrderItemStatus::NIEUW,
+                    'status'      => OrderItemStatus::NIEUW,
                 ]);
             }
         }
@@ -123,7 +127,7 @@ class OrderController extends SimpleEntityController
             'orderRegels.resourceOrderItems.resource',
         ]);
 
-        $salesLeads = \App\Models\SalesLead::with('lead')->get()->mapWithKeys(function ($salesLead) {
+        $salesLeads = SalesLead::with('lead')->get()->mapWithKeys(function ($salesLead) {
             return [$salesLead->id => $salesLead->name.' ('.($salesLead->lead?->name ?? 'Geen lead').')'];
         })->toArray();
 
@@ -159,15 +163,15 @@ class OrderController extends SimpleEntityController
     protected function validateOrderStatus(string $requestedStatus, int $orderId): void
     {
         // If trying to set status to INGEPLAND, check if all order items are ready
-        if ($requestedStatus === \App\Enums\OrderStatus::INGEPLAND->value) {
+        if ($requestedStatus === OrderStatus::INGEPLAND->value) {
             $order = $this->orderRepository->findOrFail($orderId);
 
             $hasItemsNeedingPlanning = $order->orderRegels()
-                ->where('status', \App\Enums\OrderItemStatus::MOET_WORDEN_INGEPLAND->value)
+                ->where('status', OrderItemStatus::MOET_WORDEN_INGEPLAND->value)
                 ->exists();
 
             if ($hasItemsNeedingPlanning) {
-                throw \Illuminate\Validation\ValidationException::withMessages([
+                throw ValidationException::withMessages([
                     'status' => 'Order kan niet op INGEPLAND gezet worden: er zijn nog orderregels die moeten worden ingepland.',
                 ]);
             }

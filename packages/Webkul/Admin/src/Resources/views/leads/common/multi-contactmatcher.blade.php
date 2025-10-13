@@ -279,7 +279,15 @@
                 async fetchSuggestions(query) {
                      this.isSearching = true;
                      try {
-                         const params = { query };
+                         let params = {};
+
+                         // Detect likely phone input and use backend's phone: convenience token
+                         const digitsOnly = String(query || '').replace(/\D+/g, '');
+                         if (digitsOnly.length >= 6) {
+                             params.search = `phone:${digitsOnly};`;
+                         } else {
+                             params.query = query;
+                         }
                          
                          // Add lead_id for match score calculation if available
                          if (this.lead && this.lead.id) {

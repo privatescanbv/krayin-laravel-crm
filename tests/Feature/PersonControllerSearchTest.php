@@ -163,6 +163,28 @@ test('person search by email and phone works', function () {
     expect($idsPhone)->toContain($p->id);
 });
 
+test('person search by phone works', function () {
+    $p = Person::factory()->create([
+        'first_name' => 'John',
+        'last_name'  => 'Doe',
+        'emails'     => [
+            ['value' => 'john.doe@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => true],
+        ],
+        'phones' => [
+            ['value' => '0687654321', 'label' => ContactLabel::Relatie->value, 'is_default' => true],
+        ],
+        'user_id'    => $this->user->id,
+    ]);
+
+    // Email
+    $respPhone = $this->getJson(route('admin.contacts.persons.search', [
+        'query'       => '6876543',
+    ]));
+    $respPhone->assertOk();
+    $personIdsFound = collect($respPhone->json('data'))->pluck('id');
+    expect($personIdsFound)->toContain($p->id);
+});
+
 test('person search returns 400 for invalid field', function () {
     $resp = $this->getJson(route('admin.contacts.persons.search', [
         'search'       => 'foo:bar;',

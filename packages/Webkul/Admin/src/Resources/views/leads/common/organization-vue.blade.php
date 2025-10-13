@@ -22,7 +22,7 @@
                     src="{{ route('admin.contacts.organizations.search') }}"
                     name="organization_lookup"
                     label="Naam"
-                    :value="selectedOrganization"
+                    :value="$selectedOrganization"
                     placeholder="Zoek organisatie..."
                     :can-add-new="false"
                     @on-selected="selectOrganization"
@@ -31,7 +31,7 @@
                 
                 <!-- Selected Organization Info -->
                 <div v-if="selectedOrganization" class="mt-2 p-2 bg-green-100 border border-green-300 rounded text-sm text-green-800">
-                    <i class="icon-check-circle"></i> <span>{{ selectedOrganization.name }}</span>
+                    <i class="icon-check-circle"></i> <span>@{{ selectedOrganization.name }}</span>
                 </div>
             </div>
 
@@ -113,7 +113,7 @@ const ORGANIZATION_STORE_URL = '{{ route("admin.contacts.organizations.store") }
 Vue.createApp({
     data() {
         return {
-            selectedOrganization: @json($organization ?? null),
+            selectedOrganization: @json($selectedOrganization ?? null),
             showOrganizationForm: false
         }
     },

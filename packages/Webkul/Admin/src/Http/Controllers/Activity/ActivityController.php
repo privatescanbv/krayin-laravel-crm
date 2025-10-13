@@ -27,6 +27,7 @@ use Webkul\Admin\Http\Resources\ActivityResource;
 use App\Services\ActivityStatusService;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Lead\Repositories\LeadRepository;
+use Webkul\User\Models\Group;
 use Webkul\User\Repositories\GroupRepository;
 
 class ActivityController extends Controller
@@ -276,6 +277,25 @@ class ActivityController extends Controller
                 }
 
                 session()->flash('error', 'Je hebt geen rechten om de toewijzing van deze activiteit te wijzigen.');
+                return redirect()->back();
+            }
+        }
+
+        // Validate that assigned user is active
+        if (request()->has('user_id') && request('user_id')) {
+            $validator = \Illuminate\Support\Facades\Validator::make(
+                ['user_id' => request('user_id')],
+                ['user_id' => 'active_user']
+            );
+
+            if ($validator->fails()) {
+                if (request()->ajax()) {
+                    return response()->json([
+                        'message' => $validator->errors()->first('user_id'),
+                    ], 422);
+                }
+
+                session()->flash('error', $validator->errors()->first('user_id'));
                 return redirect()->back();
             }
         }
@@ -545,7 +565,7 @@ class ActivityController extends Controller
                 }
             } else {
                 // Validate provided group_id belongs to the same department as the lead
-                $group = \Webkul\User\Models\Group::query()->find($data['group_id']);
+                $group = Group::query()->find($data['group_id']);
                 if (!$group || ($group->department_id !== $lead->department_id)) {
                     if (request()->ajax()) {
                         return response()->json([

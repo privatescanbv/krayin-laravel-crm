@@ -12,9 +12,11 @@ use App\Observers\OrderRegelObserver;
 use App\Observers\PersonObserver;
 use App\Observers\ResourceOrderItemObserver;
 use App\Observers\SalesLeadObserver;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
+use Webkul\User\Models\User;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -37,5 +39,20 @@ class AppServiceProvider extends ServiceProvider
         Order::observe(OrderObserver::class);
         OrderRegel::observe(OrderRegelObserver::class);
         ResourceOrderItem::observe(ResourceOrderItemObserver::class);
+
+        // Register custom validation rules
+        Validator::extend('active_user', function ($attribute, $value, $parameters, $validator) {
+            if ($value === null || $value === '') {
+                return true; // Allow null/empty values
+            }
+
+            $user = User::find($value);
+
+            return $user && $user->status == 1;
+        });
+
+        Validator::replacer('active_user', function ($message, $attribute, $rule, $parameters) {
+            return 'De geselecteerde gebruiker is niet actief.';
+        });
     }
 }

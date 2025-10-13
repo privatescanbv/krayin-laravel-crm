@@ -166,7 +166,7 @@
             stateId: '{{ $addressId }}_state'
         };
     </script>
-    
+
     @verbatim
         <script type="text/x-template" id="v-address-preview-template">
             <div v-if="fullAddress" class="mt-4 p-3 bg-gray-50 rounded border" style="display: none;">
@@ -218,7 +218,8 @@
         // Direct initialization for address lookup buttons
         document.addEventListener('DOMContentLoaded', function() {
             const addressId = '{{ $addressId }}';
-            const button = document.querySelector('#' + addressId + '-lookup-btn');
+            console.log('registerAddressLookupButtons met '+addressId);
+                    const button = document.querySelector('#' + addressId + '-lookup-btn');
 
             if (button && !button.hasAttribute('data-lookup-initialized')) {
                 console.log('Initializing button:', button.id);
@@ -229,12 +230,13 @@
 
                     const lookupBtn = e.target;
                     const addressConfig = window.addressComponents[addressId];
-                    
+
                     if (!addressConfig) {
                         console.error('Address component config not found for:', addressId);
                         return;
                     }
-                    
+                    console.log('street id = '+addressConfig.streetId);
+
                     // Only target fields within this specific address component
                     const addressContainer = lookupBtn.closest('.flex.flex-col.gap-4');
                     const postcode = addressContainer.querySelector('#' + addressConfig.postalCodeId);

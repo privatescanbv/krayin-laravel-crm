@@ -369,13 +369,6 @@ class LeadController extends Controller
             // Na aanmaken: ga naar de lead detailpagina in plaats van het kanban bord
             return redirect()->route('admin.leads.view', $lead->id);
         } catch (InvalidArgumentException $e) {
-            Log::error('Lead creation failed - InvalidArgumentException', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all(),
-                'user_id' => auth()->guard('user')->id(),
-            ]);
-
             if (request()->ajax()) {
                 throw new ValidationException(
                     Validator::make([], []),
@@ -386,23 +379,6 @@ class LeadController extends Controller
             }
 
             return redirect()->back()->withInput()->withErrors(['error' => $e->getMessage()]);
-        } catch (Exception $e) {
-            Log::error('Lead creation failed - Unexpected error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all(),
-                'user_id' => auth()->guard('user')->id(),
-                'exception_class' => get_class($e),
-            ]);
-
-            if (request()->ajax()) {
-                return response()->json([
-                    'message' => 'Er is een onverwachte fout opgetreden bij het aanmaken van de lead.',
-                    'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
-                ], 500);
-            }
-
-            return redirect()->back()->withInput()->withErrors(['error' => 'Er is een onverwachte fout opgetreden bij het aanmaken van de lead.']);
         }
     }
 
@@ -413,7 +389,6 @@ class LeadController extends Controller
      */
     public function storeLead(LeadForm $request): array
     {
-        try {
             Event::dispatch('lead.create.before');
 
             $data = $request->all();
@@ -523,16 +498,6 @@ class LeadController extends Controller
             Event::dispatch('lead.create.after', $lead);
 
             return [$lead, $data['lead_pipeline_id']];
-        } catch (Exception $e) {
-            Log::error('Lead creation failed in storeLead method', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'request_data' => $request->all(),
-                'user_id' => auth()->guard('user')->id(),
-                'exception_class' => get_class($e),
-            ]);
-            throw $e; // Re-throw to be caught by the calling method
-        }
     }
 
     /**

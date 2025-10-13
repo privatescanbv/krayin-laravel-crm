@@ -289,8 +289,40 @@ async function saveNewOrganization() {
                 });
             }
 
-            // Hide the form and clear it
-            cancelOrganizationForm();
+            // Hide the form but don't clear the organization info
+            const organizationForm = document.getElementById('new-organization-form');
+            if (organizationForm) {
+                organizationForm.style.display = 'none';
+            }
+            
+            // Clear form fields but keep organization info visible
+            const nameField = document.getElementById('new_organization_name');
+            const postcodeField = document.getElementById('new_org_address_postal_code');
+            const houseNumberField = document.getElementById('new_org_address_house_number');
+            const streetField = document.getElementById('new_org_address_street');
+            const suffixField = document.getElementById('new_org_address_house_number_suffix');
+            const cityField = document.getElementById('new_org_address_city');
+            const stateField = document.getElementById('new_org_address_state');
+            const countryField = document.getElementById('new_org_address_country');
+
+            if (nameField) nameField.value = '';
+            if (postcodeField) postcodeField.value = '';
+            if (houseNumberField) houseNumberField.value = '';
+            if (streetField) streetField.value = '';
+            if (suffixField) suffixField.value = '';
+            if (cityField) cityField.value = '';
+            if (stateField) stateField.value = '';
+            if (countryField) countryField.value = 'Nederland';
+            
+            // Debug: Check if organization info is still visible
+            setTimeout(() => {
+                const selectedOrgInfo = document.getElementById('selected-organization-info');
+                if (selectedOrgInfo) {
+                    console.log('DEBUG: After form clear - Element display style:', selectedOrgInfo.style.display);
+                    console.log('DEBUG: After form clear - Element computed style:', window.getComputedStyle(selectedOrgInfo).display);
+                    console.log('DEBUG: After form clear - Element content:', selectedOrgInfo.innerHTML);
+                }
+            }, 100);
         } else {
             throw new Error(result.message || 'Er is een fout opgetreden bij het aanmaken van de organisatie.');
         }

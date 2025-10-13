@@ -425,6 +425,13 @@ console.log('DEBUG: Organization data:', @json($organization));
 console.log('DEBUG: Organization ID:', '{{ $organization?->id ?? "null" }}');
 console.log('DEBUG: Organization name:', '{{ $organization?->name ?? "null" }}');
 
+// Show organization info if organization is already selected
+@if($organization)
+setTimeout(() => {
+    showSelectedOrganization('{{ $organization->name }}');
+}, 1000);
+@endif
+
 // Test: Make element visible for debugging
 setTimeout(() => {
     const testElement = document.getElementById('selected-organization-info');
@@ -435,6 +442,25 @@ setTimeout(() => {
     } else {
         console.log('DEBUG: Test element not found - checking DOM');
         console.log('DEBUG: All divs with id containing "selected":', document.querySelectorAll('div[id*="selected"]'));
+        
+        // Try to find the organization section
+        const orgSection = document.querySelector('[id="organization"]');
+        console.log('DEBUG: Organization section found:', orgSection);
+        
+        // Try to create the element if it doesn't exist
+        if (orgSection) {
+            const existingElement = orgSection.querySelector('#selected-organization-info');
+            if (!existingElement) {
+                console.log('DEBUG: Creating selected-organization-info element');
+                const newElement = document.createElement('div');
+                newElement.id = 'selected-organization-info';
+                newElement.className = 'mt-2 p-2 bg-green-100 border border-green-300 rounded text-sm text-green-800';
+                newElement.style.display = 'block';
+                newElement.innerHTML = '<i class="icon-check-circle"></i> <span id="selected-org-name">TEST ORGANISATIE</span>';
+                orgSection.appendChild(newElement);
+                console.log('DEBUG: Element created and added to DOM');
+            }
+        }
     }
 }, 2000);
 </script>

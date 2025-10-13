@@ -897,6 +897,12 @@
                     showFieldError(fieldName, errorMessage) {
                         if (!this.$refs.leadForm) return;
                         
+                        // Handle contact requirement error - show it in both email and phone sections
+                        if (fieldName === 'contact_requirement') {
+                            this.showContactRequirementError(errorMessage);
+                            return;
+                        }
+                        
                         // Handle phone validation errors
                         if (fieldName.startsWith('phones.')) {
                             const phoneIndex = fieldName.match(/phones\.(\d+)\.value/);
@@ -962,6 +968,30 @@
                                 fieldInput.parentNode.appendChild(errorDiv);
                             }
                         }
+                    },
+
+                    showContactRequirementError(errorMessage) {
+                        // Show error in both email and phone sections
+                        if (this.$refs.emailsSection) {
+                            this.addSectionError(this.$refs.emailsSection, errorMessage);
+                        }
+                        if (this.$refs.phonesSection) {
+                            this.addSectionError(this.$refs.phonesSection, errorMessage);
+                        }
+                    },
+
+                    addSectionError(section, errorMessage) {
+                        // Remove existing contact requirement error
+                        const existingError = section.querySelector('.contact-requirement-error');
+                        if (existingError) {
+                            existingError.remove();
+                        }
+                        
+                        // Add error message at the top of the section
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'contact-requirement-error mb-2 rounded border border-red-400 bg-red-100 px-3 py-2 text-red-800 dark:bg-red-900 dark:text-red-200';
+                        errorDiv.textContent = errorMessage;
+                        section.insertBefore(errorDiv, section.firstChild);
                     }
                 }
             });

@@ -215,9 +215,8 @@
     </script>
 
     <script>
-        // Direct initialization for address lookup buttons
-        document.addEventListener('DOMContentLoaded', function() {
-            const addressId = '{{ $addressId }}';
+        // Function to initialize address lookup button
+        function initializeAddressLookupButton(addressId) {
             const buttonId = addressId + '-lookup-btn';
             console.log('Looking for button with ID:', buttonId);
             console.log('AddressId:', addressId);
@@ -225,20 +224,10 @@
             const button = document.querySelector('#' + buttonId);
             console.log('Button found:', button);
             
-            // Also try to find the button in hidden elements
-            let targetButton = button;
-            if (!button) {
-                const allButtons = document.querySelectorAll('button[id*="lookup-btn"]');
-                console.log('All lookup buttons found:', allButtons);
-                const hiddenButton = Array.from(allButtons).find(btn => btn.id === buttonId);
-                console.log('Hidden button found:', hiddenButton);
-                targetButton = hiddenButton;
-            }
-
-            if (targetButton && !targetButton.hasAttribute('data-lookup-initialized')) {
-                console.log('Initializing button:', targetButton.id);
-                targetButton.setAttribute('data-lookup-initialized', 'true');
-                targetButton.addEventListener('click', function(e) {
+            if (button && !button.hasAttribute('data-lookup-initialized')) {
+                console.log('Initializing button:', button.id);
+                button.setAttribute('data-lookup-initialized', 'true');
+                button.addEventListener('click', function(e) {
                     e.preventDefault();
                     e.stopPropagation();
 
@@ -314,6 +303,21 @@
                             lookupBtn.textContent = 'Adres opzoeken';
                         });
                 });
+            }
+        }
+
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAddressLookupButton('{{ $addressId }}');
+        });
+
+        // Also initialize when the organization form is shown
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.id === 'add-organization-btn') {
+                // Wait a bit for the form to be shown
+                setTimeout(function() {
+                    initializeAddressLookupButton('new_org_address');
+                }, 100);
             }
         });
     </script>

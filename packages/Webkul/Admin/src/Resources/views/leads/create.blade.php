@@ -481,7 +481,7 @@
                                                 ->get()
                                                 ->pluck('full_name', 'id')
                                                 ->toArray();
-                                            $currentUserId = null;
+                                            $currentUserId = $currentUserId ?? null;
                                         @endphp
                                         <x-admin::form.control-group>
                                             <x-admin::form.control-group.label>
@@ -544,6 +544,7 @@
                             combine_order: 1,
                             mri_status: this.userDefaults.mri_status || '',
                             lead_type_id: this.userDefaults.lead_type_id || '1', // Default: Preventie
+                            user_id: '{{ $currentUserId ?? "" }}', // Default: Current logged-in user
                             // Personal fields for matching
                             salutation: this.initialLeadPerson?.salutation?.value || this.userDefaults.salutation || '',
                             initials: this.initialLeadPerson?.initials || this.userDefaults.initials || '',

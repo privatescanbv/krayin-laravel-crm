@@ -24,7 +24,7 @@
         
         <!-- Selected Organization Info -->
         <div id="selected-organization-info" class="mt-2 p-2 bg-green-100 border border-green-300 rounded text-sm text-green-800" style="display: none;">
-            <i class="icon-check-circle"></i> <span id="selected-org-name"></span>
+            <i class="icon-check-circle"></i> <span id="selected-org-name">Geen organisatie geselecteerd</span>
         </div>
     </div>
 
@@ -168,11 +168,9 @@ function clearOrganizationForm() {
 function showSelectedOrganization(orgName) {
     console.log('DEBUG: showSelectedOrganization called with:', orgName);
     const selectedOrgInfo = document.getElementById('selected-organization-info');
-    const selectedOrgName = document.getElementById('selected-org-name');
     console.log('DEBUG: selectedOrgInfo found:', !!selectedOrgInfo);
-    console.log('DEBUG: selectedOrgName found:', !!selectedOrgName);
-    if (selectedOrgInfo && selectedOrgName && orgName) {
-        selectedOrgName.textContent = orgName;
+    if (selectedOrgInfo && orgName) {
+        selectedOrgInfo.innerHTML = '<i class="icon-check-circle"></i> ' + orgName;
         selectedOrgInfo.style.display = 'block';
         console.log('DEBUG: Organization info displayed');
     } else {
@@ -270,17 +268,14 @@ async function saveNewOrganization() {
                 // Show selected organization info
                 console.log('DEBUG: Trying to show selected organization info');
                 const selectedOrgInfo = document.getElementById('selected-organization-info');
-                const selectedOrgName = document.getElementById('selected-org-name');
                 console.log('DEBUG: selectedOrgInfo found:', !!selectedOrgInfo);
-                console.log('DEBUG: selectedOrgName found:', !!selectedOrgName);
                 console.log('DEBUG: result.data.name:', result.data.name);
-                if (selectedOrgInfo && selectedOrgName && result.data.name) {
-                    selectedOrgName.textContent = result.data.name;
+                if (selectedOrgInfo && result.data.name) {
+                    // Update the content directly
+                    selectedOrgInfo.innerHTML = '<i class="icon-check-circle"></i> ' + result.data.name;
                     selectedOrgInfo.style.display = 'block';
                     console.log('DEBUG: Organization info should now be visible');
                     console.log('DEBUG: Element display style:', selectedOrgInfo.style.display);
-                    console.log('DEBUG: Element computed style:', window.getComputedStyle(selectedOrgInfo).display);
-                    console.log('DEBUG: Element visibility:', window.getComputedStyle(selectedOrgInfo).visibility);
                 } else {
                     console.log('DEBUG: Could not show organization info - missing elements or data');
                 }

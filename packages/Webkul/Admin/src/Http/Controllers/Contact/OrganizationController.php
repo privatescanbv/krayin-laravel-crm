@@ -53,7 +53,7 @@ class OrganizationController extends Controller
      */
     public function show(int $id): View
     {
-        $organization = $this->organizationRepository->findOrFail($id);
+        $organization = $this->organizationRepository->with('address')->findOrFail($id);
 
         return view('admin::contacts.organizations.view', compact('organization'));
     }

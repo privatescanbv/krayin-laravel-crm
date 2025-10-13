@@ -30,10 +30,10 @@ Implementeert Symfony's `TransportInterface` en verzorgt:
 - Automatische fallback naar default configuratie
 
 **Features**:
-- Genereert e-mailadres als `voornaam.achternaam@crm.private-scan.nl`
-- Gebruikt `first_name + last_name` als afzendernaam
+- Gebruikt altijd het service account e-mailadres (`crm@privatescan.nl`) om SendAs permission issues te voorkomen
+- Gebruikt `first_name + last_name` als afzendernaam voor personalisatie
 - Fallback naar `name` veld als first_name/last_name niet beschikbaar zijn
-- Verwijdert automatisch spaties en special characters uit e-mailadressen
+- Alle e-mails worden verstuurd vanuit het geconfigureerde mailbox account
 
 ### 3. Service Provider
 

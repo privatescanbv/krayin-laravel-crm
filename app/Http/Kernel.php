@@ -6,7 +6,6 @@ use App\Http\Middleware\ApiKeyAuth;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\BouncerPermissionMiddleware;
 use App\Http\Middleware\EncryptCookies;
-use App\Http\Middleware\Log500Errors;
 use App\Http\Middleware\PreventRequestsDuringMaintenance;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\TrimStrings;
@@ -46,7 +45,6 @@ class Kernel extends HttpKernel
         ValidatePostSize::class,
         TrimStrings::class,
         CanInstall::class,
-        Log500Errors::class,
     ];
 
     /**

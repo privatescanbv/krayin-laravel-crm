@@ -19,22 +19,12 @@ class Lead
      */
     public function linkToEmail($lead)
     {
-        try {
-            if (! request('email_id')) {
-                return;
-            }
-
-            $this->emailRepository->update([
-                'lead_id' => $lead->id,
-            ], request('email_id'));
-        } catch (\Exception $e) {
-            \Log::error('Lead event listener failed - linkToEmail', [
-                'lead_id' => $lead->id ?? null,
-                'email_id' => request('email_id'),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            // Don't re-throw to prevent breaking the lead creation process
+        if (! request('email_id')) {
+            return;
         }
+
+        $this->emailRepository->update([
+            'lead_id' => $lead->id,
+        ], request('email_id'));
     }
 }

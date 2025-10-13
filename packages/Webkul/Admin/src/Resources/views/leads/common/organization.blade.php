@@ -21,6 +21,11 @@
             :can-add-new="false"
         />
         <x-admin::form.control-group.error control-name="organization_id" />
+        
+        <!-- Selected Organization Info -->
+        <div id="selected-organization-info" class="mt-2 text-sm text-green-600 dark:text-green-400" style="display: none;">
+            <i class="icon-check-circle"></i> <span id="selected-org-name"></span>
+        </div>
     </div>
 
     <!-- Add New Organization Button -->
@@ -151,6 +156,22 @@ function clearOrganizationForm() {
     if (cityField) cityField.value = '';
     if (stateField) stateField.value = '';
     if (countryField) countryField.value = 'Nederland';
+    
+    // Hide selected organization info
+    const selectedOrgInfo = document.getElementById('selected-organization-info');
+    if (selectedOrgInfo) {
+        selectedOrgInfo.style.display = 'none';
+    }
+}
+
+// Show selected organization info when organization is selected via lookup
+function showSelectedOrganization(orgName) {
+    const selectedOrgInfo = document.getElementById('selected-organization-info');
+    const selectedOrgName = document.getElementById('selected-org-name');
+    if (selectedOrgInfo && selectedOrgName && orgName) {
+        selectedOrgName.textContent = orgName;
+        selectedOrgInfo.style.display = 'block';
+    }
 }
 
 async function saveNewOrganization() {
@@ -237,6 +258,14 @@ async function saveNewOrganization() {
                 if (organizationLookup && result.data.id) {
                     organizationLookup.value = result.data.id;
                     organizationLookup.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+
+                // Show selected organization info
+                const selectedOrgInfo = document.getElementById('selected-organization-info');
+                const selectedOrgName = document.getElementById('selected-org-name');
+                if (selectedOrgInfo && selectedOrgName && result.data.name) {
+                    selectedOrgName.textContent = result.data.name;
+                    selectedOrgInfo.style.display = 'block';
                 }
             }
 

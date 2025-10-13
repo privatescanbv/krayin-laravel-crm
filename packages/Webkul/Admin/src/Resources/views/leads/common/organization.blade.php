@@ -21,11 +21,6 @@
             :can-add-new="false"
         />
         
-        <script>
-        console.log('DEBUG: Organization data:', @json($organization));
-        console.log('DEBUG: Organization ID:', '{{ $organization?->id ?? "null" }}');
-        console.log('DEBUG: Organization name:', '{{ $organization?->name ?? "null" }}');
-        </script>
         <x-admin::form.control-group.error control-name="organization_id" />
         
         <!-- Selected Organization Info -->
@@ -425,6 +420,11 @@ console.log('DEBUG: HTML elements check:');
 console.log('DEBUG: selected-organization-info:', document.getElementById('selected-organization-info'));
 console.log('DEBUG: selected-org-name:', document.getElementById('selected-org-name'));
 
+// Debug: Organization data
+console.log('DEBUG: Organization data:', @json($organization));
+console.log('DEBUG: Organization ID:', '{{ $organization?->id ?? "null" }}');
+console.log('DEBUG: Organization name:', '{{ $organization?->name ?? "null" }}');
+
 // Test: Make element visible for debugging
 setTimeout(() => {
     const testElement = document.getElementById('selected-organization-info');
@@ -432,6 +432,9 @@ setTimeout(() => {
         testElement.style.display = 'block';
         testElement.innerHTML = '<i class="icon-check-circle"></i> TEST ORGANISATIE';
         console.log('DEBUG: Test element made visible');
+    } else {
+        console.log('DEBUG: Test element not found - checking DOM');
+        console.log('DEBUG: All divs with id containing "selected":', document.querySelectorAll('div[id*="selected"]'));
     }
 }, 2000);
 </script>

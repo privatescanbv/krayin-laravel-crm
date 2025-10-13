@@ -239,7 +239,7 @@ class LeadStatusTransitionValidator
      * Calculate match score between lead and person.
      * This is a simplified version of the match score calculation from PersonController.
      */
-    private static function calculateMatchScore(Lead $lead, Person $person): float
+    private static function calculateMatchScore(Lead $lead, \Webkul\Contact\Models\Person $person): float
     {
         $score = 0.0;
         $maxScore = 100.0;
@@ -266,7 +266,7 @@ class LeadStatusTransitionValidator
     /**
      * Calculate name match score between lead and person.
      */
-    private static function calculateNameMatchScore(Lead $lead, Person $person): float
+    private static function calculateNameMatchScore(Lead $lead, \Webkul\Contact\Models\Person $person): float
     {
         $nameFields = [
             'first_name',
@@ -342,7 +342,7 @@ class LeadStatusTransitionValidator
     /**
      * Calculate email match score between lead and person.
      */
-    private static function calculateEmailMatchScore(Lead $lead, Person $person): float
+    private static function calculateEmailMatchScore(Lead $lead, \Webkul\Contact\Models\Person $person): float
     {
         $leadEmails = self::extractEmails($lead);
         $personEmails = self::extractEmails($person);
@@ -369,7 +369,7 @@ class LeadStatusTransitionValidator
     /**
      * Calculate phone match score between lead and person.
      */
-    private static function calculatePhoneMatchScore(Lead $lead, Person $person): float
+    private static function calculatePhoneMatchScore(Lead $lead, \Webkul\Contact\Models\Person $person): float
     {
         $leadPhones = self::extractPhones($lead);
         $personPhones = self::extractPhones($person);
@@ -396,7 +396,7 @@ class LeadStatusTransitionValidator
     /**
      * Calculate address match score between lead and person.
      */
-    private static function calculateAddressMatchScore(Lead $lead, Person $person): float
+    private static function calculateAddressMatchScore(Lead $lead, \Webkul\Contact\Models\Person $person): float
     {
         $leadAddress = self::extractAddressData($lead);
         $personAddress = self::extractAddressData($person);

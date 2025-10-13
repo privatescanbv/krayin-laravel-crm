@@ -25,7 +25,17 @@ class Handler extends ExceptionHandler
     public function register(): void
     {
         $this->reportable(function (Throwable $e) {
-            //
+            // Log all exceptions that are reported
+            Log::error('Exception reported', [
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+                'url' => request()->fullUrl(),
+                'method' => request()->method(),
+                'user_id' => auth()->guard('user')->id(),
+            ]);
         });
     }
 
@@ -53,6 +63,9 @@ class Handler extends ExceptionHandler
                 'method'    => $request->method(),
                 'ip'        => $request->ip(),
                 'user_id'   => auth()->guard('user')->id(),
+                'request_data' => $request->all(),
+                'headers'   => $request->headers->all(),
+                'session_id' => session()->getId(),
             ]);
         }
 

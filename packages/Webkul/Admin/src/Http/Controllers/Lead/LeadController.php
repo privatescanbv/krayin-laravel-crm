@@ -261,10 +261,11 @@ class LeadController extends Controller
      */
     public function create(): View
     {
-        // Get current user's groups to determine default department
-        $user = auth()->guard('user')->user() ?? auth()->user();
-        $userGroupNames = $user->groups->pluck('name')->toArray();
-        $defaultDepartmentId = Department::mapGroupToDepartmentId($userGroupNames);
+        try {
+            // Get current user's groups to determine default department
+            $user = auth()->guard('user')->user() ?? auth()->user();
+            $userGroupNames = $user->groups->pluck('name')->toArray();
+            $defaultDepartmentId = Department::mapGroupToDepartmentId($userGroupNames);
 
         // Get user default values for lead fields
         $userDefaults = $this->userDefaultValueService->getLeadDefaults($user->id);
@@ -329,15 +330,35 @@ class LeadController extends Controller
             }
         }
 
-        return view('admin::leads.create', [
-            'defaultDepartmentId' => $defaultDepartmentId,
-            'defaultPipelineId' => $pipeline->id ?? null,
-            'defaultStageId' => $defaultStageId,
-            'departmentOptions' => Department::pluck('name', 'id')->toArray(),
-            'prefilledPersons' => $prefilledPersons,
-            'prefilledLeadPerson' => $prefilledLeadPerson,
-            'userDefaults' => $userDefaults,
-        ]);
+            return view('admin::leads.create', [
+                'defaultDepartmentId' => $defaultDepartmentId,
+                'defaultPipelineId' => $pipeline->id ?? null,
+                'defaultStageId' => $defaultStageId,
+                'departmentOptions' => Department::pluck('name', 'id')->toArray(),
+                'prefilledPersons' => $prefilledPersons,
+                'prefilledLeadPerson' => $prefilledLeadPerson,
+                'userDefaults' => $userDefaults,
+            ]);
+        } catch (Exception $e) {
+            Log::error('Lead create form failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => auth()->guard('user')->id(),
+                'exception_class' => get_class($e),
+            ]);
+
+            // Return a basic view with error message
+            return view('admin::leads.create', [
+                'defaultDepartmentId' => null,
+                'defaultPipelineId' => null,
+                'defaultStageId' => null,
+                'departmentOptions' => [],
+                'prefilledPersons' => [],
+                'prefilledLeadPerson' => null,
+                'userDefaults' => [],
+                'error' => 'Er is een fout opgetreden bij het laden van het formulier.',
+            ]);
+        }
     }
 
     /**
@@ -345,41 +366,65 @@ class LeadController extends Controller
      */
     public function store(LeadForm $request): RedirectResponse|JsonResponse
     {
-        // Normalize contact arrays before validation
-        $this->normalizeContactArrays($request);
+        try {
+            // Normalize contact arrays before validation
+            $this->normalizeContactArrays($request);
 
-        // Validate with custom rules including email/phone requirement
-        $this->validate($request, LeadValidationService::getWebValidationRules($request));
+            // Validate with custom rules including email/phone requirement
+            $this->validate($request, LeadValidationService::getWebValidationRules($request));
 
-        // Additional rule now embedded in LeadValidationService rules
+            // Additional rule now embedded in LeadValidationService rules
 
-            try {
-                [$lead, $leadPipelineId] = $this->storeLead($request);
+            [$lead, $leadPipelineId] = $this->storeLead($request);
 
-                // If this is an AJAX request, respond with JSON containing redirect target
-                if (request()->ajax()) {
-                    return response()->json([
-                        'message'  => trans('admin::app.leads.create-success'),
-                        'redirect' => route('admin.leads.view', $lead->id),
-                    ]);
-                }
-
-                session()->flash('success', trans('admin::app.leads.create-success'));
-
-                // Na aanmaken: ga naar de lead detailpagina in plaats van het kanban bord
-                return redirect()->route('admin.leads.view', $lead->id);
-            } catch (InvalidArgumentException $e) {
-                if (request()->ajax()) {
-                    throw new ValidationException(
-                        Validator::make([], []),
-                        response()->json([
-                            'message' => $e->getMessage(),
-                        ], 422)
-                    );
-                }
-
-                return redirect()->back()->withInput()->withErrors(['error' => $e->getMessage()]);
+            // If this is an AJAX request, respond with JSON containing redirect target
+            if (request()->ajax()) {
+                return response()->json([
+                    'message'  => trans('admin::app.leads.create-success'),
+                    'redirect' => route('admin.leads.view', $lead->id),
+                ]);
             }
+
+            session()->flash('success', trans('admin::app.leads.create-success'));
+
+            // Na aanmaken: ga naar de lead detailpagina in plaats van het kanban bord
+            return redirect()->route('admin.leads.view', $lead->id);
+        } catch (InvalidArgumentException $e) {
+            Log::error('Lead creation failed - InvalidArgumentException', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+                'user_id' => auth()->guard('user')->id(),
+            ]);
+
+            if (request()->ajax()) {
+                throw new ValidationException(
+                    Validator::make([], []),
+                    response()->json([
+                        'message' => $e->getMessage(),
+                    ], 422)
+                );
+            }
+
+            return redirect()->back()->withInput()->withErrors(['error' => $e->getMessage()]);
+        } catch (Exception $e) {
+            Log::error('Lead creation failed - Unexpected error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+                'user_id' => auth()->guard('user')->id(),
+                'exception_class' => get_class($e),
+            ]);
+
+            if (request()->ajax()) {
+                return response()->json([
+                    'message' => 'Er is een onverwachte fout opgetreden bij het aanmaken van de lead.',
+                    'error' => config('app.debug') ? $e->getMessage() : 'Internal server error'
+                ], 500);
+            }
+
+            return redirect()->back()->withInput()->withErrors(['error' => 'Er is een onverwachte fout opgetreden bij het aanmaken van de lead.']);
+        }
     }
 
     /**
@@ -389,7 +434,17 @@ class LeadController extends Controller
      */
     public function storeLead(LeadForm $request): array
     {
-            Event::dispatch('lead.create.before');
+        try {
+            try {
+                Event::dispatch('lead.create.before');
+            } catch (Exception $e) {
+                Log::error('Lead create.before event failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'user_id' => auth()->guard('user')->id(),
+                ]);
+                // Continue with lead creation even if event fails
+            }
 
             $data = $request->all();
 
@@ -419,14 +474,24 @@ class LeadController extends Controller
             $data['status'] = 1;
 
             if (isset($data['lead_pipeline_stage_id'])) {
-                $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
+                try {
+                    $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
 
-                // If pipeline_id is also provided, validate that stage belongs to pipeline
-                if (isset($data['lead_pipeline_id']) && $stage->lead_pipeline_id != $data['lead_pipeline_id']) {
-                    throw new \InvalidArgumentException('The selected stage does not belong to the specified pipeline.');
+                    // If pipeline_id is also provided, validate that stage belongs to pipeline
+                    if (isset($data['lead_pipeline_id']) && $stage->lead_pipeline_id != $data['lead_pipeline_id']) {
+                        throw new \InvalidArgumentException('The selected stage does not belong to the specified pipeline.');
+                    }
+
+                    $data['lead_pipeline_id'] = $stage->lead_pipeline_id;
+                } catch (Exception $e) {
+                    Log::error('Lead stage validation failed', [
+                        'error' => $e->getMessage(),
+                        'stage_id' => $data['lead_pipeline_stage_id'] ?? null,
+                        'pipeline_id' => $data['lead_pipeline_id'] ?? null,
+                        'user_id' => auth()->guard('user')->id(),
+                    ]);
+                    throw $e;
                 }
-
-                $data['lead_pipeline_id'] = $stage->lead_pipeline_id;
             } else {
                 // Determine pipeline based on department_id if provided
                 $pipeline = null;
@@ -454,7 +519,17 @@ class LeadController extends Controller
             if (in_array($stage->code, ['won', 'lost'])) {
                 $data['closed_at'] = Carbon::now();
             }
-            $lead = $this->leadRepository->create($data);
+            try {
+                $lead = $this->leadRepository->create($data);
+            } catch (Exception $e) {
+                Log::error('Lead repository create failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'data' => $data,
+                    'user_id' => auth()->guard('user')->id(),
+                ]);
+                throw $e;
+            }
 
             // Persist basic anamnesis answers if provided and if persons attached
             try {
@@ -495,9 +570,29 @@ class LeadController extends Controller
                 Log::warning('Failed to persist anamnesis answers on lead create', ['lead_id' => $lead->id, 'error' => $e->getMessage()]);
             }
 
-            Event::dispatch('lead.create.after', $lead);
+            try {
+                Event::dispatch('lead.create.after', $lead);
+            } catch (Exception $e) {
+                Log::error('Lead create.after event failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'lead_id' => $lead->id ?? null,
+                    'user_id' => auth()->guard('user')->id(),
+                ]);
+                // Continue even if event fails
+            }
 
             return [$lead, $data['lead_pipeline_id']];
+        } catch (Exception $e) {
+            Log::error('Lead creation failed in storeLead method', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+                'user_id' => auth()->guard('user')->id(),
+                'exception_class' => get_class($e),
+            ]);
+            throw $e; // Re-throw to be caught by the calling method
+        }
     }
 
     /**

@@ -23,7 +23,7 @@ test('organizations index returns datagrid json', function () {
     $response = $this->getJson(route('admin.contacts.organizations.index'), [
         'X-Requested-With' => 'XMLHttpRequest'
     ]);
-    
+
     $response->assertOk();
     $response->assertJsonStructure([
         'records',
@@ -36,15 +36,15 @@ test('organizations index returns datagrid json', function () {
 
 test('can create organization with address', function () {
     $payload = [
-        'name' => 'Test Organization',
+        'name'    => 'Test Organization',
         'address' => [
-            'postal_code' => '1234 AB',
-            'house_number' => '123',
+            'postal_code'         => '1234 AB',
+            'house_number'        => '123',
             'house_number_suffix' => 'A',
-            'street' => 'Teststraat',
-            'city' => 'Amsterdam',
-            'state' => 'Noord-Holland',
-            'country' => 'Nederland',
+            'street'              => 'Teststraat',
+            'city'                => 'Amsterdam',
+            'state'               => 'Noord-Holland',
+            'country'             => 'Nederland',
         ],
     ];
 
@@ -68,14 +68,14 @@ test('can create organization with address', function () {
 
 test('can create organization via ajax', function () {
     $payload = [
-        'name' => 'Test Organization AJAX',
+        'name'    => 'Test Organization AJAX',
         'address' => [
-            'postal_code' => '5678 CD',
+            'postal_code'  => '5678 CD',
             'house_number' => '456',
-            'street' => 'AJAX Straat',
-            'city' => 'Utrecht',
-            'state' => 'Utrecht',
-            'country' => 'Nederland',
+            'street'       => 'AJAX Straat',
+            'city'         => 'Utrecht',
+            'state'        => 'Utrecht',
+            'country'      => 'Nederland',
         ],
     ];
 
@@ -102,15 +102,15 @@ test('can update organization with address', function () {
     $address = Address::factory()->create(['organization_id' => $organization->id]);
 
     $payload = [
-        'name' => 'Updated Organization',
+        'name'    => 'Updated Organization',
         'address' => [
-            'postal_code' => '9999 ZZ',
-            'house_number' => '999',
+            'postal_code'         => '9999 ZZ',
+            'house_number'        => '999',
             'house_number_suffix' => 'B',
-            'street' => 'Updated Straat',
-            'city' => 'Rotterdam',
-            'state' => 'Zuid-Holland',
-            'country' => 'Nederland',
+            'street'              => 'Updated Straat',
+            'city'                => 'Rotterdam',
+            'state'               => 'Zuid-Holland',
+            'country'             => 'Nederland',
         ],
         '_method' => 'put',
     ];
@@ -121,7 +121,7 @@ test('can update organization with address', function () {
     $response->assertOk();
 
     $this->assertDatabaseHas('organizations', [
-        'id' => $organization->id,
+        'id'   => $organization->id,
         'name' => 'Updated Organization',
     ]);
 
@@ -140,14 +140,14 @@ test('can update organization and remove address', function () {
     $address = Address::factory()->create(['organization_id' => $organization->id]);
 
     $payload = [
-        'name' => 'Organization Without Address',
+        'name'    => 'Organization Without Address',
         'address' => [
-            'postal_code' => '',
+            'postal_code'  => '',
             'house_number' => '',
-            'street' => '',
-            'city' => '',
-            'state' => '',
-            'country' => '',
+            'street'       => '',
+            'city'         => '',
+            'state'        => '',
+            'country'      => '',
         ],
         '_method' => 'put',
     ];
@@ -158,7 +158,7 @@ test('can update organization and remove address', function () {
     $response->assertOk();
 
     $this->assertDatabaseHas('organizations', [
-        'id' => $organization->id,
+        'id'   => $organization->id,
         'name' => 'Organization Without Address',
     ]);
 
@@ -186,7 +186,7 @@ test('can search organizations', function () {
     $org3 = Organization::factory()->create(['name' => 'Different Company', 'user_id' => $user->id]);
 
     $response = $this->getJson(route('admin.contacts.organizations.search', ['search' => 'Test Company']));
-    
+
     $response->assertOk();
     $response->assertJsonStructure([
         'data' => [
@@ -202,7 +202,7 @@ test('can search organizations', function () {
 
     $data = $response->json('data');
     expect($data)->toHaveCount(2);
-    
+
     $names = collect($data)->pluck('name')->toArray();
     expect($names)->toContain('Test Company A', 'Test Company B');
     expect($names)->not->toContain('Different Company');
@@ -210,15 +210,15 @@ test('can search organizations', function () {
 
 test('validates required name field', function () {
     $payload = [
-        'name' => '',
+        'name'    => '',
         'entity_type' => 'organizations',
         'address' => [
-            'postal_code' => '1234 AB',
+            'postal_code'  => '1234 AB',
             'house_number' => '123',
-            'street' => 'Teststraat',
-            'city' => 'Amsterdam',
-            'state' => 'Noord-Holland',
-            'country' => 'Nederland',
+            'street'       => 'Teststraat',
+            'city'         => 'Amsterdam',
+            'state'        => 'Noord-Holland',
+            'country'      => 'Nederland',
         ],
     ];
 
@@ -229,15 +229,15 @@ test('validates required name field', function () {
 
 test('validates max length for name field', function () {
     $payload = [
-        'name' => str_repeat('A', 101), // Exceeds max length of 100
+        'name'    => str_repeat('A', 101), // Exceeds max length of 100
         'entity_type' => 'organizations',
         'address' => [
-            'postal_code' => '1234 AB',
+            'postal_code'  => '1234 AB',
             'house_number' => '123',
-            'street' => 'Teststraat',
-            'city' => 'Amsterdam',
-            'state' => 'Noord-Holland',
-            'country' => 'Nederland',
+            'street'       => 'Teststraat',
+            'city'         => 'Amsterdam',
+            'state'        => 'Noord-Holland',
+            'country'      => 'Nederland',
         ],
     ];
 
@@ -251,14 +251,14 @@ test('organization has audit trail fields', function () {
     $this->actingAs($user, 'user');
 
     $payload = [
-        'name' => 'Audit Trail Organization',
+        'name'    => 'Audit Trail Organization',
         'address' => [
-            'postal_code' => '1234 AB',
+            'postal_code'  => '1234 AB',
             'house_number' => '123',
-            'street' => 'Teststraat',
-            'city' => 'Amsterdam',
-            'state' => 'Noord-Holland',
-            'country' => 'Nederland',
+            'street'       => 'Teststraat',
+            'city'         => 'Amsterdam',
+            'state'        => 'Noord-Holland',
+            'country'      => 'Nederland',
         ],
     ];
 

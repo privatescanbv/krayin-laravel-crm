@@ -225,7 +225,7 @@
 function toggleOrganizationForm() {
     const form = document.getElementById('organization-form');
     const btn = document.getElementById('add-organization-btn');
-    
+
     if (form.classList.contains('hidden')) {
         form.classList.remove('hidden');
         btn.innerHTML = '<i class="icon-minus text-xs mr-1"></i>Nieuwe organisatie formulier verbergen';
@@ -253,7 +253,7 @@ function clearOrganizationForm() {
     const cityField = document.getElementById('new_org_address_city');
     const stateField = document.getElementById('new_org_address_state');
     const countryField = document.getElementById('new_org_address_country');
-    
+
     if (nameField) nameField.value = '';
     if (postcodeField) postcodeField.value = '';
     if (houseNumberField) houseNumberField.value = '';
@@ -273,7 +273,7 @@ async function saveNewOrganization() {
     const stateField = document.getElementById('new_org_address_state');
     const countryField = document.getElementById('new_org_address_country');
     const suffixField = document.getElementById('new_org_address_house_number_suffix');
-    
+
     const name = nameField ? nameField.value.trim() : '';
     const postalCode = postalCodeField ? postalCodeField.value.trim() : '';
     const houseNumber = houseNumberField ? houseNumberField.value.trim() : '';
@@ -321,7 +321,7 @@ async function saveNewOrganization() {
             if (organizationLookup) {
                 // Set the value to the new organization
                 document.getElementById('selected_organization_id').value = result.data.id;
-                
+
                 // Update the lookup display (this depends on the lookup component implementation)
                 const lookupInput = organizationLookup.closest('.lookup-container')?.querySelector('input[type="text"]');
                 if (lookupInput) {
@@ -331,7 +331,7 @@ async function saveNewOrganization() {
 
             // Hide the form and clear it
             cancelOrganizationForm();
-            
+
             // Show success message
             if (window.$emitter) {
                 window.$emitter.emit('add-flash', {

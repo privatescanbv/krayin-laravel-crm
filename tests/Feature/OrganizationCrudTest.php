@@ -16,11 +16,19 @@ beforeEach(function () {
 });
 
 test('organizations index returns datagrid json', function () {
-    $org1 = Organization::factory()->create();
-    $org2 = Organization::factory()->create();
+    $user = auth()->guard('user')->user();
+    $org1 = Organization::factory()->create(['user_id' => $user->id]);
+    $org2 = Organization::factory()->create(['user_id' => $user->id]);
 
-    $response = $this->getJson(route('admin.contacts.organizations.index'));
+    $response = $this->getJson(route('admin.contacts.organizations.index'), [
+        'X-Requested-With' => 'XMLHttpRequest'
+    ]);
+    
     $response->assertOk();
+    $response->assertJsonStructure([
+        'records',
+        'meta'
+    ]);
 
     $ids = getDatagridIds($response);
     expect($ids)->toContain($org1->id, $org2->id);
@@ -89,7 +97,8 @@ test('can create organization via ajax', function () {
 });
 
 test('can update organization with address', function () {
-    $organization = Organization::factory()->create();
+    $user = auth()->guard('user')->user();
+    $organization = Organization::factory()->create(['user_id' => $user->id]);
     $address = Address::factory()->create(['organization_id' => $organization->id]);
 
     $payload = [
@@ -124,7 +133,8 @@ test('can update organization with address', function () {
 });
 
 test('can update organization and remove address', function () {
-    $organization = Organization::factory()->create();
+    $user = auth()->guard('user')->user();
+    $organization = Organization::factory()->create(['user_id' => $user->id]);
     $address = Address::factory()->create(['organization_id' => $organization->id]);
 
     $payload = [
@@ -154,7 +164,8 @@ test('can update organization and remove address', function () {
 });
 
 test('can delete organization', function () {
-    $organization = Organization::factory()->create();
+    $user = auth()->guard('user')->user();
+    $organization = Organization::factory()->create(['user_id' => $user->id]);
 
     $response = $this->deleteJson(route('admin.contacts.organizations.delete', ['id' => $organization->id]));
     $response->assertOk();
@@ -165,16 +176,29 @@ test('can delete organization', function () {
 });
 
 test('can search organizations', function () {
-    $org1 = Organization::factory()->create(['name' => 'Test Company A']);
-    $org2 = Organization::factory()->create(['name' => 'Test Company B']);
-    $org3 = Organization::factory()->create(['name' => 'Different Company']);
+    $user = auth()->guard('user')->user();
+    $org1 = Organization::factory()->create(['name' => 'Test Company A', 'user_id' => $user->id]);
+    $org2 = Organization::factory()->create(['name' => 'Test Company B', 'user_id' => $user->id]);
+    $org3 = Organization::factory()->create(['name' => 'Different Company', 'user_id' => $user->id]);
 
     $response = $this->getJson(route('admin.contacts.organizations.search', ['search' => 'Test Company']));
+    
     $response->assertOk();
+    $response->assertJsonStructure([
+        'data' => [
+            '*' => [
+                'id',
+                'name',
+                'address',
+                'created_at',
+                'updated_at'
+            ]
+        ]
+    ]);
 
     $data = $response->json('data');
     expect($data)->toHaveCount(2);
-
+    
     $names = collect($data)->pluck('name')->toArray();
     expect($names)->toContain('Test Company A', 'Test Company B');
     expect($names)->not->toContain('Different Company');
@@ -241,15 +265,16 @@ test('organization has audit trail fields', function () {
 });
 
 test('can mass delete organizations', function () {
-    $org1 = Organization::factory()->create();
-    $org2 = Organization::factory()->create();
-    $org3 = Organization::factory()->create();
+    $user = auth()->guard('user')->user();
+    $org1 = Organization::factory()->create(['user_id' => $user->id]);
+    $org2 = Organization::factory()->create(['user_id' => $user->id]);
+    $org3 = Organization::factory()->create(['user_id' => $user->id]);
 
     $payload = [
         'indices' => [$org1->id, $org2->id],
     ];
 
-    $response = $this->postJson(route('admin.contacts.organizations.mass-destroy'), $payload);
+    $response = $this->postJson(route('admin.contacts.organizations.mass_delete'), $payload);
     $response->assertOk();
 
     $this->assertDatabaseMissing('organizations', [

@@ -6,6 +6,7 @@ use App\Exceptions\Handler as AppExceptionHandler;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use PDOException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -45,6 +46,20 @@ class Handler extends AppExceptionHandler
      */
     public function render($request, Throwable $exception)
     {
+        // Log all exceptions in admin context with additional details
+        Log::error('Admin exception occurred', [
+            'exception' => get_class($exception),
+            'message' => $exception->getMessage(),
+            'file' => $exception->getFile(),
+            'line' => $exception->getLine(),
+            'trace' => $exception->getTraceAsString(),
+            'url' => $request->fullUrl(),
+            'method' => $request->method(),
+            'user_id' => auth()->guard('user')->id(),
+            'request_data' => $request->all(),
+            'session_id' => session()->getId(),
+        ]);
+
         if (! config('app.debug')) {
             return $this->renderCustomResponse($exception);
         }
@@ -87,10 +102,30 @@ class Handler extends AppExceptionHandler
         }
 
         if ($exception instanceof ModelNotFoundException) {
+            \Log::error('Model not found in admin', [
+                'model' => $exception->getModel(),
+                'ids' => $exception->getIds(),
+                'url' => request()->fullUrl(),
+                'user_id' => auth()->guard('user')->id(),
+            ]);
             return $this->response(404);
         } elseif ($exception instanceof PDOException || $exception instanceof \ParseError) {
+            \Log::error('Database error in admin', [
+                'error' => $exception->getMessage(),
+                'code' => $exception->getCode(),
+                'url' => request()->fullUrl(),
+                'user_id' => auth()->guard('user')->id(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
             return $this->response(500);
         } else {
+            \Log::error('General error in admin', [
+                'error' => $exception->getMessage(),
+                'class' => get_class($exception),
+                'url' => request()->fullUrl(),
+                'user_id' => auth()->guard('user')->id(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
             return $this->response(500);
         }
     }

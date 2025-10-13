@@ -201,7 +201,7 @@ class SalesLeadController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'message'       => 'Sales lead updated successfully.',
-                'sales_lead' => $salesLead,
+                'sales_lead'    => $salesLead,
             ]);
         }
 
@@ -244,7 +244,7 @@ class SalesLeadController extends Controller
         $orders = Order::where('sales_lead_id', $salesLead->id)->get();
 
         return view('admin.sales_leads.view', [
-            'salesLead' => $salesLead,
+            'salesLead'    => $salesLead,
             'lead'         => $lead,
             'orders'       => $orders,
         ]);

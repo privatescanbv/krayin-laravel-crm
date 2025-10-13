@@ -20,6 +20,35 @@
                 <span>{{ $activity->title ?: __('admin::app.activities.edit.title') }}</span>
             </div>
 
+            <!-- Activity Relations -->
+            @if($activity->lead || $activity->workflowLead || $activity->clinic)
+                <div class="flex flex-wrap gap-2 mt-2">
+                    @if($activity->lead)
+                        <a href="{{ route('admin.leads.view', $activity->lead->id) }}" 
+                           class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800">
+                            <span class="icon-lead mr-1"></span>
+                            Lead: {{ $activity->lead->title ?? '#' . $activity->lead->id }}
+                        </a>
+                    @endif
+                    
+                    @if($activity->workflowLead)
+                        <a href="{{ route('admin.workflow-leads.view', $activity->workflowLead->id) }}" 
+                           class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800">
+                            <span class="icon-sales-lead mr-1"></span>
+                            Sales Lead: {{ $activity->workflowLead->title ?? '#' . $activity->workflowLead->id }}
+                        </a>
+                    @endif
+                    
+                    @if($activity->clinic)
+                        <a href="{{ route('admin.settings.clinics.view', $activity->clinic->id) }}" 
+                           class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900 dark:text-purple-200 dark:hover:bg-purple-800">
+                            <span class="icon-clinic mr-1"></span>
+                            Clinic: {{ $activity->clinic->name ?? '#' . $activity->clinic->id }}
+                        </a>
+                    @endif
+                </div>
+            @endif
+
             <!-- Status Bar hidden per requirement -->
         </div>
 

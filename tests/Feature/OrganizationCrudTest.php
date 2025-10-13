@@ -210,16 +210,7 @@ test('can search organizations', function () {
 
 test('validates required name field', function () {
     $payload = [
-        'name'    => '',
-        'entity_type' => 'organizations',
-        'address' => [
-            'postal_code'  => '1234 AB',
-            'house_number' => '123',
-            'street'       => 'Teststraat',
-            'city'         => 'Amsterdam',
-            'state'        => 'Noord-Holland',
-            'country'      => 'Nederland',
-        ],
+        'name' => '',
     ];
 
     $response = $this->postJson(route('admin.contacts.organizations.store'), $payload, [
@@ -231,16 +222,7 @@ test('validates required name field', function () {
 
 test('validates max length for name field', function () {
     $payload = [
-        'name'    => str_repeat('A', 101), // Exceeds max length of 100
-        'entity_type' => 'organizations',
-        'address' => [
-            'postal_code'  => '1234 AB',
-            'house_number' => '123',
-            'street'       => 'Teststraat',
-            'city'         => 'Amsterdam',
-            'state'        => 'Noord-Holland',
-            'country'      => 'Nederland',
-        ],
+        'name' => str_repeat('A', 101), // Exceeds max length of 100
     ];
 
     $response = $this->postJson(route('admin.contacts.organizations.store'), $payload, [

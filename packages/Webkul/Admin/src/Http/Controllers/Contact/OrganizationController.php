@@ -57,6 +57,17 @@ class OrganizationController extends Controller
 
         $data = request()->all();
 
+        // Basic validation for name field
+        if (empty($data['name'])) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Name is required'
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Name is required');
+        }
+
         $organization = $this->organizationRepository->create($data);
 
         // Handle address creation
@@ -101,6 +112,17 @@ class OrganizationController extends Controller
 
         $data = request()->all();
 
+        // Basic validation for name field
+        if (empty($data['name'])) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Name is required'
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Name is required');
+        }
+
         $organization = $this->organizationRepository->update($data, $id);
 
         if (!$organization) {
@@ -117,6 +139,15 @@ class OrganizationController extends Controller
         if (isset($data['address'])) {
             // Get fresh organization instance with address relationship
             $organization = $this->organizationRepository->find($id);
+            if (!$organization) {
+                if (request()->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Organization not found after update'
+                    ], 404);
+                }
+                return redirect()->back()->with('error', 'Organization not found after update');
+            }
             $existingAddress = $organization->address;
 
             if (!empty(array_filter($data['address']))) {

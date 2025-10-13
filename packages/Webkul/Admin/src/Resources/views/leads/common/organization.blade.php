@@ -193,12 +193,24 @@ async function saveNewOrganization() {
         formData.append('address[state]', state);
         formData.append('address[country]', country);
 
+        // Get CSRF token safely
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                         document.querySelector('input[name="_token"]')?.value ||
+                         '';
+        
+        console.log('CSRF Token found:', csrfToken);
+        
+        // Add CSRF token to form data as well
+        if (csrfToken) {
+            formData.append('_token', csrfToken);
+        }
+
         const response = await fetch(ORGANIZATION_STORE_URL, {
             method: 'POST',
             body: formData,
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                'X-CSRF-TOKEN': csrfToken
             }
         });
 

@@ -16,7 +16,7 @@
             src="{{ route('admin.contacts.organizations.search') }}"
             name="organization_id"
             label="Naam"
-            value="{{ $organization ? json_encode($organization) : '' }}"
+            value="{{ $organization?->id ?? '' }}"
             placeholder="Zoek organisatie..."
             :can-add-new="false"
         />
@@ -174,25 +174,10 @@ function clearOrganizationForm() {
 
 // Show selected organization info when organization is selected via lookup
 function showSelectedOrganization(orgName) {
-    console.log('DEBUG: showSelectedOrganization called with:', orgName);
     const selectedOrgInfo = document.getElementById('selected-organization-info');
-    console.log('DEBUG: selectedOrgInfo found:', !!selectedOrgInfo);
     if (selectedOrgInfo && orgName) {
         selectedOrgInfo.innerHTML = '<i class="icon-check-circle"></i> ' + orgName;
         selectedOrgInfo.style.display = 'block';
-        console.log('DEBUG: Organization info displayed');
-    } else {
-        console.log('DEBUG: Could not display organization info');
-    }
-    
-    // Also update the lookup input
-    const lookupInput = document.querySelector('[name="organization_id"]');
-    const lookupContainer = lookupInput?.closest('.lookup-container');
-    const displayInput = lookupContainer?.querySelector('input[type="text"]');
-    
-    if (displayInput && orgName) {
-        displayInput.value = orgName;
-        console.log('DEBUG: Updated lookup display input to:', orgName);
     }
 }
 
@@ -426,15 +411,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Debug: Check if HTML elements exist
-console.log('DEBUG: HTML elements check:');
-console.log('DEBUG: selected-organization-info:', document.getElementById('selected-organization-info'));
-console.log('DEBUG: selected-org-name:', document.getElementById('selected-org-name'));
-
-// Debug: Organization data
-console.log('DEBUG: Organization data:', @json($organization));
-console.log('DEBUG: Organization ID:', '{{ $organization?->id ?? "null" }}');
-console.log('DEBUG: Organization name:', '{{ $organization?->name ?? "null" }}');
 
 // Show organization info if organization is already selected
 @if($organization)
@@ -443,57 +419,6 @@ setTimeout(() => {
 }, 1000);
 @endif
 
-// Debug: Check lookup component
-setTimeout(() => {
-    const lookupInput = document.querySelector('[name="organization_id"]');
-    const lookupContainer = lookupInput?.closest('.lookup-container');
-    const displayInput = lookupContainer?.querySelector('input[type="text"]');
-    
-    console.log('DEBUG: Lookup input found:', lookupInput);
-    console.log('DEBUG: Lookup container found:', lookupContainer);
-    console.log('DEBUG: Display input found:', displayInput);
-    console.log('DEBUG: Lookup input value:', lookupInput?.value);
-    console.log('DEBUG: Display input value:', displayInput?.value);
-    
-    // Try to set the display value
-    @if($organization)
-    if (displayInput && '{{ $organization->name }}') {
-        displayInput.value = '{{ $organization->name }}';
-        console.log('DEBUG: Set display input value to:', displayInput.value);
-    }
-    @endif
-}, 500);
 
-// Test: Make element visible for debugging
-setTimeout(() => {
-    const testElement = document.getElementById('selected-organization-info');
-    if (testElement) {
-        testElement.style.display = 'block';
-        testElement.innerHTML = '<i class="icon-check-circle"></i> TEST ORGANISATIE';
-        console.log('DEBUG: Test element made visible');
-    } else {
-        console.log('DEBUG: Test element not found - checking DOM');
-        console.log('DEBUG: All divs with id containing "selected":', document.querySelectorAll('div[id*="selected"]'));
-        
-        // Try to find the organization section
-        const orgSection = document.querySelector('[id="organization"]');
-        console.log('DEBUG: Organization section found:', orgSection);
-        
-        // Try to create the element if it doesn't exist
-        if (orgSection) {
-            const existingElement = orgSection.querySelector('#selected-organization-info');
-            if (!existingElement) {
-                console.log('DEBUG: Creating selected-organization-info element');
-                const newElement = document.createElement('div');
-                newElement.id = 'selected-organization-info';
-                newElement.className = 'mt-2 p-2 bg-green-100 border border-green-300 rounded text-sm text-green-800';
-                newElement.style.display = 'block';
-                newElement.innerHTML = '<i class="icon-check-circle"></i> <span id="selected-org-name">TEST ORGANISATIE</span>';
-                orgSection.appendChild(newElement);
-                console.log('DEBUG: Element created and added to DOM');
-            }
-        }
-    }
-}, 2000);
 </script>
 @endPushOnce

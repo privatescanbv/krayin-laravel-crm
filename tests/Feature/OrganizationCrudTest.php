@@ -21,13 +21,13 @@ test('organizations index returns datagrid json', function () {
     $org2 = Organization::factory()->create(['user_id' => $user->id]);
 
     $response = $this->getJson(route('admin.contacts.organizations.index'), [
-        'X-Requested-With' => 'XMLHttpRequest'
+        'X-Requested-With' => 'XMLHttpRequest',
     ]);
 
     $response->assertOk();
     $response->assertJsonStructure([
         'records',
-        'meta'
+        'meta',
     ]);
 
     $ids = getDatagridIds($response);
@@ -116,7 +116,7 @@ test('can update organization with address', function () {
     ];
 
     $response = $this->postJson(route('admin.contacts.organizations.update', ['id' => $organization->id]), $payload, [
-        'X-Requested-With' => 'XMLHttpRequest'
+        'X-Requested-With' => 'XMLHttpRequest',
     ]);
     $response->assertOk();
 
@@ -153,7 +153,7 @@ test('can update organization and remove address', function () {
     ];
 
     $response = $this->postJson(route('admin.contacts.organizations.update', ['id' => $organization->id]), $payload, [
-        'X-Requested-With' => 'XMLHttpRequest'
+        'X-Requested-With' => 'XMLHttpRequest',
     ]);
     $response->assertOk();
 
@@ -195,9 +195,9 @@ test('can search organizations', function () {
                 'name',
                 'address',
                 'created_at',
-                'updated_at'
-            ]
-        ]
+                'updated_at',
+            ],
+        ],
     ]);
 
     $data = $response->json('data');
@@ -214,12 +214,12 @@ test('validates required name field', function () {
     ];
 
     $response = $this->postJson(route('admin.contacts.organizations.store'), $payload, [
-        'X-Requested-With' => 'XMLHttpRequest'
+        'X-Requested-With' => 'XMLHttpRequest',
     ]);
     $response->assertStatus(422);
     $response->assertJson([
         'success' => false,
-        'message' => 'Name is required'
+        'message' => 'Name is required',
     ]);
 });
 
@@ -229,11 +229,11 @@ test('validates max length for name field', function () {
     ];
 
     $response = $this->postJson(route('admin.contacts.organizations.store'), $payload, [
-        'X-Requested-With' => 'XMLHttpRequest'
+        'X-Requested-With' => 'XMLHttpRequest',
     ]);
     $response->assertStatus(200);
     $response->assertJson([
-        'success' => true
+        'success' => true,
     ]);
 });
 

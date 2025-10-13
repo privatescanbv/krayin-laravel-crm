@@ -1,7 +1,7 @@
 {!! view_render_event('admin.leads.organization.before') !!}
 
 <!-- Lead Organization Section -->
-<div class="flex flex-col gap-4">
+<div id="organization" class="flex flex-col gap-4">
     <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
         <div class="flex flex-col gap-2">
             <x-admin::form.control-group.label>
@@ -22,10 +22,10 @@
                     src="{{ route('admin.contacts.organizations.search') }}"
                     name="organization_lookup"
                     label="Naam"
-                    ::value="selectedOrganization"
+                    :value="selectedOrganization"
                     placeholder="Zoek organisatie..."
                     :can-add-new="false"
-                    @on-selected="(org) => selectOrganization(org)"
+                    @on-selected="selectOrganization"
                 />
                 <x-admin::form.control-group.error control-name="organization_id" />
                 
@@ -113,7 +113,7 @@ const ORGANIZATION_STORE_URL = '{{ route("admin.contacts.organizations.store") }
 Vue.createApp({
     data() {
         return {
-            selectedOrganization: @json($organization),
+            selectedOrganization: @json($organization ?? null),
             showOrganizationForm: false
         }
     },
@@ -237,6 +237,11 @@ Vue.createApp({
                 saveBtn.innerHTML = originalText;
             }
         }
+    },
+    
+    mounted() {
+        console.log('Organization Vue component mounted');
+        console.log('Selected organization:', this.selectedOrganization);
     }
 }).mount('#organization');
 </script>

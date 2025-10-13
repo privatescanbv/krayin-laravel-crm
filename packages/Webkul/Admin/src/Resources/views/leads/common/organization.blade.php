@@ -21,6 +21,27 @@
             :can-add-new="false"
         />
         
+        <script>
+        // Debug: Check lookup component
+        setTimeout(() => {
+            const lookupInput = document.querySelector('[name="organization_id"]');
+            const lookupContainer = lookupInput?.closest('.lookup-container');
+            const displayInput = lookupContainer?.querySelector('input[type="text"]');
+            
+            console.log('DEBUG: Lookup input found:', lookupInput);
+            console.log('DEBUG: Lookup container found:', lookupContainer);
+            console.log('DEBUG: Display input found:', displayInput);
+            console.log('DEBUG: Lookup input value:', lookupInput?.value);
+            console.log('DEBUG: Display input value:', displayInput?.value);
+            
+            // Try to set the display value
+            if (displayInput && '{{ $organization?->name }}') {
+                displayInput.value = '{{ $organization->name }}';
+                console.log('DEBUG: Set display input value to:', displayInput.value);
+            }
+        }, 500);
+        </script>
+        
         <x-admin::form.control-group.error control-name="organization_id" />
         
         <!-- Selected Organization Info -->
@@ -182,6 +203,16 @@ function showSelectedOrganization(orgName) {
         console.log('DEBUG: Organization info displayed');
     } else {
         console.log('DEBUG: Could not display organization info');
+    }
+    
+    // Also update the lookup input
+    const lookupInput = document.querySelector('[name="organization_id"]');
+    const lookupContainer = lookupInput?.closest('.lookup-container');
+    const displayInput = lookupContainer?.querySelector('input[type="text"]');
+    
+    if (displayInput && orgName) {
+        displayInput.value = orgName;
+        console.log('DEBUG: Updated lookup display input to:', orgName);
     }
 }
 

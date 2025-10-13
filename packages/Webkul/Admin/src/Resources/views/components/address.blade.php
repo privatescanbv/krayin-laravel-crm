@@ -1,5 +1,9 @@
 {!! view_render_event('admin.address.before') !!}
 
+@php
+    $addressId = $id ?? 'address';
+@endphp
+
 <div class="flex flex-col gap-4">
     <div class="flex flex-col gap-1">
         <p class="text-base font-semibold dark:text-white">
@@ -16,10 +20,10 @@
                     <x-admin::form.control-group.label>Postcode</x-admin::form.control-group.label>
                     <x-admin::form.control-group.control
                         type="text"
-                        name="address[postal_code]"
+                        name="{{ $namePrefix ?? 'address' }}[postal_code]"
                         :value="old('address.postal_code', $entity?->address?->postal_code ?? '')"
                         placeholder="1234 AB"
-                        id="address_postal_code"
+                        id="{{ $addressId }}_postal_code"
                     />
                     <x-admin::form.control-group.error control-name="address.postal_code"/>
                 </x-admin::form.control-group>
@@ -31,10 +35,10 @@
                     <x-admin::form.control-group.label>Huisnummer</x-admin::form.control-group.label>
                     <x-admin::form.control-group.control
                         type="text"
-                        name="address[house_number]"
+                        name="{{ $namePrefix ?? 'address' }}[house_number]"
                         :value="old('address.house_number', $entity?->address?->house_number ?? '')"
                         placeholder="123"
-                        id="address_house_number"
+                        id="{{ $addressId }}_house_number"
                     />
                     <x-admin::form.control-group.error control-name="address.house_number"/>
                 </x-admin::form.control-group>
@@ -43,7 +47,7 @@
             <!-- Lookup button -->
             <div class="flex-shrink-0 flex flex-col justify-end">
                 <div class="mb-4 flex items-end h-full">
-                <button type="button" id="address-lookup-btn"
+                <button type="button" id="{{ $addressId }}-lookup-btn"
                         class="address-lookup-button px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-w-[120px]">
                     Adres opzoeken
                 </button>
@@ -63,10 +67,10 @@
 
             <x-admin::form.control-group.control
                 type="text"
-                name="address[street]"
+                name="{{ $namePrefix ?? 'address' }}[street]"
                 :value="old('address.street', $entity?->address?->street ?? '')"
                 placeholder="Straatnaam"
-                id="address_street"
+                id="{{ $addressId }}_street"
             />
 
             <x-admin::form.control-group.error control-name="address.street"/>
@@ -80,10 +84,10 @@
 
             <x-admin::form.control-group.control
                 type="text"
-                name="address[house_number_suffix]"
+                name="{{ $namePrefix ?? 'address' }}[house_number_suffix]"
                 :value="old('address.house_number_suffix', $entity?->address?->house_number_suffix ?? '')"
                 placeholder="A, 1e verdieping, etc."
-                id="address_house_number_suffix"
+                id="{{ $addressId }}_house_number_suffix"
             />
 
             <x-admin::form.control-group.error control-name="address.house_number_suffix"/>
@@ -97,10 +101,10 @@
 
             <x-admin::form.control-group.control
                 type="text"
-                name="address[city]"
+                name="{{ $namePrefix ?? 'address' }}[city]"
                 :value="old('address.city', $entity?->address?->city ?? '')"
                 placeholder="Amsterdam"
-                id="address_city"
+                id="{{ $addressId }}_city"
             />
 
             <x-admin::form.control-group.error control-name="address.city"/>
@@ -114,10 +118,10 @@
 
             <x-admin::form.control-group.control
                 type="text"
-                name="address[state]"
+                name="{{ $namePrefix ?? 'address' }}[state]"
                 :value="old('address.state', $entity?->address?->state ?? '')"
                 placeholder="Noord-Holland"
-                id="address_state"
+                id="{{ $addressId }}_state"
             />
 
             <x-admin::form.control-group.error control-name="address.state"/>
@@ -131,10 +135,10 @@
 
             <x-admin::form.control-group.control
                 type="text"
-                name="address[country]"
+                name="{{ $namePrefix ?? 'address' }}[country]"
                 :value="old('address.country', $entity?->address?->country ?? 'Nederland')"
                 placeholder="Nederland"
-                id="address_country"
+                id="{{ $addressId }}_country"
             />
 
             <x-admin::form.control-group.error control-name="address.country"/>
@@ -218,11 +222,12 @@
                         e.stopPropagation();
 
                         const lookupBtn = e.target;
-                        const postcode = document.querySelector('#address_postal_code');
-                        const huisnummer = document.querySelector('#address_house_number');
-                        const street = document.querySelector('#address_street');
-                        const city = document.querySelector('#address_city');
-                        const state = document.querySelector('#address_state');
+                        const addressId = '{{ $addressId }}';
+                        const postcode = document.querySelector('#' + addressId + '_postal_code');
+                        const huisnummer = document.querySelector('#' + addressId + '_house_number');
+                        const street = document.querySelector('#' + addressId + '_street');
+                        const city = document.querySelector('#' + addressId + '_city');
+                        const state = document.querySelector('#' + addressId + '_state');
 
                         if (!postcode || !huisnummer) {
                             alert('Adresvelden niet gevonden');

@@ -69,127 +69,13 @@
                 </p>
             </div>
 
-            <!-- Address Lookup Panel -->
-            <div class="bg-white border border-gray-200 rounded-lg p-4 mt-2 dark:bg-gray-700 dark:border-gray-600">
-                <div class="flex flex-wrap md:flex-nowrap gap-3">
-                    <!-- Postal Code -->
-                    <div class="flex-1 min-w-[150px]">
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>Postcode</x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control
-                                type="text"
-                                name="new_organization_address[postal_code]"
-                                id="new_org_address_postal_code"
-                                placeholder="1234 AB"
-                                required
-                            />
-                            <x-admin::form.control-group.error control-name="new_organization_address.postal_code"/>
-                        </x-admin::form.control-group>
-                    </div>
-
-                    <!-- House Number -->
-                    <div class="flex-1 min-w-[150px]">
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>Huisnummer</x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control
-                                type="text"
-                                name="new_organization_address[house_number]"
-                                id="new_org_address_house_number"
-                                placeholder="123"
-                                required
-                            />
-                            <x-admin::form.control-group.error control-name="new_organization_address.house_number"/>
-                        </x-admin::form.control-group>
-                    </div>
-
-                    <!-- Lookup button -->
-                    <div class="flex-shrink-0 flex flex-col justify-end">
-                        <div class="mb-4 flex items-end h-full">
-                            <button type="button" id="new-org-address-lookup-btn"
-                                    class="address-lookup-button px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-w-[120px]">
-                                Adres opzoeken
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Address Details -->
-            <div class="grid grid-cols-2 gap-4 mt-4">
-                <!-- Street -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        Straat
-                    </x-admin::form.control-group.label>
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="new_organization_address[street]"
-                        id="new_org_address_street"
-                        placeholder="Straatnaam"
-                        required
-                    />
-                    <x-admin::form.control-group.error control-name="new_organization_address.street"/>
-                </x-admin::form.control-group>
-
-                <!-- House Number Suffix -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        Toevoeging
-                    </x-admin::form.control-group.label>
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="new_organization_address[house_number_suffix]"
-                        id="new_org_address_house_number_suffix"
-                        placeholder="A, 1e verdieping, etc."
-                    />
-                    <x-admin::form.control-group.error control-name="new_organization_address.house_number_suffix"/>
-                </x-admin::form.control-group>
-
-                <!-- City -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        Stad
-                    </x-admin::form.control-group.label>
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="new_organization_address[city]"
-                        id="new_org_address_city"
-                        placeholder="Amsterdam"
-                        required
-                    />
-                    <x-admin::form.control-group.error control-name="new_organization_address.city"/>
-                </x-admin::form.control-group>
-
-                <!-- State -->
-                <x-admin::form.control-group>
-                    <x-admin::form.control-group.label>
-                        Provincie
-                    </x-admin::form.control-group.label>
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="new_organization_address[state]"
-                        id="new_org_address_state"
-                        placeholder="Noord-Holland"
-                        required
-                    />
-                    <x-admin::form.control-group.error control-name="new_organization_address.state"/>
-                </x-admin::form.control-group>
-
-                <!-- Country -->
-                <x-admin::form.control-group class="col-span-2">
-                    <x-admin::form.control-group.label>
-                        Land
-                    </x-admin::form.control-group.label>
-                    <x-admin::form.control-group.control
-                        type="text"
-                        name="new_organization_address[country]"
-                        id="new_org_address_country"
-                        placeholder="Nederland"
-                        value="Nederland"
-                        required
-                    />
-                    <x-admin::form.control-group.error control-name="new_organization_address.country"/>
-                </x-admin::form.control-group>
+            <!-- Address Component -->
+            <div class="mt-2">
+                @include('admin::components.address', [
+                    'id' => 'new_org_address',
+                    'namePrefix' => 'new_organization_address',
+                    'entity' => null
+                ])
             </div>
         </div>
 
@@ -357,7 +243,7 @@ async function saveNewOrganization() {
 
 // Address lookup for new organization
 document.addEventListener('DOMContentLoaded', function() {
-    const lookupBtn = document.getElementById('new-org-address-lookup-btn');
+    const lookupBtn = document.getElementById('new_org_address-lookup-btn');
     if (lookupBtn) {
         lookupBtn.addEventListener('click', function(e) {
             e.preventDefault();

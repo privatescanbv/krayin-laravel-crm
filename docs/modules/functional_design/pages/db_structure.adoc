@@ -628,6 +628,7 @@ end note
 
 note right of Organization
   Bedrijfsentiteit waaraan personen en leads gekoppeld kunnen zijn.
+  Adres is verplicht bij aanmaken en wijzigen.
 end note
 
 note right of Address

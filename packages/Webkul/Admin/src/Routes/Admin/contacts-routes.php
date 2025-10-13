@@ -78,6 +78,8 @@ Route::prefix('contacts')->group(function () {
 
         Route::post('create', 'store')->name('admin.contacts.organizations.store');
 
+        Route::get('view/{id}', 'show')->name('admin.contacts.organizations.view');
+
         Route::get('edit/{id?}', 'edit')->name('admin.contacts.organizations.edit');
 
         Route::put('edit/{id}', 'update')->name('admin.contacts.organizations.update');

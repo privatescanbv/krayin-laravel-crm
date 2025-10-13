@@ -1,11 +1,17 @@
 {!! view_render_event('admin.address.before') !!}
 
+@php
+    $addressId = $id ?? 'address';
+@endphp
+
 <div class="flex flex-col gap-4">
+    @if(!isset($hideTitle) || !$hideTitle)
     <div class="flex flex-col gap-1">
         <p class="text-base font-semibold dark:text-white">
             Adresgegevens
         </p>
     </div>
+    @endif
 
     <!-- Address Lookup Panel -->
     <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 dark:bg-gray-800 dark:border-gray-700">
@@ -16,10 +22,10 @@
                     <x-admin::form.control-group.label>Postcode</x-admin::form.control-group.label>
                     <x-admin::form.control-group.control
                         type="text"
-                        name="address[postal_code]"
+                        name="{{ $namePrefix ?? 'address' }}[postal_code]"
                         :value="old('address.postal_code', $entity?->address?->postal_code ?? '')"
                         placeholder="1234 AB"
-                        id="address_postal_code"
+                        id="{{ $addressId }}_postal_code"
                     />
                     <x-admin::form.control-group.error control-name="address.postal_code"/>
                 </x-admin::form.control-group>
@@ -31,10 +37,10 @@
                     <x-admin::form.control-group.label>Huisnummer</x-admin::form.control-group.label>
                     <x-admin::form.control-group.control
                         type="text"
-                        name="address[house_number]"
+                        name="{{ $namePrefix ?? 'address' }}[house_number]"
                         :value="old('address.house_number', $entity?->address?->house_number ?? '')"
                         placeholder="123"
-                        id="address_house_number"
+                        id="{{ $addressId }}_house_number"
                     />
                     <x-admin::form.control-group.error control-name="address.house_number"/>
                 </x-admin::form.control-group>
@@ -43,7 +49,7 @@
             <!-- Lookup button -->
             <div class="flex-shrink-0 flex flex-col justify-end">
                 <div class="mb-4 flex items-end h-full">
-                <button type="button" id="address-lookup-btn"
+                <button type="button" id="{{ $addressId }}-lookup-btn"
                         class="address-lookup-button px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 min-w-[120px]">
                     Adres opzoeken
                 </button>
@@ -63,10 +69,10 @@
 
             <x-admin::form.control-group.control
                 type="text"
-                name="address[street]"
+                name="{{ $namePrefix ?? 'address' }}[street]"
                 :value="old('address.street', $entity?->address?->street ?? '')"
                 placeholder="Straatnaam"
-                id="address_street"
+                id="{{ $addressId }}_street"
             />
 
             <x-admin::form.control-group.error control-name="address.street"/>
@@ -80,10 +86,10 @@
 
             <x-admin::form.control-group.control
                 type="text"
-                name="address[house_number_suffix]"
+                name="{{ $namePrefix ?? 'address' }}[house_number_suffix]"
                 :value="old('address.house_number_suffix', $entity?->address?->house_number_suffix ?? '')"
                 placeholder="A, 1e verdieping, etc."
-                id="address_house_number_suffix"
+                id="{{ $addressId }}_house_number_suffix"
             />
 
             <x-admin::form.control-group.error control-name="address.house_number_suffix"/>
@@ -97,10 +103,10 @@
 
             <x-admin::form.control-group.control
                 type="text"
-                name="address[city]"
+                name="{{ $namePrefix ?? 'address' }}[city]"
                 :value="old('address.city', $entity?->address?->city ?? '')"
                 placeholder="Amsterdam"
-                id="address_city"
+                id="{{ $addressId }}_city"
             />
 
             <x-admin::form.control-group.error control-name="address.city"/>
@@ -114,10 +120,10 @@
 
             <x-admin::form.control-group.control
                 type="text"
-                name="address[state]"
+                name="{{ $namePrefix ?? 'address' }}[state]"
                 :value="old('address.state', $entity?->address?->state ?? '')"
                 placeholder="Noord-Holland"
-                id="address_state"
+                id="{{ $addressId }}_state"
             />
 
             <x-admin::form.control-group.error control-name="address.state"/>
@@ -131,10 +137,10 @@
 
             <x-admin::form.control-group.control
                 type="text"
-                name="address[country]"
+                name="{{ $namePrefix ?? 'address' }}[country]"
                 :value="old('address.country', $entity?->address?->country ?? 'Nederland')"
                 placeholder="Nederland"
-                id="address_country"
+                id="{{ $addressId }}_country"
             />
 
             <x-admin::form.control-group.error control-name="address.country"/>
@@ -149,6 +155,18 @@
 {!! view_render_event('admin.address.after') !!}
 
 @pushOnce('scripts')
+    <script>
+        window.addressComponents = window.addressComponents || {};
+        window.addressComponents['{{ $addressId }}'] = {
+            id: '{{ $addressId }}',
+            postalCodeId: '{{ $addressId }}_postal_code',
+            houseNumberId: '{{ $addressId }}_house_number',
+            streetId: '{{ $addressId }}_street',
+            cityId: '{{ $addressId }}_city',
+            stateId: '{{ $addressId }}_state'
+        };
+    </script>
+
     @verbatim
         <script type="text/x-template" id="v-address-preview-template">
             <div v-if="fullAddress" class="mt-4 p-3 bg-gray-50 rounded border" style="display: none;">
@@ -156,132 +174,204 @@
                 <div class="text-sm text-gray-600">{{ fullAddress }}</div>
             </div>
         </script>
+    @endverbatim
 
-        <script type="module">
-            app.component('v-address-preview', {
-                template: '#v-address-preview-template',
+    <script type="module">
+        app.component('v-address-preview', {
+            template: '#v-address-preview-template',
 
-                props: ['address'],
+            props: ['address'],
 
-                computed: {
-                    fullAddress() {
-                        if (!this.address) return '';
+            computed: {
+                fullAddress() {
+                    if (!this.address) return '';
 
-                        const parts = [];
+                    const parts = [];
 
-                        if (this.address.street && this.address.house_number) {
-                            let streetPart = this.address.street + ' ' + this.address.house_number;
-                            if (this.address.house_number_suffix) {
-                                streetPart += ' ' + this.address.house_number_suffix;
-                            }
-                            parts.push(streetPart);
+                    if (this.address.street && this.address.house_number) {
+                        let streetPart = this.address.street + ' ' + this.address.house_number;
+                        if (this.address.house_number_suffix) {
+                            streetPart += ' ' + this.address.house_number_suffix;
                         }
-
-                        if (this.address.postal_code && this.address.city) {
-                            parts.push(this.address.postal_code + ' ' + this.address.city);
-                        }
-
-                        if (this.address.state) {
-                            parts.push(this.address.state);
-                        }
-
-                        if (this.address.country) {
-                            parts.push(this.address.country);
-                        }
-
-                        return parts.join(', ');
+                        parts.push(streetPart);
                     }
-                },
-                mounted() {
-                    this.registerAddressLookupButtons();
-                },
 
-                methods: {
-                    // Registreer knoppen
-                    registerAddressLookupButtons() {
-                        const buttons = document.querySelectorAll('.address-lookup-button');
+                    if (this.address.postal_code && this.address.city) {
+                        parts.push(this.address.postal_code + ' ' + this.address.city);
+                    }
 
-                        buttons.forEach((lookupBtn) => {
-                            if (lookupBtn.hasAttribute('data-lookup-initialized')) {
-                                console.log('Button already initialized');
-                                return;
-                            }
+                    if (this.address.state) {
+                        parts.push(this.address.state);
+                    }
 
-                            console.log('Initializing button:', lookupBtn.id);
-                            lookupBtn.setAttribute('data-lookup-initialized', 'true');
-                            lookupBtn.addEventListener('click', this.handleAddressLookup);
-                        });
-                    },
+                    if (this.address.country) {
+                        parts.push(this.address.country);
+                    }
 
-                    handleAddressLookup(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
+                    return parts.join(', ');
+                }
+            }
+        });
+    </script>
 
-                        const lookupBtn = e.target;
-                        const postcode = document.querySelector('#address_postal_code');
-                        const huisnummer = document.querySelector('#address_house_number');
-                        const street = document.querySelector('#address_street');
-                        const city = document.querySelector('#address_city');
-                        const state = document.querySelector('#address_state');
+    <script>
+        // Function to initialize address lookup button
+        function initializeAddressLookupButton(addressId) {
+            const buttonId = addressId + '-lookup-btn';
+            console.log('Looking for button with ID:', buttonId);
+            console.log('AddressId:', addressId);
+            
+            const button = document.querySelector('#' + buttonId);
+            console.log('Button found:', button);
+            
+            if (button && !button.hasAttribute('data-lookup-initialized')) {
+                console.log('Initializing button:', button.id);
+                button.setAttribute('data-lookup-initialized', 'true');
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
 
-                        if (!postcode || !huisnummer) {
-                            alert('Adresvelden niet gevonden');
-                            return;
+                    const lookupBtn = e.target;
+                    const addressConfig = window.addressComponents[addressId];
+
+                    if (!addressConfig) {
+                        console.error('Address component config not found for:', addressId);
+                        return;
+                    }
+                    console.log('street id = '+addressConfig.streetId);
+
+                    // Only target fields within this specific address component
+                    const addressContainer = lookupBtn.closest('.flex.flex-col.gap-4');
+                    const postcode = addressContainer.querySelector('#' + addressConfig.postalCodeId);
+                    const huisnummer = addressContainer.querySelector('#' + addressConfig.houseNumberId);
+                    const street = addressContainer.querySelector('#' + addressConfig.streetId);
+                    const city = addressContainer.querySelector('#' + addressConfig.cityId);
+                    const state = addressContainer.querySelector('#' + addressConfig.stateId);
+
+                    if (!postcode || !huisnummer) {
+                        alert('Adresvelden niet gevonden');
+                        return;
+                    }
+
+                    const postcodeValue = postcode.value.trim();
+                    const huisnummerValue = huisnummer.value.trim();
+
+                    if (!postcodeValue || !huisnummerValue) {
+                        alert('Vul eerst postcode en huisnummer in.');
+                        return;
+                    }
+
+                    lookupBtn.disabled = true;
+                    lookupBtn.textContent = 'Zoeken...';
+
+                    fetch('/admin/address/lookup?postcode=' + encodeURIComponent(postcodeValue) + '&huisnummer=' + encodeURIComponent(huisnummerValue), {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
                         }
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log('Lookup response:', data);
+                            if (data.success) {
 
-                        const postcodeValue = postcode.value.trim();
-                        const huisnummerValue = huisnummer.value.trim();
-
-                        if (!postcodeValue || !huisnummerValue) {
-                            alert('Vul eerst postcode en huisnummer in.');
-                            return;
-                        }
-
-                        lookupBtn.disabled = true;
-                        lookupBtn.textContent = 'Zoeken...';
-
-                        fetch('/admin/address/lookup?postcode=' + encodeURIComponent(postcodeValue) + '&huisnummer=' + encodeURIComponent(huisnummerValue), {
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest',
-                                'Accept': 'application/json',
+                                if (street) {
+                                    street.value = data.street || '';
+                                    // Trigger input event to notify any listeners
+                                    street.dispatchEvent(new Event('input', { bubbles: true }));
+                                }
+                                if (city) {
+                                    city.value = data.city || '';
+                                    // Trigger input event to notify any listeners
+                                    city.dispatchEvent(new Event('input', { bubbles: true }));
+                                }
+                                if (state) {
+                                    state.value = data.state || '';
+                                    // Trigger input event to notify any listeners
+                                    state.dispatchEvent(new Event('input', { bubbles: true }));
+                                }
+                            } else {
+                                alert(data.message || 'Adres niet gevonden.');
                             }
                         })
-                            .then(response => response.json())
-                            .then(data => {
-                                console.log('Lookup response:', data);
-                                if (data.success) {
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Fout bij opzoeken adres: ' + error.message);
+                        })
+                        .finally(() => {
+                            lookupBtn.disabled = false;
+                            lookupBtn.textContent = 'Adres opzoeken';
+                        });
+                });
+            }
+        }
 
-                                    if (street) {
-                                        street.value = data.street || '';
-                                        // Trigger input event to notify any listeners
-                                        street.dispatchEvent(new Event('input', { bubbles: true }));
-                                    }
-                                    if (city) {
-                                        city.value = data.city || '';
-                                        // Trigger input event to notify any listeners
-                                        city.dispatchEvent(new Event('input', { bubbles: true }));
-                                    }
-                                    if (state) {
-                                        state.value = data.state || '';
-                                        // Trigger input event to notify any listeners
-                                        state.dispatchEvent(new Event('input', { bubbles: true }));
-                                    }
-                                } else {
-                                    alert(data.message || 'Adres niet gevonden.');
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                alert('Fout bij opzoeken adres: ' + error.message);
-                            })
-                            .finally(() => {
-                                lookupBtn.disabled = false;
-                                lookupBtn.textContent = 'Adres opzoeken';
-                            });
+        // Initialize on DOM ready
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait a bit for all elements to be loaded
+            setTimeout(function() {
+                initializeAddressLookupButton('{{ $addressId }}');
+                
+                // Also try to initialize any other address buttons that might exist
+                const allAddressButtons = document.querySelectorAll('button[id*="lookup-btn"]');
+                allAddressButtons.forEach(function(button) {
+                    if (!button.hasAttribute('data-lookup-initialized')) {
+                        const buttonId = button.id;
+                        const addressId = buttonId.replace('-lookup-btn', '');
+                        console.log('Found uninitialized button:', buttonId, 'for address:', addressId);
+                        initializeAddressLookupButton(addressId);
                     }
-                }
+                });
+            }, 100);
+        });
 
+        // Also initialize when the organization form is shown
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.id === 'add-organization-btn') {
+                // Wait a bit for the form to be shown
+                setTimeout(function() {
+                    // Ensure the address component config exists
+                    if (!window.addressComponents['new_org_address']) {
+                        window.addressComponents['new_org_address'] = {
+                            id: 'new_org_address',
+                            postalCodeId: 'new_org_address_postal_code',
+                            houseNumberId: 'new_org_address_house_number',
+                            streetId: 'new_org_address_street',
+                            cityId: 'new_org_address_city',
+                            stateId: 'new_org_address_state'
+                        };
+                        console.log('Created address config for new_org_address');
+                    }
+                    initializeAddressLookupButton('new_org_address');
+                }, 100);
+            }
+        });
+
+        // Fallback: try to initialize all address buttons periodically
+        setInterval(function() {
+            const allAddressButtons = document.querySelectorAll('button[id*="lookup-btn"]');
+            allAddressButtons.forEach(function(button) {
+                if (!button.hasAttribute('data-lookup-initialized')) {
+                    const buttonId = button.id;
+                    const addressId = buttonId.replace('-lookup-btn', '');
+                    console.log('Fallback: Found uninitialized button:', buttonId, 'for address:', addressId);
+                    
+                    // Create config if it doesn't exist
+                    if (!window.addressComponents[addressId]) {
+                        window.addressComponents[addressId] = {
+                            id: addressId,
+                            postalCodeId: addressId + '_postal_code',
+                            houseNumberId: addressId + '_house_number',
+                            streetId: addressId + '_street',
+                            cityId: addressId + '_city',
+                            stateId: addressId + '_state'
+                        };
+                        console.log('Created address config for', addressId);
+                    }
+                    
+                    initializeAddressLookupButton(addressId);
+                }
             });
-        </script>
-    @endverbatim
+        }, 1000);
+    </script>
 @endPushOnce

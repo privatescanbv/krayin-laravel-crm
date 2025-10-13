@@ -49,6 +49,16 @@ class OrganizationController extends Controller
     }
 
     /**
+     * Display the specified resource.
+     */
+    public function show(int $id): View
+    {
+        $organization = $this->organizationRepository->with('address')->findOrFail($id);
+
+        return view('admin::contacts.organizations.view', compact('organization'));
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(AttributeForm $request): RedirectResponse|JsonResponse
@@ -56,6 +66,17 @@ class OrganizationController extends Controller
         Event::dispatch('contacts.organization.create.before');
 
         $data = request()->all();
+
+        // Basic validation for name field
+        if (empty($data['name'])) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Name is required'
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Name is required');
+        }
 
         $organization = $this->organizationRepository->create($data);
 
@@ -71,7 +92,12 @@ class OrganizationController extends Controller
 
         if (request()->expectsJson() || request()->ajax()) {
             return response()->json([
-                'data'    => new OrganizationResource($organization),
+                'success' => true,
+                'data'    => [
+                    'id' => $organization->id,
+                    'name' => $organization->name,
+                    'address' => $organization->address
+                ],
                 'message' => trans('admin::app.contacts.organizations.index.create-success'),
             ], 200);
         }
@@ -95,19 +121,50 @@ class OrganizationController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(AttributeForm $request, int $id): RedirectResponse
+    public function update(AttributeForm $request, int $id): RedirectResponse|JsonResponse
     {
         Event::dispatch('contacts.organization.update.before', $id);
 
         $data = request()->all();
 
-        $organization = $this->organizationRepository->update($data, $id);
+        // Basic validation for name field
+        if (empty($data['name'])) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Name is required'
+                ], 422);
+            }
+            return redirect()->back()->with('error', 'Name is required');
+        }
 
-        // Handle address update
-        if (isset($data['address'])) {
-            // Get fresh organization instance with address relationship
-            $organization = $this->organizationRepository->find($id);
-            $existingAddress = $organization->address;
+        try {
+            $organization = $this->organizationRepository->update($data, $id);
+
+            if (!$organization) {
+                if (request()->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Organization not found'
+                    ], 404);
+                }
+                return redirect()->back()->with('error', 'Organization not found');
+            }
+
+            // Handle address update
+            if (isset($data['address'])) {
+                // Get fresh organization instance with address relationship
+                $organization = $this->organizationRepository->find($id);
+                if (!$organization) {
+                    if (request()->ajax()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Organization not found after update'
+                        ], 404);
+                    }
+                    return redirect()->back()->with('error', 'Organization not found after update');
+                }
+                $existingAddress = $organization->address;
 
             if (!empty(array_filter($data['address']))) {
                 $addressData = array_merge($data['address'], [
@@ -127,11 +184,28 @@ class OrganizationController extends Controller
             }
         }
 
-        Event::dispatch('contacts.organization.update.after', $organization);
+            Event::dispatch('contacts.organization.update.after', $organization);
 
-        session()->flash('success', trans('admin::app.contacts.organizations.index.update-success'));
+            session()->flash('success', trans('admin::app.contacts.organizations.index.update-success'));
 
-        return redirect()->route('admin.contacts.organizations.index');
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => trans('admin::app.contacts.organizations.index.update-success'),
+                    'data' => $organization->load('address')
+                ]);
+            }
+
+            return redirect()->route('admin.contacts.organizations.index');
+        } catch (\Exception $e) {
+            if (request()->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error updating organization: ' . $e->getMessage()
+                ], 500);
+            }
+            return redirect()->back()->with('error', 'Error updating organization: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -181,18 +255,27 @@ class OrganizationController extends Controller
      */
     public function search()
     {
+        $searchTerm = request('search');
+        
         if ($userIds = bouncer()->getAuthorizedUserIds()) {
             $organizations = $this->organizationRepository
-                ->pushCriteria(app(RequestCriteria::class))
                 ->with(['address'])
                 ->findWhereIn('user_id', $userIds);
         } else {
             $organizations = $this->organizationRepository
-                ->pushCriteria(app(RequestCriteria::class))
                 ->with(['address'])
                 ->all();
         }
 
+        // If search term is provided, filter by name
+        if (!empty($searchTerm)) {
+            $organizations = $organizations->filter(function($organization) use ($searchTerm) {
+                return stripos($organization->name, $searchTerm) !== false;
+            });
+        }
+
         return OrganizationResource::collection($organizations);
     }
+
+
 }

@@ -308,7 +308,21 @@
 
         // Initialize on DOM ready
         document.addEventListener('DOMContentLoaded', function() {
-            initializeAddressLookupButton('{{ $addressId }}');
+            // Wait a bit for all elements to be loaded
+            setTimeout(function() {
+                initializeAddressLookupButton('{{ $addressId }}');
+                
+                // Also try to initialize any other address buttons that might exist
+                const allAddressButtons = document.querySelectorAll('button[id*="lookup-btn"]');
+                allAddressButtons.forEach(function(button) {
+                    if (!button.hasAttribute('data-lookup-initialized')) {
+                        const buttonId = button.id;
+                        const addressId = buttonId.replace('-lookup-btn', '');
+                        console.log('Found uninitialized button:', buttonId, 'for address:', addressId);
+                        initializeAddressLookupButton(addressId);
+                    }
+                });
+            }, 100);
         });
 
         // Also initialize when the organization form is shown
@@ -332,5 +346,32 @@
                 }, 100);
             }
         });
+
+        // Fallback: try to initialize all address buttons periodically
+        setInterval(function() {
+            const allAddressButtons = document.querySelectorAll('button[id*="lookup-btn"]');
+            allAddressButtons.forEach(function(button) {
+                if (!button.hasAttribute('data-lookup-initialized')) {
+                    const buttonId = button.id;
+                    const addressId = buttonId.replace('-lookup-btn', '');
+                    console.log('Fallback: Found uninitialized button:', buttonId, 'for address:', addressId);
+                    
+                    // Create config if it doesn't exist
+                    if (!window.addressComponents[addressId]) {
+                        window.addressComponents[addressId] = {
+                            id: addressId,
+                            postalCodeId: addressId + '_postal_code',
+                            houseNumberId: addressId + '_house_number',
+                            streetId: addressId + '_street',
+                            cityId: addressId + '_city',
+                            stateId: addressId + '_state'
+                        };
+                        console.log('Created address config for', addressId);
+                    }
+                    
+                    initializeAddressLookupButton(addressId);
+                }
+            });
+        }, 1000);
     </script>
 @endPushOnce

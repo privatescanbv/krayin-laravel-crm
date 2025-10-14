@@ -19,6 +19,9 @@
                 </div>
 
                 <div class="flex items-center gap-x-2.5">
+                    <a href="{{ route('admin.planning.monitor.order', ['orderId' => $orders->id]) }}" class="secondary-button">
+                        Resource Planner
+                    </a>
                     <button type="submit" class="primary-button">
                         Opslaan
                     </button>

@@ -45,6 +45,79 @@ class ResourcePlanningMonitorController extends Controller
         return $this->getWeekAvailability($request);
     }
 
+    public function orderPlanning(Request $request, int $orderId): View
+    {
+        $order = Order::with(['orderRegels.product.partnerProducts', 'salesLead.lead'])->findOrFail($orderId);
+
+        $resourceTypes = ResourceType::all(['id', 'name']);
+        $resources = Resource::with('clinic')->get(['id', 'name', 'clinic_id', 'resource_type_id']);
+        $clinics = Clinic::all(['id', 'name']);
+
+        return view('admin::planning.order_monitor', [
+            'order'         => $order,
+            'resourceTypes' => $resourceTypes,
+            'resources'     => $resources,
+            'clinics'       => $clinics,
+        ]);
+    }
+
+    public function orderAvailability(Request $request, int $orderId): JsonResponse
+    {
+        $order = Order::with(['orderRegels.product'])->findOrFail($orderId);
+        $viewType = $request->query('view', 'week');
+
+        if ($viewType === 'month') {
+            return $this->getOrderMonthAvailability($request, $order);
+        }
+
+        return $this->getOrderWeekAvailability($request, $order);
+    }
+
+    public function bookOrderItem(Request $request, int $orderItemId): JsonResponse
+    {
+        try {
+            $request->validate([
+                'resource_id'      => ['required', 'integer', 'exists:resources,id'],
+                'from'             => ['required', 'date'],
+                'to'               => ['required', 'date', 'after:from'],
+                'replace_existing' => ['sometimes', 'boolean'],
+            ]);
+
+            $orderItem = OrderRegel::findOrFail($orderItemId);
+            $replace = $request->boolean('replace_existing', true);
+
+            $booking = DB::transaction(function () use ($request, $orderItem, $replace) {
+                if ($replace) {
+                    ResourceOrderItem::where('orderitem_id', $orderItem->id)->delete();
+                }
+
+                return ResourceOrderItem::create([
+                    'resource_id'  => (int) $request->input('resource_id'),
+                    'orderitem_id' => $orderItem->id,
+                    'from'         => Carbon::parse($request->input('from')),
+                    'to'           => Carbon::parse($request->input('to')),
+                    'created_by'   => auth()->id(),
+                    'updated_by'   => auth()->id(),
+                ]);
+            });
+
+            return response()->json([
+                'message' => $replace ? 'Ingeboekt (vorige afspraak vervangen)' : 'Ingeboekt',
+                'data'    => $booking,
+            ], 201);
+        } catch (Exception $e) {
+            Log::error('Error creating ResourceOrderItem from monitor', [
+                'error'        => $e->getMessage(),
+                'trace'        => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+            ]);
+
+            return response()->json([
+                'message' => 'Fout bij inboeken: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
     private function getWeekAvailability(Request $request): JsonResponse
     {
         $start = CarbonImmutable::parse($request->query('start', Carbon::now()->startOfWeek()));
@@ -457,79 +530,6 @@ class ResourcePlanningMonitorController extends Controller
         $merged = array_merge($merged, $occupiedBlocks);
 
         return $merged;
-    }
-
-    public function orderPlanning(Request $request, int $orderId): View
-    {
-        $order = Order::with(['orderRegels.product.partnerProducts', 'salesLead.lead'])->findOrFail($orderId);
-        
-        $resourceTypes = ResourceType::all(['id', 'name']);
-        $resources = Resource::with('clinic')->get(['id', 'name', 'clinic_id', 'resource_type_id']);
-        $clinics = Clinic::all(['id', 'name']);
-
-        return view('admin::planning.order_monitor', [
-            'order'         => $order,
-            'resourceTypes' => $resourceTypes,
-            'resources'     => $resources,
-            'clinics'       => $clinics,
-        ]);
-    }
-
-    public function orderAvailability(Request $request, int $orderId): JsonResponse
-    {
-        $order = Order::with(['orderRegels.product'])->findOrFail($orderId);
-        $viewType = $request->query('view', 'week');
-
-        if ($viewType === 'month') {
-            return $this->getOrderMonthAvailability($request, $order);
-        }
-
-        return $this->getOrderWeekAvailability($request, $order);
-    }
-
-    public function bookOrderItem(Request $request, int $orderItemId): JsonResponse
-    {
-        try {
-            $request->validate([
-                'resource_id'      => ['required', 'integer', 'exists:resources,id'],
-                'from'             => ['required', 'date'],
-                'to'               => ['required', 'date', 'after:from'],
-                'replace_existing' => ['sometimes', 'boolean'],
-            ]);
-
-            $orderItem = OrderRegel::findOrFail($orderItemId);
-            $replace = $request->boolean('replace_existing', true);
-
-            $booking = DB::transaction(function () use ($request, $orderItem, $replace) {
-                if ($replace) {
-                    ResourceOrderItem::where('orderitem_id', $orderItem->id)->delete();
-                }
-
-                return ResourceOrderItem::create([
-                    'resource_id'  => (int) $request->input('resource_id'),
-                    'orderitem_id' => $orderItem->id,
-                    'from'         => Carbon::parse($request->input('from')),
-                    'to'           => Carbon::parse($request->input('to')),
-                    'created_by'   => auth()->id(),
-                    'updated_by'   => auth()->id(),
-                ]);
-            });
-
-            return response()->json([
-                'message' => $replace ? 'Ingeboekt (vorige afspraak vervangen)' : 'Ingeboekt',
-                'data'    => $booking,
-            ], 201);
-        } catch (Exception $e) {
-            Log::error('Error creating ResourceOrderItem from monitor', [
-                'error'        => $e->getMessage(),
-                'trace'        => $e->getTraceAsString(),
-                'request_data' => $request->all(),
-            ]);
-
-            return response()->json([
-                'message' => 'Fout bij inboeken: '.$e->getMessage(),
-            ], 500);
-        }
     }
 
     private function getOrderWeekAvailability(Request $request, Order $order): JsonResponse

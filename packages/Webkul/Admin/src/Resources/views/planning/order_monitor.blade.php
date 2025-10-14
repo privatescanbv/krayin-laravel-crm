@@ -266,7 +266,7 @@
                             clinic_ids: [],
                             resource_ids: [],
                             order_item_ids: [],
-                            show_available_only: true,
+                            show_available_only: false,
                         },
                         form: { 
                             order_item_id: null, 

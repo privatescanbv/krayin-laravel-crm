@@ -131,6 +131,22 @@ class OrderController extends SimpleEntityController
         return redirect()->route($this->indexRoute)->with('success', $this->getUpdateSuccessMessage());
     }
 
+    public function getPersonsForSalesLead(Request $request, int $salesLeadId): JsonResponse
+    {
+        $salesLead = SalesLead::with('lead.persons')->findOrFail($salesLeadId);
+
+        $persons = [];
+        if ($salesLead && $salesLead->lead) {
+            $persons = $salesLead->lead->persons()->get()->mapWithKeys(function ($person) {
+                return [$person->id => $person->name];
+            })->toArray();
+        }
+
+        return response()->json([
+            'persons' => $persons,
+        ]);
+    }
+
     protected function getEditViewData(Request $request, Model $entity): array
     {
         // Eager-load relations needed for planning button visibility and planning info
@@ -140,7 +156,7 @@ class OrderController extends SimpleEntityController
             },
             'orderRegels.resourceOrderItems.resource',
             'orderRegels.person',
-            'salesLead.lead.persons',
+            'salesLead.lead',
         ]);
 
         $salesLeads = SalesLead::with('lead')->get()->mapWithKeys(function ($salesLead) {
@@ -236,21 +252,5 @@ class OrderController extends SimpleEntityController
     protected function getDeleteFailedMessage(): string
     {
         return 'Verwijderen mislukt.';
-    }
-
-    public function getPersonsForSalesLead(Request $request, int $salesLeadId): JsonResponse
-    {
-        $salesLead = SalesLead::with('lead.persons')->findOrFail($salesLeadId);
-        
-        $persons = [];
-        if ($salesLead && $salesLead->lead) {
-            $persons = $salesLead->lead->persons()->get()->mapWithKeys(function ($person) {
-                return [$person->id => $person->name];
-            })->toArray();
-        }
-
-        return response()->json([
-            'persons' => $persons
-        ]);
     }
 }

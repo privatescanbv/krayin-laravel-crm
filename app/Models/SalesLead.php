@@ -6,6 +6,7 @@ use App\Enums\WorkflowType;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\Email;
@@ -105,21 +106,84 @@ class SalesLead extends Model
     }
 
     /**
-     * Persons related to this sales lead via underlying lead (many-to-many via lead_persons).
-     * Uses sales lead's lead_id as the parent key on the pivot's lead_id.
+     * Get the persons associated with the sales lead.
+     * This accessor ensures we always get the correct data.
      */
-    public function persons()
+    public function getPersonsAttribute()
     {
-        // TODO replace with sales lead person.
-        return $this->belongsToMany(Person::class, 'lead_persons', 'lead_id', 'person_id', 'lead_id', 'id')
-            ->withPivot(['lead_id', 'person_id']);
+        try {
+            return Person::whereIn('id',
+                DB::table('saleslead_persons')->where('saleslead_id', $this->id)->pluck('person_id')
+            )->get();
+        } catch (Exception $e) {
+            Log::warning('Could not load persons for sales lead', ['saleslead_id' => $this->id, 'error' => $e->getMessage()]);
+
+            return collect();
+        }
+
+        // Load the relationship if not already loaded
+        $this->load('persons');
+
+        return $this->getRelation('persons');
     }
 
     /**
-     * Legacy alias, mirrors persons().
+     * Persons related to this sales lead (many-to-many via saleslead_persons).
+     */
+    public function persons()
+    {
+        return $this->belongsToMany(Person::class, 'saleslead_persons', 'saleslead_id', 'person_id');
+    }
+
+    /**
+     * Legacy alias to support filters like person.name used by RequestCriteria.
+     * Returns the same relation as persons().
      */
     public function person()
     {
         return $this->persons();
+    }
+
+    /**
+     * Attach persons to this sales lead.
+     */
+    public function attachPersons(array $personIds)
+    {
+        foreach ($personIds as $personId) {
+            DB::table('saleslead_persons')->insertOrIgnore([
+                'saleslead_id' => $this->id,
+                'person_id'    => $personId,
+            ]);
+        }
+    }
+
+    /**
+     * Sync persons to this sales lead (replace all existing).
+     */
+    public function syncPersons(array $personIds)
+    {
+        // Remove existing relationships
+        DB::table('saleslead_persons')->where('saleslead_id', $this->id)->delete();
+
+        // Add new relationships
+        if (! empty($personIds)) {
+            $this->attachPersons($personIds);
+        }
+    }
+
+    /**
+     * Get the count of persons associated with this sales lead.
+     */
+    public function getPersonsCountAttribute(): int
+    {
+        return (int) $this->persons()->count();
+    }
+
+    /**
+     * Check if this sales lead has multiple persons.
+     */
+    public function hasMultiplePersons(): bool
+    {
+        return $this->persons()->count() > 1;
     }
 }

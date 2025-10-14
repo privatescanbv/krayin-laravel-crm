@@ -31,48 +31,38 @@
                         @endphp
                     @endif
 
-                    {!! view_render_event('admin.leads.view.tags.before', ['lead' => $lead]) !!}
+{{--                    {!! view_render_event('admin.leads.view.tags.before', ['lead' => $lead]) !!}--}}
 
-                    <!-- Tags -->
-                    <x-admin::tags
-                        :attach-endpoint="route('admin.leads.tags.attach', $lead->id)"
-                        :detach-endpoint="route('admin.leads.tags.detach', $lead->id)"
-                        :added-tags="$lead->tags"
-                    />
+{{--                    <!-- Tags -->--}}
+{{--                    <x-admin::tags--}}
+{{--                        :attach-endpoint="route('admin.sales-leads.tags.attach', $lead->id)"--}}
+{{--                        :detach-endpoint="route('admin.sales-leads.tags.detach', $lead->id)"--}}
+{{--                        :added-tags="$lead->tags"--}}
+{{--                    />--}}
 
-                    {!! view_render_event('admin.leads.view.tags.after', ['lead' => $lead]) !!}
+{{--                    {!! view_render_event('admin.leads.view.tags.after', ['lead' => $lead]) !!}--}}
                 </div>
 
-
-                {!! view_render_event('admin.leads.view.title.before', ['lead' => $lead]) !!}
-
-                <!-- Title -->
-                {{--                <h3 class="text-lg font-bold dark:text-white">--}}
-                {{--                    {{ $lead->name }}--}}
-                {{--                </h3>--}}
-
-                {!! view_render_event('admin.leads.view.title.after', ['lead' => $lead]) !!}
-
                 <!-- Duplicate Detection -->
-                @if ($lead->hasPotentialDuplicates())
-                    <div
-                        class="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="icon-warning text-orange-600"></span>
-                                <span class="text-sm font-medium text-orange-800 dark:text-orange-200">
-                                    Potentiële duplicaten gevonden ({{ $lead->getPotentialDuplicatesCount() }} leads{{ $lead->getPotentialDuplicatesCount() > 1 ? 's' : '' }})
-                                </span>
-                            </div>
-                            <a
-                                href="{{ route('admin.leads.duplicates.index', $lead->id) }}"
-                                class="rounded bg-orange-600 px-3 py-1 text-xs text-white hover:bg-orange-700"
-                            >
-                                Duplicaten samenvoegen
-                            </a>
-                        </div>
-                    </div>
-                @endif
+{{--                @if ($lead->hasPotentialDuplicates())--}}
+{{--                    <div--}}
+{{--                        class="mb-4 rounded-lg border border-orange-200 bg-orange-50 p-3 dark:border-orange-800 dark:bg-orange-900/20">--}}
+{{--                        <div class="flex items-center justify-between">--}}
+{{--                            <div class="flex items-center gap-2">--}}
+{{--                                <span class="icon-warning text-orange-600"></span>--}}
+{{--                                <span class="text-sm font-medium text-orange-800 dark:text-orange-200">--}}
+{{--                                    Potentiële duplicaten gevonden ({{ $lead->getPotentialDuplicatesCount() }} leads{{ $lead->getPotentialDuplicatesCount() > 1 ? 's' : '' }})--}}
+{{--                                </span>--}}
+{{--                            </div>--}}
+{{--                            <a--}}
+{{--                                href="{{ route('admin.leads.duplicates.index', $lead->id) }}"--}}
+{{--                                class="rounded bg-orange-600 px-3 py-1 text-xs text-white hover:bg-orange-700"--}}
+{{--                            >--}}
+{{--                                Duplicaten samenvoegen--}}
+{{--                            </a>--}}
+{{--                        </div>--}}
+{{--                    </div>--}}
+{{--                @endif--}}
 
                 <!-- No Open Activities Warning for Sales Lead -->
                 @php
@@ -130,7 +120,7 @@
                         />
                     @endif
 
-                    @if (bouncer()->hasPermission('leads.edit'))
+                    @if (bouncer()->hasPermission('sales-leads.edit'))
                         <button
                             type="button"
                             class="secondary-button"
@@ -147,7 +137,7 @@
             @include('admin::leads.common.card', ['lead' => $lead, 'show_actions'=>false])
 
             <!-- Lead Overview (compact overview with all information) -->
-            @include('admin::leads.view.compact-overview')
+            @include('admin.sales_leads.view.compact-overview')
 
             <!-- Contact Person -->
             @include('admin::leads.view.person')

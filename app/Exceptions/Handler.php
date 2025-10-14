@@ -30,13 +30,13 @@ class Handler extends ExceptionHandler
                 // Log all exceptions that are reported
                 Log::error('Exception reported', [
                     'exception' => get_class($e),
-                    'message' => $e->getMessage(),
-                    'file' => $e->getFile(),
-                    'line' => $e->getLine(),
-                    'trace' => $e->getTraceAsString(),
-                    'url' => optional(request())->fullUrl(),
-                    'method' => optional(request())->method(),
-                    'user_id' => optional(optional(auth()->guard('user'))->user())->id,
+                    'message'   => $e->getMessage(),
+                    'file'      => $e->getFile(),
+                    'line'      => $e->getLine(),
+                    'trace'     => $e->getTraceAsString(),
+                    'url'       => optional(request())->fullUrl(),
+                    'method'    => optional(request())->method(),
+                    'user_id'   => optional(optional(auth()->guard('user'))->user())->id,
                 ]);
             } catch (Exception $e) {
                 Log::error('Could not log error for 500 status code', ['exception' => $e->getMessage()]);
@@ -47,7 +47,7 @@ class Handler extends ExceptionHandler
     /**
      * Render an exception into an HTTP response.
      *
-     * @param \Illuminate\Http\Request $request
+     * @param  \Illuminate\Http\Request  $request
      * @return \Symfony\Component\HttpFoundation\Response
      *
      * @throws \Throwable
@@ -60,18 +60,18 @@ class Handler extends ExceptionHandler
         if ($response->getStatusCode() === 500) {
             try {
                 Log::error('500 Internal Server Error', [
-                    'exception' => get_class($exception),
-                    'message' => $exception->getMessage(),
-                    'file' => $exception->getFile(),
-                    'line' => $exception->getLine(),
-                    'trace' => $exception->getTraceAsString(),
-                    'url' => optional($request)->fullUrl(),
-                    'method' => optional($request)->method(),
-                    'ip' => optional($request)->ip(),
-                    'user_id' => optional(optional(auth()->guard('user'))->user())->id,
+                    'exception'    => get_class($exception),
+                    'message'      => $exception->getMessage(),
+                    'file'         => $exception->getFile(),
+                    'line'         => $exception->getLine(),
+                    'trace'        => $exception->getTraceAsString(),
+                    'url'          => optional($request)->fullUrl(),
+                    'method'       => optional($request)->method(),
+                    'ip'           => optional($request)->ip(),
+                    'user_id'      => optional(optional(auth()->guard('user'))->user())->id,
                     'request_data' => optional($request)->all(),
-                    'headers' => optional(optional($request)->headers)->all(),
-                    'session_id' => optional(session())->getId(),
+                    'headers'      => optional(optional($request)->headers)->all(),
+                    'session_id'   => optional(session())->getId(),
                 ]);
             } catch (Exception $e) {
                 Log::error('Could not log error for 500 status code', ['exception' => $e->getMessage()]);

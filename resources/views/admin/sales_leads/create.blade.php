@@ -40,6 +40,30 @@
                         @enderror
                     </div>
 
+                    <!-- Lead Selection -->
+                    <div>
+                        <label for="lead_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Lead
+                        </label>
+                        <select
+                            name="lead_id"
+                            id="lead_id"
+                            class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-800 dark:text-white"
+                        >
+                            <option value="">Selecteer een lead</option>
+                            @if (isset($leads))
+                                @foreach ($leads as $id => $name)
+                                    <option value="{{ $id }}" {{ old('lead_id') == $id ? 'selected' : '' }}>
+                                        {{ $name }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                        @error('lead_id')
+                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
                     <!-- Description -->
                     <div class="md:col-span-2">
                         <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -54,6 +78,23 @@
                         @error('description')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
+                    </div>
+                </div>
+
+                <!-- Contact Persons Section -->
+                <div class="mt-6">
+                    <div class="flex flex-col gap-4" id="contact-person">
+                        <div class="flex flex-col gap-1">
+                            <p class="text-base font-semibold dark:text-white">
+                                Contactpersonen
+                            </p>
+                            <p class="text-gray-600 dark:text-gray-300">
+                                Koppel een of meerdere contactpersonen aan deze sales lead
+                            </p>
+                        </div>
+
+                        <!-- Multi Contact Matcher -->
+                        @include('admin::leads.common.multi-contactmatcher', ['lead' => new \App\Models\SalesLead(), 'persons' => []])
                     </div>
                 </div>
 

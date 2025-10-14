@@ -312,6 +312,14 @@ TABLE(SalesLead, "sales_lead (backoffice)") {
   workflow_type: enum
 }
 
+TABLE(SalesLeadPerson, "saleslead_persons") {
+  PRIMARY_KEY(id): bigint
+  FOREIGN_KEY(saleslead_id): bigint
+  FOREIGN_KEY(person_id): bigint
+  created_at: datetime
+  updated_at: datetime
+}
+
 TABLE(Activity, "activity") {
   PRIMARY_KEY(id): bigint
   title: string
@@ -540,6 +548,7 @@ Person "1" -- "0..1" User
 Person "1" -- "0..1" Organization
 Person "1" -- "0..1" Address
 Person "n" -- "n" Lead : "lead_persons"
+Person "n" -- "n" SalesLead : "saleslead_persons"
 
 Organization "1" -- "0..1" Address
 

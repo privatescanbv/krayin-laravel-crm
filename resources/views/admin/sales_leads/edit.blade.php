@@ -41,6 +41,14 @@
                         @enderror
                     </div>
 
+                    <!-- Lead Selection -->
+                    <div>
+                        <label for="lead_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Lead
+                        </label>
+                        todo - toon lead link ?
+                    </div>
+
                     <!-- Description -->
                     <div class="md:col-span-2">
                         <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -58,6 +66,23 @@
                     </div>
                 </div>
 
+                <!-- Contact Persons Section -->
+                <div class="mt-6">
+                    <div class="flex flex-col gap-4" id="contact-person">
+                        <div class="flex flex-col gap-1">
+                            <p class="text-base font-semibold dark:text-white">
+                                Contactpersonen
+                            </p>
+                            <p class="text-gray-600 dark:text-gray-300">
+                                Koppel een of meerdere contactpersonen aan deze sales lead
+                            </p>
+                        </div>
+
+                        <!-- Multi Contact Matcher -->
+                        @include('admin::leads.common.multi-contactmatcher', ['lead' => $salesLead, 'persons' => $salesLead->persons])
+                    </div>
+                </div>
+
                 <!-- Submit Button -->
                 <div class="mt-6 flex justify-end">
                     <button
@@ -71,4 +96,3 @@
         </div>
     </div>
 </x-admin::layouts>
- 

@@ -4,10 +4,12 @@ namespace Webkul\Contact\Models;
 
 use App\Enums\PersonGender;
 use App\Enums\PersonSalutation;
+use Exception;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Webkul\Activity\Models\ActivityProxy;
 use Webkul\Activity\Traits\LogsActivity;
@@ -15,6 +17,7 @@ use Webkul\Attribute\Traits\CustomAttribute;
 use Webkul\Contact\Contracts\Person as PersonContract;
 use Webkul\Contact\Database\Factories\PersonFactory;
 use Webkul\Email\Models\Email;
+use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\LeadProxy;
 use Webkul\Tag\Models\TagProxy;
 use Webkul\User\Models\UserProxy;
@@ -161,11 +164,11 @@ class Person extends Model implements PersonContract
     public function getLeadsAttribute()
     {
         try {
-            return \Webkul\Lead\Models\Lead::whereIn('id',
-                \DB::table('lead_persons')->where('person_id', $this->id)->pluck('lead_id')
+            return Lead::whereIn('id',
+                DB::table('lead_persons')->where('person_id', $this->id)->pluck('lead_id')
             )->get();
-        } catch (\Exception $e) {
-            \Log::warning('Could not load leads for person', ['person_id' => $this->id, 'error' => $e->getMessage()]);
+        } catch (Exception $e) {
+            Log::warning('Could not load leads for person', ['person_id' => $this->id, 'error' => $e->getMessage()]);
             return collect();
         }
     }

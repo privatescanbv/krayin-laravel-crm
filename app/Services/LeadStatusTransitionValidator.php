@@ -60,7 +60,7 @@ class LeadStatusTransitionValidator
 
         // Valideer minimum aantal personen
         if (isset($rules['min_persons'])) {
-            $personCount = (int) $lead->persons()->count();
+            $personCount = $lead->persons()->count();
             if ($personCount < $rules['min_persons']) {
                 $errors[] = $rules['message'] ?? "Minimaal {$rules['min_persons']} persoon(en) vereist voor deze status.";
             }

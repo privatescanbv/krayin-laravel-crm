@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\PipelineType;
 use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
+use Webkul\Contact\Models\Person;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
@@ -139,5 +140,150 @@ test('can delete workflow lead', function () {
 
     $this->assertDatabaseMissing('salesleads', [
         'id' => $salesLead->id,
+    ]);
+});
+
+test('can create sales lead with person relationships', function () {
+    $lead = Lead::factory()->create();
+    $person1 = Person::factory()->create();
+    $person2 = Person::factory()->create();
+
+    $payload = [
+        'name'              => 'Sales Lead with Persons',
+        'description'       => 'Created with person relationships',
+        'pipeline_stage_id' => test()->stage->id,
+        'lead_id'           => $lead->id,
+        'person_ids'        => [$person1->id, $person2->id],
+    ];
+
+    $response = $this->postJson(route('admin.sales-leads.store'), $payload);
+    $response->assertStatus(302);
+
+    $salesLead = SalesLead::where('name', 'Sales Lead with Persons')->first();
+    expect($salesLead)->not->toBeNull();
+    expect($salesLead->persons()->count())->toBe(2);
+    expect($salesLead->persons->pluck('id')->toArray())->toContain($person1->id, $person2->id);
+
+    // Check database relationships
+    $this->assertDatabaseHas('saleslead_persons', [
+        'saleslead_id' => $salesLead->id,
+        'person_id'    => $person1->id,
+    ]);
+    $this->assertDatabaseHas('saleslead_persons', [
+        'saleslead_id' => $salesLead->id,
+        'person_id'    => $person2->id,
+    ]);
+});
+
+test('can copy persons from lead when creating sales lead', function () {
+    $lead = Lead::factory()->create();
+    $person1 = Person::factory()->create();
+    $person2 = Person::factory()->create();
+
+    // Attach persons to the lead
+    $lead->attachPersons([$person1->id, $person2->id]);
+
+    $payload = [
+        'name'              => 'Sales Lead with Copied Persons',
+        'description'       => 'Created with persons copied from lead',
+        'pipeline_stage_id' => test()->stage->id,
+        'lead_id'           => $lead->id,
+    ];
+
+    $response = $this->postJson(route('admin.sales-leads.store'), $payload);
+    $response->assertStatus(302);
+
+    $salesLead = SalesLead::where('name', 'Sales Lead with Copied Persons')->first();
+    expect($salesLead)->not->toBeNull();
+    expect($salesLead->persons()->count())->toBe(2);
+    expect($salesLead->persons->pluck('id')->toArray())->toContain($person1->id, $person2->id);
+});
+
+test('can update sales lead person relationships', function () {
+    $lead = Lead::factory()->create();
+    $person1 = Person::factory()->create();
+    $person2 = Person::factory()->create();
+    $person3 = Person::factory()->create();
+
+    $salesLead = SalesLead::create([
+        'name'              => 'Update Persons',
+        'pipeline_stage_id' => test()->stage->id,
+        'lead_id'           => $lead->id,
+    ]);
+
+    // Initially attach person1
+    $salesLead->attachPersons([$person1->id]);
+
+    $payload = [
+        'name'        => 'Updated Sales Lead',
+        'description' => 'Updated with new persons',
+        'person_ids'  => [$person2->id, $person3->id],
+        '_method'     => 'put',
+    ];
+
+    $response = $this->withHeaders(['HTTP_X-Requested-With' => 'XMLHttpRequest'])
+        ->postJson(route('admin.sales-leads.update', ['id' => $salesLead->id]), $payload);
+
+    $response->assertOk()->assertJsonPath('message', 'Sales lead updated successfully.');
+
+    // Refresh the sales lead
+    $salesLead->refresh();
+    expect($salesLead->persons()->count())->toBe(2);
+    expect($salesLead->persons->pluck('id')->toArray())->toContain($person2->id, $person3->id);
+    expect($salesLead->persons->pluck('id')->toArray())->not->toContain($person1->id);
+
+    // Check database relationships
+    $this->assertDatabaseHas('saleslead_persons', [
+        'saleslead_id' => $salesLead->id,
+        'person_id'    => $person2->id,
+    ]);
+    $this->assertDatabaseHas('saleslead_persons', [
+        'saleslead_id' => $salesLead->id,
+        'person_id'    => $person3->id,
+    ]);
+    $this->assertDatabaseMissing('saleslead_persons', [
+        'saleslead_id' => $salesLead->id,
+        'person_id'    => $person1->id,
+    ]);
+});
+
+test('can remove all person relationships from sales lead', function () {
+    $lead = Lead::factory()->create();
+    $person1 = Person::factory()->create();
+    $person2 = Person::factory()->create();
+
+    $salesLead = SalesLead::create([
+        'name'              => 'Remove All Persons',
+        'pipeline_stage_id' => test()->stage->id,
+        'lead_id'           => $lead->id,
+    ]);
+
+    // Initially attach persons
+    $salesLead->attachPersons([$person1->id, $person2->id]);
+
+    $payload = [
+        'name'        => 'Updated Sales Lead',
+        'description' => 'Removed all persons',
+        'person_ids'  => [],
+        '_method'     => 'put',
+    ];
+
+    $response = $this->withHeaders(['HTTP_X-Requested-With' => 'XMLHttpRequest'])
+        ->postJson(route('admin.sales-leads.update', ['id' => $salesLead->id]), $payload);
+
+    $response->assertOk()->assertJsonPath('message', 'Sales lead updated successfully.');
+
+    // Refresh the sales lead
+    $salesLead->refresh();
+    expect($salesLead->persons()->count())->toBe(0);
+
+    // Check database relationships are removed
+    $this->assertDatabaseMissing('saleslead_persons', [
+        'saleslead_id' => $salesLead->id,
+        'person_id'    => $person1->id,
+    ]);
+    $this->assertDatabaseMissing('saleslead_persons', [
+        'saleslead_id' => $salesLead->id,
+        'person_id'    => $person2->id,
     ]);
 });

@@ -281,35 +281,41 @@ class LeadStatusTransitionValidatorTest extends TestCase
         // Attach the person
         $minimalLead->attachPersons([$minimalPerson->id]);
 
-        // This should not throw an exception (empty fields should be handled correctly)
+        // This should throw an exception because match score will be less than 100%
+        // (only name fields match, no email/phone/address = ~85% score)
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $this->expectExceptionMessage('contact match score 100% is');
+
         LeadStatusTransitionValidator::validateTransition($minimalLead, $this->wonStage->id);
-        
-        $this->assertTrue(true); // If we get here, no exception was thrown
     }
 
     /** @test */
     public function it_handles_date_of_birth_matching_correctly()
     {
-        // Create lead with date of birth
+        // Create lead with date of birth and complete matching data
         $leadWithDob = Lead::create([
             'first_name' => 'John',
             'last_name' => 'Doe',
             'date_of_birth' => '1990-01-01',
+            'emails' => [['value' => 'john.doe@example.com', 'is_default' => true]],
+            'phones' => [['value' => '0612345678', 'is_default' => true]],
             'lead_pipeline_stage_id' => $this->otherStage->id,
             'lead_pipeline_id' => $this->lead->lead_pipeline_id,
         ]);
 
-        // Create person with matching date of birth
+        // Create person with matching date of birth and complete data
         $personWithDob = Person::create([
             'first_name' => 'John',
             'last_name' => 'Doe',
             'date_of_birth' => '1990-01-01',
+            'emails' => [['value' => 'john.doe@example.com', 'is_default' => true]],
+            'phones' => [['value' => '0612345678', 'is_default' => true]],
         ]);
 
         // Attach the person
         $leadWithDob->attachPersons([$personWithDob->id]);
 
-        // This should not throw an exception
+        // This should not throw an exception (complete match = 100% score)
         LeadStatusTransitionValidator::validateTransition($leadWithDob, $this->wonStage->id);
         
         $this->assertTrue(true); // If we get here, no exception was thrown
@@ -346,18 +352,22 @@ class LeadStatusTransitionValidatorTest extends TestCase
     /** @test */
     public function it_handles_address_matching_correctly()
     {
-        // Create lead with address
+        // Create lead with address and complete matching data
         $leadWithAddress = Lead::create([
             'first_name' => 'John',
             'last_name' => 'Doe',
+            'emails' => [['value' => 'john.doe@example.com', 'is_default' => true]],
+            'phones' => [['value' => '0612345678', 'is_default' => true]],
             'lead_pipeline_stage_id' => $this->otherStage->id,
             'lead_pipeline_id' => $this->lead->lead_pipeline_id,
         ]);
 
-        // Create person with matching address
+        // Create person with matching address and complete data
         $personWithAddress = Person::create([
             'first_name' => 'John',
             'last_name' => 'Doe',
+            'emails' => [['value' => 'john.doe@example.com', 'is_default' => true]],
+            'phones' => [['value' => '0612345678', 'is_default' => true]],
         ]);
 
         // Create addresses for both
@@ -382,7 +392,7 @@ class LeadStatusTransitionValidatorTest extends TestCase
         // Attach the person
         $leadWithAddress->attachPersons([$personWithAddress->id]);
 
-        // This should not throw an exception
+        // This should not throw an exception (complete match = 100% score)
         LeadStatusTransitionValidator::validateTransition($leadWithAddress, $this->wonStage->id);
         
         $this->assertTrue(true); // If we get here, no exception was thrown
@@ -391,27 +401,63 @@ class LeadStatusTransitionValidatorTest extends TestCase
     /** @test */
     public function it_handles_phone_number_normalization_correctly()
     {
-        // Create lead with phone number
+        // Create lead with phone number and complete matching data
         $leadWithPhone = Lead::create([
             'first_name' => 'John',
             'last_name' => 'Doe',
+            'emails' => [['value' => 'john.doe@example.com', 'is_default' => true]],
             'phones' => [['value' => '+31612345678', 'is_default' => true]],
             'lead_pipeline_stage_id' => $this->otherStage->id,
             'lead_pipeline_id' => $this->lead->lead_pipeline_id,
         ]);
 
-        // Create person with normalized phone number
+        // Create person with normalized phone number and complete data
         $personWithPhone = Person::create([
             'first_name' => 'John',
             'last_name' => 'Doe',
+            'emails' => [['value' => 'john.doe@example.com', 'is_default' => true]],
             'phones' => [['value' => '0612345678', 'is_default' => true]],
         ]);
 
         // Attach the person
         $leadWithPhone->attachPersons([$personWithPhone->id]);
 
-        // This should not throw an exception (phone numbers should match after normalization)
+        // This should not throw an exception (complete match = 100% score)
         LeadStatusTransitionValidator::validateTransition($leadWithPhone, $this->wonStage->id);
+        
+        $this->assertTrue(true); // If we get here, no exception was thrown
+    }
+
+    /** @test */
+    public function it_allows_transition_with_perfect_name_match_when_other_fields_are_empty()
+    {
+        // Create a lead with only name fields (no email/phone/address)
+        $leadWithNamesOnly = Lead::create([
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'lastname_prefix' => 'van',
+            'married_name' => 'Smith',
+            'initials' => 'J.D.',
+            'date_of_birth' => '1990-01-01',
+            'lead_pipeline_stage_id' => $this->otherStage->id,
+            'lead_pipeline_id' => $this->lead->lead_pipeline_id,
+        ]);
+
+        // Create a person with matching name fields (no email/phone/address)
+        $personWithNamesOnly = Person::create([
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'lastname_prefix' => 'van',
+            'married_name' => 'Smith',
+            'initials' => 'J.D.',
+            'date_of_birth' => '1990-01-01',
+        ]);
+
+        // Attach the person
+        $leadWithNamesOnly->attachPersons([$personWithNamesOnly->id]);
+
+        // This should not throw an exception (perfect name match = 100% score)
+        LeadStatusTransitionValidator::validateTransition($leadWithNamesOnly, $this->wonStage->id);
         
         $this->assertTrue(true); // If we get here, no exception was thrown
     }

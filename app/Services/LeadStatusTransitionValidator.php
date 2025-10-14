@@ -347,6 +347,12 @@ class LeadStatusTransitionValidator
         $leadEmails = self::extractEmails($lead);
         $personEmails = self::extractEmails($person);
 
+        // If both are empty, treat as perfect match (100%)
+        if (empty($leadEmails) && empty($personEmails)) {
+            return 1.0;
+        }
+
+        // If only one is empty, no match
         if (empty($leadEmails) || empty($personEmails)) {
             return 0.0;
         }
@@ -374,6 +380,12 @@ class LeadStatusTransitionValidator
         $leadPhones = self::extractPhones($lead);
         $personPhones = self::extractPhones($person);
 
+        // If both are empty, treat as perfect match (100%)
+        if (empty($leadPhones) && empty($personPhones)) {
+            return 1.0;
+        }
+
+        // If only one is empty, no match
         if (empty($leadPhones) || empty($personPhones)) {
             return 0.0;
         }

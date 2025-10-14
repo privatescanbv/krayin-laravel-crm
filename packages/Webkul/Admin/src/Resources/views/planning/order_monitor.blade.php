@@ -23,11 +23,18 @@
             <h3 class="text-lg font-semibold mb-4">Orderregels</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 @foreach($order->orderRegels as $item)
-                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 {{ $item->product && $item->product->partnerProducts && $item->product->partnerProducts->count() > 0 ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-gray-800' }}">
+                    @php
+                        $statusValue = is_string($item->status) ? $item->status : ($item->status?->value ?? 'nieuw');
+                        $statusLabel = is_object($item->status) && method_exists($item->status, 'label')
+                            ? $item->status->label()
+                            : ucfirst(str_replace('_', ' ', $statusValue));
+                        $canPlan = $item->product && $item->product->partnerProducts()->exists();
+                    @endphp
+                    <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 {{ $canPlan ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-gray-800' }}">
                         <div class="flex justify-between items-start mb-2">
                             <h4 class="font-medium text-sm">{{ $item->product?->name ?? 'Onbekend product' }}</h4>
-                            <span class="text-xs px-2 py-1 rounded-full {{ $item->status === 'ingepland' ? 'bg-green-100 text-green-800' : ($item->status === 'moet_worden_ingepland' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800') }}">
-                                {{ ucfirst(str_replace('_', ' ', $item->status ?? 'nieuw')) }}
+                            <span class="text-xs px-2 py-1 rounded-full {{ $statusValue === 'ingepland' ? 'bg-green-100 text-green-800' : ($statusValue === 'moet_worden_ingepland' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800') }}">
+                                {{ $statusLabel }}
                             </span>
                         </div>
                         <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">
@@ -54,23 +61,30 @@
         </div>
 
         <!-- Resource Planning Calendar -->
+        @php
+            $orderItems = $order->orderRegels->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'product_name' => $item->product?->name ?? 'Onbekend product',
+                    'quantity' => $item->quantity,
+                    'status' => (is_string($item->status) ? $item->status : ($item->status?->value ?? 'nieuw')),
+                    'can_plan' => $item->product && method_exists($item->product, 'partnerProducts') && $item->product->partnerProducts()->exists(),
+                    'bookings' => $item->resourceOrderItems->map(function ($booking) {
+                        return [
+                            'id' => $booking->id,
+                            'resource_id' => $booking->resource_id,
+                            'resource_name' => $booking->resource?->name ?? 'Onbekend',
+                            'from' => \Carbon\Carbon::parse($booking->from)->toIso8601String(),
+                            'to' => \Carbon\Carbon::parse($booking->to)->toIso8601String(),
+                        ];
+                    })->values()->toArray(),
+                ];
+            })->values()->toArray();
+        @endphp
         <div id="order-resource-planning" class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
             <v-order-resource-planning
                 :order-id="{{ $order->id }}"
-                :order-items='@json($order->orderRegels->map(fn($item) => [
-                    "id" => $item->id,
-                    "product_name" => $item->product?->name ?? "Onbekend product",
-                    "quantity" => $item->quantity,
-                    "status" => $item->status,
-                    "can_plan" => $item->product && $item->product->partnerProducts && $item->product->partnerProducts->count() > 0,
-                    "bookings" => $item->resourceOrderItems->map(fn($booking) => [
-                        "id" => $booking->id,
-                        "resource_id" => $booking->resource_id,
-                        "resource_name" => $booking->resource?->name ?? "Onbekend",
-                        "from" => \Carbon\Carbon::parse($booking->from)->toIso8601String(),
-                        "to" => \Carbon\Carbon::parse($booking->to)->toIso8601String(),
-                    ])
-                ]))'
+                :order-items='@json($orderItems)'
             ></v-order-resource-planning>
         </div>
     </div>

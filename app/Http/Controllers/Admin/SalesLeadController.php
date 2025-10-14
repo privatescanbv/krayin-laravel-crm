@@ -174,7 +174,11 @@ class SalesLeadController extends Controller
 
         // Handle person relationships
         if ($request->has('person_ids') && !empty($request->person_ids)) {
-            $salesLead->syncPersons($request->person_ids);
+            // Filter out empty values
+            $personIds = array_filter($request->person_ids, function($id) {
+                return !empty($id);
+            });
+            $salesLead->syncPersons($personIds);
         } elseif ($request->has('lead_id') && $request->lead_id) {
             // Copy persons from the selected lead
             $lead = \Webkul\Lead\Models\Lead::find($request->lead_id);
@@ -221,7 +225,11 @@ class SalesLeadController extends Controller
 
         // Handle person relationships
         if ($request->has('person_ids')) {
-            $salesLead->syncPersons($request->person_ids ?? []);
+            // Filter out empty values
+            $personIds = array_filter($request->person_ids ?? [], function($id) {
+                return !empty($id);
+            });
+            $salesLead->syncPersons($personIds);
         }
 
         // If this is an AJAX request (like from kanban drag & drop), return JSON

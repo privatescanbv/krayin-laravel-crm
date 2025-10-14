@@ -105,18 +105,19 @@ class SalesLead extends Model
     }
 
     /**
-     * Get the persons associated with the sales lead (repository-based).
+     * Get the persons associated with the sales lead.
+     * This accessor ensures we always get the correct data.
      */
     public function getPersonsAttribute()
     {
-        try {
-            return Person::whereIn('id',
-                \DB::table('saleslead_persons')->where('saleslead_id', $this->id)->pluck('person_id')
-            )->get();
-        } catch (\Exception $e) {
-            \Log::warning('Could not load persons for sales lead', ['saleslead_id' => $this->id, 'error' => $e->getMessage()]);
-            return collect();
+        // If the relationship is already loaded, return it
+        if ($this->relationLoaded('persons')) {
+            return $this->getRelation('persons');
         }
+        
+        // Load the relationship if not already loaded
+        $this->load('persons');
+        return $this->getRelation('persons');
     }
 
     /**
@@ -124,8 +125,7 @@ class SalesLead extends Model
      */
     public function persons()
     {
-        return $this->belongsToMany(Person::class, 'saleslead_persons', 'saleslead_id', 'person_id')
-            ->withPivot(['saleslead_id', 'person_id']);
+        return $this->belongsToMany(Person::class, 'saleslead_persons', 'saleslead_id', 'person_id');
     }
 
     /**

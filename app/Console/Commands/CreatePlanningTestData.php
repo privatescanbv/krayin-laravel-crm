@@ -7,6 +7,8 @@ use App\Models\PartnerProduct;
 use App\Models\ProductType;
 use App\Models\Resource;
 use App\Models\ResourceType;
+use App\Models\Shift;
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Webkul\Product\Models\Product;
 use Webkul\Product\Models\ProductGroup;
@@ -65,7 +67,10 @@ class CreatePlanningTestData extends Command
         $resources = $this->createResources($clinic, $resourceType);
         $this->info('✅ Resources aangemaakt: '.count($resources));
 
-        // 8. Koppelingen maken
+        // 8. Shifts aanmaken voor resources (08:00 - 17:00 op verschillende dagen)
+        $this->createShiftsForResources($resources);
+
+        // 9. Koppelingen maken
         $this->createRelationships($partnerProduct, $clinic, $resources);
 
         $this->info('');
@@ -207,5 +212,43 @@ class CreatePlanningTestData extends Command
         $this->info('✅ Koppelingen gemaakt:');
         $this->info('   • Partner Product gekoppeld aan Kliniek');
         $this->info('   • Partner Product gekoppeld aan '.count($resources).' Resources');
+    }
+
+    private function createShiftsForResources(array $resources): void
+    {
+        $totalShifts = 0;
+
+        foreach ($resources as $resource) {
+            // Kies een paar verschillende komende dagen
+            $dates = [
+                Carbon::today()->addDays(1),
+                Carbon::today()->addDays(3),
+                Carbon::today()->addDays(5),
+            ];
+
+            foreach ($dates as $date) {
+                // dayOfWeekIso: 1 (ma) t/m 7 (zo)
+                $weekday = $date->dayOfWeekIso;
+
+                $timeBlocks = [
+                    $weekday => [
+                        ['from' => '08:00', 'to' => '17:00'],
+                    ],
+                ];
+
+                Shift::create([
+                    'resource_id'         => $resource->id,
+                    'available'           => true,
+                    'notes'               => 'Auto-generated test shift',
+                    'period_start'        => $date->toDateString(),
+                    'period_end'          => $date->toDateString(),
+                    'weekday_time_blocks' => $timeBlocks,
+                ]);
+
+                $totalShifts++;
+            }
+        }
+
+        $this->info('✅ Shifts aangemaakt: '.$totalShifts.' (08:00 - 17:00)');
     }
 }

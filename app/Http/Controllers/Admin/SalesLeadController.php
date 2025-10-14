@@ -152,7 +152,10 @@ class SalesLeadController extends Controller
 
     public function create(Request $request)
     {
-        return view('admin.sales_leads.create');
+        // Get all leads for selection
+        $leads = \Webkul\Lead\Models\Lead::select('id', 'name')->get()->pluck('name', 'id');
+        
+        return view('admin.sales_leads.create', compact('leads'));
     }
 
     public function store(Request $request)
@@ -163,9 +166,23 @@ class SalesLeadController extends Controller
             'pipeline_stage_id' => 'nullable|exists:lead_pipeline_stages,id',
             'lead_id'           => 'nullable|exists:leads,id',
             'user_id'           => 'nullable|exists:users,id',
+            'person_ids'        => 'nullable|array',
+            'person_ids.*'      => 'exists:persons,id',
         ]);
 
         $salesLead = SalesLead::create($request->all());
+
+        // Handle person relationships
+        if ($request->has('person_ids') && !empty($request->person_ids)) {
+            $salesLead->syncPersons($request->person_ids);
+        } elseif ($request->has('lead_id') && $request->lead_id) {
+            // Copy persons from the selected lead
+            $lead = \Webkul\Lead\Models\Lead::find($request->lead_id);
+            if ($lead && $lead->persons()->count() > 0) {
+                $personIds = $lead->persons()->pluck('persons.id')->toArray();
+                $salesLead->syncPersons($personIds);
+            }
+        }
 
         return redirect()->route('admin.sales-leads.index')
             ->with('success', 'Sales lead created successfully.');
@@ -173,7 +190,10 @@ class SalesLeadController extends Controller
 
     public function edit($id)
     {
-        $salesLead = SalesLead::findOrFail($id);
+        $salesLead = SalesLead::with('persons')->findOrFail($id);
+        
+        // Get all leads for selection
+        $leads = \Webkul\Lead\Models\Lead::select('id', 'name')->get()->pluck('name', 'id');
 
         Log::info('SalesLead found: ', [
             'id'          => $salesLead->id,
@@ -181,7 +201,7 @@ class SalesLeadController extends Controller
             'description' => $salesLead->description,
         ]);
 
-        return view('admin.sales_leads.edit', ['salesLead' => $salesLead]);
+        return view('admin.sales_leads.edit', ['salesLead' => $salesLead, 'leads' => $leads]);
     }
 
     public function update(Request $request, $id)
@@ -192,10 +212,17 @@ class SalesLeadController extends Controller
             'pipeline_stage_id' => 'sometimes|nullable|exists:lead_pipeline_stages,id',
             'lead_id'           => 'nullable|exists:leads,id',
             'user_id'           => 'nullable|exists:users,id',
+            'person_ids'        => 'nullable|array',
+            'person_ids.*'      => 'exists:persons,id',
         ]);
 
         $salesLead = SalesLead::findOrFail($id);
         $salesLead->update($request->all());
+
+        // Handle person relationships
+        if ($request->has('person_ids')) {
+            $salesLead->syncPersons($request->person_ids ?? []);
+        }
 
         // If this is an AJAX request (like from kanban drag & drop), return JSON
         if ($request->ajax()) {

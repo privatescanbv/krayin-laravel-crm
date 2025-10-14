@@ -10,6 +10,7 @@ use Webkul\Activity\Models\Activity;
 use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
+use Webkul\Contact\Models\Person;
 
 // Quote entity removed
 
@@ -101,5 +102,81 @@ class SalesLead extends Model
     public function getOpenActivitiesCountAttribute(): int
     {
         return (int) $this->activities()->where('is_done', 0)->count();
+    }
+
+    /**
+     * Get the persons associated with the sales lead (repository-based).
+     */
+    public function getPersonsAttribute()
+    {
+        try {
+            return Person::whereIn('id',
+                \DB::table('saleslead_persons')->where('saleslead_id', $this->id)->pluck('person_id')
+            )->get();
+        } catch (\Exception $e) {
+            \Log::warning('Could not load persons for sales lead', ['saleslead_id' => $this->id, 'error' => $e->getMessage()]);
+            return collect();
+        }
+    }
+
+    /**
+     * Persons related to this sales lead (many-to-many via saleslead_persons).
+     */
+    public function persons()
+    {
+        return $this->belongsToMany(Person::class, 'saleslead_persons', 'saleslead_id', 'person_id')
+            ->withPivot(['saleslead_id', 'person_id']);
+    }
+
+    /**
+     * Legacy alias to support filters like person.name used by RequestCriteria.
+     * Returns the same relation as persons().
+     */
+    public function person()
+    {
+        return $this->persons();
+    }
+
+    /**
+     * Attach persons to this sales lead.
+     */
+    public function attachPersons(array $personIds)
+    {
+        foreach ($personIds as $personId) {
+            \DB::table('saleslead_persons')->insertOrIgnore([
+                'saleslead_id' => $this->id,
+                'person_id' => $personId,
+            ]);
+        }
+    }
+
+    /**
+     * Sync persons to this sales lead (replace all existing).
+     */
+    public function syncPersons(array $personIds)
+    {
+        // Remove existing relationships
+        \DB::table('saleslead_persons')->where('saleslead_id', $this->id)->delete();
+
+        // Add new relationships
+        if (!empty($personIds)) {
+            $this->attachPersons($personIds);
+        }
+    }
+
+    /**
+     * Get the count of persons associated with this sales lead.
+     */
+    public function getPersonsCountAttribute(): int
+    {
+        return (int) $this->persons()->count();
+    }
+
+    /**
+     * Check if this sales lead has multiple persons.
+     */
+    public function hasMultiplePersons(): bool
+    {
+        return $this->persons()->count() > 1;
     }
 }

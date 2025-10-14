@@ -63,15 +63,14 @@
                     "quantity" => $item->quantity,
                     "status" => $item->status,
                     "can_plan" => $item->product && $item->product->partnerProducts && $item->product->partnerProducts->count() > 0,
-                "bookings" => $item->resourceOrderItems->map(fn($booking) => [
-                    "id" => $booking->id,
-                    "resource_id" => $booking->resource_id,
-                    "resource_name" => $booking->resource?->name ?? "Onbekend",
-                    "from" => \Carbon\Carbon::parse($booking->from)->toIso8601String(),
-                    "to" => \Carbon\Carbon::parse($booking->to)->toIso8601String(),
-                ])
-            ])
-        ]))'
+                    "bookings" => $item->resourceOrderItems->map(fn($booking) => [
+                        "id" => $booking->id,
+                        "resource_id" => $booking->resource_id,
+                        "resource_name" => $booking->resource?->name ?? "Onbekend",
+                        "from" => \Carbon\Carbon::parse($booking->from)->toIso8601String(),
+                        "to" => \Carbon\Carbon::parse($booking->to)->toIso8601String(),
+                    ])
+                ]))'
             ></v-order-resource-planning>
         </div>
     </div>

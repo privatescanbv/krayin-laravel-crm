@@ -104,7 +104,7 @@ class SalesLeadController extends Controller
             $salesLeads = $query->get();
 
             $salesLeads = $salesLeads->map(function ($salesLead) {
-                $person = $salesLead->lead ? $salesLead->lead->persons()->first() : null;
+                $person = $salesLead->persons()->first();
 
                 return [
                     'id'                => $salesLead->id,
@@ -153,8 +153,8 @@ class SalesLeadController extends Controller
     public function create(Request $request)
     {
         // Get all leads for selection
-        $leads = \Webkul\Lead\Models\Lead::select('id', 'name')->get()->pluck('name', 'id');
-        
+        $leads = Lead::select('id', 'name')->get()->pluck('name', 'id');
+
         return view('admin.sales_leads.create', compact('leads'));
     }
 
@@ -173,15 +173,15 @@ class SalesLeadController extends Controller
         $salesLead = SalesLead::create($request->all());
 
         // Handle person relationships
-        if ($request->has('person_ids') && !empty($request->person_ids)) {
+        if ($request->has('person_ids') && ! empty($request->person_ids)) {
             // Filter out empty values
-            $personIds = array_filter($request->person_ids, function($id) {
-                return !empty($id);
+            $personIds = array_filter($request->person_ids, function ($id) {
+                return ! empty($id);
             });
             $salesLead->syncPersons($personIds);
         } elseif ($request->has('lead_id') && $request->lead_id) {
             // Copy persons from the selected lead
-            $lead = \Webkul\Lead\Models\Lead::find($request->lead_id);
+            $lead = Lead::find($request->lead_id);
             if ($lead && $lead->persons()->count() > 0) {
                 $personIds = $lead->persons()->pluck('persons.id')->toArray();
                 $salesLead->syncPersons($personIds);
@@ -195,17 +195,8 @@ class SalesLeadController extends Controller
     public function edit($id)
     {
         $salesLead = SalesLead::with('persons')->findOrFail($id);
-        
-        // Get all leads for selection
-        $leads = \Webkul\Lead\Models\Lead::select('id', 'name')->get()->pluck('name', 'id');
 
-        Log::info('SalesLead found: ', [
-            'id'          => $salesLead->id,
-            'name'        => $salesLead->name,
-            'description' => $salesLead->description,
-        ]);
-
-        return view('admin.sales_leads.edit', ['salesLead' => $salesLead, 'leads' => $leads]);
+        return view('admin.sales_leads.edit', ['salesLead' => $salesLead]);
     }
 
     public function update(Request $request, $id)
@@ -226,8 +217,8 @@ class SalesLeadController extends Controller
         // Handle person relationships
         if ($request->has('person_ids')) {
             // Filter out empty values
-            $personIds = array_filter($request->person_ids ?? [], function($id) {
-                return !empty($id);
+            $personIds = array_filter($request->person_ids ?? [], function ($id) {
+                return ! empty($id);
             });
             $salesLead->syncPersons($personIds);
         }
@@ -461,7 +452,7 @@ class SalesLeadController extends Controller
     {
         $salesLead = SalesLead::with(['pipelineStage', 'lead', 'user'])->findOrFail($id);
 
-        $person = $salesLead->lead ? $salesLead->lead->persons()->first() : null;
+        $person = $salesLead->persons()->first();
 
         return response()->json([
             'sales_lead' => [

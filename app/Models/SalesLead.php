@@ -6,11 +6,12 @@ use App\Enums\WorkflowType;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Models\Activity;
+use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
-use Webkul\Contact\Models\Person;
 
 // Quote entity removed
 
@@ -114,9 +115,10 @@ class SalesLead extends Model
         if ($this->relationLoaded('persons')) {
             return $this->getRelation('persons');
         }
-        
+
         // Load the relationship if not already loaded
         $this->load('persons');
+
         return $this->getRelation('persons');
     }
 
@@ -143,9 +145,9 @@ class SalesLead extends Model
     public function attachPersons(array $personIds)
     {
         foreach ($personIds as $personId) {
-            \DB::table('saleslead_persons')->insertOrIgnore([
+            DB::table('saleslead_persons')->insertOrIgnore([
                 'saleslead_id' => $this->id,
-                'person_id' => $personId,
+                'person_id'    => $personId,
             ]);
         }
     }
@@ -156,10 +158,10 @@ class SalesLead extends Model
     public function syncPersons(array $personIds)
     {
         // Remove existing relationships
-        \DB::table('saleslead_persons')->where('saleslead_id', $this->id)->delete();
+        DB::table('saleslead_persons')->where('saleslead_id', $this->id)->delete();
 
         // Add new relationships
-        if (!empty($personIds)) {
+        if (! empty($personIds)) {
             $this->attachPersons($personIds);
         }
     }

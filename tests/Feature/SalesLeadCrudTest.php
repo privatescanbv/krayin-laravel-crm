@@ -5,11 +5,11 @@ namespace Tests\Feature;
 use App\Enums\PipelineType;
 use App\Models\SalesLead;
 use Database\Seeders\TestSeeder;
+use Webkul\Contact\Models\Person;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Models\Stage;
-use Webkul\Contact\Models\Person;
 
 beforeEach(function () {
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
@@ -179,7 +179,7 @@ test('can copy persons from lead when creating sales lead', function () {
     $lead = Lead::factory()->create();
     $person1 = Person::factory()->create();
     $person2 = Person::factory()->create();
-    
+
     // Attach persons to the lead
     $lead->attachPersons([$person1->id, $person2->id]);
 

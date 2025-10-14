@@ -10,7 +10,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('order_regels', function (Blueprint $table) {
-            $table->unsignedBigInteger('person_id')->nullable()->after('product_id');
+            $table->unsignedInteger('person_id')->nullable()->after('product_id');
             $table->foreign('person_id')->references('id')->on('persons')->onDelete('set null');
         });
     }

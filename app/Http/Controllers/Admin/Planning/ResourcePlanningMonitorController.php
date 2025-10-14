@@ -61,6 +61,26 @@ class ResourcePlanningMonitorController extends Controller
         ]);
     }
 
+    public function orderResourceTypes(Request $request, int $orderId): JsonResponse
+    {
+        $order = Order::with(['orderRegels.product.resourceType'])->findOrFail($orderId);
+
+        // Get unique resource types from order items
+        $resourceTypes = $order->orderRegels
+            ->filter(fn($item) => $item->product && $item->product->resourceType)
+            ->map(fn($item) => $item->product->resourceType)
+            ->unique('id')
+            ->values()
+            ->map(fn($type) => [
+                'id' => $type->id,
+                'name' => $type->name
+            ]);
+
+        return response()->json([
+            'resource_types' => $resourceTypes
+        ]);
+    }
+
     public function orderAvailability(Request $request, int $orderId): JsonResponse
     {
         $order = Order::with(['orderRegels.product'])->findOrFail($orderId);

@@ -38,9 +38,21 @@ class OrderController extends SimpleEntityController
             return [$salesLead->id => $salesLead->name.' ('.($salesLead->lead?->name ?? 'Geen lead').')'];
         })->toArray();
 
+        // Get persons from the selected sales lead
+        $persons = [];
+        if ($salesLeadId) {
+            $salesLead = SalesLead::with('lead.persons')->find($salesLeadId);
+            if ($salesLead && $salesLead->lead) {
+                $persons = $salesLead->lead->persons()->get()->mapWithKeys(function ($person) {
+                    return [$person->id => $person->name];
+                })->toArray();
+            }
+        }
+
         return view($this->createView, [
             'salesLeadId' => $salesLeadId,
             'salesLeads'  => $salesLeads,
+            'persons'     => $persons,
         ]);
     }
 
@@ -61,6 +73,7 @@ class OrderController extends SimpleEntityController
             if (! empty($item['product_id']) && ! empty($item['quantity'])) {
                 $order->orderRegels()->create([
                     'product_id'  => (int) $item['product_id'],
+                    'person_id'   => ! empty($item['person_id']) ? (int) $item['person_id'] : null,
                     'quantity'    => (int) $item['quantity'],
                     'total_price' => (float) ($item['total_price'] ?? 0),
                     'status'      => OrderItemStatus::NIEUW,
@@ -98,6 +111,7 @@ class OrderController extends SimpleEntityController
             if (! empty($item['product_id']) && ! empty($item['quantity'])) {
                 $order->orderRegels()->create([
                     'product_id'  => (int) $item['product_id'],
+                    'person_id'   => ! empty($item['person_id']) ? (int) $item['person_id'] : null,
                     'quantity'    => (int) $item['quantity'],
                     'total_price' => (float) ($item['total_price'] ?? 0),
                     'status'      => OrderItemStatus::NIEUW,
@@ -125,15 +139,26 @@ class OrderController extends SimpleEntityController
                 $q->select('partner_products.id', 'partner_products.product_id');
             },
             'orderRegels.resourceOrderItems.resource',
+            'orderRegels.person',
+            'salesLead.lead.persons',
         ]);
 
         $salesLeads = SalesLead::with('lead')->get()->mapWithKeys(function ($salesLead) {
             return [$salesLead->id => $salesLead->name.' ('.($salesLead->lead?->name ?? 'Geen lead').')'];
         })->toArray();
 
+        // Get persons from the sales lead
+        $persons = [];
+        if ($entity->salesLead && $entity->salesLead->lead) {
+            $persons = $entity->salesLead->lead->persons()->get()->mapWithKeys(function ($person) {
+                return [$person->id => $person->name];
+            })->toArray();
+        }
+
         return [
             $this->entityName => $entity,
             'salesLeads'      => $salesLeads,
+            'persons'         => $persons,
         ];
     }
 
@@ -145,6 +170,7 @@ class OrderController extends SimpleEntityController
             'sales_lead_id'       => ['required', 'integer', 'exists:salesleads,id'],
             'items'               => ['nullable', 'array'],
             'items.*.product_id'  => ['nullable', 'integer', 'exists:products,id'],
+            'items.*.person_id'   => ['nullable', 'integer', 'exists:persons,id'],
             'items.*.quantity'    => ['nullable', 'integer', 'min:1'],
             'items.*.total_price' => ['nullable', 'numeric', 'min:0'],
         ]);
@@ -210,5 +236,21 @@ class OrderController extends SimpleEntityController
     protected function getDeleteFailedMessage(): string
     {
         return 'Verwijderen mislukt.';
+    }
+
+    public function getPersonsForSalesLead(Request $request, int $salesLeadId): JsonResponse
+    {
+        $salesLead = SalesLead::with('lead.persons')->findOrFail($salesLeadId);
+        
+        $persons = [];
+        if ($salesLead && $salesLead->lead) {
+            $persons = $salesLead->lead->persons()->get()->mapWithKeys(function ($person) {
+                return [$person->id => $person->name];
+            })->toArray();
+        }
+
+        return response()->json([
+            'persons' => $persons
+        ]);
     }
 }

@@ -19,6 +19,7 @@ class OrderRegel extends Model
     protected $fillable = [
         'order_id',
         'product_id',
+        'person_id',
         'quantity',
         'total_price',
         'status',
@@ -29,6 +30,7 @@ class OrderRegel extends Model
     protected $casts = [
         'order_id'    => 'integer',
         'product_id'  => 'integer',
+        'person_id'   => 'integer',
         'quantity'    => 'integer',
         'total_price' => 'decimal:2',
         'status'      => OrderItemStatus::class,
@@ -44,6 +46,11 @@ class OrderRegel extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function person(): BelongsTo
+    {
+        return $this->belongsTo(Person::class);
     }
 
     public function resourceOrderItems(): HasMany

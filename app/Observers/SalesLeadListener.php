@@ -9,7 +9,7 @@ use Webkul\Attribute\Models\Attribute;
 use Webkul\Attribute\Models\AttributeValue;
 use Webkul\Lead\Models\Lead;
 
-class LeadWorkflowListener
+class SalesLeadListener
 {
     /**
      * Handle the event.
@@ -18,7 +18,7 @@ class LeadWorkflowListener
     {
         // Skip workflow processing if webhooks are disabled (e.g., during imports)
         if (! config('webhook.enabled', true)) {
-            Log::info('LeadWorkflowListener: Skipping - webhooks are disabled (likely during import)', [
+            Log::info('SalesLeadListener: Skipping - webhooks are disabled (likely during import)', [
                 'lead_id' => $lead->id,
             ]);
 
@@ -28,7 +28,7 @@ class LeadWorkflowListener
         // Refresh the lead to get the latest data from database
         $lead->refresh();
 
-        logger()->info('LeadWorkflowListener triggered', [
+        logger()->info('SalesLeadListener triggered', [
             'lead_id'           => $lead->id,
             'stage'             => $lead->stage?->name,
             'pipeline_id'       => $lead->lead_pipeline_id,
@@ -40,7 +40,7 @@ class LeadWorkflowListener
         $recentlyUpdated = $lead->updated_at && $lead->updated_at->diffInSeconds(now()) < 5;
 
         if ($recentlyUpdated) {
-            Log::info('LeadWorkflowListener: Skipping update - lead was recently updated', [
+            Log::info('SalesLeadListener: Skipping update - lead was recently updated', [
                 'lead_id'     => $lead->id,
                 'updated_at'  => $lead->updated_at,
                 'seconds_ago' => $lead->updated_at->diffInSeconds(now()),
@@ -57,7 +57,7 @@ class LeadWorkflowListener
             // Update lead pipeline and stage based on department
             $this->leadDepartmentUpdated($lead, $departmentValue);
         } else {
-            Log::info('LeadWorkflowListener: No department value found, skipping update', [
+            Log::info('SalesLeadListener: No department value found, skipping update', [
                 'lead_id' => $lead->id,
             ]);
         }
@@ -87,7 +87,7 @@ class LeadWorkflowListener
             $leadPipelineStageId = PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value;
         }
 
-        Log::info('LeadWorkflowListener: Checking if update is needed', [
+        Log::info('SalesLeadListener: Checking if update is needed', [
             'lead_id'                    => $lead->id,
             'department'                 => $department,
             'current_pipeline_id'        => $lead->lead_pipeline_id,
@@ -100,7 +100,7 @@ class LeadWorkflowListener
 
         if ($lead->lead_pipeline_stage_id !== $leadPipelineStageId || $lead->lead_pipeline_id !== $leadPipelineId) {
             // Only update if the pipeline or stage is actually different
-            Log::info('LeadWorkflowListener: Updating lead pipeline and stage based on department', [
+            Log::info('SalesLeadListener: Updating lead pipeline and stage based on department', [
                 'lead_id'                    => $lead->id,
                 'department'                 => $department,
                 'lead_pipeline_id'           => $lead->lead_pipeline_id,
@@ -114,7 +114,7 @@ class LeadWorkflowListener
                 'lead_pipeline_stage_id' => $leadPipelineStageId,
             ]);
         } else {
-            Log::info('LeadWorkflowListener: No update needed - pipeline and stage already correct', [
+            Log::info('SalesLeadListener: No update needed - pipeline and stage already correct', [
                 'lead_id'    => $lead->id,
                 'department' => $department,
             ]);

@@ -32,7 +32,7 @@
                     type="select" 
                     name="sales_lead_id" 
                     value="{{ $salesLeadId ?? old('sales_lead_id') ?? '' }}"
-                    rules="required|integer|exists:salesleads,id"
+                    rules="required|integer"
                 >
                     <option value="">Selecteer een Sales Lead</option>
                     @if(isset($salesLeads))

@@ -281,12 +281,40 @@ class LeadStatusTransitionValidatorTest extends TestCase
         // Attach the person
         $minimalLead->attachPersons([$minimalPerson->id]);
 
+        // This should NOT throw an exception because it's a perfect match
+        // (name fields match + empty email/phone/address fields match = 100% score)
+        LeadStatusTransitionValidator::validateTransition($minimalLead, $this->wonStage->id);
+        
+        $this->assertTrue(true); // If we get here, no exception was thrown
+    }
+
+    /** @test */
+    public function it_prevents_transition_when_lead_has_data_but_person_has_empty_fields()
+    {
+        // Create a lead with email data
+        $leadWithEmail = Lead::create([
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+            'emails' => [['value' => 'john.doe@example.com', 'is_default' => true]],
+            'lead_pipeline_stage_id' => $this->otherStage->id,
+            'lead_pipeline_id' => $this->lead->lead_pipeline_id,
+        ]);
+
+        // Create a person with matching names but no email
+        $personWithoutEmail = Person::create([
+            'first_name' => 'John',
+            'last_name' => 'Doe',
+        ]);
+
+        // Attach the person
+        $leadWithEmail->attachPersons([$personWithoutEmail->id]);
+
         // This should throw an exception because match score will be less than 100%
-        // (only name fields match, no email/phone/address = ~85% score)
+        // (name fields match but email mismatch = ~90% score)
         $this->expectException(\Illuminate\Validation\ValidationException::class);
         $this->expectExceptionMessage('contact match score 100% is');
 
-        LeadStatusTransitionValidator::validateTransition($minimalLead, $this->wonStage->id);
+        LeadStatusTransitionValidator::validateTransition($leadWithEmail, $this->wonStage->id);
     }
 
     /** @test */

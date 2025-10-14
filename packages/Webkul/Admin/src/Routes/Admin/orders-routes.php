@@ -50,6 +50,7 @@ Route::middleware(['user'])->controller(ResourcePlanningMonitorController::class
     Route::get('availability', 'availability')->name('admin.planning.monitor.availability');
     Route::get('order/{orderId}', 'orderPlanning')->name('admin.planning.monitor.order');
     Route::get('order/{orderId}/availability', 'orderAvailability')->name('admin.planning.monitor.order.availability');
+    Route::get('order/{orderId}/resource-types', 'orderResourceTypes')->name('admin.planning.monitor.order.resource_types');
     Route::post('order-item/{orderItemId}/book', 'bookOrderItem')->name('admin.planning.monitor.order_item.book');
 });
 

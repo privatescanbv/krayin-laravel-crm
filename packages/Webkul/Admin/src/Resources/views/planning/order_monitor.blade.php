@@ -279,6 +279,7 @@
                         resourceTypes: @json($resourceTypes),
                         clinics: @json($clinics),
                         availabilityUrl: "{{ route('admin.planning.monitor.order.availability', ['orderId' => $order->id]) }}",
+                        resourceTypesUrl: "{{ route('admin.planning.monitor.order.resource_types', ['orderId' => $order->id]) }}",
                     };
                 },
                 computed: {
@@ -320,9 +321,32 @@
                     }
                 },
                 mounted() {
-                    this.loadAvailability();
+                    this.loadOrderResourceTypes();
                 },
                 methods: {
+                    async loadOrderResourceTypes() {
+                        try {
+                            const response = await fetch(this.resourceTypesUrl, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            });
+
+                            if (response.ok) {
+                                const data = await response.json();
+                                // Pre-select the resource types for this order
+                                this.filters.resource_type_ids = data.resource_types.map(rt => rt.id);
+                                // Load availability with the pre-selected resource types
+                                this.loadAvailability();
+                            }
+                        } catch (error) {
+                            console.error('Error loading order resource types:', error);
+                            // Still load availability even if resource types fail
+                            this.loadAvailability();
+                        }
+                    },
                     setViewType(type) {
                         this.viewType = type;
                         if (type === 'month') {

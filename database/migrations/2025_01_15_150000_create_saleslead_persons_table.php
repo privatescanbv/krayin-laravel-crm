@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('saleslead_persons', function (Blueprint $table) {
             $table->increments('id');
 
-            $table->integer('saleslead_id')->unsigned();
+            $table->bigInteger('saleslead_id')->unsigned();
             $table->foreign('saleslead_id')->references('id')->on('salesleads')->onDelete('cascade');
 
             $table->integer('person_id')->unsigned();

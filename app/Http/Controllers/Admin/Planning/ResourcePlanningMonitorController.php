@@ -4,14 +4,19 @@ namespace App\Http\Controllers\Admin\Planning;
 
 use App\Http\Controllers\Controller;
 use App\Models\Clinic;
+use App\Models\Order;
+use App\Models\OrderRegel;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use App\Models\ResourceType;
 use App\Models\Shift;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class ResourcePlanningMonitorController extends Controller
@@ -38,6 +43,79 @@ class ResourcePlanningMonitorController extends Controller
         }
 
         return $this->getWeekAvailability($request);
+    }
+
+    public function orderPlanning(Request $request, int $orderId): View
+    {
+        $order = Order::with(['orderRegels.product.partnerProducts', 'salesLead.lead'])->findOrFail($orderId);
+
+        $resourceTypes = ResourceType::all(['id', 'name']);
+        $resources = Resource::with('clinic')->get(['id', 'name', 'clinic_id', 'resource_type_id']);
+        $clinics = Clinic::all(['id', 'name']);
+
+        return view('admin::planning.order_monitor', [
+            'order'         => $order,
+            'resourceTypes' => $resourceTypes,
+            'resources'     => $resources,
+            'clinics'       => $clinics,
+        ]);
+    }
+
+    public function orderAvailability(Request $request, int $orderId): JsonResponse
+    {
+        $order = Order::with(['orderRegels.product'])->findOrFail($orderId);
+        $viewType = $request->query('view', 'week');
+
+        if ($viewType === 'month') {
+            return $this->getOrderMonthAvailability($request, $order);
+        }
+
+        return $this->getOrderWeekAvailability($request, $order);
+    }
+
+    public function bookOrderItem(Request $request, int $orderItemId): JsonResponse
+    {
+        try {
+            $request->validate([
+                'resource_id'      => ['required', 'integer', 'exists:resources,id'],
+                'from'             => ['required', 'date'],
+                'to'               => ['required', 'date', 'after:from'],
+                'replace_existing' => ['sometimes', 'boolean'],
+            ]);
+
+            $orderItem = OrderRegel::findOrFail($orderItemId);
+            $replace = $request->boolean('replace_existing', true);
+
+            $booking = DB::transaction(function () use ($request, $orderItem, $replace) {
+                if ($replace) {
+                    ResourceOrderItem::where('orderitem_id', $orderItem->id)->delete();
+                }
+
+                return ResourceOrderItem::create([
+                    'resource_id'  => (int) $request->input('resource_id'),
+                    'orderitem_id' => $orderItem->id,
+                    'from'         => Carbon::parse($request->input('from')),
+                    'to'           => Carbon::parse($request->input('to')),
+                    'created_by'   => auth()->id(),
+                    'updated_by'   => auth()->id(),
+                ]);
+            });
+
+            return response()->json([
+                'message' => $replace ? 'Ingeboekt (vorige afspraak vervangen)' : 'Ingeboekt',
+                'data'    => $booking,
+            ], 201);
+        } catch (Exception $e) {
+            Log::error('Error creating ResourceOrderItem from monitor', [
+                'error'        => $e->getMessage(),
+                'trace'        => $e->getTraceAsString(),
+                'request_data' => $request->all(),
+            ]);
+
+            return response()->json([
+                'message' => 'Fout bij inboeken: '.$e->getMessage(),
+            ], 500);
+        }
     }
 
     private function getWeekAvailability(Request $request): JsonResponse
@@ -210,7 +288,7 @@ class ResourcePlanningMonitorController extends Controller
                     'to'            => $block['to']->toIso8601String(),
                     'resource_id'   => $resource->id,
                     'resource_name' => $resource->name,
-                    'clickable'     => false,
+                    'clickable'     => true,
                 ];
             }
         }
@@ -408,7 +486,7 @@ class ResourcePlanningMonitorController extends Controller
                         'to'            => $segment[1]->toIso8601String(),
                         'resource_id'   => $availBlock['resource_id'],
                         'resource_name' => $availBlock['resource_name'],
-                        'clickable'     => false,
+                        'clickable'     => true,
                     ];
                 }
             }
@@ -452,5 +530,150 @@ class ResourcePlanningMonitorController extends Controller
         $merged = array_merge($merged, $occupiedBlocks);
 
         return $merged;
+    }
+
+    private function getOrderWeekAvailability(Request $request, Order $order): JsonResponse
+    {
+        $start = CarbonImmutable::parse($request->query('start', Carbon::now()->startOfWeek()));
+        $end = CarbonImmutable::parse($request->query('end', $start->addDays(6)->endOfDay()));
+
+        $resources = $this->getFilteredResources($request);
+        $showAvailableOnly = $request->query('show_available_only') === '1';
+
+        // Get occupancy and shifts
+        $occupancy = $this->getOccupancy($resources, $start, $end);
+        $shifts = $this->getShifts($resources, $start, $end);
+
+        // Build rendered blocks per resource per day
+        $renderedBlocks = [];
+        foreach ($resources as $resource) {
+            $rid = $resource->id;
+            $renderedBlocks[$rid] = [];
+
+            // Generate blocks for each day of the week
+            for ($i = 0; $i < 7; $i++) {
+                $day = $start->addDays($i);
+                $dayKey = $day->format('Y-m-d');
+
+                $dayBlocks = $this->renderDayBlocks(
+                    $resource,
+                    $day,
+                    $shifts->get($rid, collect()),
+                    $occupancy->get($rid, collect()),
+                    false,
+                    $showAvailableOnly
+                );
+
+                $renderedBlocks[$rid][$dayKey] = $dayBlocks;
+            }
+        }
+
+        // Get order items with their existing bookings
+        $orderItems = $order->orderRegels()->with(['product', 'resourceOrderItems.resource'])->get();
+
+        return response()->json([
+            'view_type' => 'week',
+            'resources' => $resources->map(fn ($r) => [
+                'id'               => $r->id,
+                'name'             => $r->name,
+                'clinic_id'        => $r->clinic_id,
+                'clinic'           => $r->clinic?->name,
+                'resource_type'    => $r->resourceType?->name,
+                'resource_type_id' => $r->resource_type_id,
+            ])->values(),
+            'blocks'     => $renderedBlocks,
+            'window'     => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
+            'order'      => [
+                'id'    => $order->id,
+                'title' => $order->title,
+            ],
+            'order_items' => $orderItems->map(fn ($item) => [
+                'id'           => $item->id,
+                'product_name' => $item->product?->name ?? 'Onbekend product',
+                'quantity'     => $item->quantity,
+                'status'       => $item->status,
+                'can_plan'     => $item->product && $item->product->partnerProducts && $item->product->partnerProducts->count() > 0,
+                'bookings'     => $item->resourceOrderItems->map(fn ($booking) => [
+                    'id'            => $booking->id,
+                    'resource_id'   => $booking->resource_id,
+                    'resource_name' => $booking->resource?->name ?? 'Onbekend',
+                    'from'          => CarbonImmutable::parse($booking->from)->toIso8601String(),
+                    'to'            => CarbonImmutable::parse($booking->to)->toIso8601String(),
+                ]),
+            ]),
+        ]);
+    }
+
+    private function getOrderMonthAvailability(Request $request, Order $order): JsonResponse
+    {
+        $start = CarbonImmutable::parse($request->query('start', Carbon::now()->startOfMonth()));
+        $end = CarbonImmutable::parse($request->query('end', $start->endOfMonth()));
+
+        $resources = $this->getFilteredResources($request);
+        $showAvailableOnly = $request->query('show_available_only') === '1';
+
+        // Get occupancy and shifts
+        $occupancy = $this->getOccupancy($resources, $start, $end);
+        $shifts = $this->getShifts($resources, $start, $end);
+
+        // Build merged blocks per resource per day for month view
+        $renderedBlocks = [];
+        foreach ($resources as $resource) {
+            $rid = $resource->id;
+            $renderedBlocks[$rid] = [];
+
+            // Generate blocks for each day of the month
+            $currentDay = $start->copy();
+            while ($currentDay->lte($end)) {
+                $dayKey = $currentDay->format('Y-m-d');
+
+                $dayBlocks = $this->renderDayBlocks(
+                    $resource,
+                    $currentDay,
+                    $shifts->get($rid, collect()),
+                    $occupancy->get($rid, collect()),
+                    true, // merge adjacent blocks for month view
+                    $showAvailableOnly
+                );
+
+                $renderedBlocks[$rid][$dayKey] = $dayBlocks;
+                $currentDay = $currentDay->addDay();
+            }
+        }
+
+        // Get order items with their existing bookings
+        $orderItems = $order->orderRegels()->with(['product', 'resourceOrderItems.resource'])->get();
+
+        return response()->json([
+            'view_type' => 'month',
+            'resources' => $resources->map(fn ($r) => [
+                'id'               => $r->id,
+                'name'             => $r->name,
+                'clinic_id'        => $r->clinic_id,
+                'clinic'           => $r->clinic?->name,
+                'resource_type'    => $r->resourceType?->name,
+                'resource_type_id' => $r->resource_type_id,
+            ])->values(),
+            'blocks'     => $renderedBlocks,
+            'window'     => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
+            'order'      => [
+                'id'    => $order->id,
+                'title' => $order->title,
+            ],
+            'order_items' => $orderItems->map(fn ($item) => [
+                'id'           => $item->id,
+                'product_name' => $item->product?->name ?? 'Onbekend product',
+                'quantity'     => $item->quantity,
+                'status'       => $item->status,
+                'can_plan'     => $item->product && $item->product->partnerProducts && $item->product->partnerProducts->count() > 0,
+                'bookings'     => $item->resourceOrderItems->map(fn ($booking) => [
+                    'id'            => $booking->id,
+                    'resource_id'   => $booking->resource_id,
+                    'resource_name' => $booking->resource?->name ?? 'Onbekend',
+                    'from'          => CarbonImmutable::parse($booking->from)->toIso8601String(),
+                    'to'            => CarbonImmutable::parse($booking->to)->toIso8601String(),
+                ]),
+            ]),
+        ]);
     }
 }

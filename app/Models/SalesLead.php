@@ -7,6 +7,7 @@ use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Activity\Models\Activity;
+use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\Email;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
@@ -101,5 +102,24 @@ class SalesLead extends Model
     public function getOpenActivitiesCountAttribute(): int
     {
         return (int) $this->activities()->where('is_done', 0)->count();
+    }
+
+    /**
+     * Persons related to this sales lead via underlying lead (many-to-many via lead_persons).
+     * Uses sales lead's lead_id as the parent key on the pivot's lead_id.
+     */
+    public function persons()
+    {
+        // TODO replace with sales lead person.
+        return $this->belongsToMany(Person::class, 'lead_persons', 'lead_id', 'person_id', 'lead_id', 'id')
+            ->withPivot(['lead_id', 'person_id']);
+    }
+
+    /**
+     * Legacy alias, mirrors persons().
+     */
+    public function person()
+    {
+        return $this->persons();
     }
 }

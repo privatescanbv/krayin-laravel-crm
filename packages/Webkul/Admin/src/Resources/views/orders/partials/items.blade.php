@@ -4,7 +4,7 @@
         <p class="text-sm text-gray-600 dark:text-white">Voeg producten toe met aantallen en bedragen.</p>
     </div>
 
-    <v-order-item-list :errors="errors" :data='@json((isset($order) ? $order->orderRegels : []))'></v-order-item-list>
+    <v-order-item-list :errors="errors" :data='@json((isset($order) ? $order->orderRegels : []))' :persons='@json($persons ?? [])'></v-order-item-list>
 </div>
 
 @pushOnce('scripts')
@@ -14,6 +14,7 @@
                 <x-admin::table.thead>
                     <x-admin::table.thead.tr>
                         <x-admin::table.th>Product</x-admin::table.th>
+                        <x-admin::table.th>Persoon</x-admin::table.th>
                         <x-admin::table.th class="text-center">Aantal</x-admin::table.th>
                         <x-admin::table.th class="text-center">Totaal</x-admin::table.th>
                         <x-admin::table.th class="text-center">Status</x-admin::table.th>
@@ -23,7 +24,7 @@
                 </x-admin::table.thead>
                 <x-admin::table.tbody>
                     <template v-for="(item, index) in items" :key="index">
-                        <v-order-item :item="item" :index="index" :errors="errors" @onRemoveItem="removeItem($event)"></v-order-item>
+                        <v-order-item :item="item" :index="index" :errors="errors" :persons="persons" @onRemoveItem="removeItem($event)"></v-order-item>
                     </template>
                 </x-admin::table.tbody>
             </x-admin::table>
@@ -44,6 +45,26 @@
                         ::value="displayValue"
                         @on-selected="(product) => selectProduct(product)"
                     />
+                </x-admin::form.control-group>
+            </x-admin::table.td>
+            <x-admin::table.td>
+                <x-admin::form.control-group class="!mb-0">
+                    <x-admin::form.control-group.control
+                        type="select"
+                        ::name="`${inputName}[person_id]`"
+                        ::value="item.person_id"
+                        rules=""
+                        ::errors="errors"
+                        label="Persoon"
+                        placeholder="Selecteer persoon"
+                        @on-change="(e) => item.person_id = e.value"
+                        position="center"
+                    >
+                        <option value="">Selecteer persoon</option>
+                        <option v-for="(personName, personId) in persons" :key="personId" :value="personId" :selected="item.person_id == personId">
+                            @{{ personName }}
+                        </option>
+                    </x-admin::form.control-group.control>
                 </x-admin::form.control-group>
             </x-admin::table.td>
             <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
@@ -85,12 +106,13 @@
     <script type="module">
         app.component('v-order-item-list', {
             template: '#v-order-item-list-template',
-            props: ['errors', 'data'],
+            props: ['errors', 'data', 'persons'],
             data() {
                 return {
                     items: this.data && this.data.length ? this.data.map(r => ({
                         id: r.id ?? null,
                         product_id: r.product_id ?? null,
+                        person_id: r.person_id ?? null,
                         quantity: r.quantity ?? 1,
                         total_price: r.total_price ?? 0,
                         status: r.status ?? null,
@@ -98,18 +120,18 @@
                         product: r.product || null,
                         partner_product_count: (r.product && Array.isArray(r.product.partner_products)) ? r.product.partner_products.length : 0,
                         planning_summary: this.formatPlanningSummary(r.resource_order_items || []),
-                    })) : [{ id: null, product_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null }],
+                    })) : [{ id: null, product_id: null, person_id: null, quantity: 1, total_price: 0, status: null, product: null, partner_product_count: 0, planning_summary: null }],
                 };
             },
             methods: {
                 addItem() {
-                    this.items.push({ id: null, product_id: null, quantity: 1, total_price: 0 });
+                    this.items.push({ id: null, product_id: null, person_id: null, quantity: 1, total_price: 0 });
                 },
                 removeItem(item) {
                     this.$emitter.emit('open-confirm-modal', {
                         agree: () => {
                             if (this.items.length === 1) {
-                                this.items = [{ id: null, product_id: null, quantity: 1, total_price: 0, status: null, planning_summary: null }];
+                                this.items = [{ id: null, product_id: null, person_id: null, quantity: 1, total_price: 0, status: null, planning_summary: null }];
                             } else {
                                 const index = this.items.indexOf(item);
                                 if (index !== -1) this.items.splice(index, 1);
@@ -140,7 +162,7 @@
 
         app.component('v-order-item', {
             template: '#v-order-item-template',
-            props: ['index', 'item', 'errors'],
+            props: ['index', 'item', 'errors', 'persons'],
             computed: {
                 inputName() {
                     return this.item.id ? `items[${this.item.id}]` : `items[item_${this.index}]`;

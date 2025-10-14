@@ -17,6 +17,7 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::put('edit/{id}', 'update')->name('admin.orders.update');
     Route::delete('', 'destroy')->name('admin.orders.delete');
     Route::delete('{id}', 'destroy')->name('admin.orders.delete');
+    Route::get('persons/{salesLeadId}', 'getPersonsForSalesLead')->name('admin.orders.persons');
 });
 
 /**
@@ -47,6 +48,9 @@ Route::middleware(['user'])->controller(OrderItemPlanningController::class)->pre
 Route::middleware(['user'])->controller(ResourcePlanningMonitorController::class)->prefix('planning/monitor')->group(function () {
     Route::get('', 'index')->name('admin.planning.monitor.index');
     Route::get('availability', 'availability')->name('admin.planning.monitor.availability');
+    Route::get('order/{orderId}', 'orderPlanning')->name('admin.planning.monitor.order');
+    Route::get('order/{orderId}/availability', 'orderAvailability')->name('admin.planning.monitor.order.availability');
+    Route::post('order-item/{orderItemId}/book', 'bookOrderItem')->name('admin.planning.monitor.order_item.book');
 });
 
 

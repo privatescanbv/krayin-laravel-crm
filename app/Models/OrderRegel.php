@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Webkul\Contact\Models\Person;
 use Webkul\Product\Models\Product;
 
 class OrderRegel extends Model
@@ -19,6 +20,7 @@ class OrderRegel extends Model
     protected $fillable = [
         'order_id',
         'product_id',
+        'person_id',
         'quantity',
         'total_price',
         'status',
@@ -29,6 +31,7 @@ class OrderRegel extends Model
     protected $casts = [
         'order_id'    => 'integer',
         'product_id'  => 'integer',
+        'person_id'   => 'integer',
         'quantity'    => 'integer',
         'total_price' => 'decimal:2',
         'status'      => OrderItemStatus::class,
@@ -44,6 +47,11 @@ class OrderRegel extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function person(): BelongsTo
+    {
+        return $this->belongsTo(Person::class);
     }
 
     public function resourceOrderItems(): HasMany

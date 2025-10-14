@@ -97,6 +97,7 @@
                              :title="getBlockTooltip(block)"
                              @click="block.clickable ? handleBlockClick(block) : null">
                             <div v-if="block.type === 'occupied'" class="font-semibold text-xs">@{{ block.lead_name || 'Onbekend' }}</div>
+                            <div v-else-if="block.type === 'available'" class="text-xs font-medium">Beschikbaar</div>
                             <div class="text-xs" :class="block.type === 'occupied' ? 'opacity-75' : ''">@{{ timeRange(block.from, block.to) }}</div>
                         </div>
                     </div>
@@ -130,6 +131,7 @@
                          :title="getBlockTooltip(block)"
                          @click="block.clickable ? handleBlockClick(block) : null">
                         <div v-if="block.type === 'occupied'" class="font-semibold">@{{ block.lead_name || 'Onbekend' }}</div>
+                        <div v-else-if="block.type === 'available'" class="font-medium">Beschikbaar</div>
                         <div class="text-xs">@{{ timeRange(block.from, block.to) }}</div>
                     </div>
                 </div>

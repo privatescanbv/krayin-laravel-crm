@@ -180,7 +180,6 @@ test('does not redirect to sync page when match score is 100', function () {
         'first_name'             => 'John',
         'last_name'              => 'Doe',
         'emails'                 => [['value' => 'john@example.com', 'label' => 'eigen']],
-        'phones'                 => [['value' => '123456789', 'label' => 'eigen']],
         'date_of_birth'          => '1985-05-15',
     ]);
 
@@ -212,9 +211,14 @@ test('does not redirect to sync page when match score is 100', function () {
             'first_name' => 'John',
             'last_name'  => 'Doe',
             'emails'     => [['value' => 'john@example.com', 'label' => 'eigen']],
-            'phones'     => [['value' => '123456789', 'label' => 'eigen']],
             'department_id' => $department->id,
         ]);
+
+    // Debug the response
+    if ($response->status() !== 302) {
+        dump('Response status: ' . $response->status());
+        dump('Response content: ' . $response->getContent());
+    }
 
     // Should redirect to lead view page (not sync page)
     $response->assertRedirect(route('admin.leads.view', $lead->id));
@@ -247,12 +251,19 @@ test('handles AJAX requests correctly for sync redirect', function () {
 
     $response = test()
         ->actingAs(test()->user, 'user')
+        ->withHeaders(['X-Requested-With' => 'XMLHttpRequest'])
         ->putJson(route('admin.leads.update', $lead->id), [
             'first_name' => 'John',
             'last_name'  => 'Smith',
             'emails'     => [['value' => 'john@example.com', 'label' => 'eigen']],
             'department_id' => $department->id,
         ]);
+
+    // Debug the response
+    if ($response->status() !== 200) {
+        dump('Response status: ' . $response->status());
+        dump('Response content: ' . $response->getContent());
+    }
 
     // Should return JSON with redirect to sync page
     $response->assertOk();

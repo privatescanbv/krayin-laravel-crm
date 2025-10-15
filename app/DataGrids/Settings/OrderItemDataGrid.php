@@ -6,20 +6,20 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
 
-class OrderRegelDataGrid extends DataGrid
+class OrderItemDataGrid extends DataGrid
 {
     public function prepareQueryBuilder(): Builder
     {
-        $queryBuilder = DB::table('order_regels')
+        $queryBuilder = DB::table('order_items')
             ->addSelect(
-                'order_regels.id',
-                'order_regels.order_id',
-                'order_regels.product_id',
-                'order_regels.quantity',
-                'order_regels.total_price'
+                'order_items.id',
+                'order_items.order_id',
+                'order_items.product_id',
+                'order_items.quantity',
+                'order_items.total_price'
             );
 
-        $this->addFilter('id', 'order_regels.id');
+        $this->addFilter('id', 'order_items.id');
 
         return $queryBuilder;
     }
@@ -74,23 +74,23 @@ class OrderRegelDataGrid extends DataGrid
 
     public function prepareActions(): void
     {
-        if (bouncer()->hasPermission('settings.order_regels.edit')) {
+        if (bouncer()->hasPermission('settings.order_items.edit')) {
             $this->addAction([
                 'index'  => 'edit',
                 'icon'   => 'icon-edit',
                 'title'  => 'Bewerken',
                 'method' => 'GET',
-                'url'    => fn ($row) => route('admin.order_regels.edit', $row->id),
+                'url'    => fn ($row) => route('admin.order_items.edit', $row->id),
             ]);
         }
 
-        if (bouncer()->hasPermission('settings.order_regels.delete')) {
+        if (bouncer()->hasPermission('settings.order_items.delete')) {
             $this->addAction([
                 'index'  => 'delete',
                 'icon'   => 'icon-delete',
                 'title'  => 'Verwijderen',
                 'method' => 'DELETE',
-                'url'    => fn ($row) => route('admin.order_regels.delete', $row->id),
+                'url'    => fn ($row) => route('admin.order_items.delete', $row->id),
             ]);
         }
     }

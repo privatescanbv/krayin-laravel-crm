@@ -11,11 +11,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Webkul\Contact\Models\Person;
 use Webkul\Product\Models\Product;
 
-class OrderRegel extends Model
+class OrderItem extends Model
 {
     use HasAuditTrail, HasFactory;
 
-    protected $table = 'order_regels';
+    protected $table = 'order_items';
 
     protected $fillable = [
         'order_id',

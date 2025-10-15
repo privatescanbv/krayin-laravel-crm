@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin\Planning;
 
 use App\Http\Controllers\Controller;
-use App\Models\OrderRegel;
+use App\Models\OrderItem;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use App\Models\Shift;
@@ -21,7 +21,7 @@ class OrderItemPlanningController extends Controller
 {
     public function show(Request $request, int $orderItemId): View
     {
-        $orderItem = OrderRegel::with(['product.partnerProducts', 'order'])->findOrFail($orderItemId);
+        $orderItem = OrderItem::with(['product.partnerProducts', 'order'])->findOrFail($orderItemId);
 
         $defaultResourceTypeId = $orderItem->product?->resource_type_id;
         $defaultClinicId = $orderItem->order?->clinic_id ?? null;
@@ -35,7 +35,7 @@ class OrderItemPlanningController extends Controller
 
     public function availability(Request $request, int $orderItemId): JsonResponse
     {
-        $orderItem = OrderRegel::with(['product', 'order'])->findOrFail($orderItemId);
+        $orderItem = OrderItem::with(['product', 'order'])->findOrFail($orderItemId);
 
         $viewType = $request->query('view', 'week'); // 'week' or 'month'
 
@@ -56,7 +56,7 @@ class OrderItemPlanningController extends Controller
                 'replace_existing' => ['sometimes', 'boolean'],
             ]);
 
-            $orderItem = OrderRegel::findOrFail($orderItemId);
+            $orderItem = OrderItem::findOrFail($orderItemId);
 
             $replace = $request->boolean('replace_existing', true);
 
@@ -92,7 +92,7 @@ class OrderItemPlanningController extends Controller
         }
     }
 
-    private function getWeekAvailability(Request $request, OrderRegel $orderItem): JsonResponse
+    private function getWeekAvailability(Request $request, OrderItem $orderItem): JsonResponse
     {
         $start = CarbonImmutable::parse($request->query('start', Carbon::now()->startOfWeek()));
         $end = CarbonImmutable::parse($request->query('end', $start->addDays(6)->endOfDay()));
@@ -161,7 +161,7 @@ class OrderItemPlanningController extends Controller
         ]);
     }
 
-    private function getMonthAvailability(Request $request, OrderRegel $orderItem): JsonResponse
+    private function getMonthAvailability(Request $request, OrderItem $orderItem): JsonResponse
     {
         $start = CarbonImmutable::parse($request->query('start', Carbon::now()->startOfMonth()));
         $end = CarbonImmutable::parse($request->query('end', $start->endOfMonth()));

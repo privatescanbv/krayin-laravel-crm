@@ -3,16 +3,16 @@
 namespace Database\Factories;
 
 use App\Models\Order;
-use App\Models\OrderRegel;
+use App\Models\OrderItem;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Webkul\Product\Models\Product;
 
 /**
- * @extends Factory<OrderRegel>
+ * @extends Factory<OrderItem>
  */
-class OrderRegelFactory extends Factory
+class OrderItemFactory extends Factory
 {
-    protected $model = OrderRegel::class;
+    protected $model = OrderItem::class;
 
     public function definition(): array
     {

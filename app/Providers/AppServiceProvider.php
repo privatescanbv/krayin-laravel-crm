@@ -3,12 +3,12 @@
 namespace App\Providers;
 
 use App\Models\Order;
-use App\Models\OrderRegel;
+use App\Models\OrderItem;
 use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
 use App\Observers\LeadObserver;
 use App\Observers\OrderObserver;
-use App\Observers\OrderRegelObserver;
+use App\Observers\OrderItemObserver;
 use App\Observers\PersonObserver;
 use App\Observers\ResourceOrderItemObserver;
 use App\Observers\SalesLeadObserver;
@@ -37,7 +37,7 @@ class AppServiceProvider extends ServiceProvider
         Person::observe(PersonObserver::class);
         SalesLead::observe(SalesLeadObserver::class);
         Order::observe(OrderObserver::class);
-        OrderRegel::observe(OrderRegelObserver::class);
+        OrderItem::observe(OrderItemObserver::class);
         ResourceOrderItem::observe(ResourceOrderItemObserver::class);
 
         // Register custom validation rules

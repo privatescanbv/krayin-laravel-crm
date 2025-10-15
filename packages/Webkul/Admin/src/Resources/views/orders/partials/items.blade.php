@@ -1,10 +1,10 @@
 <div id="order-items" class="flex flex-col gap-4">
     <div class="flex flex-col gap-1">
-        <p class="text-base font-semibold text-gray-800 dark:text-white">Orderregels</p>
+        <p class="text-base font-semibold text-gray-800 dark:text-white">Orderitems</p>
         <p class="text-sm text-gray-600 dark:text-white">Voeg producten toe met aantallen en bedragen.</p>
     </div>
 
-    <v-order-item-list :errors="errors" :data='@json((isset($order) ? $order->orderRegels : []))' :persons='@json($persons ?? [])'></v-order-item-list>
+    <v-order-item-list :errors="errors" :data='@json((isset($order) ? $order->orderItems : []))' :persons='@json($persons ?? [])'></v-order-item-list>
 </div>
 
 @pushOnce('scripts')

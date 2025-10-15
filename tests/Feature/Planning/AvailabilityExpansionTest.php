@@ -3,7 +3,7 @@
 namespace Tests\Feature\Planning;
 
 use App\Models\Order;
-use App\Models\OrderRegel;
+use App\Models\OrderItem;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use App\Models\SalesLead;
@@ -29,7 +29,7 @@ class AvailabilityExpansionTest extends TestCase
         $this->withoutMiddleware();
         // Arrange: resource, order, order item, and shift with weekday map for Mon/Tue/Wed 08:00-17:00
         $order = Order::factory()->create(['sales_lead_id' => $this->salesLead->id]);
-        $orderItem = OrderRegel::factory()->create(['order_id' => $order->id]);
+        $orderItem = OrderItem::factory()->create(['order_id' => $order->id]);
         $resource = Resource::factory()->create();
 
         $weekdayMap = [
@@ -89,7 +89,7 @@ class AvailabilityExpansionTest extends TestCase
         $this->withoutMiddleware();
         // Arrange: resource with shift and existing booking
         $order = Order::factory()->create(['sales_lead_id' => $this->salesLead->id]);
-        $orderItem = OrderRegel::factory()->create(['order_id' => $order->id]);
+        $orderItem = OrderItem::factory()->create(['order_id' => $order->id]);
         $resource = Resource::factory()->create();
 
         // Shift: Mon 08:00-17:00
@@ -242,7 +242,7 @@ class AvailabilityExpansionTest extends TestCase
         $this->withoutMiddleware();
         // Arrange: 2 resources with different shifts
         $order = Order::factory()->create(['sales_lead_id' => $this->salesLead->id]);
-        $orderItem = OrderRegel::factory()->create(['order_id' => $order->id]);
+        $orderItem = OrderItem::factory()->create(['order_id' => $order->id]);
 
         $resource1 = Resource::factory()->create();
         $resource2 = Resource::factory()->create();

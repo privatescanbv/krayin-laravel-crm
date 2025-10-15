@@ -42,9 +42,9 @@ class Order extends Model
         ];
     }
 
-    public function orderRegels(): HasMany
+    public function orderItems(): HasMany
     {
-        return $this->hasMany(OrderRegel::class);
+        return $this->hasMany(OrderItem::class);
     }
 
     public function salesLead(): BelongsTo

@@ -23,7 +23,7 @@ class OrderObserver
     }
 
     /**
-     * Update the Order status based on OrderRegel statuses.
+     * Update the Order status based on OrderItem statuses.
      */
     private function updateOrderStatus(Order $order): void
     {
@@ -44,18 +44,18 @@ class OrderObserver
     private function calculateOrderStatus(Order $order): OrderStatus
     {
         // Get all order items
-        $orderRegels = DB::table('order_regels')
+        $orderItems = DB::table('order_items')
             ->where('order_id', $order->id)
             ->get();
 
-        if ($orderRegels->isEmpty()) {
+        if ($orderItems->isEmpty()) {
             return OrderStatus::NIEUW;
         }
 
         // Check if all items are ready (INGEPLAND or NIEUW)
         $allReady = true;
-        foreach ($orderRegels as $orderRegel) {
-            $status = $orderRegel->status;
+        foreach ($orderItems as $orderItem) {
+            $status = $orderItem->status;
 
             // If any item needs to be planned (MOET_WORDEN_INGEPLAND), order is not ready
             if ($status === OrderItemStatus::MOET_WORDEN_INGEPLAND->value) {

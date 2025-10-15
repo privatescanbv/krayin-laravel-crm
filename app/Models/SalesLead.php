@@ -186,4 +186,12 @@ class SalesLead extends Model
     {
         return $this->persons()->count() > 1;
     }
+
+    /**
+     * Get the orders associated with this sales lead.
+     */
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
 }

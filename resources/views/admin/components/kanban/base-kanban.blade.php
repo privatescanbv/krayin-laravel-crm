@@ -1,19 +1,19 @@
-{!! view_render_event('admin.sales-leads.index.kanban.before') !!}
+{!! view_render_event($eventPrefix . '.before') !!}
 
 <!-- Kanban Vue Component -->
-<v-sales-leads-kanban ref="salesLeadsKanban">
+<v-base-kanban ref="baseKanban">
     <div class="flex flex-col gap-4">
         <!-- Shimmer -->
         <x-admin::shimmer.leads.index.kanban />
     </div>
-</v-sales-leads-kanban>
+</v-base-kanban>
 
-{!! view_render_event('admin.sales-leads.index.kanban.after') !!}
+{!! view_render_event($eventPrefix . '.after') !!}
 
 @pushOnce('scripts')
     <script
         type="text/x-template"
-        id="v-sales-leads-kanban-template"
+        id="v-base-kanban-template"
     >
         <template v-if="isLoading">
             <div class="flex flex-col gap-4">
@@ -23,18 +23,65 @@
 
         <template v-else>
             <div class="flex flex-col gap-4">
-                @include('admin::sales_leads.index.kanban.toolbar')
+                <!-- Toolbar -->
+                <div class="flex justify-between gap-2 max-md:flex-wrap">
+                    <div class="flex w-full items-center gap-x-1.5 max-md:justify-between">
+                        <!-- Search Panel -->
+                        <v-kanban-search
+                            :is-loading="isLoading"
+                            :available="available"
+                            :applied="applied"
+                            @search="search"
+                        >
+                        </v-kanban-search>
 
-                {!! view_render_event('admin.sales-leads.index.kanban.content.before') !!}
+                        <!-- Filter -->
+                        <v-kanban-filter
+                            :is-loading="isLoading"
+                            :available="available"
+                            :applied="applied"
+                            @applyFilters="filter"
+                        >
+                        </v-kanban-filter>
+
+                        <!-- Collapse Won/Lost toggle -->
+                        <button
+                            type="button"
+                            class="secondary-button whitespace-nowrap"
+                            @click="toggleWonLost()"
+                        >
+                            <span>@{{ wonLostLabel }}</span>
+                        </button>
+                    </div>
+
+                    <!-- View Switcher -->
+                    <div class="flex items-center gap-2">
+                        <a
+                            :href="kanbanUrl"
+                            class="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-gray-100 dark:hover:bg-gray-800"
+                            :class="viewType === 'kanban' ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white' : 'text-gray-600 dark:text-gray-400'"
+                        >
+                            <span class="icon-kanban text-lg"></span>
+                            Kanban
+                        </a>
+
+                        <a
+                            :href="tableUrl"
+                            class="flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium transition-all hover:bg-gray-100 dark:hover:bg-gray-800"
+                            :class="viewType === 'table' ? 'bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white' : 'text-gray-600 dark:text-gray-400'"
+                        >
+                            <span class="icon-table text-lg"></span>
+                            Tabel
+                        </a>
+                    </div>
+                </div>
 
                 <div class="flex gap-2.5 overflow-x-auto">
-                    <!-- Pipeline Stage Cards -->
+                    <!-- Stage Cards -->
                     <div
                         class="flex min-w-[275px] max-w-[275px] flex-col gap-1 rounded-lg border border-gray-200 dark:border-gray-800"
                         v-for="(stage, index) in stageLeads"
                     >
-                        {!! view_render_event('admin.sales-leads.index.kanban.content.stage.header.before') !!}
-
                         <!-- Stage Header -->
                         <div class="flex flex-col px-2 py-3 rounded-t-lg" style="background-color: var(--brand-blue);">
                             <!-- Stage Title and Action -->
@@ -48,39 +95,37 @@
                                         @{{ stage.leads.meta.total }}
                                     </span>
 
-                                    @if (bouncer()->hasPermission('sales-leads.create'))
-                                        <a
-                                            :href="'{{ route('admin.sales-leads.create') }}' + '?pipeline_stage_id=' + stage.id"
-                                            class="icon-add cursor-pointer rounded p-1 text-lg text-white transition-all hover:bg-white hover:bg-opacity-20"
-                                            target="_blank"
-                                        >
-                                        </a>
-                                    @endif
+                                    <a
+                                        :href="createUrl + '?pipeline_stage_id=' + stage.id"
+                                        class="icon-add cursor-pointer rounded p-1 text-lg text-white transition-all hover:bg-white hover:bg-opacity-20"
+                                        target="_blank"
+                                        v-if="canCreate"
+                                    >
+                                    </a>
                                 </div>
                             </div>
                         </div>
 
-                        {!! view_render_event('admin.sales-leads.index.kanban.content.stage.header.after') !!}
-
-                        {!! view_render_event('admin.sales-leads.index.kanban.content.stage.body.before') !!}
-
-                        <!-- Draggable Sales Lead Cards -->
+                        <!-- Draggable Lead Cards -->
                         <draggable
                             class="flex h-[calc(100vh-317px)] flex-col gap-2 overflow-y-auto p-2"
                             :class="{ 'justify-center': stage.leads.data.length === 0 }"
                             ghost-class="draggable-ghost"
-                            handle=".sales-lead-item"
+                            :handle="dragHandle"
                             v-bind="{animation: 200}"
                             :list="stage.leads.data"
                             item-key="id"
-                            group="sales-leads"
+                            :group="dragGroup"
                             @scroll="handleScroll(stage, $event)"
                             @change="updateStage(stage, $event)"
                             :scroll-sensitivity="100"
                             :force-fallback="false"
                         >
-                            <template v-if="! stage.leads.data.length">
-                                <div class="flex flex-col items-center justify-center">
+                            <template #header>
+                                <div
+                                    class="flex flex-col items-center justify-center"
+                                    v-if="! stage.leads.data.length"
+                                >
                                     <img
                                         class="dark:mix-blend-exclusion dark:invert"
                                         src="{{ vite()->asset('images/empty-placeholders/pipedrive.svg') }}"
@@ -89,46 +134,41 @@
                                     <div class="flex flex-col items-center gap-4">
                                         <div class="flex flex-col items-center gap-2">
                                             <p class="!text-base font-semibold dark:text-white">
-                                                No sales leads
+                                                @{{ emptyMessage }}
                                             </p>
 
                                             <p class="!text-sm text-gray-400 dark:text-gray-400">
-                                                Create your first sales lead
+                                                @{{ emptyDescription }}
                                             </p>
                                         </div>
 
-                                        @if (bouncer()->hasPermission('sales-leads.create'))
-                                            <a
-                                                :href="'{{ route('admin.sales-leads.create') }}' + '?pipeline_stage_id=' + stage.id"
-                                                class="secondary-button"
-                                            >
-                                                Sales order aanmaken
-                                            </a>
-                                        @endif
+                                        <a
+                                            :href="createUrl + '?pipeline_stage_id=' + stage.id"
+                                            class="secondary-button"
+                                            v-if="canCreate"
+                                        >
+                                            @{{ createButtonText }}
+                                        </a>
                                     </div>
                                 </div>
                             </template>
 
-                            <!-- Sales Lead Card -->
-                            <template #item="{ element: lead }">
-                                {!! view_render_event('admin.sales-leads.index.kanban.content.stage.body.card.before') !!}
-
+                            <!-- Lead Card -->
+                            <template #item="{ element, index }">
                                 <a
-                                    class="sales-lead-item flex cursor-pointer flex-col gap-2 rounded-md border border-gray-100 bg-gray-50 p-1.5 dark:border-gray-400 dark:bg-gray-400"
-                                    :href="'{{ route('admin.sales-leads.view', 'replaceId') }}'.replace('replaceId', lead.id)"
+                                    :class="cardClass"
+                                    :href="viewUrl.replace('replaceId', element.id)"
                                     style="min-height:unset;"
                                 >
-                                    {!! view_render_event('admin.sales-leads.index.kanban.content.stage.body.card.header.before') !!}
-
                                     <!-- Header -->
                                     <div class="flex items-start justify-between gap-2">
                                        <div class="flex items-center gap-1 min-w-0 flex-1">
-                                           <div v-if="lead.lead?.person?.name" class="flex-shrink-0">
-                                               <x-admin::avatar ::name="lead.lead?.person?.name" class="w-6 h-6" />
+                                           <div v-if="element.lead?.person?.name" class="flex-shrink-0">
+                                               <x-admin::avatar ::name="element.lead?.person?.name" class="w-6 h-6" />
                                            </div>
                                            <div class="flex flex-col gap-0.5 min-w-0">
                                                <span class="text-[11px] font-medium truncate">
-                                                   @{{ lead.lead?.person?.name || lead.name }}
+                                                   @{{ getLeadName(element) }}
                                                </span>
                                            </div>
                                        </div>
@@ -136,94 +176,131 @@
                                        <!-- Date -->
                                        <div class="flex items-center gap-1 flex-shrink-0">
                                            <span class="text-[9px] text-gray-500 whitespace-nowrap">
-                                               @{{ formatDate(lead.created_at) }}
+                                               @{{ formatDate(element.created_at) }}
                                            </span>
                                        </div>
                                     </div>
 
-                                    {!! view_render_event('admin.sales-leads.index.kanban.content.stage.body.card.header.after') !!}
-
-                                    {!! view_render_event('admin.sales-leads.index.kanban.content.stage.body.card.title.before') !!}
-
-                                    <!-- Sales Lead Title -->
+                                    <!-- Title -->
                                     <p class="text-[12px] font-medium leading-tight mb-0.5">
-                                        @{{ lead.description }}
+                                        @{{ getLeadTitle(element) }}
                                     </p>
 
-                                    {!! view_render_event('admin.sales-leads.index.kanban.content.stage.body.card.title.after') !!}
-
+                                    <!-- Tags -->
                                     <div class="flex flex-wrap gap-0.5">
                                         <div
                                             class="flex items-center gap-0.5 rounded-xl bg-gray-200 px-2 py-0.5 text-[10px] font-medium dark:bg-gray-800 dark:text-white"
-                                            v-if="lead.user"
+                                            v-if="element.user"
                                         >
                                             <span class="icon-settings-user text-xs"></span>
-                                            @{{ lead.user.name }}
+                                            @{{ element.user.name }}
                                         </div>
                                         <div class="rounded-xl bg-gray-200 px-2 py-0.5 text-[10px] font-medium dark:bg-gray-800 dark:text-white">
-                                            @{{ lead.pipeline_stage?.name || 'No Stage' }}
+                                            @{{ element.pipeline_stage?.name || 'No Stage' }}
                                         </div>
                                         <div 
                                             class="rounded-xl px-2 py-0.5 text-[10px] font-medium"
-                                            :class="getOrderStatusClass(lead.order_status)"
-                                            v-if="lead.order_status"
+                                            :class="getOrderStatusClass(element.order_status)"
+                                            v-if="element.order_status"
                                         >
-                                            @{{ lead.order_status }}
+                                            @{{ element.order_status }}
                                         </div>
                                     </div>
                                 </a>
-
-                                {!! view_render_event('admin.sales-leads.index.kanban.content.stage.body.card.after') !!}
                             </template>
                         </draggable>
-
-                        {!! view_render_event('admin.sales-leads.index.kanban.content.stage.body.after') !!}
                     </div>
                 </div>
-
-                {!! view_render_event('admin.sales-leads.index.kanban.content.after') !!}
             </div>
         </template>
     </script>
 
     <script type="module">
-        app.component('v-sales-leads-kanban', {
-            template: '#v-sales-leads-kanban-template',
+        app.component('v-base-kanban', {
+            template: '#v-base-kanban-template',
+
+            props: {
+                available: {
+                    type: Object,
+                    required: true
+                },
+                applied: {
+                    type: Object,
+                    required: true
+                },
+                stages: {
+                    type: Array,
+                    required: true
+                },
+                getUrl: {
+                    type: String,
+                    required: true
+                },
+                createUrl: {
+                    type: String,
+                    required: true
+                },
+                viewUrl: {
+                    type: String,
+                    required: true
+                },
+                updateUrl: {
+                    type: String,
+                    required: true
+                },
+                kanbanUrl: {
+                    type: String,
+                    required: true
+                },
+                tableUrl: {
+                    type: String,
+                    required: true
+                },
+                viewType: {
+                    type: String,
+                    default: 'kanban'
+                },
+                canCreate: {
+                    type: Boolean,
+                    default: true
+                },
+                dragHandle: {
+                    type: String,
+                    default: '.lead-item'
+                },
+                dragGroup: {
+                    type: String,
+                    required: true
+                },
+                cardClass: {
+                    type: String,
+                    default: 'lead-item flex cursor-pointer flex-col gap-2 rounded-md border border-gray-100 bg-gray-50 p-1.5 dark:border-gray-400 dark:bg-gray-400'
+                },
+                emptyMessage: {
+                    type: String,
+                    default: 'Geen items'
+                },
+                emptyDescription: {
+                    type: String,
+                    default: 'Maak je eerste item aan'
+                },
+                createButtonText: {
+                    type: String,
+                    default: 'Item aanmaken'
+                }
+            },
 
             data() {
                 return {
-                    available: {
-                        columns: {{ Js::from($columns) }},
-                    },
-
-                    applied: {
-                        filters: {
-                            columns: [],
-                        }
-                    },
-
-                    stages: {{ Js::from($stages) }},
-
                     stageLeads: {},
-
                     isLoading: true,
-
-                    tagTextColor: {
-                        '#FEE2E2': '#DC2626',
-                        '#FFEDD5': '#EA580C',
-                        '#FEF3C7': '#D97706',
-                        '#FEF9C3': '#CA8A04',
-                        '#ECFCCB': '#65A30D',
-                        '#DCFCE7': '#16A34A',
-                    },
-
                     hideWonLost: true,
                     wonLostLabel: 'Toon gewonnen/verloren',
                     scrollTimeouts: {},
                 };
             },
 
-            mounted () {
+            mounted() {
                 this.boot();
                 this.setWonLostButtonText();
             },
@@ -231,9 +308,6 @@
             methods: {
                 /**
                  * Format date to a more readable format
-                 *
-                 * @param {string} dateString - The date string to format
-                 * @returns {string} Formatted date string
                  */
                 formatDate(dateString) {
                     if (!dateString) return '';
@@ -260,9 +334,6 @@
 
                 /**
                  * Get CSS classes for order status
-                 *
-                 * @param {string} orderStatus - The order status
-                 * @returns {string} CSS classes
                  */
                 getOrderStatusClass(orderStatus) {
                     if (!orderStatus) return 'bg-gray-200 text-gray-800 dark:bg-gray-800 dark:text-white';
@@ -285,6 +356,26 @@
                 },
 
                 /**
+                 * Get lead name for display
+                 */
+                getLeadName(element) {
+                    if (element.lead?.person?.name) {
+                        return element.lead.person.name;
+                    }
+                    if (element.persons && element.persons.length > 0) {
+                        return element.persons[0]?.name || (element.first_name ? `${element.first_name} ${element.last_name}` : element.name);
+                    }
+                    return element.first_name ? `${element.first_name} ${element.last_name}` : element.name;
+                },
+
+                /**
+                 * Get lead title for display
+                 */
+                getLeadTitle(element) {
+                    return element.description || element.name || '';
+                },
+
+                /**
                  * Initialization
                  */
                 boot() {
@@ -303,12 +394,11 @@
                 },
 
                 /**
-                 * Fetches the sales leads
+                 * Fetches the data
                  */
                 get(requestedParams = {}) {
                     let params = {
                         view_type: 'kanban',
-                        pipeline_id: '{{ request('pipeline_id') }}',
                         limit: 10,
                         exclude_won_lost: this.hideWonLost,
                     };
@@ -334,7 +424,7 @@
                     });
 
                     return this.$axios
-                        .get("{{ route('admin.sales-leads.get') }}", {
+                        .get(this.getUrl, {
                             params: {
                                 ...params,
                                 ...requestedParams,
@@ -342,14 +432,6 @@
                         })
                         .then(response => {
                             this.isLoading = false;
-
-                            // Update stageLeads with leads data
-                            const data = response.data || {};
-
-                            for (let [sortOrder, stageData] of Object.entries(data)) {
-                                this.stageLeads[sortOrder] = stageData;
-                            }
-
                             return response;
                         })
                         .catch(error => {
@@ -359,43 +441,7 @@
                 },
 
                 /**
-                 * Updates the stage with the latest sales lead data.
-                 *
-                 * @param {object} stage - The stage object.
-                 * @param {object} event - The event object.
-                 * @returns {void}
-                 */
-                updateStage(stage, event) {
-                    if (event.moved) {
-                        return;
-                    }
-
-                    if (event.removed) {
-                        this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage.sort_order].leads.meta.total - 1;
-                        return;
-                    }
-
-                    if (event.added) {
-                        this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage.sort_order].leads.meta.total + 1;
-
-                        this.$axios
-                            .put("{{ route('admin.sales-leads.update', 'replace') }}".replace('replace', event.added.element.id), {
-                                'pipeline_stage_id': stage.id
-                            })
-                            .then(response => {
-                                this.$emitter.emit('add-flash', { type: 'success', message: 'Sales lead stage updated successfully.' });
-                            })
-                            .catch(error => {
-                                this.$emitter.emit('add-flash', { type: 'error', message: error.response?.data?.message || 'Failed to update sales lead stage.' });
-                            });
-                    }
-                },
-
-                /**
-                 * Filters the sales leads based on the applied filters.
-                 *
-                 * @param {object} filters - The filters to be applied.
-                 * @returns {void}
+                 * Filters the data
                  */
                 filter(filters) {
                     this.applied.filters.columns = [
@@ -403,7 +449,6 @@
                         ...filters.columns,
                     ];
 
-                    // Clear existing data before applying new filters
                     this.stageLeads = {};
                     this.get()
                         .then(response => {
@@ -419,10 +464,7 @@
                 },
 
                 /**
-                 * Searches the sales leads based on the applied filters.
-                 *
-                 * @param {object} filters - The filters to be applied.
-                 * @returns {void}
+                 * Searches the data
                  */
                 search(filters) {
                     this.applied.filters.columns = [
@@ -430,7 +472,6 @@
                         ...filters.columns,
                     ];
 
-                    // Clear existing data before applying new search
                     this.stageLeads = {};
                     this.get()
                         .then(response => {
@@ -446,13 +487,12 @@
                 },
 
                 /**
-                 * Toggle the visibility of won/lost stages
+                 * Toggle won/lost visibility
                  */
                 toggleWonLost() {
                     this.hideWonLost = !this.hideWonLost;
                     this.setWonLostButtonText();
 
-                    // Clear existing data and refetch with new exclude_won_lost parameter
                     this.stageLeads = {};
                     this.get()
                         .then(response => {
@@ -468,31 +508,24 @@
                 },
 
                 /**
-                 * Sync toggle button label with state.
+                 * Set won/lost button text
                  */
                 setWonLostButtonText() {
                     this.wonLostLabel = this.hideWonLost ? 'Toon gewonnen/verloren' : 'Verberg gewonnen/verloren';
                 },
 
                 /**
-                 * Handles the scroll event on the stage leads with debouncing for performance.
-                 *
-                 * @param {object} stage - The stage object.
-                 * @param {object} event - The scroll event.
-                 * @returns {void}
+                 * Handle scroll event
                  */
                 handleScroll(stage, event) {
-                    // Clear existing timeout for this stage
                     if (this.scrollTimeouts && this.scrollTimeouts[stage.id]) {
                         clearTimeout(this.scrollTimeouts[stage.id]);
                     }
 
-                    // Initialize scrollTimeouts if not exists
                     if (!this.scrollTimeouts) {
                         this.scrollTimeouts = {};
                     }
 
-                    // Debounce scroll handling
                     this.scrollTimeouts[stage.id] = setTimeout(() => {
                         const element = event.target;
                         const bottom = Math.abs(element.scrollHeight - element.scrollTop - element.clientHeight) < 1;
@@ -511,14 +544,11 @@
                             page: this.stageLeads[stage.sort_order].leads.meta.current_page + 1,
                             limit: 10,
                         });
-                    }, 150); // 150ms debounce
+                    }, 150);
                 },
 
                 /**
-                 * Appends the sales leads to the stage.
-                 *
-                 * @param {object} params - The parameters to be appended.
-                 * @returns {void}
+                 * Append data
                  */
                 append(params) {
                     this.get(params)
@@ -534,6 +564,35 @@
                                 }
                             }
                         });
+                },
+
+                /**
+                 * Update stage
+                 */
+                updateStage(stage, event) {
+                    if (event.moved) {
+                        return;
+                    }
+
+                    if (event.removed) {
+                        this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage.sort_order].leads.meta.total - 1;
+                        return;
+                    }
+
+                    if (event.added) {
+                        this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage.sort_order].leads.meta.total + 1;
+
+                        this.$axios
+                            .put(this.updateUrl.replace('replace', event.added.element.id), {
+                                'pipeline_stage_id': stage.id
+                            })
+                            .then(response => {
+                                this.$emitter.emit('add-flash', { type: 'success', message: 'Stage updated successfully.' });
+                            })
+                            .catch(error => {
+                                this.$emitter.emit('add-flash', { type: 'error', message: error.response?.data?.message || 'Failed to update stage.' });
+                            });
+                    }
                 },
             }
         });

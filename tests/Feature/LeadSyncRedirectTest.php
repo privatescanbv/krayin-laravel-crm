@@ -158,16 +158,48 @@ test('does not redirect to sync page when lead has 2+ persons', function () {
     $response->assertRedirect(route('admin.leads.view', $lead->id));
 });
 
-test('does not redirect to sync page when match score is 100', function () {
+test('does not redirect to sync page when lead has 0 persons', function () {
+    $data = createLeadSyncPipelineData();
+
+    $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
+    $lead = Lead::factory()->create([
+        'lead_pipeline_id'       => $data['pipelineId'],
+        'lead_pipeline_stage_id' => $data['stageId'],
+        'user_id'                => test()->user->id,
+        'department_id'          => $department->id,
+        'first_name'             => 'John',
+        'last_name'              => 'Doe',
+        'emails'                 => [['value' => 'john@example.com', 'label' => 'eigen']],
+    ]);
+
+    $response = test()
+        ->actingAs(test()->user, 'user')
+        ->put(route('admin.leads.update', $lead->id), [
+            'first_name' => 'John',
+            'last_name'  => 'Doe',
+            'emails'     => [['value' => 'john@example.com', 'label' => 'eigen']],
+            'department_id' => $department->id,
+        ]);
+
+    // Should redirect to lead view page (not sync page)
+    $response->assertRedirect(route('admin.leads.view', $lead->id));
+});
+
+test('does not redirect to sync page when lead has 2 persons', function () {
     $data = createLeadSyncPipelineData();
     
-    // Create a person with matching data
-    $person = Person::factory()->create([
+    // Create two persons
+    $person1 = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
         'emails'     => [['value' => 'john@example.com', 'label' => 'eigen']],
-        'phones'     => [['value' => '123456789', 'label' => 'eigen']],
-        'date_of_birth' => '1985-05-15',
+        'user_id'    => test()->user->id,
+    ]);
+
+    $person2 = Person::factory()->create([
+        'first_name' => 'Jane',
+        'last_name'  => 'Smith',
+        'emails'     => [['value' => 'jane@example.com', 'label' => 'eigen']],
         'user_id'    => test()->user->id,
     ]);
 
@@ -180,30 +212,10 @@ test('does not redirect to sync page when match score is 100', function () {
         'first_name'             => 'John',
         'last_name'              => 'Doe',
         'emails'                 => [['value' => 'john@example.com', 'label' => 'eigen']],
-        'date_of_birth'          => '1985-05-15',
     ]);
 
-    // Add matching addresses for perfect score
-    Address::create([
-        'lead_id'      => $lead->id,
-        'street'       => 'Test Street',
-        'house_number' => '123',
-        'city'         => 'Test City',
-        'postal_code'  => '1234AB',
-        'country'      => 'Nederland',
-    ]);
-
-    Address::create([
-        'person_id'    => $person->id,
-        'street'       => 'Test Street',
-        'house_number' => '123',
-        'city'         => 'Test City',
-        'postal_code'  => '1234AB',
-        'country'      => 'Nederland',
-    ]);
-
-    // Attach the person to the lead
-    $lead->attachPersons([$person->id]);
+    // Attach both persons to the lead
+    $lead->attachPersons([$person1->id, $person2->id]);
 
     $response = test()
         ->actingAs(test()->user, 'user')
@@ -214,13 +226,7 @@ test('does not redirect to sync page when match score is 100', function () {
             'department_id' => $department->id,
         ]);
 
-    // Debug the response
-    if ($response->status() !== 302) {
-        dump('Response status: ' . $response->status());
-        dump('Response content: ' . $response->getContent());
-    }
-
-    // Should redirect to lead view page (not sync page)
+    // Should redirect to lead view page (not sync page) because lead has 2 persons
     $response->assertRedirect(route('admin.leads.view', $lead->id));
 });
 
@@ -258,12 +264,6 @@ test('handles AJAX requests correctly for sync redirect', function () {
             'emails'     => [['value' => 'john@example.com', 'label' => 'eigen']],
             'department_id' => $department->id,
         ]);
-
-    // Debug the response
-    if ($response->status() !== 200) {
-        dump('Response status: ' . $response->status());
-        dump('Response content: ' . $response->getContent());
-    }
 
     // Should return JSON with redirect to sync page
     $response->assertOk();

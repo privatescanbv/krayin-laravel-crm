@@ -8,13 +8,15 @@ use App\Enums\PipelineStageDefaultKeys;
 use App\Models\SalesLead;
 use Illuminate\Support\Facades\Log;
 use Throwable;
+use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
 
 class SalesLeadRepository
 {
     public function __construct(
-        private readonly OrderRepository $orderRepository
+        private readonly OrderRepository $orderRepository,
+        private readonly ActivityRepository $activityRepository
     ) {}
 
     /**
@@ -56,6 +58,9 @@ class SalesLeadRepository
 
             // Create initial order for this sales lead
             $this->orderRepository->createFromSalesLead($salesLead->id, $salesLead->name);
+
+            // Create system activity on the lead
+            $this->createSalesLeadActivity($lead, $salesLead);
 
             return $salesLead;
 
@@ -138,6 +143,35 @@ class SalesLeadRepository
             }
         } catch (Throwable $e) {
             Log::warning('Failed to copy persons from lead to sales lead', [
+                'lead_id'       => $lead->id,
+                'sales_lead_id' => $salesLead->id,
+                'error'         => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Create a system activity on the lead when a sales lead is created.
+     */
+    private function createSalesLeadActivity(Lead $lead, SalesLead $salesLead): void
+    {
+        try {
+            $salesLeadViewUrl = route('admin.sales-leads.view', $salesLead->id);
+            
+            $this->activityRepository->create([
+                'type'       => 'system',
+                'title'      => 'Sales lead aangemaakt',
+                'is_done'    => 1,
+                'additional' => json_encode([
+                    'sales_lead_id' => $salesLead->id,
+                    'sales_lead_name' => $salesLead->name,
+                    'view_url' => $salesLeadViewUrl,
+                ]),
+                'user_id' => auth()->id() ?? $lead->user_id ?? 1,
+                'lead_id' => $lead->id,
+            ]);
+        } catch (Throwable $e) {
+            Log::warning('Failed to create sales lead activity', [
                 'lead_id'       => $lead->id,
                 'sales_lead_id' => $salesLead->id,
                 'error'         => $e->getMessage(),

@@ -161,16 +161,8 @@
                 :activeType="'planned'"
                 :extra-types="[
                     ['name' => 'description', 'label' => trans('admin::app.leads.view.tabs.description')],
-                    ['name' => 'products', 'label' => trans('admin::app.leads.view.tabs.products')],
                 ]"
             >
-                <!-- Products -->
-                <x-slot:products>
-                    @include ('admin::leads.view.products')
-                </x-slot>
-
-                
-
                 <!-- Description -->
                 <x-slot:description>
                     <div class="p-4 dark:text-white">

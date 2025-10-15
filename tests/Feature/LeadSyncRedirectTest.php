@@ -41,7 +41,7 @@ test('redirects to sync page when lead has 1 person with match score < 100', fun
     $person = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
-        'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
+        'emails'     => [['value' => 'john@example.com', 'label' => 'eigen']],
         'user_id'    => test()->user->id,
     ]);
 
@@ -53,7 +53,7 @@ test('redirects to sync page when lead has 1 person with match score < 100', fun
         'department_id'          => $department->id,
         'first_name'             => 'John',
         'last_name'              => 'Smith', // Different last name for partial match
-        'emails'                 => [['value' => 'john@example.com', 'label' => 'Work']],
+        'emails'                 => [['value' => 'john@example.com', 'label' => 'eigen']],
     ]);
 
     // Attach the person to the lead
@@ -99,6 +99,7 @@ test('does not redirect to sync page when lead has 0 persons', function () {
         'department_id'          => $department->id,
         'first_name'             => 'John',
         'last_name'              => 'Doe',
+        'emails'                 => [['value' => 'john@example.com', 'label' => 'eigen']],
     ]);
 
     $response = test()
@@ -138,6 +139,7 @@ test('does not redirect to sync page when lead has 2+ persons', function () {
         'department_id'          => $department->id,
         'first_name'             => 'John',
         'last_name'              => 'Doe',
+        'emails'                 => [['value' => 'john@example.com', 'label' => 'eigen']],
     ]);
 
     // Attach both persons to the lead
@@ -163,8 +165,8 @@ test('does not redirect to sync page when match score is 100', function () {
     $person = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
-        'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
-        'phones'     => [['value' => '123456789', 'label' => 'Mobile']],
+        'emails'     => [['value' => 'john@example.com', 'label' => 'eigen']],
+        'phones'     => [['value' => '123456789', 'label' => 'eigen']],
         'date_of_birth' => '1985-05-15',
         'user_id'    => test()->user->id,
     ]);
@@ -177,8 +179,8 @@ test('does not redirect to sync page when match score is 100', function () {
         'department_id'          => $department->id,
         'first_name'             => 'John',
         'last_name'              => 'Doe',
-        'emails'                 => [['value' => 'john@example.com', 'label' => 'Work']],
-        'phones'                 => [['value' => '123456789', 'label' => 'Mobile']],
+        'emails'                 => [['value' => 'john@example.com', 'label' => 'eigen']],
+        'phones'                 => [['value' => '123456789', 'label' => 'eigen']],
         'date_of_birth'          => '1985-05-15',
     ]);
 
@@ -225,7 +227,7 @@ test('handles AJAX requests correctly for sync redirect', function () {
     $person = Person::factory()->create([
         'first_name' => 'John',
         'last_name'  => 'Doe',
-        'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
+        'emails'     => [['value' => 'john@example.com', 'label' => 'eigen']],
         'user_id'    => test()->user->id,
     ]);
 
@@ -237,7 +239,7 @@ test('handles AJAX requests correctly for sync redirect', function () {
         'department_id'          => $department->id,
         'first_name'             => 'John',
         'last_name'              => 'Smith', // Different last name for partial match
-        'emails'                 => [['value' => 'john@example.com', 'label' => 'Work']],
+        'emails'                 => [['value' => 'john@example.com', 'label' => 'eigen']],
     ]);
 
     // Attach the person to the lead

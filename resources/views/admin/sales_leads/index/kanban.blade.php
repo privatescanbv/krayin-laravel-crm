@@ -27,6 +27,13 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
                         <h2 class="text-lg font-semibold dark:text-white">Backoffice</h2>
+                        <button
+                            type="button"
+                            class="secondary-button whitespace-nowrap"
+                            @click="$root.$refs.salesLeadsKanban && $root.$refs.salesLeadsKanban.toggleWonLost()"
+                        >
+                            <span>@{{ $root.$refs.salesLeadsKanban ? $root.$refs.salesLeadsKanban.wonLostLabel : 'Toon gewonnen/verloren' }}</span>
+                        </button>
                     </div>
                 </div>
 
@@ -36,7 +43,7 @@
                     <!-- Pipeline Stage Cards -->
                     <div
                         class="flex min-w-[275px] max-w-[275px] flex-col gap-1 rounded-lg border border-gray-200 dark:border-gray-800"
-                        v-for="(stage, index) in stages"
+                        v-for="(stage, index) in stageLeads"
                     >
                         {!! view_render_event('admin.sales-leads.index.kanban.content.stage.header.before') !!}
 
@@ -211,7 +218,19 @@
                         '#ECFCCB': '#65A30D',
                         '#DCFCE7': '#16A34A',
                     },
+                    hideWonLost: true,
+                    wonLostLabel: 'Toon gewonnen/verloren',
                 };
+            },
+
+            computed: {
+                src() {
+                    const pipelineId = "{{ request('pipeline_id') ?? '' }}";
+                    return `{{ route('admin.sales-leads.index') }}${pipelineId ? '?pipeline_id=' + pipelineId : ''}`;
+                },
+                currentPipelineId() {
+                    return "{{ request('pipeline_id') ?? '' }}";
+                }
             },
 
             mounted () {
@@ -219,6 +238,12 @@
             },
 
             methods: {
+                /**
+                 * Sync toggle button label with state
+                 */
+                setWonLostButtonText() {
+                    this.wonLostLabel = this.hideWonLost ? 'Toon gewonnen/verloren' : 'Verberg gewonnen/verloren';
+                },
                 /**
                  * Format date to a more readable format
                  *
@@ -252,39 +277,75 @@
                  * Initialization
                  */
                 boot() {
-                    this.get();
+                    // Load pipeline-specific setting if present
+                    const pipelineSpecificKey = `kanban_hideWonLost_pipeline_${this.currentPipelineId}`;
+                    const pipelineSpecificSetting = localStorage.getItem(pipelineSpecificKey);
+                    if (pipelineSpecificSetting !== null) {
+                        try { this.hideWonLost = JSON.parse(pipelineSpecificSetting); } catch (e) {}
+                    } else {
+                        this.hideWonLost = true;
+                    }
+                    this.setWonLostButtonText();
+
+                    this.get()
+                        .then(response => {
+                            if (response && response.data) {
+                                for (let [sortOrder, data] of Object.entries(response.data)) {
+                                    this.stageLeads[sortOrder] = data;
+                                }
+                            }
+                        })
+                        .catch(() => { this.isLoading = false; });
                 },
 
                 /**
                  * Fetches the sales leads
                  */
-                get() {
-                    this.$axios
-                        .get("{{ route('admin.sales-leads.get') }}", {
-                            params: {
-                                view_type: 'kanban',
-                                pipeline_id: '{{ request('pipeline_id') }}'
-                            }
-                        })
+                get(requestedParams = {}) {
+                    const params = {
+                        view_type: 'kanban',
+                        pipeline_id: '{{ request('pipeline_id') }}',
+                        exclude_won_lost: this.hideWonLost,
+                        ...requestedParams,
+                    };
+
+                    return this.$axios
+                        .get("{{ route('admin.sales-leads.get') }}", { params })
                         .then(response => {
                             this.isLoading = false;
-
-                            // Update stages with leads data
-                            const data = response.data || {};
-
-                            this.stages.forEach(stage => {
-                                if (data[stage.sort_order]) {
-                                    stage.leads.data = data[stage.sort_order].leads.data;
-                                    stage.leads.meta = data[stage.sort_order].leads.meta;
-                                } else {
-                                    stage.leads.data = [];
-                                    stage.leads.meta.total = 0;
-                                }
-                            });
+                            return response;
                         })
                         .catch(error => {
                             console.log(error);
                             this.isLoading = false;
+                        });
+                },
+
+                /**
+                 * Toggle won/lost visibility and refetch
+                 */
+                toggleWonLost() {
+                    this.hideWonLost = !this.hideWonLost;
+
+                    const pipelineSpecificKey = `kanban_hideWonLost_pipeline_${this.currentPipelineId}`;
+                    localStorage.setItem(pipelineSpecificKey, JSON.stringify(this.hideWonLost));
+
+                    this.setWonLostButtonText();
+
+                    // Clear and refetch
+                    this.stageLeads = {};
+                    this.get()
+                        .then(response => {
+                            if (response && response.data) {
+                                for (let [sortOrder, data] of Object.entries(response.data)) {
+                                    this.stageLeads[sortOrder] = data;
+                                }
+                            }
+                        })
+                        .catch(() => {
+                            // revert on error
+                            this.hideWonLost = !this.hideWonLost;
+                            this.setWonLostButtonText();
                         });
                 },
 
@@ -324,3 +385,4 @@
         });
     </script>
 @endPushOnce
+

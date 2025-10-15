@@ -97,6 +97,11 @@ class SalesLeadController extends Controller
         $data = [];
 
         foreach ($stages as $stage) {
+            // Optionally skip stages that are marked won/lost when requested
+            if ($request->boolean('exclude_won_lost') && ($stage->is_won || $stage->is_lost)) {
+                continue;
+            }
+
             $query = SalesLead::with(['pipelineStage', 'lead', 'user'])
                 ->where('pipeline_stage_id', $stage->id);
             $salesLeads = $query->get();

@@ -102,7 +102,7 @@ class SalesLeadController extends Controller
                 continue;
             }
 
-            $query = SalesLead::with(['pipelineStage', 'lead', 'user'])
+            $query = SalesLead::with(['pipelineStage', 'lead', 'user', 'orders'])
                 ->where('pipeline_stage_id', $stage->id);
             $salesLeads = $query->get();
 
@@ -117,6 +117,7 @@ class SalesLeadController extends Controller
                     'pipeline_stage'    => $salesLead->pipelineStage ? [
                         'id'   => $salesLead->pipelineStage->id,
                         'name' => $salesLead->pipelineStage->name,
+                        'code' => $salesLead->pipelineStage->code,
                     ] : null,
                     'lead' => $salesLead->lead ? [
                         'id'     => $salesLead->lead->id,
@@ -124,6 +125,9 @@ class SalesLeadController extends Controller
                         'person' => $person ? [
                             'id'   => $person->id,
                             'name' => $person->name,
+                            'organization' => $person->organization ? [
+                                'name' => $person->organization->name,
+                            ] : null,
                         ] : null,
                     ] : null,
                     'user' => $salesLead->user ? [
@@ -131,6 +135,25 @@ class SalesLeadController extends Controller
                         'name' => $salesLead->user->name,
                     ] : null,
                     'created_at' => $salesLead->created_at,
+                    'open_activities_count' => $salesLead->open_activities_count,
+                    'unread_emails_count' => $salesLead->unread_emails_count ?? 0,
+                    'has_duplicates' => $salesLead->has_duplicates ?? false,
+                    'duplicates_count' => $salesLead->duplicates_count ?? 0,
+                    'rotten_days' => $salesLead->rotten_days ?? 0,
+                    'days_until_due_date' => $salesLead->days_until_due_date ?? null,
+                    'mri_status' => $salesLead->mri_status ?? null,
+                    'mri_status_label' => $salesLead->mri_status_label ?? null,
+                    'has_diagnosis_form' => $salesLead->has_diagnosis_form ?? false,
+                    'lost_reason_label' => $salesLead->lost_reason_label ?? null,
+                    'has_multiple_persons' => $salesLead->hasMultiplePersons(),
+                    'persons_count' => $salesLead->persons_count,
+                    'orders' => $salesLead->orders->map(function ($order) {
+                        return [
+                            'id' => $order->id,
+                            'status' => $order->status->value,
+                            'status_label' => $order->status->label(),
+                        ];
+                    }),
                 ];
             });
 

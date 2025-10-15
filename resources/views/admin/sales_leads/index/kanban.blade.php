@@ -127,7 +127,7 @@
 
                                 <a
                                     class="sales-lead-item flex cursor-pointer flex-col gap-2 rounded-md border border-gray-100 bg-gray-50 p-1.5 dark:border-gray-400 dark:bg-gray-400"
-                                    :href="'{{ route('admin.sales-leads.view', 'replaceId') }}'.replace('replaceId', lead.id)"
+                                    :href="'{{ route('admin.sales-leads.view', 'replaceId') }}'.replace('replaceId', salesLead.id)"
                                     style="min-height:unset;"
                                 >
                                     {!! view_render_event('admin.sales-leads.index.kanban.content.stage.body.card.header.before') !!}
@@ -137,13 +137,13 @@
                                        <div class="flex items-center gap-1 min-w-0 flex-1">
                                            <div class="flex flex-col gap-0.5 min-w-0">
                                                <span class="text-[11px] font-medium truncate">
-                                                   @{{ lead.lead?.person?.name || lead.name }}
+                                                   @{{ salesLead.lead?.person?.name || salesLead.name }}
                                                </span>
-                                               <span class="text-[9px] leading-normal truncate" v-if="lead.has_multiple_persons">
-                                                   +@{{ lead.persons_count - 1 }} meer
+                                               <span class="text-[9px] leading-normal truncate" v-if="salesLead.has_multiple_persons">
+                                                   +@{{ salesLead.persons_count - 1 }} meer
                                                </span>
-                                               <span class="text-[9px] leading-normal" v-if="lead.lead?.person?.organization?.name">
-                                                   @{{ lead.lead?.person?.organization?.name }}
+                                               <span class="text-[9px] leading-normal" v-if="salesLead.lead?.person?.organization?.name">
+                                                   @{{ salesLead.lead?.person?.organization?.name }}
                                                </span>
                                            </div>
                                        </div>
@@ -152,18 +152,18 @@
                                        <div class="flex items-center gap-1 flex-shrink-0">
                                            <!-- Date -->
                                            <span class="text-[9px] text-gray-500 whitespace-nowrap">
-                                               @{{ formatDate(lead.created_at) }}
+                                               @{{ formatDate(salesLead.created_at) }}
                                            </span>
 
                                            <!-- Rotten Days Indicator -->
                                            <div
                                                class="group relative flex-shrink-0"
-                                               v-if="lead.rotten_days > 0"
+                                               v-if="salesLead.rotten_days > 0"
                                            >
                                                <span class="icon-rotten cursor-default text-sm text-rose-600"></span>
                                                <div class="absolute -top-1 right-7 hidden w-max flex-col items-center group-hover:flex">
                                                    <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
-                                                       @{{ "@lang('admin::app.leads.index.kanban.rotten-days', ['days' => 'replaceDays'])".replace('replaceDays', lead.rotten_days) }}
+                                                       @{{ "@lang('admin::app.leads.index.kanban.rotten-days', ['days' => 'replaceDays'])".replace('replaceDays', salesLead.rotten_days) }}
                                                    </span>
                                                    <div class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                                </div>
@@ -178,29 +178,29 @@
                                     <!-- Lost Reason (only for lost status) -->
                                     <div
                                         class="text-[10px] text-red-700 dark:text-red-400 mt-1"
-                                        v-if="lead?.pipeline_stage?.code && String(lead.pipeline_stage.code).toLowerCase().startsWith('lost') && lead.lost_reason_label"
+                                        v-if="salesLead?.pipeline_stage?.code && String(salesLead.pipeline_stage.code).toLowerCase().startsWith('lost') && salesLead.lost_reason_label"
                                     >
                                         <span class="font-medium">Verliesreden:</span>
-                                        @{{ lead.lost_reason_label }}
+                                        @{{ salesLead.lost_reason_label }}
                                     </div>
 
                                     <!-- Order Status -->
                                     <div
                                         class="text-[10px] font-medium mt-1"
-                                        v-if="lead.orders && lead.orders.length > 0"
+                                        v-if="salesLead.orders && salesLead.orders.length > 0"
                                     >
                                         <span class="text-gray-600 dark:text-gray-400">Order status:</span>
                                         <span 
                                             class="ml-1 px-1.5 py-0.5 rounded text-[9px]"
                                             :class="{
-                                                'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': lead.orders[0].status === 'nieuw',
-                                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': lead.orders[0].status === 'ingepland',
-                                                'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200': lead.orders[0].status === 'verstuurd',
-                                                'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': lead.orders[0].status === 'akkoord',
-                                                'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': lead.orders[0].status === 'afgewezen'
+                                                'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': salesLead.orders[0].status === 'nieuw',
+                                                'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200': salesLead.orders[0].status === 'ingepland',
+                                                'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200': salesLead.orders[0].status === 'verstuurd',
+                                                'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200': salesLead.orders[0].status === 'akkoord',
+                                                'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200': salesLead.orders[0].status === 'afgewezen'
                                             }"
                                         >
-                                            @{{ lead.orders[0].status_label || lead.orders[0].status }}
+                                            @{{ salesLead.orders[0].status_label || salesLead.orders[0].status }}
                                         </span>
                                     </div>
 
@@ -209,13 +209,13 @@
                                     <!-- Card Footer -->
                                     <div
                                         class="flex items-center justify-between mt-2 pt-2 border-t border-gray-200 dark:border-gray-600"
-                                        v-if="lead.has_duplicates || lead.open_activities_count === 0 || (lead.open_activities_count && lead.open_activities_count > 0) || (lead.unread_emails_count && lead.unread_emails_count > 0) || lead.mri_status || lead.has_diagnosis_form"
+                                        v-if="salesLead.has_duplicates || salesLead.open_activities_count === 0 || (salesLead.open_activities_count && salesLead.open_activities_count > 0) || (salesLead.unread_emails_count && salesLead.unread_emails_count > 0) || salesLead.mri_status || salesLead.has_diagnosis_form"
                                     >
                                         <div class="flex items-center gap-3">
                                             <!-- Open Activities Count -->
                                             <div class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
                                                 <span class="icon-activity text-xs"></span>
-                                                <span>@{{ lead.open_activities_count || 0 }}</span>
+                                                <span>@{{ salesLead.open_activities_count || 0 }}</span>
                                                 <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
                                                     <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
                                                         Openstaande activiteiten
@@ -227,7 +227,7 @@
                                             <!-- Unread Emails Count (includes nested activity emails) -->
                                             <div class="group relative flex items-center gap-1 text-[10px] text-gray-600 dark:text-gray-400">
                                                 <span class="icon-mail text-xs"></span>
-                                                <span>@{{ lead.unread_emails_count || 0 }}</span>
+                                                <span>@{{ salesLead.unread_emails_count || 0 }}</span>
                                                 <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
                                                     <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
                                                         Ongelezen e-mails
@@ -239,12 +239,12 @@
                                             <!-- Duplicate Indicator -->
                                             <div
                                                 class="group relative flex items-center gap-1"
-                                                v-if="lead.has_duplicates"
+                                                v-if="salesLead.has_duplicates"
                                             >
                                                 <span class="icon-warning cursor-default text-xs text-orange-600"></span>
                                                 <div class="absolute -top-1 left-0 hidden w-max flex-col items-center group-hover:flex">
                                                     <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
-                                                        Mogelijke duplicate gevonden (@{{ lead.duplicates_count }} gelijkenissen)
+                                                        Mogelijke duplicate gevonden (@{{ salesLead.duplicates_count }} gelijkenissen)
                                                     </span>
                                                     <div class="absolute -left-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                                 </div>
@@ -253,10 +253,10 @@
                                             <!-- No Open Activities Warning -->
                                             <div
                                                 class="group relative flex items-center gap-1"
-                                                v-if="lead.open_activities_count === 0 && !(
-                                                    lead?.pipeline_stage?.code && (
-                                                        String(lead.pipeline_stage.code).toLowerCase().startsWith('lost') ||
-                                                        String(lead.pipeline_stage.code).toLowerCase().startsWith('won')
+                                                v-if="salesLead.open_activities_count === 0 && !(
+                                                    salesLead?.pipeline_stage?.code && (
+                                                        String(salesLead.pipeline_stage.code).toLowerCase().startsWith('lost') ||
+                                                        String(salesLead.pipeline_stage.code).toLowerCase().startsWith('won')
                                                     )
                                                 )"
                                             >
@@ -273,19 +273,19 @@
                                         <!-- Days Until Due Date -->
                                         <div class="relative text-[10px] text-gray-600 dark:text-gray-400">
                                             <span
-                                                v-if="lead.days_until_due_date === null"
+                                                v-if="salesLead.days_until_due_date === null"
                                                 class="text-gray-500"
                                             >
                                                 -
                                             </span>
                                             <span
-                                                v-else-if="lead.days_until_due_date > 0"
+                                                v-else-if="salesLead.days_until_due_date > 0"
                                                 class="text-green-600"
                                             >
-                                                @{{ lead.days_until_due_date }}d
+                                                @{{ salesLead.days_until_due_date }}d
                                             </span>
                                             <span
-                                                v-else-if="lead.days_until_due_date === 0"
+                                                v-else-if="salesLead.days_until_due_date === 0"
                                                 class="text-orange-600 font-medium"
                                             >
                                                 Vandaag
@@ -294,11 +294,11 @@
                                                 v-else
                                                 class="text-red-600 font-medium"
                                             >
-                                                @{{ Math.abs(lead.days_until_due_date) }}d over
+                                                @{{ Math.abs(salesLead.days_until_due_date) }}d over
                                             </span>
 
                                             <!-- Diagnosis Form Icon bottom-right (to the left of MRI) -->
-                                            <div v-if="lead.has_diagnosis_form"
+                                            <div v-if="salesLead.has_diagnosis_form"
                                                  class="absolute -bottom-1 right-4 group">
                                                 <span class="icon-attachment text-xs"></span>
                                                 <div class="absolute -top-1 right-5 hidden w-max flex-col items-center group-hover:flex">
@@ -310,12 +310,12 @@
                                             </div>
 
                                             <!-- MRI Status Icon bottom-right -->
-                                            <div v-if="lead.mri_status"
+                                            <div v-if="salesLead.mri_status"
                                                  class="absolute -bottom-1 -right-1 group">
                                                 <span class="icon-image text-xs"></span>
                                                 <div class="absolute -top-1 right-5 hidden w-max flex-col items-center group-hover:flex">
                                                     <span class="whitespace-no-wrap relative rounded-md bg-black px-2 py-1 text-[10px] leading-none text-white shadow-lg">
-                                                        @{{ lead.mri_status_label }}
+                                                        @{{ salesLead.mri_status_label }}
                                                     </span>
                                                     <div class="absolute -right-1 top-2 h-2 w-2 rotate-45 bg-black"></div>
                                                 </div>

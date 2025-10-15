@@ -122,16 +122,16 @@ RUN mkdir -p ./storage && touch ./storage/installed
 # Voeg de cronjob toe
 # Bijvoorbeeld: draai elke minuut een Laravel schedule commando
 
-RUN echo "* * * * * /usr/local/bin/php /usr/share/nginx/html/artisan schedule:run >> /var/log/laravel-cron.log 2>&1" > /etc/cron.d/laravel-cron
+RUN echo "* * * * * www-data /usr/local/bin/php /usr/share/nginx/html/artisan schedule:run >> /var/log/laravel-cron.log 2>&1" > /etc/cron.d/laravel-cron
 
 # Inbound email processor
-RUN echo "* * * * * /usr/local/bin/php /usr/share/nginx/html/artisan inbound-emails:process >> /var/log/inbound-emails.log 2>&1" > /etc/cron.d/inbound-emails
+RUN echo "* * * * * www-data /usr/local/bin/php /usr/share/nginx/html/artisan inbound-emails:process >> /var/log/inbound-emails.log 2>&1" > /etc/cron.d/inbound-emails
 
 # Zorg dat de cron-bestanden correct permissies hebben
 RUN chmod 0644 /etc/cron.d/laravel-cron && \
     chmod 0644 /etc/cron.d/inbound-emails && \
-    crontab /etc/cron.d/laravel-cron && \
-    crontab -l | cat - /etc/cron.d/inbound-emails | crontab -
+    touch /var/log/laravel-cron.log /var/log/inbound-emails.log && \
+    chown www-data:www-data /var/log/laravel-cron.log /var/log/inbound-emails.log
 
 COPY .docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # temporary for mail server

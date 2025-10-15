@@ -611,7 +611,7 @@ class LeadController extends Controller
             // Check if we should redirect to sync page
             $shouldSync = $this->shouldRedirectToSync($lead);
             if ($shouldSync) {
-                $person = $lead->persons->first();
+                $person = $lead->persons()->first();
                 if (request()->ajax()) {
                     return response()->json([
                         'message'  => trans('admin::app.leads.update-success'),

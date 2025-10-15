@@ -23,12 +23,7 @@
 
         <template v-else>
             <div class="flex flex-col gap-4">
-                <!-- Toolbar -->
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <h2 class="text-lg font-semibold dark:text-white">Backoffice</h2>
-                    </div>
-                </div>
+                @include('admin::sales_leads.index.kanban.toolbar')
 
                 {!! view_render_event('admin.sales-leads.index.kanban.content.before') !!}
 

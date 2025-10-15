@@ -1,0 +1,39 @@
+{!! view_render_event('admin.sales-leads.index.kanban.toolbar.before') !!}
+
+<div class="flex justify-between gap-2 max-md:flex-wrap">
+    <div class="flex w-full items-center gap-x-1.5 max-md:justify-between">
+        {!! view_render_event('admin.sales-leads.index.kanban.toolbar.search.before') !!}
+
+        <!-- Search Panel -->
+        @include('admin::sales_leads.index.kanban.search')
+
+        {!! view_render_event('admin.sales-leads.index.kanban.toolbar.search.after') !!}
+
+        {!! view_render_event('admin.sales-leads.index.kanban.toolbar.filter.before') !!}
+
+        <!-- Filter -->
+        @include('admin::sales_leads.index.kanban.filter')
+
+        {!! view_render_event('admin.sales-leads.index.kanban.toolbar.filter.after') !!}
+
+        <!-- Collapse Won/Lost toggle -->
+        <button
+            type="button"
+            class="secondary-button whitespace-nowrap"
+            @click="$root.$refs.salesLeadsKanban && $root.$refs.salesLeadsKanban.toggleWonLost()"
+        >
+            <span>@{{ $root.$refs.salesLeadsKanban ? $root.$refs.salesLeadsKanban.wonLostLabel : 'Toon gewonnen/verloren' }}</span>
+        </button>
+
+        <div class="z-10 hidden w-full divide-y divide-gray-100 rounded bg-white shadow dark:bg-gray-900"></div>
+    </div>
+
+    {!! view_render_event('admin.sales-leads.index.kanban.toolbar.switcher.before') !!}
+
+    <!-- View Switcher -->
+    @include('admin::sales_leads.index.view-switcher')
+
+    {!! view_render_event('admin.sales-leads.index.kanban.toolbar.switcher.after') !!}
+</div>
+
+{!! view_render_event('admin.sales-leads.index.kanban.toolbar.after') !!}

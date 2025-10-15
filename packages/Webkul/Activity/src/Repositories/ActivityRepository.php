@@ -2,6 +2,7 @@
 
 namespace Webkul\Activity\Repositories;
 
+use Exception;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -169,7 +170,13 @@ class ActivityRepository extends Repository
     public function createSystemActivityForSalesLeadCreation(Lead $lead, SalesLead $salesLead): ?Activity
     {
         try {
-            return $this->create([
+            Log::info('Creating system activity for sales lead creation', [
+                'lead_id' => $lead->id,
+                'sales_lead_id' => $salesLead->id,
+            ]);
+
+            $link = route('admin.sales-leads.view', $salesLead->id);
+            $activity = $this->create([
                 'type' => ActivityType::SYSTEM,
                 'title' => 'Sales lead aangemaakt',
                 'comment' => null,
@@ -179,7 +186,7 @@ class ActivityRepository extends Repository
                 'additional' => [
                     'old' => ['label' => 'Leeg'],
                     'new' => ['label' => $salesLead->name],
-                    'link' => route('admin.sales-leads.view', $salesLead->id),
+                    'link' => $link,
                     'link_label' => 'Bekijk sales lead',
                     'sales_lead' => [
                         'id' => $salesLead->id,
@@ -187,6 +194,14 @@ class ActivityRepository extends Repository
                     ],
                 ],
             ]);
+
+            Log::info('System activity created successfully', [
+                'activity_id' => $activity->id,
+                'lead_id' => $lead->id,
+                'sales_lead_id' => $salesLead->id,
+            ]);
+
+            return $activity;
         } catch (Throwable $e) {
             Log::error('Failed to create system activity for sales lead creation', [
                 'lead_id' => $lead->id,
@@ -226,6 +241,7 @@ class ActivityRepository extends Repository
                 'lead_id' => $lead->id,
                 'sales_lead_id' => $salesLead->id,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
             return null;
         }

@@ -106,6 +106,88 @@ class SalesLead extends Model
     }
 
     /**
+     * Count unread emails for this sales lead.
+     */
+    public function getUnreadEmailsCountAttribute(): int
+    {
+        return (int) $this->emails()->where('is_read', 0)->count();
+    }
+
+    /**
+     * Check if this sales lead has duplicates.
+     */
+    public function getHasDuplicatesAttribute(): bool
+    {
+        return false; // Placeholder - implement duplicate detection logic if needed
+    }
+
+    /**
+     * Get the count of duplicates for this sales lead.
+     */
+    public function getDuplicatesCountAttribute(): int
+    {
+        return 0; // Placeholder - implement duplicate counting logic if needed
+    }
+
+    /**
+     * Get the number of rotten days for this sales lead.
+     */
+    public function getRottenDaysAttribute(): int
+    {
+        return 0; // Placeholder - implement rotten days logic if needed
+    }
+
+    /**
+     * Get the days until due date for this sales lead.
+     */
+    public function getDaysUntilDueDateAttribute(): ?int
+    {
+        return null; // Placeholder - implement due date logic if needed
+    }
+
+    /**
+     * Get the MRI status for this sales lead.
+     */
+    public function getMriStatusAttribute(): ?string
+    {
+        return null; // Placeholder - implement MRI status logic if needed
+    }
+
+    /**
+     * Get the MRI status label for this sales lead.
+     */
+    public function getMriStatusLabelAttribute(): ?string
+    {
+        return null; // Placeholder - implement MRI status label logic if needed
+    }
+
+    /**
+     * Check if this sales lead has a diagnosis form.
+     */
+    public function getHasDiagnosisFormAttribute(): bool
+    {
+        return false; // Placeholder - implement diagnosis form logic if needed
+    }
+
+    /**
+     * Get the lost reason label for this sales lead.
+     */
+    public function getLostReasonLabelAttribute(): ?string
+    {
+        if (! $this->lost_reason) {
+            return null;
+        }
+
+        try {
+            $lostReason = \App\Enums\LostReason::from($this->lost_reason);
+
+            return $lostReason->label();
+        } catch (\ValueError $e) {
+            return $this->lost_reason;
+        }
+    }
+
+    /**
      * Get the persons associated with the sales lead.
      * This accessor ensures we always get the correct data.
      */
@@ -185,5 +267,13 @@ class SalesLead extends Model
     public function hasMultiplePersons(): bool
     {
         return $this->persons()->count() > 1;
+    }
+
+    /**
+     * Get the orders associated with this sales lead.
+     */
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
     }
 }

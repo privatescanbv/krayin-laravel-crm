@@ -163,7 +163,23 @@ class ActivityRepository extends Repository
     public function createSystemActivityForSalesLeadCreation(Lead $lead, SalesLead $salesLead): ?Activity
     {
         try {
-            return $this->create([
+            Log::info('Creating system activity for sales lead creation', [
+                'lead_id' => $lead->id,
+                'sales_lead_id' => $salesLead->id,
+            ]);
+
+            // Try to generate the route, fallback to a simple URL if route fails
+            try {
+                $link = route('admin.sales-leads.view', $salesLead->id);
+            } catch (\Exception $e) {
+                $link = "/admin/sales-leads/view/{$salesLead->id}";
+                Log::warning('Failed to generate route for sales lead view', [
+                    'sales_lead_id' => $salesLead->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+
+            $activity = $this->create([
                 'type' => ActivityType::SYSTEM,
                 'title' => 'Sales lead aangemaakt',
                 'comment' => null,
@@ -174,7 +190,7 @@ class ActivityRepository extends Repository
                 'additional' => [
                     'old' => ['label' => 'Leeg'],
                     'new' => ['label' => $salesLead->name],
-                    'link' => route('admin.sales-leads.view', $salesLead->id),
+                    'link' => $link,
                     'link_label' => 'Bekijk sales lead',
                     'sales_lead' => [
                         'id' => $salesLead->id,
@@ -182,11 +198,20 @@ class ActivityRepository extends Repository
                     ],
                 ],
             ]);
+
+            Log::info('System activity created successfully', [
+                'activity_id' => $activity->id,
+                'lead_id' => $lead->id,
+                'sales_lead_id' => $salesLead->id,
+            ]);
+
+            return $activity;
         } catch (Throwable $e) {
-            Log::warning('Failed to create system activity for sales lead creation', [
+            Log::error('Failed to create system activity for sales lead creation', [
                 'lead_id' => $lead->id,
                 'sales_lead_id' => $salesLead->id,
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
             return null;
         }

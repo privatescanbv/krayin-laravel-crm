@@ -2,12 +2,14 @@
 
 namespace App\Repositories;
 
+use App\Enums\ActivityType;
 use App\Enums\Departments;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Models\SalesLead;
 use Illuminate\Support\Facades\Log;
 use Throwable;
+use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
@@ -60,7 +62,41 @@ class SalesLeadRepository
             $this->orderRepository->createFromSalesLead($salesLead->id, $salesLead->name);
 
             // Add a system activity on the lead linking to this new sales lead view
-            $this->activityRepository->createSystemActivityForSalesLeadCreation($lead, $salesLead);
+            Log::info('Creating system activity for sales lead', [
+                'lead_id' => $lead->id,
+                'sales_lead_id' => $salesLead->id,
+            ]);
+            $activity = $this->activityRepository->createSystemActivityForSalesLeadCreation($lead, $salesLead);
+            Log::info('System activity creation result', [
+                'activity_created' => $activity !== null,
+                'activity_id' => $activity?->id,
+            ]);
+
+            // Fallback: if the repository method fails, create the activity directly
+            if (!$activity) {
+                Log::warning('ActivityRepository method failed, creating activity directly');
+                try {
+                    $activity = Activity::create([
+                        'type' => ActivityType::SYSTEM,
+                        'title' => 'Sales lead aangemaakt',
+                        'comment' => null,
+                        'is_done' => 1,
+                        'user_id' => auth()->check() ? auth()->id() : null,
+                        'lead_id' => $lead->id,
+                        'sales_lead_id' => $salesLead->id,
+                        'additional' => [
+                            'link' => route('admin.sales-leads.view', $salesLead->id),
+                        ],
+                    ]);
+                    Log::info('Fallback activity created successfully', ['activity_id' => $activity->id]);
+                } catch (\Exception $e) {
+                    Log::error('Fallback activity creation also failed', [
+                        'error' => $e->getMessage(),
+                        'lead_id' => $lead->id,
+                        'sales_lead_id' => $salesLead->id,
+                    ]);
+                }
+            }
 
             return $salesLead;
 

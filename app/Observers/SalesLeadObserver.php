@@ -31,20 +31,8 @@ class SalesLeadObserver
             'stage'         => $salesLead->pipelineStage?->name,
         ]);
 
-        // Create a system activity on the related lead
-        if ($salesLead->lead_id) {
-            Activity::create([
-                'lead_id'        => $salesLead->lead_id,
-                'sales_lead_id'  => $salesLead->id,
-                'type'           => ActivityType::SYSTEM,
-                'title'          => 'Sales lead aangemaakt',
-                'comment'        => 'Een nieuwe sales lead is aangemaakt voor deze lead.',
-                'is_done'        => 1,
-                'additional'     => [
-                    'link' => route('admin.sales-leads.view', $salesLead->id),
-                ],
-            ]);
-        }
+        // Note: System activity is created in SalesLeadRepository::createFromWonLead()
+        // to avoid duplicate activities
 
         $this->sendWebhook($salesLead, 'SalesLeadObserver@created');
     }

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin\Planning;
 use App\Http\Controllers\Controller;
 use App\Models\Clinic;
 use App\Models\Order;
-use App\Models\OrderRegel;
+use App\Models\OrderItem;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use App\Models\ResourceType;
@@ -47,7 +47,7 @@ class ResourcePlanningMonitorController extends Controller
 
     public function orderPlanning(Request $request, int $orderId): View
     {
-        $order = Order::with(['orderRegels.product.partnerProducts', 'salesLead.lead'])->findOrFail($orderId);
+        $order = Order::with(['orderItems.product.partnerProducts', 'salesLead.lead'])->findOrFail($orderId);
 
         $resourceTypes = ResourceType::all(['id', 'name']);
         $resources = Resource::with('clinic')->get(['id', 'name', 'clinic_id', 'resource_type_id']);
@@ -63,10 +63,10 @@ class ResourcePlanningMonitorController extends Controller
 
     public function orderResourceTypes(Request $request, int $orderId): JsonResponse
     {
-        $order = Order::with(['orderRegels.product.resourceType'])->findOrFail($orderId);
+        $order = Order::with(['orderItems.product.resourceType'])->findOrFail($orderId);
 
         // Get unique resource types from order items
-        $resourceTypes = $order->orderRegels
+        $resourceTypes = $order->orderItems
             ->filter(fn ($item) => $item->product && $item->product->resourceType)
             ->map(fn ($item) => $item->product->resourceType)
             ->unique('id')
@@ -83,7 +83,7 @@ class ResourcePlanningMonitorController extends Controller
 
     public function orderAvailability(Request $request, int $orderId): JsonResponse
     {
-        $order = Order::with(['orderRegels.product'])->findOrFail($orderId);
+        $order = Order::with(['orderItems.product'])->findOrFail($orderId);
         $viewType = $request->query('view', 'week');
 
         if ($viewType === 'month') {
@@ -103,7 +103,7 @@ class ResourcePlanningMonitorController extends Controller
                 'replace_existing' => ['sometimes', 'boolean'],
             ]);
 
-            $orderItem = OrderRegel::findOrFail($orderItemId);
+            $orderItem = OrderItem::findOrFail($orderItemId);
             $replace = $request->boolean('replace_existing', true);
 
             $booking = DB::transaction(function () use ($request, $orderItem, $replace) {
@@ -589,7 +589,7 @@ class ResourcePlanningMonitorController extends Controller
         }
 
         // Get order items with their existing bookings
-        $orderItems = $order->orderRegels()->with(['product', 'resourceOrderItems.resource'])->get();
+        $orderItems = $order->orderItems()->with(['product', 'resourceOrderItems.resource'])->get();
 
         return response()->json([
             'view_type' => 'week',
@@ -662,7 +662,7 @@ class ResourcePlanningMonitorController extends Controller
         }
 
         // Get order items with their existing bookings
-        $orderItems = $order->orderRegels()->with(['product', 'resourceOrderItems.resource'])->get();
+        $orderItems = $order->orderItems()->with(['product', 'resourceOrderItems.resource'])->get();
 
         return response()->json([
             'view_type' => 'month',

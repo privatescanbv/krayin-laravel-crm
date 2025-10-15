@@ -71,7 +71,7 @@ class OrderController extends SimpleEntityController
         // Persist items
         foreach ($items as $item) {
             if (! empty($item['product_id']) && ! empty($item['quantity'])) {
-                $order->orderRegels()->create([
+                $order->orderItems()->create([
                     'product_id'  => (int) $item['product_id'],
                     'person_id'   => ! empty($item['person_id']) ? (int) $item['person_id'] : null,
                     'quantity'    => (int) $item['quantity'],
@@ -106,10 +106,10 @@ class OrderController extends SimpleEntityController
         $order = $this->orderRepository->update($payload, $id);
 
         // Re-sync items (simple approach: delete and recreate)
-        $order->orderRegels()->delete();
+        $order->orderItems()->delete();
         foreach ($items as $item) {
             if (! empty($item['product_id']) && ! empty($item['quantity'])) {
-                $order->orderRegels()->create([
+                $order->orderItems()->create([
                     'product_id'  => (int) $item['product_id'],
                     'person_id'   => ! empty($item['person_id']) ? (int) $item['person_id'] : null,
                     'quantity'    => (int) $item['quantity'],
@@ -151,11 +151,11 @@ class OrderController extends SimpleEntityController
     {
         // Eager-load relations needed for planning button visibility and planning info
         $entity->load([
-            'orderRegels.product.partnerProducts' => function ($q) {
+            'orderItems.product.partnerProducts' => function ($q) {
                 $q->select('partner_products.id', 'partner_products.product_id');
             },
-            'orderRegels.resourceOrderItems.resource',
-            'orderRegels.person',
+            'orderItems.resourceOrderItems.resource',
+            'orderItems.person',
             'salesLead.lead',
         ]);
 
@@ -209,13 +209,13 @@ class OrderController extends SimpleEntityController
         if ($requestedStatus === OrderStatus::INGEPLAND->value) {
             $order = $this->orderRepository->findOrFail($orderId);
 
-            $hasItemsNeedingPlanning = $order->orderRegels()
+            $hasItemsNeedingPlanning = $order->orderItems()
                 ->where('status', OrderItemStatus::MOET_WORDEN_INGEPLAND->value)
                 ->exists();
 
             if ($hasItemsNeedingPlanning) {
                 throw ValidationException::withMessages([
-                    'status' => 'Order kan niet op INGEPLAND gezet worden: er zijn nog orderregels die moeten worden ingepland.',
+                    'status' => 'Order kan niet op INGEPLAND gezet worden: er zijn nog orderitems die moeten worden ingepland.',
                 ]);
             }
         }

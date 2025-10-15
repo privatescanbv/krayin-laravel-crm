@@ -38,6 +38,6 @@ class ResourceOrderItem extends Model
 
     public function orderItem(): BelongsTo
     {
-        return $this->belongsTo(OrderRegel::class, 'orderitem_id');
+        return $this->belongsTo(OrderItem::class, 'orderitem_id');
     }
 }

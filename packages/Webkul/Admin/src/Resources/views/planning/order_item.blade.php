@@ -1,6 +1,6 @@
 <x-admin::layouts>
     <x-slot:title>
-        Planning - Orderregel #{{ $orderItem->id }}
+        Planning - Orderitem #{{ $orderItem->id }}
     </x-slot>
 
     @include('admin::planning.components.planning-calendar')
@@ -9,7 +9,7 @@
         <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
             <div class="flex flex-col gap-1">
                 <div class="text-xl font-bold">Resource Planning</div>
-                <div class="text-sm text-gray-600 dark:text-gray-400">Orderregel #{{ $orderItem->id }}</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Orderitem #{{ $orderItem->id }}</div>
             </div>
             <a href="{{ route('admin.orders.edit', ['id' => $orderItem->order_id]) }}" class="secondary-button">Terug naar order</a>
         </div>
@@ -101,7 +101,7 @@
                                 <div class="space-y-6" style="pointer-events: auto; z-index: 1000; position: relative;">
                                     <!-- Existing bookings summary -->
                                     <div v-if="existingForOrderItem && existingForOrderItem.length" class="rounded border border-amber-300 bg-amber-50 text-amber-900 p-3 text-sm">
-                                        <div class="font-semibold mb-1">Bestaande afspraken voor deze orderregel</div>
+                                        <div class="font-semibold mb-1">Bestaande afspraken voor deze orderitem</div>
                                         <ul class="list-disc ml-5">
                                             <li v-for="b in existingForOrderItem" :key="b.id">
                                                 @{{ b.resource_name || 'Onbekende resource' }} — @{{ timeRange(b.from, b.to) }}
@@ -141,7 +141,7 @@
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <input id="replace_existing" type="checkbox" v-model="form.replace_existing" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
-                                        <label for="replace_existing" class="text-sm text-gray-700 dark:text-gray-300">Vervang bestaande afspraak (verwijdert eerdere boekingen voor deze orderregel)</label>
+                                        <label for="replace_existing" class="text-sm text-gray-700 dark:text-gray-300">Vervang bestaande afspraak (verwijdert eerdere boekingen voor deze orderitem)</label>
                                     </div>
                                 </div>
                             </x-slot:content>

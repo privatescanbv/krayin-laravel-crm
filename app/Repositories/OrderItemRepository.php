@@ -2,13 +2,13 @@
 
 namespace App\Repositories;
 
-use App\Models\OrderRegel;
+use App\Models\OrderItem;
 use Webkul\Core\Eloquent\Repository;
 
-class OrderRegelRepository extends Repository
+class OrderItemRepository extends Repository
 {
     public function model(): string
     {
-        return OrderRegel::class;
+        return OrderItem::class;
     }
 }

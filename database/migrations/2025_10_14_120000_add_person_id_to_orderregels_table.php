@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('order_regels', function (Blueprint $table) {
+        Schema::table('order_items', function (Blueprint $table) {
             $table->unsignedInteger('person_id')->nullable()->after('product_id');
             $table->foreign('person_id')->references('id')->on('persons')->onDelete('set null');
         });
@@ -16,7 +16,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('order_regels', function (Blueprint $table) {
+        Schema::table('order_items', function (Blueprint $table) {
             $table->dropForeign(['person_id']);
             $table->dropColumn('person_id');
         });

@@ -2,23 +2,23 @@
 
 namespace App\Http\Controllers\Admin\Settings;
 
-use App\DataGrids\Settings\OrderRegelDataGrid;
-use App\Repositories\OrderRegelRepository;
+use App\DataGrids\Settings\OrderItemDataGrid;
+use App\Repositories\OrderItemRepository;
 use Illuminate\Http\Request;
 
-class OrderRegelController extends SimpleEntityController
+class OrderItemController extends SimpleEntityController
 {
-    public function __construct(protected OrderRegelRepository $orderRegelRepository)
+    public function __construct(protected OrderItemRepository $orderItemRepository)
     {
-        parent::__construct($orderRegelRepository);
+        parent::__construct($orderItemRepository);
 
-        $this->entityName = 'order_regels';
-        $this->datagridClass = OrderRegelDataGrid::class;
-        $this->indexView = 'admin::order_regels.index';
-        $this->createView = 'admin::order_regels.create';
-        $this->editView = 'admin::order_regels.edit';
-        $this->indexRoute = 'admin.order_regels.index';
-        $this->permissionPrefix = 'settings.order_regels';
+        $this->entityName = 'order_items';
+        $this->datagridClass = OrderItemDataGrid::class;
+        $this->indexView = 'admin::order_items.index';
+        $this->createView = 'admin::order_items.create';
+        $this->editView = 'admin::order_items.edit';
+        $this->indexRoute = 'admin.order_items.index';
+        $this->permissionPrefix = 'settings.order_items';
     }
 
     protected function validateStore(Request $request): void
@@ -38,17 +38,17 @@ class OrderRegelController extends SimpleEntityController
 
     protected function getCreateSuccessMessage(): string
     {
-        return 'Orderregel aangemaakt.';
+        return 'Orderitem aangemaakt.';
     }
 
     protected function getUpdateSuccessMessage(): string
     {
-        return 'Orderregel bijgewerkt.';
+        return 'Orderitem bijgewerkt.';
     }
 
     protected function getDestroySuccessMessage(): string
     {
-        return 'Orderregel verwijderd.';
+        return 'Orderitem verwijderd.';
     }
 
     protected function getDeleteFailedMessage(): string

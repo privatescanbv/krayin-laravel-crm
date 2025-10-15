@@ -106,7 +106,7 @@ Belangrijke dependencies:
 === API Integraties
 De applicatie integreert met:
 
-* CRM API voor patiënt- en orderregel data
+* CRM API voor patiënt- en orderitem data
 * PDF parser voor factuur extractie
 * Mail service voor notificaties
 

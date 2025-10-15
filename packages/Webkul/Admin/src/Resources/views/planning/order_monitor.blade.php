@@ -20,9 +20,9 @@
 
         <!-- Order Items Panel -->
         <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-            <h3 class="text-lg font-semibold mb-4">Orderregels</h3>
+            <h3 class="text-lg font-semibold mb-4">Orderitems</h3>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach($order->orderRegels as $item)
+                @foreach($order->orderItems as $item)
                     @php
                         $statusValue = is_string($item->status) ? $item->status : ($item->status?->value ?? 'nieuw');
                         $statusLabel = is_object($item->status) && method_exists($item->status, 'label')
@@ -62,7 +62,7 @@
 
         <!-- Resource Planning Calendar -->
         @php
-            $orderItems = $order->orderRegels->map(function ($item) {
+            $orderItems = $order->orderItems->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'product_name' => $item->product?->name ?? 'Onbekend product',
@@ -134,8 +134,8 @@
                                         <v-multiselect-filter
                                             v-model="filters.order_item_ids"
                                             :options="orderItemOptions"
-                                            label="Orderregel"
-                                            placeholder="Alle orderregels"
+                                            label="Orderitem"
+                                            placeholder="Alle orderitems"
                                         ></v-multiselect-filter>
                                     </div>
                                     <div class="w-full md:w-56 flex items-end">
@@ -192,14 +192,14 @@
                                 <div class="space-y-6" style="pointer-events: auto; z-index: 1000; position: relative;">
                                     <!-- Order item selection -->
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Orderregel</label>
+                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Orderitem</label>
                                         <select
                                             v-model.number="form.order_item_id"
                                             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
                                             style="pointer-events: auto; z-index: 10; position: relative;"
                                             @click.stop
                                         >
-                                            <option value="">Selecteer orderregel</option>
+                                            <option value="">Selecteer orderitem</option>
                                             <option v-for="item in orderItems" :key="item.id" :value="item.id" :disabled="!item.can_plan">
                                                 @{{ item.product_name }} (Aantal: @{{ item.quantity }}) @{{ !item.can_plan ? '- Niet planbaar' : '' }}
                                             </option>
@@ -238,7 +238,7 @@
                                     </div>
                                     <div class="flex items-center gap-2">
                                         <input id="replace_existing" type="checkbox" v-model="form.replace_existing" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
-                                        <label for="replace_existing" class="text-sm text-gray-700 dark:text-gray-300">Vervang bestaande afspraak (verwijdert eerdere boekingen voor deze orderregel)</label>
+                                        <label for="replace_existing" class="text-sm text-gray-700 dark:text-gray-300">Vervang bestaande afspraak (verwijdert eerdere boekingen voor deze orderitem)</label>
                                     </div>
                                 </div>
                             </x-slot:content>
@@ -428,7 +428,7 @@
                         if (this.$refs.calendar.loading) return;
 
                         if (!this.form.order_item_id) {
-                            this.$emitter.emit('add-flash', { type: 'error', message: 'Selecteer een orderregel' });
+                            this.$emitter.emit('add-flash', { type: 'error', message: 'Selecteer een orderitem' });
                             return;
                         }
 

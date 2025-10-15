@@ -2,7 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\OrderRegel;
+use App\Models\OrderItem;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -18,7 +18,7 @@ class ResourceOrderItemFactory extends Factory
 
         return [
             'resource_id'  => Resource::factory(),
-            'orderitem_id' => OrderRegel::factory(),
+            'orderitem_id' => OrderItem::factory(),
             'from'         => $from,
             'to'           => $to,
         ];

@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Settings;
 
-use App\Models\OrderRegel;
+use App\Models\OrderItem;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -15,7 +15,7 @@ class ResourceOrderItemCrudTest extends TestCase
     public function test_can_create_resource_order_item(): void
     {
         $resource = Resource::factory()->create();
-        $orderItem = OrderRegel::factory()->create();
+        $orderItem = OrderItem::factory()->create();
 
         $roi = ResourceOrderItem::create([
             'resource_id'  => $resource->id,

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->dateTime('to');
 
             $table->foreign('resource_id')->references('id')->on('resources')->onDelete('cascade');
-            $table->foreign('orderitem_id')->references('id')->on('order_regels')->onDelete('cascade');
+            $table->foreign('orderitem_id')->references('id')->on('order_items')->onDelete('cascade');
 
             AuditTrailMigrationHelper::addAuditTrailColumns($table);
             $table->timestamps();

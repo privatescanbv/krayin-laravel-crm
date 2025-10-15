@@ -276,7 +276,7 @@ TABLE(Order, "orders") {
   updated_by: bigint
 }
 
-TABLE(OrderRegel, "order_regels") {
+TABLE(OrderItem, "order_items") {
   PRIMARY_KEY(id): bigint
   FOREIGN_KEY(order_id): bigint
   FOREIGN_KEY(product_id): bigint
@@ -528,10 +528,10 @@ Order "1" -- "n" OrderItem
 OrderItem "n" -- "1" Order
 OrderItem "1" -- "1" PartnerProduct
 
-Order "1" -- "n" OrderRegel
+Order "1" -- "n" OrderItem
 Order "n" -- "1" SalesLead
-OrderRegel "n" -- "1" Order
-OrderRegel "1" -- "1" Product
+OrderItem "n" -- "1" Order
+OrderItem "1" -- "1" Product
 
 Activity "1" --> "1" User
 Activity "0..1" --> "1" Group
@@ -569,7 +569,7 @@ Clinic "1" -- "n" Activity
 PartnerProduct "n" -- "n" Resource
 
 ResourceOrderItem "n" -- "1" Resource
-ResourceOrderItem "n" -- "1" OrderRegel
+ResourceOrderItem "n" -- "1" OrderItem
 
 Resource "1" -- "1" ResourceType
 
@@ -608,13 +608,13 @@ end note
 note right of Order
   Afgesloten deal, gekoppeld aan een lead, gebruiker en contactpersoon.
   Ondersteunt nu factuur- en verzendadressen.
-  Status wordt automatisch bijgewerkt op basis van OrderRegel statussen:
+  Status wordt automatisch bijgewerkt op basis van OrderItem statussen:
   - INGEPLAND: alle items zijn klaar (INGEPLAND of NIEUW)
   - Anders: minimaal één item moet nog worden ingepland
 end note
 
-note right of OrderRegel
-  OrderRegel status wordt automatisch bepaald:
+note right of OrderItem
+  OrderItem status wordt automatisch bepaald:
   - INGEPLAND: als er een ResourceOrderItem bestaat voor deze regel
   - MOET_WORDEN_INGEPLAND: als het product partnerproducten heeft
   - NIEUW: standaard status

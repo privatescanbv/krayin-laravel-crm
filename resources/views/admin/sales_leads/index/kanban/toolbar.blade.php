@@ -5,14 +5,14 @@
         {!! view_render_event('admin.sales-leads.index.kanban.toolbar.search.before') !!}
 
         <!-- Search Panel -->
-        @include('admin::sales_leads.index.kanban.search')
+        @include('admin.sales_leads.index.kanban.search')
 
         {!! view_render_event('admin.sales-leads.index.kanban.toolbar.search.after') !!}
 
         {!! view_render_event('admin.sales-leads.index.kanban.toolbar.filter.before') !!}
 
         <!-- Filter -->
-        @include('admin::sales_leads.index.kanban.filter')
+        @include('admin.sales_leads.index.kanban.filter')
 
         {!! view_render_event('admin.sales-leads.index.kanban.toolbar.filter.after') !!}
 
@@ -31,7 +31,7 @@
     {!! view_render_event('admin.sales-leads.index.kanban.toolbar.switcher.before') !!}
 
     <!-- View Switcher -->
-    @include('admin::sales_leads.index.view-switcher')
+    @include('admin.sales_leads.index.view-switcher')
 
     {!! view_render_event('admin.sales-leads.index.kanban.toolbar.switcher.after') !!}
 </div>

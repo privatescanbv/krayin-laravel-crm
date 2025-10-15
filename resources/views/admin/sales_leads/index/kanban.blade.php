@@ -23,7 +23,7 @@
 
         <template v-else>
             <div class="flex flex-col gap-4">
-                @include('admin::sales_leads.index.kanban.toolbar')
+                @include('admin.sales_leads.index.kanban.toolbar')
 
                 {!! view_render_event('admin.sales-leads.index.kanban.content.before') !!}
 

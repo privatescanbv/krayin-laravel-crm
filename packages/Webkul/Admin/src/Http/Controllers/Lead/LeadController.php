@@ -24,6 +24,7 @@ use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\DataGrids\Lead\LeadDataGrid;
+use Webkul\Admin\Http\Controllers\Contact\Persons\PersonController;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\LeadForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
@@ -34,6 +35,7 @@ use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Lead\Helpers\MagicAI;
+use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Lead\Repositories\PipelineRepository;
 use Webkul\Lead\Repositories\ProductRepository;
@@ -605,6 +607,27 @@ class LeadController extends Controller
             $lead = $this->leadRepository->update($data, $id);
 
             Event::dispatch('lead.update.after', $lead);
+
+            // Check if we should redirect to sync page
+            $shouldSync = $this->shouldRedirectToSync($lead);
+            if ($shouldSync) {
+                $person = $lead->persons()->first();
+                if (request()->ajax()) {
+                    return response()->json([
+                        'message'  => trans('admin::app.leads.update-success'),
+                        'redirect' => route('admin.contacts.persons.edit_with_lead', [
+                            'personId' => $person->id,
+                            'leadId' => $lead->id
+                        ]),
+                    ]);
+                }
+
+                session()->flash('success', trans('admin::app.leads.update-success'));
+                return redirect()->route('admin.contacts.persons.edit_with_lead', [
+                    'personId' => $person->id,
+                    'leadId' => $lead->id
+                ]);
+            }
 
             if (request()->ajax()) {
                 return response()->json([
@@ -1491,5 +1514,99 @@ class LeadController extends Controller
                 'status' => ActivityStatus::DONE->value,
             ], $activity->id);
         }
+    }
+
+    /**
+     * Check if lead should redirect to sync page based on conditions:
+     * - Lead has exactly 1 person
+     * - Match score is not 100
+     */
+    private function shouldRedirectToSync($lead): bool
+    {
+        try {
+            // Check if lead has exactly 1 person using the relationship
+            if ($lead->persons()->count() !== 1) {
+                return false;
+            }
+
+            $person = $lead->persons()->first();
+
+            // Use PersonController to calculate match score
+            $personController = app(PersonController::class);
+            $matchScore = $personController->calculateMatchScore($lead, $person);
+
+            // Return true if match score is not 100 (perfect match)
+            return $matchScore < 100;
+
+        } catch (Exception $e) {
+            // Log the error and return false to prevent sync redirect
+            Log::error('Error in shouldRedirectToSync: ' . $e->getMessage(), [
+                'lead_id' => $lead->id,
+                'exception' => $e->getTraceAsString()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Normalize phone number for comparison.
+     * This is a copy of the method from PersonController to avoid circular dependencies.
+     */
+    private function normalizePhoneNumber(string $phone): string
+    {
+        // Remove all non-numeric characters
+        $normalized = preg_replace('/[^0-9]/', '', $phone);
+
+        // Handle Dutch phone numbers - convert +31 to 0
+        if (str_starts_with($normalized, '31') && strlen($normalized) >= 10) {
+            $normalized = '0' . substr($normalized, 2);
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Format date for comparison, handling invalid dates.
+     * This is a copy of the method from PersonController to avoid circular dependencies.
+     */
+    private function formatDateForComparison($date): ?string
+    {
+        if (empty($date)) {
+            return null;
+        }
+
+        try {
+            // Check if it's a valid Carbon instance
+            if ($date instanceof \Carbon\Carbon) {
+                // Check for invalid dates (like -0001-11-30 or 0000-00-00)
+                if ($date->year <= 0 || $date->year > 2100) {
+                    return null;
+                }
+                return $date->format('Y-m-d');
+            }
+
+            // If it's a string, try to parse it
+            if (is_string($date)) {
+                // Skip obviously invalid dates
+                if (in_array($date, ['0000-00-00', '0000-00-00 00:00:00']) || strpos($date, '-0001') === 0) {
+                    return null;
+                }
+
+                $carbonDate = \Carbon\Carbon::parse($date);
+                if ($carbonDate->year <= 0 || $carbonDate->year > 2100) {
+                    return null;
+                }
+                return $carbonDate->format('Y-m-d');
+            }
+        } catch (Exception $e) {
+            logger()->error('Error parsing date for comparison', [
+                'date' => $date,
+                'error' => $e->getMessage()
+            ]);
+            // If parsing fails, treat as null
+            return null;
+        }
+
+        return null;
     }
 }

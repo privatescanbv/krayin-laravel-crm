@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Throwable;
 use Webkul\Admin\DataGrids\Contact\PersonDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\AttributeForm;
@@ -588,7 +589,7 @@ class PersonController extends Controller
                 ],
                 'breakdown' => $result['breakdown'],
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return response()->json([
                 'message' => 'Unable to calculate match score',
             ], 400);
@@ -727,7 +728,7 @@ class PersonController extends Controller
     /**
      * Calculate match score between lead and person.
      */
-    private function calculateMatchScore(Lead $lead, Person $person): float
+    public function calculateMatchScore(Lead $lead, Person $person): float
     {
         $maxScore = 100.0;
 

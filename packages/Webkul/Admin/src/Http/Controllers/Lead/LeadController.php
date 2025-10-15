@@ -1521,6 +1521,9 @@ class LeadController extends Controller
      */
     private function shouldRedirectToSync($lead): bool
     {
+        // Ensure the lead has the persons relationship loaded
+        $lead->load('persons');
+        
         // Check if lead has exactly 1 person
         if ($lead->persons->count() !== 1) {
             return false;

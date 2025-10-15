@@ -65,6 +65,7 @@ test('redirects to sync page when lead has 1 person with match score < 100', fun
             'first_name' => 'John',
             'last_name'  => 'Smith',
             'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
+            'department_id' => $department->id,
         ]);
 
     // Should redirect to sync page
@@ -92,6 +93,8 @@ test('does not redirect to sync page when lead has 0 persons', function () {
         ->put(route('admin.leads.update', $lead->id), [
             'first_name' => 'John',
             'last_name'  => 'Doe',
+            'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
+            'department_id' => $department->id,
         ]);
 
     // Should redirect to lead view page
@@ -132,6 +135,8 @@ test('does not redirect to sync page when lead has 2+ persons', function () {
         ->put(route('admin.leads.update', $lead->id), [
             'first_name' => 'John',
             'last_name'  => 'Doe',
+            'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
+            'department_id' => $department->id,
         ]);
 
     // Should redirect to lead view page
@@ -191,6 +196,9 @@ test('does not redirect to sync page when match score is 100', function () {
         ->put(route('admin.leads.update', $lead->id), [
             'first_name' => 'John',
             'last_name'  => 'Doe',
+            'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
+            'phones'     => [['value' => '123456789', 'label' => 'Mobile']],
+            'department_id' => $department->id,
         ]);
 
     // Should redirect to lead view page (not sync page)
@@ -228,6 +236,7 @@ test('handles AJAX requests correctly for sync redirect', function () {
             'first_name' => 'John',
             'last_name'  => 'Smith',
             'emails'     => [['value' => 'john@example.com', 'label' => 'Work']],
+            'department_id' => $department->id,
         ]);
 
     // Should return JSON with redirect to sync page

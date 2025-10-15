@@ -2160,7 +2160,6 @@ return [
 
             'tabs'        => [
                 'description' => 'Description',
-                'products'    => 'Products',
                 'quotes'      => 'Quotes',
             ],
 

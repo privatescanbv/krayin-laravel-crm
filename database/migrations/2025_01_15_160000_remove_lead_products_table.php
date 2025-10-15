@@ -6,12 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up()
+    {
+        Schema::dropIfExists('lead_products');
+    }
+
+    public function down()
     {
         Schema::create('lead_products', function (Blueprint $table) {
             $table->increments('id');
@@ -26,15 +26,5 @@ return new class extends Migration
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             $table->timestamps();
         });
-    }
-
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
-    public function down()
-    {
-        Schema::dropIfExists('lead_products');
     }
 };

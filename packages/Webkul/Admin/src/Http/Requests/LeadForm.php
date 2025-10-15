@@ -215,11 +215,6 @@ class LeadForm extends FormRequest
         return [
             ...$this->rules,
             'user_id'               => 'nullable|exists:users,id|active_user',
-            'products'              => 'array',
-            'products.*.product_id' => 'sometimes|required|exists:products,id',
-            'products.*.name'       => 'required_with:products.*.product_id',
-            'products.*.price'      => 'required_with:products.*.product_id',
-            'products.*.quantity'   => 'required_with:products.*.product_id',
         ];
     }
 
@@ -228,11 +223,6 @@ class LeadForm extends FormRequest
      */
     public function messages(): array
     {
-        return [
-            'products.*.product_id.exists'      => trans('admin::app.leads.selected-product-not-exist'),
-            'products.*.name.required_with'     => trans('admin::app.leads.product-name-required'),
-            'products.*.price.required_with'    => trans('admin::app.leads.product-price-required'),
-            'products.*.quantity.required_with' => trans('admin::app.leads.product-quantity-required'),
-        ];
+        return [];
     }
 }

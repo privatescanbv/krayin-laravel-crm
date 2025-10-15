@@ -40,10 +40,6 @@ Route::controller(LeadController::class)->prefix('leads')->group(function () {
 
     Route::delete('{leadId}/detach-person/{personId}', 'detachPerson')->name('admin.leads.detach_person');
 
-    Route::delete('product/{lead_id}', 'removeProduct')->name('admin.leads.product.remove');
-
-    Route::put('product/{lead_id}', 'addProduct')->name('admin.leads.product.add');
-
     Route::get('kanban/look-up', [LeadController::class, 'kanbanLookup'])->name('admin.leads.kanban.look_up');
 
     Route::get('{id}/default-group', [ActivityController::class, 'getDefaultGroup'])->name('admin.leads.default-group');

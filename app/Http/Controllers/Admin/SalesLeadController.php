@@ -18,22 +18,20 @@ use Webkul\Admin\Http\Resources\ActivityResource;
 use Webkul\Installer\Database\Seeders\Lead\PipelineSeeder;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
+use Webkul\Lead\Repositories\PipelineRepository;
 use Webkul\Lead\Repositories\StageRepository;
 
 class SalesLeadController extends Controller
 {
-    /**
-     * Const variable for won/lost stage codes.
-     */
-    const WON_LOST_STAGE_CODES = ['won', 'lost', 'won-hernia', 'lost-hernia'];
+    public function __construct(private readonly PipelineRepository $pipelineRepository) {}
 
     public function index(Request $request)
     {
         // Get selected pipeline or default workflow pipeline
         if ($request->has('pipeline_id')) {
-            $pipeline = app('Webkul\Lead\Repositories\PipelineRepository')->find($request->pipeline_id);
+            $pipeline = $this->pipelineRepository->find($request->pipeline_id);
         } else {
-            $pipeline = app('Webkul\Lead\Repositories\PipelineRepository')->getDefaultPipelineByType(PipelineType::BACKOFFICE);
+            $pipeline = $this->pipelineRepository->getDefaultPipelineByType(PipelineType::BACKOFFICE);
         }
 
         // Remember selected pipeline for subsequent data requests
@@ -155,7 +153,7 @@ class SalesLeadController extends Controller
         // Get all leads for selection
         $leads = Lead::select('id', 'name')->get()->pluck('name', 'id');
 
-        return view('admin.sales_leads.create', compact('leads'));
+        return view('admin.sales_leads.create', ['leads' => $leads]);
     }
 
     public function store(Request $request)

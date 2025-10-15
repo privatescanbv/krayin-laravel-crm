@@ -4,9 +4,8 @@ namespace App\Observers;
 
 use App\Enums\LeadPipelineStageDefaults;
 use App\Enums\PipelineDefaultKeys;
-use App\Enums\PipelineStageDefaultKeys;
 use App\Enums\WebhookType;
-use App\Models\Department;
+use App\Repositories\SalesLeadRepository;
 use App\Services\LeadDuplicateCacheService;
 use App\Services\WebhookService;
 use Exception;
@@ -31,6 +30,7 @@ class LeadObserver
         protected WebhookService $webhookService,
         protected ActivityRepository $activityRepository,
         private readonly LeadRepository $leadRepository,
+        private readonly SalesLeadRepository $salesLeadRepository,
     ) {}
 
     /**
@@ -119,6 +119,14 @@ class LeadObserver
             ]);
             // 'stack_trace' => (new \Exception())->getTraceAsString(),
             $this->sendWebhook($lead, 'LeadObserver@updated');
+
+            // If stage transitioned to a "won" stage, create SalesLead and initial Order
+            // Reload the stage relationship to get the fresh data
+            $lead->load('stage');
+            $newStageCode = $lead->stage?->code;
+            if ($newStageCode && str_starts_with(strtolower($newStageCode), 'won')) {
+                $this->salesLeadRepository->createFromWonLead($lead);
+            }
         }
 
         // Log activities for fixed fields
@@ -137,7 +145,7 @@ class LeadObserver
 
             return;
         }
-        [$leadPipelineId, $leadPipelineStageId] = $this->getPipelineLineByDepartment($lead->department);
+        [$leadPipelineId, $leadPipelineStageId] = $this->leadRepository->mapLeadPipelineLineByDepartment($lead->department);
         if ($lead->lead_pipeline_id != $leadPipelineId) {
             $lead = $this->leadRepository->findOrFail($lead->id);
             logger()->info('lead pipeline updated');
@@ -146,18 +154,6 @@ class LeadObserver
                 'lead_pipeline_stage_id' => $leadPipelineStageId,
             ]);
         }
-    }
-
-    private function getPipelineLineByDepartment(Department $department): array
-    {
-        $leadPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
-        $leadPipelineStageId = PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_PRIVATESCAN_ID->value;
-        if ($department->name == 'Hernia') {
-            $leadPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
-            $leadPipelineStageId = PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value;
-        }
-
-        return [$leadPipelineId, $leadPipelineStageId];
     }
 
     /**

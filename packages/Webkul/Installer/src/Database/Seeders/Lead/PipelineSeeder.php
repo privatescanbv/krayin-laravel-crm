@@ -31,8 +31,8 @@ class PipelineSeeder extends BaseSeeder
 
         $privateSanPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
         $herniaPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
-        $privateScanWorkflowPipelineId = 3;
-        $herniaWorkflowPipelineId = 4;
+        $privateScanWorkflowPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_WORKFLOW_ID->value;
+        $herniaWorkflowPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_WORKFLOW_ID->value;
 
         // should always be empty, used for new leads
         $techBacklogPipelineId = PipelineDefaultKeys::PIPELINE_TECHNICAL_ID->value;;

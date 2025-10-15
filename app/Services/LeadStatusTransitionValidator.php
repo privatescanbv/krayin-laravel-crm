@@ -140,6 +140,34 @@ class LeadStatusTransitionValidator
     }
 
     /**
+     * Calculate match score between lead and person.
+     * This is a simplified version of the match score calculation from PersonController.
+     */
+    public static function calculateMatchScore(Lead $lead, \Webkul\Contact\Models\Person $person): float
+    {
+        $score = 0.0;
+        $maxScore = 100.0;
+
+        // Calculate name field matches (85% weight)
+        $nameScore = self::calculateNameMatchScore($lead, $person);
+        $score += $nameScore * 0.85 * 100;
+
+        // Email matching (5% weight)
+        $emailScore = self::calculateEmailMatchScore($lead, $person);
+        $score += $emailScore * 0.05 * 100;
+
+        // Phone number matching (5% weight)
+        $phoneScore = self::calculatePhoneMatchScore($lead, $person);
+        $score += $phoneScore * 0.05 * 100;
+
+        // Address matching (5% weight)
+        $addressScore = self::calculateAddressMatchScore($lead, $person);
+        $score += $addressScore * 0.05 * 100;
+
+        return min($score, $maxScore);
+    }
+
+    /**
      * Ensure default rules are present (lazy initialization).
      */
     private static function ensureDefaultRules(): void
@@ -235,34 +263,6 @@ class LeadStatusTransitionValidator
         }
 
         return $errors;
-    }
-
-    /**
-     * Calculate match score between lead and person.
-     * This is a simplified version of the match score calculation from PersonController.
-     */
-    private static function calculateMatchScore(Lead $lead, \Webkul\Contact\Models\Person $person): float
-    {
-        $score = 0.0;
-        $maxScore = 100.0;
-
-        // Calculate name field matches (85% weight)
-        $nameScore = self::calculateNameMatchScore($lead, $person);
-        $score += $nameScore * 0.85 * 100;
-
-        // Email matching (5% weight)
-        $emailScore = self::calculateEmailMatchScore($lead, $person);
-        $score += $emailScore * 0.05 * 100;
-
-        // Phone number matching (5% weight)
-        $phoneScore = self::calculatePhoneMatchScore($lead, $person);
-        $score += $phoneScore * 0.05 * 100;
-
-        // Address matching (5% weight)
-        $addressScore = self::calculateAddressMatchScore($lead, $person);
-        $score += $addressScore * 0.05 * 100;
-
-        return min($score, $maxScore);
     }
 
     /**

@@ -101,6 +101,7 @@ COPY --chown=www-data:www-data --from=yarn /build/public/build public/build
 
 # Ensure storage directories have correct permissions for log writing
 RUN mkdir -p /usr/share/nginx/html/storage/logs \
+    && chown -R www-data:www-data /usr/share/nginx/html/storage \
     && mkdir -p /usr/share/nginx/html/storage/framework/cache \
     && mkdir -p /usr/share/nginx/html/storage/framework/sessions \
     && mkdir -p /usr/share/nginx/html/storage/framework/views \
@@ -118,14 +119,6 @@ COPY docker-compose-prod.yml /docker/docker-compose.yml
 # TODO security wise, red flag. Change this CI implmementation later to a vault.
 COPY .env.prod /docker/.env.prod
 RUN mkdir -p ./storage && touch ./storage/installed
-
-# Voeg de cronjob toe
-# Bijvoorbeeld: draai elke minuut een Laravel schedule commando
-
-RUN echo "* * * * * /usr/local/bin/php /usr/share/nginx/html/artisan schedule:run >> /var/log/laravel-cron.log 2>&1" > /etc/cron.d/laravel-cron
-
-# Inbound email processor
-RUN echo "* * * * * /usr/local/bin/php /usr/share/nginx/html/artisan inbound-emails:process >> /var/log/inbound-emails.log 2>&1" > /etc/cron.d/inbound-emails
 
 # Zorg dat de cron-bestanden correct permissies hebben
 RUN chmod 0644 /etc/cron.d/laravel-cron && \

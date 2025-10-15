@@ -597,52 +597,6 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "=http://crm/api/sales-leads",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "X-API-KEY",
-              "value": "3!LvFF3HNTUGz*E^X@cu"
-            }
-          ]
-        },
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "lead_id",
-              "value": "={{ $json.lead_id}}"
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        -1904,
-        944
-      ],
-      "id": "0ae96eea-1712-422d-8f26-9495e201dddb",
-      "name": "Add lead workflow"
-    },
-    {
-      "parameters": {
-        "jsCode": "return $input.all().map(item => {\n  return {\n    json: {\n      ...item.json,\n      lead_id: item.json.body.entity_id,\n      source_code_id: item.json.source_code_id\n    }\n  };\n});\nreturn $input.all();"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -2128,
-        944
-      ],
-      "id": "368c0314-c60a-4f8a-97fc-beb3201e0bae",
-      "name": "lead_id"
-    },
-    {
-      "parameters": {
         "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Klant data bijwerken')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
@@ -726,19 +680,6 @@
       ],
       "id": "57eab30a-c3fa-4e7f-8d11-aa6d091bb1d1",
       "name": "Create task"
-    },
-    {
-      "parameters": {
-        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Order verzenden')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -1136,
-        768
-      ],
-      "id": "f32055a5-327d-4921-b5b2-3e6dea6c8a5c",
-      "name": "set lead_id and group_id2"
     },
     {
       "parameters": {
@@ -969,18 +910,7 @@
             "index": 0
           }
         ],
-        [
-          {
-            "node": "lead_id",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "set lead_id and group_id2",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Webhook - lead status change": {
@@ -1050,29 +980,7 @@
         ]
       ]
     },
-    "lead_id": {
-      "main": [
-        [
-          {
-            "node": "Add lead workflow",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "set lead_id and group_id": {
-      "main": [
-        [
-          {
-            "node": "Create task",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "set lead_id and group_id2": {
       "main": [
         [
           {
@@ -1121,7 +1029,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "b8dec605-a3e1-48ab-873f-67f0a4417ee4",
+  "versionId": "7c2d40d4-7a90-46d0-873b-4c2f5ae8c5e5",
   "meta": {
     "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },

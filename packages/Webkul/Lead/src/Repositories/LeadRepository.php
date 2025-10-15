@@ -2,6 +2,10 @@
 
 namespace Webkul\Lead\Repositories;
 
+use App\Enums\Departments;
+use App\Enums\PipelineDefaultKeys;
+use App\Enums\PipelineStageDefaultKeys;
+use App\Models\Department;
 use App\Services\LeadDuplicateCacheService;
 use App\Services\Concerns\JsonDuplicateMatcher;
 use Carbon\Carbon;
@@ -479,8 +483,7 @@ class LeadRepository extends Repository
      * @param array $fieldMappings
      * @return Lead
      */
-    public
-    function mergeLeads($primaryLeadId, $duplicateLeadIds, $fieldMappings = [])
+    public function mergeLeads($primaryLeadId, $duplicateLeadIds, $fieldMappings = [])
     {
         $primaryLead = $this->findOrFail($primaryLeadId);
         $duplicateLeads = $this->findWhereIn('id', $duplicateLeadIds);
@@ -559,6 +562,25 @@ class LeadRepository extends Repository
             DB::rollback();
             throw $e;
         }
+    }
+
+    /**
+     * @param Department $department
+     * @return array{
+     *   lead_pipeline_id: int,
+     *   lead_pipeline_stage_id: int
+     * }
+     */
+    public function mapLeadPipelineLineByDepartment(Department $department): array
+    {
+        $leadPipelineId = PipelineDefaultKeys::PIPELINE_PRIVATESCAN_ID->value;
+        $leadPipelineStageId = PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_PRIVATESCAN_ID->value;
+        if ($department->name == Departments::HERNIA->value) {
+            $leadPipelineId = PipelineDefaultKeys::PIPELINE_HERNIA_ID->value;
+            $leadPipelineStageId = PipelineStageDefaultKeys::PIPELINE_FIRST_STAGE_HERNIA_ID->value;
+        }
+
+        return [$leadPipelineId, $leadPipelineStageId];
     }
 
     /**
@@ -698,8 +720,6 @@ class LeadRepository extends Repository
         return false;
     }
 
-
-
     /**
      * Delete anamnesis for a lead when all persons are removed.
      */
@@ -715,40 +735,6 @@ class LeadRepository extends Repository
                 'error' => $e->getMessage(),
             ]);
         }
-    }
-
-    /**
-     * Generic helper to find duplicates based on JSON field values.
-     */
-    private function findJsonFieldDuplicates(Lead $lead, string $fieldName): Collection
-    {
-        $duplicates = collect();
-        $fieldData = $lead->$fieldName;
-
-        // Handle case where field might be a string or null
-        if (is_string($fieldData)) {
-            $fieldData = json_decode($fieldData, true) ?: [];
-        }
-
-        if (is_array($fieldData) && !empty($fieldData)) {
-            foreach ($fieldData as $item) {
-                if (is_array($item) && !empty($item['value'])) {
-                    try {
-                        $query = LeadModel::with(['stage', 'pipeline', 'user'])
-                            ->where('id', '!=', $lead->id);
-
-                        // Use shared matcher for robust cross-driver matching
-                        $query = $this->applyJsonValueMatch($query, $fieldName, (string) $item['value']);
-
-                        $duplicates = $duplicates->merge($query->get());
-                    } catch (Exception $e) {
-                        Log::error("Error searching for {$fieldName} duplicates: " . $e->getMessage());
-                    }
-                }
-            }
-        }
-
-        return $duplicates;
     }
 
 }

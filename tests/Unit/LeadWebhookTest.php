@@ -33,7 +33,8 @@ class LeadWebhookTest extends TestCase
         $this->observer = new LeadObserver(
             webhookService: $this->mockWebhookService(),
             activityRepository: app(ActivityRepository::class),
-            leadRepository: app(LeadRepository::class)
+            leadRepository: app(LeadRepository::class),
+            salesLeadRepository: app(\App\Repositories\SalesLeadRepository::class)
         );
     }
 

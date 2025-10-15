@@ -60,7 +60,7 @@ class SalesLeadRepository
             $this->orderRepository->createFromSalesLead($salesLead->id, $salesLead->name);
 
             // Add a system activity on the lead linking to this new sales lead view
-            $this->activityRepository->createSystemActivityForSalesLeadCreation($lead, $salesLead);
+            $this->activityRepository->createSystemActivitiesForSalesLeadCreation($lead, $salesLead);
 
             return $salesLead;
 

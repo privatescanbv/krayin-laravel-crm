@@ -381,8 +381,6 @@ class SalesLeadController extends Controller
             'schedule_to'   => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
         ]);
 
-        $salesLead = SalesLead::findOrFail($id);
-
         $activity = Activity::create([
             'type'             => request('type'),
             'title'            => request('title'),

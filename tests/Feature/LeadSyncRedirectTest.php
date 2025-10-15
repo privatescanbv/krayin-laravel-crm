@@ -68,11 +68,6 @@ test('redirects to sync page when lead has 1 person with match score < 100', fun
             'department_id' => $department->id,
         ]);
 
-    // Debug: Check if validation failed
-    if ($response->status() === 422) {
-        dump('Validation failed with errors:', $response->json('errors'));
-    }
-
     // Should redirect to sync page
     $response->assertRedirect(route('admin.contacts.persons.edit_with_lead', [
         'personId' => $person->id,

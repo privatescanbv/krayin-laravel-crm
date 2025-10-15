@@ -4,7 +4,6 @@ namespace Webkul\Admin\Helpers\Reporting;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Webkul\Lead\Repositories\ProductRepository;
 
 class Product extends AbstractReporting
 {
@@ -13,9 +12,8 @@ class Product extends AbstractReporting
      *
      * @return void
      */
-    public function __construct(
-        protected ProductRepository $productRepository
-    ) {
+    public function __construct()
+    {
         parent::__construct();
     }
 

@@ -171,16 +171,10 @@
                 :activeType="request()->query('from') === 'quotes' ? 'quotes' : 'planned'"
                 :extra-types="[
                     ['name' => 'description', 'label' => trans('admin::app.leads.view.tabs.description')],
-                    ['name' => 'products', 'label' => trans('admin::app.leads.view.tabs.products')],
-                    ['name' => 'quotes', 'label' => trans('admin::app.leads.view.tabs.quotes')],
                     ['name' => 'orders', 'label' => 'Orders'],
                 ]"
                 ref="activities"
             >
-                <!-- Products -->
-                <x-slot:products>
-                    @include('admin::leads.view.products')
-                </x-slot>
 
                 <!-- Orders -->
                 <x-slot:orders>

@@ -146,9 +146,9 @@
       "parameters": {
         "workflowId": {
           "__rl": true,
-          "value": "FoL6phxyuOVrAwz5",
+          "value": "erhMZ9LlyR8UpyEl",
           "mode": "list",
-          "cachedResultName": "Create Task"
+          "cachedResultName": "Create Task Sales"
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
@@ -174,17 +174,8 @@
               "type": "string"
             },
             {
-              "id": "lead_id",
-              "displayName": "lead_id",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string"
-            },
-            {
-              "id": "group_id",
-              "displayName": "group_id",
+              "id": "sales_lead_id",
+              "displayName": "sales_lead_id",
               "required": false,
               "defaultMatch": false,
               "display": true,
@@ -232,7 +223,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'order opstellen')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
+        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    sales_lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'order opstellen')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -245,7 +236,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Wacht op akkoord')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
+        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    sales_lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Wacht op akkoord')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -258,7 +249,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Order Akkoord - handel af')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
+        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    sales_lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Order Akkoord - handel af')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -271,7 +262,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Maak Order')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
+        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    sales_lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Maak Order')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -284,7 +275,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Order verzonden | wacht op akkoord')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
+        "jsCode": "const body = $json.body || {};\nreturn {\n  json: {\n    sales_lead_id: body.entity_id ?? null,\n    task_title: (body.status || 'Order verzonden | wacht op akkoord')\n      .replace(/-/g, ' ')\n      .replace(/\\b\\w/g, c => c.toUpperCase()),\n    task_description: ''\n  }\n};"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -424,7 +415,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "0268d5f3-1ef8-4392-8690-812a147e1cae",
+  "versionId": "899abbfc-42b1-41d5-ac3a-3c2b55fa11db",
   "meta": {
     "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },

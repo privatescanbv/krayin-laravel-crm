@@ -1,0 +1,120 @@
+{
+  "name": "Create Task Sales",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://crm/api/sales_lead/{{ $json.sales_lead_id }}/activities",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-KEY",
+              "value": "3!LvFF3HNTUGz*E^X@cu"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "type",
+              "value": "={{ $json.task_type || 'task' }}"
+            },
+            {
+              "name": "title",
+              "value": "={{ $json.task_title }}"
+            },
+            {
+              "name": "description",
+              "value": "={{ $json.task_description }}"
+            },
+            {
+              "name": "schedule_from",
+              "value": "={{ $now.format('yyyy-MM-dd hh:mm:ss') }}"
+            },
+            {
+              "name": "schedule_to",
+              "value": "={{ $now.plus(7, 'days').format('yyyy-MM-dd hh:mm:ss') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1088,
+        400
+      ],
+      "id": "40ab3c8e-c8d4-4d1d-b017-0aaa810fd9f4",
+      "name": "Add task - klant bellen"
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "task_title"
+            },
+            {
+              "name": "task_description"
+            },
+            {
+              "name": "sales_lead_id"
+            },
+            {
+              "name": "task_type"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        352,
+        240
+      ],
+      "id": "7d374692-8f6a-479a-b533-cb25784d6eb3",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "content": "Deze flow maakt een taak aan, gekoppeld aan meegeven sales lead.\n\n## Parameters\n* task_title (*)\n* task_description (*)\n* task_type (call;meeting;task, default: task)",
+        "height": 320
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        64,
+        80
+      ],
+      "id": "9da3d4f7-c1a8-477c-b2ab-a6f9cf72c928",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Add task - klant bellen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b79a7cc4-d308-430f-b378-9cb619c39b99",
+  "meta": {
+    "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
+  },
+  "id": "erhMZ9LlyR8UpyEl",
+  "tags": []
+}

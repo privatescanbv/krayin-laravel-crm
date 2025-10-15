@@ -43,5 +43,14 @@ Route::middleware('api.key')->group(function () {
     // Workflow Leads API
     Route::prefix('sales-leads')->group(function () {
         Route::post('/', [SalesLeadController::class, 'store']);
+        // Sales lead activities
+        Route::get('{id}/activities', [SalesLeadController::class, 'activities']);
+        Route::post('{id}/activities', [SalesLeadController::class, 'storeActivity']);
+    });
+
+    // Backward-compatible singular prefix for n8n (sales-lead)
+    Route::prefix('sales-leads')->group(function () {
+        Route::get('{id}/activities', [SalesLeadController::class, 'activities']);
+        Route::post('{id}/activities', [SalesLeadController::class, 'storeActivity']);
     });
 });

@@ -55,8 +55,6 @@ class SalesLeadObserver
 
     private function sendWebhook(SalesLead $salesLead, string $caller): void
     {
-        // Eager load the lead relation to get source and department
-        $salesLead->load(['lead.source', 'lead.department']);
 
         $this->webhookService->sendWebhook([
             'entity_id'      => $salesLead->id,

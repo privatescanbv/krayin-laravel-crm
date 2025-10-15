@@ -134,7 +134,7 @@ class CreatePlanningTestData extends Command
 
     private function getOrCreateProductType(): ProductType
     {
-        $productType = ProductType::where('name', 'Medische Dienst')->first();
+        $productType = ProductType::where('name', 'Total Bodyscan')->first();
         if (! $productType) {
             $productType = ProductType::create([
                 'name'        => 'Medische Dienst',

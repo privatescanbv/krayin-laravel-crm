@@ -18,5 +18,6 @@ class DatabaseSeeder extends Seeder
         $this->call(DutchLocaleSeeder::class);
         $this->call(ClinicSeeder::class);
         $this->call(ResourceTypeSeeder::class);
+        $this->call(ProductTypeSeeder::class);
     }
 }

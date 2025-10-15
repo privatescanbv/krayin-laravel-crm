@@ -2,31 +2,30 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ProductType as ProductTypeEnum;
 use App\Models\ProductType;
-use Illuminate\Database\Seeder;
 
-class ProductTypeSeeder extends Seeder
+class ProductTypeSeeder extends BaseSeeder
 {
     public function run(): void
     {
-        $items = [
-            ['name' => 'Good', 'description' => null],
-            ['name' => 'Service', 'description' => null],
-            ['name' => '01 Total Bodyscan', 'description' => null],
-            ['name' => '02 MRI scan', 'description' => null],
-            ['name' => '03 CT scan', 'description' => null],
-            ['name' => '04 Cardiologie', 'description' => null],
-            ['name' => '05 Endoscopie', 'description' => null],
-            ['name' => '06 PET scan', 'description' => null],
-            ['name' => '07 Laboratorium', 'description' => null],
-            ['name' => '08 CCSVI', 'description' => null],
-            ['name' => '09 Vertaling', 'description' => null],
-            ['name' => '10 Diensten', 'description' => null],
-            ['name' => '11 Overige', 'description' => null],
+        $this->truncateTables(['product_types']);
+
+        $defaults = [
+            ['external_id' => '01', 'name' => ProductTypeEnum::TOTAL_BODYSCAN->label()],
+            ['external_id' => '02', 'name' => ProductTypeEnum::MRI_SCAN->label()],
+            ['external_id' => '03', 'name' => ProductTypeEnum::CT_SCAN->label()],
+            ['external_id' => '04', 'name' => ProductTypeEnum::CARDIOLOGIE->label()],
+            ['external_id' => '05', 'name' => ProductTypeEnum::ENDOSCOPIE->label()],
+            ['external_id' => '06', 'name' => ProductTypeEnum::PETSCAN->label()],
+            ['external_id' => '07', 'name' => ProductTypeEnum::LABORATORIUM->label()],
+            ['external_id' => '09', 'name' => ProductTypeEnum::VERTALING->label()],
+            ['external_id' => '10', 'name' => ProductTypeEnum::DIENSTEN->label()],
+            ['external_id' => '11', 'name' => ProductTypeEnum::OVERIG->label()],
         ];
 
-        foreach ($items as $item) {
-            ProductType::firstOrCreate(['name' => $item['name']], $item);
+        foreach ($defaults as $data) {
+            ProductType::create($data);
         }
     }
 }

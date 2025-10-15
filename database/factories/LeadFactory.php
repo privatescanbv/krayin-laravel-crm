@@ -78,7 +78,6 @@ class LeadFactory extends Factory
             'lead_pipeline_id'       => $pipeline->id,
             'lead_pipeline_stage_id' => $stage->id,
             'department_id'          => $department->id, // Always set department_id
-            'combine_order'          => true, // Default true
             // Personal fields - minimal defaults, can be overridden
             'first_name'             => $this->faker->firstName(),
             'last_name'              => $this->faker->lastName(),

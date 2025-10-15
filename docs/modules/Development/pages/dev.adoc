@@ -143,6 +143,20 @@ mysql -u <DB_MYSQLDB_USER> -p'<DB_MYSQLDB_PASSWORD>' -h 127.0.0.1 -P 3307 <DB_MY
 delete from workflow_entity;
 delete from shared_workflow;
 
+*Disk full*
+
+Voer analyse uit, commando's:
+
+// # 1. Totale schijfruimte
+- df -h
+- docker system df
+- sudo docker system prune -a --volumes
+- sudo du -h /var/lib/docker | sort -hr | head -20
+
+fix met opruimen van docker images:
+- docker system prune -a --volumes
+
+(Laatste prune actie leverde 35 GB op)
 
 
 === Mail server lokaal opzetten

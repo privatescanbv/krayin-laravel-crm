@@ -78,9 +78,6 @@ class LeadValidationService
             // Lead organization (standalone for billing)
             'organization_id' => 'nullable|numeric|exists:organizations,id',
 
-            // Order combination setting
-            'combine_order' => 'nullable|boolean',
-
             // Address fields
             'address.postal_code'         => 'nullable|string|max:20',
             'address.house_number'        => 'nullable|string|max:20',

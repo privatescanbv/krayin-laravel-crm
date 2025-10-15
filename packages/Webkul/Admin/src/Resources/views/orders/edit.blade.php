@@ -68,6 +68,18 @@
                 </x-admin::form.control-group.control>
             </x-admin::form.control-group>
 
+            <x-admin::form.control-group>
+                <x-admin::form.control-group.label>Orders combineren</x-admin::form.control-group.label>
+                <x-admin::form.control-group.control
+                    type="select"
+                    name="combine_order"
+                    value="{{ $orders->combine_order ? '1' : '0' }}"
+                >
+                    <option value="1" {{ $orders->combine_order ? 'selected' : '' }}>Ja</option>
+                    <option value="0" {{ !$orders->combine_order ? 'selected' : '' }}>Nee</option>
+                </x-admin::form.control-group.control>
+            </x-admin::form.control-group>
+
             @include('admin::orders.partials.items', ['order' => $orders])
         </div>
     </x-admin::form>

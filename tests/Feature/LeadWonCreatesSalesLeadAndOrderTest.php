@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Enums\ActivityType;
 use App\Enums\OrderStatus;
 use App\Enums\PipelineDefaultKeys;
 use App\Models\Department;
 use App\Models\Order;
 use App\Models\SalesLead;
-use App\Enums\ActivityType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Webkul\Activity\Models\Activity;
@@ -87,7 +87,6 @@ class LeadWonCreatesSalesLeadAndOrderTest extends TestCase
             'lead_source_id'         => $source->id,
             'lead_type_id'           => $type->id,
             'department_id'          => $department->id,
-            'combine_order'          => true,
         ]);
         $lead->save();
 
@@ -205,7 +204,6 @@ class LeadWonCreatesSalesLeadAndOrderTest extends TestCase
             'lead_source_id'         => $source->id,
             'lead_type_id'           => $type->id,
             'department_id'          => $department->id,
-            'combine_order'          => true,
         ]);
         $lead->save();
 
@@ -311,7 +309,6 @@ class LeadWonCreatesSalesLeadAndOrderTest extends TestCase
             'lead_source_id'         => $source->id,
             'lead_type_id'           => $type->id,
             'department_id'          => $department->id,
-            'combine_order'          => true,
         ]);
         $lead->save();
 

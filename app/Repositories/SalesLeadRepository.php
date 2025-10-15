@@ -3,15 +3,14 @@
 namespace App\Repositories;
 
 use App\Enums\Departments;
-use App\Enums\ActivityType;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Models\SalesLead;
 use Illuminate\Support\Facades\Log;
 use Throwable;
+use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
-use Webkul\Activity\Repositories\ActivityRepository;
 
 class SalesLeadRepository
 {

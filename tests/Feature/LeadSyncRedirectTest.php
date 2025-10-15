@@ -16,7 +16,7 @@ beforeEach(function () {
 });
 
 // Helper to get required pipeline/stage data
-function createPipelineData(): array
+function createLeadSyncPipelineData(): array
 {
     $pipeline = Pipeline::firstOrCreate([
         'name'        => 'Test Pipeline',
@@ -35,7 +35,7 @@ function createPipelineData(): array
 }
 
 test('redirects to sync page when lead has 1 person with match score < 100', function () {
-    $data = createPipelineData();
+    $data = createLeadSyncPipelineData();
     
     // Create a person with different data than the lead
     $person = Person::factory()->create([
@@ -75,7 +75,7 @@ test('redirects to sync page when lead has 1 person with match score < 100', fun
 });
 
 test('does not redirect to sync page when lead has 0 persons', function () {
-    $data = createPipelineData();
+    $data = createLeadSyncPipelineData();
     
     $department = Department::where('name', Departments::PRIVATESCAN->value)->firstOrFail();
     $lead = Lead::factory()->create([
@@ -99,7 +99,7 @@ test('does not redirect to sync page when lead has 0 persons', function () {
 });
 
 test('does not redirect to sync page when lead has 2+ persons', function () {
-    $data = createPipelineData();
+    $data = createLeadSyncPipelineData();
     
     // Create two persons
     $person1 = Person::factory()->create([
@@ -139,7 +139,7 @@ test('does not redirect to sync page when lead has 2+ persons', function () {
 });
 
 test('does not redirect to sync page when match score is 100', function () {
-    $data = createPipelineData();
+    $data = createLeadSyncPipelineData();
     
     // Create a person with matching data
     $person = Person::factory()->create([
@@ -198,7 +198,7 @@ test('does not redirect to sync page when match score is 100', function () {
 });
 
 test('handles AJAX requests correctly for sync redirect', function () {
-    $data = createPipelineData();
+    $data = createLeadSyncPipelineData();
     
     // Create a person with different data than the lead
     $person = Person::factory()->create([

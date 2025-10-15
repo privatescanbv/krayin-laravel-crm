@@ -24,6 +24,7 @@ use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\DataGrids\Lead\LeadDataGrid;
+use Webkul\Admin\Http\Controllers\Contact\Persons\PersonController;
 use Webkul\Admin\Http\Controllers\Controller;
 use Webkul\Admin\Http\Requests\LeadForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
@@ -34,6 +35,7 @@ use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Lead\Helpers\MagicAI;
+use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Lead\Repositories\PipelineRepository;
 use Webkul\Lead\Repositories\ProductRepository;
@@ -1528,25 +1530,22 @@ class LeadController extends Controller
             }
 
             $person = $lead->persons()->first();
-            
+
             // Use PersonController to calculate match score
-            $personController = app(\Webkul\Admin\Http\Controllers\Contact\Persons\PersonController::class);
+            $personController = app(PersonController::class);
             $matchScore = $personController->calculateMatchScore($lead, $person);
-            
+
             // Return true if match score is not 100 (perfect match)
             return $matchScore < 100;
-            
-        } catch (\Exception $e) {
+
+        } catch (Exception $e) {
             // Log the error and return false to prevent sync redirect
-            \Log::error('Error in shouldRedirectToSync: ' . $e->getMessage(), [
+            Log::error('Error in shouldRedirectToSync: ' . $e->getMessage(), [
                 'lead_id' => $lead->id,
                 'exception' => $e->getTraceAsString()
             ]);
             return false;
         }
-    }
-}
-        });
     }
 
     /**

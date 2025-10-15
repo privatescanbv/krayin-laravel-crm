@@ -1790,8 +1790,8 @@ return [
 
         'shifts' => [
             'index' => [
-                'title'       => 'Diensten',
-                'create-btn'  => 'Dienst toevoegen',
+                'title'       => 'Roosters',
+                'create-btn'  => 'Rooster toevoegen',
                 'datagrid'    => [
                     'id'        => 'ID',
                     'starts_at' => 'Start',
@@ -1802,11 +1802,11 @@ return [
                 ],
             ],
             'create' => [
-                'title'    => 'Dienst aanmaken',
+                'title'    => 'Rooster aanmaken',
                 'save-btn' => 'Opslaan',
             ],
             'edit' => [
-                'title'    => 'Dienst bewerken',
+                'title'    => 'Rooster bewerken',
                 'save-btn' => 'Opslaan',
             ],
             'fields' => [
@@ -1832,10 +1832,10 @@ return [
                 'edit'      => 'Bewerken',
                 'delete'    => 'Verwijderen',
             ],
-            'create-success' => 'Dienst succesvol aangemaakt.',
-            'update-success' => 'Dienst succesvol bijgewerkt.',
-            'delete-success' => 'Dienst succesvol verwijderd.',
-            'delete-failed'  => 'Verwijderen van dienst mislukt.',
+            'create-success' => 'Rooster succesvol aangemaakt.',
+            'update-success' => 'Rooster succesvol bijgewerkt.',
+            'delete-success' => 'Rooster succesvol verwijderd.',
+            'delete-failed'  => 'Verwijderen van rooster mislukt.',
         ],
 
         'partner_products' => [

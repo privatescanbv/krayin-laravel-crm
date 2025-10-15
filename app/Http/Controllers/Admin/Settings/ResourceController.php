@@ -9,7 +9,9 @@ use App\Repositories\ResourceTypeRepository;
 use App\Repositories\ShiftRepository;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\View\View;
 
 class ResourceController extends SimpleEntityController
@@ -70,6 +72,35 @@ class ResourceController extends SimpleEntityController
             ->all();
 
         return response()->json(['data' => $resources]);
+    }
+
+    public function store(Request $request): RedirectResponse|JsonResponse
+    {
+        $this->validateStore($request);
+
+        Event::dispatch("settings.{$this->entityName}.create.before");
+
+        $entity = $this->resourceRepository->create($this->transformPayload($request->all()));
+
+        Event::dispatch("settings.{$this->entityName}.create.after", $entity);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'data'    => $entity,
+                'message' => $this->getCreateSuccessMessage(),
+            ], 200);
+        }
+
+        // If coming from clinic view, go back there
+        if ($request->input('return_to') === 'clinic_view' && $request->filled('clinic_id')) {
+            return redirect()
+                ->route('admin.settings.clinics.view', (int) $request->input('clinic_id'))
+                ->with('success', $this->getCreateSuccessMessage());
+        }
+
+        return redirect()
+            ->route($this->indexRoute)
+            ->with('success', $this->getCreateSuccessMessage());
     }
 
     /**

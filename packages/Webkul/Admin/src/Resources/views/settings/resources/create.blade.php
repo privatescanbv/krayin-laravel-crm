@@ -22,6 +22,7 @@
             </div>
 
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+               <input type="hidden" name="return_to" value="{{ isset($preSelectedClinicId) ? 'clinic_view' : request()->query('return_to') }}" />
                 <x-admin::resource-form-fields :pre-selected-clinic-id="$preSelectedClinicId" />
             </div>
         </div>

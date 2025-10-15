@@ -10,7 +10,7 @@
                 </span>
             </div>
             @if (bouncer()->hasPermission('settings.resources.create'))
-                <a href="{{ route('admin.settings.resources.create', ['clinic_id' => $clinic->id]) }}" class="primary-button">
+                <a href="{{ route('admin.settings.resources.create', ['clinic_id' => $clinic->id, 'return_to' => 'clinic_view']) }}" class="primary-button">
                     @lang('admin::app.settings.clinics.view.resources.add-btn')
                 </a>
             @endif

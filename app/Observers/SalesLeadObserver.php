@@ -2,10 +2,12 @@
 
 namespace App\Observers;
 
+use App\Enums\ActivityType;
 use App\Enums\WebhookType;
 use App\Models\SalesLead;
 use App\Services\WebhookService;
 use Illuminate\Support\Facades\Log;
+use Webkul\Activity\Models\Activity;
 
 /**
  * Observer for SalesLead model to handle pipeline stage changes and webhooks.
@@ -28,6 +30,21 @@ class SalesLeadObserver
             'sales_lead_id' => $salesLead->id,
             'stage'         => $salesLead->pipelineStage?->name,
         ]);
+
+        // Create a system activity on the related lead
+        if ($salesLead->lead_id) {
+            Activity::create([
+                'lead_id'        => $salesLead->lead_id,
+                'sales_lead_id'  => $salesLead->id,
+                'type'           => ActivityType::SYSTEM,
+                'title'          => 'Sales lead aangemaakt',
+                'comment'        => 'Een nieuwe sales lead is aangemaakt voor deze lead.',
+                'is_done'        => 1,
+                'additional'     => [
+                    'link' => route('admin.sales-leads.view', $salesLead->id),
+                ],
+            ]);
+        }
 
         $this->sendWebhook($salesLead, 'SalesLeadObserver@created');
     }

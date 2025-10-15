@@ -4,7 +4,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=http://crm/api/sales_lead/{{ $json.sales_lead_id }}/activities",
+        "url": "=http://crm/api/sales-leads/{{ $json.sales_lead_id }}/activities",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -111,7 +111,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "b79a7cc4-d308-430f-b378-9cb619c39b99",
+  "versionId": "c353c160-206b-48b0-bb86-d0f8b26d16f6",
   "meta": {
     "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },

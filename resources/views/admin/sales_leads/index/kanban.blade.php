@@ -122,7 +122,7 @@
                             </template>
 
                             <!-- Sales Lead Card -->
-                            <template #item="{ element: lead }">
+                            <template #item="{ element: salesLead }">
                                 {!! view_render_event('admin.sales-leads.index.kanban.content.stage.body.card.before') !!}
 
                                 <a

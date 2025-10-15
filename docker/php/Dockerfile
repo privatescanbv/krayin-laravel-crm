@@ -120,12 +120,6 @@ COPY docker-compose-prod.yml /docker/docker-compose.yml
 COPY .env.prod /docker/.env.prod
 RUN mkdir -p ./storage && touch ./storage/installed
 
-# Zorg dat de cron-bestanden correct permissies hebben
-RUN chmod 0644 /etc/cron.d/laravel-cron && \
-    chmod 0644 /etc/cron.d/inbound-emails && \
-    crontab /etc/cron.d/laravel-cron && \
-    crontab -l | cat - /etc/cron.d/inbound-emails | crontab -
-
 COPY .docker/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # temporary for mail server
 COPY ./docker/config /docker/config

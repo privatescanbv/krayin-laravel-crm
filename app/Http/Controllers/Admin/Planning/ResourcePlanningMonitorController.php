@@ -67,17 +67,17 @@ class ResourcePlanningMonitorController extends Controller
 
         // Get unique resource types from order items
         $resourceTypes = $order->orderRegels
-            ->filter(fn($item) => $item->product && $item->product->resourceType)
-            ->map(fn($item) => $item->product->resourceType)
+            ->filter(fn ($item) => $item->product && $item->product->resourceType)
+            ->map(fn ($item) => $item->product->resourceType)
             ->unique('id')
             ->values()
-            ->map(fn($type) => [
-                'id' => $type->id,
-                'name' => $type->name
+            ->map(fn ($type) => [
+                'id'   => $type->id,
+                'name' => $type->name,
             ]);
 
         return response()->json([
-            'resource_types' => $resourceTypes
+            'resource_types' => $resourceTypes,
         ]);
     }
 

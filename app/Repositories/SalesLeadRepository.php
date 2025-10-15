@@ -3,10 +3,8 @@
 namespace App\Repositories;
 
 use App\Enums\Departments;
-use App\Enums\OrderStatus;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
-use App\Models\Order;
 use App\Models\SalesLead;
 use Illuminate\Support\Facades\Log;
 use Throwable;

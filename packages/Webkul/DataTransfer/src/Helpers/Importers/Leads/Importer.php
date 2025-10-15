@@ -15,7 +15,6 @@ use Webkul\DataTransfer\Helpers\Import;
 use Webkul\DataTransfer\Helpers\Importers\AbstractImporter;
 use Webkul\DataTransfer\Repositories\ImportBatchRepository;
 use Webkul\Lead\Repositories\LeadRepository;
-use Webkul\Lead\Repositories\ProductRepository as LeadProductRepository;
 
 class Importer extends AbstractImporter
 {
@@ -74,7 +73,6 @@ class Importer extends AbstractImporter
     public function __construct(
         protected ImportBatchRepository $importBatchRepository,
         protected LeadRepository $leadRepository,
-        protected LeadProductRepository $leadProductRepository,
         protected AttributeRepository $attributeRepository,
         protected AttributeValueRepository $attributeValueRepository,
         protected Storage $leadsStorage,
@@ -135,25 +133,7 @@ class Importer extends AbstractImporter
             return true;
         }
 
-        if (! empty($rowData['product'])) {
-            $product = $this->parseProducts($rowData['product']);
-
-            $validator = Validator::make($product, [
-                'id'       => 'required|exists:products,id',
-                'price'    => 'required',
-                'quantity' => 'required',
-            ]);
-
-            if ($validator->fails()) {
-                $failedAttributes = $validator->failed();
-
-                foreach ($validator->errors()->getMessages() as $attributeCode => $message) {
-                    $errorCode = array_key_first($failedAttributes[$attributeCode] ?? []);
-
-                    $this->skipRow($rowNumber, $errorCode, $attributeCode, current($message));
-                }
-            }
-        }
+        // Product handling removed - lead-product relationship no longer exists
 
         /**
          * Validate leads attributes.
@@ -346,13 +326,10 @@ class Importer extends AbstractImporter
         $products = [];
 
         foreach ($batch->data as $rowData) {
-            /**
-             * Prepare products.
-             */
-            $this->prepareProducts($rowData, $products);
+        // Product preparation removed - lead-product relationship no longer exists
         }
 
-        $this->saveProducts($products);
+        // Product saving removed - lead-product relationship no longer exists
 
         /**
          * Update import batch summary
@@ -366,44 +343,7 @@ class Importer extends AbstractImporter
         return true;
     }
 
-    /**
-     * Prepare products.
-     */
-    public function prepareProducts($rowData, &$product): void
-    {
-        if (! empty($rowData['product'])) {
-            $product[$rowData['id']] = $this->parseProducts($rowData['product']);
-        }
-    }
-
-    /**
-     * Save products.
-     */
-    public function saveProducts(array $products): void
-    {
-        $leadProducts = [];
-
-        foreach ($products as $title => $product) {
-            $lead = $this->leadsStorage->get($title);
-
-            $leadProducts['insert'][] = [
-                'lead_id'    => $lead['id'],
-                'product_id' => $product['id'],
-                'price'      => $product['price'],
-                'quantity'   => $product['quantity'],
-                'amount'     => $product['amount'],
-            ];
-        }
-
-        foreach ($leadProducts['insert'] as $key => $leadProduct) {
-            $this->leadProductRepository->deleteWhere([
-                'lead_id'    => $leadProduct['lead_id'],
-                'product_id' => $leadProduct['product_id'],
-            ]);
-        }
-
-        $this->leadProductRepository->upsert($leadProducts['insert'], ['lead_id', 'product_id']);
-    }
+    // Product-related methods removed - lead-product relationship no longer exists
 
     /**
      * Delete leads from current batch.

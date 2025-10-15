@@ -1260,7 +1260,7 @@
                                             class="overflow-y-auto"
                                             v-show="selectedType == 'product'"
                                         >
-                                            @include('admin::leads.common.products')
+                                            <!-- Products functionality removed -->
                                         </div>
                                     </div>
                                 </div>

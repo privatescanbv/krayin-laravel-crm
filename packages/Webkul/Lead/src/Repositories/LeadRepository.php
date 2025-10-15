@@ -62,7 +62,6 @@ class LeadRepository extends Repository
     public function __construct(
         protected StageRepository          $stageRepository,
         protected PersonRepository         $personRepository,
-        protected ProductRepository        $productRepository,
         protected AttributeRepository      $attributeRepository,
         protected AttributeValueRepository $attributeValueRepository,
         Container                          $container
@@ -186,14 +185,6 @@ class LeadRepository extends Repository
             'user_id' => auth()->id() ?? 1,
         ], $data));
 
-        if (isset($data['products'])) {
-            foreach ($data['products'] as $product) {
-                $this->productRepository->create(array_merge($product, [
-                    'lead_id' => $lead->id,
-                    'amount' => $product['price'] * $product['quantity'],
-                ]));
-            }
-        }
 
         // Handle address data for new leads
         if (isset($data['address']) && !empty($data['address'])) {
@@ -315,27 +306,6 @@ class LeadRepository extends Repository
 
         $lead = parent::update($data, $id);
 
-        $previousProductIds = $lead->products()->pluck('id');
-
-        if (isset($data['products'])) {
-            foreach ($data['products'] as $productId => $productInputs) {
-                if (Str::contains($productId, 'product_')) {
-                    $this->productRepository->create(array_merge([
-                        'lead_id' => $lead->id,
-                    ], $productInputs));
-                } else {
-                    if (is_numeric($index = $previousProductIds->search($productId))) {
-                        $previousProductIds->forget($index);
-                    }
-
-                    $this->productRepository->update($productInputs, $productId);
-                }
-            }
-        }
-
-        foreach ($previousProductIds as $productId) {
-            $this->productRepository->delete($productId);
-        }
 
                 // Sync persons to the lead
         // Only sync if persons data was explicitly provided (not for partial updates like stage changes)

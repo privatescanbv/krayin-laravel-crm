@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Enums\Departments;
+use App\Enums\ActivityType;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Models\SalesLead;
@@ -10,11 +11,13 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
+use Webkul\Activity\Repositories\ActivityRepository;
 
 class SalesLeadRepository
 {
     public function __construct(
-        private readonly OrderRepository $orderRepository
+        private readonly OrderRepository $orderRepository,
+        private readonly ActivityRepository $activityRepository,
     ) {}
 
     /**
@@ -56,6 +59,9 @@ class SalesLeadRepository
 
             // Create initial order for this sales lead
             $this->orderRepository->createFromSalesLead($salesLead->id, $salesLead->name);
+
+            // Add a system activity on the lead linking to this new sales lead view
+            $this->activityRepository->createSystemActivityForSalesLeadCreation($lead, $salesLead);
 
             return $salesLead;
 

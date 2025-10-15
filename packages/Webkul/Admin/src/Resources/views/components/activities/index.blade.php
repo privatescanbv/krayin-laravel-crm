@@ -137,6 +137,12 @@
                                                         @{{ truncate(activity.additional?.new?.label ? String(activity.additional.new.label).replaceAll('<br>', ' ') : "@lang('admin::app.components.activities.index.empty')" , 60) }}
                                                     </span>
                                                 </p>
+
+                                                <p class="mt-1" v-if="activity.additional?.link">
+                                                    <a :href="activity.additional.link" class="text-blue-600 hover:underline" target="_blank">
+                                                        @{{ activity.additional.link_label || 'Bekijk' }}
+                                                    </a>
+                                                </p>
                                             </template>
                                         </div>
 

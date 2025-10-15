@@ -4,9 +4,14 @@ namespace Webkul\Activity\Repositories;
 
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Services\ViewService;
 use Webkul\Core\Eloquent\Repository;
+use App\Enums\ActivityType;
+use App\Models\SalesLead;
+use Webkul\Lead\Models\Lead;
 
 class ActivityRepository extends Repository
 {
@@ -17,8 +22,9 @@ class ActivityRepository extends Repository
      */
     public function __construct(
         protected FileRepository $fileRepository,
-        Container $container
-    ) {
+        Container                $container
+    )
+    {
         parent::__construct($container);
     }
 
@@ -43,8 +49,8 @@ class ActivityRepository extends Repository
 
         if (isset($data['file'])) {
             $this->fileRepository->create([
-                'name'        => $data['name'] ?? $data['file']->getClientOriginalName(),
-                'path'        => $data['file']->store('activities/'.$activity->id),
+                'name' => $data['name'] ?? $data['file']->getClientOriginalName(),
+                'path' => $data['file']->store('activities/' . $activity->id),
                 'activity_id' => $activity->id,
             ]);
         }
@@ -57,8 +63,8 @@ class ActivityRepository extends Repository
     /**
      * Update pipeline.
      *
-     * @param  int  $id
-     * @param  string  $attribute
+     * @param int $id
+     * @param string $attribute
      * @return \Webkul\Activity\Contracts\Activity
      */
     public function update(array $data, $id, $attribute = 'id')
@@ -76,8 +82,8 @@ class ActivityRepository extends Repository
     }
 
     /**
-     * @param  string  $dateRange
-     * @param  string|null  $view
+     * @param string $dateRange
+     * @param string|null $view
      * @return mixed
      */
     public function getActivities($dateRange, $view = null)
@@ -118,27 +124,27 @@ class ActivityRepository extends Repository
     }
 
     /**
-     * @param  string  $startFrom
-     * @param  string  $endFrom
-     * @param  array  $participants
-     * @param  int  $id
+     * @param string $startFrom
+     * @param string $endFrom
+     * @param array $participants
+     * @param int $id
      * @return bool
      */
     public function isDurationOverlapping($startFrom, $endFrom, $participants, $id)
     {
         // Simplified overlap detection - only check assigned user conflicts
         $queryBuilder = $this->where(function ($query) use ($startFrom, $endFrom) {
-                $query->where([
-                    ['activities.schedule_from', '<=', $startFrom],
-                    ['activities.schedule_to', '>=', $startFrom],
-                ])->orWhere([
-                    ['activities.schedule_from', '>=', $startFrom],
-                    ['activities.schedule_from', '<=', $endFrom],
-                ]);
-            })
+            $query->where([
+                ['activities.schedule_from', '<=', $startFrom],
+                ['activities.schedule_to', '>=', $startFrom],
+            ])->orWhere([
+                ['activities.schedule_from', '>=', $startFrom],
+                ['activities.schedule_from', '<=', $endFrom],
+            ]);
+        })
             ->whereNotNull('user_id'); // Only check activities with assigned users
 
-        if (! is_null($id)) {
+        if (!is_null($id)) {
             $queryBuilder->where('activities.id', '!=', $id);
         }
 
@@ -149,5 +155,40 @@ class ActivityRepository extends Repository
     {
         $activity->update(['user_id' => null]);
         $activity->save();
+    }
+
+    /**
+     * Create a system activity on a lead that links to the created sales lead view.
+     */
+    public function createSystemActivityForSalesLeadCreation(Lead $lead, SalesLead $salesLead): ?Activity
+    {
+        try {
+            return $this->create([
+                'type' => ActivityType::SYSTEM,
+                'title' => 'Sales lead aangemaakt',
+                'comment' => null,
+                'is_done' => 1,
+                'user_id' => auth()->check() ? auth()->id() : null,
+                'lead_id' => $lead->id,
+                'sales_lead_id' => $salesLead->id,
+                'additional' => [
+                    'old' => ['label' => 'Leeg'],
+                    'new' => ['label' => $salesLead->name],
+                    'link' => route('admin.sales-leads.view', $salesLead->id),
+                    'link_label' => 'Bekijk sales lead',
+                    'sales_lead' => [
+                        'id' => $salesLead->id,
+                        'name' => $salesLead->name,
+                    ],
+                ],
+            ]);
+        } catch (Throwable $e) {
+            Log::warning('Failed to create system activity for sales lead creation', [
+                'lead_id' => $lead->id,
+                'sales_lead_id' => $salesLead->id,
+                'error' => $e->getMessage(),
+            ]);
+            return null;
+        }
     }
 }

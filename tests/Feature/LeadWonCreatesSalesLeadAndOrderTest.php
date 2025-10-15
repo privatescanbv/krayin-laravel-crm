@@ -7,8 +7,10 @@ use App\Enums\PipelineDefaultKeys;
 use App\Models\Department;
 use App\Models\Order;
 use App\Models\SalesLead;
+use App\Enums\ActivityType;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Pipeline;
@@ -117,6 +119,18 @@ class LeadWonCreatesSalesLeadAndOrderTest extends TestCase
         $this->assertNotNull($order, 'Order not created for new SalesLead');
         $this->assertSame(OrderStatus::NIEUW, $order->status);
         $this->assertSame(0.00, (float) $order->total_price);
+
+        // Assert: a system activity was created on the lead linking to the new sales lead
+        $activity = Activity::where('lead_id', $lead->id)
+            ->where('sales_lead_id', $salesLead->id)
+            ->where('type', ActivityType::SYSTEM)
+            ->first();
+
+        $this->assertNotNull($activity, 'System activity not created for sales lead creation');
+        $this->assertSame('Sales lead aangemaakt', $activity->title);
+        $this->assertSame(1, (int) $activity->is_done);
+        $this->assertIsArray($activity->additional);
+        $this->assertSame(route('admin.sales-leads.view', $salesLead->id), $activity->additional['link'] ?? null);
     }
 
     public function test_lead_won_does_not_create_sales_lead_when_one_exists_in_non_won_lost_stage(): void

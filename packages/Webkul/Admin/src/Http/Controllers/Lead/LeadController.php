@@ -1532,18 +1532,12 @@ class LeadController extends Controller
 
             $person = $lead->persons->first();
             
-            // Simple match check: compare first_name and last_name
-            $leadName = strtolower(trim(($lead->first_name ?? '') . ' ' . ($lead->last_name ?? '')));
-            $personName = strtolower(trim(($person->first_name ?? '') . ' ' . ($person->last_name ?? '')));
+            // Use PersonController to calculate match score
+            $personController = app(\Webkul\Admin\Http\Controllers\Contact\Persons\PersonController::class);
+            $matchScore = $personController->calculateMatchScore($lead, $person);
             
-            // If names are exactly the same, don't redirect to sync
-            if ($leadName === $personName && !empty($leadName)) {
-                return false;
-            }
-            
-            // For now, always redirect to sync if there's exactly 1 person
-            // This ensures the basic functionality works
-            return true;
+            // Return true if match score is not 100 (perfect match)
+            return $matchScore < 100;
             
         } catch (\Exception $e) {
             // Log the error and return false to prevent sync redirect

@@ -18,7 +18,8 @@
                             <div class="text-gray-300 text-xs pl-2">• initialen, geboortedatum</div>
                             <div class="mt-1"><strong>E-mailadressen (5%)</strong></div>
                             <div class="mt-1"><strong>Telefoonnummers (5%)</strong></div>
-                            <div class="mt-1"><strong>Adresgegevens (5%)</strong></div>
+                            <div class="mt-1"><strong>Adresgegevens (5%):</strong></div>
+                            <div class="text-gray-300 text-xs pl-2">• straat, huisnummer(+toevoeging), postcode, plaats, land</div>
                         </div>
                         <div class="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
                     </div>

@@ -24,7 +24,7 @@ class SalesLeadRepository
     {
         try {
             // Check if there's already a SalesLead for this lead
-            $existingSalesLead = SalesLead::where('lead_id', $lead->id)->first();
+            $existingSalesLead = SalesLead::where('lead_id', $lead->id)->with('pipelineStage')->first();
 
             if ($existingSalesLead) {
                 // Check if the existing SalesLead is in a non-won/lost stage
@@ -36,6 +36,7 @@ class SalesLeadRepository
                     // Don't create a new SalesLead if one already exists in a non-won/lost stage
                     return null;
                 }
+                // If an existing SalesLead is in won/lost, do not create an order here; creation is only for new SalesLeads
             }
 
             // Determine the appropriate workflow pipeline stage

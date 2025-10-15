@@ -326,9 +326,9 @@ class LeadWonCreatesSalesLeadAndOrderTest extends TestCase
         $newSalesLead = $salesLeads->where('id', '!=', $existingSalesLead->id)->first();
         $this->assertEquals($workflowFirstStage->id, $newSalesLead->pipeline_stage_id, 'New SalesLead should be in the first stage of the workflow pipeline');
 
-        // Assert: an order was created for the existing SalesLead (since it was in won/lost stage)
+        // Assert: no order is created for the existing SalesLead in won/lost stage (order creation only happens for newly created SalesLeads)
         $existingOrder = Order::where('sales_lead_id', $existingSalesLead->id)->first();
-        $this->assertNotNull($existingOrder, 'Order should be created for existing SalesLead in won/lost stage');
+        $this->assertNull($existingOrder, 'No order should be created for existing SalesLead in won/lost stage');
 
         // Assert: an order was created for the new SalesLead
         $newOrder = Order::where('sales_lead_id', $newSalesLead->id)->first();

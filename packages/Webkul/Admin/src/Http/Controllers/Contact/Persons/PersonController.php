@@ -33,7 +33,7 @@ use App\Services\PersonValidationService;
 class PersonController extends Controller
 {
     use NormalizesContactFields;
-    private bool $enableLogging = true;
+    private bool $enableLogging = false;
 
     /**
      * Create a new class instance.
@@ -567,7 +567,7 @@ class PersonController extends Controller
         $score += $nameScore * 0.85 * 100;
 
         // Debug logging for tests - always log for person ID 1 in tests
-        if ($this->enableLogging && ($person->id == 1 || $lead->id == 1)) {
+        if ($this->enableLogging && ($lead->id == 9 && $person->id == 3)) {
             Log::info('Match Score Debug', [
                 'lead_id' => $lead->id,
                 'person_id' => $person->id,
@@ -589,23 +589,6 @@ class PersonController extends Controller
                     'lastname_prefix' => $person->lastname_prefix,
                     'emails' => $person->emails,
                     'phones' => $person->phones,
-                ]
-            ]);
-        }
-
-        // Debug score after empty fields fix
-        if ($this->enableLogging && $person->id == 1) {
-            \Log::info('Score After Empty Fields Fix', [
-                'nameScore' => $nameScore,
-                'emailScore' => $emailScore,
-                'phoneScore' => $phoneScore,
-                'addressScore' => $addressScore,
-                'finalScore' => min($score, $maxScore),
-                'calculation' => [
-                    'name_contribution' => $nameScore * 0.85 * 100,
-                    'email_contribution' => $emailScore * 0.05 * 100,
-                    'phone_contribution' => $phoneScore * 0.05 * 100,
-                    'address_contribution' => $addressScore * 0.05 * 100,
                 ]
             ]);
         }
@@ -779,6 +762,10 @@ class PersonController extends Controller
             ]);
         }
 
+        // Treat both empty as perfect match; one empty as no match
+        if (empty($leadPhones) && empty($personPhones)) {
+            return 1.0;
+        }
         if (empty($leadPhones) || empty($personPhones)) {
             return 0.0;
         }

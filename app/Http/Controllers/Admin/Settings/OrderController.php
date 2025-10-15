@@ -184,6 +184,7 @@ class OrderController extends SimpleEntityController
             'title'               => ['required', 'string', 'max:255'],
             'total_price'         => ['nullable', 'numeric', 'min:0'],
             'sales_lead_id'       => ['required', 'integer', 'exists:salesleads,id'],
+            'combine_order'       => ['nullable', 'boolean'],
             'items'               => ['nullable', 'array'],
             'items.*.product_id'  => ['nullable', 'integer', 'exists:products,id'],
             'items.*.person_id'   => ['nullable', 'integer', 'exists:persons,id'],

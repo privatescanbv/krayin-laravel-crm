@@ -102,7 +102,7 @@
         </div>
     </div>
 
-    <!-- MRI & Combine Order -->
+    <!-- MRI Status -->
     <div class="flex gap-4 mb-4">
         <div class="flex-1">
             @php
@@ -126,19 +126,7 @@
             </x-admin::form.control-group>
         </div>
         <div class="flex-1">
-            <x-admin::form.control-group>
-                <x-admin::form.control-group.label>
-                    Orders combineren
-                </x-admin::form.control-group.label>
-                <x-admin::form.control-group.control
-                    type="select"
-                    name="combine_order"
-                    value="{{ (string)($val('combine_order', 1)) }}"
-                >
-                    <option value="1" {{ ((string)$val('combine_order', 1) === '1') ? 'selected' : '' }}>Ja</option>
-                    <option value="0" {{ ((string)$val('combine_order', 1) === '0') ? 'selected' : '' }}>Nee</option>
-                </x-admin::form.control-group.control>
-            </x-admin::form.control-group>
+            <!-- Empty div to maintain layout -->
         </div>
     </div>
     <div class="flex gap-4 mb-4">

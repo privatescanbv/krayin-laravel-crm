@@ -20,6 +20,7 @@ class Order extends Model
         'total_price',
         'status',
         'sales_lead_id',
+        'combine_order',
         'created_by',
         'updated_by',
     ];
@@ -28,6 +29,7 @@ class Order extends Model
         'total_price'   => 'decimal:2',
         'status'        => OrderStatus::class,
         'sales_lead_id' => 'integer',
+        'combine_order' => 'boolean',
         'created_by'    => 'integer',
         'updated_by'    => 'integer',
     ];
@@ -39,6 +41,7 @@ class Order extends Model
             'total_price'   => 'required|numeric|min:0',
             'status'        => 'required|string',
             'sales_lead_id' => 'required|integer|exists:salesleads,id',
+            'combine_order' => 'boolean',
         ];
     }
 

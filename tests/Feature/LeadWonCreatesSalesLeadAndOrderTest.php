@@ -85,7 +85,6 @@ class LeadWonCreatesSalesLeadAndOrderTest extends TestCase
             'lead_source_id'         => $source->id,
             'lead_type_id'           => $type->id,
             'department_id'          => $department->id,
-            'combine_order'          => true,
         ]);
         $lead->save();
 
@@ -191,7 +190,6 @@ class LeadWonCreatesSalesLeadAndOrderTest extends TestCase
             'lead_source_id'         => $source->id,
             'lead_type_id'           => $type->id,
             'department_id'          => $department->id,
-            'combine_order'          => true,
         ]);
         $lead->save();
 
@@ -297,7 +295,6 @@ class LeadWonCreatesSalesLeadAndOrderTest extends TestCase
             'lead_source_id'         => $source->id,
             'lead_type_id'           => $type->id,
             'department_id'          => $department->id,
-            'combine_order'          => true,
         ]);
         $lead->save();
 

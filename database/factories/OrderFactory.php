@@ -19,6 +19,7 @@ class OrderFactory extends Factory
             'title'          => $this->faker->sentence(3),
             'total_price'    => $this->faker->randomFloat(2, 10, 5000),
             'sales_lead_id'  => SalesLead::factory(),
+            'combine_order'  => true,
         ];
     }
 }

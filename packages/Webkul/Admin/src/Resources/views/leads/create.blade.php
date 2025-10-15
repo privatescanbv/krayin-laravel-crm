@@ -440,7 +440,6 @@
                                         'entity' => null,
                                         'defaults' => [
                                             'department_id' => $userDefaults['department_id'] ?? $defaultDepartmentId ?? '',
-                                            'combine_order' => 1,
                                             'lead_channel_id' => $userDefaults['lead_channel_id'] ?? '1',
                                             'lead_source_id' => $userDefaults['lead_source_id'] ?? 32,
                                             'lead_type_id' => $userDefaults['lead_type_id'] ?? 1,
@@ -541,7 +540,6 @@
                             department_id: this.userDefaults.department_id || '{{ $defaultDepartmentId ?? "" }}', // Set based on pipeline or user groups
                             lead_pipeline_id: '{{ $defaultPipelineId ?? "" }}', // Set based on department or URL param
                             lead_pipeline_stage_id: '{{ $defaultStageId ?? "" }}', // Set based on pipeline or URL param
-                            combine_order: 1,
                             mri_status: this.userDefaults.mri_status || '',
                             lead_type_id: this.userDefaults.lead_type_id || '1', // Default: Preventie
                             user_id: '{{ $currentUserId ?? "" }}', // Default: Current logged-in user

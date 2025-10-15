@@ -66,8 +66,7 @@
 
                 <!-- No Open Activities Warning for Sales Lead -->
                 @php
-                    $stageCode = strtolower($salesLead->pipelineStage->code ?? '');
-                    $isWonOrLost = str_starts_with($stageCode, 'won') || str_starts_with($stageCode, 'lost');
+                    $isWonOrLost = ($salesLead->pipelineStage->is_won ?? false) || ($salesLead->pipelineStage->is_lost ?? false);
                 @endphp
                 @if (($salesLead->open_activities_count ?? 0) === 0 && ! $isWonOrLost)
                     <div
@@ -91,13 +90,6 @@
                             :entity="$salesLead"
                             entity-control-name="sales_lead_id"
                         />
-                    @endif
-
-                    @if (bouncer()->hasPermission('orders.create'))
-                        <a href="{{ route('admin.orders.create', ['sales_lead_id' => $salesLead->id]) }}"
-                           class="primary-button">
-                            Order aanmaken
-                        </a>
                     @endif
 
                     @if (bouncer()->hasPermission('activities.create'))

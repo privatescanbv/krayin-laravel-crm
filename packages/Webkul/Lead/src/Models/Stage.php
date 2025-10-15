@@ -22,6 +22,18 @@ class Stage extends Model implements StageContract
         'probability',
         'sort_order',
         'lead_pipeline_id',
+        'is_won',
+        'is_lost',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'is_won' => 'boolean',
+        'is_lost' => 'boolean',
     ];
 
     /**

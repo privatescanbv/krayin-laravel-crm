@@ -219,7 +219,7 @@ class LeadDataGrid extends DataGrid
                     return trans('admin::app.leads.index.datagrid.no');
                 }
 
-                if (in_array($row->stage_code, ['won', 'lost'])) {
+                if ($row->stage_is_won || $row->stage_is_lost) {
                     return trans('admin::app.leads.index.datagrid.no');
                 }
 

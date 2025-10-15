@@ -90,6 +90,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $privateSanPipelineId,
+                'is_won' => false,
+                'is_lost' => false,
             ], [
                 'id' => ++$stageId,
                 'code' => 'klant-adviseren-start',
@@ -97,6 +99,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $privateSanPipelineId,
+                'is_won' => false,
+                'is_lost' => false,
             ], [
                 'id' => ++$stageId,
                 'code' => 'klant-adviseren-opvolgen',
@@ -104,6 +108,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $privateSanPipelineId,
+                'is_won' => false,
+                'is_lost' => false,
             ], [
                 'id' => ++$stageId,
                 'code' => 'won',
@@ -111,6 +117,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $privateSanPipelineId,
+                'is_won' => true,
+                'is_lost' => false,
             ], [
                 'id' => ++$stageId,
                 'code' => 'lost',
@@ -118,6 +126,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 0,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $privateSanPipelineId,
+                'is_won' => false,
+                'is_lost' => true,
             ],
             // Hernia pipeline stages
             [
@@ -127,6 +137,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaPipelineId,
+                'is_won' => false,
+                'is_lost' => false,
             ], [
                 'id' => ++$stageId,
                 'code' => 'klant-adviseren-start-hernia',
@@ -134,6 +146,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaPipelineId,
+                'is_won' => false,
+                'is_lost' => false,
             ], [
                 'id' => ++$stageId,
                 'code' => 'klant-adviseren-will-mri-hernia',
@@ -141,6 +155,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaPipelineId,
+                'is_won' => false,
+                'is_lost' => false,
             ],[
                 'id' => ++$stageId,
                 'code' => 'klant-adviseren-wachten-op-mri-hernia',
@@ -148,6 +164,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaPipelineId,
+                'is_won' => false,
+                'is_lost' => false,
             ], [
                 'id' => ++$stageId,
                 'code' => 'klant-adviseren-mri-binnen-hernia',
@@ -155,6 +173,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaPipelineId,
+                'is_won' => false,
+                'is_lost' => false,
             ], [
                 'id' => ++$stageId,
                 'code' => 'won-hernia',
@@ -162,6 +182,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaPipelineId,
+                'is_won' => true,
+                'is_lost' => false,
             ], [
                 'id' => ++$stageId,
                 'code' => 'lost-hernia',
@@ -169,6 +191,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 0,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaPipelineId,
+                'is_won' => false,
+                'is_lost' => true,
             ],
             // workflow Privatescan
             [
@@ -178,6 +202,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $privateScanWorkflowPipelineId,
+                'is_won' => false,
+                'is_lost' => false,
             ], [
                 'id' => ++$stageId,
                 'code' => 'order-verzonden',
@@ -185,6 +211,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $privateScanWorkflowPipelineId,
+                'is_won' => false,
+                'is_lost' => false,
             ],[
                 'id' => ++$stageId,
                 'code' => 'order-confirmed',
@@ -192,6 +220,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $privateScanWorkflowPipelineId,
+                'is_won' => false,
+                'is_lost' => false,
             ],[
                 'id' => ++$stageId,
                 'code' => self::STAGE_ORDER_LOST_PREFIX,
@@ -199,6 +229,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $privateScanWorkflowPipelineId,
+                'is_won' => false,
+                'is_lost' => true,
             ],[
                 'id' => ++$stageId,
                 'code' => 'order-won',
@@ -206,6 +238,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $privateScanWorkflowPipelineId,
+                'is_won' => true,
+                'is_lost' => false,
             ],
             // workflow Hennia
             [
@@ -215,6 +249,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaWorkflowPipelineId,
+                'is_won' => false,
+                'is_lost' => false,
             ], [
                 'id' => ++$stageId,
                 'code' => 'order-verzenden-hernia',
@@ -222,6 +258,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaWorkflowPipelineId,
+                'is_won' => false,
+                'is_lost' => false,
             ],[
                 'id' => ++$stageId,
                 'code' => self::STAGE_ORDER_LOST_PREFIX . '-hernia',
@@ -229,6 +267,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaWorkflowPipelineId,
+                'is_won' => false,
+                'is_lost' => true,
             ],[
                 'id' => ++$stageId,
                 'code' => 'order-won-hernia',
@@ -236,6 +276,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $herniaWorkflowPipelineId,
+                'is_won' => true,
+                'is_lost' => false,
             ],
             // workflow tech pipeline
             [
@@ -245,6 +287,8 @@ class PipelineSeeder extends BaseSeeder
                 'probability' => 100,
                 'sort_order' => $stageId,
                 'lead_pipeline_id' => $techBacklogPipelineId,
+                'is_won' => false,
+                'is_lost' => false,
             ],
         ];
 

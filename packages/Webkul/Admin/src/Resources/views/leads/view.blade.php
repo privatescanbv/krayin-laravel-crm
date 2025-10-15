@@ -73,8 +73,7 @@
 
                 <!-- No Open Activities Warning (shown directly below duplicate block) -->
                 @php
-                    $stageCode = strtolower($lead->stage->code ?? '');
-                    $isWonOrLost = str_starts_with($stageCode, 'won') || str_starts_with($stageCode, 'lost');
+                    $isWonOrLost = ($lead->stage->is_won ?? false) || ($lead->stage->is_lost ?? false);
                 @endphp
                 @if(($lead->open_activities_count ?? $lead->openActivitiesCount ?? $lead->open_activities_count) === 0 && ! $isWonOrLost)
                     <div class="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-900/20">

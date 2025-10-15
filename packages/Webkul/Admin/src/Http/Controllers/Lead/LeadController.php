@@ -157,7 +157,7 @@ class LeadController extends Controller
             // Filter out won/lost stages if requested to improve performance
             if ($excludeWonLost) {
                 $stages = $stages->filter(function ($stage) {
-                    return !in_array($stage->code, self::WON_LOST_STAGE_CODES);
+                    return !($stage->is_won || $stage->is_lost);
                 });
             }
         }
@@ -452,7 +452,7 @@ class LeadController extends Controller
                 $data['lead_pipeline_stage_id'] = $stage->id;
             }
 
-            if (in_array($stage->code, ['won', 'lost'])) {
+            if ($stage->is_won || $stage->is_lost) {
                 $data['closed_at'] = Carbon::now();
             }
             $lead = $this->leadRepository->create($data);
@@ -864,7 +864,7 @@ class LeadController extends Controller
                         $qq->where('persons.id', $person->id);
                     })
                     ->whereHas('stage', function($qq) {
-                        $qq->whereNotIn('code', self::WON_LOST_STAGE_CODES);
+                        $qq->where('is_won', false)->where('is_lost', false);
                     });
             })
             ->all();

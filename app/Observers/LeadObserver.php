@@ -54,8 +54,8 @@ class LeadObserver
                 }
             }
 
-            // If changing to any 'lost' stage (e.g., 'lost', 'lost-hernia'), check if lost_reason is provided
-            if ($newStageCode && str_starts_with($newStageCode, 'lost')) {
+            // If changing to any 'lost' stage, check if lost_reason is provided
+            if ($newStageCode && Stage::find($lead->lead_pipeline_stage_id)?->is_lost) {
                 if (empty($lead->lost_reason)) {
                     Log::warning('Cannot update lead: missing lost_reason for lost stage', [
                         'lead_id' => $lead->id,
@@ -123,8 +123,7 @@ class LeadObserver
             // If stage transitioned to a "won" stage, create SalesLead and initial Order
             // Reload the stage relationship to get the fresh data
             $lead->load('stage');
-            $newStageCode = $lead->stage?->code;
-            if ($newStageCode && str_starts_with(strtolower($newStageCode), 'won')) {
+            if ($lead->stage?->is_won) {
                 $this->salesLeadRepository->createFromWonLead($lead);
             }
         }

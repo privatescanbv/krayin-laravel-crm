@@ -15,7 +15,9 @@ use Webkul\Lead\Models\Stage;
 
 class SalesLeadRepository
 {
-    public function __construct(private readonly OrderRepository $orderRepository) {}
+    public function __construct(
+        private readonly OrderRepository $orderRepository
+    ) {}
 
     /**
      * Create a SalesLead from a won Lead with appropriate workflow pipeline stage.
@@ -23,21 +25,19 @@ class SalesLeadRepository
     public function createFromWonLead(Lead $lead): ?SalesLead
     {
         try {
-            // Check if SalesLead already exists for this lead
+            // Check if there's already a SalesLead for this lead
             $existingSalesLead = SalesLead::where('lead_id', $lead->id)->first();
-            if ($existingSalesLead) {
-                // Ensure an order exists; if not, create a default one
-                $existingOrder = Order::where('sales_lead_id', $existingSalesLead->id)->first();
-                if (! $existingOrder) {
-                    Order::create([
-                        'title'         => 'Order voor '.$lead->name,
-                        'total_price'   => 0.00,
-                        'status'        => OrderStatus::NIEUW,
-                        'sales_lead_id' => $existingSalesLead->id,
-                    ]);
-                }
 
-                return $existingSalesLead;
+            if ($existingSalesLead) {
+                // Check if the existing SalesLead is in a non-won/lost stage
+                if ($this->existsSalesLeadInNotWonOrLoss($lead->id)) {
+                    Log::info('SalesLead already exists in a non-won/lost stage', [
+                        'lead_id' => $lead->id,
+                    ]);
+
+                    // Don't create a new SalesLead if one already exists in a non-won/lost stage
+                    return null;
+                }
             }
 
             // Determine the appropriate workflow pipeline stage
@@ -68,6 +68,16 @@ class SalesLeadRepository
 
             return null;
         }
+    }
+
+    private function existsSalesLeadInNotWonOrLoss(int $leadId): bool
+    {
+        return SalesLead::where('lead_id', $leadId)
+            ->whereHas('pipelineStage', function ($query) {
+                $query->where('is_won', false)
+                    ->where('is_lost', false);
+            })
+            ->exists();
     }
 
     /**

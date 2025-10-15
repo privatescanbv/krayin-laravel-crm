@@ -392,7 +392,7 @@ class Lead extends Model implements LeadContract
             return 0;
         }
 
-        if (in_array($this->stage->code, ['won', 'lost'])) {
+        if ($this->stage->is_won || $this->stage->is_lost) {
             return 0;
         }
 

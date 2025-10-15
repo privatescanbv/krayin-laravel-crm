@@ -280,7 +280,7 @@ class LeadRepository extends Repository
         if (isset($data['lead_pipeline_stage_id'])) {
             $stage = $this->stageRepository->find($data['lead_pipeline_stage_id']);
 
-            if (in_array($stage->code, ['won', 'lost'])) {
+            if ($stage->is_won || $stage->is_lost) {
                 $data['closed_at'] = $data['closed_at'] ?? Carbon::now();
             } else {
                 $data['closed_at'] = null;
@@ -432,7 +432,7 @@ class LeadRepository extends Repository
 
         return $duplicates->filter(function ($duplicate) use ($twoWeeksAgo, $twoWeeksLater) {
             // Filter out leads in 'Won' status
-            if ($duplicate->stage && $duplicate->stage->code === 'won') {
+            if ($duplicate->stage && $duplicate->stage->is_won) {
                 return false;
             }
 

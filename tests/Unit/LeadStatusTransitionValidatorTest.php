@@ -46,6 +46,8 @@ class LeadStatusTransitionValidatorTest extends TestCase
             'probability'      => 100,
             'sort_order'       => 1,
             'lead_pipeline_id' => $pipeline->id,
+            'is_won'           => true,
+            'is_lost'          => false,
         ]);
 
         $this->lostStage = Stage::create([
@@ -54,6 +56,8 @@ class LeadStatusTransitionValidatorTest extends TestCase
             'probability'      => 0,
             'sort_order'       => 2,
             'lead_pipeline_id' => $pipeline->id,
+            'is_won'           => false,
+            'is_lost'          => true,
         ]);
 
         $this->otherStage = Stage::create([
@@ -62,6 +66,8 @@ class LeadStatusTransitionValidatorTest extends TestCase
             'probability'      => 10,
             'sort_order'       => 0,
             'lead_pipeline_id' => $pipeline->id,
+            'is_won'           => false,
+            'is_lost'          => false,
         ]);
 
         // Create test lead
@@ -217,6 +223,8 @@ class LeadStatusTransitionValidatorTest extends TestCase
             'probability'      => 50,
             'sort_order'       => 3,
             'lead_pipeline_id' => $this->lead->lead_pipeline_id,
+            'is_won'           => false,
+            'is_lost'          => false,
         ]);
 
         // This should not throw an exception even without persons

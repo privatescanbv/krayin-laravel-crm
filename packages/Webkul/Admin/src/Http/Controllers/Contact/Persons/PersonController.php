@@ -140,8 +140,7 @@ class PersonController extends Controller
 
             $sortedLeads = $leads
                 ->sortBy(function($lead) {
-                    $wonLostCodes = ['won', 'lost', 'won-hernia', 'lost-hernia'];
-                    $isWonLost = $lead->stage && in_array($lead->stage->code, $wonLostCodes, true) ? 1 : 0;
+                    $isWonLost = $lead->stage && ($lead->stage->is_won || $lead->stage->is_lost) ? 1 : 0;
                     $updatedTs = $lead->updated_at ? $lead->updated_at->getTimestamp() : 0;
                     return [$isWonLost, -$updatedTs];
                 })

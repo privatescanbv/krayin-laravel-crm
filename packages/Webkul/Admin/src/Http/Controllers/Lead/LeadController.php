@@ -606,6 +606,27 @@ class LeadController extends Controller
 
             Event::dispatch('lead.update.after', $lead);
 
+            // Check if we should redirect to sync page
+            $shouldSync = $this->shouldRedirectToSync($lead);
+            if ($shouldSync) {
+                $person = $lead->persons->first();
+                if (request()->ajax()) {
+                    return response()->json([
+                        'message'  => trans('admin::app.leads.update-success'),
+                        'redirect' => route('admin.contacts.persons.edit_with_lead', [
+                            'personId' => $person->id,
+                            'leadId' => $lead->id
+                        ]),
+                    ]);
+                }
+
+                session()->flash('success', trans('admin::app.leads.update-success'));
+                return redirect()->route('admin.contacts.persons.edit_with_lead', [
+                    'personId' => $person->id,
+                    'leadId' => $lead->id
+                ]);
+            }
+
             if (request()->ajax()) {
                 return response()->json([
                     'message'  => trans('admin::app.leads.update-success'),
@@ -1491,5 +1512,449 @@ class LeadController extends Controller
                 'status' => ActivityStatus::DONE->value,
             ], $activity->id);
         }
+    }
+
+    /**
+     * Check if lead should redirect to sync page based on conditions:
+     * - Lead has exactly 1 person
+     * - Match score is not 100
+     */
+    private function shouldRedirectToSync($lead): bool
+    {
+        // Check if lead has exactly 1 person
+        if ($lead->persons->count() !== 1) {
+            return false;
+        }
+
+        $person = $lead->persons->first();
+        
+        // Calculate match score using the same logic as PersonController
+        $matchScore = $this->calculateMatchScore($lead, $person);
+        
+        // Return true if match score is not 100 (perfect match)
+        return $matchScore < 100;
+    }
+
+    /**
+     * Calculate match score between lead and person.
+     * This is a copy of the method from PersonController to avoid circular dependencies.
+     */
+    private function calculateMatchScore(Lead $lead, Person $person): float
+    {
+        $maxScore = 100.0;
+
+        $result = $this->buildMatchBreakdown($lead, $person);
+        $score = $result['percentage'];
+
+        return min((float) $score, $maxScore);
+    }
+
+    /**
+     * Build match breakdown and final percentage for a lead/person pair.
+     * This is a copy of the method from PersonController to avoid circular dependencies.
+     */
+    private function buildMatchBreakdown(Lead $lead, Person $person): array
+    {
+        $nameScore = $this->calculateNameMatchScore($lead, $person); // 0..1
+        $emailScore = $this->calculateEmailMatchScore($lead, $person); // 0..1
+        $phoneScore = $this->calculatePhoneMatchScore($lead, $person); // 0..1
+        $addressScore = $this->calculateAddressMatchScore($lead, $person); // 0..1
+
+        $finalScore = min(
+            ($nameScore * 0.85 + $emailScore * 0.05 + $phoneScore * 0.05 + $addressScore * 0.05) * 100,
+            100
+        );
+
+        return [
+            'percentage' => round($finalScore, 1),
+            'breakdown' => [
+                'name' => [
+                    'ratio' => $nameScore,
+                    'weighted' => $nameScore * 0.85 * 100,
+                    'weight' => 0.85,
+                ],
+                'email' => [
+                    'matched' => ($emailScore ?? 0) > 0,
+                    'weighted' => $emailScore * 0.05 * 100,
+                    'weight' => 0.05,
+                ],
+                'phone' => [
+                    'matched' => ($phoneScore ?? 0) > 0,
+                    'weighted' => $phoneScore * 0.05 * 100,
+                    'weight' => 0.05,
+                ],
+                'address' => [
+                    'matched' => ($addressScore ?? 0) > 0,
+                    'weighted' => $addressScore * 0.05 * 100,
+                    'weight' => 0.05,
+                ],
+                'final' => [
+                    'score' => $finalScore,
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Calculate name match score with new logic.
+     * This is a copy of the method from PersonController to avoid circular dependencies.
+     */
+    private function calculateNameMatchScore(Lead $lead, Person $person): float
+    {
+        $nameFields = [
+            'first_name',
+            'last_name',
+            'lastname_prefix',
+            'married_name',
+            'married_name_prefix',
+            'initials',
+            'date_of_birth'
+        ];
+
+        $importantNameFields = [
+            'first_name',
+            'last_name',
+            'lastname_prefix'
+        ];
+
+        $totalMatches = 0;
+        $totalPossibleMatches = 0;
+        $importantMatches = 0;
+        $importantPossibleMatches = 0;
+
+        foreach ($nameFields as $field) {
+            $leadValue = $lead->$field ?? '';
+            $personValue = $person->$field ?? '';
+
+            if (!empty($leadValue) || !empty($personValue)) {
+                $totalPossibleMatches++;
+
+                if (in_array($field, $importantNameFields)) {
+                    $importantPossibleMatches++;
+                }
+
+                // Handle matching logic
+                $isMatch = false;
+
+                // If both values are empty, treat as match
+                if (empty($leadValue) && empty($personValue)) {
+                    $isMatch = true;
+                }
+                // If both values exist, compare them
+                elseif (!empty($leadValue) && !empty($personValue)) {
+                    // Special handling for date_of_birth
+                    if ($field === 'date_of_birth') {
+                        $leadDate = $this->formatDateForComparison($leadValue);
+                        $personDate = $this->formatDateForComparison($personValue);
+                        if ($leadDate && $personDate && $leadDate === $personDate) {
+                            $isMatch = true;
+                        }
+                    }
+                    // Exact match for other fields
+                    elseif (strtolower(trim($leadValue)) === strtolower(trim($personValue))) {
+                        $isMatch = true;
+                    }
+                    // Partial match for names (not for initials or date_of_birth)
+                    elseif (!in_array($field, ['initials', 'date_of_birth']) &&
+                        (stripos($personValue, $leadValue) !== false ||
+                            stripos($leadValue, $personValue) !== false)) {
+                        $isMatch = true;
+                    }
+                }
+                // If one is empty and one is not, no match (default $isMatch = false)
+
+                if ($isMatch) {
+                    $totalMatches++;
+                    if (in_array($field, $importantNameFields)) {
+                        $importantMatches++;
+                    }
+                }
+            }
+        }
+
+        // Calculate scores based on new criteria
+        if ($totalPossibleMatches === 0) {
+            return 0.0;
+        }
+
+        $totalMatchRatio = $totalMatches / $totalPossibleMatches;
+
+        // 100% match on all name fields = 100% score for perfect test matches
+        if ($totalMatchRatio >= 1.0) {
+            return 1.0;
+        }
+
+        // 100% match on important name fields = 80% score
+        if ($importantPossibleMatches > 0 && $importantMatches === $importantPossibleMatches && $totalMatchRatio < 1.0) {
+            return 0.80;
+        }
+
+        // Partial scoring based on match ratio
+        // Scale between 0 and 0.80 based on total match ratio
+        return $totalMatchRatio * 0.80;
+    }
+
+    /**
+     * Calculate email match score between lead and person.
+     * This is a copy of the method from PersonController to avoid circular dependencies.
+     */
+    private function calculateEmailMatchScore(Lead $lead, Person $person): float
+    {
+        $leadEmails = $this->extractEmails($lead);
+        $personEmails = $this->extractEmails($person);
+
+        if (empty($leadEmails) || empty($personEmails)) {
+            return 0.0;
+        }
+
+        $matchCount = 0;
+        $totalPersonEmails = count($personEmails);
+
+        foreach ($leadEmails as $leadEmail) {
+            foreach ($personEmails as $personEmail) {
+                if (strtolower($leadEmail) === strtolower($personEmail)) {
+                    $matchCount++;
+                    break; // Don't count the same lead email multiple times
+                }
+            }
+        }
+
+        // If all person emails match, return 1.0
+        // If some match, return partial score
+        return $matchCount > 0 ? ($matchCount / $totalPersonEmails) : 0.0;
+    }
+
+    /**
+     * Calculate phone match score between lead and person.
+     * This is a copy of the method from PersonController to avoid circular dependencies.
+     */
+    private function calculatePhoneMatchScore(Lead $lead, Person $person): float
+    {
+        $leadPhones = $this->extractPhones($lead);
+        $personPhones = $this->extractPhones($person);
+
+        // Treat both empty as perfect match; one empty as no match
+        if (empty($leadPhones) && empty($personPhones)) {
+            return 1.0;
+        }
+        if (empty($leadPhones) || empty($personPhones)) {
+            return 0.0;
+        }
+
+        $matchCount = 0;
+        $totalPersonPhones = count($personPhones);
+
+        foreach ($leadPhones as $leadPhone) {
+            foreach ($personPhones as $personPhone) {
+                if ($this->normalizePhoneNumber($leadPhone) === $this->normalizePhoneNumber($personPhone)) {
+                    $matchCount++;
+                    break; // Don't count the same lead phone multiple times
+                }
+            }
+        }
+
+        return $matchCount > 0 ? ($matchCount / $totalPersonPhones) : 0.0;
+    }
+
+    /**
+     * Calculate address match score between lead and person.
+     * This is a copy of the method from PersonController to avoid circular dependencies.
+     */
+    private function calculateAddressMatchScore(Lead $lead, Person $person): float
+    {
+        $leadAddress = $this->extractAddressData($lead);
+        $personAddress = $this->extractAddressData($person);
+
+        // If both addresses are empty, treat as perfect match (like empty fields fix)
+        if (empty($leadAddress) && empty($personAddress)) {
+            return 1.0;
+        }
+
+        // If only one address is empty, no match
+        if (empty($leadAddress) || empty($personAddress)) {
+            return 0.0;
+        }
+
+        $addressFields = ['street', 'house_number', 'city', 'postal_code', 'country'];
+        $matchCount = 0;
+        $totalFields = 0;
+
+        foreach ($addressFields as $field) {
+            $leadValue = $leadAddress[$field] ?? '';
+            $personValue = $personAddress[$field] ?? '';
+
+            if (!empty($leadValue) || !empty($personValue)) {
+                $totalFields++;
+
+                if (!empty($leadValue) && !empty($personValue)) {
+                    // Normalize and compare
+                    $leadNormalized = strtolower(trim($leadValue));
+                    $personNormalized = strtolower(trim($personValue));
+
+                    if ($leadNormalized === $personNormalized) {
+                        $matchCount++;
+                    }
+                    // For postal codes, also check partial matches (useful for Dutch postal codes)
+                    elseif ($field === 'postal_code' &&
+                           (strpos($leadNormalized, $personNormalized) !== false ||
+                            strpos($personNormalized, $leadNormalized) !== false)) {
+                        $matchCount += 0.5; // Partial match
+                    }
+                }
+            }
+        }
+
+        return $totalFields > 0 ? ($matchCount / $totalFields) : 0.0;
+    }
+
+    /**
+     * Extract emails from lead or person.
+     * This is a copy of the method from PersonController to avoid circular dependencies.
+     */
+    private function extractEmails($entity): array
+    {
+        $emails = [];
+
+        // Handle array format (from emails field)
+        if (!empty($entity->emails) && is_array($entity->emails)) {
+            foreach ($entity->emails as $email) {
+                if (is_array($email) && !empty($email['value'])) {
+                    $emails[] = $email['value'];
+                } elseif (is_string($email)) {
+                    $emails[] = $email;
+                }
+            }
+        }
+
+        // Handle single email field (if exists)
+        if (!empty($entity->email)) {
+            $emails[] = $entity->email;
+        }
+
+        return array_filter($emails);
+    }
+
+    /**
+     * Extract phone numbers from lead or person.
+     * This is a copy of the method from PersonController to avoid circular dependencies.
+     */
+    private function extractPhones($entity): array
+    {
+        $phones = [];
+
+        // Handle array format (from phones or contact_numbers field)
+        if (!empty($entity->phones) && is_array($entity->phones)) {
+            foreach ($entity->phones as $phone) {
+                if (is_array($phone) && !empty($phone['value'])) {
+                    $phones[] = $phone['value'];
+                } elseif (is_string($phone)) {
+                    $phones[] = $phone;
+                }
+            }
+        }
+
+        // Handle single phone field (if exists)
+        if (!empty($entity->phone)) {
+            $phones[] = $entity->phone;
+        }
+
+        return array_filter($phones);
+    }
+
+    /**
+     * Extract address data from lead or person.
+     * This is a copy of the method from PersonController to avoid circular dependencies.
+     */
+    private function extractAddressData($entity): array
+    {
+        $address = [];
+
+        // For both persons and leads, check if they have an address relationship
+        if (method_exists($entity, 'address') && $entity->address) {
+            $address = [
+                'street' => $entity->address->street ?? '',
+                'house_number' => $entity->address->house_number ?? '',
+                'city' => $entity->address->city ?? '',
+                'postal_code' => $entity->address->postal_code ?? '',
+                'country' => $entity->address->country ?? '',
+            ];
+        }
+        // Fallback to direct address fields (for backwards compatibility)
+        else {
+            $address = [
+                'street' => $entity->street ?? '',
+                'house_number' => $entity->house_number ?? '',
+                'city' => $entity->city ?? '',
+                'postal_code' => $entity->postal_code ?? '',
+                'country' => $entity->country ?? '',
+            ];
+        }
+
+        // Filter out empty values
+        return array_filter($address, function($value) {
+            return !empty(trim($value));
+        });
+    }
+
+    /**
+     * Normalize phone number for comparison.
+     * This is a copy of the method from PersonController to avoid circular dependencies.
+     */
+    private function normalizePhoneNumber(string $phone): string
+    {
+        // Remove all non-numeric characters
+        $normalized = preg_replace('/[^0-9]/', '', $phone);
+
+        // Handle Dutch phone numbers - convert +31 to 0
+        if (str_starts_with($normalized, '31') && strlen($normalized) >= 10) {
+            $normalized = '0' . substr($normalized, 2);
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Format date for comparison, handling invalid dates.
+     * This is a copy of the method from PersonController to avoid circular dependencies.
+     */
+    private function formatDateForComparison($date): ?string
+    {
+        if (empty($date)) {
+            return null;
+        }
+
+        try {
+            // Check if it's a valid Carbon instance
+            if ($date instanceof \Carbon\Carbon) {
+                // Check for invalid dates (like -0001-11-30 or 0000-00-00)
+                if ($date->year <= 0 || $date->year > 2100) {
+                    return null;
+                }
+                return $date->format('Y-m-d');
+            }
+
+            // If it's a string, try to parse it
+            if (is_string($date)) {
+                // Skip obviously invalid dates
+                if (in_array($date, ['0000-00-00', '0000-00-00 00:00:00']) || strpos($date, '-0001') === 0) {
+                    return null;
+                }
+
+                $carbonDate = \Carbon\Carbon::parse($date);
+                if ($carbonDate->year <= 0 || $carbonDate->year > 2100) {
+                    return null;
+                }
+                return $carbonDate->format('Y-m-d');
+            }
+        } catch (Exception $e) {
+            logger()->error('Error parsing date for comparison', [
+                'date' => $date,
+                'error' => $e->getMessage()
+            ]);
+            // If parsing fails, treat as null
+            return null;
+        }
+
+        return null;
     }
 }

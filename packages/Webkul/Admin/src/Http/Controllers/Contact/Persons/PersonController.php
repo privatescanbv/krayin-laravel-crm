@@ -727,7 +727,7 @@ class PersonController extends Controller
     /**
      * Calculate match score between lead and person.
      */
-    private function calculateMatchScore(Lead $lead, Person $person): float
+    public function calculateMatchScore(Lead $lead, Person $person): float
     {
         $maxScore = 100.0;
 

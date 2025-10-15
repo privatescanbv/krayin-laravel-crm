@@ -236,7 +236,7 @@ class PersonController extends Controller
 
         session()->flash('success', trans('admin::app.contacts.persons.index.update-success'));
 
-        return redirect()->route('admin.contacts.persons.index');
+        return redirect()->route('admin.contacts.persons.view', $id);
     }
 
     /**
@@ -541,40 +541,208 @@ class PersonController extends Controller
     }
 
     /**
+     * Return match score breakdown between a lead and a person for UI tooltips.
+     */
+    public function matchScoreBreakdown(int $personId, int $leadId): JsonResponse
+    {
+        try {
+            $lead = Lead::findOrFail($leadId);
+            $person = Person::findOrFail($personId);
+
+            $result = $this->buildMatchBreakdown($lead, $person);
+
+            return response()->json(array_merge([
+                'lead_id' => $lead->id,
+                'person_id' => $person->id,
+            ], $result['breakdown_detailed']));
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Unable to calculate match score breakdown',
+            ], 400);
+        }
+    }
+
+    /**
+     * Simplified single-person scoring API: /admin/contacts/persons/searchByLead?lead_id=..&person_id=..
+     * Returns score percentage and breakdown for reuse in UI components.
+     */
+    public function searchByLeadSingle(): JsonResponse
+    {
+        $leadId = (int) request()->query('lead_id');
+        $personId = (int) request()->query('person_id');
+        if (! $leadId || ! $personId) {
+            return response()->json(['message' => 'lead_id and person_id are required'], 422);
+        }
+
+        try {
+            $lead = Lead::findOrFail($leadId);
+            $person = Person::findOrFail($personId);
+
+            $result = $this->buildMatchBreakdown($lead, $person);
+
+            return response()->json([
+                'person' => [
+                    'id' => $person->id,
+                    'name' => $person->name,
+                    'match_score_percentage' => $result['percentage'],
+                ],
+                'breakdown' => $result['breakdown'],
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'message' => 'Unable to calculate match score',
+            ], 400);
+        }
+    }
+
+    /**
+     * Build match breakdown and final percentage for a lead/person pair.
+     *
+     * @return array{
+     *     percentage: float,
+     *     breakdown: array{
+     *         name: array{ratio: float, weighted: float, weight: float},
+     *         email: array{matched: bool, weighted: float, weight: float},
+     *         phone: array{matched: bool, weighted: float, weight: float},
+     *         address: array{matched: bool, weighted: float, weight: float},
+     *         final: array{score: float}
+     *     },
+     *     breakdown_detailed: array{
+     *         name: array{
+     *             ratio: float,
+     *             weighted: float,
+     *             weight: float,
+     *             fields: array<string, array{0: null|string, 1: null|string}>
+     *         },
+     *         email: array{matched: bool, weighted: float, weight: float, lead: array, person: array},
+     *         phone: array{matched: bool, weighted: float, weight: float, lead: array, person: array},
+     *         address: array{
+     *             matched: bool,
+     *             weighted: float,
+     *             weight: float,
+     *             lead: array<string, null|string>,
+     *             person: array<string, null|string>
+     *         },
+     *         final: array{score: float}
+     *     }
+     * }
+     */
+    private function buildMatchBreakdown(Lead $lead, Person $person): array
+    {
+        $nameScore = $this->calculateNameMatchScore($lead, $person); // 0..1
+        $emailScore = $this->calculateEmailMatchScore($lead, $person); // 0..1
+        $phoneScore = $this->calculatePhoneMatchScore($lead, $person); // 0..1
+        $addressScore = $this->calculateAddressMatchScore($lead, $person); // 0..1
+
+        $finalScore = min(
+            ($nameScore * 0.85 + $emailScore * 0.05 + $phoneScore * 0.05 + $addressScore * 0.05) * 100,
+            100
+        );
+
+        return [
+            'percentage' => round($finalScore, 1),
+            'breakdown' => [
+                'name' => [
+                    'ratio' => $nameScore,
+                    'weighted' => $nameScore * 0.85 * 100,
+                    'weight' => 0.85,
+                ],
+                'email' => [
+                    'matched' => ($emailScore ?? 0) > 0,
+                    'weighted' => $emailScore * 0.05 * 100,
+                    'weight' => 0.05,
+                ],
+                'phone' => [
+                    'matched' => ($phoneScore ?? 0) > 0,
+                    'weighted' => $phoneScore * 0.05 * 100,
+                    'weight' => 0.05,
+                ],
+                'address' => [
+                    'matched' => ($addressScore ?? 0) > 0,
+                    'weighted' => $addressScore * 0.05 * 100,
+                    'weight' => 0.05,
+                ],
+                'final' => [
+                    'score' => $finalScore,
+                ],
+            ],
+            // Detailed variant used by matchScoreBreakdown (includes field values)
+            'breakdown_detailed' => [
+                'name' => [
+                    'ratio' => $nameScore,
+                    'weighted' => $nameScore * 0.85 * 100,
+                    'weight' => 0.85,
+                    'fields' => [
+                        'first_name' => [$lead->first_name ?? null, $person->first_name ?? null],
+                        'last_name' => [$lead->last_name ?? null, $person->last_name ?? null],
+                        'lastname_prefix' => [$lead->lastname_prefix ?? null, $person->lastname_prefix ?? null],
+                        'married_name' => [$lead->married_name ?? null, $person->married_name ?? null],
+                        'married_name_prefix' => [$lead->married_name_prefix ?? null, $person->married_name_prefix ?? null],
+                        'initials' => [$lead->initials ?? null, $person->initials ?? null],
+                        'date_of_birth' => [$lead->date_of_birth ?? null, $person->date_of_birth ?? null],
+                    ],
+                ],
+                'email' => [
+                    'matched' => ($emailScore ?? 0) > 0,
+                    'weighted' => $emailScore * 0.05 * 100,
+                    'weight' => 0.05,
+                    'lead' => $lead->emails ?? [],
+                    'person' => $person->emails ?? [],
+                ],
+                'phone' => [
+                    'matched' => ($phoneScore ?? 0) > 0,
+                    'weighted' => $phoneScore * 0.05 * 100,
+                    'weight' => 0.05,
+                    'lead' => $lead->phones ?? [],
+                    'person' => $person->phones ?? [],
+                ],
+                'address' => [
+                    'matched' => ($addressScore ?? 0) > 0,
+                    'weighted' => $addressScore * 0.05 * 100,
+                    'weight' => 0.05,
+                    'lead' => [
+                        'street' => $lead->address->street ?? null,
+                        'house_number' => $lead->address->house_number ?? null,
+                        'house_number_suffix' => $lead->address->house_number_suffix ?? null,
+                        'postal_code' => $lead->address->postal_code ?? null,
+                        'city' => $lead->address->city ?? null,
+                        'country' => $lead->address->country ?? null,
+                    ],
+                    'person' => [
+                        'street' => $person->address->street ?? null,
+                        'house_number' => $person->address->house_number ?? null,
+                        'house_number_suffix' => $person->address->house_number_suffix ?? null,
+                        'postal_code' => $person->address->postal_code ?? null,
+                        'city' => $person->address->city ?? null,
+                        'country' => $person->address->country ?? null,
+                    ],
+                ],
+                'final' => [
+                    'score' => $finalScore,
+                ],
+            ],
+        ];
+    }
+
+    /**
      * Calculate match score between lead and person.
      */
     private function calculateMatchScore(Lead $lead, Person $person): float
     {
-        $score = 0.0;
         $maxScore = 100.0;
 
-        // Calculate name field matches (including date of birth)
-        $nameScore = $this->calculateNameMatchScore($lead, $person);
-
-        // Email matching (5% weight)
-        $emailScore = $this->calculateEmailMatchScore($lead, $person);
-        $score += $emailScore * 0.05 * 100;
-
-        // Phone number matching (5% weight)
-        $phoneScore = $this->calculatePhoneMatchScore($lead, $person);
-        $score += $phoneScore * 0.05 * 100;
-
-        // Address matching (5% weight)
-        $addressScore = $this->calculateAddressMatchScore($lead, $person);
-        $score += $addressScore * 0.05 * 100;
-
-        // Add name score (85% total weight)
-        $score += $nameScore * 0.85 * 100;
+        $result = $this->buildMatchBreakdown($lead, $person);
+        $score = $result['percentage'];
 
         // Debug logging for tests - always log for person ID 1 in tests
         if ($this->enableLogging && ($lead->id == 9 && $person->id == 3)) {
             Log::info('Match Score Debug', [
                 'lead_id' => $lead->id,
                 'person_id' => $person->id,
-                'nameScore' => $nameScore,
-                'emailScore' => $emailScore,
-                'phoneScore' => $phoneScore,
-                'addressScore' => $addressScore,
+                'nameScore' => $result['breakdown']['name']['ratio'] ?? null,
+                'emailScore' => ($result['breakdown']['email']['weighted'] ?? 0) / 5,
+                'phoneScore' => ($result['breakdown']['phone']['weighted'] ?? 0) / 5,
+                'addressScore' => ($result['breakdown']['address']['weighted'] ?? 0) / 5,
                 'finalScore' => min($score, $maxScore),
                 'lead_data' => [
                     'first_name' => $lead->first_name,
@@ -593,7 +761,7 @@ class PersonController extends Controller
             ]);
         }
 
-        return min($score, $maxScore);
+        return min((float) $score, $maxScore);
     }
 
     /**

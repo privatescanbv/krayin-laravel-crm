@@ -27,10 +27,15 @@ Route::prefix('contacts')->group(function () {
         Route::get('search', 'search')->name('admin.contacts.persons.search');
 
         Route::get('searchByLead/{lead}', 'searchByLead')->name('admin.contacts.persons.searchbylead');
+        // Single-person variant, query params lead_id & person_id
+        Route::get('searchByLead', 'searchByLeadSingle')->name('admin.contacts.persons.searchbylead_single');
 
         Route::get('edit-with-lead/{personId}/{leadId}', 'editWithLead')->name('admin.contacts.persons.edit_with_lead');
 
         Route::post('update-with-lead/{personId}/{leadId}', 'updateWithLead')->name('admin.contacts.persons.update_with_lead');
+
+        // Match score breakdown endpoint for UI tooltips
+        Route::get('match-breakdown/{personId}/{leadId}', 'matchScoreBreakdown')->name('admin.contacts.persons.match_breakdown');
 
         Route::middleware(['throttle:100,60'])->delete('{id}', 'destroy')->name('admin.contacts.persons.delete');
 
@@ -57,11 +62,11 @@ Route::prefix('contacts')->group(function () {
          */
         Route::controller(DuplicateController::class)->prefix('{id}/duplicates')->group(function () {
             Route::get('', 'index')->name('admin.contacts.persons.duplicates.index');
-            
+
             Route::get('check', 'checkDuplicates')->name('admin.contacts.persons.duplicates.check');
-            
+
             Route::get('get', 'getDuplicates')->name('admin.contacts.persons.duplicates.get');
-            
+
             Route::post('merge', 'merge')->name('admin.contacts.persons.duplicates.merge');
         });
     });

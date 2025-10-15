@@ -55,6 +55,16 @@
                                         class="icon-eye rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
                                         title="Bekijk persoon"
                                     ></a>
+                                    <!-- Sync with lead link -->
+                                    <a
+                                        href="{{ route('admin.contacts.persons.edit_with_lead', ['personId' => $person->id, 'leadId' => $lead->id]) }}"
+                                        class="rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 text-green-600 hover:text-green-700"
+                                        title="Synchroniseer gegevens met lead"
+                                    >
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                        </svg>
+                                    </a>
                                     <button
                                         type="button"
                                         class="icon-trash rounded-md p-1.5 text-xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950 text-red-600 hover:text-red-700"
@@ -70,6 +80,7 @@
 
                             <!-- Person Details -->
                             <div class="text-sm space-y-2">
+                                <v-match-score person-id="{{ $person->id }}" lead-id="{{ $lead->id }}"></v-match-score>
                                 @php
                                     $defaultEmail = null;
                                     if ($person->emails && count($person->emails) > 0) {
@@ -108,45 +119,4 @@
 
 {!! view_render_event('admin.leads.view.persons.after', ['lead' => $lead]) !!}
 
-@pushOnce('scripts')
-<script>
-function openAddPersonModal() {
-    // TODO: Implement modal for adding person to lead
-    alert('Add person modal - to be implemented');
-}
-
-function detachPerson(personId) {
-    if (confirm('Weet je zeker dat je deze persoon wilt ontkoppelen van de lead?')) {
-        const leadId = {{ $lead->id }};
-
-        fetch(`/admin/leads/${leadId}/detach-person/${personId}`, {
-            method: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Remove the person card from the DOM
-                const personCard = document.querySelector(`#person-details-${personId}`).closest('.border');
-                personCard.remove();
-
-                // Show success message
-                window.location.reload(); // Reload to update person count and anamnesis
-            } else {
-                alert('Fout: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Er is een fout opgetreden bij het ontkoppelen van de persoon.');
-        });
-    }
-}
-
-// Toggle functionality removed - cards are always expanded
-</script>
-@endPushOnce
+@include('admin::components.match-score')

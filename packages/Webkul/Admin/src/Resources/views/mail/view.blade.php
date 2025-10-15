@@ -1406,7 +1406,7 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <a
-                                    :href="'{{ route('admin.workflow-leads.view', ':id') }}'.replace(':id', email.sales_lead_id)"
+                                    :href="'{{ route('admin.sales-leads.view', ':id') }}'.replace(':id', email.sales_lead_id)"
                                     target="_blank"
                                     class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
                                     title="Sales Lead bekijken"
@@ -2403,7 +2403,7 @@
                     search() {
                         this.isSearching = true;
 
-                        this.$axios.get('{{ route('admin.workflow-leads.search') }}', {
+                        this.$axios.get('{{ route('admin.sales-leads.search') }}', {
                             params: {
                                 search: this.searchTerm,
                             }

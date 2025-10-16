@@ -84,10 +84,10 @@ class PersonController extends Controller
         $data['entity_type'] = 'persons';
 
         // Normalize enum-like fields to strings for persistence
-        if (isset($data['salutation']) && $data['salutation'] instanceof \BackedEnum) {
+        if (isset($data['salutation']) && $data['salutation'] instanceof BackedEnum) {
             $data['salutation'] = $data['salutation']->value;
         }
-        if (isset($data['gender']) && $data['gender'] instanceof \BackedEnum) {
+        if (isset($data['gender']) && $data['gender'] instanceof BackedEnum) {
             $data['gender'] = $data['gender']->value;
         }
 
@@ -632,12 +632,12 @@ class PersonController extends Controller
         // Check regular fields
         foreach ($comparableFields as $field => $label) {
             $leadValue = $lead->$field ?? null;
-            
+
             // Only consider fields that have a value in the lead
             if ($this->hasValue($leadValue)) {
                 $totalFields++;
                 $personValue = $person->$field ?? null;
-                
+
                 $isMatch = $this->valuesMatch($leadValue, $personValue, $field);
                 if ($isMatch) {
                     $matchingFields++;
@@ -656,12 +656,12 @@ class PersonController extends Controller
         if ($lead->address) {
             foreach ($addressFields as $field => $label) {
                 $leadValue = $lead->address->$field ?? null;
-                
+
                 // Only consider fields that have a value in the lead
                 if ($this->hasValue($leadValue)) {
                     $totalFields++;
                     $personValue = $person->address->$field ?? null;
-                    
+
                     $isMatch = $this->valuesMatch($leadValue, $personValue, $field);
                     if ($isMatch) {
                         $matchingFields++;
@@ -696,7 +696,7 @@ class PersonController extends Controller
         if (is_null($value)) {
             return 'Geen waarde';
         }
-        
+
         if (in_array($field, ['emails', 'phones'])) {
             if (is_array($value)) {
                 $values = $this->extractArrayValues($value);
@@ -704,12 +704,17 @@ class PersonController extends Controller
             }
             return (string) $value;
         }
-        
+
         if ($field === 'date_of_birth') {
             $formatted = $this->formatDateForComparison($value);
             return $formatted ?: 'Geen waarde';
         }
-        
+
+        // For enums, return backing value for display
+        if ($value instanceof BackedEnum) {
+            return (string) $value->value;
+        }
+
         return (string) $value;
     }
 
@@ -918,12 +923,12 @@ class PersonController extends Controller
         // Check regular fields
         foreach ($comparableFields as $field) {
             $leadValue = $lead->$field ?? null;
-            
+
             // Only consider fields that have a value in the lead
             if ($this->hasValue($leadValue)) {
                 $totalFields++;
                 $personValue = $person->$field ?? null;
-                
+
                 if ($this->valuesMatch($leadValue, $personValue, $field)) {
                     $matchingFields++;
                 }
@@ -934,12 +939,12 @@ class PersonController extends Controller
         if ($lead->address) {
             foreach ($addressFields as $field) {
                 $leadValue = $lead->address->$field ?? null;
-                
+
                 // Only consider fields that have a value in the lead
                 if ($this->hasValue($leadValue)) {
                     $totalFields++;
                     $personValue = $person->address->$field ?? null;
-                    
+
                     if ($this->valuesMatch($leadValue, $personValue, $field)) {
                         $matchingFields++;
                     }
@@ -954,7 +959,7 @@ class PersonController extends Controller
 
         // Calculate percentage
         $percentage = ($matchingFields / $totalFields) * 100;
-        
+
         return min($percentage, 100.0);
     }
 
@@ -966,15 +971,15 @@ class PersonController extends Controller
         if (is_null($value)) {
             return false;
         }
-        
+
         if (is_string($value)) {
             return trim($value) !== '';
         }
-        
+
         if (is_array($value)) {
             return !empty($value);
         }
-        
+
         return true;
     }
 
@@ -987,18 +992,18 @@ class PersonController extends Controller
         if (in_array($field, ['emails', 'phones'])) {
             return $this->arrayValuesMatch($leadValue, $personValue);
         }
-        
+
         // Handle date fields
         if ($field === 'date_of_birth') {
             $leadDate = $this->formatDateForComparison($leadValue);
             $personDate = $this->formatDateForComparison($personValue);
             return $leadDate && $personDate && $leadDate === $personDate;
         }
-        
+
         // Handle regular string fields
         $leadNormalized = $this->normalizeValue($leadValue);
         $personNormalized = $this->normalizeValue($personValue);
-        
+
         return $leadNormalized === $personNormalized;
     }
 
@@ -1010,14 +1015,14 @@ class PersonController extends Controller
         if (!is_array($leadArray) || !is_array($personArray)) {
             return false;
         }
-        
+
         $leadValues = $this->extractArrayValues($leadArray);
         $personValues = $this->extractArrayValues($personArray);
-        
+
         // Sort both arrays for comparison
         sort($leadValues);
         sort($personValues);
-        
+
         return $leadValues === $personValues;
     }
 
@@ -1027,7 +1032,7 @@ class PersonController extends Controller
     private function extractArrayValues($array): array
     {
         $values = [];
-        
+
         foreach ($array as $item) {
             if (is_array($item) && isset($item['value'])) {
                 $values[] = trim($item['value']);
@@ -1035,7 +1040,7 @@ class PersonController extends Controller
                 $values[] = trim($item);
             }
         }
-        
+
         return array_filter($values);
     }
 
@@ -1047,11 +1052,16 @@ class PersonController extends Controller
         if (is_null($value)) {
             return '';
         }
-        
+
+        // Unwrap backed enums to their scalar backing values for comparison
+        if ($value instanceof BackedEnum) {
+            $value = $value->value;
+        }
+
         if (is_string($value)) {
             return strtolower(trim($value));
         }
-        
+
         return strtolower(trim((string) $value));
     }
 

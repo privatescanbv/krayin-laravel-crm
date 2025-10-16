@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Enums\LostReason;
 use App\Enums\WorkflowType;
 use App\Traits\HasAuditTrail;
+use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use ValueError;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
 use Webkul\Email\Models\Email;
@@ -179,10 +182,10 @@ class SalesLead extends Model
         }
 
         try {
-            $lostReason = \App\Enums\LostReason::from($this->lost_reason);
+            $lostReason = LostReason::from($this->lost_reason);
 
             return $lostReason->label();
-        } catch (\ValueError $e) {
+        } catch (ValueError $e) {
             return $this->lost_reason;
         }
     }
@@ -229,7 +232,7 @@ class SalesLead extends Model
     /**
      * Attach persons to this sales lead.
      */
-    public function attachPersons(array $personIds)
+    public function attachPersons(array $personIds): void
     {
         foreach ($personIds as $personId) {
             DB::table('saleslead_persons')->insertOrIgnore([
@@ -242,7 +245,7 @@ class SalesLead extends Model
     /**
      * Sync persons to this sales lead (replace all existing).
      */
-    public function syncPersons(array $personIds)
+    public function syncPersons(array $personIds): void
     {
         // Remove existing relationships
         DB::table('saleslead_persons')->where('saleslead_id', $this->id)->delete();

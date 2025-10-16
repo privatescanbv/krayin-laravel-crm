@@ -3,6 +3,7 @@
 namespace Webkul\Admin\Http\Controllers\Products;
 
 use App\Enums\Currency;
+use App\Helpers\ProductHelper;
 use App\Rules\PartnerProductsMatchResourceType;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -151,6 +152,7 @@ class ProductController extends Controller
     public function search(): JsonResource
     {
         $products = $this->productRepository
+            ->with('productGroup')
             ->pushCriteria(app(RequestCriteria::class))
             ->all();
 

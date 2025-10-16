@@ -1,4 +1,4 @@
-@php use App\Enums\Currency;use App\Models\ProductType;use App\Models\ResourceType;use Webkul\Product\Models\ProductGroup; @endphp
+@php use App\Enums\Currency;use App\Helpers\ProductHelper;use App\Models\ProductType;use App\Models\ResourceType;use Webkul\Product\Models\ProductGroup; @endphp
 @props([
     'product' => null,
     'selectedPartnerProducts' => [],

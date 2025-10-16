@@ -5,6 +5,7 @@
     'selectedResources' => [],
     'relatedProducts' => [],
     'excludeId' => null,
+    'templateProductId' => null,
 ])
 
 @php
@@ -13,6 +14,11 @@
     $defaultCurrency = Currency::default()->value;
     $clinics = app(ClinicRepository::class)->allActive(['id', 'name']);
 @endphp
+
+    <!-- Hidden field for product_id (template product) -->
+    @if($templateProductId)
+        <input type="hidden" name="product_id" value="{{ $templateProductId }}" />
+    @endif
 
     <!-- Naam en Duur -->
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

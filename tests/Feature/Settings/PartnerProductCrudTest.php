@@ -7,6 +7,8 @@ use App\Models\PartnerProduct;
 use App\Models\Resource;
 use App\Models\ResourceType;
 use Webkul\Installer\Http\Middleware\CanInstall;
+use Webkul\Product\Models\Product;
+use Webkul\Product\Models\ProductGroup;
 
 beforeEach(function () {
     config(['api.keys' => ['valid-api-key-123', 'another-valid-key']]);
@@ -288,4 +290,120 @@ test('can update partner product with resources from multiple selected clinics',
     $pp->refresh();
     expect($pp->clinics->pluck('id')->toArray())->toContain($clinicA->id, $clinicB->id)
         ->and($pp->resources->pluck('id')->toArray())->toContain($resourceFromClinicA->id, $resourceFromClinicB->id);
+});
+
+test('can create partner product with template product', function () {
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+    $clinicId = Clinic::query()->value('id') ?? Clinic::factory()->create()->id;
+
+    // Create a template product
+    $templateProduct = Product::factory()->create([
+        'name'             => 'Template Product',
+        'description'      => 'Template description',
+        'currency'         => 'EUR',
+        'price'            => 150.00,
+        'resource_type_id' => $resourceTypeId,
+    ]);
+
+    $payload = [
+        'name'                         => 'Partner Product from Template',
+        'currency'                     => 'EUR',
+        'sales_price'                  => 199.99,
+        'active'                       => 1,
+        'description'                  => 'Partner product description',
+        'discount_info'                => 'Intro discount 10%',
+        'resource_type_id'             => $resourceTypeId,
+        'product_id'                   => $templateProduct->id,
+        'clinics'                      => [$clinicId],
+        'clinic_description'           => 'Omschrijving kliniek',
+        'duration'                     => 60,
+        'purchase_price_misc'          => 10.50,
+        'purchase_price_doctor'        => 25.00,
+        'purchase_price_cardiology'    => 15.75,
+        'purchase_price_clinic'        => 30.25,
+        'purchase_price_royal_doctors' => 12.00,
+        'purchase_price_radiology'     => 20.50,
+    ];
+
+    $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
+    $response->assertOk();
+
+    $this->assertDatabaseHas('partner_products', [
+        'name'       => 'Partner Product from Template',
+        'product_id' => $templateProduct->id,
+    ]);
+
+    $createdProduct = PartnerProduct::where('name', 'Partner Product from Template')->first();
+    expect($createdProduct->product_id)->toBe($templateProduct->id);
+});
+
+test('can get template products for selection', function () {
+    $product1 = Product::factory()->create(['name' => 'Product 1', 'active' => true, 'product_group_id' => null]);
+    $product2 = Product::factory()->create(['name' => 'Product 2', 'active' => true, 'product_group_id' => null]);
+    $product3 = Product::factory()->create(['name' => 'Product 3', 'active' => false]); // Inactive
+
+    $response = $this->getJson(route('admin.settings.partner_products.template_products'));
+    $response->assertOk();
+
+    $data = $response->json('data');
+    expect($data)->toHaveCount(2); // Only active products
+    expect(collect($data)->pluck('name'))->toContain('Product 1', 'Product 2');
+    expect(collect($data)->pluck('name'))->not->toContain('Product 3');
+
+    // Check that name_with_path is present and matches name when no product group
+    expect(collect($data)->pluck('name_with_path'))->toContain('Product 1', 'Product 2');
+});
+
+test('can get specific template product details', function () {
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+    $templateProduct = Product::factory()->create([
+        'name'             => 'Template Product',
+        'description'      => 'Template description',
+        'currency'         => 'EUR',
+        'price'            => 150.00,
+        'costs'            => 100.00,
+        'resource_type_id' => $resourceTypeId,
+        'product_group_id' => null, // Explicitly set to null
+    ]);
+
+    $response = $this->getJson(route('admin.settings.partner_products.template_product', ['id' => $templateProduct->id]));
+    $response->assertOk();
+
+    $data = $response->json('data');
+    expect($data['id'])->toBe($templateProduct->id);
+    expect($data['name'])->toBe('Template Product');
+    expect($data['name_with_path'])->toBe('Template Product'); // No product group, so same as name
+    expect($data['description'])->toBe('Template description');
+    expect($data['currency'])->toBe('EUR');
+    expect($data['price'])->toBe('150.00');
+    expect($data['costs'])->toBe('100.00');
+    expect($data['resource_type_id'])->toBe($resourceTypeId);
+});
+
+test('template products show product group path when available', function () {
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+
+    // Create a product group hierarchy
+    $parentGroup = ProductGroup::factory()->create(['name' => 'Parent Group']);
+    $childGroup = ProductGroup::factory()->create([
+        'name'      => 'Child Group',
+        'parent_id' => $parentGroup->id,
+    ]);
+
+    $templateProduct = Product::factory()->create([
+        'name'             => 'Template Product',
+        'active'           => true,
+        'product_group_id' => $childGroup->id,
+        'resource_type_id' => $resourceTypeId,
+    ]);
+
+    $response = $this->getJson(route('admin.settings.partner_products.template_products'));
+    $response->assertOk();
+
+    $data = $response->json('data');
+    $product = collect($data)->firstWhere('id', $templateProduct->id);
+
+    expect($product)->not->toBeNull();
+    expect($product['name'])->toBe('Template Product');
+    expect($product['name_with_path'])->toBe('Parent Group > Child Group > Template Product');
 });

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\PartnerProductDataGrid;
 use App\Enums\Currency;
+use App\Helpers\ProductHelper;
 use App\Models\Resource;
 use App\Models\ResourceType;
 use App\Repositories\ClinicRepository;
@@ -15,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Webkul\Product\Models\Product;
 
 class PartnerProductController extends SimpleEntityController
 {
@@ -46,6 +48,40 @@ class PartnerProductController extends SimpleEntityController
     {
         $query = $request->input('query', '');
         $data = $this->partnerProductRepository->searchFormatted($query, 50);
+
+        return response()->json(['data' => $data]);
+    }
+
+    public function getTemplateProducts(Request $request): JsonResponse
+    {
+        $query = $request->input('query', '');
+
+        $products = Product::with('productGroup')
+            ->where('active', true)
+            ->where('name', 'like', '%'.$query.'%')
+            ->orderBy('name')
+            ->limit(50)
+            ->get(['id', 'name', 'description', 'currency', 'price', 'costs', 'resource_type_id', 'product_group_id']);
+
+        $data = ProductHelper::formatCollectionWithPaths($products);
+
+        return response()->json(['data' => $data]);
+    }
+
+    public function getTemplateProduct(int $id): JsonResponse
+    {
+        $product = Product::with('productGroup')->findOrFail($id);
+
+        $data = [
+            'id'               => $product->id,
+            'name'             => $product->name,
+            'name_with_path'   => ProductHelper::formatNameWithPath($product),
+            'description'      => $product->description,
+            'currency'         => $product->currency,
+            'price'            => $product->price,
+            'costs'            => $product->costs,
+            'resource_type_id' => $product->resource_type_id,
+        ];
 
         return response()->json(['data' => $data]);
     }
@@ -171,6 +207,7 @@ class PartnerProductController extends SimpleEntityController
             'description'         => 'nullable|string',
             'discount_info'       => 'nullable|string',
             'resource_type_id'    => 'required|integer|exists:resource_types,id',
+            'product_id'          => 'nullable|integer|exists:products,id',
 
             // partner fields
             'clinic_description'  => 'nullable|string',
@@ -218,6 +255,10 @@ class PartnerProductController extends SimpleEntityController
 
         if (array_key_exists('resource_type_id', $payload)) {
             $payload['resource_type_id'] = $payload['resource_type_id'] === '' ? null : $payload['resource_type_id'];
+        }
+
+        if (array_key_exists('product_id', $payload)) {
+            $payload['product_id'] = $payload['product_id'] === '' ? null : $payload['product_id'];
         }
 
         if (array_key_exists('sales_price', $payload)) {

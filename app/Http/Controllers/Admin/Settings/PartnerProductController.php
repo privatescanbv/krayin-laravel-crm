@@ -51,15 +51,19 @@ class PartnerProductController extends SimpleEntityController
             ->scopeQuery(function ($q) use ($query) {
                 return $q->where('active', true)
                     ->where('name', 'like', '%'.$query.'%')
+                    ->with('clinics:id,name')
                     ->orderBy('name')
                     ->limit(50);
             })
             ->all();
 
         $data = $products->map(function ($product) {
+            $clinicNames = $product->clinics->pluck('name')->join(', ');
+            $displayName = $clinicNames ? "{$clinicNames} - {$product->name}" : $product->name;
+            
             return [
                 'id'   => $product->id,
-                'name' => $product->name,
+                'name' => $displayName,
             ];
         });
 

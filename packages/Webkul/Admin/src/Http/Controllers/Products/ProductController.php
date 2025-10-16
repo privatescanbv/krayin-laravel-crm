@@ -102,6 +102,9 @@ class ProductController extends Controller
     public function edit(int $id): View|JsonResponse
     {
         $product = $this->productRepository->findOrFail($id);
+        
+        // Load partner products with their clinics for display
+        $product->load('partnerProducts.clinics');
 
         $currencies = Currency::options();
         $defaultCurrency = Currency::default()->value;

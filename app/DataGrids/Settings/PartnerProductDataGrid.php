@@ -12,13 +12,17 @@ class PartnerProductDataGrid extends DataGrid
     public function prepareQueryBuilder(): Builder
     {
         $queryBuilder = DB::table('partner_products')
+            ->leftJoin('clinic_partner_product', 'partner_products.id', '=', 'clinic_partner_product.partner_product_id')
+            ->leftJoin('clinics', 'clinic_partner_product.clinic_id', '=', 'clinics.id')
             ->addSelect(
                 'partner_products.id',
                 'partner_products.name',
                 'partner_products.currency',
                 'partner_products.sales_price',
-                'partner_products.active'
-            );
+                'partner_products.active',
+                DB::raw('GROUP_CONCAT(DISTINCT clinics.name ORDER BY clinics.name SEPARATOR ", ") as clinic_names')
+            )
+            ->groupBy('partner_products.id', 'partner_products.name', 'partner_products.currency', 'partner_products.sales_price', 'partner_products.active');
 
         $this->addFilter('id', 'partner_products.id');
 
@@ -43,6 +47,10 @@ class PartnerProductDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+            'closure'    => function ($row) {
+                $clinicNames = $row->clinic_names;
+                return $clinicNames ? "{$clinicNames} - {$row->name}" : $row->name;
+            },
         ]);
 
         $this->addColumn([

@@ -59,7 +59,7 @@
 
                 <x-admin::product-form-fields
                     :product="$product"
-                    :selected-partner-products="$product->partnerProducts->map(fn($p) => ['id' => $p->id, 'name' => $p->name])->toArray()"
+                    :selected-partner-products="$product->partnerProducts->load('clinics')->map(fn($p) => ['id' => $p->id, 'name' => $p->clinics->pluck('name')->join(', ') ? $p->clinics->pluck('name')->join(', ') . ' - ' . $p->name : $p->name])->toArray()"
                 />
             </div>
         </div>

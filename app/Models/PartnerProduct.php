@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Abstracts\BaseProduct;
+use Webkul\Product\Models\Product;
 
 class PartnerProduct extends BaseProduct
 {
@@ -72,6 +73,6 @@ class PartnerProduct extends BaseProduct
 
     public function product()
     {
-        return $this->belongsTo(\Webkul\Product\Models\Product::class);
+        return $this->belongsTo(Product::class);
     }
 }

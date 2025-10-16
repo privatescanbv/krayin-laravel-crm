@@ -357,6 +357,27 @@ class LeadController extends Controller
 
             [$lead, $leadPipelineId] = $this->storeLead($request);
 
+            // Check if we should redirect to sync page after creation
+            $shouldSync = $this->shouldRedirectToSync($lead);
+            if ($shouldSync) {
+                $person = $lead->persons()->first();
+                if (request()->ajax()) {
+                    return response()->json([
+                        'message'  => trans('admin::app.leads.create-success'),
+                        'redirect' => route('admin.leads.sync-lead-to-person', [
+                            'leadId' => $lead->id,
+                            'personId' => $person->id
+                        ]),
+                    ]);
+                }
+
+                session()->flash('success', trans('admin::app.leads.create-success'));
+                return redirect()->route('admin.leads.sync-lead-to-person', [
+                    'leadId' => $lead->id,
+                    'personId' => $person->id
+                ]);
+            }
+
             // If this is an AJAX request, respond with JSON containing redirect target
             if (request()->ajax()) {
                 return response()->json([
@@ -613,17 +634,17 @@ class LeadController extends Controller
                 if (request()->ajax()) {
                     return response()->json([
                         'message'  => trans('admin::app.leads.update-success'),
-                        'redirect' => route('admin.contacts.persons.edit_with_lead', [
-                            'personId' => $person->id,
-                            'leadId' => $lead->id
+                        'redirect' => route('admin.leads.sync-lead-to-person', [
+                            'leadId' => $lead->id,
+                            'personId' => $person->id
                         ]),
                     ]);
                 }
 
                 session()->flash('success', trans('admin::app.leads.update-success'));
-                return redirect()->route('admin.contacts.persons.edit_with_lead', [
-                    'personId' => $person->id,
-                    'leadId' => $lead->id
+                return redirect()->route('admin.leads.sync-lead-to-person', [
+                    'leadId' => $lead->id,
+                    'personId' => $person->id
                 ]);
             }
 
@@ -1468,7 +1489,7 @@ class LeadController extends Controller
     /**
      * Check if lead should redirect to sync page based on conditions:
      * - Lead has exactly 1 person
-     * - Match score is not 100
+     * - New match score is not 100
      */
     private function shouldRedirectToSync($lead): bool
     {
@@ -1480,7 +1501,7 @@ class LeadController extends Controller
 
             $person = $lead->persons()->first();
 
-            // Use PersonController to calculate match score
+            // Use PersonController to calculate new match score (1-way)
             $personController = app(PersonController::class);
             $matchScore = $personController->calculateMatchScore($lead, $person);
 

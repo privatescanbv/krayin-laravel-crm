@@ -6,7 +6,7 @@ use App\Enums\ContactLabel;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Models\Address;
 use BackedEnum;
-use Dotenv\Exception\ValidationException;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -84,10 +84,10 @@ class PersonController extends Controller
         $data['entity_type'] = 'persons';
 
         // Normalize enum-like fields to strings for persistence
-        if (isset($data['salutation']) && $data['salutation'] instanceof \BackedEnum) {
+        if (isset($data['salutation']) && $data['salutation'] instanceof BackedEnum) {
             $data['salutation'] = $data['salutation']->value;
         }
-        if (isset($data['gender']) && $data['gender'] instanceof \BackedEnum) {
+        if (isset($data['gender']) && $data['gender'] instanceof BackedEnum) {
             $data['gender'] = $data['gender']->value;
         }
 
@@ -179,6 +179,7 @@ class PersonController extends Controller
 
     /**
      * Update the specified resource in storage.
+     * @throws Exception when update fails
      */
     public function update(AttributeForm $request, int $id): RedirectResponse|JsonResponse
     {
@@ -550,13 +551,21 @@ class PersonController extends Controller
             $lead = Lead::findOrFail($leadId);
             $person = Person::findOrFail($personId);
 
-            $result = $this->buildMatchBreakdown($lead, $person);
+            $result = $this->buildLeadToPersonMatchBreakdown($lead, $person);
 
-            return response()->json(array_merge([
+            // Compute legacy breakdown data for UI (weights and matched flags)
+            $legacyBreakdown = $this->buildLegacyBreakdown($lead, $person, $result['percentage']);
+
+            return response()->json([
                 'lead_id' => $lead->id,
                 'person_id' => $person->id,
-            ], $result['breakdown_detailed']));
-        } catch (\Throwable $e) {
+                'percentage' => $result['percentage'],
+                'total_fields' => $result['total_fields'],
+                'matching_fields' => $result['matching_fields'],
+                'field_differences' => $result['field_differences'],
+                'breakdown' => $legacyBreakdown,
+            ]);
+        } catch (Throwable $e) {
             return response()->json([
                 'message' => 'Unable to calculate match score breakdown',
             ], 400);
@@ -579,7 +588,10 @@ class PersonController extends Controller
             $lead = Lead::findOrFail($leadId);
             $person = Person::findOrFail($personId);
 
-            $result = $this->buildMatchBreakdown($lead, $person);
+            $result = $this->buildLeadToPersonMatchBreakdown($lead, $person);
+
+            // Compute legacy breakdown data for UI (weights and matched flags)
+            $legacyBreakdown = $this->buildLegacyBreakdown($lead, $person, $result['percentage']);
 
             return response()->json([
                 'person' => [
@@ -587,13 +599,152 @@ class PersonController extends Controller
                     'name' => $person->name,
                     'match_score_percentage' => $result['percentage'],
                 ],
-                'breakdown' => $result['breakdown'],
+                'breakdown' => $legacyBreakdown,
             ]);
         } catch (Throwable $e) {
+            Log::error('Error in searchByLeadSingle', [
+                'lead_id' => $leadId,
+                'person_id' => $personId,
+                'error' => $e->getMessage(),
+            ]);
             return response()->json([
                 'message' => 'Unable to calculate match score',
             ], 400);
         }
+    }
+
+    /**
+     * Build match result for lead → person (one-way) comparison.
+     * Only considers fields that are present on the lead.
+     *
+     * @return array{
+     *   percentage: float,
+     *   total_fields: int,
+     *   matching_fields: int,
+     *   field_differences: array<string, array{
+     *     label: string,
+     *     lead_value: null|string,
+     *     person_value: null|string,
+     *     type: string
+     *   }>
+     * }
+     */
+    private function buildLeadToPersonMatchBreakdown(Lead $lead, Person $person): array
+    {
+        $comparableFields = [
+            'salutation' => 'Aanhef',
+            'first_name' => 'Voornaam',
+            'last_name' => 'Achternaam',
+            'lastname_prefix' => 'Voorvoegsel achternaam',
+            'married_name' => 'Gehuwde naam',
+            'married_name_prefix' => 'Voorvoegsel gehuwde naam',
+            'initials' => 'Initialen',
+            'date_of_birth' => 'Geboortedatum',
+            'gender' => 'Geslacht',
+            'emails' => 'E-mailadressen',
+            'phones' => 'Telefoonnummers',
+        ];
+
+        $addressFields = [
+            'street' => 'Straat',
+            'house_number' => 'Huisnummer',
+            'house_number_suffix' => 'Huisnummer toevoeging',
+            'postal_code' => 'Postcode',
+            'city' => 'Plaats',
+            'country' => 'Land',
+        ];
+
+        $fieldDifferences = [];
+        $totalFields = 0;
+        $matchingFields = 0;
+
+        // Check regular fields
+        foreach ($comparableFields as $field => $label) {
+            $leadValue = $lead->$field ?? null;
+
+            // Only consider fields that have a value in the lead
+            if ($this->hasValue($leadValue)) {
+                $totalFields++;
+                $personValue = $person->$field ?? null;
+
+                $isMatch = $this->valuesMatch($leadValue, $personValue, $field, 'lead');
+                if ($isMatch) {
+                    $matchingFields++;
+                } else {
+                    $fieldDifferences[$field] = [
+                        'label' => $label,
+                        'lead_value' => $this->formatValueForDisplay($leadValue, $field),
+                        'person_value' => $this->formatValueForDisplay($personValue, $field),
+                        'type' => $this->getFieldType($field)
+                    ];
+                }
+            }
+        }
+
+        // Check address fields
+        if ($lead->address) {
+            foreach ($addressFields as $field => $label) {
+                $leadValue = $lead->address->$field ?? null;
+
+                // Only consider fields that have a value in the lead
+                if ($this->hasValue($leadValue)) {
+                    $totalFields++;
+                    $personValue = $person->address->$field ?? null;
+
+                    $isMatch = $this->valuesMatch($leadValue, $personValue, $field);
+                    if ($isMatch) {
+                        $matchingFields++;
+                    } else {
+                        $fieldDifferences["address_{$field}"] = [
+                            'label' => $label,
+                            'lead_value' => $this->formatValueForDisplay($leadValue, $field),
+                            'person_value' => $this->formatValueForDisplay($personValue, $field),
+                            'type' => 'text'
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Calculate percentage
+        $percentage = $totalFields > 0 ? ($matchingFields / $totalFields) * 100 : 0;
+
+        return [
+            'percentage' => round($percentage, 1),
+            'total_fields' => $totalFields,
+            'matching_fields' => $matchingFields,
+            'field_differences' => $fieldDifferences,
+        ];
+    }
+
+    /**
+     * Format value for display in the UI.
+     */
+    private function formatValueForDisplay($value, $field): string
+    {
+        if (is_null($value)) {
+            return 'Geen waarde';
+        }
+
+        if (in_array($field, ['emails', 'phones'])) {
+            if (is_array($value)) {
+                $values = $this->extractArrayValues($value);
+                return implode(', ', $values) ?: 'Geen waarde';
+            }
+            return (string) $value;
+        }
+
+        if ($field === 'date_of_birth') {
+            $formatted = $this->formatDateForComparison($value);
+            return $formatted ?: 'Geen waarde';
+        }
+
+        // For enums, return backing value for display
+        if ($value instanceof BackedEnum) {
+            return (string) $value->value;
+        }
+
+        return (string) $value;
     }
 
     /**
@@ -628,392 +779,285 @@ class PersonController extends Controller
      *     }
      * }
      */
-    private function buildMatchBreakdown(Lead $lead, Person $person): array
-    {
-        $nameScore = $this->calculateNameMatchScore($lead, $person); // 0..1
-        $emailScore = $this->calculateEmailMatchScore($lead, $person); // 0..1
-        $phoneScore = $this->calculatePhoneMatchScore($lead, $person); // 0..1
-        $addressScore = $this->calculateAddressMatchScore($lead, $person); // 0..1
-
-        $finalScore = min(
-            ($nameScore * 0.85 + $emailScore * 0.05 + $phoneScore * 0.05 + $addressScore * 0.05) * 100,
-            100
-        );
-
-        return [
-            'percentage' => round($finalScore, 1),
-            'breakdown' => [
-                'name' => [
-                    'ratio' => $nameScore,
-                    'weighted' => $nameScore * 0.85 * 100,
-                    'weight' => 0.85,
-                ],
-                'email' => [
-                    'matched' => ($emailScore ?? 0) > 0,
-                    'weighted' => $emailScore * 0.05 * 100,
-                    'weight' => 0.05,
-                ],
-                'phone' => [
-                    'matched' => ($phoneScore ?? 0) > 0,
-                    'weighted' => $phoneScore * 0.05 * 100,
-                    'weight' => 0.05,
-                ],
-                'address' => [
-                    'matched' => ($addressScore ?? 0) > 0,
-                    'weighted' => $addressScore * 0.05 * 100,
-                    'weight' => 0.05,
-                ],
-                'final' => [
-                    'score' => $finalScore,
-                ],
-            ],
-            // Detailed variant used by matchScoreBreakdown (includes field values)
-            'breakdown_detailed' => [
-                'name' => [
-                    'ratio' => $nameScore,
-                    'weighted' => $nameScore * 0.85 * 100,
-                    'weight' => 0.85,
-                    'fields' => [
-                        'first_name' => [$lead->first_name ?? null, $person->first_name ?? null],
-                        'last_name' => [$lead->last_name ?? null, $person->last_name ?? null],
-                        'lastname_prefix' => [$lead->lastname_prefix ?? null, $person->lastname_prefix ?? null],
-                        'married_name' => [$lead->married_name ?? null, $person->married_name ?? null],
-                        'married_name_prefix' => [$lead->married_name_prefix ?? null, $person->married_name_prefix ?? null],
-                        'initials' => [$lead->initials ?? null, $person->initials ?? null],
-                        'date_of_birth' => [$lead->date_of_birth ?? null, $person->date_of_birth ?? null],
-                    ],
-                ],
-                'email' => [
-                    'matched' => ($emailScore ?? 0) > 0,
-                    'weighted' => $emailScore * 0.05 * 100,
-                    'weight' => 0.05,
-                    'lead' => $lead->emails ?? [],
-                    'person' => $person->emails ?? [],
-                ],
-                'phone' => [
-                    'matched' => ($phoneScore ?? 0) > 0,
-                    'weighted' => $phoneScore * 0.05 * 100,
-                    'weight' => 0.05,
-                    'lead' => $lead->phones ?? [],
-                    'person' => $person->phones ?? [],
-                ],
-                'address' => [
-                    'matched' => ($addressScore ?? 0) > 0,
-                    'weighted' => $addressScore * 0.05 * 100,
-                    'weight' => 0.05,
-                    'lead' => [
-                        'street' => $lead->address->street ?? null,
-                        'house_number' => $lead->address->house_number ?? null,
-                        'house_number_suffix' => $lead->address->house_number_suffix ?? null,
-                        'postal_code' => $lead->address->postal_code ?? null,
-                        'city' => $lead->address->city ?? null,
-                        'country' => $lead->address->country ?? null,
-                    ],
-                    'person' => [
-                        'street' => $person->address->street ?? null,
-                        'house_number' => $person->address->house_number ?? null,
-                        'house_number_suffix' => $person->address->house_number_suffix ?? null,
-                        'postal_code' => $person->address->postal_code ?? null,
-                        'city' => $person->address->city ?? null,
-                        'country' => $person->address->country ?? null,
-                    ],
-                ],
-                'final' => [
-                    'score' => $finalScore,
-                ],
-            ],
-        ];
-    }
 
     /**
      * Calculate match score between lead and person.
+     * Only considers fields that are filled in the lead and exist in the person.
+     *  If lead values match person values exactly, score is 100%.
      */
     public function calculateMatchScore(Lead $lead, Person $person): float
     {
-        $maxScore = 100.0;
-
-        $result = $this->buildMatchBreakdown($lead, $person);
-        $score = $result['percentage'];
-
-        // Debug logging for tests - always log for person ID 1 in tests
-        if ($this->enableLogging && ($lead->id == 9 && $person->id == 3)) {
-            Log::info('Match Score Debug', [
-                'lead_id' => $lead->id,
-                'person_id' => $person->id,
-                'nameScore' => $result['breakdown']['name']['ratio'] ?? null,
-                'emailScore' => ($result['breakdown']['email']['weighted'] ?? 0) / 5,
-                'phoneScore' => ($result['breakdown']['phone']['weighted'] ?? 0) / 5,
-                'addressScore' => ($result['breakdown']['address']['weighted'] ?? 0) / 5,
-                'finalScore' => min($score, $maxScore),
-                'lead_data' => [
-                    'first_name' => $lead->first_name,
-                    'last_name' => $lead->last_name,
-                    'lastname_prefix' => $lead->lastname_prefix,
-                    'emails' => $lead->emails,
-                    'phones' => $lead->phones,
-                ],
-                'person_data' => [
-                    'first_name' => $person->first_name,
-                    'last_name' => $person->last_name,
-                    'lastname_prefix' => $person->lastname_prefix,
-                    'emails' => $person->emails,
-                    'phones' => $person->phones,
-                ]
-            ]);
-        }
-
-        return min((float) $score, $maxScore);
-    }
-
-    /**
-     * Calculate name match score with new logic.
-     */
-    private function calculateNameMatchScore(Lead $lead, Person $person): float
-    {
-        $nameFields = [
+        $comparableFields = [
+            'salutation',
             'first_name',
             'last_name',
             'lastname_prefix',
             'married_name',
             'married_name_prefix',
             'initials',
-            'date_of_birth'
+            'date_of_birth',
+            'gender',
+            'emails',
+            'phones',
         ];
 
-        $importantNameFields = [
-            'first_name',
-            'last_name',
-            'lastname_prefix'
+        $addressFields = [
+            'street',
+            'house_number',
+            'house_number_suffix',
+            'postal_code',
+            'city',
+            'country',
         ];
 
-        $totalMatches = 0;
-        $totalPossibleMatches = 0;
-        $importantMatches = 0;
-        $importantPossibleMatches = 0;
+        $totalFields = 0;
+        $matchingFields = 0;
 
-        foreach ($nameFields as $field) {
-            $leadValue = $lead->$field ?? '';
-            $personValue = $person->$field ?? '';
+        // Check regular fields
+        foreach ($comparableFields as $field) {
+            $leadValue = $lead->$field ?? null;
 
-            if (!empty($leadValue) || !empty($personValue)) {
-                $totalPossibleMatches++;
+            // Only consider fields that have a value in the lead
+            if ($this->hasValue($leadValue)) {
+                $totalFields++;
+                $personValue = $person->$field ?? null;
 
-                if (in_array($field, $importantNameFields)) {
-                    $importantPossibleMatches++;
+                // Use lead perspective for array subset logic on emails/phones
+                if ($this->valuesMatch($leadValue, $personValue, $field, 'lead')) {
+                    $matchingFields++;
                 }
+            }
+        }
 
-                // Handle matching logic
-                $isMatch = false;
+        // Check address fields
+        if ($lead->address) {
+            foreach ($addressFields as $field) {
+                $leadValue = $lead->address->$field ?? null;
 
-                // If both values are empty, treat as match
-                if (empty($leadValue) && empty($personValue)) {
-                    $isMatch = true;
+                // Only consider fields that have a value in the lead
+                if ($this->hasValue($leadValue)) {
+                    $totalFields++;
+                    $personValue = $person->address->$field ?? null;
+
+                    if ($this->valuesMatch($leadValue, $personValue, $field)) {
+                        $matchingFields++;
+                    }
                 }
-                // If both values exist, compare them
-                elseif (!empty($leadValue) && !empty($personValue)) {
-                    // Special handling for date_of_birth
-                    if ($field === 'date_of_birth') {
-                        $leadDate = $this->formatDateForComparison($leadValue);
-                        $personDate = $this->formatDateForComparison($personValue);
-                        if ($leadDate && $personDate && $leadDate === $personDate) {
-                            $isMatch = true;
+            }
+        }
+
+        // If no fields to compare, return 0
+        if ($totalFields === 0) {
+            return 0.0;
+        }
+
+        // Calculate percentage
+        $percentage = ($matchingFields / $totalFields) * 100;
+
+        return min($percentage, 100.0);
+    }
+
+    /**
+     * Check if a value is considered "has value" (not empty/null).
+     */
+    private function hasValue($value): bool
+    {
+        if (is_null($value)) {
+            return false;
+        }
+
+        if (is_string($value)) {
+            return trim($value) !== '';
+        }
+
+        if (is_array($value)) {
+            return !empty($value);
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if two values match for comparison.
+     */
+    private function valuesMatch($leadValue, $personValue, $field, string $perspective = 'generic'): bool
+    {
+        // Handle array fields (emails, phones)
+        if (in_array($field, ['emails', 'phones'])) {
+            return $this->arrayValuesMatch($leadValue, $personValue, $perspective);
+        }
+
+        // Handle date fields
+        if ($field === 'date_of_birth') {
+            $leadDate = $this->formatDateForComparison($leadValue);
+            $personDate = $this->formatDateForComparison($personValue);
+            return $leadDate && $personDate && $leadDate === $personDate;
+        }
+
+        // Handle regular string fields
+        $leadNormalized = $this->normalizeValue($leadValue);
+        $personNormalized = $this->normalizeValue($personValue);
+
+        return $leadNormalized === $personNormalized;
+    }
+
+    /**
+     * Check if array values match (for emails/phones).
+     */
+    private function arrayValuesMatch($leadArray, $personArray, string $perspective = 'generic'): bool
+    {
+        if (!is_array($leadArray) || !is_array($personArray)) {
+            return false;
+        }
+
+        $leadValues = $this->extractArrayValues($leadArray);
+        $personValues = $this->extractArrayValues($personArray);
+
+        // For sync (lead perspective): treat as match if all lead values exist in person values (subset)
+        if ($perspective === 'lead') {
+            $personSet = array_map('strtolower', $personValues);
+            foreach ($leadValues as $lv) {
+                if (!in_array(strtolower($lv), $personSet, true)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Generic: exact match
+        sort($leadValues);
+        sort($personValues);
+        return $leadValues === $personValues;
+    }
+
+    /**
+     * Extract values from array format (emails/phones).
+     */
+    private function extractArrayValues($array): array
+    {
+        $values = [];
+
+        foreach ($array as $item) {
+            if (is_array($item) && isset($item['value'])) {
+                $values[] = trim($item['value']);
+            } elseif (is_string($item)) {
+                $values[] = trim($item);
+            }
+        }
+
+        return array_filter($values);
+    }
+
+    /**
+     * Normalize value for comparison.
+     */
+    private function normalizeValue($value): string
+    {
+        if (is_null($value)) {
+            return '';
+        }
+
+        // Unwrap backed enums to their scalar backing values for comparison
+        if ($value instanceof BackedEnum) {
+            $value = $value->value;
+        }
+
+        if (is_string($value)) {
+            return strtolower(trim($value));
+        }
+
+        return strtolower(trim((string) $value));
+    }
+
+    /**
+     * Build legacy breakdown (name/email/phone/address/final) for UI widgets.
+     * name.weighted derives from name fields match ratio (0..1) * 85.
+     * email/phone weighted = 5 when subset matches, else 0. address weighted approx = (matches/fields)*5.
+     */
+    private function buildLegacyBreakdown(Lead $lead, Person $person, float $finalPercentage): array
+    {
+        // Name ratio: recompute from individual name fields considered on the lead
+        $nameFields = ['first_name','last_name','lastname_prefix','married_name','married_name_prefix','initials','date_of_birth'];
+        $nameTotal = 0; $nameMatches = 0;
+        foreach ($nameFields as $nf) {
+            $leadVal = $lead->$nf ?? null;
+            if ($this->hasValue($leadVal)) {
+                $nameTotal++;
+                $personVal = $person->$nf ?? null;
+                if ($this->valuesMatch($leadVal, $personVal, $nf)) {
+                    $nameMatches++;
+                }
+            }
+        }
+        $nameRatio = $nameTotal > 0 ? ($nameMatches / $nameTotal) : 0.0;
+        $nameWeighted = $nameRatio * 0.85 * 100; // keep original 0..100 scale for weighted
+
+        // Email subset match
+        $emailLead = $this->extractEmails($lead);
+        $emailPerson = $this->extractEmails($person);
+        $emailMatched = false;
+        if (!empty($emailLead)) {
+            $set = array_map('strtolower', $emailPerson);
+            $emailMatched = true;
+            foreach ($emailLead as $e) {
+                if (!in_array(strtolower($e), $set, true)) {
+                    $emailMatched = false; break;
+                }
+            }
+        }
+        $emailWeighted = $emailMatched ? (0.05 * 100) : 0;
+
+        // Phone subset match (normalized)
+        $phoneLead = $this->extractPhones($lead);
+        $phonePerson = $this->extractPhones($person);
+        $normalizedPersonPhones = array_map(fn($p) => $this->normalizePhoneNumber($p), $phonePerson);
+        $phoneMatched = false;
+        if (!empty($phoneLead)) {
+            $phoneMatched = true;
+            foreach ($phoneLead as $p) {
+                if (!in_array($this->normalizePhoneNumber($p), $normalizedPersonPhones, true)) {
+                    $phoneMatched = false; break;
+                }
+            }
+        }
+        $phoneWeighted = $phoneMatched ? (0.05 * 100) : 0;
+
+        // Address approx matching: compare basic fields equality count
+        $leadAddr = $lead->address;
+        $personAddr = $person->address;
+        $addressWeighted = 0;
+        $addressMatched = false;
+        if ($leadAddr && $personAddr) {
+            $fields = ['street','house_number','postal_code','city','country'];
+            $total = 0; $matches = 0;
+            foreach ($fields as $f) {
+                $lv = strtolower(trim((string)($leadAddr->$f ?? '')));
+                $pv = strtolower(trim((string)($personAddr->$f ?? '')));
+                if ($lv !== '' || $pv !== '') {
+                    $total++;
+                    if ($lv !== '' && $pv !== '' && $lv === $pv) {
+                        $matches++;
+                    } elseif ($f === 'postal_code' && $lv !== '' && $pv !== '') {
+                        if (str_contains($lv, $pv) || str_contains($pv, $lv)) {
+                            $matches += 0.5;
                         }
                     }
-                    // Exact match for other fields
-                    elseif (strtolower(trim($leadValue)) === strtolower(trim($personValue))) {
-                        $isMatch = true;
-                    }
-                    // Partial match for names (not for initials or date_of_birth)
-                    elseif (!in_array($field, ['initials', 'date_of_birth']) &&
-                        (stripos($personValue, $leadValue) !== false ||
-                            stripos($leadValue, $personValue) !== false)) {
-                        $isMatch = true;
-                    }
                 }
-                // If one is empty and one is not, no match (default $isMatch = false)
-
-                if ($isMatch) {
-                    $totalMatches++;
-                    if (in_array($field, $importantNameFields)) {
-                        $importantMatches++;
-                    }
-                }
-//                // can be used for debugging specific name field matches
-//                else {
-//                    Log::info("Name field '{$field}' did not match", [
-//                        'lead_value' => $leadValue,
-//                        'person_value' => $personValue
-//                    ]);
-//                }
+            }
+            if ($total > 0) {
+                $ratio = $matches / $total; // 0..1
+                $addressWeighted = $ratio * 0.05 * 100;
+                $addressMatched = $ratio > 0; // some match
             }
         }
 
-        // Calculate scores based on new criteria
-        if ($totalPossibleMatches === 0) {
-            return 0.0;
-        }
-
-        $totalMatchRatio = $totalMatches / $totalPossibleMatches;
-
-        // Debug name matching for person ID 1
-        if ($this->enableLogging&& $person->id == 1) {
-            Log::info('Name Match Debug', [
-                'totalMatches' => $totalMatches,
-                'totalPossibleMatches' => $totalPossibleMatches,
-                'importantMatches' => $importantMatches,
-                'importantPossibleMatches' => $importantPossibleMatches,
-                'totalMatchRatio' => $totalMatchRatio,
-                'will_return_score' => $totalMatchRatio === 1.0 ? 0.95 : ($importantPossibleMatches > 0 && $importantMatches === $importantPossibleMatches ? 0.80 : $totalMatchRatio * 0.80)
-            ]);
-        }
-
-        // 100% match on all name fields = 100% score for perfect test matches
-        if ($totalMatchRatio >= 1.0) {
-            return 1.0;
-        }
-
-        // 100% match on important name fields = 80% score
-        if ($importantPossibleMatches > 0 && $importantMatches === $importantPossibleMatches && $totalMatchRatio < 1.0) {
-            return 0.80;
-        }
-
-        // Partial scoring based on match ratio
-        // Scale between 0 and 0.80 based on total match ratio
-        return $totalMatchRatio * 0.80;
-    }
-
-    /**
-     * Calculate email match score between lead and person.
-     */
-    private function calculateEmailMatchScore(Lead $lead, Person $person): float
-    {
-        $leadEmails = $this->extractEmails($lead);
-        $personEmails = $this->extractEmails($person);
-
-        if (empty($leadEmails) || empty($personEmails)) {
-            return 0.0;
-        }
-
-        $matchCount = 0;
-        $totalPersonEmails = count($personEmails);
-
-        foreach ($leadEmails as $leadEmail) {
-            foreach ($personEmails as $personEmail) {
-                if (strtolower($leadEmail) === strtolower($personEmail)) {
-                    $matchCount++;
-                    break; // Don't count the same lead email multiple times
-                }
-            }
-        }
-
-        // If all person emails match, return 1.0
-        // If some match, return partial score
-        return $matchCount > 0 ? ($matchCount / $totalPersonEmails) : 0.0;
-    }
-
-    /**
-     * Calculate phone match score between lead and person.
-     */
-    private function calculatePhoneMatchScore(Lead $lead, Person $person): float
-    {
-        $leadPhones = $this->extractPhones($lead);
-        $personPhones = $this->extractPhones($person);
-
-        // Debug phone extraction for person ID 1
-        if ($this->enableLogging&& $person->id == 1) {
-            Log::info('Phone Match Debug', [
-                'lead_id' => $lead->id,
-                'person_id' => $person->id,
-                'leadPhones' => $leadPhones,
-                'personPhones' => $personPhones,
-                'lead_phones_raw' => $lead->phones,
-                'person_phones_raw' => $person->phones,
-            ]);
-        }
-
-        // Treat both empty as perfect match; one empty as no match
-        if (empty($leadPhones) && empty($personPhones)) {
-            return 1.0;
-        }
-        if (empty($leadPhones) || empty($personPhones)) {
-            return 0.0;
-        }
-
-        $matchCount = 0;
-        $totalPersonPhones = count($personPhones);
-
-        foreach ($leadPhones as $leadPhone) {
-            foreach ($personPhones as $personPhone) {
-                if ($this->normalizePhoneNumber($leadPhone) === $this->normalizePhoneNumber($personPhone)) {
-                    $matchCount++;
-                    break; // Don't count the same lead phone multiple times
-                }
-            }
-        }
-
-        return $matchCount > 0 ? ($matchCount / $totalPersonPhones) : 0.0;
-    }
-
-    /**
-     * Calculate address match score between lead and person.
-     */
-    private function calculateAddressMatchScore(Lead $lead, Person $person): float
-    {
-        $leadAddress = $this->extractAddressData($lead);
-        $personAddress = $this->extractAddressData($person);
-
-        // Debug address extraction for person ID 1
-        if ($this->enableLogging&& $person->id == 1) {
-            Log::info('Address Match Debug', [
-                'lead_id' => $lead->id,
-                'person_id' => $person->id,
-                'leadAddress' => $leadAddress,
-                'personAddress' => $personAddress,
-                'leadAddressEmpty' => empty($leadAddress),
-                'personAddressEmpty' => empty($personAddress),
-            ]);
-        }
-
-        // If both addresses are empty, treat as perfect match (like empty fields fix)
-        if (empty($leadAddress) && empty($personAddress)) {
-            return 1.0;
-        }
-
-        // If only one address is empty, no match
-        if (empty($leadAddress) || empty($personAddress)) {
-            return 0.0;
-        }
-
-        $addressFields = ['street', 'house_number', 'city', 'postal_code', 'country'];
-        $matchCount = 0;
-        $totalFields = 0;
-
-        foreach ($addressFields as $field) {
-            $leadValue = $leadAddress[$field] ?? '';
-            $personValue = $personAddress[$field] ?? '';
-
-            if (!empty($leadValue) || !empty($personValue)) {
-                $totalFields++;
-
-                if (!empty($leadValue) && !empty($personValue)) {
-                    // Normalize and compare
-                    $leadNormalized = strtolower(trim($leadValue));
-                    $personNormalized = strtolower(trim($personValue));
-
-                    if ($leadNormalized === $personNormalized) {
-                        $matchCount++;
-                    }
-                    // For postal codes, also check partial matches (useful for Dutch postal codes)
-                    elseif ($field === 'postal_code' &&
-                           (strpos($leadNormalized, $personNormalized) !== false ||
-                            strpos($personNormalized, $leadNormalized) !== false)) {
-                        $matchCount += 0.5; // Partial match
-                    }
-                }
-            }
-        }
-
-        return $totalFields > 0 ? ($matchCount / $totalFields) : 0.0;
+        return [
+            'name' => [ 'ratio' => $nameRatio, 'weighted' => $nameWeighted, 'weight' => 0.85 ],
+            'email' => [ 'matched' => $emailMatched, 'weighted' => $emailWeighted, 'weight' => 0.05 ],
+            'phone' => [ 'matched' => $phoneMatched, 'weighted' => $phoneWeighted, 'weight' => 0.05 ],
+            'address' => [ 'matched' => $addressMatched, 'weighted' => $addressWeighted, 'weight' => 0.05 ],
+            'final' => [ 'score' => $finalPercentage ],
+        ];
     }
 
     /**
@@ -1069,40 +1113,6 @@ class PersonController extends Controller
     }
 
     /**
-     * Extract address data from lead or person.
-     */
-    private function extractAddressData($entity): array
-    {
-        $address = [];
-
-        // For both persons and leads, check if they have an address relationship
-        if (method_exists($entity, 'address') && $entity->address) {
-            $address = [
-                'street' => $entity->address->street ?? '',
-                'house_number' => $entity->address->house_number ?? '',
-                'city' => $entity->address->city ?? '',
-                'postal_code' => $entity->address->postal_code ?? '',
-                'country' => $entity->address->country ?? '',
-            ];
-        }
-        // Fallback to direct address fields (for backwards compatibility)
-        else {
-            $address = [
-                'street' => $entity->street ?? '',
-                'house_number' => $entity->house_number ?? '',
-                'city' => $entity->city ?? '',
-                'postal_code' => $entity->postal_code ?? '',
-                'country' => $entity->country ?? '',
-            ];
-        }
-
-        // Filter out empty values
-        return array_filter($address, function($value) {
-            return !empty(trim($value));
-        });
-    }
-
-    /**
      * Normalize phone number for comparison.
      */
     private function normalizePhoneNumber(string $phone): string
@@ -1135,7 +1145,8 @@ class PersonController extends Controller
             return response()->json([
                 'message' => trans('admin::app.contacts.persons.index.delete-success'),
             ], 200);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
+            Log::error('Could not delete person: ' . $exception->getMessage(), ['person_id' => $id]);
             return response()->json([
                 'message' => trans('admin::app.contacts.persons.index.delete-failed'),
             ], 400);
@@ -1163,88 +1174,103 @@ class PersonController extends Controller
     }
 
     /**
-     * Show the form for updating person with lead data.
+     * Show the form for syncing lead data to person (1-way sync).
      */
-    public function editWithLead(int $personId, int $leadId): View
+    public function syncLeadToPerson(int $leadId, int $personId): View
     {
-        $person = $this->personRepository->findOrFail($personId);
         $lead = app(LeadRepository::class)->findOrFail($leadId);
+        $person = $this->personRepository->findOrFail($personId);
 
-        $fieldDifferences = $this->comparePersonWithLead($person, $lead);
+        $matchBreakdown = $this->buildLeadToPersonMatchBreakdown($lead, $person);
 
-        return view('admin::contacts.persons.edit-with-lead', compact('person', 'lead', 'fieldDifferences'));
+        return view('admin::leads.sync-lead-to-person', compact('lead', 'person', 'matchBreakdown'));
     }
 
+    // Removed legacy edit-with-lead and update-with-lead in favor of sync-lead-to-person
+
     /**
-     * Update person with selected lead data.
+     * Sync lead data to person (1-way sync).
      */
-    public function updateWithLead(int $personId, int $leadId)
+    public function syncLeadToPersonUpdate(int $leadId, int $personId)
     {
+        $lead = $this->leadRepository->findOrFail($leadId);
         $person = $this->personRepository->findOrFail($personId);
-        $lead = app(LeadRepository::class)->findOrFail($leadId);
 
         $data = request()->all();
-        $leadUpdates = $data['lead_updates'] ?? [];
-        $personUpdates = $data['person_updates'] ?? [];
+        $choices = $data['choice'] ?? [];
 
         try {
-            // Update lead with modified values
-            if (!empty($leadUpdates)) {
-                $lead->update($leadUpdates);
-            }
+            $personUpdate = [];
+            $personAddressUpdate = [];
+            $leadUpdate = [];
+            $leadAddressUpdate = [];
 
-            // Update person with selected values from lead
-            if (!empty($personUpdates)) {
-                $updateData = [];
-                foreach ($personUpdates as $field => $shouldUpdate) {
-                    if ($shouldUpdate) {
-                        if (isset($leadUpdates[$field])) {
-                            // Use the potentially modified lead value
-                            $value = $leadUpdates[$field];
-                        } else {
-                            // Use the original lead value
-                            $value = $lead->$field;
+            foreach ($choices as $field => $which) {
+                // Address subfields
+                if (str_starts_with($field, 'address_')) {
+                    $addressField = substr($field, 8);
+                    if ($which === 'lead') {
+                        $leadValue = $lead->address->$addressField ?? null;
+                        if ($this->hasValue($leadValue)) {
+                            $personAddressUpdate[$addressField] = $leadValue;
                         }
-
-                        // Handle array fields (emails, phones) - convert string back to array format
-                        if (in_array($field, ['emails', 'phones']) && is_string($value)) {
-                            $values = array_filter(explode(', ', $value));
-                            $arrayData = [];
-                            foreach ($values as $index => $val) {
-                                $arrayData[] = [
-                                    'value' => trim($val),
-                                    'label' => $field === 'emails' ? 'Work' : 'Mobile',
-                                    'is_default' => $index === 0
-                                ];
-                            }
-                            $updateData[$field] = $arrayData;
-                        } elseif ($field === 'address') {
-                            // Handle address field - copy lead address to person
-                            if ($lead->address) {
-                                $this->copyAddressFromLeadToPerson($lead, $person);
-                            }
-                        } else {
-                            $updateData[$field] = $value;
+                    } else { // person chosen -> update lead
+                        $personValue = $person->address->$addressField ?? null;
+                        if ($this->hasValue($personValue)) {
+                            $leadAddressUpdate[$addressField] = $personValue;
                         }
                     }
+                    continue;
                 }
 
-                if (!empty($updateData)) {
-                    $person->update($updateData);
+                // Regular fields
+                if ($which === 'lead') {
+                    if (in_array($field, ['emails', 'phones'], true)) {
+                        $personCurrent = is_array($person->$field) ? $person->$field : [];
+                        $leadValues = is_array($lead->$field) ? $lead->$field : [];
+                        $merged = $this->appendContactsSetDefault($personCurrent, $leadValues);
+                        if (!empty($merged)) {
+                            $personUpdate[$field] = $merged;
+                        }
+                    } else {
+                        $value = $lead->$field ?? null;
+                        if ($this->hasValue($value)) {
+                            $personUpdate[$field] = $value;
+                        }
+                    }
+                } else { // person
+                    if (in_array($field, ['emails', 'phones'], true)) {
+                        $leadUpdate[$field] = is_array($person->$field) ? $person->$field : [];
+                    } else {
+                        $leadUpdate[$field] = $person->$field ?? null;
+                    }
                 }
+            }
+
+            if (!empty($personUpdate)) {
+                $person->update($personUpdate);
+            }
+            if (!empty($personAddressUpdate)) {
+                $this->updatePersonAddress($person, $personAddressUpdate);
+            }
+            if (!empty($leadUpdate)) {
+                $lead->update($leadUpdate);
+            }
+            if (!empty($leadAddressUpdate)) {
+                $this->updateLeadAddress($lead, $leadAddressUpdate);
             }
 
             // Check if it's an AJAX request
             if (request()->expectsJson() || request()->ajax()) {
                 return response()->json([
-                    'message' => 'Person en lead succesvol bijgewerkt.',
-                    'redirect_url' => route('admin.contacts.persons.view', $person->id)
+                    'message' => 'Lead gegevens succesvol overgenomen naar person.',
+                    'redirect_url' => route('admin.leads.view', $lead->id)
                 ]);
             }
-            return redirect()->route('admin.contacts.persons.view', $person->id);
+            return redirect()->route('admin.leads.view', $lead->id);
 
         } catch (Exception $e) {
-            logger()->error('Could not sync person with lead ' . $e->getMessage(), [
+            logger()->error('Could not sync lead to person ' . $e->getMessage(), [
                 'person_id' => $personId,
                 'lead_id' => $leadId,
                 'data' => $data
@@ -1261,85 +1287,104 @@ class PersonController extends Controller
     }
 
     /**
-     * Compare person and lead fields to find differences.
+     * Update person address with provided data.
      */
-    private function comparePersonWithLead(Person $person, Lead $lead): array
+    private function updatePersonAddress($person, $addressData): void
     {
-                $comparableFields = [
-            // Personal Information (fields that exist in both Person and Lead models)
-            'salutation' => 'Aanhef',
-            'first_name' => 'Voornaam',
-            'last_name' => 'Achternaam',
-            'lastname_prefix' => 'Voorvoegsel achternaam',
-            'married_name' => 'Gehuwde naam',
-            'married_name_prefix' => 'Voorvoegsel gehuwde naam',
-            'initials' => 'Initialen',
-            'date_of_birth' => 'Geboortedatum',
-            'gender' => 'Geslacht',
+        if (empty($addressData)) {
+            return;
+        }
 
-            // Contact Information
-            'emails' => 'E-mailadressen',
-            'phones' => 'Telefoonnummers',
+        // Add person_id to address data
+        $addressData['person_id'] = $person->id;
 
-            // Address Information
-            'address' => 'Adres',
-        ];
+        // Delete existing address if it exists
+        if ($person->address) {
+            $person->address->delete();
+        }
 
-        $differences = [];
+        // Create new address for person
+        Address::create($addressData);
+    }
 
-        foreach ($comparableFields as $field => $label) {
-            $personValue = $person->$field;
-            $leadValue = $lead->$field;
+    /**
+     * Update lead address with provided data.
+     */
+    private function updateLeadAddress($lead, $addressData): void
+    {
+        if (empty($addressData)) {
+            return;
+        }
 
-            // Handle array fields (emails, phones)
-            if (in_array($field, ['emails', 'phones'])) {
-                $personValue = $this->normalizeArrayField($personValue);
-                $leadValue = $this->normalizeArrayField($leadValue);
-            }
+        // Add lead_id to address data
+        $addressData['lead_id'] = $lead->id;
 
-            // Handle date fields
-            if ($field === 'date_of_birth') {
-                $personValue = $this->formatDateForComparison($personValue);
-                $leadValue = $this->formatDateForComparison($leadValue);
-            }
+        // Delete existing address if it exists
+        if ($lead->address) {
+            $lead->address->delete();
+        }
 
-            // Handle address field
-            if ($field === 'address') {
-                $personValue = $this->normalizeAddressField($person->address);
-                $leadValue = $this->normalizeAddressField($lead->address);
-            }
+        // Create new address for lead
+        Address::create($addressData);
+    }
 
-            // Compare values
-            if ($this->valuesAreDifferent($personValue, $leadValue)) {
-                $differences[$field] = [
-                    'label' => $label,
-                    'person_value' => $personValue,
-                    'lead_value' => $leadValue,
-                    'type' => $this->getFieldType($field)
+    /**
+     * Append lead emails/phones to person and set the first added as default.
+     * Returns normalized array of contact entries [{value,label,is_default}, ...]
+     */
+    private function appendContactsSetDefault(array $personContacts, array $leadContacts): array
+    {
+        $normalizedPerson = [];
+        foreach ($personContacts as $idx => $item) {
+            if (is_array($item) && isset($item['value'])) {
+                $normalizedPerson[] = [
+                    'value' => trim((string) $item['value']),
+                    'label' => $item['label'] ?? ContactLabel::default()->value,
+                    'is_default' => (bool) ($item['is_default'] ?? false),
+                ];
+            } elseif (is_string($item)) {
+                $normalizedPerson[] = [
+                    'value' => trim($item),
+                    'label' => ContactLabel::default()->value,
+                    'is_default' => $idx === 0,
                 ];
             }
         }
 
-        return $differences;
-    }
+        $existingValues = array_map(fn($i) => strtolower($i['value']), $normalizedPerson);
 
-    /**
-     * Normalize array fields for comparison.
-     */
-    private function normalizeArrayField($value): string
-    {
-        if (empty($value)) {
-            return '';
+        $addedAny = false;
+        foreach ($leadContacts as $item) {
+            $value = null;
+            if (is_array($item) && isset($item['value'])) {
+                $value = trim((string) $item['value']);
+            } elseif (is_string($item)) {
+                $value = trim($item);
+            }
+            if ($value === null || $value === '') {
+                continue;
+            }
+            if (!in_array(strtolower($value), $existingValues, true)) {
+                $normalizedPerson[] = [
+                    'value' => $value,
+                    'label' => ContactLabel::default()->value,
+                    'is_default' => false, // set later
+                ];
+                $existingValues[] = strtolower($value);
+                $addedAny = true;
+            }
         }
 
-        if (is_array($value)) {
-            $values = array_map(function ($item) {
-                return is_array($item) ? ($item['value'] ?? '') : $item;
-            }, $value);
-            return implode(', ', array_filter($values));
+        // Set default: if we added any, make the last added the default
+        if ($addedAny) {
+            foreach ($normalizedPerson as &$row) {
+                $row['is_default'] = false;
+            }
+            $normalizedPerson[count($normalizedPerson) - 1]['is_default'] = true;
+            unset($row);
         }
 
-        return (string) $value;
+        return $normalizedPerson;
     }
 
     /**
@@ -1353,7 +1398,7 @@ class PersonController extends Controller
 
         try {
             // Check if it's a valid Carbon instance
-            if ($date instanceof \Carbon\Carbon) {
+            if ($date instanceof Carbon) {
                 // Check for invalid dates (like -0001-11-30 or 0000-00-00)
                 if ($date->year <= 0 || $date->year > 2100) {
                     return null;
@@ -1364,11 +1409,11 @@ class PersonController extends Controller
             // If it's a string, try to parse it
             if (is_string($date)) {
                 // Skip obviously invalid dates
-                if (in_array($date, ['0000-00-00', '0000-00-00 00:00:00']) || strpos($date, '-0001') === 0) {
+                if (in_array($date, ['0000-00-00', '0000-00-00 00:00:00']) || str_starts_with($date, '-0001')) {
                     return null;
                 }
 
-                $carbonDate = \Carbon\Carbon::parse($date);
+                $carbonDate = Carbon::parse($date);
                 if ($carbonDate->year <= 0 || $carbonDate->year > 2100) {
                     return null;
                 }
@@ -1387,30 +1432,6 @@ class PersonController extends Controller
     }
 
     /**
-     * Normalize address field for comparison.
-     */
-    private function normalizeAddressField($address): string
-    {
-        if (empty($address)) {
-            return '';
-        }
-
-        // Create a normalized address string for comparison
-        $addressParts = [
-            $address->full_address ?? '',
-            $address->street ?? '',
-            $address->house_number ?? '',
-            $address->house_number_suffix ?? '',
-            $address->postal_code ?? '',
-            $address->city ?? '',
-            $address->state ?? '',
-            $address->country ?? ''
-        ];
-
-        return implode('|', array_filter($addressParts));
-    }
-
-    /**
      * Get the field type for proper display handling.
      */
     private function getFieldType(string $field): string
@@ -1426,67 +1447,4 @@ class PersonController extends Controller
         return 'text';
     }
 
-    /**
-     * Copy address from lead to person.
-     */
-    private function copyAddressFromLeadToPerson($lead, $person): void
-    {
-        if (!$lead->address) {
-            return;
-        }
-
-        $addressData = [
-            'street' => $lead->address->street,
-            'house_number' => $lead->address->house_number,
-            'house_number_suffix' => $lead->address->house_number_suffix,
-            'postal_code' => $lead->address->postal_code,
-            'city' => $lead->address->city,
-            'state' => $lead->address->state,
-            'country' => $lead->address->country,
-            'person_id' => $person->id,
-        ];
-
-        // Delete existing address if it exists
-        if ($person->address) {
-            $person->address->delete();
-        }
-
-        // Create new address for person
-        Address::create($addressData);
-    }
-
-    /**
-     * Check if two values are different.
-     */
-    private function valuesAreDifferent($value1, $value2): bool
-    {
-        // Unwrap enums to their backing values
-        if ($value1 instanceof \BackedEnum) {
-            $value1 = $value1->value;
-        }
-        if ($value2 instanceof \BackedEnum) {
-            $value2 = $value2->value;
-        }
-
-        // If either is an array, compare directly (no trim)
-        if (is_array($value1) || is_array($value2)) {
-            return $value1 !== $value2;
-        }
-
-        // Normalize nulls to empty strings and cast scalars to string
-        $value1 = $value1 === null ? '' : (string) $value1;
-        $value2 = $value2 === null ? '' : (string) $value2;
-
-        return trim($value1) !== trim($value2);
-    }
-
-    /**
-     * Normalize contact arrays to ensure proper data types
-     * @deprecated Use normalizeContactFields() from NormalizesContactFields trait instead
-     */
-    private function normalizeContactArrays($request)
-    {
-        // Replaced by normalizeContactFields() from trait
-        $this->normalizeContactFields($request);
-    }
 }

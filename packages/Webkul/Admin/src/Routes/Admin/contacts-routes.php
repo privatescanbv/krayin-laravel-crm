@@ -30,9 +30,9 @@ Route::prefix('contacts')->group(function () {
         // Single-person variant, query params lead_id & person_id
         Route::get('searchByLead', 'searchByLeadSingle')->name('admin.contacts.persons.searchbylead_single');
 
-        Route::get('edit-with-lead/{personId}/{leadId}', 'editWithLead')->name('admin.contacts.persons.edit_with_lead');
+        Route::get('sync-lead-to-person/{leadId}/{personId}', 'syncLeadToPerson')->name('admin.contacts.persons.sync_lead_to_person');
 
-        Route::post('update-with-lead/{personId}/{leadId}', 'updateWithLead')->name('admin.contacts.persons.update_with_lead');
+        Route::post('sync-lead-to-person/{leadId}/{personId}', 'syncLeadToPersonUpdate')->name('admin.contacts.persons.sync_lead_to_person_update');
 
         // Match score breakdown endpoint for UI tooltips
         Route::get('match-breakdown/{personId}/{leadId}', 'matchScoreBreakdown')->name('admin.contacts.persons.match_breakdown');

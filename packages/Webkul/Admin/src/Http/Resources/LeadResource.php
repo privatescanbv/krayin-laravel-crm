@@ -42,7 +42,8 @@ class LeadResource extends JsonResource
             'updated_at'           => $this->updated_at?->format('Y-m-d H:i:s'),
 
             // Personal information (for matching purposes)
-            'salutation'           => $this->salutation,
+            'salutation'           => $this->salutation?->value,
+            'salutation_label'     => $this->salutation?->label() ?? null,
             'first_name'           => $this->first_name,
             'last_name'            => $this->last_name,
             'lastname_prefix'      => $this->lastname_prefix,
@@ -50,7 +51,8 @@ class LeadResource extends JsonResource
             'married_name_prefix'  => $this->married_name_prefix,
             'initials'             => $this->initials,
             'date_of_birth'        => $this->date_of_birth?->format('Y-m-d'),
-            'gender'               => $this->gender,
+            'gender'               => $this->gender?->value,
+            'gender_label'         => $this->gender?->label() ?? null,
 
             // Contact information (for matching purposes)
             'emails'               => is_array($this->emails) ? $this->emails : [],

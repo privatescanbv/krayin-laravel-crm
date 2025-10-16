@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Webkul\Activity\Models\Activity;
 
 class Clinic extends Model
 {
@@ -49,6 +50,6 @@ class Clinic extends Model
 
     public function activities()
     {
-        return $this->hasMany(\Webkul\Activity\Models\Activity::class);
+        return $this->hasMany(Activity::class);
     }
 }

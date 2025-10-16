@@ -42,6 +42,12 @@ Breadcrumbs::for('leads.view', function (BreadcrumbTrail $trail, $lead) {
     $trail->parent('leads');
     $trail->push('#'.$lead->id, route('admin.leads.view', $lead->id));
 });
+
+// Dashboard > Leads > Sync Lead to Person
+Breadcrumbs::for('leads.sync_lead_to_person', function (BreadcrumbTrail $trail, $lead) {
+    $trail->parent('leads.view', $lead);
+    $trail->push('Gegevens overnemen', route('admin.leads.sync-lead-to-person', ['leadId' => $lead->id, 'personId' => request()->route('personId')]));
+});
 // Mail
 Breadcrumbs::for('mail', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');
@@ -108,11 +114,7 @@ Breadcrumbs::for('contacts.persons.view', function (BreadcrumbTrail $trail, $per
     $trail->push('#'.$person->id, route('admin.contacts.persons.view', $person->id));
 });
 
-// Dashboard > Contacts > Persons > Edit with Lead
-Breadcrumbs::for('contacts.persons.edit_with_lead', function (BreadcrumbTrail $trail, $person) {
-    $trail->parent('contacts.persons.view', $person);
-    $trail->push('Sync met Lead');
-});
+// Removed: contacts.persons.edit_with_lead (replaced by admin.leads.sync-lead-to-person)
 
 // Dashboard > Contacts > Organizations
 Breadcrumbs::for('contacts.organizations', function (BreadcrumbTrail $trail) {

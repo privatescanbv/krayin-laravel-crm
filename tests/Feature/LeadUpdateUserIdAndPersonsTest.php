@@ -69,3 +69,32 @@ test('detaching the last person really unlinks the person and removes anamnesis'
         ->exists();
     expect($exists)->toBeFalse();
 });
+
+test('mayEditPersonFields returns true when no persons are linked', function () {
+    $lead = Lead::factory()->create();
+    
+    expect($lead->mayEditPersonFields())->toBeTrue();
+});
+
+test('mayEditPersonFields returns false when persons are linked', function () {
+    $lead = Lead::factory()->create();
+    $person = Person::factory()->create();
+    
+    // Attach person to lead
+    $lead->attachPersons([$person->id]);
+    
+    expect($lead->mayEditPersonFields())->toBeFalse();
+});
+
+test('mayEditPersonFields returns true again after all persons are detached', function () {
+    $lead = Lead::factory()->create();
+    $person = Person::factory()->create();
+    
+    // Attach person to lead
+    $lead->attachPersons([$person->id]);
+    expect($lead->mayEditPersonFields())->toBeFalse();
+    
+    // Detach all persons
+    $lead->syncPersons([]);
+    expect($lead->mayEditPersonFields())->toBeTrue();
+});

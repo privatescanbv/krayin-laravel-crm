@@ -1,13 +1,13 @@
 {{-- {!! view_render_event('admin.leads.create.personal_fields.form_controls.before') !!} --}}
 
 @php
-    // Check if there are linked persons - if so, make person fields readonly
-    $hasLinkedPersons = isset($entity) && $entity->persons && $entity->persons->count() > 0;
-    $readonlyAttributes = $hasLinkedPersons ? ['readonly' => 'readonly', 'disabled' => 'disabled'] : [];
+    // Check if person fields may be edited (no linked persons)
+    $mayEditPersonFields = isset($entity) && $entity->mayEditPersonFields();
+    $readonlyAttributes = !$mayEditPersonFields ? ['readonly' => 'readonly', 'disabled' => 'disabled'] : [];
 @endphp
 
 <div class="flex flex-col gap-4">
-    @if($hasLinkedPersons)
+    @if(!$mayEditPersonFields)
         <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div class="flex items-center">
                 <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -183,6 +183,7 @@ class ActivityRepository extends Repository
                 'is_done' => 1,
                 'user_id' => auth()->check() ? auth()->id() : null,
                 'lead_id' => $lead->id,
+                'sales_lead_id' => $salesLead->id,
                 'additional' => [
                     'old' => ['label' => 'Leeg'],
                     'new' => ['label' => $salesLead->name],

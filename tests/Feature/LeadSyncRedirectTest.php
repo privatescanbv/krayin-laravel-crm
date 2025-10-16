@@ -69,9 +69,9 @@ test('redirects to sync page when lead has 1 person with match score < 100', fun
         ]);
 
     // Should redirect to sync page
-    $response->assertRedirect(route('admin.contacts.persons.edit_with_lead', [
-        'personId' => $person->id,
+    $response->assertRedirect(route('admin.leads.sync-lead-to-person', [
         'leadId'   => $lead->id,
+        'personId' => $person->id,
     ]));
 });
 
@@ -250,9 +250,9 @@ test('handles AJAX requests correctly for sync redirect', function () {
     // Should return JSON with redirect to sync page
     $response->assertOk();
     $response->assertJson([
-        'redirect' => route('admin.contacts.persons.edit_with_lead', [
-            'personId' => $person->id,
+        'redirect' => route('admin.leads.sync-lead-to-person', [
             'leadId'   => $lead->id,
+            'personId' => $person->id,
         ]),
     ]);
 });

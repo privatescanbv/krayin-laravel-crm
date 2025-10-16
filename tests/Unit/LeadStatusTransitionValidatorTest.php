@@ -458,7 +458,7 @@ class LeadStatusTransitionValidatorTest extends TestCase
             'first_name' => 'John',
             'last_name'  => 'Doe',
             'emails'     => [['value' => 'john.doe@example.com', 'is_default' => true]],
-            'phones'     => [['value' => '0612345678', 'is_default' => true]],
+            'phones'     => [['value' => '+31612345678', 'is_default' => true]],
         ]);
 
         // Attach the person

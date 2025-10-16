@@ -2,7 +2,11 @@
 
 @php
     // Check if person fields may be edited (no linked persons)
-    $mayEditPersonFields = isset($entity) && $entity->mayEditPersonFields();
+    // Only check for linked persons if entity is a Lead model (has mayEditPersonFields method)
+    $mayEditPersonFields = true; // Default to true for create forms
+    if (isset($entity) && method_exists($entity, 'mayEditPersonFields')) {
+        $mayEditPersonFields = $entity->mayEditPersonFields();
+    }
     $readonlyAttributes = !$mayEditPersonFields ? ['readonly' => 'readonly', 'disabled' => 'disabled'] : [];
 @endphp
 

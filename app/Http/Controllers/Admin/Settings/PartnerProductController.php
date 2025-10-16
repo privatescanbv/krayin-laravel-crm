@@ -66,6 +66,48 @@ class PartnerProductController extends SimpleEntityController
         return response()->json(['data' => $data]);
     }
 
+    public function getTemplateProducts(Request $request): JsonResponse
+    {
+        $query = $request->input('query', '');
+
+        $products = \Webkul\Product\Models\Product::where('active', true)
+            ->where('name', 'like', '%'.$query.'%')
+            ->orderBy('name')
+            ->limit(50)
+            ->get(['id', 'name', 'description', 'currency', 'price', 'costs', 'resource_type_id']);
+
+        $data = $products->map(function ($product) {
+            return [
+                'id'               => $product->id,
+                'name'             => $product->name,
+                'description'      => $product->description,
+                'currency'         => $product->currency,
+                'price'            => $product->price,
+                'costs'            => $product->costs,
+                'resource_type_id' => $product->resource_type_id,
+            ];
+        });
+
+        return response()->json(['data' => $data]);
+    }
+
+    public function getTemplateProduct(int $id): JsonResponse
+    {
+        $product = \Webkul\Product\Models\Product::findOrFail($id);
+
+        $data = [
+            'id'               => $product->id,
+            'name'             => $product->name,
+            'description'      => $product->description,
+            'currency'         => $product->currency,
+            'price'            => $product->price,
+            'costs'            => $product->costs,
+            'resource_type_id' => $product->resource_type_id,
+        ];
+
+        return response()->json(['data' => $data]);
+    }
+
     public function store(Request $request): RedirectResponse|JsonResponse
     {
         $this->validateStore($request);
@@ -187,6 +229,7 @@ class PartnerProductController extends SimpleEntityController
             'description'         => 'nullable|string',
             'discount_info'       => 'nullable|string',
             'resource_type_id'    => 'required|integer|exists:resource_types,id',
+            'product_id'          => 'nullable|integer|exists:products,id',
 
             // partner fields
             'clinic_description'  => 'nullable|string',
@@ -234,6 +277,10 @@ class PartnerProductController extends SimpleEntityController
 
         if (array_key_exists('resource_type_id', $payload)) {
             $payload['resource_type_id'] = $payload['resource_type_id'] === '' ? null : $payload['resource_type_id'];
+        }
+
+        if (array_key_exists('product_id', $payload)) {
+            $payload['product_id'] = $payload['product_id'] === '' ? null : $payload['product_id'];
         }
 
         if (array_key_exists('sales_price', $payload)) {

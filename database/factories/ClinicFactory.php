@@ -12,6 +12,7 @@ class ClinicFactory extends Factory
     public function definition(): array
     {
         return [
+            'is_active'                => false,
             'name'                     => $this->faker->unique()->company(),
             'website_url'              => $this->faker->url(),
             'order_confirmation_note'  => $this->faker->optional()->sentence(),

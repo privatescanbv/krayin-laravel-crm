@@ -64,7 +64,7 @@
 {{--                    </div>--}}
 {{--                @endif--}}
 
-                <!-- No Open Activities Warning for Sales Lead -->
+                <!-- No Open Activities Warning for sales -->
                 @php
                     $isWonOrLost = ($salesLead->pipelineStage->is_won ?? false) || ($salesLead->pipelineStage->is_lost ?? false);
                 @endphp
@@ -118,7 +118,7 @@
                             class="secondary-button"
                             @click="$refs.salesLeadAfvoerenModal.open()"
                         >
-                            Sales lead afvoeren
+                            sales afvoeren
                         </button>
                     @endif
 
@@ -262,7 +262,7 @@
                                         this.$refs.salesLeadAfvoerenModal.close();
                                         this.$emitter.emit('add-flash', {
                                             type: 'success',
-                                            message: 'Sales lead is afgevoerd.'
+                                            message: 'sales is afgevoerd.'
                                         });
                                         window.location.reload();
                                     })
@@ -281,18 +281,18 @@
         </script>
     @endPushOnce
 
-    <!-- Sales Lead Afvoeren Modal -->
+    <!-- sales Afvoeren Modal -->
     <x-admin::modal ref="salesLeadAfvoerenModal">
         <x-slot:header>
             <h3 class="text-base font-semibold dark:text-white">
-                Sales lead afvoeren
+                Sales afvoeren
             </h3>
         </x-slot>
 
         <x-slot:content>
             <div class="mb-4">
                 <p class="text-sm text-gray-600 dark:text-gray-400">
-                    Weet je zeker dat je deze sales lead wilt afvoeren? Dit zet de sales lead op status "Verloren" en
+                    Weet je zeker dat je deze sales wilt afvoeren? Dit zet de sales op status "Verloren" en
                     slaat de gekozen reden op. De gekoppelde lead blijft ongewijzigd.
                 </p>
             </div>
@@ -344,7 +344,7 @@
                 :disabled="!salesLeadAfvoerenData.lost_reason || isSubmittingSalesLead"
             >
                 <span v-if="isSubmittingSalesLead">Bezig...</span>
-                <span v-else>Sales lead afvoeren</span>
+                <span v-else>sales afvoeren</span>
             </button>
         </x-slot>
     </x-admin::modal>

@@ -97,7 +97,7 @@ class Product extends Model implements ProductContract
      */
     public function partnerProducts(): HasMany
     {
-        return $this->hasMany(PartnerProduct::class);
+        return $this->hasMany(PartnerProduct::class, 'product_id');
     }
 
     /**

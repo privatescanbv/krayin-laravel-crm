@@ -57,9 +57,18 @@
                     @lang('admin::app.products.create.general')
                 </p>
 
+                @php
+                    $selectedPartnerProducts = $product->partnerProducts->map(function($p) {
+                        $clinicNames = $p->clinics->pluck('name')->join(', ');
+                        return [
+                            'id' => $p->id, 
+                            'name' => $clinicNames ? $clinicNames . ' - ' . $p->name : $p->name
+                        ];
+                    })->toArray();
+                @endphp
                 <x-admin::product-form-fields
                     :product="$product"
-                    :selected-partner-products="$product->partnerProducts->load('clinics')->map(fn($p) => ['id' => $p->id, 'name' => $p->clinics->pluck('name')->join(', ') ? $p->clinics->pluck('name')->join(', ') . ' - ' . $p->name : $p->name])->toArray()"
+                    :selected-partner-products="$selectedPartnerProducts"
                 />
             </div>
         </div>

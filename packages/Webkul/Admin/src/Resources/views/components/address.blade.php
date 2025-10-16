@@ -2,6 +2,7 @@
 
 @php
     $addressId = $id ?? 'address';
+    $readonlyAttributes = isset($readonly) && $readonly ? ['readonly' => 'readonly', 'disabled' => 'disabled'] : [];
 @endphp
 
 <div class="flex flex-col gap-4">
@@ -11,6 +12,19 @@
             Adresgegevens
         </p>
     </div>
+    @endif
+
+    @if(isset($readonly) && $readonly)
+        <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                <span class="text-sm text-yellow-800 font-medium">
+                    Adresgegevens zijn alleen-lezen omdat er contactpersonen gekoppeld zijn aan deze lead.
+                </span>
+            </div>
+        </div>
     @endif
 
     <!-- Address Lookup Panel -->
@@ -26,6 +40,7 @@
                         :value="old('address.postal_code', $entity?->address?->postal_code ?? '')"
                         placeholder="1234 AB"
                         id="{{ $addressId }}_postal_code"
+                        :attributes="$readonlyAttributes"
                     />
                     <x-admin::form.control-group.error control-name="address.postal_code"/>
                 </x-admin::form.control-group>
@@ -41,12 +56,14 @@
                         :value="old('address.house_number', $entity?->address?->house_number ?? '')"
                         placeholder="123"
                         id="{{ $addressId }}_house_number"
+                        :attributes="$readonlyAttributes"
                     />
                     <x-admin::form.control-group.error control-name="address.house_number"/>
                 </x-admin::form.control-group>
             </div>
 
             <!-- Lookup button -->
+            @if(!isset($readonly) || !$readonly)
             <div class="flex-shrink-0 flex flex-col justify-end">
                 <div class="mb-4 flex items-end h-full">
                 <button type="button" id="{{ $addressId }}-lookup-btn"
@@ -55,6 +72,7 @@
                 </button>
                 </div>
             </div>
+            @endif
         </div>
     </div>
 
@@ -73,6 +91,7 @@
                 :value="old('address.street', $entity?->address?->street ?? '')"
                 placeholder="Straatnaam"
                 id="{{ $addressId }}_street"
+                :attributes="$readonlyAttributes"
             />
 
             <x-admin::form.control-group.error control-name="address.street"/>
@@ -90,6 +109,7 @@
                 :value="old('address.house_number_suffix', $entity?->address?->house_number_suffix ?? '')"
                 placeholder="A, 1e verdieping, etc."
                 id="{{ $addressId }}_house_number_suffix"
+                :attributes="$readonlyAttributes"
             />
 
             <x-admin::form.control-group.error control-name="address.house_number_suffix"/>
@@ -107,6 +127,7 @@
                 :value="old('address.city', $entity?->address?->city ?? '')"
                 placeholder="Amsterdam"
                 id="{{ $addressId }}_city"
+                :attributes="$readonlyAttributes"
             />
 
             <x-admin::form.control-group.error control-name="address.city"/>
@@ -124,6 +145,7 @@
                 :value="old('address.state', $entity?->address?->state ?? '')"
                 placeholder="Noord-Holland"
                 id="{{ $addressId }}_state"
+                :attributes="$readonlyAttributes"
             />
 
             <x-admin::form.control-group.error control-name="address.state"/>
@@ -141,6 +163,7 @@
                 :value="old('address.country', $entity?->address?->country ?? 'Nederland')"
                 placeholder="Nederland"
                 id="{{ $addressId }}_country"
+                :attributes="$readonlyAttributes"
             />
 
             <x-admin::form.control-group.error control-name="address.country"/>

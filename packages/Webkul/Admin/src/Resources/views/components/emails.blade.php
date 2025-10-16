@@ -6,6 +6,7 @@
         name="{{ $name ?? 'emails' }}"
         :value='@json($value ?? [])'
         :errors='@json($errors->getMessages() ?? [])'
+        :readonly='@json($readonly ?? false)'
     ></v-emails-component>
 </div>
 
@@ -31,6 +32,8 @@
                                 v-model="email.value"
                                 :class="getInputClass(index)"
                                 placeholder="Voer email-adres in"
+                                :readonly="readonly"
+                                :disabled="readonly"
                             />
                             <div v-if="getEmailError(index)" class="mt-1 text-sm text-red-600">
                                 {{ getEmailError(index) }}
@@ -41,6 +44,7 @@
                             :name="name + '[' + index + '][label]'"
                             v-model="email.label"
                             class="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                            :disabled="readonly"
                         >
                             <option
                                 v-for="opt in labelOptions"
@@ -57,6 +61,7 @@
                                 :checked="email.is_default === true || email.is_default === 'on'"
                                 @change="handleDefaultChange(index, $event)"
                                 class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                :disabled="readonly"
                             />
                             <label :for="'email_default_' + index" class="text-sm text-gray-700 dark:text-gray-300">
                                 Default
@@ -64,6 +69,7 @@
                         </div>
 
                         <button
+                            v-if="!readonly"
                             type="button"
                             @click="removeEmail(index)"
                             class="inline-flex items-center justify-center rounded-md border border-transparent bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
@@ -77,6 +83,7 @@
                 </div>
 
                 <button
+                    v-if="!readonly"
                     type="button"
                     @click="addEmail"
                     class="mt-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
@@ -109,6 +116,10 @@
                 errors: {
                     type: Object,
                     default: () => ({})
+                },
+                readonly: {
+                    type: Boolean,
+                    default: false
                 }
             },
 

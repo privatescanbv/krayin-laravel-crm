@@ -42,6 +42,12 @@ Breadcrumbs::for('leads.view', function (BreadcrumbTrail $trail, $lead) {
     $trail->parent('leads');
     $trail->push('#'.$lead->id, route('admin.leads.view', $lead->id));
 });
+
+// Dashboard > Leads > Sync Lead to Person
+Breadcrumbs::for('leads.sync_lead_to_person', function (BreadcrumbTrail $trail, $lead) {
+    $trail->parent('leads.view', $lead);
+    $trail->push('Gegevens overnemen', route('admin.leads.sync-lead-to-person', ['leadId' => $lead->id, 'personId' => request()->route('personId')]));
+});
 // Mail
 Breadcrumbs::for('mail', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');

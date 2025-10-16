@@ -6,6 +6,7 @@ use Webkul\Admin\Http\Controllers\Lead\DuplicateController;
 use Webkul\Admin\Http\Controllers\Lead\EmailController;
 use Webkul\Admin\Http\Controllers\Lead\LeadController;
 use Webkul\Admin\Http\Controllers\Lead\TagController;
+use Webkul\Admin\Http\Controllers\Contact\Persons\PersonController;
 use App\Http\Controllers\Admin\AnamnesisController;
 
 Route::controller(LeadController::class)->prefix('leads')->group(function () {
@@ -39,6 +40,10 @@ Route::controller(LeadController::class)->prefix('leads')->group(function () {
     Route::get('get/{pipeline_id?}', 'get')->name('admin.leads.get');
 
     Route::delete('{leadId}/detach-person/{personId}', 'detachPerson')->name('admin.leads.detach_person');
+
+    Route::get('sync-lead-to-person/{leadId}/{personId}', [PersonController::class, 'syncLeadToPerson'])->name('admin.leads.sync-lead-to-person');
+
+    Route::post('sync-lead-to-person/{leadId}/{personId}', [PersonController::class, 'syncLeadToPersonUpdate'])->name('admin.leads.sync-lead-to-person-update');
 
     Route::get('kanban/look-up', [LeadController::class, 'kanbanLookup'])->name('admin.leads.kanban.look_up');
 

@@ -597,6 +597,123 @@ class PersonController extends Controller
     }
 
     /**
+     * Build new match breakdown for lead to person comparison (1-way).
+     * Only considers fields that are filled in the lead.
+     */
+    private function buildLeadToPersonMatchBreakdown(Lead $lead, Person $person): array
+    {
+        $comparableFields = [
+            'salutation' => 'Aanhef',
+            'first_name' => 'Voornaam',
+            'last_name' => 'Achternaam',
+            'lastname_prefix' => 'Voorvoegsel achternaam',
+            'married_name' => 'Gehuwde naam',
+            'married_name_prefix' => 'Voorvoegsel gehuwde naam',
+            'initials' => 'Initialen',
+            'date_of_birth' => 'Geboortedatum',
+            'gender' => 'Geslacht',
+            'emails' => 'E-mailadressen',
+            'phones' => 'Telefoonnummers',
+        ];
+
+        $addressFields = [
+            'street' => 'Straat',
+            'house_number' => 'Huisnummer',
+            'house_number_suffix' => 'Huisnummer toevoeging',
+            'postal_code' => 'Postcode',
+            'city' => 'Plaats',
+            'country' => 'Land',
+        ];
+
+        $fieldDifferences = [];
+        $totalFields = 0;
+        $matchingFields = 0;
+
+        // Check regular fields
+        foreach ($comparableFields as $field => $label) {
+            $leadValue = $lead->$field ?? null;
+            
+            // Only consider fields that have a value in the lead
+            if ($this->hasValue($leadValue)) {
+                $totalFields++;
+                $personValue = $person->$field ?? null;
+                
+                $isMatch = $this->valuesMatch($leadValue, $personValue, $field);
+                if ($isMatch) {
+                    $matchingFields++;
+                } else {
+                    $fieldDifferences[$field] = [
+                        'label' => $label,
+                        'lead_value' => $this->formatValueForDisplay($leadValue, $field),
+                        'person_value' => $this->formatValueForDisplay($personValue, $field),
+                        'type' => $this->getFieldType($field)
+                    ];
+                }
+            }
+        }
+
+        // Check address fields
+        if ($lead->address) {
+            foreach ($addressFields as $field => $label) {
+                $leadValue = $lead->address->$field ?? null;
+                
+                // Only consider fields that have a value in the lead
+                if ($this->hasValue($leadValue)) {
+                    $totalFields++;
+                    $personValue = $person->address->$field ?? null;
+                    
+                    $isMatch = $this->valuesMatch($leadValue, $personValue, $field);
+                    if ($isMatch) {
+                        $matchingFields++;
+                    } else {
+                        $fieldDifferences["address_{$field}"] = [
+                            'label' => $label,
+                            'lead_value' => $this->formatValueForDisplay($leadValue, $field),
+                            'person_value' => $this->formatValueForDisplay($personValue, $field),
+                            'type' => 'text'
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Calculate percentage
+        $percentage = $totalFields > 0 ? ($matchingFields / $totalFields) * 100 : 0;
+
+        return [
+            'percentage' => round($percentage, 1),
+            'total_fields' => $totalFields,
+            'matching_fields' => $matchingFields,
+            'field_differences' => $fieldDifferences,
+        ];
+    }
+
+    /**
+     * Format value for display in the UI.
+     */
+    private function formatValueForDisplay($value, $field): string
+    {
+        if (is_null($value)) {
+            return 'Geen waarde';
+        }
+        
+        if (in_array($field, ['emails', 'phones'])) {
+            if (is_array($value)) {
+                $values = $this->extractArrayValues($value);
+                return implode(', ', $values) ?: 'Geen waarde';
+            }
+            return (string) $value;
+        }
+        
+        if ($field === 'date_of_birth') {
+            $formatted = $this->formatDateForComparison($value);
+            return $formatted ?: 'Geen waarde';
+        }
+        
+        return (string) $value;
+    }
+
+    /**
      * Build match breakdown and final percentage for a lead/person pair.
      *
      * @return array{
@@ -763,6 +880,179 @@ class PersonController extends Controller
         }
 
         return min((float) $score, $maxScore);
+    }
+
+    /**
+     * Calculate new match score for lead to person comparison (1-way).
+     * Only considers fields that are filled in the lead and exist in the person.
+     * If lead values match person values exactly, score is 100%.
+     */
+    public function calculateLeadToPersonMatchScore(Lead $lead, Person $person): float
+    {
+        $comparableFields = [
+            'salutation',
+            'first_name',
+            'last_name',
+            'lastname_prefix',
+            'married_name',
+            'married_name_prefix',
+            'initials',
+            'date_of_birth',
+            'gender',
+            'emails',
+            'phones',
+        ];
+
+        $addressFields = [
+            'street',
+            'house_number',
+            'house_number_suffix',
+            'postal_code',
+            'city',
+            'country',
+        ];
+
+        $totalFields = 0;
+        $matchingFields = 0;
+
+        // Check regular fields
+        foreach ($comparableFields as $field) {
+            $leadValue = $lead->$field ?? null;
+            
+            // Only consider fields that have a value in the lead
+            if ($this->hasValue($leadValue)) {
+                $totalFields++;
+                $personValue = $person->$field ?? null;
+                
+                if ($this->valuesMatch($leadValue, $personValue, $field)) {
+                    $matchingFields++;
+                }
+            }
+        }
+
+        // Check address fields
+        if ($lead->address) {
+            foreach ($addressFields as $field) {
+                $leadValue = $lead->address->$field ?? null;
+                
+                // Only consider fields that have a value in the lead
+                if ($this->hasValue($leadValue)) {
+                    $totalFields++;
+                    $personValue = $person->address->$field ?? null;
+                    
+                    if ($this->valuesMatch($leadValue, $personValue, $field)) {
+                        $matchingFields++;
+                    }
+                }
+            }
+        }
+
+        // If no fields to compare, return 0
+        if ($totalFields === 0) {
+            return 0.0;
+        }
+
+        // Calculate percentage
+        $percentage = ($matchingFields / $totalFields) * 100;
+        
+        return min($percentage, 100.0);
+    }
+
+    /**
+     * Check if a value is considered "has value" (not empty/null).
+     */
+    private function hasValue($value): bool
+    {
+        if (is_null($value)) {
+            return false;
+        }
+        
+        if (is_string($value)) {
+            return trim($value) !== '';
+        }
+        
+        if (is_array($value)) {
+            return !empty($value);
+        }
+        
+        return true;
+    }
+
+    /**
+     * Check if two values match for comparison.
+     */
+    private function valuesMatch($leadValue, $personValue, $field): bool
+    {
+        // Handle array fields (emails, phones)
+        if (in_array($field, ['emails', 'phones'])) {
+            return $this->arrayValuesMatch($leadValue, $personValue);
+        }
+        
+        // Handle date fields
+        if ($field === 'date_of_birth') {
+            $leadDate = $this->formatDateForComparison($leadValue);
+            $personDate = $this->formatDateForComparison($personValue);
+            return $leadDate && $personDate && $leadDate === $personDate;
+        }
+        
+        // Handle regular string fields
+        $leadNormalized = $this->normalizeValue($leadValue);
+        $personNormalized = $this->normalizeValue($personValue);
+        
+        return $leadNormalized === $personNormalized;
+    }
+
+    /**
+     * Check if array values match (for emails/phones).
+     */
+    private function arrayValuesMatch($leadArray, $personArray): bool
+    {
+        if (!is_array($leadArray) || !is_array($personArray)) {
+            return false;
+        }
+        
+        $leadValues = $this->extractArrayValues($leadArray);
+        $personValues = $this->extractArrayValues($personArray);
+        
+        // Sort both arrays for comparison
+        sort($leadValues);
+        sort($personValues);
+        
+        return $leadValues === $personValues;
+    }
+
+    /**
+     * Extract values from array format (emails/phones).
+     */
+    private function extractArrayValues($array): array
+    {
+        $values = [];
+        
+        foreach ($array as $item) {
+            if (is_array($item) && isset($item['value'])) {
+                $values[] = trim($item['value']);
+            } elseif (is_string($item)) {
+                $values[] = trim($item);
+            }
+        }
+        
+        return array_filter($values);
+    }
+
+    /**
+     * Normalize value for comparison.
+     */
+    private function normalizeValue($value): string
+    {
+        if (is_null($value)) {
+            return '';
+        }
+        
+        if (is_string($value)) {
+            return strtolower(trim($value));
+        }
+        
+        return strtolower(trim((string) $value));
     }
 
     /**
@@ -1176,6 +1466,19 @@ class PersonController extends Controller
     }
 
     /**
+     * Show the form for syncing lead data to person (1-way sync).
+     */
+    public function syncLeadToPerson(int $leadId, int $personId): View
+    {
+        $lead = app(LeadRepository::class)->findOrFail($leadId);
+        $person = $this->personRepository->findOrFail($personId);
+
+        $matchBreakdown = $this->buildLeadToPersonMatchBreakdown($lead, $person);
+
+        return view('admin::leads.sync-lead-to-person', compact('lead', 'person', 'matchBreakdown'));
+    }
+
+    /**
      * Update person with selected lead data.
      */
     public function updateWithLead(int $personId, int $leadId)
@@ -1258,6 +1561,95 @@ class PersonController extends Controller
 
             return redirect()->back()->withErrors(['message' => 'Er is een fout opgetreden: ' . $e->getMessage()]);
         }
+    }
+
+    /**
+     * Sync lead data to person (1-way sync).
+     */
+    public function syncLeadToPersonUpdate(int $leadId, int $personId)
+    {
+        $lead = app(LeadRepository::class)->findOrFail($leadId);
+        $person = $this->personRepository->findOrFail($personId);
+
+        $data = request()->all();
+        $selectedFields = $data['selected_fields'] ?? [];
+
+        try {
+            $updateData = [];
+            $addressData = [];
+
+            foreach ($selectedFields as $field) {
+                if (str_starts_with($field, 'address_')) {
+                    // Handle address fields
+                    $addressField = substr($field, 8); // Remove 'address_' prefix
+                    $leadValue = $lead->address->$addressField ?? null;
+                    if ($this->hasValue($leadValue)) {
+                        $addressData[$addressField] = $leadValue;
+                    }
+                } else {
+                    // Handle regular fields
+                    $leadValue = $lead->$field ?? null;
+                    if ($this->hasValue($leadValue)) {
+                        $updateData[$field] = $leadValue;
+                    }
+                }
+            }
+
+            // Update person with selected fields
+            if (!empty($updateData)) {
+                $person->update($updateData);
+            }
+
+            // Update address if any address fields were selected
+            if (!empty($addressData)) {
+                $this->updatePersonAddress($person, $addressData);
+            }
+
+            // Check if it's an AJAX request
+            if (request()->expectsJson() || request()->ajax()) {
+                return response()->json([
+                    'message' => 'Lead gegevens succesvol overgenomen naar person.',
+                    'redirect_url' => route('admin.leads.view', $lead->id)
+                ]);
+            }
+            return redirect()->route('admin.leads.view', $lead->id);
+
+        } catch (Exception $e) {
+            logger()->error('Could not sync lead to person ' . $e->getMessage(), [
+                'person_id' => $personId,
+                'lead_id' => $leadId,
+                'data' => $data
+            ]);
+
+            if (request()->expectsJson() || request()->ajax()) {
+                return response()->json([
+                    'message' => 'Er is een fout opgetreden: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->back()->withErrors(['message' => 'Er is een fout opgetreden: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Update person address with provided data.
+     */
+    private function updatePersonAddress($person, $addressData): void
+    {
+        if (empty($addressData)) {
+            return;
+        }
+
+        // Add person_id to address data
+        $addressData['person_id'] = $person->id;
+
+        // Delete existing address if it exists
+        if ($person->address) {
+            $person->address->delete();
+        }
+
+        // Create new address for person
+        Address::create($addressData);
     }
 
     /**

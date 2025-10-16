@@ -174,12 +174,13 @@ class SalesLead extends Model
      */
     public function getLostReasonLabelAttribute(): ?string
     {
-        if (!$this->lost_reason) {
+        if (! $this->lost_reason) {
             return null;
         }
 
         try {
             $lostReason = \App\Enums\LostReason::from($this->lost_reason);
+
             return $lostReason->label();
         } catch (\ValueError $e) {
             return $this->lost_reason;

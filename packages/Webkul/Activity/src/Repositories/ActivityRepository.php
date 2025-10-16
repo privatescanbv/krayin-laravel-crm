@@ -2,6 +2,7 @@
 
 namespace Webkul\Activity\Repositories;
 
+use Exception;
 use Illuminate\Container\Container;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -168,17 +169,7 @@ class ActivityRepository extends Repository
                 'sales_lead_id' => $salesLead->id,
             ]);
 
-            // Try to generate the route, fallback to a simple URL if route fails
-            try {
-                $link = route('admin.sales-leads.view', $salesLead->id);
-            } catch (\Exception $e) {
-                $link = "/admin/sales-leads/view/{$salesLead->id}";
-                Log::warning('Failed to generate route for sales lead view', [
-                    'sales_lead_id' => $salesLead->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-
+            $link = route('admin.sales-leads.view', $salesLead->id);
             $activity = $this->create([
                 'type' => ActivityType::SYSTEM,
                 'title' => 'Sales lead aangemaakt',

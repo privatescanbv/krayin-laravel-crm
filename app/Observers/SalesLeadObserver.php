@@ -2,7 +2,6 @@
 
 namespace App\Observers;
 
-use App\Enums\ActivityType;
 use App\Enums\WebhookType;
 use App\Models\SalesLead;
 use App\Services\WebhookService;
@@ -26,14 +25,6 @@ class SalesLeadObserver
      */
     public function created(SalesLead $salesLead): void
     {
-        Log::info('CREATE sales lead', [
-            'sales_lead_id' => $salesLead->id,
-            'stage'         => $salesLead->pipelineStage?->name,
-        ]);
-
-        // Note: System activity is created in SalesLeadRepository::createFromWonLead()
-        // to avoid duplicate activities
-
         $this->sendWebhook($salesLead, 'SalesLeadObserver@created');
     }
 

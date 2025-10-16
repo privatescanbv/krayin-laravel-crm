@@ -190,7 +190,7 @@
                                         v-if="salesLead.orders && salesLead.orders.length > 0"
                                     >
                                         <span class="text-gray-600 dark:text-gray-400">Order status:</span>
-                                        <span 
+                                        <span
                                             class="ml-1 px-1.5 py-0.5 rounded text-[9px]"
                                             :class="{
                                                 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200': salesLead.orders[0].status === 'nieuw',
@@ -362,7 +362,7 @@
                                 required
                             >
                                 <option value="">Selecteer reden...</option>
-                                @foreach(\App\Enums\LostReason::cases() as $reason)
+                                @foreach (\App\Enums\LostReason::cases() as $reason)
                                     <option value="{{ $reason->value }}">{{ $reason->label() }}</option>
                                 @endforeach
                             </select>

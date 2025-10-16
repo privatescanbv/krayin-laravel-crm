@@ -3,13 +3,14 @@
 namespace App\Http\Controllers\Admin\Planning;
 
 use App\Http\Controllers\Controller;
-use App\Models\Clinic;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
 use App\Models\ResourceType;
 use App\Models\Shift;
+use App\Repositories\ClinicRepository;
+use App\Repositories\ResourceRepository;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Exception;
@@ -24,8 +25,9 @@ class ResourcePlanningMonitorController extends Controller
     public function index(Request $request): View
     {
         $resourceTypes = ResourceType::all(['id', 'name']);
-        $resources = Resource::with('clinic')->get(['id', 'name', 'clinic_id', 'resource_type_id']);
-        $clinics = Clinic::all(['id', 'name']);
+        $resources = app(ResourceRepository::class)
+            ->allWithActiveClinics(['clinic'], ['id', 'name', 'clinic_id', 'resource_type_id']);
+        $clinics = app(ClinicRepository::class)->allActive(['id', 'name']);
 
         return view('admin::planning.monitor', [
             'resourceTypes' => $resourceTypes,
@@ -50,8 +52,9 @@ class ResourcePlanningMonitorController extends Controller
         $order = Order::with(['orderItems.product.partnerProducts', 'salesLead.lead'])->findOrFail($orderId);
 
         $resourceTypes = ResourceType::all(['id', 'name']);
-        $resources = Resource::with('clinic')->get(['id', 'name', 'clinic_id', 'resource_type_id']);
-        $clinics = Clinic::all(['id', 'name']);
+        $resources = app(ResourceRepository::class)
+            ->allWithActiveClinics(['clinic'], ['id', 'name', 'clinic_id', 'resource_type_id']);
+        $clinics = app(ClinicRepository::class)->allActive(['id', 'name']);
 
         return view('admin::planning.order_monitor', [
             'order'         => $order,
@@ -243,7 +246,9 @@ class ResourcePlanningMonitorController extends Controller
 
     private function getFilteredResources(Request $request)
     {
-        $resourcesQuery = Resource::query()->with('clinic', 'resourceType');
+        $resourcesQuery = app(ResourceRepository::class)
+            ->queryWithActiveClinics()
+            ->with('clinic', 'resourceType');
 
         // Filter by resource types (multi-select)
         if ($request->filled('resource_type_ids')) {
@@ -612,6 +617,7 @@ class ResourcePlanningMonitorController extends Controller
                 'product_name' => $item->product?->name ?? 'Onbekend product',
                 'quantity'     => $item->quantity,
                 'status'       => $item->status,
+                // Only plan if product has partner products linked to active clinics
                 'can_plan'     => $item->product && $item->product->partnerProducts && $item->product->partnerProducts->count() > 0,
                 'bookings'     => $item->resourceOrderItems->map(fn ($booking) => [
                     'id'            => $booking->id,
@@ -685,6 +691,7 @@ class ResourcePlanningMonitorController extends Controller
                 'product_name' => $item->product?->name ?? 'Onbekend product',
                 'quantity'     => $item->quantity,
                 'status'       => $item->status,
+                // Only plan if product has partner products linked to active clinics
                 'can_plan'     => $item->product && $item->product->partnerProducts && $item->product->partnerProducts->count() > 0,
                 'bookings'     => $item->resourceOrderItems->map(fn ($booking) => [
                     'id'            => $booking->id,

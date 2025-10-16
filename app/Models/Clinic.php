@@ -15,6 +15,7 @@ class Clinic extends Model
 
     protected $fillable = [
         'external_id',
+        'is_active',
         'name',
         'registration_form_clinic_name',
         'website_url',
@@ -27,6 +28,7 @@ class Clinic extends Model
     ];
 
     protected $casts = [
+        'is_active'  => 'boolean',
         'emails'     => 'array',
         'phones'     => 'array',
         'created_by' => 'integer',

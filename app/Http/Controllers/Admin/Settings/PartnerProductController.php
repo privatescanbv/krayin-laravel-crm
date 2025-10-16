@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\PartnerProductDataGrid;
 use App\Enums\Currency;
-use App\Models\Clinic;
 use App\Models\Resource;
 use App\Models\ResourceType;
+use App\Repositories\ClinicRepository;
 use App\Repositories\PartnerProductRepository;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -18,7 +18,10 @@ use Illuminate\View\View;
 
 class PartnerProductController extends SimpleEntityController
 {
-    public function __construct(protected PartnerProductRepository $partnerProductRepository)
+    public function __construct(
+        protected PartnerProductRepository $partnerProductRepository,
+        private readonly ClinicRepository  $clinicRepository,
+    )
     {
         parent::__construct($partnerProductRepository);
 
@@ -131,7 +134,7 @@ class PartnerProductController extends SimpleEntityController
             'resourceTypes'        => ResourceType::orderBy('name')->get(['id', 'name']),
             'currencies'           => Currency::options(),
             'defaultCurrency'      => Currency::default()->value,
-            'clinics'              => Clinic::orderBy('name')->get(['id', 'name']),
+            'clinics'              => $this->clinicRepository->allActive(['id', 'name']),
             'resources'            => Resource::orderBy('name')->get(['id', 'name']),
             'preSelectedClinicId'  => $request->query('clinic_id'),
             'returnTo'             => $request->query('return_to'),
@@ -144,7 +147,7 @@ class PartnerProductController extends SimpleEntityController
             'partner_products' => $entity,
             'resourceTypes'    => ResourceType::orderBy('name')->get(['id', 'name']),
             'currencies'       => Currency::options(),
-            'clinics'          => Clinic::orderBy('name')->get(['id', 'name']),
+            'clinics'          => $this->clinicRepository->allActive(['id', 'name']),
             'resources'        => Resource::orderBy('name')->get(['id', 'name']),
         ];
     }

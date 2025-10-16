@@ -661,7 +661,7 @@ test('subset email match is treated as match (lead email present in person email
     ]);
 
     $score = (new PersonController(app(PersonRepository::class), app(LeadRepository::class), app(AttributeRepository::class)))
-        ->calculateLeadToPersonMatchScore($lead, $person);
+        ->calculateMatchScore($lead, $person);
 
     // Since all lead contact values are present in person (subset), treat as full match for those fields
     expect($score)->toBeGreaterThanOrEqual(100.0);
@@ -693,7 +693,7 @@ test('subset phone match is treated as match (lead phone present in person phone
     ]);
 
     $score = (new PersonController(app(PersonRepository::class), app(LeadRepository::class), app(AttributeRepository::class)))
-        ->calculateLeadToPersonMatchScore($lead, $person);
+        ->calculateMatchScore($lead, $person);
 
     // Only phone matches; total should be < 100 but > 5
     expect($score)->toBeGreaterThanOrEqual(100.0);

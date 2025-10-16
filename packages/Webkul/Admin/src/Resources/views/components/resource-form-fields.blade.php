@@ -1,4 +1,4 @@
-@php use App\Models\Clinic;use App\Models\ResourceType; @endphp
+@php use App\Models\ResourceType;use App\Repositories\ClinicRepository; @endphp
 @props([
     'resource' => null,
     'preSelectedClinicId' => null,
@@ -6,7 +6,7 @@
 
 @php
     $resourceTypes = ResourceType::orderBy('name')->get(['id', 'name']);
-    $clinics = Clinic::orderBy('name')->get(['id', 'name']);
+    $clinics = app(ClinicRepository::class)->allActive(['id', 'name']);
     
     // Pre-select clinic if provided
     $selectedClinicId = old('clinic_id', $resource->clinic_id ?? '');

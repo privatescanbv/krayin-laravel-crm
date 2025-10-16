@@ -263,8 +263,6 @@ class SalesLeadController extends Controller
 
     public function view($id)
     {
-        Log::info('SalesLeadController::view called with ID: '.$id);
-
         // First load the sales lead to check if it has a lead_id
         $salesLead = SalesLead::with(['pipelineStage.pipeline.stages', 'user'])->findOrFail($id);
 

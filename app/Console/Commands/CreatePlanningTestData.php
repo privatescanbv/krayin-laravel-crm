@@ -8,6 +8,7 @@ use App\Models\ProductType;
 use App\Models\Resource;
 use App\Models\ResourceType;
 use App\Models\Shift;
+use App\Repositories\ClinicRepository;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Webkul\Product\Models\Product;
@@ -104,13 +105,14 @@ class CreatePlanningTestData extends Command
         }
 
         // Zoek bestaande kliniek of maak nieuwe aan
-        $clinic = Clinic::first();
+        $clinic = app(ClinicRepository::class)->allActive()->first();
         if (! $clinic) {
             $clinic = Clinic::create([
                 'name'        => 'Test Kliniek Amsterdam',
                 'website_url' => 'https://testkliniek.nl',
                 'emails'      => ['info@testkliniek.nl'],
                 'phones'      => ['+31 20 123 4567'],
+                'is_active'   => true,
             ]);
         }
 

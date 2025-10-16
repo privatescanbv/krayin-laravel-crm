@@ -1,4 +1,4 @@
-@php use App\Enums\Currency;use App\Models\Clinic;use App\Models\ResourceType; @endphp
+@php use App\Enums\Currency;use App\Models\ResourceType;use App\Repositories\ClinicRepository; @endphp
 @props([
     'partnerProduct' => null,
     'selectedClinics' => [],
@@ -11,7 +11,7 @@
     $resourceTypes = ResourceType::orderBy('name')->get(['id', 'name']);
     $currencies = Currency::options();
     $defaultCurrency = Currency::default()->value;
-    $clinics = Clinic::orderBy('name')->get(['id', 'name']);
+    $clinics = app(ClinicRepository::class)->allActive(['id', 'name']);
 @endphp
 
     <!-- Naam en Duur -->

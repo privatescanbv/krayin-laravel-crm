@@ -14,6 +14,17 @@ class ClinicRepository extends Repository
         return Clinic::class;
     }
 
+    /**
+     * Return all active clinics.
+     */
+    public function allActive(array $columns = ['*'])
+    {
+        return Clinic::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get($columns);
+    }
+
     public function deleteWithResourceDetach(int $id): bool
     {
         return DB::transaction(function () use ($id) {

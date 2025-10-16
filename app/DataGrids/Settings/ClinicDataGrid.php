@@ -23,6 +23,7 @@ class ClinicDataGrid extends DataGrid
         $queryBuilder = DB::table('clinics')
             ->addSelect(
                 'clinics.id',
+                'clinics.is_active',
                 'clinics.name',
                 'clinics.registration_form_clinic_name'
             );
@@ -41,6 +42,24 @@ class ClinicDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'is_active',
+            'type'       => 'boolean',
+            'label'      => trans('admin::app.settings.clinics.index.datagrid.is_active'),
+            'searchable' => false,
+            'filterable' => true,
+            'sortable'   => true,
+            'closure'    => function ($row) {
+                $active = (bool) ($row->is_active ?? false);
+
+                return $active
+                    ? "<span class='icon-tick text-green-600 text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>"
+                    : "<span class='icon-cross-large text-red-600 text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>";
+            },
+            'escape'     => false,
+            'width'      => '20px',
         ]);
 
         $this->addColumn([

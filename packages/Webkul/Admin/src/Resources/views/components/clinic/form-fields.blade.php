@@ -5,6 +5,22 @@
 <!-- Basic Information Section -->
 <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
     <x-admin::form.control-group>
+        <x-admin::form.control-group.label>
+            @lang('admin::app.settings.clinics.index.create.is_active')
+        </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.control
+            type="checkbox"
+            name="is_active"
+            value="1"
+            :checked="old('is_active', $clinic->is_active ?? false)"
+            :label="trans('admin::app.settings.clinics.index.create.is_active')"
+        />
+
+        <x-admin::form.control-group.error control-name="is_active" />
+    </x-admin::form.control-group>
+
+    <x-admin::form.control-group>
         <x-admin::form.control-group.label class="required">
             @lang('admin::app.settings.clinics.index.create.name')
         </x-admin::form.control-group.label>

@@ -11,4 +11,29 @@ class ResourceRepository extends Repository
     {
         return Resource::class;
     }
+
+    /**
+     * Base query for resources that belong to active clinics.
+     */
+    public function queryWithActiveClinics(): \Illuminate\Database\Eloquent\Builder
+    {
+        return Resource::query()
+            ->whereHas('clinic', function ($q) {
+                $q->where('is_active', true);
+            });
+    }
+
+    /**
+     * Get all resources from active clinics, with optional eager loads and selected columns.
+     */
+    public function allWithActiveClinics(array $with = [], array $columns = ['*'])
+    {
+        $query = $this->queryWithActiveClinics();
+
+        if (! empty($with)) {
+            $query->with($with);
+        }
+
+        return $query->get($columns);
+    }
 }

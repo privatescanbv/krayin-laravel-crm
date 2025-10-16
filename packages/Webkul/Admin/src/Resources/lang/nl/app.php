@@ -1601,6 +1601,7 @@ return [
 
                 'datagrid' => [
                     'id' => 'ID',
+                    'is_active' => 'Actief',
                     'name' => 'Naam',
                     'view' => 'Bekijken',
                     'view-resources' => 'Resources bekijken',
@@ -1611,11 +1612,13 @@ return [
                 'edit' => [
                     'title' => 'Kliniek bewerken',
                     'delete-warning' => 'Weet je zeker dat je deze kliniek wilt verwijderen? Alle gekoppelde resources worden losgekoppeld.',
+                    'is_active' => 'Actief',
                 ],
 
                 'create' => [
                     'title' => 'Kliniek aanmaken',
                     'delete-warning' => 'Weet je zeker dat je deze kliniek wilt verwijderen? Alle gekoppelde resources worden losgekoppeld.',
+                    'is_active' => 'Actief',
                     'name' => 'Naam',
                     'emails' => 'E-mails (JSON array)',
                     'emails-help' => 'Voorbeeld: ["info@voorbeeld.nl", "support@voorbeeld.nl"]',

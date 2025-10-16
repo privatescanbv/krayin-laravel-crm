@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Resources;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Throwable;
 
@@ -13,9 +14,8 @@ class ActivityResource extends JsonResource
      * @param  \Illuminate\Http\Request
      * @return array
      */
-    public function toArray($request)
+    public function toArray($request): array
     {
-        logger()->info('Transforming ActivityResource '. get_class($this));
         $data = [
             'id'              => $this->id,
             'parent_id'       => $this->parent_id ?? null,
@@ -36,7 +36,7 @@ class ActivityResource extends JsonResource
             'emails'          => (function () {
                 try {
                     // If this is an Eloquent model and relation is loaded
-                    if ($this->resource instanceof \Illuminate\Database\Eloquent\Model && $this->relationLoaded('emails')) {
+                    if ($this->resource instanceof Model && $this->relationLoaded('emails')) {
                         return $this->emails->map(function ($email) {
                             return [
                                 'id' => $email->id,

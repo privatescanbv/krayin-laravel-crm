@@ -150,6 +150,28 @@ class ProductRepository extends Repository
     }
 
     /**
+     * Get formatted partner products with clinic names for display.
+     *
+     * @param  \Webkul\Product\Contracts\Product  $product
+     * @return array
+     */
+    public function getFormattedPartnerProducts($product): array
+    {
+        $partnerProductRepository = app(\App\Repositories\PartnerProductRepository::class);
+        
+        return $product->partnerProducts()
+            ->with('clinics:id,name')
+            ->get()
+            ->map(function ($partnerProduct) use ($partnerProductRepository) {
+                return [
+                    'id' => $partnerProduct->id,
+                    'name' => $partnerProductRepository->formatDisplayName($partnerProduct),
+                ];
+            })
+            ->toArray();
+    }
+
+    /**
      * Get inventories grouped by warehouse.
      *
      * @param  int  $id

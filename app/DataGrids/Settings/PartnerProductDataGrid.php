@@ -43,6 +43,12 @@ class PartnerProductDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+            'closure'    => function ($row) {
+                $partnerProductRepository = app(\App\Repositories\PartnerProductRepository::class);
+                $partnerProduct = \App\Models\PartnerProduct::with('clinics:id,name')->find($row->id);
+
+                return $partnerProduct ? $partnerProductRepository->formatDisplayName($partnerProduct) : $row->name;
+            },
         ]);
 
         $this->addColumn([

@@ -102,12 +102,15 @@ class ProductController extends Controller
     public function edit(int $id): View|JsonResponse
     {
         $product = $this->productRepository->findOrFail($id);
+        
+        // Get formatted partner products with clinic names
+        $selectedPartnerProducts = $this->productRepository->getFormattedPartnerProducts($product);
 
         $currencies = Currency::options();
         $defaultCurrency = Currency::default()->value;
 
         // Inventory/warehouse logic removed for this deployment
-        return view('admin::products.edit', compact('product', 'currencies', 'defaultCurrency'));
+        return view('admin::products.edit', compact('product', 'currencies', 'defaultCurrency', 'selectedPartnerProducts'));
     }
 
     /**

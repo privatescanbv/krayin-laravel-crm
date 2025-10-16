@@ -20,9 +20,8 @@ class PartnerProductController extends SimpleEntityController
 {
     public function __construct(
         protected PartnerProductRepository $partnerProductRepository,
-        private readonly ClinicRepository  $clinicRepository,
-    )
-    {
+        private readonly ClinicRepository $clinicRepository,
+    ) {
         parent::__construct($partnerProductRepository);
 
         $this->entityName = 'partner_products';
@@ -46,22 +45,7 @@ class PartnerProductController extends SimpleEntityController
     public function search(Request $request): JsonResponse
     {
         $query = $request->input('query', '');
-
-        $products = $this->partnerProductRepository
-            ->scopeQuery(function ($q) use ($query) {
-                return $q->where('active', true)
-                    ->where('name', 'like', '%'.$query.'%')
-                    ->orderBy('name')
-                    ->limit(50);
-            })
-            ->all();
-
-        $data = $products->map(function ($product) {
-            return [
-                'id'   => $product->id,
-                'name' => $product->name,
-            ];
-        });
+        $data = $this->partnerProductRepository->searchFormatted($query, 50);
 
         return response()->json(['data' => $data]);
     }

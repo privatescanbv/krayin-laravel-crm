@@ -46,9 +46,22 @@
             :placeholder="trans('admin::app.settings.partner_products.index.create.duration')"
         />
 
-        <x-admin::form.control-group.error control-name="duration"/>
-    </x-admin::form.control-group>
+    <x-admin::form.control-group.error control-name="duration"/>
+</x-admin::form.control-group>
 </div>
+
+<!-- Associated Product (Readonly) -->
+@if($partnerProduct && $partnerProduct->product)
+<x-admin::form.control-group>
+    <x-admin::form.control-group.label>
+        @lang('admin::app.settings.partner_products.index.create.associated_product')
+    </x-admin::form.control-group.label>
+
+    <div class="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        {{ $partnerProduct->product->name }}
+    </div>
+</x-admin::form.control-group>
+@endif
 
 <!-- Omschrijving en Omschrijving kliniek -->
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

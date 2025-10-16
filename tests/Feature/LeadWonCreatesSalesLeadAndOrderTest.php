@@ -120,8 +120,7 @@ class LeadWonCreatesSalesLeadAndOrderTest extends TestCase
         $this->assertSame(0.00, (float) $order->total_price);
 
         // Assert: a system activity was created on the lead linking to the new sales lead
-        $activity = Activity::where('lead_id', $lead->id)
-            ->where('sales_lead_id', $salesLead->id)
+        $SalesActivity = Activity::where('sales_lead_id', $salesLead->id)
             ->where('type', ActivityType::SYSTEM)
             ->first();
 
@@ -129,11 +128,11 @@ class LeadWonCreatesSalesLeadAndOrderTest extends TestCase
         $allActivities = Activity::where('lead_id', $lead->id)->get();
         $this->assertGreaterThan(0, $allActivities->count(), 'No activities found for lead. Found: '.$allActivities->toJson());
 
-        $this->assertNotNull($activity, 'System activity not created for sales lead creation. All activities: '.$allActivities->toJson());
-        $this->assertSame('Sales lead aangemaakt', $activity->title);
-        $this->assertSame(1, (int) $activity->is_done);
-        $this->assertIsArray($activity->additional);
-        $this->assertSame(route('admin.sales-leads.view', $salesLead->id), $activity->additional['link'] ?? null);
+        $this->assertNotNull($SalesActivity, 'System activity not created for sales lead creation. All activities: '.$allActivities->toJson());
+        $this->assertSame('Sales lead aangemaakt vanuit lead', $SalesActivity->title);
+        $this->assertSame(1, (int) $SalesActivity->is_done);
+        $this->assertIsArray($SalesActivity->additional);
+        $this->assertSame(route('admin.leads.view', $lead->id), $SalesActivity->additional['link'] ?? null);
     }
 
     public function test_lead_won_does_not_create_sales_lead_when_one_exists_in_non_won_lost_stage(): void

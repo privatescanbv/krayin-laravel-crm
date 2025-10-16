@@ -16,7 +16,7 @@
                 @endforeach
             </div>
         @endif
-        @include('admin::components.phones', ['name' => ($name ?? 'phones'), 'value' => ($value ?? [])])
+        @include('admin::components.phones', ['name' => ($name ?? 'phones'), 'value' => ($value ?? []), 'readonly' => $readonly ?? false])
     </div>
 </div>
 

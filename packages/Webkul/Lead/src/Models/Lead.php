@@ -554,6 +554,14 @@ class Lead extends Model implements LeadContract
         return $this->persons()->count() > 1;
     }
 
+    /**
+     * Check if person fields may be edited (i.e., no persons are linked).
+     */
+    public function mayEditPersonFields(): bool
+    {
+        return $this->persons()->count() === 0;
+    }
+
     public function hasPotentialDuplicates() : bool
     {
         return  $this->getPotentialDuplicatesCount() > 0;

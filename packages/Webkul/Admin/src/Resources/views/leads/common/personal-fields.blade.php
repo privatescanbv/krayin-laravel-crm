@@ -1,6 +1,29 @@
 {{-- {!! view_render_event('admin.leads.create.personal_fields.form_controls.before') !!} --}}
 
+@php
+    // Check if person fields may be edited (no linked persons)
+    // Only check for linked persons if entity is a Lead model (has mayEditPersonFields method)
+    $mayEditPersonFields = true; // Default to true for create forms
+    if (isset($entity) && method_exists($entity, 'mayEditPersonFields')) {
+        $mayEditPersonFields = $entity->mayEditPersonFields();
+    }
+    $readonlyAttributes = !$mayEditPersonFields ? ['readonly' => 'readonly', 'disabled' => 'disabled'] : [];
+@endphp
+
 <div class="flex flex-col gap-4">
+    @if(!$mayEditPersonFields)
+        <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                <span class="text-sm text-yellow-800 font-medium">
+                    Persoonsgegevens zijn alleen-lezen omdat er contactpersonen gekoppeld zijn aan deze lead.
+                </span>
+            </div>
+        </div>
+    @endif
+
     <!-- Salutation -->
 
     <div class="flex gap-4">
@@ -20,6 +43,8 @@
                 name="salutation"
                 value="{{ $current }}"
                 label="{{ __('Aanhef') }}"
+                :disabled="!$mayEditPersonFields"
+                :readonly="!$mayEditPersonFields"
             >
                 <option value="">{{ __('Selecteer aanhef') }}</option>
 
@@ -46,6 +71,7 @@
                 value="{{ $entity?->initials ?? '' }}"
                 label="{{ __('Initialen') }}"
                 placeholder="J.A."
+                :readonly="!$mayEditPersonFields"
             />
 
             <x-admin::form.control-group.error control-name="initials"/>
@@ -64,6 +90,7 @@
                 label="{{ __('Voornaam') }}"
                 placeholder="Voornaam"
                 rules="required"
+                :readonly="!$mayEditPersonFields"
             />
 
             <x-admin::form.control-group.error control-name="first_name"/>
@@ -85,6 +112,7 @@
                 label="{{ __('Tussenvoegsel') }}"
                 placeholder="van, de, den, etc."
                 class="w-24"
+                :readonly="!$mayEditPersonFields"
             />
 
             <x-admin::form.control-group.error control-name="lastname_prefix"/>
@@ -103,6 +131,7 @@
                 label="@lang('admin::app.leads.merge.field-last-name-birth')"
                 placeholder="Achternaam"
                 rules="required"
+                :readonly="!$mayEditPersonFields"
             />
 
             <x-admin::form.control-group.error control-name="last_name"/>
@@ -125,6 +154,7 @@
                 label="{{ __('Married name prefix') }}"
                 placeholder="van, de, den, etc."
                 class="w-24"
+                :readonly="!$mayEditPersonFields"
             />
 
             <x-admin::form.control-group.error control-name="married_name_prefix"/>
@@ -141,6 +171,7 @@
                 name="married_name"
                 value="{{ $entity?->married_name ?? '' }}"
                 label="{{ __('Married name') }}"
+                :readonly="!$mayEditPersonFields"
             />
 
             <x-admin::form.control-group.error control-name="married_name"/>
@@ -159,6 +190,7 @@
             name="date_of_birth"
             value="{{ $entity && $entity->date_of_birth ? $entity->date_of_birth->format('Y-m-d') : '' }}"
             label="{{ __('Geboortedatum') }}"
+            :readonly="!$mayEditPersonFields"
         />
 
         <x-admin::form.control-group.error control-name="date_of_birth"/>
@@ -181,6 +213,8 @@
             name="gender"
             value="{{ $currentGender }}"
             label="{{ __('Geslacht') }}"
+            :disabled="!$mayEditPersonFields"
+            :readonly="!$mayEditPersonFields"
         >
             <option value="">{{ __('Selecteer geslacht') }}</option>
 

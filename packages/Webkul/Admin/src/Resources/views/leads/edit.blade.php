@@ -131,14 +131,14 @@
                     {!! view_render_event('admin.leads.edit.emails.before', ['lead' => $lead]) !!}
 
                     <!-- Emails Section -->
-                    @include('admin::leads.common.sections.emails', ['name' => 'emails', 'value' => ($lead->emails ?? [])])
+                    @include('admin::leads.common.sections.emails', ['name' => 'emails', 'value' => ($lead->emails ?? []), 'readonly' => !$lead->mayEditPersonFields()])
 
                     {!! view_render_event('admin.leads.edit.emails.after', ['lead' => $lead]) !!}
 
                     {!! view_render_event('admin.leads.edit.phones.before', ['lead' => $lead]) !!}
 
                     <!-- Phones Section -->
-                    @include('admin::leads.common.sections.phones', ['name' => 'phones', 'value' => ($lead->phones ?? [])])
+                    @include('admin::leads.common.sections.phones', ['name' => 'phones', 'value' => ($lead->phones ?? []), 'readonly' => !$lead->mayEditPersonFields()])
 
                     {!! view_render_event('admin.leads.edit.phones.after', ['lead' => $lead]) !!}
 
@@ -173,7 +173,7 @@
                         id="address"
                     >
                         <div class="w-1/2 max-md:w-full">
-                            @include('admin::components.address', ['entity' => $lead])
+                            @include('admin::components.address', ['entity' => $lead, 'readonly' => !$lead->mayEditPersonFields()])
                         </div>
                     </div>
 

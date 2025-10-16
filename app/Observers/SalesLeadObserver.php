@@ -5,8 +5,6 @@ namespace App\Observers;
 use App\Enums\WebhookType;
 use App\Models\SalesLead;
 use App\Services\WebhookService;
-use Illuminate\Support\Facades\Log;
-use Webkul\Activity\Models\Activity;
 
 /**
  * Observer for SalesLead model to handle pipeline stage changes and webhooks.

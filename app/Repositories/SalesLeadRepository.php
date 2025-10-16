@@ -2,7 +2,6 @@
 
 namespace App\Repositories;
 
-use App\Enums\ActivityType;
 use App\Enums\Departments;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;

@@ -2,6 +2,7 @@
 
 namespace Webkul\Product\Models;
 
+use App\Helpers\ProductHelper;
 use App\Models\PartnerProduct;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -114,5 +115,10 @@ class Product extends Model implements ProductContract
     public function setCostsAttribute($value): void
     {
         $this->attributes['costs'] = Currency::normalizePrice($value);
+    }
+
+    public function getFullNameAttribute(): string {
+
+        return ProductHelper::formatNameWithPath($this);
     }
 }

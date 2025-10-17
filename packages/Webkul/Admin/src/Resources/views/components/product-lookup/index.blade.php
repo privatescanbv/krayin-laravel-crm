@@ -77,7 +77,7 @@
                         class="cursor-pointer px-4 py-2 text-gray-800 transition-colors hover:bg-blue-100 dark:text-white dark:hover:bg-gray-900"
                         @click="selectItem(item)"
                     >
-                        @{{ item.name }}
+                        @{{ item.name_with_path || item.name }}
                     </li>
 
                     <template v-if="filteredResults.length === 0 && !isSearching && searchTerm.length > 2">
@@ -121,11 +121,8 @@
             mounted() {
                 if (this.value && this.value.id) {
                     this.selectedItem = this.value;
-
-                    // If name is missing, try to fetch by id from src using query param.
-                    if (!this.selectedItem.name) {
-                        this.fetchInitialById(this.value.id);
-                    }
+                    // Always enrich to ensure name_with_path is available
+                    this.fetchInitialById(this.value.id);
                 }
 
                 window.addEventListener('click', this.handleFocusOut);
@@ -142,7 +139,7 @@
 
                 displayLabel() {
                     if (!this.selectedItem) return '';
-                    return this.selectedItem.name || (this.selectedItem.id ? `#${this.selectedItem.id}` : '');
+                    return this.selectedItem.name_with_path || this.selectedItem.name || (this.selectedItem.id ? `#${this.selectedItem.id}` : '');
                 },
             },
 
@@ -155,7 +152,7 @@
                 },
 
                 selectItem(item) {
-                    this.selectedItem = item;
+                    this.selectedItem = Object.assign({}, item, { name: item.name_with_path || item.name });
                     this.$emit('on-selected', item);
                     this.searchTerm = '';
                     this.searchedResults = [];
@@ -209,7 +206,7 @@
                             const list = response.data?.data || response.data || [];
                             const found = Array.isArray(list) ? list.find(x => (x.id == id)) : null;
                             if (found) {
-                                this.selectedItem = found;
+                                this.selectedItem = Object.assign({}, found, { name: found.name_with_path || found.name });
                             }
                         })
                         .catch(() => {})

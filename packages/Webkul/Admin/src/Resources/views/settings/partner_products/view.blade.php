@@ -61,7 +61,7 @@
                 @if ($partner_product->reporting && count($partner_product->reporting) > 0)
                     <div class="mt-2">
                         <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.settings.partner_products.index.create.reporting')</div>
-                        <div class="dark:text-white">
+                        <div class="grid grid-cols-1 gap-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             @foreach ($partner_product->getReportingLabels() as $label)
                                 <span class="inline-block rounded bg-blue-100 px-2 py-1 text-xs text-blue-800 dark:bg-blue-900 dark:text-blue-200">{{ $label }}</span>
                             @endforeach

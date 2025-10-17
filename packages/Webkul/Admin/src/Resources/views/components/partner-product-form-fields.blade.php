@@ -187,7 +187,7 @@
         @lang('admin::app.settings.partner_products.index.create.reporting')
     </x-admin::form.control-group.label>
 
-    <div class="space-y-2">
+    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         @foreach ($reportingOptions as $value => $label)
             <div class="flex items-center">
                 <input 

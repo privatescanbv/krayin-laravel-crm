@@ -38,7 +38,7 @@ test('can create partner product', function () {
         'currency'                     => 'EUR',
         'sales_price'                  => 199.99,
         'active'                       => 1,
-        'reporting'                    => 1,
+        'reporting'                    => ['financial_summary', 'operational_metrics'],
         'description'                  => 'Great partner product',
         'discount_info'                => 'Intro discount 10%',
         'resource_type_id'             => $resourceTypeId,

@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\ProductReports;
 use App\Models\Abstracts\BaseProduct;
+use Illuminate\Support\Collection;
 use Webkul\Product\Models\Product;
 
 class PartnerProduct extends BaseProduct
@@ -32,6 +34,7 @@ class PartnerProduct extends BaseProduct
         'purchase_price_royal_doctors',
         'purchase_price_radiology',
         'purchase_price',
+        'reporting',
     ];
 
     protected $casts = [
@@ -49,7 +52,42 @@ class PartnerProduct extends BaseProduct
         'purchase_price_royal_doctors' => 'decimal:2',
         'purchase_price_radiology'     => 'decimal:2',
         'purchase_price'               => 'decimal:2',
+        'reporting'                    => 'array',
     ];
+
+    /**
+     * Normalize various reporting input shapes (array, JSON string, comma-separated string, collection) to array.
+     */
+    public static function normalizeReporting(mixed $input): array
+    {
+        if ($input instanceof Collection) {
+            return $input->all();
+        }
+
+        if (is_array($input)) {
+            return $input;
+        }
+
+        if (is_string($input)) {
+            $decoded = json_decode($input, true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                if (is_array($decoded)) {
+                    return $decoded;
+                }
+                if (is_string($decoded) && $decoded !== '') {
+                    return [$decoded];
+                }
+
+                return [];
+            }
+
+            $parts = array_filter(array_map('trim', explode(',', $input)));
+
+            return $parts;
+        }
+
+        return [];
+    }
 
     public function clinics()
     {
@@ -74,5 +112,27 @@ class PartnerProduct extends BaseProduct
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function getReportingOptions(): array
+    {
+        return ProductReports::getOptions();
+    }
+
+    public function getReportingLabels(): array
+    {
+        if (! $this->reporting) {
+            return [];
+        }
+
+        $labels = [];
+        foreach ($this->reporting as $report) {
+            $enum = ProductReports::tryFrom($report);
+            if ($enum) {
+                $labels[] = $enum->getLabel();
+            }
+        }
+
+        return $labels;
     }
 }

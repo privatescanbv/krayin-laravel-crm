@@ -3,6 +3,8 @@
 namespace App\DataGrids\Settings;
 
 use App\Enums\Currency;
+use App\Enums\ProductReports;
+use App\Models\PartnerProduct;
 use App\Repositories\PartnerProductRepository;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +20,8 @@ class PartnerProductDataGrid extends DataGrid
                 'partner_products.name',
                 'partner_products.currency',
                 'partner_products.sales_price',
-                'partner_products.active'
+                'partner_products.active',
+                'partner_products.reporting'
             );
 
         $this->addFilter('id', 'partner_products.id');
@@ -46,7 +49,7 @@ class PartnerProductDataGrid extends DataGrid
             'sortable'   => true,
             'closure'    => function ($row) {
                 $partnerProductRepository = app(PartnerProductRepository::class);
-                $partnerProduct = \App\Models\PartnerProduct::with('clinics:id,name')->find($row->id);
+                $partnerProduct = PartnerProduct::with('clinics:id,name')->find($row->id);
 
                 return $partnerProduct ? $partnerProductRepository->formatDisplayName($partnerProduct) : $row->name;
             },
@@ -83,6 +86,32 @@ class PartnerProductDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'reporting',
+            'type'       => 'string',
+            'label'      => trans('admin::app.settings.partner_products.index.datagrid.reporting'),
+            'searchable' => false,
+            'filterable' => false,
+            'sortable'   => false,
+            'closure'    => function ($row) {
+                $normalized = PartnerProduct::normalizeReporting($row->reporting);
+
+                if (empty($normalized)) {
+                    return '-';
+                }
+
+                $labels = [];
+                foreach ($normalized as $report) {
+                    $enum = ProductReports::tryFrom($report);
+                    if ($enum) {
+                        $labels[] = $enum->getLabel();
+                    }
+                }
+
+                return empty($labels) ? '-' : implode(', ', $labels);
+            },
         ]);
     }
 

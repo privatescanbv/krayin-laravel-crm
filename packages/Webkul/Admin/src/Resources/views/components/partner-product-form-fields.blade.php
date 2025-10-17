@@ -1,4 +1,4 @@
-@php use App\Enums\Currency;use App\Helpers\ProductHelper;use App\Models\ResourceType;use App\Repositories\ClinicRepository; @endphp
+@php use App\Enums\Currency;use App\Enums\ProductReports;use App\Helpers\ProductHelper;use App\Models\PartnerProduct;use App\Models\ResourceType;use App\Repositories\ClinicRepository; @endphp
 @props([
     'partnerProduct' => null,
     'selectedClinics' => [],
@@ -13,14 +13,15 @@
     $currencies = Currency::options();
     $defaultCurrency = Currency::default()->value;
     $clinics = app(ClinicRepository::class)->allActive(['id', 'name']);
+    $reportingOptions = ProductReports::getOptions();
 @endphp
 
     <!-- Hidden field for product_id (template product) -->
-    @if($templateProductId)
-        <input type="hidden" name="product_id" value="{{ $templateProductId }}" />
-    @endif
+@if($templateProductId)
+    <input type="hidden" name="product_id" value="{{ $templateProductId }}"/>
+@endif
 
-    <!-- Naam en Duur -->
+<!-- Naam en Duur -->
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
     <x-admin::form.control-group>
         <x-admin::form.control-group.label class="required">
@@ -52,21 +53,22 @@
             :placeholder="trans('admin::app.settings.partner_products.index.create.duration')"
         />
 
-    <x-admin::form.control-group.error control-name="duration"/>
-</x-admin::form.control-group>
+        <x-admin::form.control-group.error control-name="duration"/>
+    </x-admin::form.control-group>
 </div>
 
 <!-- Associated Product (Readonly) -->
 @if($partnerProduct && $partnerProduct->product)
-<x-admin::form.control-group>
-    <x-admin::form.control-group.label>
-        @lang('admin::app.settings.partner_products.index.create.associated_product')
-    </x-admin::form.control-group.label>
+    <x-admin::form.control-group>
+        <x-admin::form.control-group.label>
+            @lang('admin::app.settings.partner_products.index.create.associated_product')
+        </x-admin::form.control-group.label>
 
-    <div class="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-        {{ ProductHelper::formatNameWithPathLazy($partnerProduct->product) }}
-    </div>
-</x-admin::form.control-group>
+        <div
+            class="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            {{ ProductHelper::formatNameWithPathLazy($partnerProduct->product) }}
+        </div>
+    </x-admin::form.control-group>
 @endif
 
 <!-- Omschrijving en Omschrijving kliniek -->
@@ -219,3 +221,33 @@
     :value="$relatedProducts"
     :exclude-id="$excludeId"
 />
+
+<!-- Reporting (moved below Related Products) -->
+<x-admin::form.control-group>
+    <x-admin::form.control-group.label>
+        @lang('admin::app.settings.partner_products.index.create.reporting')
+    </x-admin::form.control-group.label>
+
+    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        @php
+            $selectedReporting = PartnerProduct::normalizeReporting(old('reporting', $partnerProduct->reporting ?? []));
+        @endphp
+        @foreach ($reportingOptions as $value => $label)
+            <div class="flex items-center">
+                <input
+                    type="checkbox"
+                    id="reporting_{{ $value }}"
+                    name="reporting[]"
+                    value="{{ $value }}"
+                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
+                    @checked(in_array($value, $selectedReporting, true))
+                />
+                <label for="reporting_{{ $value }}" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    {{ $label }}
+                </label>
+            </div>
+        @endforeach
+    </div>
+
+    <x-admin::form.control-group.error control-name="reporting"/>
+</x-admin::form.control-group>

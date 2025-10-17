@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\DataGrids\Settings\OrderDataGrid;
 use App\Enums\OrderItemStatus;
 use App\Enums\OrderStatus;
+use App\Models\OrderCheck;
 use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
 use Illuminate\Database\Eloquent\Model;
@@ -157,6 +158,7 @@ class OrderController extends SimpleEntityController
             'orderItems.resourceOrderItems.resource',
             'orderItems.person',
             'salesLead.lead',
+            'orderChecks',
         ]);
 
         $salesLeads = SalesLead::with('lead')->get()->mapWithKeys(function ($salesLead) {
@@ -253,5 +255,53 @@ class OrderController extends SimpleEntityController
     protected function getDeleteFailedMessage(): string
     {
         return 'Verwijderen mislukt.';
+    }
+
+    public function storeCheck(Request $request, int $orderId): JsonResponse
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'done' => 'boolean',
+        ]);
+
+        $check = OrderCheck::create([
+            'order_id' => $orderId,
+            'name' => $request->input('name'),
+            'done' => $request->input('done', false),
+        ]);
+
+        return response()->json([
+            'id' => $check->id,
+            'message' => 'Check toegevoegd.',
+        ]);
+    }
+
+    public function updateCheck(Request $request, int $orderId, int $checkId): JsonResponse
+    {
+        $check = OrderCheck::where('order_id', $orderId)->findOrFail($checkId);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'done' => 'boolean',
+        ]);
+
+        $check->update([
+            'name' => $request->input('name'),
+            'done' => $request->input('done', false),
+        ]);
+
+        return response()->json([
+            'message' => 'Check bijgewerkt.',
+        ]);
+    }
+
+    public function destroyCheck(Request $request, int $orderId, int $checkId): JsonResponse
+    {
+        $check = OrderCheck::where('order_id', $orderId)->findOrFail($checkId);
+        $check->delete();
+
+        return response()->json([
+            'message' => 'Check verwijderd.',
+        ]);
     }
 }

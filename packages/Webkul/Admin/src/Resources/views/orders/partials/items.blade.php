@@ -13,13 +13,13 @@
             <x-admin::table>
                 <x-admin::table.thead>
                     <x-admin::table.thead.tr>
-                        <x-admin::table.th>Product</x-admin::table.th>
-                        <x-admin::table.th>Persoon</x-admin::table.th>
-                        <x-admin::table.th class="text-center">Aantal</x-admin::table.th>
-                        <x-admin::table.th class="text-center">Totaal</x-admin::table.th>
-                        <x-admin::table.th class="text-center">Status</x-admin::table.th>
-                        <x-admin::table.th>Planning</x-admin::table.th>
-                        <x-admin::table.th class="text-center">Actie</x-admin::table.th>
+                        <x-admin::table.th class="w-1/3">Product</x-admin::table.th>
+                        <x-admin::table.th class="w-1/6">Persoon</x-admin::table.th>
+                        <x-admin::table.th class="text-center w-20">Aantal</x-admin::table.th>
+                        <x-admin::table.th class="text-center w-24">Totaal</x-admin::table.th>
+                        <x-admin::table.th class="text-center w-32">Status</x-admin::table.th>
+                        <x-admin::table.th class="w-1/4">Planning</x-admin::table.th>
+                        <x-admin::table.th class="text-center w-24">Actie</x-admin::table.th>
                     </x-admin::table.thead.tr>
                 </x-admin::table.thead>
                 <x-admin::table.tbody>
@@ -35,7 +35,7 @@
 
     <script type="text/x-template" id="v-order-item-template">
         <x-admin::table.thead.tr>
-            <x-admin::table.td>
+            <x-admin::table.td class="!w-1/3">
                 <x-admin::form.control-group class="!mb-0">
                     <x-admin::product-lookup
                         ::src="src"
@@ -44,10 +44,11 @@
                         ::key="(item.id ? item.id : ('new-' + index)) + '-' + (item.product_id ? item.product_id : '')"
                         ::value="displayValue"
                         @on-selected="(product) => selectProduct(product)"
+                        class="w-full"
                     />
                 </x-admin::form.control-group>
             </x-admin::table.td>
-            <x-admin::table.td>
+            <x-admin::table.td class="!w-1/6">
                 <x-admin::form.control-group class="!mb-0">
                     <x-admin::form.control-group.control
                         type="select"
@@ -59,6 +60,7 @@
                         placeholder="Selecteer persoon"
                         @on-change="(e) => item.person_id = e.value"
                         position="center"
+                        class="w-full"
                     >
                         <option value="">Selecteer persoon</option>
                         <option v-for="(personName, personId) in persons" :key="personId" :value="personId" :selected="item.person_id == personId">
@@ -67,23 +69,23 @@
                     </x-admin::form.control-group.control>
                 </x-admin::form.control-group>
             </x-admin::table.td>
-            <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
+            <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left !w-20">
                 <x-admin::form.control-group class="!mb-0">
                     <x-admin::form.control-group.control type="inline" ::name="`${inputName}[quantity]`" ::value="item.quantity" rules="required|integer|min:1" ::errors="errors" label="Aantal" placeholder="Aantal" @on-change="(e) => item.quantity = e.value" position="center" />
                 </x-admin::form.control-group>
             </x-admin::table.td>
-            <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
+            <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left !w-24">
                 <x-admin::form.control-group class="!mb-0">
                     <x-admin::form.control-group.control type="inline" ::name="`${inputName}[total_price]`" ::value="item.total_price" rules="required|decimal:2" ::errors="errors" label="Totaal" placeholder="Totaal" @on-change="(e) => item.total_price = e.value" position="center" />
                 </x-admin::form.control-group>
             </x-admin::table.td>
-            <x-admin::table.td class="!px-2 text-center">
+            <x-admin::table.td class="!px-2 text-center !w-32">
                 <span v-if="item.status" class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full" :class="getStatusClass(item.status)">
                     @{{ getStatusLabel(item.status) }}
                 </span>
                 <span v-else class="text-gray-400 text-xs">-</span>
             </x-admin::table.td>
-            <x-admin::table.td class="!px-2">
+            <x-admin::table.td class="!px-2 !w-1/4">
                 <div v-if="item.planning_summary" class="text-xs text-gray-700 dark:text-gray-300">
                     <div v-for="(booking, idx) in item.planning_summary" :key="idx" class="mb-1">
                         <strong>@{{ booking.resource }}</strong><br>
@@ -92,9 +94,9 @@
                 </div>
                 <span v-else class="text-gray-400 text-xs">Niet ingepland</span>
             </x-admin::table.td>
-            <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
+            <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left !w-24">
                 <div class="flex items-center justify-end gap-2">
-                    <button v-if="canPlan" type="button" class="secondary-button" @click="openPlanning">
+                    <button v-if="canPlan" type="button" class="secondary-button text-xs px-2 py-1" @click="openPlanning">
                         Inplannen
                     </button>
                     <i @click="removeItem" class="icon-delete cursor-pointer text-2xl"></i>

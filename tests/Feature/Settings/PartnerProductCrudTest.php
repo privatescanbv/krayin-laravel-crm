@@ -38,6 +38,7 @@ test('can create partner product', function () {
         'currency'                     => 'EUR',
         'sales_price'                  => 199.99,
         'active'                       => 1,
+        'reporting'                    => 1,
         'description'                  => 'Great partner product',
         'discount_info'                => 'Intro discount 10%',
         'resource_type_id'             => $resourceTypeId,
@@ -57,6 +58,7 @@ test('can create partner product', function () {
 
     $this->assertDatabaseHas('partner_products', [
         'name' => 'MRI Scan',
+        'reporting' => 1,
     ]);
 
     $createdProduct = PartnerProduct::where('name', 'MRI Scan')->first();

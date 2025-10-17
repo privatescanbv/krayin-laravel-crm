@@ -180,6 +180,24 @@
     <x-admin::form.control-group.error control-name="active"/>
 </x-admin::form.control-group>
 
+<!-- Reporting checkbox -->
+<x-admin::form.control-group>
+    <x-admin::form.control-group.label>
+        @lang('admin::app.settings.partner_products.index.create.reporting')
+    </x-admin::form.control-group.label>
+
+    <input type="hidden" name="reporting" value="0"/>
+    <x-admin::form.control-group.control
+        type="checkbox"
+        name="reporting"
+        value="1"
+        :label="trans('admin::app.settings.partner_products.index.create.reporting')"
+        :checked="old('reporting', $partnerProduct->reporting ?? 0)"
+    />
+
+    <x-admin::form.control-group.error control-name="reporting"/>
+</x-admin::form.control-group>
+
 <!-- Resource Type -->
 <x-admin::form.control-group>
     <x-admin::form.control-group.label>

@@ -18,7 +18,8 @@ class PartnerProductDataGrid extends DataGrid
                 'partner_products.name',
                 'partner_products.currency',
                 'partner_products.sales_price',
-                'partner_products.active'
+                'partner_products.active',
+                'partner_products.reporting'
             );
 
         $this->addFilter('id', 'partner_products.id');
@@ -80,6 +81,15 @@ class PartnerProductDataGrid extends DataGrid
             'index'      => 'active',
             'type'       => 'boolean',
             'label'      => trans('admin::app.settings.partner_products.index.datagrid.active'),
+            'searchable' => true,
+            'filterable' => true,
+            'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'reporting',
+            'type'       => 'boolean',
+            'label'      => trans('admin::app.settings.partner_products.index.datagrid.reporting'),
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,

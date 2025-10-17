@@ -204,6 +204,7 @@ class PartnerProductController extends SimpleEntityController
             'sales_price'         => 'required|numeric|min:0',
             'name'                => 'required|string|max:255',
             'active'              => 'required|boolean',
+            'reporting'           => 'required|boolean',
             'description'         => 'nullable|string',
             'discount_info'       => 'nullable|string',
             'resource_type_id'    => 'required|integer|exists:resource_types,id',

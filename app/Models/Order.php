@@ -59,4 +59,9 @@ class Order extends Model
     {
         return $this->salesLead?->lead;
     }
+
+    public function orderChecks(): HasMany
+    {
+        return $this->hasMany(OrderCheck::class);
+    }
 }

@@ -1890,6 +1890,7 @@ return [
                     'purchase_price_royal_doctors' => 'Inkoopprijs royal doctors',
                     'purchase_price_radiology' => 'Inkoopprijs radiologie',
                     'purchase_price_total' => 'Totale inkoopprijs',
+                    'associated_product' => 'Gekoppeld product',
                 ],
             ],
         ],

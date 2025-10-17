@@ -157,14 +157,15 @@ class ProductRepository extends Repository
      */
     public function getFormattedPartnerProducts($product): array
     {
+        $partnerProductRepository = app(\App\Repositories\PartnerProductRepository::class);
+        
         return $product->partnerProducts()
             ->with('clinics:id,name')
             ->get()
-            ->map(function ($partnerProduct) {
-                $clinicNames = $partnerProduct->clinics->pluck('name')->join(', ');
+            ->map(function ($partnerProduct) use ($partnerProductRepository) {
                 return [
                     'id' => $partnerProduct->id,
-                    'name' => $clinicNames ? "{$clinicNames} - {$partnerProduct->name}" : $partnerProduct->name,
+                    'name' => $partnerProductRepository->formatDisplayName($partnerProduct),
                 ];
             })
             ->toArray();

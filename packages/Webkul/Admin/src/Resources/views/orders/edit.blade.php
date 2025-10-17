@@ -214,34 +214,48 @@
         <script type="text/x-template" id="v-order-checks-template">
             <div class="space-y-4">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white">Checklist</h3>
-                    <button type="button" @click="addCheck" class="primary-button">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">Checklist</h3>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            @{{ completedChecks }}/@{{ checks.length }} voltooid
+                        </p>
+                    </div>
+                    <button type="button" @click="addCheck" class="primary-button flex items-center gap-2">
+                        <i class="icon-plus text-sm"></i>
                         Check toevoegen
                     </button>
                 </div>
 
                 <div class="space-y-3">
                     <div v-for="(check, index) in checks" :key="check.id || index" 
-                         class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                         class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg transition-all duration-200"
+                         :class="{ 'opacity-60': check.done }">
                         <input type="checkbox" 
                                v-model="check.done" 
                                @change="updateCheck(check)"
-                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                               class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer">
                         <input type="text" 
                                v-model="check.name" 
                                @blur="updateCheck(check)"
-                               class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                               placeholder="Check naam">
+                               @keyup.enter="updateCheck(check)"
+                               class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-all duration-200"
+                               :class="{ 'line-through text-gray-500': check.done }"
+                               placeholder="Check naam invoeren...">
                         <button type="button" 
                                 @click="removeCheck(check, index)"
-                                class="text-red-600 hover:text-red-800">
-                            <i class="icon-delete"></i>
+                                class="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200"
+                                title="Check verwijderen">
+                            <i class="icon-delete text-lg"></i>
                         </button>
                     </div>
                 </div>
 
-                <div v-if="checks.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
-                    Nog geen checks toegevoegd. Klik op "Check toevoegen" om te beginnen.
+                <div v-if="checks.length === 0" class="text-center py-12 text-gray-500 dark:text-gray-400">
+                    <div class="flex flex-col items-center gap-3">
+                        <i class="icon-check text-4xl text-gray-300 dark:text-gray-600"></i>
+                        <p class="text-lg font-medium">Nog geen checks toegevoegd</p>
+                        <p class="text-sm">Klik op "Check toevoegen" om te beginnen met je checklist</p>
+                    </div>
                 </div>
             </div>
         </script>
@@ -260,6 +274,11 @@
                         })) : []
                     };
                 },
+                computed: {
+                    completedChecks() {
+                        return this.checks.filter(check => check.done).length;
+                    }
+                },
                 methods: {
                     addCheck() {
                         this.checks.push({
@@ -268,9 +287,26 @@
                             done: false,
                             order_id: this.orderId
                         });
+                        
+                        // Focus on the new input after it's rendered
+                        this.$nextTick(() => {
+                            const inputs = document.querySelectorAll('#checks-tab input[type="text"]');
+                            if (inputs.length > 0) {
+                                inputs[inputs.length - 1].focus();
+                            }
+                        });
                     },
                     async updateCheck(check) {
-                        if (!check.name.trim()) return;
+                        if (!check.name.trim()) {
+                            // If name is empty and it's a new check, remove it
+                            if (!check.id) {
+                                const index = this.checks.indexOf(check);
+                                if (index > -1) {
+                                    this.checks.splice(index, 1);
+                                }
+                            }
+                            return;
+                        }
 
                         try {
                             const url = check.id 
@@ -296,11 +332,16 @@
                                 if (!check.id) {
                                     check.id = data.id;
                                 }
+                                
+                                // Show success feedback
+                                this.showNotification('Check opgeslagen', 'success');
                             } else {
                                 console.error('Error updating check');
+                                this.showNotification('Fout bij opslaan check', 'error');
                             }
                         } catch (error) {
                             console.error('Error updating check:', error);
+                            this.showNotification('Fout bij opslaan check', 'error');
                         }
                     },
                     async removeCheck(check, index) {
@@ -324,6 +365,21 @@
                         }
                         
                         this.checks.splice(index, 1);
+                        this.showNotification('Check verwijderd', 'success');
+                    },
+                    showNotification(message, type = 'info') {
+                        // Simple notification - you can replace this with your preferred notification system
+                        const notification = document.createElement('div');
+                        notification.className = `fixed top-4 right-4 px-4 py-2 rounded-md text-white z-50 ${
+                            type === 'success' ? 'bg-green-500' : 
+                            type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+                        }`;
+                        notification.textContent = message;
+                        document.body.appendChild(notification);
+                        
+                        setTimeout(() => {
+                            notification.remove();
+                        }, 3000);
                     }
                 }
             });

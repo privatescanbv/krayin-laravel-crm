@@ -14,6 +14,15 @@
     $defaultCurrency = Currency::default()->value;
     $clinics = app(ClinicRepository::class)->allActive(['id', 'name']);
     $reportingOptions = ProductReports::getOptions();
+    
+    // Ensure reporting is always an array
+    $currentReporting = $partnerProduct->reporting ?? [];
+    if (is_string($currentReporting)) {
+        $currentReporting = json_decode($currentReporting, true) ?? [];
+    }
+    if (!is_array($currentReporting)) {
+        $currentReporting = [];
+    }
 @endphp
 
     <!-- Hidden field for product_id (template product) -->
@@ -196,7 +205,7 @@
                     name="reporting[]" 
                     value="{{ $value }}"
                     class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
-                    @checked(in_array($value, old('reporting', $partnerProduct->reporting ?? [])))
+                    @checked(in_array($value, old('reporting', $currentReporting)))
                 />
                 <label for="reporting_{{ $value }}" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
                     {{ $label }}

@@ -407,3 +407,36 @@ test('template products show product group path when available', function () {
     expect($product['name'])->toBe('Template Product');
     expect($product['name_with_path'])->toBe('Parent Group > Child Group > Template Product');
 });
+
+test('edit partner product shows linked product with full path', function () {
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+    $clinicId = Clinic::query()->value('id') ?? Clinic::factory()->create()->id;
+
+    // Create a product group hierarchy
+    $parentGroup = ProductGroup::factory()->create(['name' => 'Parent Group']);
+    $childGroup = ProductGroup::factory()->create([
+        'name'      => 'Child Group',
+        'parent_id' => $parentGroup->id,
+    ]);
+
+    $templateProduct = Product::factory()->create([
+        'name'             => 'Template Product',
+        'active'           => true,
+        'product_group_id' => $childGroup->id,
+        'resource_type_id' => $resourceTypeId,
+    ]);
+
+    // Create a partner product linked to the template product
+    $partnerProduct = PartnerProduct::factory()->create([
+        'name'             => 'Partner Product',
+        'product_id'       => $templateProduct->id,
+        'resource_type_id' => $resourceTypeId,
+    ]);
+
+    // Test the edit view
+    $response = $this->get(route('admin.settings.partner_products.edit', $partnerProduct->id));
+    $response->assertOk();
+
+    // The view should contain the linked product with full path
+    $response->assertSee('Parent Group > Child Group > Template Product');
+});

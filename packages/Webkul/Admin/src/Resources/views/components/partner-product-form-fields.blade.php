@@ -1,4 +1,4 @@
-@php use App\Enums\Currency;use App\Models\ResourceType;use App\Repositories\ClinicRepository; @endphp
+@php use App\Enums\Currency;use App\Helpers\ProductHelper;use App\Models\ResourceType;use App\Repositories\ClinicRepository; @endphp
 @props([
     'partnerProduct' => null,
     'selectedClinics' => [],
@@ -64,7 +64,7 @@
     </x-admin::form.control-group.label>
 
     <div class="rounded border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-        {{ $partnerProduct->product->name }}
+        {{ ProductHelper::formatNameWithPathLazy($partnerProduct->product) }}
     </div>
 </x-admin::form.control-group>
 @endif

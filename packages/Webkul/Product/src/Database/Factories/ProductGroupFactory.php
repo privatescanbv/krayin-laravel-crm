@@ -12,7 +12,7 @@ class ProductGroupFactory extends Factory
     public function definition(): array
     {
         return [
-            'name'        => $this->faker->unique()->words(2, true),
+            'name'        => $this->faker->unique()->sentence(2),
             'description' => $this->faker->optional()->sentence(),
             'parent_id'   => null,
         ];

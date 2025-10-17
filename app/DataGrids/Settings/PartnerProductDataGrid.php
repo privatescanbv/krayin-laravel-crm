@@ -3,6 +3,7 @@
 namespace App\DataGrids\Settings;
 
 use App\Enums\Currency;
+use App\Enums\ProductReports;
 use App\Repositories\PartnerProductRepository;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +19,8 @@ class PartnerProductDataGrid extends DataGrid
                 'partner_products.name',
                 'partner_products.currency',
                 'partner_products.sales_price',
-                'partner_products.active'
+                'partner_products.active',
+                'partner_products.reporting'
             );
 
         $this->addFilter('id', 'partner_products.id');
@@ -83,6 +85,35 @@ class PartnerProductDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'reporting',
+            'type'       => 'string',
+            'label'      => trans('admin::app.settings.partner_products.index.datagrid.reporting'),
+            'searchable' => false,
+            'filterable' => false,
+            'sortable'   => false,
+            'closure'    => function ($row) {
+                if (!$row->reporting) {
+                    return '-';
+                }
+                
+                $reporting = json_decode($row->reporting, true);
+                if (empty($reporting)) {
+                    return '-';
+                }
+                
+                $labels = [];
+                foreach ($reporting as $report) {
+                    $enum = ProductReports::tryFrom($report);
+                    if ($enum) {
+                        $labels[] = $enum->getLabel();
+                    }
+                }
+                
+                return implode(', ', $labels);
+            },
         ]);
     }
 

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Abstracts\BaseProduct;
+use App\Enums\ProductReports;
 use Webkul\Product\Models\Product;
 
 class PartnerProduct extends BaseProduct
@@ -32,6 +33,7 @@ class PartnerProduct extends BaseProduct
         'purchase_price_royal_doctors',
         'purchase_price_radiology',
         'purchase_price',
+        'reporting',
     ];
 
     protected $casts = [
@@ -49,6 +51,7 @@ class PartnerProduct extends BaseProduct
         'purchase_price_royal_doctors' => 'decimal:2',
         'purchase_price_radiology'     => 'decimal:2',
         'purchase_price'               => 'decimal:2',
+        'reporting'                    => 'array',
     ];
 
     public function clinics()
@@ -74,5 +77,26 @@ class PartnerProduct extends BaseProduct
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function getReportingOptions(): array
+    {
+        return ProductReports::getOptions();
+    }
+
+    public function getReportingLabels(): array
+    {
+        if (!$this->reporting) {
+            return [];
+        }
+
+        $labels = [];
+        foreach ($this->reporting as $report) {
+            $enum = ProductReports::tryFrom($report);
+            if ($enum) {
+                $labels[] = $enum->getLabel();
+            }
+        }
+        return $labels;
     }
 }

@@ -1,4 +1,4 @@
-@php use App\Enums\Currency;use App\Helpers\ProductHelper;use App\Models\ResourceType;use App\Repositories\ClinicRepository; @endphp
+@php use App\Enums\Currency;use App\Enums\ProductReports;use App\Helpers\ProductHelper;use App\Models\ResourceType;use App\Repositories\ClinicRepository; @endphp
 @props([
     'partnerProduct' => null,
     'selectedClinics' => [],
@@ -13,6 +13,7 @@
     $currencies = Currency::options();
     $defaultCurrency = Currency::default()->value;
     $clinics = app(ClinicRepository::class)->allActive(['id', 'name']);
+    $reportingOptions = ProductReports::getOptions();
 @endphp
 
     <!-- Hidden field for product_id (template product) -->
@@ -178,6 +179,33 @@
     />
 
     <x-admin::form.control-group.error control-name="active"/>
+</x-admin::form.control-group>
+
+<!-- Reporting -->
+<x-admin::form.control-group>
+    <x-admin::form.control-group.label>
+        @lang('admin::app.settings.partner_products.index.create.reporting')
+    </x-admin::form.control-group.label>
+
+    <div class="space-y-2">
+        @foreach ($reportingOptions as $value => $label)
+            <div class="flex items-center">
+                <input 
+                    type="checkbox" 
+                    id="reporting_{{ $value }}" 
+                    name="reporting[]" 
+                    value="{{ $value }}"
+                    class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
+                    @checked(in_array($value, old('reporting', $partnerProduct->reporting ?? [])))
+                />
+                <label for="reporting_{{ $value }}" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    {{ $label }}
+                </label>
+            </div>
+        @endforeach
+    </div>
+
+    <x-admin::form.control-group.error control-name="reporting"/>
 </x-admin::form.control-group>
 
 <!-- Resource Type -->

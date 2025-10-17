@@ -212,6 +212,8 @@ class PartnerProductController extends SimpleEntityController
             // partner fields
             'clinic_description'  => 'nullable|string',
             'duration'            => 'nullable|integer|min:0',
+            'reporting'           => 'nullable|array',
+            'reporting.*'         => 'string|in:'.implode(',', array_column(\App\Enums\ProductReports::cases(), 'value')),
 
             // relations
             'clinics'             => 'required|array|min:1',
@@ -292,6 +294,11 @@ class PartnerProductController extends SimpleEntityController
             floatval($payload['purchase_price_clinic'] ?? 0) +
             floatval($payload['purchase_price_royal_doctors'] ?? 0) +
             floatval($payload['purchase_price_radiology'] ?? 0);
+
+        // Normalize reporting field - convert to JSON array
+        if (array_key_exists('reporting', $payload)) {
+            $payload['reporting'] = $payload['reporting'] ? json_encode($payload['reporting']) : null;
+        }
 
         return parent::transformPayload($payload, $id);
     }

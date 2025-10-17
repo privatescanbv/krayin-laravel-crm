@@ -2,6 +2,7 @@
 
 namespace Webkul\Admin\Http\Resources;
 
+use App\Helpers\ProductHelper;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductResource extends JsonResource
@@ -17,6 +18,7 @@ class ProductResource extends JsonResource
         return [
             'id'              => $this->id,
             'name'            => $this->name,
+            'name_with_path'  => ProductHelper::formatNameWithPathLazy($this->resource),
             'description'     => $this->description,
             'sku'             => $this->sku,
             'price'           => $this->price,

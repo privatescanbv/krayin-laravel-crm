@@ -17,6 +17,7 @@ class ProductGroupResource extends JsonResource
         return [
             'id'             => $this->id,
             'name'           => $this->name,
+            'path'           => $this->path,
             'description'    => $this->description,
             'products_count' => $this->products->count(),
             'created_at'     => $this->created_at,

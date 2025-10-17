@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin\Settings;
 
 use App\DataGrids\Settings\PartnerProductDataGrid;
 use App\Enums\Currency;
+use App\Helpers\ProductHelper;
 use App\Models\Resource;
 use App\Models\ResourceType;
 use App\Repositories\ClinicRepository;
@@ -60,6 +61,7 @@ class PartnerProductController extends SimpleEntityController
             return [
                 'id'   => $product->id,
                 'name' => $product->name,
+                'name_with_path' => $product->name, // Partner products don't have product groups, so just use name
             ];
         });
 
@@ -70,34 +72,26 @@ class PartnerProductController extends SimpleEntityController
     {
         $query = $request->input('query', '');
 
-        $products = \Webkul\Product\Models\Product::where('active', true)
+        $products = \Webkul\Product\Models\Product::with('productGroup')
+            ->where('active', true)
             ->where('name', 'like', '%'.$query.'%')
             ->orderBy('name')
             ->limit(50)
-            ->get(['id', 'name', 'description', 'currency', 'price', 'costs', 'resource_type_id']);
+            ->get(['id', 'name', 'description', 'currency', 'price', 'costs', 'resource_type_id', 'product_group_id']);
 
-        $data = $products->map(function ($product) {
-            return [
-                'id'               => $product->id,
-                'name'             => $product->name,
-                'description'      => $product->description,
-                'currency'         => $product->currency,
-                'price'            => $product->price,
-                'costs'            => $product->costs,
-                'resource_type_id' => $product->resource_type_id,
-            ];
-        });
+        $data = ProductHelper::formatCollectionWithPaths($products);
 
         return response()->json(['data' => $data]);
     }
 
     public function getTemplateProduct(int $id): JsonResponse
     {
-        $product = \Webkul\Product\Models\Product::findOrFail($id);
+        $product = \Webkul\Product\Models\Product::with('productGroup')->findOrFail($id);
 
         $data = [
             'id'               => $product->id,
             'name'             => $product->name,
+            'name_with_path'   => ProductHelper::formatNameWithPath($product),
             'description'      => $product->description,
             'currency'         => $product->currency,
             'price'            => $product->price,

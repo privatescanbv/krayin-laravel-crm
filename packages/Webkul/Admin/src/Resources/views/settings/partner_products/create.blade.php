@@ -96,7 +96,7 @@
                     data.data.forEach(product => {
                         const option = document.createElement('option');
                         option.value = product.id;
-                        option.textContent = product.name;
+                        option.textContent = product.name_with_path;
                         select.appendChild(option);
                     });
                 })
@@ -155,7 +155,7 @@
                     const infoDiv = document.getElementById('template-product-details');
                     infoDiv.innerHTML = `
                         <div class="bg-white dark:bg-gray-700 p-3 rounded border">
-                            <div class="font-medium">${product.name}</div>
+                            <div class="font-medium">${product.name_with_path}</div>
                             <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                 ${product.currency} ${product.price || '0.00'} | 
                                 @lang('admin::app.settings.partner_products.index.create.template_loaded')

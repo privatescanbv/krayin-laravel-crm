@@ -348,6 +348,9 @@ test('can get template products for selection', function () {
     expect($data)->toHaveCount(2); // Only active products
     expect(collect($data)->pluck('name'))->toContain('Product 1', 'Product 2');
     expect(collect($data)->pluck('name'))->not->toContain('Product 3');
+    
+    // Check that name_with_path is present
+    expect(collect($data)->pluck('name_with_path'))->toContain('Product 1', 'Product 2');
 });
 
 test('can get specific template product details', function () {
@@ -367,9 +370,37 @@ test('can get specific template product details', function () {
     $data = $response->json('data');
     expect($data['id'])->toBe($templateProduct->id);
     expect($data['name'])->toBe('Template Product');
+    expect($data['name_with_path'])->toBe('Template Product'); // No product group, so same as name
     expect($data['description'])->toBe('Template description');
     expect($data['currency'])->toBe('EUR');
     expect($data['price'])->toBe('150.00');
     expect($data['costs'])->toBe('100.00');
     expect($data['resource_type_id'])->toBe($resourceTypeId);
+});
+
+test('template products show product group path when available', function () {
+    $resourceTypeId = ResourceType::query()->value('id') ?? ResourceType::factory()->create()->id;
+    
+    // Create a product group hierarchy
+    $parentGroup = \Webkul\Product\Models\ProductGroup::factory()->create(['name' => 'Parent Group']);
+    $childGroup = \Webkul\Product\Models\ProductGroup::factory()->create([
+        'name' => 'Child Group',
+        'parent_id' => $parentGroup->id
+    ]);
+    
+    $templateProduct = Product::factory()->create([
+        'name' => 'Template Product',
+        'active' => true,
+        'product_group_id' => $childGroup->id,
+    ]);
+
+    $response = $this->getJson(route('admin.settings.partner_products.template_products'));
+    $response->assertOk();
+
+    $data = $response->json('data');
+    $product = collect($data)->firstWhere('id', $templateProduct->id);
+    
+    expect($product)->not->toBeNull();
+    expect($product['name'])->toBe('Template Product');
+    expect($product['name_with_path'])->toBe('Template Product (Parent Group > Child Group)');
 });

@@ -240,10 +240,14 @@
                                placeholder="Check naam invoeren...">
                         <button type="button"
                                 @click="removeCheck(check, index)"
+                                v-if="check.removable !== false"
                                 class="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200"
                                 title="Check verwijderen">
                             <i class="icon-delete text-lg"></i>
                         </button>
+                        <span v-else class="text-gray-400 text-sm px-2" title="Deze check kan niet worden verwijderd">
+                            <i class="icon-lock text-sm"></i>
+                        </span>
                     </div>
                 </div>
 
@@ -267,6 +271,7 @@
                             id: c.id || null,
                             name: c.name || '',
                             done: c.done || false,
+                            removable: c.removable !== undefined ? c.removable : true,
                             order_id: this.orderId
                         })) : []
                     };
@@ -282,6 +287,7 @@
                             id: null,
                             name: '',
                             done: false,
+                            removable: true,
                             order_id: this.orderId
                         });
 
@@ -350,6 +356,12 @@
                         }
                     },
                     async removeCheck(check, index) {
+                        // Prevent deletion if removable is false
+                        if (check.removable === false) {
+                            this.showNotification('Deze check kan niet worden verwijderd', 'error');
+                            return;
+                        }
+
                         if (check.id) {
                             try {
                                 const csrfToken = (document.querySelector('meta[name="csrf-token"]')?.getAttribute('content'))
@@ -363,11 +375,13 @@
                                 });
 
                                 if (!response.ok) {
-                                    console.error('Error deleting check');
+                                    const data = await response.json();
+                                    this.showNotification(data.message || 'Fout bij verwijderen check', 'error');
                                     return;
                                 }
                             } catch (error) {
                                 console.error('Error deleting check:', error);
+                                this.showNotification('Fout bij verwijderen check', 'error');
                                 return;
                             }
                         }

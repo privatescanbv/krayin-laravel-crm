@@ -337,8 +337,8 @@ test('can create partner product with template product', function () {
 });
 
 test('can get template products for selection', function () {
-    $product1 = Product::factory()->create(['name' => 'Product 1', 'active' => true]);
-    $product2 = Product::factory()->create(['name' => 'Product 2', 'active' => true]);
+    $product1 = Product::factory()->create(['name' => 'Product 1', 'active' => true, 'product_group_id' => null]);
+    $product2 = Product::factory()->create(['name' => 'Product 2', 'active' => true, 'product_group_id' => null]);
     $product3 = Product::factory()->create(['name' => 'Product 3', 'active' => false]); // Inactive
 
     $response = $this->getJson(route('admin.settings.partner_products.template_products'));
@@ -349,7 +349,7 @@ test('can get template products for selection', function () {
     expect(collect($data)->pluck('name'))->toContain('Product 1', 'Product 2');
     expect(collect($data)->pluck('name'))->not->toContain('Product 3');
     
-    // Check that name_with_path is present
+    // Check that name_with_path is present and matches name when no product group
     expect(collect($data)->pluck('name_with_path'))->toContain('Product 1', 'Product 2');
 });
 
@@ -362,6 +362,7 @@ test('can get specific template product details', function () {
         'price' => 150.00,
         'costs' => 100.00,
         'resource_type_id' => $resourceTypeId,
+        'product_group_id' => null, // Explicitly set to null
     ]);
 
     $response = $this->getJson(route('admin.settings.partner_products.template_product', ['id' => $templateProduct->id]));
@@ -392,6 +393,7 @@ test('template products show product group path when available', function () {
         'name' => 'Template Product',
         'active' => true,
         'product_group_id' => $childGroup->id,
+        'resource_type_id' => $resourceTypeId,
     ]);
 
     $response = $this->getJson(route('admin.settings.partner_products.template_products'));

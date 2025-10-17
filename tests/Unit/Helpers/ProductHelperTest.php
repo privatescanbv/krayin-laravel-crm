@@ -7,7 +7,10 @@ use Webkul\Product\Models\Product;
 use Webkul\Product\Models\ProductGroup;
 
 test('formatNameWithPath returns just name when no product group', function () {
-    $product = Product::factory()->create(['name' => 'Test Product']);
+    $product = Product::factory()->create([
+        'name' => 'Test Product',
+        'product_group_id' => null
+    ]);
     
     $result = ProductHelper::formatNameWithPath($product);
     

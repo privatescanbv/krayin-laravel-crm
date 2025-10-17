@@ -38,7 +38,7 @@ class PartnerProduct extends BaseProduct
     protected $casts = [
         'sales_price'                  => 'decimal:2',
         'active'                       => 'boolean',
-        'reporting'                    => 'boolean',
+        'reporting'                    => 'array',
         'resource_type_id'             => 'integer',
         'product_id'                   => 'integer',
         'created_by'                   => 'integer',

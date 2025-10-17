@@ -88,11 +88,26 @@ class PartnerProductDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'reporting',
-            'type'       => 'boolean',
+            'type'       => 'string',
             'label'      => trans('admin::app.settings.partner_products.index.datagrid.reporting'),
             'searchable' => true,
             'filterable' => true,
-            'sortable'   => true,
+            'sortable'   => false,
+            'closure'    => function ($row) {
+                if (empty($row->reporting)) {
+                    return '-';
+                }
+                
+                $reportingTypes = json_decode($row->reporting, true);
+                if (!is_array($reportingTypes)) {
+                    return '-';
+                }
+                
+                $labels = \App\Enums\ReportingType::getLabels();
+                return collect($reportingTypes)
+                    ->map(fn($type) => $labels[$type] ?? $type)
+                    ->join(', ');
+            },
         ]);
     }
 

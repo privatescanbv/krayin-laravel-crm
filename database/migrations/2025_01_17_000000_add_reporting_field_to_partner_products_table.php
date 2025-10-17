@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('partner_products', function (Blueprint $table) {
-            $table->boolean('reporting')->default(false)->after('active');
+            $table->json('reporting')->nullable()->after('active');
         });
     }
 

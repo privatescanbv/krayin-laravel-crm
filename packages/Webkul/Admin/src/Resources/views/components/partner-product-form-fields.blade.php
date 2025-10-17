@@ -180,20 +180,35 @@
     <x-admin::form.control-group.error control-name="active"/>
 </x-admin::form.control-group>
 
-<!-- Reporting checkbox -->
+<!-- Reporting multi-select -->
 <x-admin::form.control-group>
     <x-admin::form.control-group.label>
         @lang('admin::app.settings.partner_products.index.create.reporting')
     </x-admin::form.control-group.label>
 
-    <input type="hidden" name="reporting" value="0"/>
     <x-admin::form.control-group.control
-        type="checkbox"
-        name="reporting"
-        value="1"
+        type="select"
+        name="reporting[]"
         :label="trans('admin::app.settings.partner_products.index.create.reporting')"
-        :checked="old('reporting', $partnerProduct->reporting ?? 0)"
-    />
+        :placeholder="trans('admin::app.settings.partner_products.index.create.select_reporting')"
+        multiple
+        class="w-full"
+    >
+        @php
+            $selectedReporting = old('reporting', $partnerProduct->reporting ?? []);
+            $reportingOptions = \App\Enums\ReportingType::getOptions();
+        @endphp
+        
+        @foreach($reportingOptions as $option)
+            <option 
+                value="{{ $option['value'] }}" 
+                @selected(in_array($option['value'], $selectedReporting))
+                title="{{ $option['description'] }}"
+            >
+                {{ $option['label'] }}
+            </option>
+        @endforeach
+    </x-admin::form.control-group.control>
 
     <x-admin::form.control-group.error control-name="reporting"/>
 </x-admin::form.control-group>

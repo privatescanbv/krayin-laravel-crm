@@ -17,6 +17,7 @@ class OrderCheck extends Model
         'order_id',
         'name',
         'done',
+        'removable',
         'created_by',
         'updated_by',
     ];
@@ -24,6 +25,7 @@ class OrderCheck extends Model
     protected $casts = [
         'order_id'   => 'integer',
         'done'       => 'boolean',
+        'removable'  => 'boolean',
         'created_by' => 'integer',
         'updated_by' => 'integer',
     ];
@@ -31,9 +33,10 @@ class OrderCheck extends Model
     public static function rules(): array
     {
         return [
-            'order_id' => 'required|integer|exists:orders,id',
-            'name'     => 'required|string|max:255',
-            'done'     => 'boolean',
+            'order_id'  => 'required|integer|exists:orders,id',
+            'name'      => 'required|string|max:255',
+            'done'      => 'boolean',
+            'removable' => 'boolean',
         ];
     }
 

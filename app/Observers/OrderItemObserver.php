@@ -4,16 +4,22 @@ namespace App\Observers;
 
 use App\Enums\OrderItemStatus;
 use App\Models\OrderItem;
+use App\Services\OrderCheckService;
 use Illuminate\Support\Facades\DB;
 
 class OrderItemObserver
 {
+    public function __construct(
+        protected OrderCheckService $orderCheckService
+    ) {}
+
     /**
      * Handle the OrderItem "created" event.
      */
     public function created(OrderItem $orderItem): void
     {
         $this->updateOrderItemStatus($orderItem);
+        $this->updatePartnerProductChecks($orderItem);
     }
 
     /**
@@ -24,10 +30,21 @@ class OrderItemObserver
         // Check if product_id changed, then recalculate status
         if ($orderItem->wasChanged('product_id')) {
             $this->updateOrderItemStatus($orderItem);
+            $this->updatePartnerProductChecks($orderItem);
         }
 
         // After updating an order item, check if we need to update the parent order status
         $this->updateParentOrderStatus($orderItem);
+    }
+
+    /**
+     * Handle the OrderItem "deleted" event.
+     */
+    public function deleted(OrderItem $orderItem): void
+    {
+        // After deleting an order item, check if we need to update the parent order status
+        $this->updateParentOrderStatus($orderItem);
+        $this->updatePartnerProductChecks($orderItem);
     }
 
     /**
@@ -90,6 +107,16 @@ class OrderItemObserver
             $order = $orderItem->order;
             // Trigger the OrderObserver by touching the order
             $order->touch();
+        }
+    }
+
+    /**
+     * Update partner product checks for the order
+     */
+    private function updatePartnerProductChecks(OrderItem $orderItem): void
+    {
+        if ($orderItem->order) {
+            $this->orderCheckService->updatePartnerProductChecks($orderItem->order);
         }
     }
 }

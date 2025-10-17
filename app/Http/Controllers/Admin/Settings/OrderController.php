@@ -8,6 +8,7 @@ use App\Enums\OrderStatus;
 use App\Models\OrderCheck;
 use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
+use App\Services\OrderCheckService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -18,8 +19,10 @@ use Illuminate\View\View;
 
 class OrderController extends SimpleEntityController
 {
-    public function __construct(protected OrderRepository $orderRepository)
-    {
+    public function __construct(
+        protected OrderRepository $orderRepository,
+        protected OrderCheckService $orderCheckService
+    ) {
         parent::__construct($orderRepository);
 
         $this->entityName = 'orders';
@@ -84,6 +87,9 @@ class OrderController extends SimpleEntityController
 
         Event::dispatch("{$this->entityName}.create.after", $order);
 
+        // Create partner product checks for new order
+        $this->orderCheckService->updatePartnerProductChecks($order);
+
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'data'    => $order,
@@ -122,6 +128,9 @@ class OrderController extends SimpleEntityController
 
         Event::dispatch("{$this->entityName}.update.after", $order);
 
+        // Update partner product checks after order items are updated
+        $this->orderCheckService->updatePartnerProductChecks($order);
+
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'data'    => $order,
@@ -151,14 +160,16 @@ class OrderController extends SimpleEntityController
     public function storeCheck(Request $request, int $orderId): JsonResponse
     {
         $request->validate([
-            'name' => 'required|string|max:255',
-            'done' => 'boolean',
+            'name'      => 'required|string|max:255',
+            'done'      => 'boolean',
+            'removable' => 'boolean',
         ]);
 
         $check = OrderCheck::create([
-            'order_id' => $orderId,
-            'name'     => $request->input('name'),
-            'done'     => $request->input('done', false),
+            'order_id'  => $orderId,
+            'name'      => $request->input('name'),
+            'done'      => $request->input('done', false),
+            'removable' => $request->input('removable', true),
         ]);
 
         return response()->json([
@@ -172,13 +183,15 @@ class OrderController extends SimpleEntityController
         $check = OrderCheck::where('order_id', $orderId)->findOrFail($checkId);
 
         $request->validate([
-            'name' => 'required|string|max:255',
-            'done' => 'boolean',
+            'name'      => 'required|string|max:255',
+            'done'      => 'boolean',
+            'removable' => 'boolean',
         ]);
 
         $check->update([
-            'name' => $request->input('name'),
-            'done' => $request->input('done', false),
+            'name'      => $request->input('name'),
+            'done'      => $request->input('done', false),
+            'removable' => $request->input('removable', true),
         ]);
 
         return response()->json([
@@ -189,6 +202,14 @@ class OrderController extends SimpleEntityController
     public function destroyCheck(Request $request, int $orderId, int $checkId): JsonResponse
     {
         $check = OrderCheck::where('order_id', $orderId)->findOrFail($checkId);
+
+        // Prevent deletion if removable is false
+        if (! $check->removable) {
+            return response()->json([
+                'message' => 'Deze check kan niet worden verwijderd.',
+            ], 422);
+        }
+
         $check->delete();
 
         return response()->json([

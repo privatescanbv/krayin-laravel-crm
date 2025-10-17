@@ -12,6 +12,7 @@ use App\Observers\OrderObserver;
 use App\Observers\PersonObserver;
 use App\Observers\ResourceOrderItemObserver;
 use App\Observers\SalesLeadObserver;
+use App\Services\OrderCheckService;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Webkul\Contact\Models\Person;
@@ -25,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(OrderCheckService::class);
     }
 
     /**

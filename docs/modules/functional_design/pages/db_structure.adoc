@@ -289,6 +289,18 @@ TABLE(OrderItem, "order_items") {
   updated_by: bigint
 }
 
+TABLE(OrderCheck, "order_checks") {
+  PRIMARY_KEY(id): bigint
+  FOREIGN_KEY(order_id): bigint
+  name: string
+  done: boolean
+  removable: boolean
+  created_at: datetime
+  updated_at: datetime
+  created_by: bigint
+  updated_by: bigint
+}
+
 TABLE(ResourceOrderItem, "resource_orderitem") {
   PRIMARY_KEY(id): bigint
   FOREIGN_KEY(resource_id): bigint
@@ -529,9 +541,11 @@ OrderItem "n" -- "1" Order
 OrderItem "1" -- "1" PartnerProduct
 
 Order "1" -- "n" OrderItem
+Order "1" -- "n" OrderCheck
 Order "n" -- "1" SalesLead
 OrderItem "n" -- "1" Order
 OrderItem "1" -- "1" Product
+OrderCheck "n" -- "1" Order
 
 Activity "1" --> "1" User
 Activity "0..1" --> "1" Group
@@ -618,6 +632,13 @@ note right of OrderItem
   - INGEPLAND: als er een ResourceOrderItem bestaat voor deze regel
   - MOET_WORDEN_INGEPLAND: als het product partnerproducten heeft
   - NIEUW: standaard status
+end note
+
+note right of OrderCheck
+  Checklist items voor een order.
+  - removable: bepaalt of de check handmatig verwijderd kan worden
+  - done: voltooiingsstatus van de check
+  - Automatisch gegenereerde checks voor partner product rapportages zijn niet verwijderbaar
 end note
 
 note right of SalesLead

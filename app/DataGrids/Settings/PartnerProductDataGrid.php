@@ -3,6 +3,7 @@
 namespace App\DataGrids\Settings;
 
 use App\Enums\Currency;
+use App\Repositories\PartnerProductRepository;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
@@ -44,7 +45,7 @@ class PartnerProductDataGrid extends DataGrid
             'filterable' => true,
             'sortable'   => true,
             'closure'    => function ($row) {
-                $partnerProductRepository = app(\App\Repositories\PartnerProductRepository::class);
+                $partnerProductRepository = app(PartnerProductRepository::class);
                 $partnerProduct = \App\Models\PartnerProduct::with('clinics:id,name')->find($row->id);
 
                 return $partnerProduct ? $partnerProductRepository->formatDisplayName($partnerProduct) : $row->name;

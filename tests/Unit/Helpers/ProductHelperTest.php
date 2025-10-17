@@ -34,7 +34,7 @@ test('formatNameWithPath returns name with path when product group exists', func
 
     $result = ProductHelper::formatNameWithPath($product);
 
-    expect($result)->toBe('Test Product (Parent Group > Child Group)');
+    expect($result)->toBe('Parent Group > Child Group > Test Product');
 });
 
 test('formatNameWithPathLazy loads product group relationship', function () {
@@ -52,7 +52,7 @@ test('formatNameWithPathLazy loads product group relationship', function () {
     // Don't load the relationship beforehand
     $result = ProductHelper::formatNameWithPathLazy($product);
 
-    expect($result)->toBe('Test Product (Parent Group > Child Group)');
+    expect($result)->toBe('Parent Group > Child Group > Test Product');
 });
 
 test('formatCollectionWithPaths formats multiple products', function () {
@@ -76,9 +76,9 @@ test('formatCollectionWithPaths formats multiple products', function () {
 
     $result = ProductHelper::formatCollectionWithPaths($products);
 
-    expect($result)->toHaveCount(2);
-    expect($result[0]['name'])->toBe('Product 1');
-    expect($result[0]['name_with_path'])->toBe('Product 1 (Parent Group > Child Group)');
-    expect($result[1]['name'])->toBe('Product 2');
-    expect($result[1]['name_with_path'])->toBe('Product 2');
+    expect($result)->toHaveCount(2)
+        ->and($result[0]['name'])->toBe('Product 1')
+        ->and($result[0]['name_with_path'])->toBe('Parent Group > Child Group > Product 1')
+        ->and($result[1]['name'])->toBe('Product 2')
+        ->and($result[1]['name_with_path'])->toBe('Product 2');
 });

@@ -3,6 +3,7 @@
 namespace Webkul\Product\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 use Webkul\Product\Models\ProductGroup;
 
 class ProductGroupFactory extends Factory
@@ -12,8 +13,8 @@ class ProductGroupFactory extends Factory
     public function definition(): array
     {
         return [
-            'name'        => $this->faker->unique()->sentence(2),
-            'description' => $this->faker->optional()->sentence(),
+            'name'        => 'Group '.strtoupper(Str::random(6)),
+            'description' => 'Description '.strtoupper(Str::random(12)),
             'parent_id'   => null,
         ];
     }

@@ -38,7 +38,7 @@ class LeadKanbanResource extends JsonResource
 
             // Relationships - only what's needed for kanban
             'persons'              => [],
-            'persons_count'        => 0,
+            'persons_count'        => 0, // Simplified for performance, avoid N+1 queries
             'has_multiple_persons' => false,
             'stage'                => $this->stage ? new StageResource($this->stage) : null,
 

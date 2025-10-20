@@ -211,7 +211,11 @@ class LeadController extends Controller
                     'leads.id',
                     'leads.first_name',
                     'leads.last_name',
+                    'leads.married_name',
+                    'leads.lastname_prefix',
+                    'leads.salutation',
                     'leads.created_at',
+                    'leads.married_name_prefix',
                     'leads.lead_pipeline_id',
                     'leads.lead_pipeline_stage_id',
                     'leads.mri_status',
@@ -219,6 +223,7 @@ class LeadController extends Controller
                     'leads.has_diagnosis_form'
                 ])->with([
                     'stage:id,code,name,sort_order,is_won,is_lost',
+                    // Removed persons eager loading to prevent null pivot issues
                     // Removed pipeline eager loading to prevent N+1 per stage
                 ])->paginate((int) request()->query('limit', 10));
 
@@ -227,7 +232,7 @@ class LeadController extends Controller
                     'id' => $pipeline->id,
                     'rotten_days' => $pipeline->rotten_days
                 ]);
-                
+
                 foreach ($paginator->items() as $lead) {
                     $lead->setRelation('pipeline', $pipelineModel);
                 }

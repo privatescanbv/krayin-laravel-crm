@@ -27,7 +27,7 @@ class PartnerProductController extends Controller
     public function destroy(Request $request, int $id, int $partner_product_id): JsonResponse
     {
         $clinic = $this->clinicRepository->findOrFail($id);
-        $partnerProduct = PartnerProduct::findOrFail($partner_product_id);
+        $partnerProduct = PartnerProduct::whereNull('deleted_at')->findOrFail($partner_product_id);
 
         // Check how many clinics are linked to this partner product
         $clinicCount = $partnerProduct->clinics()->count();
@@ -37,7 +37,7 @@ class PartnerProductController extends Controller
             $clinic->partnerProducts()->detach($partner_product_id);
             $message = trans('admin::app.settings.clinics.view.partner-products.detach-success');
         } else {
-            // Single clinic: hard delete the partner product
+            // Single clinic: soft delete the partner product
             $partnerProduct->delete();
             $message = trans('admin::app.settings.clinics.view.partner-products.delete-success');
         }

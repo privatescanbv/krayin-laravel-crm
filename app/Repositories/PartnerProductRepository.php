@@ -31,6 +31,7 @@ class PartnerProductRepository extends Repository
     {
         $products = $this->scopeQuery(function ($q) use ($query) {
             return $q->where('active', true)
+                ->whereNull('deleted_at')
                 ->where('name', 'like', '%'.$query.'%')
                 ->orderBy('name')
                 ->limit($limit);

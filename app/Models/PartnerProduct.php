@@ -4,11 +4,14 @@ namespace App\Models;
 
 use App\Enums\ProductReports;
 use App\Models\Abstracts\BaseProduct;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 use Webkul\Product\Models\Product;
 
 class PartnerProduct extends BaseProduct
 {
+    use SoftDeletes;
+    
     protected $table = 'partner_products';
 
     protected $fillable = [
@@ -36,6 +39,7 @@ class PartnerProduct extends BaseProduct
         'purchase_price_radiology',
         'purchase_price',
         'reporting',
+        'deleted_at',
     ];
 
     protected $casts = [
@@ -55,6 +59,7 @@ class PartnerProduct extends BaseProduct
         'purchase_price_radiology'     => 'decimal:2',
         'purchase_price'               => 'decimal:2',
         'reporting'                    => 'array',
+        'deleted_at'                   => 'datetime',
     ];
 
     /**
@@ -93,7 +98,8 @@ class PartnerProduct extends BaseProduct
 
     public function clinics()
     {
-        return $this->belongsToMany(Clinic::class, 'clinic_partner_product');
+        return $this->belongsToMany(Clinic::class, 'clinic_partner_product')
+            ->whereNull('partner_products.deleted_at');
     }
 
     public function relatedProducts()
@@ -103,12 +109,13 @@ class PartnerProduct extends BaseProduct
             'partner_product_related',
             'partner_product_id',
             'related_product_id'
-        );
+        )->whereNull('deleted_at');
     }
 
     public function resources()
     {
-        return $this->belongsToMany(Resource::class, 'partner_product_resource');
+        return $this->belongsToMany(Resource::class, 'partner_product_resource')
+            ->whereNull('partner_products.deleted_at');
     }
 
     public function product()

@@ -45,6 +45,7 @@ class Resource extends Model
 
     public function partnerProducts()
     {
-        return $this->belongsToMany(PartnerProduct::class, 'partner_product_resource');
+        return $this->belongsToMany(PartnerProduct::class, 'partner_product_resource')
+            ->whereNull('partner_products.deleted_at');
     }
 }

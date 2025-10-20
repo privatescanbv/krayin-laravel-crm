@@ -29,7 +29,7 @@
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 @php
                     $oldRelatedProducts = collect(old('related_products', []))->map(function($id) {
-                        $product = \App\Models\PartnerProduct::find($id);
+                        $product = \App\Models\PartnerProduct::whereNull('deleted_at')->find($id);
                         return $product ? ['id' => $product->id, 'name' => $product->name] : null;
                     })->filter()->values()->toArray();
 

@@ -132,6 +132,7 @@ class ProductRepository extends Repository
         // Set product_id for the selected partner products
         if (! empty($partnerProductIds)) {
             \App\Models\PartnerProduct::whereIn('id', $partnerProductIds)
+                ->whereNull('deleted_at')
                 ->update(['product_id' => $product->id]);
         }
     }

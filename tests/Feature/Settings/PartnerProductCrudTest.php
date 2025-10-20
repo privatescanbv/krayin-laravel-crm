@@ -111,8 +111,16 @@ test('can delete partner product', function () {
     $response = $this->deleteJson(route('admin.settings.partner_products.delete', ['id' => $pp->id]));
     $response->assertOk();
 
+    // Check that the partner product is soft deleted (deleted_at is set)
+    $this->assertDatabaseHas('partner_products', [
+        'id' => $pp->id,
+        'deleted_at' => now(),
+    ]);
+    
+    // Check that it's not returned in normal queries
     $this->assertDatabaseMissing('partner_products', [
         'id' => $pp->id,
+        'deleted_at' => null,
     ]);
 });
 

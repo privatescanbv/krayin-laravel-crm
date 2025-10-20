@@ -15,6 +15,7 @@ class ClinicPartnerProductDataGrid extends DataGrid
     public function prepareQueryBuilder(): Builder
     {
         $queryBuilder = DB::table('partner_products')
+            ->whereNull('partner_products.deleted_at')
             ->join('clinic_partner_product', 'partner_products.id', '=', 'clinic_partner_product.partner_product_id')
             ->addSelect(
                 'partner_products.id',

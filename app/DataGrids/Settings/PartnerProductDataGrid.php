@@ -20,6 +20,7 @@ class PartnerProductDataGrid extends DataGrid
                 'partner_products.name',
                 'partner_products.currency',
                 'partner_products.sales_price',
+                'partner_products.related_sales_price',
                 'partner_products.active',
                 'partner_products.reporting'
             );
@@ -76,6 +77,18 @@ class PartnerProductDataGrid extends DataGrid
             'sortable'   => true,
             'closure'    => function ($row) {
                 return Currency::formatMoney($row->currency, (float) $row->sales_price);
+            },
+        ]);
+
+        $this->addColumn([
+            'index'      => 'related_sales_price',
+            'type'       => 'string',
+            'label'      => trans('admin::app.settings.partner_products.index.datagrid.related_sales_price'),
+            'searchable' => true,
+            'filterable' => true,
+            'sortable'   => true,
+            'closure'    => function ($row) {
+                return $row->related_sales_price > 0 ? Currency::formatMoney($row->currency, (float) $row->related_sales_price) : '-';
             },
         ]);
 

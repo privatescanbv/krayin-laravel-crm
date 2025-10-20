@@ -204,6 +204,8 @@ TABLE(ResourceType, "resourcetype") {
 TABLE(PartnerProduct, "partner_product") {
   PRIMARY_KEY(id): bigint
   description: text
+  sales_price: decimal
+  related_sales_price: decimal
   FOREIGN_KEY(product_id): bigint
   created_at: datetime
   updated_at: datetime

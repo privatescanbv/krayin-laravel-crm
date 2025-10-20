@@ -153,9 +153,22 @@
             }
         }, true);
 
-        // Initial calculation
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(calculateRelPurchasePriceTotal, 300);
-        });
+        // Initial calculation - use multiple approaches to ensure it works
+        function initializeRelPurchasePriceCalculation() {
+            // Try immediate calculation
+            calculateRelPurchasePriceTotal();
+            
+            // Try again after a short delay
+            setTimeout(calculateRelPurchasePriceTotal, 100);
+            setTimeout(calculateRelPurchasePriceTotal, 500);
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeRelPurchasePriceCalculation);
+        } else {
+            // DOM is already ready
+            initializeRelPurchasePriceCalculation();
+        }
     </script>
 @endPushOnce

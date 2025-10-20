@@ -38,6 +38,10 @@
             </div>
 
             <x-admin::partner-product-purchase-prices :partner-product="$partner_products" />
+
+            <!-- Related Purchase Prices -->
+            <x-admin::partner-product-related-purchase-prices :partner-product="$partner_products" />
+
         </div>
     </x-admin::form>
 </x-admin::layouts>

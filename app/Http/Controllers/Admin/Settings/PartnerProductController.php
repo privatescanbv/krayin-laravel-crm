@@ -179,6 +179,23 @@ class PartnerProductController extends SimpleEntityController
             'sales_price' => Currency::normalizePrice($request->input('sales_price')),
         ]);
 
+        // Normalize purchase price fields before validation
+        $this->normalizePurchasePriceFields($request, [
+            'purchase_price_misc',
+            'purchase_price_doctor',
+            'purchase_price_cardiology',
+            'purchase_price_clinic',
+            'purchase_price_radiology',
+        ]);
+
+        $this->normalizePurchasePriceFields($request, [
+            'rel_purchase_price_misc',
+            'rel_purchase_price_doctor',
+            'rel_purchase_price_cardiology',
+            'rel_purchase_price_clinic',
+            'rel_purchase_price_radiology',
+        ]);
+
         $request->validate($this->getValidationRules());
 
         // Additional validation: resources must belong to selected clinics
@@ -189,6 +206,23 @@ class PartnerProductController extends SimpleEntityController
     {
         $request->merge([
             'sales_price' => Currency::normalizePrice($request->input('sales_price')),
+        ]);
+
+        // Normalize purchase price fields before validation
+        $this->normalizePurchasePriceFields($request, [
+            'purchase_price_misc',
+            'purchase_price_doctor',
+            'purchase_price_cardiology',
+            'purchase_price_clinic',
+            'purchase_price_radiology',
+        ]);
+
+        $this->normalizePurchasePriceFields($request, [
+            'rel_purchase_price_misc',
+            'rel_purchase_price_doctor',
+            'rel_purchase_price_cardiology',
+            'rel_purchase_price_clinic',
+            'rel_purchase_price_radiology',
         ]);
 
         $request->validate($this->getValidationRules($id));
@@ -217,13 +251,13 @@ class PartnerProductController extends SimpleEntityController
             'reporting'           => 'nullable|array',
             'reporting.*'         => 'string|in:'.implode(',', array_column(ProductReports::cases(), 'value')),
 
-            // related purchase price fields (all optional)
-            'rel_purchase_price_misc'      => 'nullable|numeric|min:0',
-            'rel_purchase_price_doctor'    => 'nullable|numeric|min:0',
+            // related purchase price fields (all optional, default to 0)
+            'rel_purchase_price_misc'       => 'nullable|numeric|min:0',
+            'rel_purchase_price_doctor'     => 'nullable|numeric|min:0',
             'rel_purchase_price_cardiology' => 'nullable|numeric|min:0',
-            'rel_purchase_price_clinic'    => 'nullable|numeric|min:0',
-            'rel_purchase_price_radiology' => 'nullable|numeric|min:0',
-            'rel_purchase_price'           => 'nullable|numeric|min:0',
+            'rel_purchase_price_clinic'     => 'nullable|numeric|min:0',
+            'rel_purchase_price_radiology'  => 'nullable|numeric|min:0',
+            'rel_purchase_price'            => 'nullable|numeric|min:0',
 
             // relations
             'clinics'             => 'required|array|min:1',
@@ -233,6 +267,42 @@ class PartnerProductController extends SimpleEntityController
             'resources'           => 'nullable|array',
             'resources.*'         => 'integer|exists:resources,id',
         ];
+    }
+
+    /**
+     * Normalize purchase price fields before validation.
+     */
+    protected function normalizePurchasePriceFields(Request $request, array $fields, $defaultValue = 0): void
+    {
+        foreach ($fields as $field) {
+            $value = $request->input($field);
+            $normalized = Currency::normalizePrice($value);
+            $request->merge([
+                $field => ($normalized === '' || $normalized === null) ? $defaultValue : $normalized,
+            ]);
+        }
+    }
+
+    /**
+     * Normalize purchase price fields and calculate total.
+     */
+    protected function normalizeAndCalculatePurchasePrices(array $payload, array $fields, string $totalField): array
+    {
+        $total = 0;
+
+        foreach ($fields as $field) {
+            if (array_key_exists($field, $payload)) {
+                $normalized = Currency::normalizePrice($payload[$field]);
+                $payload[$field] = ($normalized === '' || $normalized === null) ? 0 : $normalized;
+            } else {
+                $payload[$field] = 0;
+            }
+            $total += floatval($payload[$field]);
+        }
+
+        $payload[$totalField] = $total;
+
+        return $payload;
     }
 
     /**
@@ -282,7 +352,7 @@ class PartnerProductController extends SimpleEntityController
             $payload['related_sales_price'] = ($normalized === '' || $normalized === null) ? 0 : $normalized;
         }
 
-        // Normalize purchase price fields
+        // Normalize and calculate purchase price fields
         $purchasePriceFields = [
             'purchase_price_misc',
             'purchase_price_doctor',
@@ -290,25 +360,9 @@ class PartnerProductController extends SimpleEntityController
             'purchase_price_clinic',
             'purchase_price_radiology',
         ];
+        $payload = $this->normalizeAndCalculatePurchasePrices($payload, $purchasePriceFields, 'purchase_price');
 
-        foreach ($purchasePriceFields as $field) {
-            if (array_key_exists($field, $payload)) {
-                $normalized = Currency::normalizePrice($payload[$field]);
-                $payload[$field] = ($normalized === '' || $normalized === null) ? 0 : $normalized;
-            } else {
-                $payload[$field] = 0;
-            }
-        }
-
-        // Calculate total purchase price
-        $payload['purchase_price'] =
-            floatval($payload['purchase_price_misc'] ?? 0) +
-            floatval($payload['purchase_price_doctor'] ?? 0) +
-            floatval($payload['purchase_price_cardiology'] ?? 0) +
-            floatval($payload['purchase_price_clinic'] ?? 0) +
-            floatval($payload['purchase_price_radiology'] ?? 0);
-
-        // Normalize related purchase price fields
+        // Normalize and calculate related purchase price fields
         $relatedPurchasePriceFields = [
             'rel_purchase_price_misc',
             'rel_purchase_price_doctor',
@@ -316,23 +370,7 @@ class PartnerProductController extends SimpleEntityController
             'rel_purchase_price_clinic',
             'rel_purchase_price_radiology',
         ];
-
-        foreach ($relatedPurchasePriceFields as $field) {
-            if (array_key_exists($field, $payload)) {
-                $normalized = Currency::normalizePrice($payload[$field]);
-                $payload[$field] = ($normalized === '' || $normalized === null) ? null : $normalized;
-            } else {
-                $payload[$field] = null;
-            }
-        }
-
-        // Calculate total related purchase price
-        $payload['rel_purchase_price'] =
-            floatval($payload['rel_purchase_price_misc'] ?? 0) +
-            floatval($payload['rel_purchase_price_doctor'] ?? 0) +
-            floatval($payload['rel_purchase_price_cardiology'] ?? 0) +
-            floatval($payload['rel_purchase_price_clinic'] ?? 0) +
-            floatval($payload['rel_purchase_price_radiology'] ?? 0);
+        $payload = $this->normalizeAndCalculatePurchasePrices($payload, $relatedPurchasePriceFields, 'rel_purchase_price');
 
         // Normalize reporting field - convert to JSON array
         if (array_key_exists('reporting', $payload)) {

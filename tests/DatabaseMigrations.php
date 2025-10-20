@@ -11,7 +11,7 @@ trait DatabaseMigrations
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Run migrations instead of loading schema file
         $this->artisan('migrate:fresh');
     }

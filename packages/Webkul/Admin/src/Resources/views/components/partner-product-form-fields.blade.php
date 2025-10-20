@@ -241,6 +241,9 @@
     :exclude-id="$excludeId"
 />
 
+<!-- Related Purchase Prices -->
+<x-admin::partner-product-related-purchase-prices :partner-product="$partnerProduct" />
+
 <!-- Reporting (moved below Related Products) -->
 <x-admin::form.control-group>
     <x-admin::form.control-group.label>

@@ -60,7 +60,7 @@ test('can create partner product', function () {
     ]);
 
     $createdProduct = PartnerProduct::where('name', 'MRI Scan')->first();
-    expect($createdProduct->purchase_price)->toBe('114.00')
+    expect($createdProduct->purchase_price)->toBe('102.00')
         ->and($createdProduct->purchase_price_misc)->toBe('10.50')
         ->and($createdProduct->purchase_price_doctor)->toBe('25.00');
 });
@@ -100,7 +100,7 @@ test('can update partner product', function () {
     ]);
 
     $pp->refresh();
-    expect($pp->purchase_price)->toBe('100.00')
+    expect($pp->purchase_price)->toBe('92.00')
         ->and($pp->purchase_price_misc)->toBe('5.00')
         ->and($pp->purchase_price_doctor)->toBe('50.00');
 });
@@ -149,7 +149,7 @@ test('purchase price total is calculated correctly on create', function () {
     $pp = PartnerProduct::where('name', 'Test Product')->first();
 
     // Use string comparison since decimal:2 cast returns strings
-    expect($pp->purchase_price)->toBe('324.00')
+    expect($pp->purchase_price)->toBe('294.00')
         ->and($pp->purchase_price_misc)->toBe('22.50')
         ->and($pp->purchase_price_doctor)->toBe('100.00')
         ->and($pp->purchase_price_cardiology)->toBe('50.25')

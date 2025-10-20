@@ -217,6 +217,14 @@ class PartnerProductController extends SimpleEntityController
             'reporting'           => 'nullable|array',
             'reporting.*'         => 'string|in:'.implode(',', array_column(ProductReports::cases(), 'value')),
 
+            // related purchase price fields (all optional)
+            'rel_purchase_price_misc'      => 'nullable|numeric|min:0',
+            'rel_purchase_price_doctor'    => 'nullable|numeric|min:0',
+            'rel_purchase_price_cardiology' => 'nullable|numeric|min:0',
+            'rel_purchase_price_clinic'    => 'nullable|numeric|min:0',
+            'rel_purchase_price_radiology' => 'nullable|numeric|min:0',
+            'rel_purchase_price'           => 'nullable|numeric|min:0',
+
             // relations
             'clinics'             => 'required|array|min:1',
             'clinics.*'           => 'integer|exists:clinics,id',
@@ -280,7 +288,6 @@ class PartnerProductController extends SimpleEntityController
             'purchase_price_doctor',
             'purchase_price_cardiology',
             'purchase_price_clinic',
-            'purchase_price_royal_doctors',
             'purchase_price_radiology',
         ];
 
@@ -299,8 +306,33 @@ class PartnerProductController extends SimpleEntityController
             floatval($payload['purchase_price_doctor'] ?? 0) +
             floatval($payload['purchase_price_cardiology'] ?? 0) +
             floatval($payload['purchase_price_clinic'] ?? 0) +
-            floatval($payload['purchase_price_royal_doctors'] ?? 0) +
             floatval($payload['purchase_price_radiology'] ?? 0);
+
+        // Normalize related purchase price fields
+        $relatedPurchasePriceFields = [
+            'rel_purchase_price_misc',
+            'rel_purchase_price_doctor',
+            'rel_purchase_price_cardiology',
+            'rel_purchase_price_clinic',
+            'rel_purchase_price_radiology',
+        ];
+
+        foreach ($relatedPurchasePriceFields as $field) {
+            if (array_key_exists($field, $payload)) {
+                $normalized = Currency::normalizePrice($payload[$field]);
+                $payload[$field] = ($normalized === '' || $normalized === null) ? null : $normalized;
+            } else {
+                $payload[$field] = null;
+            }
+        }
+
+        // Calculate total related purchase price
+        $payload['rel_purchase_price'] =
+            floatval($payload['rel_purchase_price_misc'] ?? 0) +
+            floatval($payload['rel_purchase_price_doctor'] ?? 0) +
+            floatval($payload['rel_purchase_price_cardiology'] ?? 0) +
+            floatval($payload['rel_purchase_price_clinic'] ?? 0) +
+            floatval($payload['rel_purchase_price_radiology'] ?? 0);
 
         // Normalize reporting field - convert to JSON array
         if (array_key_exists('reporting', $payload)) {

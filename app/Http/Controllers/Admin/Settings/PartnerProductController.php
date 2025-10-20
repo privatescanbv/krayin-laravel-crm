@@ -203,6 +203,7 @@ class PartnerProductController extends SimpleEntityController
             // base fields
             'currency'            => 'required|in:'.implode(',', Currency::codes()),
             'sales_price'         => 'required|numeric|min:0',
+            'related_sales_price' => 'nullable|numeric|min:0',
             'name'                => 'required|string|max:255',
             'active'              => 'required|boolean',
             'description'         => 'nullable|string',
@@ -266,6 +267,11 @@ class PartnerProductController extends SimpleEntityController
 
         if (array_key_exists('sales_price', $payload)) {
             $payload['sales_price'] = Currency::normalizePrice($payload['sales_price']);
+        }
+
+        if (array_key_exists('related_sales_price', $payload)) {
+            $normalized = Currency::normalizePrice($payload['related_sales_price']);
+            $payload['related_sales_price'] = ($normalized === '' || $normalized === null) ? 0 : $normalized;
         }
 
         // Normalize purchase price fields

@@ -26,6 +26,7 @@ class PartnerProductsMatchResourceType implements ValidationRule
         }
 
         $partnerProducts = PartnerProduct::whereIn('id', $value)
+            ->whereNull('deleted_at')
             ->get(['id', 'name', 'resource_type_id']);
 
         $mismatchedProducts = $partnerProducts->filter(function ($partnerProduct) {

@@ -63,7 +63,7 @@
 
                 @php
                     $oldPartnerProducts = collect(old('partner_products', []))->map(function($id) {
-                        $product = PartnerProduct::find($id);
+                        $product = PartnerProduct::whereNull('deleted_at')->find($id);
                         return $product ? ['id' => $product->id, 'name' => $product->name] : null;
                     })->filter()->values()->toArray();
                 @endphp

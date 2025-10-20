@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Webkul\User\Models\User;
 
 trait HasAuditTrail
 {
@@ -33,7 +34,7 @@ trait HasAuditTrail
      */
     public function creator(): BelongsTo
     {
-        return $this->belongsTo(\Webkul\User\Models\User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     /**
@@ -41,7 +42,7 @@ trait HasAuditTrail
      */
     public function updater(): BelongsTo
     {
-        return $this->belongsTo(\Webkul\User\Models\User::class, 'updated_by');
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
     /**

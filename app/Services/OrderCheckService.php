@@ -61,7 +61,9 @@ class OrderCheckService
             ->pluck('product_id')
             ->unique();
 
-        return PartnerProduct::whereIn('product_id', $productIds)->get();
+        return PartnerProduct::whereIn('product_id', $productIds)
+            ->whereNull('deleted_at')
+            ->get();
     }
 
     /**

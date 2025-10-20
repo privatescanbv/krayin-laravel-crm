@@ -15,6 +15,7 @@ class PartnerProductDataGrid extends DataGrid
     public function prepareQueryBuilder(): Builder
     {
         $queryBuilder = DB::table('partner_products')
+            ->whereNull('partner_products.deleted_at')
             ->addSelect(
                 'partner_products.id',
                 'partner_products.name',
@@ -50,7 +51,9 @@ class PartnerProductDataGrid extends DataGrid
             'sortable'   => true,
             'closure'    => function ($row) {
                 $partnerProductRepository = app(PartnerProductRepository::class);
-                $partnerProduct = PartnerProduct::with('clinics:id,name')->find($row->id);
+                $partnerProduct = PartnerProduct::with('clinics:id,name')
+                    ->whereNull('deleted_at')
+                    ->find($row->id);
 
                 return $partnerProduct ? $partnerProductRepository->formatDisplayName($partnerProduct) : $row->name;
             },

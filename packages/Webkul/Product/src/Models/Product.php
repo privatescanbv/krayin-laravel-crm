@@ -98,7 +98,8 @@ class Product extends Model implements ProductContract
      */
     public function partnerProducts(): HasMany
     {
-        return $this->hasMany(PartnerProduct::class, 'product_id');
+        return $this->hasMany(PartnerProduct::class, 'product_id')
+            ->whereNull('deleted_at');
     }
 
     /**

@@ -936,6 +936,7 @@ CREATE TABLE `partner_products` (
   `reporting` json DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `deleted_at` timestamp NULL DEFAULT NULL,
   `created_by` int unsigned DEFAULT NULL,
   `updated_by` int unsigned DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -1752,6 +1753,7 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (169,'2025_01_29_00
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (170,'2025_01_29_000000_rename_order_regels_to_order_items_table',2);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (171,'2025_01_30_000000_create_order_checks_table',2);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (172,'2025_09_26_120600_add_reporting_to_partner_products_table',2);
+INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (191,'2025_10_20_100001_add_deleted_at_to_partner_products_table',3);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (173,'2025_10_07_100000_add_first_name_last_name_to_users_table',2);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (174,'2025_10_07_100001_remove_name_column_from_users_table',2);
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES (175,'2025_10_07_120000_add_sales_lead_id_to_emails_table',2);

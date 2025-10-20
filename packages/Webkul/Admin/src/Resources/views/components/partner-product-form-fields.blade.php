@@ -1,4 +1,3 @@
-@php use App\Enums\Currency;use App\Enums\ProductReports;use App\Helpers\ProductHelper;use App\Models\PartnerProduct;use App\Models\ResourceType;use App\Repositories\ClinicRepository; @endphp
 @props([
     'partnerProduct' => null,
     'selectedClinics' => [],
@@ -8,6 +7,7 @@
     'templateProductId' => null,
 ])
 
+@php use App\Enums\Currency;use App\Enums\ProductReports;use App\Helpers\ProductHelper;use App\Models\PartnerProduct;use App\Models\ResourceType;use App\Repositories\ClinicRepository; @endphp
 @php
     $resourceTypes = ResourceType::orderBy('name')->get(['id', 'name']);
     $currencies = Currency::options();

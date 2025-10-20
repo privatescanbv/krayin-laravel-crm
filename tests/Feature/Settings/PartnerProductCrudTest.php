@@ -48,7 +48,6 @@ test('can create partner product', function () {
         'purchase_price_doctor'        => 25.00,
         'purchase_price_cardiology'    => 15.75,
         'purchase_price_clinic'        => 30.25,
-        'purchase_price_royal_doctors' => 12.00,
         'purchase_price_radiology'     => 20.50,
     ];
 
@@ -60,7 +59,7 @@ test('can create partner product', function () {
     ]);
 
     $createdProduct = PartnerProduct::where('name', 'MRI Scan')->first();
-    expect($createdProduct->purchase_price)->toBe('114.00')
+    expect($createdProduct->purchase_price)->toBe('102.00')
         ->and($createdProduct->purchase_price_misc)->toBe('10.50')
         ->and($createdProduct->purchase_price_doctor)->toBe('25.00');
 });
@@ -86,7 +85,6 @@ test('can update partner product', function () {
         'purchase_price_doctor'        => 50.00,
         'purchase_price_cardiology'    => 10.00,
         'purchase_price_clinic'        => 15.00,
-        'purchase_price_royal_doctors' => 8.00,
         'purchase_price_radiology'     => 12.00,
         '_method'                      => 'put',
     ];
@@ -100,7 +98,7 @@ test('can update partner product', function () {
     ]);
 
     $pp->refresh();
-    expect($pp->purchase_price)->toBe('100.00')
+    expect($pp->purchase_price)->toBe('92.00')
         ->and($pp->purchase_price_misc)->toBe('5.00')
         ->and($pp->purchase_price_doctor)->toBe('50.00');
 });
@@ -139,7 +137,6 @@ test('purchase price total is calculated correctly on create', function () {
         'purchase_price_doctor'        => 100.00,
         'purchase_price_cardiology'    => 50.25,
         'purchase_price_clinic'        => 75.75,
-        'purchase_price_royal_doctors' => 30.00,
         'purchase_price_radiology'     => 45.50,
     ];
 
@@ -149,12 +146,11 @@ test('purchase price total is calculated correctly on create', function () {
     $pp = PartnerProduct::where('name', 'Test Product')->first();
 
     // Use string comparison since decimal:2 cast returns strings
-    expect($pp->purchase_price)->toBe('324.00')
+    expect($pp->purchase_price)->toBe('294.00')
         ->and($pp->purchase_price_misc)->toBe('22.50')
         ->and($pp->purchase_price_doctor)->toBe('100.00')
         ->and($pp->purchase_price_cardiology)->toBe('50.25')
         ->and($pp->purchase_price_clinic)->toBe('75.75')
-        ->and($pp->purchase_price_royal_doctors)->toBe('30.00')
         ->and($pp->purchase_price_radiology)->toBe('45.50');
 });
 
@@ -329,7 +325,6 @@ test('can create partner product with template product', function () {
         'purchase_price_doctor'        => 25.00,
         'purchase_price_cardiology'    => 15.75,
         'purchase_price_clinic'        => 30.25,
-        'purchase_price_royal_doctors' => 12.00,
         'purchase_price_radiology'     => 20.50,
     ];
 

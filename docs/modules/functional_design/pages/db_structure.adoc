@@ -201,14 +201,36 @@ TABLE(ResourceType, "resourcetype") {
   updated_by: bigint
 }
 
-TABLE(PartnerProduct, "partner_product") {
+TABLE(PartnerProduct, "partner_products") {
   PRIMARY_KEY(id): bigint
+  name: string
   description: text
   sales_price: decimal
   related_sales_price: decimal
-  FOREIGN_KEY(product_id): bigint
+  currency: string
+  active: boolean
+  discount_info: text
+  resource_type_id: bigint
+  product_id: bigint
+  clinic_description: text
+  duration: int
+  purchase_price_misc: decimal
+  purchase_price_doctor: decimal
+  purchase_price_cardiology: decimal
+  purchase_price_clinic: decimal
+  purchase_price_radiology: decimal
+  purchase_price: decimal
+  rel_purchase_price_misc: decimal
+  rel_purchase_price_doctor: decimal
+  rel_purchase_price_cardiology: decimal
+  rel_purchase_price_clinic: decimal
+  rel_purchase_price_radiology: decimal
+  rel_purchase_price: decimal
+  reporting: json
+  external_id: string
   created_at: datetime
   updated_at: datetime
+  deleted_at: datetime
   created_by: bigint
   updated_by: bigint
 }

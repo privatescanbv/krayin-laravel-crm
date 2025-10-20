@@ -72,21 +72,6 @@
             <x-admin::form.control-group.error control-name="purchase_price_clinic" />
         </x-admin::form.control-group>
 
-        <x-admin::form.control-group>
-            <x-admin::form.control-group.label>
-                @lang('admin::app.settings.partner_products.index.create.purchase_price_royal_doctors')
-            </x-admin::form.control-group.label>
-
-            <x-admin::form.control-group.control
-                type="price"
-                name="purchase_price_royal_doctors"
-                value="{{ old('purchase_price_royal_doctors', $partnerProduct ? number_format($partnerProduct->purchase_price_royal_doctors ?? 0, 2, ',', '') : '0') }}"
-                :label="trans('admin::app.settings.partner_products.index.create.purchase_price_royal_doctors')"
-                :placeholder="trans('admin::app.settings.partner_products.index.create.purchase_price_royal_doctors')"
-            />
-
-            <x-admin::form.control-group.error control-name="purchase_price_royal_doctors" />
-        </x-admin::form.control-group>
 
         <x-admin::form.control-group>
             <x-admin::form.control-group.label>
@@ -122,7 +107,6 @@
             'purchase_price_doctor',
             'purchase_price_cardiology',
             'purchase_price_clinic',
-            'purchase_price_royal_doctors',
             'purchase_price_radiology'
         ];
 
@@ -170,9 +154,22 @@
             }
         }, true);
 
-        // Initial calculation
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(calculatePurchasePriceTotal, 300);
-        });
+        // Initial calculation - use multiple approaches to ensure it works
+        function initializePurchasePriceCalculation() {
+            // Try immediate calculation
+            calculatePurchasePriceTotal();
+            
+            // Try again after a short delay
+            setTimeout(calculatePurchasePriceTotal, 100);
+            setTimeout(calculatePurchasePriceTotal, 500);
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializePurchasePriceCalculation);
+        } else {
+            // DOM is already ready
+            initializePurchasePriceCalculation();
+        }
     </script>
 @endPushOnce

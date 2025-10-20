@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         // Check if the column already exists before adding it
-        if (!Schema::hasColumn('partner_products', 'deleted_at')) {
+        if (! Schema::hasColumn('partner_products', 'deleted_at')) {
             Schema::table('partner_products', function (Blueprint $table) {
                 $table->timestamp('deleted_at')->nullable();
             });

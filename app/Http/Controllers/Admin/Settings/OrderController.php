@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use Throwable;
 
 class OrderController extends SimpleEntityController
 {
@@ -141,9 +142,9 @@ class OrderController extends SimpleEntityController
                 'ajax'          => $request->ajax(),
                 'wants_json'    => $request->wantsJson(),
                 'redirect_to'   => $request->input('redirect_to'),
-                'submit_names'  => array_keys(array_filter($request->all(), fn($v, $k) => is_string($k), ARRAY_FILTER_USE_BOTH)),
+                'submit_names'  => array_keys(array_filter($request->all(), fn ($v, $k) => is_string($k), ARRAY_FILTER_USE_BOTH)),
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // no-op for logging failures
         }
 
@@ -162,14 +163,16 @@ class OrderController extends SimpleEntityController
                 'order_id'    => $order->id,
                 'redirect_to' => $redirectTo,
             ]);
-        } catch (\Throwable $e) {}
+        } catch (Throwable $e) {
+        }
         if ($redirectTo) {
             try {
                 Log::debug('OrderController@update redirecting to provided URL', [
                     'order_id'    => $order->id,
                     'redirect_to' => $redirectTo,
                 ]);
-            } catch (\Throwable $e) {}
+            } catch (Throwable $e) {
+            }
 
             return redirect()->to($redirectTo)->with('success', $this->getUpdateSuccessMessage());
         }
@@ -179,7 +182,8 @@ class OrderController extends SimpleEntityController
                 'order_id' => $order->id,
                 'route'    => $this->indexRoute,
             ]);
-        } catch (\Throwable $e) {}
+        } catch (Throwable $e) {
+        }
 
         return redirect()->route($this->indexRoute)->with('success', $this->getUpdateSuccessMessage());
     }

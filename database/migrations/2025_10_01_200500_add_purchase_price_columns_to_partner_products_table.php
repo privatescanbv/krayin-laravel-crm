@@ -13,7 +13,6 @@ return new class extends Migration
             $table->decimal('purchase_price_doctor', 12, 2)->default(0)->after('purchase_price_misc');
             $table->decimal('purchase_price_cardiology', 12, 2)->default(0)->after('purchase_price_doctor');
             $table->decimal('purchase_price_clinic', 12, 2)->default(0)->after('purchase_price_cardiology');
-            $table->decimal('purchase_price_royal_doctors', 12, 2)->default(0)->after('purchase_price_clinic');
             $table->decimal('purchase_price_radiology', 12, 2)->default(0)->after('purchase_price_royal_doctors');
             $table->decimal('purchase_price', 12, 2)->default(0)->after('purchase_price_radiology');
         });
@@ -27,7 +26,6 @@ return new class extends Migration
                 'purchase_price_doctor',
                 'purchase_price_cardiology',
                 'purchase_price_clinic',
-                'purchase_price_royal_doctors',
                 'purchase_price_radiology',
                 'purchase_price',
             ]);

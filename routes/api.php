@@ -22,7 +22,7 @@ use Webkul\Lead\Http\Controllers\Api\LeadController;
 Route::middleware('api.key')->group(function () {
     // Lead routes
     Route::prefix('leads')->group(function () {
-        Route::get('/', [LeadController::class, 'index']);
+        // Removed index route - too heavy, use /admin/leads/get for kanban instead
         Route::post('/', [LeadController::class, 'store']);
         Route::get('{id}', [LeadController::class, 'show']);
         Route::put('{id}', [LeadController::class, 'update']);

@@ -225,3 +225,30 @@ php artisan schedule:run
 # Specifieke taak uitvoeren
 php artisan duplicates:refresh-cache --clear
 ----
+
+
+===== Telescope Monitoring
+
+Hoe op te zetten:
+1. Installeer Laravel Telescope (indien nog niet gedaan):
+   - sail composer require laravel/telescope
+2, sail artisan telescope:install
+3. sail artisan migrate
+4. Toegang via /telescope route (alleen in lokale omgeving standaard)
+5. in je .env file:
+   - TELESCOPE_ENABLED=true
+6. Plaats je emailadres in TelescopeServiceProvider :
+
+```
+protected function gate()
+{
+    Gate::define('viewTelescope', function ($user) {
+    return in_array($user->email, [
+    // Vul hier je eigen e-mailadres in
+    'jij@domein.nl',
+    ]);
+    });
+}
+```
+
+7. sail artisan telescope:publish

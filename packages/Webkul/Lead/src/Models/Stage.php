@@ -2,11 +2,14 @@
 
 namespace Webkul\Lead\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Lead\Contracts\Stage as StageContract;
 
 class Stage extends Model implements StageContract
 {
+    use HasFactory;
+
     public $timestamps = false;
 
     protected $table = 'lead_pipeline_stages';
@@ -50,5 +53,10 @@ class Stage extends Model implements StageContract
     public function leads()
     {
         return $this->hasMany(LeadProxy::modelClass(), 'lead_pipeline_stage_id');
+    }
+
+    public static function newFactory()
+    {
+        return \Database\Factories\StageFactory::new();
     }
 }

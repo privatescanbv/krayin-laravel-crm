@@ -55,4 +55,5 @@ docs/html
 /rainloop_data
 ./docker/rainloop_data/
 /upload_sugarcrm
-
+/k6-scripts/results.json
+/k6-scripts/results.html

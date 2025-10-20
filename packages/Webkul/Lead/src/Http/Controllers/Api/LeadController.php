@@ -42,17 +42,7 @@ class LeadController extends Controller
         request()->request->add(['entity_type' => 'leads']);
     }
 
-    /**
-     * Display a listing of the leads.
-     */
-    public function index(): JsonResponse
-    {
-        $leads = $this->leadRepository->all();
-
-        return response()->json([
-            'data' => $leads,
-        ]);
-    }
+    // Removed index method - too heavy, use /admin/leads/get for kanban instead
 
     /**
      * Store a newly created lead in storage.

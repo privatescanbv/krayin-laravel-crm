@@ -30,6 +30,7 @@ use Webkul\Admin\Http\Requests\LeadForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\MassUpdateRequest;
 use Webkul\Admin\Http\Resources\LeadResource;
+use Webkul\Admin\Http\Resources\LeadKanbanResource;
 use Webkul\Admin\Http\Resources\StageResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Models\Person;
@@ -150,9 +151,9 @@ class LeadController extends Controller
         $excludeWonLost = filter_var(request()->query('exclude_won_lost', false), FILTER_VALIDATE_BOOLEAN);
 
         if (request()->query('pipeline_stage_id')) {
-            $stages = $pipeline->stages->where('id', request()->query('pipeline_stage_id'));
+            $stages = $pipeline->stages()->select('id','code','name','sort_order','lead_pipeline_id','is_won','is_lost')->where('id', request()->query('pipeline_stage_id'))->get();
         } else {
-            $stages = $pipeline->stages;
+            $stages = $pipeline->stages()->select('id','code','name','sort_order','lead_pipeline_id','is_won','is_lost')->get();
 
             // Filter out won/lost stages if requested to improve performance
             if ($excludeWonLost) {
@@ -162,80 +163,101 @@ class LeadController extends Controller
             }
         }
 
-        foreach ($stages as $stage) {
-            /**
-             * We have to create a new instance of the lead repository every time, which is
-             * why we're not using the injected one.
-             */
-            // Normalize kanban search params: map `name` to first/last/married_name
-            $search = request()->query('search', '');
-            $searchFields = request()->query('searchFields', '');
-            if ($search && $searchFields && (str_contains($searchFields, 'name') || str_contains($search, 'name:'))) {
-                $matches = [];
-                preg_match_all('/name:([^;]+);?/i', $search, $matches);
-                $term = isset($matches[1][0]) ? trim($matches[1][0]) : '';
-                if ($term !== '') {
-                    request()->merge([
-                        'search' => "first_name:{$term};last_name:{$term};married_name:{$term}",
-                        'searchFields' => 'first_name:like;last_name:like;married_name:like',
-                        'searchJoin' => 'or',
-                    ]);
-                }
-            }
-
-            $query = app(LeadRepository::class)
-                ->pushCriteria(app(RequestCriteria::class))
-                ->where([
-                    'lead_pipeline_id' => $pipeline->id,
-                    'lead_pipeline_stage_id' => $stage->id,
+        // Normalize kanban search params: map `name` to first/last/married_name
+        $search = request()->query('search', '');
+        $searchFields = request()->query('searchFields', '');
+        if ($search && $searchFields && (str_contains($searchFields, 'name') || str_contains($search, 'name:'))) {
+            $matches = [];
+            preg_match_all('/name:([^;]+);?/i', $search, $matches);
+            $term = isset($matches[1][0]) ? trim($matches[1][0]) : '';
+            if ($term !== '') {
+                request()->merge([
+                    'search' => "first_name:{$term};last_name:{$term};married_name:{$term}",
+                    'searchFields' => 'first_name:like;last_name:like;married_name:like',
+                    'searchJoin' => 'or',
                 ]);
-
-            if ($userIds = bouncer()->getAuthorizedUserIds()) {
-                $query->whereIn('leads.user_id', $userIds);
             }
+        }
 
-            $data[$stage->sort_order] = (new StageResource($stage))->jsonSerialize();
+        // Compute total leads per stage in one DB query to avoid running pagination on empty stages
+        $stageIds = $stages->pluck('id')->all();
+        $totalsByStage = DB::table('leads')
+            ->select('lead_pipeline_stage_id', DB::raw('COUNT(*) as total'))
+            ->where('lead_pipeline_id', $pipeline->id)
+            ->whereIn('lead_pipeline_stage_id', $stageIds)
+            ->groupBy('lead_pipeline_stage_id')
+            ->pluck('total', 'lead_pipeline_stage_id');
 
-            // Load relationships - including persons for kanban display
-            // Optimize query by selecting only necessary fields and using eager loading
-            // Fixed: Removed computed attributes from select statement to prevent database errors
-            $data[$stage->sort_order]['leads'] = [
-                'data' => LeadResource::collection($paginator = $query->select([
+        // Build response for each stage with per-stage pagination only when needed
+        foreach ($stages as $stage) {
+            // Key by stage ID to ensure all columns (including empty ones) render consistently
+            $data[$stage->id] = (new StageResource($stage))->jsonSerialize();
+
+            $totalForStage = (int) ($totalsByStage[$stage->id] ?? 0);
+
+            if ($totalForStage > 0) {
+                $query = app(LeadRepository::class)
+                    ->pushCriteria(app(RequestCriteria::class))
+                    ->where([
+                        'lead_pipeline_id' => $pipeline->id,
+                        'lead_pipeline_stage_id' => $stage->id,
+                    ]);
+
+                if ($userIds = bouncer()->getAuthorizedUserIds()) {
+                    $query->whereIn('leads.user_id', $userIds);
+                }
+
+                $paginator = $query->select([
                     'leads.id',
                     'leads.first_name',
                     'leads.last_name',
-                    'leads.lastname_prefix',
-                    'leads.married_name',
-                    'leads.married_name_prefix',
                     'leads.created_at',
                     'leads.lead_pipeline_id',
                     'leads.lead_pipeline_stage_id',
-                    'leads.user_id',
-                    'leads.lead_type_id',
-                    'leads.lead_source_id',
                     'leads.mri_status',
                     'leads.lost_reason',
-                    'leads.closed_at'
+                    'leads.has_diagnosis_form'
                 ])->with([
-                    'tags',
-                    'type:id,name',
-                    'source:id,name',
-                    'user:id,first_name,last_name',
-                    'organization:id,name',
-                    'pipeline:id,name,rotten_days',
-                    'pipeline.stages:id,lead_pipeline_id,code,name,sort_order',
-                    'stage:id,code,name,sort_order',
-                ])->paginate(10)),
+                    'stage:id,code,name,sort_order,is_won,is_lost',
+                    // Removed pipeline eager loading to prevent N+1 per stage
+                ])->paginate((int) request()->query('limit', 10));
 
-                'meta' => [
-                    'current_page' => $paginator->currentPage(),
-                    'from' => $paginator->firstItem(),
-                    'last_page' => $paginator->lastPage(),
-                    'per_page' => $paginator->perPage(),
-                    'to' => $paginator->lastItem(),
-                    'total' => $paginator->total(),
-                ],
-            ];
+                // Set pipeline relation manually to prevent N+1 queries in getRottenDaysAttribute
+                $pipelineModel = new \Webkul\Lead\Models\Pipeline([
+                    'id' => $pipeline->id,
+                    'rotten_days' => $pipeline->rotten_days
+                ]);
+                
+                foreach ($paginator->items() as $lead) {
+                    $lead->setRelation('pipeline', $pipelineModel);
+                }
+
+                $data[$stage->id]['leads'] = [
+                    'data' => LeadKanbanResource::collection($paginator),
+
+                    'meta' => [
+                        'current_page' => $paginator->currentPage(),
+                        'from' => $paginator->firstItem(),
+                        'last_page' => $paginator->lastPage(),
+                        'per_page' => $paginator->perPage(),
+                        'to' => $paginator->lastItem(),
+                        'total' => $totalForStage, // use precomputed total
+                    ],
+                ];
+            } else {
+                // Empty stage: still return column with empty leads
+                $data[$stage->id]['leads'] = [
+                    'data' => [],
+                    'meta' => [
+                        'current_page' => 1,
+                        'from' => null,
+                        'last_page' => 1,
+                        'per_page' => 0,
+                        'to' => 0,
+                        'total' => 0,
+                    ],
+                ];
+            }
         }
 
         return response()->json($data);

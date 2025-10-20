@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+
+./vendor/bin/sail artisan optimize:clear
+
 # 📦 1️⃣ Lees API key uit .env
 if [ -f .env ]; then
   API_TOKEN=$(grep -E '^API_KEY_1=' .env | cut -d '=' -f2- | tr -d '"' | tr -d "'")

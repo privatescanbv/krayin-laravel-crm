@@ -101,20 +101,6 @@ test('API request with alternative valid API key works', function () {
         ]);
 });
 
-test('GET request to leads index requires API key', function () {
-    // Test without API key
-    $response = $this->getJson('/api/leads');
-    $response->assertStatus(401);
-
-    // Test with valid API key
-    $response = $this->withHeaders([
-        'X-API-KEY' => 'valid-api-key-123',
-        'Accept'    => 'application/json',
-    ])->getJson('/api/leads');
-
-    $response->assertStatus(200);
-});
-
 test('sales-leads endpoint requires API key', function () {
     // Test without API key
     $response = $this->postJson('/api/sales-leads', [

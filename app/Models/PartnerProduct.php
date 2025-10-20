@@ -108,7 +108,7 @@ class PartnerProduct extends BaseProduct
             'partner_product_related',
             'partner_product_id',
             'related_product_id'
-        )->whereNull('deleted_at');
+        )->whereNull('partner_products.deleted_at');
     }
 
     public function resources()

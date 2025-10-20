@@ -37,6 +37,7 @@
         "krayin/krayin-package-generator": "dev-master",
         "laravel/pint": "^1.16",
         "laravel/sail": "^1.0.1",
+        "laravel/telescope": "^5.14",
         "mockery/mockery": "^1.4.2",
         "nunomaduro/collision": "^7.0",
         "pestphp/pest": "^2.6",

@@ -16,6 +16,7 @@ class PartnerProduct extends BaseProduct
         'external_id',
         'currency',
         'sales_price',
+        'related_sales_price',
         'name',
         'active',
         'description',
@@ -39,6 +40,7 @@ class PartnerProduct extends BaseProduct
 
     protected $casts = [
         'sales_price'                  => 'decimal:2',
+        'related_sales_price'          => 'decimal:2',
         'active'                       => 'boolean',
         'resource_type_id'             => 'integer',
         'product_id'                   => 'integer',

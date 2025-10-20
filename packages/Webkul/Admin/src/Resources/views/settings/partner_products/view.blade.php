@@ -30,6 +30,11 @@
                     <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.settings.partner_products.index.create.sales_price')</div>
                     <div class="dark:text-white">{{ number_format($partner_product->sales_price, 2, ',', '.') }}</div>
 
+                    @if($partner_product->related_sales_price > 0)
+                        <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.settings.partner_products.index.create.related_sales_price')</div>
+                        <div class="dark:text-white">{{ number_format($partner_product->related_sales_price, 2, ',', '.') }}</div>
+                    @endif
+
                     <div class="text-gray-600 dark:text-gray-400">@lang('admin::app.settings.partner_products.index.create.active')</div>
                     <div class="dark:text-white">{{ $partner_product->active ? trans('admin::app.common.yes') : trans('admin::app.common.no') }}</div>
 

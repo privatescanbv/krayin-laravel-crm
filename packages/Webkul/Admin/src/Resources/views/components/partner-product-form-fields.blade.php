@@ -147,6 +147,25 @@
     </x-admin::form.control-group>
 </div>
 
+<!-- Gerelateerde verkoopprijs -->
+<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+    <x-admin::form.control-group>
+        <x-admin::form.control-group.label>
+            @lang('admin::app.settings.partner_products.index.create.related_sales_price')
+        </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.control
+            type="price"
+            name="related_sales_price"
+            value="{{ old('related_sales_price', $partnerProduct ? number_format($partnerProduct->related_sales_price, 2, ',', '') : '') }}"
+            :label="trans('admin::app.settings.partner_products.index.create.related_sales_price')"
+            :placeholder="trans('admin::app.settings.partner_products.index.create.related_sales_price')"
+        />
+
+        <x-admin::form.control-group.error control-name="related_sales_price"/>
+    </x-admin::form.control-group>
+</div>
+
 <!-- Kortingsinformatie -->
 <x-admin::form.control-group>
     <x-admin::form.control-group.label>

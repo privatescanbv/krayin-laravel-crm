@@ -10,14 +10,9 @@ return new class extends Migration
     {
         // Check if the column already exists before adding it
         if (!Schema::hasColumn('partner_products', 'deleted_at')) {
-            try {
-                Schema::table('partner_products', function (Blueprint $table) {
-                    $table->timestamp('deleted_at')->nullable();
-                });
-            } catch (\Exception $e) {
-                // If the column already exists or there's an error, log it but don't fail
-                \Log::info('Could not add deleted_at column to partner_products: ' . $e->getMessage());
-            }
+            Schema::table('partner_products', function (Blueprint $table) {
+                $table->timestamp('deleted_at')->nullable();
+            });
         }
     }
 

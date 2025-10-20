@@ -195,6 +195,7 @@ Breadcrumbs::for('orders.create', function (BreadcrumbTrail $trail) {
 // Orders > Edit
 Breadcrumbs::for('orders.edit', function (BreadcrumbTrail $trail, $order) {
     $trail->parent('orders');
+    $trail->push($order->salesLead->name, route('admin.sales-leads.view', $order->salesLead->id));
     $trail->push('Order bewerken', route('admin.orders.edit', $order->id));
 });
 

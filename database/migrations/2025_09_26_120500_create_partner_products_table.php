@@ -26,6 +26,7 @@ return new class extends Migration
             $table->unsignedInteger('duration')->nullable(); // minutes
 
             $table->timestamps();
+            $table->timestamp('deleted_at')->nullable();
             AuditTrailMigrationHelper::addAuditTrailColumns($table);
 
             $table->foreign('resource_type_id')->references('id')->on('resource_types')->nullOnDelete();

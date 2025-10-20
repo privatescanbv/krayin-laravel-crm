@@ -8,7 +8,7 @@ use App\Enums\PipelineDefaultKeys;
 use App\Models\Department;
 use App\Models\Order;
 use App\Models\SalesLead;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
@@ -21,7 +21,7 @@ use Webkul\User\Models\User;
 
 class LeadWonCreatesSalesLeadAndOrderTest extends TestCase
 {
-    use RefreshDatabase;
+    use DatabaseMigrations;
 
     public function test_lead_won_creates_sales_lead_and_order(): void
     {

@@ -9,6 +9,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('partner_products', function (Blueprint $table) {
+            // Add related sales price if it doesn't exist
+            if (!Schema::hasColumn('partner_products', 'related_sales_price')) {
+                $table->decimal('related_sales_price', 12, 2)->nullable()->after('sales_price');
+            }
+            
             // Add new related purchase price fields after purchase_price
             $table->decimal('rel_purchase_price_misc', 12, 2)->nullable()->after('purchase_price');
             $table->decimal('rel_purchase_price_doctor', 12, 2)->nullable()->after('rel_purchase_price_misc');
@@ -17,8 +22,10 @@ return new class extends Migration
             $table->decimal('rel_purchase_price_radiology', 12, 2)->nullable()->after('rel_purchase_price_clinic');
             $table->decimal('rel_purchase_price', 12, 2)->nullable()->after('rel_purchase_price_radiology');
             
-            // Remove purchase_price_royal_doctors field
-            $table->dropColumn('purchase_price_royal_doctors');
+            // Remove purchase_price_royal_doctors field if it exists
+            if (Schema::hasColumn('partner_products', 'purchase_price_royal_doctors')) {
+                $table->dropColumn('purchase_price_royal_doctors');
+            }
         });
     }
 
@@ -37,6 +44,11 @@ return new class extends Migration
                 'rel_purchase_price_radiology',
                 'rel_purchase_price',
             ]);
+            
+            // Remove related sales price if it exists
+            if (Schema::hasColumn('partner_products', 'related_sales_price')) {
+                $table->dropColumn('related_sales_price');
+            }
         });
     }
 };

@@ -29,7 +29,7 @@ class PartnerProductRepository extends Repository
      */
     public function searchFormatted(string $query = '', int $limit = 50)
     {
-        $products = $this->scopeQuery(function ($q) use ($query) {
+        $products = $this->scopeQuery(function ($q) use ($query, $limit) {
             return $q->where('active', true)
                 ->whereNull('deleted_at')
                 ->where('name', 'like', '%'.$query.'%')

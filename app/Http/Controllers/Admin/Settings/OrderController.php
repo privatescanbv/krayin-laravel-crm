@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -131,12 +132,54 @@ class OrderController extends SimpleEntityController
         // Update partner product checks after order items are updated
         $this->orderCheckService->updatePartnerProductChecks($order);
 
+        // Debug logging to trace redirect behavior
+        try {
+            Log::debug('OrderController@update request received', [
+                'order_id'      => $id,
+                'route'         => $request->route()?->getName(),
+                'method'        => $request->method(),
+                'ajax'          => $request->ajax(),
+                'wants_json'    => $request->wantsJson(),
+                'redirect_to'   => $request->input('redirect_to'),
+                'submit_names'  => array_keys(array_filter($request->all(), fn($v, $k) => is_string($k), ARRAY_FILTER_USE_BOTH)),
+            ]);
+        } catch (\Throwable $e) {
+            // no-op for logging failures
+        }
+
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
                 'data'    => $order,
                 'message' => $this->getUpdateSuccessMessage(),
             ]);
         }
+
+        // Redirect to provided URL if present and allowed, otherwise fallback to index
+        // Read redirect target from body or query (supports HTML5 formaction)
+        $redirectTo = $request->input('redirect_to') ?: $request->query('redirect_to') ?: $request->get('redirect_to');
+        try {
+            Log::debug('OrderController@update resolved redirect target', [
+                'order_id'    => $order->id,
+                'redirect_to' => $redirectTo,
+            ]);
+        } catch (\Throwable $e) {}
+        if ($redirectTo) {
+            try {
+                Log::debug('OrderController@update redirecting to provided URL', [
+                    'order_id'    => $order->id,
+                    'redirect_to' => $redirectTo,
+                ]);
+            } catch (\Throwable $e) {}
+
+            return redirect()->to($redirectTo)->with('success', $this->getUpdateSuccessMessage());
+        }
+
+        try {
+            Log::debug('OrderController@update redirecting to index fallback', [
+                'order_id' => $order->id,
+                'route'    => $this->indexRoute,
+            ]);
+        } catch (\Throwable $e) {}
 
         return redirect()->route($this->indexRoute)->with('success', $this->getUpdateSuccessMessage());
     }

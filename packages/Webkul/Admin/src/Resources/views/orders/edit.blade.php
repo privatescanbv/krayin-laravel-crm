@@ -4,8 +4,11 @@
         Order bewerken
     </x-slot>
 
-    <x-admin::form :action="route('admin.orders.update', ['id' => $orders->id])" method="POST">
+    <x-admin::form id="order-edit-form" :action="route('admin.orders.update', ['id' => $orders->id])" method="POST">
         <input type="hidden" name="_method" value="put">
+        <x-admin::form.control-group>
+            <x-admin::form.control-group.control type="hidden" name="redirect_to" value="{{ route('admin.orders.edit', ['id' => $orders->id]) }}" />
+        </x-admin::form.control-group>
 
         <div class="flex flex-col gap-4">
             <!-- Titel panel met order status -->
@@ -27,14 +30,50 @@
                 </div>
 
                 <div class="flex items-center gap-x-2.5">
-                    <a href="{{ route('admin.planning.monitor.order', ['orderId' => $orders->id]) }}" class="secondary-button">
+                    <button
+                        type="submit"
+                        class="secondary-button"
+                        id="order-edit-planner"
+                        data-redirect-to="{{ route('admin.planning.monitor.order', ['orderId' => $orders->id]) }}"
+                    >
                         Resource Planner
-                    </a>
-                    <button type="submit" class="primary-button">
+                    </button>
+                    <button
+                        type="submit"
+                        class="secondary-button"
+                        id="order-edit-apply"
+                        data-redirect-to="{{ route('admin.orders.edit', ['id' => $orders->id]) }}"
+                    >
+                        Toepassen
+                    </button>
+                    <button type="submit" class="primary-button" id="order-edit-save" data-redirect-to="{{ route('admin.orders.index') }}">
                         Opslaan
                     </button>
                 </div>
             </div>
+
+            <script>
+            (function(){
+                var form = document.getElementById('order-edit-form') || document.querySelector('form');
+                var btnPlanner = document.getElementById('order-edit-planner');
+                var btnApply = document.getElementById('order-edit-apply');
+                var btnSave = document.getElementById('order-edit-save');
+                var hidden = form ? form.querySelector('input[name="redirect_to"]') : null;
+
+                function bind(btn){
+                    if (!btn || btn.__redirBound) return;
+                    btn.addEventListener('click', function(){
+                        var target = btn.getAttribute('data-redirect-to');
+                        if (hidden && target) hidden.value = target;
+                    });
+                    btn.__redirBound = true;
+                }
+
+                bind(btnPlanner);
+                bind(btnApply);
+                bind(btnSave);
+            })();
+            </script>
 
             <!-- Apart panel met velden en tabs -->
             <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
@@ -116,7 +155,7 @@
         </div>
     </x-admin::form>
 
-    
+
 
     @pushOnce('scripts')
         @php
@@ -205,10 +244,92 @@
                 }
             };
 
+            // Debug logging for redirect buttons and submission flow
+            const initOrderEditDebug = () => {
+                try {
+                    const form = document.getElementById('order-edit-form') || document.querySelector('form');
+                    const btnPlanner = document.getElementById('order-edit-planner');
+                    const btnApply = document.getElementById('order-edit-apply');
+
+                    if (btnPlanner && !btnPlanner.dataset.logBound) {
+                        btnPlanner.addEventListener('click', (e) => {
+                            const form = document.getElementById('order-edit-form') || document.querySelector('form');
+                            const hidden = form ? form.querySelector('input[name="redirect_to"]') : null;
+                            console.log('[OrderEdit][click] Planner clicked', {
+                                buttonId: 'order-edit-planner',
+                                dataRedirectTo: btnPlanner.getAttribute('data-redirect-to'),
+                                formaction: btnPlanner.getAttribute('formaction'),
+                                hiddenRedirectToBefore: hidden ? hidden.value : null,
+                            });
+                        });
+                        btnPlanner.dataset.logBound = 'true';
+                    }
+
+                    if (btnApply && !btnApply.dataset.logBound) {
+                        btnApply.addEventListener('click', (e) => {
+                            const form = document.getElementById('order-edit-form') || document.querySelector('form');
+                            const hidden = form ? form.querySelector('input[name="redirect_to"]') : null;
+                            console.log('[OrderEdit][click] Apply clicked', {
+                                buttonId: 'order-edit-apply',
+                                dataRedirectTo: btnApply.getAttribute('data-redirect-to'),
+                                formaction: btnApply.getAttribute('formaction'),
+                                hiddenRedirectToBefore: hidden ? hidden.value : null,
+                            });
+                        });
+                        btnApply.dataset.logBound = 'true';
+                    }
+
+                    if (form && !form.dataset.logBound) {
+                        form.addEventListener('submit', (e) => {
+                            const active = document.activeElement;
+                            const hidden = form.querySelector('input[name="redirect_to"]');
+                            const activeFormaction = active && active.getAttribute ? active.getAttribute('formaction') : null;
+                            console.log('[OrderEdit][submit]', {
+                                action: form.getAttribute('action'),
+                                method: (form.getAttribute('method') || 'GET').toUpperCase(),
+                                activeElement: active ? (active.id || active.name || active.tagName) : null,
+                                activeFormaction,
+                                hiddenRedirectTo: hidden ? hidden.value : null,
+                            });
+                        }, true);
+                        form.dataset.logBound = 'true';
+                    }
+                } catch (err) {
+                    console.log('[OrderEdit] Debug init error', err);
+                }
+            };
+
+            // Minimal handler: set hidden redirect_to from clicked button's data attribute
+            const initRedirectButtons = () => {
+                try {
+                    const form = document.getElementById('order-edit-form') || document.querySelector('form');
+                    if (!form) return;
+                    const hidden = form.querySelector('input[name="redirect_to"]');
+                    const btns = [
+                        document.getElementById('order-edit-planner'),
+                        document.getElementById('order-edit-apply')
+                    ].filter(Boolean);
+
+                    btns.forEach(btn => {
+                        if (btn.dataset.bound) return;
+                        btn.addEventListener('click', (e) => {
+                            const target = btn.getAttribute('data-redirect-to');
+                            if (hidden && target) hidden.value = target;
+                            console.log('[OrderEdit][click] set hidden redirect_to', { target });
+                        });
+                        btn.dataset.bound = 'true';
+                    });
+                } catch (err) {
+                    console.error('[OrderEdit] Redirect buttons init error', err);
+                }
+            };
+
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initOrderEditSalesLead, { once: true });
+                document.addEventListener('DOMContentLoaded', () => { initOrderEditSalesLead(); initRedirectButtons(); initOrderEditDebug(); }, { once: true });
             } else {
                 initOrderEditSalesLead();
+                initRedirectButtons();
+                initOrderEditDebug();
             }
         </script>
 

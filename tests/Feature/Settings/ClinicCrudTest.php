@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\ContactLabel;
 use App\Models\Clinic;
+use App\Repositories\ClinicRepository;
 use Webkul\Installer\Http\Middleware\CanInstall;
 
 beforeEach(function () {
@@ -45,10 +46,10 @@ test('can create clinic', function () {
 
     // Verify emails and phones are stored correctly
     $clinic = Clinic::where('name', 'Test Clinic')->first();
-    expect($clinic->emails)->toBeArray();
-    expect($clinic->emails[0]['value'])->toBe('info@testclinic.tld');
-    expect($clinic->phones)->toBeArray();
-    expect($clinic->phones[0]['value'])->toBe('+31101234567');
+    expect($clinic->emails)->toBeArray()
+        ->and($clinic->emails[0]['value'])->toBe('info@testclinic.tld')
+        ->and($clinic->phones)->toBeArray()
+        ->and($clinic->phones[0]['value'])->toBe('+31101234567');
 });
 
 test('can update clinic', function () {
@@ -75,10 +76,10 @@ test('can update clinic', function () {
 
     // Verify emails and phones are updated correctly
     $clinic->refresh();
-    expect($clinic->emails)->toBeArray();
-    expect($clinic->emails[0]['value'])->toBe('contact@updated.tld');
-    expect($clinic->phones)->toBeArray();
-    expect($clinic->phones[0]['value'])->toBe('+31102223333');
+    expect($clinic->emails)->toBeArray()
+        ->and($clinic->emails[0]['value'])->toBe('contact@updated.tld')
+        ->and($clinic->phones)->toBeArray()
+        ->and($clinic->phones[0]['value'])->toBe('+31102223333');
 });
 
 test('can update clinic with empty email/phone values filtered out', function () {
@@ -103,14 +104,14 @@ test('can update clinic with empty email/phone values filtered out', function ()
     $clinic->refresh();
 
     // Only valid email should remain
-    expect($clinic->emails)->toBeArray();
-    expect($clinic->emails)->toHaveCount(1);
-    expect($clinic->emails[0]['value'])->toBe('valid@email.com');
+    expect($clinic->emails)->toBeArray()
+        ->and($clinic->emails)->toHaveCount(1)
+        ->and($clinic->emails[0]['value'])->toBe('valid@email.com')
+        ->and($clinic->phones)->toBeArray()
+        ->and($clinic->phones)->toHaveCount(1)
+        ->and($clinic->phones[0]['value'])->toBe('+31612345678');
 
     // Only valid phone should remain
-    expect($clinic->phones)->toBeArray();
-    expect($clinic->phones)->toHaveCount(1);
-    expect($clinic->phones[0]['value'])->toBe('+31612345678');
 });
 
 test('validates website url is a valid url', function () {
@@ -139,6 +140,22 @@ test('accepts valid http and https urls', function () {
         'name'        => 'Test Clinic Valid URL',
         'website_url' => 'https://www.testclinic.nl',
     ]);
+});
+
+test('allActive returns only active clinics (is_active = 1)', function () {
+    // Arrange: create active and inactive clinics
+    $active = Clinic::factory()->create(['is_active' => 1, 'name' => 'Active Clinic']);
+    $inactive = Clinic::factory()->create(['is_active' => 0, 'name' => 'Inactive Clinic']);
+
+    // Act: fetch via repository
+    $resultIds = app(ClinicRepository::class)
+        ->allActive(['id'])
+        ->pluck('id')
+        ->all();
+
+    // Assert: only active clinic id is present
+    expect($resultIds)->toContain($active->id)
+        ->and($resultIds)->not->toContain($inactive->id);
 });
 
 test('can delete clinic', function () {

@@ -189,6 +189,7 @@ class PartnerProductController extends SimpleEntityController
     {
         $request->merge([
             'sales_price' => Currency::normalizePrice($request->input('sales_price')),
+            'related_sales_price' => Currency::normalizePrice($request->input('related_sales_price')),
         ]);
 
         $request->validate($this->getValidationRules($id));

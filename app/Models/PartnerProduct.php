@@ -11,7 +11,7 @@ use Webkul\Product\Models\Product;
 class PartnerProduct extends BaseProduct
 {
     use SoftDeletes;
-    
+
     protected $table = 'partner_products';
 
     protected $fillable = [

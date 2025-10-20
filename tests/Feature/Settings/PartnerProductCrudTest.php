@@ -113,13 +113,13 @@ test('can delete partner product', function () {
 
     // Check that the partner product is soft deleted (deleted_at is set)
     $this->assertDatabaseHas('partner_products', [
-        'id' => $pp->id,
+        'id'         => $pp->id,
         'deleted_at' => now(),
     ]);
-    
+
     // Check that it's not returned in normal queries
     $this->assertDatabaseMissing('partner_products', [
-        'id' => $pp->id,
+        'id'         => $pp->id,
         'deleted_at' => null,
     ]);
 });

@@ -98,8 +98,7 @@ class PartnerProduct extends BaseProduct
 
     public function clinics()
     {
-        return $this->belongsToMany(Clinic::class, 'clinic_partner_product')
-            ->whereNull('partner_products.deleted_at');
+        return $this->belongsToMany(Clinic::class, 'clinic_partner_product');
     }
 
     public function relatedProducts()
@@ -114,8 +113,7 @@ class PartnerProduct extends BaseProduct
 
     public function resources()
     {
-        return $this->belongsToMany(Resource::class, 'partner_product_resource')
-            ->whereNull('partner_products.deleted_at');
+        return $this->belongsToMany(Resource::class, 'partner_product_resource');
     }
 
     public function product()

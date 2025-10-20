@@ -42,8 +42,7 @@ class Clinic extends Model
 
     public function partnerProducts()
     {
-        return $this->belongsToMany(PartnerProduct::class, 'clinic_partner_product')
-            ->whereNull('partner_products.deleted_at');
+        return $this->belongsToMany(PartnerProduct::class, 'clinic_partner_product');
     }
 
     public function resources()

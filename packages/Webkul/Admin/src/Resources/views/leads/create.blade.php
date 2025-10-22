@@ -275,6 +275,22 @@
                                         @include('admin::leads.common.personal-fields', ['entity' => $__entityPrefill, 'bindModel' => 'formData'])
                                     </div>
 
+                                    <!-- Contact Person Selection -->
+                                    <div class="mt-4">
+                                        <p class="text-base font-semibold dark:text-white mb-3">Contactpersoon</p>
+                                        <x-admin::lookup
+                                            src="{{ route('admin.contacts.persons.search') }}"
+                                            name="contact_person_id"
+                                            :label="'Contactpersoon'"
+                                            placeholder="Selecteer contactpersoon..."
+                                            :can-add-new="true"
+                                            :value="old('contact_person_id')"
+                                        />
+                                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                            Selecteer de contactpersoon voor deze lead. Deze persoon kan ook voorkomen in de gekoppelde personen.
+                                        </p>
+                                    </div>
+
                                     <!-- Other attributes -->
                                     <div class="flex gap-4 max-sm:flex-wrap">
                                         <div class="w-full">

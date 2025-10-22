@@ -42,6 +42,7 @@ class SalesLead extends Model
         'pipeline_stage_id',
         'lead_id',
         'user_id',
+        'contact_person_id',
         'created_by',
         'updated_by',
     ];
@@ -82,6 +83,14 @@ class SalesLead extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the contact person for this sales lead.
+     */
+    public function contactPerson()
+    {
+        return $this->belongsTo(Person::class, 'contact_person_id');
     }
 
     /**

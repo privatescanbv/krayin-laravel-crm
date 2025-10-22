@@ -107,6 +107,7 @@ TABLE(Lead, "lead") {
   lead_channel_id: bigint
   department_id: bigint
   organization_id: bigint
+  contact_person_id: bigint
   salutation: string
   first_name: string
   last_name: string
@@ -345,6 +346,7 @@ TABLE(SalesLead, "sales_lead (backoffice)") {
   FOREIGN_KEY(lead_id): bigint
   FOREIGN_KEY(order_id): bigint
   FOREIGN_KEY(user_id): bigint
+  FOREIGN_KEY(contact_person_id): bigint
   workflow_type: enum
 }
 
@@ -556,6 +558,7 @@ Activity "1" -- "n" CallStatus
 Lead "n" -- "n" Person : "lead_persons"
 Lead "1" -- "0..1" Organization
 Lead "1" -- "0..1" Address
+Lead "0..1" -- "1" Person : "contact_person"
 
 Order "1" --> "1" Person : "for"
 Order "1" --> "1" User
@@ -581,6 +584,7 @@ SalesLead "1" -- "n" Activity
 SalesLead "0..1" -- "1" Order
 SalesLead "0..1" -- "1" Lead
 SalesLead "1" --> "1" User
+SalesLead "0..1" -- "1" Person : "contact_person"
 
 Person "1" -- "0..1" User
 Person "1" -- "0..1" Organization
@@ -641,6 +645,7 @@ note right of Lead
   Potentiële klant, optioneel gekoppeld aan een gebruiker, contactpersoon en organisatie.
   Pipeline-fasen ("nieuw", "in behandeling", "afgehandeld").
   Ondersteunt nu persoonlijke velden en externe ID's.
+  Contactpersoon is de primaire aanspreekpunt voor communicatie en overleg.
 end note
 
 note right of Order
@@ -668,6 +673,7 @@ end note
 note right of SalesLead
   Automatiseringsflow gekoppeld aan een pipeline-fase.
   Vervangt de oude "Backoffice" entiteit.
+  Contactpersoon is de primaire aanspreekpunt voor communicatie en overleg.
 end note
 
 note right of Activity

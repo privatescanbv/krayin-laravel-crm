@@ -260,27 +260,27 @@ Breadcrumbs::for('settings.import-logs.view', function (BreadcrumbTrail $trail, 
 });
 
 // Settings > Partner Products
-Breadcrumbs::for('settings.partner_products', function (BreadcrumbTrail $trail) {
+Breadcrumbs::for('partner_products', function (BreadcrumbTrail $trail) {
     $trail->parent('settings.clinics');
-    $trail->push(trans('admin::app.layouts.partner_products'), route('admin.settings.partner_products.index'));
+    $trail->push(trans('admin::app.layouts.partner_products'), route('admin.partner_products.index'));
 });
 
 // Settings > Partner Products > Create
-Breadcrumbs::for('settings.partner_products.create', function (BreadcrumbTrail $trail) {
-    $trail->parent('settings.partner_products');
-    $trail->push(trans('admin::app.settings.partner_products.index.create.title'), route('admin.settings.partner_products.create'));
+Breadcrumbs::for('partner_products.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('partner_products');
+    $trail->push(trans('admin::app.partner_products.index.create.title'), route('admin.partner_products.create'));
 });
 
 // Settings > Partner Products > View
-Breadcrumbs::for('settings.partner_products.view', function (BreadcrumbTrail $trail, $entity) {
-    $trail->parent('settings.partner_products');
-    $trail->push('#'.$entity->id, route('admin.settings.partner_products.view', $entity->id));
+Breadcrumbs::for('partner_products.view', function (BreadcrumbTrail $trail, $entity) {
+    $trail->parent('partner_products');
+    $trail->push('#'.$entity->id, route('admin.partner_products.view', $entity->id));
 });
 
 // Settings > Partner Products > Edit
-Breadcrumbs::for('settings.partner_products.edit', function (BreadcrumbTrail $trail, $entity) {
-    $trail->parent('settings.partner_products');
-    $trail->push(trans('admin::app.settings.partner_products.index.edit.title'), route('admin.settings.partner_products.edit', $entity->id));
+Breadcrumbs::for('partner_products.edit', function (BreadcrumbTrail $trail, $entity) {
+    $trail->parent('partner_products');
+    $trail->push(trans('admin::app.partner_products.index.edit.title'), route('admin.partner_products.edit', $entity->id));
 });
 
 // Dashboard > Groups > Create Group

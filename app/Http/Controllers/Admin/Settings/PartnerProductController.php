@@ -29,18 +29,18 @@ class PartnerProductController extends SimpleEntityController
 
         $this->entityName = 'partner_products';
         $this->datagridClass = PartnerProductDataGrid::class;
-        $this->indexView = 'admin::settings.partner_products.index';
-        $this->createView = 'admin::settings.partner_products.create';
-        $this->editView = 'admin::settings.partner_products.edit';
-        $this->indexRoute = 'admin.settings.partner_products.index';
-        $this->permissionPrefix = 'settings.partner_products';
+        $this->indexView = 'admin.partner-products.index';
+        $this->createView = 'admin.partner-products.create';
+        $this->editView = 'admin.partner-products.edit';
+        $this->indexRoute = 'admin.partner_products.index';
+        $this->permissionPrefix = 'partner_products';
     }
 
     public function view(int $id): View
     {
         $partnerProduct = $this->partnerProductRepository->findOrFail($id);
 
-        return view('admin::settings.partner_products.view', [
+        return view('admin.partner-products.view', [
             'partner_product' => $partnerProduct,
         ]);
     }
@@ -158,6 +158,7 @@ class PartnerProductController extends SimpleEntityController
             'clinics'              => $this->clinicRepository->allActive(['id', 'name']),
             'resources'            => Resource::orderBy('name')->get(['id', 'name']),
             'preSelectedClinicId'  => $request->query('clinic_id'),
+            'preSelectedProductId' => $request->query('product_id'),
             'returnTo'             => $request->query('return_to'),
         ];
     }
@@ -383,22 +384,22 @@ class PartnerProductController extends SimpleEntityController
 
     protected function getCreateSuccessMessage(): string
     {
-        return trans('admin::app.settings.partner_products.index.create-success');
+        return trans('admin::app.partner_products.index.create-success');
     }
 
     protected function getUpdateSuccessMessage(): string
     {
-        return trans('admin::app.settings.partner_products.index.update-success');
+        return trans('admin::app.partner_products.index.update-success');
     }
 
     protected function getDestroySuccessMessage(): string
     {
-        return trans('admin::app.settings.partner_products.index.destroy-success');
+        return trans('admin::app.partner_products.index.destroy-success');
     }
 
     protected function getDeleteFailedMessage(): string
     {
-        return trans('admin::app.settings.partner_products.index.delete-failed');
+        return trans('admin::app.partner_products.index.delete-failed');
     }
 
     // Price normalization centralized in App\Enums\Currency::normalizePrice

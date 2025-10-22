@@ -185,7 +185,7 @@ return [
         'key'        => 'settings.clinics.partner_products',
         'name'       => 'admin::app.layouts.partner_products',
         'info'       => 'admin::app.layouts.partner_products-info',
-        'route'      => 'admin.settings.partner_products.index',
+        'route'      => 'admin.partner_products.index',
         'sort'       => 2,
         'icon-class' => 'icon-setting',
     ], [

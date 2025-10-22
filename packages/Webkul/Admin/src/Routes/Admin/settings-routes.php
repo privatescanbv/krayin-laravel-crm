@@ -82,7 +82,7 @@ Route::prefix('settings')->group(function () {
         });
     });
 
-    
+
 
     /**
      * Product Type routes.
@@ -115,29 +115,6 @@ Route::prefix('settings')->group(function () {
         Route::get('view/{id}', 'view')->name('admin.settings.import-logs.view');
         Route::delete('', 'destroy')->name('admin.settings.import-logs.delete');
         Route::delete('{id}', 'destroy')->name('admin.settings.import-logs.delete');
-    });
-
-    /**
-     * Partner Products routes.
-     */
-    Route::controller(PartnerProductController::class)->prefix('partner-products')->group(function () {
-        Route::get('', 'index')->name('admin.settings.partner_products.index');
-        Route::get('create', 'create')->name('admin.settings.partner_products.create');
-        Route::post('create', 'store')->name('admin.settings.partner_products.store');
-        Route::get('view/{id}', 'view')->name('admin.settings.partner_products.view');
-        Route::get('edit/{id}', 'edit')->name('admin.settings.partner_products.edit');
-        Route::put('edit/{id}', 'update')->name('admin.settings.partner_products.update');
-        Route::delete('', 'destroy')->name('admin.settings.partner_products.delete');
-        Route::delete('{id}', 'destroy')->name('admin.settings.partner_products.delete');
-        Route::get('search', 'search')->name('admin.settings.partner_products.search');
-        Route::get('template-products', 'getTemplateProducts')->name('admin.settings.partner_products.template_products');
-        Route::get('template-product/{id}', 'getTemplateProduct')->name('admin.settings.partner_products.template_product');
-        Route::get('template-products', 'getTemplateProducts')->name('admin.settings.partner_products.template_products');
-        Route::get('template-product/{id}', 'getTemplateProduct')->name('admin.settings.partner_products.template_product');
-
-        Route::controller(PartnerProductActivityController::class)->prefix('{id}/activities')->group(function () {
-            Route::get('', 'index')->name('admin.settings.partner_products.activities.index');
-        });
     });
 
     /**

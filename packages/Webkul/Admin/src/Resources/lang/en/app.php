@@ -645,6 +645,57 @@ return [
         ],
     ],
 
+    'partner_products' => [
+        'index' => [
+            'title'           => 'Partner Products',
+            'create-btn'      => 'Add Partner Product',
+            'create-success'  => 'Partner product created successfully.',
+            'update-success'  => 'Partner product updated successfully.',
+            'destroy-success' => 'Partner product deleted successfully.',
+            'delete-failed'   => 'Failed to delete partner product.',
+
+            'datagrid' => [
+                'id'            => 'ID',
+                'name'          => 'Name',
+                'currency'      => 'Currency',
+                'sales_price'   => 'Sales Price',
+                'related_sales_price' => 'Related Sales Price',
+                'active'        => 'Active',
+                'duration'      => 'Duration',
+                'minutes'       => 'min',
+                'view'          => 'View',
+                'edit'          => 'Edit',
+                'delete'        => 'Delete',
+            ],
+
+            'edit' => [
+                'title' => 'Edit Partner Product',
+            ],
+
+            'create' => [
+                'title'         => 'Create Partner Product',
+                'name'          => 'Name',
+                'currency'      => 'Currency',
+                'sales_price'   => 'Sales Price',
+                'related_sales_price' => 'Related Sales Price',
+                'active'        => 'Active',
+                'description'   => 'Description',
+                'discount_info' => 'Discount info',
+                'resource_type' => 'Resource type',
+                'clinic_description' => 'Clinic description',
+                'duration'      => 'Duration (minutes)',
+                'related_products' => 'Related Products',
+                'search_related_products' => 'Search products often bought together...',
+                'save-btn'      => 'Save',
+                'template_product' => 'Product Template',
+                'select_template_product' => 'Select an existing product as template',
+                'no_template' => 'No template',
+                'template_info' => 'Template Information',
+                'template_loaded' => 'Template loaded - fields are filled',
+            ],
+        ],
+    ],
+
     'settings' => [
         'title' => 'Settings',
 
@@ -1778,56 +1829,6 @@ return [
             ],
         ],
 
-        'partner_products' => [
-            'index' => [
-                'title'           => 'Partner Products',
-                'create-btn'      => 'Add Partner Product',
-                'create-success'  => 'Partner product created successfully.',
-                'update-success'  => 'Partner product updated successfully.',
-                'destroy-success' => 'Partner product deleted successfully.',
-                'delete-failed'   => 'Failed to delete partner product.',
-
-                'datagrid' => [
-                    'id'            => 'ID',
-                    'name'          => 'Name',
-                    'currency'      => 'Currency',
-                    'sales_price'   => 'Sales Price',
-                    'related_sales_price' => 'Related Sales Price',
-                    'active'        => 'Active',
-                    'duration'      => 'Duration',
-                    'minutes'       => 'min',
-                    'view'          => 'View',
-                    'edit'          => 'Edit',
-                    'delete'        => 'Delete',
-                ],
-
-                'edit' => [
-                    'title' => 'Edit Partner Product',
-                ],
-
-                'create' => [
-                    'title'         => 'Create Partner Product',
-                    'name'          => 'Name',
-                    'currency'      => 'Currency',
-                    'sales_price'   => 'Sales Price',
-                    'related_sales_price' => 'Related Sales Price',
-                    'active'        => 'Active',
-                    'description'   => 'Description',
-                    'discount_info' => 'Discount info',
-                    'resource_type' => 'Resource type',
-                    'clinic_description' => 'Clinic description',
-                    'duration'      => 'Duration (minutes)',
-                    'related_products' => 'Related Products',
-                    'search_related_products' => 'Search products often bought together...',
-                    'save-btn'      => 'Save',
-                    'template_product' => 'Product Template',
-                    'select_template_product' => 'Select an existing product as template',
-                    'no_template' => 'No template',
-                    'template_info' => 'Template Information',
-                    'template_loaded' => 'Template loaded - fields are filled',
-                ],
-            ],
-        ],
     ],
 
     'activities' => [

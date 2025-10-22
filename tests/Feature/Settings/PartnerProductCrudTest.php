@@ -22,7 +22,7 @@ test('partner products index returns datagrid json', function () {
     $p1 = PartnerProduct::factory()->create();
     $p2 = PartnerProduct::factory()->create();
 
-    $response = $this->getJson(route('admin.settings.partner_products.index'));
+    $response = $this->getJson(route('admin.partner_products.index'));
     $response->assertOk();
 
     $ids = getDatagridIds($response);
@@ -51,7 +51,7 @@ test('can create partner product', function () {
         'purchase_price_radiology'     => 20.50,
     ];
 
-    $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
+    $response = $this->postJson(route('admin.partner_products.store'), $payload);
     $response->assertOk();
 
     $this->assertDatabaseHas('partner_products', [
@@ -89,7 +89,7 @@ test('can update partner product', function () {
         '_method'                      => 'put',
     ];
 
-    $response = $this->postJson(route('admin.settings.partner_products.update', ['id' => $pp->id]), $payload);
+    $response = $this->postJson(route('admin.partner_products.update', ['id' => $pp->id]), $payload);
     $response->assertOk()->assertJsonPath('data.name', 'CT Scan');
 
     $this->assertDatabaseHas('partner_products', [
@@ -106,7 +106,7 @@ test('can update partner product', function () {
 test('can delete partner product', function () {
     $pp = PartnerProduct::factory()->create();
 
-    $response = $this->deleteJson(route('admin.settings.partner_products.delete', ['id' => $pp->id]));
+    $response = $this->deleteJson(route('admin.partner_products.delete', ['id' => $pp->id]));
     $response->assertOk();
 
     // Check that the partner product is soft deleted (deleted_at is set)
@@ -140,7 +140,7 @@ test('purchase price total is calculated correctly on create', function () {
         'purchase_price_radiology'     => 45.50,
     ];
 
-    $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
+    $response = $this->postJson(route('admin.partner_products.store'), $payload);
     $response->assertOk();
 
     $pp = PartnerProduct::where('name', 'Test Product')->first();
@@ -174,7 +174,7 @@ test('validates resources belong to selected clinics when creating', function ()
         'duration'           => 30,
     ];
 
-    $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
+    $response = $this->postJson(route('admin.partner_products.store'), $payload);
     $response->assertOk();
 
     // Just verify relationships exist
@@ -213,7 +213,7 @@ test('cannot create partner product with resources from different clinics', func
         'duration'           => 30,
     ];
 
-    $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
+    $response = $this->postJson(route('admin.partner_products.store'), $payload);
     $response->assertStatus(422);
     $response->assertJsonValidationErrors('resources');
 
@@ -253,7 +253,7 @@ test('cannot update partner product with resources from different clinics', func
         '_method'            => 'put',
     ];
 
-    $response = $this->postJson(route('admin.settings.partner_products.update', ['id' => $pp->id]), $payload);
+    $response = $this->postJson(route('admin.partner_products.update', ['id' => $pp->id]), $payload);
     $response->assertStatus(422);
     $response->assertJsonValidationErrors('resources');
 });
@@ -288,7 +288,7 @@ test('can update partner product with resources from multiple selected clinics',
         '_method'            => 'put',
     ];
 
-    $response = $this->postJson(route('admin.settings.partner_products.update', ['id' => $pp->id]), $payload);
+    $response = $this->postJson(route('admin.partner_products.update', ['id' => $pp->id]), $payload);
     $response->assertOk();
 
     $pp->refresh();
@@ -328,7 +328,7 @@ test('can create partner product with template product', function () {
         'purchase_price_radiology'     => 20.50,
     ];
 
-    $response = $this->postJson(route('admin.settings.partner_products.store'), $payload);
+    $response = $this->postJson(route('admin.partner_products.store'), $payload);
     $response->assertOk();
 
     $this->assertDatabaseHas('partner_products', [
@@ -345,7 +345,7 @@ test('can get template products for selection', function () {
     $product2 = Product::factory()->create(['name' => 'Product 2', 'active' => true, 'product_group_id' => null]);
     $product3 = Product::factory()->create(['name' => 'Product 3', 'active' => false]); // Inactive
 
-    $response = $this->getJson(route('admin.settings.partner_products.template_products'));
+    $response = $this->getJson(route('admin.partner_products.template_products'));
     $response->assertOk();
 
     $data = $response->json('data');
@@ -369,7 +369,7 @@ test('can get specific template product details', function () {
         'product_group_id' => null, // Explicitly set to null
     ]);
 
-    $response = $this->getJson(route('admin.settings.partner_products.template_product', ['id' => $templateProduct->id]));
+    $response = $this->getJson(route('admin.partner_products.template_product', ['id' => $templateProduct->id]));
     $response->assertOk();
 
     $data = $response->json('data');
@@ -400,7 +400,7 @@ test('template products show product group path when available', function () {
         'resource_type_id' => $resourceTypeId,
     ]);
 
-    $response = $this->getJson(route('admin.settings.partner_products.template_products'));
+    $response = $this->getJson(route('admin.partner_products.template_products'));
     $response->assertOk();
 
     $data = $response->json('data');
@@ -437,7 +437,7 @@ test('edit partner product shows linked product with full path', function () {
     ]);
 
     // Test the edit view
-    $response = $this->get(route('admin.settings.partner_products.edit', $partnerProduct->id));
+    $response = $this->get(route('admin.partner_products.edit', $partnerProduct->id));
     $response->assertOk();
 
     // The view should contain the linked product with full path

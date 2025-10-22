@@ -34,12 +34,12 @@
                     <h3 class="break-words text-lg font-bold dark:text-white">
                         {{ $product->name }}
                     </h3>
-                    
+
                     {!! view_render_event('admin.products.view.left.title.after', ['product' => $product]) !!}
 
                     <!-- Currency -->
                     <p class="break-words text-sm font-normal dark:text-white">
-                        @lang('admin::app.settings.partner_products.index.create.currency') : {{ $product->currency }}
+                        @lang('admin::app.partner_products.index.create.currency') : {{ $product->currency }}
                     </p>
                 </div>
 
@@ -70,7 +70,7 @@
 
                 {!! view_render_event('admin.products.view.left.activity_actions.after', ['product' => $product]) !!}
             </div>
-            
+
             <!-- Product Attributes -->
             @include ('admin::products.view.attributes')
         </div>
@@ -78,14 +78,14 @@
         {!! view_render_event('admin.products.view.left.after', ['product' => $product]) !!}
 
         {!! view_render_event('admin.products.view.right.before', ['product' => $product]) !!}
-        
+
         <!-- Right Panel -->
         <div class="flex w-full flex-col gap-4 rounded-lg">
             {!! view_render_event('admin.products.view.right.activities.before', ['product' => $product]) !!}
 
             <!-- Activity Navigation -->
             <x-admin::activities
-                :endpoint="route('admin.products.activities.index', $product->id)" 
+                :endpoint="route('admin.products.activities.index', $product->id)"
                 :types="[
                     ['name' => 'all', 'label' => trans('admin::app.products.view.all')],
                     ['name' => 'note', 'label' => trans('admin::app.products.view.notes')],
@@ -105,5 +105,5 @@
         </div>
 
         {!! view_render_event('admin.products.view.right.after', ['product' => $product]) !!}
-    </div>    
+    </div>
 </x-admin::layouts>

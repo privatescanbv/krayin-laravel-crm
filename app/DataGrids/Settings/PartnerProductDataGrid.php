@@ -35,7 +35,7 @@ class PartnerProductDataGrid extends DataGrid
     {
         $this->addColumn([
             'index'      => 'id',
-            'label'      => trans('admin::app.settings.partner_products.index.datagrid.id'),
+            'label'      => trans('admin::app.partner_products.index.datagrid.id'),
             'type'       => 'string',
             'searchable' => true,
             'filterable' => true,
@@ -45,7 +45,7 @@ class PartnerProductDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'name',
             'type'       => 'string',
-            'label'      => trans('admin::app.settings.partner_products.index.datagrid.name'),
+            'label'      => trans('admin::app.partner_products.index.datagrid.name'),
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
@@ -62,7 +62,7 @@ class PartnerProductDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'purchase_price',
             'type'       => 'string',
-            'label'      => trans('admin::app.settings.partner_products.index.datagrid.purchase_price'),
+            'label'      => trans('admin::app.partner_products.index.datagrid.purchase_price'),
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
@@ -74,7 +74,7 @@ class PartnerProductDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'sales_price',
             'type'       => 'string',
-            'label'      => trans('admin::app.settings.partner_products.index.datagrid.sales_price'),
+            'label'      => trans('admin::app.partner_products.index.datagrid.sales_price'),
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
@@ -86,7 +86,7 @@ class PartnerProductDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'related_sales_price',
             'type'       => 'string',
-            'label'      => trans('admin::app.settings.partner_products.index.datagrid.related_sales_price'),
+            'label'      => trans('admin::app.partner_products.index.datagrid.related_sales_price'),
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
@@ -98,7 +98,7 @@ class PartnerProductDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'active',
             'type'       => 'boolean',
-            'label'      => trans('admin::app.settings.partner_products.index.datagrid.active'),
+            'label'      => trans('admin::app.partner_products.index.datagrid.active'),
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
@@ -107,7 +107,7 @@ class PartnerProductDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'reporting',
             'type'       => 'string',
-            'label'      => trans('admin::app.settings.partner_products.index.datagrid.reporting'),
+            'label'      => trans('admin::app.partner_products.index.datagrid.reporting'),
             'searchable' => false,
             'filterable' => false,
             'sortable'   => false,
@@ -136,28 +136,28 @@ class PartnerProductDataGrid extends DataGrid
         $this->addAction([
             'index'  => 'view',
             'icon'   => 'icon-eye',
-            'title'  => trans('admin::app.settings.partner_products.index.datagrid.view'),
+            'title'  => trans('admin::app.partner_products.index.datagrid.view'),
             'method' => 'GET',
-            'url'    => fn ($row) => route('admin.settings.partner_products.view', $row->id),
+            'url'    => fn ($row) => route('admin.partner_products.view', $row->id),
         ]);
 
-        if (bouncer()->hasPermission('settings.partner_products.edit')) {
+        if (bouncer()->hasPermission('partner_products.edit')) {
             $this->addAction([
                 'index'  => 'edit',
                 'icon'   => 'icon-edit',
-                'title'  => trans('admin::app.settings.partner_products.index.datagrid.edit'),
+                'title'  => trans('admin::app.partner_products.index.datagrid.edit'),
                 'method' => 'GET',
-                'url'    => fn ($row) => route('admin.settings.partner_products.edit', $row->id),
+                'url'    => fn ($row) => route('admin.partner_products.edit', $row->id),
             ]);
         }
 
-        if (bouncer()->hasPermission('settings.partner_products.delete')) {
+        if (bouncer()->hasPermission('partner_products.delete')) {
             $this->addAction([
                 'index'  => 'delete',
                 'icon'   => 'icon-delete',
-                'title'  => trans('admin::app.settings.partner_products.index.datagrid.delete'),
+                'title'  => trans('admin::app.partner_products.index.datagrid.delete'),
                 'method' => 'DELETE',
-                'url'    => fn ($row) => route('admin.settings.partner_products.delete', $row->id),
+                'url'    => fn ($row) => route('admin.partner_products.delete', $row->id),
             ]);
         }
     }

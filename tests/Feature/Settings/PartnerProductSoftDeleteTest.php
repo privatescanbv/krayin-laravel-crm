@@ -65,7 +65,7 @@ test('soft deleted partner products are not returned in datagrid', function () {
     $partnerProduct->clinics()->sync([$clinicId]);
 
     // Verify it appears in the datagrid
-    $response = $this->getJson(route('admin.settings.partner_products.index'));
+    $response = $this->getJson(route('admin.partner_products.index'));
     $response->assertOk();
 
     $ids = getDatagridIds($response);
@@ -75,7 +75,7 @@ test('soft deleted partner products are not returned in datagrid', function () {
     $partnerProduct->delete();
 
     // Verify it doesn't appear in the datagrid anymore
-    $response = $this->getJson(route('admin.settings.partner_products.index'));
+    $response = $this->getJson(route('admin.partner_products.index'));
     $response->assertOk();
 
     $ids = getDatagridIds($response);
@@ -94,7 +94,7 @@ test('soft deleted partner products are not returned in search', function () {
     $partnerProduct->clinics()->sync([$clinicId]);
 
     // Verify it appears in search
-    $response = $this->getJson(route('admin.settings.partner_products.search', ['query' => 'Searchable']));
+    $response = $this->getJson(route('admin.partner_products.search', ['query' => 'Searchable']));
     $response->assertOk();
 
     $data = $response->json('data');
@@ -105,7 +105,7 @@ test('soft deleted partner products are not returned in search', function () {
     $partnerProduct->delete();
 
     // Verify it doesn't appear in search anymore
-    $response = $this->getJson(route('admin.settings.partner_products.search', ['query' => 'Searchable']));
+    $response = $this->getJson(route('admin.partner_products.search', ['query' => 'Searchable']));
     $response->assertOk();
 
     $data = $response->json('data');

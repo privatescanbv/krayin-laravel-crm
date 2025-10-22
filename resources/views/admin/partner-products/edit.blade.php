@@ -1,23 +1,23 @@
 <x-admin::layouts>
     <x-slot:title>
-        @lang('admin::app.settings.partner_products.index.edit.title')
+        @lang('admin::app.partner_products.index.edit.title')
     </x-slot>
 
-    <x-admin::form :action="route('admin.settings.partner_products.update', $partner_products->id)" method="POST">
+    <x-admin::form :action="route('admin.partner_products.update', $partner_products->id)" method="POST">
         @method('PUT')
         <div class="flex flex-col gap-4">
             <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
-                    <x-admin::breadcrumbs name="settings.partner_products.edit" :entity="$partner_products" />
+                    <x-admin::breadcrumbs name="partner_products.edit" :entity="$partner_products" />
 
                     <div class="text-xl font-bold dark:text-gray-300">
-                        @lang('admin::app.settings.partner_products.index.edit.title')
+                        @lang('admin::app.partner_products.index.edit.title')
                     </div>
                 </div>
 
                 <div class="flex items-center gap-x-2.5">
                     <button type="submit" class="primary-button">
-                        @lang('admin::app.settings.partner_products.index.create.save-btn')
+                        @lang('admin::app.partner_products.index.create.save-btn')
                     </button>
                 </div>
             </div>
@@ -28,7 +28,7 @@
                     $selectedResources = old('resources', $partner_products->resources->pluck('id')->toArray());
                 @endphp
 
-                <x-admin::partner-product-form-fields
+                <x-adminc::partner-products.partner-product-form-fields
                     :partner-product="$partner_products"
                     :selected-clinics="$selectedClinics"
                     :selected-resources="$selectedResources"
@@ -37,10 +37,10 @@
                 />
             </div>
 
-            <x-admin::partner-product-purchase-prices :partner-product="$partner_products" />
+            <x-adminc::partner-products.partner-product-purchase-prices :partner-product="$partner_products" />
 
             <!-- Related Purchase Prices -->
-            <x-admin::partner-product-related-purchase-prices :partner-product="$partner_products" />
+            <x-adminc::partner-products.partner-product-related-purchase-prices :partner-product="$partner_products" />
 
         </div>
     </x-admin::form>

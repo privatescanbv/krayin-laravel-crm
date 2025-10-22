@@ -41,7 +41,7 @@ class ClinicPartnerProductDataGrid extends DataGrid
     {
         $this->addColumn([
             'index'      => 'id',
-            'label'      => trans('admin::app.settings.partner_products.index.datagrid.id'),
+            'label'      => trans('admin::app.partner_products.index.datagrid.id'),
             'type'       => 'string',
             'searchable' => false,
             'filterable' => true,
@@ -79,12 +79,12 @@ class ClinicPartnerProductDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'duration',
             'type'       => 'string',
-            'label'      => trans('admin::app.settings.partner_products.index.datagrid.duration'),
+            'label'      => trans('admin::app.partner_products.index.datagrid.duration'),
             'searchable' => false,
             'filterable' => true,
             'sortable'   => true,
             'closure'    => function ($row) {
-                return $row->duration ? $row->duration.' '.trans('admin::app.settings.partner_products.index.datagrid.minutes') : '-';
+                return $row->duration ? $row->duration.' '.trans('admin::app.partner_products.index.datagrid.minutes') : '-';
             },
         ]);
 
@@ -111,25 +111,25 @@ class ClinicPartnerProductDataGrid extends DataGrid
 
     public function prepareActions(): void
     {
-        if (bouncer()->hasPermission('settings.partner_products.view')) {
+        if (bouncer()->hasPermission('partner_products.view')) {
             $this->addAction([
                 'index'  => 'view',
                 'icon'   => 'icon-eye',
                 'title'  => trans('admin::app.settings.clinics.view.partner-products.table.view'),
                 'method' => 'GET',
-                'url'    => fn ($row) => route('admin.settings.partner_products.view', $row->id),
+                'url'    => fn ($row) => route('admin.partner_products.view', $row->id),
             ]);
         }
-        if (bouncer()->hasPermission('settings.partner_products.edit')) {
+        if (bouncer()->hasPermission('partner_products.edit')) {
             $this->addAction([
                 'index'  => 'edit',
                 'icon'   => 'icon-edit',
                 'title'  => trans('admin::app.settings.clinics.view.partner-products.table.edit'),
                 'method' => 'GET',
-                'url'    => fn ($row) => route('admin.settings.partner_products.edit', $row->id),
+                'url'    => fn ($row) => route('admin.partner_products.edit', $row->id),
             ]);
         }
-        if (bouncer()->hasPermission('settings.partner_products.delete')) {
+        if (bouncer()->hasPermission('partner_products.delete')) {
             $this->addAction([
                 'index'  => 'delete',
                 'icon'   => 'icon-delete',

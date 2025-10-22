@@ -51,7 +51,7 @@
 <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
     <x-admin::form.control-group>
         <x-admin::form.control-group.label class="required">
-            @lang('admin::app.settings.partner_products.index.create.currency')
+            @lang('admin::app.partner_products.index.create.currency')
         </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.control
@@ -59,7 +59,7 @@
             name="currency"
             value="{{ old('currency', $product->currency ?? $defaultCurrency) }}"
             rules="required"
-            :label="trans('admin::app.settings.partner_products.index.create.currency')"
+            :label="trans('admin::app.partner_products.index.create.currency')"
         >
             @foreach ($currencies as $currency)
                 <option
@@ -107,7 +107,7 @@
 <!-- Active checkbox -->
 <x-admin::form.control-group>
     <x-admin::form.control-group.label>
-        @lang('admin::app.settings.partner_products.index.create.active')
+        @lang('admin::app.partner_products.index.create.active')
     </x-admin::form.control-group.label>
 
     <input type="hidden" name="active" value="0"/>
@@ -115,7 +115,7 @@
         type="checkbox"
         name="active"
         value="1"
-        :label="trans('admin::app.settings.partner_products.index.create.active')"
+        :label="trans('admin::app.partner_products.index.create.active')"
         :checked="old('active', $product->active ?? 1)"
     />
 
@@ -206,7 +206,7 @@
 
 <!-- Partner Products Selection -->
 <x-admin::partner-product-lookup
-    :src="route('admin.settings.partner_products.search')"
+    :src="route('admin.partner_products.search')"
     name="partner_products"
     :label="trans('admin::app.products.create.partner_products')"
     :search-placeholder="trans('admin::app.products.create.search_partner_products')"

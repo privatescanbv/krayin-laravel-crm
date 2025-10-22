@@ -1,35 +1,38 @@
+@php use App\Models\PartnerProduct; @endphp
 <x-admin::layouts>
     <x-slot:title>
-        @lang('admin::app.settings.partner_products.index.create.title')
+        @lang('admin::app.partner_products.index.create.title')
     </x-slot>
 
-    <x-admin::form :action="route('admin.settings.partner_products.store')" method="POST">
+    <x-admin::form :action="route('admin.partner_products.store')" method="POST">
         <!-- Hidden field for return_to -->
-        @if(isset($returnTo))
-            <input type="hidden" name="return_to" value="{{ $returnTo }}" />
+        @if (isset($returnTo))
+            <input type="hidden" name="return_to" value="{{ $returnTo }}"/>
         @endif
 
         <div class="flex flex-col gap-4">
-            <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+            <div
+                class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">
-                    <x-admin::breadcrumbs name="settings.partner_products.create" />
+                    <x-admin::breadcrumbs name="partner_products.create"/>
 
                     <div class="text-xl font-bold dark:text-gray-300">
-                        @lang('admin::app.settings.partner_products.index.create.title')
+                        @lang('admin::app.partner_products.index.create.title')
                     </div>
                 </div>
 
                 <div class="flex items-center gap-x-2.5">
                     <button type="submit" class="primary-button">
-                        @lang('admin::app.settings.partner_products.index.create.save-btn')
+                        @lang('admin::app.partner_products.index.create.save-btn')
                     </button>
                 </div>
             </div>
 
-            <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div
+                class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 @php
                     $oldRelatedProducts = collect(old('related_products', []))->map(function($id) {
-                        $product = \App\Models\PartnerProduct::whereNull('deleted_at')->find($id);
+                        $product = PartnerProduct::whereNull('deleted_at')->find($id);
                         return $product ? ['id' => $product->id, 'name' => $product->name] : null;
                     })->filter()->values()->toArray();
 
@@ -40,29 +43,29 @@
                     }
                 @endphp
 
-                <!-- Product Template Selector -->
+                    <!-- Product Template Selector -->
                 <div class="mb-6 p-4 bg-gray-50 rounded-lg dark:bg-gray-800">
                     <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
-                        @lang('admin::app.settings.partner_products.index.create.template_product')
+                        @lang('admin::app.partner_products.index.create.template_product')
                     </h3>
 
                     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                @lang('admin::app.settings.partner_products.index.create.select_template_product')
+                                @lang('admin::app.partner_products.index.create.select_template_product')
                             </label>
                             <select
                                 id="template-product-selector"
                                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
                                 onchange="loadTemplateProduct(this.value)"
                             >
-                                <option value="">@lang('admin::app.settings.partner_products.index.create.no_template')</option>
+                                <option value="">@lang('admin::app.partner_products.index.create.no_template')</option>
                             </select>
                         </div>
 
                         <div id="template-product-info" class="hidden">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                @lang('admin::app.settings.partner_products.index.create.template_info')
+                                @lang('admin::app.partner_products.index.create.template_info')
                             </label>
                             <div id="template-product-details" class="text-sm text-gray-600 dark:text-gray-400">
                                 <!-- Template product details will be loaded here -->
@@ -71,29 +74,68 @@
                     </div>
                 </div>
 
-                <x-admin::partner-product-form-fields
+                <x-adminc::partner-products.partner-product-form-fields
                     :selected-clinics="$selectedClinics"
                     :selected-resources="old('resources', [])"
                     :related-products="$oldRelatedProducts"
-                    :template-product-id="old('product_id', null)"
+                    :template-product-id="old('product_id', $preSelectedProductId ?? null)"
                 />
             </div>
 
-            <x-admin::partner-product-purchase-prices />
+            <x-adminc::partner-products.partner-product-purchase-prices/>
 
             <!-- Related Purchase Prices -->
-            <x-admin::partner-product-related-purchase-prices />
+            <x-adminc::partner-products.partner-product-related-purchase-prices/>
 
         </div>
     </x-admin::form>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        let isUserEditing = false;
+        let templateLoaded = false;
+
+        function setFieldValue(name, value) {
+            const el = document.querySelector(`[name="${name}"]`);
+            if (!el) return;
+
+            // Set value
+            el.value = value ?? '';
+
+            // Dispatch events so Vue/VeeValidate picks up the change
+            el.dispatchEvent(new Event('input', {bubbles: true}));
+            el.dispatchEvent(new Event('change', {bubbles: true}));
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
             loadTemplateProducts();
+
+            // Track user input to prevent template overwrites
+            const formFields = document.querySelectorAll('input, textarea, select');
+            formFields.forEach(field => {
+                field.addEventListener('input', function () {
+                    isUserEditing = true;
+                });
+
+                field.addEventListener('change', function () {
+                    isUserEditing = true;
+                });
+            });
+
+            // Auto-select product template if preSelectedProductId is provided
+            @if(isset($preSelectedProductId) && $preSelectedProductId)
+                // Wait for template products to load, then auto-select
+                setTimeout(() => {
+                    const select = document.getElementById('template-product-selector');
+                    if (select) {
+                        select.value = {{ $preSelectedProductId }};
+                        loadTemplateProduct({{ $preSelectedProductId }});
+                    }
+                }, 500);
+            @endif
         });
 
         function loadTemplateProducts() {
-            fetch('{{ route("admin.settings.partner_products.template_products") }}')
+            fetch('{{ route("admin.partner_products.template_products") }}')
                 .then(response => response.json())
                 .then(data => {
                     const select = document.getElementById('template-product-selector');
@@ -116,33 +158,41 @@
                 if (productIdField) {
                     productIdField.remove();
                 }
+                templateLoaded = false;
                 return;
             }
 
-            fetch(`{{ route("admin.settings.partner_products.template_product", ":id") }}`.replace(':id', productId))
+            // Only load template if user hasn't started editing or if explicitly requested
+            if (isUserEditing && templateLoaded) {
+                if (!confirm('Je hebt al wijzigingen gemaakt. Wil je deze overschrijven met de template gegevens?')) {
+                    return;
+                }
+            }
+
+            fetch(`{{ route("admin.partner_products.template_product", ":id") }}`.replace(':id', productId))
                 .then(response => response.json())
                 .then(data => {
                     const product = data.data;
 
                     // Update form fields with template data
-                    if (product.name) {
-                        document.querySelector('input[name="name"]').value = product.name;
+                    if (product.name !== undefined) {
+                        setFieldValue('name', product.name);
                     }
 
-                    if (product.description) {
-                        document.querySelector('textarea[name="description"]').value = product.description;
+                    if (product.description !== undefined) {
+                        setFieldValue('description', product.description);
                     }
 
-                    if (product.currency) {
-                        document.querySelector('select[name="currency"]').value = product.currency;
+                    if (product.currency !== undefined) {
+                        setFieldValue('currency', product.currency);
                     }
 
-                    if (product.price) {
-                        document.querySelector('input[name="sales_price"]').value = product.price;
+                    if (product.price !== undefined) {
+                        setFieldValue('sales_price', product.price);
                     }
 
-                    if (product.resource_type_id) {
-                        document.querySelector('select[name="resource_type_id"]').value = product.resource_type_id;
+                    if (product.resource_type_id !== undefined) {
+                        setFieldValue('resource_type_id', product.resource_type_id);
                     }
 
                     // Set the product_id hidden field
@@ -162,11 +212,14 @@
                             <div class="font-medium">${product.name_with_path}</div>
                             <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                 ${product.currency} ${product.price || '0.00'} |
-                                @lang('admin::app.settings.partner_products.index.create.template_loaded')
-                            </div>
-                        </div>
-                    `;
+                                @lang('admin::app.partner_products.index.create.template_loaded')
+                    </div>
+                </div>
+`;
                     document.getElementById('template-product-info').classList.remove('hidden');
+
+                    templateLoaded = true;
+                    isUserEditing = false; // Reset after template load
                 })
                 .catch(error => console.error('Error loading template product:', error));
         }

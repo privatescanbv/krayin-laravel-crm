@@ -17,7 +17,7 @@
 @endphp
 
     <!-- Hidden field for product_id (template product) -->
-@if($templateProductId)
+@if ($templateProductId)
     <input type="hidden" name="product_id" value="{{ $templateProductId }}"/>
 @endif
 
@@ -25,7 +25,7 @@
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
     <x-admin::form.control-group>
         <x-admin::form.control-group.label class="required">
-            @lang('admin::app.settings.partner_products.index.create.name')
+            @lang('admin::app.partner_products.index.create.name')
         </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.control
@@ -33,8 +33,8 @@
             name="name"
             value="{{ old('name', $partnerProduct->name ?? '') }}"
             rules="required|min:1|max:255"
-            :label="trans('admin::app.settings.partner_products.index.create.name')"
-            :placeholder="trans('admin::app.settings.partner_products.index.create.name')"
+            :label="trans('admin::app.partner_products.index.create.name')"
+            :placeholder="trans('admin::app.partner_products.index.create.name')"
         />
 
         <x-admin::form.control-group.error control-name="name"/>
@@ -42,15 +42,15 @@
 
     <x-admin::form.control-group>
         <x-admin::form.control-group.label>
-            @lang('admin::app.settings.partner_products.index.create.duration')
+            @lang('admin::app.partner_products.index.create.duration')
         </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.control
             type="number"
             name="duration"
             value="{{ old('duration', $partnerProduct->duration ?? '') }}"
-            :label="trans('admin::app.settings.partner_products.index.create.duration')"
-            :placeholder="trans('admin::app.settings.partner_products.index.create.duration')"
+            :label="trans('admin::app.partner_products.index.create.duration')"
+            :placeholder="trans('admin::app.partner_products.index.create.duration')"
         />
 
         <x-admin::form.control-group.error control-name="duration"/>
@@ -58,10 +58,10 @@
 </div>
 
 <!-- Associated Product (Readonly) -->
-@if($partnerProduct && $partnerProduct->product)
+@if ($partnerProduct && $partnerProduct->product)
     <x-admin::form.control-group>
         <x-admin::form.control-group.label>
-            @lang('admin::app.settings.partner_products.index.create.associated_product')
+            @lang('admin::app.partner_products.index.create.associated_product')
         </x-admin::form.control-group.label>
 
         <div
@@ -75,15 +75,15 @@
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
     <x-admin::form.control-group>
         <x-admin::form.control-group.label>
-            @lang('admin::app.settings.partner_products.index.create.description')
+            @lang('admin::app.partner_products.index.create.description')
         </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.control
             type="textarea"
             name="description"
             value="{{ old('description', $partnerProduct->description ?? '') }}"
-            :label="trans('admin::app.settings.partner_products.index.create.description')"
-            :placeholder="trans('admin::app.settings.partner_products.index.create.description')"
+            :label="trans('admin::app.partner_products.index.create.description')"
+            :placeholder="trans('admin::app.partner_products.index.create.description')"
         />
 
         <x-admin::form.control-group.error control-name="description"/>
@@ -91,15 +91,15 @@
 
     <x-admin::form.control-group>
         <x-admin::form.control-group.label>
-            @lang('admin::app.settings.partner_products.index.create.clinic_description')
+            @lang('admin::app.partner_products.index.create.clinic_description')
         </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.control
             type="textarea"
             name="clinic_description"
             value="{{ old('clinic_description', $partnerProduct->clinic_description ?? '') }}"
-            :label="trans('admin::app.settings.partner_products.index.create.clinic_description')"
-            :placeholder="trans('admin::app.settings.partner_products.index.create.clinic_description')"
+            :label="trans('admin::app.partner_products.index.create.clinic_description')"
+            :placeholder="trans('admin::app.partner_products.index.create.clinic_description')"
         />
 
         <x-admin::form.control-group.error control-name="clinic_description"/>
@@ -110,7 +110,7 @@
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
     <x-admin::form.control-group>
         <x-admin::form.control-group.label class="required">
-            @lang('admin::app.settings.partner_products.index.create.currency')
+            @lang('admin::app.partner_products.index.create.currency')
         </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.control
@@ -118,7 +118,7 @@
             name="currency"
             value="{{ old('currency', $partnerProduct->currency ?? $defaultCurrency) }}"
             rules="required"
-            :label="trans('admin::app.settings.partner_products.index.create.currency')"
+            :label="trans('admin::app.partner_products.index.create.currency')"
         >
             @foreach ($currencies as $currency)
                 <option
@@ -131,7 +131,7 @@
 
     <x-admin::form.control-group>
         <x-admin::form.control-group.label class="required">
-            @lang('admin::app.settings.partner_products.index.create.sales_price')
+            @lang('admin::app.partner_products.index.create.sales_price')
         </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.control
@@ -139,8 +139,8 @@
             name="sales_price"
             value="{{ old('sales_price', $partnerProduct ? number_format($partnerProduct->sales_price, 2, ',', '') : '') }}"
             rules="required"
-            :label="trans('admin::app.settings.partner_products.index.create.sales_price')"
-            :placeholder="trans('admin::app.settings.partner_products.index.create.sales_price')"
+            :label="trans('admin::app.partner_products.index.create.sales_price')"
+            :placeholder="trans('admin::app.partner_products.index.create.sales_price')"
         />
 
         <x-admin::form.control-group.error control-name="sales_price"/>
@@ -151,15 +151,15 @@
 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
     <x-admin::form.control-group>
         <x-admin::form.control-group.label>
-            @lang('admin::app.settings.partner_products.index.create.related_sales_price')
+            @lang('admin::app.partner_products.index.create.related_sales_price')
         </x-admin::form.control-group.label>
 
         <x-admin::form.control-group.control
             type="price"
             name="related_sales_price"
             value="{{ old('related_sales_price', $partnerProduct ? number_format($partnerProduct->related_sales_price, 2, ',', '') : '') }}"
-            :label="trans('admin::app.settings.partner_products.index.create.related_sales_price')"
-            :placeholder="trans('admin::app.settings.partner_products.index.create.related_sales_price')"
+            :label="trans('admin::app.partner_products.index.create.related_sales_price')"
+            :placeholder="trans('admin::app.partner_products.index.create.related_sales_price')"
         />
 
         <x-admin::form.control-group.error control-name="related_sales_price"/>
@@ -169,15 +169,15 @@
 <!-- Kortingsinformatie -->
 <x-admin::form.control-group>
     <x-admin::form.control-group.label>
-        @lang('admin::app.settings.partner_products.index.create.discount_info')
+        @lang('admin::app.partner_products.index.create.discount_info')
     </x-admin::form.control-group.label>
 
     <x-admin::form.control-group.control
         type="textarea"
         name="discount_info"
         value="{{ old('discount_info', $partnerProduct->discount_info ?? '') }}"
-        :label="trans('admin::app.settings.partner_products.index.create.discount_info')"
-        :placeholder="trans('admin::app.settings.partner_products.index.create.discount_info')"
+        :label="trans('admin::app.partner_products.index.create.discount_info')"
+        :placeholder="trans('admin::app.partner_products.index.create.discount_info')"
     />
 
     <x-admin::form.control-group.error control-name="discount_info"/>
@@ -186,7 +186,7 @@
 <!-- Active checkbox -->
 <x-admin::form.control-group>
     <x-admin::form.control-group.label>
-        @lang('admin::app.settings.partner_products.index.create.active')
+        @lang('admin::app.partner_products.index.create.active')
     </x-admin::form.control-group.label>
 
     <input type="hidden" name="active" value="0"/>
@@ -194,7 +194,7 @@
         type="checkbox"
         name="active"
         value="1"
-        :label="trans('admin::app.settings.partner_products.index.create.active')"
+        :label="trans('admin::app.partner_products.index.create.active')"
         :checked="old('active', $partnerProduct->active ?? 1)"
     />
 
@@ -204,7 +204,7 @@
 <!-- Resource Type -->
 <x-admin::form.control-group>
     <x-admin::form.control-group.label>
-        @lang('admin::app.settings.partner_products.index.create.resource_type')
+        @lang('admin::app.partner_products.index.create.resource_type')
     </x-admin::form.control-group.label>
 
     <x-admin::form.control-group.control
@@ -212,7 +212,7 @@
         name="resource_type_id"
         value="{{ old('resource_type_id', $partnerProduct->resource_type_id ?? '') }}"
         rules="required|numeric"
-        :label="trans('admin::app.settings.partner_products.index.create.resource_type')"
+        :label="trans('admin::app.partner_products.index.create.resource_type')"
     >
         <option value="">@lang('admin::app.select')</option>
         @foreach ($resourceTypes as $type)
@@ -233,10 +233,10 @@
 
 <!-- Related Products -->
 <x-admin::partner-product-lookup
-    :src="route('admin.settings.partner_products.search')"
+    :src="route('admin.partner_products.search')"
     name="related_products"
-    :label="trans('admin::app.settings.partner_products.index.create.related_products')"
-    :search-placeholder="trans('admin::app.settings.partner_products.index.create.search_related_products')"
+    :label="trans('admin::app.partner_products.index.create.related_products')"
+    :search-placeholder="trans('admin::app.partner_products.index.create.search_related_products')"
     :value="$relatedProducts"
     :exclude-id="$excludeId"
 />
@@ -244,7 +244,7 @@
 <!-- Reporting (moved below Related Products) -->
 <x-admin::form.control-group>
     <x-admin::form.control-group.label>
-        @lang('admin::app.settings.partner_products.index.create.reporting')
+        @lang('admin::app.partner_products.index.create.reporting')
     </x-admin::form.control-group.label>
 
     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

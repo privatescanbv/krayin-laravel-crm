@@ -50,7 +50,7 @@ class ProductDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'id',
-            'label'      => trans('admin::app.settings.partner_products.index.datagrid.id'),
+            'label'      => trans('admin::app.partner_products.index.datagrid.id'),
             'type'       => 'string',
             'sortable'   => true,
             'searchable' => true,
@@ -106,7 +106,7 @@ class ProductDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'active',
-            'label'      => trans('admin::app.settings.partner_products.index.datagrid.active'),
+            'label'      => trans('admin::app.partner_products.index.datagrid.active'),
             'type'       => 'boolean',
             'searchable' => true,
             'sortable'   => true,
@@ -136,6 +136,16 @@ class ProductDataGrid extends DataGrid
                 'title'  => trans('admin::app.products.index.datagrid.edit'),
                 'method' => 'GET',
                 'url'    => fn ($row) => route('admin.products.edit', $row->id),
+            ]);
+        }
+
+        if (bouncer()->hasPermission('products.add')) {
+            $this->addAction([
+                'index'  => 'add',
+                'icon'   => 'icon-add',
+                'title'  => 'Partner product toevoegen op basis van dit product',
+                'method' => 'GET',
+                'url'    => fn ($row) => route('admin.partner_products.create', ['product_id'=>$row->id]),
             ]);
         }
 

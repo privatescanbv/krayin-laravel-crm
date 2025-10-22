@@ -19,6 +19,7 @@ require 'mail-routes.php';
  * Settings routes.
  */
 require 'settings-routes.php';
+require 'partner-products-routes.php';
 
 /**
  * Products routes.

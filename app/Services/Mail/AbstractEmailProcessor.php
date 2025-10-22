@@ -246,12 +246,6 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
             'started_at' => now(),
             'metadata'   => $this->getSyncMetadata(),
         ]);
-
-        Log::info('Starting email sync', [
-            'processor' => static::class,
-            'log_id'    => $this->currentLog->id,
-            'timestamp' => now(),
-        ]);
     }
 
     /**
@@ -267,13 +261,15 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
             ]);
         }
 
-        Log::info('Email sync completed', [
-            'processor'       => static::class,
-            'processed_count' => $processedCount,
-            'error_count'     => $errorCount,
-            'log_id'          => $this->currentLog?->id,
-            'timestamp'       => now(),
-        ]);
+        if ($processedCount > 1) {
+            Log::info('Email sync completed', [
+                'processor'       => static::class,
+                'processed_count' => $processedCount,
+                'error_count'     => $errorCount,
+                'log_id'          => $this->currentLog?->id,
+                'timestamp'       => now(),
+            ]);
+        }
     }
 
     /**

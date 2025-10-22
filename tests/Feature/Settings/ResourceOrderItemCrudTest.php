@@ -5,13 +5,10 @@ namespace Tests\Feature\Settings;
 use App\Models\OrderItem;
 use App\Models\Resource;
 use App\Models\ResourceOrderItem;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Tests\TestCase;
 
 class ResourceOrderItemCrudTest extends TestCase
 {
-    use DatabaseMigrations;
-
     public function test_can_create_resource_order_item(): void
     {
         $resource = Resource::factory()->create();

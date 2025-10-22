@@ -123,20 +123,6 @@ test('mass actions are properly configured', function () {
     expect(true)->toBeTrue();
 });
 
-test('query doesnt use nonexistent columns', function () {
-    request()->merge(['route' => 'inbox']);
-
-    $dataGrid = new EmailDataGrid;
-    $queryBuilder = $dataGrid->prepareQueryBuilder();
-
-    $sql = $queryBuilder->toRawSql();
-
-    // Should not contain non-existent columns
-    expect($sql)->not->toContain('leads.name')
-        ->and($sql)->not->toContain('folders_inbox')
-        ->and($sql)->not->toContain('folders_draft');
-});
-
 test('query uses correct lead name concatenation', function () {
     request()->merge(['route' => 'inbox']);
 

@@ -31,7 +31,7 @@
 
                 <div class="flex items-center gap-x-2.5">
                     <button
-                        type="submit"
+                        type="button"
                         class="secondary-button"
                         id="order-edit-planner"
                         data-redirect-to="{{ route('admin.planning.monitor.order', ['orderId' => $orders->id]) }}"
@@ -39,14 +39,14 @@
                         Resource Planner
                     </button>
                     <button
-                        type="submit"
+                        type="button"
                         class="secondary-button"
                         id="order-edit-apply"
                         data-redirect-to="{{ route('admin.orders.edit', ['id' => $orders->id]) }}"
                     >
                         Toepassen
                     </button>
-                    <button type="submit" class="primary-button" id="order-edit-save" data-redirect-to="{{ route('admin.orders.index') }}">
+                    <button type="button" class="primary-button" id="order-edit-save" data-redirect-to="{{ route('admin.orders.index') }}">
                         Opslaan
                     </button>
                 </div>
@@ -54,24 +54,28 @@
 
             <script>
             (function(){
-                var form = document.getElementById('order-edit-form') || document.querySelector('form');
-                var btnPlanner = document.getElementById('order-edit-planner');
-                var btnApply = document.getElementById('order-edit-apply');
-                var btnSave = document.getElementById('order-edit-save');
-                var hidden = form ? form.querySelector('input[name="redirect_to"]') : null;
-
-                function bind(btn){
-                    if (!btn || btn.__redirBound) return;
-                    btn.addEventListener('click', function(){
-                        var target = btn.getAttribute('data-redirect-to');
-                        if (hidden && target) hidden.value = target;
-                    });
-                    btn.__redirBound = true;
-                }
-
-                bind(btnPlanner);
-                bind(btnApply);
-                bind(btnSave);
+                // Use event delegation to handle Vue.js DOM changes
+                document.addEventListener('click', function(e) {
+                    // Check if clicked element is one of our buttons
+                    if (e.target.id === 'order-edit-planner' || 
+                        e.target.id === 'order-edit-apply' || 
+                        e.target.id === 'order-edit-save') {
+                        
+                        e.preventDefault();
+                        
+                        var target = e.target.getAttribute('data-redirect-to');
+                        if (!target) return;
+                        
+                        var form = document.getElementById('order-edit-form') || document.querySelector('form');
+                        if (!form) return;
+                        
+                        var hidden = form.querySelector('input[name="redirect_to"]');
+                        if (!hidden) return;
+                        
+                        hidden.value = target;
+                        form.submit();
+                    }
+                });
             })();
             </script>
 
@@ -299,36 +303,10 @@
                 }
             };
 
-            // Minimal handler: set hidden redirect_to from clicked button's data attribute
-            const initRedirectButtons = () => {
-                try {
-                    const form = document.getElementById('order-edit-form') || document.querySelector('form');
-                    if (!form) return;
-                    const hidden = form.querySelector('input[name="redirect_to"]');
-                    const btns = [
-                        document.getElementById('order-edit-planner'),
-                        document.getElementById('order-edit-apply')
-                    ].filter(Boolean);
-
-                    btns.forEach(btn => {
-                        if (btn.dataset.bound) return;
-                        btn.addEventListener('click', (e) => {
-                            const target = btn.getAttribute('data-redirect-to');
-                            if (hidden && target) hidden.value = target;
-                            console.log('[OrderEdit][click] set hidden redirect_to', { target });
-                        });
-                        btn.dataset.bound = 'true';
-                    });
-                } catch (err) {
-                    console.error('[OrderEdit] Redirect buttons init error', err);
-                }
-            };
-
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => { initOrderEditSalesLead(); initRedirectButtons(); initOrderEditDebug(); }, { once: true });
+                document.addEventListener('DOMContentLoaded', () => { initOrderEditSalesLead(); initOrderEditDebug(); }, { once: true });
             } else {
                 initOrderEditSalesLead();
-                initRedirectButtons();
                 initOrderEditDebug();
             }
         </script>

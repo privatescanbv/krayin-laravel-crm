@@ -83,11 +83,11 @@ class WebklexImapEmailProcessorTest extends TestCase
             ->atLeast()->once()
             ->andReturn($parentEmail);
 
-        // Update should be called to merge folders and references
+        // Update should be called to merge folder and references
         $emailRepository->shouldReceive('update')
             ->once()
             ->with(m::on(function ($data) {
-                return isset($data['folders'], $data['reference_ids']);
+                return isset($data['folder_id'], $data['reference_ids']);
             }), $parentEmail->id)
             ->andReturn($parentEmail);
 
@@ -99,7 +99,7 @@ class WebklexImapEmailProcessorTest extends TestCase
                     && ($data['activity_id'] === $parentEmail->activity_id)
                     && ($data['lead_id'] === $parentEmail->lead_id)
                     && ($data['person_id'] === $parentEmail->person_id)
-                    && is_array($data['folders']) && count($data['folders']) >= 1
+                    && isset($data['folder_id']) && is_numeric($data['folder_id'])
                     && isset($data['reference_ids']) && is_array($data['reference_ids']) && count($data['reference_ids']) >= 1;
             }))
             ->andReturn((object) ['id' => 555]);

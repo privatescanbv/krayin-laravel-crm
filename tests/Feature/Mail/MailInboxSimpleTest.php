@@ -108,11 +108,14 @@ test('email datagrid mass actions can be prepared', function () {
 });
 
 test('email model handles null created_at in time_ago attribute', function () {
+    // Create inbox folder first
+    $folder = \Webkul\Email\Models\Folder::create(['name' => 'inbox']);
+    
     $email = new Email([
         'subject'    => 'Test Email',
         'from'       => ['test@example.com'],
         'reply'      => 'Test content',
-        'folders'    => ['inbox'],
+        'folder_id'  => $folder->id,
         'created_at' => null,
     ]);
 
@@ -120,11 +123,14 @@ test('email model handles null created_at in time_ago attribute', function () {
 });
 
 test('email model time_ago works with valid created_at', function () {
+    // Create inbox folder first
+    $folder = \Webkul\Email\Models\Folder::create(['name' => 'inbox']);
+    
     $email = new Email([
         'subject'    => 'Test Email',
         'from'       => ['test@example.com'],
         'reply'      => 'Test content',
-        'folders'    => ['inbox'],
+        'folder_id'  => $folder->id,
         'created_at' => now(),
     ]);
 

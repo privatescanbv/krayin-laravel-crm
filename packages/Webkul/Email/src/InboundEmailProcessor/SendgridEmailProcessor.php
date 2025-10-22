@@ -93,7 +93,7 @@ class SendgridEmailProcessor implements InboundEmailProcessor
 
         if (! isset($email)) {
             $email = $this->emailRepository->create(array_merge($headers, [
-                'folders'       => ['inbox'],
+                'folder_id'     => $this->getInboxFolderId(),
                 'reply'         => $reply,
                 'unique_id'     => time().'@'.config('mail.domain'),
                 'reference_ids' => [$headers['message_id']],
@@ -106,7 +106,7 @@ class SendgridEmailProcessor implements InboundEmailProcessor
             ]);
         } else {
             $parentEmail = $this->emailRepository->update([
-                'folders'       => array_unique(array_merge($email->folders, ['inbox'])),
+                'folder_id'     => $this->getInboxFolderId(),
                 'reference_ids' => array_merge($email->reference_ids ?? [], [$headers['message_id']]),
             ], $email->id);
 
@@ -124,5 +124,16 @@ class SendgridEmailProcessor implements InboundEmailProcessor
                 'attachments' => $this->emailParser->getAttachments(),
             ]);
         }
+    }
+
+    /**
+     * Get inbox folder ID
+     *
+     * @return int|null
+     */
+    protected function getInboxFolderId()
+    {
+        $folder = \Webkul\Email\Models\Folder::where('name', 'inbox')->first();
+        return $folder ? $folder->id : null;
     }
 }

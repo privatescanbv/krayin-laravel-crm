@@ -117,7 +117,7 @@ class ImapEmailProcessor extends AbstractEmailProcessor
             'name'          => $attributes['from']->first()->personal,
             'reply'         => $message->bodies['html'] ?? $message->bodies['text'],
             'is_read'       => (int) $message->flags()->has('seen'),
-            'folders'       => [$folderName],
+            'folder_id'     => $this->getFolderId($folderName),
             'reply_to'      => $this->getEmailsByAttributeCode($attributes, 'to'),
             'cc'            => $this->getEmailsByAttributeCode($attributes, 'cc'),
             'bcc'           => $this->getEmailsByAttributeCode($attributes, 'bcc'),
@@ -289,5 +289,17 @@ class ImapEmailProcessor extends AbstractEmailProcessor
                 throw new Exception('Failed to connect to the mail server.');
             }
         }
+    }
+
+    /**
+     * Get folder ID by name
+     *
+     * @param string $folderName
+     * @return int|null
+     */
+    protected function getFolderId($folderName)
+    {
+        $folder = \Webkul\Email\Models\Folder::where('name', strtolower($folderName))->first();
+        return $folder ? $folder->id : null;
     }
 }

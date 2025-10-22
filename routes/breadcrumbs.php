@@ -531,13 +531,21 @@ Breadcrumbs::for('settings.product_types', function (BreadcrumbTrail $trail) {
 // Settings > Product Types > Create
 Breadcrumbs::for('settings.product_types.create', function (BreadcrumbTrail $trail) {
     $trail->parent('settings.product_types');
-    $trail->push(trans('admin::app.settings.product_types.index.create.title'), route('admin.settings.product_types.create'));
+    $trail->push('', route('admin.settings.product_types.create'));
+});
+Breadcrumbs::for('settings.product_types.edit', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings.product_types');
+    $trail->push('', route('admin.settings.product_types.create'));
 });
 
 // Settings > Resource Types > Create
 Breadcrumbs::for('settings.resource_types.create', function (BreadcrumbTrail $trail) {
     $trail->parent('settings.resource_types');
-    $trail->push(trans('admin::app.settings.resource_types.index.create.title'), route('admin.settings.resource_types.create'));
+    $trail->push('', route('admin.settings.resource_types.create'));
+});
+Breadcrumbs::for('settings.resource_types.edit', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings.resource_types');
+    $trail->push('', route('admin.settings.resource_types.create'));
 });
 
 // Dashboard > Settings > Locations

@@ -14,9 +14,9 @@ class ProductTypeController extends SimpleEntityController
 
         $this->entityName = 'product_type';
         $this->datagridClass = ProductTypeDataGrid::class;
-        $this->indexView = 'admin::settings.product_types.index';
-        $this->createView = 'admin::settings.product_types.create';
-        $this->editView = 'admin::settings.product_types.edit';
+        $this->indexView = 'admin.product_types.index';
+        $this->createView = 'admin.product_types.create';
+        $this->editView = 'admin.product_types.edit';
         $this->indexRoute = 'admin.settings.product_types.index';
         $this->permissionPrefix = 'settings.product_types';
     }

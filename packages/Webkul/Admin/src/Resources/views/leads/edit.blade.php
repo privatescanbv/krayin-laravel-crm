@@ -144,6 +144,33 @@
 
                     {!! view_render_event('admin.leads.edit.contact_person.before', ['lead' => $lead]) !!}
 
+                    <!-- Contact Person Selection -->
+                    <div
+                        class="flex flex-col gap-4"
+                        id="contact-person-selection"
+                    >
+                        <div class="flex flex-col gap-1">
+                            <p class="text-base font-semibold dark:text-white">
+                                Contactpersoon
+                            </p>
+                            <p class="text-gray-600 dark:text-gray-300">
+                                Selecteer de contactpersoon voor deze lead
+                            </p>
+                        </div>
+
+                        <div class="w-1/2 max-md:w-full">
+                            <x-adminc::components.entity-selector
+                                name="contact_person_id"
+                                label="Contactpersoon"
+                                placeholder="Selecteer contactpersoon..."
+                                search-route="{{ route('admin.contacts.persons.search') }}"
+                                :current-value="$lead->contact_person_id"
+                                :current-label="$lead->contactPerson ? $lead->contactPerson->name : null"
+                                :can-add-new="true"
+                            />
+                        </div>
+                    </div>
+
                     <!-- Contact Persons -->
                     <div
                         class="flex flex-col gap-4"

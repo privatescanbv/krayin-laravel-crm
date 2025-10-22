@@ -86,6 +86,7 @@ class Lead extends Model implements LeadContract
         'lead_channel_id',
         'department_id',
         'organization_id',
+        'contact_person_id',
         'created_by',
         'updated_by',
         'mri_status',
@@ -372,6 +373,14 @@ class Lead extends Model implements LeadContract
     public function organization()
     {
         return $this->belongsTo(Organization::class, 'organization_id');
+    }
+
+    /**
+     * Get the contact person for this lead.
+     */
+    public function contactPerson()
+    {
+        return $this->belongsTo(Person::class, 'contact_person_id');
     }
 
     /**

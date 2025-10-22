@@ -41,6 +41,7 @@ class SalesLead extends Model
         'pipeline_stage_id',
         'lead_id',
         'user_id',
+        'contact_person_id',
         'created_by',
         'updated_by',
     ];
@@ -81,6 +82,14 @@ class SalesLead extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the contact person for this sales lead.
+     */
+    public function contactPerson()
+    {
+        return $this->belongsTo(Person::class, 'contact_person_id');
     }
 
     /**
@@ -189,8 +198,6 @@ class SalesLead extends Model
         }
     }
 
-    // Accessor for persons removed; use the persons() relation directly so pivot data is available
-
     /**
      * Persons related to this sales lead (many-to-many via saleslead_persons).
      */
@@ -262,5 +269,22 @@ class SalesLead extends Model
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    /**
+     * Copy persons and contact person from a lead to this sales lead.
+     */
+    public function copyFromLead(Lead $lead): void
+    {
+        // Copy persons
+        if ($lead->persons()->count() > 0) {
+            $personIds = $lead->persons()->pluck('persons.id')->toArray();
+            $this->syncPersons($personIds);
+        }
+
+        // Copy contact person
+        if ($lead->contact_person_id) {
+            $this->update(['contact_person_id' => $lead->contact_person_id]);
+        }
     }
 }

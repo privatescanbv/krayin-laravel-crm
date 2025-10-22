@@ -66,6 +66,32 @@
                     </div>
                 </div>
 
+                <!-- Contact Person Selection -->
+                <div class="mt-6">
+                    <div class="flex flex-col gap-4" id="contact-person-selection">
+                        <div class="flex flex-col gap-1">
+                            <p class="text-base font-semibold dark:text-white">
+                                Contactpersoon
+                            </p>
+                            <p class="text-gray-600 dark:text-gray-300">
+                                Selecteer de contactpersoon voor deze sales lead
+                            </p>
+                        </div>
+
+                        <div class="w-1/2 max-md:w-full">
+                            <x-adminc::components.entity-selector
+                                name="contact_person_id"
+                                label="Contactpersoon"
+                                placeholder="Selecteer contactpersoon..."
+                                search-route="{{ route('admin.contacts.persons.search') }}"
+                                :current-value="$salesLead->contact_person_id"
+                                :current-label="$salesLead->contactPerson ? $salesLead->contactPerson->name : null"
+                                :can-add-new="true"
+                            />
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Contact Persons Section -->
                 <div class="mt-6">
                     <div class="flex flex-col gap-4" id="contact-person">
@@ -79,7 +105,7 @@
                         </div>
 
                         <!-- Multi Contact Matcher -->
-                        @include('admin::leads.common.multi-contactmatcher', ['lead' => $salesLead, 'persons' => $salesLead->persons])
+                        @include('admin::leads.common.multi-contactmatcher', ['lead' => (object)['id' => $salesLead->id], 'persons' => $salesLead->persons])
                     </div>
                 </div>
 

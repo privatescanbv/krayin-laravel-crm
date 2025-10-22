@@ -13,6 +13,7 @@ use App\Observers\PersonObserver;
 use App\Observers\ResourceOrderItemObserver;
 use App\Observers\SalesLeadObserver;
 use App\Services\OrderCheckService;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Webkul\Contact\Models\Person;
@@ -55,5 +56,8 @@ class AppServiceProvider extends ServiceProvider
         Validator::replacer('active_user', function ($message, $attribute, $rule, $parameters) {
             return 'De geselecteerde gebruiker is niet actief.';
         });
+
+        // Register custom Blade components
+        Blade::componentNamespace('App\\View\\Components\\Adminc', 'adminc');
     }
 }

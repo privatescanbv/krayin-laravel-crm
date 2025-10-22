@@ -138,12 +138,9 @@ class SalesLeadRepository
     private function copyPersonsFromLead(SalesLead $salesLead, Lead $lead): void
     {
         try {
-            $personIds = $lead->persons()->pluck('persons.id')->toArray();
-            if (! empty($personIds) && method_exists($salesLead, 'syncPersons')) {
-                $salesLead->syncPersons($personIds);
-            }
+            $salesLead->copyFromLead($lead);
         } catch (Throwable $e) {
-            Log::warning('Failed to copy persons from lead to sales lead', [
+            Log::error('Failed to copy persons from lead to sales lead', [
                 'lead_id'       => $lead->id,
                 'sales_lead_id' => $salesLead->id,
                 'error'         => $e->getMessage(),

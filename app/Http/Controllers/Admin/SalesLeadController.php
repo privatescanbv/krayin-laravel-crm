@@ -188,16 +188,18 @@ class SalesLeadController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'              => 'required|string|max:255',
-            'description'       => 'nullable|string',
-            'pipeline_stage_id' => 'nullable|exists:lead_pipeline_stages,id',
-            'lead_id'           => 'nullable|exists:leads,id',
-            'user_id'           => 'nullable|exists:users,id',
-            'person_ids'        => 'nullable|array',
-            'person_ids.*'      => 'exists:persons,id',
+            'name'                      => 'required|string|max:255',
+            'description'               => 'nullable|string',
+            'pipeline_stage_id'         => 'nullable|exists:lead_pipeline_stages,id',
+            'lead_id'                   => 'nullable|exists:leads,id',
+            'user_id'                   => 'nullable|exists:users,id',
+            'contact_person_id'         => 'nullable|exists:persons,id',
+            'contact_person_id_display' => 'nullable|string',
+            'person_ids'                => 'nullable|array',
+            'person_ids.*'              => 'exists:persons,id',
         ]);
 
-        $salesLead = SalesLead::create($request->all());
+        $salesLead = SalesLead::create($this->prepareSalesLeadData($request->all()));
 
         // Handle person relationships
         if ($request->has('person_ids') && ! empty($request->person_ids)) {
@@ -207,11 +209,10 @@ class SalesLeadController extends Controller
             });
             $salesLead->syncPersons($personIds);
         } elseif ($request->has('lead_id') && $request->lead_id) {
-            // Copy persons from the selected lead
+            // Copy persons and contact person from the selected lead
             $lead = Lead::find($request->lead_id);
-            if ($lead && $lead->persons()->count() > 0) {
-                $personIds = $lead->persons()->pluck('persons.id')->toArray();
-                $salesLead->syncPersons($personIds);
+            if ($lead) {
+                $salesLead->copyFromLead($lead);
             }
         }
 
@@ -221,7 +222,7 @@ class SalesLeadController extends Controller
 
     public function edit($id)
     {
-        $salesLead = SalesLead::with('persons')->findOrFail($id);
+        $salesLead = SalesLead::with(['contactPerson', 'lead', 'user'])->findOrFail($id);
 
         return view('admin.sales_leads.edit', ['salesLead' => $salesLead]);
     }
@@ -229,17 +230,19 @@ class SalesLeadController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'name'              => 'sometimes|required|string|max:255',
-            'description'       => 'nullable|string',
-            'pipeline_stage_id' => 'sometimes|nullable|exists:lead_pipeline_stages,id',
-            'lead_id'           => 'nullable|exists:leads,id',
-            'user_id'           => 'nullable|exists:users,id',
-            'person_ids'        => 'nullable|array',
-            'person_ids.*'      => 'exists:persons,id',
+            'name'                      => 'sometimes|required|string|max:255',
+            'description'               => 'nullable|string',
+            'pipeline_stage_id'         => 'sometimes|nullable|exists:lead_pipeline_stages,id',
+            'lead_id'                   => 'nullable|exists:leads,id',
+            'user_id'                   => 'nullable|exists:users,id',
+            'contact_person_id'         => 'nullable|exists:persons,id',
+            'contact_person_id_display' => 'nullable|string',
+            'person_ids'                => 'nullable|array',
+            'person_ids.*'              => 'exists:persons,id',
         ]);
 
         $salesLead = SalesLead::findOrFail($id);
-        $salesLead->update($request->all());
+        $salesLead->update($this->prepareSalesLeadData($request->all()));
 
         // Handle person relationships
         if ($request->has('person_ids')) {
@@ -258,7 +261,7 @@ class SalesLeadController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.sales-leads.index')
+        return redirect()->route('admin.sales-leads.view', $id)
             ->with('success', 'Sales lead updated successfully.');
     }
 
@@ -622,5 +625,29 @@ class SalesLeadController extends Controller
                 'status'  => ActivityStatus::DONE->value,
             ], $activity->id);
         }
+    }
+
+    /**
+     * Prepare sales lead data for creation/update.
+     *
+     * Handles contact_person_id logic:
+     * 1. If contact_person_id_display has a value, use it for contact_person_id
+     * 2. Convert empty strings or '0' to null for database consistency
+     * 3. Remove the display field to prevent database errors
+     */
+    private function prepareSalesLeadData(array $data): array
+    {
+        // Handle contact_person_id_display -> contact_person_id mapping
+        if (isset($data['contact_person_id_display']) && ! empty($data['contact_person_id_display'])) {
+            $data['contact_person_id'] = $data['contact_person_id_display'];
+            unset($data['contact_person_id_display']); // Remove display field to prevent DB errors
+        }
+
+        // Normalize contact_person_id - convert empty values to null
+        if (isset($data['contact_person_id']) && (empty($data['contact_person_id']) || $data['contact_person_id'] === '0')) {
+            $data['contact_person_id'] = null;
+        }
+
+        return $data;
     }
 }

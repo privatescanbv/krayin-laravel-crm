@@ -555,7 +555,7 @@ class LeadController extends Controller
     public function edit(int $id): View
     {
         // Load lead without persons relationship (persons loaded via attribute)
-        $lead = $this->leadRepository->with(['address', 'organization'])->findOrFail($id);
+        $lead = $this->leadRepository->with(['address', 'organization', 'contactPerson'])->findOrFail($id);
 
         return view('admin::leads.edit', compact('lead'));
     }
@@ -600,7 +600,9 @@ class LeadController extends Controller
 
         try {
             try {
-                $this->validate($request, LeadValidationService::getWebValidationRules($request, false));
+                $validationRules = LeadValidationService::getWebValidationRules($request, false);
+                $validationRules['contact_person_id_display'] = 'nullable|string';
+                $this->validate($request, $validationRules);
             } catch (ValidationException $exception) {
                 // for missing error displaying in the UI
                 logger()->warning('Validation error during lead update', ['errors' => $exception->errors()]);
@@ -610,6 +612,18 @@ class LeadController extends Controller
             Event::dispatch('lead.update.before', $id);
 
             $data = $request->all();
+            
+            // Handle contact_person_id - if empty but display has value, use display value
+            if (isset($data['contact_person_id_display']) && !empty($data['contact_person_id_display'])) {
+                $data['contact_person_id'] = $data['contact_person_id_display'];
+                unset($data['contact_person_id_display']); // Remove the display field
+            }
+            
+            // Handle contact_person_id - convert empty string to null
+            if (isset($data['contact_person_id']) && (empty($data['contact_person_id']) || $data['contact_person_id'] === '0')) {
+                $data['contact_person_id'] = null;
+            }
+            
             // Handle empty date field
             if (array_key_exists('date_of_birth', $data) && ($data['date_of_birth'] === '' || $data['date_of_birth'] === null)) {
                 $data['date_of_birth'] = null;

@@ -68,6 +68,17 @@ class EmailRepository extends Repository
      */
     public function update(array $data, $id, $attribute = 'id')
     {
+        // Add user signature to email content if not a draft and reply content exists
+        if ((!isset($data['is_draft']) || !$data['is_draft']) && isset($data['reply'])) {
+            $user = auth()->guard('user')->user();
+            if ($user && $user->signature) {
+                // Only add signature if it's not already present
+                if (strpos($data['reply'], $user->signature) === false) {
+                    $data['reply'] = $data['reply'] . "\n\n" . $user->signature;
+                }
+            }
+        }
+
         return parent::update($this->sanitizeEmails($data), $id);
     }
 

@@ -89,6 +89,7 @@
                         <x-admin::activities.actions.mail
                             :entity="$salesLead"
                             entity-control-name="sales_lead_id"
+                            :emails="$emails"
                         />
                     @endif
 

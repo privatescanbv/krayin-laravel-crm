@@ -113,6 +113,7 @@
                                                         <span class="icon-contact text-[10px]"></span>
                                                     </span>
                                                     <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'activity'" class="icon-activity text-xs text-blue-600 ml-1" title="E-mail gekoppeld aan activiteit"></span>
+                                                    <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'sales'" class="icon-activity text-xs text-blue-600 ml-1" title="E-mail gekoppeld aan sales"></span>
                                                     <span v-else-if="activity.type === 'email'" class="icon-activity text-xs text-blue-600 ml-1" title="E-mail gekoppeld aan onbekend"></span>
 
                                                     <!-- Status chip hidden per requirement -->

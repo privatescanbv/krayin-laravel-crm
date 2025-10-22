@@ -1200,6 +1200,7 @@ return [
                     'permission' => 'Machtiging',
                     'role' => 'Rol',
                     'save-btn' => 'Gebruiker opslaan',
+                    'signature' => 'E-mail handtekening',
                     'status' => 'Status',
                     'title' => 'Gebruiker aanmaken',
                     'view-permission' => 'Bekijk machtiging',

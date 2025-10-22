@@ -470,6 +470,29 @@
                                 
                             {!! view_render_event('admin.settings.users.index.form.status.after') !!}
 
+                            {!! view_render_event('admin.settings.users.index.form.signature.before') !!}
+
+                            <!-- Signature -->
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    @lang('admin::app.settings.users.index.create.signature')
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="textarea"
+                                    id="signature"
+                                    name="signature"
+                                    v-model="user.signature"
+                                    :label="trans('admin::app.settings.users.index.create.signature')"
+                                    :placeholder="trans('admin::app.settings.users.index.create.signature')"
+                                    rows="4"
+                                />
+
+                                <x-admin::form.control-group.error control-name="signature" />
+                            </x-admin::form.control-group>
+
+                            {!! view_render_event('admin.settings.users.index.form.signature.after') !!}
+
                             <!-- User Default Field Values -->
                             <div class="mt-4 rounded border border-gray-200 p-4 dark:border-gray-800">
                                 <div class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200">Default veld waarden</div>

@@ -15,6 +15,7 @@ use Illuminate\Validation\Rules\Enum;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Resources\ActivityResource;
+use Webkul\Email\Models\Email as EmailModel;
 use Webkul\Installer\Database\Seeders\Lead\PipelineSeeder;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
@@ -293,10 +294,20 @@ class SalesLeadController extends Controller
         // Load related orders
         $orders = Order::where('sales_lead_id', $salesLead->id)->get();
 
+        // Collect emails from associated persons
+        $emails = [];
+        if ($salesLead->persons && $salesLead->persons->count() > 0) {
+            $emails[] = [
+                'value'      => $salesLead->defaultEmailContactPerson() ?: '',
+                'is_default' => true,
+            ];
+        }
+
         return view('admin.sales_leads.view', [
             'salesLead'    => $salesLead,
             'lead'         => $lead,
             'orders'       => $orders,
+            'emails'       => $emails,
         ]);
     }
 
@@ -388,7 +399,49 @@ class SalesLeadController extends Controller
 
         $activities = $query->get();
 
-        return ActivityResource::collection($activities);
+        // Also include standalone emails linked directly to this sales lead
+        $emails = EmailModel::where('sales_lead_id', $id)
+            ->with('attachments')
+            ->get();
+
+        $emailActivities = $emails->map(function ($email) {
+            return (object) [
+                'id'                    => $email->id,
+                'parent_id'             => $email->parent_id,
+                'title'                 => $email->subject,
+                'type'                  => 'email',
+                'emailLinkedEntityType' => 'sales',
+                'is_done'               => 1,
+                'comment'               => $email->reply,
+                'schedule_from'         => null,
+                'schedule_to'           => null,
+                'user'                  => auth()->guard('user')->user(),
+                'user_id'               => auth()->guard('user')->id(),
+                'group'                 => null,
+                'participants'          => [],
+                'location'              => null,
+                'additional'            => json_encode([
+                    'folders' => $email->folders,
+                    'from'    => $email->from,
+                    'to'      => $email->reply_to,
+                    'cc'      => $email->cc,
+                    'bcc'     => $email->bcc,
+                ]),
+                'files'         => $email->attachments->map(function ($attachment) {
+                    return (object) [
+                        'name' => $attachment->name,
+                        'url'  => $attachment->path,
+                    ];
+                })->toArray(),
+                'created_at'    => $email->created_at,
+                'updated_at'    => $email->updated_at,
+            ];
+        });
+
+        // Merge and return as a single collection
+        $merged = $emailActivities->concat($activities);
+
+        return ActivityResource::collection($merged);
     }
 
     public function storeActivity($id)

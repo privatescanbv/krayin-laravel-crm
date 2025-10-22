@@ -348,6 +348,7 @@
                     <x-admin::modal
                         ref="toggleComposeModal"
                         position="bottom-right"
+                        size="large"
                         @toggle="removeTinyMCE"
                     >
                         <x-slot:header>
@@ -468,7 +469,7 @@
                                     name="reply"
                                     id="reply"
                                     rules="required"
-                                    rows="8"
+                                    rows="12"
                                     ::value="draft.reply"
                                     :tinymce="true"
                                     :label="trans('admin::app.mail.index.mail.message')"
@@ -604,6 +605,11 @@
 
                     toggleModal() {
                         this.draft.reply_to = [];
+
+                        // Add user signature to the email body
+                        @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
+                            this.draft.reply = `{{ auth()->guard('user')->user()->signature }}`;
+                        @endif
 
                         this.$refs.toggleComposeModal.toggle();
                     },

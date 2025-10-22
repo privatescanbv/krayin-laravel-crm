@@ -5,7 +5,6 @@ namespace App\Models;
 use App\Enums\LostReason;
 use App\Enums\WorkflowType;
 use App\Traits\HasAuditTrail;
-use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -190,27 +189,7 @@ class SalesLead extends Model
         }
     }
 
-    /**
-     * Get the persons associated with the sales lead.
-     * This accessor ensures we always get the correct data.
-     */
-    public function getPersonsAttribute()
-    {
-        try {
-            return Person::whereIn('id',
-                DB::table('saleslead_persons')->where('saleslead_id', $this->id)->pluck('person_id')
-            )->get();
-        } catch (Exception $e) {
-            Log::warning('Could not load persons for sales lead', ['saleslead_id' => $this->id, 'error' => $e->getMessage()]);
-
-            return collect();
-        }
-
-        // Load the relationship if not already loaded
-        $this->load('persons');
-
-        return $this->getRelation('persons');
-    }
+    // Accessor for persons removed; use the persons() relation directly so pivot data is available
 
     /**
      * Persons related to this sales lead (many-to-many via saleslead_persons).
@@ -227,6 +206,11 @@ class SalesLead extends Model
     public function person()
     {
         return $this->persons();
+    }
+
+    public function defaultEmailContactPerson(): ?string
+    {
+        return $this->persons()->first()?->findDefaultEmail();
     }
 
     /**

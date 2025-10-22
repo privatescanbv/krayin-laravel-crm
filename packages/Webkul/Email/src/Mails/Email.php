@@ -38,12 +38,19 @@ class Email extends Mailable
             $this->from($from, $name);
         }
 
+        // Add user signature to email content if not already present
+        $emailContent = $this->email->reply;
+        $user = auth()->guard('user')->user();
+        if ($user && $user->signature && strpos($emailContent, $user->signature) === false) {
+            $emailContent = $emailContent . "\n\n" . $user->signature;
+        }
+
         $this->to($this->email->reply_to)
             ->replyTo($this->email->parent_id ? $this->email->parent->unique_id : $this->email->unique_id)
             ->cc($this->email->cc ?? [])
             ->bcc($this->email->bcc ?? [])
             ->subject($this->email->parent_id ? $this->email->parent->subject : $this->email->subject)
-            ->html($this->email->reply);
+            ->html($emailContent);
 
         $this->withSymfonyMessage(function (MimeEmail $message) {
             $message->getHeaders()->addIdHeader('Message-ID', $this->email->message_id);

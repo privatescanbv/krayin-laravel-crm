@@ -1,6 +1,7 @@
 @props([
     'entity'            => null,
     'entityControlName' => null,
+    'emails'            => [],
 ])
 
 <!-- Mail Button -->
@@ -27,6 +28,7 @@
         :entity="{{ json_encode($entity) }}"
         entity-control-name="{{ $entityControlName }}"
         :activity-id="{{ isset($activity) ? (int) $activity->id : 'null' }}"
+        :emails="{{ json_encode($emails) }}"
     ></v-mail-activity>
 
     {!! view_render_event('admin.components.activities.actions.mail.after') !!}
@@ -71,14 +73,14 @@
                                 name="type"
                                 value="email"
                             />
-                            
+
                             <!-- Id -->
                             <x-admin::form.control-group.control
                                 type="hidden"
                                 ::name="entityControlName"
                                 ::value="entity.id"
                             />
-                            
+
                             <!-- To -->
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label class="required">
@@ -114,7 +116,7 @@
                                                         <span v-if="mail.is_default" class="text-xs text-gray-500">default</span>
                                                     </x-admin::dropdown.menu.item>
                                                     <x-admin::dropdown.menu.item @click="focusReplyToInput()">
-                                                        @lang('admin::app.components.datagrid.search.other')
+                                                        Anders
                                                     </x-admin::dropdown.menu.item>
                                                 </x-slot:menu>
                                             </x-admin::dropdown>
@@ -270,6 +272,12 @@
                     type: [Number, null],
                     required: false,
                     default: null,
+                },
+
+                emails: {
+                    type: Array,
+                    required: false,
+                    default: () => []
                 }
             },
 
@@ -293,8 +301,12 @@
                     this.openModalWithEmail(event.detail.defaultEmail, event.detail.activityId);
                 });
 
-                // Collect emails from current entity context
-                this.entityEmails = this.collectEntityEmails();
+                // Use emails from server-side if provided, otherwise fallback to client-side logic
+                if (this.emails && this.emails.length > 0) {
+                    this.entityEmails = this.emails;
+                } else {
+                    this.entityEmails = this.collectEntityEmails();
+                }
             },
 
             methods: {
@@ -311,12 +323,20 @@
                                 this.setReplyTo(def);
                             }
                         }
+
+                        // Add user signature to the message field if empty
+                        const messageField = this.$refs.mailActionForm.querySelector('[name="reply"]');
+                        if (messageField && !messageField.value.trim()) {
+                            @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
+                                messageField.value = `{{ auth()->guard('user')->user()->signature }}`;
+                            @endif
+                        }
                     }, 100);
                 },
 
                 openModalWithEmail(defaultEmail, activityId) {
                     this.$refs.mailActivityModal.open();
-                    
+
                     // Pre-fill the email field
                     setTimeout(() => {
                         const emailField = this.$refs.mailActionForm.querySelector('[name="reply_to"]');
@@ -326,6 +346,14 @@
                             // Trigger change event to update any tags input
                             emailField.dispatchEvent(new Event('change', { bubbles: true }));
                             this.selectedEmailLabel = defaultEmail;
+                        }
+
+                        // Add user signature to the message field if empty
+                        const messageField = this.$refs.mailActionForm.querySelector('[name="reply"]');
+                        if (messageField && !messageField.value.trim()) {
+                            @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
+                                messageField.value = `{{ auth()->guard('user')->user()->signature }}`;
+                            @endif
                         }
 
                         // Inject activity_id hidden input if provided
@@ -344,6 +372,12 @@
                 },
 
                 collectEntityEmails() {
+                    // If server-provided emails exist, use them
+                    if (this.emails && this.emails.length > 0) {
+                        return this.emails;
+                    }
+
+                    // Fallback to client-side logic for backwards compatibility
                     const results = [];
                     const pushEmail = (value, isDefault = false) => {
                         if (value && typeof value === 'string') {
@@ -363,8 +397,16 @@
                     };
 
                     tryExtract(this.entity);
+
                     // Some entities may have nested person
-                    if (this.entity && this.entity.person) tryExtract(this.entity.person);
+                    if (this.entity && this.entity.contactPerson)
+                    {
+                        tryExtract(this.entity.person);
+                    }
+                    else if (this.entity && this.entity.person)
+                    {
+                        tryExtract(this.entity.person);
+                    }
 
                     // De-duplicate, preserve first/default
                     const seen = new Set();

@@ -24,6 +24,7 @@ class User extends Authenticatable
         'password',
         'created_by',
         'updated_by',
+        'signature',
     ];
 
     /**

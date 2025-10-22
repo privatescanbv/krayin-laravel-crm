@@ -1652,7 +1652,12 @@
                             return this.action.email.reply;
                         }
 
-                        return '';
+                        // For new emails (compose), add user signature if available
+                        @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
+                            return `{{ auth()->guard('user')->user()->signature }}`;
+                        @else
+                            return '';
+                        @endif
                     },
 
                     getActionType() {

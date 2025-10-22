@@ -605,6 +605,11 @@
                     toggleModal() {
                         this.draft.reply_to = [];
 
+                        // Add user signature to the email body
+                        @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
+                            this.draft.reply = `{{ auth()->guard('user')->user()->signature }}`;
+                        @endif
+
                         this.$refs.toggleComposeModal.toggle();
                     },
 

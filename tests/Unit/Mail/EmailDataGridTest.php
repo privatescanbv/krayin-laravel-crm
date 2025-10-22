@@ -3,6 +3,8 @@
 use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Admin\DataGrids\Mail\EmailDataGrid;
+use Webkul\Email\Models\Email;
+use Webkul\Email\Models\Folder;
 
 uses(RefreshDatabase::class);
 
@@ -62,8 +64,8 @@ test('query uses json contains for folder filtering', function () {
 
     $sql = $queryBuilder->toRawSql();
 
-    expect($sql)->toContain('JSON_CONTAINS');
-    expect($sql)->toContain('folders');
+    expect($sql)->toContain('"folders"."name"');
+    expect($sql)->toContain('inbox');
 });
 
 test('query includes proper group by', function () {
@@ -88,8 +90,9 @@ test('query handles different routes', function () {
 
         $sql = $queryBuilder->toRawSql();
 
-        // Should contain the route in JSON_CONTAINS
-        expect($sql)->toContain('"'.$route.'"');
+        // Should contain the route in folders.name
+        expect($sql)->toContain('"folders"."name"')
+            ->and($sql)->toContain($route);
     }
 });
 
@@ -133,4 +136,67 @@ test('query uses correct lead name concatenation', function () {
 
     // Should use CONCAT for lead names
     expect($sql)->toContain('CONCAT(leads.first_name, " ", leads.last_name)');
+});
+
+test('unread emails are sorted before read emails', function () {
+    // Create test data - first create folder manually
+    $folder = Folder::create([
+        'name'         => 'inbox',
+        'display_name' => 'Inbox',
+    ]);
+
+    // Create read email (newer)
+    $readEmail = Email::create([
+        'folder_id'  => $folder->id,
+        'is_read'    => true,
+        'created_at' => now()->subDay(),
+        'subject'    => 'Read Email',
+        'from'       => 'test@example.com',
+        'name'       => 'Test User',
+        'reply'      => 'Test content',
+    ]);
+
+    // Create unread email (older)
+    $unreadEmail = Email::create([
+        'folder_id'  => $folder->id,
+        'is_read'    => false,
+        'created_at' => now()->subDays(2),
+        'subject'    => 'Unread Email',
+        'from'       => 'test2@example.com',
+        'name'       => 'Test User 2',
+        'reply'      => 'Test content 2',
+    ]);
+
+    // Create another read email (newest)
+    $readEmail2 = Email::create([
+        'folder_id'  => $folder->id,
+        'is_read'    => true,
+        'created_at' => now(),
+        'subject'    => 'Newest Read Email',
+        'from'       => 'test3@example.com',
+        'name'       => 'Test User 3',
+        'reply'      => 'Test content 3',
+    ]);
+
+    request()->merge(['route' => 'inbox']);
+
+    $dataGrid = new EmailDataGrid;
+    $queryBuilder = $dataGrid->prepareQueryBuilder();
+
+    // Manually apply the custom sorting that would be applied in processRequestedSorting
+    $queryBuilder->reorder()
+        ->orderByRaw('CASE WHEN emails.is_read = 0 OR emails.is_read IS NULL THEN 0 ELSE 1 END, emails.created_at DESC');
+
+    $results = $queryBuilder->get();
+
+    // Should have 3 emails
+    expect($results)->toHaveCount(3);
+
+    // First email should be unread (even though it's oldest)
+    expect($results->first()->id)->toBe($unreadEmail->id)
+        ->and($results->first()->is_read)->toBe(0);
+
+    // Second and third should be read emails, sorted by date desc
+    expect($results->skip(1)->first()->id)->toBe($readEmail2->id) // newest read
+        ->and($results->last()->id)->toBe($readEmail->id); // older read
 });

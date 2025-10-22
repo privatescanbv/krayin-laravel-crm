@@ -2,6 +2,7 @@
 
 namespace Webkul\Installer\Database\Seeders\EmailTemplate;
 
+use Database\Seeders\FolderSeeder;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -15,5 +16,6 @@ class DatabaseSeeder extends Seeder
     public function run($parameters = [])
     {
         $this->call(EmailTemplateSeeder::class, false, $parameters);
+        $this->call(FolderSeeder::class, false, $parameters);
     }
 }

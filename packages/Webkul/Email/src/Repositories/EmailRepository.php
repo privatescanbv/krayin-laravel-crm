@@ -5,6 +5,8 @@ namespace Webkul\Email\Repositories;
 use Illuminate\Container\Container;
 use Webkul\Core\Eloquent\Repository;
 use Webkul\Email\Contracts\Email;
+use Webkul\Email\Models\Folder;
+use Webkul\Email\Enums\EmailFolderEnum;
 
 class EmailRepository extends Repository
 {
@@ -46,7 +48,7 @@ class EmailRepository extends Repository
             'source'        => 'web',
             'from' => config('mail.from.address'),
             'user_type'     => 'admin',
-            'folders'       => isset($data['is_draft']) ? ['draft'] : ['outbox'],
+            'folder_id'     => $this->getFolderId($data['is_draft'] ?? false),
             'unique_id'     => $uniqueId,
             'message_id'    => $uniqueId,
             'reference_ids' => array_merge($referenceIds, [$uniqueId]),
@@ -102,5 +104,18 @@ class EmailRepository extends Repository
         }
 
         return $data;
+    }
+
+    /**
+     * Get folder ID by name
+     *
+     * @param bool $isDraft
+     * @return int|null
+     */
+    protected function getFolderId($isDraft = false)
+    {
+        $folderEnum = $isDraft ? EmailFolderEnum::DRAFT : EmailFolderEnum::SENT;
+        $folder = Folder::where('name', $folderEnum->getFolderName())->first();
+        return $folder ? $folder->id : null;
     }
 }

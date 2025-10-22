@@ -21,13 +21,16 @@ test('mail view JavaScript template contains null safety patterns', function () 
 });
 
 test('email model handles null arrays gracefully', function () {
+    // Create inbox folder first
+    $folder = \Webkul\Email\Models\Folder::create(['name' => 'inbox']);
+
     $email = new Email([
-        'subject'  => 'Test Email',
-        'folders'  => ['inbox'],
-        'reply_to' => null,
-        'cc'       => null,
-        'bcc'      => null,
-        'from'     => null,
+        'subject'   => 'Test Email',
+        'folder_id' => $folder->id,
+        'reply_to'  => null,
+        'cc'        => null,
+        'bcc'       => null,
+        'from'      => null,
     ]);
 
     // Test that null arrays don't cause issues
@@ -38,13 +41,16 @@ test('email model handles null arrays gracefully', function () {
 });
 
 test('email model handles empty arrays gracefully', function () {
+    // Create inbox folder first
+    $folder = \Webkul\Email\Models\Folder::create(['name' => 'inbox']);
+
     $email = new Email([
-        'subject'  => 'Test Email',
-        'folders'  => ['inbox'],
-        'reply_to' => [],
-        'cc'       => [],
-        'bcc'      => [],
-        'from'     => [],
+        'subject'   => 'Test Email',
+        'folder_id' => $folder->id,
+        'reply_to'  => [],
+        'cc'        => [],
+        'bcc'       => [],
+        'from'      => [],
     ]);
 
     // Test that empty arrays work correctly

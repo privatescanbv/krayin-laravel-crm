@@ -4,13 +4,14 @@ namespace App\Models;
 
 use App\Enums\CallStatus as CallStatusEnum;
 use App\Traits\HasAuditTrail;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Webkul\Activity\Models\Activity;
 
 class CallStatus extends Model
 {
-    use HasAuditTrail;
+    use HasAuditTrail, HasFactory;
 
     protected $table = 'call_statuses';
 

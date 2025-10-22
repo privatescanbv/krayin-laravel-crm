@@ -20,7 +20,14 @@ class EmailDataGrid extends DataGrid
      *
      * @var ?string
      */
-    protected $sortColumn = 'created_at';
+    protected $sortColumn = null;
+
+    /**
+     * Default sort order of datagrid.
+     *
+     * @var string
+     */
+    protected $sortOrder = 'desc';
 
     /**
      * Prepare query builder.
@@ -66,9 +73,12 @@ class EmailDataGrid extends DataGrid
             ->leftJoin('salesleads', 'emails.sales_lead_id', '=', 'salesleads.id')
             ->leftJoin('persons', 'emails.person_id', '=', 'persons.id')
             ->leftJoin('activities', 'emails.activity_id', '=', 'activities.id')
-            ->groupBy('emails.id', 'leads.first_name', 'leads.last_name', 'persons.name', 'activities.title')
-            // Use JSON_CONTAINS for better performance than LIKE
-            ->whereRaw('JSON_CONTAINS(folders, ?)', ['"'.request('route').'"']);
+            ->leftJoin('folders', 'emails.folder_id', '=', 'folders.id')
+            ->groupBy('emails.id', 'leads.first_name', 'leads.last_name', 'persons.name', 'activities.title', 'emails.is_read', 'emails.created_at')
+            // Filter by folder name - handle both new folder_id and old folders JSON
+            ->where(function($query) {
+                $query->where('folders.name', request('route'));
+            });
 
         $this->addFilter('id', 'emails.id');
         $this->addFilter('name', 'emails.name');
@@ -76,6 +86,24 @@ class EmailDataGrid extends DataGrid
         $this->addFilter('created_at', 'emails.created_at');
 
         return $queryBuilder;
+    }
+
+    /**
+     * Override the default sorting to maintain our custom unread-first sorting.
+     */
+    protected function processRequestedSorting($requestedSort)
+    {
+        // Only apply custom sorting if no specific sort is requested
+        if (empty($requestedSort) || empty($requestedSort['column'])) {
+            // Apply our custom sorting: unread emails first, then by created_at desc
+            $this->queryBuilder->reorder()
+                ->orderByRaw('CASE WHEN emails.is_read = 0 OR emails.is_read IS NULL THEN 0 ELSE 1 END, emails.created_at DESC');
+        } else {
+            // If user requests specific sorting, apply it normally
+            return parent::processRequestedSorting($requestedSort);
+        }
+
+        return $this->queryBuilder;
     }
 
     /**

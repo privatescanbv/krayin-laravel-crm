@@ -6,6 +6,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\User\Models\User;
+use Webkul\Email\Models\Folder;
 
 trait ConcatsEmailActivities
 {
@@ -35,7 +36,7 @@ trait ConcatsEmailActivities
                 'group'         => null,
                 'location'      => null,
                 'additional'    => [
-                    'folders' => json_decode($email->folders),
+                    'folders' => $email->folder_id ? [Folder::find($email->folder_id)?->name] : [],
                     'from'    => json_decode($email->from),
                     'to'      => json_decode($email->reply_to),
                     'cc'      => json_decode($email->cc),

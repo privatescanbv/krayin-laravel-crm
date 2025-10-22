@@ -16,8 +16,10 @@ use Webkul\Admin\Http\Requests\MassUpdateRequest;
 use Webkul\Admin\Http\Resources\EmailResource;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
 use Webkul\Email\Mails\Email;
+use Webkul\Email\Models\Folder;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
+use Webkul\Email\Repositories\FolderRepository;
 use Webkul\Lead\Repositories\LeadRepository;
 
 class EmailController extends Controller
@@ -30,7 +32,8 @@ class EmailController extends Controller
     public function __construct(
         protected LeadRepository $leadRepository,
         protected EmailRepository $emailRepository,
-        protected AttachmentRepository $attachmentRepository
+        protected AttachmentRepository $attachmentRepository,
+        protected FolderRepository $folderRepository
     ) {}
 
     /**
@@ -47,15 +50,28 @@ class EmailController extends Controller
         }
 
         switch (request('route')) {
-            case 'compose':
-                return view('admin::mail.compose');
-
             default:
+                // Check if the route is a folder name
+                $folder = Folder::where('name', request('route'))->first();
+                if ($folder) {
+                    if (request()->ajax()) {
+                        return datagrid(EmailDataGrid::class)->process();
+                    }
+
+                    // Get emails for this specific folder
+                    $emails = $folder->emails()->orderBy('created_at', 'desc')->get();
+                    $hierarchicalFolders = $this->folderRepository->getHierarchicalFolders();
+
+                    return view('admin::mail.index', compact('folder', 'hierarchicalFolders', 'emails'));
+                }
+
+                // Fallback to original behavior for backward compatibility
                 if (request()->ajax()) {
                     return datagrid(EmailDataGrid::class)->process();
                 }
 
-                return view('admin::mail.index');
+                $hierarchicalFolders = $this->folderRepository->getHierarchicalFolders();
+                return view('admin::mail.index', compact('hierarchicalFolders'));
         }
     }
 
@@ -120,9 +136,13 @@ class EmailController extends Controller
             try {
                 Mail::send(new Email($email));
 
-                $this->emailRepository->update([
-                    'folders' => ['sent'],
-                ], $email->id);
+                // Get the 'sent' folder
+                $sentFolder = Folder::where('name', 'sent')->first();
+                if ($sentFolder) {
+                    $this->emailRepository->update([
+                        'folder_id' => $sentFolder->id,
+                    ], $email->id);
+                }
             } catch (Exception $e) {
             }
         }
@@ -160,7 +180,11 @@ class EmailController extends Controller
         $data = request()->all();
 
         if (! is_null(request('is_draft'))) {
-            $data['folders'] = request('is_draft') ? ['draft'] : ['outbox'];
+            $folderName = request('is_draft') ? 'draft' : 'outbox';
+            $folder = Folder::where('name', $folderName)->first();
+            if ($folder) {
+                $data['folder_id'] = $folder->id;
+            }
         }
 
         $email = $this->emailRepository->update($data, request('id') ?? $id);
@@ -171,9 +195,13 @@ class EmailController extends Controller
             try {
                 Mail::send(new Email($email));
 
-                $this->emailRepository->update([
-                    'folders' => ['inbox', 'sent'],
-                ], $email->id);
+                // Get the 'inbox' folder
+                $inboxFolder = Folder::where('name', 'inbox')->first();
+                if ($inboxFolder) {
+                    $this->emailRepository->update([
+                        'folder_id' => $inboxFolder->id,
+                    ], $email->id);
+                }
             } catch (Exception $e) {
             }
         }
@@ -247,9 +275,14 @@ class EmailController extends Controller
             foreach ($emails as $email) {
                 Event::dispatch('email.update.before', $email->id);
 
-                $this->emailRepository->update([
-                    'folders' => request('folders'),
-                ], $email->id);
+                // Get the folder by name from the folders array
+                $folderName = request('folders')[0] ?? 'inbox';
+                $folder = Folder::where('name', $folderName)->first();
+                if ($folder) {
+                    $this->emailRepository->update([
+                        'folder_id' => $folder->id,
+                    ], $email->id);
+                }
 
                 Event::dispatch('email.update.after', $email->id);
             }
@@ -277,9 +310,12 @@ class EmailController extends Controller
             $parentId = $email->parent_id;
 
             if (request('type') == 'trash') {
-                $this->emailRepository->update([
-                    'folders' => ['trash'],
-                ], $id);
+                $trashFolder = Folder::where('name', 'trash')->first();
+                if ($trashFolder) {
+                    $this->emailRepository->update([
+                        'folder_id' => $trashFolder->id,
+                    ], $id);
+                }
             } else {
                 $this->emailRepository->delete($id);
             }
@@ -324,7 +360,10 @@ class EmailController extends Controller
                 Event::dispatch('email.'.$massDestroyRequest->input('type').'.before', $email->id);
 
                 if ($massDestroyRequest->input('type') == 'trash') {
-                    $this->emailRepository->update(['folders' => ['trash']], $email->id);
+                    $trashFolder = Folder::where('name', 'trash')->first();
+                    if ($trashFolder) {
+                        $this->emailRepository->update(['folder_id' => $trashFolder->id], $email->id);
+                    }
                 } else {
                     $this->emailRepository->delete($email->id);
                 }

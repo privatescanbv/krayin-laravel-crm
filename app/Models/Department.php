@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\Departments;
+use App\Traits\HasAuditTrail;
 use Exception;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use Webkul\User\Models\Group;
 
 class Department extends Model
 {
-    use HasFactory;
+    use HasAuditTrail, HasFactory;
 
     /**
      * The attributes that are mass assignable.

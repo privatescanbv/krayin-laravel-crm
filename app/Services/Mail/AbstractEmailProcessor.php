@@ -89,7 +89,7 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
         // Update parent email if found
         if ($parentEmail) {
             $this->emailRepository->update([
-                'folders'       => array_unique(array_merge($parentEmail->folders, [$folderName])),
+                'folder_id'     => $this->getFolderId($folderName),
                 'reference_ids' => array_merge($parentEmail->reference_ids ?? [], [$messageId]),
             ], $parentEmail->id);
         }
@@ -368,4 +368,17 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
      * Get sync metadata for logging
      */
     abstract protected function getSyncMetadata(): array;
+
+    /**
+     * Get folder ID by name
+     *
+     * @param  string  $folderName
+     * @return int|null
+     */
+    protected function getFolderId($folderName)
+    {
+        $folder = \Webkul\Email\Models\Folder::where('name', strtolower($folderName))->first();
+
+        return $folder ? $folder->id : null;
+    }
 }

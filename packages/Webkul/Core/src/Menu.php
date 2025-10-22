@@ -2,6 +2,7 @@
 
 namespace Webkul\Core;
 
+use Exception;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Webkul\Core\Menu\MenuItem;
@@ -47,7 +48,7 @@ class Menu
     public function getItems(?string $area = null, string $key = ''): Collection
     {
         if (! $area) {
-            throw new \Exception('Area must be provided to get menu items.');
+            throw new Exception('Area must be provided to get menu items.');
         }
 
         static $items;

@@ -3,16 +3,20 @@
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Email\Models\Email;
+use Webkul\Email\Models\Folder;
 
 uses(RefreshDatabase::class);
 
 test('email model handles null created_at gracefully', function () {
+    // Create inbox folder first
+    $folder = Folder::create(['name' => 'inbox']);
+
     // Create email with null created_at
     $email = new Email([
         'subject'    => 'Test Email',
         'from'       => ['test@example.com'],
         'reply'      => 'Test content',
-        'folders'    => ['inbox'],
+        'folder_id'  => $folder->id,
         'created_at' => null,
     ]);
 
@@ -24,11 +28,14 @@ test('email model handles null created_at gracefully', function () {
 });
 
 test('email model time_ago works with valid created_at', function () {
+    // Create inbox folder first
+    $folder = Folder::create(['name' => 'inbox']);
+
     $email = new Email([
         'subject'    => 'Test Email',
         'from'       => ['test@example.com'],
         'reply'      => 'Test content',
-        'folders'    => ['inbox'],
+        'folder_id'  => $folder->id,
         'created_at' => now(),
     ]);
 
@@ -38,12 +45,15 @@ test('email model time_ago works with valid created_at', function () {
 });
 
 test('email model handles missing created_at field', function () {
+    // Create inbox folder first
+    $folder = Folder::create(['name' => 'inbox']);
+
     // Create email without created_at field
     $email = new Email([
-        'subject' => 'Test Email',
-        'from'    => ['test@example.com'],
-        'reply'   => 'Test content',
-        'folders' => ['inbox'],
+        'subject'   => 'Test Email',
+        'from'      => ['test@example.com'],
+        'reply'     => 'Test content',
+        'folder_id' => $folder->id,
     ]);
 
     // Manually set created_at to null
@@ -54,11 +64,14 @@ test('email model handles missing created_at field', function () {
 });
 
 test('email model created_at is properly cast', function () {
+    // Create inbox folder first
+    $folder = Folder::create(['name' => 'inbox']);
+
     $email = new Email([
         'subject'    => 'Test Email',
         'from'       => ['test@example.com'],
         'reply'      => 'Test content',
-        'folders'    => ['inbox'],
+        'folder_id'  => $folder->id,
         'created_at' => now(),
     ]);
 
@@ -68,11 +81,14 @@ test('email model created_at is properly cast', function () {
 });
 
 test('email model handles edge cases for time_ago', function () {
+    // Create inbox folder first
+    $folder = Folder::create(['name' => 'inbox']);
+
     $email = new Email([
-        'subject' => 'Test Email',
-        'from'    => ['test@example.com'],
-        'reply'   => 'Test content',
-        'folders' => ['inbox'],
+        'subject'   => 'Test Email',
+        'from'      => ['test@example.com'],
+        'reply'     => 'Test content',
+        'folder_id' => $folder->id,
     ]);
 
     // Test with different null scenarios

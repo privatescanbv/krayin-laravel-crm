@@ -3,7 +3,9 @@
 use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Models\Activity;
 use Webkul\Contact\Models\Person;
+use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\Models\Email;
+use Webkul\Email\Models\Folder;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Lead\Models\Lead;
 use Webkul\User\Models\Group;
@@ -45,11 +47,14 @@ test('person activities index includes email from activity without person_id', f
         'activity_id' => $activity->id,
     ]);
 
+    // Get or create inbox folder
+    $folder = Folder::firstOrCreate(['name' => EmailFolderEnum::INBOX->getFolderName()]);
+
     // Email that belongs to the above activity, does not have person_id, but does have lead_id and activity_id
     $email = Email::create([
         'subject'     => 'Re: Follow up',
         'is_read'     => 0,
-        'folders'     => json_encode(['inbox']),
+        'folder_id'   => $folder->id,
         'from'        => json_encode(['test@example.com']),
         'reply_to'    => json_encode(['test@example.com']),
         'cc'          => json_encode([]),

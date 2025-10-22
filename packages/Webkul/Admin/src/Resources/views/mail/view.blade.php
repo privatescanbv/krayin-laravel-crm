@@ -16,12 +16,22 @@
             <div class="flex flex-col gap-2">
                 {!! view_render_event('admin.mail.view.form.before', ['email' => $email]) !!}
 
-                <!-- Bredcrumbs -->
-                <x-admin::breadcrumbs
-                    name="mail.route.view"
-                    :entity="$email"
-                    :route="request('route')"
-                />
+                <!-- Back Button and Breadcrumbs -->
+                <div class="flex items-center gap-3">
+                    <!-- Back Button -->
+                    <a href="{{ route('admin.mail.index', ['route' => request('route')]) }}" 
+                       class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700">
+                        <i class="icon-arrow-left text-lg"></i>
+                        @lang('admin::app.mail.view.back-to-folder')
+                    </a>
+
+                    <!-- Breadcrumbs -->
+                    <x-admin::breadcrumbs
+                        name="mail.route.view"
+                        :entity="$email"
+                        :route="request('route')"
+                    />
+                </div>
 
                 {!! view_render_event('admin.mail.view.form.after', ['email' => $email]) !!}
 

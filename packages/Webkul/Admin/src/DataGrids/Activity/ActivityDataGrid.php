@@ -33,6 +33,7 @@ class ActivityDataGrid extends DataGrid
                 'persons.name as person_name',
                 'products.name as product_name',
                 'warehouses.name as warehouse_name',
+                'folders.name as folder_name',
                 // Cross-DB days until deadline: use different SQL per driver
                 DB::raw((function () {
                     $driver = DB::connection()->getDriverName();
@@ -73,6 +74,8 @@ class ActivityDataGrid extends DataGrid
             ->leftJoin('products', 'product_activities.product_id', '=', 'products.id')
             ->leftJoin('warehouse_activities', 'activities.id', '=', 'warehouse_activities.activity_id')
             ->leftJoin('warehouses', 'warehouse_activities.warehouse_id', '=', 'warehouses.id')
+            ->leftJoin('emails', 'activities.id', '=', 'emails.activity_id')
+            ->leftJoin('folders', 'emails.folder_id', '=', 'folders.id')
             ->whereIn('type', ['call', 'meeting','task'])
             ->when(!auth()->guard('user')->user()?->isGlobalAdmin(), function ($query) {
                 $query->where(function ($query) {

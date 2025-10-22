@@ -412,6 +412,25 @@ Route::prefix('settings')->group(function () {
     });
 
     /**
+     * Folders Routes.
+     */
+    Route::controller(\Webkul\Admin\Http\Controllers\Settings\FolderController::class)->prefix('folders')->group(function () {
+        Route::get('', 'index')->name('admin.settings.folders.index');
+
+        Route::get('create', 'create')->name('admin.settings.folders.create');
+
+        Route::post('create', 'store')->name('admin.settings.folders.store');
+
+        Route::get('edit/{id}', 'edit')->name('admin.settings.folders.edit');
+
+        Route::put('edit/{id}', 'update')->name('admin.settings.folders.update');
+
+        Route::delete('{id}', 'destroy')->name('admin.settings.folders.delete');
+
+        Route::post('mass-destroy', 'massDestroy')->name('admin.settings.folders.mass_delete');
+    });
+
+    /**
      * Events Routes.
      */
     Route::group(['prefix' => 'marketing'], function () {

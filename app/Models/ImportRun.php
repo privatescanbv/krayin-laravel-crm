@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ImportRun extends Model
 {
-    use HasFactory;
+    use HasAuditTrail, HasFactory;
 
     protected $table = 'import_runs';
 

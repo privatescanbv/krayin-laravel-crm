@@ -384,7 +384,7 @@ class ActivityImporter
                         'name'         => $emailData->subject ?? 'Email',
                         'user_type'    => 'person',
                         'is_read'      => 1,
-                        'folders'      => ['imported'], // Don't show in inbox, only visible from lead view
+                        'folder_id'    => $this->getImportedFolderId(), // Don't show in inbox, only visible from lead view
                         'from'         => ['name' => 'SugarCRM Import', 'email' => 'import@sugarcrm.local'],
                         'sender'       => ['name' => 'SugarCRM Import', 'email' => 'import@sugarcrm.local'],
                         'reply_to'     => [],
@@ -420,6 +420,18 @@ class ActivityImporter
         }
 
         return ['imported' => $imported, 'skipped' => $skipped, 'email_ids' => $importedEmailIds];
+    }
+
+    /**
+     * Get the imported folder ID
+     *
+     * @return int|null
+     */
+    protected function getImportedFolderId()
+    {
+        $folder = \Webkul\Email\Models\Folder::where('name', 'imported')->first();
+
+        return $folder ? $folder->id : null;
     }
 
     /**

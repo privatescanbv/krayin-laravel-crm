@@ -1,7 +1,75 @@
 <x-admin::layouts>
     <x-slot:title>
-        @lang('admin::app.mail.index.' . request('route'))
+        @if(isset($folder))
+            {{ $folder->name ?? 'Unknown' }}
+        @else
+            @lang('admin::app.mail.index.' . request('route'))
+        @endif
     </x-slot>
+
+    <!-- Gmail-like Email Interface -->
+    <div class="flex h-screen bg-gray-50 dark:bg-gray-900">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col">
+            <!-- Folders List -->
+            <div class="flex-1 overflow-y-auto">
+                <div class="p-2">
+                    <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-3">
+                        Folders
+                    </h3>
+
+                    @php
+                        $currentRoute = request('route') ?? 'inbox';
+                    @endphp
+
+                        <!-- Hierarchical Folders -->
+                    <div class="space-y-1">
+                        @if(isset($hierarchicalFolders) && is_array($hierarchicalFolders))
+                            @foreach ($hierarchicalFolders as $folder)
+                                @if(isset($folder['name']))
+                                    <!-- Parent Folder -->
+                                    <a href="{{ route('admin.mail.index', ['route' => $folder['name']]) }}"
+                                       class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                                              {{ $currentRoute === $folder['name'] ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200' : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700' }}">
+                                        <i class="icon-folder text-lg"></i>
+                                        {{ $folder['name'] }}
+                                        <span class="ml-auto text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
+                                            {{ $folder['count'] ?? 0 }}
+                                        </span>
+                                    </a>
+
+                                    <!-- Child Folders -->
+                                    @if(isset($folder['children']) && is_array($folder['children']) && count($folder['children']) > 0)
+                                        <div class="ml-8 space-y-1 border-l-2 border-gray-200 dark:border-gray-600 pl-4">
+                                            @foreach ($folder['children'] as $child)
+                                                @if(isset($child['name']))
+                                                    <a href="{{ route('admin.mail.index', ['route' => $child['name']]) }}"
+                                                       class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors
+                                                              {{ $currentRoute === $child['name'] ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700' }}">
+                                                        <i class="icon-folder text-sm opacity-75"></i>
+                                                        <span class="text-sm">{{ $child['name'] }}</span>
+                                                        <span class="ml-auto text-xs bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
+                                                            {{ $child['count'] ?? 0 }}
+                                                        </span>
+                                                    </a>
+                                                @endif
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                @endif
+                            @endforeach
+                        @else
+                            <!-- Fallback: Show basic folders if hierarchical data is not available -->
+                            <div class="text-sm text-gray-500 dark:text-gray-400 px-3 py-2">
+                                No folders available
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
 
     <div class="flex flex-col gap-4">
         <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
@@ -17,8 +85,7 @@
                 {!! view_render_event('admin.mail.create.breadcrumbs.after') !!}
 
                 <div class="text-xl font-bold dark:text-white">
-                    <!-- title -->
-                    @lang('admin::app.mail.index.' . request('route'))
+                    {{ request('route') }}
                 </div>
             </div>
 
@@ -47,6 +114,7 @@
             <!-- Datagrid Shimmer -->
             <x-admin::shimmer.mail.datagrid :is-multi-row="true"/>
         </v-mail>
+    </div>
     </div>
 
     @pushOnce('scripts')

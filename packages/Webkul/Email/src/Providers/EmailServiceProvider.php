@@ -8,9 +8,11 @@ use Illuminate\Support\Str;
 use App\Services\Mail\GraphMailService;
 use App\Services\Mail\ImapEmailProcessor;
 use Webkul\Email\Console\Commands\ProcessInboundEmails;
+use Webkul\Email\Contracts\Folder;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
 use Webkul\Email\InboundEmailProcessor\SendgridEmailProcessor;
 use Webkul\Email\InboundEmailProcessor\WebklexImapEmailProcessor;
+use Webkul\Email\Models\Folder as FolderModel;
 
 class EmailServiceProvider extends ServiceProvider
 {
@@ -57,6 +59,15 @@ class EmailServiceProvider extends ServiceProvider
     public function register()
     {
         $this->registerCommands();
+        $this->registerContracts();
+    }
+
+    /**
+     * Register the contracts.
+     */
+    protected function registerContracts(): void
+    {
+        $this->app->bind(Folder::class, FolderModel::class);
     }
 
     /**

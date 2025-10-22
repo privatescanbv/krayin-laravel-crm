@@ -119,7 +119,7 @@ class GraphMailService extends AbstractEmailProcessor
             'name'          => $from['name'] ?? '',
             'reply'         => $body,
             'is_read'       => (int) ($message['isRead'] ?? false),
-            'folders'       => [$folderName],
+            'folder_id'     => $this->getFolderId($folderName),
             'reply_to'      => $this->extractEmailAddresses($replyTo),
             'cc'            => $this->extractEmailAddresses($ccRecipients),
             'bcc'           => $this->extractEmailAddresses($bccRecipients),
@@ -259,5 +259,18 @@ class GraphMailService extends AbstractEmailProcessor
     protected function parseDateTime(string $dateTime): Carbon
     {
         return Carbon::parse($dateTime)->setTimezone(config('app.timezone', 'UTC'));
+    }
+
+    /**
+     * Get folder ID by name
+     *
+     * @param  string  $folderName
+     * @return int|null
+     */
+    protected function getFolderId($folderName)
+    {
+        $folder = \Webkul\Email\Models\Folder::where('name', strtolower($folderName))->first();
+
+        return $folder ? $folder->id : null;
     }
 }

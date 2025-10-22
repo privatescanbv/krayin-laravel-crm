@@ -51,13 +51,13 @@ Breadcrumbs::for('leads.sync_lead_to_person', function (BreadcrumbTrail $trail, 
 // Mail
 Breadcrumbs::for('mail', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');
-    $trail->push(trans('admin::app.layouts.mail.title'), route('admin.mail.index', ['route' => 'inbox']));
+    $trail->push('E-mail', route('admin.mail.index', ['route' => 'inbox']));
 });
 
 // Mail > [Compose | Inbox | Outbox | Draft | Sent | Trash]
 Breadcrumbs::for('mail.route', function (BreadcrumbTrail $trail, $route) {
     $trail->parent('mail');
-    $trail->push(trans('admin::app.mail.index.'.$route), route('admin.mail.index', ['route' => $route]));
+    $trail->push('', route('admin.mail.index', ['route' => $route]));
 });
 
 // Mail > [Inbox | Outbox | Draft | Sent | Trash] > Title
@@ -407,6 +407,24 @@ Breadcrumbs::for('settings.email_templates.create', function (BreadcrumbTrail $t
 Breadcrumbs::for('settings.email_templates.edit', function (BreadcrumbTrail $trail, $emailTemplate) {
     $trail->parent('settings.email_templates');
     $trail->push(trans('admin::app.settings.email-template.edit.title'), route('admin.settings.email_templates.edit', $emailTemplate->id));
+});
+
+// Settings > Folders
+Breadcrumbs::for('settings.folders', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings');
+    $trail->push(trans('admin::app.settings.folders.index.title'), route('admin.settings.folders.index'));
+});
+
+// Settings > Folders > Create Folder
+Breadcrumbs::for('settings.folders.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings.folders');
+    $trail->push(trans('admin::app.settings.folders.create.title'), route('admin.settings.folders.create'));
+});
+
+// Settings > Folders > Edit Folder
+Breadcrumbs::for('settings.folders.edit', function (BreadcrumbTrail $trail, $folder) {
+    $trail->parent('settings.folders');
+    $trail->push(trans('admin::app.settings.folders.edit.title'), route('admin.settings.folders.edit', $folder->id));
 });
 
 // Settings > Marketing Events

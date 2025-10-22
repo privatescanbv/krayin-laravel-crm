@@ -9,7 +9,7 @@
     if (!is_array($fieldList)) {
         $fieldList = [];
     }
-    
+
     // Filter out empty values
     $validFields = collect($fieldList)->filter(function($field) {
         if (is_array($field)) {
@@ -44,11 +44,11 @@
                         @else
                             <span>{{ $value }}</span>
                         @endif
-                        
+
                         @if (!empty($fieldLabel))
                             <span class="text-xs text-gray-500 dark:text-gray-400">({{ $fieldLabel }})</span>
                         @endif
-                        
+
                         @if ($isDefault)
                             <span class="text-xs rounded bg-blue-100 px-1.5 py-0.5 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                                 standaard

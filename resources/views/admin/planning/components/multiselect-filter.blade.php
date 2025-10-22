@@ -2,7 +2,7 @@
     <script type="text/x-template" id="v-multiselect-filter-template">
         <div class="flex flex-col w-full">
             <label v-if="label" class="block text-xs mb-1 text-gray-600 dark:text-gray-400">@{{ label }}</label>
-            
+
             <!-- Selected values as tags -->
             <div v-if="selectedValues.length > 0" class="mb-2 flex flex-wrap gap-1.5">
                 <span
@@ -57,7 +57,7 @@
     <script type="module">
         app.component('v-multiselect-filter', {
             template: '#v-multiselect-filter-template',
-            
+
             props: {
                 modelValue: {
                     type: Array,

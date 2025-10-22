@@ -158,6 +158,10 @@ class Email extends Model implements EmailContract
      */
     public function getTimeAgoAttribute(): string
     {
+        if (!$this->created_at || empty($this->created_at)) {
+            return 'Unknown';
+        }
+        
         return $this->created_at->diffForHumans();
     }
 }

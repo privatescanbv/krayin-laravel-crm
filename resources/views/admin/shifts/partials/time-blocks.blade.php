@@ -12,8 +12,8 @@
     </x-admin::form.control-group.label>
 
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        @for($day=1; $day<=7; $day++)
-            @php 
+        @for ($day=1; $day<=7; $day++)
+            @php
                 $blocks = $weekdayBlocks[$day] ?? [];
                 // Ensure blocks is always an array
                 if (!is_array($blocks)) {
@@ -25,7 +25,7 @@
                     {{ [1=>trans('admin::app.monday'),2=>trans('admin::app.tuesday'),3=>trans('admin::app.wednesday'),4=>trans('admin::app.thursday'),5=>trans('admin::app.friday'),6=>trans('admin::app.saturday'),7=>trans('admin::app.sunday')][$day] }}
                 </div>
                 <div class="flex flex-col gap-2" id="weekday-{{ $day }}-blocks">
-                    @foreach($blocks as $i => $block)
+                    @foreach ($blocks as $i => $block)
                         <div class="flex items-center gap-2">
                             <input class="min-w-[120px] rounded border border-gray-300 p-2 dark:border-gray-800 dark:bg-gray-900" name="weekday_time_blocks[{{ $day }}][{{ $i }}][from]" value="{{ $block['from'] ?? '' }}" placeholder="08:00">
                             <input class="min-w-[120px] rounded border border-gray-300 p-2 dark:border-gray-800 dark:bg-gray-900" name="weekday_time_blocks[{{ $day }}][{{ $i }}][to]" value="{{ $block['to'] ?? '' }}" placeholder="12:00">

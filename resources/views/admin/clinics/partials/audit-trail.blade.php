@@ -75,7 +75,7 @@
                                 @lang('admin::app.settings.clinics.view.audit-trail.change-summary')
                             </p>
                             <p class="mt-1 text-blue-700 dark:text-blue-400">
-                                @lang('admin::app.settings.clinics.view.audit-trail.last-modified'): 
+                                @lang('admin::app.settings.clinics.view.audit-trail.last-modified'):
                                 {{ $clinic->updated_at->diffForHumans() }}
                             </p>
                         </div>

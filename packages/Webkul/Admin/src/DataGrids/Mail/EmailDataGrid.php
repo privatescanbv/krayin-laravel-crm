@@ -37,10 +37,15 @@ class EmailDataGrid extends DataGrid
                 'emails.is_read',
                 'emails.created_at',
                 'emails.parent_id',
-                'tags.name as tags',
                 'emails.person_id',
                 'emails.lead_id',
                 'emails.activity_id',
+                // Preload related entity names to avoid N+1 queries
+                DB::raw('CONCAT(leads.first_name, " ", leads.last_name) as lead_name'),
+                'persons.name as person_name', 
+                'activities.title as activity_title',
+                // Aggregate tags and attachments
+                DB::raw('GROUP_CONCAT(DISTINCT tags.name) as tags'),
                 DB::raw('COUNT(DISTINCT '.DB::getTablePrefix().'email_attachments.id) as attachments'),
                 // Add entity information
                 DB::raw('CASE
@@ -53,14 +58,18 @@ class EmailDataGrid extends DataGrid
             ->leftJoin('email_attachments', 'emails.id', '=', 'email_attachments.email_id')
             ->leftJoin('email_tags', 'emails.id', '=', 'email_tags.email_id')
             ->leftJoin('tags', 'tags.id', '=', 'email_tags.tag_id')
-            ->groupBy('emails.id')
-            ->where('folders', 'like', '%"'.request('route').'"%');
+            // Preload related entities to avoid N+1 queries
+            ->leftJoin('leads', 'emails.lead_id', '=', 'leads.id')
+            ->leftJoin('persons', 'emails.person_id', '=', 'persons.id')
+            ->leftJoin('activities', 'emails.activity_id', '=', 'activities.id')
+            ->groupBy('emails.id', 'leads.first_name', 'leads.last_name', 'persons.name', 'activities.title')
+            // Use JSON_CONTAINS for better performance than LIKE
+            ->whereRaw('JSON_CONTAINS(folders, ?)', ['"'.request('route').'"']);
 
         $this->addFilter('id', 'emails.id');
         $this->addFilter('name', 'emails.name');
         $this->addFilter('tags', 'tags.name');
         $this->addFilter('created_at', 'emails.created_at');
-
 
         logger()->info($queryBuilder->toRawSql());
         return $queryBuilder;
@@ -122,11 +131,7 @@ class EmailDataGrid extends DataGrid
             'filterable'         => true,
             'filterable_type'    => 'searchable_dropdown',
             'closure'            => function ($row) {
-                if ($email = app(EmailRepository::class)->find($row->id)) {
-                    return $email->tags;
-                }
-
-                return '--';
+                return $row->tags ?: '--';
             },
             'filterable_options' => [
                 'repository' => TagRepository::class,
@@ -161,32 +166,17 @@ class EmailDataGrid extends DataGrid
                 switch ($row->entity_type) {
                     case 'lead':
                         $route = route('admin.leads.view', $row->lead_id);
-                        // Try to resolve lead name via model accessor; fallback to #ID
-                        try {
-                            $lead = Lead::find($row->lead_id);
-                            $display = $lead ? ($lead->name ?? ('#'.$row->lead_id)) : ('#'.$row->lead_id);
-                        } catch (Throwable $e) {
-                            logger()->warning('Unable to locate lead entity id '.$row->lead_id . ', '. $e->getMessage());
-                            $display = '#'.$row->lead_id;
-                        }
+                        $display = trim($row->lead_name) ?: ('#'.$row->lead_id);
                         $label = e($display);
                         break;
                     case 'person':
                         $route = route('admin.contacts.persons.view', $row->person_id);
-                        // Try to resolve person name via model accessor; fallback to #ID
-                        try {
-                            $person = Person::find($row->person_id);
-                            $display = $person ? $person->name : ('#'.$row->person_id);
-                        } catch (Throwable $e) {
-                            logger()->warning('Unable to locate person entity id '.$row->person_id . ', '. $e->getMessage());
-                            $display = '#'.$row->person_id;
-                        }
+                        $display = $row->person_name ?: ('#'.$row->person_id);
                         $label = e($display);
                         break;
                     case 'activity':
                         $route = route('admin.activities.view', $row->activity_id);
-                        $activity = Activity::find($row->activity_id);
-                        $display = $activity ? $activity->title : ('#'.$row->activity_id);
+                        $display = $row->activity_title ?: ('#'.$row->activity_id);
                         $label = e($display);
                         break;
                     default:

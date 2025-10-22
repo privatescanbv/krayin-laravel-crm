@@ -122,7 +122,7 @@
             });
 
             // Auto-select product template if preSelectedProductId is provided
-            @if(isset($preSelectedProductId) && $preSelectedProductId)
+            @if (isset($preSelectedProductId) && $preSelectedProductId)
                 // Wait for template products to load, then auto-select
                 setTimeout(() => {
                     const select = document.getElementById('template-product-selector');

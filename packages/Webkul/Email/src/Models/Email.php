@@ -26,6 +26,7 @@ class Email extends Model implements EmailContract
      * @var array
      */
     protected $casts = [
+        'folders'       => 'array', // Keep for migration compatibility
         'sender'        => 'array',
         'from'          => 'array',
         'reply_to'      => 'array',
@@ -54,6 +55,7 @@ class Email extends Model implements EmailContract
         'name',
         'user_type',
         'is_read',
+        'folders',      // Keep for migration compatibility
         'folder_id',
         'from',
         'sender',

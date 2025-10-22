@@ -68,8 +68,11 @@ class EmailDataGrid extends DataGrid
             ->leftJoin('activities', 'emails.activity_id', '=', 'activities.id')
             ->leftJoin('folders', 'emails.folder_id', '=', 'folders.id')
             ->groupBy('emails.id', 'leads.first_name', 'leads.last_name', 'persons.name', 'activities.title')
-            // Filter by folder name for backward compatibility
-            ->where('folders.name', request('route'));
+            // Filter by folder name - handle both new folder_id and old folders JSON
+            ->where(function($query) {
+                $query->where('folders.name', request('route'))
+                      ->orWhereRaw('JSON_CONTAINS(folders, ?)', ['"'.request('route').'"']);
+            });
 
         $this->addFilter('id', 'emails.id');
         $this->addFilter('name', 'emails.name');

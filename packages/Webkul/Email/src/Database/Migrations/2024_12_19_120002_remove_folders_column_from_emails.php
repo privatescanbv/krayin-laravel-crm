@@ -13,13 +13,10 @@ return new class extends Migration
      */
     public function up()
     {
+        // Remove the folders JSON column after migration is complete
         Schema::table('emails', function (Blueprint $table) {
-            $table->integer('folder_id')->unsigned()->nullable()->after('is_read');
-            $table->foreign('folder_id')->references('id')->on('folders')->onDelete('set null');
+            $table->dropColumn('folders');
         });
-
-        // Note: We'll keep the folders column for now to allow migration
-        // It will be removed in a later migration after data migration is complete
     }
 
     /**
@@ -31,8 +28,6 @@ return new class extends Migration
     {
         Schema::table('emails', function (Blueprint $table) {
             $table->json('folders')->nullable()->after('is_read');
-            $table->dropForeign(['folder_id']);
-            $table->dropColumn('folder_id');
         });
     }
 };

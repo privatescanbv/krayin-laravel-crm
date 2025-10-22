@@ -269,8 +269,9 @@ class EmailController extends Controller
             foreach ($emails as $email) {
                 Event::dispatch('email.update.before', $email->id);
 
-                // Get the folder by name
-                $folder = \Webkul\Email\Models\Folder::where('name', request('folders')[0] ?? 'inbox')->first();
+                // Get the folder by name from the folders array
+                $folderName = request('folders')[0] ?? 'inbox';
+                $folder = \Webkul\Email\Models\Folder::where('name', $folderName)->first();
                 if ($folder) {
                     $this->emailRepository->update([
                         'folder_id' => $folder->id,

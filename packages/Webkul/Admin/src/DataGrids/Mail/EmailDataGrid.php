@@ -39,10 +39,12 @@ class EmailDataGrid extends DataGrid
                 'emails.parent_id',
                 'emails.person_id',
                 'emails.lead_id',
+                'emails.sales_lead_id',
                 'emails.activity_id',
                 // Preload related entity names to avoid N+1 queries
                 DB::raw('CONCAT(leads.first_name, " ", leads.last_name) as lead_name'),
-                'persons.name as person_name', 
+                DB::raw('salesleads.name as sales_name'),
+                'persons.name as person_name',
                 'activities.title as activity_title',
                 // Aggregate tags and attachments
                 DB::raw('GROUP_CONCAT(DISTINCT tags.name) as tags'),
@@ -52,6 +54,7 @@ class EmailDataGrid extends DataGrid
                     WHEN emails.person_id IS NOT NULL THEN "person"
                     WHEN emails.activity_id IS NOT NULL THEN "activity"
                     WHEN emails.lead_id IS NOT NULL THEN "lead"
+                    WHEN emails.sales_lead_id IS NOT NULL THEN "sales"
                     ELSE "N/A"
                 END as entity_type'),
             )
@@ -60,6 +63,7 @@ class EmailDataGrid extends DataGrid
             ->leftJoin('tags', 'tags.id', '=', 'email_tags.tag_id')
             // Preload related entities to avoid N+1 queries
             ->leftJoin('leads', 'emails.lead_id', '=', 'leads.id')
+            ->leftJoin('salesleads', 'emails.sales_lead_id', '=', 'salesleads.id')
             ->leftJoin('persons', 'emails.person_id', '=', 'persons.id')
             ->leftJoin('activities', 'emails.activity_id', '=', 'activities.id')
             ->groupBy('emails.id', 'leads.first_name', 'leads.last_name', 'persons.name', 'activities.title')
@@ -71,7 +75,6 @@ class EmailDataGrid extends DataGrid
         $this->addFilter('tags', 'tags.name');
         $this->addFilter('created_at', 'emails.created_at');
 
-        logger()->info($queryBuilder->toRawSql());
         return $queryBuilder;
     }
 
@@ -149,12 +152,13 @@ class EmailDataGrid extends DataGrid
             'type'               => 'string',
             'searchable'         => false,
             'sortable'           => true,
-            'filterable'         => true,
+            'filterable'         => false,
             'filterable_type'    => 'dropdown',
             'filterable_options' => [
                 ['label' => 'Alles', 'value' => ''],
                 ['label' => 'Lead', 'value' => 'lead'],
                 ['label' => 'Persoon', 'value' => 'person'],
+                ['label' => 'Sales', 'value' => 'sales'],
                 ['label' => 'Activiteit', 'value' => 'activity'],
                 ['label' => 'N/A', 'value' => 'N/A'],
             ],
@@ -177,6 +181,11 @@ class EmailDataGrid extends DataGrid
                     case 'activity':
                         $route = route('admin.activities.view', $row->activity_id);
                         $display = $row->activity_title ?: ('#'.$row->activity_id);
+                        $label = e($display);
+                        break;
+                    case 'sales':
+                        $route = route('admin.sales-leads.view', $row->sales_lead_id);
+                        $display = $row->sales_name ?: ('#'.$row->sales_lead_id);
                         $label = e($display);
                         break;
                     default:

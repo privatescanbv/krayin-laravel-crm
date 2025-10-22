@@ -44,7 +44,9 @@ test('email datagrid doesnt use nonexistent columns', function () {
     $queryBuilder = $dataGrid->prepareQueryBuilder();
     $sql = $queryBuilder->toRawSql();
 
-    expect($sql)->not->toContain('leads.name')
+    // Check that we don't use leads.name directly (we use CONCAT instead)
+    // But salesleads.name is allowed for sales lead functionality
+    expect($sql)->not->toMatch('/\bleads\.name\b/')
         ->and($sql)->not->toContain('folders_inbox')
         ->and($sql)->not->toContain('folders_draft');
 });

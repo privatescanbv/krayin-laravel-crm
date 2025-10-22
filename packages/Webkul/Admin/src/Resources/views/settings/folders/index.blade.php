@@ -29,67 +29,87 @@
         </div>
 
         <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
-            <div class="p-4">
-                @if ($folders->count() > 0)
-                    <div class="space-y-2">
-                        @foreach ($folders as $folder)
-                            <div class="flex items-center justify-between rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-                                <div class="flex items-center gap-3">
-                                    <div class="flex items-center gap-2">
-                                        <i class="icon-folder text-2xl text-gray-600 dark:text-gray-300"></i>
-                                        <span class="font-medium text-gray-900 dark:text-white">{{ $folder->name }}</span>
-                                    </div>
-                                    @if ($folder->children->count() > 0)
-                                        <div class="ml-4 space-y-1">
-                                            @foreach ($folder->children as $child)
-                                                <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                                                    <i class="icon-folder text-lg"></i>
-                                                    <span>{{ $child->name }}</span>
-                                                </div>
-                                            @endforeach
+            @if ($folders->count() > 0)
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
+                                    @lang('admin::app.settings.folders.index.name')
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
+                                    @lang('admin::app.settings.folders.index.parent')
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
+                                    @lang('admin::app.settings.folders.index.emails')
+                                </th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-300">
+                                    @lang('admin::app.settings.folders.index.actions')
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                            @foreach ($folders as $folder)
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <i class="icon-folder text-2xl text-gray-600 dark:text-gray-300 mr-3"></i>
+                                            <span class="font-medium text-gray-900 dark:text-white">{{ $folder->name }}</span>
                                         </div>
-                                    @endif
-                                </div>
-
-                                <div class="flex items-center gap-2">
-                                    <span class="text-sm text-gray-500 dark:text-gray-400">
-                                        {{ $folder->emails->count() }} emails
-                                    </span>
-
-                                    <div class="flex items-center gap-1">
-                                        @if (bouncer()->hasPermission('settings.folders.edit'))
-                                            <a
-                                                href="{{ route('admin.settings.folders.edit', $folder->id) }}"
-                                                class="icon-edit text-2xl text-gray-600 hover:text-blue-600 dark:text-gray-300 dark:hover:text-blue-400"
-                                                title="@lang('admin::app.settings.folders.index.edit')"
-                                            ></a>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                                        @if ($folder->parent)
+                                            <span class="flex items-center">
+                                                <i class="icon-folder text-sm text-gray-400 mr-2"></i>
+                                                {{ $folder->parent->name }}
+                                            </span>
+                                        @else
+                                            <span class="text-gray-400 dark:text-gray-500">-</span>
                                         @endif
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                                        {{ $folder->emails->count() }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div class="flex items-center justify-end gap-2">
+                                            @if (bouncer()->hasPermission('settings.folders.edit'))
+                                                <a
+                                                    href="{{ route('admin.settings.folders.edit', $folder->id) }}"
+                                                    class="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                                                    title="@lang('admin::app.settings.folders.index.edit')"
+                                                >
+                                                    <i class="icon-edit text-xl"></i>
+                                                </a>
+                                            @endif
 
-                                        @if (bouncer()->hasPermission('settings.folders.delete'))
-                                            <button
-                                                type="button"
-                                                class="icon-delete text-2xl text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400"
-                                                title="@lang('admin::app.settings.folders.index.delete')"
-                                                @click="confirmDelete('{{ route('admin.settings.folders.delete', $folder->id) }}')"
-                                            ></button>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                @else
-                    <div class="flex flex-col items-center justify-center py-12">
-                        <i class="icon-folder text-6xl text-gray-300 dark:text-gray-600"></i>
-                        <p class="mt-4 text-lg font-medium text-gray-500 dark:text-gray-400">
-                            @lang('admin::app.settings.folders.index.empty-state.title')
-                        </p>
-                        <p class="mt-2 text-sm text-gray-400 dark:text-gray-500">
-                            @lang('admin::app.settings.folders.index.empty-state.description')
-                        </p>
-                    </div>
-                @endif
-            </div>
+                                            @if (bouncer()->hasPermission('settings.folders.delete') && $folder->is_deletable)
+                                                <button
+                                                    type="button"
+                                                    class="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                                                    title="@lang('admin::app.settings.folders.index.delete')"
+                                                    @click="confirmDelete('{{ route('admin.settings.folders.delete', $folder->id) }}')"
+                                                >
+                                                    <i class="icon-delete text-xl"></i>
+                                                </button>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="flex flex-col items-center justify-center py-12">
+                    <i class="icon-folder text-6xl text-gray-300 dark:text-gray-600"></i>
+                    <p class="mt-4 text-lg font-medium text-gray-500 dark:text-gray-400">
+                        @lang('admin::app.settings.folders.index.empty-state.title')
+                    </p>
+                    <p class="mt-2 text-sm text-gray-400 dark:text-gray-500">
+                        @lang('admin::app.settings.folders.index.empty-state.description')
+                    </p>
+                </div>
+            @endif
         </div>
     </div>
 

@@ -69,6 +69,7 @@
 
                             <x-admin::form.control-group.error control-name="parent_id" />
                         </x-admin::form.control-group>
+
                     </div>
                 </div>
 

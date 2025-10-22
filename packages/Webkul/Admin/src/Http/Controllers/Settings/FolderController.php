@@ -26,7 +26,7 @@ class FolderController extends Controller
      */
     public function index(): View
     {
-        $folders = $this->folderRepository->getTree();
+        $folders = $this->folderRepository->all();
 
         return view('admin::settings.folders.index', compact('folders'));
     }
@@ -47,11 +47,14 @@ class FolderController extends Controller
     public function store(): RedirectResponse
     {
         $this->validate(request(), [
-            'name'      => 'required|string|max:255',
-            'parent_id' => 'nullable|exists:folders,id',
+            'name'         => 'required|string|max:255',
+            'parent_id'    => 'nullable|exists:folders,id',
         ]);
 
-        $this->folderRepository->create(request()->all());
+        $data = request()->all();
+        $data['is_deletable'] = true; // Always allow deletion for new folders
+
+        $this->folderRepository->create($data);
 
         session()->flash('success', trans('admin::app.settings.folders.create-success'));
 
@@ -75,11 +78,14 @@ class FolderController extends Controller
     public function update(int $id): RedirectResponse
     {
         $this->validate(request(), [
-            'name'      => 'required|string|max:255',
-            'parent_id' => 'nullable|exists:folders,id|different:' . $id,
+            'name'         => 'required|string|max:255',
+            'parent_id'    => 'nullable|exists:folders,id|different:' . $id,
         ]);
 
-        $this->folderRepository->update(request()->all(), $id);
+        $data = request()->all();
+        // Don't update is_deletable field - keep existing value
+
+        $this->folderRepository->update($data, $id);
 
         session()->flash('success', trans('admin::app.settings.folders.update-success'));
 
@@ -92,6 +98,22 @@ class FolderController extends Controller
     public function destroy(int $id): JsonResponse|RedirectResponse
     {
         try {
+            $folder = $this->folderRepository->findOrFail($id);
+
+            // Check if folder is deletable
+            if (!$folder->is_deletable) {
+                $message = trans('admin::app.settings.folders.delete-not-allowed');
+                
+                if (request()->ajax()) {
+                    return response()->json([
+                        'message' => $message,
+                    ], 403);
+                }
+
+                session()->flash('error', $message);
+                return redirect()->back();
+            }
+
             $this->folderRepository->delete($id);
 
             if (request()->ajax()) {
@@ -122,8 +144,25 @@ class FolderController extends Controller
     public function massDestroy(MassDestroyRequest $massDestroyRequest): JsonResponse
     {
         try {
+            $nonDeletableFolders = [];
+            
             foreach ($massDestroyRequest->input('indices') as $id) {
+                $folder = $this->folderRepository->findOrFail($id);
+                
+                if (!$folder->is_deletable) {
+                    $nonDeletableFolders[] = $folder->name;
+                    continue;
+                }
+                
                 $this->folderRepository->delete($id);
+            }
+
+            if (!empty($nonDeletableFolders)) {
+                return response()->json([
+                    'message' => trans('admin::app.settings.folders.mass-delete-partial-success', [
+                        'folders' => implode(', ', $nonDeletableFolders)
+                    ]),
+                ], 207); // 207 Multi-Status
             }
 
             return response()->json([

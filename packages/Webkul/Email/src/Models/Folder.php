@@ -23,6 +23,25 @@ class Folder extends Model implements FolderContract
         'name',
         'parent_id',
         'order',
+        'is_deletable',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'is_deletable' => 'boolean',
+    ];
+
+    /**
+     * The attributes that should have default values.
+     *
+     * @var array
+     */
+    protected $attributes = [
+        'is_deletable' => true,
     ];
 
     /**

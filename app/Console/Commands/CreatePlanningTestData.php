@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Webkul\Product\Models\Product;
 use Webkul\Product\Models\ProductGroup;
+use Webkul\Email\Models\Email;
 
 class CreatePlanningTestData extends Command
 {
@@ -71,7 +72,10 @@ class CreatePlanningTestData extends Command
         // 8. Shifts aanmaken voor resources (08:00 - 17:00 op verschillende dagen)
         $this->createShiftsForResources($resources);
 
-        // 9. Koppelingen maken
+        // 9. Voorbeeld mail aanmaken (ongelezen, niet assigned)
+        $this->createExampleEmail();
+
+        // 10. Koppelingen maken
         $this->createRelationships($partnerProduct, $clinic, $resources);
 
         $this->info('');
@@ -84,10 +88,12 @@ class CreatePlanningTestData extends Command
         $this->info("   • Product: {$product->name} (ID: {$product->id})");
         $this->info("   • Partner Product: {$partnerProduct->name} (ID: {$partnerProduct->id})");
         $this->info('   • Resources: '.count($resources).' stuks');
+        $this->info('   • E-mail: Voorbeeld ongelezen e-mail aangemaakt');
         $this->info('');
         $this->info('🔗 Je kunt nu plannen met:');
         $this->info("   • Resource Type ID: {$resourceType->id}");
         $this->info("   • Clinic ID: {$clinic->id}");
+        $this->info('   • E-mail: Bekijk in admin/mail/inbox');
     }
 
     private function getOrCreateClinic(): Clinic
@@ -252,5 +258,30 @@ class CreatePlanningTestData extends Command
         }
 
         $this->info('✅ Shifts aangemaakt: '.$totalShifts.' (08:00 - 17:00)');
+    }
+
+    private function createExampleEmail(): void
+    {
+        $email = Email::create([
+            'name' => 'Test Gebruiker',
+            'from' => ['test@example.com'],
+            'subject' => 'Voorbeeld e-mail voor planning test data',
+            'reply' => 'Dit is een voorbeeld e-mail die is aangemaakt door de planning:create-test-data command. Deze e-mail is ongelezen en niet gekoppeld aan een entity.',
+            'folders' => ['inbox'],
+            'is_read' => false,
+            'person_id' => null,
+            'lead_id' => null,
+            'activity_id' => null,
+            'reply_to' => null,
+            'cc' => null,
+            'bcc' => null,
+            'created_at' => now()->subHours(2),
+            'updated_at' => now()->subHours(2),
+        ]);
+
+        $this->info("✅ Voorbeeld e-mail aangemaakt: '{$email->subject}' (ID: {$email->id})");
+        $this->info('   • Status: Ongelezen');
+        $this->info('   • Entity: Niet gekoppeld');
+        $this->info('   • Folder: Inbox');
     }
 }

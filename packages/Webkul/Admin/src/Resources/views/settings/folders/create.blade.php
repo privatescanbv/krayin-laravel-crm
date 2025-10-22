@@ -65,6 +65,24 @@
 
                             <x-admin::form.control-group.error control-name="parent_id" />
                         </x-admin::form.control-group>
+
+                        <!-- Is Deletable -->
+                        <x-admin::form.control-group>
+                            <x-admin::form.control-group.label>
+                                @lang('admin::app.settings.folders.create.is-deletable')
+                            </x-admin::form.control-group.label>
+
+                            <x-admin::form.control-group.control
+                                type="checkbox"
+                                name="is_deletable"
+                                id="is_deletable"
+                                value="1"
+                                :checked="old('is_deletable', true)"
+                                :label="trans('admin::app.settings.folders.create.is-deletable')"
+                            />
+
+                            <x-admin::form.control-group.error control-name="is_deletable" />
+                        </x-admin::form.control-group>
                     </div>
                 </div>
 

@@ -42,9 +42,16 @@
                                     @if ($folder->children->count() > 0)
                                         <div class="ml-4 space-y-1">
                                             @foreach ($folder->children as $child)
-                                                <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
-                                                    <i class="icon-folder text-lg"></i>
-                                                    <span>{{ $child->name }}</span>
+                                                <div class="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300">
+                                                    <div class="flex items-center gap-2">
+                                                        <i class="icon-folder text-lg"></i>
+                                                        <span>{{ $child->name }}</span>
+                                                    </div>
+                                                    @if (!$child->is_deletable)
+                                                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded dark:bg-gray-700 dark:text-gray-300">
+                                                            @lang('admin::app.settings.folders.index.not-deletable')
+                                                        </span>
+                                                    @endif
                                                 </div>
                                             @endforeach
                                         </div>
@@ -55,6 +62,12 @@
                                     <span class="text-sm text-gray-500 dark:text-gray-400">
                                         {{ $folder->emails->count() }} emails
                                     </span>
+                                    
+                                    @if (!$folder->is_deletable)
+                                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded dark:bg-gray-700 dark:text-gray-300">
+                                            @lang('admin::app.settings.folders.index.not-deletable')
+                                        </span>
+                                    @endif
 
                                     <div class="flex items-center gap-1">
                                         @if (bouncer()->hasPermission('settings.folders.edit'))
@@ -65,7 +78,7 @@
                                             ></a>
                                         @endif
 
-                                        @if (bouncer()->hasPermission('settings.folders.delete'))
+                                        @if (bouncer()->hasPermission('settings.folders.delete') && $folder->is_deletable)
                                             <button
                                                 type="button"
                                                 class="icon-delete text-2xl text-gray-600 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400"

@@ -264,12 +264,13 @@ class GraphMailService extends AbstractEmailProcessor
     /**
      * Get folder ID by name
      *
-     * @param string $folderName
+     * @param  string  $folderName
      * @return int|null
      */
     protected function getFolderId($folderName)
     {
         $folder = \Webkul\Email\Models\Folder::where('name', strtolower($folderName))->first();
+
         return $folder ? $folder->id : null;
     }
 }

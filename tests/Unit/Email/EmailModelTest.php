@@ -10,7 +10,7 @@ uses(RefreshDatabase::class);
 test('email model handles null created_at gracefully', function () {
     // Create inbox folder first
     $folder = Folder::create(['name' => 'inbox']);
-    
+
     // Create email with null created_at
     $email = new Email([
         'subject'    => 'Test Email',
@@ -30,7 +30,7 @@ test('email model handles null created_at gracefully', function () {
 test('email model time_ago works with valid created_at', function () {
     // Create inbox folder first
     $folder = Folder::create(['name' => 'inbox']);
-    
+
     $email = new Email([
         'subject'    => 'Test Email',
         'from'       => ['test@example.com'],
@@ -47,7 +47,7 @@ test('email model time_ago works with valid created_at', function () {
 test('email model handles missing created_at field', function () {
     // Create inbox folder first
     $folder = Folder::create(['name' => 'inbox']);
-    
+
     // Create email without created_at field
     $email = new Email([
         'subject'   => 'Test Email',
@@ -66,7 +66,7 @@ test('email model handles missing created_at field', function () {
 test('email model created_at is properly cast', function () {
     // Create inbox folder first
     $folder = Folder::create(['name' => 'inbox']);
-    
+
     $email = new Email([
         'subject'    => 'Test Email',
         'from'       => ['test@example.com'],
@@ -83,7 +83,7 @@ test('email model created_at is properly cast', function () {
 test('email model handles edge cases for time_ago', function () {
     // Create inbox folder first
     $folder = Folder::create(['name' => 'inbox']);
-    
+
     $email = new Email([
         'subject'   => 'Test Email',
         'from'      => ['test@example.com'],

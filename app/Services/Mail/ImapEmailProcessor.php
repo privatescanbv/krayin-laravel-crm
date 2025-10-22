@@ -272,6 +272,19 @@ class ImapEmailProcessor extends AbstractEmailProcessor
     }
 
     /**
+     * Get folder ID by name
+     *
+     * @param  string  $folderName
+     * @return int|null
+     */
+    protected function getFolderId($folderName)
+    {
+        $folder = \Webkul\Email\Models\Folder::where('name', strtolower($folderName))->first();
+
+        return $folder ? $folder->id : null;
+    }
+
+    /**
      * @throws Exception, with email client connection errors
      */
     private function reconnect(): void
@@ -289,17 +302,5 @@ class ImapEmailProcessor extends AbstractEmailProcessor
                 throw new Exception('Failed to connect to the mail server.');
             }
         }
-    }
-
-    /**
-     * Get folder ID by name
-     *
-     * @param string $folderName
-     * @return int|null
-     */
-    protected function getFolderId($folderName)
-    {
-        $folder = \Webkul\Email\Models\Folder::where('name', strtolower($folderName))->first();
-        return $folder ? $folder->id : null;
     }
 }

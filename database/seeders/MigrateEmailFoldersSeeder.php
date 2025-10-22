@@ -20,19 +20,19 @@ class MigrateEmailFoldersSeeder extends Seeder
 
         foreach ($emails as $email) {
             $folders = $email->folders;
-            
+
             if (is_array($folders) && count($folders) > 0) {
                 // Get the first folder name (assuming emails can only be in one folder now)
                 $folderName = $folders[0];
-                
+
                 // Find the folder by name
                 $folder = Folder::where('name', $folderName)->first();
-                
+
                 if ($folder) {
                     // Update the email to use the new folder_id
                     $email->update([
                         'folder_id' => $folder->id,
-                        'folders' => null, // Remove the old folders field
+                        'folders'   => null, // Remove the old folders field
                     ]);
                 }
             }

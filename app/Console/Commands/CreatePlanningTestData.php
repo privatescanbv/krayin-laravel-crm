@@ -96,6 +96,18 @@ class CreatePlanningTestData extends Command
         $this->info('   • E-mail: Bekijk in admin/mail/inbox');
     }
 
+    /**
+     * Get the inbox folder ID
+     *
+     * @return int|null
+     */
+    protected function getInboxFolderId()
+    {
+        $folder = \Webkul\Email\Models\Folder::where('name', 'inbox')->first();
+
+        return $folder ? $folder->id : null;
+    }
+
     private function getOrCreateClinic(): Clinic
     {
         $clinicId = $this->option('clinic-id');
@@ -283,16 +295,5 @@ class CreatePlanningTestData extends Command
         $this->info('   • Status: Ongelezen');
         $this->info('   • Entity: Niet gekoppeld');
         $this->info('   • Folder: Inbox');
-    }
-
-    /**
-     * Get the inbox folder ID
-     *
-     * @return int|null
-     */
-    protected function getInboxFolderId()
-    {
-        $folder = \Webkul\Email\Models\Folder::where('name', 'inbox')->first();
-        return $folder ? $folder->id : null;
     }
 }

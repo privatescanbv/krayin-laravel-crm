@@ -70,8 +70,7 @@ class EmailDataGrid extends DataGrid
             ->groupBy('emails.id', 'leads.first_name', 'leads.last_name', 'persons.name', 'activities.title')
             // Filter by folder name - handle both new folder_id and old folders JSON
             ->where(function($query) {
-                $query->where('folders.name', request('route'))
-                      ->orWhereRaw('JSON_CONTAINS(folders, ?)', ['"'.request('route').'"']);
+                $query->where('folders.name', request('route'));
             });
 
         $this->addFilter('id', 'emails.id');

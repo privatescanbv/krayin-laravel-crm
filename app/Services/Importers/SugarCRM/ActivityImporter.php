@@ -423,6 +423,18 @@ class ActivityImporter
     }
 
     /**
+     * Get the imported folder ID
+     *
+     * @return int|null
+     */
+    protected function getImportedFolderId()
+    {
+        $folder = \Webkul\Email\Models\Folder::where('name', 'imported')->first();
+
+        return $folder ? $folder->id : null;
+    }
+
+    /**
      * Format email content for activity comment
      */
     private function formatEmailContent($emailData): string
@@ -494,16 +506,5 @@ class ActivityImporter
         $this->command->infoV("Mapped assigned user {$assignedUserId} to user: {$user->name} (ID: {$user->id})");
 
         return $user->id;
-    }
-
-    /**
-     * Get the imported folder ID
-     *
-     * @return int|null
-     */
-    protected function getImportedFolderId()
-    {
-        $folder = \Webkul\Email\Models\Folder::where('name', 'imported')->first();
-        return $folder ? $folder->id : null;
     }
 }

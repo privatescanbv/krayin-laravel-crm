@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\PostcodeNormalizer;
+use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use InvalidArgumentException;
 use Webkul\Contact\Models\Person;
@@ -10,7 +11,7 @@ use Webkul\Lead\Models\Lead;
 
 class Address extends BaseModel
 {
-    use HasFactory;
+    use HasAuditTrail, HasFactory;
 
     /**
      * The validation rules.

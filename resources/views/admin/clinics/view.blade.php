@@ -73,7 +73,7 @@
             </div>
 
             <!-- Clinic Attributes -->
-            @include ('admin::settings.clinics.view.attributes')
+            <x:adminc::clinics.partials.attributes :clinic="$clinic"/>
 
             <!-- Footer with creation and modification dates -->
             <div class="flex w-full flex-col gap-2 p-4 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
@@ -105,7 +105,7 @@
             <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
                 <v-clinic-tabs>
                     <!-- Tab Navigation will be rendered by Vue -->
-                    
+
                     <!-- Activities Tab Content -->
                     <template #activities>
                         <x-admin::activities
@@ -116,22 +116,22 @@
 
                     <!-- Overview Tab Content -->
                     <template #overview>
-                        @include('admin::settings.clinics.view.overview')
+                        <x-adminc::clinics.partials.overview :clinic="$clinic"/>
                     </template>
 
                     <!-- Partner Products Tab Content -->
                     <template #partner-products>
-                        @include('admin::settings.clinics.view.partner-products')
+                        <x-adminc::clinics.partials.partner-products :clinic="$clinic"/>
                     </template>
 
                     <!-- Resources Tab Content -->
                     <template #resources>
-                        @include('admin::settings.clinics.view.resources')
+                        <x-adminc::clinics.partials.resources :clinic="$clinic"/>
                     </template>
 
                     <!-- Audit Trail Tab Content -->
                     <template #audit-trail>
-                        @include('admin::settings.clinics.view.audit-trail')
+                        <x-adminc::clinics.partials.audit-trail :clinic="$clinic"/>
                     </template>
                 </v-clinic-tabs>
             </div>

@@ -220,13 +220,13 @@ Breadcrumbs::for('settings.clinics', function (BreadcrumbTrail $trail) {
 // Settings > Clinics > Create
 Breadcrumbs::for('settings.clinics.create', function (BreadcrumbTrail $trail) {
     $trail->parent('settings.clinics');
-    $trail->push(trans('admin::app.settings.clinics.index.create.title'), route('admin.settings.clinics.create'));
+    $trail->push('', route('admin.settings.clinics.create'));
 });
 
 // Settings > Clinics > Edit
 Breadcrumbs::for('settings.clinics.edit', function (BreadcrumbTrail $trail, $clinic) {
     $trail->parent('settings.clinics');
-    $trail->push(trans('admin::app.settings.clinics.index.edit.title'), route('admin.settings.clinics.edit', $clinic->id));
+    $trail->push('', route('admin.settings.clinics.edit', $clinic->id));
 });
 
 // Settings > Clinics > View

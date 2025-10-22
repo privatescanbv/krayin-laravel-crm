@@ -58,14 +58,14 @@
                 @endif
 
                 <!-- Emails -->
-                <x-admin::clinic.contact-fields
+                <x-adminc::clinics.partials.contact-fields
                     :label="trans('admin::app.settings.clinics.view.attributes.emails')"
                     :fields="$clinic->emails"
                     type="email"
                 />
 
                 <!-- Phones -->
-                <x-admin::clinic.contact-fields
+                <x-adminc::clinics.partials.contact-fields
                     :label="trans('admin::app.settings.clinics.view.attributes.phones')"
                     :fields="$clinic->phones"
                     type="phone"

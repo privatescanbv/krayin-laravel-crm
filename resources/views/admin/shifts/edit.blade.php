@@ -51,10 +51,9 @@
 
                     <x-admin::form.control-group.error control-name="resource_id" />
                 </x-admin::form.control-group>
-                @include('admin::settings.shifts.partials.period', [
-                    'periodStart' => old('period_start', optional($shift->period_start)->format('Y-m-d')),
-                    'periodEnd'   => old('period_end', optional($shift->period_end)->format('Y-m-d') ?? ''),
-                ])
+                <x-adminc::shifts.partials.period
+                    :periodStart="old('period_start', optional($shift->period_start)->format('Y-m-d'))"
+                    :periodEnd="old('period_end', optional($shift->period_end)->format('Y-m-d'))"/>
 
                 @php
                     // Ensure weekday_time_blocks is always an array (it's stored as JSON in DB)
@@ -67,7 +66,7 @@
                     }
                     $weekdayBlocks = $weekdayBlocks ?: [];
                 @endphp
-                @include('admin::settings.shifts.partials.time-blocks', ['weekdayBlocks' => $weekdayBlocks])
+                <x-adminc::shifts.partials.time-blocks :weekdayBlocks="$weekdayBlocks"/>
 
                 <x-admin::form.control-group>
                     <x-admin::form.control-group.label>

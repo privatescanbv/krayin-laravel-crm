@@ -50,12 +50,10 @@
 
                     <x-admin::form.control-group.error control-name="resource_id" />
                 </x-admin::form.control-group>
-                @include('admin::settings.shifts.partials.period', [
-                    'periodStart' => old('period_start'),
-                    'periodEnd'   => old('period_end'),
-                ])
-
-                @include('admin::settings.shifts.partials.time-blocks', ['weekdayBlocks' => old('weekday_time_blocks', [])])
+                <x-adminc::shifts.partials.period
+                    :periodStart="old('period_start')"
+                    :periodEnd="old('period_end')"/>
+                <x-adminc::shifts.partials.time-blocks :weekdayBlocks="old('weekday_time_blocks', [])"/>
 
                 <x-admin::form.control-group>
                     <x-admin::form.control-group.label>

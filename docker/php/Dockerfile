@@ -42,12 +42,11 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 #    bash \
 
-# Install the MySQL client
-RUN curl -LO https://dev.mysql.com/get/mysql-apt-config_0.8.32-1_all.deb \
-    && echo "9be3e6b23b09bd452d3e52470c4b385f  mysql-apt-config_0.8.32-1_all.deb" | md5sum -c \
-    && dpkg -i mysql-apt-config_0.8.32-1_all.deb \
-    && apt-get update \
-    && apt-get install -y default-mysql-client
+# Install the MySQL client from Debian repositories
+RUN apt-get update \
+    && apt-get install -y default-mysql-client \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install PHP Redis using PECL
 RUN pecl install redis \

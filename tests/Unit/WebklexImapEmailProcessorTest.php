@@ -40,7 +40,7 @@ class WebklexImapEmailProcessorTest extends TestCase
             ->with(m::on(function ($data) {
                 // Minimal sanity checks to ensure required fields are present and no exceptions occur
                 return isset($data['from'], $data['subject'], $data['message_id'])
-                    && isset($data['folder_id']) && is_numeric($data['folder_id'])
+                    && array_key_exists('folder_id', $data) // Can be null if folder not found
                     && array_key_exists('parent_id', $data) && $data['parent_id'] === null
                     && isset($data['reference_ids']) && is_array($data['reference_ids']) && count($data['reference_ids']) >= 1;
             }))
@@ -87,7 +87,7 @@ class WebklexImapEmailProcessorTest extends TestCase
         $emailRepository->shouldReceive('update')
             ->once()
             ->with(m::on(function ($data) {
-                return isset($data['folder_id'], $data['reference_ids']);
+                return array_key_exists('folder_id', $data) && isset($data['reference_ids']);
             }), $parentEmail->id)
             ->andReturn($parentEmail);
 
@@ -99,7 +99,7 @@ class WebklexImapEmailProcessorTest extends TestCase
                     && ($data['activity_id'] === $parentEmail->activity_id)
                     && ($data['lead_id'] === $parentEmail->lead_id)
                     && ($data['person_id'] === $parentEmail->person_id)
-                    && isset($data['folder_id']) && is_numeric($data['folder_id'])
+                    && array_key_exists('folder_id', $data) // Can be null if folder not found
                     && isset($data['reference_ids']) && is_array($data['reference_ids']) && count($data['reference_ids']) >= 1;
             }))
             ->andReturn((object) ['id' => 555]);

@@ -59,6 +59,7 @@ class UserController extends Controller
             'password'         => 'nullable',
             'confirm_password' => 'nullable|required_with:password|same:password',
             'role_id'          => 'required',
+            'signature'        => 'nullable|string|max:2000',
         ]);
 
         $data = request()->all();
@@ -144,6 +145,7 @@ class UserController extends Controller
             'password'         => 'nullable',
             'confirm_password' => 'nullable|required_with:password|same:password',
             'role_id'          => 'required',
+            'signature'        => 'nullable|string|max:2000',
         ]);
 
         $data = request()->all();

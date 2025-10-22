@@ -30,6 +30,7 @@ class User extends Authenticatable implements UserContract
         'status',
         'external_id',
         'view_permission',
+        'signature',
     ];
 
     /**

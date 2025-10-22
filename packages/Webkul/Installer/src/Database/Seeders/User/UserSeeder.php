@@ -67,6 +67,7 @@ class UserSeeder extends Seeder
                 'role_id'         => 1,
                 'view_permission' => 'global',
                 'group_id'        => null, // Admin has no specific group
+                'signature'       => "Met vriendelijke groet,\n\nMark Bulthuis\nPrivatescan\nTel: +31 (0)6 12345678\nEmail: mark.bulthuis@privatescan.nl",
             ],
             [
                 'first_name'      => 'Mark',
@@ -77,6 +78,7 @@ class UserSeeder extends Seeder
                 'role_id'         => 1,
                 'view_permission' => 'global',
                 'group_id'        => null, // Admin has no specific group
+                'signature'       => "Met vriendelijke groet,\n\nMark Klaucke\nPrivatescan\nTel: +31 (0)6 12345679\nEmail: mark.klaucke@privatescan.nl",
             ],
             [
                 'first_name'      => 'Linda',
@@ -87,6 +89,7 @@ class UserSeeder extends Seeder
                 'role_id'         => 1,
                 'view_permission' => 'global',
                 'group_id'        => null,
+                'signature'       => "Met vriendelijke groet,\n\nLinda Meijer\nPrivatescan\nTel: +31 (0)6 12345680\nEmail: linda@privatescan.nl",
             ],
             [
                 'first_name'      => 'Petra',
@@ -97,6 +100,7 @@ class UserSeeder extends Seeder
                 'role_id'         => 1,
                 'view_permission' => 'global',
                 'group_id'        => $groupPrivatescanId,
+                'signature'       => "Met vriendelijke groet,\n\nPetra Nijhof\nPrivatescan\nTel: +31 (0)6 12345681\nEmail: petra@privatescan.nl",
             ],
             [
                 'first_name'      => 'Wout',
@@ -107,6 +111,7 @@ class UserSeeder extends Seeder
                 'role_id'         => 1,
                 'view_permission' => 'global',
                 'group_id'        => $groupHerniaId,
+                'signature'       => "Met vriendelijke groet,\n\nWout Lansink\nPrivatescan\nTel: +31 (0)6 12345682\nEmail: wout@privatescan.nl",
             ],
             [
                 'first_name'      => 'Lars',
@@ -117,6 +122,7 @@ class UserSeeder extends Seeder
                 'role_id'         => 2, // Medewerker Afdeling role
                 'view_permission' => 'group', // Restricted to group view
                 'group_id'        => $groupHerniaId,
+                'signature'       => "Met vriendelijke groet,\n\nLars Kamphuis\nPrivatescan\nTel: +31 (0)6 12345683\nEmail: lars@privatescan.nl",
             ],
             [
                 'first_name'      => 'Frank',
@@ -127,6 +133,7 @@ class UserSeeder extends Seeder
                 'role_id'         => 1,
                 'view_permission' => 'global',
                 'group_id'        => null,
+                'signature'       => "Met vriendelijke groet,\n\nFrank Hefti\nPrivatescan\nTel: +31 (0)6 12345684\nEmail: frank@privatescan.nl",
             ],
         ];
 
@@ -147,6 +154,7 @@ class UserSeeder extends Seeder
                     'status'          => $userData['status'],
                     'role_id'         => $userData['role_id'],
                     'view_permission' => $userData['view_permission'],
+                    'signature'       => $userData['signature'] ?? null,
                 ]
             );
 

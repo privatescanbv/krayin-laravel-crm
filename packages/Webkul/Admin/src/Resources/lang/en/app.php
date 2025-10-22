@@ -1369,6 +1369,7 @@ return [
                     'permission'       => 'Permission',
                     'role'             => 'Role',
                     'save-btn'         => 'Save User',
+                    'signature'        => 'Email Signature',
                     'status'           => 'Status',
                     'title'            => 'Create User',
                     'view-permission'  => 'View Permission',

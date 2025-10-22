@@ -62,8 +62,8 @@ test('query uses json contains for folder filtering', function () {
 
     $sql = $queryBuilder->toRawSql();
 
-    expect($sql)->toContain('JSON_CONTAINS');
-    expect($sql)->toContain('folders');
+    expect($sql)->toContain('folders.name');
+    expect($sql)->toContain('inbox');
 });
 
 test('query includes proper group by', function () {
@@ -88,8 +88,9 @@ test('query handles different routes', function () {
 
         $sql = $queryBuilder->toRawSql();
 
-        // Should contain the route in JSON_CONTAINS
-        expect($sql)->toContain('"'.$route.'"');
+        // Should contain the route in folders.name
+        expect($sql)->toContain('folders.name')
+            ->and($sql)->toContain($route);
     }
 });
 

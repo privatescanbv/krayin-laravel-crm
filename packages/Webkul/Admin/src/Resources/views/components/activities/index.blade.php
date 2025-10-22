@@ -366,7 +366,7 @@
                                                     @if (bouncer()->hasPermission('mail.view'))
                                                         <x-admin::dropdown.menu.item>
                                                             <a
-                                                                :href="'{{ route('admin.mail.view', ['route' => 'replaceFolder', 'id' => 'replaceMailId']) }}'.replace('replaceFolder', activity.email?.folder?.name || 'inbox').replace('replaceMailId', activity.id)"
+                                                                :href="'{{ route('admin.mail.view', ['route' => 'replaceFolder', 'id' => 'replaceMailId']) }}'.replace('replaceFolder', activity.folder_name || 'inbox').replace('replaceMailId', activity.id)"
                                                                 class="flex items-center gap-2"
                                                                 target="_blank"
                                                             >

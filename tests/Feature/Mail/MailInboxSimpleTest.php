@@ -19,8 +19,8 @@ test('email datagrid query executes without errors', function () {
     $queryBuilder = $dataGrid->prepareQueryBuilder();
     $sql = $queryBuilder->toRawSql();
 
-    expect($sql)->toContain('JSON_CONTAINS')
-        ->and($sql)->toContain('"inbox"');
+    expect($sql)->toContain('folders.name')
+        ->and($sql)->toContain('inbox');
 });
 
 test('email datagrid handles different routes', function () {
@@ -33,7 +33,8 @@ test('email datagrid handles different routes', function () {
         $queryBuilder = $dataGrid->prepareQueryBuilder();
         $sql = $queryBuilder->toRawSql();
 
-        expect($sql)->toContain('"'.request('route').'"');
+        expect($sql)->toContain('folders.name')
+            ->and($sql)->toContain($route);
     }
 });
 

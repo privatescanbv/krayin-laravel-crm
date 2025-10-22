@@ -45,11 +45,14 @@ test('person activities index includes email from activity without person_id', f
         'activity_id' => $activity->id,
     ]);
 
+    // Create inbox folder first
+    $folder = \Webkul\Email\Models\Folder::create(['name' => 'inbox']);
+    
     // Email that belongs to the above activity, does not have person_id, but does have lead_id and activity_id
     $email = Email::create([
         'subject'     => 'Re: Follow up',
         'is_read'     => 0,
-        'folders'     => json_encode(['inbox']),
+        'folder_id'   => $folder->id,
         'from'        => json_encode(['test@example.com']),
         'reply_to'    => json_encode(['test@example.com']),
         'cc'          => json_encode([]),

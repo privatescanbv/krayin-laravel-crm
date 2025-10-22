@@ -157,7 +157,7 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
 
         if ($email) {
             $parentEmail = $this->emailRepository->update([
-                'folders'       => array_unique(array_merge($email->folders, [$folderName])),
+                'folder_id'     => $this->getFolderId($folderName),
                 'reference_ids' => array_merge($email->reference_ids ?? [], [$references]),
             ], $email->id);
         }
@@ -167,7 +167,7 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
             'name'          => $attributes['from']->first()->personal,
             'reply'         => $message->bodies['html'] ?? $message->bodies['text'],
             'is_read'       => (int) $message->flags()->has('seen'),
-            'folders'       => [$folderName],
+            'folder_id'     => $this->getFolderId($folderName),
             'reply_to'      => $this->getEmailsByAttributeCode($attributes, 'to'),
             'cc'            => $this->getEmailsByAttributeCode($attributes, 'cc'),
             'bcc'           => $this->getEmailsByAttributeCode($attributes, 'bcc'),
@@ -283,5 +283,17 @@ class WebklexImapEmailProcessor implements InboundEmailProcessor
             logger()->error('Database is not available: '.$e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Get folder ID by name
+     *
+     * @param string $folderName
+     * @return int|null
+     */
+    protected function getFolderId($folderName)
+    {
+        $folder = \Webkul\Email\Models\Folder::where('name', strtolower($folderName))->first();
+        return $folder ? $folder->id : null;
     }
 }

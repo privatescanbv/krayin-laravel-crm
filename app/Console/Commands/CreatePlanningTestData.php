@@ -267,7 +267,7 @@ class CreatePlanningTestData extends Command
             'from'        => ['test@example.com'],
             'subject'     => 'Voorbeeld e-mail voor planning test data',
             'reply'       => 'Dit is een voorbeeld e-mail die is aangemaakt door de planning:create-test-data command. Deze e-mail is ongelezen en niet gekoppeld aan een entity.',
-            'folders'     => ['inbox'],
+            'folder_id'   => $this->getInboxFolderId(),
             'is_read'     => false,
             'person_id'   => null,
             'lead_id'     => null,
@@ -283,5 +283,16 @@ class CreatePlanningTestData extends Command
         $this->info('   • Status: Ongelezen');
         $this->info('   • Entity: Niet gekoppeld');
         $this->info('   • Folder: Inbox');
+    }
+
+    /**
+     * Get the inbox folder ID
+     *
+     * @return int|null
+     */
+    protected function getInboxFolderId()
+    {
+        $folder = \Webkul\Email\Models\Folder::where('name', 'inbox')->first();
+        return $folder ? $folder->id : null;
     }
 }

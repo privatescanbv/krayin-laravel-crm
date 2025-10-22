@@ -182,7 +182,7 @@ return [
         'sort'       => 1,
         'icon-class' => 'icon-settings-pipeline',
     ], [
-        'key'        => 'settings.clinics.partner_products',
+        'key'        => 'clinic_products',
         'name'       => 'admin::app.layouts.partner_products',
         'info'       => 'admin::app.layouts.partner_products-info',
         'route'      => 'admin.partner_products.index',

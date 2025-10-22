@@ -315,6 +315,26 @@ return [
         'route' => ['admin.partner_products.delete'],
         'sort'  => 3,
     ], [
+        'key'   => 'clinic_products',
+        'name'  => 'Clinic Products',
+        'route' => 'admin.clinic_products.index',
+        'sort'  => 6,
+    ], [
+        'key'   => 'clinic_products.create',
+        'name'  => 'admin::app.acl.create',
+        'route' => ['admin.clinic_products.create', 'admin.clinic_products.store'],
+        'sort'  => 1,
+    ], [
+        'key'   => 'clinic_products.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => ['admin.clinic_products.edit', 'admin.clinic_products.update'],
+        'sort'  => 2,
+    ], [
+        'key'   => 'clinic_products.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => ['admin.clinic_products.delete'],
+        'sort'  => 3,
+    ], [
         'key'   => 'settings.product_types',
         'name'  => 'Product Types',
         'route' => 'admin.settings.product_types.index',

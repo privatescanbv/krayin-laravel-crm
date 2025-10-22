@@ -121,7 +121,7 @@
 
                     <!-- Partner Products Tab Content -->
                     <template #partner-products>
-                        @include('admin::settings.clinics.view.partner-products')
+                        @include('admin::admin.clinic-products.index')
                     </template>
 
                     <!-- Resources Tab Content -->

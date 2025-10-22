@@ -1753,6 +1753,27 @@ return [
                         'delete' => 'Verwijderen',
                     ],
                 ],
+            ],
+        ],
+
+        'clinic-products' => [
+            'index' => [
+                'title' => 'Kliniek Producten',
+                'add-btn' => 'Kliniek Product Toevoegen',
+                'no-products' => 'Geen kliniek producten gevonden.',
+                'detach-success' => 'Kliniek product succesvol losgekoppeld.',
+                'delete-success' => 'Kliniek product succesvol verwijderd.',
+                'table' => [
+                    'name' => 'Naam',
+                    'price' => 'Prijs',
+                    'status' => 'Status',
+                    'active' => 'Actief',
+                    'inactive' => 'Inactief',
+                    'view' => 'Bekijken',
+                    'edit' => 'Bewerken',
+                    'delete' => 'Verwijderen',
+                ],
+            ],
 
                 'resources' => [
                     'title' => 'Gekoppelde Resources',

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\DataGrids\Settings;
+namespace App\DataGrids\ClinicProducts;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
 
-class ClinicPartnerProductDataGrid extends DataGrid
+class ClinicProductDataGrid extends DataGrid
 {
     protected $sortColumn = 'partner_products.name';
 
@@ -27,7 +27,7 @@ class ClinicPartnerProductDataGrid extends DataGrid
             );
 
         // Filter by clinic_id from route parameter
-        if ($clinicId = request()->route('id')) {
+        if ($clinicId = request()->route('clinic_id')) {
             $queryBuilder->where('clinic_partner_product.clinic_id', $clinicId);
         }
 
@@ -52,7 +52,7 @@ class ClinicPartnerProductDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'name',
             'type'       => 'string',
-            'label'      => trans('admin::app.settings.clinics.view.partner-products.table.name'),
+            'label'      => trans('admin::app.clinic-products.index.table.name'),
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
@@ -61,7 +61,7 @@ class ClinicPartnerProductDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'sales_price',
             'type'       => 'string',
-            'label'      => trans('admin::app.settings.clinics.view.partner-products.table.price'),
+            'label'      => trans('admin::app.clinic-products.index.table.price'),
             'searchable' => false,
             'filterable' => true,
             'sortable'   => true,
@@ -91,19 +91,19 @@ class ClinicPartnerProductDataGrid extends DataGrid
         $this->addColumn([
             'index'      => 'active',
             'type'       => 'boolean',
-            'label'      => trans('admin::app.settings.clinics.view.partner-products.table.status'),
+            'label'      => trans('admin::app.clinic-products.index.table.status'),
             'searchable' => false,
             'filterable' => true,
             'sortable'   => true,
             'closure'    => function ($row) {
                 if ($row->active) {
                     return '<span class="rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200">'
-                        .trans('admin::app.settings.clinics.view.partner-products.table.active')
+                        .trans('admin::app.clinic-products.index.table.active')
                         .'</span>';
                 }
 
                 return '<span class="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800 dark:bg-gray-900 dark:text-gray-200">'
-                    .trans('admin::app.settings.clinics.view.partner-products.table.inactive')
+                    .trans('admin::app.clinic-products.index.table.inactive')
                     .'</span>';
             },
         ]);
@@ -111,32 +111,32 @@ class ClinicPartnerProductDataGrid extends DataGrid
 
     public function prepareActions(): void
     {
-        if (bouncer()->hasPermission('partner_products.view')) {
+        if (bouncer()->hasPermission('clinic_products.view')) {
             $this->addAction([
                 'index'  => 'view',
                 'icon'   => 'icon-eye',
-                'title'  => trans('admin::app.settings.clinics.view.partner-products.table.view'),
+                'title'  => trans('admin::app.clinic-products.index.table.view'),
                 'method' => 'GET',
                 'url'    => fn ($row) => route('admin.partner_products.view', $row->id),
             ]);
         }
-        if (bouncer()->hasPermission('partner_products.edit')) {
+        if (bouncer()->hasPermission('clinic_products.edit')) {
             $this->addAction([
                 'index'  => 'edit',
                 'icon'   => 'icon-edit',
-                'title'  => trans('admin::app.settings.clinics.view.partner-products.table.edit'),
+                'title'  => trans('admin::app.clinic-products.index.table.edit'),
                 'method' => 'GET',
                 'url'    => fn ($row) => route('admin.partner_products.edit', $row->id),
             ]);
         }
-        if (bouncer()->hasPermission('partner_products.delete')) {
+        if (bouncer()->hasPermission('clinic_products.delete')) {
             $this->addAction([
                 'index'  => 'delete',
                 'icon'   => 'icon-delete',
-                'title'  => trans('admin::app.settings.clinics.view.partner-products.table.delete'),
+                'title'  => trans('admin::app.clinic-products.index.table.delete'),
                 'method' => 'DELETE',
-                'url'    => fn ($row) => route('admin.settings.clinics.partner_products.delete', [
-                    'id'                 => request()->route('id'),
+                'url'    => fn ($row) => route('admin.clinic_products.delete', [
+                    'clinic_id'          => request()->route('clinic_id'),
                     'partner_product_id' => $row->id,
                 ]),
             ]);

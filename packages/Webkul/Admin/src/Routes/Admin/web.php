@@ -20,6 +20,7 @@ require 'mail-routes.php';
  */
 require 'settings-routes.php';
 require 'partner-products-routes.php';
+require 'clinic-products-routes.php';
 
 /**
  * Products routes.

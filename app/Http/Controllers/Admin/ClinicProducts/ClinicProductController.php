@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Settings\Clinic;
+namespace App\Http\Controllers\Admin\ClinicProducts;
 
-use App\DataGrids\Settings\ClinicPartnerProductDataGrid;
+use App\DataGrids\ClinicProducts\ClinicProductDataGrid;
 use App\Models\PartnerProduct;
 use App\Repositories\ClinicRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Webkul\Admin\Http\Controllers\Controller;
 
-class PartnerProductController extends Controller
+class ClinicProductController extends Controller
 {
     public function __construct(
         protected ClinicRepository $clinicRepository
@@ -21,7 +21,7 @@ class PartnerProductController extends Controller
         $this->clinicRepository->findOrFail($id);
 
         // Return datagrid JSON response
-        return datagrid(ClinicPartnerProductDataGrid::class)->process();
+        return datagrid(ClinicProductDataGrid::class)->process();
     }
 
     public function destroy(Request $request, int $id, int $partner_product_id): JsonResponse
@@ -35,11 +35,11 @@ class PartnerProductController extends Controller
         if ($clinicCount > 1) {
             // Multiple clinics: only detach from this clinic
             $clinic->partnerProducts()->detach($partner_product_id);
-            $message = trans('admin::app.settings.clinics.view.partner-products.detach-success');
+            $message = trans('admin::app.clinic-products.index.detach-success');
         } else {
             // Single clinic: soft delete the partner product
             $partnerProduct->delete();
-            $message = trans('admin::app.settings.clinics.view.partner-products.delete-success');
+            $message = trans('admin::app.clinic-products.index.delete-success');
         }
 
         return response()->json([

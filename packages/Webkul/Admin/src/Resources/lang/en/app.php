@@ -732,6 +732,14 @@ return [
             ],
 
             'view' => [
+                'tabs' => [
+                    'activities'      => 'Activities',
+                    'overview'        => 'Overview',
+                    'partner-products' => 'Partner Products',
+                    'resources'       => 'Resources',
+                    'audit-trail'     => 'Audit Trail',
+                ],
+
                 'resources' => [
                     'title'    => 'Resources',
                     'total'    => 'Total',
@@ -765,6 +773,27 @@ return [
                         'edit'     => 'Edit',
                         'delete'   => 'Delete',
                     ],
+                ],
+            ],
+        ],
+
+        'clinic-products' => [
+            'index' => [
+                'title'          => 'Clinic Products',
+                'add-btn'        => 'Add Clinic Product',
+                'no-products'    => 'No clinic products found.',
+                'detach-success' => 'Clinic product detached successfully.',
+                'delete-success' => 'Clinic product deleted successfully.',
+
+                'table' => [
+                    'name'     => 'Name',
+                    'price'    => 'Price',
+                    'status'   => 'Status',
+                    'active'   => 'Active',
+                    'inactive' => 'Inactive',
+                    'view'     => 'View',
+                    'edit'     => 'Edit',
+                    'delete'   => 'Delete',
                 ],
             ],
         ],

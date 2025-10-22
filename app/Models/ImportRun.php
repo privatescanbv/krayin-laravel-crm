@@ -21,6 +21,8 @@ class ImportRun extends Model
         'records_imported',
         'records_skipped',
         'records_errored',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [
@@ -30,6 +32,8 @@ class ImportRun extends Model
         'records_imported'   => 'integer',
         'records_skipped'    => 'integer',
         'records_errored'    => 'integer',
+        'created_by'         => 'integer',
+        'updated_by'         => 'integer',
     ];
 
     public function importLogs()

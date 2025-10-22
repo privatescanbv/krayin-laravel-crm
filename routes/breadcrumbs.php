@@ -409,6 +409,24 @@ Breadcrumbs::for('settings.email_templates.edit', function (BreadcrumbTrail $tra
     $trail->push(trans('admin::app.settings.email-template.edit.title'), route('admin.settings.email_templates.edit', $emailTemplate->id));
 });
 
+// Settings > Folders
+Breadcrumbs::for('settings.folders', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings');
+    $trail->push(trans('admin::app.settings.folders.index.title'), route('admin.settings.folders.index'));
+});
+
+// Settings > Folders > Create Folder
+Breadcrumbs::for('settings.folders.create', function (BreadcrumbTrail $trail) {
+    $trail->parent('settings.folders');
+    $trail->push(trans('admin::app.settings.folders.create.title'), route('admin.settings.folders.create'));
+});
+
+// Settings > Folders > Edit Folder
+Breadcrumbs::for('settings.folders.edit', function (BreadcrumbTrail $trail, $folder) {
+    $trail->parent('settings.folders');
+    $trail->push(trans('admin::app.settings.folders.edit.title'), route('admin.settings.folders.edit', $folder->id));
+});
+
 // Settings > Marketing Events
 Breadcrumbs::for('settings.marketing.events', function (BreadcrumbTrail $trail) {
     $trail->parent('settings');

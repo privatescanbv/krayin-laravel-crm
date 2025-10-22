@@ -27,6 +27,7 @@ return [
         'sources'         => 'Sources',
         'types'           => 'Types',
         'email-templates' => 'Email Templates',
+        'folders'         => 'Folders',
         'workflows'       => 'Workflows',
         'other-settings'  => 'Other Settings',
         'tags'            => 'Tags',
@@ -1219,6 +1220,44 @@ return [
                 'subject-placeholders' => 'Subject Placeholders',
                 'general'              => 'General',
                 'name'                 => 'Name',
+            ],
+        ],
+
+        'folders' => [
+            'index' => [
+                'title'                    => 'Folders',
+                'create-btn'               => 'Create Folder',
+                'create-success'           => 'Folder created successfully.',
+                'update-success'           => 'Folder updated successfully.',
+                'delete-success'           => 'Folder deleted successfully.',
+                'delete-failed'            => 'Folder can not be deleted.',
+                'mass-delete-success'      => 'Folders deleted successfully',
+                'delete-confirmation'      => 'Are you sure you want to delete this folder?',
+                'edit'                     => 'Edit',
+                'delete'                   => 'Delete',
+
+                'empty-state' => [
+                    'title'       => 'No folders found',
+                    'description' => 'Create your first folder to organize your emails.',
+                ],
+            ],
+
+            'create' => [
+                'title'     => 'Create Folder',
+                'name'      => 'Folder Name',
+                'parent'    => 'Parent Folder',
+                'no-parent' => 'No Parent (Root Folder)',
+                'cancel'    => 'Cancel',
+                'save-btn'  => 'Create Folder',
+            ],
+
+            'edit' => [
+                'title'     => 'Edit Folder',
+                'name'      => 'Folder Name',
+                'parent'    => 'Parent Folder',
+                'no-parent' => 'No Parent (Root Folder)',
+                'cancel'    => 'Cancel',
+                'save-btn'  => 'Update Folder',
             ],
         ],
 
@@ -2483,6 +2522,8 @@ return [
         'email-templates'      => 'Email Templates',
         'email'                => 'Email',
         'email-templates-info' => 'Add, edit or delete email templates from CRM',
+        'folders'              => 'Folders',
+        'folders-info'         => 'Manage email folders to organize your emails',
         'events'               => 'Events',
         'events-info'          => 'Add, edit or delete events from CRM',
         'campaigns'            => 'Campaigns',

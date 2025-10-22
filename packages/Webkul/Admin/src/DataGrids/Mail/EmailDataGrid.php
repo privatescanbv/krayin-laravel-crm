@@ -66,9 +66,10 @@ class EmailDataGrid extends DataGrid
             ->leftJoin('salesleads', 'emails.sales_lead_id', '=', 'salesleads.id')
             ->leftJoin('persons', 'emails.person_id', '=', 'persons.id')
             ->leftJoin('activities', 'emails.activity_id', '=', 'activities.id')
+            ->leftJoin('folders', 'emails.folder_id', '=', 'folders.id')
             ->groupBy('emails.id', 'leads.first_name', 'leads.last_name', 'persons.name', 'activities.title')
-            // Use JSON_CONTAINS for better performance than LIKE
-            ->whereRaw('JSON_CONTAINS(folders, ?)', ['"'.request('route').'"']);
+            // Filter by folder name for backward compatibility
+            ->where('folders.name', request('route'));
 
         $this->addFilter('id', 'emails.id');
         $this->addFilter('name', 'emails.name');

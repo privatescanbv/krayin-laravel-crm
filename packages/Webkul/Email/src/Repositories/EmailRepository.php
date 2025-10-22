@@ -46,7 +46,7 @@ class EmailRepository extends Repository
             'source'        => 'web',
             'from' => config('mail.from.address'),
             'user_type'     => 'admin',
-            'folders'       => isset($data['is_draft']) ? ['draft'] : ['outbox'],
+            'folder_id'     => $this->getFolderId($data['is_draft'] ?? false),
             'unique_id'     => $uniqueId,
             'message_id'    => $uniqueId,
             'reference_ids' => array_merge($referenceIds, [$uniqueId]),
@@ -102,5 +102,18 @@ class EmailRepository extends Repository
         }
 
         return $data;
+    }
+
+    /**
+     * Get folder ID by name
+     *
+     * @param bool $isDraft
+     * @return int|null
+     */
+    protected function getFolderId($isDraft = false)
+    {
+        $folderName = $isDraft ? 'draft' : 'outbox';
+        $folder = \Webkul\Email\Models\Folder::where('name', $folderName)->first();
+        return $folder ? $folder->id : null;
     }
 }

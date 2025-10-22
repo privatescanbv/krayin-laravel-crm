@@ -20,6 +20,45 @@
                     <!-- title -->
                     @lang('admin::app.mail.index.' . request('route'))
                 </div>
+
+                <!-- Folder Navigation -->
+                <div class="flex flex-wrap gap-2 mt-2">
+                    @php
+                        $folders = \Webkul\Email\Models\Folder::with('children')->whereNull('parent_id')->orderBy('name')->get();
+                    @endphp
+                    
+                    @foreach ($folders as $folder)
+                        <a
+                            href="{{ route('admin.mail.index', ['route' => $folder->name]) }}"
+                            class="inline-flex items-center gap-1 px-3 py-1 text-sm rounded-full border transition-colors
+                                {{ request('route') === $folder->name 
+                                    ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-700' 
+                                    : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700' 
+                                }}"
+                        >
+                            <i class="icon-folder text-sm"></i>
+                            {{ $folder->name }}
+                            <span class="text-xs opacity-75">({{ $folder->emails->count() }})</span>
+                        </a>
+                        
+                        @if ($folder->children->count() > 0)
+                            @foreach ($folder->children as $child)
+                                <a
+                                    href="{{ route('admin.mail.index', ['route' => $child->name]) }}"
+                                    class="inline-flex items-center gap-1 px-3 py-1 text-sm rounded-full border transition-colors ml-4
+                                        {{ request('route') === $child->name 
+                                            ? 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-700' 
+                                            : 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700' 
+                                        }}"
+                                >
+                                    <i class="icon-folder text-sm"></i>
+                                    {{ $child->name }}
+                                    <span class="text-xs opacity-75">({{ $child->emails->count() }})</span>
+                                </a>
+                            @endforeach
+                        @endif
+                    @endforeach
+                </div>
             </div>
 
             <div class="flex items-center gap-x-2.5">

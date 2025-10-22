@@ -26,7 +26,6 @@ class Email extends Model implements EmailContract
      * @var array
      */
     protected $casts = [
-        'folders'       => 'array',
         'sender'        => 'array',
         'from'          => 'array',
         'reply_to'      => 'array',
@@ -55,7 +54,7 @@ class Email extends Model implements EmailContract
         'name',
         'user_type',
         'is_read',
-        'folders',
+        'folder_id',
         'from',
         'sender',
         'reply_to',
@@ -151,6 +150,14 @@ class Email extends Model implements EmailContract
     public function activity()
     {
         return $this->belongsTo(Activity::class, 'activity_id');
+    }
+
+    /**
+     * Get the folder that contains this email.
+     */
+    public function folder()
+    {
+        return $this->belongsTo(FolderProxy::modelClass());
     }
 
     /**

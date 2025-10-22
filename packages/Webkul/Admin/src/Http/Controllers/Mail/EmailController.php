@@ -51,6 +51,16 @@ class EmailController extends Controller
                 return view('admin::mail.compose');
 
             default:
+                // Check if the route is a folder name
+                $folder = \Webkul\Email\Models\Folder::where('name', request('route'))->first();
+                if ($folder) {
+                    if (request()->ajax()) {
+                        return datagrid(EmailDataGrid::class)->process();
+                    }
+                    return view('admin::mail.index', compact('folder'));
+                }
+
+                // Fallback to original behavior for backward compatibility
                 if (request()->ajax()) {
                     return datagrid(EmailDataGrid::class)->process();
                 }
@@ -120,9 +130,13 @@ class EmailController extends Controller
             try {
                 Mail::send(new Email($email));
 
-                $this->emailRepository->update([
-                    'folders' => ['sent'],
-                ], $email->id);
+                // Get the 'sent' folder
+                $sentFolder = \Webkul\Email\Models\Folder::where('name', 'sent')->first();
+                if ($sentFolder) {
+                    $this->emailRepository->update([
+                        'folder_id' => $sentFolder->id,
+                    ], $email->id);
+                }
             } catch (Exception $e) {
             }
         }
@@ -160,7 +174,11 @@ class EmailController extends Controller
         $data = request()->all();
 
         if (! is_null(request('is_draft'))) {
-            $data['folders'] = request('is_draft') ? ['draft'] : ['outbox'];
+            $folderName = request('is_draft') ? 'draft' : 'outbox';
+            $folder = \Webkul\Email\Models\Folder::where('name', $folderName)->first();
+            if ($folder) {
+                $data['folder_id'] = $folder->id;
+            }
         }
 
         $email = $this->emailRepository->update($data, request('id') ?? $id);
@@ -171,9 +189,13 @@ class EmailController extends Controller
             try {
                 Mail::send(new Email($email));
 
-                $this->emailRepository->update([
-                    'folders' => ['inbox', 'sent'],
-                ], $email->id);
+                // Get the 'inbox' folder
+                $inboxFolder = \Webkul\Email\Models\Folder::where('name', 'inbox')->first();
+                if ($inboxFolder) {
+                    $this->emailRepository->update([
+                        'folder_id' => $inboxFolder->id,
+                    ], $email->id);
+                }
             } catch (Exception $e) {
             }
         }
@@ -247,9 +269,13 @@ class EmailController extends Controller
             foreach ($emails as $email) {
                 Event::dispatch('email.update.before', $email->id);
 
-                $this->emailRepository->update([
-                    'folders' => request('folders'),
-                ], $email->id);
+                // Get the folder by name
+                $folder = \Webkul\Email\Models\Folder::where('name', request('folders')[0] ?? 'inbox')->first();
+                if ($folder) {
+                    $this->emailRepository->update([
+                        'folder_id' => $folder->id,
+                    ], $email->id);
+                }
 
                 Event::dispatch('email.update.after', $email->id);
             }
@@ -277,9 +303,12 @@ class EmailController extends Controller
             $parentId = $email->parent_id;
 
             if (request('type') == 'trash') {
-                $this->emailRepository->update([
-                    'folders' => ['trash'],
-                ], $id);
+                $trashFolder = \Webkul\Email\Models\Folder::where('name', 'trash')->first();
+                if ($trashFolder) {
+                    $this->emailRepository->update([
+                        'folder_id' => $trashFolder->id,
+                    ], $id);
+                }
             } else {
                 $this->emailRepository->delete($id);
             }
@@ -324,7 +353,10 @@ class EmailController extends Controller
                 Event::dispatch('email.'.$massDestroyRequest->input('type').'.before', $email->id);
 
                 if ($massDestroyRequest->input('type') == 'trash') {
-                    $this->emailRepository->update(['folders' => ['trash']], $email->id);
+                    $trashFolder = \Webkul\Email\Models\Folder::where('name', 'trash')->first();
+                    if ($trashFolder) {
+                        $this->emailRepository->update(['folder_id' => $trashFolder->id], $email->id);
+                    }
                 } else {
                     $this->emailRepository->delete($email->id);
                 }

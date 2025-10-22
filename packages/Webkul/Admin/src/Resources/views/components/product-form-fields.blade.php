@@ -205,7 +205,7 @@
 {!! view_render_event('admin.products.' . ($product ? 'edit' : 'create') . '.attributes.after', ['product' => $product]) !!}
 
 <!-- Partner Products Selection -->
-<x-admin::partner-product-lookup
+<x-adminc::partner-products.lookup
     :src="route('admin.partner_products.search')"
     name="partner_products"
     :label="trans('admin::app.products.create.partner_products')"

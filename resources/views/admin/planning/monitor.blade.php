@@ -3,8 +3,8 @@
         Monitor Resource Planning
     </x-slot>
 
-    @include('admin::planning.components.planning-calendar')
-    @include('admin::planning.components.multiselect-filter')
+    <x-adminc::planning.components.planning-calendar/>
+    <x-adminc::planning.components.multiselect-filter/>
 
     <div class="flex flex-col gap-4">
         <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
@@ -133,21 +133,21 @@
                     },
                     filteredResourceOptions() {
                         let filtered = this.resources;
-                        
+
                         // Filter by resource type if selected
                         if (this.filters.resource_type_ids.length > 0) {
                             filtered = filtered.filter(r => this.filters.resource_type_ids.includes(r.resource_type_id));
                         }
-                        
+
                         // Filter by clinic if selected
                         if (this.filters.clinic_ids.length > 0) {
                             filtered = filtered.filter(r => this.filters.clinic_ids.includes(r.clinic_id));
                         }
-                        
+
                         return filtered.map(r => {
                             const clinic = this.clinics.find(c => c.id === r.clinic_id);
-                            return { 
-                                value: r.id, 
+                            return {
+                                value: r.id,
                                 label: r.name + (clinic ? ' (' + clinic.name + ')' : '')
                             };
                         });
@@ -207,7 +207,7 @@
                     },
                     async loadAvailability() {
                         const params = {};
-                        
+
                         if (this.filters.resource_type_ids.length > 0) {
                             params.resource_type_ids = this.filters.resource_type_ids.join(',');
                         }

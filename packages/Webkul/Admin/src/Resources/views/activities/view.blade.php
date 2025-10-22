@@ -101,7 +101,7 @@
                         @endif
 
                         @if($activity->salesLead)
-                            <a href="{{ route('admin.workflow-leads.view', $activity->salesLead->id) }}"
+                            <a href="{{ route('admin.sales-leads.view', $activity->salesLead->id) }}"
                                class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900 dark:text-green-200 dark:hover:bg-green-800">
                                 <span class="icon-sales-lead mr-1"></span>
                                 {{ $activity->salesLead->name }}

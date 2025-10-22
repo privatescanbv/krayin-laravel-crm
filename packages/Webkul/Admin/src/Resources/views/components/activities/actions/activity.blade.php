@@ -314,7 +314,7 @@
                     if (this.entityControlName === 'lead_id' && this.entity.id) {
                         url = `/admin/leads/${this.entity.id}/activities`;
                     } else if (this.entityControlName === 'workflow_lead_id' && this.entity.id) {
-                        url = `/admin/workflow-leads/${this.entity.id}/activities`;
+                        url = `/admin/sales-leads/${this.entity.id}/activities`;
                     }
 
                     // Format dates to Y-m-d H:i:s format

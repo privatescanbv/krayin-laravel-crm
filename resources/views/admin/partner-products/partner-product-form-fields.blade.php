@@ -232,7 +232,7 @@
 />
 
 <!-- Related Products -->
-<x-admin::partner-product-lookup
+<x-adminc::partner-products.lookup
     :src="route('admin.partner_products.search')"
     name="related_products"
     :label="trans('admin::app.partner_products.index.create.related_products')"

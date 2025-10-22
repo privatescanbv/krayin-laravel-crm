@@ -93,10 +93,10 @@ class RoleSeeder extends Seeder
                 'settings.lead.types.create',
                 'settings.lead.types.edit',
                 'settings.lead.types.delete',
-                'workflow-leads',
-                'workflow-leads.create',
-                'workflow-leads.edit',
-                'workflow-leads.delete',
+                'sales-leads',
+                'sales-leads.create',
+                'sales-leads.edit',
+                'sales-leads.delete',
             ]),
         ]);
     }

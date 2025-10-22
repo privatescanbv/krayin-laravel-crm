@@ -4,8 +4,8 @@
         Resource Planning - Order #{{ $order->id }}
     </x-slot>
 
-    @include('admin::planning.components.planning-calendar')
-    @include('admin::planning.components.multiselect-filter')
+    <x-adminc::planning.components.planning-calendar/>
+    <x-adminc::planning.components.multiselect-filter/>
 
     <div class="flex flex-col gap-4">
         <div

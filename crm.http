@@ -15,7 +15,7 @@ Content-Type: application/json
 }
 
 ### create workflow lead
-POST http://localhost:8000/api/workflow-leads
+POST http://localhost:8000/api/sales-leads
 Content-Type: application/json
 
 {

@@ -22,6 +22,8 @@ Route::prefix('mail')->group(function () {
 
         Route::post('mass-destroy', 'massDestroy')->name('admin.mail.mass_delete');
 
+        Route::post('move/{id}', 'move')->name('admin.mail.move');
+
         Route::post('inbound-parse', 'inboundParse')->name('admin.mail.inbound_parse')->withoutMiddleware('user');
     });
 

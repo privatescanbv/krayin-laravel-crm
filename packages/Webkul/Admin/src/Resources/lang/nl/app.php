@@ -2060,6 +2060,7 @@ return [
             'forward' => 'Doorsturen',
             'delete' => 'Verwijderen',
             'enter-mails' => 'Voer e-mailadres in',
+            'move' => 'Verplaats naar folder',
             'rotten-days' => 'Lead is al :days dagen verlopen',
             'search-an-existing-lead' => 'Zoek een bestaande lead',
             'search-an-existing-contact' => 'Zoek een bestaand contact',

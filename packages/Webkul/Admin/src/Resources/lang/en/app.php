@@ -2002,6 +2002,8 @@ return [
         'mass-update-success' => 'Emails updated successfully.',
         'delete-success'      => 'Email deleted successfully.',
         'delete-failed'       => 'Email can not be deleted.',
+        'move-success'        => 'Email moved successfully.',
+        'move-failed'         => 'Email could not be moved.',
 
         'view' => [
             'title'                      => 'Mails',
@@ -2014,6 +2016,7 @@ return [
             'reply'                      => 'Reply',
             'reply-all'                  => 'Reply All',
             'forward'                    => 'Forward',
+            'move'                       => 'Move to Folder',
             'delete'                     => 'Delete',
             'enter-mails'                => 'Enter email id',
             'rotten-days'                => 'Lead is rotten for :days days',

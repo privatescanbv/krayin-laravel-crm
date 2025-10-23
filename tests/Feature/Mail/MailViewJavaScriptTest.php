@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Webkul\Email\Models\Email;
+use Webkul\Email\Models\Folder;
 use Webkul\User\Models\User;
 
 uses(RefreshDatabase::class);
@@ -22,7 +23,7 @@ test('mail view JavaScript template contains null safety patterns', function () 
 
 test('email model handles null arrays gracefully', function () {
     // Create inbox folder first
-    $folder = \Webkul\Email\Models\Folder::create(['name' => 'inbox']);
+    $folder = Folder::create(['name' => 'inbox']);
 
     $email = new Email([
         'subject'   => 'Test Email',
@@ -42,7 +43,7 @@ test('email model handles null arrays gracefully', function () {
 
 test('email model handles empty arrays gracefully', function () {
     // Create inbox folder first
-    $folder = \Webkul\Email\Models\Folder::create(['name' => 'inbox']);
+    $folder = Folder::create(['name' => 'inbox']);
 
     $email = new Email([
         'subject'   => 'Test Email',

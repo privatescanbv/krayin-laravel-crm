@@ -107,7 +107,9 @@ class EmailController extends Controller
             ]);
         }
 
-        return view('admin::mail.view', compact('email'));
+        $hierarchicalFolders = $this->folderRepository->getHierarchicalFolders();
+
+        return view('admin::mail.view', compact('email', 'hierarchicalFolders'));
     }
 
     /**
@@ -345,6 +347,41 @@ class EmailController extends Controller
             session()->flash('error', trans('admin::app.mail.delete-failed'));
 
             return redirect()->back();
+        }
+    }
+
+    /**
+     * Move email to another folder.
+     */
+    public function move(int $id): JsonResponse
+    {
+        $this->validate(request(), [
+            'folder_id' => 'required|integer|exists:folders,id',
+        ]);
+
+        $email = $this->emailRepository->findOrFail($id);
+
+        try {
+            Event::dispatch('email.move.before', $id);
+
+            $folder = Folder::findOrFail(request('folder_id'));
+            
+            $this->emailRepository->update([
+                'folder_id' => $folder->id,
+            ], $id);
+
+            Event::dispatch('email.move.after', $id);
+
+            return response()->json([
+                'message' => trans('admin::app.mail.move-success'),
+                'data' => [
+                    'folder_name' => $folder->name,
+                ],
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => trans('admin::app.mail.move-failed'),
+            ], 400);
         }
     }
 

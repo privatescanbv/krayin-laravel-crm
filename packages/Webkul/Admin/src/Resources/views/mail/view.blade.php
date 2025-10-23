@@ -19,7 +19,7 @@
                 <!-- Back Button and Breadcrumbs -->
                 <div class="flex items-center gap-3">
                     <!-- Back Button -->
-                    <a href="{{ route('admin.mail.index', ['route' => request('route')]) }}" 
+                    <a href="{{ route('admin.mail.index', ['route' => request('route')]) }}"
                        class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md transition-colors dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700">
                         <i class="icon-arrow-left text-lg"></i>
                         @lang('admin::app.mail.view.back-to-folder')
@@ -121,7 +121,7 @@
                     </div>
                 @endif
 
-                
+
             </div>
         </script>
 
@@ -399,6 +399,15 @@
                                 @lang('admin::app.mail.view.forward')
 
                                 <i class="icon-forward text-2xl"></i>
+                            </label>
+
+                            <label
+                                class="flex cursor-pointer items-center gap-2 text-brandColor"
+                                @click="emailAction('move')"
+                            >
+                                @lang('admin::app.mail.view.move')
+
+                                <i class="icon-folder text-2xl"></i>
                             </label>
                         </div>
                     </template>
@@ -1501,6 +1510,7 @@
                 data() {
                     return {
                         email: @json($email),
+                        hierarchicalFolders: @json($hierarchicalFolders ?? []),
 
                         action: {},
                     };
@@ -1575,7 +1585,9 @@
                     },
 
                     emailAction(type) {
-                        if (type != 'delete') {
+                        if (type == 'move') {
+                            this.showMoveModal();
+                        } else if (type != 'delete') {
                             this.$emit('on-email-action', {type, email: this.email});
                         } else {
                             this.$emitter.emit('open-confirm-modal', {
@@ -1594,6 +1606,149 @@
                                 }
                             });
                         }
+                    },
+
+                    showMoveModal() {
+                        const hierarchicalFolders = this.$parent?.hierarchicalFolders || [];
+                        this.createFolderSelectModal(hierarchicalFolders);
+                    },
+
+                    createFolderSelectModal(folders) {
+                        // Clean up any existing modal
+                        this.closeExistingModal();
+
+                        const modalHtml = this.buildModalHtml(folders);
+                        document.body.insertAdjacentHTML('beforeend', modalHtml);
+                        document.body.style.overflow = 'hidden';
+
+                        this.setupModalEventHandlers();
+                    },
+
+                    buildModalHtml(folders) {
+                        return `
+                            <div id="folder-select-modal" class="fixed inset-0 z-[10003] bg-gray-500 bg-opacity-50 transition-opacity">
+                                <div class="fixed inset-0 z-[10004] transform overflow-y-auto transition">
+                                    <div class="flex min-h-full items-center justify-center p-5">
+                                        <div class="box-shadow w-full max-w-[500px] rounded-lg bg-white dark:bg-gray-900">
+                                            <div class="flex items-center justify-between gap-2.5 border-b px-4 py-3 text-lg font-bold text-gray-800 dark:border-gray-800 dark:text-white">
+                                                Verplaats e-mail
+                                                <span class="icon-cross-large cursor-pointer text-3xl hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-950" onclick="closeFolderModal()"></span>
+                                            </div>
+
+                                            <div class="px-4 py-4">
+                                                <div class="mb-4">
+                                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                        Selecteer folder
+                                                    </label>
+                                                    <select id="folder-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                                                        <option value="">..</option>
+                                                        ${this.buildFolderOptions(folders)}
+                                                    </select>
+                                                </div>
+                                                <div class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                                    Selecteer de folder om naar toe te verplaatsen
+                                                </div>
+
+                                                <div class="flex justify-end gap-2.5">
+                                                    <button type="button" class="transparent-button" onclick="closeFolderModal()">
+                                                        Annuleren
+                                                    </button>
+                                                    <button type="button" class="primary-button" onclick="moveEmailToFolder()">
+                                                        Verplaats e-mail
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    },
+
+                    setupModalEventHandlers() {
+                        const self = this;
+
+                        window.closeFolderModal = () => {
+                            const modal = document.getElementById('folder-select-modal');
+                            if (modal) {
+                                modal.remove();
+                                document.body.style.overflow = 'auto';
+                            }
+                        };
+
+                        window.moveEmailToFolder = () => {
+                            self.moveEmailToFolder();
+                        };
+                    },
+
+                    closeExistingModal() {
+                        const existingModal = document.getElementById('folder-select-modal');
+                        if (existingModal) {
+                            existingModal.remove();
+                        }
+                    },
+
+                    buildFolderOptions(folders, level = 0) {
+                        if (!folders || !Array.isArray(folders)) {
+                            return '';
+                        }
+
+                        const indent = '&nbsp;'.repeat(level * 4);
+
+                        return folders.map(folder => {
+                            let options = `<option value="${folder.id}">${indent}${folder.name}</option>`;
+
+                            if (folder.children && Array.isArray(folder.children) && folder.children.length > 0) {
+                                options += this.buildFolderOptions(folder.children, level + 1);
+                            }
+
+                            return options;
+                        }).join('');
+                    },
+
+                    moveEmailToFolder() {
+                        const folderSelect = document.getElementById('folder-select');
+
+                        if (!folderSelect) {
+                            this.$emitter.emit('add-flash', { type: 'error', message: 'Folder selection not found.' });
+                            return;
+                        }
+
+                        const folderId = folderSelect.value;
+
+                        if (!folderId) {
+                            this.$emitter.emit('add-flash', { type: 'error', message: 'Please select a folder.' });
+                            return;
+                        }
+
+                        // Show loading state
+                        this.$emitter.emit('add-flash', { type: 'info', message: 'Moving email...' });
+
+                        this.$axios.post(`{{ route('admin.mail.move', ':id') }}`.replace(':id', this.email.id), {
+                            folder_id: folderId
+                        })
+                        .then((response) => {
+                            if (response.status === 200) {
+                                this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+
+                                // Close the modal
+                                window.closeFolderModal();
+
+                                // Redirect to the new folder after a short delay
+                                setTimeout(() => {
+                                    const folderName = response.data.data?.folder_name?.toLowerCase();
+                                    if (folderName) {
+                                        window.location.href = `{{ route('admin.mail.index', ['route' => 'FOLDER_NAME']) }}`.replace('FOLDER_NAME', folderName);
+                                    }
+                                }, 1000);
+                            }
+                        })
+                        .catch((error) => {
+                            const errorMessage = error.response?.data?.message ||
+                                               error.response?.data?.error ||
+                                               'Verplaatsen van e-mail is niet gelukt.';
+                            this.$emitter.emit('add-flash', { type: 'error', message: errorMessage });
+                        });
                     },
                 },
             });

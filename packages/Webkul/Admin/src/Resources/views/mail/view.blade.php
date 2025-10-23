@@ -400,6 +400,15 @@
 
                                 <i class="icon-forward text-2xl"></i>
                             </label>
+
+                            <label
+                                class="flex cursor-pointer items-center gap-2 text-brandColor"
+                                @click="emailAction('move')"
+                            >
+                                @lang('admin::app.mail.view.move')
+
+                                <i class="icon-folder text-2xl"></i>
+                            </label>
                         </div>
                     </template>
 
@@ -1501,6 +1510,7 @@
                 data() {
                     return {
                         email: @json($email),
+                        hierarchicalFolders: @json($hierarchicalFolders ?? []),
 
                         action: {},
                     };
@@ -1575,7 +1585,9 @@
                     },
 
                     emailAction(type) {
-                        if (type != 'delete') {
+                        if (type == 'move') {
+                            this.showMoveModal();
+                        } else if (type != 'delete') {
                             this.$emit('on-email-action', {type, email: this.email});
                         } else {
                             this.$emitter.emit('open-confirm-modal', {
@@ -1594,6 +1606,56 @@
                                 }
                             });
                         }
+                    },
+
+                    showMoveModal() {
+                        let optionsHtml = '<option value="">Select a folder...</option>';
+                        
+                        this.hierarchicalFolders.forEach(folder => {
+                            optionsHtml += `<option value="${folder.id}">${folder.name}</option>`;
+                            if (folder.children && folder.children.length > 0) {
+                                folder.children.forEach(child => {
+                                    optionsHtml += `<option value="${child.id}">&nbsp;&nbsp;${child.name}</option>`;
+                                });
+                            }
+                        });
+
+                        this.$emitter.emit('open-confirm-modal', {
+                            title: 'Move Email to Folder',
+                            content: `
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Select Folder:
+                                    </label>
+                                    <select id="folder-select" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                                        ${optionsHtml}
+                                    </select>
+                                </div>
+                            `,
+                            agree: () => {
+                                const folderSelect = document.getElementById('folder-select');
+                                const folderId = folderSelect.value;
+                                
+                                if (!folderId) {
+                                    this.$emitter.emit('add-flash', { type: 'error', message: 'Please select a folder.' });
+                                    return;
+                                }
+
+                                this.$axios.post(`{{ route('admin.mail.move', ':id') }}`.replace(':id', this.email.id), {
+                                    folder_id: folderId
+                                })
+                                .then((response) => {
+                                    if (response.status == 200) {
+                                        this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                                        // Optionally redirect to the new folder
+                                        window.location.href = `{{ route('admin.mail.index', ['route' => '']) }}` + response.data.data.folder_name.toLowerCase();
+                                    }
+                                })
+                                .catch((error) => {
+                                    this.$emitter.emit('add-flash', { type: 'error', message: error.response?.data?.message || 'Failed to move email.' });
+                                });
+                            }
+                        });
                     },
                 },
             });

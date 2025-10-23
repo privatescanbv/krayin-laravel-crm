@@ -60,14 +60,6 @@
                                         @{{ stage.leads.meta.total }}
                                     </span>
 
-                                    @if (bouncer()->hasPermission('sales-leads.create'))
-                                        <a
-                                            :href="'{{ route('admin.sales-leads.create') }}' + '?pipeline_stage_id=' + stage.id"
-                                            class="icon-add cursor-pointer rounded p-1 text-lg text-white transition-all hover:bg-white hover:bg-opacity-20"
-                                            target="_blank"
-                                        >
-                                        </a>
-                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -103,20 +95,8 @@
                                             <p class="!text-base font-semibold dark:text-white">
                                                 No sales leads
                                             </p>
-
-                                            <p class="!text-sm text-gray-400 dark:text-gray-400">
-                                                Create your first sales lead
-                                            </p>
                                         </div>
 
-                                        @if (bouncer()->hasPermission('sales-leads.create'))
-                                            <a
-                                                :href="'{{ route('admin.sales-leads.create') }}' + '?pipeline_stage_id=' + stage.id"
-                                                class="secondary-button"
-                                            >
-                                                Sales order aanmaken
-                                            </a>
-                                        @endif
                                     </div>
                                 </div>
                             </template>

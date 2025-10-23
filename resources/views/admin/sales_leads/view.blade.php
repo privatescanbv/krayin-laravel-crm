@@ -127,13 +127,12 @@
                 </div>
             </div>
 
-            @include('admin::leads.common.card', ['lead' => $lead, 'show_actions'=>false])
+            <x-adminc::persons.card :person="$salesLead->getContactPersonOrFirstPerson()" show_actions="false" />
 
             <!-- Lead Overview (compact overview with all information) -->
-            @include('admin.sales_leads.view.compact-overview')
+            <x-adminc::leads.compact-overview :lead="$lead"/>
 
-            <!-- Contact Person -->
-            @include('admin::leads.view.person')
+            <x-adminc::leads.persons :lead="$lead" />
 
             <!-- Footer with creation and modification dates -->
             <div

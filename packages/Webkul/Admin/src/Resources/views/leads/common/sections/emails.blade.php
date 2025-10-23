@@ -16,7 +16,7 @@
                 @endforeach
             </div>
         @endif
-        @include('admin::components.emails', ['name' => ($name ?? 'emails'), 'value' => ($value ?? []), 'readonly' => $readonly ?? false])
+        <x-adminc::components.emails name="emails" :value="($value ?? [])" :readonly="$readonly ?? false"/>
     </div>
 </div>
 

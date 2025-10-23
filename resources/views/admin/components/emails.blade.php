@@ -231,7 +231,7 @@
                     }
                 },
 
-                
+
 
                 getInputClass(index) {
                     const baseClass = 'w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 dark:bg-gray-700 dark:text-white';

@@ -2,9 +2,9 @@
 
 <div class="panel bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
     <div class="panel-header mb-3">
-        <h3 class="text-lg font-semibold text-blue-800">Contactpersonen Koppelen</h3>
-        <p class="text-sm text-blue-600">Zoek en koppel meerdere bestaande contactpersonen of maak nieuwe aan</p>
-        
+        <h3 class="text-lg font-semibold text-blue-800">Personen Koppelen</h3>
+        <p class="text-sm text-blue-600">Zoek en koppel meerdere bestaande personen of maak nieuwe aan</p>
+
         <div class="mt-2 text-xs text-blue-500">
             <div class="flex items-center gap-1">
                 <strong>Matching criteria:</strong>
@@ -40,10 +40,9 @@
 @verbatim
     <script type="text/x-template" id="v-multi-contact-matcher-template">
         <div>
-            <!-- Gekoppelde contactpersonen -->
             <div class="mb-4">
                 <div class="flex items-center justify-between mb-2">
-                    <span class="font-semibold text-sm">Gekoppelde contactpersonen ({{ selectedPersons.length }})</span>
+                    <span class="font-semibold text-sm">Gekoppelde personen ({{ selectedPersons.length }})</span>
                     <button
                         @click="clearAllPersons"
                         v-if="selectedPersons.length > 0"
@@ -52,10 +51,10 @@
                         Alles verwijderen
                     </button>
                 </div>
-                
+
                 <div v-if="selectedPersons.length > 0" class="space-y-2">
-                    <div 
-                        v-for="(person, index) in selectedPersons" 
+                    <div
+                        v-for="(person, index) in selectedPersons"
                         :key="person.id"
                         class="p-2 border rounded bg-green-50 border-green-200"
                     >
@@ -80,7 +79,7 @@
                                 <div class="flex items-center gap-2 mt-1 text-sm text-gray-600">
                                     <span v-if="person.emails && person.emails.length">{{ person.emails[0].value }}</span>
                                     <span v-if="person.phones && person.phones.length">{{ person.phones[0].value }}</span>
-                                    
+
                                     <!-- Match score indicator -->
                                     <div v-if="person.match_score_percentage !== null" class="flex items-center gap-1">
                                         <span class="text-xs text-gray-500">Match:</span>
@@ -120,9 +119,9 @@
                         </div>
                     </div>
                 </div>
-                
+
                                  <div v-if="selectedPersons.length === 0" class="p-3 border rounded bg-gray-50 border-gray-200 text-center text-gray-500">
-                     Geen contactpersonen gekoppeld
+                     Geen personen gekoppeld
                  </div>
              </div>
 
@@ -152,8 +151,8 @@
 
              <!-- Zoeken naar nieuwe personen -->
              <div class="mb-4">
-                <label class="block font-semibold mb-1">Contactpersoon zoeken</label>
-                
+                <label class="block font-semibold mb-1">Persoon zoeken</label>
+
                 <!-- Zoekveld -->
                 <div class="relative">
                     <input
@@ -208,11 +207,11 @@
                          </div>
                      </li>
                  </ul>
-                 
+
                  <!-- Geen resultaten - optie om nieuwe persoon aan te maken -->
                  <div v-if="search.length >= 2 && !isSearching && suggestions.length === 0" class="p-3 border rounded bg-blue-50 border-blue-200">
                      <div class="text-center">
-                         <div class="text-sm text-blue-700 mb-2">Geen bestaande contactpersonen gevonden voor "{{ search }}"</div>
+                         <div class="text-sm text-blue-700 mb-2">Geen bestaande personen gevonden voor "{{ search }}"</div>
                          <button
                              @click="createNewPerson"
                              class="text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-3 py-1 rounded text-sm"
@@ -224,12 +223,12 @@
              </div>
 
             <!-- Hidden form fields -->
-            <input 
-                v-for="(person, index) in selectedPersons" 
+            <input
+                v-for="(person, index) in selectedPersons"
                 :key="person.id"
-                type="hidden" 
-                :name="'person_ids[' + index + ']'" 
-                :value="person.id" 
+                type="hidden"
+                :name="'person_ids[' + index + ']'"
+                :value="person.id"
             />
             <!-- Ensure key exists when list is empty so backend can detach all -->
             <input
@@ -266,12 +265,12 @@
             methods: {
                 onSearch() {
                     clearTimeout(this.searchTimeout);
-                    
+
                     if (this.search.length < 2) {
                         this.suggestions = [];
                         return;
                     }
-                    
+
                     this.searchTimeout = setTimeout(() => {
                         this.fetchSuggestions(this.search);
                     }, 300);
@@ -289,7 +288,7 @@
                          } else {
                              params.query = query;
                          }
-                         
+
                          // Add lead_id for match score calculation if available
                          if (this.lead && this.lead.id) {
                              params.lead_id = this.lead.id;
@@ -301,10 +300,10 @@
 
                          // Filter out already selected persons from suggestions
                          const allSuggestions = response.data.data || [];
-                         this.suggestions = allSuggestions.filter(person => 
+                         this.suggestions = allSuggestions.filter(person =>
                              !this.isPersonSelected(person.id)
                          );
-                         
+
 
                      } catch (e) {
                          console.error('Zoekopdracht mislukt:', e);
@@ -330,11 +329,11 @@
                         if (!Array.isArray(enriched.emails)) { enriched.emails = []; }
                         if (!Array.isArray(enriched.phones)) { enriched.phones = []; }
                         this.selectedPersons.push(enriched);
-                        
+
                         // Clear search and suggestions after adding
                         this.search = '';
                         this.suggestions = [];
-                        
+
                         // Notify parent safely
                         if (typeof window.handlePersonsUpdated === 'function') {
                             window.handlePersonsUpdated(this.selectedPersons);
@@ -347,19 +346,19 @@
 
                 removePerson(index) {
                     const person = this.selectedPersons[index];
-                    
+
                     if (confirm(`Weet je zeker dat je ${person.name} wilt ontkoppelen?`)) {
                         // If this is an existing person on an existing lead, call detach API
                         if (this.lead && this.lead.id && person.id) {
                             this.detachPersonFromLead(person.id);
                         }
-                        
+
                         this.selectedPersons.splice(index, 1);
-                        
+
                         // Emit event for parent components to listen to
                         this.$emit('person-removed', person);
                         this.$emit('persons-updated', this.selectedPersons);
-                        
+
                         // Also call the lead form component directly if available
                         if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
                             window.leadFormComponent.persons = this.selectedPersons;
@@ -369,12 +368,12 @@
                 },
 
                 clearAllPersons() {
-                    if (confirm('Weet je zeker dat je alle contactpersonen wilt ontkoppelen?')) {
+                    if (confirm('Weet je zeker dat je alle personen wilt ontkoppelen?')) {
                         this.selectedPersons = [];
-                        
+
                         // Emit event for parent components to listen to
                         this.$emit('persons-updated', this.selectedPersons);
-                        
+
                         // Also call the lead form component directly if available
                         if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
                             window.leadFormComponent.persons = this.selectedPersons;
@@ -389,11 +388,11 @@
 
                 async calculateExistingMatchScores() {
                     if (!this.lead || !this.lead.id || this.selectedPersons.length === 0) return;
-                    
+
                     try {
                         const response = await axios.get(`/admin/contacts/persons/searchByLead/${this.lead.id}`);
                         const personsWithScores = response.data.data || [];
-                        
+
                         // Update match scores for existing persons
                         this.selectedPersons.forEach((person, index) => {
                             const personWithScore = personsWithScores.find(p => p.id === person.id);
@@ -442,33 +441,33 @@
 
                                                  if (response.data && response.data.data) {
                             const newPerson = response.data.data;
-                            
+
                             // Add to selected persons
                             this.selectedPersons.push(newPerson);
-                            
+
                             // Emit event for parent components to listen to
                             this.$emit('person-added', newPerson);
                             this.$emit('persons-updated', this.selectedPersons);
-                            
+
                             // Also call the lead form component directly if available
                             if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
                                 window.leadFormComponent.persons = this.selectedPersons;
                                 window.leadFormComponent.updateFormDataFromPersons();
                             }
-                            
-                            alert('Contactpersoon succesvol aangemaakt en gekoppeld aan deze lead.');
+
+                            alert('Persoon succesvol aangemaakt en gekoppeld aan deze lead.');
                         }
                      } catch (error) {
-                         console.error('Fout bij aanmaken contactpersoon:', error);
-                         
-                         let errorMessage = 'Er is een fout opgetreden bij het aanmaken van de contactpersoon.';
+                         console.error('Fout bij aanmaken Persoon:', error);
+
+                         let errorMessage = 'Er is een fout opgetreden bij het aanmaken van de Persoon.';
                          if (error.response?.data?.message) {
                              errorMessage = error.response.data.message;
                          } else if (error.response?.data?.errors) {
                              const errors = Object.values(error.response.data.errors).flat();
                              errorMessage = errors.join(', ');
                          }
-                         
+
                          alert(errorMessage);
                      } finally {
                          this.isCreatingPerson = false;
@@ -500,37 +499,37 @@
 
                                                  if (response.data && response.data.data) {
                             const newPerson = response.data.data;
-                            
+
                             // Add to selected persons
                             this.selectedPersons.push(newPerson);
-                            
+
                             // Clear search
                             this.search = '';
                             this.suggestions = [];
-                            
+
                             // Emit event for parent components to listen to
                             this.$emit('person-added', newPerson);
                             this.$emit('persons-updated', this.selectedPersons);
-                            
+
                             // Also call the lead form component directly if available
                             if (window.leadFormComponent && typeof window.leadFormComponent.updateFormDataFromPersons === 'function') {
                                 window.leadFormComponent.persons = this.selectedPersons;
                                 window.leadFormComponent.updateFormDataFromPersons();
                             }
-                            
-                            alert(`Nieuwe contactpersoon "${newPerson.name}" succesvol aangemaakt en gekoppeld.`);
+
+                            alert(`Nieuwe persoon "${newPerson.name}" succesvol aangemaakt en gekoppeld.`);
                         }
                      } catch (error) {
-                         console.error('Fout bij aanmaken nieuwe contactpersoon:', error);
-                         
-                         let errorMessage = 'Er is een fout opgetreden bij het aanmaken van de nieuwe contactpersoon.';
+                         console.error('Fout bij aanmaken nieuwe persoon:', error);
+
+                         let errorMessage = 'Er is een fout opgetreden bij het aanmaken van de nieuwe Persoon.';
                          if (error.response?.data?.message) {
                              errorMessage = error.response.data.message;
                          } else if (error.response?.data?.errors) {
                              const errors = Object.values(error.response.data.errors).flat();
                              errorMessage = errors.join(', ');
                          }
-                         
+
                          alert(errorMessage);
                      } finally {
                          this.isCreatingPerson = false;

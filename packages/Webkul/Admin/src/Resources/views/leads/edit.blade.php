@@ -186,8 +186,10 @@
                             </p>
                         </div>
 
-                        <!-- Multi Contact Matcher (based on original contactmatcher) -->
-                        @include('admin::leads.common.multi-contactmatcher', ['lead' => $lead, 'persons' => $lead->persons])
+                        <x-adminc::components.multi-contactmatcher
+                            :lead="$lead"
+                            :persons="$lead->persons"
+                        />
                     </div>
 
                     {!! view_render_event('admin.leads.edit.contact_person.after', ['lead' => $lead]) !!}

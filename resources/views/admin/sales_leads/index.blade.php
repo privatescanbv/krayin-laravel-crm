@@ -27,17 +27,6 @@
             <!-- Pipeline Switcher -->
             @include('admin.sales_leads.index.view-switcher')
 
-            <!-- Create button for Sales Leads -->
-            <div class="flex items-center gap-x-2.5">
-                @if (bouncer()->hasPermission('sales-leads.create'))
-                    <a
-                        href="{{ route('admin.sales-leads.create') }}"
-                        class="primary-button"
-                    >
-                        Sales order aanmaken
-                    </a>
-                @endif
-            </div>
         </div>
 
         {!! view_render_event('admin.sales-leads.index.header.right.after') !!}

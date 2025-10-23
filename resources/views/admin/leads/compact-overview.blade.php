@@ -29,7 +29,7 @@
                 </div>
 
                 <!-- Sales Owner -->
-                @if($lead->user)
+                @if ($lead->user)
                 <div class="mb-4">
                     <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Toegewezen aan</div>
                     <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -39,7 +39,7 @@
                 @endif
 
                 <!-- Lost Reason -->
-                @if(!empty($lead->lost_reason))
+                @if (!empty($lead->lost_reason))
                 <div class="mb-4">
                     <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Verliesreden</div>
                     <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -49,7 +49,7 @@
                 @endif
 
                  <!-- Lead Organization (for billing) -->
-                 @if($lead->organization)
+                 @if ($lead->organization)
                  <div class="mb-4">
                      <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Organisatie (facturatie)</div>
                      <div>
@@ -69,7 +69,7 @@
                 <div class="mb-4">
                     <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Adres</div>
                     <div class="text-sm text-gray-900 dark:text-gray-100">
-                        @if($lead->address && $lead->address->full_address)
+                        @if ($lead->address && $lead->address->full_address)
                             {{ $lead->address->full_address }}
                             <a
                                 href="https://maps.google.com/?q={{ urlencode($lead->address->full_address) }}"
@@ -102,7 +102,7 @@
                         <div class="mb-3">
                             <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Diagnoseformulier</div>
                             <div class="text-sm text-gray-900 dark:text-gray-100">
-                                @if($lead->has_diagnosis_form)
+                                @if ($lead->has_diagnosis_form)
                                     <span class="inline-flex items-center gap-1 text-green-700">
                                         <span class="icon-attachment text-xs"></span>
                                         Aanwezig

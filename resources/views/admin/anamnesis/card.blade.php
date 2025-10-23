@@ -1,6 +1,6 @@
 @props(['anamnesis', 'showCreatedDate' => false])
 
-@if($anamnesis)
+@if ($anamnesis)
     <div class="p-2 bg-blue-50 border border-blue-200 rounded dark:bg-blue-900/20 dark:border-blue-800">
         <div class="flex items-center justify-between mb-1">
             <h6 class="text-xs font-semibold text-blue-800 dark:text-blue-200">Anamnese</h6>
@@ -14,18 +14,18 @@
         </div>
 
         <div class="space-y-1 text-xs">
-            @if($anamnesis->description)
+            @if ($anamnesis->description)
                 <div class="text-gray-700 dark:text-gray-300 mb-2">
                     {{ Str::limit($anamnesis->description, 80) }}
                 </div>
             @endif
 
-            @if($anamnesis->height || $anamnesis->weight)
+            @if ($anamnesis->height || $anamnesis->weight)
                 <div class="flex gap-2 text-gray-600 dark:text-gray-400">
-                    @if($anamnesis->height)
+                    @if ($anamnesis->height)
                         <span>{{ $anamnesis->height }}cm</span>
                     @endif
-                    @if($anamnesis->weight)
+                    @if ($anamnesis->weight)
                         <span>{{ $anamnesis->weight }}kg</span>
                     @endif
                 </div>
@@ -56,9 +56,9 @@
                 });
             @endphp
 
-            @if($conditions->isNotEmpty())
+            @if ($conditions->isNotEmpty())
                 <div class="flex flex-wrap gap-1 mt-1">
-                    @foreach($conditions as $field => $label)
+                    @foreach ($conditions as $field => $label)
                         <span class="inline-flex items-center rounded-full bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-2 py-0.5 text-xs font-medium">
                             {{ $label }}
                         </span>

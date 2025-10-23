@@ -174,7 +174,7 @@
             </div>
 
             @if($activity->lead)
-            @include('admin::leads.common.card', ['lead' => $activity->lead])
+                <x-adminc::leads.card :lead="$activity->lead" />
             @endif
 
             <div class="p-4 text-sm text-gray-700 dark:text-gray-300">

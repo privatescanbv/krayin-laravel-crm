@@ -177,14 +177,6 @@ class SalesLeadController extends Controller
         return response()->json($data);
     }
 
-    public function create(Request $request)
-    {
-        // Get all leads for selection
-        $leads = Lead::select('id', 'name')->get()->pluck('name', 'id');
-
-        return view('admin.sales_leads.create', ['leads' => $leads]);
-    }
-
     public function store(Request $request)
     {
         $request->validate([

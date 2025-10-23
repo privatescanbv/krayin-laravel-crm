@@ -383,6 +383,11 @@ class Lead extends Model implements LeadContract
         return $this->belongsTo(Person::class, 'contact_person_id');
     }
 
+    public function hasContactPerson(): bool {
+        return !is_null($this->contact_person_id);
+    }
+
+
     /**
      * Returns the rotten days
      */
@@ -403,6 +408,13 @@ class Lead extends Model implements LeadContract
         $rottenDate = $this->created_at->addDays($this->pipeline->rotten_days);
 
         return $rottenDate->diffInDays(Carbon::now(), false);
+    }
+
+    public function getContactPersonOrFirstPerson(): ?Person    {
+        if ($this->hasContactPerson()) {
+            return $this->contactPerson()->first();
+        }
+        return $this->persons()->first();
     }
 
     /**

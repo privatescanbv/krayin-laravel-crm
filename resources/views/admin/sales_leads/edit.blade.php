@@ -66,6 +66,25 @@
                     </div>
                 </div>
 
+                <!-- Contact Persons Section -->
+                <div class="mt-6">
+                    <div class="flex flex-col gap-4" id="contact-person">
+                        <div class="flex flex-col gap-1">
+                            <p class="text-base font-semibold dark:text-white">
+                                Personen
+                            </p>
+                            <p class="text-gray-600 dark:text-gray-300">
+                                Koppel een of meerdere personen aan deze sales lead
+                            </p>
+                        </div>
+
+                        <x-adminc::components.multi-contactmatcher
+                            :leads=" (object)['id' => $salesLead->id]"
+                            :persons="$salesLead->persons"
+                        />
+                    </div>
+                </div>
+
                 <!-- Contact Person Selection -->
                 <div class="mt-6">
                     <div class="flex flex-col gap-4" id="contact-person-selection">
@@ -89,23 +108,6 @@
                                 :can-add-new="true"
                             />
                         </div>
-                    </div>
-                </div>
-
-                <!-- Contact Persons Section -->
-                <div class="mt-6">
-                    <div class="flex flex-col gap-4" id="contact-person">
-                        <div class="flex flex-col gap-1">
-                            <p class="text-base font-semibold dark:text-white">
-                                Contactpersonen
-                            </p>
-                            <p class="text-gray-600 dark:text-gray-300">
-                                Koppel een of meerdere contactpersonen aan deze sales lead
-                            </p>
-                        </div>
-
-                        <!-- Multi Contact Matcher -->
-                        @include('admin::leads.common.multi-contactmatcher', ['lead' => (object)['id' => $salesLead->id], 'persons' => $salesLead->persons])
                     </div>
                 </div>
 

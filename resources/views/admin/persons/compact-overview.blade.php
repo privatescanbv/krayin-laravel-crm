@@ -18,7 +18,7 @@
             {!! view_render_event('admin.contacts.persons.view.attributes.form_controls.before', ['person' => $person]) !!}
 
             <div class="flex flex-col text-sm">
-                @if($person->organization)
+                @if ($person->organization)
                 <div class="mb-4">
                     <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Organisatie</div>
                     <div>
@@ -38,7 +38,7 @@
                 <div class="mb-4">
                     <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Adres</div>
                     <div class="text-sm text-gray-900 dark:text-gray-100">
-                        @if($person->address && $person->address->full_address)
+                        @if ($person->address && $person->address->full_address)
                             {{ $person->address->full_address }}
                             <a
                                 href="https://maps.google.com/?q={{ urlencode($person->address->full_address) }}"

@@ -81,7 +81,7 @@
                     </h3>
                 </div>
 
-                @include('admin::components.emails', ['name' => 'emails', 'value' => old('emails', [])])
+                <x-adminc::components.emails name="emails" :value="old('emails', [])"/>
             </div>
 
             <!-- Phones Section -->
@@ -91,8 +91,7 @@
                         Telefoonnummers
                     </h3>
                 </div>
-
-                @include('admin::components.phones', ['name' => 'phones', 'value' => old('phones', [])])
+                <x-adminc::components.phones name="phones" :value="old('phones', [])"/>
             </div>
 
             <!-- Address Section -->

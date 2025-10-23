@@ -92,6 +92,11 @@ class SalesLead extends Model
         return $this->belongsTo(Person::class, 'contact_person_id');
     }
 
+    public function hasContactPerson(): bool
+    {
+        return $this->contact_person_id !== null && $this->contactPerson()->exists();
+    }
+
     /**
      * Get the activities associated with the workflow lead.
      */
@@ -217,7 +222,18 @@ class SalesLead extends Model
 
     public function defaultEmailContactPerson(): ?string
     {
-        return $this->persons()->first()?->findDefaultEmail();
+        $person = $this->getContactPersonOrFirstPerson();
+
+        return $person?->findDefaultEmail();
+    }
+
+    public function getContactPersonOrFirstPerson(): ?Person
+    {
+        if ($this->hasContactPerson()) {
+            return $this->contactPerson;
+        }
+
+        return $this->persons()->first();
     }
 
     /**

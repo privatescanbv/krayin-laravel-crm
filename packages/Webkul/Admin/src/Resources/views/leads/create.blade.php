@@ -207,7 +207,10 @@
 
                         <!-- Multi Contact Matcher (based on original contactmatcher) -->
                         <div>
-                            @include('admin::leads.common.multi-contactmatcher', ['lead' => (object)['id' => null], 'persons' => ($prefilledPersons ?? [])])
+                            <x-adminc::components.multi-contactmatcher
+                                :lead="new Webkul\Lead\Models\Lead()"
+                                :persons="$prefilledPersons ?? []"
+                            />
                         </div>
 
                         <div class="flex justify-end pt-4">

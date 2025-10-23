@@ -98,7 +98,7 @@
                                 @endif
 
                                 <!-- Anamnesis for this specific person -->
-                                <x-admin::anamnesis.card :anamnesis="$personAnamnesis" />
+                                <x-adminc::anamnesis.card :anamnesis="$personAnamnesis" />
                                 </div>
                             </div>
                         </div>

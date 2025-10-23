@@ -86,7 +86,7 @@
                         @lang('admin::app.leads.common.emails.title')
                     </h3>
                 </div>
-                @include('admin::components.emails', ['name' => 'emails', 'value' => old('emails', $person->emails ?? [])])
+                <x-adminc::components.emails name="emails" :value="old('emails', $person->emails ?? [])"/>
             </div>
 
             <!-- Phones Section -->
@@ -96,7 +96,7 @@
                         Telefoonnummers
                     </h3>
                 </div>
-                @include('admin::components.phones', ['name' => 'phones', 'value' => old('phones', $person->phones ?? [])])
+                <x-adminc::components.phones name="phones" :value="old('phones', $person->phones ?? [])"/>
             </div>
 
             {!! view_render_event('admin.contacts.persons.edit.address.before', ['lead' => $person]) !!}

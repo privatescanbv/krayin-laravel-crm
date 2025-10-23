@@ -96,14 +96,14 @@
                 </div>
             </div>
 
-            @include('admin::contacts.persons.common.card', ['person' => $person, 'show_actions' => false])
+{{--            @include('admin::contacts.persons.common.card', ['person' => $person, 'show_actions' => false])--}}
+            <x-adminc::persons.card :person="$person" show_actions="false"/>
 
-            <!-- Person Overview (merged attributes and organization) -->
-            @include ('admin::contacts.persons.view.compact-overview')
+            <x-adminc::persons.compact-overview :person="$person"/>
 
             <!-- Gekoppelde Anamneses -->
             <div class="border-b border-gray-200 dark:border-gray-800">
-                <x-admin::anamnesis.index :anamnesis="$person->anamnesis"/>
+                <x-adminc::anamnesis.index :anamnesis="$person->anamnesis"/>
             </div>
 
             <!-- Gekoppelde Leads -->

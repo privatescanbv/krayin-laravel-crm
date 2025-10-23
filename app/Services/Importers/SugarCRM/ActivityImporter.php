@@ -11,7 +11,9 @@ use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Models\Activity;
+use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\Models\Email;
+use Webkul\Email\Models\Folder;
 use Webkul\Lead\Models\Lead;
 use Webkul\Tag\Models\Tag;
 use Webkul\User\Models\User;
@@ -429,7 +431,7 @@ class ActivityImporter
      */
     protected function getImportedFolderId()
     {
-        $folder = \Webkul\Email\Models\Folder::where('name', 'imported')->first();
+        $folder = Folder::where('name', EmailFolderEnum::PROCESSED->getFolderName())->first();
 
         return $folder ? $folder->id : null;
     }

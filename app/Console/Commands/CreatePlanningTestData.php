@@ -12,6 +12,7 @@ use App\Repositories\ClinicRepository;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Webkul\Email\Models\Email;
+use Webkul\Email\Models\Folder;
 use Webkul\Product\Models\Product;
 use Webkul\Product\Models\ProductGroup;
 
@@ -103,7 +104,7 @@ class CreatePlanningTestData extends Command
      */
     protected function getInboxFolderId()
     {
-        $folder = \Webkul\Email\Models\Folder::where('name', 'inbox')->first();
+        $folder = Folder::where('name', 'inbox')->first();
 
         return $folder ? $folder->id : null;
     }

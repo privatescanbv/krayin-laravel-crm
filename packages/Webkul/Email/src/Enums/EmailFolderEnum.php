@@ -5,12 +5,14 @@ namespace Webkul\Email\Enums;
 enum EmailFolderEnum: string
 {
     case INBOX = 'Inbox';
-    case IMPORTED = 'Imported';
+    case PRIVATESCAN_WEBFORM = 'Privatescan webforms';
+    case HERNIA_WEBFORM = 'Hernia Poli webforms';
+    case CLINICS = 'Klinieken';
+    case NEWSLETTER = 'Nieuwsbrief reacties';
+    case PROCESSED = 'Verwerkt';
     case SENT = 'Sent';
-    case DRAFT = 'Draft';
     case TRASH = 'Trash';
-    case IMPORTANT = 'Important';
-    case ARCHIVE = 'Archive';
+    case NO_FOLLOW_UP = 'Geen opvolging';
 
     /**
      * Get the folder name for the enum case

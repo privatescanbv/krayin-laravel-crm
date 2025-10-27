@@ -1,4 +1,4 @@
-FROM docker.io/node:20-bullseye AS yarn
+FROM docker.io/node:20-bullseye AS vite
 WORKDIR /build
 COPY ./ ./
 
@@ -6,6 +6,10 @@ COPY ./ ./
 RUN rm -rf tests
 RUN rm -rf .git
 RUN rm -rf flows
+
+# Install dependencies and build assets
+RUN npm ci
+RUN npm run build
 
 FROM docker.io/php:8.3-fpm-bullseye
 
@@ -96,7 +100,7 @@ COPY  .docker/nginx/nginx.conf /etc/nginx/nginx.conf
 
 RUN chown -R www-data:www-data /usr/share/nginx/html /var/log /run /etc/nginx
 
-COPY --chown=www-data:www-data --from=yarn /build/public/build public/build
+COPY --chown=www-data:www-data --from=vite /build/public/build public/build
 
 # Ensure storage directories have correct permissions for log writing
 RUN mkdir -p /usr/share/nginx/html/storage/logs \

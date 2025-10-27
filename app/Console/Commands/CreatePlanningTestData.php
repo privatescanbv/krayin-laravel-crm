@@ -50,21 +50,9 @@ class CreatePlanningTestData extends Command
         $resourceType = $this->getOrCreateResourceType();
         $this->info("✅ Resource Type: {$resourceType->name} (ID: {$resourceType->id})");
 
-        // 3. Product Type ophalen of aanmaken
-        $productType = $this->getOrCreateProductType();
-        $this->info("✅ Product Type: {$productType->name} (ID: {$productType->id})");
-
-        // 4. Product Group aanmaken
-        $productGroup = $this->createProductGroup();
-        $this->info("✅ Product Group: {$productGroup->name} (ID: {$productGroup->id})");
-
-        // 5. Product aanmaken
-        $product = $this->createProduct($productGroup, $resourceType, $productType);
-        $this->info("✅ Product: {$product->name} (ID: {$product->id})");
-
-        // 6. Partner Product aanmaken
-        $partnerProduct = $this->createPartnerProduct($product, $resourceType);
-        $this->info("✅ Partner Product: {$partnerProduct->name} (ID: {$partnerProduct->id})");
+        // 3. Producten aanmaken
+        $products = $this->createProducts();
+        $this->info('✅ Producten aangemaakt: '.count($products));
 
         // 7. Resources aanmaken
         $resources = $this->createResources($clinic, $resourceType);
@@ -77,7 +65,7 @@ class CreatePlanningTestData extends Command
         $this->createExampleEmail();
 
         // 10. Koppelingen maken
-        $this->createRelationships($partnerProduct, $clinic, $resources);
+        $this->createRelationships($products, $clinic, $resources);
 
         $this->info('');
         $this->info('🎉 Alle test data succesvol aangemaakt!');
@@ -85,9 +73,7 @@ class CreatePlanningTestData extends Command
         $this->info('📋 Overzicht:');
         $this->info("   • Kliniek: {$clinic->name} (ID: {$clinic->id})");
         $this->info("   • Resource Type: {$resourceType->name} (ID: {$resourceType->id})");
-        $this->info("   • Product Group: {$productGroup->name} (ID: {$productGroup->id})");
-        $this->info("   • Product: {$product->name} (ID: {$product->id})");
-        $this->info("   • Partner Product: {$partnerProduct->name} (ID: {$partnerProduct->id})");
+        $this->info('   • Producten: '.count($products).' stuks');
         $this->info('   • Resources: '.count($resources).' stuks');
         $this->info('   • E-mail: Voorbeeld ongelezen e-mail aangemaakt');
         $this->info('');
@@ -138,9 +124,9 @@ class CreatePlanningTestData extends Command
         return $clinic;
     }
 
-    private function getOrCreateResourceType(): ResourceType
+    private function getOrCreateResourceType(string $name = null): ResourceType
     {
-        $resourceTypeName = $this->option('resource-type');
+        $resourceTypeName = $name ?: $this->option('resource-type');
 
         $resourceType = ResourceType::where('name', $resourceTypeName)->first();
         if (! $resourceType) {
@@ -153,54 +139,178 @@ class CreatePlanningTestData extends Command
         return $resourceType;
     }
 
-    private function getOrCreateProductType(): ProductType
+    private function getOrCreateProductType(string $name): ProductType
     {
-        $productType = ProductType::where('name', 'Total Bodyscan')->first();
+        $productType = ProductType::where('name', $name)->first();
         if (! $productType) {
             $productType = ProductType::create([
-                'name'        => 'Medische Dienst',
-                'description' => 'Test product type voor medische diensten',
+                'name'        => $name,
+                'description' => "Product type: {$name}",
             ]);
         }
 
         return $productType;
     }
 
-    private function createProductGroup(): ProductGroup
+    private function getOrCreateProductGroup(string $name): ProductGroup
     {
-        return ProductGroup::query()->where('name', '=', 'Wervelkolom')->firstOrFail();
+        $productGroup = ProductGroup::where('name', $name)->first();
+        if (! $productGroup) {
+            $productGroup = ProductGroup::create([
+                'name'        => $name,
+                'description' => "Product group: {$name}",
+            ]);
+        }
+
+        return $productGroup;
     }
 
-    private function createProduct(ProductGroup $productGroup, ResourceType $resourceType, ProductType $productType): Product
+    private function createProducts(): array
     {
-        return Product::create([
-            'name'             => 'MRI Scan Planning',
-            'description'      => 'MRI scan die kan worden ingepland',
-            'active'           => true,
-            'currency'         => 'EUR',
-            'price'            => 450.00,
-            'costs'            => 200.00,
-            'product_group_id' => $productGroup->id,
-            'resource_type_id' => $resourceType->id,
-            'product_type_id'  => $productType->id,
-        ]);
+        $products = [];
+        
+        // Product data from the provided table
+        $productData = [
+            [
+                'name' => 'TB3 Royal Bodyscan + Wervelkolom',
+                'description' => 'TB3 Royal Bodyscan + Wervelkolom, bestaande uit:',
+                'currency' => 'EUR',
+                'purchase_price' => 600.00,
+                'sales_price' => 1900.00,
+                'product_type' => 'Total Bodyscan',
+                'resource_type' => 'MRI scanner',
+                'product_group' => 'Bodyscan'
+            ],
+            [
+                'name' => 'MRI Abdomen exclusief CM',
+                'description' => 'MRI scan van de onder- en bovenbuik (abdomen), exclusief contrastmiddel',
+                'currency' => 'EUR',
+                'purchase_price' => 220.00,
+                'sales_price' => 850.00,
+                'product_type' => 'MRI scan',
+                'resource_type' => 'MRI scanner',
+                'product_group' => 'Buik'
+            ],
+            [
+                'name' => 'CT Abdomen inclusief CM',
+                'description' => 'CT scan van de onder- en bovenbuik (abdomen), inclusief contrastmiddel',
+                'currency' => 'EUR',
+                'purchase_price' => 300.00,
+                'sales_price' => 650.00,
+                'product_type' => 'CT scan',
+                'resource_type' => 'CT scanner',
+                'product_group' => 'Buik'
+            ],
+            [
+                'name' => 'Bloed- en urineonderzoek preventief uitgebreid heren',
+                'description' => 'Uitgebreid laboratoriumonderzoek (bloed en urine) met PSA bepaling',
+                'currency' => 'EUR',
+                'purchase_price' => 85.00,
+                'sales_price' => 220.00,
+                'product_type' => 'Laboratorium',
+                'resource_type' => 'Cardiologie',
+                'product_group' => 'Bloedonderzoeken'
+            ],
+            [
+                'name' => 'Coördinatie- en bemiddelingskosten',
+                'description' => 'Coördinatie- en bemiddelingskosten',
+                'currency' => 'EUR',
+                'purchase_price' => 0.00,
+                'sales_price' => 59.00,
+                'product_type' => 'Diensten',
+                'resource_type' => 'Overig',
+                'product_group' => 'Bemiddelingskosten'
+            ],
+            [
+                'name' => 'Volledige vertaling TB3',
+                'description' => 'Nederlandse vertaling van de rapportage',
+                'currency' => 'EUR',
+                'purchase_price' => 80.00,
+                'sales_price' => 185.00,
+                'product_type' => 'Vertaling',
+                'resource_type' => 'Overig',
+                'product_group' => 'Vertalingen'
+            ],
+            [
+                'name' => 'Transf. Endosc. Operatie 1 n',
+                'description' => 'Transforaminale endoscopische operatie 1 niveau',
+                'currency' => 'EUR',
+                'purchase_price' => 4950.00,
+                'sales_price' => 9500.00,
+                'product_type' => '',
+                'resource_type' => 'Artsen',
+                'product_group' => 'PTED'
+            ],
+            [
+                'name' => 'Transf. Endosc. Operatie 2 n',
+                'description' => 'Transforaminale endoscopische operatie 2 niveaus',
+                'currency' => 'EUR',
+                'purchase_price' => 9000.00,
+                'sales_price' => 16000.00,
+                'product_type' => '',
+                'resource_type' => 'Artsen',
+                'product_group' => 'PTED'
+            ],
+            [
+                'name' => 'ACDF (Anterior Cervical Discectomy and Fusion) operatie',
+                'description' => 'ACDF (Anterior Cervical Discectomy and Fusion) operatie',
+                'currency' => 'EUR',
+                'purchase_price' => 5900.00,
+                'sales_price' => 13900.00,
+                'product_type' => 'Overig',
+                'resource_type' => 'Artsen',
+                'product_group' => 'ACDF'
+            ]
+        ];
+
+        foreach ($productData as $data) {
+            // Get or create ProductType
+            $productType = $this->getOrCreateProductType($data['product_type'] ?: 'Overig');
+            
+            // Get or create ResourceType
+            $resourceType = $this->getOrCreateResourceType($data['resource_type']);
+            
+            // Get or create ProductGroup
+            $productGroup = $this->getOrCreateProductGroup($data['product_group']);
+            
+            // Create Product
+            $product = Product::create([
+                'name'             => $data['name'],
+                'description'      => $data['description'],
+                'active'           => true,
+                'currency'         => $data['currency'],
+                'price'            => $data['sales_price'],
+                'costs'            => $data['purchase_price'],
+                'product_group_id' => $productGroup->id,
+                'resource_type_id' => $resourceType->id,
+                'product_type_id'  => $productType->id,
+            ]);
+            
+            // Create PartnerProduct
+            $partnerProduct = PartnerProduct::create([
+                'name'                  => $data['name'] . ' - Partner Product',
+                'description'           => $data['description'],
+                'active'                => true,
+                'currency'              => $data['currency'],
+                'sales_price'           => $data['sales_price'],
+                'duration'              => 60, // Default 60 minutes
+                'resource_type_id'      => $resourceType->id,
+                'product_id'            => $product->id,
+                'purchase_price'        => $data['purchase_price'],
+                'purchase_price_clinic' => $data['purchase_price'] * 0.9, // 10% discount for clinic
+            ]);
+            
+            $products[] = [
+                'product' => $product,
+                'partner_product' => $partnerProduct
+            ];
+            
+            $this->info("   • {$product->name} (ID: {$product->id})");
+        }
+        
+        return $products;
     }
 
-    private function createPartnerProduct(Product $product, ResourceType $resourceType): PartnerProduct
-    {
-        return PartnerProduct::create([
-            'name'                  => 'MRI Scan - Partner Product',
-            'description'           => 'Partner product voor MRI scan planning',
-            'active'                => true,
-            'currency'              => 'EUR',
-            'sales_price'           => 450.00,
-            'duration'              => 60, // 60 minuten
-            'resource_type_id'      => $resourceType->id,
-            'product_id'            => $product->id,
-            'purchase_price'        => 200.00,
-            'purchase_price_clinic' => 180.00,
-        ]);
-    }
 
     private function createResources(Clinic $clinic, ResourceType $resourceType): array
     {
@@ -218,18 +328,23 @@ class CreatePlanningTestData extends Command
         return $resources;
     }
 
-    private function createRelationships(PartnerProduct $partnerProduct, Clinic $clinic, array $resources): void
+    private function createRelationships(array $products, Clinic $clinic, array $resources): void
     {
-        // Koppel partner product aan kliniek
-        $partnerProduct->clinics()->attach($clinic->id);
-
-        // Koppel partner product aan resources
         $resourceIds = collect($resources)->pluck('id')->toArray();
-        $partnerProduct->resources()->attach($resourceIds);
+        
+        foreach ($products as $productData) {
+            $partnerProduct = $productData['partner_product'];
+            
+            // Koppel partner product aan kliniek
+            $partnerProduct->clinics()->attach($clinic->id);
+
+            // Koppel partner product aan resources
+            $partnerProduct->resources()->attach($resourceIds);
+        }
 
         $this->info('✅ Koppelingen gemaakt:');
-        $this->info('   • Partner Product gekoppeld aan Kliniek');
-        $this->info('   • Partner Product gekoppeld aan '.count($resources).' Resources');
+        $this->info('   • '.count($products).' Partner Products gekoppeld aan Kliniek');
+        $this->info('   • '.count($products).' Partner Products gekoppeld aan '.count($resources).' Resources');
     }
 
     private function createShiftsForResources(array $resources): void

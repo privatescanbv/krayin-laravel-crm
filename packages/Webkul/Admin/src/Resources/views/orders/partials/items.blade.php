@@ -94,9 +94,6 @@
             </x-admin::table.td>
             <x-admin::table.td class="!px-2 ltr:text-right rtl:text-left">
                 <div class="flex items-center justify-end gap-2">
-                    <button v-if="canPlan" type="button" class="secondary-button" @click="openPlanning">
-                        Inplannen
-                    </button>
                     <i @click="removeItem" class="icon-delete cursor-pointer text-2xl"></i>
                 </div>
             </x-admin::table.td>
@@ -194,12 +191,6 @@
                 removeItem() {
                     try { console.log('[v-order-item] removeItem'); } catch (e) {}
                     this.$emit('onRemoveItem', this.item);
-                },
-                openPlanning() {
-                    const id = this.item.id;
-                    if (!id) return;
-                    const url = "{{ route('admin.planning.order_item.show', ['orderItemId' => '___ID___']) }}".replace('___ID___', id);
-                    window.location.href = url;
                 },
                 getStatusLabel(status) {
                     const labels = {

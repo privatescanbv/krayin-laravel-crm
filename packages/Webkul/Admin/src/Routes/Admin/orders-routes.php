@@ -18,7 +18,7 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::delete('', 'destroy')->name('admin.orders.delete');
     Route::delete('{id}', 'destroy')->name('admin.orders.delete');
     Route::get('persons/{salesLeadId}', 'getPersonsForSalesLead')->name('admin.orders.persons');
-    
+
     // Order checks routes
     Route::post('{orderId}/checks', 'storeCheck')->name('admin.orders.checks.store');
     Route::put('{orderId}/checks/{checkId}', 'updateCheck')->name('admin.orders.checks.update');
@@ -42,7 +42,6 @@ Route::controller(OrderItemController::class)->prefix('order-items')->group(func
  * Planning routes.
  */
 Route::middleware(['user'])->controller(OrderItemPlanningController::class)->prefix('planning')->group(function () {
-    Route::get('order-item/{orderItemId}', 'show')->name('admin.planning.order_item.show');
     Route::get('order-item/{orderItemId}/availability', 'availability')->name('admin.planning.order_item.availability');
     Route::post('order-item/{orderItemId}/book', 'book')->name('admin.planning.order_item.book');
 });

@@ -133,11 +133,11 @@ function mountVueApp() {
     if (!window.app) {
         return;
     }
-    
+
     if (window.app._instance) {
         return;
     }
-    
+
     // Process any deferred components first
     if (window._deferredComponents && window._deferredComponents.length > 0) {
         window._deferredComponents.forEach(({ name, def }) => {
@@ -145,7 +145,7 @@ function mountVueApp() {
         });
         window._deferredComponents = [];
     }
-    
+
     // Now mount Vue
     window.app.mount("#app");
 

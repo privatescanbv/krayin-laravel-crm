@@ -232,14 +232,23 @@
 />
 
 <!-- Related Products -->
-<x-adminc::partner-products.lookup
-    :src="route('admin.partner_products.search')"
-    name="related_products"
-    :label="trans('admin::app.partner_products.index.create.related_products')"
-    :search-placeholder="trans('admin::app.partner_products.index.create.search_related_products')"
-    :value="$relatedProducts"
-    :exclude-id="$excludeId"
-/>
+
+
+<x-admin::form.control-group>
+    <x-admin::form.control-group.label>
+       @lang('admin::app.partner_products.index.create.related_products')
+    </x-admin::form.control-group.label>
+
+    <x-adminc::components.entity-selector
+        name="related_products"
+        :placeholder="trans('admin::app.partner_products.index.create.search_related_products')"
+        search-route="{{ route('admin.partner_products.search') }}"
+        :can-add-new="true"
+        :multiple="true"
+        :items="$relatedProducts"
+    />
+    <x-admin::form.control-group.error control-name="related_products"/>
+</x-admin::form.control-group>
 
 <!-- Reporting (moved below Related Products) -->
 <x-admin::form.control-group>

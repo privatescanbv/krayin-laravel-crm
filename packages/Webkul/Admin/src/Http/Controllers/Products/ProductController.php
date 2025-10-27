@@ -103,7 +103,7 @@ class ProductController extends Controller
     public function edit(int $id): View|JsonResponse
     {
         $product = $this->productRepository->findOrFail($id);
-        
+
         // Get formatted partner products with clinic names
         $selectedPartnerProducts = $this->productRepository->getFormattedPartnerProducts($product);
 
@@ -216,7 +216,7 @@ class ProductController extends Controller
     {
         $this->normalizePriceFields($request);
         $request->merge([
-            'active' => (bool) $request->boolean('active', true),
+            'active' => $request->boolean('active', true),
         ]);
         $request->validate($this->getValidationRules());
     }
@@ -228,7 +228,7 @@ class ProductController extends Controller
     {
         $this->normalizePriceFields($request);
         $request->merge([
-            'active' => (bool) $request->boolean('active', true),
+            'active' => $request->boolean('active', true),
         ]);
         $request->validate($this->getValidationRules($id));
     }
@@ -240,6 +240,7 @@ class ProductController extends Controller
     {
         $resourceTypeId = request()->input('resource_type_id');
 
+        logger()->info('request '.print_r(request()->all(), true));
         return [
             'name'              => 'required|string|max:255',
             'active'            => 'required|boolean',
@@ -261,8 +262,8 @@ class ProductController extends Controller
     protected function normalizePriceFields(Request $request): void
     {
         $request->merge([
-            'price' => \App\Enums\Currency::normalizePrice($request->input('price')),
-            'costs' => \App\Enums\Currency::normalizePrice($request->input('costs')),
+            'price' => Currency::normalizePrice($request->input('price')),
+            'costs' => Currency::normalizePrice($request->input('costs')),
         ]);
     }
 
@@ -282,6 +283,11 @@ class ProductController extends Controller
             $data['active'] = true;
         } else {
             $data['active'] = (bool) $data['active'];
+        }
+
+        // Ensure partner_products is always present (empty array if not provided)
+        if (! array_key_exists('partner_products', $data)) {
+            $data['partner_products'] = [];
         }
 
         // Convert empty strings to null for foreign key fields

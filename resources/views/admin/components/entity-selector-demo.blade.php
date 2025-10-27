@@ -46,7 +46,7 @@
         </div>
 
         <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4">
-            <h3 class="mb-4 text-lg font-semibold">Single Select with Current Value (like Lead Edit)</h3>
+            <h3 class="mb-4 text-lg font-semibold">Single Select with Current Value</h3>
             <x-adminc::components.entity-selector
                 name="current_value_entity"
                 label="Contact Person Selection"

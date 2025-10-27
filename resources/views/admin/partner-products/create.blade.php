@@ -225,5 +225,4 @@
                 .catch(error => console.error('Error loading template product:', error));
         }
     </script>
-</x-admin::layouts>
 

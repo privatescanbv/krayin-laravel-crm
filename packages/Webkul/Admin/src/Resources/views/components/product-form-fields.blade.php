@@ -204,20 +204,20 @@
 
 {!! view_render_event('admin.products.' . ($product ? 'edit' : 'create') . '.attributes.after', ['product' => $product]) !!}
 
-<!-- Partner Products Selection -->
-{{--<x-adminc::partner-products.lookup--}}
-{{--    :src="route('admin.partner_products.search')"--}}
-{{--    name="partner_products"--}}
-{{--    :label="trans('admin::app.products.create.partner_products')"--}}
-{{--    :search-placeholder="trans('admin::app.products.create.search_partner_products')"--}}
-{{--    :value="$selectedPartnerProducts"--}}
-{{--/>--}}
-<x-adminc::components.entity-selector
-    name="partner_product_id"
-    label="Partner products"
-    placeholder="Selecteer .."
-    search-route="{{ route('admin.partner_products.search') }}"
-    :current-value=""
-    :current-label="$salesLead->contactPerson ? $salesLead->contactPerson->name : null"
-    :can-add-new="true"
-/>
+<x-admin::form.control-group>
+    <x-admin::form.control-group.label>
+        Partner products
+    </x-admin::form.control-group.label>
+
+    <x-adminc::components.entity-selector
+        name="partner_products"
+        label="Partner products"
+        placeholder="Selecteer .."
+        search-route="{{ route('admin.partner_products.search') }}"
+        :can-add-new="true"
+        :multiple="true"
+        :items="$selectedPartnerProducts"
+    />
+    <x-admin::form.control-group.error control-name="partner_products"/>
+</x-admin::form.control-group>
+

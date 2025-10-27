@@ -2,8 +2,9 @@
 
 namespace Webkul\Product\Repositories;
 
+use App\Models\PartnerProduct;
+use App\Repositories\PartnerProductRepository;
 use Illuminate\Container\Container;
-use Illuminate\Support\Str;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Core\Eloquent\Repository;
@@ -28,6 +29,7 @@ class ProductRepository extends Repository
     public function __construct(
         protected AttributeRepository $attributeRepository,
         protected AttributeValueRepository $attributeValueRepository,
+        protected PartnerProductRepository $partnerProductRepository,
         Container $container
     ) {
         parent::__construct($container);
@@ -103,15 +105,6 @@ class ProductRepository extends Repository
     }
 
     /**
-     * Save inventories.
-     *
-     * @param  int  $id
-     * @param  ?int  $warehouseId
-     * @return void
-     */
-    // Inventory methods removed
-
-    /**
      * Sync partner products relationship.
      *
      * @param  \Webkul\Product\Contracts\Product  $product
@@ -120,20 +113,19 @@ class ProductRepository extends Repository
      */
     protected function syncPartnerProducts($product, array $data): void
     {
-        if (! array_key_exists('partner_products', $data)) {
-            return;
-        }
-
-        $partnerProductIds = $data['partner_products'] ?? [];
-
-        // Reset product_id for all partner products that were previously linked to this product
+        // Always reset product_id for all partner products that were previously linked to this product
         $product->partnerProducts()->update(['product_id' => null]);
 
-        // Set product_id for the selected partner products
-        if (! empty($partnerProductIds)) {
-            \App\Models\PartnerProduct::whereIn('id', $partnerProductIds)
-                ->whereNull('deleted_at')
-                ->update(['product_id' => $product->id]);
+        // If partner_products key exists in data, sync the selected ones
+        if (array_key_exists('partner_products', $data)) {
+            $partnerProductIds = $data['partner_products'] ?? [];
+
+            // Set product_id for the selected partner products
+            if (! empty($partnerProductIds)) {
+                PartnerProduct::whereIn('id', $partnerProductIds)
+                    ->whereNull('deleted_at')
+                    ->update(['product_id' => $product->id]);
+            }
         }
     }
 
@@ -158,25 +150,16 @@ class ProductRepository extends Repository
      */
     public function getFormattedPartnerProducts($product): array
     {
-        $partnerProductRepository = app(\App\Repositories\PartnerProductRepository::class);
-        
+
         return $product->partnerProducts()
             ->with('clinics:id,name')
             ->get()
-            ->map(function ($partnerProduct) use ($partnerProductRepository) {
+            ->map(function ($partnerProduct) {
                 return [
                     'id' => $partnerProduct->id,
-                    'name' => $partnerProductRepository->formatDisplayName($partnerProduct),
+                    'name' => $this->partnerProductRepository->formatDisplayName($partnerProduct),
                 ];
             })
             ->toArray();
     }
-
-    /**
-     * Get inventories grouped by warehouse.
-     *
-     * @param  int  $id
-     * @return array
-     */
-    // Inventory methods removed
 }

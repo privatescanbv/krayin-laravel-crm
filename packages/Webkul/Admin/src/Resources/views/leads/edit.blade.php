@@ -162,7 +162,7 @@
                             <x-adminc::components.entity-selector
                                 name="contact_person_id"
                                 label="Contactpersoon"
-                                placeholder="Selecteer contactpersoon..."
+                                placeholder="Selecteer .."
                                 search-route="{{ route('admin.contacts.persons.search') }}"
                                 :current-value="$lead->contact_person_id"
                                 :current-label="$lead->contactPerson ? $lead->contactPerson->name : null"

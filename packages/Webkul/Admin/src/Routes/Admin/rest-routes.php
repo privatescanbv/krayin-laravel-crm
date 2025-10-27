@@ -47,6 +47,13 @@ Route::prefix('datagrid')->group(function () {
 Route::post('tinymce/upload', [TinyMCEController::class, 'upload'])->name('admin.tinymce.upload');
 
 /**
+ * Demo routes.
+ */
+Route::get('demo/entity-selector', function () {
+    return view('admin.components.entity-selector-demo');
+})->name('admin.demo.entity-selector');
+
+/**
  * User profile routes.
  */
 Route::controller(AccountController::class)->prefix('account')->group(function () {

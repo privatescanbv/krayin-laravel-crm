@@ -89,7 +89,7 @@
              class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
             <v-order-resource-planning
                 :order-id="{{ $order->id }}"
-                :order-items="{!! json_encode($orderItems) !!}"
+                :order-items='@json($orderItems)'
             ></v-order-resource-planning>
         </div>
     </div>
@@ -298,10 +298,10 @@
                             replace_existing: true
                         },
                         resources: [],
-                        resourceTypes: {!! json_encode($resourceTypes) !!},
-                        clinics: {!! json_encode($clinics) !!},
+                        resourceTypes: @json($resourceTypes),
+                        clinics: @json($clinics),
                         availabilityUrl: "{{ route('admin.planning.monitor.order.availability', ['orderId' => $order->id]) }}",
-                        resourceTypesUrl: "{{ route('admin.planning.monitor.order.resource_types', ['orderId' => $order->id]) }}",
+                        resourceTypesUrl: "{{ route('admin.planning.monitor.order.resource_types', ['orderId' => $order->id]) }}"
                     };
                 },
                 computed: {

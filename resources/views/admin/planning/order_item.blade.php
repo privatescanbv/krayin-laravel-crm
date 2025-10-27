@@ -84,7 +84,7 @@
                                 <div class="flex items-center justify-end gap-2">
                                     <button class="secondary-button" @click="prevPeriod">Vorige</button>
                                     <div class="text-sm font-medium text-gray-800 dark:text-gray-200">@{{ periodLabel }}</div>
-                                    <button class="secondary-button" @click="nextPeriod">Volgende</button>
+                                    <button class="secondary-button" @click="nextPeriod">Volgende (order_item_blade)</button>
                                     <button class="primary-button" @click="loadAvailability">Zoeken</button>
                                 </div>
                             </div>

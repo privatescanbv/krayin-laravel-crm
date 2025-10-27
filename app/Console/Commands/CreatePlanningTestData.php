@@ -239,9 +239,9 @@ class CreatePlanningTestData extends Command
         foreach ($resources as $resource) {
             // Kies een paar verschillende komende dagen
             $dates = [
-                Carbon::today()->addDays(1),
-                Carbon::today()->addDays(3),
                 Carbon::today()->addDays(5),
+                Carbon::today()->addDays(21),
+                Carbon::today()->addDays(60),
             ];
 
             foreach ($dates as $date) {
@@ -259,7 +259,7 @@ class CreatePlanningTestData extends Command
                     'available'           => true,
                     'notes'               => 'Auto-generated test shift',
                     'period_start'        => $date->toDateString(),
-                    'period_end'          => $date->toDateString(),
+                    'period_end'          => null,
                     'weekday_time_blocks' => $timeBlocks,
                 ]);
 

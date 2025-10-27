@@ -112,15 +112,16 @@
                 data() {
                     return {
                         viewType: 'week',
+                        currentWeekStart: new Date(),
                         filters: {
                             resource_type_ids: [],
                             clinic_ids: [],
                             resource_ids: [],
                             show_available_only: true,
                         },
-                        resourceTypes: {!! json_encode($resourceTypes) !!},
-                        resources: {!! json_encode($resources) !!},
-                        clinics: {!! json_encode($clinics) !!},
+                        resourceTypes: @json($resourceTypes),
+                        resources: @json($resources),
+                        clinics: @json($clinics),
                         availabilityUrl: "{{ route('admin.planning.monitor.availability') }}",
                     };
                 },
@@ -153,13 +154,32 @@
                         });
                     },
                     periodLabel() {
-                        return this.$refs.calendar?.periodLabel || '';
+                        if (this.viewType === 'week') {
+                            const weekNumber = this.getWeekNumber(this.currentWeekStart);
+                            return `Week ${weekNumber}`;
+                        } else {
+                            return this.currentWeekStart.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
+                        }
                     }
                 },
                 mounted() {
+                    // Initialize currentWeekStart with calendar's initial window
+                    this.$nextTick(() => {
+                        if (this.$refs.calendar?.window?.start) {
+                            this.currentWeekStart = new Date(this.$refs.calendar.window.start);
+                        }
+                    });
                     this.loadAvailability();
                 },
                 methods: {
+                    getWeekNumber(date) {
+                        // ISO week number calculation
+                        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+                        const dayNum = d.getUTCDay() || 7;
+                        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+                        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+                        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+                    },
                     setViewType(type) {
                         this.viewType = type;
                         // Let the child component handle the window update through its watcher
@@ -172,6 +192,7 @@
                             const s = new Date(this.$refs.calendar.window.start);
                             s.setDate(s.getDate() - 7);
                             this.$refs.calendar.window.start = this.$refs.calendar.startOfWeek(s);
+                            this.currentWeekStart = new Date(this.$refs.calendar.window.start);
                             const e = new Date(this.$refs.calendar.window.start);
                             e.setDate(e.getDate() + 6);
                             this.$refs.calendar.window.end = e;
@@ -179,6 +200,7 @@
                             const s = new Date(this.$refs.calendar.window.start);
                             s.setMonth(s.getMonth() - 1);
                             this.$refs.calendar.window.start = this.$refs.calendar.startOfMonth(s);
+                            this.currentWeekStart = new Date(this.$refs.calendar.window.start);
                             this.$refs.calendar.window.end = this.$refs.calendar.endOfMonth(s);
                         }
                         this.loadAvailability();
@@ -188,6 +210,7 @@
                             const s = new Date(this.$refs.calendar.window.start);
                             s.setDate(s.getDate() + 7);
                             this.$refs.calendar.window.start = this.$refs.calendar.startOfWeek(s);
+                            this.currentWeekStart = new Date(this.$refs.calendar.window.start);
                             const e = new Date(this.$refs.calendar.window.start);
                             e.setDate(e.getDate() + 6);
                             this.$refs.calendar.window.end = e;
@@ -195,6 +218,7 @@
                             const s = new Date(this.$refs.calendar.window.start);
                             s.setMonth(s.getMonth() + 1);
                             this.$refs.calendar.window.start = this.$refs.calendar.startOfMonth(s);
+                            this.currentWeekStart = new Date(this.$refs.calendar.window.start);
                             this.$refs.calendar.window.end = this.$refs.calendar.endOfMonth(s);
                         }
                         this.loadAvailability();

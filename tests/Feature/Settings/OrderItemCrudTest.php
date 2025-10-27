@@ -4,6 +4,7 @@ namespace Tests\Feature\Settings;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use Webkul\Contact\Models\Person;
 use Webkul\Installer\Http\Middleware\CanInstall;
 use Webkul\Product\Models\Product;
 
@@ -13,6 +14,8 @@ beforeEach(function () {
 
     $user = makeUser();
     $this->actingAs($user, 'user');
+
+    test()->person = Person::factory()->create();
 });
 
 test('order_items index returns datagrid json', function () {
@@ -32,10 +35,11 @@ test('can create order_item', function () {
     $p = Product::factory()->create();
 
     $payload = [
-        'order_id'    => $o->id,
-        'product_id'  => $p->id,
-        'quantity'    => 2,
-        'total_price' => 200,
+        'order_id'      => $o->id,
+        'product_id'    => $p->id,
+        'person_id'     => test()->person->id,
+        'quantity'      => 2,
+        'total_price'   => 200,
     ];
 
     $response = $this->postJson(route('admin.order_items.store'), $payload);
@@ -52,11 +56,12 @@ test('can update order_item', function () {
     $item = OrderItem::factory()->create();
 
     $payload = [
-        'order_id'    => $item->order_id,
-        'product_id'  => $item->product_id,
-        'quantity'    => 5,
-        'total_price' => 555.55,
-        '_method'     => 'put',
+        'order_id'      => $item->order_id,
+        'product_id'    => $item->product_id,
+        'person_id'     => test()->person->id,
+        'quantity'      => 5,
+        'total_price'   => 555.55,
+        '_method'       => 'put',
     ];
 
     $response = $this->postJson(route('admin.order_items.update', ['id' => $item->id]), $payload);

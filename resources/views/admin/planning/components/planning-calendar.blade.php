@@ -178,7 +178,8 @@
             computed: {
                 periodLabel() {
                     if (this.viewType === 'week') {
-                        return this.window.start.toLocaleDateString() + ' - ' + this.window.end.toLocaleDateString();
+                        const weekNumber = this.getWeekNumber(this.window.start);
+                        return `Week ${weekNumber}`;
                     } else {
                         return this.window.start.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
                     }
@@ -215,6 +216,14 @@
                 this.scrollToCurrentTime();
             },
             methods: {
+                getWeekNumber(date) {
+                    // ISO week number calculation
+                    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+                    const dayNum = d.getUTCDay() || 7;
+                    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+                    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+                    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+                },
                 getInitialWindow() {
                     const now = new Date();
                     if (this.viewType === 'month') {

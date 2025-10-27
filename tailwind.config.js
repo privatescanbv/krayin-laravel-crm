@@ -40,8 +40,9 @@ export default {
     darkMode: 'class',
     plugins: [],
     safelist: [
+        'icon-*',
         {
-            pattern: /icon-/,
+            pattern: /^icon-/,
         }
     ]
 };

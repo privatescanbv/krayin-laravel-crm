@@ -3,7 +3,6 @@
 namespace App\Repositories;
 
 use App\Models\Resource;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Webkul\Core\Eloquent\Repository;
@@ -39,5 +38,4 @@ class ResourceRepository extends Repository
 
         return $query->get($columns);
     }
-
 }

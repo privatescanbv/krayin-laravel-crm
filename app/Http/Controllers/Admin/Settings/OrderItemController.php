@@ -5,11 +5,14 @@ namespace App\Http\Controllers\Admin\Settings;
 use App\DataGrids\Settings\OrderItemDataGrid;
 use App\Repositories\OrderItemRepository;
 use Illuminate\Http\Request;
+use Webkul\Contact\Repositories\PersonRepository;
 
 class OrderItemController extends SimpleEntityController
 {
-    public function __construct(protected OrderItemRepository $orderItemRepository)
-    {
+    public function __construct(
+        protected OrderItemRepository $orderItemRepository,
+        protected PersonRepository $personRepository
+    ) {
         parent::__construct($orderItemRepository);
 
         $this->entityName = 'order_items';
@@ -26,6 +29,7 @@ class OrderItemController extends SimpleEntityController
         $request->validate([
             'order_id'    => ['required', 'integer', 'exists:orders,id'],
             'product_id'  => ['required', 'integer', 'exists:products,id'],
+            'person_id'   => ['required', 'integer', 'exists:persons,id'],
             'quantity'    => ['required', 'integer', 'min:1'],
             'total_price' => ['nullable', 'numeric', 'min:0'],
         ]);
@@ -54,5 +58,28 @@ class OrderItemController extends SimpleEntityController
     protected function getDeleteFailedMessage(): string
     {
         return 'Verwijderen mislukt.';
+    }
+
+    protected function getCreateViewData(Request $request): array
+    {
+        $persons = $this->personRepository->all(['id', 'name'])->mapWithKeys(function ($person) {
+            return [$person->id => $person->name];
+        })->toArray();
+
+        return [
+            'persons' => $persons,
+        ];
+    }
+
+    protected function getEditViewData(Request $request, $entity): array
+    {
+        $persons = $this->personRepository->all(['id', 'name'])->mapWithKeys(function ($person) {
+            return [$person->id => $person->name];
+        })->toArray();
+
+        return [
+            'order_items' => $entity,
+            'persons'     => $persons,
+        ];
     }
 }

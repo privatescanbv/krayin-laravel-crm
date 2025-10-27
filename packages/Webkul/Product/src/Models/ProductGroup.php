@@ -6,6 +6,7 @@ use App\Traits\HasAuditTrail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Webkul\Product\Contracts\ProductGroup as ProductGroupContract;
+use Webkul\Product\Repositories\ProductGroupRepository;
 
 class ProductGroup extends Model implements ProductGroupContract
 {
@@ -70,22 +71,10 @@ class ProductGroup extends Model implements ProductGroupContract
 
     /**
      * Get the full hierarchical path of the group.
-     * Returns empty string for root level (no parent).
+     * Returns the name for root level (no parent).
      */
     public function getPathAttribute(): string
     {
-        if (!$this->parent_id) {
-            return $this->name;
-        }
-
-        $path = [$this->name];
-        $parent = $this->parent;
-
-        while ($parent) {
-            array_unshift($path, $parent->name);
-            $parent = $parent->parent;
-        }
-
-        return implode(' > ', $path);
+        return app(ProductGroupRepository::class)->buildGroupPath($this);
     }
 }

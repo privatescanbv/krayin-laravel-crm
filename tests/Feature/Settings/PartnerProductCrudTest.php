@@ -408,7 +408,7 @@ test('template products show product group path when available', function () {
 
     expect($product)->not->toBeNull();
     expect($product['name'])->toBe('Template Product');
-    expect($product['name_with_path'])->toBe('Parent Group > Child Group > Template Product');
+    expect($product['name_with_path'])->toBe('Parent Group/Child Group/Template Product');
 });
 
 test('edit partner product shows linked product with full path', function () {
@@ -441,5 +441,5 @@ test('edit partner product shows linked product with full path', function () {
     $response->assertOk();
 
     // The view should contain the linked product with full path
-    $response->assertSee('Parent Group > Child Group > Template Product');
+    $response->assertSee('Parent Group/Child Group/Template Product');
 });

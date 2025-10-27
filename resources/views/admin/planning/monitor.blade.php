@@ -118,9 +118,9 @@
                             resource_ids: [],
                             show_available_only: true,
                         },
-                        resourceTypes: @json($resourceTypes),
-                        resources: @json($resources),
-                        clinics: @json($clinics),
+                        resourceTypes: {!! json_encode($resourceTypes) !!},
+                        resources: {!! json_encode($resources) !!},
+                        clinics: {!! json_encode($clinics) !!},
                         availabilityUrl: "{{ route('admin.planning.monitor.availability') }}",
                     };
                 },

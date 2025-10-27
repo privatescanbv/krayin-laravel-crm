@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Webkul\Email\Enums\SupportedFolderEnum;
 use Webkul\Email\Models\Email;
+use Webkul\Email\Models\Folder;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 
@@ -269,7 +270,7 @@ class GraphMailService extends AbstractEmailProcessor
      */
     protected function getFolderId($folderName)
     {
-        $folder = \Webkul\Email\Models\Folder::where('name', strtolower($folderName))->first();
+        $folder = Folder::where('name', strtolower($folderName))->first();
 
         return $folder ? $folder->id : null;
     }

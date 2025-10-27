@@ -49,7 +49,7 @@ class ResourcePlanningMonitorController extends Controller
 
     public function orderPlanning(Request $request, int $orderId): View
     {
-        $order = Order::with(['orderItems.product.partnerProducts', 'salesLead.lead'])->findOrFail($orderId);
+        $order = Order::with(['orderItems.product.partnerProducts', 'orderItems.person', 'salesLead.lead'])->findOrFail($orderId);
 
         $resourceTypes = ResourceType::all(['id', 'name']);
         $resources = app(ResourceRepository::class)

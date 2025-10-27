@@ -2,6 +2,8 @@
 
 namespace App\Helpers;
 
+use App\Enums\PathDivider;
+use Illuminate\Support\Collection;
 use Webkul\Product\Models\Product;
 
 class ProductHelper
@@ -16,7 +18,7 @@ class ProductHelper
         if ($product->productGroup) {
             $path = $product->productGroup->path;
 
-            return "{$path} > {$name}";
+            return "{$path}".PathDivider::value()."{$name}";
         }
 
         return $name;
@@ -38,7 +40,7 @@ class ProductHelper
         if ($product->productGroup) {
             $path = $product->productGroup->path;
 
-            return "{$path} > {$name}";
+            return "{$path}".PathDivider::value()."{$name}";
         }
 
         return $name;
@@ -48,9 +50,8 @@ class ProductHelper
      * Format multiple products with their paths.
      *
      * @param  \Illuminate\Database\Eloquent\Collection  $products
-     * @return \Illuminate\Support\Collection
      */
-    public static function formatCollectionWithPaths($products)
+    public static function formatCollectionWithPaths($products): Collection
     {
         return $products->map(function ($product) {
             return [

@@ -5,6 +5,7 @@ namespace Webkul\Email\InboundEmailProcessor;
 use Webkul\Email\Helpers\HtmlFilter;
 use Webkul\Email\Helpers\Parser;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
+use Webkul\Email\Models\Folder;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 
@@ -133,7 +134,7 @@ class SendgridEmailProcessor implements InboundEmailProcessor
      */
     protected function getInboxFolderId()
     {
-        $folder = \Webkul\Email\Models\Folder::where('name', 'inbox')->first();
+        $folder = Folder::where('name', 'inbox')->first();
         return $folder ? $folder->id : null;
     }
 }

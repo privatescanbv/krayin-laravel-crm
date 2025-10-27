@@ -42,7 +42,7 @@
                                 {{ $statusLabel }}
                             </span>
                         </div>
-                        <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">{{ $item->person->name }} &mdash; Aantal: {{ $item->quantity }}</div>
+                        <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">{{ $item->person?->name ?? 'Geen persoon toegewezen' }} &mdash; Aantal: {{ $item->quantity }}</div>
                         @if ($item->resourceOrderItems && $item->resourceOrderItems->count() > 0)
                             <div class="text-xs text-gray-700 dark:text-gray-300">
                                 <div class="font-medium mb-1">Ingepland:</div>
@@ -89,7 +89,7 @@
              class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
             <v-order-resource-planning
                 :order-id="{{ $order->id }}"
-                :order-items='@json($orderItems)'
+                :order-items="{!! json_encode($orderItems) !!}"
             ></v-order-resource-planning>
         </div>
     </div>
@@ -298,8 +298,8 @@
                             replace_existing: true
                         },
                         resources: [],
-                        resourceTypes: @json($resourceTypes),
-                        clinics: @json($clinics),
+                        resourceTypes: {!! json_encode($resourceTypes) !!},
+                        clinics: {!! json_encode($clinics) !!},
                         availabilityUrl: "{{ route('admin.planning.monitor.order.availability', ['orderId' => $order->id]) }}",
                         resourceTypesUrl: "{{ route('admin.planning.monitor.order.resource_types', ['orderId' => $order->id]) }}",
                     };

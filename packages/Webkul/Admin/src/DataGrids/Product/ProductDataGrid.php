@@ -7,9 +7,14 @@ use Illuminate\Support\Facades\DB;
 use App\Enums\Currency;
 use Webkul\DataGrid\DataGrid;
 use Webkul\Tag\Repositories\TagRepository;
+use Webkul\Product\Repositories\ProductGroupRepository;
 
 class ProductDataGrid extends DataGrid
 {
+    /**
+     * Create a new controller instance.
+     */
+    public function __construct(protected ProductGroupRepository $productGroupRepository) {}
     /**
      * Prepare query builder.
      */
@@ -26,7 +31,8 @@ class ProductDataGrid extends DataGrid
                 'products.price',
                 'products.active',
                 DB::raw('MIN(tags.name) as tag_name'),
-                'product_groups.name as group_name'
+                'product_groups.name as group_name',
+                'product_groups.parent_id as group_parent_id'
             )
             ->groupBy('products.id');
 
@@ -102,6 +108,19 @@ class ProductDataGrid extends DataGrid
             'searchable' => true,
             'sortable'   => true,
             'filterable' => true,
+            'closure'    => function ($row) {
+                if (!$row->group_name) {
+                    return '--';
+                }
+                
+                // Create a mock object with the row data
+                $mockRow = (object) [
+                    'name' => $row->group_name,
+                    'parent_id' => $row->group_parent_id
+                ];
+                
+                return $this->productGroupRepository->getGroupPathByRow($mockRow);
+            },
         ]);
 
         $this->addColumn([

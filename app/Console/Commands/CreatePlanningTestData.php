@@ -168,10 +168,7 @@ class CreatePlanningTestData extends Command
 
     private function createProductGroup(): ProductGroup
     {
-        return ProductGroup::create([
-            'name'        => 'Test Planning Producten',
-            'description' => 'Product groep voor planning test data',
-        ]);
+        return ProductGroup::query()->where('name', '=', 'Wervelkolom')->firstOrFail();
     }
 
     private function createProduct(ProductGroup $productGroup, ResourceType $resourceType, ProductType $productType): Product

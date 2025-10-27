@@ -4,9 +4,14 @@ namespace Webkul\Admin\DataGrids\Products;
 
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
+use Webkul\Product\Repositories\ProductGroupRepository;
 
 class ProductGroupDataGrid extends DataGrid
 {
+    /**
+     * Create a new controller instance.
+     */
+    public function __construct(protected ProductGroupRepository $productGroupRepository) {}
     /**
      * Prepare query builder.
      *
@@ -19,6 +24,7 @@ class ProductGroupDataGrid extends DataGrid
                 'id',
                 'name',
                 'description',
+                'parent_id',
                 'created_at'
             );
 
@@ -50,6 +56,9 @@ class ProductGroupDataGrid extends DataGrid
             'searchable' => true,
             'sortable'   => true,
             'filterable' => true,
+            'closure'    => function ($row) {
+                return $this->productGroupRepository->getGroupPathByRow($row);
+            },
         ]);
 
         $this->addColumn([
@@ -98,4 +107,5 @@ class ProductGroupDataGrid extends DataGrid
             'icon'   => 'icon-delete',
         ]);
     }
+
 }

@@ -32,6 +32,21 @@
             </x-admin::form.control-group>
 
             <x-admin::form.control-group>
+                <x-admin::form.control-group.label>Persoon</x-admin::form.control-group.label>
+                <x-admin::form.control-group.control
+                    type="select"
+                    name="person_id"
+                    rules="required|integer|exists:persons,id"
+                    label="Persoon"
+                >
+                    <option value="">Selecteer persoon</option>
+                    @foreach ($persons as $personId => $personName)
+                        <option value="{{ $personId }}">{{ $personName }}</option>
+                    @endforeach
+                </x-admin::form.control-group.control>
+            </x-admin::form.control-group>
+
+            <x-admin::form.control-group>
                 <x-admin::form.control-group.label>Aantal</x-admin::form.control-group.label>
                 <x-admin::form.control-group.control type="number" name="quantity" rules="required|integer|min:1" />
             </x-admin::form.control-group>

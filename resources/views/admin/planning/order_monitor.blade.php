@@ -8,69 +8,33 @@
     <x-adminc::planning.components.multiselect-filter/>
 
     <div class="flex flex-col gap-4">
-        <div
-            class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-            <div class="flex flex-col gap-1">
-                <div class="text-xl font-bold">Resource Planning - Order #{{ $order->id }}</div>
-                <div class="text-sm text-gray-600 dark:text-gray-400">{{ $order->title }}</div>
-            </div>
-            <div class="flex items-center gap-2">
-                <a href="{{ route('admin.orders.edit', ['id' => $order->id]) }}" class="secondary-button">Terug naar
-                    order</a>
-                <a href="{{ route('admin.planning.monitor.index') }}" class="secondary-button">Alle resources</a>
-            </div>
-        </div>
+        <x-adminc::planning.components.page-header
+            title="Resource Planning - Order #{{ $order->id }}"
+            :subtitle="$order->title"
+            :actions="[
+                ['url' => route('admin.orders.edit', ['id' => $order->id]), 'label' => 'Terug naar order'],
+                ['url' => route('admin.planning.monitor.index'), 'label' => 'Alle resources']
+            ]"
+        />
 
         <!-- Order Items Panel -->
-        <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
-            <h3 class="text-lg font-semibold mb-4">Orderitems</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                @foreach ($order->orderItems as $item)
-                    @php
-                        $statusValue = is_string($item->status) ? $item->status : ($item->status?->value ?? 'nieuw');
-                        $statusLabel = is_object($item->status) && method_exists($item->status, 'label')
-                            ? $item->status->label()
-                            : ucfirst(str_replace('_', ' ', $statusValue));
-                        $canPlan = $item->product && $item->product->partnerProducts()->exists();
-                    @endphp
-                    <div
-                        class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 {{ $canPlan ? 'bg-blue-50 dark:bg-blue-900/20' : 'bg-gray-50 dark:bg-gray-800' }}">
-                        <div class="flex justify-between items-start mb-2">
-                            <h4 class="font-medium text-sm">{{ $item->product->fullName ?? 'Onbekend product' }}</h4>
-                            <span
-                                class="text-xs px-2 py-1 rounded-full {{ $statusValue === 'ingepland' ? 'bg-green-100 text-green-800' : ($statusValue === 'moet_worden_ingepland' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-800') }}">
-                                {{ $statusLabel }}
-                            </span>
-                        </div>
-                        <div class="text-xs text-gray-600 dark:text-gray-400 mb-2">{{ $item->person?->name ?? 'Geen persoon toegewezen' }} &mdash; Aantal: {{ $item->quantity }}</div>
-                        @if ($item->resourceOrderItems && $item->resourceOrderItems->count() > 0)
-                            <div class="text-xs text-gray-700 dark:text-gray-300">
-                                <div class="font-medium mb-1">Ingepland:</div>
-                                @foreach ($item->resourceOrderItems as $booking)
-                                    <div class="mb-1">
-                                        <strong>{{ $booking->resource?->name ?? 'Onbekend' }}</strong><br>
-                                        {{ Carbon::parse($booking->from)->format('d-m-Y H:i') }}
-                                        - {{ Carbon::parse($booking->to)->format('H:i') }}
-                                    </div>
-                                @endforeach
-                            </div>
-                        @else
-                            <div class="text-xs text-gray-500 dark:text-gray-400">
-                                Niet ingepland
-                            </div>
-                        @endif
-                    </div>
-                @endforeach
-            </div>
-        </div>
+        <x-adminc::planning.components.order-items-panel :order-items="$order->orderItems" />
 
         <!-- Resource Planning Calendar -->
         @php
             $orderItems = $order->orderItems->map(function ($item) {
+                // Get duration from the first partner product (if any)
+                $duration = null;
+                if ($item->product && method_exists($item->product, 'partnerProducts')) {
+                    $partnerProduct = $item->product->partnerProducts()->first();
+                    $duration = $partnerProduct?->duration;
+                }
+
                 return [
                     'id' => $item->id,
                     'product_name' => $item->product?->name ?? 'Onbekend product',
                     'quantity' => $item->quantity,
+                    'duration' => $duration, // Duration in minutes
                     'status' => (is_string($item->status) ? $item->status : ($item->status?->value ?? 'nieuw')),
                     'can_plan' => $item->product && method_exists($item->product, 'partnerProducts') && $item->product->partnerProducts()->exists(),
                     'bookings' => $item->resourceOrderItems->map(function ($booking) {
@@ -106,180 +70,19 @@
                     @block-click="openBook"
                 >
                     <template #filters>
-                        <!-- Filters and View Controls -->
-                        <div
-                            class="filters-bar rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60 p-3 md:p-4">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <!-- Left: Filters -->
-                                <div class="flex flex-wrap items-start gap-3">
-                                    <div class="w-full md:w-56">
-                                        <v-multiselect-filter
-                                            v-model="filters.resource_type_ids"
-                                            :options="resourceTypeOptions"
-                                            label="Resource type"
-                                            placeholder="Alle types"
-                                        ></v-multiselect-filter>
-                                    </div>
-                                    <div class="w-full md:w-56">
-                                        <v-multiselect-filter
-                                            v-model="filters.clinic_ids"
-                                            :options="clinicOptions"
-                                            label="Kliniek"
-                                            placeholder="Alle klinieken"
-                                        ></v-multiselect-filter>
-                                    </div>
-                                    <div class="w-full md:w-56">
-                                        <v-multiselect-filter
-                                            v-model="filters.resource_ids"
-                                            :options="filteredResourceOptions"
-                                            label="Resource"
-                                            placeholder="Alle resources"
-                                        ></v-multiselect-filter>
-                                    </div>
-                                    <div class="w-full md:w-56">
-                                        <v-multiselect-filter
-                                            v-model="filters.order_item_ids"
-                                            :options="orderItemOptions"
-                                            label="Orderitem"
-                                            placeholder="Alle orderitems"
-                                        ></v-multiselect-filter>
-                                    </div>
-                                    <div class="w-full md:w-56 flex items-end">
-                                        <label class="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                v-model="filters.show_available_only"
-                                                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                            />
-                                            <span class="text-sm text-gray-700 dark:text-gray-300">Toon alleen beschikbaar</span>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <!-- Right: View controls -->
-                                <div class="flex flex-col gap-3">
-                                    <!-- View toggle -->
-                                    <div class="flex items-center justify-end gap-3">
-                                        <div
-                                            class="flex border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden">
-                                            <button
-                                                @click="setViewType('week')"
-                                                :class="['px-3 py-1 text-sm', viewType === 'week' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
-                                            >
-                                                Week
-                                            </button>
-                                            <button
-                                                @click="setViewType('month')"
-                                                :class="['px-3 py-1 text-sm', viewType === 'month' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
-                                            >
-                                                Maand
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Calendar controls -->
-                                    <div class="flex items-center justify-end gap-2">
-                                        <button class="secondary-button" @click="prevPeriod">Vorige</button>
-                                        <div class="text-sm font-medium text-gray-800 dark:text-gray-200">@{{
-                                            periodLabel }}
-                                        </div>
-                                        <button class="secondary-button" @click="nextPeriod">Volgende</button>
-                                        <button class="primary-button" @click="loadAvailability">Zoeken</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <x-adminc::planning.components.filters-bar :show-order-item-filter="true" />
                     </template>
 
                     <template #modals>
-                        <!-- Book modal -->
-                        <x-admin::modal ref="bookModal">
-                            <x-slot:header>
-                                Inboeken
-                            </x-slot:header>
-                            <x-slot:content>
-                                <div class="space-y-6" style="pointer-events: auto; z-index: 1000; position: relative;">
-                                    <!-- Order item selection -->
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Orderitem</label>
-                                        <select
-                                            v-model.number="form.order_item_id"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
-                                            style="pointer-events: auto; z-index: 10; position: relative;"
-                                            @click.stop
-                                        >
-                                            <option value="">Selecteer orderitem</option>
-                                            <option v-for="item in orderItems" :key="item.id" :value="item.id"
-                                                    :disabled="!item.can_plan">
-                                                @{{ item.product_name }} (Aantal: @{{ item.quantity }}) @{{
-                                                !item.can_plan ? '- Niet planbaar' : '' }}
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Resource</label>
-                                        <select
-                                            v-model.number="form.resource_id"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
-                                            style="pointer-events: auto; z-index: 10; position: relative;"
-                                            @click.stop
-                                        >
-                                            <option v-for="r in resources" :key="r.id" :value="r.id">@{{ r.name }} (@{{
-                                                r.clinic }})
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Van</label>
-                                        <input
-                                            type="datetime-local"
-                                            v-model="form.from"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
-                                            style="pointer-events: auto; z-index: 10; position: relative;"
-                                            @click.stop
-                                        />
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tot</label>
-                                        <input
-                                            type="datetime-local"
-                                            v-model="form.to"
-                                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:border-gray-600 dark:text-white cursor-pointer"
-                                            style="pointer-events: auto; z-index: 10; position: relative;"
-                                            @click.stop
-                                        />
-                                    </div>
-                                    <div class="flex items-center gap-2">
-                                        <input id="replace_existing" type="checkbox" v-model="form.replace_existing"
-                                               class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"/>
-                                        <label for="replace_existing" class="text-sm text-gray-700 dark:text-gray-300">Vervang
-                                            bestaande afspraak (verwijdert eerdere boekingen voor deze
-                                            orderitem)</label>
-                                    </div>
-                                </div>
-                            </x-slot:content>
-                            <x-slot:footer>
-                                <div class="flex justify-end gap-3">
-                                    <button
-                                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
-                                        @click="$refs.bookModal.toggle()">Annuleren
-                                    </button>
-                                    <button
-                                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                        @click="submitBooking">Opslaan
-                                    </button>
-                                </div>
-                            </x-slot:footer>
-                        </x-admin::modal>
+                        <x-adminc::planning.components.booking-modal />
                     </template>
                 </v-planning-calendar>
             </div>
         </script>
 
         <script type="module">
-            app.component('v-order-resource-planning', {
-                template: '#v-order-resource-planning-template',
-                props: ['orderId', 'orderItems'],
+            // Common planning calendar mixin
+            const planningCalendarMixin = {
                 data() {
                     return {
                         viewType: 'week',
@@ -288,29 +91,16 @@
                             resource_type_ids: [],
                             clinic_ids: [],
                             resource_ids: [],
-                            order_item_ids: [],
                             show_available_only: false,
                         },
-                        form: {
-                            order_item_id: null,
-                            resource_id: null,
-                            from: '',
-                            to: '',
-                            replace_existing: true
-                        },
-                        resources: [],
-                        resourceTypes: @json($resourceTypes),
-                        clinics: @json($clinics),
-                        availabilityUrl: "{{ route('admin.planning.monitor.order.availability', ['orderId' => $order->id]) }}",
-                        resourceTypesUrl: "{{ route('admin.planning.monitor.order.resource_types', ['orderId' => $order->id]) }}"
                     };
                 },
                 computed: {
                     resourceTypeOptions() {
-                        return this.resourceTypes.map(rt => ({value: rt.id, label: rt.name}));
+                        return this.resourceTypes.map(rt => ({ value: rt.id, label: rt.name }));
                     },
                     clinicOptions() {
-                        return this.clinics.map(c => ({value: c.id, label: c.name}));
+                        return this.clinics.map(c => ({ value: c.id, label: c.name }));
                     },
                     filteredResourceOptions() {
                         let filtered = this.resources;
@@ -334,10 +124,8 @@
                         });
                     },
                     orderItemOptions() {
-                        return this.orderItems.map(item => ({
-                            value: item.id,
-                            label: item.product_name + ' (Aantal: ' + item.quantity + ')' + (!item.can_plan ? ' - Niet planbaar' : '')
-                        }));
+                        // Default empty array - can be overridden in components that have order items
+                        return [];
                     },
                     periodLabel() {
                         if (this.viewType === 'week') {
@@ -348,15 +136,6 @@
                         }
                     }
                 },
-                mounted() {
-                    // Initialize currentWeekStart with calendar's initial window
-                    this.$nextTick(() => {
-                        if (this.$refs.calendar?.window?.start) {
-                            this.currentWeekStart = new Date(this.$refs.calendar.window.start);
-                        }
-                    });
-                    this.loadOrderResourceTypes();
-                },
                 methods: {
                     getWeekNumber(date) {
                         // ISO week number calculation
@@ -366,41 +145,12 @@
                         const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
                         return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
                     },
-                    async loadOrderResourceTypes() {
-                        try {
-                            const response = await fetch(this.resourceTypesUrl, {
-                                method: 'GET',
-                                headers: {
-                                    'Accept': 'application/json',
-                                    'X-Requested-With': 'XMLHttpRequest'
-                                }
-                            });
-
-                            if (response.ok) {
-                                const data = await response.json();
-                                // Pre-select the resource types for this order
-                                this.filters.resource_type_ids = data.resource_types.map(rt => rt.id);
-                                // Load availability with the pre-selected resource types
-                                this.loadAvailability();
-                            }
-                        } catch (error) {
-                            console.error('Error loading order resource types:', error);
-                            // Still load availability even if resource types fail
-                            this.loadAvailability();
-                        }
-                    },
                     setViewType(type) {
                         this.viewType = type;
-                        if (type === 'month') {
-                            this.$refs.calendar.window.start = this.$refs.calendar.startOfMonth(new Date());
-                            this.$refs.calendar.window.end = this.$refs.calendar.endOfMonth(new Date());
-                        } else {
-                            this.$refs.calendar.window.start = this.$refs.calendar.startOfWeek(new Date());
-                            const end = new Date(this.$refs.calendar.window.start);
-                            end.setDate(this.$refs.calendar.window.start.getDate() + 6);
-                            this.$refs.calendar.window.end = end;
-                        }
-                        this.loadAvailability();
+                        // Let the child component handle the window update through its watcher
+                        this.$nextTick(() => {
+                            this.loadAvailability();
+                        });
                     },
                     prevPeriod() {
                         if (this.viewType === 'week') {
@@ -450,17 +200,117 @@
                         if (this.filters.resource_ids.length > 0) {
                             params.resource_ids = this.filters.resource_ids.join(',');
                         }
-                        if (this.filters.order_item_ids.length > 0) {
-                            params.order_item_ids = this.filters.order_item_ids.join(',');
-                        }
                         if (this.filters.show_available_only) {
                             params.show_available_only = '1';
+                        }
+
+                        // Add order_item_ids if available (for order monitor)
+                        if (this.filters.order_item_ids && this.filters.order_item_ids.length > 0) {
+                            params.order_item_ids = this.filters.order_item_ids.join(',');
                         }
 
                         await this.$refs.calendar.loadAvailability(params);
                     },
                     onCalendarLoaded(data) {
+                        // Handle any post-load logic if needed
                         this.resources = data.resources || [];
+                    }
+                }
+            };
+
+            app.component('v-order-resource-planning', {
+                template: '#v-order-resource-planning-template',
+                props: ['orderId', 'orderItems'],
+                mixins: [planningCalendarMixin],
+                data() {
+                    return {
+                        ...planningCalendarMixin.data(),
+                        filters: {
+                            ...planningCalendarMixin.data().filters,
+                            order_item_ids: [],
+                            show_available_only: false,
+                        },
+                        form: {
+                            order_item_id: null,
+                            resource_id: null,
+                            from: '',
+                            to: '',
+                            replace_existing: true
+                        },
+                        resources: [],
+                        resourceTypes: @json($resourceTypes),
+                        clinics: @json($clinics),
+                        availabilityUrl: "{{ route('admin.planning.monitor.order.availability', ['orderId' => $order->id]) }}",
+                        resourceTypesUrl: "{{ route('admin.planning.monitor.order.resource_types', ['orderId' => $order->id]) }}"
+                    };
+                },
+                computed: {
+                    ...planningCalendarMixin.computed,
+                    orderItemOptions() {
+                        return this.orderItems.map(item => ({
+                            value: item.id,
+                            label: item.product_name + ' (Aantal: ' + item.quantity + ')' + (!item.can_plan ? ' - Niet planbaar' : '')
+                        }));
+                    },
+                    selectedOrderItem() {
+                        if (!this.form.order_item_id) return null;
+                        return this.orderItems.find(item => item.id === this.form.order_item_id);
+                    }
+                },
+                mounted() {
+                    // Initialize currentWeekStart with calendar's initial window
+                    this.$nextTick(() => {
+                        if (this.$refs.calendar?.window?.start) {
+                            this.currentWeekStart = new Date(this.$refs.calendar.window.start);
+                        }
+                    });
+                    this.loadOrderResourceTypes();
+                },
+                watch: {
+                    'form.order_item_id'() {
+                        // Recalculate end time when order item changes
+                        if (this.form.from) {
+                            this.calculateEndTime();
+                        }
+                    }
+                },
+                methods: {
+                    ...planningCalendarMixin.methods,
+                    calculateEndTime() {
+                        if (!this.form.from || !this.selectedOrderItem || !this.selectedOrderItem.duration) {
+                            return;
+                        }
+
+                        const startTime = new Date(this.form.from);
+                        const durationMinutes = this.selectedOrderItem.duration;
+                        const endTime = new Date(startTime.getTime() + (durationMinutes * 60 * 1000));
+
+                        // Format to datetime-local format (YYYY-MM-DDTHH:MM)
+                        const pad = (n) => String(n).padStart(2, '0');
+                        this.form.to = `${endTime.getFullYear()}-${pad(endTime.getMonth() + 1)}-${pad(endTime.getDate())}T${pad(endTime.getHours())}:${pad(endTime.getMinutes())}`;
+                    },
+                    async loadOrderResourceTypes() {
+                        try {
+                            const response = await fetch(this.resourceTypesUrl, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            });
+
+                            if (response.ok) {
+                                const data = await response.json();
+                                // Pre-select the resource types for this order
+                                this.filters.resource_type_ids = data.resource_types.map(rt => rt.id);
+                                // Load availability with the pre-selected resource types
+                                this.loadAvailability();
+                            }
+                        } catch (error) {
+                            console.error('Error loading order resource types:', error);
+                            // Still load availability even if resource types fail
+                            this.loadAvailability();
+                        }
                     },
                     openBook(block) {
                         this.form.resource_id = block.resource_id;

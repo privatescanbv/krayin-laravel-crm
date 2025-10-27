@@ -7,12 +7,10 @@
     <x-adminc::planning.components.multiselect-filter/>
 
     <div class="flex flex-col gap-4">
-        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-            <div class="flex flex-col gap-1">
-                <div class="text-xl font-bold">Monitor Resource Planning</div>
-                <div class="text-sm text-gray-600 dark:text-gray-400">Bekijk alle resources en hun bezetting</div>
-            </div>
-        </div>
+        <x-adminc::planning.components.page-header
+            title="Monitor Resource Planning"
+            subtitle="Bekijk alle resources en hun bezetting"
+        />
 
         <div id="resource-planning-monitor" class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-4">
             <v-resource-planning-monitor></v-resource-planning-monitor>
@@ -30,85 +28,15 @@
                     @loaded="onCalendarLoaded"
                 >
                     <template #filters>
-                        <!-- Filters and View Controls -->
-                        <div class="filters-bar rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/60 p-3 md:p-4">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <!-- Left: Filters -->
-                                <div class="flex flex-wrap items-start gap-3">
-                                    <div class="w-full md:w-56">
-                                        <v-multiselect-filter
-                                            v-model="filters.resource_type_ids"
-                                            :options="resourceTypeOptions"
-                                            label="Resource type"
-                                            placeholder="Alle types"
-                                        ></v-multiselect-filter>
-                                    </div>
-                                    <div class="w-full md:w-56">
-                                        <v-multiselect-filter
-                                            v-model="filters.clinic_ids"
-                                            :options="clinicOptions"
-                                            label="Kliniek"
-                                            placeholder="Alle klinieken"
-                                        ></v-multiselect-filter>
-                                    </div>
-                                    <div class="w-full md:w-56">
-                                        <v-multiselect-filter
-                                            v-model="filters.resource_ids"
-                                            :options="filteredResourceOptions"
-                                            label="Resource"
-                                            placeholder="Alle resources"
-                                        ></v-multiselect-filter>
-                                    </div>
-                                    <div class="w-full md:w-56 flex items-end">
-                                        <label class="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                v-model="filters.show_available_only"
-                                                class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                                            />
-                                            <span class="text-sm text-gray-700 dark:text-gray-300">Toon alleen beschikbaar</span>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <!-- Right: View controls -->
-                                <div class="flex flex-col gap-3">
-                                    <!-- View toggle -->
-                                    <div class="flex items-center justify-end gap-3">
-                                        <div class="flex border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden">
-                                            <button
-                                                @click="setViewType('week')"
-                                                :class="['px-3 py-1 text-sm', viewType === 'week' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
-                                            >
-                                                Week
-                                            </button>
-                                            <button
-                                                @click="setViewType('month')"
-                                                :class="['px-3 py-1 text-sm', viewType === 'month' ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800']"
-                                            >
-                                                Maand
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Calendar controls -->
-                                    <div class="flex items-center justify-end gap-2">
-                                        <button class="secondary-button" @click="prevPeriod">Vorige</button>
-                                        <div class="text-sm font-medium text-gray-800 dark:text-gray-200">@{{ periodLabel }}</div>
-                                        <button class="secondary-button" @click="nextPeriod">Volgende</button>
-                                        <button class="primary-button" @click="loadAvailability">Zoeken</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <x-adminc::planning.components.filters-bar />
                     </template>
                 </v-planning-calendar>
             </div>
         </script>
 
         <script type="module">
-            app.component('v-resource-planning-monitor', {
-                template: '#v-resource-planning-monitor-template',
+            // Common planning calendar mixin
+            const planningCalendarMixin = {
                 data() {
                     return {
                         viewType: 'week',
@@ -117,12 +45,8 @@
                             resource_type_ids: [],
                             clinic_ids: [],
                             resource_ids: [],
-                            show_available_only: true,
+                            show_available_only: false,
                         },
-                        resourceTypes: @json($resourceTypes),
-                        resources: @json($resources),
-                        clinics: @json($clinics),
-                        availabilityUrl: "{{ route('admin.planning.monitor.availability') }}",
                     };
                 },
                 computed: {
@@ -153,6 +77,10 @@
                             };
                         });
                     },
+                    orderItemOptions() {
+                        // Default empty array - can be overridden in components that have order items
+                        return [];
+                    },
                     periodLabel() {
                         if (this.viewType === 'week') {
                             const weekNumber = this.getWeekNumber(this.currentWeekStart);
@@ -161,15 +89,6 @@
                             return this.currentWeekStart.toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' });
                         }
                     }
-                },
-                mounted() {
-                    // Initialize currentWeekStart with calendar's initial window
-                    this.$nextTick(() => {
-                        if (this.$refs.calendar?.window?.start) {
-                            this.currentWeekStart = new Date(this.$refs.calendar.window.start);
-                        }
-                    });
-                    this.loadAvailability();
                 },
                 methods: {
                     getWeekNumber(date) {
@@ -239,11 +158,44 @@
                             params.show_available_only = '1';
                         }
 
+                        // Add order_item_ids if available (for order monitor)
+                        if (this.filters.order_item_ids && this.filters.order_item_ids.length > 0) {
+                            params.order_item_ids = this.filters.order_item_ids.join(',');
+                        }
+
                         await this.$refs.calendar.loadAvailability(params);
                     },
                     onCalendarLoaded(data) {
                         // Handle any post-load logic if needed
+                        this.resources = data.resources || [];
                     }
+                }
+            };
+
+            app.component('v-resource-planning-monitor', {
+                template: '#v-resource-planning-monitor-template',
+                mixins: [planningCalendarMixin],
+                data() {
+                    return {
+                        ...planningCalendarMixin.data(),
+                        filters: {
+                            ...planningCalendarMixin.data().filters,
+                            show_available_only: true,
+                        },
+                        resourceTypes: @json($resourceTypes),
+                        resources: @json($resources),
+                        clinics: @json($clinics),
+                        availabilityUrl: "{{ route('admin.planning.monitor.availability') }}",
+                    };
+                },
+                mounted() {
+                    // Initialize currentWeekStart with calendar's initial window
+                    this.$nextTick(() => {
+                        if (this.$refs.calendar?.window?.start) {
+                            this.currentWeekStart = new Date(this.$refs.calendar.window.start);
+                        }
+                    });
+                    this.loadAvailability();
                 }
             });
         </script>

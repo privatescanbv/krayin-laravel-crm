@@ -89,8 +89,9 @@
 
         </div>
     </x-admin::form>
+</x-admin::layouts>
 
-    <script>
+<script>
         let isUserEditing = false;
         let templateLoaded = false;
 

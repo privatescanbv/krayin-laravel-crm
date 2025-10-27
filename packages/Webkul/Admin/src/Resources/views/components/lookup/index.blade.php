@@ -199,7 +199,7 @@
                 window.addEventListener('click', this.handleFocusOut);
             },
 
-            beforeDestroy() {
+            beforeUnmount() {
                 window.removeEventListener('click', this.handleFocusOut);
             },
 

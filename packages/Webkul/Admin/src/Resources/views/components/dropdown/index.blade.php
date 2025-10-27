@@ -109,7 +109,7 @@
                 this.toggleBlockHeight = this.$refs.toggleBlock.clientHeight;
             },
 
-            beforeDestroy() {
+            beforeUnmount() {
                 window.removeEventListener('click', this.handleFocusOut);
             },
 

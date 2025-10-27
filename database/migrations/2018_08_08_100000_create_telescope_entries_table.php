@@ -17,7 +17,7 @@ return new class extends Migration
     public function up(): void
     {
         // Skip Telescope migrations during testing
-        if (!app()->environment('local')) {
+        if (! app()->environment('local')) {
             return;
         }
 
@@ -61,7 +61,7 @@ return new class extends Migration
     public function down(): void
     {
         // Skip Telescope migrations during testing
-        if (!app()->environment('local')) {
+        if (! app()->environment('local')) {
             return;
         }
 

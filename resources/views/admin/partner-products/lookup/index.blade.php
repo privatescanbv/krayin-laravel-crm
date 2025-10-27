@@ -11,7 +11,7 @@
     // Convert value array to current value and label for entity selector
     $currentValue = null;
     $currentLabel = null;
-    
+
     if (!empty($value) && is_array($value)) {
         if (count($value) === 1) {
             // Single selection

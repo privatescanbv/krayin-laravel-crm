@@ -95,33 +95,40 @@ function initEntitySelector(name, config) {
         addItem(name, e.detail);
     });
 }
-
 function renderSelectedItems(name, items) {
     const container = document.getElementById(`selected-items-${name}`);
     const noItemsMsg = document.getElementById(`no-items-${name}`);
 
     if (items.length === 0) {
-        container.style.display = 'none';
-        noItemsMsg.style.display = 'block';
+        container.style.display = "none";
+        noItemsMsg.style.display = "block";
         return;
     }
 
-    container.style.display = 'block';
-    noItemsMsg.style.display = 'none';
+    container.style.display = "block";
+    noItemsMsg.style.display = "none";
 
-    container.innerHTML = items.map((item, index) => `
-        <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800">
-            <span>${item.name}</span>
-            <button
-                type="button"
-                class="text-red-500 hover:text-red-700 text-xs"
-                onclick="removeItem('${name}', ${index})"
-            >
-                ✕
-            </button>
-        </div>
-    `).join('');
+    container.innerHTML = items
+        .map(
+            (item, index) => `
+      <div
+        id="entity-item-${name}-${index}"
+        class="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-800 transform transition-all duration-300 ease-out opacity-0 translate-y-2 animate-[fadeInUp_0.3s_ease-out_forwards]"
+      >
+        <span>${item.name}</span>
+        <button
+          type="button"
+          class="text-red-500 hover:text-red-700 text-xs transition-colors duration-150"
+          onclick="removeItem('${name}', ${index})"
+        >
+          ✕
+        </button>
+      </div>
+    `
+        )
+        .join("");
 }
+
 
 function renderHiddenInputs(name, items, multiple) {
     const container = document.getElementById(`hidden-inputs-${name}`);
@@ -212,7 +219,6 @@ function initLookupComponent(name, config) {
 function displayResults(name, results) {
     const container = document.getElementById(`lookup-results-${name}`);
 
-    // Ensure results is an array
     if (!Array.isArray(results)) {
         console.error('Search results is not an array:', results);
         container.innerHTML = '<div class="px-3 py-2 text-gray-500 text-sm">Ongeldige response van server</div>';
@@ -220,33 +226,32 @@ function displayResults(name, results) {
         return;
     }
 
-    // Get currently selected item IDs
     const hiddenInputsContainer = document.getElementById(`hidden-inputs-${name}`);
     const selectedIds = Array.from(hiddenInputsContainer.querySelectorAll('input')).map(input => input.value);
-
-    // Filter out already selected items
     const filteredResults = results.filter(item => !selectedIds.includes(item.id.toString()));
 
     if (filteredResults.length === 0) {
-        if (results.length > 0) {
-            container.innerHTML = '<div class="px-3 py-2 text-gray-500 text-sm">Alle resultaten zijn al geselecteerd</div>';
-        } else {
-            container.innerHTML = '<div class="px-3 py-2 text-gray-500 text-sm">Geen resultaten gevonden</div>';
-        }
+        container.innerHTML = `<div class="px-3 py-2 text-gray-500 text-sm">Geen resultaten gevonden</div>`;
     } else {
-        container.innerHTML = filteredResults.map(item => `
-            <div class="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0"
-                 onclick="selectItem('${name}', ${JSON.stringify(item).replace(/"/g, '&quot;')})">
+        container.innerHTML = filteredResults
+            .map(
+                (item) => `
+            <div
+                class="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-b-0 transform transition-all duration-200 ease-out opacity-0 translate-y-2 animate-[fadeInUp_0.35s_ease-out_forwards]"
+                onclick="selectItem('${name}', ${JSON.stringify(item).replace(/"/g, '&quot;')})"
+            >
                 <div class="font-medium">${item.name || item.title || 'Geen naam'}</div>
                 ${item.description ? `<div class="text-sm text-gray-600">${item.description}</div>` : ''}
             </div>
-        `).join('');
+        `
+            )
+            .join('');
     }
 
     container.classList.remove('hidden');
 }
 
-window.selectItem = function(name, item) {
+window.selectItem = function (name, item) {
     document.getElementById(`lookup-results-${name}`).classList.add('hidden');
     document.getElementById(`lookup-input-${name}`).value = '';
     window.dispatchEvent(new CustomEvent(`entity-add-${name}`, {detail: item}));
@@ -286,30 +291,44 @@ function addItem(name, item) {
         }
     }
 }
+window.removeItem = function (name, index) {
+    const itemEl = document.getElementById(`entity-item-${name}-${index}`);
+    if (!itemEl) return;
 
-window.removeItem = function(name, index) {
-    const hiddenInputsContainer = document.getElementById(`hidden-inputs-${name}`);
-    const currentItems = Array.from(hiddenInputsContainer.querySelectorAll('input')).map(input => ({
-        id: input.value,
-        name: input.dataset.name || 'Geen naam'
-    }));
+    // Start fade-out-left animatie
+    itemEl.classList.add("animate-[fadeOutLeft_0.6s_ease-in_forwards]");
 
-    currentItems.splice(index, 1);
+    // Na animatie: item daadwerkelijk verwijderen
+    itemEl.addEventListener(
+        "animationend",
+        () => {
+            const hiddenInputsContainer = document.getElementById(
+                `hidden-inputs-${name}`
+            );
+            const currentItems = Array.from(
+                hiddenInputsContainer.querySelectorAll("input")
+            ).map((input) => ({
+                id: input.value,
+                name: input.dataset.name || "Geen naam",
+            }));
 
-    // Get the multiple config from stored configuration
-    const config = window[`entityConfig_${name}`];
-    const isMultiple = config ? config.multiple : false;
+            currentItems.splice(index, 1);
 
-    renderSelectedItems(name, currentItems);
-    renderHiddenInputs(name, currentItems, isMultiple);
+            const config = window[`entityConfig_${name}`];
+            const isMultiple = config ? config.multiple : false;
 
-    // Update search results if they are visible to show the removed item again
-    const resultsContainer = document.getElementById(`lookup-results-${name}`);
-    if (resultsContainer && !resultsContainer.classList.contains('hidden')) {
-        // Re-trigger search to update results
-        const input = document.getElementById(`lookup-input-${name}`);
-        if (input && input.value.trim().length >= 2) {
-            input.dispatchEvent(new Event('input'));
-        }
-    }
-}
+            renderSelectedItems(name, currentItems);
+            renderHiddenInputs(name, currentItems, isMultiple);
+
+            // Refresh resultaten als dropdown open is
+            const resultsContainer = document.getElementById(`lookup-results-${name}`);
+            if (resultsContainer && !resultsContainer.classList.contains("hidden")) {
+                const input = document.getElementById(`lookup-input-${name}`);
+                if (input && input.value.trim().length >= 2) {
+                    input.dispatchEvent(new Event("input"));
+                }
+            }
+        },
+        { once: true }
+    );
+};

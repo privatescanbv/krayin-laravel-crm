@@ -21,6 +21,11 @@ export default defineConfig(({ command }) => ({
             refresh: true,
         }),
     ],
+    resolve: {
+        alias: {
+            'alpinejs': 'alpinejs/dist/module.esm.min.js'
+        }
+    },
     build: {
         sourcemap: command === 'build' ? true : false,
         minify: command === 'build' ? 'esbuild' : false,

@@ -1,4 +1,4 @@
-@php use App\Models\SalesLead; @endphp
+@php use App\Enums\OrderStatus;use App\Models\SalesLead; @endphp
 <x-admin::layouts>
     <x-slot:title>
         Order bewerken
@@ -7,7 +7,8 @@
     <x-admin::form id="order-edit-form" :action="route('admin.orders.update', ['id' => $orders->id])" method="POST">
         <input type="hidden" name="_method" value="put">
         <x-admin::form.control-group>
-            <x-admin::form.control-group.control type="hidden" name="redirect_to" value="{{ route('admin.orders.edit', ['id' => $orders->id]) }}" />
+            <x-admin::form.control-group.control type="hidden" name="redirect_to"
+                                                 value="{{ route('admin.orders.edit', ['id' => $orders->id]) }}"/>
         </x-admin::form.control-group>
 
         <div class="flex flex-col gap-4">
@@ -22,7 +23,8 @@
                             Order bewerken
                         </div>
                         @if($orders->status)
-                            <span class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full {{ $orders->status->getStatusClass() }}">
+                            <span
+                                class="inline-flex items-center px-3 py-1 text-sm font-medium rounded-full {{ $orders->status->getStatusClass() }}">
                                 {{ $orders->status->label() }}
                             </span>
                         @endif
@@ -46,38 +48,13 @@
                     >
                         Toepassen
                     </button>
-                    <button type="button" class="primary-button" id="order-edit-save" data-redirect-to="{{ route('admin.orders.index') }}">
+                    <button type="button" class="primary-button" id="order-edit-save"
+                            data-redirect-to="{{ route('admin.orders.index') }}">
                         Opslaan
                     </button>
                 </div>
             </div>
 
-            <script>
-            (function(){
-                // Use event delegation to handle Vue.js DOM changes
-                document.addEventListener('click', function(e) {
-                    // Check if clicked element is one of our buttons
-                    if (e.target.id === 'order-edit-planner' || 
-                        e.target.id === 'order-edit-apply' || 
-                        e.target.id === 'order-edit-save') {
-                        
-                        e.preventDefault();
-                        
-                        var target = e.target.getAttribute('data-redirect-to');
-                        if (!target) return;
-                        
-                        var form = document.getElementById('order-edit-form') || document.querySelector('form');
-                        if (!form) return;
-                        
-                        var hidden = form.querySelector('input[name="redirect_to"]');
-                        if (!hidden) return;
-                        
-                        hidden.value = target;
-                        form.submit();
-                    }
-                });
-            })();
-            </script>
 
             <!-- Apart panel met velden en tabs -->
             <div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
@@ -86,12 +63,15 @@
                         <div class="space-y-6">
 
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">Titel</x-admin::form.control-group.label>
-                                <x-admin::form.control-group.control type="text" name="title" :value="$orders->title" rules="required"/>
+                                <x-admin::form.control-group.label class="required">Titel
+                                </x-admin::form.control-group.label>
+                                <x-admin::form.control-group.control type="text" name="title" :value="$orders->title"
+                                                                     rules="required"/>
                             </x-admin::form.control-group>
 
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">Sales Lead</x-admin::form.control-group.label>
+                                <x-admin::form.control-group.label class="required">Sales Lead
+                                </x-admin::form.control-group.label>
                                 <x-admin::form.control-group.control
                                     type="select"
                                     name="sales_lead_id"
@@ -103,7 +83,8 @@
                                     <option value="">Selecteer een Sales Lead</option>
                                     @if(isset($salesLeads))
                                         @foreach($salesLeads as $id => $name)
-                                            <option value="{{ $id }}" {{ $orders->sales_lead_id == $id ? 'selected' : '' }}>
+                                            <option
+                                                value="{{ $id }}" {{ $orders->sales_lead_id == $id ? 'selected' : '' }}>
                                                 {{ $name }}
                                             </option>
                                         @endforeach
@@ -113,15 +94,17 @@
                             </x-admin::form.control-group>
 
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">Status</x-admin::form.control-group.label>
+                                <x-admin::form.control-group.label class="required">Status
+                                </x-admin::form.control-group.label>
                                 <x-admin::form.control-group.control
                                     type="select"
                                     name="status"
                                     value="{{ $orders->status->value ?? '' }}"
                                     rules="required"
                                 >
-                                    @foreach(\App\Enums\OrderStatus::cases() as $status)
-                                        <option value="{{ $status->value }}" {{ $orders->status === $status ? 'selected' : '' }}>
+                                    @foreach(OrderStatus::cases() as $status)
+                                        <option
+                                            value="{{ $status->value }}" {{ $orders->status === $status ? 'selected' : '' }}>
                                             {{ $status->label() }}
                                         </option>
                                     @endforeach
@@ -148,10 +131,12 @@
                         <div class="space-y-6">
                             <div class="flex flex-col gap-1">
                                 <p class="text-base font-semibold text-gray-800 dark:text-white">Order Checks</p>
-                                <p class="text-sm text-gray-600 dark:text-white">Beheer de checklist voor deze order.</p>
+                                <p class="text-sm text-gray-600 dark:text-white">Beheer de checklist voor deze
+                                    order.</p>
                             </div>
 
-                            <v-order-checks :order-id="{{ $orders->id }}" :checks='@json($orders->orderChecks ?? [])'></v-order-checks>
+                            <v-order-checks :order-id="{{ $orders->id }}"
+                                            :checks='@json($orders->orderChecks ?? [])'></v-order-checks>
                         </div>
                     </template>
                 </v-order-tabs>
@@ -160,13 +145,12 @@
     </x-admin::form>
 
 
-
     @pushOnce('scripts')
         @php
             $completedChecks = ($orders->orderChecks ?? collect())->where('done', true)->count();
             $totalChecks = ($orders->orderChecks ?? collect())->count();
         @endphp
-        <!-- v-order-tabs component template -->
+            <!-- v-order-tabs component template -->
         <script type="text/x-template" id="v-order-tabs-template">
             <div class="flex flex-col gap-0">
                 <div class="flex gap-6 border-b border-gray-200 dark:border-gray-800 px-6">
@@ -207,6 +191,30 @@
         </script>
 
         <script type="module">
+
+            // Use event delegation to handle Vue.js DOM changes
+            document.addEventListener('click', function (e) {
+                // Check if clicked element is one of our buttons
+                if (e.target.id === 'order-edit-planner' ||
+                    e.target.id === 'order-edit-apply' ||
+                    e.target.id === 'order-edit-save') {
+
+                    e.preventDefault();
+
+                    var target = e.target.getAttribute('data-redirect-to');
+                    if (!target) return;
+
+                    var form = document.getElementById('order-edit-form') || document.querySelector('form');
+                    if (!form) return;
+
+                    var hidden = form.querySelector('input[name="redirect_to"]');
+                    if (!hidden) return;
+
+                    hidden.value = target;
+                    form.submit();
+                }
+            });
+
             // Register v-order-tabs
             app.component('v-order-tabs', {
                 template: '#v-order-tabs-template',
@@ -222,7 +230,7 @@
                 try {
                     const salesLeadSelect = document.querySelector('select[name="sales_lead_id"]');
                     if (salesLeadSelect && !salesLeadSelect.dataset.bound) {
-                        salesLeadSelect.addEventListener('change', function() {
+                        salesLeadSelect.addEventListener('change', function () {
                             const salesLeadId = this.value;
                             if (salesLeadId) {
                                 fetch(`/admin/orders/persons/${salesLeadId}`)
@@ -304,7 +312,10 @@
             };
 
             if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => { initOrderEditSalesLead(); initOrderEditDebug(); }, { once: true });
+                document.addEventListener('DOMContentLoaded', () => {
+                    initOrderEditSalesLead();
+                    initOrderEditDebug();
+                }, {once: true});
             } else {
                 initOrderEditSalesLead();
                 initOrderEditDebug();
@@ -434,7 +445,7 @@
                                 method: method,
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
+                                    ...(csrfToken ? {'X-CSRF-TOKEN': csrfToken} : {})
                                 },
                                 body: JSON.stringify({
                                     name: check.name,
@@ -474,7 +485,7 @@
                                 const response = await fetch(`/admin/orders/${this.orderId}/checks/${check.id}`, {
                                     method: 'DELETE',
                                     headers: {
-                                        ...(csrfToken ? { 'X-CSRF-TOKEN': csrfToken } : {})
+                                        ...(csrfToken ? {'X-CSRF-TOKEN': csrfToken} : {})
                                     }
                                 });
 
@@ -498,7 +509,7 @@
                         const notification = document.createElement('div');
                         notification.className = `fixed top-4 right-4 px-4 py-2 rounded-md text-white z-50 ${
                             type === 'success' ? 'bg-green-500' :
-                            type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+                                type === 'error' ? 'bg-red-500' : 'bg-blue-500'
                         }`;
                         notification.textContent = message;
                         document.body.appendChild(notification);

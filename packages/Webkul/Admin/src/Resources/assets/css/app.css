@@ -36,7 +36,7 @@
     .icon-image:before {
         content: "\e956";
     }
-      
+
     .icon-bookmark:before {
         content: "\e92c";
     }
@@ -658,4 +658,42 @@
 
 .tox.tox-silver-sink.tox-tinymce-aux {
     z-index: 99999;
+}
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOutDown {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+        height: auto;
+    }
+    to {
+        opacity: 0;
+        transform: translateY(6px);
+        height: 0;
+        margin: 0;
+        padding: 0;
+    }
+}
+@keyframes fadeOutLeft {
+    0% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-40px);
+        height: 0;
+        margin: 0;
+        padding: 0;
+    }
 }

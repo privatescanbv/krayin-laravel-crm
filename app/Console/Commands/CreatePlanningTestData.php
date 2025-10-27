@@ -169,135 +169,87 @@ class CreatePlanningTestData extends Command
     {
         $products = [];
         
-        // Product data from the provided table
-        $productData = [
+        // Partner Product data from the provided table
+        $partnerProductData = [
             [
+                'template_product' => 'TB3 Royal Bodyscan + Wervelkolom',
+                'clinic' => 'Evidia - Augusta Klinik',
                 'name' => 'TB3 Royal Bodyscan + Wervelkolom',
-                'description' => 'TB3 Royal Bodyscan + Wervelkolom, bestaande uit:',
+                'description' => 'TB3 Royal Bodyscan + Wervelkolom, bestaande uit:
+
+MRI onderzoeken:
+- MRI Schedel en hersenen
+- MRI Hals en aanvoerende bloedvaten hersenen (carotiden)
+- MRI Aortaboog (hoofdslagader lichaam)
+- MRI Longen (overzichtsscan)
+- MRI Boven- en onderbuik organen (m.u.v. slokdarm, maag en darmen)
+- MRI Bekken organen (prostaat, baarmoeder en eierstokken)
+- MRI Gehele wervelkolom gedetailleerd',
+                'duration' => 45,
+                'clinic_description' => 'TB3',
                 'currency' => 'EUR',
-                'purchase_price' => 600.00,
-                'sales_price' => 1900.00,
-                'product_type' => 'Total Bodyscan',
+                'sales_price' => 2690.00,
                 'resource_type' => 'MRI scanner',
-                'product_group' => 'Bodyscan'
+                'reporting' => 'Radiologie MRI',
+                'purchase_price_other' => 0.00,
+                'purchase_price_doctor' => 0.00,
+                'purchase_price_cardiology' => 0.00,
+                'purchase_price_clinic' => 0.00,
+                'purchase_price_radiology' => 506.00
             ],
             [
-                'name' => 'MRI Abdomen exclusief CM',
-                'description' => 'MRI scan van de onder- en bovenbuik (abdomen), exclusief contrastmiddel',
-                'currency' => 'EUR',
-                'purchase_price' => 220.00,
-                'sales_price' => 850.00,
-                'product_type' => 'MRI scan',
-                'resource_type' => 'MRI scanner',
-                'product_group' => 'Buik'
-            ],
-            [
-                'name' => 'CT Abdomen inclusief CM',
-                'description' => 'CT scan van de onder- en bovenbuik (abdomen), inclusief contrastmiddel',
-                'currency' => 'EUR',
-                'purchase_price' => 300.00,
-                'sales_price' => 650.00,
-                'product_type' => 'CT scan',
-                'resource_type' => 'CT scanner',
-                'product_group' => 'Buik'
-            ],
-            [
+                'template_product' => 'Bloed- en urineonderzoek preventief uitgebreid heren',
+                'clinic' => 'Ambulante Kardiologie Augusta',
                 'name' => 'Bloed- en urineonderzoek preventief uitgebreid heren',
                 'description' => 'Uitgebreid laboratoriumonderzoek (bloed en urine) met PSA bepaling',
+                'duration' => 0,
+                'clinic_description' => 'Grosses Blut bild, inkl. Urin + PSA',
                 'currency' => 'EUR',
-                'purchase_price' => 85.00,
-                'sales_price' => 220.00,
-                'product_type' => 'Laboratorium',
+                'sales_price' => 0.00,
                 'resource_type' => 'Cardiologie',
-                'product_group' => 'Bloedonderzoeken'
-            ],
-            [
-                'name' => 'Coördinatie- en bemiddelingskosten',
-                'description' => 'Coördinatie- en bemiddelingskosten',
-                'currency' => 'EUR',
-                'purchase_price' => 0.00,
-                'sales_price' => 59.00,
-                'product_type' => 'Diensten',
-                'resource_type' => 'Overig',
-                'product_group' => 'Bemiddelingskosten'
-            ],
-            [
-                'name' => 'Volledige vertaling TB3',
-                'description' => 'Nederlandse vertaling van de rapportage',
-                'currency' => 'EUR',
-                'purchase_price' => 80.00,
-                'sales_price' => 185.00,
-                'product_type' => 'Vertaling',
-                'resource_type' => 'Overig',
-                'product_group' => 'Vertalingen'
-            ],
-            [
-                'name' => 'Transf. Endosc. Operatie 1 n',
-                'description' => 'Transforaminale endoscopische operatie 1 niveau',
-                'currency' => 'EUR',
-                'purchase_price' => 4950.00,
-                'sales_price' => 9500.00,
-                'product_type' => '',
-                'resource_type' => 'Artsen',
-                'product_group' => 'PTED'
-            ],
-            [
-                'name' => 'Transf. Endosc. Operatie 2 n',
-                'description' => 'Transforaminale endoscopische operatie 2 niveaus',
-                'currency' => 'EUR',
-                'purchase_price' => 9000.00,
-                'sales_price' => 16000.00,
-                'product_type' => '',
-                'resource_type' => 'Artsen',
-                'product_group' => 'PTED'
-            ],
-            [
-                'name' => 'ACDF (Anterior Cervical Discectomy and Fusion) operatie',
-                'description' => 'ACDF (Anterior Cervical Discectomy and Fusion) operatie',
-                'currency' => 'EUR',
-                'purchase_price' => 5900.00,
-                'sales_price' => 13900.00,
-                'product_type' => 'Overig',
-                'resource_type' => 'Artsen',
-                'product_group' => 'ACDF'
+                'reporting' => 'Laboratoriumuitslag',
+                'purchase_price_other' => 0.00,
+                'purchase_price_doctor' => 0.00,
+                'purchase_price_cardiology' => 38.00,
+                'purchase_price_clinic' => 0.00,
+                'purchase_price_radiology' => 0.00
             ]
         ];
 
-        foreach ($productData as $data) {
-            // Get or create ProductType
-            $productType = $this->getOrCreateProductType($data['product_type'] ?: 'Overig');
-            
+        foreach ($partnerProductData as $data) {
             // Get or create ResourceType
             $resourceType = $this->getOrCreateResourceType($data['resource_type']);
             
-            // Get or create ProductGroup
-            $productGroup = $this->getOrCreateProductGroup($data['product_group']);
-            
-            // Create Product
+            // Create Product (Template Product) - this is the base product
             $product = Product::create([
-                'name'             => $data['name'],
+                'name'             => $data['template_product'],
                 'description'      => $data['description'],
                 'active'           => true,
                 'currency'         => $data['currency'],
                 'price'            => $data['sales_price'],
-                'costs'            => $data['purchase_price'],
-                'product_group_id' => $productGroup->id,
+                'costs'            => $data['purchase_price_other'], // Use other purchase price as base cost
+                'product_group_id' => $this->getOrCreateProductGroup('Partner Products')->id,
                 'resource_type_id' => $resourceType->id,
-                'product_type_id'  => $productType->id,
+                'product_type_id'  => $this->getOrCreateProductType('Partner Product')->id,
             ]);
             
-            // Create PartnerProduct
+            // Create PartnerProduct with all the specific pricing fields
             $partnerProduct = PartnerProduct::create([
-                'name'                  => $data['name'] . ' - Partner Product',
-                'description'           => $data['description'],
-                'active'                => true,
-                'currency'              => $data['currency'],
-                'sales_price'           => $data['sales_price'],
-                'duration'              => 60, // Default 60 minutes
-                'resource_type_id'      => $resourceType->id,
-                'product_id'            => $product->id,
-                'purchase_price'        => $data['purchase_price'],
-                'purchase_price_clinic' => $data['purchase_price'] * 0.9, // 10% discount for clinic
+                'name'                      => $data['name'],
+                'description'               => $data['description'],
+                'active'                    => true,
+                'currency'                  => $data['currency'],
+                'sales_price'               => $data['sales_price'],
+                'duration'                  => $data['duration'],
+                'clinic_description'        => $data['clinic_description'],
+                'resource_type_id'          => $resourceType->id,
+                'product_id'                => $product->id, // Link to template product
+                'purchase_price'            => $data['purchase_price_other'],
+                'purchase_price_misc'       => $data['purchase_price_other'],
+                'purchase_price_clinic'     => $data['purchase_price_clinic'],
+                'purchase_price_doctor'     => $data['purchase_price_doctor'],
+                'purchase_price_cardiology' => $data['purchase_price_cardiology'],
+                'purchase_price_radiology'  => $data['purchase_price_radiology'],
             ]);
             
             $products[] = [
@@ -305,7 +257,8 @@ class CreatePlanningTestData extends Command
                 'partner_product' => $partnerProduct
             ];
             
-            $this->info("   • {$product->name} (ID: {$product->id})");
+            $this->info("   • Template Product: {$product->name} (ID: {$product->id})");
+            $this->info("   • Partner Product: {$partnerProduct->name} (ID: {$partnerProduct->id})");
         }
         
         return $products;

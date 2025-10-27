@@ -226,6 +226,13 @@ php artisan schedule:run
 php artisan duplicates:refresh-cache --clear
 ----
 
+==== Composer update dependencies
+
+Het is van belang om met een frequentie alle dependencies te update (Maandelijks).
+
+1. Voer dit uit: composer update --with-all-dependencies
+2. Test het lokaal
+3. check de nieuwe lock file in git.
 
 ===== Telescope Monitoring
 

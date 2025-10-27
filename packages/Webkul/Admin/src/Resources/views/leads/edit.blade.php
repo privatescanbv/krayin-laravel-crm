@@ -328,7 +328,7 @@
 
                         lead: {
                             id: {{ $lead->id }},
-                            title: "{{ addslashes($lead->name) }}",
+                            title: "{{ addslashes($lead->name) }}"
                             // Simplified lead data to avoid JSON parsing errors
                         },
 
@@ -340,7 +340,7 @@
                             {id: 'phones', label: 'Telefoonnummers'},
                             {id: 'contact-person', label: '@lang('admin::app.leads.edit.contact-person')'},
                             {id: 'personal-fields', label: 'Persoonsgegevens'},
-                            {id: 'address', label: 'Adres'},
+                            {id: 'address', label: 'Adres'}
                             {{--{ id: 'products', label: '@lang('admin::app.leads.edit.products')' }--}}
                         ],
                     };

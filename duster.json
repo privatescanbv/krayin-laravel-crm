@@ -1,6 +1,21 @@
 {
+    "preset": "laravel",
+    "style": "psr12",
     "exclude": [
         "packages/*",
-        "docker/*"
-    ]
+        "docker/*",
+        "bootstrap/*",
+        "storage/*",
+        "docs/*",
+        "flows/*"
+    ],
+    "pint": {
+        "preset": "laravel",
+        "rules": {
+            "concat_space": {
+                "spacing": "one"
+            },
+            "no_unused_imports": true
+        }
+    }
 }

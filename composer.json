@@ -40,6 +40,7 @@
         "laravel/telescope": "^5.14",
         "mockery/mockery": "^1.4.2",
         "nunomaduro/collision": "^7.0",
+        "nunomaduro/larastan": "^2.11",
         "pestphp/pest": "^2.6",
         "pestphp/pest-plugin-laravel": "^2.1",
         "phpunit/phpunit": "^10.0",
@@ -116,6 +117,10 @@
         ],
         "post-create-project-cmd": [
             "@php artisan key:generate --ansi"
+        ],
+        "lint:tlint": [
+            "tlint lint app",
+            "tlint lint resources"
         ]
     }
 }

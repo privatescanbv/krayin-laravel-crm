@@ -91,8 +91,6 @@
             </div>
         </div>
     </x-admin::form>
-
-    {{-- scripts included in partial with @pushOnce --}}
 </x-admin::layouts>
 
 

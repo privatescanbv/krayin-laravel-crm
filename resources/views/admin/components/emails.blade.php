@@ -1,3 +1,4 @@
+@php use App\Enums\ContactLabel; @endphp
 {!! view_render_event('admin.emails.before') !!}
 
 <div class="flex flex-col gap-4">
@@ -16,7 +17,8 @@
     @verbatim
         <script type="text/x-template" id="v-emails-component-template">
             <div>
-                <div v-if="topLevelErrors.length" class="mb-2 rounded border border-red-400 bg-red-100 px-3 py-2 text-red-800 dark:bg-red-900 dark:text-red-200">
+                <div v-if="topLevelErrors.length"
+                     class="mb-2 rounded border border-red-400 bg-red-100 px-3 py-2 text-red-800 dark:bg-red-900 dark:text-red-200">
                     <div v-for="(msg, i) in topLevelErrors" :key="i">{{ msg }}</div>
                 </div>
                 <div class="space-y-3">
@@ -89,7 +91,8 @@
                         >
                             <span class="sr-only">Remove Email</span>
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M6 18L18 6M6 6l12 12"></path>
                             </svg>
                         </button>
                     </div>
@@ -102,7 +105,8 @@
                     class="mt-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600"
                 >
                     <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                     </svg>
                     Voeg e-mailadres toe
                 </button>
@@ -111,8 +115,8 @@
     @endverbatim
 
     <script type="module">
-        const CONTACT_LABEL_OPTIONS = @json(\App\Enums\ContactLabel::options());
-        const CONTACT_LABEL_DEFAULT = @json(\App\Enums\ContactLabel::default()->value);
+        const CONTACT_LABEL_OPTIONS = @json(ContactLabel::options());
+        const CONTACT_LABEL_DEFAULT = @json(ContactLabel::default()->value);
 
         app.component('v-emails-component', {
             template: '#v-emails-component-template',
@@ -180,14 +184,14 @@
 
                     // If no emails at all, add one empty email for user to fill
                     if (processedEmails.length === 0) {
-                        return [{ value: '', label: this.defaultLabel, is_default: true }];
+                        return [{value: '', label: this.defaultLabel, is_default: true}];
                     }
 
                     return processedEmails;
                 },
 
                 addEmail() {
-                    this.emails.push({ value: '', label: this.defaultLabel, is_default: false });
+                    this.emails.push({value: '', label: this.defaultLabel, is_default: false});
                 },
 
                 removeEmail(index) {
@@ -232,7 +236,6 @@
                 },
 
 
-
                 getInputClass(index) {
                     const baseClass = 'w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1 dark:bg-gray-700 dark:text-white';
                     const hasError = this.getEmailError(index);
@@ -253,4 +256,3 @@
     </script>
 @endPushOnce
 
- 

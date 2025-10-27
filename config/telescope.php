@@ -59,7 +59,7 @@ return [
 
     'storage' => [
         'database' => [
-            'connection' => env('DB_CONNECTION', 'mysql'),
+            'connection' => env('TELESCOPE_DB_CONNECTION', 'mysql'),
             'chunk'      => 1000,
         ],
     ],
@@ -120,7 +120,26 @@ return [
     ],
 
     'ignore_commands' => [
-        //
+        'list',
+        'config:*',
+        'route:*',
+        'telescope:*',
+        'migrate:*',
+        'db:*',
+        'queue:*',
+        'schedule:*',
+        'cache:*',
+        'view:*',
+        'config:clear',
+        'config:cache',
+        'route:clear',
+        'route:cache',
+        'view:clear',
+        'view:cache',
+        'cache:clear',
+        'cache:forget',
+        'optimize',
+        'optimize:clear',
     ],
 
     /*

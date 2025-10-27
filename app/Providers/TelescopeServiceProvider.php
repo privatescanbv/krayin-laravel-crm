@@ -40,6 +40,11 @@ class TelescopeServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Only boot Telescope if not in testing environment
+        if (!$this->app->environment('local')) {
+            return;
+        }
+
         $this->gate();
     }
 

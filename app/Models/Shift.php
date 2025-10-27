@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Support\Period;
 use App\Traits\HasAuditTrail;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Shift extends BaseModel
@@ -36,5 +38,16 @@ class Shift extends BaseModel
     public function resource()
     {
         return $this->belongsTo(Resource::class);
+    }
+
+    /**
+     * Get the period for this shift.
+     */
+    public function period(): Period
+    {
+        $start = $this->period_start ? CarbonImmutable::parse($this->period_start) : null;
+        $end = $this->period_end ? CarbonImmutable::parse($this->period_end) : null;
+
+        return new Period($start, $end);
     }
 }

@@ -47,4 +47,14 @@ class Resource extends Model
     {
         return $this->belongsToMany(PartnerProduct::class, 'partner_product_resource');
     }
+
+    /**
+     * Check if the resource has infinite duration (no end date on any shift).
+     */
+    public function hasInfiniteDuration(): bool
+    {
+        return $this->shifts->contains(function ($shift) {
+            return $shift->period()->isInfinite();
+        });
+    }
 }

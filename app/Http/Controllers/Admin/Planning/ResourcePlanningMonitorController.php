@@ -26,7 +26,7 @@ class ResourcePlanningMonitorController extends Controller
     {
         $resourceTypes = ResourceType::all(['id', 'name']);
         $resources = app(ResourceRepository::class)
-            ->allWithActiveClinics(['clinic'], ['id', 'name', 'clinic_id', 'resource_type_id']);
+            ->allWithActiveClinics(['clinic', 'shifts'], ['id', 'name', 'clinic_id', 'resource_type_id']);
         $clinics = app(ClinicRepository::class)->allActive(['id', 'name']);
 
         return view('admin.planning.monitor', [
@@ -180,12 +180,14 @@ class ResourcePlanningMonitorController extends Controller
         return response()->json([
             'view_type' => 'week',
             'resources' => $resources->map(fn ($r) => [
-                'id'               => $r->id,
-                'name'             => $r->name,
-                'clinic_id'        => $r->clinic_id,
-                'clinic'           => $r->clinic?->name,
-                'resource_type'    => $r->resourceType?->name,
-                'resource_type_id' => $r->resource_type_id,
+                'id'                    => $r->id,
+                'name'                  => $r->name,
+                'clinic_id'             => $r->clinic_id,
+                'clinic'                => $r->clinic?->name,
+                'resource_type'         => $r->resourceType?->name,
+                'resource_type_id'      => $r->resource_type_id,
+                'has_infinite_duration' => $r->hasInfiniteDuration(),
+                'shifts_count'          => $r->shifts->count(),
             ])->values(),
             'blocks'   => $renderedBlocks,
             'window'   => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
@@ -232,12 +234,14 @@ class ResourcePlanningMonitorController extends Controller
         return response()->json([
             'view_type' => 'month',
             'resources' => $resources->map(fn ($r) => [
-                'id'               => $r->id,
-                'name'             => $r->name,
-                'clinic_id'        => $r->clinic_id,
-                'clinic'           => $r->clinic?->name,
-                'resource_type'    => $r->resourceType?->name,
-                'resource_type_id' => $r->resource_type_id,
+                'id'                    => $r->id,
+                'name'                  => $r->name,
+                'clinic_id'             => $r->clinic_id,
+                'clinic'                => $r->clinic?->name,
+                'resource_type'         => $r->resourceType?->name,
+                'resource_type_id'      => $r->resource_type_id,
+                'has_infinite_duration' => $r->hasInfiniteDuration(),
+                'shifts_count'          => $r->shifts->count(),
             ])->values(),
             'blocks'   => $renderedBlocks,
             'window'   => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
@@ -248,7 +252,7 @@ class ResourcePlanningMonitorController extends Controller
     {
         $resourcesQuery = app(ResourceRepository::class)
             ->queryWithActiveClinics()
-            ->with('clinic', 'resourceType');
+            ->with('clinic', 'resourceType', 'shifts');
 
         // Filter by resource types (multi-select)
         if ($request->filled('resource_type_ids')) {
@@ -267,6 +271,15 @@ class ResourcePlanningMonitorController extends Controller
             $resourceIds = explode(',', $request->query('resource_ids'));
             $resourcesQuery->whereIn('id', array_map('intval', $resourceIds));
         }
+
+        // Include resources that are active on the requested date range based on their shifts
+        $start = CarbonImmutable::parse($request->query('start', Carbon::now()->startOfWeek()));
+        $resourcesQuery->whereHas('shifts', function ($q) use ($start) {
+            $q->where(function ($shiftQuery) use ($start) {
+                $shiftQuery->whereNull('period_end') // Infinite duration shifts
+                    ->orWhere('period_end', '>=', $start->format('Y-m-d')); // Shifts that haven't expired
+            });
+        });
 
         return $resourcesQuery->get();
     }
@@ -292,8 +305,16 @@ class ResourcePlanningMonitorController extends Controller
         return Shift::query()
             ->whereIn('resource_id', $resources->pluck('id'))
             ->where(function ($q) use ($start, $end) {
-                $q->whereDate('period_start', '<=', $end->toDateString())
-                    ->whereDate('period_end', '>=', $start->toDateString());
+                $q->where(function ($shiftQuery) use ($start, $end) {
+                    // For finite duration shifts: check if they overlap with the requested period
+                    $shiftQuery->whereNotNull('period_end')
+                        ->whereDate('period_start', '<=', $end->toDateString())
+                        ->whereDate('period_end', '>=', $start->toDateString());
+                })->orWhere(function ($shiftQuery) use ($end) {
+                    // For infinite duration shifts: check if they start before or during the requested period
+                    $shiftQuery->whereNull('period_end')
+                        ->whereDate('period_start', '<=', $end->toDateString());
+                });
             })
             ->get()
             ->groupBy('resource_id');
@@ -367,6 +388,12 @@ class ResourcePlanningMonitorController extends Controller
         $shiftBlocks = $shift->weekday_time_blocks;
 
         if (empty($shiftBlocks) || $shift->available === false) {
+            return $blocks;
+        }
+
+        // Check if the shift is active on this specific day
+        $shiftPeriod = $shift->period();
+        if (! $shiftPeriod->contains($day->toDate())) {
             return $blocks;
         }
 
@@ -599,12 +626,14 @@ class ResourcePlanningMonitorController extends Controller
         return response()->json([
             'view_type' => 'week',
             'resources' => $resources->map(fn ($r) => [
-                'id'               => $r->id,
-                'name'             => $r->name,
-                'clinic_id'        => $r->clinic_id,
-                'clinic'           => $r->clinic?->name,
-                'resource_type'    => $r->resourceType?->name,
-                'resource_type_id' => $r->resource_type_id,
+                'id'                    => $r->id,
+                'name'                  => $r->name,
+                'clinic_id'             => $r->clinic_id,
+                'clinic'                => $r->clinic?->name,
+                'resource_type'         => $r->resourceType?->name,
+                'resource_type_id'      => $r->resource_type_id,
+                'has_infinite_duration' => $r->hasInfiniteDuration(),
+                'shifts_count'          => $r->shifts->count(),
             ])->values(),
             'blocks'     => $renderedBlocks,
             'window'     => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],
@@ -673,12 +702,14 @@ class ResourcePlanningMonitorController extends Controller
         return response()->json([
             'view_type' => 'month',
             'resources' => $resources->map(fn ($r) => [
-                'id'               => $r->id,
-                'name'             => $r->name,
-                'clinic_id'        => $r->clinic_id,
-                'clinic'           => $r->clinic?->name,
-                'resource_type'    => $r->resourceType?->name,
-                'resource_type_id' => $r->resource_type_id,
+                'id'                    => $r->id,
+                'name'                  => $r->name,
+                'clinic_id'             => $r->clinic_id,
+                'clinic'                => $r->clinic?->name,
+                'resource_type'         => $r->resourceType?->name,
+                'resource_type_id'      => $r->resource_type_id,
+                'has_infinite_duration' => $r->hasInfiniteDuration(),
+                'shifts_count'          => $r->shifts->count(),
             ])->values(),
             'blocks'     => $renderedBlocks,
             'window'     => ['start' => $start->toIso8601String(), 'end' => $end->toIso8601String()],

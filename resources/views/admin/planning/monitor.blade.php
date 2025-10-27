@@ -162,16 +162,10 @@
                 methods: {
                     setViewType(type) {
                         this.viewType = type;
-                        if (type === 'month') {
-                            this.$refs.calendar.window.start = this.$refs.calendar.startOfMonth(new Date());
-                            this.$refs.calendar.window.end = this.$refs.calendar.endOfMonth(new Date());
-                        } else {
-                            this.$refs.calendar.window.start = this.$refs.calendar.startOfWeek(new Date());
-                            const end = new Date(this.$refs.calendar.window.start);
-                            end.setDate(this.$refs.calendar.window.start.getDate() + 6);
-                            this.$refs.calendar.window.end = end;
-                        }
-                        this.loadAvailability();
+                        // Let the child component handle the window update through its watcher
+                        this.$nextTick(() => {
+                            this.loadAvailability();
+                        });
                     },
                     prevPeriod() {
                         if (this.viewType === 'week') {

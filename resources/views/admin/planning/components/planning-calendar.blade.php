@@ -150,12 +150,8 @@
                 autoLoad: { type: Boolean, default: true },
             },
             data() {
-                const start = this.startOfWeek(new Date());
-                const end = new Date(start);
-                end.setDate(start.getDate() + 6);
-
                 return {
-                    window: { start, end },
+                    window: this.getInitialWindow(),
                     resources: [],
                     blocks: {},
                     hours: Array.from({ length: 10 }, (_, i) => i + 8), // 08:00 - 17:00
@@ -167,6 +163,17 @@
                         '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
                     ],
                 };
+            },
+            watch: {
+                viewType: {
+                    handler(newViewType) {
+                        this.window = this.getInitialWindow();
+                        if (this.autoLoad) {
+                            this.loadAvailability();
+                        }
+                    },
+                    immediate: false
+                }
             },
             computed: {
                 periodLabel() {
@@ -190,7 +197,7 @@
                     const current = new Date(firstMonday);
                     while (current <= end) {
                         days.push({
-                            date: current.toISOString().split('T')[0],
+                            date: this.getDateKey(current),
                             dayNumber: current.getDate(),
                             isCurrentMonth: current.getMonth() === start.getMonth()
                         });
@@ -208,6 +215,28 @@
                 this.scrollToCurrentTime();
             },
             methods: {
+                getInitialWindow() {
+                    const now = new Date();
+                    if (this.viewType === 'month') {
+                        const start = this.startOfMonth(now);
+                        const end = this.endOfMonth(now);
+                        return { start, end };
+                    } else {
+                        const start = this.startOfWeek(now);
+                        const end = new Date(start);
+                        end.setDate(start.getDate() + 6);
+                        return { start, end };
+                    }
+                },
+                /**
+                 * Generate a timezone-safe date key in YYYY-MM-DD format
+                 * This avoids timezone conversion issues with toISOString()
+                 */
+                getDateKey(date) {
+                    return date.getFullYear() + '-' +
+                           String(date.getMonth() + 1).padStart(2, '0') + '-' +
+                           String(date.getDate()).padStart(2, '0');
+                },
                 slotHeightPx(hour) {
                     return this.pixelsPerHour;
                 },
@@ -245,6 +274,8 @@
                 dayDate(offset) {
                     const d = new Date(this.window.start);
                     d.setDate(d.getDate() + offset);
+                    // Ensure we're working with local time to avoid timezone issues
+                    d.setHours(12, 0, 0, 0); // Set to noon to avoid DST issues
                     return d;
                 },
                 dayLabel(offset) {
@@ -309,7 +340,7 @@
                 },
                 getBlocksForDay(weekdayOffset) {
                     const day = this.dayDate(weekdayOffset);
-                    const dayKey = day.toISOString().split('T')[0];
+                    const dayKey = this.getDateKey(day);
                     const blocks = [];
 
                     for (const resource of this.resources) {

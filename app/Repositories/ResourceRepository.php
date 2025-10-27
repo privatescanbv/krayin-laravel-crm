@@ -3,6 +3,9 @@
 namespace App\Repositories;
 
 use App\Models\Resource;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Webkul\Core\Eloquent\Repository;
 
 class ResourceRepository extends Repository
@@ -15,7 +18,7 @@ class ResourceRepository extends Repository
     /**
      * Base query for resources that belong to active clinics.
      */
-    public function queryWithActiveClinics(): \Illuminate\Database\Eloquent\Builder
+    public function queryWithActiveClinics(): Builder
     {
         return Resource::query()
             ->whereHas('clinic', function ($q) {
@@ -26,7 +29,7 @@ class ResourceRepository extends Repository
     /**
      * Get all resources from active clinics, with optional eager loads and selected columns.
      */
-    public function allWithActiveClinics(array $with = [], array $columns = ['*'])
+    public function allWithActiveClinics(array $with = [], array $columns = ['*']): Collection|array
     {
         $query = $this->queryWithActiveClinics();
 
@@ -36,4 +39,5 @@ class ResourceRepository extends Repository
 
         return $query->get($columns);
     }
+
 }

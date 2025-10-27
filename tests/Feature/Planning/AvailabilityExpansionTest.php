@@ -318,4 +318,198 @@ class AvailabilityExpansionTest extends TestCase
         });
         $this->assertTrue($hasWednesdayBlock, 'Resource 2 should have Wednesday 09:00-18:00 available block');
     }
+
+    public function test_resources_with_infinite_duration_shifts_are_shown_in_monitor(): void
+    {
+        $this->withoutMiddleware();
+
+        // Arrange: Create a resource with an infinite duration shift (no end date)
+        $resource = Resource::factory()->create();
+
+        // Create a shift with infinite duration (no period_end)
+        Shift::query()->create([
+            'resource_id'         => $resource->id,
+            'available'           => true,
+            'period_start'        => now()->subDays(10)->format('Y-m-d'), // Started 10 days ago
+            'period_end'          => null, // Infinite duration - this is the key!
+            'weekday_time_blocks' => [
+                '1' => [['from' => '09:00', 'to' => '17:00']], // Monday
+                '2' => [['from' => '09:00', 'to' => '17:00']], // Tuesday
+                '3' => [['from' => '09:00', 'to' => '17:00']], // Wednesday
+                '4' => [['from' => '09:00', 'to' => '17:00']], // Thursday
+                '5' => [['from' => '09:00', 'to' => '17:00']], // Friday
+            ],
+        ]);
+
+        // Act: Call the monitor availability endpoint
+        $start = now()->startOfWeek();
+        $end = (clone $start)->addDays(6)->endOfDay();
+
+        $resp = $this->getJson(route('admin.planning.monitor.availability', [
+            'view'                => 'week',
+            'start'               => $start->toIso8601String(),
+            'end'                 => $end->toIso8601String(),
+            'show_available_only' => '1',
+        ]));
+
+        // Assert
+        $resp->assertOk();
+        $data = $resp->json();
+
+        $this->assertArrayHasKey('resources', $data, 'Response should have resources key');
+        $this->assertArrayHasKey('blocks', $data, 'Response should have blocks key');
+        $this->assertArrayHasKey('view_type', $data, 'Response should have view_type key');
+
+        $this->assertEquals('week', $data['view_type'], 'View type should be week');
+        $this->assertNotEmpty($data['resources'], 'Should have resources in response');
+
+        // Find our resource in the response
+        $ourResource = collect($data['resources'])->where('id', $resource->id)->first();
+        $this->assertNotNull($ourResource, 'Our resource should be included in the response');
+
+        // Verify the resource has the correct properties
+        $this->assertEquals($resource->name, $ourResource['name'], 'Resource name should match');
+        $this->assertTrue($ourResource['has_infinite_duration'], 'Resource should have infinite duration');
+        $this->assertEquals(1, $ourResource['shifts_count'], 'Resource should have 1 shift');
+
+        // Verify blocks are generated for the resource
+        $this->assertArrayHasKey($resource->id, $data['blocks'], 'Resource should have blocks');
+        $resourceBlocks = $data['blocks'][$resource->id];
+        $this->assertNotEmpty($resourceBlocks, 'Resource should have blocks for the week');
+
+        // Verify blocks exist for each day of the week
+        $expectedDays = 7;
+        $this->assertCount($expectedDays, $resourceBlocks, "Resource should have blocks for {$expectedDays} days");
+
+        // Verify that blocks are generated for weekdays (Monday-Friday)
+        $weekdays = ['1', '2', '3', '4', '5']; // Monday to Friday
+        foreach ($weekdays as $day) {
+            $dayKey = $start->copy()->addDays($day - 1)->format('Y-m-d');
+            $this->assertArrayHasKey($dayKey, $resourceBlocks, "Should have blocks for {$dayKey}");
+
+            $dayBlocks = $resourceBlocks[$dayKey];
+            $this->assertNotEmpty($dayBlocks, "Should have blocks for {$dayKey}");
+
+            // Verify that there are available blocks for weekdays
+            $hasAvailableBlock = collect($dayBlocks)->contains(function ($block) {
+                return $block['type'] === 'available';
+            });
+            $this->assertTrue($hasAvailableBlock, "Should have available blocks for {$dayKey}");
+        }
+
+        // Verify that the resource has infinite duration
+        $this->assertTrue($resource->hasInfiniteDuration(), 'Resource should have infinite duration');
+    }
+
+    public function test_resources_with_finite_duration_shifts_are_shown_when_active(): void
+    {
+        $this->withoutMiddleware();
+
+        // Arrange: Create a resource with a finite duration shift
+        $resource = Resource::factory()->create();
+
+        // Create a shift with finite duration (has period_end)
+        Shift::query()->create([
+            'resource_id'         => $resource->id,
+            'available'           => true,
+            'period_start'        => now()->subDays(5)->format('Y-m-d'), // Started 5 days ago
+            'period_end'          => now()->addDays(10)->format('Y-m-d'), // Ends in 10 days
+            'weekday_time_blocks' => [
+                '1' => [['from' => '08:00', 'to' => '16:00']], // Monday
+                '2' => [['from' => '08:00', 'to' => '16:00']], // Tuesday
+            ],
+        ]);
+
+        // Act: Call the monitor availability endpoint
+        $start = now()->startOfWeek();
+        $end = (clone $start)->addDays(6)->endOfDay();
+
+        $resp = $this->getJson(route('admin.planning.monitor.availability', [
+            'view'                => 'week',
+            'start'               => $start->toIso8601String(),
+            'end'                 => $end->toIso8601String(),
+            'show_available_only' => '1',
+        ]));
+
+        // Assert
+        $resp->assertOk();
+        $data = $resp->json();
+
+        $this->assertNotEmpty($data['resources'], 'Should have resources in response');
+
+        // Find our resource in the response
+        $ourResource = collect($data['resources'])->where('id', $resource->id)->first();
+        $this->assertNotNull($ourResource, 'Our resource should be included in the response');
+
+        // Verify the resource has the correct properties
+        $this->assertFalse($ourResource['has_infinite_duration'], 'Resource should not have infinite duration');
+        $this->assertEquals(1, $ourResource['shifts_count'], 'Resource should have 1 shift');
+
+        // Verify blocks are generated for the resource
+        $this->assertArrayHasKey($resource->id, $data['blocks'], 'Resource should have blocks');
+        $resourceBlocks = $data['blocks'][$resource->id];
+        $this->assertNotEmpty($resourceBlocks, 'Resource should have blocks for the week');
+
+        // Verify that blocks are generated for the specific weekdays (Monday-Tuesday)
+        $weekdays = ['1', '2']; // Monday and Tuesday
+        foreach ($weekdays as $day) {
+            $dayKey = $start->copy()->addDays($day - 1)->format('Y-m-d');
+            $this->assertArrayHasKey($dayKey, $resourceBlocks, "Should have blocks for {$dayKey}");
+
+            $dayBlocks = $resourceBlocks[$dayKey];
+            $this->assertNotEmpty($dayBlocks, "Should have blocks for {$dayKey}");
+
+            // Verify that there are available blocks for these weekdays
+            $hasAvailableBlock = collect($dayBlocks)->contains(function ($block) {
+                return $block['type'] === 'available';
+            });
+            $this->assertTrue($hasAvailableBlock, "Should have available blocks for {$dayKey}");
+        }
+
+        // Verify the resource does not have infinite duration
+        $this->assertFalse($resource->hasInfiniteDuration(), 'Resource should not have infinite duration');
+    }
+
+    public function test_resources_with_expired_shifts_are_not_shown(): void
+    {
+        $this->withoutMiddleware();
+
+        // Arrange: Create a resource with an expired shift
+        $resource = Resource::factory()->create();
+
+        // Create a shift that has already expired
+        Shift::query()->create([
+            'resource_id'         => $resource->id,
+            'available'           => true,
+            'period_start'        => now()->subDays(20)->format('Y-m-d'), // Started 20 days ago
+            'period_end'          => now()->subDays(5)->format('Y-m-d'), // Ended 5 days ago
+            'weekday_time_blocks' => [
+                '1' => [['from' => '09:00', 'to' => '17:00']], // Monday
+            ],
+        ]);
+
+        // Act: Call the monitor availability endpoint
+        $start = now()->startOfWeek();
+        $end = (clone $start)->addDays(6)->endOfDay();
+
+        $resp = $this->getJson(route('admin.planning.monitor.availability', [
+            'view'                => 'week',
+            'start'               => $start->toIso8601String(),
+            'end'                 => $end->toIso8601String(),
+            'show_available_only' => '1',
+        ]));
+
+        // Assert
+        $resp->assertOk();
+        $data = $resp->json();
+
+        // Find our resource in the response
+        $ourResource = collect($data['resources'])->where('id', $resource->id)->first();
+        $this->assertNull($ourResource, 'Expired resource should NOT be included in the response');
+
+        // Verify that no blocks are generated for the expired resource
+        $this->assertArrayNotHasKey($resource->id, $data['blocks'], 'Expired resource should NOT have blocks');
+
+        // Note: Expired resource should not be shown in API response (tested above)
+    }
 }

@@ -47,11 +47,9 @@
         <script type="module" src="http://localhost:5173/packages/Webkul/Admin/src/Resources/assets/js/app.js"></script>
         <link rel="stylesheet" href="http://localhost:5173/packages/Webkul/Admin/src/Resources/assets/css/app.css">
     @else
-        {{-- Productie: gebruik de gebuilde assets uit manifest.json --}}
-        @vite([
-            'packages/Webkul/Admin/src/Resources/assets/css/app.css',
-            'packages/Webkul/Admin/src/Resources/assets/js/app.js'
-        ])
+        {{
+            vite()->set(['src/Resources/assets/css/app.css', 'src/Resources/assets/js/app.js'])
+        }}
     @endif
 
     <link

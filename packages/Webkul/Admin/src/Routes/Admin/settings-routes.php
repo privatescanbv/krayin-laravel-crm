@@ -3,8 +3,10 @@
 use App\Http\Controllers\Admin\Settings\ClinicController;
 use App\Http\Controllers\Admin\Settings\ImportLogController;
 use App\Http\Controllers\Admin\Settings\ImportRunController;
-use App\Http\Controllers\Admin\Settings\PartnerProductController;
-use Webkul\Admin\Http\Controllers\Settings\PartnerProducts\ActivityController as PartnerProductActivityController;
+use App\Http\Controllers\Admin\Settings\ProductTypeController;
+use App\Http\Controllers\Admin\Settings\ResourceController;
+use App\Http\Controllers\Admin\Settings\ResourceTypeController;
+use App\Http\Controllers\Admin\Settings\ShiftController;
 use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Settings\AttributeController;
 use Webkul\Admin\Http\Controllers\Settings\DataTransfer\ImportController;
@@ -20,16 +22,8 @@ use Webkul\Admin\Http\Controllers\Settings\SourceController;
 use Webkul\Admin\Http\Controllers\Settings\TagController;
 use Webkul\Admin\Http\Controllers\Settings\TypeController;
 use Webkul\Admin\Http\Controllers\Settings\UserController;
-use Webkul\Admin\Http\Controllers\Settings\Warehouse\ActivityController;
-use Webkul\Admin\Http\Controllers\Settings\Warehouse\TagController as WarehouseTagController;
-use Webkul\Admin\Http\Controllers\Settings\Warehouse\WarehouseController;
-use Webkul\Admin\Http\Controllers\Settings\WebFormController;
 use Webkul\Admin\Http\Controllers\Settings\WebhookController;
 use Webkul\Admin\Http\Controllers\Settings\WorkflowController;
-use App\Http\Controllers\Admin\Settings\ResourceController;
-use App\Http\Controllers\Admin\Settings\ResourceTypeController;
-use App\Http\Controllers\Admin\Settings\ShiftController;
-use App\Http\Controllers\Admin\Settings\ProductTypeController;
 
 /**
  * Settings routes.

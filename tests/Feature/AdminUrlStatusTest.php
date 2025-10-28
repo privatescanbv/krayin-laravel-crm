@@ -134,7 +134,15 @@ it('tests all admin GET routes return valid HTTP status codes', function () {
             $response = $this->actingAs($admin, 'user')
                 ->get($url);
 
-            $statusCode = $response->status();
+            // Handle different response types
+            if (method_exists($response, 'getStatusCode')) {
+                $statusCode = $response->getStatusCode();
+            } elseif (method_exists($response, 'status')) {
+                $statusCode = $response->status();
+            } else {
+                // For BinaryFileResponse and other special cases, try to get status from headers
+                $statusCode = $response->headers->get('Status') ?? 200;
+            }
 
             // Accept 200, 302 (redirects), 404 (not found is OK for some routes)
             // But NOT 500 (internal server error)

@@ -621,11 +621,11 @@
 
     @keyframes skeleton {
         0% {
-            @apply bg-[-1250px_0];
+            background-position: -1250px 0;
         }
 
         100% {
-            @apply bg-[1250px_0];
+            background-position: 1250px 0;
         }
     }
 
@@ -659,6 +659,9 @@
 .tox.tox-silver-sink.tox-tinymce-aux {
     z-index: 99999;
 }
+
+
+
 @keyframes fadeInUp {
     from {
         opacity: 0;

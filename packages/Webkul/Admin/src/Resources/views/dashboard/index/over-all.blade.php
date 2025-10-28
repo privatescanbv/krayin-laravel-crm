@@ -43,7 +43,7 @@
                                 class="text-xs font-semibold text-green-500"
                                 :class="[report.statistics.total_leads.progress < 0 ?  'text-red-500' : 'text-green-500']"
                             >
-                                @{{ Math.abs(report.statistics.total_leads.progress.toFixed(2)) }}%
+                                @{{ Math.abs(Number(report.statistics.total_leads.progress ?? 0).toFixed(2)) }}%
                             </p>
                         </div>
                     </div>
@@ -70,7 +70,7 @@
                                 class="text-xs font-semibold text-green-500"
                                 :class="[report.statistics.won_leads.progress < 0 ?  'text-red-500' : 'text-green-500']"
                             >
-                                @{{ Math.abs(report.statistics.won_leads.progress.toFixed(2)) }}%
+                                @{{ Math.abs(Number(report.statistics.won_leads.progress ?? 0).toFixed(2)) }}%
                             </p>
                         </div>
                     </div>
@@ -97,7 +97,7 @@
                                 class="text-xs font-semibold text-green-500"
                                 :class="[report.statistics.lost_leads.progress < 0 ?  'text-red-500' : 'text-green-500']"
                             >
-                                @{{ Math.abs(report.statistics.lost_leads.progress.toFixed(2)) }}%
+                                @{{ Math.abs(Number(report.statistics.lost_leads.progress ?? 0).toFixed(2)) }}%
                             </p>
                         </div>
                     </div>
@@ -111,7 +111,7 @@
 
                     <div class="flex gap-2">
                         <p class="text-xl font-bold dark:text-gray-300">
-                            @{{ report.statistics.average_leads_per_day.current.toFixed(2) }}
+                            @{{ Number(report.statistics.average_leads_per_day.current ?? 0).toFixed(2) }}
                         </p>
 
                         <div class="flex items-center gap-0.5">
@@ -124,7 +124,7 @@
                                 class="text-xs font-semibold text-green-500"
                                 :class="[report.statistics.average_leads_per_day.progress < 0 ?  'text-red-500' : 'text-green-500']"
                             >
-                                @{{ Math.abs(report.statistics.average_leads_per_day.progress.toFixed(2)) }}%
+                                @{{ Math.abs(Number(report.statistics.average_leads_per_day.progress ?? 0).toFixed(2)) }}%
                             </p>
                         </div>
                     </div>
@@ -151,7 +151,7 @@
                                 class="text-xs font-semibold text-green-500"
                                 :class="[report.statistics.total_quotations.progress < 0 ?  'text-red-500' : 'text-green-500']"
                             >
-                                @{{ Math.abs(report.statistics.total_quotations.progress.toFixed(2)) }}%
+                                @{{ Math.abs(Number(report.statistics.total_quotations.progress ?? 0).toFixed(2)) }}%
                             </p>
                         </div>
                     </div>
@@ -178,7 +178,7 @@
                                 class="text-xs font-semibold text-green-500"
                                 :class="[report.statistics.total_persons.progress < 0 ?  'text-red-500' : 'text-green-500']"
                             >
-                                @{{ Math.abs(report.statistics.total_persons.progress.toFixed(2)) }}%
+                                @{{ Math.abs(Number(report.statistics.total_persons.progress ?? 0).toFixed(2)) }}%
                             </p>
                         </div>
                     </div>
@@ -205,7 +205,7 @@
                                 class="text-xs font-semibold text-green-500"
                                 :class="[report.statistics.total_organizations.progress < 0 ?  'text-red-500' : 'text-green-500']"
                             >
-                                @{{ Math.abs(report.statistics.total_organizations.progress.toFixed(2)) }}%
+                                @{{ Math.abs(Number(report.statistics.total_organizations.progress ?? 0).toFixed(2)) }}%
                             </p>
                         </div>
                     </div>
@@ -217,7 +217,7 @@
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                     Statistieken per Afdeling
                 </h3>
-                
+
                 <div class="grid grid-cols-2 gap-6 max-lg:grid-cols-1">
                     <!-- Herniapoli Department -->
                     <div class="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 p-6">
@@ -225,7 +225,7 @@
                             <span class="inline-block w-3 h-3 bg-blue-500 rounded-full mr-2"></span>
                             Herniapoli
                         </h4>
-                        
+
                         <div class="grid grid-cols-3 gap-4">
                             <div class="text-center">
                                 <div class="text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -246,12 +246,12 @@
                                 <div class="text-sm text-gray-600 dark:text-gray-400">Verloren</div>
                             </div>
                         </div>
-                        
+
                         <div class="mt-4 bg-gray-100 dark:bg-gray-800 rounded-lg p-3">
                             <div class="flex justify-between items-center text-sm">
                                 <span class="text-gray-600 dark:text-gray-400">Conversie ratio:</span>
                                 <span class="font-semibold text-gray-900 dark:text-gray-100">
-                                    @{{ report.statistics.department_stats.herniapoli.total > 0 ? 
+                                    @{{ report.statistics.department_stats.herniapoli.total > 0 ?
                                         Math.round((report.statistics.department_stats.herniapoli.won / report.statistics.department_stats.herniapoli.total) * 100) : 0 }}%
                                 </span>
                             </div>
@@ -264,7 +264,7 @@
                             <span class="inline-block w-3 h-3 bg-purple-500 rounded-full mr-2"></span>
                             Privatescan
                         </h4>
-                        
+
                         <div class="grid grid-cols-3 gap-4">
                             <div class="text-center">
                                 <div class="text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -285,12 +285,12 @@
                                 <div class="text-sm text-gray-600 dark:text-gray-400">Verloren</div>
                             </div>
                         </div>
-                        
+
                         <div class="mt-4 bg-gray-100 dark:bg-gray-800 rounded-lg p-3">
                             <div class="flex justify-between items-center text-sm">
                                 <span class="text-gray-600 dark:text-gray-400">Conversie ratio:</span>
                                 <span class="font-semibold text-gray-900 dark:text-gray-100">
-                                    @{{ report.statistics.department_stats.privatescan.total > 0 ? 
+                                    @{{ report.statistics.department_stats.privatescan.total > 0 ?
                                         Math.round((report.statistics.department_stats.privatescan.won / report.statistics.department_stats.privatescan.total) * 100) : 0 }}%
                                 </span>
                             </div>
@@ -307,7 +307,22 @@
 
             data() {
                 return {
-                    report: [],
+                    report: {
+                        statistics: {
+                            total_leads: { current: 0, progress: 0 },
+                            won_leads: { current: 0, progress: 0 },
+                            lost_leads: { current: 0, progress: 0 },
+                            average_leads_per_day: { current: 0, progress: 0 },
+                            total_quotations: { current: 0, progress: 0 },
+                            total_persons: { current: 0, progress: 0 },
+                            total_organizations: { current: 0, progress: 0 },
+                            department_stats: {
+                                herniapoli: { total: 0, won: 0, lost: 0 },
+                                privatescan: { total: 0, won: 0, lost: 0 },
+                            },
+                        },
+                        date_range: '',
+                    },
 
                     isLoading: true,
 

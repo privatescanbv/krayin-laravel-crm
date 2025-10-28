@@ -39,7 +39,7 @@ Route::prefix('datagrid')->group(function () {
     Route::get('datagrid/look-up', [DataGridController::class, 'lookUp'])->name('admin.datagrid.look_up');
 });
 
- 
+
 
 /**
  * Tinymce file upload handler.
@@ -50,8 +50,12 @@ Route::post('tinymce/upload', [TinyMCEController::class, 'upload'])->name('admin
  * Demo routes.
  */
 Route::get('demo/entity-selector', function () {
-    return view('admin.components.entity-selector-demo');
+    return view('adminc.components.entity-selector-demo');
 })->name('admin.demo.entity-selector');
+
+Route::get('demo/js-test', function () {
+    return response()->file(base_path('test-js.html'));
+})->name('admin.demo.js-test')->withoutMiddleware(['user']);
 
 /**
  * User profile routes.

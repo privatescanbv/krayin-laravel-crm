@@ -124,7 +124,7 @@ class CreatePlanningTestData extends Command
         return $clinic;
     }
 
-    private function getOrCreateResourceType(string $name = null): ResourceType
+    private function getOrCreateResourceType(?string $name = null): ResourceType
     {
         $resourceTypeName = $name ?: $this->option('resource-type');
 
@@ -168,111 +168,111 @@ class CreatePlanningTestData extends Command
     private function createProducts(): array
     {
         $products = [];
-        
+
         // Product data from the provided table
         $productData = [
             [
-                'name' => 'TB3 Royal Bodyscan + Wervelkolom',
-                'description' => 'TB3 Royal Bodyscan + Wervelkolom, bestaande uit:',
-                'currency' => 'EUR',
+                'name'           => 'TB3 Royal Bodyscan + Wervelkolom',
+                'description'    => 'TB3 Royal Bodyscan + Wervelkolom, bestaande uit:',
+                'currency'       => 'EUR',
                 'purchase_price' => 600.00,
-                'sales_price' => 1900.00,
-                'product_type' => 'Total Bodyscan',
-                'resource_type' => 'MRI scanner',
-                'product_group' => 'Bodyscan'
+                'sales_price'    => 1900.00,
+                'product_type'   => 'Total Bodyscan',
+                'resource_type'  => 'MRI scanner',
+                'product_group'  => 'Bodyscan',
             ],
             [
-                'name' => 'MRI Abdomen exclusief CM',
-                'description' => 'MRI scan van de onder- en bovenbuik (abdomen), exclusief contrastmiddel',
-                'currency' => 'EUR',
+                'name'           => 'MRI Abdomen exclusief CM',
+                'description'    => 'MRI scan van de onder- en bovenbuik (abdomen), exclusief contrastmiddel',
+                'currency'       => 'EUR',
                 'purchase_price' => 220.00,
-                'sales_price' => 850.00,
-                'product_type' => 'MRI scan',
-                'resource_type' => 'MRI scanner',
-                'product_group' => 'Buik'
+                'sales_price'    => 850.00,
+                'product_type'   => 'MRI scan',
+                'resource_type'  => 'MRI scanner',
+                'product_group'  => 'Buik',
             ],
             [
-                'name' => 'CT Abdomen inclusief CM',
-                'description' => 'CT scan van de onder- en bovenbuik (abdomen), inclusief contrastmiddel',
-                'currency' => 'EUR',
+                'name'           => 'CT Abdomen inclusief CM',
+                'description'    => 'CT scan van de onder- en bovenbuik (abdomen), inclusief contrastmiddel',
+                'currency'       => 'EUR',
                 'purchase_price' => 300.00,
-                'sales_price' => 650.00,
-                'product_type' => 'CT scan',
-                'resource_type' => 'CT scanner',
-                'product_group' => 'Buik'
+                'sales_price'    => 650.00,
+                'product_type'   => 'CT scan',
+                'resource_type'  => 'CT scanner',
+                'product_group'  => 'Buik',
             ],
             [
-                'name' => 'Bloed- en urineonderzoek preventief uitgebreid heren',
-                'description' => 'Uitgebreid laboratoriumonderzoek (bloed en urine) met PSA bepaling',
-                'currency' => 'EUR',
+                'name'           => 'Bloed- en urineonderzoek preventief uitgebreid heren',
+                'description'    => 'Uitgebreid laboratoriumonderzoek (bloed en urine) met PSA bepaling',
+                'currency'       => 'EUR',
                 'purchase_price' => 85.00,
-                'sales_price' => 220.00,
-                'product_type' => 'Laboratorium',
-                'resource_type' => 'Cardiologie',
-                'product_group' => 'Bloedonderzoeken'
+                'sales_price'    => 220.00,
+                'product_type'   => 'Laboratorium',
+                'resource_type'  => 'Cardiologie',
+                'product_group'  => 'Bloedonderzoeken',
             ],
             [
-                'name' => 'Coördinatie- en bemiddelingskosten',
-                'description' => 'Coördinatie- en bemiddelingskosten',
-                'currency' => 'EUR',
+                'name'           => 'Coördinatie- en bemiddelingskosten',
+                'description'    => 'Coördinatie- en bemiddelingskosten',
+                'currency'       => 'EUR',
                 'purchase_price' => 0.00,
-                'sales_price' => 59.00,
-                'product_type' => 'Diensten',
-                'resource_type' => 'Overig',
-                'product_group' => 'Bemiddelingskosten'
+                'sales_price'    => 59.00,
+                'product_type'   => 'Diensten',
+                'resource_type'  => 'Overig',
+                'product_group'  => 'Bemiddelingskosten',
             ],
             [
-                'name' => 'Volledige vertaling TB3',
-                'description' => 'Nederlandse vertaling van de rapportage',
-                'currency' => 'EUR',
+                'name'           => 'Volledige vertaling TB3',
+                'description'    => 'Nederlandse vertaling van de rapportage',
+                'currency'       => 'EUR',
                 'purchase_price' => 80.00,
-                'sales_price' => 185.00,
-                'product_type' => 'Vertaling',
-                'resource_type' => 'Overig',
-                'product_group' => 'Vertalingen'
+                'sales_price'    => 185.00,
+                'product_type'   => 'Vertaling',
+                'resource_type'  => 'Overig',
+                'product_group'  => 'Vertalingen',
             ],
             [
-                'name' => 'Transf. Endosc. Operatie 1 n',
-                'description' => 'Transforaminale endoscopische operatie 1 niveau',
-                'currency' => 'EUR',
+                'name'           => 'Transf. Endosc. Operatie 1 n',
+                'description'    => 'Transforaminale endoscopische operatie 1 niveau',
+                'currency'       => 'EUR',
                 'purchase_price' => 4950.00,
-                'sales_price' => 9500.00,
-                'product_type' => '',
-                'resource_type' => 'Artsen',
-                'product_group' => 'PTED'
+                'sales_price'    => 9500.00,
+                'product_type'   => '',
+                'resource_type'  => 'Artsen',
+                'product_group'  => 'PTED',
             ],
             [
-                'name' => 'Transf. Endosc. Operatie 2 n',
-                'description' => 'Transforaminale endoscopische operatie 2 niveaus',
-                'currency' => 'EUR',
+                'name'           => 'Transf. Endosc. Operatie 2 n',
+                'description'    => 'Transforaminale endoscopische operatie 2 niveaus',
+                'currency'       => 'EUR',
                 'purchase_price' => 9000.00,
-                'sales_price' => 16000.00,
-                'product_type' => '',
-                'resource_type' => 'Artsen',
-                'product_group' => 'PTED'
+                'sales_price'    => 16000.00,
+                'product_type'   => '',
+                'resource_type'  => 'Artsen',
+                'product_group'  => 'PTED',
             ],
             [
-                'name' => 'ACDF (Anterior Cervical Discectomy and Fusion) operatie',
-                'description' => 'ACDF (Anterior Cervical Discectomy and Fusion) operatie',
-                'currency' => 'EUR',
+                'name'           => 'ACDF (Anterior Cervical Discectomy and Fusion) operatie',
+                'description'    => 'ACDF (Anterior Cervical Discectomy and Fusion) operatie',
+                'currency'       => 'EUR',
                 'purchase_price' => 5900.00,
-                'sales_price' => 13900.00,
-                'product_type' => 'Overig',
-                'resource_type' => 'Artsen',
-                'product_group' => 'ACDF'
-            ]
+                'sales_price'    => 13900.00,
+                'product_type'   => 'Overig',
+                'resource_type'  => 'Artsen',
+                'product_group'  => 'ACDF',
+            ],
         ];
 
         foreach ($productData as $data) {
             // Get or create ProductType
             $productType = $this->getOrCreateProductType($data['product_type'] ?: 'Overig');
-            
+
             // Get or create ResourceType
             $resourceType = $this->getOrCreateResourceType($data['resource_type']);
-            
+
             // Get or create ProductGroup
             $productGroup = $this->getOrCreateProductGroup($data['product_group']);
-            
+
             // Create Product
             $product = Product::create([
                 'name'             => $data['name'],
@@ -285,10 +285,10 @@ class CreatePlanningTestData extends Command
                 'resource_type_id' => $resourceType->id,
                 'product_type_id'  => $productType->id,
             ]);
-            
+
             // Create PartnerProduct
             $partnerProduct = PartnerProduct::create([
-                'name'                  => $data['name'] . ' - Partner Product',
+                'name'                  => $data['name'].' - Partner Product',
                 'description'           => $data['description'],
                 'active'                => true,
                 'currency'              => $data['currency'],
@@ -299,18 +299,17 @@ class CreatePlanningTestData extends Command
                 'purchase_price'        => $data['purchase_price'],
                 'purchase_price_clinic' => $data['purchase_price'] * 0.9, // 10% discount for clinic
             ]);
-            
+
             $products[] = [
-                'product' => $product,
-                'partner_product' => $partnerProduct
+                'product'         => $product,
+                'partner_product' => $partnerProduct,
             ];
-            
+
             $this->info("   • {$product->name} (ID: {$product->id})");
         }
-        
+
         return $products;
     }
-
 
     private function createResources(Clinic $clinic, ResourceType $resourceType): array
     {
@@ -331,10 +330,10 @@ class CreatePlanningTestData extends Command
     private function createRelationships(array $products, Clinic $clinic, array $resources): void
     {
         $resourceIds = collect($resources)->pluck('id')->toArray();
-        
+
         foreach ($products as $productData) {
             $partnerProduct = $productData['partner_product'];
-            
+
             // Koppel partner product aan kliniek
             $partnerProduct->clinics()->attach($clinic->id);
 

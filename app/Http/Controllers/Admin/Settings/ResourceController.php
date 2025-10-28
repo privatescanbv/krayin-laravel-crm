@@ -26,9 +26,9 @@ class ResourceController extends SimpleEntityController
 
         $this->entityName = 'resource';
         $this->datagridClass = ResourceDataGrid::class;
-        $this->indexView = 'admin.resources.index';
-        $this->createView = 'admin.resources.create';
-        $this->editView = 'admin.resources.edit';
+        $this->indexView = 'adminc.resources.index';
+        $this->createView = 'adminc.resources.create';
+        $this->editView = 'adminc.resources.edit';
         $this->indexRoute = 'admin.settings.resources.index';
         $this->permissionPrefix = 'settings.resources';
     }
@@ -44,7 +44,7 @@ class ResourceController extends SimpleEntityController
         // Build period-aware weekly summaries expected by the Blade view
         $periodSummaries = $this->buildPeriodAwareWeeklySummaries($allShifts->all());
 
-        return view('admin.resources.show', [
+        return view('adminc.resources.show', [
             'resource'         => $resource,
             'upcomingShifts'   => collect(),
             'scheduleSummary'  => $this->buildMergedWeeklySummary($allShifts->all()), // keep for potential partials

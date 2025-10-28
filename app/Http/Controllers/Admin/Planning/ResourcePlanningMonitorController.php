@@ -29,7 +29,7 @@ class ResourcePlanningMonitorController extends Controller
             ->allWithActiveClinics(['clinic', 'shifts'], ['id', 'name', 'clinic_id', 'resource_type_id']);
         $clinics = app(ClinicRepository::class)->allActive(['id', 'name']);
 
-        return view('admin.planning.monitor', [
+        return view('adminc.planning.monitor', [
             'resourceTypes' => $resourceTypes,
             'resources'     => $resources,
             'clinics'       => $clinics,
@@ -56,7 +56,7 @@ class ResourcePlanningMonitorController extends Controller
             ->allWithActiveClinics(['clinic'], ['id', 'name', 'clinic_id', 'resource_type_id']);
         $clinics = app(ClinicRepository::class)->allActive(['id', 'name']);
 
-        return view('admin.planning.order_monitor', [
+        return view('adminc.planning.order_monitor', [
             'order'         => $order,
             'resourceTypes' => $resourceTypes,
             'resources'     => $resources,

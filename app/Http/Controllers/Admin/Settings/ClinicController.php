@@ -21,10 +21,10 @@ class ClinicController extends SimpleEntityController
 
         $this->entityName = 'clinic';
         $this->datagridClass = ClinicDataGrid::class;
-        $this->indexView = 'admin.clinics.index';
-        $this->createView = 'admin.clinics.create';
-        $this->editView = 'admin.clinics.edit';
-        $this->indexRoute = 'admin.settings.clinics.index';
+        $this->indexView = 'adminc.clinics.index';
+        $this->createView = 'adminc.clinics.create';
+        $this->editView = 'adminc.clinics.edit';
+        $this->indexRoute = 'adminc.settings.clinics.index';
         $this->permissionPrefix = 'settings.clinics';
     }
 
@@ -48,7 +48,7 @@ class ClinicController extends SimpleEntityController
     {
         $clinic = $this->clinicRepository->with(['address', 'resources.resourceType', 'creator', 'updater'])->findOrFail($id);
 
-        return view('admin.clinics.view', ['clinic' => $clinic]);
+        return view('adminc.clinics.view', ['clinic' => $clinic]);
     }
 
     public function destroy(Request $request, ?int $id = null): RedirectResponse|JsonResponse

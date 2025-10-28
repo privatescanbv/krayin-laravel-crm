@@ -8,8 +8,7 @@ RUN rm -rf .git
 RUN rm -rf flows
 
 # Install dependencies and build assets
-RUN npm ci
-RUN npm run build
+RUN ./build.sh
 
 FROM docker.io/php:8.3-fpm-bullseye
 
@@ -101,6 +100,10 @@ COPY  .docker/nginx/nginx.conf /etc/nginx/nginx.conf
 RUN chown -R www-data:www-data /usr/share/nginx/html /var/log /run /etc/nginx
 
 COPY --chown=www-data:www-data --from=vite /build/public/build public/build
+COPY --chown=www-data:www-data --from=vite /build/public/admin/build public/admin/build
+COPY --chown=www-data:www-data --from=vite /build/public/webform/build public/webform/build
+
+
 
 # Ensure storage directories have correct permissions for log writing
 RUN mkdir -p /usr/share/nginx/html/storage/logs \

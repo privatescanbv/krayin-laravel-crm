@@ -71,7 +71,6 @@ De frontend is gebouwd met:
 
 * Blade templates
 * Tailwind CSS voor styling
-* Alpine.js voor interactiviteit
 * Vue.js met Laravel UI
 * Livewire voor real-time updates
 

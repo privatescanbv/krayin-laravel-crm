@@ -42,16 +42,12 @@
     >
 
     @stack('meta')
-    @if (app()->environment('local'))
-        {{-- Ontwikkelomgeving: gebruik de Vite dev-server --}}
-        <script type="module" src="http://localhost:5173/packages/Webkul/Admin/src/Resources/assets/js/app.js"></script>
-        <link rel="stylesheet" href="http://localhost:5173/packages/Webkul/Admin/src/Resources/assets/css/app.css">
-    @else
-        {{
-            vite()->set(['src/Resources/assets/css/app.css', 'src/Resources/assets/js/app.js'])
-        }}
-    @endif
-
+    {{
+        vite()->set([
+               'packages/Webkul/Admin/src/Resources/assets/css/app.css',
+               'packages/Webkul/Admin/src/Resources/assets/js/app.js',
+        ])
+    }}
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap"
         rel="stylesheet"
@@ -140,24 +136,19 @@
 
     {!! view_render_event('admin.layout.body.after') !!}
 
-
+    @stack('scripts')
     {!! view_render_event('admin.layout.vue-app-mount.before') !!}
 
     <script>
         /**
-         * Load event, the purpose of using the event is to mount the application
-         * after all of our `Vue` components which is present in blade file have
-         * been registered in the app. No matter what `app.mount()` should be
-         * called in the last.
+         * Mount after pushed inline component registrations have executed.
          */
-        window.addEventListener("load", function(event) {
+        window.addEventListener("load", function() {
             app.mount("#app");
         });
     </script>
 
     {!! view_render_event('admin.layout.vue-app-mount.after') !!}
-
-    @stack('scripts')
 </body>
 
 </html>

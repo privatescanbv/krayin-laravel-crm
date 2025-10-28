@@ -2,6 +2,7 @@
 
 namespace Webkul\Core;
 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Vite as BaseVite;
 use Webkul\Core\Exceptions\ViterNotFound;
 
@@ -23,7 +24,9 @@ class Vite
         $url = trim($filename, '/');
 
         $viteUrl = trim($viters[$namespace]['package_assets_directory'], '/').'/'.$url;
-
+//Log::info('Vite asset URL: '.$viteUrl);
+//Log::info('Using hot file: '.$viters[$namespace]['hot_file']);
+//        Log::info('Using build directory: '.$viters[$namespace]['build_directory']);
         return BaseVite::useHotFile($viters[$namespace]['hot_file'])
             ->useBuildDirectory($viters[$namespace]['build_directory'])
             ->asset($viteUrl);

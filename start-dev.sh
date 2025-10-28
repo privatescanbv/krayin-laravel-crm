@@ -25,7 +25,7 @@ fi
 
 # Start Vite dev server in de CRM container
 echo "🎨 Starting Vite dev server..."
-docker-compose exec -d crm npm run dev -- --host 0.0.0.0 --port 5173
+docker-compose exec -d crm yarn dev -- --host 0.0.0.0 --port 5173
 # Wait a bit for Vite to start
 sleep 5
 

@@ -58,6 +58,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Register custom Blade components
-        Blade::componentNamespace('App\\View\\Components\\Adminc', 'adminc');
+        //        Blade::componentNamespace('App\\View\\Components\\Adminc', 'adminc');
+        Blade::anonymousComponentPath(resource_path('views/adminc'), 'adminc');
     }
 }

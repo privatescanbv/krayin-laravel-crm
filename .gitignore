@@ -24,6 +24,8 @@ npm-debug.log
 /public/storage
 /public/vendor
 /public/admin/build
+/public/webform
+/public/installer
 /lang/vendor
 /storage/*.key
 /storage/dcc-data/

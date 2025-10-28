@@ -19,7 +19,7 @@ Logs:
 === Feature testen uitvoeren
 
 - sail artisan migrate:fresh --database=mysql_testing
-- sail artisan test
+- sail artisan test --parallel --colors=always
 
 Of in PHPStorm
 
@@ -259,3 +259,20 @@ protected function gate()
 ```
 
 7. sail artisan telescope:publish
+
+
+===== Frontend build
+
+In deze stack gebruiken we:
+- Laravel Mix (Webpack) voor asset bundling
+- Tailwind CSS voor styling
+- Vue.js voor interactieve UI componenten
+Om de frontend te bouwen, volg deze stappen:
+1. Installeer Node.js en npm (indien nog niet geïnstalleerd):
+   - Download en installeer vanaf https://nodejs.org/
+2. yarn of npm dependencies installeren:
+   - sail yarn install
+3. Voor vite: starten we lokaal een vite server -> yarn dev (zie ook start-dev.sh)
+
+
+yarn config set nodeLinker node-modules

@@ -29,10 +29,10 @@ class PartnerProductController extends SimpleEntityController
 
         $this->entityName = 'partner_products';
         $this->datagridClass = PartnerProductDataGrid::class;
-        $this->indexView = 'admin.partner-products.index';
-        $this->createView = 'admin.partner-products.create';
-        $this->editView = 'admin.partner-products.edit';
-        $this->indexRoute = 'admin.partner_products.index';
+        $this->indexView = 'adminc.partner-products.index';
+        $this->createView = 'adminc.partner-products.create';
+        $this->editView = 'adminc.partner-products.edit';
+        $this->indexRoute = 'adminc.partner_products.index';
         $this->permissionPrefix = 'partner_products';
     }
 

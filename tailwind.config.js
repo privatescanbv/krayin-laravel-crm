@@ -40,7 +40,7 @@ export default {
     darkMode: 'class',
     plugins: [],
     safelist: [
-        // Keep icon classes safe from purging
-        'icon-*'
+        // Keep all icon classes from being purged
+        { pattern: /icon-.*/ }
     ]
 };

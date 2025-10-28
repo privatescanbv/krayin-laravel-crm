@@ -36,7 +36,14 @@ export default {
         app.component("VField", Field);
         app.component("VErrorMessage", ErrorMessage);
 
-        window.addEventListener("load", () => setLocale(document.documentElement.attributes.lang.value));
+        window.addEventListener("load", () => {
+            const langAttr = document.documentElement.attributes.lang;
+            if (langAttr && langAttr.value) {
+                setLocale(langAttr.value);
+            } else {
+                setLocale('en'); // Default to English if no lang attribute
+            }
+        });
 
         /**
          * Registration of all global validators.

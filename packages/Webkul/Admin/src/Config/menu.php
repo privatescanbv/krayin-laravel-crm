@@ -94,6 +94,13 @@ return [
         'sort'       => 11,
         'icon-class' => 'icon-activity',
     ],
+    [
+        'key'        => 'clinics',
+        'name'       => 'Beheer klinieken',
+        'route'      => 'admin.settings.clinics.index',
+        'sort'       => 12,
+        'icon-class' => 'icon-organization',
+    ],
 
     /**
      * Settings.
@@ -102,7 +109,7 @@ return [
         'key'        => 'settings',
         'name'       => 'admin::app.layouts.settings',
         'route'      => 'admin.settings.index',
-        'sort'       => 12,
+        'sort'       => 13,
         'icon-class' => 'icon-setting',
     ], [
         'key'        => 'settings.user',
@@ -297,7 +304,7 @@ return [
         'key'        => 'configuration',
         'name'       => 'admin::app.layouts.configuration',
         'route'      => 'admin.configuration.index',
-        'sort'       => 13,
+        'sort'       => 14,
         'icon-class' => 'icon-configuration',
     ],
 
@@ -308,7 +315,7 @@ return [
         'key'        => 'documentation',
         'name'       => 'Documentation',
         'route'      => 'admin.docs.index',
-        'sort'       => 14,
+        'sort'       => 15,
         'icon-class' => 'icon-file',
     ],
 ];

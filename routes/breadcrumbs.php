@@ -674,7 +674,7 @@ Breadcrumbs::for('dashboard.account.edit', function (BreadcrumbTrail $trail, $us
 // Dashboard > Sales Leads
 Breadcrumbs::for('sales-leads', function (BreadcrumbTrail $trail) {
     $trail->parent('dashboard');
-    $trail->push('Sales order', route('admin.sales-leads.index'));
+    $trail->push('Sales', route('admin.sales-leads.index'));
 });
 
 // Dashboard > Sales Leads > Create

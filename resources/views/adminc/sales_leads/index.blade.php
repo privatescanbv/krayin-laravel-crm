@@ -25,7 +25,7 @@
             @endif
 
             <!-- Pipeline Switcher -->
-            <x-adminc::sales_leads.index.view-switcher />
+            <x-adminc::sales_leads.index.view-switcher :pipeline="$pipeline" />
 
         </div>
 
@@ -39,9 +39,9 @@
     <!-- Content -->
     <div class="[&>*>*>*.toolbarRight]:max-lg:w-full [&>*>*>*.toolbarRight]:max-lg:justify-between [&>*>*>*.toolbarRight]:max-md:gap-y-2 [&>*>*>*.toolbarRight]:max-md:flex-wrap mt-3.5 [&>*>*:nth-child(1)]:max-lg:!flex-wrap">
         @if ((request()->view_type ?? "kanban") == "table")
-            <x-adminc::sales_leads.index.table />
+            <x-adminc::sales_leads.index.table :pipeline="$pipeline"/>
         @else
-            <x-adminc::sales_leads.index.kanban />
+            <x-adminc::sales_leads.index.kanban :columns="$columns" :stages="$stages"/>
         @endif
     </div>
 

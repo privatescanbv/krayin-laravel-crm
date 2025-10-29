@@ -82,7 +82,7 @@
 
                 <!-- Activity Actions -->
                 <div class="flex flex-wrap gap-2">
-                    {!! view_render_event('admin.leads.view.actions.before', ['lead' => $lead]) !!}
+                    {!! view_render_event('admin.sales-leads.view.actions.before', ['lead' => $lead]) !!}
 
                     @if (bouncer()->hasPermission('mail.compose'))
                         <!-- Mail Activity Action -->
@@ -123,14 +123,14 @@
                         </button>
                     @endif
 
-                    {!! view_render_event('admin.leads.view.actions.after', ['lead' => $lead]) !!}
+                    {!! view_render_event('admin.sales-leads.view.actions.after', ['lead' => $lead]) !!}
                 </div>
             </div>
 
             <x-adminc::persons.card :person="$salesLead->getContactPersonOrFirstPerson()" show_actions="false" />
 
             <!-- Lead Overview (compact overview with all information) -->
-            <x-adminc::leads.compact-overview :lead="$lead"/>
+            <x-adminc::sales_leads.view.compact-overview :salesLead="$salesLead" :lead="$lead"/>
 
             <x-adminc::leads.persons :lead="$lead" />
 
@@ -148,9 +148,9 @@
             </div>
         </div>
 
-        {!! view_render_event('admin.leads.view.left.after', ['lead' => $lead]) !!}
+        {!! view_render_event('admin.sales-leads.view.left.after', ['lead' => $lead]) !!}
 
-        {!! view_render_event('admin.leads.view.right.before', ['lead' => $lead]) !!}
+        {!! view_render_event('admin.sales-leads.view.right.before', ['lead' => $lead]) !!}
 
         <!-- Right Panel -->
         <div class="flex w-full flex-col gap-4 rounded-lg">
@@ -163,7 +163,7 @@
             ])
 
             <!-- Activities -->
-            {!! view_render_event('admin.leads.view.activities.before', ['lead' => $lead]) !!}
+            {!! view_render_event('admin.sales-leads.view.activities.before', ['lead' => $lead]) !!}
 
             <x-admin::activities
                 :endpoint="route('admin.sales-leads.activities.index', $salesLead->id)"
@@ -221,10 +221,10 @@
                 </x-slot>
             </x-admin::activities>
 
-            {!! view_render_event('admin.leads.view.activities.after', ['lead' => $lead]) !!}
+            {!! view_render_event('admin.sales-leads.view.activities.after', ['lead' => $lead]) !!}
         </div>
 
-        {!! view_render_event('admin.leads.view.right.after', ['lead' => $lead]) !!}
+        {!! view_render_event('admin.sales-leads.view.right.after', ['lead' => $lead]) !!}
     </div>
 
     @pushOnce('scripts')

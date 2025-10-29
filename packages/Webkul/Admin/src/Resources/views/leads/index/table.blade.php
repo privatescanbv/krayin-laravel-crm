@@ -5,7 +5,7 @@
     <x-admin::shimmer.datagrid />
 
     <x-slot:toolbar-right-after>
-        @include('admin::leads.index.view-switcher')
+        <x-adminc::sales_leads.index.view-switcher :pipeline="$pipeline" :columns="$columns" />
     </x-slot>
 </x-admin::datagrid>
 

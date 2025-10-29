@@ -5,7 +5,6 @@
     <x-admin::shimmer.datagrid />
 
     <x-slot:toolbar-right-after>
-        <x-adminc::sales_leads.index.view-switcher/>
     </x-slot>
 </x-admin::datagrid>
 

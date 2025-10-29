@@ -12,19 +12,19 @@ services:
       - .env
     labels:
       - traefik.enable=true
-      - traefik.http.routers.forms.rule=Host(`newcrm.dev.privatescan.nl`)
-      - traefik.http.routers.forms.entrypoints=https
-      - traefik.http.routers.forms.tls=true
-      - traefik.http.routers.forms.tls.certresolver=myresolver
-      - traefik.http.routers.forms.service=forms-svc
+      - traefik.http.routers.crm.rule=Host(`newcrm.dev.privatescan.nl`)
+      - traefik.http.routers.crm.entrypoints=https
+      - traefik.http.routers.crm.tls=true
+      - traefik.http.routers.crm.tls.certresolver=myresolver
+      - traefik.http.routers.crm.service=forms-svc
       - traefik.http.services.forms-svc.loadbalancer.server.port=80
       # Protect CRM log viewer path with Basic Auth
-      - traefik.http.routers.forms-logviewer.rule=Host(`newcrm.dev.privatescan.nl`) && PathPrefix(`/log-viewer`)
-      - traefik.http.routers.forms-logviewer.entrypoints=https
-      - traefik.http.routers.forms-logviewer.tls=true
-      - traefik.http.routers.forms-logviewer.tls.certresolver=myresolver
-      - traefik.http.routers.forms-logviewer.service=forms-svc
-      - traefik.http.routers.forms-logviewer.middlewares=crm-logauth,forward-headers
+      - traefik.http.routers.crm-logviewer.rule=Host(`newcrm.dev.privatescan.nl`) && PathPrefix(`/log-viewer`)
+      - traefik.http.routers.crm-logviewer.entrypoints=https
+      - traefik.http.routers.crm-logviewer.tls=true
+      - traefik.http.routers.crm-logviewer.tls.certresolver=myresolver
+      - traefik.http.routers.crm-logviewer.service=forms-svc
+      - traefik.http.routers.crm-logviewer.middlewares=crm-logauth,forward-headers
       - traefik.http.middlewares.crm-logauth.basicauth.users=logviewer:$$apr1$$H5jLv78F$$TFMkJ79Ez/XCa2qQDaVkm/
       # Middleware: expliciete headers doorgeven
       - traefik.http.middlewares.forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
@@ -40,14 +40,6 @@ services:
       - mysql
       - n8n
       - mailserver
-    healthcheck:
-      test: [
-        "CMD-SHELL",
-        'curl -f -H "X-N8N-API-KEY: $N8N_API_KEY" http://n8n:5678/webhook/health-check'
-      ]
-      interval: 30s
-      timeout: 5s
-      retries: 3
 
   mysql:
     image: 'mysql/mysql-server:8.0'
@@ -156,22 +148,22 @@ services:
     image: traefik:v2.11
     container_name: traefik
     command:
-      - "--api.dashboard=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.http.address=:80"
-      - "--entrypoints.https.address=:443"
-      - "--certificatesresolvers.myresolver.acme.httpchallenge=true"
-      - "--certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=http"
-      - "--certificatesresolvers.myresolver.acme.email=mark.bulthuis@mbsoftware.nl"
-      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - --api.dashboard=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.http.address=:80
+      - --entrypoints.https.address=:443
+      - --certificatesresolvers.myresolver.acme.httpchallenge=true
+      - --certificatesresolvers.myresolver.acme.httpchallenge.entrypoint=http
+      - --certificatesresolvers.myresolver.acme.email=mark.bulthuis@mbsoftware.nl
+      - --certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json
     ports:
       - "80:80"
       - "443:443"
       - "8080:8080"
     volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "./letsencrypt:/letsencrypt"
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./letsencrypt:/letsencrypt
     networks:
       - mb_traefik
 

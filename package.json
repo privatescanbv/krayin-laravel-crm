@@ -20,12 +20,15 @@
     "@vee-validate/rules": "^4.12.6",
     "autoprefixer": "^10.4.21",
     "dompurify": "^3.1.7",
-    "fast-glob": "^3.3.3",
     "flatpickr": "^4.6.13",
+    "lodash": "^4.17.21",
     "mitt": "^3.0.1",
     "vee-validate": "^4.15.1",
     "vue": "^3.5.22",
     "vue-cal": "^4.8.0",
     "vuedraggable": "^4.1.0"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-arm64-gnu": "^4.52.5"
   }
 }

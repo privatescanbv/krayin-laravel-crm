@@ -2,8 +2,13 @@
 
 return [
     'viters' => [
-        'admin' => [
+        'root' => [
             'hot_file'                 => storage_path('framework/vite.hot'),
+            'build_directory'          => 'build',
+            'package_assets_directory' => 'resources',
+        ],
+        'admin' => [
+            'hot_file'                 => storage_path('framework/admin-vite.hot'),
 
             // Laat build outputs op hun eigen plek
             'build_directory'          => 'admin/build',

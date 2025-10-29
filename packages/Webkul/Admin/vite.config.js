@@ -17,10 +17,12 @@ export default defineConfig(({ mode }) => {
 
         server: {
             host: process.env.VITE_HOST || "localhost",
-            port: process.env.VITE_PORT || 5173,
+            // Use a dedicated dev port for the Admin package so the correct server serves Admin assets
+            port: process.env.VITE_ADMIN_PORT || 5174,
             cors: true,
             hmr: {
-                host: 'localhost',
+                host: process.env.VITE_HOST || 'localhost',
+                port: process.env.VITE_ADMIN_PORT || 5174,
             },
             fs: {
                 // 👇 hiermee mag de devserver ook je packages-map uitlezen
@@ -35,7 +37,8 @@ export default defineConfig(({ mode }) => {
             vue(),
 
             laravel({
-                hotFile: "../../../storage/framework/vite.hot",
+                // Separate hotfile so Laravel can distinguish this dev server from the root one
+                hotFile: "../../../public/admin-vite.hot",
                 publicDirectory: "../../../public",
                 buildDirectory: "admin/build",
                 input: [

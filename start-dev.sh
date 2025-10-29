@@ -1,4 +1,6 @@
 #!/bin/bash
+# Starts the local docker compose and starts the vite server for local development.
+# Note: alle css and js files should be loaded from localhost:5137, check the html if this works (hot deployment, vite)
 
 # Start Docker Compose met Vite dev server
 echo "🚀 Starting Docker Compose with Vite dev server..."
@@ -26,6 +28,7 @@ fi
 # Start Vite dev server in de CRM container
 echo "🎨 Starting Vite dev server..."
 docker-compose exec -d crm yarn dev -- --host 0.0.0.0 --port 5173
+docker-compose exec -d cd ./packages/Webkul/Admin && crm npm run dev -- --host 0.0.0.0 --port 5174
 # Wait a bit for Vite to start
 sleep 5
 

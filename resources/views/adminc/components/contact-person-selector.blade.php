@@ -7,12 +7,12 @@
     'canAddNew' => true,
 ])
 
-<x-adminc::components.entity-selector
+<v-entity-selector
     :name="$name"
     :label="$label"
     :placeholder="$placeholder"
     :search-route="route('admin.contacts.persons.search')"
-    :current-value="$currentValue"
-    :current-label="$currentLabel"
+    :items="$currentValue ? [['id' => $currentValue, 'name' => $currentLabel ?: '']] : []"
     :can-add-new="$canAddNew"
+    :multiple="false"
 />

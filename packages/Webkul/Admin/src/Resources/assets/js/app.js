@@ -7,7 +7,6 @@ import.meta.glob(["../images/**", "../fonts/**"]);
  * Main vue bundler.
  */
 import { createApp } from "vue/dist/vue.esm-bundler";
-import registerEntitySelector from "./alpine/entity-selector";
 /**
  * Main root application registry.
  */
@@ -133,8 +132,5 @@ app.directive("tooltip", ToolTip);
 
 app.component("CallStatusIcon", CallStatusIcon);
 
-window.addEventListener("load", function() {
-    registerEntitySelector();
-});
 export default app;
 

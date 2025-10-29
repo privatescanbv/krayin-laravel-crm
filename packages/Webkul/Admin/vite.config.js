@@ -16,19 +16,20 @@ export default defineConfig(({ mode }) => {
         envDir,
 
         server: {
-            host: process.env.VITE_HOST || "localhost",
+            // Listen on all interfaces inside the container
+            host: "0.0.0.0",
             // Use a dedicated dev port for the Admin package so the correct server serves Admin assets
             port: process.env.VITE_ADMIN_PORT || 5174,
+            strictPort: true,
             cors: true,
-            hmr: {
-                host: process.env.VITE_HOST || 'localhost',
-                port: process.env.VITE_ADMIN_PORT || 5174,
-            },
+            hmr: false,
             fs: {
                 // 👇 hiermee mag de devserver ook je packages-map uitlezen
                 allow: [
+                    path.resolve(__dirname, 'src/Resources'),
                     path.resolve(__dirname, 'resources'),
                     path.resolve(__dirname, 'packages'),
+                    path.resolve(__dirname, '../../../'),
                 ],
             },
         },

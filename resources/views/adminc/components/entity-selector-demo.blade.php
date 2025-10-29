@@ -1,3 +1,5 @@
+<x-adminc::components.entity-selector />
+
 <x-admin::layouts>
     <x-slot:title>Entity Selector Demo</x-slot>
     <div class="flex flex-col gap-4">
@@ -14,11 +16,11 @@
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4">
                 <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">Partner Products</h3>
 
-                <x-adminc::components.entity-selector
+                <v-entity-selector
                     name="partner_products"
                     label="Partner Products"
                     placeholder="Selecteer partner producten..."
-                    searchRoute="/admin/partner-products/search"
+                    search-route="/admin/partner-products/search"
                     :multiple="true"
                     :items="[]"
                 />
@@ -28,11 +30,11 @@
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4">
                 <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">Contacts/Persons</h3>
 
-                <x-adminc::components.entity-selector
+                <v-entity-selector
                     name="contacts"
                     label="Contacts"
                     placeholder="Selecteer contacten..."
-                    searchRoute="/admin/contacts/persons/search"
+                    search-route="/admin/contacts/persons/search"
                     :multiple="true"
                     :items="[]"
                 />
@@ -42,11 +44,11 @@
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4">
                 <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">Products</h3>
 
-                <x-adminc::components.entity-selector
+                <v-entity-selector
                     name="products"
                     label="Products"
                     placeholder="Selecteer producten..."
-                    searchRoute="/admin/products/search"
+                    search-route="/admin/products/search"
                     :multiple="true"
                     :items="[]"
                 />
@@ -56,11 +58,11 @@
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4">
                 <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">Leads</h3>
 
-                <x-adminc::components.entity-selector
+                <v-entity-selector
                     name="leads"
                     label="Leads"
                     placeholder="Selecteer leads..."
-                    searchRoute="/admin/leads/search"
+                    search-route="/admin/leads/search"
                     :multiple="true"
                     :items="[]"
                 />
@@ -71,11 +73,11 @@
         <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4">
             <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">Single Selection Test</h3>
 
-            <x-adminc::components.entity-selector
+            <v-entity-selector
                 name="single_test"
                 label="Single Selection"
                 placeholder="Selecteer één item..."
-                searchRoute="/admin/partner-products/search"
+                search-route="/admin/partner-products/search"
                 :multiple="false"
                 :items="[]"
             />

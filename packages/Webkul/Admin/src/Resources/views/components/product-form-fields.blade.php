@@ -209,7 +209,7 @@
         Partner products
     </x-admin::form.control-group.label>
 
-    <x-adminc::components.entity-selector
+    <v-entity-selector
         name="partner_products"
         label="Partner products"
         placeholder="Selecteer .."

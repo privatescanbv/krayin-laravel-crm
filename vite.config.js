@@ -19,7 +19,7 @@ export default defineConfig(({ command }) => ({
                 'resources/views/**',
                 'packages/**/src/Resources/views/**',
             ],
-            hotFile: 'storage/framework/vite.hot',
+            hotFile: 'public/vite.hot',
         }),
     ],
     build: {
@@ -32,6 +32,7 @@ export default defineConfig(({ command }) => ({
         port: process.env.VITE_PORT || 5173,
         hmr: {
             host: 'localhost',
+            port: process.env.VITE_PORT || 5173,
         },
         fs: {
             // 👇 hiermee mag de devserver ook je packages-map uitlezen

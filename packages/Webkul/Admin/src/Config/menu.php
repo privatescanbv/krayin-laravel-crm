@@ -296,6 +296,15 @@ return [
         'sort'       => 1,
         'icon-class' => 'icon-settings-tag',
     ],
+    [
+        'key'        => 'settings.other_settings.components',
+        'name'       => 'demo entity selector',
+        'info'       => 'Selectie van componenten om het gedrag te testen',
+        'route'      => 'admin.demo.entity-selector',
+        'sort'       => 2,
+        'icon-class' => 'icon-settings-tag',
+    ],
+
 
     /**
      * Configuration.

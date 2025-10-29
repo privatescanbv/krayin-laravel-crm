@@ -13,6 +13,7 @@ services:
       - 'host.docker.internal:host-gateway'
     ports:
       - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
+      - '${VITE_ADMIN_PORT:-5174}:${VITE_ADMIN_PORT:-5174}'
       - '8000:80'
     environment:
       WWWUSER: '${WWWUSER}'
@@ -98,43 +99,43 @@ services:
     volumes:
       - ./data/n8n_data:/home/node/.n8n
 
-  mailserver:
-    image: mailserver/docker-mailserver:latest
-    hostname: mail
-    domainname: test.local
-    container_name: mailserver
-    env_file: mailserver.env
-    environment:
-      - SSL_TYPE=manual
-      - SSL_CERT_PATH=/tmp/docker-mailserver/ssl/mail.test.local-cert.pem
-      - SSL_KEY_PATH=/tmp/docker-mailserver/ssl/mail.test.local-key.pem
-    volumes:
-      - ./maildata:/var/mail
-      - ./mailstate:/var/mail-state
-      - ./docker/config/:/tmp/docker-mailserver/
-    ports:
-      - "1025:25"     # SMTP inkomend (van Laravel)
-      - "587:587"     # SMTP met AUTH (voor RainLoop)
-      - "993:993"     # IMAPS voor Webklex of mailclient
-    restart: always
-    cap_add:
-      - NET_ADMIN
-    networks:
-      - sail
-  # visueel mailtjes kunnen lezen (local development)
-  rainloop:
-    image: hardware/rainloop
-    container_name: rainloop
-    ports:
-      - "8888:8888"  # Webmail
-    restart: unless-stopped
-    depends_on:
-      - mailserver
-    networks:
-      - sail
-      - mb_traefik
-    volumes:
-      - './docker/rainloop_data:/rainloop/data'
+#  mailserver:
+#    image: mailserver/docker-mailserver:latest
+#    hostname: mail
+#    domainname: test.local
+#    container_name: mailserver
+#    env_file: mailserver.env
+#    environment:
+#      - SSL_TYPE=manual
+#      - SSL_CERT_PATH=/tmp/docker-mailserver/ssl/mail.test.local-cert.pem
+#      - SSL_KEY_PATH=/tmp/docker-mailserver/ssl/mail.test.local-key.pem
+#    volumes:
+#      - ./maildata:/var/mail
+#      - ./mailstate:/var/mail-state
+#      - ./docker/config/:/tmp/docker-mailserver/
+#    ports:
+#      - "1025:25"     # SMTP inkomend (van Laravel)
+#      - "587:587"     # SMTP met AUTH (voor RainLoop)
+#      - "993:993"     # IMAPS voor Webklex of mailclient
+#    restart: always
+#    cap_add:
+#      - NET_ADMIN
+#    networks:
+#      - sail
+#  # visueel mailtjes kunnen lezen (local development)
+#  rainloop:
+#    image: hardware/rainloop
+#    container_name: rainloop
+#    ports:
+#      - "8888:8888"  # Webmail
+#    restart: unless-stopped
+#    depends_on:
+#      - mailserver
+#    networks:
+#      - sail
+#      - mb_traefik
+#    volumes:
+#      - './docker/rainloop_data:/rainloop/data'
 # enable this for local cucumber testing
 #  test:
 #    build:

@@ -98,14 +98,14 @@
                         </div>
 
                         <div class="w-1/2 max-md:w-full">
-                            <x-adminc::components.entity-selector
+                            <v-entity-selector
                                 name="contact_person_id"
                                 label="Contactpersoon"
                                 placeholder="Selecteer contactpersoon..."
                                 search-route="{{ route('admin.contacts.persons.search') }}"
-                                :current-value="$salesLead->contact_person_id"
-                                :current-label="$salesLead->contactPerson ? $salesLead->contactPerson->name : null"
+                                :items="$salesLead->contact_person_id ? [['id' => $salesLead->contact_person_id, 'name' => $salesLead->contactPerson ? $salesLead->contactPerson->name : '']] : []"
                                 :can-add-new="true"
+                                :multiple="false"
                             />
                         </div>
                     </div>

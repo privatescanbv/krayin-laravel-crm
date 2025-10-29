@@ -144,6 +144,26 @@ class PartnerProductController extends SimpleEntityController
             ]);
         }
 
+        // Check if we should return to clinic view
+        if ($request->input('return_to') === 'clinic_view') {
+            $clinicId = $request->input('clinic_id');
+            if ($clinicId) {
+                return redirect()
+                    ->route('admin.clinics.view', $clinicId)
+                    ->with('success', $this->getUpdateSuccessMessage());
+            }
+
+            // Fallback to first clinic from the clinics array
+            $clinicIds = $request->input('clinics');
+            if ($clinicIds) {
+                $firstClinicId = is_array($clinicIds) ? reset($clinicIds) : $clinicIds;
+
+                return redirect()
+                    ->route('admin.clinics.view', $firstClinicId)
+                    ->with('success', $this->getUpdateSuccessMessage());
+            }
+        }
+
         return redirect()
             ->route($this->indexRoute)
             ->with('success', $this->getUpdateSuccessMessage());

@@ -126,7 +126,7 @@ class ClinicPartnerProductDataGrid extends DataGrid
                 'icon'   => 'icon-edit',
                 'title'  => trans('admin::app.settings.clinics.view.partner-products.table.edit'),
                 'method' => 'GET',
-                'url'    => fn ($row) => route('admin.partner_products.edit', $row->id),
+                'url'    => fn ($row) => route('admin.partner_products.edit', $row->id).'?return_to=clinic_view&clinic_id='.request()->route('id'),
             ]);
         }
         if (bouncer()->hasPermission('partner_products.delete')) {

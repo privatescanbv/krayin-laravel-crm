@@ -5,6 +5,12 @@
 
     <x-admin::form :action="route('admin.partner_products.update', $partner_products->id)" method="POST">
         @method('PUT')
+
+        <!-- Hidden fields for return navigation -->
+        @if (request('return_to') === 'clinic_view' && request('clinic_id'))
+            <input type="hidden" name="return_to" value="clinic_view">
+            <input type="hidden" name="clinic_id" value="{{ request('clinic_id') }}">
+        @endif
         <div class="flex flex-col gap-4">
             <div class="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
                 <div class="flex flex-col gap-2">

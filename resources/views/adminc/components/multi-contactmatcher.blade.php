@@ -40,124 +40,127 @@
 @verbatim
     <script type="text/x-template" id="v-multi-contact-matcher-template">
         <div>
-            <div class="mb-4">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="font-semibold text-sm">Gekoppelde personen ({{ selectedPersons.length }})</span>
-                    <button
-                        @click="clearAllPersons"
-                        v-if="selectedPersons.length > 0"
-                        class="text-red-600 hover:text-red-800 text-xs"
-                    >
-                        Alles verwijderen
-                    </button>
-                </div>
+            <div class="flex gap-4 max-lg:flex-wrap">
+                <!-- Left: selected persons and actions -->
+                <div class="flex-1 min-w-[320px]">
+                    <div class="mb-2 flex items-center justify-between">
+                        <div class="font-semibold text-sm">Gekoppelde personen ({{ selectedPersons.length }})</div>
+                        <button
+                            @click="clearAllPersons"
+                            v-if="selectedPersons.length > 0"
+                            class="text-red-600 hover:text-red-800 text-xs"
+                        >
+                            Alles verwijderen
+                        </button>
+                    </div>
 
-                <div v-if="selectedPersons.length > 0" class="space-y-2">
-                    <div
-                        v-for="(person, index) in selectedPersons"
-                        :key="person.id"
-                        class="p-2 border rounded bg-green-50 border-green-200"
-                    >
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2">
-                                    <a :href="'/admin/contacts/persons/view/' + person.id"
-                                       class="text-blue-600 hover:text-blue-800 underline font-medium"
-                                       target="_blank">
-                                        {{ person.name }}
-                                    </a>
+                    <div v-if="selectedPersons.length > 0" class="space-y-2">
+                        <div
+                            v-for="(person, index) in selectedPersons"
+                            :key="person.id"
+                            class="p-2 border rounded bg-green-50 border-green-200"
+                        >
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2">
+                                        <a :href="'/admin/contacts/persons/view/' + person.id"
+                                           class="text-blue-600 hover:text-blue-800 underline font-medium"
+                                           target="_blank">
+                                            {{ person.name }}
+                                        </a>
 
-                                    <a :href="'/admin/leads/sync-lead-to-person/' + lead.id + '/' + person.id"
-                                       class="text-green-600 hover:text-green-800"
-                                       target="_blank"
-                                       title="Gegevens overnemen (lead → person)">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                                        </svg>
-                                    </a>
-                                </div>
-                                <div class="flex items-center gap-2 mt-1 text-sm text-gray-600">
-                                    <span v-if="person.emails && person.emails.length">{{ person.emails[0].value }}</span>
-                                    <span v-if="person.phones && person.phones.length">{{ person.phones[0].value }}</span>
+                                        <a :href="'/admin/leads/sync-lead-to-person/' + lead.id + '/' + person.id"
+                                           class="text-green-600 hover:text-green-800"
+                                           target="_blank"
+                                           title="Gegevens overnemen (lead → person)">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                            </svg>
+                                        </a>
+                                    </div>
+                                    <div class="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                                        <span v-if="person.emails && person.emails.length">{{ person.emails[0].value }}</span>
+                                        <span v-if="person.phones && person.phones.length">{{ person.phones[0].value }}</span>
 
-                                    <!-- Match score indicator -->
-                                    <div v-if="person.match_score_percentage !== null" class="flex items-center gap-1">
-                                        <span class="text-xs text-gray-500">Match:</span>
-                                        <div class="flex items-center gap-1">
-                                            <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                                                <div
-                                                    class="h-full rounded-full transition-all duration-300"
-                                                    :class="{
-                                                        'bg-red-500': person.match_score_percentage < 50,
-                                                        'bg-yellow-500': person.match_score_percentage >= 50 && person.match_score_percentage < 80,
-                                                        'bg-green-500': person.match_score_percentage >= 80
-                                                    }"
-                                                    :style="{ width: (person.match_score_percentage || 0) + '%' }"
-                                                ></div>
+                                        <div v-if="person.match_score_percentage !== null" class="flex items-center gap-1">
+                                            <span class="text-xs text-gray-500">Match:</span>
+                                            <div class="flex items-center gap-1">
+                                                <div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                                    <div
+                                                        class="h-full rounded-full transition-all duration-300"
+                                                        :class="{
+                                                            'bg-red-500': person.match_score_percentage < 50,
+                                                            'bg-yellow-500': person.match_score_percentage >= 50 && person.match_score_percentage < 80,
+                                                            'bg-green-500': person.match_score_percentage >= 80
+                                                        }"
+                                                        :style="{ width: (person.match_score_percentage || 0) + '%' }"
+                                                    ></div>
+                                                </div>
+                                                <span class="text-xs font-medium"
+                                                      :class="{
+                                                          'text-red-600': person.match_score_percentage < 50,
+                                                          'text-yellow-600': person.match_score_percentage >= 50 && person.match_score_percentage < 80,
+                                                          'text-green-600': person.match_score_percentage >= 80
+                                                      }">
+                                                    {{ Math.round(person.match_score_percentage || 0) }}%
+                                                </span>
                                             </div>
-                                            <span class="text-xs font-medium"
-                                                  :class="{
-                                                      'text-red-600': person.match_score_percentage < 50,
-                                                      'text-yellow-600': person.match_score_percentage >= 50 && person.match_score_percentage < 80,
-                                                      'text-green-600': person.match_score_percentage >= 80
-                                                  }">
-                                                {{ Math.round(person.match_score_percentage || 0) }}%
-                                            </span>
                                         </div>
                                     </div>
                                 </div>
+                                <button
+                                    @click="removePerson(index)"
+                                    class="text-red-600 hover:text-red-800 p-1"
+                                    title="Verwijder persoon"
+                                >
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="selectedPersons.length === 0" class="p-3 border rounded bg-gray-50 border-gray-200 text-center text-gray-500">
+                        Geen personen gekoppeld
+                    </div>
+
+                    <div v-if="lead && lead.id && (lead.first_name || lead.last_name || lead.emails || lead.phones) && selectedPersons.length === 0" class="mt-4 p-3 border rounded bg-yellow-50 border-yellow-200">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="font-semibold text-sm text-yellow-800">Contact aanmaken van lead gegevens</div>
+                                <div class="text-sm text-yellow-700">
+                                    <span v-if="lead.first_name || lead.last_name">
+                                        {{ (lead.first_name || '') + ' ' + (lead.last_name || '') }}
+                                    </span>
+                                    <span v-if="lead.emails && lead.emails.length"> ({{ lead.emails[0].value }})</span>
+                                    <span v-if="lead.phones && lead.phones.length"> - {{ lead.phones[0].value }}</span>
+                                </div>
                             </div>
                             <button
-                                @click="removePerson(index)"
-                                class="text-red-600 hover:text-red-800 p-1"
-                                title="Verwijder persoon"
+                                @click="createPersonFromLead"
+                                :disabled="isCreatingPerson"
+                                class="text-yellow-600 hover:text-yellow-800 bg-yellow-100 hover:bg-yellow-200 px-3 py-1 rounded text-sm"
+                                :class="{ 'opacity-50 cursor-not-allowed': isCreatingPerson }"
                             >
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
+                                {{ isCreatingPerson ? 'Aanmaken...' : 'Contact aanmaken' }}
                             </button>
                         </div>
                     </div>
                 </div>
 
-                                 <div v-if="selectedPersons.length === 0" class="p-3 border rounded bg-gray-50 border-gray-200 text-center text-gray-500">
-                     Geen personen gekoppeld
-                 </div>
-             </div>
-
-             <!-- Contact aanmaken van lead gegevens -->
-             <div v-if="lead && lead.id && (lead.first_name || lead.last_name || lead.emails || lead.phones)" class="mb-4 p-3 border rounded bg-yellow-50 border-yellow-200">
-                 <div class="flex items-center justify-between">
-                     <div>
-                         <div class="font-semibold text-sm text-yellow-800">Contact aanmaken van lead gegevens</div>
-                         <div class="text-sm text-yellow-700">
-                             <span v-if="lead.first_name || lead.last_name">
-                                 {{ (lead.first_name || '') + ' ' + (lead.last_name || '') }}
-                             </span>
-                             <span v-if="lead.emails && lead.emails.length"> ({{ lead.emails[0].value }})</span>
-                             <span v-if="lead.phones && lead.phones.length"> - {{ lead.phones[0].value }}</span>
-                         </div>
-                     </div>
-                     <button
-                         @click="createPersonFromLead"
-                         :disabled="isCreatingPerson"
-                         class="text-yellow-600 hover:text-yellow-800 bg-yellow-100 hover:bg-yellow-200 px-3 py-1 rounded text-sm"
-                         :class="{ 'opacity-50 cursor-not-allowed': isCreatingPerson }"
-                     >
-                         {{ isCreatingPerson ? 'Aanmaken...' : 'Contact aanmaken' }}
-                     </button>
-                 </div>
-             </div>
-
-            <!-- Zoeken naar nieuwe personen -->
-            <v-person-search
-                :search="search"
-                :suggestions="suggestions"
-                :is-searching="isSearching"
-                @update:search="(val) => { search = val; onSearch(); }"
-                @select="addPerson"
-                @create-new="createNewPerson"
-            ></v-person-search>
+                <!-- Right: search and suggestions -->
+                <div class="flex-1 min-w-[320px]">
+                    <v-person-search
+                        :search="search"
+                        :suggestions="suggestions"
+                        :is-searching="isSearching"
+                        @update:search="(val) => { search = val; onSearch(); }"
+                        @select="addPerson"
+                        @create-new="createNewPerson"
+                    ></v-person-search>
+                </div>
+            </div>
 
             <!-- Hidden form fields -->
             <input

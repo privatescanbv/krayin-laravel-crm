@@ -278,16 +278,18 @@
                                         @include('admin::leads.common.personal-fields', ['entity' => $__entityPrefill, 'bindModel' => 'formData'])
                                     </div>
 
-                                    <!-- Contact Person Selection -->
+                                    <!-- Contact Person Selection (aligned with edit view) -->
                                     <div class="mt-4">
-                                        <p class="text-base font-semibold dark:text-white mb-3">Contactpersoon</p>
-                                        <x-admin::lookup
-                                            src="{{ route('admin.contacts.persons.search') }}"
+                                        @include('adminc.components.contact-person-selector')
+                                        <v-contact-person-selector
                                             name="contact_person_id"
-                                            :label="'Contactpersoon'"
+                                            label="Contactpersoon"
                                             placeholder="Selecteer contactpersoon..."
+                                            :current-value="formData.contact_person_id || null"
+                                            :current-label="formData.contact_person_label || ''"
                                             :can-add-new="true"
-                                            :value="old('contact_person_id')"
+                                            @change="onContactPersonChange"
+                                            @update:value="val => { formData.contact_person_id = val; }"
                                         />
                                         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                             Selecteer de contactpersoon voor deze lead. Deze persoon kan ook voorkomen in de gekoppelde personen.
@@ -572,6 +574,9 @@
                             married_name: this.initialLeadPerson?.married_name || this.userDefaults.married_name || '',
                             email: this.userDefaults.email || '',
                             phone: this.userDefaults.phone || '',
+                                    // Contact person selector binding
+                                    contact_person_id: null,
+                                    contact_person_label: '',
                         },
                         hasSelectedPersons: false,
                         joinedPersonNames: ''
@@ -606,6 +611,15 @@
                 },
 
                 methods: {
+                    onContactPersonChange(selectedPerson) {
+                        if (selectedPerson) {
+                            this.formData.contact_person_id = selectedPerson.id;
+                            this.formData.contact_person_label = selectedPerson.name;
+                        } else {
+                            this.formData.contact_person_id = null;
+                            this.formData.contact_person_label = '';
+                        }
+                    },
                     onLookupSelected(index, selectedPerson) {
                         this.updatePerson(index, selectedPerson);
                         // After selecting a person, update lead fields and contacts

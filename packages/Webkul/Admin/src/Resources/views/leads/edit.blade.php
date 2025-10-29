@@ -149,40 +149,32 @@
                         class="flex flex-col gap-4"
                         id="contact-person-selection"
                     >
-                        <div class="flex flex-col gap-1">
-                            <p class="text-base font-semibold dark:text-white">
-                                Contactpersoon
-                            </p>
-                            <p class="text-gray-600 dark:text-gray-300">
-                                Selecteer de contactpersoon voor deze lead
-                            </p>
-                        </div>
 
                         <div class="w-1/2 max-md:w-full">
-                            <v-entity-selector
+                            @include('adminc.components.contact-person-selector')
+                            <v-contact-person-selector
                                 name="contact_person_id"
                                 label="Contactpersoon"
                                 placeholder="Selecteer .."
-                                search-route="{{ route('admin.contacts.persons.search') }}"
-                                :items="$lead->contact_person_id ? [['id' => $lead->contact_person_id, 'name' => $lead->contactPerson ? $lead->contactPerson->name : '']] : []"
+                                :current-value='@json($lead->contact_person_id)'
+                                :current-label='@json($lead->contactPerson ? $lead->contactPerson->name : null)'
                                 :can-add-new="true"
-                                :multiple="false"
                             />
                         </div>
                     </div>
 
-                    <!-- Contact Persons -->
+                    <!-- Persons -->
                     <div
                         class="flex flex-col gap-4"
                         id="contact-person"
                     >
                         <div class="flex flex-col gap-1">
                             <p class="text-base font-semibold dark:text-white">
-                                Contactpersonen
+                                Personen
                             </p>
 
                             <p class="text-gray-600 dark:text-gray-300">
-                                Koppel een of meerdere contactpersonen aan deze lead
+                                Koppel een of meerdere personen aan deze lead of maak een nieuwe persoon aan op basis van deze lead
                             </p>
                         </div>
 

@@ -239,9 +239,11 @@
        @lang('admin::app.partner_products.index.create.related_products')
     </x-admin::form.control-group.label>
 
+    @include('adminc.components.entity-selector')
+
     <v-entity-selector
         name="related_products"
-        :placeholder="trans('admin::app.partner_products.index.create.search_related_products')"
+        placeholder="{{ trans('admin::app.partner_products.index.create.search_related_products') }}"
         search-route="{{ route('admin.partner_products.search') }}"
         :can-add-new="true"
         :multiple="true"

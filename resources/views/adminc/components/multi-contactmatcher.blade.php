@@ -2,9 +2,6 @@
 
 <div class="panel bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
     <div class="panel-header mb-3">
-        <h3 class="text-lg font-semibold text-blue-800">Personen Koppelen</h3>
-        <p class="text-sm text-blue-600">Zoek en koppel meerdere bestaande personen of maak nieuwe aan</p>
-
         <div class="mt-2 text-xs text-blue-500">
             <div class="flex items-center gap-1">
                 <strong>Matching criteria:</strong>
@@ -37,6 +34,7 @@
 {!! view_render_event('admin.leads.multi_contactmatcher.after') !!}
 
 @include('adminc.components.person_search')
+@include('adminc.components.person-search-helpers')
 
 @pushOnce('scripts')
 @verbatim
@@ -216,46 +214,20 @@
                 },
 
                 async fetchSuggestions(query) {
-                     this.isSearching = true;
-                     try {
-                         let params = {};
+                    this.isSearching = true;
+                    try {
+                        const results = await (window.adminc && window.adminc.fetchPersons
+                            ? window.adminc.fetchPersons(query, { leadId: this.lead && this.lead.id })
+                            : []);
 
-                         // Detect likely phone input and use backend's phone: convenience token
-                         const digitsOnly = String(query || '').replace(/\D+/g, '');
-                         if (digitsOnly.length >= 6) {
-                             params.search = `phone:${digitsOnly};`;
-                         } else {
-                             params.query = query;
-                         }
-
-                         // Add lead_id for match score calculation if available
-                         if (this.lead && this.lead.id) {
-                             params.lead_id = this.lead.id;
-                         }
-
-                         const response = await axios.get('/admin/contacts/persons/search', {
-                             params: params
-                         });
-
-                         // Filter out already selected persons from suggestions
-                         const allSuggestions = response.data.data || [];
-                         this.suggestions = allSuggestions.filter(person =>
-                             !this.isPersonSelected(person.id)
-                         );
-
-
-                     } catch (e) {
-                         console.error('Zoekopdracht mislukt:', e);
-                         console.log('Error details:', {
-                             'status': e.response?.status,
-                             'statusText': e.response?.statusText,
-                             'data': e.response?.data
-                         });
-                         this.suggestions = [];
-                     } finally {
-                         this.isSearching = false;
-                     }
-                 },
+                        this.suggestions = (results || []).filter(person => !this.isPersonSelected(person.id));
+                    } catch (e) {
+                        console.error('Zoekopdracht mislukt:', e);
+                        this.suggestions = [];
+                    } finally {
+                        this.isSearching = false;
+                    }
+                },
 
                 addPerson(person) {
                     if (!this.isPersonSelected(person.id)) {

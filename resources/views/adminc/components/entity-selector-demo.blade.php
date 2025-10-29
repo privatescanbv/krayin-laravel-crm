@@ -30,13 +30,15 @@
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4">
                 <h3 class="mb-4 text-lg font-semibold text-gray-800 dark:text-gray-200">Contacts/Persons</h3>
 
-                <v-entity-selector
-                    name="contacts"
-                    label="Contacts"
-                    placeholder="Selecteer contacten..."
-                    search-route="/admin/contacts/persons/search"
-                    :multiple="true"
-                    :items="[]"
+                @include('adminc.components.contact-person-selector')
+
+                <v-contact-person-selector
+                    name="contact_person_id_demo"
+                    label="Contactpersoon"
+                    placeholder="Selecteer contactpersoon..."
+                    :current-value="null"
+                    :current-label="null"
+                    :can-add-new="true"
                 />
             </div>
 

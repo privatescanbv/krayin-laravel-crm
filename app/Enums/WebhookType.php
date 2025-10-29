@@ -13,7 +13,7 @@ enum WebhookType: string
         return match ($this) {
             self::LEAD_PIPELINE_STAGE_CHANGE       => 'lead pipeline stage change',
             self::LEAD_ACTIVITY_IS_DONE            => 'Activity is done',
-            self::SALES_LEAD_PIPELINE_STAGE_CHANGE => 'sales lead pipeline stage change',
+            self::SALES_LEAD_PIPELINE_STAGE_CHANGE => 'sales pipeline stage change',
         };
     }
 }

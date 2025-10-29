@@ -680,16 +680,16 @@ Breadcrumbs::for('sales-leads', function (BreadcrumbTrail $trail) {
 // Dashboard > Sales Leads > Create
 Breadcrumbs::for('sales-leads.create', function (BreadcrumbTrail $trail) {
     $trail->parent('sales-leads');
-    $trail->push('Create Sales Lead', route('admin.sales-leads.create'));
+    $trail->push('Create Sales', route('admin.sales-leads.create'));
 });
 
 // Dashboard > Sales Leads > Edit
 Breadcrumbs::for('sales-leads.edit', function (BreadcrumbTrail $trail, $entity) {
     $trail->parent('sales-leads');
-    $trail->push('Edit Sales Lead', route('admin.sales-leads.edit', $entity->id));
+    $trail->push('Edit sales', route('admin.sales-leads.edit', $entity->id));
 });
 
-// Dashboard > Sales Leads > View
+// Dashboard > sales > View
 Breadcrumbs::for('sales-leads.view', function (BreadcrumbTrail $trail, $entity) {
     $trail->parent('sales-leads');
     $trail->push('#'.$entity->id, route('admin.sales-leads.view', $entity->id));

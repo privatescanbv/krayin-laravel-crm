@@ -140,7 +140,7 @@ class SalesLeadRepository
         try {
             $salesLead->copyFromLead($lead);
         } catch (Throwable $e) {
-            Log::error('Failed to copy persons from lead to sales lead', [
+            Log::error('Failed to copy persons from lead to sales', [
                 'lead_id'       => $lead->id,
                 'sales_lead_id' => $salesLead->id,
                 'error'         => $e->getMessage(),

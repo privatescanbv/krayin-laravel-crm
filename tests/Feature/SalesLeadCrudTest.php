@@ -110,7 +110,7 @@ test('can update workflow lead (ajax json)', function () {
     ]);
 
     $payload = [
-        'name'        => 'Updated Sales Lead',
+        'name'        => 'Updated sales',
         'description' => 'Now updated',
         '_method'     => 'put',
     ];
@@ -118,11 +118,11 @@ test('can update workflow lead (ajax json)', function () {
     $response = $this->withHeaders(['HTTP_X-Requested-With' => 'XMLHttpRequest'])
         ->postJson(route('admin.sales-leads.update', ['id' => $salesLead->id]), $payload);
 
-    $response->assertOk()->assertJsonPath('message', 'Sales lead updated successfully.');
+    $response->assertOk()->assertJsonPath('message', 'Sales updated successfully.');
 
     $this->assertDatabaseHas('salesleads', [
         'id'   => $salesLead->id,
-        'name' => 'Updated Sales Lead',
+        'name' => 'Updated sales',
     ]);
 });
 
@@ -143,13 +143,13 @@ test('can delete workflow lead', function () {
     ]);
 });
 
-test('can create sales lead with person relationships', function () {
+test('can create Sales with person relationships', function () {
     $lead = Lead::factory()->create();
     $person1 = Person::factory()->create();
     $person2 = Person::factory()->create();
 
     $payload = [
-        'name'              => 'Sales Lead with Persons',
+        'name'              => 'Sales with Persons',
         'description'       => 'Created with person relationships',
         'pipeline_stage_id' => test()->stage->id,
         'lead_id'           => $lead->id,
@@ -159,7 +159,7 @@ test('can create sales lead with person relationships', function () {
     $response = $this->postJson(route('admin.sales-leads.store'), $payload);
     $response->assertStatus(302);
 
-    $salesLead = SalesLead::where('name', 'Sales Lead with Persons')->first();
+    $salesLead = SalesLead::where('name', 'Sales with Persons')->first();
     expect($salesLead)->not->toBeNull();
     expect($salesLead->persons()->count())->toBe(2);
     expect($salesLead->persons->pluck('id')->toArray())->toContain($person1->id, $person2->id);
@@ -175,7 +175,7 @@ test('can create sales lead with person relationships', function () {
     ]);
 });
 
-test('can copy persons from lead when creating sales lead', function () {
+test('can copy persons from lead when creating Sales', function () {
     $lead = Lead::factory()->create();
     $person1 = Person::factory()->create();
     $person2 = Person::factory()->create();
@@ -184,7 +184,7 @@ test('can copy persons from lead when creating sales lead', function () {
     $lead->attachPersons([$person1->id, $person2->id]);
 
     $payload = [
-        'name'              => 'Sales Lead with Copied Persons',
+        'name'              => 'Sales with Copied Persons',
         'description'       => 'Created with persons copied from lead',
         'pipeline_stage_id' => test()->stage->id,
         'lead_id'           => $lead->id,
@@ -193,13 +193,13 @@ test('can copy persons from lead when creating sales lead', function () {
     $response = $this->postJson(route('admin.sales-leads.store'), $payload);
     $response->assertStatus(302);
 
-    $salesLead = SalesLead::where('name', 'Sales Lead with Copied Persons')->first();
+    $salesLead = SalesLead::where('name', 'Sales with Copied Persons')->first();
     expect($salesLead)->not->toBeNull();
     expect($salesLead->persons()->count())->toBe(2);
     expect($salesLead->persons->pluck('id')->toArray())->toContain($person1->id, $person2->id);
 });
 
-test('can update sales lead person relationships', function () {
+test('can update Sales person relationships', function () {
     $lead = Lead::factory()->create();
     $person1 = Person::factory()->create();
     $person2 = Person::factory()->create();
@@ -215,7 +215,7 @@ test('can update sales lead person relationships', function () {
     $salesLead->attachPersons([$person1->id]);
 
     $payload = [
-        'name'        => 'Updated Sales Lead',
+        'name'        => 'Updated Sales',
         'description' => 'Updated with new persons',
         'person_ids'  => [$person2->id, $person3->id],
         '_method'     => 'put',
@@ -224,9 +224,9 @@ test('can update sales lead person relationships', function () {
     $response = $this->withHeaders(['HTTP_X-Requested-With' => 'XMLHttpRequest'])
         ->postJson(route('admin.sales-leads.update', ['id' => $salesLead->id]), $payload);
 
-    $response->assertOk()->assertJsonPath('message', 'Sales lead updated successfully.');
+    $response->assertOk()->assertJsonPath('message', 'Sales updated successfully.');
 
-    // Refresh the sales lead
+    // Refresh the Sales
     $salesLead->refresh();
     expect($salesLead->persons()->count())->toBe(2);
     expect($salesLead->persons->pluck('id')->toArray())->toContain($person2->id, $person3->id);
@@ -247,7 +247,7 @@ test('can update sales lead person relationships', function () {
     ]);
 });
 
-test('can remove all person relationships from sales lead', function () {
+test('can remove all person relationships from Sales', function () {
     $lead = Lead::factory()->create();
     $person1 = Person::factory()->create();
     $person2 = Person::factory()->create();
@@ -262,7 +262,7 @@ test('can remove all person relationships from sales lead', function () {
     $salesLead->attachPersons([$person1->id, $person2->id]);
 
     $payload = [
-        'name'        => 'Updated Sales Lead',
+        'name'        => 'Updated Sales',
         'description' => 'Removed all persons',
         'person_ids'  => [],
         '_method'     => 'put',
@@ -271,9 +271,9 @@ test('can remove all person relationships from sales lead', function () {
     $response = $this->withHeaders(['HTTP_X-Requested-With' => 'XMLHttpRequest'])
         ->postJson(route('admin.sales-leads.update', ['id' => $salesLead->id]), $payload);
 
-    $response->assertOk()->assertJsonPath('message', 'Sales lead updated successfully.');
+    $response->assertOk()->assertJsonPath('message', 'Sales updated successfully.');
 
-    // Refresh the sales lead
+    // Refresh the Sales
     $salesLead->refresh();
     expect($salesLead->persons()->count())->toBe(0);
 

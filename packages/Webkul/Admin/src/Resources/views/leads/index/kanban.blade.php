@@ -812,7 +812,7 @@
                         const openCount = Number(lead.open_activities_count || 0);
 
                         if (openCount > 0) {
-                            const message = await window.buildOpenActivitiesConfirmMessage(this.$axios, lead.id, openCount);
+                            const message = await window.buildOpenActivitiesConfirmMessage(this.$axios, lead.id, openCount,'lead');
                             const confirmClose = await new Promise((resolve) => {
                                 resolve(window.confirm(message));
                             });

@@ -9,6 +9,7 @@ use App\Enums\PipelineType;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\SalesLead;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Enum;
@@ -72,22 +73,21 @@ class SalesLeadController extends Controller
             return $dataGrid->toJson();
         }
 
-        // For kanban view, return sales leads grouped by pipeline stages
-        $pipelineRepository = app('Webkul\Lead\Repositories\PipelineRepository');
+        // For kanban view, return Sales grouped by pipeline stages
 
         // Get selected pipeline or default workflow pipeline
         if ($request->filled('pipeline_id')) {
-            $pipeline = $pipelineRepository->find($request->pipeline_id);
+            $pipeline = $this->pipelineRepository->find($request->pipeline_id);
         } else {
             // Fallback to last selected pipeline from session
             $selectedPipelineId = session('workflow_pipeline_id');
             $pipeline = $selectedPipelineId
-                ? $pipelineRepository->find($selectedPipelineId)
-                : $pipelineRepository->getDefaultPipelineByType(PipelineType::BACKOFFICE);
+                ? $this->pipelineRepository->find($selectedPipelineId)
+                : $this->pipelineRepository->getDefaultPipelineByType(PipelineType::BACKOFFICE);
         }
 
         if (! $pipeline) {
-            Log::error('No default pipeline found for sales leads.');
+            Log::error('No default pipeline found for Sales.');
 
             return response()->json([
                 'error' => 'No workflow pipeline found for this request.',
@@ -209,7 +209,7 @@ class SalesLeadController extends Controller
         }
 
         return redirect()->route('admin.sales-leads.index')
-            ->with('success', 'Sales lead created successfully.');
+            ->with('success', 'Sales created successfully.');
     }
 
     public function edit($id)
@@ -248,18 +248,18 @@ class SalesLeadController extends Controller
         // If this is an AJAX request (like from kanban drag & drop), return JSON
         if ($request->ajax()) {
             return response()->json([
-                'message'       => 'Sales lead updated successfully.',
+                'message'       => 'Sales updated successfully.',
                 'sales_lead'    => $salesLead,
             ]);
         }
 
         return redirect()->route('admin.sales-leads.view', $id)
-            ->with('success', 'Sales lead updated successfully.');
+            ->with('success', 'Sales updated successfully.');
     }
 
     public function view($id)
     {
-        // First load the sales lead to check if it has a lead_id
+        // First load the Sales to check if it has a lead_id
         $salesLead = SalesLead::with(['pipelineStage.pipeline.stages', 'user'])->findOrFail($id);
 
         // If there's no related lead_id, return 404
@@ -271,7 +271,7 @@ class SalesLeadController extends Controller
             ]);
 
             return response()->view('errors.404', [
-                'message' => 'Deze sales lead heeft geen gekoppelde lead. Sales Lead: '.$salesLead->name,
+                'message' => 'Deze Sales heeft geen gekoppelde lead. Sales: '.$salesLead->name,
             ], 404);
         }
         $lead = Lead::findOrFail($salesLead->lead_id);
@@ -317,7 +317,7 @@ class SalesLeadController extends Controller
             'pipeline_stage_id' => request('lead_pipeline_stage_id'),
         ]);
 
-        // Optionally close open activities for this sales lead when requested (parity with lead stage update)
+        // Optionally close open activities for this Sales when requested (parity with lead stage update)
         if (request()->boolean('close_open_activities')) {
             Activity::where('sales_lead_id', $salesLead->id)
                 ->where('is_done', 0)
@@ -325,12 +325,12 @@ class SalesLeadController extends Controller
         }
 
         return response()->json([
-            'message' => 'Sales lead stage updated successfully.',
+            'message' => 'Sales stage updated successfully.',
         ]);
     }
 
     /**
-     * Mark sales lead as lost with reason and closed_at; do not touch linked lead.
+     * Mark Sales as lost with reason and closed_at; do not touch linked lead.
      */
     public function lost($id)
     {
@@ -341,11 +341,11 @@ class SalesLeadController extends Controller
 
         $salesLead = SalesLead::findOrFail($id);
 
-        // Find the lost stage for this sales lead's pipeline (relations required)
+        // Find the lost stage for this Sales's pipeline (relations required)
         $pipelineStage = $salesLead->pipelineStage;
         if (! $pipelineStage) {
             return response()->json([
-                'message' => 'Sales lead heeft geen pipeline stage.',
+                'message' => 'Sales heeft geen pipeline stage.',
             ], 422);
         }
 
@@ -377,13 +377,13 @@ class SalesLeadController extends Controller
         $this->completeAllOpenActivitiesForLead($salesLead->id);
 
         return response()->json([
-            'message' => 'Sales lead is afgevoerd.',
+            'message' => 'Sales is afgevoerd.',
         ]);
     }
 
     public function activities($id)
     {
-        // Get activities related to this sales lead (not paginated, same as lead activities)
+        // Get activities related to this Sales (not paginated, same as lead activities)
         $query = Activity::where('sales_lead_id', $id)->with('emails');
 
         // Optional filter for efficiency: is_done=0 (open) or 1 (done)
@@ -394,7 +394,7 @@ class SalesLeadController extends Controller
 
         $activities = $query->get();
 
-        // Also include standalone emails linked directly to this sales lead
+        // Also include standalone emails linked directly to this Sales
         $emails = EmailModel::where('sales_lead_id', $id)
             ->with('attachments')
             ->get();
@@ -481,11 +481,11 @@ class SalesLeadController extends Controller
         $salesLead->delete();
 
         return redirect()->route('admin.sales-leads.index')
-            ->with('success', 'Sales lead deleted successfully.');
+            ->with('success', 'Sales deleted successfully.');
     }
 
     /**
-     * Search sales leads.
+     * Search Saless.
      */
     public function search()
     {
@@ -573,7 +573,7 @@ class SalesLeadController extends Controller
                 'filterable'            => true,
                 'filterable_type'       => 'searchable_dropdown',
                 'filterable_options'    => [
-                    'repository' => \App\Models\User::class,
+                    'repository' => User::class,
                     'column'     => [
                         'label' => 'name',
                         'value' => 'id',
@@ -620,7 +620,7 @@ class SalesLeadController extends Controller
     }
 
     /**
-     * Prepare sales lead data for creation/update.
+     * Prepare Sales data for creation/update.
      *
      * Handles contact_person_id logic:
      * 1. If contact_person_id_display has a value, use it for contact_person_id

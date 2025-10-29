@@ -1,5 +1,5 @@
 {
-  "name": "Sales Lead",
+  "name": "Sales",
   "nodes": [
     {
       "parameters": {
@@ -415,7 +415,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "899abbfc-42b1-41d5-ac3a-3c2b55fa11db",
+  "versionId": "828bab1d-15c0-4832-9a51-8555b70337f2",
   "meta": {
     "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },

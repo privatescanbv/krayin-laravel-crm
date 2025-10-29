@@ -1008,7 +1008,7 @@
                 <div class="relative" ref="lookup">
                     <div class="relative inline-block w-full" @click="toggle">
                         <div class="w-full cursor-pointer rounded-md border border-gray-300 px-3 py-2 text-gray-800 dark:border-gray-800 dark:text-gray-300">
-                            @{{ selectedItem.name ?? 'Zoek een sales lead'}}
+                            @{{ selectedItem.name ?? 'Zoek een sales'}}
                         </div>
                         <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                             <i class="fas fa-chevron-down text-gray-400"></i>
@@ -1401,13 +1401,13 @@
                     </template>
                 @endif
 
-                <!-- Sales Lead Lookup -->
+                <!-- Sales Lookup -->
                 @if (bouncer()->hasPermission('leads.view'))
                     <label class="font-semibold text-gray-800 dark:text-gray-300">
-                        @{{ email?.sales_lead_id ? "Gekoppelde Sales Lead" : "Koppel aan Sales Lead" }}
+                        @{{ email?.sales_lead_id ? "Gekoppelde sales" : "Koppel aan sales" }}
                     </label>
 
-                    <!-- When a sales lead is already linked -->
+                    <!-- When a sales is already linked -->
                     <template v-if="email?.sales_lead_id && email?.sales_lead">
                         <div class="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
                             <div class="flex items-center gap-3">
@@ -1428,7 +1428,7 @@
                                     :href="'{{ route('admin.sales-leads.view', ':id') }}'.replace(':id', email.sales_lead_id)"
                                     target="_blank"
                                     class="flex h-8 w-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-                                    title="Sales Lead bekijken"
+                                    title="sales bekijken"
                                 >
                                     <span class="icon-right-arrow text-sm"></span>
                                 </a>
@@ -1442,7 +1442,7 @@
                         </div>
                     </template>
 
-                    <!-- Otherwise, show sales lead search -->
+                    <!-- Otherwise, show sales search -->
                     <template v-else>
                         <v-sales-lead-lookup
                             @link-sales-lead="linkSalesLead"
@@ -2542,7 +2542,7 @@
             });
         </script>
 
-        <!-- Sales Lead Lookup Component -->
+        <!-- sales Lookup Component -->
         <script type="module">
             app.component('v-sales-lead-lookup', {
                 template: '#v-sales-lead-lookup-template',

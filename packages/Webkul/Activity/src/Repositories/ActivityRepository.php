@@ -165,7 +165,7 @@ class ActivityRepository extends Repository
     }
 
     /**
-     * Create a system activity on a lead that links to the created sales lead view.
+     * Create a system activity on a lead that links to the created sales view.
      */
     public function createSystemActivityForLeadCreation(Lead $lead, SalesLead $salesLead): ?Activity
     {
@@ -173,7 +173,7 @@ class ActivityRepository extends Repository
             $link = route('admin.sales-leads.view', $salesLead->id);
             $activity = $this->create([
                 'type' => ActivityType::SYSTEM,
-                'title' => 'Sales lead aangemaakt',
+                'title' => 'Sales aangemaakt',
                 'comment' => null,
                 'is_done' => 1,
                 'user_id' => auth()->check() ? auth()->id() : null,
@@ -182,7 +182,7 @@ class ActivityRepository extends Repository
                     'old' => ['label' => 'Leeg'],
                     'new' => ['label' => $salesLead->name],
                     'link' => $link,
-                    'link_label' => 'Bekijk sales lead',
+                    'link_label' => 'Bekijk sales',
                     'sales_lead' => [
                         'id' => $salesLead->id,
                         'name' => $salesLead->name,
@@ -192,7 +192,7 @@ class ActivityRepository extends Repository
 
             return $activity;
         } catch (Throwable $e) {
-            Log::error('Failed to create system activity for sales lead creation', [
+            Log::error('Failed to create system activity for sales creation', [
                 'lead_id' => $lead->id,
                 'sales_lead_id' => $salesLead->id,
                 'error' => $e->getMessage(),
@@ -202,14 +202,14 @@ class ActivityRepository extends Repository
     }
 
     /**
-     * Create a system activity on a lead that links to the created sales lead view.
+     * Create a system activity on a lead that links to the created sales view.
      */
     public function createSystemActivityForSalesCreation(Lead $lead, SalesLead $salesLead): ?Activity
     {
         try {
             return $this->create([
                 'type' => ActivityType::SYSTEM,
-                'title' => 'Sales lead aangemaakt vanuit lead',
+                'title' => 'Sales aangemaakt vanuit lead',
                 'comment' => null,
                 'is_done' => 1,
                 'user_id' => auth()->check() ? auth()->id() : null,
@@ -226,7 +226,7 @@ class ActivityRepository extends Repository
                 ],
             ]);
         } catch (Throwable $e) {
-            Log::error('Failed to create system activity for sales lead creation in sales lead', [
+            Log::error('Failed to create system activity for sales creation', [
                 'lead_id' => $lead->id,
                 'sales_lead_id' => $salesLead->id,
                 'error' => $e->getMessage(),

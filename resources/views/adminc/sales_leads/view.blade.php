@@ -74,7 +74,7 @@
                         <div class="flex items-center gap-2">
                             <span class="icon-warning text-red-600"></span>
                             <span class="text-sm font-medium text-red-800 dark:text-red-200">
-                                Geen open activiteiten voor deze sales lead
+                                Geen open activiteiten voor deze sales
                             </span>
                         </div>
                     </div>

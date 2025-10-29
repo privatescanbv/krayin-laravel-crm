@@ -80,7 +80,7 @@
     },
     {
       "parameters": {
-        "content": "Deze flow maakt een taak aan, gekoppeld aan meegeven sales lead.\n\n## Parameters\n* task_title (*)\n* task_description (*)\n* task_type (call;meeting;task, default: task)",
+        "content": "Deze flow maakt een taak aan, gekoppeld aan meegeven sales.\n\n## Parameters\n* task_title (*)\n* task_description (*)\n* task_type (call;meeting;task, default: task)",
         "height": 320
       },
       "type": "n8n-nodes-base.stickyNote",
@@ -111,7 +111,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "c353c160-206b-48b0-bb86-d0f8b26d16f6",
+  "versionId": "0dd0ff86-4632-4a77-a2a8-d8080b99f704",
   "meta": {
     "instanceId": "45c47f08e808fd2653debf4d6f1fd9a260925f4fa8b93d3546f78a446a69f1ca"
   },

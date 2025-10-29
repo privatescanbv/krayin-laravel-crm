@@ -125,8 +125,8 @@ class LeadWonCreatesSalesLeadAndOrderTest extends TestCase
         $allActivities = Activity::where('lead_id', $lead->id)->get();
         $this->assertGreaterThan(0, $allActivities->count(), 'No activities found for lead. Found: '.$allActivities->toJson());
 
-        $this->assertNotNull($SalesActivity, 'System activity not created for sales lead creation. All activities: '.$allActivities->toJson());
-        $this->assertSame('Sales lead aangemaakt vanuit lead', $SalesActivity->title);
+        $this->assertNotNull($SalesActivity, 'System activity not created for ales creation. All activities: '.$allActivities->toJson());
+        $this->assertSame('Sales aangemaakt vanuit lead', $SalesActivity->title);
         $this->assertSame(1, (int) $SalesActivity->is_done);
         $this->assertIsArray($SalesActivity->additional);
         $this->assertSame(route('admin.leads.view', $lead->id), $SalesActivity->additional['link'] ?? null);

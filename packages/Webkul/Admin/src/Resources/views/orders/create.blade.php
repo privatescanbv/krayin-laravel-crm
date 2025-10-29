@@ -27,14 +27,14 @@
             </x-admin::form.control-group>
 
             <x-admin::form.control-group>
-                <x-admin::form.control-group.label class="required">Sales Lead</x-admin::form.control-group.label>
-                <x-admin::form.control-group.control 
-                    type="select" 
-                    name="sales_lead_id" 
+                <x-admin::form.control-group.label class="required">Sales</x-admin::form.control-group.label>
+                <x-admin::form.control-group.control
+                    type="select"
+                    name="sales_lead_id"
                     value="{{ $salesLeadId ?? old('sales_lead_id') ?? '' }}"
                     rules="required|integer"
                 >
-                    <option value="">Selecteer een Sales Lead</option>
+                    <option value="">Selecteer een sales</option>
                     @if(isset($salesLeads))
                         @foreach($salesLeads as $id => $name)
                             <option value="{{ $id }}" {{ ($salesLeadId ?? old('sales_lead_id')) == $id ? 'selected' : '' }}>
@@ -67,12 +67,12 @@
         <script type="module">
             document.addEventListener('DOMContentLoaded', function() {
                 const salesLeadSelect = document.querySelector('select[name="sales_lead_id"]');
-                
+
                 if (salesLeadSelect) {
                     salesLeadSelect.addEventListener('change', function() {
                         const salesLeadId = this.value;
                         if (salesLeadId) {
-                            // Load persons for the selected sales lead
+                            // Load persons for the selected Sales
                             fetch(`/admin/orders/persons/${salesLeadId}`)
                                 .then(response => response.json())
                                 .then(data => {

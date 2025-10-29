@@ -43,7 +43,7 @@ Route::middleware('api.key')->group(function () {
     // Workflow Leads API
     Route::prefix('sales-leads')->group(function () {
         Route::post('/', [SalesLeadController::class, 'store']);
-        // Sales lead activities
+        // Sales activities
         Route::get('{id}/activities', [SalesLeadController::class, 'activities']);
         Route::post('{id}/activities', [SalesLeadController::class, 'storeActivity']);
     });

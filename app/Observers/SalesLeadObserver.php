@@ -33,16 +33,6 @@ class SalesLeadObserver
     {
         // Send webhook if stage has changed and the stage is actually different
         if ($salesLead->isDirty('pipeline_stage_id') && $salesLead->pipeline_stage_id !== $salesLead->getOriginal('pipeline_stage_id') && $salesLead->pipelineStage) {
-
-            logger()->info('sales lead update', [
-                'sales_lead_id'      => $salesLead->id,
-                'original'           => $salesLead->getOriginal('pipeline_stage_id'),
-                'new'                => $salesLead->pipeline_stage_id,
-                'wasChanged'         => $salesLead->wasChanged('pipeline_stage_id'),
-                'changed_attributes' => $salesLead->getChanges(),
-                'dirty_attributes'   => $salesLead->getDirty(),
-            ]);
-
             $this->sendWebhook($salesLead, 'SalesLeadObserver@updated');
         }
     }

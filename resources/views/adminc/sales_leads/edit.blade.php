@@ -1,6 +1,6 @@
 <x-admin::layouts>
     <x-slot:title>
-        Edit Sales Lead
+        Edit sales
     </x-slot>
 
     <!-- Header -->
@@ -10,7 +10,7 @@
             <x-admin::breadcrumbs name="sales-leads.edit" :entity="$salesLead" />
 
             <div class="text-xl font-bold dark:text-white">
-                Edit Sales Lead
+                Edit sales
             </div>
         </div>
     </div>
@@ -74,7 +74,7 @@
                                 Personen
                             </p>
                             <p class="text-gray-600 dark:text-gray-300">
-                                Koppel een of meerdere personen aan deze sales lead
+                                Koppel een of meerdere personen aan deze sales
                             </p>
                         </div>
 
@@ -93,7 +93,7 @@
                                 Contactpersoon
                             </p>
                             <p class="text-gray-600 dark:text-gray-300">
-                                Selecteer de contactpersoon voor deze sales lead
+                                Selecteer de contactpersoon voor deze sales
                             </p>
                         </div>
 
@@ -117,7 +117,7 @@
                         type="submit"
                         class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                     >
-                        Update Sales Lead
+                        Update Sales
                     </button>
                 </div>
             </form>

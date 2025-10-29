@@ -77,31 +77,21 @@ Beter is rechtstreeks van de oude server naar de nieuwe met scp, maar er zijn no
 ==== Stappen plan om een nieuwe prod suite CRM dataset klaar te zetten
 
 1. **MySQL dump vanuit SSH sessie oude server**
-   - Run `./export_...sh` (note: bestand staat in /home/mbulthuis)
+- Run `./export_db-suitecrm_prod.sh` (note: bestand staat in /home/mbulthuis)
+- wachtwoord voor user mark, zie keeper 'Sugar suite - PphMyAdmin - user mark'
+- Na db export, gaat deze copieren met scp naar de nieuwe test server. Met gebruiker mbulthuis, dit wachtwoord opgeven.
 
-2. **Copy file naar ./tmp op de server**
+2. **Uitpakken**
+- `gunzip -c scrm_privatesuite9_2025-09-02_1620.sql.gz > scrm_privatesuite9_2025-09-02_1620.sql`
 
-3. **Open Filezilla en copy file naar Citrix omgeving**
+3. **Database aanmaken** [optioneel, alleen eerste keer]
+- https://phpmyadmin.dev.privatescan.nl -> maak database aan met naam `sugarcrm_privatesuite9`
 
-4. **Copy naar lokaal**
-   - Voor Mac: werkt alleen als je in Safari zit met plugin
+4. **Importeren in MySQL docker**
+- `sudo docker exec -i mysql mysql -u root -p[DB_PASSWORD] scrm_privatesuite9 -h 127.0.0.1 -P 3306 < ./scrm_privatesuite9_2025-09-02_1620.sql`
+(DB_PASSWORD is te vinden in .env.prod DB_PASSWORD, van Github Project Krayin-laravel-crm)
 
-5. **SCP naar nieuwe server iChosting**
-   - `scp [filename] mbulthuis@178.251.28.76:/home/mbulthuis`
-
-6. **Uitpakken**
-   - `gunzip -c scrm_privatesuite9_2025-09-02_1620.sql.gz > scrm_privatesuite9_2025-09-02_1620.sql`
-
-7. **Database aanmaken** [optioneel, alleen eerste keer]
-   - https://phpmyadmin.dev.privatescan.nl -> maak database aan met naam `sugarcrm_privatesuite9`
-
-8. **Importeren in MySQL docker**
-   - `sudo docker exec -i mysql mysql -u root -p[DB_PASSWORD] scrm_privatesuite9 -h 127.0.0.1 -P 3306 < ./scrm_privatesuite9_2025-09-02_1620.sql`
-(DB_PASSWORD is te vinden in .env.prod DB_PASSWORD)
-
-9. (optional) Copy file to local machine
-
-
+Note: dit is exclusief de e-mail attachments, zie daarvoor rsync command.
 
 === Commands
 
@@ -165,8 +155,8 @@ Het idee is om een eenvoudige mail server lokaal op te zetten. Later gaan we dit
 
 In de opzet maken wij 2 mail accounts aan:
 
- * user1@test.local -> Hier mail naar toe sturen vanuit CRM, simuleert een patient.
- * crm@privatescan.nl -> CRM leest deze mailbox en zal ze verwerken na en commando (Lees later een cronjob om de 5 minuten)
+* user1@test.local -> Hier mail naar toe sturen vanuit CRM, simuleert een patient.
+* crm@privatescan.nl -> CRM leest deze mailbox en zal ze verwerken na en commando (Lees later een cronjob om de 5 minuten)
 
 test.local is een gekozen opzet, certificaten zijn hiervoor gemaakt voor communicatie met de mailserver.
 
@@ -175,13 +165,13 @@ zie mailserver in docker-compose.yml.
 NOTE: Op dit moment is deze opzet ook uitgerold op de test omgeving.
 
 1. User aanmaken in de mailserver (mag je skippen, werkt out of de box door config file te delen. Zie postfix-accounts.cf):
-   * docker run --rm -v "$(pwd)/docker/config":/tmp/docker-mailserver \
-      mailserver/docker-mailserver setup email add user1@test.local test1234
-   * docker run --rm -v "$(pwd)/docker/config":/tmp/docker-mailserver \
-      mailserver/docker-mailserver setup email add crm@privatescan.nl test1234
+* docker run --rm -v "$(pwd)/docker/config":/tmp/docker-mailserver \
+mailserver/docker-mailserver setup email add user1@test.local test1234
+* docker run --rm -v "$(pwd)/docker/config":/tmp/docker-mailserver \
+mailserver/docker-mailserver setup email add crm@privatescan.nl test1234
 2. rainbow config aanpassen (na opstarten):
-    * http://localhost:8888/?admin
-    * Inloggen met admin / 12345
+* http://localhost:8888/?admin
+* Inloggen met admin / 12345
 
 image::rainbow_config.png[]
 
@@ -238,12 +228,12 @@ Het is van belang om met een frequentie alle dependencies te update (Maandelijks
 
 Hoe op te zetten:
 1. Installeer Laravel Telescope (indien nog niet gedaan):
-   - sail composer require laravel/telescope
+- sail composer require laravel/telescope
 2, sail artisan telescope:install
 3. sail artisan migrate
 4. Toegang via /telescope route (alleen in lokale omgeving standaard)
 5. in je .env file:
-   - TELESCOPE_ENABLED=true
+- TELESCOPE_ENABLED=true
 6. Plaats je emailadres in TelescopeServiceProvider :
 
 ```
@@ -269,9 +259,9 @@ In deze stack gebruiken we:
 - Vue.js voor interactieve UI componenten
 Om de frontend te bouwen, volg deze stappen:
 1. Installeer Node.js en npm (indien nog niet geïnstalleerd):
-   - Download en installeer vanaf https://nodejs.org/
+- Download en installeer vanaf https://nodejs.org/
 2. yarn of npm dependencies installeren:
-   - sail yarn install
+- sail yarn install
 3. Voor vite: starten we lokaal een vite server -> yarn dev (zie ook start-dev.sh)
 
 

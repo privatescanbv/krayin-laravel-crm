@@ -70,7 +70,7 @@
                             </x-admin::form.control-group>
 
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">Sales Lead
+                                <x-admin::form.control-group.label class="required">Sales
                                 </x-admin::form.control-group.label>
                                 <x-admin::form.control-group.control
                                     type="select"
@@ -80,7 +80,7 @@
                                     readonly
                                     disabled
                                 >
-                                    <option value="">Selecteer een Sales Lead</option>
+                                    <option value="">Selecteer een sales</option>
                                     @if(isset($salesLeads))
                                         @foreach($salesLeads as $id => $name)
                                             <option
@@ -225,7 +225,7 @@
                 },
             });
 
-            // Sales Lead change functionality (kept)
+            // sales change functionality (kept)
             const initOrderEditSalesLead = () => {
                 try {
                     const salesLeadSelect = document.querySelector('select[name="sales_lead_id"]');

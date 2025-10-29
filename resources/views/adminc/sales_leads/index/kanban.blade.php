@@ -11,6 +11,7 @@
 {!! view_render_event('admin.sales-leads.index.kanban.after') !!}
 
 @pushOnce('scripts')
+    @include('admin::leads.partials.open_activities_confirm_helper')
     <script
         type="text/x-template"
         id="v-sales-leads-kanban-template"
@@ -93,7 +94,7 @@
                                     <div class="flex flex-col items-center gap-4">
                                         <div class="flex flex-col items-center gap-2">
                                             <p class="!text-base font-semibold dark:text-white">
-                                                No sales leads
+                                                No sales
                                             </p>
                                         </div>
 
@@ -326,7 +327,7 @@
                 <x-slot:content>
                     <div v-if="currentStageUpdate">
                         <p class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-                            Sales lead "<strong>@{{ getSalesLeadName(currentStageUpdate.salesLead) }}</strong>" wordt verplaatst naar status "Verloren"
+                            Sales "<strong>@{{ getSalesLeadName(currentStageUpdate.salesLead) }}</strong>" wordt verplaatst naar status "Verloren"
                         </p>
 
                         <!-- Lost Reason -->
@@ -614,12 +615,12 @@
                             return response;
                         })
                         .catch(error => {
-                            console.error('Error fetching sales leads:', error);
+                            console.error('Error fetching sales:', error);
                         });
                 },
 
                 /**
-                 * Filters the sales leads based on the applied filters.
+                 * Filters the sales based on the applied filters.
                  * Clears existing data and refetches with new filters and current exclude_won_lost state.
                  *
                  * @param {object} filters - The filters to be applied.
@@ -760,14 +761,24 @@
                         return;
                     }
 
-                    this.updateSalesLeadStage(
-                        this.currentStageUpdate.salesLead.id,
-                        this.currentStageUpdate.stage.id,
-                        {
+                    // Submit lost details to dedicated endpoint
+                    this.$axios
+                        .put("{{ route('admin.sales-leads.lost', 'replace') }}".replace('replace', this.currentStageUpdate.salesLead.id), {
                             lost_reason: this.currentStageUpdate.lost_reason,
                             closed_at: this.currentStageUpdate.closed_at
-                        }
-                    );
+                        })
+                        .then(response => {
+                            this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+
+                            // Increment the target stage count
+                            const stage = this.currentStageUpdate.stage;
+                            if (stage && this.stageLeads[stage.sort_order]) {
+                                this.stageLeads[stage.sort_order].leads.meta.total = this.stageLeads[stage.sort_order].leads.meta.total + 1;
+                            }
+                        })
+                        .catch(error => {
+                            this.$emitter.emit('add-flash', { type: 'error', message: error?.response?.data?.message || 'Bijwerken mislukt' });
+                        });
 
                     if (this.$refs.lostStageModal) {
                         this.$refs.lostStageModal.close();
@@ -780,11 +791,11 @@
                  */
                 async updateSalesLeadStage(salesLeadId, stageId, additionalData = {}) {
                     const data = {
-                        'pipeline_stage_id': stageId,
+                        'lead_pipeline_stage_id': stageId,
                         ...additionalData
                     };
                     this.$axios
-                        .put("{{ route('admin.sales-leads.update', 'replace') }}".replace('replace', salesLeadId), data)
+                        .put("{{ route('admin.sales-leads.stage.update', 'replace') }}".replace('replace', salesLeadId), data)
                         .then(response => {
                             this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
 
@@ -807,7 +818,7 @@
                         const openCount = Number(salesLead.open_activities_count || 0);
 
                         if (openCount > 0) {
-                            const message = await window.buildOpenActivitiesConfirmMessage(this.$axios, salesLead.id, openCount);
+                            const message = await window.buildOpenActivitiesConfirmMessage(this.$axios, salesLead.id, openCount, 'sales');
                             const confirmClose = await new Promise((resolve) => {
                                 resolve(window.confirm(message));
                             });
@@ -829,12 +840,12 @@
                 },
 
                 /**
-                 * Get sales lead name for display
+                 * Get sales name for display
                  */
                 getSalesLeadName(salesLead) {
                     const firstName = salesLead.first_name || '';
                     const lastName = salesLead.last_name || '';
-                    return (firstName + ' ' + lastName).trim() || salesLead.name || 'Onbekende sales lead';
+                    return (firstName + ' ' + lastName).trim() || salesLead.name || 'Onbekende sales';
                 },
 
                 /**
@@ -848,7 +859,7 @@
                 },
 
                 /**
-                 * Handles the scroll event on the stage sales leads with debouncing for performance.
+                 * Handles the scroll event on the stage saless with debouncing for performance.
                  *
                  * @param {object} stage - The stage object.
                  * @param {object} event - The scroll event.
@@ -888,7 +899,7 @@
                 },
 
                 /**
-                 * Appends the sales leads to the stage.
+                 * Appends the sales to the stage.
                  * Ensures the exclude_won_lost parameter is included for performance optimization.
                  *
                  * @param {object} params - The parameters to be appended.

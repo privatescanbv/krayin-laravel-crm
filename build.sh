@@ -17,15 +17,15 @@ ROLLUP_SKIP_NODEJS_NATIVE=true yarn build
 
 # Build Admin package
 cd packages/Webkul/Admin
-npm install
-npm run build
+npm install && npm run build
 cd ../../..
 
 # Build WebForm package
 cd packages/Webkul/WebForm
-npm install
-npm run build
+npm install && npm run build
 cd ../../..
+
+# do not build installer, do not use it for now
 
 echo "DONE"
 

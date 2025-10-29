@@ -13,17 +13,13 @@ export default defineConfig(({ command }) => ({
             }
         }),
         laravel({
-            buildDirectory: 'admin/build',
-            input: [
-                'packages/Webkul/Admin/src/Resources/assets/css/app.css',
-                'packages/Webkul/Admin/src/Resources/assets/js/app.js'
-            ],
+            buildDirectory: 'adminc/build',
+            input: ['resources/css/app.css', 'resources/js/app.js'],
             refresh: [
                 'resources/views/**',
                 'packages/**/src/Resources/views/**',
             ],
-            hotFile: 'sto' +
-                'rage/framework/vite.hot',
+            hotFile: 'storage/framework/vite.hot',
         }),
     ],
     build: {

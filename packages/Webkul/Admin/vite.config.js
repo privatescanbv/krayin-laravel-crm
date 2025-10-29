@@ -19,13 +19,23 @@ export default defineConfig(({ mode }) => {
             host: process.env.VITE_HOST || "localhost",
             port: process.env.VITE_PORT || 5173,
             cors: true,
+            hmr: {
+                host: 'localhost',
+            },
+            fs: {
+                // 👇 hiermee mag de devserver ook je packages-map uitlezen
+                allow: [
+                    path.resolve(__dirname, 'resources'),
+                    path.resolve(__dirname, 'packages'),
+                ],
+            },
         },
 
         plugins: [
             vue(),
 
             laravel({
-                hotFile: "../../../public/admin-vite.hot",
+                hotFile: "../../../storage/framework/vite.hot",
                 publicDirectory: "../../../public",
                 buildDirectory: "admin/build",
                 input: [
@@ -36,7 +46,6 @@ export default defineConfig(({ mode }) => {
                 refresh: true,
             }),
         ],
-
         experimental: {
             renderBuiltUrl(filename, { hostId, hostType, type }) {
                 if (hostType === "css") {

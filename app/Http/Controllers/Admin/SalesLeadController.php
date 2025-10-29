@@ -57,7 +57,7 @@ class SalesLeadController extends Controller
             ];
         })->toArray();
 
-        return view('admin.sales_leads.index', [
+        return view('adminc.sales_leads.index', [
             'pipeline' => $pipeline,
             'columns'  => $this->getKanbanColumns(),
             'stages'   => $stages,
@@ -216,7 +216,7 @@ class SalesLeadController extends Controller
     {
         $salesLead = SalesLead::with(['contactPerson', 'lead', 'user'])->findOrFail($id);
 
-        return view('admin.sales_leads.edit', ['salesLead' => $salesLead]);
+        return view('adminc.sales_leads.edit', ['salesLead' => $salesLead]);
     }
 
     public function update(Request $request, $id)
@@ -298,7 +298,7 @@ class SalesLeadController extends Controller
             ];
         }
 
-        return view('admin.sales_leads.view', [
+        return view('adminc.sales_leads.view', [
             'salesLead'    => $salesLead,
             'lead'         => $lead,
             'orders'       => $orders,

@@ -15,14 +15,14 @@
 
             <div class="flex items-center gap-x-2.5">
                 @if (bouncer()->hasPermission('settings.clinics.create'))
-                    <a href="{{ route('admin.settings.clinics.create') }}" class="primary-button">
+                    <a href="{{ route('admin.clinics.create') }}" class="primary-button">
                         @lang('admin::app.settings.clinics.index.create-btn')
                     </a>
                 @endif
             </div>
         </div>
 
-        <x-admin::datagrid :src="route('admin.settings.clinics.index')" ref="datagrid" />
+        <x-admin::datagrid :src="route('admin.clinics.index')" ref="datagrid" />
     </div>
 
 </x-admin::layouts>

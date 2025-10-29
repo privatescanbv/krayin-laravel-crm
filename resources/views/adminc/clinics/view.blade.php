@@ -17,7 +17,7 @@
                                 @lang('admin::app.layouts.settings')
                             </a>
                             <span class="text-gray-400">/</span>
-                            <a href="{{ route('admin.settings.clinics.index') }}" class="text-gray-600 dark:text-gray-300">
+                            <a href="{{ route('admin.clinics.index') }}" class="text-gray-600 dark:text-gray-300">
                                 @lang('admin::app.layouts.clinics')
                             </a>
                             <span class="text-gray-400">/</span>
@@ -61,7 +61,7 @@
 
                     @if (bouncer()->hasPermission('settings.clinics.edit'))
                         <a
-                            href="{{ route('admin.settings.clinics.edit', $clinic->id) }}"
+                            href="{{ route('admin.clinics.edit', $clinic->id) }}"
                             class="secondary-button"
                             title="@lang('admin::app.settings.clinics.view.edit-btn')"
                         >
@@ -109,7 +109,7 @@
                     <!-- Activities Tab Content -->
                     <template #activities>
                         <x-admin::activities
-                            :endpoint="route('admin.settings.clinics.activities.index', $clinic->id)"
+                            :endpoint="route('admin.clinics.activities.index', $clinic->id)"
                             :activeType="'planned'"
                         />
                     </template>

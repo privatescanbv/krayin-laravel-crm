@@ -19,7 +19,7 @@ test('clinics index returns datagrid json', function () {
     $c1 = Clinic::factory()->create();
     $c2 = Clinic::factory()->create();
 
-    $response = $this->getJson(route('admin.settings.clinics.index'));
+    $response = $this->getJson(route('admin.clinics.index'));
     $response->assertOk();
 
     $ids = getDatagridIds($response);
@@ -35,7 +35,7 @@ test('can create clinic', function () {
         'order_confirmation_note' => 'Meld je bij de receptie',
     ];
 
-    $response = $this->postJson(route('admin.settings.clinics.store'), $payload);
+    $response = $this->postJson(route('admin.clinics.store'), $payload);
     $response->assertOk();
 
     $this->assertDatabaseHas('clinics', [
@@ -64,7 +64,7 @@ test('can update clinic', function () {
         '_method'                 => 'put',
     ];
 
-    $response = $this->postJson(route('admin.settings.clinics.update', ['id' => $clinic->id]), $payload);
+    $response = $this->postJson(route('admin.clinics.update', ['id' => $clinic->id]), $payload);
     $response->assertOk()->assertJsonPath('data.name', 'Updated Clinic');
 
     $this->assertDatabaseHas('clinics', [
@@ -98,7 +98,7 @@ test('can update clinic with empty email/phone values filtered out', function ()
         '_method' => 'put',
     ];
 
-    $response = $this->postJson(route('admin.settings.clinics.update', ['id' => $clinic->id]), $payload);
+    $response = $this->postJson(route('admin.clinics.update', ['id' => $clinic->id]), $payload);
     $response->assertOk();
 
     $clinic->refresh();
@@ -121,7 +121,7 @@ test('validates website url is a valid url', function () {
         'website_url' => 'not-a-valid-url',
     ];
 
-    $response = $this->postJson(route('admin.settings.clinics.store'), $payload);
+    $response = $this->postJson(route('admin.clinics.store'), $payload);
     $response->assertStatus(422);
     $response->assertJsonValidationErrors(['website_url']);
 });
@@ -133,7 +133,7 @@ test('accepts valid http and https urls', function () {
         'website_url' => 'https://www.testclinic.nl',
     ];
 
-    $response = $this->postJson(route('admin.settings.clinics.store'), $payload);
+    $response = $this->postJson(route('admin.clinics.store'), $payload);
     $response->assertOk();
 
     $this->assertDatabaseHas('clinics', [
@@ -161,7 +161,7 @@ test('allActive returns only active clinics (is_active = 1)', function () {
 test('can delete clinic', function () {
     $clinic = Clinic::factory()->create();
 
-    $response = $this->deleteJson(route('admin.settings.clinics.delete', ['id' => $clinic->id]));
+    $response = $this->deleteJson(route('admin.clinics.delete', ['id' => $clinic->id]));
     $response->assertOk();
 
     $this->assertDatabaseMissing('clinics', [

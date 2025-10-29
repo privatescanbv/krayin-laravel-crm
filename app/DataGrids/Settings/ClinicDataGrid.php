@@ -89,7 +89,7 @@ class ClinicDataGrid extends DataGrid
                 'icon'   => 'icon-eye',
                 'title'  => trans('admin::app.settings.clinics.index.datagrid.view'),
                 'method' => 'GET',
-                'url'    => fn ($row) => route('admin.settings.clinics.view', $row->id),
+                'url'    => fn ($row) => route('admin.clinics.view', $row->id),
             ]);
         }
 
@@ -99,7 +99,7 @@ class ClinicDataGrid extends DataGrid
                 'icon'   => 'icon-edit',
                 'title'  => trans('admin::app.settings.clinics.index.datagrid.edit'),
                 'method' => 'GET',
-                'url'    => fn ($row) => route('admin.settings.clinics.edit', $row->id),
+                'url'    => fn ($row) => route('admin.clinics.edit', $row->id),
             ]);
         }
 
@@ -109,7 +109,7 @@ class ClinicDataGrid extends DataGrid
                 'icon'   => 'icon-delete',
                 'title'  => trans('admin::app.settings.clinics.index.datagrid.delete'),
                 'method' => 'DELETE',
-                'url'    => fn ($row) => route('admin.settings.clinics.delete', $row->id),
+                'url'    => fn ($row) => route('admin.clinics.delete', $row->id),
             ]);
         }
     }

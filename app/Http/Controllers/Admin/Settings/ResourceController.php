@@ -94,7 +94,7 @@ class ResourceController extends SimpleEntityController
         // If coming from clinic view, go back there
         if ($request->input('return_to') === 'clinic_view' && $request->filled('clinic_id')) {
             return redirect()
-                ->route('admin.settings.clinics.view', (int) $request->input('clinic_id'))
+                ->route('admin.clinics.view', (int) $request->input('clinic_id'))
                 ->with('success', $this->getCreateSuccessMessage());
         }
 

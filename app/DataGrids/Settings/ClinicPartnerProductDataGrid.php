@@ -135,7 +135,7 @@ class ClinicPartnerProductDataGrid extends DataGrid
                 'icon'   => 'icon-delete',
                 'title'  => trans('admin::app.settings.clinics.view.partner-products.table.delete'),
                 'method' => 'DELETE',
-                'url'    => fn ($row) => route('admin.settings.clinics.partner_products.delete', [
+                'url'    => fn ($row) => route('admin.clinics.partner_products.delete', [
                     'id'                 => request()->route('id'),
                     'partner_product_id' => $row->id,
                 ]),

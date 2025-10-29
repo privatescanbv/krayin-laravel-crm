@@ -13,7 +13,7 @@
         @endif
     </div>
 
-    <x-admin::datagrid :src="route('admin.settings.clinics.partner_products.index', $clinic->id)">
+    <x-admin::datagrid :src="route('admin.clinics.partner_products.index', $clinic->id)">
         <!-- Empty State -->
         <template #body="{ available, isLoading }">
             <template v-if="! isLoading && ! available.records.length">

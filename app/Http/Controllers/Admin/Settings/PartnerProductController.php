@@ -32,7 +32,7 @@ class PartnerProductController extends SimpleEntityController
         $this->indexView = 'adminc.partner-products.index';
         $this->createView = 'adminc.partner-products.create';
         $this->editView = 'adminc.partner-products.edit';
-        $this->indexRoute = 'adminc.partner_products.index';
+        $this->indexRoute = 'admin.partner_products.index';
         $this->permissionPrefix = 'partner_products';
     }
 
@@ -114,7 +114,7 @@ class PartnerProductController extends SimpleEntityController
             $firstClinicId = is_array($clinicIds) ? reset($clinicIds) : $clinicIds;
 
             return redirect()
-                ->route('admin.settings.clinics.view', $firstClinicId)
+                ->route('admin.clinics.view', $firstClinicId)
                 ->with('success', $this->getCreateSuccessMessage());
         }
 

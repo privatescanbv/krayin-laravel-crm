@@ -213,26 +213,25 @@ Breadcrumbs::for('settings.groups', function (BreadcrumbTrail $trail) {
 
 // Settings > Clinics
 Breadcrumbs::for('settings.clinics', function (BreadcrumbTrail $trail) {
-    $trail->parent('settings');
-    $trail->push(trans('admin::app.layouts.clinics'), route('admin.settings.clinics.index'));
+    $trail->push(trans('admin::app.layouts.clinics'), route('admin.clinics.index'));
 });
 
 // Settings > Clinics > Create
 Breadcrumbs::for('settings.clinics.create', function (BreadcrumbTrail $trail) {
     $trail->parent('settings.clinics');
-    $trail->push('', route('admin.settings.clinics.create'));
+    $trail->push('', route('admin.clinics.create'));
 });
 
 // Settings > Clinics > Edit
 Breadcrumbs::for('settings.clinics.edit', function (BreadcrumbTrail $trail, $clinic) {
     $trail->parent('settings.clinics');
-    $trail->push('', route('admin.settings.clinics.edit', $clinic->id));
+    $trail->push('', route('admin.clinics.edit', $clinic->id));
 });
 
 // Settings > Clinics > View
 Breadcrumbs::for('settings.clinics.view', function (BreadcrumbTrail $trail, $clinic) {
     $trail->parent('settings.clinics');
-    $trail->push($clinic->name, route('admin.settings.clinics.view', $clinic->id));
+    $trail->push($clinic->name, route('admin.clinics.view', $clinic->id));
 });
 
 // Settings > Import Runs

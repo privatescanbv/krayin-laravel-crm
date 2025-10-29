@@ -109,7 +109,7 @@
                         @endif
 
                         @if($activity->clinic)
-                            <a href="{{ route('admin.settings.clinics.view', $activity->clinic->id) }}"
+                            <a href="{{ route('admin.clinics.view', $activity->clinic->id) }}"
                                class="inline-flex items-center px-2.5 py-1.5 rounded-md text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900 dark:text-purple-200 dark:hover:bg-purple-800">
                                 <span class="icon-clinic mr-1"></span>
                                 {{ $activity->clinic->name ?? '#' . $activity->clinic->id }}

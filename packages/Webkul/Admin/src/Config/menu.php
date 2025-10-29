@@ -97,7 +97,7 @@ return [
     [
         'key'        => 'clinics',
         'name'       => 'Beheer klinieken',
-        'route'      => 'admin.settings.clinics.index',
+        'route'      => 'admin.clinics.index',
         'sort'       => 12,
         'icon-class' => 'icon-organization',
     ],
@@ -143,14 +143,14 @@ return [
         'key'        => 'settings.clinics',
         'name'       => 'admin::app.layouts.clinics',
         'info'       => 'admin::app.layouts.clinics-info',
-        'route'      => 'admin.settings.clinics.index',
+        'route'      => 'admin.clinics.index',
         'sort'       => 4,
         'icon-class' => 'icon-setting',
     ], [
         'key'        => 'settings.clinics.admin',
         'name'       => 'admin::app.layouts.clinics',
         'info'       => 'admin::app.layouts.clinics-info',
-        'route'      => 'admin.settings.clinics.index',
+        'route'      => 'admin.clinics.index',
         'sort'       => 1,
         'icon-class' => 'icon-settings-pipeline',
     ], [

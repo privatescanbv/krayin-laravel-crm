@@ -16,7 +16,7 @@
 
             <div class="flex items-center gap-x-2.5">
                 {!! view_render_event('admin.settings.users.index.create_button.before') !!}
-                
+
                 <!-- Create button for User -->
                 @if (bouncer()->hasPermission('settings.user.users.create'))
                     <div class="flex items-center gap-x-2.5">
@@ -46,7 +46,7 @@
             id="users-settings-template"
         >
             {!! view_render_event('admin.settings.users.index.datagrid.before') !!}
-        
+
             <!-- Datagrid -->
             <x-admin::datagrid
                 :src="route('admin.settings.users.index')"
@@ -63,7 +63,7 @@
                     <template v-if="isLoading">
                         <x-admin::shimmer.datagrid.table.body />
                     </template>
-        
+
                     <template v-else>
                         <div
                             v-for="record in available.records"
@@ -86,10 +86,10 @@
                                     :for="`mass_action_select_record_${record.id}`"
                                 ></label>
                             </div>
-                            
+
                             <!-- Users Id -->
                             <p>@{{ record.id }}</p>
-        
+
                             <!-- Users Name and Profile -->
                             <div class="flex items-center gap-2.5">
                                 <template v-if="record.name.image">
@@ -118,7 +118,7 @@
                             >
                                 @{{ record.status == 1 ? '@lang('admin::app.settings.users.index.active')' : '@lang('admin::app.settings.users.index.inactive')' }}
                             </span>
-                        
+
                             <!-- Users Creation Date -->
                             <p>@{{ record.created_at }}</p>
 
@@ -131,7 +131,7 @@
                                     >
                                     </span>
                                 </a>
-    
+
                                 <a @click="performAction(record.actions.find(action => action.index === 'delete'))">
                                     <span
                                         :class="record.actions.find(action => action.index === 'delete')?.icon"
@@ -160,7 +160,7 @@
                                                 class="peer hidden"
                                                 v-model="applied.massActions.indices"
                                             >
-    
+
                                             <span class="icon-checkbox-outline peer-checked:icon-checkbox-select cursor-pointer rounded-md text-2xl text-gray-500 peer-checked:text-brandColor">
                                             </span>
                                         </label>
@@ -179,7 +179,7 @@
                                             >
                                             </span>
                                         </a>
-            
+
                                         <a @click="performAction(record.actions.find(action => action.index === 'delete'))">
                                             <span
                                                 :class="record.actions.find(action => action.index === 'delete')?.icon"
@@ -204,15 +204,15 @@
                         </template>
                 </template>
             </x-admin::datagrid>
-            
+
             {!! view_render_event('admin.users.index.datagrid.after') !!}
-            
+
             <x-admin::form
                 v-slot="{ meta, values, errors, handleSubmit }"
                 as="div"
                 ref="modalForm"
             >
-                <form 
+                <form
                     @submit="handleSubmit($event, updateOrCreate)"
                     ref="userForm"
                 >
@@ -222,10 +222,10 @@
                         <!-- Modal Header -->
                         <x-slot:header>
                             <p class="text-lg font-bold text-gray-800 dark:text-white">
-                                @{{ 
+                                @{{
                                     selectedType == 'create'
                                     ? "@lang('admin::app.settings.users.index.create.title')"
-                                    : "@lang('admin::app.settings.users.index.edit.title')" 
+                                    : "@lang('admin::app.settings.users.index.edit.title')"
                                 }}
                             </p>
                         </x-slot>
@@ -349,7 +349,7 @@
                             {!! view_render_event('admin.settings.users.index.form.password.after') !!}
 
                             {!! view_render_event('admin.settings.users.index.form.role_id.before') !!}
-                            
+
                             <div class="flex gap-4">
                                 <!-- Role -->
                                 <x-admin::form.control-group class="flex-1">
@@ -368,11 +368,11 @@
                                             v-for="role in roles"
                                             :key="role.id"
                                             :value="role.id"
-                                        > 
-                                            @{{ role.name }} 
+                                        >
+                                            @{{ role.name }}
                                         </option>
                                     </x-admin::form.control-group.control>
-                                
+
                                     <x-admin::form.control-group.error control-name="role_id" />
                                 </x-admin::form.control-group>
 
@@ -393,7 +393,7 @@
                                         <option  value="global" selected>
                                             @lang('admin::app.settings.users.index.create.global')
                                         </option>
-                                        
+
                                         <option value="group">
                                             @lang('admin::app.settings.users.index.create.group')
                                         </option>
@@ -467,7 +467,7 @@
                                     ::checked="parseInt(user.status || 0)"
                                 />
                             </x-admin::form.control-group>
-                                
+
                             {!! view_render_event('admin.settings.users.index.form.status.after') !!}
 
                             {!! view_render_event('admin.settings.users.index.form.signature.before') !!}
@@ -497,10 +497,10 @@
                             <div class="mt-4 rounded border border-gray-200 p-4 dark:border-gray-800">
                                 <div class="mb-2 text-sm font-semibold text-gray-700 dark:text-gray-200">Default veld waarden</div>
 
-                                <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+                                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                                     <x-admin::form.control-group>
                                         <x-admin::form.control-group.label>
-                                            lead.department_id
+                                            Lead afdeling
                                         </x-admin::form.control-group.label>
 
                                         <x-admin::form.control-group.control
@@ -514,7 +514,7 @@
 
                                     <x-admin::form.control-group>
                                         <x-admin::form.control-group.label>
-                                            lead.lead_channel_id
+                                            Lead kanaal
                                         </x-admin::form.control-group.label>
 
                                         <x-admin::form.control-group.control
@@ -528,7 +528,7 @@
 
                                     <x-admin::form.control-group>
                                         <x-admin::form.control-group.label>
-                                            lead.lead_source_id
+                                            Lead bron
                                         </x-admin::form.control-group.label>
 
                                         <x-admin::form.control-group.control
@@ -537,6 +537,20 @@
                                             v-model="user.user_default_values['lead.lead_source_id']"
                                             :label="'lead.lead_source_id'"
                                             :placeholder="'6'"
+                                        />
+                                    </x-admin::form.control-group>
+
+                                    <x-admin::form.control-group>
+                                        <x-admin::form.control-group.label>
+                                            Lead type
+                                        </x-admin::form.control-group.label>
+
+                                        <x-admin::form.control-group.control
+                                            type="text"
+                                            name="user_default_values[lead.type_id]"
+                                            v-model="user.user_default_values['lead.type_id']"
+                                            :label="'lead.type_id'"
+                                            :placeholder="'2'"
                                         />
                                     </x-admin::form.control-group>
                                 </div>
@@ -568,7 +582,7 @@
         <script type="module">
             app.component('v-users-settings', {
                 template: '#users-settings-template',
-        
+
                 data() {
                     return {
                         isProcessing: false,
@@ -584,15 +598,15 @@
                 computed: {
                     gridsCount() {
                         let count = this.$refs.datagrid.available.columns.length;
-        
+
                         if (this.$refs.datagrid.available.actions.length) {
                             ++count;
                         }
-        
+
                         if (this.$refs.datagrid.available.massActions.length) {
                             ++count;
                         }
-        
+
                         return count;
                     },
 
@@ -600,7 +614,7 @@
                         return this.user.id ? 'edit' : 'create';
                     },
                 },
-        
+
                 methods: {
                     openModal() {
                         this.user = {
@@ -610,7 +624,7 @@
 
                         this.$refs.userUpdateAndCreateModal.toggle();
                     },
-                    
+
                     updateOrCreate(params, {resetForm, setErrors}) {
                         const userForm = new FormData(this.$refs.userForm);
 
@@ -636,10 +650,10 @@
                             }
                         });
                     },
-                    
+
                     editModal(url) {
                         this.$axios.get(url)
-                            .then(response => {                                
+                            .then(response => {
                                 this.user = response.data.data;
 
                                 this.user.groups = this.user.groups.map(group => group.id);

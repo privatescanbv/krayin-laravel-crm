@@ -467,6 +467,27 @@ class LeadController extends Controller
 
             $data['status'] = 1;
 
+            // Ensure a default lead type is set when none provided
+            if (empty($data['lead_type_id'])) {
+                try {
+                    $currentUser = auth()->guard('user')->user() ?? auth()->user();
+                    $userDefaults = $this->userDefaultValueService->getLeadDefaults($currentUser?->id);
+                    if (!empty($userDefaults['lead_type_id'])) {
+                        $data['lead_type_id'] = (int) $userDefaults['lead_type_id'];
+                    }
+                } catch (\Throwable $e) {
+                    // If fetching user defaults fails, fall through to repository fallback
+                }
+
+                if (empty($data['lead_type_id'])) {
+                    // Fallback to first available lead type
+                    $defaultType = $this->typeRepository->first();
+                    if ($defaultType) {
+                        $data['lead_type_id'] = (int) $defaultType->id;
+                    }
+                }
+            }
+
             if (isset($data['lead_pipeline_stage_id'])) {
                 $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);
 

@@ -39,6 +39,13 @@ class ProductDataGrid extends DataGrid
         $this->addFilter('id', 'products.id');
         $this->addFilter('tag_name', 'tags.name');
         $this->addFilter('group_name', 'product_groups.name');
+        $this->addFilter('active', 'products.active');
+
+        // Default filter: only active resources unless user provides a filter
+        $requestedFilters = request()->input('filters', []);
+        if (! array_key_exists('active', $requestedFilters)) {
+            $queryBuilder->where('products.active', 1);
+        }
 
         // 🚨 reset alle automatisch toegevoegde order by’s en zet jouw eigen fallback
         return $queryBuilder
@@ -46,6 +53,23 @@ class ProductDataGrid extends DataGrid
             ->orderBy('products.id', 'desc'); // voeg expliciet jouw order toe
     }
 
+    /**
+     * Default sorting: active resources first, then by name ASC.
+     * Only applies when no explicit sort is requested by the client.
+     */
+    protected function processRequestedSorting($requestedSort)
+    {
+        if (empty($requestedSort) || empty($requestedSort['column'])) {
+            // Reset any existing order and apply our default
+            $this->queryBuilder->reorder()
+                ->orderBy('products.active', 'desc')
+                ->orderBy('products.name', 'asc');
+
+            return $this->queryBuilder;
+        }
+
+        return parent::processRequestedSorting($requestedSort);
+    }
 
     /**
      * Add columns.
@@ -56,6 +80,7 @@ class ProductDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'id',
+            'columnName' => 'products.id',
             'label'      => trans('admin::app.partner_products.index.datagrid.id'),
             'type'       => 'string',
             'sortable'   => true,
@@ -65,6 +90,7 @@ class ProductDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'name',
+            'columnName' => 'products.name',
             'label'      => trans('admin::app.products.index.datagrid.name'),
             'type'       => 'string',
             'sortable'   => true,
@@ -74,6 +100,7 @@ class ProductDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'price',
+            'columnName' => 'products.price',
             'label'      => trans('admin::app.products.index.datagrid.price'),
             'type'       => 'string',
             'sortable'   => true,
@@ -85,6 +112,7 @@ class ProductDataGrid extends DataGrid
         ]);
         $this->addColumn([
             'index'              => 'tag_name',
+            'columnName' => 'products.tag_name',
             'label'              => trans('admin::app.products.index.datagrid.tag-name'),
             'type'               => 'string',
             'searchable'         => false,
@@ -103,6 +131,7 @@ class ProductDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'group_name',
+            'columnName' => 'products.group_name',
             'label'      => trans('admin::app.productgroups.title'),
             'type'       => 'string',
             'searchable' => true,
@@ -112,24 +141,32 @@ class ProductDataGrid extends DataGrid
                 if (!$row->group_name) {
                     return '--';
                 }
-                
+
                 // Create a mock object with the row data
                 $mockRow = (object) [
                     'name' => $row->group_name,
                     'parent_id' => $row->group_parent_id
                 ];
-                
+
                 return $this->productGroupRepository->getGroupPathByRow($mockRow);
             },
         ]);
 
         $this->addColumn([
             'index'      => 'active',
+            'columnName' => 'products.active',
             'label'      => trans('admin::app.partner_products.index.datagrid.active'),
             'type'       => 'boolean',
             'searchable' => true,
             'sortable'   => true,
             'filterable' => true,
+            'closure'    => function ($row) {
+                $active = $row->active ?? false;
+
+                return $active
+                    ? "<span class='icon-tick text-green-600 text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>"
+                    : "<span class='icon-cross-large text-red-600 text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>";
+            },
         ]);
     }
 

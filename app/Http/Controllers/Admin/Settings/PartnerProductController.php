@@ -125,6 +125,9 @@ class PartnerProductController extends SimpleEntityController
 
     public function update(Request $request, int $id): RedirectResponse|JsonResponse
     {
+        $request->merge([
+            'active' => $request->boolean('active', false),
+        ]);
         $this->validateUpdate($request, $id);
 
         Event::dispatch("settings.{$this->entityName}.update.before", $id);

@@ -40,6 +40,7 @@ trait NormalizesContactFields
 
         // Replace request data
         $request->replace($incoming);
+
     }
 
     /**

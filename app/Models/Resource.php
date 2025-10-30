@@ -17,6 +17,7 @@ class Resource extends Model
         'name',
         'resource_type_id',
         'clinic_id',
+        'is_active',
         'created_by',
         'updated_by',
     ];
@@ -24,6 +25,7 @@ class Resource extends Model
     protected $casts = [
         'clinic_id'        => 'integer',
         'resource_type_id' => 'integer',
+        'is_active'        => 'boolean',
         'created_by'       => 'integer',
         'updated_by'       => 'integer',
     ];

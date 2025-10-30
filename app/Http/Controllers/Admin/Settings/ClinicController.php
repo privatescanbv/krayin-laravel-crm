@@ -24,7 +24,7 @@ class ClinicController extends SimpleEntityController
         $this->indexView = 'adminc.clinics.index';
         $this->createView = 'adminc.clinics.create';
         $this->editView = 'adminc.clinics.edit';
-        $this->indexRoute = 'adminc.settings.clinics.index';
+        $this->indexRoute = 'admin.clinics.index';
         $this->permissionPrefix = 'settings.clinics';
     }
 
@@ -40,6 +40,10 @@ class ClinicController extends SimpleEntityController
     {
         // Normalize contact fields before validation
         $this->normalizeContactFields($request);
+
+        $request->merge([
+            'is_active' => $request->boolean('is_active', false),
+        ]);
 
         return parent::update($request, $id);
     }

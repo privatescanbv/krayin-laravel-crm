@@ -164,24 +164,24 @@
 
         <x-admin::form.control-group.error control-name="related_sales_price"/>
     </x-admin::form.control-group>
+
+    <!-- Kortingsinformatie -->
+    <x-admin::form.control-group>
+        <x-admin::form.control-group.label>
+            @lang('admin::app.partner_products.index.create.discount_info')
+        </x-admin::form.control-group.label>
+
+        <x-admin::form.control-group.control
+            type="textarea"
+            name="discount_info"
+            value="{{ old('discount_info', $partnerProduct->discount_info ?? '') }}"
+            :label="trans('admin::app.partner_products.index.create.discount_info')"
+            :placeholder="trans('admin::app.partner_products.index.create.discount_info')"
+        />
+
+        <x-admin::form.control-group.error control-name="discount_info"/>
+    </x-admin::form.control-group>
 </div>
-
-<!-- Kortingsinformatie -->
-<x-admin::form.control-group>
-    <x-admin::form.control-group.label>
-        @lang('admin::app.partner_products.index.create.discount_info')
-    </x-admin::form.control-group.label>
-
-    <x-admin::form.control-group.control
-        type="textarea"
-        name="discount_info"
-        value="{{ old('discount_info', $partnerProduct->discount_info ?? '') }}"
-        :label="trans('admin::app.partner_products.index.create.discount_info')"
-        :placeholder="trans('admin::app.partner_products.index.create.discount_info')"
-    />
-
-    <x-admin::form.control-group.error control-name="discount_info"/>
-</x-admin::form.control-group>
 
 <!-- Active checkbox -->
 <x-admin::form.control-group>
@@ -189,13 +189,12 @@
         @lang('admin::app.partner_products.index.create.active')
     </x-admin::form.control-group.label>
 
-    <input type="hidden" name="active" value="0"/>
     <x-admin::form.control-group.control
-        type="checkbox"
+        type="switch"
         name="active"
         value="1"
-        :label="trans('admin::app.partner_products.index.create.active')"
-        :checked="old('active', $partnerProduct->active ?? 1)"
+        :checked="(bool) old('is_active', $partnerProduct->active ?? true)"
+        label="Actief"
     />
 
     <x-admin::form.control-group.error control-name="active"/>
@@ -247,7 +246,7 @@
         search-route="{{ route('admin.partner_products.search') }}"
         :can-add-new="true"
         :multiple="true"
-        :items="$relatedProducts"
+        :items='@json($relatedProducts)'
     />
     <x-admin::form.control-group.error control-name="related_products"/>
 </x-admin::form.control-group>

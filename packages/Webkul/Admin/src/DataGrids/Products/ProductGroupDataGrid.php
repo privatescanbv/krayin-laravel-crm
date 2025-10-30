@@ -36,6 +36,23 @@ class ProductGroupDataGrid extends DataGrid
     }
 
     /**
+     * Default sorting: active resources first, then by name ASC.
+     * Only applies when no explicit sort is requested by the client.
+     */
+    protected function processRequestedSorting($requestedSort)
+    {
+        if (empty($requestedSort) || empty($requestedSort['column'])) {
+            // Reset any existing order and apply our default
+            $this->queryBuilder->reorder()
+                ->orderBy('product_groups.name', 'asc');
+
+            return $this->queryBuilder;
+        }
+
+        return parent::processRequestedSorting($requestedSort);
+    }
+
+    /**
      * Prepare columns.
      */
     public function prepareColumns(): void

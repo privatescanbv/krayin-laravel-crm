@@ -29,6 +29,13 @@ class ClinicDataGrid extends DataGrid
             );
 
         $this->addFilter('id', 'clinics.id');
+        $this->addFilter('is_active', 'clinics.is_active');
+
+        // Default filter: only active resources unless user provides a filter
+        $requestedFilters = request()->input('filters', []);
+        if (! array_key_exists('is_active', $requestedFilters)) {
+            $queryBuilder->where('clinics.is_active', 1);
+        }
 
         return $queryBuilder;
     }
@@ -45,25 +52,8 @@ class ClinicDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'is_active',
-            'type'       => 'boolean',
-            'label'      => trans('admin::app.settings.clinics.index.datagrid.is_active'),
-            'searchable' => false,
-            'filterable' => true,
-            'sortable'   => true,
-            'closure'    => function ($row) {
-                $active = (bool) ($row->is_active ?? false);
-
-                return $active
-                    ? "<span class='icon-tick text-green-600 text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>"
-                    : "<span class='icon-cross-large text-red-600 text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>";
-            },
-            'escape'     => false,
-            'width'      => '20px',
-        ]);
-
-        $this->addColumn([
             'index'      => 'name',
+            'columnName' => 'clinics.name',
             'type'       => 'string',
             'label'      => trans('admin::app.settings.clinics.index.datagrid.name'),
             'searchable' => true,
@@ -73,11 +63,31 @@ class ClinicDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'registration_form_clinic_name',
+            'columnName' => 'clinics.registration_form_clinic_name',
             'type'       => 'string',
             'label'      => 'AFB naam kliniek',
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'is_active',
+            'columnName' => 'clinics.is_active',
+            'type'       => 'boolean',
+            'label'      => trans('admin::app.settings.clinics.index.datagrid.is_active'),
+            'searchable' => false,
+            'filterable' => true,
+            'sortable'   => true,
+            'closure'    => function ($row) {
+                $active = $row->is_active ?? false;
+
+                return $active
+                    ? "<span class='icon-tick text-green-600 text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>"
+                    : "<span class='icon-cross-large text-red-600 text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>";
+            },
+            'escape'     => false,
+            'width'      => '20px',
         ]);
     }
 
@@ -112,5 +122,23 @@ class ClinicDataGrid extends DataGrid
                 'url'    => fn ($row) => route('admin.clinics.delete', $row->id),
             ]);
         }
+    }
+
+    /**
+     * Default sorting: active resources first, then by name ASC.
+     * Only applies when no explicit sort is requested by the client.
+     */
+    protected function processRequestedSorting($requestedSort)
+    {
+        if (empty($requestedSort) || empty($requestedSort['column'])) {
+            // Reset any existing order and apply our default
+            $this->queryBuilder->reorder()
+                ->orderBy('clinics.is_active', 'desc')
+                ->orderBy('clinics.name', 'asc');
+
+            return $this->queryBuilder;
+        }
+
+        return parent::processRequestedSorting($requestedSort);
     }
 }

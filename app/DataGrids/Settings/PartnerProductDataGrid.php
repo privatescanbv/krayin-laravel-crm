@@ -27,6 +27,13 @@ class PartnerProductDataGrid extends DataGrid
             );
 
         $this->addFilter('id', 'partner_products.id');
+        $this->addFilter('active', 'partner_products.active');
+
+        // Default filter: only active resources unless user provides a filter
+        $requestedFilters = request()->input('filters', []);
+        if (! array_key_exists('active', $requestedFilters)) {
+            $queryBuilder->where('partner_products.active', 1);
+        }
 
         return $queryBuilder;
     }
@@ -35,6 +42,7 @@ class PartnerProductDataGrid extends DataGrid
     {
         $this->addColumn([
             'index'      => 'id',
+            'columnName' => 'partner_products.id',
             'label'      => trans('admin::app.partner_products.index.datagrid.id'),
             'type'       => 'string',
             'searchable' => true,
@@ -44,6 +52,7 @@ class PartnerProductDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'name',
+            'columnName' => 'partner_products.name',
             'type'       => 'string',
             'label'      => trans('admin::app.partner_products.index.datagrid.name'),
             'searchable' => true,
@@ -61,6 +70,7 @@ class PartnerProductDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'purchase_price',
+            'columnName' => 'partner_products.purchase_price',
             'type'       => 'string',
             'label'      => trans('admin::app.partner_products.index.datagrid.purchase_price'),
             'searchable' => true,
@@ -73,6 +83,7 @@ class PartnerProductDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'sales_price',
+            'columnName' => 'partner_products.sales_price',
             'type'       => 'string',
             'label'      => trans('admin::app.partner_products.index.datagrid.sales_price'),
             'searchable' => true,
@@ -85,6 +96,7 @@ class PartnerProductDataGrid extends DataGrid
 
         $this->addColumn([
             'index'      => 'related_sales_price',
+            'columnName' => 'partner_products.related_sales_price',
             'type'       => 'string',
             'label'      => trans('admin::app.partner_products.index.datagrid.related_sales_price'),
             'searchable' => true,
@@ -96,16 +108,8 @@ class PartnerProductDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'active',
-            'type'       => 'boolean',
-            'label'      => trans('admin::app.partner_products.index.datagrid.active'),
-            'searchable' => true,
-            'filterable' => true,
-            'sortable'   => true,
-        ]);
-
-        $this->addColumn([
             'index'      => 'reporting',
+            'columnName' => 'partner_products.reporting',
             'type'       => 'string',
             'label'      => trans('admin::app.partner_products.index.datagrid.reporting'),
             'searchable' => false,
@@ -127,6 +131,23 @@ class PartnerProductDataGrid extends DataGrid
                 }
 
                 return empty($labels) ? '-' : implode(', ', $labels);
+            },
+        ]);
+
+        $this->addColumn([
+            'index'      => 'active',
+            'columnName' => 'partner_products.active',
+            'type'       => 'boolean',
+            'label'      => trans('admin::app.partner_products.index.datagrid.active'),
+            'searchable' => true,
+            'filterable' => true,
+            'sortable'   => true,
+            'closure'    => function ($row) {
+                $active = $row->active ?? false;
+
+                return $active
+                    ? "<span class='icon-tick text-green-600 text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>"
+                    : "<span class='icon-cross-large text-red-600 text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>";
             },
         ]);
     }
@@ -160,6 +181,24 @@ class PartnerProductDataGrid extends DataGrid
                 'url'    => fn ($row) => route('admin.partner_products.delete', $row->id),
             ]);
         }
+    }
+
+    /**
+     * Default sorting: active resources first, then by name ASC.
+     * Only applies when no explicit sort is requested by the client.
+     */
+    protected function processRequestedSorting($requestedSort)
+    {
+        if (empty($requestedSort) || empty($requestedSort['column'])) {
+            // Reset any existing order and apply our default
+            $this->queryBuilder->reorder()
+                ->orderBy('partner_products.active', 'desc')
+                ->orderBy('partner_products.name', 'asc');
+
+            return $this->queryBuilder;
+        }
+
+        return parent::processRequestedSorting($requestedSort);
     }
 
     // Money formatting centralized in App\Enums\Currency::formatMoney

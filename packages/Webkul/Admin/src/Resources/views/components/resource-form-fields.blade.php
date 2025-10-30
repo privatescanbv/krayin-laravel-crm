@@ -7,7 +7,7 @@
 @php
     $resourceTypes = ResourceType::orderBy('name')->get(['id', 'name']);
     $clinics = app(ClinicRepository::class)->allActive(['id', 'name']);
-    
+
     // Pre-select clinic if provided
     $selectedClinicId = old('clinic_id', $resource->clinic_id ?? '');
     if (empty($selectedClinicId) && isset($preSelectedClinicId)) {
@@ -75,4 +75,21 @@
     </x-admin::form.control-group.control>
 
     <x-admin::form.control-group.error control-name="clinic_id" />
+</x-admin::form.control-group>
+
+<!-- Is Active -->
+<x-admin::form.control-group>
+    <x-admin::form.control-group.label>
+        Actief
+    </x-admin::form.control-group.label>
+
+    <x-admin::form.control-group.control
+        type="switch"
+        name="is_active"
+        value="1"
+        :checked="(bool) old('is_active', $resource->is_active ?? true)"
+        label="Actief"
+    />
+
+    <x-admin::form.control-group.error control-name="is_active" />
 </x-admin::form.control-group>

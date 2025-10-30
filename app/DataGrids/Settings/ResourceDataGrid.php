@@ -25,12 +25,20 @@ class ResourceDataGrid extends DataGrid
                 'resources.id',
                 'resources.name',
                 'resources.clinic_id',
+                'resources.is_active',
                 'resource_types.name as resource_type_name',
                 'clinics.name as clinic_name'
             );
 
         $this->addFilter('id', 'resources.id');
         $this->addFilter('clinic_id', 'resources.clinic_id');
+        $this->addFilter('is_active', 'resources.is_active');
+
+        // Default filter: only active resources unless user provides a filter
+        $requestedFilters = request()->input('filters', []);
+        if (! array_key_exists('is_active', $requestedFilters)) {
+            $queryBuilder->where('resources.is_active', 1);
+        }
 
         return $queryBuilder;
     }
@@ -44,6 +52,7 @@ class ResourceDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+            'columnName' => 'resources.id',
         ]);
 
         // Removed deprecated 'type' column; it's replaced by relation to ResourceType
@@ -55,6 +64,7 @@ class ResourceDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+            'columnName' => 'resources.name',
         ]);
 
         $this->addColumn([
@@ -64,6 +74,7 @@ class ResourceDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
+            'columnName' => 'resource_types.name',
         ]);
 
         $this->addColumn([
@@ -73,6 +84,23 @@ class ResourceDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => false,
             'sortable'   => true,
+            'columnName' => 'clinics.name',
+        ]);
+
+        $this->addColumn([
+            'index'      => 'is_active',
+            'type'       => 'boolean',
+            'label'      => 'Actief',
+            'searchable' => false,
+            'filterable' => true,
+            'sortable'   => true,
+            'closure'    => function ($row) {
+                $active = $row->is_active ?? false;
+
+                return $active
+                    ? "<span class='icon-tick text-green-600 text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>"
+                    : "<span class='icon-cross-large text-red-600 text-lg' title='".e(trans('admin::app.settings.clinics.index.datagrid.is_active'))."'></span>";
+            },
         ]);
 
         // Hidden clinic_id column for filtering purposes
@@ -85,6 +113,7 @@ class ResourceDataGrid extends DataGrid
             'sortable'           => false,
             'filterable_type'    => 'dropdown',
             'filterable_options' => $this->clinicRepository->all(['name as label', 'id as value'])->toArray(),
+            'hidden'             => true, // werkt niet
         ]);
     }
 
@@ -125,5 +154,23 @@ class ResourceDataGrid extends DataGrid
                 'url'    => fn ($row) => route('admin.settings.resources.delete', $row->id),
             ]);
         }
+    }
+
+    /**
+     * Default sorting: active resources first, then by name ASC.
+     * Only applies when no explicit sort is requested by the client.
+     */
+    protected function processRequestedSorting($requestedSort)
+    {
+        if (empty($requestedSort) || empty($requestedSort['column'])) {
+            // Reset any existing order and apply our default
+            $this->queryBuilder->reorder()
+                ->orderBy('resources.is_active', 'desc')
+                ->orderBy('resources.name', 'asc');
+
+            return $this->queryBuilder;
+        }
+
+        return parent::processRequestedSorting($requestedSort);
     }
 }

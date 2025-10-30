@@ -209,6 +209,7 @@
             <input
                 type="checkbox"
                 name="{{ $name }}"
+                id="{{ $attributes->get('id') ?? $name }}"
                 v-bind="field"
                 class="peer sr-only"
                 {{ $attributes->except(['rules', 'label', ':label', 'key', ':key']) }}
@@ -228,6 +229,7 @@
                     ->merge(['class' => 'text-gray-500 icon-checkbox-outline peer-checked:icon-checkbox-select text-2xl peer-checked:text-brandColor'])
                     ->merge(['class' => $attributes->get('disabled') ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'])
             }}
+            for="{{ $attributes->get('id') ?? $name }}"
         >
         </label>
 

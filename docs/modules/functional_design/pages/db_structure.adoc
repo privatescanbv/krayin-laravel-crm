@@ -239,6 +239,7 @@ TABLE(PartnerProduct, "partner_products") {
 TABLE(Resource, "resource") {
   PRIMARY_KEY(id): bigint
   name: string
+  is_active: boolean
   created_at: datetime
   updated_at: datetime
   created_by: bigint

@@ -76,3 +76,20 @@
 
     <x-admin::form.control-group.error control-name="clinic_id" />
 </x-admin::form.control-group>
+
+<!-- Is Active -->
+<x-admin::form.control-group>
+    <x-admin::form.control-group.label>
+        @lang('admin::app.settings.resources.index.create.is_active')
+    </x-admin::form.control-group.label>
+
+    <x-admin::form.control-group.control
+        type="switch"
+        name="is_active"
+        value="1"
+        :checked="(bool) old('is_active', $resource->is_active ?? true)"
+        :label="trans('admin::app.settings.resources.index.create.is_active')"
+    />
+
+    <x-admin::form.control-group.error control-name="is_active" />
+</x-admin::form.control-group>

@@ -25,6 +25,7 @@ class ResourceDataGrid extends DataGrid
                 'resources.id',
                 'resources.name',
                 'resources.clinic_id',
+                'resources.is_active',
                 'resource_types.name as resource_type_name',
                 'clinics.name as clinic_name'
             );
@@ -73,6 +74,18 @@ class ResourceDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => false,
             'sortable'   => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'is_active',
+            'type'       => 'boolean',
+            'label'      => trans('admin::app.settings.resources.index.datagrid.is_active'),
+            'searchable' => false,
+            'filterable' => true,
+            'sortable'   => true,
+            'closure'    => function ($row) {
+                return $row->is_active ? '<span class="label-active">'.trans('admin::app.common.active').'</span>' : '<span class="label-inactive">'.trans('admin::app.common.inactive').'</span>';
+            },
         ]);
 
         // Hidden clinic_id column for filtering purposes

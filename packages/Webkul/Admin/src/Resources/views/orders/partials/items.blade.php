@@ -36,16 +36,17 @@
     <script type="text/x-template" id="v-order-item-template">
         <x-admin::table.thead.tr>
             <x-admin::table.td>
-                <x-admin::form.control-group class="!mb-0">
-                    <x-admin::product-lookup
-                        ::src="src"
-                        ::name="`${inputName}[product_id]`"
-                        placeholder="Zoek product"
-                        ::key="(item.id ? item.id : ('new-' + index)) + '-' + (item.product_id ? item.product_id : '')"
-                        ::value="displayValue"
-                        @on-selected="(product) => selectProduct(product)"
-                    />
-                </x-admin::form.control-group>
+                @include('adminc.components.entity-selector')
+                <v-entity-selector
+                    :name="`${inputName}[product_id]`"
+                    label="Product"
+                    placeholder="Zoek product..."
+                    :search-route="src"
+                    :multiple="false"
+                    :items="displayValue ? [displayValue] : []"
+                    @select="(p) => selectProduct(p)"
+                    @update:items="(list) => { const p = (list && list[0]) || null; if(p){ selectProduct(p); } else { item.product_id=null; item.product_name=''; } }"
+                />
             </x-admin::table.td>
             <x-admin::table.td>
                 <x-admin::form.control-group class="!mb-0">

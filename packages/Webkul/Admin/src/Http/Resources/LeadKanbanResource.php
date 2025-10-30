@@ -42,9 +42,10 @@ class LeadKanbanResource extends JsonResource
             'has_multiple_persons' => false,
             'stage'                => $this->stage ? new StageResource($this->stage) : null,
 
-            // Computed attributes - simplified for performance
-            'open_activities_count'=> 0,
-            'unread_emails_count'  => 0,
+            // Computed attributes
+            'open_activities_count'=> (int) ($this->open_activities_count_query ?? $this->openActivitiesCount ?? 0),
+            // include unread emails from direct and nested activity emails when available
+            'unread_emails_count'  => (int) ($this->open_email_count_query ?? $this->resource->getUnreadEmailsCountNestedAttribute() ?? $this->unread_emails_count ?? 0),
             'days_until_due_date'  => null,
             'has_duplicates'       => false,
             'duplicates_count'     => 0,

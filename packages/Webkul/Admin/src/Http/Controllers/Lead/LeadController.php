@@ -2,7 +2,6 @@
 
 namespace Webkul\Admin\Http\Controllers\Lead;
 
-use App\Enums\ContactLabel;
 use App\Enums\LostReason;
 use App\Enums\ActivityStatus;
 use App\Enums\PipelineDefaultKeys;
@@ -36,7 +35,7 @@ use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Models\Person;
 use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Lead\Helpers\MagicAI;
-use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Pipeline;
 use Webkul\Lead\Repositories\LeadRepository;
 use Webkul\Lead\Repositories\PipelineRepository;
 use Webkul\Lead\Repositories\SourceRepository;
@@ -206,7 +205,6 @@ class LeadController extends Controller
                 if ($userIds = bouncer()->getAuthorizedUserIds()) {
                     $query->whereIn('leads.user_id', $userIds);
                 }
-
                 $paginator = $query->select([
                     'leads.id',
                     'leads.first_name',
@@ -220,19 +218,33 @@ class LeadController extends Controller
                     'leads.lead_pipeline_stage_id',
                     'leads.mri_status',
                     'leads.lost_reason',
-                    'leads.has_diagnosis_form'
+                    'leads.has_diagnosis_form',
+                    DB::raw('COALESCE(open_activities.open_activity_count, 0) AS open_activities_count_query'),
+                    DB::raw('COALESCE(open_emails.open_email_count, 0) AS open_email_count_query'),
                 ])->with([
                     'stage:id,code,name,sort_order,is_won,is_lost',
                     // Removed persons eager loading to prevent null pivot issues
                     // Removed pipeline eager loading to prevent N+1 per stage
+                ])->leftJoin(DB::raw('(
+                        SELECT lead_id, COUNT(*) AS open_activity_count
+                        FROM activities
+                        WHERE is_done = 0
+                        GROUP BY lead_id
+                    ) AS open_activities'), 'open_activities.lead_id', '=', 'leads.id')
+                ->leftJoin(DB::raw('(
+                        SELECT lead_id, COUNT(*) AS open_email_count
+                        FROM emails
+                        WHERE is_read = 0
+                        GROUP BY lead_id
+                    ) AS open_emails'), 'open_emails.lead_id', '=', 'leads.id')
+                ->with([
+                    'stage:id,code,name,sort_order,is_won,is_lost',
                 ])->paginate((int) request()->query('limit', 10));
-
                 // Set pipeline relation manually to prevent N+1 queries in getRottenDaysAttribute
-                $pipelineModel = new \Webkul\Lead\Models\Pipeline([
+                $pipelineModel = new Pipeline([
                     'id' => $pipeline->id,
                     'rotten_days' => $pipeline->rotten_days
                 ]);
-
                 foreach ($paginator->items() as $lead) {
                     $lead->setRelation('pipeline', $pipelineModel);
                 }
@@ -612,18 +624,18 @@ class LeadController extends Controller
             Event::dispatch('lead.update.before', $id);
 
             $data = $request->all();
-            
+
             // Handle contact_person_id - if empty but display has value, use display value
             if (isset($data['contact_person_id_display']) && !empty($data['contact_person_id_display'])) {
                 $data['contact_person_id'] = $data['contact_person_id_display'];
                 unset($data['contact_person_id_display']); // Remove the display field
             }
-            
+
             // Handle contact_person_id - convert empty string to null
             if (isset($data['contact_person_id']) && (empty($data['contact_person_id']) || $data['contact_person_id'] === '0')) {
                 $data['contact_person_id'] = null;
             }
-            
+
             // Handle empty date field
             if (array_key_exists('date_of_birth', $data) && ($data['date_of_birth'] === '' || $data['date_of_birth'] === null)) {
                 $data['date_of_birth'] = null;

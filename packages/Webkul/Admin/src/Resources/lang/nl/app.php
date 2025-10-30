@@ -1863,7 +1863,7 @@ return [
 
         'shifts' => [
             'index' => [
-                'title'       => 'Roosters',
+                'title'       => 'Rooster regels',
                 'create-btn'  => 'Rooster toevoegen',
                 'datagrid'    => [
                     'id'        => 'ID',

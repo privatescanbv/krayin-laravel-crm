@@ -165,7 +165,7 @@ class ResourceController extends SimpleEntityController
      * @param  array<int, \App\Models\Shift>  $shifts
      * @return array<int, array{label: string, start: ?string, end: ?string, summary: array<int, array{available: array<int, array{from: string, to: string}>, unavailable: array<int, array{from: string, to: string}>}>}>
      */
-    protected function buildPeriodAwareWeeklySummaries(array $shifts): array
+    protected function buildPeriodAwareWeeklySummaries(array $shifts, int $maxLookingForwardInMonths=18): array
     {
         if (empty($shifts)) {
             return [];
@@ -174,7 +174,7 @@ class ResourceController extends SimpleEntityController
         // Collect timeline boundary events: start at period_start, end at day after period_end
         $events = [];
         $today = now()->startOfDay();
-        $maxLookahead = $today->copy()->addMonths(18); // cap open-ended at 18 months for display
+        $maxLookahead = $today->copy()->addMonths($maxLookingForwardInMonths); // cap open-ended at 18 months for display
 
         foreach ($shifts as $idx => $shift) {
             $start = optional($shift->period_start)->startOfDay() ?? $today;
@@ -250,7 +250,13 @@ class ResourceController extends SimpleEntityController
             $summary = $this->buildMergedWeeklySummary($segmentShifts);
 
             $fromStr = $seg['from'] ? $seg['from']->format('Y-m-d') : null;
-            $toStr = $seg['to'] ? $seg['to']->copy()->subDay()->format('Y-m-d') : null; // convert exclusive end back to inclusive
+            // If the segment's exclusive end equals the exclusive maxLookahead, treat as open-ended (∞)
+            $endsAtCap = $seg['to'] && $seg['to']->eq($maxLookahead);
+            $toStr = null;
+            if ($seg['to'] && ! $endsAtCap) {
+                // Convert exclusive end back to inclusive for display
+                $toStr = $seg['to']->copy()->subDay()->format('Y-m-d');
+            }
             $label = $fromStr && $toStr ? ($fromStr.' — '.$toStr) : ($fromStr.' — ∞');
 
             $result[] = [

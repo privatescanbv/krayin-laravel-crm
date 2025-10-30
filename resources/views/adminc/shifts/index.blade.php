@@ -14,8 +14,11 @@
             </div>
 
             <div class="flex items-center gap-x-2.5">
+                <a href="{{ route('admin.settings.resources.show', $resource->id) }}" class="primary-button">
+                    Rooster bekijken
+                </a>
                 <a href="{{ route('admin.settings.resources.shifts.create', $resource->id) }}" class="primary-button">
-                    @lang('admin::app.settings.shifts.index.create-btn')
+                    Regel Toevoegen
                 </a>
             </div>
         </div>

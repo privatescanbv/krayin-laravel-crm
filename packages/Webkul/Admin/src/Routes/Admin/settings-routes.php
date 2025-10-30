@@ -150,7 +150,7 @@ Route::prefix('settings')->group(function () {
         });
 
         // Resource bekijken (visual schedule)
-        Route::get('{id}/bekijken', [ResourceController::class, 'show'])
+        Route::get('{id}/view', [ResourceController::class, 'show'])
             ->name('admin.settings.resources.show');
     });
 

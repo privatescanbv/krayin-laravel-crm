@@ -43,7 +43,7 @@
                                     <div class="mb-2 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
                                         <div>Periode: {{ $period['label'] }}</div>
                                     </div>
-                                    <x:adminc::resources.partials.weekly-summary summary="$period['summary']"/>
+                                    <x:adminc::resources.partials.weekly-summary :summary="$period['summary']"/>
                                 </div>
                             @endforeach
                         @endif

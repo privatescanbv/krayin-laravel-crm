@@ -16,19 +16,16 @@
             $daySummary = $summary[$day] ?? ['available' => []];
             $available = $daySummary['available'] ?? [];
         @endphp
-        <div class="py-3 text-sm">
-            <div class="mb-2 font-semibold">{{ $dayNames[$day] }}</div>
-            <div class="mb-1 flex flex-wrap items-center gap-2">
-                <span class="rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/40 dark:text-green-300">Beschikbaar</span>
-                @if (count($available))
+        @if (count($available))
+            <div class="py-3 text-sm">
+                <div class="mb-2 font-semibold">{{ $dayNames[$day] }}</div>
+                <div class="mb-1 flex flex-wrap items-center gap-2">
+                    <span class="rounded bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900/40 dark:text-green-300">Beschikbaar</span>
                     @foreach ($available as $range)
                         <span class="rounded border border-green-300 px-2 py-0.5 text-xs text-green-800 dark:border-green-700 dark:text-green-300">{{ $range['from'] }}–{{ $range['to'] }}</span>
                     @endforeach
-                @else
-                    <span class="text-xs text-gray-500">—</span>
-                @endif
+                </div>
             </div>
-
-        </div>
+        @endif
     @endfor
 </div>

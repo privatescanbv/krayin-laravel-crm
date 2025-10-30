@@ -2,7 +2,8 @@
     @verbatim
         <script type="text/x-template" id="v-entity-selector-template">
             <div class="w-full space-y-3">
-                <label class="block font-semibold mb-1">{{ label || 'Geselecteerde items' }}</label>
+
+                <label v-if="label" class="block font-semibold mb-1">{{ label }}</label>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                     <!-- Selected items -->

@@ -10,22 +10,15 @@ use App\Models\SalesLead;
 use App\Models\Shift;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Tests\TestCase;
 
-class AvailabilityExpansionTest extends TestCase
-{
-    use RefreshDatabase;
+uses(RefreshDatabase::class);
 
-    protected function setUp(): void
-    {
-        parent::setUp();
+beforeEach(function () {
+    // Create a default sales lead for all tests
+    $this->salesLead = SalesLead::factory()->create();
+});
 
-        // Create a default sales lead for all tests
-        $this->salesLead = SalesLead::factory()->create();
-    }
-
-    public function test_weekday_map_blocks_expand_to_availability(): void
-    {
+test('weekday map blocks expand to availability', function (): void {
         $this->withoutMiddleware();
         // Arrange: resource, order, order item, and shift with weekday map for Mon/Tue/Wed 08:00-17:00
         $order = Order::factory()->create(['sales_lead_id' => $this->salesLead->id]);
@@ -82,10 +75,9 @@ class AvailabilityExpansionTest extends TestCase
                    str_contains($block['to'], 'T17:00');
         });
         $this->assertTrue($hasBlock, 'Expected 08:00-17:00 available block in blocks');
-    }
+});
 
-    public function test_availability_with_occupancy_subtracts_booked_times(): void
-    {
+test('availability with occupancy subtracts booked times', function (): void {
         $this->withoutMiddleware();
         // Arrange: resource with shift and existing booking
         $order = Order::factory()->create(['sales_lead_id' => $this->salesLead->id]);
@@ -169,10 +161,9 @@ class AvailabilityExpansionTest extends TestCase
 
         $this->assertTrue($hasEarlyBlock, 'Should have 08:00-10:00 availability block');
         $this->assertTrue($hasLateBlock, 'Should have 12:00-17:00 availability block');
-    }
+});
 
-    public function test_subtract_intervals_function(): void
-    {
+test('subtract intervals function', function (): void {
         // Test the subtractIntervals logic directly
         $availability = [
             ['from' => '2025-10-06T08:00:00+02:00', 'to' => '2025-10-06T17:00:00+02:00'],
@@ -235,10 +226,9 @@ class AvailabilityExpansionTest extends TestCase
         $this->assertStringContainsString('T10:00', $result[0]['to']);
         $this->assertStringContainsString('T12:00', $result[1]['from']);
         $this->assertStringContainsString('T17:00', $result[1]['to']);
-    }
+});
 
-    public function test_multiple_resources_with_different_shifts(): void
-    {
+test('multiple resources with different shifts', function (): void {
         $this->withoutMiddleware();
         // Arrange: 2 resources with different shifts
         $order = Order::factory()->create(['sales_lead_id' => $this->salesLead->id]);
@@ -317,10 +307,9 @@ class AvailabilityExpansionTest extends TestCase
                    str_contains($block['to'], 'T18:00');
         });
         $this->assertTrue($hasWednesdayBlock, 'Resource 2 should have Wednesday 09:00-18:00 available block');
-    }
+});
 
-    public function test_resources_with_infinite_duration_shifts_are_shown_in_monitor(): void
-    {
+test('resources with infinite duration shifts are shown in monitor', function (): void {
         $this->withoutMiddleware();
 
         // Arrange: Create a resource with an infinite duration shift (no end date)
@@ -399,10 +388,9 @@ class AvailabilityExpansionTest extends TestCase
 
         // Verify that the resource has infinite duration
         $this->assertTrue($resource->hasInfiniteDuration(), 'Resource should have infinite duration');
-    }
+});
 
-    public function test_resources_with_finite_duration_shifts_are_shown_when_active(): void
-    {
+test('resources with finite duration shifts are shown when active', function (): void {
         $this->withoutMiddleware();
 
         // Arrange: Create a resource with a finite duration shift
@@ -468,10 +456,9 @@ class AvailabilityExpansionTest extends TestCase
 
         // Verify the resource does not have infinite duration
         $this->assertFalse($resource->hasInfiniteDuration(), 'Resource should not have infinite duration');
-    }
+});
 
-    public function test_resources_with_expired_shifts_are_not_shown(): void
-    {
+test('resources with expired shifts are not shown', function (): void {
         $this->withoutMiddleware();
 
         // Arrange: Create a resource with an expired shift
@@ -511,5 +498,4 @@ class AvailabilityExpansionTest extends TestCase
         $this->assertArrayNotHasKey($resource->id, $data['blocks'], 'Expired resource should NOT have blocks');
 
         // Note: Expired resource should not be shown in API response (tested above)
-    }
-}
+});

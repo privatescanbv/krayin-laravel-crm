@@ -2,10 +2,15 @@
 
 namespace Webkul\Admin\Http\Controllers\Settings;
 
+use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use App\Models\Department as DepartmentModel;
 use Illuminate\View\View;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Admin\DataGrids\Settings\UserDataGrid;
@@ -14,6 +19,9 @@ use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\MassUpdateRequest;
 use Webkul\Admin\Http\Resources\UserResource;
 use Webkul\Admin\Notifications\User\Create as UserCreatedNotification;
+use Webkul\Lead\Models\Channel;
+use Webkul\Lead\Models\Source;
+use Webkul\Lead\Models\Type as LeadType;
 use Webkul\User\Repositories\GroupRepository;
 use Webkul\User\Repositories\RoleRepository;
 use Webkul\User\Repositories\UserRepository;
@@ -53,22 +61,25 @@ class UserController extends Controller
      */
     public function store(): View|JsonResponse
     {
-        $this->validate(request(), [
-            'email'            => 'required|email|unique:users,email',
-            'name'             => 'required',
-            'password'         => 'nullable',
-            'confirm_password' => 'nullable|required_with:password|same:password',
-            'role_id'          => 'required',
-            'signature'        => 'nullable|string|max:2000',
-        ]);
+        try {
+             $this->validate(request(), $this->getRequestValidationRules());
+        } catch (ValidationException $e) {
+            // For web requests, redirect back with errors so tests can assert 302 + session errors
+            if (! request()->expectsJson() && ! request()->ajax()) {
+                return redirect()->back()->withErrors($e->validator)->withInput();
+            }
+            throw $e;
+        }
 
         $data = request()->all();
+        // Normalize composite name field expected by backend
+        $data['name'] = trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? ''));
 
         if (isset($data['password']) && $data['password']) {
             $data['password'] = bcrypt($data['password']);
         }
 
-        $data['status'] = $data['status'] ? 1 : 0;
+        $data['status'] = array_key_exists('status', $data) ? $data['status'] : 0;
 
         Event::dispatch('settings.user.create.before');
 
@@ -78,7 +89,14 @@ class UserController extends Controller
 
         $admin->save();
 
-        $admin->groups()->sync(request('groups') ?? []);
+        // Normalize groups from payload (supports array of ids or array of objects with id)
+        $groupInput = request()->input('groups', []);
+        $groupIds = collect(is_array($groupInput) ? $groupInput : [])
+            ->map(function ($g) { return is_array($g) ? ($g['id'] ?? null) : $g; })
+            ->filter()
+            ->values()
+            ->all();
+        $admin->groups()->sync($groupIds);
 
         // Save user default values if provided
         $settings = request('user_default_values', request('user_settings', []));
@@ -137,20 +155,23 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(int $id): JsonResponse
+    public function update(int $id): View|JsonResponse|RedirectResponse
     {
-        $this->validate(request(), [
-            'email'            => 'required|email|unique:users,email,'.$id,
-            'name'             => 'required',
-            'password'         => 'nullable',
-            'confirm_password' => 'nullable|required_with:password|same:password',
-            'role_id'          => 'required',
-            'signature'        => 'nullable|string|max:2000',
-        ]);
+        try {
+            $this->validate(request(), $this->getRequestValidationRules($id));
+        } catch (ValidationException $e) {
+            // For web requests, redirect back with errors so tests can assert 302 + session errors
+            if (! request()->expectsJson() && ! request()->ajax()) {
+                return redirect()->back()->withErrors($e->validator)->withInput();
+            }
+            throw $e;
+        }
 
         $data = request()->all();
+        // Normalize composite name field expected by backend
+        $data['name'] = trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? ''));
 
-        if (! $data['password']) {
+        if (!array_key_exists('password', $data)) {
             unset($data['password'], $data['confirm_password']);
         } else {
             $data['password'] = bcrypt($data['password']);
@@ -168,7 +189,14 @@ class UserController extends Controller
 
         $admin->save();
 
-        $admin->groups()->sync(request()->input('groups') ?? []);
+        // Normalize groups from payload (supports array of ids or array of objects with id)
+        $groupInput = request()->input('groups', []);
+        $groupIds = collect(is_array($groupInput) ? $groupInput : [])
+            ->map(function ($g) { return is_array($g) ? ($g['id'] ?? null) : $g; })
+            ->filter()
+            ->values()
+            ->all();
+        $admin->groups()->sync($groupIds);
 
         // Save user default values if provided
         $settings = request('user_default_values', request('user_settings', []));
@@ -230,7 +258,7 @@ class UserController extends Controller
             return new JsonResponse([
                 'message' => trans('admin::app.settings.users.index.delete-success'),
             ], 200);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
         }
 
         return new JsonResponse([
@@ -306,5 +334,42 @@ class UserController extends Controller
         return response()->json([
             'message' => trans('admin::app.settings.users.index.mass-delete-success'),
         ]);
+    }
+
+    private function getRequestValidationRules(?int $userId = null): array {
+
+        return [
+            'email'            => 'required|email|unique:users,email,'.$userId ?? '',
+            'first_name'       => 'required',
+            'last_name'        => 'required',
+            'password'         => 'nullable',
+            'confirm_password' => 'nullable|required_with:password|same:password',
+            'role_id'          => 'required',
+            'signature'        => 'nullable|string|max:2000',
+            'groups'           => 'nullable|array',
+            'groups.*'         => 'nullable|integer|exists:groups,id',
+            'groups.*.id'      => 'nullable|integer|exists:groups,id',
+            // Support both nested and dotted key forms for department default
+            'user_default_values.lead\\.department_id' => [
+                'nullable',
+                'integer',
+                Rule::in([DepartmentModel::findHerniaId(), DepartmentModel::findPrivateScanId()]),
+            ],
+            'user_default_values.lead\\.type_id' =>  [
+                'nullable',
+                'integer',
+                Rule::exists(LeadType::class, 'id'),
+            ],
+            'user_default_values.lead\\.lead_channel_id' =>  [
+                'nullable',
+                'integer',
+                Rule::exists(Channel::class, 'id'),
+            ],
+            'user_default_values.lead\\.lead_source_id' =>  [
+                'nullable',
+                'integer',
+                Rule::exists(Source::class, 'id'),
+            ],
+        ];
     }
 }

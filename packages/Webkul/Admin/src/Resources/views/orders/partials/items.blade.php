@@ -39,11 +39,11 @@
                 @include('adminc.components.entity-selector')
                 <v-entity-selector
                     :name="`${inputName}[product_id]`"
-                    label="Product"
+                    label=""
                     placeholder="Zoek product..."
                     :search-route="src"
                     :multiple="false"
-                    :items="displayValue ? [displayValue] : []"
+                    :items="displayValue && displayValue.id ? [displayValue] : []"
                     @select="(p) => selectProduct(p)"
                     @update:items="(list) => { const p = (list && list[0]) || null; if(p){ selectProduct(p); } else { item.product_id=null; item.product_name=''; } }"
                 />
@@ -161,6 +161,11 @@
         app.component('v-order-item', {
             template: '#v-order-item-template',
             props: ['index', 'item', 'errors', 'persons'],
+            mounted() {
+                if (this.item.product_id && !this.displayValue.name) {
+                    this.fetchProductName();
+                }
+            },
             computed: {
                 inputName() {
                     return this.item.id ? `items[${this.item.id}]` : `items[item_${this.index}]`;
@@ -169,8 +174,11 @@
                     return "{{ route('admin.products.search') }}";
                 },
                 displayValue() {
-                    const id = this.item.product_id || this.item.id || null;
-                    const name = this.item.product_name || this.item.name || '';
+                    const id = this.item.product_id || null;
+                    const name = (this.item.product && this.item.product.name)
+                        || this.item.product_name
+                        || this.item.name
+                        || '';
                     return id ? { id, name } : {};
                 },
                 canPlan() {
@@ -184,6 +192,19 @@
                 },
             },
             methods: {
+                async fetchProductName() {
+                    try {
+                        const response = await axios.get(this.src, { params: { query: String(this.item.product_id) } });
+                        const list = (response && response.data && (response.data.data || response.data)) || [];
+                        const match = (Array.isArray(list) ? list : []).find(p => (p.id ?? p.value) == this.item.product_id);
+                        const name = match ? (match.name ?? match.label ?? match.text ?? '') : '';
+                        if (name) {
+                            this.item.product_name = name;
+                        }
+                    } catch (e) {
+                        try { console.warn('[v-order-item] fetchProductName failed', e); } catch (e2) {}
+                    }
+                },
                 selectProduct(result) {
                     try { console.log('[v-order-item] selectProduct', result); } catch (e) {}
                     this.item.product_id = result.id;

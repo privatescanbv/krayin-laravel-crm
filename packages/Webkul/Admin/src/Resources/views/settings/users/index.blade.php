@@ -510,6 +510,7 @@
                                             :label="'lead.department_id'"
                                             :placeholder="'2'"
                                         />
+                                        <x-admin::form.control-group.error control-name="user_default_values.lead.department_id" />
                                     </x-admin::form.control-group>
 
                                     <x-admin::form.control-group>
@@ -524,6 +525,7 @@
                                             :label="'lead.lead_channel_id'"
                                             :placeholder="'1'"
                                         />
+                                        <x-admin::form.control-group.error control-name="user_default_values.lead.lead_channel_id" />
                                     </x-admin::form.control-group>
 
                                     <x-admin::form.control-group>
@@ -538,6 +540,7 @@
                                             :label="'lead.lead_source_id'"
                                             :placeholder="'6'"
                                         />
+                                        <x-admin::form.control-group.error control-name="user_default_values.lead.lead_source_id" />
                                     </x-admin::form.control-group>
 
                                     <x-admin::form.control-group>
@@ -552,6 +555,7 @@
                                             :label="'lead.type_id'"
                                             :placeholder="'2'"
                                         />
+                                        <x-admin::form.control-group.error control-name="user_default_values.lead.type_id" />
                                     </x-admin::form.control-group>
                                 </div>
                             </div>
@@ -647,6 +651,7 @@
 
                             if (error.response.status === 422) {
                                 setErrors(error.response.data.errors);
+                                this.$emitter.emit('add-flash', { type: 'error', message: (error.response.data && error.response.data.message) ? error.response.data.message : 'Validatiefouten in het formulier.' });
                             }
                         });
                     },

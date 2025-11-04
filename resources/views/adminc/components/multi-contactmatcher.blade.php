@@ -198,6 +198,9 @@
              },
 
             mounted() {
+                // Expose for external integrations (e.g., edit lead auto-suggest linking)
+                window.multiContactMatcher = this;
+
                 // Calculate match scores for existing persons
                 this.calculateExistingMatchScores();
             },

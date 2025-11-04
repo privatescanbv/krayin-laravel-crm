@@ -466,28 +466,7 @@
                             <div class="w-1/3 max-md:w-full">
                                 <div class="sticky top-4">
                                     <div class="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900 p-4" v-if="suggestions.length > 0">
-                                        <div class="flex items-center justify-between mb-2">
-                                            <p class="text-sm font-semibold text-blue-800 dark:text-blue-100">Mogelijke matches gevonden</p>
-                                            <button type="button" class="text-xs text-blue-700 underline" @click="clearSuggestions">verberg</button>
-                                        </div>
-                                        <ul class="space-y-2 max-h-[420px] overflow-auto pr-1">
-                                            <li v-for="s in suggestions" :key="'sug-'+s.id" class="flex items-center justify-between gap-3">
-                                                <div class="min-w-0">
-                                                    <div class="text-sm font-medium dark:text-white truncate">@{{ s.name }}</div>
-                                                    <div class="text-xs text-gray-700 dark:text-gray-200 truncate" v-if="s.date_of_birth">@{{ formatDate(s.date_of_birth) }}</div>
-                                                    <div class="text-xs text-gray-600 dark:text-gray-300 truncate">
-                                                        <span v-if="(s.emails||[]).length">@{{ (s.emails[0]||{}).value }}</span>
-                                                        <span v-if="(s.phones||[]).length && (s.emails||[]).length"> · </span>
-                                                        <span v-if="(s.phones||[]).length">@{{ (s.phones[0]||{}).value }}</span>
-                                                    </div>
-                                                </div>
-                                                <div class="flex items-center gap-3">
-                                                    <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 dark:text-gray-200">@{{ Math.round(s._client_match || 0) }}% match</span>
-                                                    <a :href="`/admin/contacts/persons/view/${s.id}`" target="_blank" rel="noopener" class="text-xs text-blue-700 underline">Bekijken</a>
-                                                    <button type="button" class="secondary-button" @click="selectSuggestion(s)">Koppelen</button>
-                                                </div>
-                                            </li>
-                                        </ul>
+                                        <x-adminc::components.person-suggestions-panel :button-handler="'selectSuggestion'" :button-text="'Koppelen'" />
                                     </div>
                                 </div>
                             </div>
@@ -797,7 +776,7 @@
                             const scored = (list || []).map(p => this.calculateMatchScore(p, firstName, lastName, email, phone))
                                 .filter(p => p._client_match > 0)
                                 .sort((a,b) => (b._client_match||0) - (a._client_match||0))
-                                .slice(0, 5);
+                                .slice(0, 10);
 
                             this.suggestions = scored;
                         } catch (e) {

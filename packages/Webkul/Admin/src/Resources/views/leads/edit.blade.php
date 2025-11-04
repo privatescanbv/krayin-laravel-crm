@@ -178,6 +178,11 @@
                             </p>
                         </div>
 
+                        <!-- Auto-suggest panel: only when no persons linked -->
+                        <div v-if="!hasPersons && suggestions.length > 0" class="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900 p-4">
+                            <x-adminc::components.person-suggestions-panel :button-handler="'linkSuggestion'" :button-text="'Koppelen'" />
+                        </div>
+
                         <x-adminc::components.multi-contactmatcher
                             :lead="$lead"
                             :persons="$lead->persons"
@@ -323,6 +328,8 @@
                             title: "{{ addslashes($lead->name) }}"
                             // Simplified lead data to avoid JSON parsing errors
                         },
+                        hasPersons: {{ $lead->persons->count() > 0 ? 'true' : 'false' }},
+                        suggestions: [],
 
                         {{--products: @json($lead->products),--}}
 
@@ -338,7 +345,57 @@
                     };
                 },
 
+                mounted() {
+                    // Auto-load suggestions only if there are no linked persons
+                    if (!this.hasPersons) {
+                        this.fetchSuggestions();
+                    }
+                },
+
                 methods: {
+                    formatDate(value) {
+                        if (!value) return '';
+                        try {
+                            const d = new Date(value);
+                            if (!isNaN(d.getTime())) {
+                                const day = String(d.getDate()).padStart(2, '0');
+                                const month = String(d.getMonth() + 1).padStart(2, '0');
+                                const year = d.getFullYear();
+                                return `${day}-${month}-${year}`;
+                            }
+                        } catch (e) {}
+                        const raw = String(value);
+                        if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+                            const [y,m,dd] = raw.slice(0,10).split('-');
+                            return `${dd}-${m}-${y}`;
+                        }
+                        return raw;
+                    },
+                    async fetchSuggestions() {
+                        try {
+                            const resp = await axios.get('/admin/contacts/persons/search', { params: { lead_id: this.lead.id } });
+                            const list = (resp && resp.data && (resp.data.data || resp.data)) || [];
+                            // Sort by server score if present, else by client score, then limit to 10
+                            const sorted = list.sort((a,b) => ((b.match_score_percentage||b.match_score||0) - (a.match_score_percentage||a.match_score||0)));
+                            this.suggestions = sorted.slice(0, 10);
+                        } catch (e) {
+                            this.suggestions = [];
+                        }
+                    },
+                    linkSuggestion(person) {
+                        // Voeg toe aan de multi-contactmatcher als gekoppelde persoon
+                        try {
+                            if (window.multiContactMatcher && typeof window.multiContactMatcher.addPerson === 'function') {
+                                window.multiContactMatcher.addPerson(person);
+                                this.hasPersons = true;
+                                this.suggestions = [];
+                                return;
+                            }
+                        } catch (e) { /* fallback below */ }
+
+                        // Fallback: als component niet beschikbaar is, ga naar sync
+                        window.location.href = `/admin/leads/sync-lead-to-person/${this.lead.id}/${person.id}`;
+                    },
                     /**
                      * Scroll to the section.
                      *

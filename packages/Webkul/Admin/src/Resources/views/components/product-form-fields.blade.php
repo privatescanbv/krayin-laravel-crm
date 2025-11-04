@@ -205,9 +205,6 @@
 {!! view_render_event('admin.products.' . ($product ? 'edit' : 'create') . '.attributes.after', ['product' => $product]) !!}
 
 <x-admin::form.control-group>
-    <x-admin::form.control-group.label>
-        Partner products
-    </x-admin::form.control-group.label>
 
     @include('adminc.components.entity-selector')
 
@@ -218,7 +215,7 @@
         search-route="{{ route('admin.partner_products.search') }}"
         :can-add-new="true"
         :multiple="true"
-        :items="$selectedPartnerProducts"
+        :items='@json($selectedPartnerProducts ?? [])'
     />
     <x-admin::form.control-group.error control-name="partner_products"/>
 </x-admin::form.control-group>

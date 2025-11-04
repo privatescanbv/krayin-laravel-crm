@@ -5,6 +5,7 @@ namespace Webkul\Product\Repositories;
 use App\Models\PartnerProduct;
 use App\Repositories\PartnerProductRepository;
 use Illuminate\Container\Container;
+use Illuminate\Support\Facades\Log;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Core\Eloquent\Repository;
@@ -144,21 +145,34 @@ class ProductRepository extends Repository
 
     /**
      * Get formatted partner products with clinic names for display.
-     *
-     * @param  \Webkul\Product\Contracts\Product  $product
-     * @return array
      */
-    public function getFormattedPartnerProducts($product): array
+    public function getFormattedPartnerProducts(Product $product): array
     {
-
-        return $product->partnerProducts()
+        // Explicitly query partner products that belong to this product and are not soft-deleted
+        // Use explicit casting to ensure type matching (product_id is unsignedInteger, product->id might be unsignedBigInteger)
+        $partnerProducts = PartnerProduct::where('product_id', (int) $product->id)
+            ->whereNull('deleted_at')
             ->with('clinics:id,name')
-            ->get()
+            ->get();
+
+        return $partnerProducts
             ->map(function ($partnerProduct) {
-                return [
-                    'id' => $partnerProduct->id,
-                    'name' => $this->partnerProductRepository->formatDisplayName($partnerProduct),
-                ];
+                try {
+                    $displayName = $this->partnerProductRepository->formatDisplayName($partnerProduct);
+                    return [
+                        'id' => (int) $partnerProduct->id,
+                        'name' => $displayName,
+                    ];
+                } catch (\Exception $e) {
+                    Log::error('Error formatting partner product display name', [
+                        'partner_product_id' => $partnerProduct->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                    return [
+                        'id' => (int) $partnerProduct->id,
+                        'name' => $partnerProduct->name ?? 'Unknown',
+                    ];
+                }
             })
             ->toArray();
     }

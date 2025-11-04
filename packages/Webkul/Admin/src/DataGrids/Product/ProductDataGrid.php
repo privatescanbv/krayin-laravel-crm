@@ -37,7 +37,7 @@ class ProductDataGrid extends DataGrid
             ->groupBy('products.id');
 
         $this->addFilter('id', 'products.id');
-        $this->addFilter('tag_name', 'tags.name');
+//        $this->addFilter('tag_name', 'tags.name');
         $this->addFilter('group_name', 'product_groups.name');
         $this->addFilter('active', 'products.active');
 
@@ -109,24 +109,6 @@ class ProductDataGrid extends DataGrid
             'closure'    => function ($row) {
                 return Currency::formatMoney($row->currency, (float) $row->price);
             },
-        ]);
-        $this->addColumn([
-            'index'              => 'tag_name',
-            'columnName' => 'products.tag_name',
-            'label'              => trans('admin::app.products.index.datagrid.tag-name'),
-            'type'               => 'string',
-            'searchable'         => false,
-            'sortable'           => true,
-            'filterable'         => true,
-            'filterable_type'    => 'searchable_dropdown',
-            'closure'            => fn ($row) => $row->tag_name ?? '--',
-            'filterable_options' => [
-                'repository' => TagRepository::class,
-                'column'     => [
-                    'label' => 'name',
-                    'value' => 'name',
-                ],
-            ],
         ]);
 
         $this->addColumn([

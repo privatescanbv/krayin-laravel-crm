@@ -44,8 +44,8 @@ class ImportUsersFromSugarCRM extends AbstractSugarCRMImport
         $connection = $this->option('connection');
         $table = $this->option('table');
         $limit = (int) $this->option('limit');
-        $userIds = $this->option('user-ids');
-        $dryRun = $this->option('dry-run');
+        $userIds = (array) $this->option('user-ids');
+        $dryRun = (bool) $this->option('dry-run');
 
         $this->info('Starting user import from SugarCRM...');
         $this->info("Connection: {$connection}");

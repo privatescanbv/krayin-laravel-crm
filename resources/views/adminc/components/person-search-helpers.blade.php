@@ -5,11 +5,11 @@
         window.adminc = window.adminc || {};
 
         if (!window.adminc.fetchPersons) {
-            window.adminc.fetchPersons = async function(query, opts = {}) {
+            window.adminc.fetchPersons = async function(query, opts = {}, dominantPhoneBehavior = true) {
                 let params = {};
 
                 const digitsOnly = String(query || '').replace(/\D+/g, '');
-                if (digitsOnly.length >= 6) {
+                if (dominantPhoneBehavior && digitsOnly.length >= 6) {
                     params.search = `phone:${digitsOnly};`;
                 } else {
                     params.search = query;

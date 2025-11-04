@@ -613,20 +613,26 @@
                     updateFormDataFromPersons() {
                         // If we have at least one person selected, use the first person's data
                         if (this.persons.length > 0) {
-                            const firstPerson = this.persons[0];
+                            const firstPerson = this.persons[0] || {};
 
-                            // Always populate first_name and last_name from the selected person
-                            // This ensures the lead data matches the selected person
-                            if (firstPerson.first_name || firstPerson.last_name) {
-                                this.formData.first_name = firstPerson.first_name || '';
-                                this.formData.last_name = firstPerson.last_name || '';
-                            } else if (firstPerson.name && (!this.formData.first_name || !this.formData.last_name)) {
-                                const parts = String(firstPerson.name).trim().split(/\s+/);
-                                this.formData.first_name = this.formData.first_name || (parts[0] || '');
-                                this.formData.last_name = this.formData.last_name || (parts.slice(1).join(' ') || '');
+                            // Only populate fields that are empty in the form
+                            if (!this.formData.first_name || String(this.formData.first_name).trim() === '') {
+                                if (firstPerson.first_name) {
+                                    this.formData.first_name = firstPerson.first_name;
+                                } else if (firstPerson.name) {
+                                    const parts = String(firstPerson.name).trim().split(/\s+/);
+                                    this.formData.first_name = parts[0] || '';
+                                }
+                            }
+                            if (!this.formData.last_name || String(this.formData.last_name).trim() === '') {
+                                if (firstPerson.last_name) {
+                                    this.formData.last_name = firstPerson.last_name;
+                                } else if (firstPerson.name) {
+                                    const parts = String(firstPerson.name).trim().split(/\s+/);
+                                    this.formData.last_name = parts.slice(1).join(' ') || '';
+                                }
                             }
 
-                            // Also populate other personal fields if available and form fields are empty
                             if (!this.formData.initials && firstPerson.initials) {
                                 this.formData.initials = firstPerson.initials;
                             }
@@ -636,15 +642,25 @@
                             if (!this.formData.married_name && firstPerson.married_name) {
                                 this.formData.married_name = firstPerson.married_name;
                             }
+                            if (!this.formData.salutation && (firstPerson.salutation && (firstPerson.salutation.value || firstPerson.salutation))) {
+                                this.formData.salutation = firstPerson.salutation.value || firstPerson.salutation || '';
+                            }
+                            if (!this.formData.gender && (firstPerson.gender && (firstPerson.gender.value || firstPerson.gender))) {
+                                this.formData.gender = firstPerson.gender.value || firstPerson.gender || '';
+                            }
+                            if (!this.formData.date_of_birth && firstPerson.date_of_birth) {
+                                // normalized later by syncPersonalFieldsToForm
+                                this.formData.date_of_birth = firstPerson.date_of_birth;
+                            }
 
                             // Also populate email and phone if available and form fields are empty
                             if (!this.formData.email && firstPerson.emails && firstPerson.emails.length > 0) {
                                 this.formData.email = firstPerson.emails[0].value || '';
                             }
-
                             if (!this.formData.phone && firstPerson.phones && firstPerson.phones.length > 0) {
                                 this.formData.phone = firstPerson.phones[0].value || '';
                             }
+
                             this.updateSelectedPersonsSummary();
                             this.$nextTick(() => this.syncPersonalFieldsToForm());
                         } else {
@@ -696,7 +712,7 @@
                         });
                     },
 
-                    // Populate first email/phone inputs in the form from the first selected person
+                    // Populate first email/phone inputs in the form from the first selected person (only if empty)
                     populateContactsFromFirstPerson() {
                         if (!this.$refs.leadForm) return;
                         const first = (this.persons && this.persons[0]) || {};
@@ -707,12 +723,12 @@
                             const emailLabelInputs = this.$refs.leadForm.querySelectorAll('input[name^="emails"][name$="[label]"]');
                             if (first.emails && Array.isArray(first.emails) && first.emails.length > 0) {
                                 const primaryEmail = first.emails[0];
-                                if (emailValueInputs[0]) {
+                                if (emailValueInputs[0] && (!emailValueInputs[0].value || emailValueInputs[0].value.trim() === '')) {
                                     emailValueInputs[0].value = primaryEmail.value || '';
                                     emailValueInputs[0].dispatchEvent(new Event('input', {bubbles: true}));
                                     emailValueInputs[0].dispatchEvent(new Event('change', {bubbles: true}));
                                 }
-                                if (emailLabelInputs[0]) {
+                                if (emailLabelInputs[0] && (!emailLabelInputs[0].value || emailLabelInputs[0].value.trim() === '')) {
                                     emailLabelInputs[0].value = (primaryEmail.label || 'eigen');
                                     emailLabelInputs[0].dispatchEvent(new Event('input', {bubbles: true}));
                                     emailLabelInputs[0].dispatchEvent(new Event('change', {bubbles: true}));
@@ -727,12 +743,12 @@
                             const phoneLabelInputs = this.$refs.leadForm.querySelectorAll('input[name^="phones"][name$="[label]"]');
                             if (first.phones && Array.isArray(first.phones) && first.phones.length > 0) {
                                 const primaryPhone = first.phones[0];
-                                if (phoneValueInputs[0]) {
+                                if (phoneValueInputs[0] && (!phoneValueInputs[0].value || phoneValueInputs[0].value.trim() === '')) {
                                     phoneValueInputs[0].value = primaryPhone.value || '';
                                     phoneValueInputs[0].dispatchEvent(new Event('input', {bubbles: true}));
                                     phoneValueInputs[0].dispatchEvent(new Event('change', {bubbles: true}));
                                 }
-                                if (phoneLabelInputs[0]) {
+                                if (phoneLabelInputs[0] && (!phoneLabelInputs[0].value || phoneLabelInputs[0].value.trim() === '')) {
                                     phoneLabelInputs[0].value = (primaryPhone.label || 'eigen');
                                     phoneLabelInputs[0].dispatchEvent(new Event('input', {bubbles: true}));
                                     phoneLabelInputs[0].dispatchEvent(new Event('change', {bubbles: true}));
@@ -771,7 +787,7 @@
                             if (!composed) { this.suggestions = []; return; }
 
                             const fetcher = (window.adminc && typeof window.adminc.fetchPersons === 'function') ? window.adminc.fetchPersons : null;
-                            const list = fetcher ? await fetcher(composed) : [];
+                            const list = fetcher ? await fetcher(composed, {}, false) : [];
 
                             const scored = (list || []).map(p => this.calculateMatchScore(p, firstName, lastName, email, phone))
                                 .filter(p => p._client_match > 0)
@@ -901,7 +917,7 @@
                         // Single-step: only guard for form existence
                         if (!this.$refs.leadForm) { return; }
 
-                        // Populate address form fields by setting their values directly
+                        // Populate address form fields by setting their values directly (only when empty)
                         const addressFields = {
                             'address[postal_code]': address.postal_code || '',
                             'address[house_number]': address.house_number || '',
@@ -915,7 +931,7 @@
                         // Set values in the actual form inputs
                         Object.keys(addressFields).forEach(fieldName => {
                             const input = this.$refs.leadForm.querySelector(`[name="${fieldName}"]`);
-                            if (input && addressFields[fieldName]) {
+                            if (input && (!input.value || input.value.trim() === '') && addressFields[fieldName]) {
                                 input.value = addressFields[fieldName];
                                 // Trigger change event to ensure any listeners are notified
                                 input.dispatchEvent(new Event('change', {bubbles: true}));

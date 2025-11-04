@@ -12,7 +12,7 @@
                 if (digitsOnly.length >= 6) {
                     params.search = `phone:${digitsOnly};`;
                 } else {
-                    params.query = query;
+                    params.search = query;
                 }
 
                 if (opts.leadId) {

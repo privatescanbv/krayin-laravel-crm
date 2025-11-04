@@ -28,28 +28,35 @@ namespace UiTests.Steps
         [When("I go to step 2 without selecting a person")]
         public async Task WhenIGoToStep2WithoutSelectingAPerson()
         {
-            await _driver.Page.GetByRole(AriaRole.Button, new() { Name = "Verder naar stap 2" }).ClickAsync();
-            await Assertions.Expect(_driver.Page.GetByText("Stap 2: Lead gegevens")).ToBeVisibleAsync();
+            // Single-step form: just ensure the form is visible
+            await Assertions.Expect(_driver.Page.GetByText("Lead gegevens")).ToBeVisibleAsync();
         }
 
         [When(@"I select the first person suggestion for query ""(.*)""")]
         public async Task WhenISelectFirstPersonForQuery(string query)
         {
-            // Use the multi-contact matcher search input
-            var input = _driver.Page.GetByPlaceholder("Zoek op naam, e-mail, telefoon...");
-            await input.FillAsync(query);
+            // New flow: trigger suggestions by filling a field and blurring
+            var firstName = _driver.Page.Locator("input[name=first_name]");
+            if (await firstName.CountAsync() > 0)
+            {
+                await firstName.FillAsync(query);
+                await firstName.BlurAsync();
+            }
 
-            // Wait for the suggestions list to render and click the first suggestion
-            var firstSuggestion = _driver.Page.Locator("ul li").First;
-            await firstSuggestion.WaitForAsync(new() { State = WaitForSelectorState.Visible });
-            await firstSuggestion.ClickAsync();
+            // Wait for right-hand suggestions panel
+            var suggestionsHeader = _driver.Page.GetByText("Mogelijke matches gevonden").First;
+            await suggestionsHeader.WaitForAsync(new() { State = WaitForSelectorState.Visible });
+
+            // Click first Koppelen
+            var firstLinkButton = _driver.Page.Locator("button:has-text('Koppelen')").First;
+            await firstLinkButton.ClickAsync();
         }
 
         [When("I go to step 2")]
         public async Task WhenIGoToStep2()
         {
-            await _driver.Page.GetByRole(AriaRole.Button, new() { Name = "Verder naar stap 2" }).ClickAsync();
-            await Assertions.Expect(_driver.Page.GetByText("Stap 2: Lead gegevens")).ToBeVisibleAsync();
+            // Single-step: form should already be present
+            await Assertions.Expect(_driver.Page.GetByText("Lead gegevens")).ToBeVisibleAsync();
         }
 
         [When("I fill the required lead fields")]

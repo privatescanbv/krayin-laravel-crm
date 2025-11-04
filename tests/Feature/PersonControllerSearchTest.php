@@ -54,6 +54,40 @@ test('person search by phone token works', function () {
     expect($ids)->toContain($p->id);
 });
 
+test('person search by firstname and lastname tokens works', function () {
+    $p = Person::factory()->create([
+        'first_name' => 'EvaToken',
+        'last_name'  => 'KuyperToken',
+        'user_id'    => $this->user->id,
+    ]);
+
+    $resp = $this->getJson(route('admin.contacts.persons.search', [
+        'search' => 'firstname:EvaToken;lastname:KuyperToken;',
+    ]));
+
+    $resp->assertOk();
+    $ids = collect($resp->json('data'))->pluck('id');
+    expect($ids)->toContain($p->id);
+});
+
+test('person search by lastname token also matches married_name', function () {
+    $p = Person::factory()->create([
+        'first_name'      => 'Anna',
+        'last_name'       => 'Maas',
+        'married_name'    => 'De Bruin',
+        'user_id'         => $this->user->id,
+    ]);
+
+    // Should match on married_name using lastname: token
+    $resp = $this->getJson(route('admin.contacts.persons.search', [
+        'search' => 'lastname:De Bruin;',
+    ]));
+
+    $resp->assertOk();
+    $ids = collect($resp->json('data'))->pluck('id');
+    expect($ids)->toContain($p->id);
+});
+
 test('person search accepts plain email via query param', function () {
     $email = 'jane.query@example.com';
     $p = Person::factory()->create([

@@ -147,14 +147,6 @@
 
                     <div class="flex items-center gap-x-2.5" v-show="currentStep === 2">
                         <button
-                            v-on:click="goToStep(1)"
-                            type="button"
-                            class="secondary-button"
-                        >
-                            Terug
-                        </button>
-
-                        <button
                             v-on:click="submitForm"
                             type="button"
                             class="primary-button"
@@ -165,78 +157,22 @@
                     </div>
                 </div>
 
-                <!-- Step Indicator -->
-                <div class="flex items-center justify-center space-x-4 py-4">
-                    <div class="flex items-center">
-                        <div
-                            class="flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-medium"
-                            :class="currentStep >= 1 ? 'bg-blue-600' : 'bg-gray-400'">
-                            1
-                        </div>
-                        <span class="ml-2 text-sm font-medium"
-                              :class="currentStep >= 1 ? 'text-blue-600' : 'text-gray-500'">
-                            Contactpersonen koppelen
-                        </span>
-                    </div>
-                    <div class="w-16 h-0.5" :class="currentStep >= 2 ? 'bg-blue-600' : 'bg-gray-300'"></div>
-                    <div class="flex items-center">
-                        <div
-                            class="flex items-center justify-center w-8 h-8 rounded-full text-white text-sm font-medium"
-                            :class="currentStep >= 2 ? 'bg-blue-600' : 'bg-gray-400'">
-                            2
-                        </div>
-                        <span class="ml-2 text-sm font-medium"
-                              :class="currentStep >= 2 ? 'text-blue-600' : 'text-gray-500'">
-                            Lead gegevens
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Step 1: Contact Matcher -->
-                <div v-show="currentStep === 1"
-                     class="box-shadow rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-6">
-                    <div class="flex flex-col gap-4">
-                        <div class="flex flex-col gap-1">
-                            <p class="text-xl font-semibold dark:text-white">
-                                Stap 1: Contactpersonen koppelen
-                            </p>
-                            <p class="text-gray-600 dark:text-white">
-                                Koppel een of meerdere contactpersonen aan deze lead (optioneel)
-                            </p>
-                        </div>
-
-                        <!-- Multi Contact Matcher (based on original contactmatcher) -->
-                        <div>
-                            <x-adminc::components.multi-contactmatcher
-                                :lead="new Webkul\Lead\Models\Lead()"
-                                :persons="$prefilledPersons ?? []"
-                            />
-                        </div>
-
-                        <div class="flex justify-end pt-4">
-                            <button
-                                v-on:click="goToStep(2)"
-                                type="button"
-                                class="primary-button"
-                            >
-                                Verder naar stap 2
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 2: Full Lead Form -->
-                <div v-show="currentStep === 2" style="display: none;">
+                <!-- Single-Step: Full Lead Form -->
+                <div>
                     <form @submit.prevent="submitForm" ref="leadForm">
                         @csrf
                         <input type="hidden" name="lead_pipeline_stage_id" value="{{ request('stage_id') }}"/>
+                        <!-- Hidden selected person id to link to lead on save -->
+                        <input type="hidden" name="person_ids[0]" :value="selectedPersonId || ''" />
 
 
-                        <div
-                            class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-6">
+                        <div class="flex gap-6 max-md:flex-col">
+                            <div class="w-2/3 max-md:w-full">
+                                <div
+                                    class="box-shadow flex flex-col gap-4 rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900 p-6">
                             <div class="flex flex-col gap-1">
                                 <p class="text-xl font-semibold dark:text-white">
-                                    Stap 2: Lead gegevens
+                                    Lead gegevens
                                 </p>
 
                                 <!-- Show selected persons info if available -->
@@ -255,8 +191,9 @@
                             </div>
 
                             <!-- Lead Details -->
-                            <div class="flex flex-col gap-4">
-                                <div class="w-1/2 max-md:w-full">
+                            <div class="flex flex-col">
+                                <!-- Left: Form -->
+                                <div class="w-full">
 
                                     <!-- Personal Fields (full, same as edit) -->
                                     <div class="flex flex-col gap-4 mb-4">
@@ -522,6 +459,38 @@
                                     </div>
                                 </div>
                             </div>
+                                </div> <!-- close box-shadow card -->
+                            </div> <!-- close left column -->
+
+                            <!-- Right: Suggestions as separate panel (outside white card) -->
+                            <div class="w-1/3 max-md:w-full">
+                                <div class="sticky top-4">
+                                    <div class="rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900 p-4" v-if="suggestions.length > 0">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <p class="text-sm font-semibold text-blue-800 dark:text-blue-100">Mogelijke matches gevonden</p>
+                                            <button type="button" class="text-xs text-blue-700 underline" @click="clearSuggestions">verberg</button>
+                                        </div>
+                                        <ul class="space-y-2 max-h-[420px] overflow-auto pr-1">
+                                            <li v-for="s in suggestions" :key="'sug-'+s.id" class="flex items-center justify-between gap-3">
+                                                <div class="min-w-0">
+                                                    <div class="text-sm font-medium dark:text-white truncate">@{{ s.name }}</div>
+                                                    <div class="text-xs text-gray-700 dark:text-gray-200 truncate" v-if="s.date_of_birth">@{{ formatDate(s.date_of_birth) }}</div>
+                                                    <div class="text-xs text-gray-600 dark:text-gray-300 truncate">
+                                                        <span v-if="(s.emails||[]).length">@{{ (s.emails[0]||{}).value }}</span>
+                                                        <span v-if="(s.phones||[]).length && (s.emails||[]).length"> · </span>
+                                                        <span v-if="(s.phones||[]).length">@{{ (s.phones[0]||{}).value }}</span>
+                                                    </div>
+                                                </div>
+                                                <div class="flex items-center gap-3">
+                                                    <span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-800 dark:text-gray-200">@{{ Math.round(s._client_match || 0) }}% match</span>
+                                                    <a :href="`/admin/contacts/persons/view/${s.id}`" target="_blank" rel="noopener" class="text-xs text-blue-700 underline">Bekijken</a>
+                                                    <button type="button" class="secondary-button" @click="selectSuggestion(s)">Koppelen</button>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -550,7 +519,7 @@
 
                 data() {
                     return {
-                        currentStep: 1,
+                        currentStep: 2,
                         selectedPersons: [],
                         persons: [...this.initialPersons],
                         isSubmitting: false,
@@ -579,7 +548,11 @@
                                     contact_person_label: '',
                         },
                         hasSelectedPersons: false,
-                        joinedPersonNames: ''
+                        joinedPersonNames: '',
+                        selectedPersonId: null,
+                        suggestions: [],
+                        _debounceTimer: null,
+                        suggestionsDisabled: false
                     };
                 },
 
@@ -600,17 +573,46 @@
                         if (!this.formData.phone && p.phones && p.phones.length) {
                             this.formData.phone = p.phones[0].value || '';
                         }
-                        // Ensure we start on step 1 regardless of prefill
-                        this.currentStep = 1;
                         this.updateSelectedPersonsSummary();
                         this.$nextTick(() => this.syncPersonalFieldsToForm());
                     } else {
                         // Initialize with one empty slot for ease of use
                         this.persons.push({id: null, name: '', match_percentage: null, organization: null});
                     }
+
+                    // Attach blur/change listeners to trigger suggestions
+                    this.$nextTick(() => {
+                        const blurFields = ['first_name','last_name','emails[0][value]','phones[0][value]'];
+                        blurFields.forEach(name => {
+                            const input = this.$refs.leadForm?.querySelector(`[name="${name}"]`);
+                            if (input) {
+                                input.addEventListener('blur', () => this.onFieldBlur());
+                                input.addEventListener('change', () => this.onFieldBlur());
+                            }
+                        });
+                    });
                 },
 
                 methods: {
+                    formatDate(value) {
+                        if (!value) return '';
+                        try {
+                            const d = new Date(value);
+                            if (!isNaN(d.getTime())) {
+                                const day = String(d.getDate()).padStart(2, '0');
+                                const month = String(d.getMonth() + 1).padStart(2, '0');
+                                const year = d.getFullYear();
+                                return `${day}-${month}-${year}`;
+                            }
+                        } catch (e) {}
+                        // Fallback: try first 10 chars or raw
+                        const raw = String(value);
+                        if (/^\d{4}-\d{2}-\d{2}/.test(raw)) {
+                            const [y,m,dd] = raw.slice(0,10).split('-');
+                            return `${dd}-${m}-${y}`;
+                        }
+                        return raw;
+                    },
                     onContactPersonChange(selectedPerson) {
                         if (selectedPerson) {
                             this.formData.contact_person_id = selectedPerson.id;
@@ -626,22 +628,7 @@
                         this.updateFormDataFromPersons();
                         this.$nextTick(() => this.populateContactsFromFirstPerson());
                     },
-                    goToStep(step) {
-                        this.currentStep = step;
-
-                        // If going to step 2 and we have selected persons, populate address from first person
-                        if (step === 2) {
-                            this.$nextTick(() => {
-                                if (this.persons.length > 0 && this.persons[0].address) {
-                                    this.populateAddressFields(this.persons[0].address);
-                                }
-                                // Ensure personal fields are synced when entering step 2
-                                this.syncPersonalFieldsToForm();
-                                // Also populate email/phone fields from first selected person
-                                this.populateContactsFromFirstPerson();
-                            });
-                        }
-                    },
+                    // Stepper removed in single-step variant
 
 
                     updateFormDataFromPersons() {
@@ -692,18 +679,38 @@
                         this.hasSelectedPersons = list.length > 0;
                         this.joinedPersonNames = list.map(p => p.name).join(', ');
                     },
+                    // Method synchronized the chosen person to attach to this lead.
                     syncPersonalFieldsToForm() {
                         if (!this.$refs.leadForm) return;
                         const firstPerson = (this.persons && this.persons[0]) || {};
                         const fields = {
                             first_name: this.formData.first_name || firstPerson.first_name || '',
                             last_name: this.formData.last_name || firstPerson.last_name || '',
-                            lastname_prefix: this.formData.lastname_prefix || firstPerson.lastname_prefix || ''
+                            lastname_prefix: this.formData.lastname_prefix || firstPerson.lastname_prefix || '',
+                            married_name_prefix: this.formData.married_name_prefix || firstPerson.married_name_prefix || '',
+                            married_name: this.formData.married_name || firstPerson.married_name || '',
+                            salutation: this.formData.salutation || (firstPerson.salutation && (firstPerson.salutation.value || firstPerson.salutation)) || '',
+                            gender: this.formData.gender || (firstPerson.gender && (firstPerson.gender.value || firstPerson.gender)) || '',
+                            date_of_birth: (() => {
+                                const val = this.formData.date_of_birth || firstPerson.date_of_birth || '';
+                                if (!val) return '';
+                                try {
+                                    // Normalize to YYYY-MM-DD for input[type=date]
+                                    const d = new Date(val);
+                                    if (!isNaN(d.getTime())) {
+                                        const y = d.getFullYear();
+                                        const m = String(d.getMonth() + 1).padStart(2, '0');
+                                        const day = String(d.getDate()).padStart(2, '0');
+                                        return `${y}-${m}-${day}`;
+                                    }
+                                } catch (_) {}
+                                return String(val).slice(0, 10);
+                            })()
                         };
-                        Object.keys(fields).forEach(name => {
+                        Object.entries(fields).forEach(([name, value]) => {
                             const input = this.$refs.leadForm.querySelector(`[name="${name}"]`);
                             if (input) {
-                                input.value = fields[name] || '';
+                                input.value = value || '';
                                 input.dispatchEvent(new Event('input', {bubbles: true}));
                                 input.dispatchEvent(new Event('change', {bubbles: true}));
                             }
@@ -756,6 +763,104 @@
                         }
                     },
 
+                    // Debounced field blur handler
+                    onFieldBlur() {
+                        if (this.suggestionsDisabled || this.selectedPersonId) return;
+                        if (this._debounceTimer) clearTimeout(this._debounceTimer);
+                        this._debounceTimer = setTimeout(() => this.fetchSuggestions(), 300);
+                    },
+
+                    async fetchSuggestions() {
+                        if (this.suggestionsDisabled || this.selectedPersonId) { this.suggestions = []; return; }
+                        try {
+                            const firstName = (this.$refs.leadForm?.querySelector('[name="first_name"]').value || '').trim();
+                            const lastName = (this.$refs.leadForm?.querySelector('[name="last_name"]').value || '').trim();
+                            const email = (this.$refs.leadForm?.querySelector('input[name^="emails"][name$="[value]"]').value || '').trim();
+                            const phone = (this.$refs.leadForm?.querySelector('input[name^="phones"][name$="[value]"]').value || '').trim();
+
+                            // Build a single fielded query string
+                            let queryParts = [];
+                            if (firstName) queryParts.push(`firstname:${firstName}`);
+                            if (lastName) queryParts.push(`lastname:${lastName}`);
+                            if (email) queryParts.push(`email:${email}`);
+                            if (phone) {
+                                const onlyDigits = phone.replace(/\D+/g, '');
+                                if (onlyDigits) queryParts.push(`phone:${onlyDigits}`);
+                            }
+
+                            const composed = queryParts.join(';') + (queryParts.length ? ';' : '');
+                            if (!composed) { this.suggestions = []; return; }
+
+                            const fetcher = (window.adminc && typeof window.adminc.fetchPersons === 'function') ? window.adminc.fetchPersons : null;
+                            const list = fetcher ? await fetcher(composed) : [];
+
+                            const scored = (list || []).map(p => this.calculateMatchScore(p, firstName, lastName, email, phone))
+                                .filter(p => p._client_match > 0)
+                                .sort((a,b) => (b._client_match||0) - (a._client_match||0))
+                                .slice(0, 5);
+
+                            this.suggestions = scored;
+                        } catch (e) {
+                            this.suggestions = [];
+                        }
+                    },
+
+                    clearSuggestions() { this.suggestions = []; },
+
+                    calculateMatchScore(p, firstName, lastName, email, phone) {
+                        // We can't use the server side match score, because the lead hasn't been persisted yet.
+                        let score = 0;
+                        const pEmail = (p.emails && p.emails[0] && (p.emails[0].value||'').toLowerCase()) || '';
+                        const pPhone = (p.phones && p.phones[0] && (p.phones[0].value||'')) || '';
+                        const pFirst = (p.first_name||'').toLowerCase();
+                        const pLast = (p.last_name||'').toLowerCase();
+                        if (email && pEmail && pEmail === email.toLowerCase()) score += 60;
+                        if (phone && pPhone && pPhone.replace(/\D/g,'') === phone.replace(/\D/g,'')) score += 40;
+                        if (firstName && pFirst && pFirst === firstName.toLowerCase()) score += 20;
+                        if (lastName && pLast && pLast === lastName.toLowerCase()) score += 20;
+                        if (!score && (pEmail.includes((email||'').toLowerCase()) || pPhone.includes(phone||''))) score += 20;
+                        p._client_match = Math.min(100, score);
+                        return p;
+                    },
+
+                    selectSuggestion(person) {
+                        this.clearSuggestions();
+                        this.suggestionsDisabled = true;
+                        this.selectedPersonId = person.id;
+                        this.persons = [{ ...person }];
+                        const p = person || {};
+                        if (!this.formData.first_name && p.first_name) this.formData.first_name = p.first_name;
+                        if (!this.formData.last_name && p.last_name) this.formData.last_name = p.last_name;
+                        if (!this.formData.lastname_prefix && p.lastname_prefix) this.formData.lastname_prefix = p.lastname_prefix;
+                        if (!this.formData.initials && p.initials) this.formData.initials = p.initials;
+                        if (!this.formData.married_name_prefix && p.married_name_prefix) this.formData.married_name_prefix = p.married_name_prefix;
+                        if (!this.formData.married_name && p.married_name) this.formData.married_name = p.married_name;
+                        if (!this.formData.salutation && (p.salutation || (p.salutation && p.salutation.value))) this.formData.salutation = (p.salutation && (p.salutation.value || p.salutation)) || '';
+                        if (!this.formData.gender && (p.gender || (p.gender && p.gender.value))) this.formData.gender = (p.gender && (p.gender.value || p.gender)) || '';
+                        if (!this.formData.date_of_birth && p.date_of_birth) {
+                            const raw = p.date_of_birth;
+                            try {
+                                const d = new Date(raw);
+                                if (!isNaN(d.getTime())) {
+                                    const y = d.getFullYear();
+                                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                                    const day = String(d.getDate()).padStart(2, '0');
+                                    this.formData.date_of_birth = `${y}-${m}-${day}`;
+                                } else {
+                                    this.formData.date_of_birth = String(raw).slice(0, 10);
+                                }
+                            } catch (_) {
+                                this.formData.date_of_birth = String(raw).slice(0, 10);
+                            }
+                        }
+
+                        this.$nextTick(() => {
+                            this.syncPersonalFieldsToForm();
+                            this.populateContactsFromFirstPerson();
+                            if (p.address) this.populateAddressFields(p.address);
+                        });
+                        this.updateSelectedPersonsSummary();
+                    },
 
                     async submitForm() {
                         if (this.isSubmitting) return;
@@ -772,15 +877,10 @@
                                 }
                             });
 
-                            // Add persons data from multi-contact-matcher component
-                            const personIdInputs = document.querySelectorAll('input[name^="person_ids["]');
-
-                            // Add person_ids from multi-contact-matcher hidden inputs
-                            personIdInputs.forEach((input, index) => {
-                                if (input.value) {
-                                    formData.set(input.name, input.value);
-                                }
-                            });
+                            // Ensure selected person is submitted if chosen
+                            if (this.selectedPersonId) {
+                                formData.set('person_ids[0]', String(this.selectedPersonId));
+                            }
 
                             const response = await axios.post('{{ route('admin.leads.store') }}', formData, {
                                 headers: {'Content-Type': 'multipart/form-data'}
@@ -819,10 +919,8 @@
                     },
 
                     populateAddressFields(address) {
-                        // Only populate if we're in step 2 and the form exists
-                        if (this.currentStep !== 2 || !this.$refs.leadForm) {
-                            return;
-                        }
+                        // Single-step: only guard for form existence
+                        if (!this.$refs.leadForm) { return; }
 
                         // Populate address form fields by setting their values directly
                         const addressFields = {

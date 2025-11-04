@@ -251,18 +251,33 @@ class PersonController extends Controller
             return $resp;
         }
 
-        // Normalize convenience tokens email:/phone: to underlying JSON columns and apply stricter matching
+        // Normalize convenience tokens email:/phone:/firstname:/lastname: to underlying columns and apply stricter matching
         $rawSearch = (string) request()->query('search', '');
-        if ($rawSearch && (str_contains($rawSearch, 'email:') || str_contains($rawSearch, 'phone:'))) {
+        if ($rawSearch && (
+                str_contains($rawSearch, 'email:') ||
+                str_contains($rawSearch, 'phone:') ||
+                str_contains($rawSearch, 'firstname:') || str_contains($rawSearch, 'first_name:') ||
+                str_contains($rawSearch, 'lastname:') || str_contains($rawSearch, 'last_name:')
+            )) {
             $tokens = array_values(array_filter(array_map('trim', explode(';', $rawSearch))));
             $emailTerms = [];
             $phoneTerms = [];
+            $firstNameTerms = [];
+            $lastNameTerms = [];
             $kept = [];
             foreach ($tokens as $tok) {
                 if (str_starts_with($tok, 'email:')) {
                     $emailTerms[] = substr($tok, strlen('email:'));
                 } elseif (str_starts_with($tok, 'phone:')) {
                     $phoneTerms[] = substr($tok, strlen('phone:'));
+                } elseif (str_starts_with($tok, 'firstname:')) {
+                    $firstNameTerms[] = substr($tok, strlen('firstname:'));
+                } elseif (str_starts_with($tok, 'first_name:')) {
+                    $firstNameTerms[] = substr($tok, strlen('first_name:'));
+                } elseif (str_starts_with($tok, 'lastname:')) {
+                    $lastNameTerms[] = substr($tok, strlen('lastname:'));
+                } elseif (str_starts_with($tok, 'last_name:')) {
+                    $lastNameTerms[] = substr($tok, strlen('last_name:'));
                 } else {
                     $kept[] = $tok;
                 }
@@ -271,11 +286,16 @@ class PersonController extends Controller
             // Rebuild search without convenience tokens (they will be applied via scopeQuery)
             request()->merge(['search' => ($kept ? implode(';', $kept) . ';' : '')]);
 
-            // Ensure searchFields include like for json columns if needed
+            // Ensure searchFields include like for relevant columns if needed
             $sf = (string) request()->query('searchFields', '');
             $parts = array_values(array_filter(array_map('trim', explode(';', $sf))));
             $fields = array_map(fn($p) => explode(':', $p)[0] ?? $p, $parts);
             foreach (['emails', 'phones'] as $f) {
+                if (!in_array($f, $fields, true)) {
+                    $parts[] = $f . ':like';
+                }
+            }
+            foreach (['first_name', 'last_name'] as $f) {
                 if (!in_array($f, $fields, true)) {
                     $parts[] = $f . ':like';
                 }
@@ -285,9 +305,9 @@ class PersonController extends Controller
             }
 
             // Apply stricter JSON matching via scopeQuery to limit false positives
-            if (!empty($emailTerms) || !empty($phoneTerms)) {
-                $this->personRepository->scopeQuery(function ($q) use ($emailTerms, $phoneTerms) {
-                    return $q->where(function ($qb) use ($emailTerms, $phoneTerms) {
+            if (!empty($emailTerms) || !empty($phoneTerms) || !empty($firstNameTerms) || !empty($lastNameTerms)) {
+                $this->personRepository->scopeQuery(function ($q) use ($emailTerms, $phoneTerms, $firstNameTerms, $lastNameTerms) {
+                    return $q->where(function ($qb) use ($emailTerms, $phoneTerms, $firstNameTerms, $lastNameTerms) {
                         foreach ($emailTerms as $term) {
                             $like = '%"value":"%' . str_replace(['%', '_'], ['\\%', '\\_'], $term) . '%"%';
                             $qb->orWhere('emails', 'like', $like)
@@ -297,6 +317,13 @@ class PersonController extends Controller
                             $like = '%"value":"%' . str_replace(['%', '_'], ['\\%', '\\_'], $term) . '%"%';
                             $qb->orWhere('phones', 'like', $like)
                                ->orWhere('phones', 'like', '%' . $term . '%'); // fallback
+                        }
+                        foreach ($firstNameTerms as $term) {
+                            $qb->orWhere('first_name', 'like', '%' . $term . '%');
+                        }
+                        foreach ($lastNameTerms as $term) {
+                            $qb->orWhere('last_name', 'like', '%' . $term . '%')
+                               ->orWhere('married_name', 'like', '%' . $term . '%');
                         }
                     });
                 });

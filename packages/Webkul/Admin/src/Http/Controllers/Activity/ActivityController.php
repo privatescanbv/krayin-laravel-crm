@@ -420,6 +420,12 @@ class ActivityController extends Controller
 
         session()->flash('success', trans('admin::app.activities.update-success'));
 
+        // If a safe return URL is provided, prefer redirecting back to it
+        $returnUrl = request()->get('return');
+        if (is_string($returnUrl) && str_starts_with($returnUrl, '/')) {
+            return redirect($returnUrl);
+        }
+
         // After completing, redirect to related lead view if available
         $shouldRedirectToLead = false;
         if (isset($data['is_done']) && $data['is_done']) {

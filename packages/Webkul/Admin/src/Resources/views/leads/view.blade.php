@@ -44,11 +44,6 @@
 
                 {!! view_render_event('admin.leads.view.title.before', ['lead' => $lead]) !!}
 
-                <!-- Title -->
-{{--                <h3 class="text-lg font-bold dark:text-white">--}}
-{{--                    {{ $lead->name }}--}}
-{{--                </h3>--}}
-
                 {!! view_render_event('admin.leads.view.title.after', ['lead' => $lead]) !!}
 
                 <!-- Duplicate Detection -->

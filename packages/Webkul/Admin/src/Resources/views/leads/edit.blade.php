@@ -244,14 +244,8 @@
                     <!-- Owner -->
                     <div class="flex-1">
                         @php
-                            $userOptions = User::query()
-                                ->where('status', 1)
-                                ->selectRaw("id, TRIM(CONCAT(COALESCE(first_name,''),' ',COALESCE(last_name,''))) as full_name")
-                                ->orderBy('first_name')
-                                ->orderBy('last_name')
-                                ->get()
-                                ->pluck('full_name', 'id')
-                                ->toArray();
+                            $userOptions = app(Webkul\User\Repositories\UserRepository::class)
+                            ->allActiveUsers();
                             $currentUserId = $lead->user_id;
                         @endphp
                         <x-admin::form.control-group>
@@ -264,49 +258,46 @@
                                 value="{{ $currentUserId }}"
                             >
                                 <option value="">-- Kies gebruiker --</option>
-                                @foreach ($userOptions as $id => $name)
+                                @foreach ($userOptions as $user)
                                     <option
-                                        value="{{ $id }}" {{ ($currentUserId == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                                        value="{{ $user->id }}" {{ ($currentUserId == $user->id) ? 'selected' : '' }}>{{ $user->name }}</option>
                                 @endforeach
                             </x-admin::form.control-group.control>
                         </x-admin::form.control-group>
                     </div>
 
+                    <div class="w-1/2 max-md:w-full">
+                        {!! view_render_event('admin.leads.edit.lead_details.attributes.before', ['lead' => $lead]) !!}
 
+                        <!-- afdeling and other custom fields -->
+                        <x-admin::attributes
+                            :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
+                                ['code', 'NOTIN', ['lead_type_id', 'lead_source_id', 'user_id', 'lead_pipeline_id', 'lead_pipeline_stage_id', 'lead_channel_id']],
+                                'entity_type' => 'leads',
+                                'quick_add'   => 1
+                            ])"
+                            :custom-validations="[]"
+                            :entity="$lead"
+                        />
 
-                        <div class="w-1/2 max-md:w-full">
-                            {!! view_render_event('admin.leads.edit.lead_details.attributes.before', ['lead' => $lead]) !!}
-
-                            <!-- afdeling and other custom fields -->
-                            <x-admin::attributes
-                                :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                    ['code', 'NOTIN', ['lead_type_id', 'lead_source_id', 'user_id', 'lead_pipeline_id', 'lead_pipeline_stage_id', 'lead_channel_id']],
-                                    'entity_type' => 'leads',
-                                    'quick_add'   => 1
-                                ])"
-                                :custom-validations="[]"
-                                :entity="$lead"
-                            />
-
-                            <!-- Lead Details Other input fields -->
-                            <div class="flex gap-4 max-sm:flex-wrap">
-                                <div class="w-full">
-                                    <x-admin::attributes
-                                        :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
-                                            ['code', 'IN', ['lead_type_id', 'lead_source_id']],
-                                            'entity_type' => 'leads',
-                                            'quick_add'   => 1
-                                        ])"
-                                        :custom-validations="[]"
-                                        :entity="$lead"
-                                    />
-                                </div>
+                        <!-- Lead Details Other input fields -->
+                        <div class="flex gap-4 max-sm:flex-wrap">
+                            <div class="w-full">
+                                <x-admin::attributes
+                                    :custom-attributes="app('Webkul\Attribute\Repositories\AttributeRepository')->findWhere([
+                                        ['code', 'IN', ['lead_type_id', 'lead_source_id']],
+                                        'entity_type' => 'leads',
+                                        'quick_add'   => 1
+                                    ])"
+                                    :custom-validations="[]"
+                                    :entity="$lead"
+                                />
                             </div>
-
-                            {!! view_render_event('admin.leads.edit.lead_details.attributes.after', ['lead' => $lead]) !!}
                         </div>
-                    </div>
 
+                        {!! view_render_event('admin.leads.edit.lead_details.attributes.after', ['lead' => $lead]) !!}
+                    </div>
+                </div>
 
                     {!! view_render_event('admin.leads.edit.lead_details.after', ['lead' => $lead]) !!}
                 </div>

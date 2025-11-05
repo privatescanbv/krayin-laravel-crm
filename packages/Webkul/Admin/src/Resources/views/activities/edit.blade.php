@@ -7,7 +7,7 @@
     {!! view_render_event('admin.activities.edit.form.before') !!}
 
     <x-admin::form
-        :action="route('admin.activities.update', $activity->id)"
+        :action="route('admin.activities.update', $activity->id) . (request('return') ? ('?return=' . urlencode(request('return'))) : '')"
         method="PUT"
     >
         <div class="flex flex-col gap-4">
@@ -26,7 +26,7 @@
                             <span>@lang('admin::app.activities.edit.title')</span>
                         </div>
 
-                        
+
                     </div>
                 </div>
 
@@ -155,25 +155,23 @@
                         </div>
                     </x-admin::form.control-group>
 
-                    <!-- Comment -->
-                    @if ($activity->type !== \App\Enums\ActivityType::CALL || !empty($activity->comment))
-                        <x-admin::form.control-group>
-                            <x-admin::form.control-group.label>
-                                @lang('admin::app.activities.edit.comment')
-                            </x-admin::form.control-group.label>
+                    <!-- Description -->
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>
+                            @lang('admin::app.components.activities.actions.activity.description')
+                        </x-admin::form.control-group.label>
 
-                            <x-admin::form.control-group.control
-                                type="textarea"
-                                name="comment"
-                                id="comment"
-                                :value="old('comment') ?? $activity->comment"
-                                :label="trans('admin::app.activities.edit.comment')"
-                                :placeholder="trans('admin::app.activities.edit.comment')"
-                            />
+                        <x-admin::form.control-group.control
+                            type="textarea"
+                            name="comment"
+                            id="comment"
+                            :value="old('comment') ?? $activity->comment"
+                            :label="trans('admin::app.components.activities.actions.activity.description')"
+                            :placeholder="trans('admin::app.components.activities.actions.activity.description')"
+                        />
 
-                            <x-admin::form.control-group.error control-name="comment" />
-                        </x-admin::form.control-group>
-                    @endif
+                        <x-admin::form.control-group.error control-name="comment" />
+                    </x-admin::form.control-group>
 
                     <!-- Toegewezen aan -->
                     <x-admin::form.control-group>
@@ -190,7 +188,7 @@
                                 :disabled="$activity->user_id && $activity->user_id != auth()->guard('user')->id() && !$canTakeover"
                             >
                                 <option value="">{{ __('admin::app.activities.select-user') }}</option>
-                                @foreach (app(Webkul\User\Repositories\UserRepository::class)->findWhere(['status' => 1]) as $user)
+                                @foreach (app(Webkul\User\Repositories\UserRepository::class)->allActiveUsers() as $user)
                                     <option
                                         value="{{ $user->id }}"
                                         {{ $activity->user_id == $user->id ? 'selected' : '' }}
@@ -281,7 +279,7 @@
     </x-admin::form>
 
     <!-- Hidden form used by Afronden button -->
-    <form id="activity-complete-form" action="{{ route('admin.activities.update', $activity->id) }}" method="POST" class="hidden">
+    <form id="activity-complete-form" action="{{ route('admin.activities.update', $activity->id) }}@if(request('return'))?return={{ urlencode(request('return')) }}@endif" method="POST" class="hidden">
         @csrf
         <input type="hidden" name="_method" value="PUT" />
         <input type="hidden" name="is_done" value="1" />
@@ -289,7 +287,7 @@
     </form>
 
     <!-- Hidden form used by Heropenen button -->
-    <form id="activity-reopen-form" action="{{ route('admin.activities.update', $activity->id) }}" method="POST" class="hidden">
+    <form id="activity-reopen-form" action="{{ route('admin.activities.update', $activity->id) }}@if(request('return'))?return={{ urlencode(request('return')) }}@endif" method="POST" class="hidden">
         @csrf
         <input type="hidden" name="_method" value="PUT" />
         <input type="hidden" name="is_done" value="0" />
@@ -379,7 +377,7 @@
             });
         </script>
 
-        
+
 
         <script>
             // Inline status update without leaving the page (global function + immediate bind)
@@ -460,12 +458,12 @@
             window.updateScheduleToForCall = function() {
                 const scheduleFromInput = document.getElementById('schedule_from');
                 const scheduleToHidden = document.getElementById('schedule_to_hidden');
-                
+
                 if (scheduleFromInput && scheduleToHidden && scheduleFromInput.value) {
                     try {
                         const fromDate = new Date(scheduleFromInput.value);
                         const toDate = new Date(fromDate.getTime() + (60 * 60 * 1000)); // Add 1 hour
-                        
+
                         // Format the date for the hidden input (ISO format)
                         scheduleToHidden.value = toDate.toISOString().slice(0, 16);
                     } catch (error) {

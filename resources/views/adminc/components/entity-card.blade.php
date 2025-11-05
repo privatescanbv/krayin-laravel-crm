@@ -145,17 +145,21 @@
     @endif
 </div>
 
+@pushOnce('scripts')
 <script>
-function toggleContactDetails(contactId) {
-    const element = document.getElementById(contactId);
-    const icon = document.getElementById('icon-' + contactId);
-
-    if (element.classList.contains('hidden')) {
-        element.classList.remove('hidden');
-        icon.style.transform = 'rotate(180deg)';
-    } else {
-        element.classList.add('hidden');
-        icon.style.transform = 'rotate(0deg)';
-    }
-}
+window.toggleContactDetails = window.toggleContactDetails || function(contactId) {
+    try {
+        var element = document.getElementById(contactId);
+        var icon = document.getElementById('icon-' + contactId);
+        if (!element || !icon) return;
+        if (element.classList.contains('hidden')) {
+            element.classList.remove('hidden');
+            icon.style.transform = 'rotate(180deg)';
+        } else {
+            element.classList.add('hidden');
+            icon.style.transform = 'rotate(0deg)';
+        }
+    } catch (e) {}
+};
 </script>
+@endPushOnce

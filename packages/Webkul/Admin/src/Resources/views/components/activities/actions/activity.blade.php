@@ -140,7 +140,7 @@
                                     :value="old('user_id', auth()->guard('user')->id())"
                                 >
                                     <option value="">{{ __('admin::app.activities.select-user') }}</option>
-                                    @foreach (app(Webkul\User\Repositories\UserRepository::class)->findWhere(['status' => 1]) as $user)
+                                    @foreach (app(Webkul\User\Repositories\UserRepository::class)->allActiveUsers() as $user)
                                         <option
                                             value="{{ $user->id }}"
                                             {{ auth()->guard('user')->id() == $user->id ? 'selected' : '' }}

@@ -430,14 +430,7 @@
                                     <!-- Owner -->
                                     <div class="flex-1">
                                         @php
-                                            $userOptions = User::query()
-                                                ->where('status', 1)
-                                                ->selectRaw("id, TRIM(CONCAT(COALESCE(first_name,''),' ',COALESCE(last_name,''))) as full_name")
-                                                ->orderBy('first_name')
-                                                ->orderBy('last_name')
-                                                ->get()
-                                                ->pluck('full_name', 'id')
-                                                ->toArray();
+                                            $userOptions = app(Webkul\User\Repositories\UserRepository::class)->allActiveUsers();
                                             $currentUserId = $currentUserId ?? null;
                                         @endphp
                                         <x-admin::form.control-group>
@@ -450,9 +443,9 @@
                                                 value="{{ $currentUserId }}"
                                             >
                                                 <option value="">-- Kies gebruiker --</option>
-                                                @foreach ($userOptions as $id => $name)
+                                                @foreach ($userOptions as $user)
                                                     <option
-                                                        value="{{ $id }}" {{ ($currentUserId == $id) ? 'selected' : '' }}>{{ $name }}</option>
+                                                        value="{{ $user->id }}" {{ ($currentUserId == $user->id) ? 'selected' : '' }}>{{ $user->name }}</option>
                                                 @endforeach
                                             </x-admin::form.control-group.control>
                                         </x-admin::form.control-group>

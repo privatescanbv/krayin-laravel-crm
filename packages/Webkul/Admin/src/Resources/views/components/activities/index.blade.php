@@ -98,10 +98,14 @@
                                             <template v-if="activity.type !== 'system'">
                                                 <a
                                                     class="flex flex-wrap items-center gap-1 font-medium dark:text-white hover:underline cursor-pointer"
+                                                    :class="{
+                                                        'text-orange-600 dark:text-orange-400': isToday(activity.schedule_from),
+                                                        'text-red-600 dark:text-red-400': !isToday(activity.schedule_from) && isPast(activity.schedule_from)
+                                                    }"
                                                     :href="
                                                         activity.type == 'email'
-                                                        ? '{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceId']) }}'.replace('replaceId', activity.id)
-                                                        : '{{ route('admin.activities.view', 'replaceId') }}'.replace('replaceId', activity.id)
+                                                        ? ('{{ route('admin.mail.view', ['route' => 'inbox', 'id' => 'replaceId']) }}'.replace('replaceId', activity.id))
+                                                        : ('{{ route('admin.activities.view', 'replaceId') }}'.replace('replaceId', activity.id) + (returnUrl ? ('?return=' + encodeURIComponent(returnUrl)) : ''))
                                                     "
                                                 >
                                                     @{{ activity.title }}
@@ -116,8 +120,16 @@
                                                     <span v-else-if="activity.type === 'email' && activity.linked_entity_type === 'sales'" class="icon-activity text-xs text-blue-600 ml-1" title="E-mail gekoppeld aan sales"></span>
                                                     <span v-else-if="activity.type === 'email'" class="icon-activity text-xs text-blue-600 ml-1" title="E-mail gekoppeld aan onbekend"></span>
 
+
                                                     <!-- Status chip hidden per requirement -->
                                                 </a>
+                                                <div class="text-sm" :class="{
+                                                    'text-orange-600 dark:text-orange-400': isToday(activity.schedule_from),
+                                                    'text-red-600 dark:text-red-400': !isToday(activity.schedule_from) && isPast(activity.schedule_from),
+                                                    'text-gray-600 dark:text-gray-300': !(isToday(activity.schedule_from) || isPast(activity.schedule_from))
+                                                }">
+                                                    Ingepland vanaf: @{{ $admin.formatDate(activity.schedule_from, 'd MMM yyyy, hh:mm', timezone) }}
+                                                </div>
                                             </template>
 
                                             <template v-else>
@@ -159,7 +171,7 @@
                                         ></p>
 
                                         <!-- Call status summary/details -->
-                                        <template v-if="activity.type === 'call' && activity.call_status_summary">
+                                        <template v-if="activity.type === 'call' && activity.call_statuses?.length">
                                             <div class="mt-1 text-sm">
                                                 <div v-if="activity.call_statuses?.length" class="mb-1">
                                                     <span class="font-medium flex items-center gap-1">Laatste: <call-status-icon :status="activity.call_statuses[activity.call_statuses.length - 1].status" size="w-4 h-4"></call-status-icon> @{{ getCallStatusLabel(activity.call_statuses[activity.call_statuses.length - 1].status) }} <span class="text-gray-500">(@{{ $admin.formatDate(activity.call_statuses[activity.call_statuses.length - 1].created_at, 'd MMM yyyy, hh:mm', timezone) }})</span></span>
@@ -341,7 +353,7 @@
                                                         <x-admin::dropdown.menu.item v-if="['call', 'meeting', 'task'].includes(activity.type)">
                                                             <a
                                                                 class="flex items-center gap-2"
-                                                                :href="'{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity.id)"
+                                                                :href="'{{ route('admin.activities.edit', 'replaceId') }}'.replace('replaceId', activity.id) + (returnUrl ? ('?return=' + encodeURIComponent(returnUrl)) : '')"
                                                                 target="_blank"
                                                             >
                                                                 <span class="icon-edit text-2xl"></span>
@@ -583,6 +595,9 @@
                     },
 
                     timezone: "{{ config('app.timezone') }}",
+
+                    // Current page URL for return navigation after editing activities
+                    returnUrl: (typeof window !== 'undefined' ? (window.location.pathname + window.location.search) : ''),
                 }
             },
 
@@ -591,7 +606,14 @@
                     if (this.selectedType == 'all') {
                         return this.activities;
                     } else if (this.selectedType == 'planned') {
-                        return this.activities.filter(activity => ! activity.is_done);
+                        return this.activities
+                            .filter(activity => ! activity.is_done)
+                            .slice()
+                            .sort((a, b) => {
+                                const aTime = a && a.schedule_from ? new Date(a.schedule_from).getTime() : Infinity;
+                                const bTime = b && b.schedule_from ? new Date(b.schedule_from).getTime() : Infinity;
+                                return aTime - bTime; // earliest first
+                            });
                     }
 
                     return this.activities.filter(activity => activity.type == this.selectedType);
@@ -718,6 +740,20 @@
                         return text;
                     }
                     return text.slice(0, maxLength - 1) + '…';
+                },
+
+                isToday(dateStr) {
+                    if (!dateStr) return false;
+                    const d = new Date(dateStr);
+                    const now = new Date();
+                    return d.getFullYear() === now.getFullYear()
+                        && d.getMonth() === now.getMonth()
+                        && d.getDate() === now.getDate();
+                },
+
+                isPast(dateStr) {
+                    if (!dateStr) return false;
+                    return new Date(dateStr).getTime() < Date.now();
                 },
             },
         });

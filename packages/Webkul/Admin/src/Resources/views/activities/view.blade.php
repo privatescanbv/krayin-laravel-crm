@@ -40,7 +40,7 @@
             @endif
             @if (!$activity->is_done && bouncer()->hasPermission('activities.edit'))
                 <a
-                    href="{{ route('admin.activities.edit', $activity->id) }}"
+                    href="{{ route('admin.activities.edit', $activity->id) }}@if(request('return'))?return={{ urlencode(request('return')) }}@endif"
                     class="secondary-button"
                 >
                     <span class="icon-edit text-2xl"></span>

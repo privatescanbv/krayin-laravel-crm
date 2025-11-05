@@ -2,6 +2,7 @@
 
 namespace Webkul\User\Repositories;
 
+use Illuminate\Database\Eloquent\Collection;
 use Webkul\Core\Eloquent\Repository;
 
 class UserRepository extends Repository
@@ -43,5 +44,16 @@ class UserRepository extends Repository
         })->get()->pluck('id')->toArray();
 
         return $userIds;
+    }
+
+    public function allActiveUsers(): Collection
+    {
+        return $this->scopeQuery(function ($query) {
+            return $query
+                ->where('status', 1)
+                ->orderBy('first_name', 'asc')
+                ->orderBy('last_name', 'asc');
+        })->all();
+
     }
 }

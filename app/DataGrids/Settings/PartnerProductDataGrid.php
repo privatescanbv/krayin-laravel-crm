@@ -5,7 +5,6 @@ namespace App\DataGrids\Settings;
 use App\Enums\Currency;
 use App\Enums\ProductReports;
 use App\Models\PartnerProduct;
-use App\Repositories\PartnerProductRepository;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Webkul\DataGrid\DataGrid;
@@ -235,4 +234,3 @@ class PartnerProductDataGrid extends DataGrid
 
     // Money formatting centralized in App\Enums\Currency::formatMoney
 }
-

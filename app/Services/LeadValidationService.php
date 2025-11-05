@@ -89,10 +89,10 @@ class LeadValidationService
         ];
         if ($create) {
             // Anamnesis quick questions on lead form
-            $rules['metals'] = 'required|boolean';
+            $rules['metals'] = 'nullable|boolean';
             $rules['metals_notes'] = 'required_if:metals,1|nullable|string';
-            $rules['claustrophobia'] = 'required|boolean';
-            $rules['allergies'] = 'required|boolean';
+            $rules['claustrophobia'] = 'nullable|boolean';
+            $rules['allergies'] = 'nullable|boolean';
             $rules['allergies_notes'] = 'required_if:allergies,1|nullable|string';
             // Height and weight fields (optional)
             $rules['height'] = 'nullable|numeric|min:100|max:250';

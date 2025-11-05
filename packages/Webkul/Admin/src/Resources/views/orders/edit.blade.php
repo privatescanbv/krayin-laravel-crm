@@ -164,7 +164,7 @@
           @php
               $orderMailEntity = [
                   'id'   => $orders->sales_lead_id,
-                  'name' => $orders->salesLead->name ?? null,
+                  'name' => $orders->salesLead?->name,
               ];
           @endphp
 

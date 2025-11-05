@@ -39,4 +39,10 @@ return [
         'base_url' => env('SUGARCRM_BASE_URL', 'http://localhost:81/'),
     ],
 
+    'forms' => [
+        'api_url'      => env('FORMS_API_URL', 'http://forms'),
+        'frontend_url' => env('FORMS_FRONTEND_URL', 'http://localhost:8001'),
+        'api_token'    => env('FORMS_API_KEY', null),
+    ],
+
 ];

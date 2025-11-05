@@ -234,3 +234,4 @@ class PartnerProductDataGrid extends DataGrid
 
     // Money formatting centralized in App\Enums\Currency::formatMoney
 }
+

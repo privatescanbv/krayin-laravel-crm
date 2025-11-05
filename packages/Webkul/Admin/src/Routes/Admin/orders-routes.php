@@ -18,6 +18,8 @@ Route::controller(OrderController::class)->prefix('orders')->group(function () {
     Route::delete('', 'destroy')->name('admin.orders.delete');
     Route::delete('{id}', 'destroy')->name('admin.orders.delete');
     Route::get('persons/{salesLeadId}', 'getPersonsForSalesLead')->name('admin.orders.persons');
+    Route::get('{orderId}/mail/preview', 'mailPreview')->name('admin.orders.mail.preview');
+    Route::post('{orderId}/status/sent', 'markAsSent')->name('admin.orders.status.sent');
 
     // Order checks routes
     Route::post('{orderId}/checks', 'storeCheck')->name('admin.orders.checks.store');

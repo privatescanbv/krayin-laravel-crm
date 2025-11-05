@@ -32,6 +32,19 @@
                 </div>
 
                 <div class="flex items-center gap-x-2.5">
+                    @php $mailDisabled = $orders->status !== OrderStatus::INGEPLAND; @endphp
+                    @if ($orders->sales_lead_id)
+                        <button
+                            type="button"
+                            class="secondary-button {{ $mailDisabled ? 'pointer-events-none opacity-60' : '' }}"
+                            id="order-compose-mail"
+                            {{ $mailDisabled ? 'disabled' : '' }}
+                            title="{{ $mailDisabled ? 'Eerst order op Ingepland zetten' : '' }}"
+                        >
+                            Maak order mail
+                        </button>
+                    @endif
+
                     <button
                         type="button"
                         class="secondary-button"
@@ -40,6 +53,7 @@
                     >
                         Resource Planner
                     </button>
+
                     <button
                         type="button"
                         class="secondary-button"
@@ -48,8 +62,13 @@
                     >
                         Toepassen
                     </button>
-                    <button type="button" class="primary-button" id="order-edit-save"
-                            data-redirect-to="{{ route('admin.orders.index') }}">
+
+                    <button
+                        type="button"
+                        class="primary-button"
+                        id="order-edit-save"
+                        data-redirect-to="{{ route('admin.orders.index') }}"
+                    >
                         Opslaan
                     </button>
                 </div>
@@ -62,6 +81,7 @@
                     <template #details>
                         <div class="space-y-6">
 
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label class="required">Titel
                                 </x-admin::form.control-group.label>
@@ -123,6 +143,37 @@
                                 </x-admin::form.control-group.control>
                             </x-admin::form.control-group>
 
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>GVL Formulier Link</x-admin::form.control-group.label>
+                                <div class="flex items-center gap-2">
+                                    <x-admin::form.control-group.control
+                                        type="text"
+                                        name="gvl_form_link"
+                                        value="{{ $orders->salesLead?->gvl_form_link ?? '' }}"
+                                        class="flex-1"
+                                    />
+                                    @if($orders->salesLead->gvl_form_link)
+                                        <button
+                                            type="button"
+                                            id="reset-gvl-form-link"
+                                            class="secondary-button"
+                                            title="Reset GVL formulier link"
+                                        >
+                                            Reset
+                                        </button>
+                                    @endif
+                                </div>
+                                <x-admin::form.control-group.error control-name="gvl_form_link" />
+                                @if($orders->salesLead && $orders->salesLead->gvl_form_link)
+                                    <p class="mt-1 text-xs text-gray-600 dark:text-gray-400">
+                                        <a href="{{ $orders->salesLead->gvl_form_link }}" target="_blank" class="text-blue-600 hover:underline">
+                                            Open formulier
+                                        </a>
+                                    </p>
+                                @endif
+                            </x-admin::form.control-group>
+                            </div>
+
                             @include('admin::orders.partials.items', ['order' => $orders])
                         </div>
                     </template>
@@ -143,6 +194,23 @@
             </div>
         </div>
     </x-admin::form>
+
+      @if ($orders->sales_lead_id)
+          @php
+              $orderMailEntity = [
+                  'id'   => $orders->sales_lead_id,
+                  'name' => $orders->salesLead?->name,
+              ];
+          @endphp
+
+          <x-admin::activities.actions.mail
+              :entity="$orderMailEntity"
+              entity-control-name="sales_lead_id"
+              :emails="$orderEmailOptions ?? []"
+              store-url="{{ route('admin.sales-leads.emails.store', ['id' => $orders->sales_lead_id]) }}"
+              :show-button="false"
+          />
+      @endif
 
 
     @pushOnce('scripts')
@@ -213,6 +281,77 @@
                     hidden.value = target;
                     form.submit();
                 }
+
+                // Reset GVL form link button via delegation
+                if (e.target && e.target.id === 'reset-gvl-form-link') {
+                    e.preventDefault();
+                    const input = document.querySelector('input[name="gvl_form_link"]');
+                    if (input) {
+                        input.value = '';
+                    }
+                    return;
+                }
+
+                // Compose order mail button via delegation (robust to re-renders)
+                if (e.target && e.target.id === 'order-compose-mail') {
+                    e.preventDefault();
+
+                    const button = e.target;
+                    if (button.dataset.loading === 'true') {
+                        return;
+                    }
+
+                    const endpoint = "{{ route('admin.orders.mail.preview', ['orderId' => $orders->id]) }}";
+
+                    const emitFlash = (type, message) => {
+                        try {
+                            const emitter = window.app?.config?.globalProperties?.$emitter || window.app?.$emitter;
+                            if (emitter) {
+                                emitter.emit('add-flash', { type, message });
+                            } else {
+                                console[type === 'error' ? 'error' : 'log'](message);
+                            }
+                        } catch (err) {
+                            console.error('[OrderEdit] Flash emit failed', err, message);
+                        }
+                    };
+
+                    (async () => {
+                        try {
+                            button.dataset.loading = 'true';
+                            const originalLabel = button.dataset.originalLabel || button.textContent.trim();
+                            button.dataset.originalLabel = originalLabel;
+                            button.textContent = 'Bezig...';
+                            button.classList.add('pointer-events-none', 'opacity-60');
+
+                            const response = await fetch(endpoint, { headers: { 'Accept': 'application/json' } });
+                            const payload = await response.json().catch(() => ({}));
+
+                            if (!response.ok) {
+                                throw new Error(payload?.message || 'Kon order mail niet voorbereiden.');
+                            }
+
+                            window.dispatchEvent(new CustomEvent('open-email-dialog', {
+                                detail: {
+                                    defaultEmail: payload.default_email || null,
+                                    subject: payload.subject || '',
+                                    body: payload.body || '',
+                                    emails: payload.emails || [],
+                                },
+                            }));
+
+                            if (!payload.default_email) {
+                                emitFlash('info', 'Geen standaard e-mailadres gevonden. Vul het adres handmatig in.');
+                            }
+                        } catch (error) {
+                            emitFlash('error', error?.message || 'Voorbereiden van de ordermail is mislukt.');
+                        } finally {
+                            button.dataset.loading = 'false';
+                            button.textContent = button.dataset.originalLabel || 'Maak order mail';
+                            button.classList.remove('pointer-events-none', 'opacity-60');
+                        }
+                    })();
+                }
             });
 
             // Register v-order-tabs
@@ -255,6 +394,94 @@
                     console.error('[OrderEdit] SalesLead init error', err);
                 }
             };
+
+              const initOrderMailCompose = () => {
+                  try {
+                      const button = document.getElementById('order-compose-mail');
+                      if (!button || button.dataset.bound === 'true') {
+                          return;
+                      }
+
+                      const endpoint = "{{ route('admin.orders.mail.preview', ['orderId' => $orders->id]) }}";
+
+                      const emitFlash = (type, message) => {
+                          try {
+                              const emitter = window.app?.config?.globalProperties?.$emitter || window.app?.$emitter;
+                              if (emitter) {
+                                  emitter.emit('add-flash', {type, message});
+                              } else {
+                                  console[type === 'error' ? 'error' : 'log'](message);
+                              }
+                          } catch (err) {
+                              console.error('[OrderEdit] Flash emit failed', err, message);
+                          }
+                      };
+
+                      button.addEventListener('click', async () => {
+                          if (button.dataset.loading === 'true') {
+                              return;
+                          }
+
+                          button.dataset.loading = 'true';
+                          const originalLabel = button.dataset.originalLabel || button.textContent.trim();
+                          button.dataset.originalLabel = originalLabel;
+                          button.textContent = 'Bezig...';
+                          button.classList.add('pointer-events-none', 'opacity-60');
+
+                          try {
+                              const response = await fetch(endpoint, {headers: {'Accept': 'application/json'}});
+                              const payload = await response.json();
+
+                              if (!response.ok) {
+                                  throw new Error(payload?.message || 'Kon order mail niet voorbereiden.');
+                              }
+
+                              const detail = {
+                                  defaultEmail: payload.default_email || null,
+                                  subject: payload.subject || '',
+                                  body: payload.body || '',
+                                  emails: payload.emails || [],
+                              };
+
+                              let handled = false;
+                              const handlers = window.__mailDialogHandlers;
+                              if (Array.isArray(handlers) && handlers.length) {
+                                  handlers.forEach((handler) => {
+                                      try {
+                                          handler(detail);
+                                          handled = true;
+                                      } catch (handlerError) {
+                                          console.error('[OrderEdit] Mail handler error', handlerError);
+                                      }
+                                  });
+                              }
+
+                              if (!handled) {
+                                  window.dispatchEvent(new CustomEvent('open-email-dialog', {detail}));
+                              }
+
+                              if (!payload.default_email) {
+                                  emitFlash('info', 'Geen standaard e-mailadres gevonden. Vul het adres handmatig in.');
+                              } else {
+                                  emitFlash('success', 'Ordermail is voor je klaargezet.');
+                              }
+                          } catch (error) {
+                              emitFlash('error', error?.message || 'Voorbereiden van de ordermail is mislukt.');
+                              if (!window.app && typeof alert === 'function') {
+                                  alert(error?.message || 'Voorbereiden van de ordermail is mislukt.');
+                              }
+                          } finally {
+                              button.dataset.loading = 'false';
+                              button.textContent = button.dataset.originalLabel || 'Maak order mail';
+                              button.classList.remove('pointer-events-none', 'opacity-60');
+                          }
+                      });
+
+                      button.dataset.bound = 'true';
+                  } catch (err) {
+                      console.error('[OrderEdit] Mail compose init error', err);
+                  }
+              };
 
             // Debug logging for redirect buttons and submission flow
             const initOrderEditDebug = () => {
@@ -315,10 +542,54 @@
                 document.addEventListener('DOMContentLoaded', () => {
                     initOrderEditSalesLead();
                     initOrderEditDebug();
+                      initOrderMailCompose();
+
+                    // After email stored, mark order as sent (min JS: one small call)
+                    try {
+                        const emitter = window.app?.config?.globalProperties?.$emitter || window.app?.$emitter;
+                        if (emitter && !window.__orderMailStatusBound) {
+                            emitter.on('on-activity-added', async () => {
+                                try {
+                                    await fetch("{{ route('admin.orders.status.sent', ['orderId' => $orders->id]) }}", {
+                                        method: 'POST',
+                                        headers: {
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                            'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')) || (document.querySelector('input[name="_token"]')?.value) || ''
+                                        }
+                                    });
+                                } catch (e) {
+                                    // ignore quietly; user can still continue
+                                }
+                            });
+                            window.__orderMailStatusBound = true;
+                        }
+                    } catch (e) {
+                        // ignore
+                    }
                 }, {once: true});
             } else {
                 initOrderEditSalesLead();
                 initOrderEditDebug();
+                  initOrderMailCompose();
+
+                // After email stored, mark order as sent
+                try {
+                    const emitter = window.app?.config?.globalProperties?.$emitter || window.app?.$emitter;
+                    if (emitter && !window.__orderMailStatusBound) {
+                        emitter.on('on-activity-added', async () => {
+                            try {
+                                await fetch("{{ route('admin.orders.status.sent', ['orderId' => $orders->id]) }}", {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')) || (document.querySelector('input[name="_token"]')?.value) || ''
+                                    }
+                                });
+                            } catch (e) {}
+                        });
+                        window.__orderMailStatusBound = true;
+                    }
+                } catch (e) {}
             }
         </script>
 

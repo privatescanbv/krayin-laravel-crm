@@ -56,6 +56,7 @@ services:
       - 'sail-mysql:/var/lib/mysql'
       - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
       - './docker/mysql/init-grant.sql:/docker-entrypoint-initdb.d/20-init-grant.sql'
+      - './docker/mysql/init-forms-database.sql:/docker-entrypoint-initdb.d/30-init-forms-database.sql'
     networks:
       - sail
       - mb_traefik
@@ -200,6 +201,73 @@ services:
       - sail
     depends_on:
       - crm
+
+  forms:
+    image: ghcr.io/privatescanbv/privateforms/forms:latest
+    container_name: privateforms
+    stdin_open: true
+    tty: true
+    environment:
+      WWWUSER: '${WWWUSER}'
+      WWWGROUP: '${WWWGROUP}'
+      APP_NAME: 'PrivateForms'
+      APP_ENV: 'production'
+      APP_KEY: 'base64:i8u5O+j9QB823zOyqJFjsqr2iINU9Z1cFdr5HTfKNOg='
+      API_KEY_1: '4!LvFF3HNTUGz*E^X@kk'
+      APP_DEBUG: 'false'
+      APP_URL: 'http://localhost:8001'
+      ASSET_URL: 'http://localhost:8001'
+      POSTMARK_TOKEN: '3ea2bc92-4dd0-4bc5-af86-fb764e5d7af9'
+      MAIL_FROM_ADDRESS: 'no-reply@privatescan.nl'
+      MAIL_FROM_NAME: 'PrivateScan'
+      APP_FALLBACK_LOCALE: 'en'
+      APP_FAKER_LOCALE: 'en_US'
+      APP_LOCALE: 'nl'
+      APP_MAINTENANCE_DRIVER: 'file'
+      PHP_CLI_SERVER_WORKERS: 4
+      BCRYPT_ROUNDS: 12
+      LOG_CHANNEL: 'stack'
+      LOG_STACK: 'single'
+      LOG_DEPRECATIONS_CHANNEL: 'null'
+      LOG_LEVEL: 'info'
+      DB_CONNECTION: 'mysql'
+      DB_HOST: 'mysql'
+      DB_PORT: '3306'
+      DB_DATABASE: 'forms'
+      DB_USERNAME: 'privatescan-api-api'
+      DB_PASSWORD: 'privatescan-api-api'
+      APP_TIMEZONE: 'UTC'
+      SESSION_DRIVER: 'file'
+      SESSION_LIFETIME: 120
+      SESSION_DOMAIN: ''
+      SESSION_SECURE: 'false'
+      SESSION_SAME_SITE: 'lax'
+      SESSION_PATH: '/'
+      BROADCAST_CONNECTION: 'log'
+      FILESYSTEM_DISK: 'local'
+      QUEUE_CONNECTION: 'database'
+      CACHE_STORE: 'database'
+      MEMCACHED_HOST: '127.0.0.1'
+      TRAEFIK_URL: 'api.forms.privatescan.local'
+      FORWARD_REDIS_PORT: 6379
+      VITE_APP_NAME: "${APP_NAME}"
+      EMAIL_VERIFICATION_BCC: 'mark.bulthuis@privatescan.nl'
+    ports:
+      - '8001:80'
+    labels:
+      - 'dev.orbstack.domains=${TRAEFIK_FROMS_URL}'
+      - traefik.enable=true
+      - traefik.http.routers.laravel-template-api-rtr.rule=Host(`$TRAEFIK_FROMS_URL`)
+      - traefik.http.routers.laravel-template-api-rtr.tls=true
+      - traefik.http.routers.laravel-template-api-rtr.entrypoints=https
+      - traefik.http.routers.laravel-template-api-rtr.service=laravel-template-forms-api-svc
+      - traefik.http.services.laravel-template-api-svc.loadbalancer.server.port=80
+    networks:
+      - sail
+      - mb_traefik
+    depends_on:
+      mysql:
+        condition: service_healthy
 
 networks:
   sail:

@@ -4,10 +4,13 @@ namespace App\Observers;
 
 use App\Enums\OrderItemStatus;
 use App\Models\ResourceOrderItem;
+use App\Services\OrderStatusService;
 use Illuminate\Support\Facades\DB;
 
 class ResourceOrderItemObserver
 {
+    public function __construct(private readonly OrderStatusService $orderStatusService) {}
+
     /**
      * Handle the ResourceOrderItem "created" event.
      */
@@ -53,10 +56,7 @@ class ResourceOrderItemObserver
             ->first();
 
         if ($orderItem && $orderItem->order_id) {
-            // Touch the order to trigger status update
-            DB::table('orders')
-                ->where('id', $orderItem->order_id)
-                ->update(['updated_at' => now()]);
+            $this->orderStatusService->recalculateAndPersistById((int) $orderItem->order_id);
         }
     }
 

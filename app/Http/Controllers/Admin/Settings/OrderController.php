@@ -9,6 +9,7 @@ use App\Models\OrderCheck;
 use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
 use App\Services\OrderCheckService;
+use App\Services\OrderMailService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -23,7 +24,8 @@ class OrderController extends SimpleEntityController
 {
     public function __construct(
         protected OrderRepository $orderRepository,
-        protected OrderCheckService $orderCheckService
+        protected OrderCheckService $orderCheckService,
+        protected OrderMailService $orderMailService
     ) {
         parent::__construct($orderRepository);
 
@@ -114,16 +116,43 @@ class OrderController extends SimpleEntityController
 
         $order = $this->orderRepository->update($payload, $id);
 
-        // Re-sync items (simple approach: delete and recreate)
-        $order->orderItems()->delete();
-        foreach ($items as $item) {
-            if (! empty($item['product_id']) && ! empty($item['quantity'])) {
-                $order->orderItems()->create([
+        // Preserve existing order items: update by ID, create new ones, do not delete missing to avoid losing planning
+        if (is_array($items) && ! empty($items)) {
+            // Load current items keyed by id for quick lookup
+            $currentItems = $order->orderItems()->get()->keyBy('id');
+
+            foreach ($items as $key => $item) {
+                // Skip invalid rows
+                if (empty($item['product_id']) || empty($item['quantity'])) {
+                    continue;
+                }
+
+                $attributes = [
                     'product_id'  => (int) $item['product_id'],
                     'person_id'   => ! empty($item['person_id']) ? (int) $item['person_id'] : null,
                     'quantity'    => (int) $item['quantity'],
                     'total_price' => (float) ($item['total_price'] ?? 0),
-                    'status'      => OrderItemStatus::NIEUW,
+                ];
+
+                // If key is a numeric id and exists, update without touching status
+                if (is_numeric($key) && $currentItems->has((int) $key)) {
+                    $current = $currentItems->get((int) $key);
+                    $current->update($attributes);
+                } else {
+                    // New item: create with default status NIEUW
+                    $order->orderItems()->create($attributes + [
+                        'status' => OrderItemStatus::NIEUW,
+                    ]);
+                }
+            }
+        }
+
+        // Update GVL form link if provided (empty string becomes null)
+        if ($request->has('gvl_form_link')) {
+            $gvlFormLink = $request->input('gvl_form_link');
+            if ($order->salesLead) {
+                $order->salesLead->update([
+                    'gvl_form_link' => empty(trim($gvlFormLink)) ? null : $gvlFormLink,
                 ]);
             }
         }
@@ -264,6 +293,41 @@ class OrderController extends SimpleEntityController
         ]);
     }
 
+    public function mailPreview(int $orderId): JsonResponse
+    {
+        $order = $this->orderRepository->findOrFail($orderId);
+
+        $order->load([
+            'orderItems.product',
+            'orderItems.person',
+            'salesLead.lead',
+            'salesLead.contactPerson',
+        ]);
+
+        if (! $order->salesLead) {
+            return response()->json([
+                'message' => 'Order heeft geen gekoppelde sales lead.',
+            ], 422);
+        }
+
+        $mailData = $this->orderMailService->buildMailData($order);
+
+        return response()->json($mailData);
+    }
+
+    public function markAsSent(Request $request, int $orderId): JsonResponse
+    {
+        $order = $this->orderRepository->findOrFail($orderId);
+
+        $order->update([
+            'status' => OrderStatus::VERSTUURD,
+        ]);
+
+        return response()->json([
+            'message' => 'Orderstatus gezet op verstuurd.',
+        ], 200);
+    }
+
     protected function getEditViewData(Request $request, Model $entity): array
     {
         // Eager-load relations needed for planning button visibility and planning info
@@ -274,8 +338,12 @@ class OrderController extends SimpleEntityController
             'orderItems.resourceOrderItems.resource',
             'orderItems.person',
             'salesLead.lead',
+            'salesLead.contactPerson',
             'orderChecks',
         ]);
+
+        $orderEmailOptions = $this->orderMailService->getEmailOptions($entity);
+        $orderDefaultEmail = $this->orderMailService->getDefaultEmail($entity);
 
         $salesLeads = SalesLead::with('lead')->get()->mapWithKeys(function ($salesLead) {
             return [$salesLead->id => $salesLead->name.' ('.($salesLead->lead?->name ?? 'Geen lead').')'];
@@ -290,9 +358,11 @@ class OrderController extends SimpleEntityController
         }
 
         return [
-            $this->entityName => $entity,
-            'salesLeads'      => $salesLeads,
-            'persons'         => $persons,
+            $this->entityName   => $entity,
+            'salesLeads'        => $salesLeads,
+            'persons'           => $persons,
+            'orderEmailOptions' => $orderEmailOptions,
+            'orderDefaultEmail' => $orderDefaultEmail,
         ];
     }
 

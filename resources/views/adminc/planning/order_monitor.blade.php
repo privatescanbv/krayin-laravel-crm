@@ -318,6 +318,13 @@
                         const toLocal = (dt) => `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
                         this.form.from = toLocal(new Date(block.from));
                         this.form.to = toLocal(new Date(block.to));
+                        // Preselect the first order item that is planable and not yet planned
+                        if (!this.form.order_item_id) {
+                            const candidate = this.orderItems.find(item => item.can_plan && item.status !== 'ingepland');
+                            if (candidate) {
+                                this.form.order_item_id = candidate.id;
+                            }
+                        }
                         this.$refs.bookModal.toggle();
                     },
                     async submitBooking() {

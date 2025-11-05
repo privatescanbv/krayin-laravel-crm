@@ -42,6 +42,7 @@ class SalesLead extends Model
         'lead_id',
         'user_id',
         'contact_person_id',
+        'gvl_form_link',
         'created_by',
         'updated_by',
     ];

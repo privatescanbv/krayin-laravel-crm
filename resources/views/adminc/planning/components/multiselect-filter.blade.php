@@ -19,7 +19,7 @@
             </div>
 
             <!-- Dropdown -->
-            <x-admin::dropdown position="bottom-left">
+            <x-admin::dropdown position="bottom-left" close-on-click="false">
                 <x-slot:toggle>
                     <button
                         type="button"
@@ -45,6 +45,7 @@
                                 :checked="selectedValues.includes(option.value)"
                                 class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                 @click.stop
+                                @change="toggleValue(option.value)"
                             />
                             <span>@{{ option.label }}</span>
                         </div>

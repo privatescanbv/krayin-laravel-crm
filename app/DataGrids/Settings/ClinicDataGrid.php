@@ -43,15 +43,6 @@ class ClinicDataGrid extends DataGrid
     public function prepareColumns(): void
     {
         $this->addColumn([
-            'index'      => 'id',
-            'label'      => trans('admin::app.settings.clinics.index.datagrid.id'),
-            'type'       => 'string',
-            'searchable' => true,
-            'filterable' => true,
-            'sortable'   => true,
-        ]);
-
-        $this->addColumn([
             'index'      => 'name',
             'columnName' => 'clinics.name',
             'type'       => 'string',

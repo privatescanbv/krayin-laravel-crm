@@ -6,7 +6,6 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use App\Enums\Currency;
 use Webkul\DataGrid\DataGrid;
-use Webkul\Tag\Repositories\TagRepository;
 use Webkul\Product\Repositories\ProductGroupRepository;
 
 class ProductDataGrid extends DataGrid
@@ -21,9 +20,15 @@ class ProductDataGrid extends DataGrid
     public function prepareQueryBuilder(): Builder
     {
         $queryBuilder = DB::table('products')
+            ->leftJoin('partner_products', function ($join) {
+                $join->on('products.id', '=', 'partner_products.product_id')
+                    ->whereNull('partner_products.deleted_at');
+            })
             ->leftJoin('product_tags', 'products.id', '=', 'product_tags.product_id')
             ->leftJoin('tags', 'tags.id', '=', 'product_tags.tag_id')
             ->leftJoin('product_groups', 'products.product_group_id', '=', 'product_groups.id')
+            ->leftJoin('product_types', 'products.product_type_id', '=', 'product_types.id')
+            ->leftJoin('resource_types', 'products.resource_type_id', '=', 'resource_types.id')
             ->select(
                 DB::raw('products.id as id'),
                 'products.name',
@@ -32,7 +37,10 @@ class ProductDataGrid extends DataGrid
                 'products.active',
                 DB::raw('MIN(tags.name) as tag_name'),
                 'product_groups.name as group_name',
-                'product_groups.parent_id as group_parent_id'
+                'product_groups.parent_id as group_parent_id',
+                'product_types.name as product_type_name',
+                'resource_types.name as resource_type_name',
+                DB::raw('COUNT(DISTINCT partner_products.id) as partner_products_count')
             )
             ->groupBy('products.id');
 
@@ -79,16 +87,6 @@ class ProductDataGrid extends DataGrid
         // SKU removed per requirements
 
         $this->addColumn([
-            'index'      => 'id',
-            'columnName' => 'products.id',
-            'label'      => trans('admin::app.partner_products.index.datagrid.id'),
-            'type'       => 'string',
-            'sortable'   => true,
-            'searchable' => true,
-            'filterable' => true,
-        ]);
-
-        $this->addColumn([
             'index'      => 'name',
             'columnName' => 'products.name',
             'label'      => trans('admin::app.products.index.datagrid.name'),
@@ -96,6 +94,32 @@ class ProductDataGrid extends DataGrid
             'sortable'   => true,
             'searchable' => true,
             'filterable' => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'product_type_name',
+            'columnName' => 'product_types.name',
+            'label'      => trans('admin::app.products.create.product_type'),
+            'type'       => 'string',
+            'searchable' => true,
+            'sortable'   => true,
+            'filterable' => true,
+            'closure'    => function ($row) {
+                return $row->product_type_name ?? '--';
+            },
+        ]);
+
+        $this->addColumn([
+            'index'      => 'resource_type_name',
+            'columnName' => 'resource_types.name',
+            'label'      => trans('admin::app.products.create.resource_type'),
+            'type'       => 'string',
+            'searchable' => true,
+            'sortable'   => true,
+            'filterable' => true,
+            'closure'    => function ($row) {
+                return $row->resource_type_name ?? '--';
+            },
         ]);
 
         $this->addColumn([
@@ -131,6 +155,19 @@ class ProductDataGrid extends DataGrid
                 ];
 
                 return $this->productGroupRepository->getGroupPathByRow($mockRow);
+            },
+        ]);
+
+        $this->addColumn([
+            'index'      => 'partner_products_count',
+            'columnName' => 'partner_products_count',
+            'label'      => 'Partner products',
+            'type'       => 'string',
+            'searchable' => false,
+            'sortable'   => true,
+            'filterable' => false,
+            'closure'    => function ($row) {
+                return (string) ($row->partner_products_count ?? 0);
             },
         ]);
 
@@ -196,19 +233,6 @@ class ProductDataGrid extends DataGrid
                 'url'    => fn ($row) => route('admin.products.delete', $row->id),
             ]);
         }
-    }
-
-    /**
-     * Prepare mass actions.
-     */
-    public function prepareMassActions(): void
-    {
-        $this->addMassAction([
-            'icon'   => 'icon-delete',
-            'title'  => trans('admin::app.products.index.datagrid.delete'),
-            'method' => 'POST',
-            'url'    => route('admin.products.mass_delete'),
-        ]);
     }
 
     // Money formatting centralized in App\Enums\Currency::formatMoney

@@ -25,15 +25,6 @@ class ResourceTypeDataGrid extends DataGrid
     public function prepareColumns(): void
     {
         $this->addColumn([
-            'index'      => 'id',
-            'label'      => trans('admin::app.settings.resource_types.index.datagrid.id'),
-            'type'       => 'string',
-            'searchable' => true,
-            'filterable' => true,
-            'sortable'   => true,
-        ]);
-
-        $this->addColumn([
             'index'      => 'name',
             'type'       => 'string',
             'label'      => trans('admin::app.settings.resource_types.index.datagrid.name'),

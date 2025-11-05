@@ -15,6 +15,11 @@ class PartnerProductDataGrid extends DataGrid
     public function prepareQueryBuilder(): Builder
     {
         $queryBuilder = DB::table('partner_products')
+            ->leftJoin('clinic_partner_product', 'partner_products.id', '=', 'clinic_partner_product.partner_product_id')
+            ->leftJoin('clinics', 'clinics.id', '=', 'clinic_partner_product.clinic_id')
+            ->leftJoin('partner_product_resource', 'partner_products.id', '=', 'partner_product_resource.partner_product_id')
+            ->leftJoin('resources', 'resources.id', '=', 'partner_product_resource.resource_id')
+            ->leftJoin('resource_types', 'resource_types.id', '=', 'partner_products.resource_type_id')
             ->whereNull('partner_products.deleted_at')
             ->addSelect(
                 'partner_products.id',
@@ -23,8 +28,12 @@ class PartnerProductDataGrid extends DataGrid
                 'partner_products.sales_price',
                 'partner_products.related_sales_price',
                 'partner_products.active',
-                'partner_products.reporting'
-            );
+                'partner_products.reporting',
+                DB::raw('MIN(clinics.name) as clinic_name'),
+                DB::raw('COUNT(DISTINCT resources.id) as resources_count'),
+                'resource_types.name as resource_type_name'
+            )
+            ->groupBy('partner_products.id');
 
         $this->addFilter('id', 'partner_products.id');
         $this->addFilter('active', 'partner_products.active');
@@ -40,15 +49,7 @@ class PartnerProductDataGrid extends DataGrid
 
     public function prepareColumns(): void
     {
-        $this->addColumn([
-            'index'      => 'id',
-            'columnName' => 'partner_products.id',
-            'label'      => trans('admin::app.partner_products.index.datagrid.id'),
-            'type'       => 'string',
-            'searchable' => true,
-            'filterable' => true,
-            'sortable'   => true,
-        ]);
+        // Removed ID column per requirements
 
         $this->addColumn([
             'index'      => 'name',
@@ -58,13 +59,44 @@ class PartnerProductDataGrid extends DataGrid
             'searchable' => true,
             'filterable' => true,
             'sortable'   => true,
-            'closure'    => function ($row) {
-                $partnerProductRepository = app(PartnerProductRepository::class);
-                $partnerProduct = PartnerProduct::with('clinics:id,name')
-                    ->whereNull('deleted_at')
-                    ->find($row->id);
+        ]);
 
-                return $partnerProduct ? $partnerProductRepository->formatDisplayName($partnerProduct) : $row->name;
+        $this->addColumn([
+            'index'      => 'clinic_name',
+            'columnName' => 'clinics.name',
+            'type'       => 'string',
+            'label'      => 'Clinic',
+            'searchable' => true,
+            'filterable' => true,
+            'sortable'   => true,
+            'closure'    => function ($row) {
+                return $row->clinic_name ?? '-';
+            },
+        ]);
+
+        $this->addColumn([
+            'index'      => 'resource_type_name',
+            'columnName' => 'resource_types.name',
+            'type'       => 'string',
+            'label'      => trans('admin::app.partner_products.index.create.resource_type'),
+            'searchable' => true,
+            'filterable' => true,
+            'sortable'   => true,
+            'closure'    => function ($row) {
+                return $row->resource_type_name ?? '-';
+            },
+        ]);
+
+        $this->addColumn([
+            'index'      => 'resources_count',
+            'columnName' => 'resources_count',
+            'type'       => 'string',
+            'label'      => 'Resources',
+            'searchable' => false,
+            'filterable' => false,
+            'sortable'   => true,
+            'closure'    => function ($row) {
+                return (string) ($row->resources_count ?? 0);
             },
         ]);
 

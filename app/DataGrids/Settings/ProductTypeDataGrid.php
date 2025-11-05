@@ -24,14 +24,6 @@ class ProductTypeDataGrid extends DataGrid
 
     public function prepareColumns(): void
     {
-        $this->addColumn([
-            'index'      => 'id',
-            'label'      => trans('admin::app.settings.product_types.index.datagrid.id'),
-            'type'       => 'string',
-            'searchable' => true,
-            'filterable' => true,
-            'sortable'   => true,
-        ]);
 
         $this->addColumn([
             'index'      => 'name',

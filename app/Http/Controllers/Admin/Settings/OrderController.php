@@ -277,7 +277,6 @@ class OrderController extends SimpleEntityController
             'orderItems.person',
             'salesLead.lead',
             'salesLead.contactPerson',
-            'salesLead.persons',
             'orderChecks',
         ]);
 

@@ -160,7 +160,7 @@
         </div>
     </x-admin::form>
 
-      @if ($orders->sales_lead_id && $orders->salesLead)
+      @if ($orders->sales_lead_id)
           @php
               $orderMailEntity = [
                   'id'   => $orders->sales_lead_id,

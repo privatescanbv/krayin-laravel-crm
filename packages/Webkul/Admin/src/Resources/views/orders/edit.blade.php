@@ -161,8 +161,15 @@
     </x-admin::form>
 
       @if ($orders->sales_lead_id && $orders->salesLead)
+          @php
+              $orderMailEntity = [
+                  'id'   => $orders->sales_lead_id,
+                  'name' => $orders->salesLead->name ?? null,
+              ];
+          @endphp
+
           <x-admin::activities.actions.mail
-              :entity="$orders->salesLead"
+              :entity="$orderMailEntity"
               entity-control-name="sales_lead_id"
               :emails="$orderEmailOptions ?? []"
               store-url="{{ route('admin.sales-leads.emails.store', ['id' => $orders->sales_lead_id]) }}"

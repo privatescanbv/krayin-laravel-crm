@@ -330,20 +330,40 @@
                                   throw new Error(payload?.message || 'Kon order mail niet voorbereiden.');
                               }
 
-                              window.dispatchEvent(new CustomEvent('open-email-dialog', {
-                                  detail: {
-                                      defaultEmail: payload.default_email || null,
-                                      subject: payload.subject || '',
-                                      body: payload.body || '',
-                                      emails: payload.emails || [],
-                                  },
-                              }));
+                              const detail = {
+                                  defaultEmail: payload.default_email || null,
+                                  subject: payload.subject || '',
+                                  body: payload.body || '',
+                                  emails: payload.emails || [],
+                              };
+
+                              let handled = false;
+                              const handlers = window.__mailDialogHandlers;
+                              if (Array.isArray(handlers) && handlers.length) {
+                                  handlers.forEach((handler) => {
+                                      try {
+                                          handler(detail);
+                                          handled = true;
+                                      } catch (handlerError) {
+                                          console.error('[OrderEdit] Mail handler error', handlerError);
+                                      }
+                                  });
+                              }
+
+                              if (!handled) {
+                                  window.dispatchEvent(new CustomEvent('open-email-dialog', {detail}));
+                              }
 
                               if (!payload.default_email) {
                                   emitFlash('info', 'Geen standaard e-mailadres gevonden. Vul het adres handmatig in.');
+                              } else {
+                                  emitFlash('success', 'Ordermail is voor je klaargezet.');
                               }
                           } catch (error) {
                               emitFlash('error', error?.message || 'Voorbereiden van de ordermail is mislukt.');
+                              if (!window.app && typeof alert === 'function') {
+                                  alert(error?.message || 'Voorbereiden van de ordermail is mislukt.');
+                              }
                           } finally {
                               button.dataset.loading = 'false';
                               button.textContent = button.dataset.originalLabel || 'Maak order mail';

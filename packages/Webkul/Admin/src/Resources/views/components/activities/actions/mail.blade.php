@@ -307,17 +307,38 @@
             },
 
               mounted() {
-                  // Listen for email dialog events from other components
-                  window.addEventListener('open-email-dialog', (event) => {
+                  this.__mailDialogListener = (event) => {
                       const detail = event?.detail || {};
                       this.openModalWithPayload(detail);
-                  });
+                  };
+
+                  window.addEventListener('open-email-dialog', this.__mailDialogListener);
+
+                  this.__mailDialogHandler = (payload) => {
+                      this.openModalWithPayload(payload || {});
+                  };
+
+                  if (! Array.isArray(window.__mailDialogHandlers)) {
+                      window.__mailDialogHandlers = [];
+                  }
+
+                  window.__mailDialogHandlers.push(this.__mailDialogHandler);
 
                   // Use emails from server-side if provided, otherwise fallback to client-side logic
                   if (this.emails && this.emails.length > 0) {
                       this.entityEmails = this.emails;
                   } else {
                       this.entityEmails = this.collectEntityEmails();
+                  }
+              },
+
+              beforeUnmount() {
+                  if (this.__mailDialogListener) {
+                      window.removeEventListener('open-email-dialog', this.__mailDialogListener);
+                  }
+
+                  if (this.__mailDialogHandler && Array.isArray(window.__mailDialogHandlers)) {
+                      window.__mailDialogHandlers = window.__mailDialogHandlers.filter((handler) => handler !== this.__mailDialogHandler);
                   }
               },
 

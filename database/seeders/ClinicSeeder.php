@@ -148,7 +148,14 @@ class ClinicSeeder extends BaseSeeder
         ];
 
         foreach ($clinics as $clinicData) {
-            Clinic::create($clinicData);
+            // Use name as unique key according to clinics.clinics_name_unique
+            Clinic::updateOrCreate(
+                ['name' => $clinicData['name']],
+                [
+                    'external_id' => $clinicData['external_id'],
+                    'registration_form_clinic_name' => $clinicData['registration_form_clinic_name'],
+                ]
+            );
         }
     }
 }

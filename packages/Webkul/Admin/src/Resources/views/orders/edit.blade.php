@@ -32,6 +32,16 @@
                 </div>
 
                 <div class="flex items-center gap-x-2.5">
+                    @if ($orders->sales_lead_id)
+                        <button
+                            type="button"
+                            class="secondary-button"
+                            id="order-compose-mail"
+                        >
+                            Maak order mail
+                        </button>
+                    @endif
+
                     <button
                         type="button"
                         class="secondary-button"
@@ -40,6 +50,7 @@
                     >
                         Resource Planner
                     </button>
+
                     <button
                         type="button"
                         class="secondary-button"
@@ -48,8 +59,13 @@
                     >
                         Toepassen
                     </button>
-                    <button type="button" class="primary-button" id="order-edit-save"
-                            data-redirect-to="{{ route('admin.orders.index') }}">
+
+                    <button
+                        type="button"
+                        class="primary-button"
+                        id="order-edit-save"
+                        data-redirect-to="{{ route('admin.orders.index') }}"
+                    >
                         Opslaan
                     </button>
                 </div>
@@ -143,6 +159,16 @@
             </div>
         </div>
     </x-admin::form>
+
+      @if ($orders->sales_lead_id && $orders->salesLead)
+          <x-admin::activities.actions.mail
+              :entity="$orders->salesLead"
+              entity-control-name="sales_lead_id"
+              :emails="$orderEmailOptions ?? []"
+              store-url="{{ route('admin.sales-leads.emails.store', ['id' => $orders->sales_lead_id]) }}"
+              :show-button="false"
+          />
+      @endif
 
 
     @pushOnce('scripts')
@@ -256,6 +282,74 @@
                 }
             };
 
+              const initOrderMailCompose = () => {
+                  try {
+                      const button = document.getElementById('order-compose-mail');
+                      if (!button || button.dataset.bound === 'true') {
+                          return;
+                      }
+
+                      const endpoint = "{{ route('admin.orders.mail.preview', ['orderId' => $orders->id]) }}";
+
+                      const emitFlash = (type, message) => {
+                          try {
+                              const emitter = window.app?.config?.globalProperties?.$emitter || window.app?.$emitter;
+                              if (emitter) {
+                                  emitter.emit('add-flash', {type, message});
+                              } else {
+                                  console[type === 'error' ? 'error' : 'log'](message);
+                              }
+                          } catch (err) {
+                              console.error('[OrderEdit] Flash emit failed', err, message);
+                          }
+                      };
+
+                      button.addEventListener('click', async () => {
+                          if (button.dataset.loading === 'true') {
+                              return;
+                          }
+
+                          button.dataset.loading = 'true';
+                          const originalLabel = button.dataset.originalLabel || button.textContent.trim();
+                          button.dataset.originalLabel = originalLabel;
+                          button.textContent = 'Bezig...';
+                          button.classList.add('pointer-events-none', 'opacity-60');
+
+                          try {
+                              const response = await fetch(endpoint, {headers: {'Accept': 'application/json'}});
+                              const payload = await response.json();
+
+                              if (!response.ok) {
+                                  throw new Error(payload?.message || 'Kon order mail niet voorbereiden.');
+                              }
+
+                              window.dispatchEvent(new CustomEvent('open-email-dialog', {
+                                  detail: {
+                                      defaultEmail: payload.default_email || null,
+                                      subject: payload.subject || '',
+                                      body: payload.body || '',
+                                      emails: payload.emails || [],
+                                  },
+                              }));
+
+                              if (!payload.default_email) {
+                                  emitFlash('info', 'Geen standaard e-mailadres gevonden. Vul het adres handmatig in.');
+                              }
+                          } catch (error) {
+                              emitFlash('error', error?.message || 'Voorbereiden van de ordermail is mislukt.');
+                          } finally {
+                              button.dataset.loading = 'false';
+                              button.textContent = button.dataset.originalLabel || 'Maak order mail';
+                              button.classList.remove('pointer-events-none', 'opacity-60');
+                          }
+                      });
+
+                      button.dataset.bound = 'true';
+                  } catch (err) {
+                      console.error('[OrderEdit] Mail compose init error', err);
+                  }
+              };
+
             // Debug logging for redirect buttons and submission flow
             const initOrderEditDebug = () => {
                 try {
@@ -315,10 +409,12 @@
                 document.addEventListener('DOMContentLoaded', () => {
                     initOrderEditSalesLead();
                     initOrderEditDebug();
+                      initOrderMailCompose();
                 }, {once: true});
             } else {
                 initOrderEditSalesLead();
                 initOrderEditDebug();
+                  initOrderMailCompose();
             }
         </script>
 

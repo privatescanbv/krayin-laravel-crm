@@ -2,21 +2,25 @@
     'entity'            => null,
     'entityControlName' => null,
     'emails'            => [],
+    'storeUrl'          => null,
+    'showButton'        => true,
 ])
 
 <!-- Mail Button -->
 <div>
     {!! view_render_event('admin.components.activities.actions.mail.create_btn.before') !!}
 
-    <button
-        type="button"
-        class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-green-200 font-medium text-green-900 transition-all hover:border-green-400"
-        @click="$refs.mailActionComponent.openModal('mail')"
-    >
-        <span class="icon-mail text-2xl dark:!text-green-900"></span>
+    @if ($showButton)
+        <button
+            type="button"
+            class="flex h-[74px] w-[84px] flex-col items-center justify-center gap-1 rounded-lg border border-transparent bg-green-200 font-medium text-green-900 transition-all hover:border-green-400"
+            @click="$refs.mailActionComponent.openModal('mail')"
+        >
+            <span class="icon-mail text-2xl dark:!text-green-900"></span>
 
-        @lang('admin::app.components.activities.actions.mail.btn')
-    </button>
+            @lang('admin::app.components.activities.actions.mail.btn')
+        </button>
+    @endif
 
     {!! view_render_event('admin.components.activities.actions.mail.create_btn.after') !!}
 
@@ -29,6 +33,7 @@
         entity-control-name="{{ $entityControlName }}"
         :activity-id="{{ isset($activity) ? (int) $activity->id : 'null' }}"
         :emails="{{ json_encode($emails) }}"
+        @if ($storeUrl) store-url="{{ $storeUrl }}" @endif
     ></v-mail-activity>
 
     {!! view_render_event('admin.components.activities.actions.mail.after') !!}
@@ -278,6 +283,12 @@
                     type: Array,
                     required: false,
                     default: () => []
+                },
+
+                storeUrl: {
+                    type: String,
+                    required: false,
+                    default: ''
                 }
             },
 
@@ -295,81 +306,84 @@
                 }
             },
 
-            mounted() {
-                // Listen for email dialog events from call status
-                window.addEventListener('open-email-dialog', (event) => {
-                    this.openModalWithEmail(event.detail.defaultEmail, event.detail.activityId);
-                });
+              mounted() {
+                  // Listen for email dialog events from other components
+                  window.addEventListener('open-email-dialog', (event) => {
+                      const detail = event?.detail || {};
+                      this.openModalWithPayload(detail);
+                  });
 
-                // Use emails from server-side if provided, otherwise fallback to client-side logic
-                if (this.emails && this.emails.length > 0) {
-                    this.entityEmails = this.emails;
-                } else {
-                    this.entityEmails = this.collectEntityEmails();
-                }
-            },
+                  // Use emails from server-side if provided, otherwise fallback to client-side logic
+                  if (this.emails && this.emails.length > 0) {
+                      this.entityEmails = this.emails;
+                  } else {
+                      this.entityEmails = this.collectEntityEmails();
+                  }
+              },
 
-            methods: {
-                openModal(type) {
-                    this.$refs.mailActivityModal.open();
+              methods: {
+                  openModal(type) {
+                      this.openModalWithPayload({});
+                  },
 
-                    // On open, prefill default email if available and field is empty
-                    setTimeout(() => {
-                        const emailField = this.$refs.mailActionForm.querySelector('[name="reply_to"]');
-                        const current = (emailField && emailField.value) ? emailField.value.trim() : '';
-                        if (!current) {
-                            const def = this.getDefaultEmail();
-                            if (def) {
-                                this.setReplyTo(def);
-                            }
-                        }
+                  openModalWithPayload(payload = {}) {
+                      const {
+                          defaultEmail = null,
+                          activityId = null,
+                          subject = '',
+                          body = '',
+                          emails = null,
+                      } = payload || {};
 
-                        // Add user signature to the message field if empty
-                        const messageField = this.$refs.mailActionForm.querySelector('[name="reply"]');
-                        if (messageField && !messageField.value.trim()) {
-                            @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
-                                messageField.value = `{{ auth()->guard('user')->user()->signature }}`;
-                            @endif
-                        }
-                    }, 100);
-                },
+                      this.$refs.mailActivityModal.open();
 
-                openModalWithEmail(defaultEmail, activityId) {
-                    this.$refs.mailActivityModal.open();
+                      setTimeout(() => {
+                          if (Array.isArray(emails) && emails.length) {
+                              this.entityEmails = emails;
+                          } else if (! this.entityEmails.length) {
+                              this.entityEmails = this.emails && this.emails.length ? this.emails : this.collectEntityEmails();
+                          }
 
-                    // Pre-fill the email field
-                    setTimeout(() => {
-                        const emailField = this.$refs.mailActionForm.querySelector('[name="reply_to"]');
-                        if (emailField && defaultEmail) {
-                            // Set the email value
-                            emailField.value = defaultEmail;
-                            // Trigger change event to update any tags input
-                            emailField.dispatchEvent(new Event('change', { bubbles: true }));
-                            this.selectedEmailLabel = defaultEmail;
-                        }
+                          const emailField = this.$refs.mailActionForm.querySelector('[name="reply_to"]');
+                          const hasExistingEmail = emailField && emailField.value && emailField.value.trim().length;
+                          const resolvedEmail = defaultEmail || (!hasExistingEmail ? this.getDefaultEmail() : null);
 
-                        // Add user signature to the message field if empty
-                        const messageField = this.$refs.mailActionForm.querySelector('[name="reply"]');
-                        if (messageField && !messageField.value.trim()) {
-                            @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
-                                messageField.value = `{{ auth()->guard('user')->user()->signature }}`;
-                            @endif
-                        }
+                          if (resolvedEmail && (!hasExistingEmail || (this.selectedEmailLabel || '').toLowerCase() !== resolvedEmail.toLowerCase())) {
+                              this.setReplyTo(resolvedEmail);
+                          }
 
-                        // Inject activity_id hidden input if provided
-                        const formEl = this.$refs.mailActionForm;
-                        if (formEl && (activityId || this.activityId)) {
-                            let hidden = formEl.querySelector('input[name="activity_id"]');
-                            if (!hidden) {
-                                hidden = document.createElement('input');
-                                hidden.type = 'hidden';
-                                hidden.name = 'activity_id';
-                                formEl.appendChild(hidden);
-                            }
-                            hidden.value = activityId || this.activityId;
-                        }
-                    }, 100);
-                },
+                          const subjectField = this.$refs.mailActionForm.querySelector('[name="subject"]');
+                          if (subjectField && subject) {
+                              subjectField.value = subject;
+                              subjectField.dispatchEvent(new Event('input', { bubbles: true }));
+                          }
+
+                          const messageField = this.$refs.mailActionForm.querySelector('[name="reply"]');
+                          if (messageField) {
+                              if (body && body.trim()) {
+                                  messageField.value = body;
+                                  messageField.dispatchEvent(new Event('input', { bubbles: true }));
+                              } else if (!messageField.value.trim()) {
+                                  @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
+                                      messageField.value = `{{ auth()->guard('user')->user()->signature }}`;
+                                  @endif
+                              }
+                          }
+
+                          // Inject activity_id hidden input if provided
+                          const formEl = this.$refs.mailActionForm;
+                          if (formEl && (activityId || this.activityId)) {
+                              let hidden = formEl.querySelector('input[name="activity_id"]');
+                              if (!hidden) {
+                                  hidden = document.createElement('input');
+                                  hidden.type = 'hidden';
+                                  hidden.name = 'activity_id';
+                                  formEl.appendChild(hidden);
+                              }
+                              hidden.value = activityId || this.activityId;
+                          }
+                      }, 100);
+                  },
 
                 collectEntityEmails() {
                     // If server-provided emails exist, use them
@@ -450,37 +464,52 @@
                     }
                 },
 
-                save(params, { resetForm, setErrors  }) {
-                    this.isStoring = true;
+                  save(params, { resetForm, setErrors  }) {
+                      this.isStoring = true;
 
-                    let formData = new FormData(this.$refs.mailActionForm);
+                      const fallbackUrlTemplate = "{{ route('admin.leads.emails.store', 'replaceEntityId') }}";
+                      const entityId = this.entity?.id ?? null;
+                      const resolvedStoreUrl = this.storeUrl && this.storeUrl.length
+                          ? this.storeUrl
+                          : (entityId ? fallbackUrlTemplate.replace('replaceEntityId', entityId) : '');
 
-                    this.$axios.post("{{ route('admin.leads.emails.store', 'replaceLeadId') }}".replace('replaceLeadId', this.entity.id), formData, {
-                            headers: {
-                                'Content-Type': 'multipart/form-data'
-                            }
-                        })
-                        .then (response => {
-                            this.isStoring = false;
+                      if (!resolvedStoreUrl || resolvedStoreUrl.includes('replaceEntityId')) {
+                          this.isStoring = false;
+                          this.$emitter.emit('add-flash', {
+                              type: 'error',
+                              message: 'Kan geen e-mailroute bepalen voor deze entiteit.',
+                          });
+                          return;
+                      }
 
-                            this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+                      const formData = new FormData(this.$refs.mailActionForm);
 
-                            this.$emitter.emit('on-activity-added', response.data.data);
+                      this.$axios.post(resolvedStoreUrl, formData, {
+                              headers: {
+                                  'Content-Type': 'multipart/form-data'
+                              }
+                          })
+                          .then (response => {
+                              this.isStoring = false;
 
-                            this.$refs.mailActivityModal.close();
-                        })
-                        .catch (error => {
-                            this.isStoring = false;
+                              this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
 
-                            if (error.response.status == 422) {
-                                setErrors(error.response.data.errors);
-                            } else {
-                                this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
+                              this.$emitter.emit('on-activity-added', response.data.data);
 
-                                this.$refs.mailActivityModal.close();
-                            }
-                        });
-                },
+                              this.$refs.mailActivityModal.close();
+                          })
+                          .catch (error => {
+                              this.isStoring = false;
+
+                              if (error?.response?.status == 422) {
+                                  setErrors(error.response.data.errors);
+                              } else {
+                                  this.$emitter.emit('add-flash', { type: 'error', message: error?.response?.data?.message || 'Opslaan van e-mail mislukt.' });
+
+                                  this.$refs.mailActivityModal.close();
+                              }
+                          });
+                  },
             },
         });
     </script>

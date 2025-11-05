@@ -9,6 +9,7 @@ use App\Models\OrderCheck;
 use App\Models\SalesLead;
 use App\Repositories\OrderRepository;
 use App\Services\OrderCheckService;
+use App\Services\OrderMailService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -23,7 +24,8 @@ class OrderController extends SimpleEntityController
 {
     public function __construct(
         protected OrderRepository $orderRepository,
-        protected OrderCheckService $orderCheckService
+        protected OrderCheckService $orderCheckService,
+        protected OrderMailService $orderMailService
     ) {
         parent::__construct($orderRepository);
 
@@ -274,8 +276,13 @@ class OrderController extends SimpleEntityController
             'orderItems.resourceOrderItems.resource',
             'orderItems.person',
             'salesLead.lead',
+            'salesLead.contactPerson',
+            'salesLead.persons',
             'orderChecks',
         ]);
+
+        $orderEmailOptions = $this->orderMailService->getEmailOptions($entity);
+        $orderDefaultEmail = $this->orderMailService->getDefaultEmail($entity);
 
         $salesLeads = SalesLead::with('lead')->get()->mapWithKeys(function ($salesLead) {
             return [$salesLead->id => $salesLead->name.' ('.($salesLead->lead?->name ?? 'Geen lead').')'];
@@ -293,7 +300,32 @@ class OrderController extends SimpleEntityController
             $this->entityName => $entity,
             'salesLeads'      => $salesLeads,
             'persons'         => $persons,
+            'orderEmailOptions' => $orderEmailOptions,
+            'orderDefaultEmail' => $orderDefaultEmail,
         ];
+    }
+
+    public function mailPreview(int $orderId): JsonResponse
+    {
+        $order = $this->orderRepository->findOrFail($orderId);
+
+        $order->load([
+            'orderItems.product',
+            'orderItems.person',
+            'salesLead.lead',
+            'salesLead.contactPerson',
+            'salesLead.persons',
+        ]);
+
+        if (! $order->salesLead) {
+            return response()->json([
+                'message' => 'Order heeft geen gekoppelde sales lead.',
+            ], 422);
+        }
+
+        $mailData = $this->orderMailService->buildMailData($order);
+
+        return response()->json($mailData);
     }
 
     protected function validateStore(Request $request): void

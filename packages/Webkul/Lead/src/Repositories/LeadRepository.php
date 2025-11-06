@@ -15,7 +15,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Models\Address;
+use App\Models\Address as LeadAddress;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Repositories\PersonRepository;
@@ -192,7 +192,7 @@ class LeadRepository extends Repository
             $hasAddressData = !empty(array_filter($addressData));
 
             if ($hasAddressData) {
-                Address::create(array_merge($addressData, [
+                LeadAddress::create(array_merge($addressData, [
                     'lead_id' => $lead->id,
                 ]));
             }
@@ -290,14 +290,14 @@ class LeadRepository extends Repository
 
             if ($hasAddressData) {
                 // Check if lead already has an address
-                $existingAddress = Address::where('lead_id', $id)->first();
+                $existingAddress = LeadAddress::where('lead_id', $id)->first();
 
                 if ($existingAddress) {
                     // Update existing address
                     $existingAddress->update($addressData);
                 } else {
                     // Create new address
-                    Address::create(array_merge($addressData, [
+                    LeadAddress::create(array_merge($addressData, [
                         'lead_id' => $id,
                     ]));
                 }

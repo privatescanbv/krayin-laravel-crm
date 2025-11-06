@@ -64,6 +64,14 @@ class AddressRepository extends Repository
             return;
         }
 
+        // Require minimum fields for a valid address payload; avoid validating on partials like only country
+        $houseNumber = isset($addressData['house_number']) ? trim((string) $addressData['house_number']) : '';
+        $postalCode  = isset($addressData['postal_code']) ? trim((string) $addressData['postal_code']) : '';
+        if ($houseNumber === '' || $postalCode === '') {
+            // Skip silently when required address parts are not provided
+            return;
+        }
+
         $payload = array_merge($addressData, [
             $ownerKey => $ownerId,
         ]);

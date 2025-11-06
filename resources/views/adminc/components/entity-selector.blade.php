@@ -4,6 +4,9 @@
             <div class="w-full space-y-3">
 
                 <label v-if="label" class="block font-semibold mb-1">{{ label }}</label>
+                <p v-if="hint" class="text-sm text-gray-600 dark:text-gray-400">
+                    <i>{{ hint }}</i>
+                </p>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                     <!-- Selected items -->
@@ -94,7 +97,7 @@
             if (!app._context.components['v-entity-selector']) {
                 app.component('v-entity-selector', {
                 template: '#v-entity-selector-template',
-                props: ['name','label','placeholder','searchRoute','canAddNew','multiple','style','items','eventName','fetcher'],
+                props: ['name','label', 'hint','placeholder','searchRoute','canAddNew','multiple','style','items','eventName','fetcher'],
                 data() {
                     return {
                         search: '',

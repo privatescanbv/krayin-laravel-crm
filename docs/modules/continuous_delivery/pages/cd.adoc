@@ -1,3 +1,9 @@
 === Continuous delivery
 
-TODO
+Docker images worden gebouwd in Github Actions en gepusht naar Github Container Registry (GHCR).
+Dit wordt gedaan voor main en development branches.
+
+1. Development branch is bedoeld om uitgerold te worden naar onze testomgeving. (crm.dev.privatescan.nl)
+2. Main branch is bedoeld om uitgerold te worden naar onze productieomgeving. (crm.privatescan.nl)
+
+Er is geen automatische deployment opgezet. Dit wordt handmatig gedaan via een SSH sessie op de server.

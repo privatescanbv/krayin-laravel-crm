@@ -8,6 +8,8 @@ Stappen voor de eerste keer:
 
  * Clone de repository
  * Kopieer .env.example naar .env en pas deze aan indien nodig
+ * Zet TELESCOPE_ENABLED=false, of zie Telescope Monitoring
+ * run composer install
  * run yarn install
  * run ./start-dev.sh
  * run sail artisan key:generate (niet zeker, probeer eerst zonder. Als je dit doet, vergeet .env niet aan te passen (APP_KEY).
@@ -57,6 +59,25 @@ Deze syntax heeft trouwens de voorkeur, ten opzichte van de @include syntax.
 Door vite, zou je in theorie geen last moeten hebben van cache problemen. Mocht je dit toch hebben, dan kun je de browser cache legen of in incognito mode werken. Daarnaast kun je ook de Laravel cache legen: sail artisan optimize:clear
 
 Note: Deze visie is wat later in het project gekomen, niet alles is op deze manier nu opgezet. Zo af en toe verplaats ik nog templates naar adminc.
+
+
+Verder gebruiken we in deze stack:
+
+* Laravel Mix (Webpack) voor asset bundling
+* Tailwind CSS voor styling
+* Vue.js voor interactieve UI componenten
+
+Om de frontend te bouwen, volg deze stappen:
+
+1. Installeer Node.js en npm (indien nog niet geïnstalleerd):
+- Download en installeer vanaf https://nodejs.org/
+2. yarn of npm dependencies installeren:
+- yarn install
+3. Voor vite: starten we lokaal een vite server -> yarn dev (zie ook start-dev.sh)
+
+note:
+Dit is al gedaan, hoef je niet opnieuw te doen. Was noodzakelijk voor de combi met dit project.
+yarn config set nodeLinker node-modules
 
 
 === Migratie script opschonen
@@ -213,13 +234,13 @@ Het systeem heeft verschillende geautomatiseerde taken die via Laravel's schedul
 [source,bash]
 ----
 # Bekijk alle geplande taken
-php artisan schedule:list
+sail artisan schedule:list
 
 # Test scheduler handmatig
-php artisan schedule:run
+sail artisan schedule:run
 
 # Specifieke taak uitvoeren
-php artisan duplicates:refresh-cache --clear
+sail artisan duplicates:refresh-cache --clear
 ----
 
 ==== Composer update dependencies
@@ -233,6 +254,7 @@ Het is van belang om met een frequentie alle dependencies te update (Maandelijks
 ===== Telescope Monitoring
 
 Hoe op te zetten:
+
 1. Installeer Laravel Telescope (indien nog niet gedaan):
 - sail composer require laravel/telescope
 2, sail artisan telescope:install
@@ -256,19 +278,3 @@ protected function gate()
 
 7. sail artisan telescope:publish
 
-
-===== Frontend build
-
-In deze stack gebruiken we:
-- Laravel Mix (Webpack) voor asset bundling
-- Tailwind CSS voor styling
-- Vue.js voor interactieve UI componenten
-Om de frontend te bouwen, volg deze stappen:
-1. Installeer Node.js en npm (indien nog niet geïnstalleerd):
-- Download en installeer vanaf https://nodejs.org/
-2. yarn of npm dependencies installeren:
-- sail yarn install
-3. Voor vite: starten we lokaal een vite server -> yarn dev (zie ook start-dev.sh)
-
-
-yarn config set nodeLinker node-modules

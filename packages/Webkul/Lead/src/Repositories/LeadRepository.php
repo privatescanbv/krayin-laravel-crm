@@ -6,6 +6,7 @@ use App\Enums\Departments;
 use App\Enums\PipelineDefaultKeys;
 use App\Enums\PipelineStageDefaultKeys;
 use App\Models\Department;
+use App\Repositories\AddressRepository;
 use App\Services\LeadDuplicateCacheService;
 use App\Services\Concerns\JsonDuplicateMatcher;
 use Carbon\Carbon;
@@ -15,7 +16,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Repositories\AddressRepository;
+use App\Models\Address as LeadAddress;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Repositories\PersonRepository;
@@ -192,7 +193,7 @@ class LeadRepository extends Repository
             $hasAddressData = !empty(array_filter($addressData));
 
             if ($hasAddressData) {
-                Address::create(array_merge($addressData, [
+                LeadAddress::create(array_merge($addressData, [
                     'lead_id' => $lead->id,
                 ]));
             }

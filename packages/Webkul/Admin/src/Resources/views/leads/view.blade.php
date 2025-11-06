@@ -111,9 +111,17 @@
                             :entity="$lead"
                             entity-control-name="lead_id"
                         />
-                    @endif
+                      @endif
 
-                    {!! view_render_event('admin.leads.view.actions.after', ['lead' => $lead]) !!}
+                      @if (bouncer()->hasPermission('leads.delete'))
+                          <v-lead-delete
+                              delete-url="{{ route('admin.leads.delete', $lead->id) }}"
+                              redirect-url="{{ route('admin.leads.index') }}"
+                              lead-name="{{ $lead->name }}"
+                          ></v-lead-delete>
+                      @endif
+
+                      {!! view_render_event('admin.leads.view.actions.after', ['lead' => $lead]) !!}
                 </div>
             </div>
 
@@ -173,4 +181,97 @@
 
         {!! view_render_event('admin.leads.view.right.after', ['lead' => $lead]) !!}
     </div>
+
+@pushOnce('scripts', 'lead-view-delete-action')
+    <script type="text/x-template" id="v-lead-delete-template">
+        <button
+            type="button"
+            class="secondary-button border border-red-500 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950 flex items-center gap-1"
+            :class="{ 'opacity-50 pointer-events-none': isDeleting }"
+            :disabled="isDeleting"
+            @click="confirmDelete"
+        >
+            <span class="icon-delete text-base"></span>
+
+            <span>@lang('admin::app.leads.view.delete-btn')</span>
+        </button>
+    </script>
+
+    <script type="module">
+        app.component('v-lead-delete', {
+            template: '#v-lead-delete-template',
+
+            props: {
+                deleteUrl: {
+                    type: String,
+                    required: true,
+                },
+                redirectUrl: {
+                    type: String,
+                    required: true,
+                },
+                leadName: {
+                    type: String,
+                    default: '',
+                },
+            },
+
+            data() {
+                return {
+                    isDeleting: false,
+
+                    translations: {
+                        title: @json(__('admin::app.leads.view.delete-confirm.title')),
+                        messageTemplate: @json(__('admin::app.leads.view.delete-confirm.message')),
+                        confirm: @json(__('admin::app.leads.view.delete-confirm.confirm')),
+                        cancel: @json(__('admin::app.leads.view.delete-confirm.cancel')),
+                        failed: @json(__('admin::app.leads.view.delete-failed')),
+                    },
+                };
+            },
+
+            methods: {
+                confirmDelete() {
+                    if (this.isDeleting) {
+                        return;
+                    }
+
+                    this.$emitter.emit('open-confirm-modal', {
+                        title: this.translations.title,
+                        message: this.translations.messageTemplate.replace(':name', this.leadName ? this.leadName : ''),
+                        options: {
+                            btnDisagree: this.translations.cancel,
+                            btnAgree: this.translations.confirm,
+                        },
+                        agree: () => {
+                            this.isDeleting = true;
+
+                            this.$axios.delete(this.deleteUrl)
+                                .then((response) => {
+                                    this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+
+                                    window.location.href = this.redirectUrl;
+                                })
+                                .catch((error) => {
+                                    let message = this.translations.failed;
+
+                                    if (error && error.response && error.response.data && error.response.data.message) {
+                                        message = error.response.data.message;
+                                    }
+
+                                    this.$emitter.emit('add-flash', { type: 'error', message });
+                                })
+                                .finally(() => {
+                                    this.isDeleting = false;
+                                });
+                        },
+                        disagree: () => {
+                            this.isDeleting = false;
+                        },
+                    });
+                },
+            },
+        });
+    </script>
+@endPushOnce
 </x-admin::layouts>

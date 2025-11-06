@@ -41,7 +41,6 @@ class RoleSeeder extends Seeder
                 'leads.create',
                 'leads.view',
                 'leads.edit',
-                'leads.delete',
                 'products',
                 'products.create',
                 'products.edit',

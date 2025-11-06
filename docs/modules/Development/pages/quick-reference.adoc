@@ -20,7 +20,7 @@
 4. ✅ Voeg jezelf toe als member aan de kaart
 
 ===== Tijdens Development
-1. ✅ Werk lokaal met `php artisan serve` of Docker
+1. ✅ Start je lokale development omgeving op met start-dev.sh.
 2. ✅ Commit regelmatig met duidelijke messages
 3. ✅ Run tests voor elke wijziging: `php artisan test`
 4. ✅ Update Trello kaart met voortgang
@@ -29,7 +29,7 @@
 1. ✅ Final testing van functionaliteit
 2. ✅ Code review zelf uitvoeren
 3. ✅ Verplaats naar "Review" lane in Trello
-4. ✅ Voeg reviewer toe aan kaart
+4. ✅ Voeg reviewer toe aan  (auto op MK gezet)
 5. ✅ Beschrijf wat er getest moet worden
 
 
@@ -69,6 +69,9 @@
 
 |**Admin Login**
 |http://localhost:8000/admin/login
+
+|**Logs**
+|http://localhost:8000/log-viewer
 |===
 
 
@@ -78,22 +81,21 @@
 ==== Development Setup
 ```bash
 # Start lokale development
-php artisan serve
-
-# Start met Docker
-docker-compose up -d
+./start-dev.sh
 
 # Database reset
-php artisan migrate:fresh --seed
+sail artisan migrate:fresh --seed
+of (inclusief data import)
+./reset.sh
 ```
 
 ==== Testing
 ```bash
 # Alle tests
-php artisan test
+sail artisan test --parallel --colors=always
 
 # Specifieke test
-php artisan test --filter=LeadTest
+sail artisan test --filter=LeadTest
 
 # Integration tests
 ./run-integration-test.sh
@@ -102,12 +104,10 @@ php artisan test --filter=LeadTest
 ==== Cache & Debug
 ```bash
 # Cache legen
-php artisan cache:clear
-php artisan config:clear
-php artisan route:clear
+sail artisan optimize:clear
 
 # Debug mode
-php artisan tinker
+sail artisan tinker
 ```
 
 ==== Review Process
@@ -183,7 +183,7 @@ rm -rf node_modules package-lock.json
 npm install
 
 # Rebuild assets
-./build.sh (doet een npm run build op root level en in admin module)
+./build.sh (doet een npm & yarn run build op root level en in admin module)
 ```
 
 

@@ -4,54 +4,60 @@ include::quick-reference.adoc[]
 
 === Local Development Setup
 
-Local development:
+Stappen voor de eerste keer:
 
-Database:
-- sail artisan migrate (eerste keer, en met wijzigingen in migraties)
-- sail artisan db:seed (eerste keer, en met wijzigingen in seeders. Letop: overschrijft bestaande data!)
-- reset database: sail artisan migrate:fresh
+ * Clone de repository
+ * Kopieer .env.example naar .env en pas deze aan indien nodig
+ * run yarn install
+ * run ./start-dev.sh
+ * run sail artisan key:generate (niet zeker, probeer eerst zonder. Als je dit doet, vergeet .env niet aan te passen (APP_KEY).
+ * run sail artisan migrate --seed of met reset.sh (inclusief data import)
+ * Open in browser: http://localhost:8000
 
-Logs:
+Stappen voor een volgende keer:
+
+ * run ./start-dev.sh
+ * Open in browser: http://localhost:8000
+
+==== Logs
 - https://github.com/opcodesio/log-viewer
 - Setup (eenmalig): php artisan log-viewer:publish
 - Daarna logs te bekijken met link:http://localhost:8000/log-viewer[http://localhost:8000/log-viewer]
 
 === Feature testen uitvoeren
 
-- sail artisan migrate:fresh --database=mysql_testing
-- sail artisan test --parallel --colors=always
+* sail artisan test --parallel --colors=always
 
 Of in PHPStorm
 
 === UI Testen uitvoeren
-[source,bash]
-----
-# console project aanmaken
-// dotnet new console -n UiTests
-dotnet new xunit -n UiTests
-cd UiTests
+* run ./test-ui.sh
 
-# reqnroll installeren
-dotnet new tool-manifest
-dotnet add package Reqnroll
-dotnet add package Reqnroll.Xunit
-dotnet add package Microsoft.Playwright
+=== Frontend development
 
-dotnet remove package xunit
-dotnet add package xunit --version 2.8.1
-dotnet add package xunit.runner.visualstudio --version 2.8.1
-dotnet add package xunit.runner.console --version 2.8.1
+Lokaal ontwikkelen maken we gebruiken van link:https://vite.dev/[Vite] in combinatie met link:https://laravel.com/docs/12.x/installation[Laravel] Mix.
+./start-dev.sh start deze vite servers op (2).
+vite
 
-dotnet add package Reqnroll.xUnit --version 3.1.0
+De stack is een combinatie van Blade en Vue templates. Zo heeft Krayin zijn templates, en hebben we een eigen directory met templates:
 
-dotnet add package Microsoft.Extensions.Configuration --version 8.0.0
-dotnet add package Microsoft.Extensions.Configuration.Json --version 8.0.0
-dotnet add package Microsoft.Extensions.Configuration.EnvironmentVariables --version 8.0.0
+* Kryain: packages/Webkul/Admin/src/Resources/views
+* custom: resources/views/adminc
 
-dotnet tool install --global Microsoft.Playwright.CLI
-rm -rf ~/Library/Caches/ms-playwright
-playwright install --with-deps
-----
+Adminc is in Laravel geregistreerd als een extra view namespace, daarmee kun je deze templates op deze manier includen:
+```
+<x-adminc::anamnesis.card
+:anamnesis="$anamnesisItem"
+show-created-date="true"
+/>
+```
+(Syntax met ':' zorgt voor binding van variabelen, anders statische waarde)
+Deze syntax heeft trouwens de voorkeur, ten opzichte van de @include syntax.
+
+Door vite, zou je in theorie geen last moeten hebben van cache problemen. Mocht je dit toch hebben, dan kun je de browser cache legen of in incognito mode werken. Daarnaast kun je ook de Laravel cache legen: sail artisan optimize:clear
+
+Note: Deze visie is wat later in het project gekomen, niet alles is op deze manier nu opgezet. Zo af en toe verplaats ik nog templates naar adminc.
+
 
 === Migratie script opschonen
 

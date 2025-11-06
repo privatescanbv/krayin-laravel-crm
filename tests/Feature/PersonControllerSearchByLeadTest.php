@@ -1,6 +1,8 @@
 <?php
 
 use App\Enums\ContactLabel;
+use App\Enums\PersonGender;
+use App\Enums\PersonSalutation;
 use App\Models\Address;
 use Database\Seeders\TestSeeder;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -729,4 +731,81 @@ test('name weighted is reduced when last name differs', function () {
     $this->assertArrayHasKey('name', $data['breakdown']);
     $this->assertIsNumeric($data['breakdown']['name']['weighted']);
     $this->assertLessThan(85, round($data['breakdown']['name']['weighted'], 1));
+});
+
+test('person created from fully populated lead yields perfect sync match', function () {
+    $pipeline = Pipeline::first();
+    $stage = Stage::first();
+
+    $lead = Lead::factory()->create([
+        'first_name'             => 'Jan',
+        'last_name'              => 'Jansen',
+        'lastname_prefix'        => 'van',
+        'married_name'           => 'Pieters',
+        'married_name_prefix'    => 'de',
+        'initials'               => 'J.P.',
+        'salutation'             => PersonSalutation::Dhr->value,
+        'gender'                 => PersonGender::Man->value,
+        'date_of_birth'          => '1985-07-12',
+        'emails'                 => [[
+            'value'      => 'jan.jansen@example.com',
+            'label'      => ContactLabel::Eigen->value,
+            'is_default' => true,
+        ]],
+        'phones'                 => [[
+            'value'      => '0612345678',
+            'label'      => ContactLabel::Relatie->value,
+            'is_default' => true,
+        ]],
+        'lead_pipeline_id'       => $pipeline->id,
+        'lead_pipeline_stage_id' => $stage->id,
+    ]);
+
+    $addressData = [
+        'street'              => 'Voorbeeldstraat',
+        'house_number'        => '42',
+        'house_number_suffix' => 'A',
+        'postal_code'         => '1234AB',
+        'city'                => 'Amsterdam',
+        'state'               => 'Noord-Holland',
+        'country'             => 'Nederland',
+    ];
+
+    Address::factory()->forLead($lead)->create($addressData);
+
+    $lead->refresh();
+    $lead->load('address');
+
+    $personPayload = [
+        'entity_type'        => 'persons',
+        'first_name'         => $lead->first_name,
+        'last_name'          => $lead->last_name,
+        'lastname_prefix'    => $lead->lastname_prefix,
+        'married_name'       => $lead->married_name,
+        'married_name_prefix'=> $lead->married_name_prefix,
+        'initials'           => $lead->initials,
+        'salutation'         => $lead->salutation?->value,
+        'gender'             => $lead->gender?->value,
+        'date_of_birth'      => optional($lead->date_of_birth)->format('Y-m-d'),
+        'emails'             => $lead->emails,
+        'phones'             => $lead->phones,
+        'address'            => $addressData,
+    ];
+
+    $person = $this->personRepository->create($personPayload);
+
+    $lead->attachPersons([$person->id]);
+    $lead->refresh();
+    $person->refresh()->load('address');
+
+    $score = $this->controller->calculateMatchScore($lead, $person);
+    expect(round($score, 1))->toBe(100.0);
+
+    $response = $this->getJson(route('admin.contacts.persons.match_breakdown', ['personId' => $person->id, 'leadId' => $lead->id]));
+    $response->assertOk();
+    $data = $response->json();
+
+    expect($data['percentage'])->toBe(100.0);
+    expect($data['field_differences'])->toBeArray();
+    expect($data['field_differences'])->toBeEmpty();
 });

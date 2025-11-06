@@ -338,21 +338,31 @@
 
                      this.isCreatingPerson = true;
 
-                     try {
-                         const personData = {
-                             entity_type: 'persons',
-                             first_name: this.lead.first_name || '',
-                             last_name: this.lead.last_name || '',
-                             lastname_prefix: this.lead.lastname_prefix || '',
-                             married_name: this.lead.married_name || '',
-                             married_name_prefix: this.lead.married_name_prefix || '',
-                             initials: this.lead.initials || '',
-                             date_of_birth: this.formatDateToDutch(this.lead.date_of_birth),
-                             gender: this.lead.gender || '',
-                             salutation: this.lead.salutation || '',
-                             emails: this.lead.emails || [],
-                             phones: this.lead.phones || []
-                         };
+                      try {
+                          const normalizedDob = this.normalizeDateForApi(this.lead.date_of_birth);
+                          const addressPayload = this.buildAddressPayloadFromLead();
+
+                          const personData = {
+                              entity_type: 'persons',
+                              first_name: this.lead.first_name || '',
+                              last_name: this.lead.last_name || '',
+                              lastname_prefix: this.lead.lastname_prefix || '',
+                              married_name: this.lead.married_name || '',
+                              married_name_prefix: this.lead.married_name_prefix || '',
+                              initials: this.lead.initials || '',
+                              gender: this.lead.gender || '',
+                              salutation: this.lead.salutation || '',
+                              emails: this.lead.emails || [],
+                              phones: this.lead.phones || []
+                          };
+
+                          if (normalizedDob) {
+                              personData.date_of_birth = normalizedDob;
+                          }
+
+                          if (addressPayload) {
+                              personData.address = addressPayload;
+                          }
 
                          const response = await axios.post('/admin/contacts/persons/create', personData);
 
@@ -389,7 +399,7 @@
                      } finally {
                          this.isCreatingPerson = false;
                      }
-                 },
+                  },
 
                  async createNewPerson() {
                      if (!this.search || this.search.length < 2) {
@@ -479,7 +489,7 @@
                     }
                 },
 
-                formatDateToDutch(value) {
+                  formatDateToDutch(value) {
                     if (!value) {
                         return '';
                     }
@@ -504,8 +514,64 @@
                             return `${dd}-${mm}-${yyyy}`;
                         }
                     } catch (e) {}
-                    return '';
-                }
+                      return '';
+                  },
+
+                  normalizeDateForApi(value) {
+                      if (!value) {
+                          return '';
+                      }
+
+                      // Accept already normalized ISO date strings
+                      const isoMatch = String(value).match(/^\s*(\d{4})-(\d{2})-(\d{2})/);
+                      if (isoMatch) {
+                          return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+                      }
+
+                      // Convert Dutch format (dd-mm-yyyy) to ISO
+                      const dutchMatch = String(value).match(/^(\d{2})-(\d{2})-(\d{4})$/);
+                      if (dutchMatch) {
+                          return `${dutchMatch[3]}-${dutchMatch[2]}-${dutchMatch[1]}`;
+                      }
+
+                      try {
+                          const date = new Date(value);
+                          if (!isNaN(date.getTime())) {
+                              const year = date.getFullYear();
+                              const month = String(date.getMonth() + 1).padStart(2, '0');
+                              const day = String(date.getDate()).padStart(2, '0');
+                              return `${year}-${month}-${day}`;
+                          }
+                      } catch (e) {}
+
+                      return '';
+                  },
+
+                  buildAddressPayloadFromLead() {
+                      if (!this.lead || !this.lead.address) {
+                          return null;
+                      }
+
+                      const source = this.lead.address;
+                      const toString = (val) => (val === null || val === undefined ? '' : String(val).trim());
+
+                      const payload = {
+                          street: toString(source.street),
+                          house_number: toString(source.house_number),
+                          house_number_suffix: toString(source.house_number_suffix),
+                          postal_code: toString(source.postal_code),
+                          city: toString(source.city),
+                          state: toString(source.state),
+                          country: toString(source.country)
+                      };
+
+                      // Address creation requires at least house number and postal code
+                      if (!payload.house_number || !payload.postal_code) {
+                          return null;
+                      }
+
+                      return payload;
+                  }
             }
         });
     </script>

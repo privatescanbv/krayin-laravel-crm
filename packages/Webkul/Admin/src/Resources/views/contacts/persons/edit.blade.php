@@ -86,8 +86,7 @@
             <!-- Address Section -->
             <div class="box-shadow rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
                 <div class="w-1/2 max-md:w-full">
-                    <!-- Address Component -->
-                    @include('admin::components.address', ['entity' => $person])
+                    <x-adminc::components.address :entity="$person" />
                 </div>
             </div>
 

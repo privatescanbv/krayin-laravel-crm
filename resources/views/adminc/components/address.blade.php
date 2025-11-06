@@ -6,7 +6,7 @@
 @endphp
 
 <div class="flex flex-col gap-4">
-    @if(!isset($hideTitle) || !$hideTitle)
+    @if (!isset($hideTitle) || !$hideTitle)
     <div class="flex flex-col gap-1">
         <p class="text-base font-semibold dark:text-white">
             Adresgegevens
@@ -14,7 +14,7 @@
     </div>
     @endif
 
-    @if(isset($readonly) && $readonly)
+    @if (isset($readonly) && $readonly)
         <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div class="flex items-center">
                 <svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -64,7 +64,7 @@
             </div>
 
             <!-- Lookup button -->
-            @if(!isset($readonly) || !$readonly)
+            @if (!isset($readonly) || !$readonly)
             <div class="flex-shrink-0 flex flex-col justify-end">
                 <div class="mb-4 flex items-end h-full">
                 <button type="button" id="{{ $addressId }}-lookup-btn"
@@ -161,7 +161,7 @@
             <x-admin::form.control-group.control
                 type="text"
                 name="{{ $namePrefix ?? 'address' }}[country]"
-                :value="old('address.country', $entity?->address?->country ?? 'Nederland')"
+                :value="old('address.country', $entity?->address?->country ?? '')"
                 placeholder="Nederland"
                 id="{{ $addressId }}_country"
                 :readonly="isset($readonly) && $readonly"

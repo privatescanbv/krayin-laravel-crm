@@ -106,9 +106,9 @@ class OrderMailService
 
         $persons = $this->collectPersonsForSalesLead($order);
         foreach ($persons as $person) {
-                foreach ($person->emails ?? [] as $email) {
-                    if (! empty($email['value'])) {
-                        return $email['value'];
+            foreach ($person->emails ?? [] as $email) {
+                if (! empty($email['value'])) {
+                    return $email['value'];
                 }
             }
         }
@@ -337,9 +337,9 @@ HTML;
 
         // gvl_form_link is empty, create new form request
         Log::info('OrderMailService: gvl_form_link is empty, creating new form request', [
-            'order_id'      => $order->id,
-            'sales_lead_id' => $order->salesLead?->id,
-            'has_sales_lead' => !is_null($order->salesLead),
+            'order_id'       => $order->id,
+            'sales_lead_id'  => $order->salesLead?->id,
+            'has_sales_lead' => ! is_null($order->salesLead),
         ]);
 
         try {
@@ -347,16 +347,16 @@ HTML;
             $person = $this->getPersonForForm($order);
             if (! $person) {
                 Log::error('OrderMailService: No person found for order', [
-                    'order_id' => $order->id,
-                    'has_sales_lead' => !is_null($order->salesLead),
-                    'has_contact_person' => !is_null($order->salesLead?->contactPerson),
-                    'has_lead' => !is_null($order->salesLead?->lead),
+                    'order_id'           => $order->id,
+                    'has_sales_lead'     => ! is_null($order->salesLead),
+                    'has_contact_person' => ! is_null($order->salesLead?->contactPerson),
+                    'has_lead'           => ! is_null($order->salesLead?->lead),
                 ]);
                 throw new Exception('No person found for order');
             }
 
             Log::info('OrderMailService: Person found, building form data', [
-                'order_id' => $order->id,
+                'order_id'  => $order->id,
                 'person_id' => $person->id,
             ]);
 
@@ -372,9 +372,9 @@ HTML;
             }
 
             Log::info('OrderMailService: Form data built, calling API', [
-                'order_id' => $order->id,
+                'order_id'  => $order->id,
                 'form_data' => $formData,
-                'has_token' => !empty($token),
+                'has_token' => ! empty($token),
             ]);
 
             $result = $this->createFormRequest($formData);
@@ -382,22 +382,22 @@ HTML;
             $httpStatus = $result['status'] ?? null;
 
             Log::info('OrderMailService: API response received', [
-                'order_id' => $order->id,
-                'http_status' => $httpStatus,
-                'has_response' => !is_null($response),
-                'response_has_id' => $response && isset($response['data']['id']),
+                'order_id'           => $order->id,
+                'http_status'        => $httpStatus,
+                'has_response'       => ! is_null($response),
+                'response_has_id'    => $response && isset($response['data']['id']),
                 'response_structure' => $response ? ['has_data' => isset($response['data']), 'keys' => array_keys($response)] : null,
             ]);
 
             if (! $response || ! isset($response['data']['id'])) {
                 $errorMessage = 'Failed to create form request';
                 $errorDetails = [
-                    'order_id' => $order->id,
-                    'http_status' => $httpStatus,
-                    'response' => $response,
-                    'response_keys' => $response ? array_keys($response) : null,
+                    'order_id'         => $order->id,
+                    'http_status'      => $httpStatus,
+                    'response'         => $response,
+                    'response_keys'    => $response ? array_keys($response) : null,
                     'response_message' => $response['message'] ?? null,
-                    'response_errors' => $response['errors'] ?? null,
+                    'response_errors'  => $response['errors'] ?? null,
                 ];
 
                 Log::error('OrderMailService: Failed to create form request', $errorDetails);
@@ -432,10 +432,10 @@ HTML;
                 $salesLead = $order->salesLead;
 
                 Log::info('OrderMailService: Attempting to save GVL form link', [
-                    'order_id'        => $order->id,
-                    'sales_lead_id'   => $salesLead->id,
-                    'form_request_id' => $formRequestId,
-                    'form_link'       => $formLink,
+                    'order_id'              => $order->id,
+                    'sales_lead_id'         => $salesLead->id,
+                    'form_request_id'       => $formRequestId,
+                    'form_link'             => $formLink,
                     'current_gvl_form_link' => $salesLead->gvl_form_link,
                 ]);
 
@@ -475,12 +475,12 @@ HTML;
             return $formLink;
         } catch (Exception $e) {
             Log::error('OrderMailService: Exception creating form request', [
-                'order_id'      => $order->id,
-                'error'         => $e->getMessage(),
-                'file'          => $e->getFile(),
-                'line'          => $e->getLine(),
-                'trace'         => $e->getTraceAsString(),
-                'has_sales_lead' => !is_null($order->salesLead),
+                'order_id'       => $order->id,
+                'error'          => $e->getMessage(),
+                'file'           => $e->getFile(),
+                'line'           => $e->getLine(),
+                'trace'          => $e->getTraceAsString(),
+                'has_sales_lead' => ! is_null($order->salesLead),
                 'sales_lead_id'  => $order->salesLead?->id,
             ]);
 
@@ -509,6 +509,7 @@ HTML;
 
     /**
      * Build the form request data array.
+     *
      * @throws Exception if no default email could be found
      */
     protected function buildFormRequestData(Order $order, Person $person): array
@@ -541,7 +542,7 @@ HTML;
             'user_crm_id'     => $person->id,
             'user_firstname'  => $firstName ?: 'Onbekend',
             'user_lastname'   => $lastName ?: 'Onbekend',
-            'user_maidenname' => !empty($person->married_name) ? $person->married_name : '--',
+            'user_maidenname' => ! empty($person->married_name) ? $person->married_name : '--',
             'user_email'      => $email,
             'user_birthday'   => $birthday,
             'mri_research'    => $mriResearch,
@@ -602,11 +603,11 @@ HTML;
 
         // Log request details
         Log::info('OrderMailService: Creating form request', [
-            'url'         => $url,
-            'method'      => 'POST',
-            'request_body' => $data,
-            'has_token'   => ! empty($token),
-            'token_preview' => $token ? substr($token, 0, 10) . '...' : null,
+            'url'           => $url,
+            'method'        => 'POST',
+            'request_body'  => $data,
+            'has_token'     => ! empty($token),
+            'token_preview' => $token ? substr($token, 0, 10).'...' : null,
         ]);
 
         // Build HTTP client with Bearer token for Sanctum
@@ -616,7 +617,7 @@ HTML;
             // Sanctum expects: Authorization: Bearer {token}
             $httpClient = $httpClient->withHeaders([
                 'X-API-KEY' => $token,
-                'Accept' => 'application/json',
+                'Accept'    => 'application/json',
             ]);
         }
 
@@ -629,28 +630,28 @@ HTML;
 
         // Check if response is HTML (likely a login page)
         $isHtml = $response->header('Content-Type') && str_contains($response->header('Content-Type'), 'text/html');
-        $bodyPreview = strlen($responseBody) > 500 ? substr($responseBody, 0, 500) . '...' : $responseBody;
+        $bodyPreview = strlen($responseBody) > 500 ? substr($responseBody, 0, 500).'...' : $responseBody;
 
         $responseData = [
-            'status'         => $status,
-            'content_type'  => $response->header('Content-Type'),
-            'is_html'       => $isHtml,
-            'response_headers' => $responseHeaders,
+            'status'                => $status,
+            'content_type'          => $response->header('Content-Type'),
+            'is_html'               => $isHtml,
+            'response_headers'      => $responseHeaders,
             'response_body_preview' => $bodyPreview,
-            'response_body_length' => strlen($responseBody),
+            'response_body_length'  => strlen($responseBody),
         ];
 
         // If we get HTML back (login page), it means authentication failed
         if ($isHtml || ($status === 200 && str_contains($responseBody, '<html'))) {
             Log::error('OrderMailService: Forms API returned HTML (likely login page)', [
-                'status' => $status,
+                'status'       => $status,
                 'content_type' => $response->header('Content-Type'),
                 'body_preview' => $bodyPreview,
-                'message' => 'Authentication failed - received HTML login page instead of JSON',
+                'message'      => 'Authentication failed - received HTML login page instead of JSON',
             ]);
 
             return [
-                'status' => $status,
+                'status'   => $status,
                 'response' => null,
             ];
         }
@@ -659,7 +660,7 @@ HTML;
             Log::error('OrderMailService: Forms API error', $responseData);
 
             return [
-                'status' => $status,
+                'status'   => $status,
                 'response' => null,
             ];
         }
@@ -670,36 +671,37 @@ HTML;
             $jsonResponse = $response->json();
 
             // Check if json() returned null (empty body or invalid JSON)
-            if ($jsonResponse === null && !empty($responseBody)) {
+            if ($jsonResponse === null && ! empty($responseBody)) {
                 Log::warning('OrderMailService: JSON response is null but body is not empty', [
-                    'status' => $status,
-                    'body_length' => strlen($responseBody),
+                    'status'       => $status,
+                    'body_length'  => strlen($responseBody),
                     'body_preview' => substr($responseBody, 0, 200),
                 ]);
             }
         } catch (Exception $e) {
             Log::error('OrderMailService: Failed to parse JSON response', [
-                'status' => $status,
-                'body' => $responseBody,
+                'status'      => $status,
+                'body'        => $responseBody,
                 'body_length' => strlen($responseBody ?? ''),
-                'error' => $e->getMessage(),
+                'error'       => $e->getMessage(),
             ]);
+
             return [
-                'status' => $status,
+                'status'   => $status,
                 'response' => null,
             ];
         }
 
         Log::info('OrderMailService: Forms API success', array_merge($responseData, [
-            'json_response' => $jsonResponse,
+            'json_response'      => $jsonResponse,
             'json_response_type' => gettype($jsonResponse),
-            'has_data_key' => isset($jsonResponse['data']),
-            'has_data_id' => isset($jsonResponse['data']['id']),
-            'response_keys' => is_array($jsonResponse) ? array_keys($jsonResponse) : null,
+            'has_data_key'       => isset($jsonResponse['data']),
+            'has_data_id'        => isset($jsonResponse['data']['id']),
+            'response_keys'      => is_array($jsonResponse) ? array_keys($jsonResponse) : null,
         ]));
 
         return [
-            'status' => $status,
+            'status'   => $status,
             'response' => $jsonResponse,
         ];
     }

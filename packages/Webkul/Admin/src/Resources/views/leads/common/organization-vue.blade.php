@@ -69,12 +69,7 @@
 
                         <!-- Address Component -->
                         <div class="mt-2">
-                            @include('admin::components.address', [
-                                'id' => 'new_org_address',
-                                'namePrefix' => 'new_organization_address',
-                                'entity' => null,
-                                'hideTitle' => true
-                            ])
+                            <x-adminc::components.address id="new_org_address" name-prefix="new_organization_address" hide-title="true" />
                         </div>
 
                         <!-- Form Actions -->

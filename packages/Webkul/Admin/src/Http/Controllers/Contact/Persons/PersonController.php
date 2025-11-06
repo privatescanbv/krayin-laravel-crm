@@ -5,6 +5,7 @@ namespace Webkul\Admin\Http\Controllers\Contact\Persons;
 use App\Enums\ContactLabel;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
 use App\Models\Address;
+use App\Repositories\AddressRepository;
 use BackedEnum;
 use Carbon\Carbon;
 use Exception;
@@ -1318,20 +1319,11 @@ class PersonController extends Controller
      */
     private function updatePersonAddress($person, $addressData): void
     {
-        if (empty($addressData)) {
+        if (empty($addressData) || !is_array($addressData)) {
             return;
         }
-
-        // Add person_id to address data
-        $addressData['person_id'] = $person->id;
-
-        // Delete existing address if it exists
-        if ($person->address) {
-            $person->address->delete();
-        }
-
-        // Create new address for person
-        Address::create($addressData);
+        // Use central repository to validate and upsert
+        app(AddressRepository::class)->upsertForPerson($person->id, $addressData);
     }
 
     /**
@@ -1339,20 +1331,11 @@ class PersonController extends Controller
      */
     private function updateLeadAddress($lead, $addressData): void
     {
-        if (empty($addressData)) {
+        if (empty($addressData) || !is_array($addressData)) {
             return;
         }
-
-        // Add lead_id to address data
-        $addressData['lead_id'] = $lead->id;
-
-        // Delete existing address if it exists
-        if ($lead->address) {
-            $lead->address->delete();
-        }
-
-        // Create new address for lead
-        Address::create($addressData);
+        // Use central repository to validate and upsert
+        app(AddressRepository::class)->upsertForLead($lead->id, $addressData);
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Enums\LostReason;
 use App\Enums\ActivityStatus;
 use App\Enums\PipelineDefaultKeys;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
+use App\Models\Address;
 use App\Models\Anamnesis;
 use App\Models\Department;
 use Carbon\Carbon;
@@ -48,6 +49,7 @@ use InvalidArgumentException;
 use App\Services\LeadValidationService;
 use App\Services\PipelineCookieService;
 use App\Services\LeadStatusTransitionValidator;
+use App\Repositories\AddressRepository;
 use App\Services\UserDefaultValueService;
 
 class LeadController extends Controller
@@ -78,6 +80,7 @@ class LeadController extends Controller
         protected StageRepository     $stageRepository,
         protected LeadRepository      $leadRepository,
         protected PersonRepository    $personRepository,
+        protected AddressRepository   $addressRepository,
         protected PipelineCookieService $pipelineCookieService,
         protected UserDefaultValueService $userDefaultValueService
     )
@@ -519,6 +522,16 @@ class LeadController extends Controller
             }
             $lead = $this->leadRepository->create($data);
 
+            // Validate and persist address if provided on lead create
+            try {
+                if (isset($data['address']) && is_array($data['address'])) {
+                    $this->addressRepository->upsertForLead($lead->id, $data['address']);
+                }
+            } catch (Exception $e) {
+                // Re-throw as InvalidArgumentException to align with request handling above
+                throw new InvalidArgumentException($e->getMessage());
+            }
+
             // Persist basic anamnesis answers if provided and if persons attached
             try {
                 if (!empty($data['persons']) || !empty($data['person_ids'])) {
@@ -679,6 +692,15 @@ class LeadController extends Controller
             }
 
             $lead = $this->leadRepository->update($data, $id);
+
+            // Validate and persist address if provided on lead update
+            try {
+                if (isset($data['address']) && is_array($data['address'])) {
+                    $this->addressRepository->upsertForLead($lead->id, $data['address']);
+                }
+            } catch (Exception $e) {
+                throw new InvalidArgumentException($e->getMessage());
+            }
 
             Event::dispatch('lead.update.after', $lead);
 

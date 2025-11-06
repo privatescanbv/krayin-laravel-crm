@@ -84,7 +84,7 @@
                     </h3>
                 </div>
 
-                @include('admin::components.address', ['entity' => null])
+                <x-adminc::components.address />
             </div>
         </div>
     </x-admin::form>

@@ -274,7 +274,7 @@
 
                                     <!-- Address -->
                                     <div class="mt-4">
-                                        @include('admin::components.address', ['entity' => null])
+                                        <x-adminc::components.address />
                                     </div>
 
                                     <!-- Anamnese -->

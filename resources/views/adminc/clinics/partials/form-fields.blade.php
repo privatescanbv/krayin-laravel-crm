@@ -111,5 +111,5 @@
         </h3>
     </div>
 
-    @include('admin::components.address', ['entity' => $clinic->address ?? null])
+    <x-adminc::components.address :entity="$clinic->addresss ?? null"/>
 </div>

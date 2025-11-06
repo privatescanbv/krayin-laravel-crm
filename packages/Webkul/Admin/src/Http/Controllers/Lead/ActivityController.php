@@ -60,7 +60,12 @@ class ActivityController extends Controller
                 'schedule_to' => 'required_unless:type,note,file|date_format:Y-m-d H:i:s',
                 'file' => 'required_if:type,file',
             ]);
-            $request['comment'] = $request->description;
+            // Prefer explicitly provided comment; otherwise, fall back to description
+            $request->merge([
+                'comment' => $request->has('comment') && $request->input('comment') !== ''
+                    ? $request->input('comment')
+                    : $request->input('description')
+            ]);
 
             // Ensure person_id is not saved when storing activity for a lead
             $request->request->remove('person_id');

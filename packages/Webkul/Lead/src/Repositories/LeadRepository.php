@@ -15,7 +15,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Models\Address;
+use App\Repositories\AddressRepository;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Attribute\Repositories\AttributeValueRepository;
 use Webkul\Contact\Repositories\PersonRepository;
@@ -283,25 +283,9 @@ class LeadRepository extends Repository
             $data['organization_id'] = null;
         }
 
-        // Handle address data
-        if (isset($data['address']) && !empty($data['address'])) {
-            $addressData = $data['address'];
-            $hasAddressData = !empty(array_filter($addressData));
-
-            if ($hasAddressData) {
-                // Check if lead already has an address
-                $existingAddress = Address::where('lead_id', $id)->first();
-
-                if ($existingAddress) {
-                    // Update existing address
-                    $existingAddress->update($addressData);
-                } else {
-                    // Create new address
-                    Address::create(array_merge($addressData, [
-                        'lead_id' => $id,
-                    ]));
-                }
-            }
+        // Handle address data using central AddressRepository (with validation)
+        if (isset($data['address']) && is_array($data['address'])) {
+            app(AddressRepository::class)->upsertForLead($id, $data['address']);
         }
 
         $lead = parent::update($data, $id);

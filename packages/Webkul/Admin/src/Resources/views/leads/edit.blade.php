@@ -199,7 +199,7 @@
                         id="address"
                     >
                         <div class="w-1/2 max-md:w-full">
-                            @include('admin::components.address', ['entity' => $lead, 'readonly' => !$lead->mayEditPersonFields()])
+                            <x-adminc::components.address :entity="$lead" :readonly="!$lead->mayEditPersonFields()" />
                         </div>
                     </div>
 

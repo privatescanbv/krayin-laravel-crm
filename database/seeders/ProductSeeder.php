@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\Currency;
 use App\Models\ProductType;
 use App\Models\ResourceType;
+use RuntimeException;
 use Webkul\Product\Models\Product;
 use Webkul\Product\Models\ProductGroup;
 
@@ -113,7 +114,7 @@ class ProductSeeder extends BaseSeeder
             if (! empty($row['producttype'])) {
                 $productType = ProductType::where('name', $row['producttype'])->first();
                 if (! $productType) {
-                    throw new \RuntimeException("ProductType not found: {$row['producttype']}");
+                    throw new RuntimeException("ProductType not found: {$row['producttype']}");
                 }
                 $productTypeId = $productType->id;
             }
@@ -126,13 +127,13 @@ class ProductSeeder extends BaseSeeder
 
             $resourceType = ResourceType::where('name', $resourceTypeName)->first();
             if (! $resourceType) {
-                throw new \RuntimeException("ResourceType not found: {$row['resourcetype']}");
+                throw new RuntimeException("ResourceType not found: {$row['resourcetype']}");
             }
 
             // Resolve ProductGroup by name
             $group = ProductGroup::where('name', $row['productgroep'])->first();
             if (! $group) {
-                throw new \RuntimeException("ProductGroup not found: {$row['productgroep']}");
+                throw new RuntimeException("ProductGroup not found: {$row['productgroep']}");
             }
 
             $price = Currency::normalizePrice($row['verkoopprijs'] ?? null) ?? '0.00';

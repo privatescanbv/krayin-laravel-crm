@@ -111,17 +111,17 @@
                             :entity="$lead"
                             entity-control-name="lead_id"
                         />
-                    @endif
+                      @endif
 
                       @if (bouncer()->hasPermission('leads.delete'))
                           <v-lead-delete
-                              :delete-url='@json(route('admin.leads.delete', $lead->id))'
-                              :redirect-url='@json(route('admin.leads.index'))'
-                              :lead-name='@json($lead->name)'
+                              :delete-url="@js(route('admin.leads.delete', $lead->id))"
+                              :redirect-url="@js(route('admin.leads.index'))"
+                              :lead-name="@js($lead->name)"
                           ></v-lead-delete>
                       @endif
 
-                    {!! view_render_event('admin.leads.view.actions.after', ['lead' => $lead]) !!}
+                      {!! view_render_event('admin.leads.view.actions.after', ['lead' => $lead]) !!}
                 </div>
             </div>
 
@@ -219,6 +219,14 @@
             data() {
                 return {
                     isDeleting: false,
+
+                    translations: {
+                        title: @js(__('admin::app.leads.view.delete-confirm.title')),
+                        messageTemplate: @js(__('admin::app.leads.view.delete-confirm.message')),
+                        confirm: @js(__('admin::app.leads.view.delete-confirm.confirm')),
+                        cancel: @js(__('admin::app.leads.view.delete-confirm.cancel')),
+                        failed: @js(__('admin::app.leads.view.delete-failed')),
+                    },
                 };
             },
 
@@ -229,11 +237,11 @@
                     }
 
                     this.$emitter.emit('open-confirm-modal', {
-                        title: "@lang('admin::app.leads.view.delete-confirm.title')",
-                        message: "@lang('admin::app.leads.view.delete-confirm.message')".replace(':name', this.leadName ? this.leadName : ''),
+                        title: this.translations.title,
+                        message: this.translations.messageTemplate.replace(':name', this.leadName ? this.leadName : ''),
                         options: {
-                            btnDisagree: "@lang('admin::app.leads.view.delete-confirm.cancel')",
-                            btnAgree: "@lang('admin::app.leads.view.delete-confirm.confirm')",
+                            btnDisagree: this.translations.cancel,
+                            btnAgree: this.translations.confirm,
                         },
                         agree: () => {
                             this.isDeleting = true;
@@ -245,7 +253,7 @@
                                     window.location.href = this.redirectUrl;
                                 })
                                 .catch((error) => {
-                                    let message = "@lang('admin::app.leads.view.delete-failed')";
+                                    let message = this.translations.failed;
 
                                     if (error && error.response && error.response.data && error.response.data.message) {
                                         message = error.response.data.message;

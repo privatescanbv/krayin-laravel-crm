@@ -2307,6 +2307,17 @@ return [
                'save-btn' => 'Opslaan',
            ],
 
+            'delete-btn' => 'Lead verwijderen',
+
+            'delete-confirm' => [
+                'title' => 'Lead verwijderen',
+                'message' => 'Weet je zeker dat je ":name" wilt verwijderen? Deze actie kan niet ongedaan worden gemaakt.',
+                'confirm' => 'Verwijderen',
+                'cancel' => 'Annuleren',
+            ],
+
+            'delete-failed' => 'Het verwijderen van de lead is mislukt.',
+
            'tags' => [
                'create-success' => 'Tag succesvol aangemaakt.',
                'destroy-success' => 'Tag succesvol verwijderd.',

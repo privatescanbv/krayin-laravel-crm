@@ -2276,6 +2276,16 @@ return [
                 'lost-reason'    => 'Lost Reason',
                 'save-btn'       => 'Save',
             ],
+            'delete-btn' => 'Delete Lead',
+
+            'delete-confirm' => [
+                'title'   => 'Delete Lead',
+                'message' => 'Are you sure you want to delete ":name"? This action cannot be undone.',
+                'confirm' => 'Delete',
+                'cancel'  => 'Cancel',
+            ],
+
+            'delete-failed' => 'Failed to delete lead.',
 
             'tags' => [
                 'create-success'  => 'Tag created successfully.',

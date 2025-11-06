@@ -113,6 +113,14 @@
                         />
                     @endif
 
+                      @if (bouncer()->hasPermission('leads.delete'))
+                          <v-lead-delete
+                              :delete-url='@json(route('admin.leads.delete', $lead->id))'
+                              :redirect-url='@json(route('admin.leads.index'))'
+                              :lead-name='@json($lead->name)'
+                          ></v-lead-delete>
+                      @endif
+
                     {!! view_render_event('admin.leads.view.actions.after', ['lead' => $lead]) !!}
                 </div>
             </div>
@@ -173,4 +181,89 @@
 
         {!! view_render_event('admin.leads.view.right.after', ['lead' => $lead]) !!}
     </div>
+
+@pushOnce('scripts', 'lead-view-delete-action')
+    <script type="text/x-template" id="v-lead-delete-template">
+        <button
+            type="button"
+            class="secondary-button border border-red-500 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-950 flex items-center gap-1"
+            :class="{ 'opacity-50 pointer-events-none': isDeleting }"
+            :disabled="isDeleting"
+            @click="confirmDelete"
+        >
+            <span class="icon-delete text-base"></span>
+
+            <span>@lang('admin::app.leads.view.delete-btn')</span>
+        </button>
+    </script>
+
+    <script type="module">
+        app.component('v-lead-delete', {
+            template: '#v-lead-delete-template',
+
+            props: {
+                deleteUrl: {
+                    type: String,
+                    required: true,
+                },
+                redirectUrl: {
+                    type: String,
+                    required: true,
+                },
+                leadName: {
+                    type: String,
+                    default: '',
+                },
+            },
+
+            data() {
+                return {
+                    isDeleting: false,
+                };
+            },
+
+            methods: {
+                confirmDelete() {
+                    if (this.isDeleting) {
+                        return;
+                    }
+
+                    this.$emitter.emit('open-confirm-modal', {
+                        title: "@lang('admin::app.leads.view.delete-confirm.title')",
+                        message: "@lang('admin::app.leads.view.delete-confirm.message')".replace(':name', this.leadName ? this.leadName : ''),
+                        options: {
+                            btnDisagree: "@lang('admin::app.leads.view.delete-confirm.cancel')",
+                            btnAgree: "@lang('admin::app.leads.view.delete-confirm.confirm')",
+                        },
+                        agree: () => {
+                            this.isDeleting = true;
+
+                            this.$axios.delete(this.deleteUrl)
+                                .then((response) => {
+                                    this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+
+                                    window.location.href = this.redirectUrl;
+                                })
+                                .catch((error) => {
+                                    let message = "@lang('admin::app.leads.view.delete-failed')";
+
+                                    if (error && error.response && error.response.data && error.response.data.message) {
+                                        message = error.response.data.message;
+                                    }
+
+                                    this.$emitter.emit('add-flash', { type: 'error', message });
+                                })
+                                .finally(() => {
+                                    this.isDeleting = false;
+                                });
+                        },
+                        disagree: () => {
+                            this.isDeleting = false;
+                        },
+                    });
+                },
+            },
+        });
+    </script>
+@endPushOnce
 </x-admin::layouts>

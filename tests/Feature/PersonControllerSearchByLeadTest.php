@@ -805,7 +805,7 @@ test('person created from fully populated lead yields perfect sync match', funct
     $response->assertOk();
     $data = $response->json();
 
-    expect($data['percentage'])->toBe(100.0);
+    expect((float)$data['percentage'])->toBe(100.0);
     expect($data['field_differences'])->toBeArray();
     expect($data['field_differences'])->toBeEmpty();
 });

@@ -345,7 +345,7 @@ class UserController extends Controller
             'password'         => 'nullable',
             'confirm_password' => 'nullable|required_with:password|same:password',
             'role_id'          => 'required',
-            'signature'        => 'nullable|string|max:2000',
+            'signature'        => 'nullable|string|max:50000',
             'groups'           => 'nullable|array',
             'groups.*'         => 'nullable|integer|exists:groups,id',
             'groups.*.id'      => 'nullable|integer|exists:groups,id',

@@ -413,13 +413,12 @@
 
                             <!-- Group -->
                             <x-admin::form.control-group>
-                                <x-admin::form.control-group.label class="required">
+                                <x-admin::form.control-group.label>
                                     @lang('admin::app.settings.users.index.create.group')
                                 </x-admin::form.control-group.label>
 
                                 <v-field
                                     name="groups[]"
-                                    rules="required"
                                     label="@lang('admin::app.settings.users.index.create.group')"
                                     multiple
                                     v-model="user.groups"
@@ -485,6 +484,7 @@
                                     v-model="user.signature"
                                     :label="trans('admin::app.settings.users.index.create.signature')"
                                     :placeholder="trans('admin::app.settings.users.index.create.signature')"
+                                    :tinymce="true"
                                     rows="4"
                                 />
 

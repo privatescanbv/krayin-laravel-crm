@@ -1,166 +1,228 @@
+@php
+    // Get default email and phone
+    $defaultEmail = $lead->findDefaultEmail();
+    $defaultPhone = null;
+    if ($lead->phones && is_array($lead->phones) && count($lead->phones) > 0) {
+        $defaultPhone = $lead->phones[0]['value'] ?? null;
+    }
+
+    // Format date of birth
+    $dateOfBirth = $lead->date_of_birth ? $lead->date_of_birth->format('d-m-Y') : '';
+
+    // Get salutation label
+    $salutationLabel = $lead->salutation ? $lead->salutation->label() : '';
+@endphp
+
 {!! view_render_event('admin.leads.view.compact_overview.before', ['lead' => $lead]) !!}
 
-<div class="flex w-full flex-col gap-4 border-b border-gray-200 p-4 dark:border-gray-800">
-    <x-admin::accordion class="select-none !border-none">
-        <x-slot:header class="!p-0">
-            <div class="flex w-full items-center justify-between gap-4 font-semibold dark:text-white">
-                <h4>Gegevens</h4>
+<div class="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+    <!-- Header -->
+    <div class="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
+        <div class="flex items-center gap-3">
+            <span class="icon-menu text-xl text-gray-600 dark:text-gray-400"></span>
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white">Lead gegevens</h3>
+        </div>
+        <div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            <span class="icon-calendar text-base"></span>
+            <span>Laatst bijgewerkt: {{ $lead->updated_at->format('d M Y') }}</span>
+        </div>
+    </div>
 
-                @if (bouncer()->hasPermission('leads.edit'))
-                    <a
-                        href="{{ route('admin.leads.edit', $lead->id) }}"
-                        class="icon-edit rounded-md p-1.5 text-2xl transition-all hover:bg-gray-100 dark:hover:bg-gray-950"
-                    ></a>
-                @endif
-            </div>
-        </x-slot>
-
-        <x-slot:content class="mt-4 !px-0 !pb-0">
-            {!! view_render_event('admin.leads.view.attributes.form_controls.before', ['lead' => $lead]) !!}
-
-            <div class="flex flex-col text-sm">
-
-                <!-- Description -->
-                <div class="mb-4">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Omschrijving</div>
-                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {{ $lead->description ?? '-' }}
-                    </div>
-                </div>
-
-                <!-- Sales Owner -->
-                @if ($lead->user)
-                <div class="mb-4">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Toegewezen aan</div>
-                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {{ $lead->user->name }}
-                    </div>
-                </div>
-                @endif
-
-                <!-- Lost Reason -->
-                @if (!empty($lead->lost_reason))
-                <div class="mb-4">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Verliesreden</div>
-                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {{ $lead->lostReasonLabel }}
-                    </div>
-                </div>
-                @endif
-
-                 <!-- Lead Organization (for billing) -->
-                 @if ($lead->organization)
-                 <div class="mb-4">
-                     <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Organisatie (facturatie)</div>
-                     <div>
-                         <a
-                             href="{{ route('admin.contacts.organizations.view', $lead->organization->id) }}"
-                             target="_blank"
-                             class="text-sm font-medium text-brandColor hover:underline"
-                         >
-                             {{ $lead->organization->name }}
-                             <span class="icon-external-link text-xs ml-1"></span>
-                         </a>
-                     </div>
-                 </div>
-                 @endif
-
-                <!-- Address -->
-                <div class="mb-4">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Adres</div>
-                    <div class="text-sm text-gray-900 dark:text-gray-100">
-                        @if ($lead->address && $lead->address->full_address)
-                            {{ $lead->address->full_address }}
-                            <a
-                                href="https://maps.google.com/?q={{ urlencode($lead->address->full_address) }}"
-                                target="_blank"
-                                class="ml-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                                title="Bekijk op Google Maps"
-                            >
-                                <span class="icon-location text-sm"></span>
-                            </a>
-                        @else
-                            <span class="text-gray-500 dark:text-gray-400 italic">-</span>
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Lead Specific Fields -->
-                <div class="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-3">Lead informatie</div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <!-- MRI Status -->
-                        <div class="mb-3">
-                            <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">MRI status</div>
-                            <div class="text-sm text-gray-900 dark:text-gray-100">
-                                {{ $lead->mriStatusLabel ?? 'Onbekend' }}
-                            </div>
-                        </div>
-
-                        <!-- Diagnoseformulier aanwezig -->
-                        <div class="mb-3">
-                            <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Diagnoseformulier</div>
-                            <div class="text-sm text-gray-900 dark:text-gray-100">
-                                @if ($lead->has_diagnosis_form)
-                                    <span class="inline-flex items-center gap-1 text-green-700">
-                                        <span class="icon-attachment text-xs"></span>
-                                        Aanwezig
-                                    </span>
-                                @else
-                                    <span class="text-gray-500">Niet aanwezig</span>
-                                @endif
-                            </div>
-                        </div>
-
-                        <!-- Lead Source -->
-                        <div class="mb-3">
-                            <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Bron</div>
-                            <div class="text-sm text-gray-900 dark:text-gray-100">
-                                {{ $lead->source->name ?? 'Onbekend' }}
-                            </div>
-                        </div>
-
-                        <!-- Lead Type -->
-                        <div class="mb-3">
-                            <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Type</div>
-                            <div class="text-sm text-gray-900 dark:text-gray-100">
-                                {{ $lead->type->name ?? 'Onbekend' }}
-                            </div>
-                        </div>
-
-                        <!-- Lead Channel -->
-                        <div class="mb-3">
-                            <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Kanaal</div>
-                            <div class="text-sm text-gray-900 dark:text-gray-100">
-                                {{ $lead->channel->name ?? 'Onbekend' }}
-                            </div>
-                        </div>
-
-                        <!-- Department -->
-                        <div class="mb-3">
-                            <div class="text-xs text-gray-400 dark:text-gray-500 mb-1">Afdeling</div>
-                            <div class="text-sm text-gray-900 dark:text-gray-100">
-                                {{ $lead->department->name ?? 'Onbekend' }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <!-- Three Column Layout -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
+        <!-- Column 1: IDENTITEIT -->
+        <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="icon-contact text-xl text-blue-500"></span>
+                <h4 class="text-sm font-semibold uppercase text-gray-700 dark:text-gray-300">IDENTITEIT</h4>
             </div>
 
-            <!-- Suite CRM link -->
-            @if (!empty($lead->sugar_link))
-                <div class="mb-4 pt-[10px]">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 mb-1">Sugar Link</div>
-                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                        <a href="{{ $lead->sugar_link }}" target="_blank">{{ $lead->external_id }}</a>
-                    </div>
-                </div>
-            @endif
+            <!-- Aanhef -->
+            <div>
+                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span class="icon-contact text-sm"></span>
+                    <span>Aanhef</span>
+                </label>
+                <input
+                    type="text"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    value="{{ $salutationLabel }}"
+                    readonly
+                />
+            </div>
 
-            {!! view_render_event('admin.leads.view.attributes.form_controls.after', ['lead' => $lead]) !!}
-        </x-slot>
-    </x-admin::accordion>
+            <!-- Voornaam -->
+            <div>
+                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span class="icon-contact text-sm"></span>
+                    <span>Voornaam</span>
+                </label>
+                <input
+                    type="text"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    value="{{ $lead->first_name ?? '' }}"
+                    readonly
+                />
+            </div>
+
+            <!-- Tussenvoegels -->
+            <div>
+                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span class="icon-contact text-sm"></span>
+                    <span>Tussenvoegels</span>
+                </label>
+                <input
+                    type="text"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    value="{{ $lead->lastname_prefix ?? '' }}"
+                    readonly
+                />
+            </div>
+
+            <!-- Achternaam -->
+            <div>
+                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span class="icon-contact text-sm"></span>
+                    <span>Achternaam</span>
+                </label>
+                <input
+                    type="text"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    value="{{ $lead->last_name ?? '' }}"
+                    readonly
+                />
+            </div>
+
+            <!-- Geboortedatum -->
+            <div>
+                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span class="icon-contact text-sm"></span>
+                    <span>Geboortedatum</span>
+                </label>
+                <input
+                    type="text"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    value="{{ $dateOfBirth }}"
+                    readonly
+                />
+            </div>
+        </div>
+
+        <!-- Column 2: ADRESGEGEVENS -->
+        <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="icon-location text-xl text-green-500"></span>
+                <h4 class="text-sm font-semibold uppercase text-gray-700 dark:text-gray-300">ADRESGEGEVENS</h4>
+            </div>
+
+            <!-- Straat en huisnummer -->
+            <div>
+                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span class="icon-location text-sm"></span>
+                    <span>Straat en huisnummer</span>
+                </label>
+                <input
+                    type="text"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    value="{{ $lead->address ? ($lead->address->street . ' ' . $lead->address->house_number . ($lead->address->house_number_suffix ? '-' . $lead->address->house_number_suffix : '')) : '' }}"
+                    readonly
+                />
+            </div>
+
+            <!-- Postcode -->
+            <div>
+                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span class="icon-location text-sm"></span>
+                    <span>Postcode</span>
+                </label>
+                <input
+                    type="text"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    value="{{ $lead->address->postal_code ?? '' }}"
+                    readonly
+                />
+            </div>
+
+            <!-- Woonplaats -->
+            <div>
+                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span class="icon-location text-sm"></span>
+                    <span>Woonplaats</span>
+                </label>
+                <input
+                    type="text"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    value="{{ $lead->address->city ?? '' }}"
+                    readonly
+                />
+            </div>
+
+            <!-- Land -->
+            <div>
+                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span class="icon-location text-sm"></span>
+                    <span>Land</span>
+                </label>
+                <input
+                    type="text"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    value="{{ $lead->address->country ?? '' }}"
+                    readonly
+                />
+            </div>
+        </div>
+
+        <!-- Column 3: CONTACT & IDENTIFICATIE -->
+        <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-2 mb-2">
+                <span class="icon-call text-xl text-purple-500"></span>
+                <h4 class="text-sm font-semibold uppercase text-gray-700 dark:text-gray-300">CONTACT & IDENTIFICATIE</h4>
+            </div>
+
+            <!-- Telefoonnummer -->
+            <div>
+                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span class="icon-call text-sm"></span>
+                    <span>Telefoonnummer</span>
+                </label>
+                <input
+                    type="tel"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    value="{{ $defaultPhone ?? '' }}"
+                    readonly
+                />
+            </div>
+
+            <!-- E-mailadres -->
+            <div>
+                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span class="icon-mail text-sm"></span>
+                    <span>E-mailadres</span>
+                </label>
+                <input
+                    type="email"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    value="{{ $defaultEmail ?? '' }}"
+                    readonly
+                />
+            </div>
+
+            <!-- Burgerservicenummer (BSN) -->
+            <div>
+                <label class="flex items-center gap-2 mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                    <span class="icon-contact text-sm"></span>
+                    <span>Burgerservicenummer (BSN)</span>
+                </label>
+                <input
+                    type="text"
+                    class="w-full px-3 py-2 rounded-lg border border-gray-300 bg-gray-50 text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
+                    value=""
+                    placeholder="BSN nummer"
+                    readonly
+                />
+            </div>
+        </div>
+    </div>
 </div>
 
 {!! view_render_event('admin.leads.view.compact_overview.after', ['lead' => $lead]) !!}

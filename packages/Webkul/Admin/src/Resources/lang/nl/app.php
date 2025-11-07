@@ -2023,6 +2023,8 @@ return [
                 'send-btn' => 'Verzenden',
                 'message' => 'Bericht',
                 'draft' => 'Concept',
+                'enter-fullscreen' => 'Volledig scherm',
+                'exit-fullscreen' => 'Verlaat volledig scherm',
             ],
 
             'datagrid' => [

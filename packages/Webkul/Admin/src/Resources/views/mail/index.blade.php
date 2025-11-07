@@ -417,12 +417,60 @@
                         ref="toggleComposeModal"
                         position="bottom-right"
                         size="large"
-                        @toggle="removeTinyMCE"
+                        @toggle="handleComposeToggle"
+                        @fullscreen-change="onComposeFullscreenChange"
                     >
                         <x-slot:header>
-                            <h3 class="text-lg font-bold text-gray-800 dark:text-white">
-                                @lang('admin::app.mail.index.mail.title')
-                            </h3>
+                            <div class="flex w-full items-center justify-between gap-2">
+                                <h3 class="text-lg font-bold text-gray-800 dark:text-white">
+                                    @lang('admin::app.mail.index.mail.title')
+                                </h3>
+
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center gap-1 rounded-md border border-transparent px-2 py-1.5 text-sm font-medium text-gray-600 transition hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-brandColor/40 dark:text-gray-300 dark:hover:bg-gray-800"
+                                    @click="toggleComposeFullscreen"
+                                    :title="isComposeFullscreen ? '{{ trans('admin::app.mail.index.mail.exit-fullscreen') }}' : '{{ trans('admin::app.mail.index.mail.enter-fullscreen') }}'"
+                                    :aria-label="isComposeFullscreen ? '{{ trans('admin::app.mail.index.mail.exit-fullscreen') }}' : '{{ trans('admin::app.mail.index.mail.enter-fullscreen') }}'"
+                                >
+                                    <svg
+                                        v-if="! isComposeFullscreen"
+                                        class="h-5 w-5"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M3 3h6m0 0v4m0-4L3 9m18-6h-6m0 0v4m0-4 6 6M9 21H3m0 0v-6m0 6 6-6m12 6h-6m0 0v-4m0 4 6-6"
+                                        />
+                                    </svg>
+
+                                    <svg
+                                        v-else
+                                        class="h-5 w-5"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M4.5 9h6m-6 0v-6m0 6L9 4.5m6 0h6m-6 0v6m0-6L19.5 9m0 6h-6m6 0v6m0-6L15 19.5m-6 0h-6m6 0v-6m0 6L4.5 15"
+                                        />
+                                    </svg>
+
+                                    <span class="hidden text-sm font-medium sm:inline" v-if="! isComposeFullscreen">
+                                        {{ trans('admin::app.mail.index.mail.enter-fullscreen') }}
+                                    </span>
+                                    <span class="hidden text-sm font-medium sm:inline" v-else>
+                                        {{ trans('admin::app.mail.index.mail.exit-fullscreen') }}
+                                    </span>
+                                </button>
+                            </div>
                         </x-slot>
 
                         <x-slot:content>
@@ -592,165 +640,193 @@
             {!! view_render_event('admin.mail.create.form.after') !!}
         </script>
 
-        <script type="module">
-            app.component('v-mail', {
-                template: '#v-mail-template',
+          <script type="module">
+              app.component('v-mail', {
+                  template: '#v-mail-template',
 
-                data() {
-                    return {
-                        selectedMail: false,
+                  data() {
+                      return {
+                          selectedMail: false,
 
-                        showCC: false,
+                          showCC: false,
 
-                        showBCC: false,
+                          showBCC: false,
 
-                        isStoring: false,
+                          isStoring: false,
 
-                        saveAsDraft: 0,
+                          saveAsDraft: 0,
 
-                        draft: {
-                            id: null,
-                            reply_to: [],
-                            cc: [],
-                            bcc: [],
-                            subject: '',
-                            reply: '',
-                            attachments: [],
-                        },
+                          isComposeFullscreen: false,
 
-                        backgroundColors: [
-                            {
-                                label: "@lang('admin::app.components.tags.index.aquarelle-red')",
-                                text: '#DC2626',
-                                background: '#FEE2E2',
-                            }, {
-                                label: "@lang('admin::app.components.tags.index.crushed-cashew')",
-                                text: '#EA580C',
-                                background: '#FFEDD5',
-                            }, {
-                                label: "@lang('admin::app.components.tags.index.beeswax')",
-                                text: '#D97706',
-                                background: '#FEF3C7',
-                            }, {
-                                label: "@lang('admin::app.components.tags.index.lemon-chiffon')",
-                                text: '#CA8A04',
-                                background: '#FEF9C3',
-                            }, {
-                                label: "@lang('admin::app.components.tags.index.snow-flurry')",
-                                text: '#65A30D',
-                                background: '#ECFCCB',
-                            }, {
-                                label: "@lang('admin::app.components.tags.index.honeydew')",
-                                text: '#16A34A',
-                                background: '#DCFCE7',
-                            },
-                        ],
-                    };
-                },
+                          draft: {
+                              id: null,
+                              reply_to: [],
+                              cc: [],
+                              bcc: [],
+                              subject: '',
+                              reply: '',
+                              attachments: [],
+                          },
 
-                mounted() {
-                    const params = new URLSearchParams(window.location.search);
+                          backgroundColors: [
+                              {
+                                  label: "@lang('admin::app.components.tags.index.aquarelle-red')",
+                                  text: '#DC2626',
+                                  background: '#FEE2E2',
+                              }, {
+                                  label: "@lang('admin::app.components.tags.index.crushed-cashew')",
+                                  text: '#EA580C',
+                                  background: '#FFEDD5',
+                              }, {
+                                  label: "@lang('admin::app.components.tags.index.beeswax')",
+                                  text: '#D97706',
+                                  background: '#FEF3C7',
+                              }, {
+                                  label: "@lang('admin::app.components.tags.index.lemon-chiffon')",
+                                  text: '#CA8A04',
+                                  background: '#FEF9C3',
+                              }, {
+                                  label: "@lang('admin::app.components.tags.index.snow-flurry')",
+                                  text: '#65A30D',
+                                  background: '#ECFCCB',
+                              }, {
+                                  label: "@lang('admin::app.components.tags.index.honeydew')",
+                                  text: '#16A34A',
+                                  background: '#DCFCE7',
+                              },
+                          ],
+                      };
+                  },
 
-                    if (params.get('openModal')) {
-                        this.$refs.toggleComposeModal.toggle();
-                    }
-                },
+                  mounted() {
+                      const params = new URLSearchParams(window.location.search);
 
-                methods: {
-                    removeTinyMCE() {
-                        tinymce?.remove?.();
-                    },
+                      if (params.get('openModal')) {
+                          this.$refs.toggleComposeModal.toggle();
+                      }
+                  },
 
-                    truncatedReply(reply) {
-                        const maxLength = 100;
+                  methods: {
+                      removeTinyMCE() {
+                          tinymce?.remove?.();
+                      },
 
-                        if (reply.length > maxLength) {
-                            return `${reply.substring(0, maxLength)}...`;
-                        }
+                      handleComposeToggle(event) {
+                          this.removeTinyMCE();
 
-                        return reply;
-                    },
+                          if (! event?.isActive) {
+                              this.isComposeFullscreen = false;
 
-                    toggleModal() {
-                        this.draft.reply_to = [];
+                              this.$refs.toggleComposeModal?.setFullscreen?.(false);
+                          }
+                      },
 
-                        // Add user signature to the email body
-                        @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
-                            this.draft.reply = `{{ auth()->guard('user')->user()->signature }}`;
-                        @endif
+                      onComposeFullscreenChange({ isFullscreen }) {
+                          this.isComposeFullscreen = !! isFullscreen;
+                      },
 
-                        this.$refs.toggleComposeModal.toggle();
-                    },
+                      toggleComposeFullscreen() {
+                          this.isComposeFullscreen = ! this.isComposeFullscreen;
 
-                    save(params, { resetForm, setErrors  }) {
-                        this.isStoring = true;
+                          this.$refs.toggleComposeModal?.setFullscreen?.(this.isComposeFullscreen);
+                      },
 
-                        let formData = new FormData(this.$refs.mailForm);
+                      truncatedReply(reply) {
+                          const maxLength = 100;
 
-                        formData.append('is_draft', this.saveAsDraft);
+                          if (reply.length > maxLength) {
+                              return `${reply.substring(0, maxLength)}...`;
+                          }
 
-                        if (this.draft.id) {
-                            formData.append('_method', 'PUT');
-                        }
+                          return reply;
+                      },
 
-                        this.$axios.post(this.draft.id ? "{{ route('admin.mail.update', ':id') }}".replace(':id', this.draft.id) : '{{ route('admin.mail.store') }}', formData, {
-                                headers: {
-                                    'Content-Type': 'multipart/form-data',
-                                },
-                            })
-                            .then ((response) => {
-                                this.$refs.datagrid.get();
+                      toggleModal() {
+                          this.draft.reply_to = [];
 
-                                this.$emitter.emit('add-flash', { type: 'success', message: response.data?.message });
+                          this.isComposeFullscreen = false;
+                          this.$refs.toggleComposeModal?.setFullscreen?.(false);
 
-                                resetForm();
-                            })
-                            .catch ((error) => {
-                                if (error?.response?.status == 422) {
-                                    setErrors(error.response.data.errors);
-                                } else {
-                                    this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
-                                }
-                            }).finally(() => {
-                                this.$refs.toggleComposeModal.close();
+                          // Add user signature to the email body
+                          @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
+                              this.draft.reply = `{{ auth()->guard('user')->user()->signature }}`;
+                          @endif
 
-                                this.isStoring = false;
+                          this.$refs.toggleComposeModal.toggle();
+                      },
 
-                                this.resetForm();
-                            });
-                    },
+                      save(params, { resetForm, setErrors }) {
+                          this.isStoring = true;
 
-                    editModal(row) {
-                        // Als het geen draft is, ga naar de view-pagina
-                        if (!row.is_draft) {
-                            window.location.href = row.url;
-                            return;
-                        }
+                          const formData = new FormData(this.$refs.mailForm);
 
-                        // Alleen voor drafts: open compose-modal
-                        this.$axios.get(row.url)
-                            .then(response => {
-                                this.draft = response.data;
-                                this.$refs.toggleComposeModal.toggle();
-                                this.showCC = this.draft.cc.length > 0;
-                                this.showBCC = this.draft.bcc.length > 0;
-                            })
-                            .catch(error => {});
-                    },
+                          formData.append('is_draft', this.saveAsDraft);
 
-                    resetForm() {
-                        this.draft = {
-                            id: null,
-                            reply_to: [],
-                            cc: [],
-                            bcc: [],
-                            subject: '',
-                            reply: '',
-                            attachments: [],
-                        };
-                    },
-                },
-            });
-        </script>
+                          if (this.draft.id) {
+                              formData.append('_method', 'PUT');
+                          }
+
+                          this.$axios.post(this.draft.id ? "{{ route('admin.mail.update', ':id') }}".replace(':id', this.draft.id) : '{{ route('admin.mail.store') }}', formData, {
+                                  headers: {
+                                      'Content-Type': 'multipart/form-data',
+                                  },
+                              })
+                              .then((response) => {
+                                  this.$refs.datagrid.get();
+
+                                  this.$emitter.emit('add-flash', { type: 'success', message: response.data?.message });
+
+                                  resetForm();
+                              })
+                              .catch((error) => {
+                                  if (error?.response?.status == 422) {
+                                      setErrors(error.response.data.errors);
+                                  } else {
+                                      this.$emitter.emit('add-flash', { type: 'error', message: error.response.data.message });
+                                  }
+                              })
+                              .finally(() => {
+                                  this.$refs.toggleComposeModal.close();
+
+                                  this.isStoring = false;
+
+                                  this.resetForm();
+                              });
+                      },
+
+                      editModal(row) {
+                          // Als het geen draft is, ga naar de view-pagina
+                          if (! row.is_draft) {
+                              window.location.href = row.url;
+                              return;
+                          }
+
+                          // Alleen voor drafts: open compose-modal
+                          this.$axios.get(row.url)
+                              .then((response) => {
+                                  this.draft = response.data;
+                                  this.isComposeFullscreen = false;
+                                  this.$refs.toggleComposeModal?.setFullscreen?.(false);
+                                  this.$refs.toggleComposeModal.toggle();
+                                  this.showCC = this.draft.cc.length > 0;
+                                  this.showBCC = this.draft.bcc.length > 0;
+                              })
+                              .catch(() => {});
+                      },
+
+                      resetForm() {
+                          this.draft = {
+                              id: null,
+                              reply_to: [],
+                              cc: [],
+                              bcc: [],
+                              subject: '',
+                              reply: '',
+                              attachments: [],
+                          };
+                      },
+                  },
+              });
+          </script>
     @endPushOnce
 </x-admin::layouts>

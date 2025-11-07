@@ -1978,6 +1978,8 @@ return [
                 'send-btn'      => 'Send',
                 'message'       => 'Message',
                 'draft'         => 'Draft',
+                'enter-fullscreen' => 'Enter fullscreen',
+                'exit-fullscreen'  => 'Exit fullscreen',
             ],
 
             'datagrid' => [

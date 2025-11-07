@@ -88,10 +88,13 @@
                     class="fixed inset-0 z-[10003] transform overflow-y-auto transition"
                     v-if="isOpen"
                 >
-                    <div class="flex min-h-full items-center justify-center max-md:p-4">
+                    <div
+                        class="flex min-h-full justify-center"
+                        :class="wrapperClasses"
+                    >
                         <div
                             class="box-shadow z-[999] w-full overflow-hidden rounded-lg bg-white dark:bg-gray-900 sm:absolute"
-                            :class="[finalPositionClass, sizeClass]"
+                            :class="[finalPositionClass, sizeClass, fullscreenClass]"
                         >
                             <!-- Header Slot -->
                             <slot
@@ -103,7 +106,7 @@
 
                             <!-- Content Slot -->
                             <slot name="content"></slot>
-                            
+
                             <!-- Footer Slot -->
                             <slot name="footer"></slot>
                         </div>
@@ -127,6 +130,7 @@
                 'toggle',
                 'open',
                 'close',
+                'fullscreen-change',
             ],
 
             data() {
@@ -134,6 +138,8 @@
                     isOpen: this.isActive,
 
                     isMobile: window.innerWidth < 640,
+
+                    isFullscreen: false,
                 };
             },
 
@@ -146,6 +152,12 @@
             },
 
             computed: {
+                wrapperClasses() {
+                    return this.isFullscreen
+                        ? 'items-stretch max-md:p-0'
+                        : 'items-center max-md:p-4';
+                },
+
                 positionClass() {
                     return {
                         'center': 'items-center justify-center',
@@ -159,12 +171,20 @@
                 },
 
                 finalPositionClass() {
-                    return this.isMobile 
-                        ? 'items-center justify-center' 
+                    if (this.isFullscreen) {
+                        return 'inset-0 sm:inset-0';
+                    }
+
+                    return this.isMobile
+                        ? 'items-center justify-center'
                         : this.positionClass;
                 },
 
                 sizeClass() {
+                    if (this.isFullscreen) {
+                        return 'h-full max-h-full max-w-none w-full sm:h-full sm:w-full sm:max-w-none';
+                    }
+
                     return {
                         'normal': 'max-w-[525px]',
                         'medium': 'max-w-[768px]',
@@ -172,9 +192,15 @@
                     }[this.size] || 'max-w-[525px]';
                 },
 
+                fullscreenClass() {
+                    return this.isFullscreen
+                        ? 'flex h-full flex-col !rounded-none sm:rounded-none'
+                        : '';
+                },
+
                 enterFromLeaveToClasses() {
                     const effectivePosition = this.isMobile ? 'center' : this.position;
-                    
+
                     return {
                         'center': '-translate-y-4 opacity-0',
                         'top-center': '-translate-y-4 opacity-0',
@@ -191,14 +217,16 @@
                 checkScreenSize() {
                     this.isMobile = window.innerWidth < 640;
                 },
-                
+
                 toggle() {
                     this.isOpen = ! this.isOpen;
 
                     if (this.isOpen) {
                         document.body.style.overflow = 'hidden';
                     } else {
-                        document.body.style.overflow ='auto';
+                        document.body.style.overflow = 'auto';
+
+                        this.setFullscreen(false);
                     }
 
                     this.$emit('toggle', { isActive: this.isOpen });
@@ -209,6 +237,8 @@
 
                     document.body.style.overflow = 'hidden';
 
+                    this.setFullscreen(false);
+
                     this.$emit('open', { isActive: this.isOpen });
                 },
 
@@ -217,7 +247,23 @@
 
                     document.body.style.overflow = 'auto';
 
+                    this.setFullscreen(false);
+
                     this.$emit('close', { isActive: this.isOpen });
+                },
+
+                toggleFullscreen() {
+                    this.setFullscreen(! this.isFullscreen);
+                },
+
+                setFullscreen(state) {
+                    if (this.isFullscreen === state) {
+                        return;
+                    }
+
+                    this.isFullscreen = state;
+
+                    this.$emit('fullscreen-change', { isFullscreen: this.isFullscreen });
                 }
             }
         });

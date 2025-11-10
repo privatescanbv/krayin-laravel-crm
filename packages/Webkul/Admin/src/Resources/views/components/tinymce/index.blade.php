@@ -175,6 +175,8 @@
                         toolbar: 'placeholders | bold italic strikethrough forecolor backcolor image alignleft aligncenter alignright alignjustify | link hr | numlist bullist outdent indent | removeformat | code | table',
                         image_advtab: true,
                         directionality: 'ltr',
+                        browser_spellcheck: true,
+                        contextmenu: 'link image table spellchecker',
                         setup: (editor) => {
                             let toggleState = false;
 

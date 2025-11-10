@@ -2,10 +2,12 @@
 
 namespace Webkul\Admin\Http\Controllers\Mail;
 
+use App\Repositories\SalesLeadRepository;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -23,6 +25,7 @@ use Webkul\Email\Repositories\EmailRepository;
 use Webkul\Email\Repositories\FolderRepository;
 use Webkul\Lead\Repositories\LeadRepository;
 use App\Models\SalesLead;
+use Illuminate\Support\Facades\File;
 
 class EmailController extends Controller
 {
@@ -33,6 +36,7 @@ class EmailController extends Controller
      */
     public function __construct(
         protected LeadRepository $leadRepository,
+        protected SalesLeadRepository $salesRepository,
         protected EmailRepository $emailRepository,
         protected AttachmentRepository $attachmentRepository,
         protected FolderRepository $folderRepository,
@@ -368,7 +372,7 @@ class EmailController extends Controller
             Event::dispatch('email.move.before', $id);
 
             $folder = Folder::findOrFail(request('folder_id'));
-            
+
             $this->emailRepository->update([
                 'folder_id' => $folder->id,
             ], $id);
@@ -425,4 +429,111 @@ class EmailController extends Controller
      * Search entities (leads, sales_leads, persons) by email address.
      */
     // Removed: searchByEmail. Reuse existing search endpoints (leads/persons/sales-leads) from respective controllers.
+
+    /**
+     * Get list of available email templates.
+     */
+    public function getTemplates(): JsonResponse
+    {
+        $templatesPath = resource_path('views/adminc/email_templates');
+        $templates = [];
+
+        if (File::exists($templatesPath)) {
+            $files = File::files($templatesPath);
+
+            foreach ($files as $file) {
+                $filename = $file->getFilename();
+                if (str_ends_with($filename, '.blade.php')) {
+                    $name = str_replace('.blade.php', '', $filename);
+                    $templates[] = [
+                        'name' => $name,
+                        'label' => ucfirst(str_replace('_', ' ', $name)),
+                    ];
+                }
+            }
+        }
+
+        return response()->json([
+            'data' => $templates,
+        ]);
+    }
+
+    /**
+     * Get rendered email template content.
+     */
+    public function getTemplateContent(): JsonResponse
+    {
+        $templateName = request()->query('template');
+        $leadId = request()->query('lead_id');
+        $personId = request()->query('person_id');
+        $salesLeadId = request()->query('sales_lead_id');
+
+        if(is_null($leadId) && is_null($personId) && is_null($salesLeadId)) {
+            return response()->json([
+                'error' => 'At least one of lead_id, person_id, or sales_lead_id is required',
+            ], 400);
+        }
+
+        if (!$templateName) {
+            return response()->json([
+                'error' => 'Template name is required',
+            ], 400);
+        }
+
+        try {
+            // Prepare variables for template (resolved server-side)
+            $variables = $this->resolveTemplateVariables($leadId, $personId, $salesLeadId);
+
+            $viewPath = 'adminc.email_templates.' . $templateName;
+
+            // Check if view exists
+            if (!view()->exists($viewPath)) {
+                return response()->json([
+                    'error' => 'Template not found',
+                    'message' => "View {$viewPath} does not exist",
+                ], 404);
+            }
+
+            $content = view($viewPath, $variables)->render();
+
+            return response()->json([
+                'data' => [
+                    'content' => $content,
+                ],
+            ]);
+        } catch (Exception $e) {
+            Log::error('Template rendering error: ' . $e->getMessage(), [
+                'template' => $templateName ?? 'unknown',
+                'lead_id' => $leadId ?? null,
+                'person_id' => $personId ?? null,
+                'exception' => $e,
+            ]);
+
+            return response()->json([
+                'error' => 'Template not found or error rendering template',
+                'message' => $e->getMessage(),
+                'trace' => config('app.debug') ? $e->getTraceAsString() : null,
+            ], 404);
+        }
+    }
+
+    /**
+     * Resolve and build template variables from provided entity identifiers.
+     * @throws Exception if all arguments are null
+     */
+    private function resolveTemplateVariables($leadId = null, $personId = null, $salesLeadId = null): array
+    {
+        // Lead and related person
+        if ($leadId) {
+            return $this->leadRepository->resolveEmailVariablesById($leadId);
+        } else if ($personId) {
+            return $this->personRepository->resolveEmailVariablesById($personId);
+        }else if ($salesLeadId) {
+            return $this->salesRepository->resolveEmailVariablesById($salesLeadId);
+        }
+        else {
+            throw new Exception('No valid entity identifier provided for template variable resolution');
+        }
+    }
 }
+

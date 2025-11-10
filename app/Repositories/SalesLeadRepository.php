@@ -10,15 +10,19 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
+use Webkul\Core\Eloquent\Repository;
 use Webkul\Lead\Models\Lead;
 use Webkul\Lead\Models\Stage;
 
-class SalesLeadRepository
+class SalesLeadRepository extends Repository
 {
     public function __construct(
         private readonly OrderRepository $orderRepository,
         private readonly ActivityRepository $activityRepository,
-    ) {}
+        \Illuminate\Container\Container $container
+    ) {
+        parent::__construct($container);
+    }
 
     /**
      * Create a SalesLead from a won Lead with appropriate workflow pipeline stage.
@@ -73,6 +77,23 @@ class SalesLeadRepository
 
             return null;
         }
+    }
+
+    public function resolveEmailVariablesById($salesId): array
+    {
+        return $this->resolveEmailVariables($this->find($salesId));
+    }
+
+    public function model()
+    {
+        return SalesLead::class;
+    }
+
+    private function resolveEmailVariables(SalesLead $sales): array
+    {
+        $person = $sales->getContactPersonOrFirstPerson();
+
+        return ['lastname' => $person->last_name];
     }
 
     private function existsSalesLeadInNotWonOrLoss(int $leadId): bool

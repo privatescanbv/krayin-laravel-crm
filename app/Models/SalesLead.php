@@ -228,7 +228,7 @@ class SalesLead extends Model
         return $person?->findDefaultEmail();
     }
 
-    public function getContactPersonOrFirstPerson(): ?Person
+    public function getContactPersonOrFirstPerson(): Person
     {
         if ($this->hasContactPerson()) {
             return $this->contactPerson;

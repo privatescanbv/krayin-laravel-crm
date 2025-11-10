@@ -18,6 +18,7 @@ use Webkul\Contact\Contracts\Person;
 use Webkul\Core\Eloquent\Repository;
 use Carbon\Carbon;
 use App\Services\Concerns\JsonDuplicateMatcher;
+use Webkul\Lead\Contracts\Lead;
 
 class PersonRepository extends Repository
 {
@@ -238,6 +239,15 @@ class PersonRepository extends Repository
             'entity_type' => 'organizations',
             'name'        => $organizationName,
         ]);
+    }
+
+    public function resolveEmailVariablesById($personId): array {
+        return $this->resolveEmailVariables($this->find($personId));
+    }
+
+    private function resolveEmailVariables(Person $person): array
+    {
+        return ['lastname' => $person->last_name];
     }
 
     /**

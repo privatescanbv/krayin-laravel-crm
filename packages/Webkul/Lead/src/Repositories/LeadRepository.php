@@ -538,6 +538,27 @@ class LeadRepository extends Repository
         return [$leadPipelineId, $leadPipelineStageId];
     }
 
+    public function resolveEmailVariablesById($leadId): array {
+        return $this->resolveEmailVariables($this->find($leadId));
+    }
+
+    private function resolveEmailVariables(Lead $lead): array
+    {
+        // First check contact person (no need to load persons relation)
+        if ($lead->hasContactPerson()) {
+            $lead->load('contactPerson');
+            return ['lastname' => $lead->contactPerson->last_name];
+        }
+        
+        // If no contact person, check linked persons (use query directly to avoid pivot loading issues)
+        $person = $lead->persons()->first();
+        if (is_null($person)) {
+            //resolve from given lead.
+            return ['lastname' => $lead->last_name];
+        }
+        return ['lastname' => $person->last_name];
+    }
+
     /**
      * Merge address data from source lead to primary lead
      */

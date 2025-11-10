@@ -58,13 +58,26 @@
                     <x-admin::modal
                         ref="mailActivityModal"
                         position="bottom-right"
+                        @toggle="removeTinyMCE"
                     >
                         <x-slot:header>
                             {!! view_render_event('admin.components.activities.actions.mail.form_controls.modal.header.before') !!}
 
-                            <h3 class="text-base font-semibold dark:text-white">
-                                @lang('admin::app.components.activities.actions.mail.title')
-                            </h3>
+                            <div class="flex items-center justify-between gap-2.5 w-full">
+                                <h3 class="text-base font-semibold dark:text-white">
+                                    @lang('admin::app.components.activities.actions.mail.title')
+                                </h3>
+
+                                <button
+                                    type="button"
+                                    class="flex items-center justify-center w-8 h-8 cursor-pointer text-gray-600 hover:rounded-md hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-950 transition-colors"
+                                    @click="toggleFullscreen"
+                                    :title="isFullscreen ? 'Verkleinen' : 'Volledig scherm'"
+                                >
+                                    <span v-if="isFullscreen" class="text-xl">⊟</span>
+                                    <span v-else class="text-xl">⊞</span>
+                                </button>
+                            </div>
 
                             {!! view_render_event('admin.components.activities.actions.mail.form_controls.modal.header.before') !!}
                         </x-slot>
@@ -184,6 +197,33 @@
                                 </x-admin::form.control-group>
                             </template>
 
+                            <!-- Template Selector -->
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    Template
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="select"
+                                    id="email_template"
+                                    name="email_template"
+                                    v-model="selectedTemplate"
+                                    @change="loadTemplate"
+                                    :label="trans('admin::app.components.activities.actions.mail.template')"
+                                >
+                                    <option value="">Geen template</option>
+                                    <option
+                                        v-for="template in emailTemplates"
+                                        :key="template.name"
+                                        :value="template.name"
+                                    >
+                                        @{{ template.label }}
+                                    </option>
+                                </x-admin::form.control-group.control>
+
+                                <x-admin::form.control-group.error control-name="email_template" />
+                            </x-admin::form.control-group>
+
                             <!-- Subject -->
                             <x-admin::form.control-group>
                                 <x-admin::form.control-group.label class="required">
@@ -209,7 +249,7 @@
                                     name="reply"
                                     id="reply"
                                     rules="required"
-                                    {{-- tinymce="true" --}}
+                                    :tinymce="true"
                                     :label="trans('admin::app.components.activities.actions.mail.message')"
                                 />
 
@@ -303,8 +343,18 @@
                     entityEmails: [],
 
                     selectedEmailLabel: '',
+
+                    selectedTemplate: '',
+
+                    emailTemplates: [],
+
+                    defaultTemplate: 'reply', // Default template for lead view
                 }
             },
+
+              created() {
+                  this.loadTemplates();
+              },
 
               mounted() {
                   this.__mailDialogListener = (event) => {
@@ -330,6 +380,11 @@
                   } else {
                       this.entityEmails = this.collectEntityEmails();
                   }
+
+                  // Ensure templates are loaded
+                  if (!this.emailTemplates || this.emailTemplates.length === 0) {
+                      this.loadTemplates();
+                  }
               },
 
               beforeUnmount() {
@@ -343,6 +398,124 @@
               },
 
               methods: {
+                  loadTemplates() {
+                      this.$axios.get('{{ route('admin.mail.templates') }}')
+                          .then(response => {
+                              // Handle different response structures
+                              const templates = response.data?.data || response.data || [];
+                              this.emailTemplates = Array.isArray(templates) ? templates : [];
+                          })
+                          .catch(error => {
+                              this.emailTemplates = [];
+                          });
+                  },
+
+                  setContentWithRetry(html, retries = 25) {
+                      if (!html || !html.trim()) return;
+
+                      // Check if TinyMCE is available and editor is ready
+                      if (window.tinymce) {
+                          try {
+                              const editor = window.tinymce.get('reply');
+                              if (editor && !editor.removed) {
+                                  // Editor exists and is not removed, set content
+                                  editor.setContent(html);
+                                  return;
+                              }
+                          } catch (e) {
+                              // Editor not ready yet, continue to retry
+                          }
+                      }
+
+                      // Retry if TinyMCE not ready yet
+                      if (retries > 0) {
+                          setTimeout(() => this.setContentWithRetry(html, retries - 1), 200);
+                      } else {
+                          // Final fallback: set textarea when all retries exhausted
+                          const messageField = this.$refs.mailActionForm?.querySelector('[name="reply"]');
+                          if (messageField) {
+                              messageField.value = html;
+                              messageField.dispatchEvent(new Event('input', { bubbles: true }));
+                          }
+                      }
+                  },
+
+                  loadTemplate() {
+                      if (!this.selectedTemplate) {
+                          return;
+                      }
+
+                      // Prepare entity IDs for server-side resolution
+                      const params = {
+                          template: this.selectedTemplate,
+                      };
+
+                      // Add entity IDs if available
+                      if (this.entity?.id) {
+                          // First check entityControlName (most reliable, explicitly passed)
+                          const controlName = (this.entityControlName || '').toString().toLowerCase();
+                          
+                          // Then check entity_type or type from entity object
+                          const entityType = (this.entity.entity_type || this.entity.type || '').toString().toLowerCase();
+                          
+                          // Prioritize entityControlName over entity type
+                          if (controlName === 'person_id') {
+                              params.person_id = this.entity.id;
+                          } else if (controlName === 'sales_lead_id') {
+                              params.sales_lead_id = this.entity.id;
+                          } else if (controlName === 'lead_id') {
+                              params.lead_id = this.entity.id;
+                          } else if (entityType === 'leads' || entityType === 'lead') {
+                              params.lead_id = this.entity.id;
+                          } else if (entityType === 'sales_leads' || entityType === 'sales_lead') {
+                              params.sales_lead_id = this.entity.id;
+                          } else {
+                              // Cannot determine entity type - throw error
+                              const errorMsg = 'Kan entity type niet bepalen. entityControlName: "' + controlName + '", entityType: "' + entityType + '"';
+                              this.$emitter.emit('add-flash', {
+                                  type: 'error',
+                                  message: errorMsg
+                              });
+                              return;
+                          }
+                      }
+
+                      // Fallbacks: if nested lead object exists
+                      if (!params.lead_id && this.entity?.lead?.id) {
+                          params.lead_id = this.entity.lead.id;
+                      }
+
+                      // Ensure at least one id is present; if still missing and entityControlName indicates sales lead
+                      if (!params.lead_id && !params.sales_lead_id) {
+                          if ((this.entityControlName || '').toString().toLowerCase() === 'sales_lead_id' && this.entity?.id) {
+                              params.sales_lead_id = this.entity.id;
+                          }
+                      }
+
+                      this.$axios.get('{{ route('admin.mail.template_content') }}', {
+                              params: params
+                          })
+                          .then(response => {
+                              const templateContent = response.data.data.content || '';
+                              const signature = @json(auth()->guard('user')->user()->signature ?? '');
+
+                              // Combine template content with signature
+                              const fullContent = templateContent + (signature ? '<br><br>' + signature : '');
+
+                              // Set content in TinyMCE or textarea
+                              this.setContentWithRetry(fullContent);
+                          })
+                          .catch(error => {
+                              this.$emitter.emit('add-flash', {
+                                  type: 'error',
+                                  message: 'Fout bij het laden van template'
+                              });
+                          });
+                  },
+
+                  removeTinyMCE() {
+                      tinymce?.remove?.();
+                  },
                   openModal(type) {
                       this.openModalWithPayload({});
                   },
@@ -356,6 +529,13 @@
                           emails = null,
                       } = payload || {};
 
+                      this.selectedTemplate = ''; // Reset template selection
+
+                      // Ensure templates are loaded before opening modal
+                      if (!this.emailTemplates || this.emailTemplates.length === 0) {
+                          this.loadTemplates();
+                      }
+
                       this.$refs.mailActivityModal.open();
 
                       setTimeout(() => {
@@ -367,9 +547,18 @@
 
                           const emailField = this.$refs.mailActionForm.querySelector('[name="reply_to"]');
                           const hasExistingEmail = emailField && emailField.value && emailField.value.trim().length;
-                          const resolvedEmail = defaultEmail || (!hasExistingEmail ? this.getDefaultEmail() : null);
 
-                          if (resolvedEmail && (!hasExistingEmail || (this.selectedEmailLabel || '').toLowerCase() !== resolvedEmail.toLowerCase())) {
+                          // Extract email from defaultEmail if it's an object
+                          let resolvedEmail = defaultEmail;
+                          if (defaultEmail && typeof defaultEmail === 'object' && !Array.isArray(defaultEmail)) {
+                              resolvedEmail = defaultEmail.email || defaultEmail.value || null;
+                          }
+
+                          if (!resolvedEmail && !hasExistingEmail) {
+                              resolvedEmail = this.getDefaultEmail();
+                          }
+
+                          if (resolvedEmail && (!hasExistingEmail || (this.selectedEmailLabel || '').toLowerCase() !== String(resolvedEmail).toLowerCase())) {
                               this.setReplyTo(resolvedEmail);
                           }
 
@@ -380,13 +569,18 @@
                           }
 
                           const messageField = this.$refs.mailActionForm.querySelector('[name="reply"]');
-                          if (messageField) {
-                              if (body && body.trim()) {
-                                  messageField.value = body;
-                                  messageField.dispatchEvent(new Event('input', { bubbles: true }));
-                              } else if (!messageField.value.trim()) {
+
+                          if (body && body.trim()) {
+                              this.setContentWithRetry(body);
+                          } else if (messageField && !messageField.value.trim()) {
+                              // Load default template for lead view if available (delay slightly to ensure editor setup)
+                              if (this.defaultTemplate && this.emailTemplates.some(t => t.name === this.defaultTemplate)) {
+                                  this.selectedTemplate = this.defaultTemplate;
+                                  setTimeout(() => this.loadTemplate(), 250);
+                              } else {
+                                  // Fallback to signature only
                                   @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
-                                      messageField.value = `{{ auth()->guard('user')->user()->signature }}`;
+                                      this.setContentWithRetry(@json(auth()->guard('user')->user()->signature));
                                   @endif
                               }
                           }

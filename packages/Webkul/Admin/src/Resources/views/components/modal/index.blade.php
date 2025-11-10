@@ -17,22 +17,24 @@
     @endisset
 
     @isset($header)
-        <template v-slot:header="{ toggle, isOpen }">
-            <div {{ $header->attributes->merge(['class' => 'flex items-center justify-between gap-2.5 border-b px-4 py-3 dark:border-gray-800']) }}>
+        <template v-slot:header="{ toggle, isOpen, toggleFullscreen, isFullscreen }">
+            <div {{ ($header->attributes ?? collect())->merge(['class' => 'flex items-center justify-between gap-2.5 border-b px-4 py-3 dark:border-gray-800']) }}>
                 {{ $header }}
 
-                <span
-                    class="icon-cross-large cursor-pointer text-3xl hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-950"
-                    @click="toggle"
-                >
-                </span>
+                <div class="flex items-center gap-2">
+                    <span
+                        class="icon-cross-large cursor-pointer text-3xl hover:rounded-md hover:bg-gray-100 dark:hover:bg-gray-950"
+                        @click="toggle"
+                    >
+                    </span>
+                </div>
             </div>
         </template>
     @endisset
 
     @isset($content)
         <template v-slot:content>
-            <div {{ $content->attributes->merge(['class' => 'border-b px-4 py-2.5 dark:border-gray-800']) }}>
+            <div {{ ($content->attributes ?? collect())->merge(['class' => 'border-b px-4 py-2.5 dark:border-gray-800']) }}>
                 {{ $content }}
             </div>
         </template>
@@ -40,7 +42,7 @@
 
     @isset($footer)
         <template v-slot:footer>
-            <div {{ $content->attributes->merge(['class' => 'flex justify-end px-4 py-2.5']) }}>
+            <div {{ ($footer->attributes ?? collect())->merge(['class' => 'flex justify-end px-4 py-2.5']) }}>
                 {{ $footer }}
             </div>
         </template>
@@ -87,17 +89,23 @@
                 <div
                     class="fixed inset-0 z-[10003] transform overflow-y-auto transition"
                     v-if="isOpen"
+                    :class="{ 'p-0': isFullscreen }"
                 >
-                    <div class="flex min-h-full items-center justify-center max-md:p-4">
+                    <div 
+                        class="flex min-h-full items-center justify-center max-md:p-4"
+                        :class="{ 'p-0': isFullscreen }"
+                    >
                         <div
                             class="box-shadow z-[999] w-full overflow-hidden rounded-lg bg-white dark:bg-gray-900 sm:absolute"
-                            :class="[finalPositionClass, sizeClass]"
+                            :class="[isFullscreen ? '' : finalPositionClass, sizeClass]"
                         >
                             <!-- Header Slot -->
                             <slot
                                 name="header"
                                 :toggle="toggle"
                                 :isOpen="isOpen"
+                                :toggleFullscreen="toggleFullscreen"
+                                :isFullscreen="isFullscreen"
                             >
                             </slot>
 
@@ -134,6 +142,8 @@
                     isOpen: this.isActive,
 
                     isMobile: window.innerWidth < 640,
+
+                    isFullscreen: false,
                 };
             },
 
@@ -165,6 +175,10 @@
                 },
 
                 sizeClass() {
+                    if (this.isFullscreen) {
+                        return 'w-full h-full max-w-full max-h-full m-0 rounded-none';
+                    }
+                    
                     return {
                         'normal': 'max-w-[525px]',
                         'medium': 'max-w-[768px]',
@@ -214,10 +228,15 @@
 
                 close() {
                     this.isOpen = false;
+                    this.isFullscreen = false;
 
                     document.body.style.overflow = 'auto';
 
                     this.$emit('close', { isActive: this.isOpen });
+                },
+
+                toggleFullscreen() {
+                    this.isFullscreen = !this.isFullscreen;
                 }
             }
         });

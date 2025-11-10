@@ -1091,23 +1091,30 @@
                             return [];
                         }
 
+                        // Extract email from from field if it's an object
+                        const extractEmail = (value) => {
+                            if (!value) return null;
+                            if (typeof value === 'string') return value;
+                            if (typeof value === 'object' && !Array.isArray(value)) {
+                                return value.email || value.value || null;
+                            }
+                            return value;
+                        };
+
+                        const fromEmail = extractEmail(this.action.email.from);
+
                         if (this.getActionType == 'reply-all') {
-                            console.log(this.action.email);
-
-                            console.log([
-                                this.action.email.from,
-                                ...(this.action.email?.cc || []),
-                                ...(this.action.email?.bcc || []),
-                            ]);
-
+                            const ccEmails = (this.action.email?.cc || []).map(extractEmail).filter(Boolean);
+                            const bccEmails = (this.action.email?.bcc || []).map(extractEmail).filter(Boolean);
+                            
                             return [
-                                this.action.email.from,
-                                ...(this.action.email?.cc || []),
-                                ...(this.action.email?.bcc || []),
-                            ];
+                                fromEmail,
+                                ...ccEmails,
+                                ...bccEmails,
+                            ].filter(Boolean);
                         }
 
-                        return [this.action.email.from];
+                        return fromEmail ? [fromEmail] : [];
                     },
 
                     cc() {
@@ -1127,6 +1134,13 @@
                     },
 
                     reply() {
+                        // For reply action, we need to include the original email content
+                        if (this.getActionType == 'reply' || this.getActionType == 'reply-all') {
+                            // Return empty string - content will be set via TinyMCE
+                            // The original email content should be included in the reply
+                            return '';
+                        }
+                        
                         if (this.getActionType == 'forward') {
                             return this.action.email.reply;
                         }
@@ -1144,7 +1158,77 @@
                     },
                 },
 
+                watch: {
+                    reply(newVal) {
+                        // When reply content changes, set it in TinyMCE
+                        if (newVal && newVal.trim()) {
+                            this.$nextTick(() => {
+                                this.setContentInTinyMCE(newVal);
+                            });
+                        }
+                    },
+                    
+                    'action.email.reply'(newVal) {
+                        // When the original email reply content changes (e.g., when switching emails), update TinyMCE
+                        if (this.getActionType == 'reply' || this.getActionType == 'reply-all') {
+                            if (newVal && newVal.trim()) {
+                                this.$nextTick(() => {
+                                    this.setContentInTinyMCE(newVal);
+                                });
+                            }
+                        }
+                    },
+                },
+
+                mounted() {
+                    // Set initial content in TinyMCE when component is mounted
+                    // For reply/reply-all, use the original email content
+                    let contentToSet = '';
+                    if (this.getActionType == 'reply' || this.getActionType == 'reply-all') {
+                        contentToSet = this.action.email?.reply || '';
+                    } else if (this.reply && this.reply.trim()) {
+                        contentToSet = this.reply;
+                    }
+                    
+                    if (contentToSet) {
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                this.setContentInTinyMCE(contentToSet);
+                            }, 500);
+                        });
+                    }
+                },
+
                 methods: {
+                    setContentInTinyMCE(html, retries = 25) {
+                        if (!html || !html.trim()) return;
+
+                        // Check if TinyMCE is available and editor is ready
+                        if (window.tinymce) {
+                            try {
+                                const editor = window.tinymce.get('reply');
+                                if (editor && !editor.removed && editor.initialized) {
+                                    // Editor exists, is not removed, and is initialized - set content
+                                    editor.setContent(html);
+                                    
+                                    // Also update the underlying textarea value to keep it in sync
+                                    const textarea = document.getElementById('reply');
+                                    if (textarea) {
+                                        textarea.value = html;
+                                    }
+                                    return;
+                                }
+                            } catch (e) {
+                                // Editor not ready yet, continue to retry
+                            }
+                        }
+
+                        // Retry if TinyMCE not ready yet
+                        if (retries > 0) {
+                            setTimeout(() => this.setContentInTinyMCE(html, retries - 1), 200);
+                        }
+                    },
+
                     save(params, { resetForm, setErrors  }) {
                         let formData = new FormData(this.$refs.mailActionForm);
 

@@ -55,7 +55,7 @@ MAIL_RECEIVER_DRIVER=microsoft-graph
 ===== Automatische Koppeling
 Het systeem gebruikt de volgende logica voor het koppelen van inkomende emails:
 
-. **Afzender Herkenning**: Het systeem zoekt naar bestaande leads/contacten met het email adres van de afzender.
+. **Suggesties**: Bij het openen van de mail, indien er geen koppeling bestaat met een entiteit, dan worden er suggesties gegeven en de mogelijkheid om een nieuwe lead aan te maken.
 . **Thread Detectie**: Replies worden gekoppeld aan de oorspronkelijke conversatie.
 . **Lead Associatie**: Nieuwe berichten verschijnen zowel in de CRM inbox als in de specifieke lead.
 . **Activiteit Koppeling**: Wanneer een email vanuit een activiteit wordt verstuurd, gaat de activiteit tijdelijk op *On-Hold*. Zodra er een reply binnenkomt, wordt de activiteit weer aangeboden om verder op te volgen.
@@ -124,6 +124,109 @@ Zie afzonderlijke secties voor veelvoorkomende problemen zoals:
 * Reageer tijdig op inkomende berichten.
 * Controleer regelmatig de CRM Inbox.
 * Documenteer belangrijke correspondentie in de lead-notities.
+
+==== Email Composer Functionaliteiten
+
+Het email compose dialoog biedt verschillende functionaliteiten om het opstellen van emails te vereenvoudigen en te standaardiseren.
+
+===== Email Templates
+
+Het systeem ondersteunt herbruikbare email templates die kunnen worden geselecteerd vanuit de email composer. Templates maken het mogelijk om gestandaardiseerde berichten snel op te stellen.
+
+* **Template Selectie**: In de email composer kan een template worden geselecteerd uit een dropdown lijst
+* **Automatische Variabele Resolutie**: Templates ondersteunen server-side variabele resolutie (bijvoorbeeld `{{ $lastname }}`, `{{ $firstname }}`). Per entiteit type wordt dit dan resolved (denk bij lead aan 1. contact persoon, 2. eerste koppelde persoon, 3. lead data)
+* **Context-Aware**: Templates kunnen automatisch variabelen ophalen op basis van de gekoppelde lead, persoon of sales lead
+* **Default Templates**: Voor specifieke views (zoals lead view) kan een standaard template worden ingesteld die automatisch wordt geladen
+
+===== Handtekening (Signature)
+
+Elke gebruiker kan een persoonlijke email handtekening configureren die automatisch wordt toegevoegd aan verzonden emails (zie edit gebruiker formulier).
+
+* **Automatische Toevoeging**: De handtekening wordt standaard automatisch toegevoegd aan nieuwe emails
+* **HTML Ondersteuning**: Handtekeningen kunnen HTML opmaak bevatten voor professionele presentatie
+* **Per Gebruiker**: Elke gebruiker heeft zijn eigen handtekening die kan worden beheerd via de gebruikersinstellingen
+* **TinyMCE Editor**: Handtekeningen kunnen worden bewerkt met een rich text editor voor geavanceerde opmaak
+
+===== Email Styling (CSS)
+
+Alle email templates gebruiken een centrale CSS stylesheet voor consistente opmaak.
+
+* **Centrale Stylesheet**: `resources/css/email-templates.css` bevat alle email-specifieke styles
+* **Layout Systeem**: Templates gebruiken een gemeenschappelijke layout (`resources/views/adminc/email_templates/base/layout.blade.php`) die de CSS automatisch inline zet
+* **Email Client Compatibiliteit**: De styles zijn geoptimaliseerd voor email clients en worden automatisch ingeladen wanneer een template wordt gerenderd
+* **Uitbreidbaar**: Nieuwe styles kunnen eenvoudig worden toegevoegd aan de centrale stylesheet
+
+===== Spellingscontrole
+
+De email composer bevat ingebouwde spellingscontrole voor betere email kwaliteit.
+
+* **Browser Native Spellcheck**: Gebruikt de spellingscontrole van de browser voor automatische detectie van spelfouten
+* **Visuele Indicatie**: Verkeerd gespelde woorden worden automatisch onderstreept
+* **Context Menu**: Rechtsklikken op een woord toont spellingssuggesties (indien beschikbaar)
+* **Taal Instellingen**: De taal van de spellingscontrole volgt de browserinstellingen van de gebruiker
+
+===== Fullscreen Modus
+
+De email composer ondersteunt een fullscreen modus voor een betere schrijfervaring.
+
+* **Toggle Functionaliteit**: Een knop in de header van de composer maakt het mogelijk om tussen normale en fullscreen modus te schakelen
+* **Maximale Werkruimte**: Fullscreen modus biedt meer ruimte voor het opstellen van lange emails
+* **Beschikbaar Overal**: De fullscreen functionaliteit is beschikbaar in alle email compose dialogen (inbox, lead view, sales lead view)
+
+==== Technische Details: Email Templates
+
+===== Template Locatie
+
+Email templates worden automatisch gedetecteerd en geladen vanuit de volgende directory:
+
+[source]
+----
+resources/views/adminc/email_templates/
+----
+
+===== Template Structuur
+
+Templates moeten voldoen aan de volgende structuur:
+
+* **Bestandsformaat**: `.blade.php` bestanden
+* **Layout Gebruik**: Templates moeten de gemeenschappelijke layout gebruiken via `@extends('adminc.email_templates.base.layout')`
+* **Content Sectie**: Template content moet worden geplaatst in een `@section('content')` blok
+* **Subdirectories**: Templates kunnen worden georganiseerd in subdirectories (bijvoorbeeld `order/order_mail.blade.php`)
+
+Voorbeeld template structuur:
+
+[source,php]
+----
+@extends('adminc.email_templates.base.layout')
+
+@section('content')
+    <p>Geachte heer/mevrouw {{ $lastname }},</p>
+
+    <p>
+        [Template content hier]
+    </p>
+@endsection
+----
+
+===== Automatische Template Detectie
+
+Het systeem scant automatisch de template directory en maakt alle beschikbare templates beschikbaar:
+
+* **Scan Proces**: Bij het openen van de email composer worden alle `.blade.php` bestanden in de root van de template directory gescand
+* **API Endpoint**: `GET /admin/mail/templates` retourneert een lijst van alle beschikbare templates
+* **Dynamische Lijst**: Nieuwe templates worden automatisch gedetecteerd zonder code wijzigingen
+* **Template Namen**: Bestandsnamen worden automatisch geformatteerd als leesbare labels (bijvoorbeeld `reply.blade.php` wordt "Reply")
+* **Subdirectories**: Templates kunnen worden georganiseerd in subdirectories voor betere structuur, maar voor automatische detectie moeten ze in de root directory staan of handmatig worden geregistreerd
+
+===== Variabele Resolutie
+
+Templates ondersteunen server-side variabele resolutie voor dynamische content:
+
+* **API Endpoint**: `GET /admin/mail/template-content` rendert een template met opgeloste variabelen
+* **Entity Context**: Templates kunnen variabelen ophalen op basis van `lead_id`, `person_id`, of `sales_lead_id`
+* **Beschikbare Variabelen**:
+** `$lastname` - Achternaam van de lead of persoon
+** etc
 
 ==== Belangrijke Noot
 

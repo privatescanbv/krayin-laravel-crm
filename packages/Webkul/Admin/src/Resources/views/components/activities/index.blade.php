@@ -123,9 +123,9 @@
 
                                                     <!-- Status chip hidden per requirement -->
                                                 </a>
-                                                <div class="text-sm" :class="{
+                                                <div v-if="activity.schedule_from" class="text-sm" :class="{
                                                     'text-orange-600 dark:text-orange-400': isToday(activity.schedule_from),
-                                                    'text-red-600 dark:text-red-400': !isToday(activity.schedule_from) && isPast(activity.schedule_from),
+                                                    'text-red-600 dark:text-red-400': !isToday(activity.schedule_from) && isPast(activity.schedule_from ),
                                                     'text-gray-600 dark:text-gray-300': !(isToday(activity.schedule_from) || isPast(activity.schedule_from))
                                                 }">
                                                     Ingepland vanaf: @{{ $admin.formatDate(activity.schedule_from, 'd MMM yyyy, hh:mm', timezone) }}
@@ -167,8 +167,12 @@
                                         <p
                                             class="dark:text-white"
                                             v-if="activity.comment"
-                                            v-safe-html="activity.comment"
-                                        ></p>
+                                        >
+                                            <span v-if="activity.type === 'email'">
+                                                @{{ truncateHtml(activity.comment, 150) }}
+                                            </span>
+                                            <span v-else v-safe-html="activity.comment"></span>
+                                        </p>
 
                                         <!-- Call status summary/details -->
                                         <template v-if="activity.type === 'call' && activity.call_statuses?.length">
@@ -729,6 +733,22 @@
                         'spoken': 'Gesproken'
                     };
                     return labels[status] || status;
+                },
+
+                truncateHtml(html, maxLength = 150) {
+                    if (!html) return '';
+
+                    // Create a temporary div to strip HTML tags
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    const textContent = tempDiv.textContent || tempDiv.innerText || '';
+
+                    // Truncate the text
+                    if (textContent.length <= maxLength) {
+                        return textContent;
+                    }
+
+                    return textContent.substring(0, maxLength) + '...';
                 },
 
                 truncate(value, maxLength = 60) {

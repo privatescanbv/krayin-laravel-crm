@@ -420,9 +420,20 @@
                         @toggle="removeTinyMCE"
                     >
                         <x-slot:header>
-                            <h3 class="text-lg font-bold text-gray-800 dark:text-white">
-                                @lang('admin::app.mail.index.mail.title')
-                            </h3>
+                            <div class="flex items-center justify-between gap-2.5 w-full">
+                                <h3 class="text-lg font-bold text-gray-800 dark:text-white">
+                                    @lang('admin::app.mail.index.mail.title')
+                                </h3>
+                                <button
+                                    type="button"
+                                    class="flex items-center justify-center w-8 h-8 cursor-pointer text-gray-600 hover:rounded-md hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-950 transition-colors"
+                                    @click="toggleFullscreen"
+                                    :title="isFullscreen ? 'Verkleinen' : 'Volledig scherm'"
+                                >
+                                    <span v-if="isFullscreen" class="text-xl">⊟</span>
+                                    <span v-else class="text-xl">⊞</span>
+                                </button>
+                            </div>
                         </x-slot>
 
                         <x-slot:content>
@@ -510,6 +521,33 @@
                                     <x-admin::form.control-group.error control-name="bcc" />
                                 </x-admin::form.control-group>
                             </template>
+
+                            <!-- Template Selector -->
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    Template
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="select"
+                                    id="email_template"
+                                    name="email_template"
+                                    v-model="selectedTemplate"
+                                    @change="loadTemplate"
+                                    :label="trans('admin::app.mail.index.mail.template')"
+                                >
+                                    <option value="">Geen template</option>
+                                    <option
+                                        v-for="template in emailTemplates"
+                                        :key="template.name"
+                                        :value="template.name"
+                                    >
+                                        @{{ template.label }}
+                                    </option>
+                                </x-admin::form.control-group.control>
+
+                                <x-admin::form.control-group.error control-name="email_template" />
+                            </x-admin::form.control-group>
 
                             <!-- Subject -->
                             <x-admin::form.control-group>
@@ -608,6 +646,10 @@
 
                         saveAsDraft: 0,
 
+                        selectedTemplate: '',
+
+                        emailTemplates: [],
+
                         draft: {
                             id: null,
                             reply_to: [],
@@ -649,14 +691,67 @@
                 },
 
                 mounted() {
+                    console.log('mount ');
                     const params = new URLSearchParams(window.location.search);
 
                     if (params.get('openModal')) {
                         this.$refs.toggleComposeModal.toggle();
                     }
+
+                    this.loadTemplates();
                 },
 
                 methods: {
+                    loadTemplates() {
+                        this.$axios.get('{{ route('admin.mail.templates') }}')
+                            .then(response => {
+                                this.emailTemplates = response.data.data || [];
+                            })
+                            .catch(error => {
+                                console.error('Error loading templates:', error);
+                            });
+                    },
+
+                    loadTemplate() {
+                        if (!this.selectedTemplate) {
+                            return;
+                        }
+
+                        // For mail inbox compose, we don't have entity context
+                        // Templates will be rendered without entity variables
+                        this.$axios.get('{{ route('admin.mail.template_content') }}', {
+                                params: {
+                                    template: this.selectedTemplate,
+                                }
+                            })
+                            .then(response => {
+                                const templateContent = response.data.data.content || '';
+                                const signature = @json(auth()->guard('user')->user()->signature ?? '');
+                                
+                                // Combine template content with signature
+                                const fullContent = templateContent + (signature ? '<br><br>' + signature : '');
+                                
+                                // Set content in TinyMCE or textarea
+                                this.$nextTick(() => {
+                                    setTimeout(() => {
+                                        if (window.tinymce && window.tinymce.get('reply')) {
+                                            const editor = window.tinymce.get('reply');
+                                            editor.setContent(fullContent);
+                                        } else {
+                                            this.draft.reply = fullContent;
+                                        }
+                                    }, 300);
+                                });
+                            })
+                            .catch(error => {
+                                console.error('Error loading template content:', error);
+                                this.$emitter.emit('add-flash', {
+                                    type: 'error',
+                                    message: 'Fout bij het laden van template'
+                                });
+                            });
+                    },
+
                     removeTinyMCE() {
                         tinymce?.remove?.();
                     },
@@ -673,13 +768,30 @@
 
                     toggleModal() {
                         this.draft.reply_to = [];
+                        this.draft.subject = '';
+                        this.draft.reply = '';
+                        this.selectedTemplate = '';
 
-                        // Add user signature to the email body
+                        // Add user signature to the email body by default
                         @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
-                            this.draft.reply = `{{ auth()->guard('user')->user()->signature }}`;
+                            this.draft.reply = @json(auth()->guard('user')->user()->signature);
                         @endif
 
                         this.$refs.toggleComposeModal.toggle();
+                        
+                        // Wait for TinyMCE to initialize, then set the signature
+                        this.$nextTick(() => {
+                            setTimeout(() => {
+                                if (window.tinymce && window.tinymce.get('reply')) {
+                                    const editor = window.tinymce.get('reply');
+                                    @if(auth()->guard('user')->user() && auth()->guard('user')->user()->signature)
+                                        if (!editor.getContent() || editor.getContent().trim() === '') {
+                                            editor.setContent(@json(auth()->guard('user')->user()->signature));
+                                        }
+                                    @endif
+                                }
+                            }, 500);
+                        });
                     },
 
                     save(params, { resetForm, setErrors  }) {

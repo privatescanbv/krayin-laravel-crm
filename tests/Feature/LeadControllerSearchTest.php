@@ -79,15 +79,15 @@ test('lead search with name and whitelisted fields works and person.name works',
 
     // Disabled, I do not think we will need this.
     // user first/last name lookup finds lead assigned to the matching user
-//    $respUser = $this->getJson(route('admin.leads.search', [
-//        'search'       => 'user.first_name:Kuh;user.last_name:Kuh;',
-//        'searchFields' => 'user.first_name:like;user.last_name:like;',
-//        'searchJoin'   => 'or',
-//    ]));
-//    $respUser->assertOk();
-//    $idsUser = collect($respUser->json('data'))->pluck('id');
-//    logger()->info('Search by user.name response', $respUser->json(), ['user' => $this->user->toArray(), 'idsUser'=>$idsUser->toArray()]);
-//    expect($idsUser)->toContain($leadByUser->id);
+    //    $respUser = $this->getJson(route('admin.leads.search', [
+    //        'search'       => 'user.first_name:Kuh;user.last_name:Kuh;',
+    //        'searchFields' => 'user.first_name:like;user.last_name:like;',
+    //        'searchJoin'   => 'or',
+    //    ]));
+    //    $respUser->assertOk();
+    //    $idsUser = collect($respUser->json('data'))->pluck('id');
+    //    logger()->info('Search by user.name response', $respUser->json(), ['user' => $this->user->toArray(), 'idsUser'=>$idsUser->toArray()]);
+    //    expect($idsUser)->toContain($leadByUser->id);
 });
 
 test('lead search returns 400 for invalid search field', function () {

@@ -89,7 +89,8 @@ RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
     && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \
     && php -r "unlink('composer-setup.php');" \
     && composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader \
-    && php artisan vendor:publish --tag=log-viewer-assets --force
+    && php artisan vendor:publish --tag=log-viewer-assets --force \
+    && composer clear-cache
 
 
 COPY  .docker/php/fpm-cloud.conf /usr/local/etc/php-fpm.d/zz-lento-fpm.conf

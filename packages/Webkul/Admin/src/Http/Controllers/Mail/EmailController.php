@@ -89,34 +89,27 @@ class EmailController extends Controller
      */
     public function view()
     {
-        $email = $this->emailRepository
-            ->with(['emails', 'attachments', 'emails.attachments', 'lead', 'lead.tags', 'lead.source', 'lead.type', 'person', 'activity', 'salesLead', 'salesLead.pipelineStage'])
-            ->findOrFail(request('id'));
+        try {
+            $email = $this->emailRepository
+                ->with(['emails', 'attachments', 'emails.attachments', 'lead', 'lead.tags', 'lead.source', 'lead.type', 'person', 'activity', 'salesLead'])
+                ->findOrFail(request('id'));
 
-        if ($userIds = bouncer()->getAuthorizedUserIds()) {
-            $results = $this->leadRepository->findWhere([
-                ['id', '=', $email->lead_id],
-                ['user_id', 'IN', $userIds],
+            if (request('route') == 'draft') {
+                Log::info('EmailController@view: Returning JSON for draft');
+                return response()->json([
+                    'data' => new EmailResource($email),
+                ]);
+            }
+            $hierarchicalFolders = $this->folderRepository->getHierarchicalFolders();
+
+            return view('admin::mail.view', compact('email', 'hierarchicalFolders'));
+        } catch (Exception $e) {
+            Log::error('EmailController@view: Error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
-        } else {
-            $results = $this->leadRepository->findWhere([
-                ['id', '=', $email->lead_id],
-            ]);
+            throw $e;
         }
-
-        if (empty($results->toArray())) {
-            unset($email->lead_id);
-        }
-
-        if (request('route') == 'draft') {
-            return response()->json([
-                'data' => new EmailResource($email),
-            ]);
-        }
-
-        $hierarchicalFolders = $this->folderRepository->getHierarchicalFolders();
-
-        return view('admin::mail.view', compact('email', 'hierarchicalFolders'));
     }
 
     /**

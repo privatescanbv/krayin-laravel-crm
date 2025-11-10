@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Models\SalesLead;
 use App\Repositories\SalesLeadRepository;
 use Database\Seeders\TestSeeder;
+use Exception;
 use Tests\TestCase;
 use Webkul\Contact\Models\Person;
 use Webkul\Lead\Models\Lead;
@@ -38,7 +39,7 @@ class ResolveEmailVariablesTest extends TestCase
         $this->pipeline = Pipeline::first();
         $this->stage = Stage::first();
         if (! $this->pipeline || ! $this->stage) {
-            throw new \Exception('Pipeline or Stage not found. Ensure TestSeeder provisions them.');
+            throw new Exception('Pipeline or Stage not found. Ensure TestSeeder provisions them.');
         }
 
         $this->leadRepository = app(LeadRepository::class);

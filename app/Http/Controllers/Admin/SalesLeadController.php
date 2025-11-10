@@ -497,107 +497,123 @@ class SalesLeadController extends Controller
      */
     public function search(): AnonymousResourceCollection
     {
-        // Apply search normalization (handles query parameter conversion)
-        $config = $this->getSearchConfig();
+        try {
+            // Apply search normalization (handles query parameter conversion)
+            $config = $this->getSearchConfig();
 
-        // Handle simple query parameter (for backward compatibility and entity lookup)
-        $queryParam = request()->query('query', '');
-        $search = request()->query('search', '');
-        $searchFields = request()->query('searchFields', '');
+            // Handle simple query parameter (for backward compatibility and entity lookup)
+            $queryParam = request()->query('query', '');
+            $search = request()->query('search', '');
+            $searchFields = request()->query('searchFields', '');
 
-        if ($queryParam && ! $search && ! $searchFields) {
-            // Simple query mode: convert to name search with like operator
-            $nameFields = $config['name_fields'];
-            $searchTokens = [];
-            $searchFieldTokens = [];
+            if ($queryParam && ! $search && ! $searchFields) {
+                // Simple query mode: convert to name search with like operator
+                $nameFields = $config['name_fields'];
+                $searchTokens = [];
+                $searchFieldTokens = [];
 
-            foreach ($nameFields as $field) {
-                $searchTokens[] = $field.':'.$queryParam;
-                $searchFieldTokens[] = $field.':like';
+                foreach ($nameFields as $field) {
+                    $searchTokens[] = $field.':'.$queryParam;
+                    $searchFieldTokens[] = $field.':like';
+                }
+
+                request()->query->add([
+                    'search'       => implode(';', $searchTokens).';',
+                    'searchFields' => implode(';', $searchFieldTokens).';',
+                    'searchJoin'   => 'or',
+                ]);
             }
 
-            request()->query->add([
-                'search'       => implode(';', $searchTokens).';',
-                'searchFields' => implode(';', $searchFieldTokens).';',
-                'searchJoin'   => 'or',
-            ]);
-        }
+            // Normalize search params
+            $this->normalizeNameSearch($config['name_fields']);
+            if ($config['supports_user_name_search']) {
+                $this->normalizeUserNameSearch();
+            }
 
-        // Normalize search params
-        $this->normalizeNameSearch($config['name_fields']);
-        if ($config['supports_user_name_search']) {
-            $this->normalizeUserNameSearch();
-        }
+            // Get normalized search parameters
+            $search = request()->query('search', '');
+            $searchFields = request()->query('searchFields', '');
+            $searchJoin = request()->query('searchJoin', 'or');
 
-        // Get normalized search parameters
-        $search = request()->query('search', '');
-        $searchFields = request()->query('searchFields', '');
-        $searchJoin = request()->query('searchJoin', 'or');
+            // Build query with eager loading
+            $query = SalesLead::with(['pipelineStage', 'user']);
 
-        // Build query with eager loading
-        $query = SalesLead::with(['pipelineStage', 'user']);
+            // Apply search filters manually
+            if ($search) {
+                $tokens = array_filter(explode(';', $search));
+                $fieldTokens = $searchFields ? array_filter(explode(';', $searchFields)) : [];
 
-        // Apply search filters manually
-        if ($search) {
-            $tokens = array_filter(explode(';', $search));
-            $fieldTokens = $searchFields ? array_filter(explode(';', $searchFields)) : [];
-
-            $query->where(function ($q) use ($tokens, $fieldTokens, $searchJoin) {
-                foreach ($tokens as $index => $token) {
-                    if (empty(trim($token))) {
-                        continue;
-                    }
-
-                    $parts = explode(':', $token, 2);
-                    if (count($parts) !== 2) {
-                        continue;
-                    }
-
-                    $field = trim($parts[0]);
-                    $value = trim($parts[1]);
-
-                    if (empty($value)) {
-                        continue;
-                    }
-
-                    // Find operator for this field
-                    $operator = 'like';
-                    foreach ($fieldTokens as $ft) {
-                        $ftParts = explode(':', $ft, 2);
-                        if (count($ftParts) === 2 && trim($ftParts[0]) === $field) {
-                            $operator = trim($ftParts[1]);
-                            break;
+                $query->where(function ($q) use ($tokens, $fieldTokens, $searchJoin) {
+                    foreach ($tokens as $index => $token) {
+                        if (empty(trim($token))) {
+                            continue;
                         }
-                    }
 
-                    // Handle relation fields (e.g., user.first_name, user.last_name)
-                    if (str_contains($field, '.')) {
-                        [$relation, $relationField] = explode('.', $field, 2);
-                        if ($relation === 'user') {
-                            $q->whereHas('user', function ($userQuery) use ($relationField, $value, $operator) {
-                                if ($operator === 'like') {
-                                    $userQuery->where($relationField, 'like', '%'.$value.'%');
-                                } else {
-                                    $userQuery->where($relationField, $operator, $value);
-                                }
-                            }, $searchJoin === 'or' ? 'or' : 'and');
+                        $parts = explode(':', $token, 2);
+                        if (count($parts) !== 2) {
+                            continue;
                         }
-                    } else {
-                        // Direct field
-                        $method = ($index === 0 || $searchJoin === 'and') ? 'where' : 'orWhere';
-                        if ($operator === 'like') {
-                            $q->$method($field, 'like', '%'.$value.'%');
+
+                        $field = trim($parts[0]);
+                        $value = trim($parts[1]);
+
+                        if (empty($value)) {
+                            continue;
+                        }
+
+                        // Find operator for this field
+                        $operator = 'like';
+                        foreach ($fieldTokens as $ft) {
+                            $ftParts = explode(':', $ft, 2);
+                            if (count($ftParts) === 2 && trim($ftParts[0]) === $field) {
+                                $operator = trim($ftParts[1]);
+                                break;
+                            }
+                        }
+
+                        // Handle relation fields (e.g., user.first_name, user.last_name)
+                        if (str_contains($field, '.')) {
+                            [$relation, $relationField] = explode('.', $field, 2);
+                            if ($relation === 'user') {
+                                $q->whereHas('user', function ($userQuery) use ($relationField, $value, $operator) {
+                                    if ($operator === 'like') {
+                                        $userQuery->where($relationField, 'like', '%'.$value.'%');
+                                    } else {
+                                        $userQuery->where($relationField, $operator, $value);
+                                    }
+                                }, $searchJoin === 'or' ? 'or' : 'and');
+                            }
                         } else {
-                            $q->$method($field, $operator, $value);
+                            // Direct field - skip fields that don't exist on SalesLead model
+                            $skipFields = ['email', 'emails', 'phones'];
+                            if (in_array($field, $skipFields)) {
+                                continue; // Skip this field as it doesn't exist on SalesLead
+                            }
+
+                            $method = ($index === 0 || $searchJoin === 'and') ? 'where' : 'orWhere';
+                            if ($operator === 'like') {
+                                $q->$method($field, 'like', '%'.$value.'%');
+                            } else {
+                                $q->$method($field, $operator, $value);
+                            }
                         }
                     }
-                }
-            });
+                });
+            }
+
+            $results = $query->limit(10)->get();
+
+            return SalesLeadLookupResource::collection($results);
+        } catch (\Exception $e) {
+            Log::error('SalesLeadController@search: Error', [
+                'error'   => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+                'request' => request()->all(),
+            ]);
+
+            // Return empty collection on error to prevent UI blocking
+            return SalesLeadLookupResource::collection(collect([]));
         }
-
-        $results = $query->limit(10)->get();
-
-        return SalesLeadLookupResource::collection($results);
     }
 
     /**

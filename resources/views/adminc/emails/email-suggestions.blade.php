@@ -71,13 +71,9 @@
                 };
             },
             mounted() {
-                console.log('v-email-suggestions mounted, email:', this.email);
                 this.fetchSuggestions();
             },
-            
-            created() {
-                console.log('v-email-suggestions created, email:', this.email);
-            },
+
             methods: {
                 async fetchSuggestions() {
                     // Only use server-computed normalized sender email

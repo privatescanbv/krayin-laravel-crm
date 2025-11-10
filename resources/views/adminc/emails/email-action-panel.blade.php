@@ -105,12 +105,10 @@
 
 <!-- Email Action Vue Component -->
 <script type="module">
-    console.log('Registering v-action-email component');
     app.component('v-action-email', {
         template: '#v-action-email-template',
 
         data() {
-            console.log('v-action-email data() called');
             return {
                 link: 'contact',
 
@@ -192,7 +190,6 @@
         },
 
         created() {
-            console.log('v-action-email created() called');
             @if ($email->person)
                 this.email.person = @json($email->person);
             @endif
@@ -205,10 +202,6 @@
                 this.email.sales_lead = @json($email->salesLead);
                 this.email.sales_lead_id = {{ $email->sales_lead_id ?? 'null' }};
             @endif
-        },
-        
-        mounted() {
-            console.log('v-action-email mounted() called, hasRelationships:', this.hasRelationships);
         },
 
         methods: {

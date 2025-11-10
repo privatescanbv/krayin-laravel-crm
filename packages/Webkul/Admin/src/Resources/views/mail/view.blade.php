@@ -1,7 +1,6 @@
 @php
     if (! $email->is_read) {
         $email->is_read = true;
-
         $email->save();
     }
 
@@ -55,10 +54,14 @@
 
                     {!! view_render_event('admin.mail.view.tags.before', ['email' => $email]) !!}
 
+                    @php
+                        // Load tags eagerly to avoid N+1 query during rendering
+                        $emailTags = $email->relationLoaded('tags') ? $email->tags : $email->tags()->get();
+                    @endphp
                     <x-admin::tags
                         :attach-endpoint="route('admin.mail.tags.attach', $email->id)"
                         :detach-endpoint="route('admin.mail.tags.detach', $email->id)"
-                        :added-tags="$email->tags"
+                        :added-tags="$emailTags"
                     />
 
                     {!! view_render_event('admin.mail.view.tags.after', ['email' => $email]) !!}
@@ -70,7 +73,11 @@
 
         <!-- Email List Vue Component -->
         <v-email-list>
-           <x-admin::shimmer.leads.view.mail :count="$email->count()"/>
+           @php
+               // Use count from eager loaded relationship instead of query
+               $emailCount = $email->relationLoaded('emails') ? $email->emails->count() : ($email->emails ? $email->emails->count() : 1);
+           @endphp
+           <x-admin::shimmer.leads.view.mail :count="$emailCount"/>
         </v-email-list>
 
         {!! view_render_event('admin.mail.view.email-list.before', ['email' => $email]) !!}

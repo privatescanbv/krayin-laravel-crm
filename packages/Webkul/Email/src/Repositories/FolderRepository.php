@@ -4,6 +4,7 @@ namespace Webkul\Email\Repositories;
 
 use Exception;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Webkul\Core\Eloquent\Repository;
 
@@ -83,17 +84,23 @@ class FolderRepository extends Repository
             $folderTree = $allFolders->groupBy('parent_id');
             $rootFolders = $folderTree->get(null, collect());
 
+            // Get all unread email counts in a single query instead of N queries
+            $folderIds = $allFolders->pluck('id')->toArray();
+
+            // Single query to get unread counts for all folders
+            $unreadCounts = DB::table('emails')
+                ->select('folder_id', \DB::raw('COUNT(*) as unread_count'))
+                ->whereIn('folder_id', $folderIds)
+                ->where('is_read', false)
+                ->groupBy('folder_id')
+                ->pluck('unread_count', 'folder_id')
+                ->toArray();
+
             $result = [];
 
             foreach ($rootFolders as $folder) {
                 $children = $folderTree->get($folder->id, collect());
-                $folderCount = 0;
-
-                try {
-                    $folderCount = $folder->emails()->where('is_read', false)->count();
-                } catch (\Exception $e) {
-                    $folderCount = 0;
-                }
+                $folderCount = $unreadCounts[$folder->id] ?? 0;
 
                 $folderData = [
                     'id' => $folder->id,
@@ -104,12 +111,7 @@ class FolderRepository extends Repository
 
                 // Add children
                 foreach ($children as $child) {
-                    $childCount = 0;
-                    try {
-                        $childCount = $child->emails()->where('is_read', false)->count();
-                    } catch (\Exception $e) {
-                        $childCount = 0;
-                    }
+                    $childCount = $unreadCounts[$child->id] ?? 0;
 
                     $folderData['children'][] = [
                         'id' => $child->id,

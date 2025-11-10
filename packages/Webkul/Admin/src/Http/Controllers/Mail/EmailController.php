@@ -91,15 +91,15 @@ class EmailController extends Controller
     {
         try {
             $email = $this->emailRepository
-                ->with(['emails', 'attachments', 'emails.attachments', 'lead', 'lead.tags', 'lead.source', 'lead.type', 'person', 'activity', 'salesLead'])
+                ->with(['emails', 'attachments', 'emails.attachments', 'tags', 'lead', 'lead.tags', 'lead.source', 'lead.type', 'person', 'activity', 'salesLead'])
                 ->findOrFail(request('id'));
 
             if (request('route') == 'draft') {
-                Log::info('EmailController@view: Returning JSON for draft');
                 return response()->json([
                     'data' => new EmailResource($email),
                 ]);
             }
+
             $hierarchicalFolders = $this->folderRepository->getHierarchicalFolders();
 
             return view('admin::mail.view', compact('email', 'hierarchicalFolders'));

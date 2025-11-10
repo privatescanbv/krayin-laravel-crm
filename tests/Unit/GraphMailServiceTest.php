@@ -179,7 +179,9 @@ class GraphMailServiceTest extends TestCase
             ->method('create')
             ->with($this->callback(function ($data) {
                 return $data['subject'] === 'Test Subject' &&
-                       $data['from'] === 'sender@example.com' &&
+                       is_array($data['from']) &&
+                       $data['from']['email'] === 'sender@example.com' &&
+                       $data['from']['name'] === 'Test Sender' &&
                        $data['message_id'] === '<msg1@example.com>';
             }))
             ->willReturn(new Email);

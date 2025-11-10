@@ -81,6 +81,19 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
             return;
         }
 
+        // Check if email already exists by unique_id (do this before extractEmailData to avoid errors with missing from field)
+        $existingEmailByUniqueId = $this->emailRepository->findOneByField('unique_id', $messageId);
+        if ($existingEmailByUniqueId) {
+            Log::warning('Email with same unique_id already exists, skipping', [
+                'message_id'        => $messageId,
+                'unique_id'         => $messageId,
+                'existing_email_id' => $existingEmailByUniqueId->id,
+                'processor'         => static::class,
+            ]);
+
+            return;
+        }
+
         // Check for reply relationships
         $parentEmail = $this->findParentEmail($message);
 
@@ -97,21 +110,6 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
 
         // Extract email data
         $emailData = $this->extractEmailData($message, $folderName, $parentEmail);
-
-        // Check if email already exists by unique_id (additional safety check)
-        if (isset($emailData['unique_id'])) {
-            $existingEmailByUniqueId = $this->emailRepository->findOneByField('unique_id', $emailData['unique_id']);
-            if ($existingEmailByUniqueId) {
-                Log::info('Email with same unique_id already exists, skipping', [
-                    'message_id'        => $messageId,
-                    'unique_id'         => $emailData['unique_id'],
-                    'existing_email_id' => $existingEmailByUniqueId->id,
-                    'processor'         => static::class,
-                ]);
-
-                return;
-            }
-        }
 
         // Link to existing entities based on email address
         $this->linkToExistingEntities($emailData, $this->getFromEmail($message));

@@ -49,9 +49,19 @@ class EmailDataGrid extends DataGrid
                 'emails.sales_lead_id',
                 'emails.activity_id',
                 // Preload related entity names to avoid N+1 queries
-                DB::raw('CONCAT(leads.first_name, " ", leads.last_name) as lead_name'),
+                // For leads: select individual name fields to construct name in closure
+                'leads.first_name as lead_first_name',
+                'leads.lastname_prefix as lead_lastname_prefix',
+                'leads.last_name as lead_last_name',
+                'leads.married_name_prefix as lead_married_name_prefix',
+                'leads.married_name as lead_married_name',
+                // For persons: select individual name fields to construct name in closure
+                'persons.first_name as person_first_name',
+                'persons.lastname_prefix as person_lastname_prefix',
+                'persons.last_name as person_last_name',
+                'persons.married_name_prefix as person_married_name_prefix',
+                'persons.married_name as person_married_name',
                 DB::raw('salesleads.name as sales_name'),
-                'persons.name as person_name',
                 'activities.title as activity_title',
                 // Aggregate tags and attachments
                 DB::raw('GROUP_CONCAT(DISTINCT tags.name) as tags'),
@@ -74,7 +84,14 @@ class EmailDataGrid extends DataGrid
             ->leftJoin('persons', 'emails.person_id', '=', 'persons.id')
             ->leftJoin('activities', 'emails.activity_id', '=', 'activities.id')
             ->leftJoin('folders', 'emails.folder_id', '=', 'folders.id')
-            ->groupBy('emails.id', 'leads.first_name', 'leads.last_name', 'persons.name', 'activities.title', 'emails.is_read', 'emails.created_at')
+            ->groupBy(
+                'emails.id',
+                'leads.first_name', 'leads.lastname_prefix', 'leads.last_name', 'leads.married_name_prefix', 'leads.married_name',
+                'persons.first_name', 'persons.lastname_prefix', 'persons.last_name', 'persons.married_name_prefix', 'persons.married_name',
+                'activities.title',
+                'emails.is_read',
+                'emails.created_at'
+            )
             // Filter by folder name - handle both new folder_id and old folders JSON
             ->where(function($query) {
                 $query->where('folders.name', request('route'));
@@ -198,12 +215,50 @@ class EmailDataGrid extends DataGrid
                 switch ($row->entity_type) {
                     case 'lead':
                         $route = route('admin.leads.view', $row->lead_id);
-                        $display = trim($row->lead_name) ?: ('#'.$row->lead_id);
+                        // Construct name similar to Lead model's name accessor
+                        $parts = [];
+                        if (!empty($row->lead_first_name)) {
+                            $parts[] = trim($row->lead_first_name);
+                        }
+                        if (!empty($row->lead_lastname_prefix)) {
+                            $parts[] = trim($row->lead_lastname_prefix);
+                        }
+                        if (!empty($row->lead_last_name)) {
+                            $parts[] = trim($row->lead_last_name);
+                        }
+                        if (!empty($row->lead_married_name)) {
+                            $marriedParts = [];
+                            if (!empty($row->lead_married_name_prefix)) {
+                                $marriedParts[] = trim($row->lead_married_name_prefix);
+                            }
+                            $marriedParts[] = trim($row->lead_married_name);
+                            $parts[] = '/ '.implode(' ', array_filter($marriedParts));
+                        }
+                        $display = !empty($parts) ? implode(' ', array_filter($parts)) : ('#'.$row->lead_id);
                         $label = e($display);
                         break;
                     case 'person':
                         $route = route('admin.contacts.persons.view', $row->person_id);
-                        $display = $row->person_name ?: ('#'.$row->person_id);
+                        // Construct name similar to Person model's name accessor
+                        $parts = [];
+                        if (!empty($row->person_first_name)) {
+                            $parts[] = trim($row->person_first_name);
+                        }
+                        if (!empty($row->person_lastname_prefix)) {
+                            $parts[] = trim($row->person_lastname_prefix);
+                        }
+                        if (!empty($row->person_last_name)) {
+                            $parts[] = trim($row->person_last_name);
+                        }
+                        if (!empty($row->person_married_name)) {
+                            $marriedParts = [];
+                            if (!empty($row->person_married_name_prefix)) {
+                                $marriedParts[] = trim($row->person_married_name_prefix);
+                            }
+                            $marriedParts[] = trim($row->person_married_name);
+                            $parts[] = '/ '.implode(' ', array_filter($marriedParts));
+                        }
+                        $display = !empty($parts) ? implode(' ', array_filter($parts)) : ('#'.$row->person_id);
                         $label = e($display);
                         break;
                     case 'activity':

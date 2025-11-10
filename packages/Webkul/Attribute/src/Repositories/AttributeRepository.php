@@ -154,7 +154,10 @@ class AttributeRepository extends Repository
                        ->orWhere('last_name', 'like', $term)
                        ->orWhere(DB::raw("CONCAT_WS(' ', first_name, last_name)"), 'like', $term);
                 });
-            })->all();
+            })->with([
+                'stage', // Load pipeline stage to avoid N+1 queries
+                // Don't load persons for lookup - not needed and causes N+1 queries
+            ])->all();
 
             // Transform to use the name accessor
             return $leads->map(function ($lead) {

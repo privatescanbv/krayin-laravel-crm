@@ -11,11 +11,14 @@ use App\Models\Order;
 use App\Models\SalesLead;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Enum;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
+use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
 use Webkul\Admin\Http\Resources\ActivityResource;
+use Webkul\Admin\Http\Resources\SalesLeadLookupResource;
 use Webkul\Email\Models\Email as EmailModel;
 use Webkul\Installer\Database\Seeders\Lead\PipelineSeeder;
 use Webkul\Lead\Models\Lead;
@@ -25,6 +28,10 @@ use Webkul\Lead\Repositories\StageRepository;
 
 class SalesLeadController extends Controller
 {
+    use HasAdvancedSearch;
+
+    private bool $enableDebugLogging = false;
+
     public function __construct(private readonly PipelineRepository $pipelineRepository) {}
 
     public function index(Request $request)
@@ -485,34 +492,112 @@ class SalesLeadController extends Controller
     }
 
     /**
-     * Search Saless.
+     * Search Sales.
+     * Uses minimal resource to avoid N+1 queries.
      */
-    public function search()
+    public function search(): AnonymousResourceCollection
     {
+        // Apply search normalization (handles query parameter conversion)
+        $config = $this->getSearchConfig();
+
+        // Handle simple query parameter (for backward compatibility and entity lookup)
+        $queryParam = request()->query('query', '');
         $search = request()->query('search', '');
+        $searchFields = request()->query('searchFields', '');
 
-        $query = SalesLead::with(['pipelineStage', 'lead', 'user']);
+        if ($queryParam && ! $search && ! $searchFields) {
+            // Simple query mode: convert to name search with like operator
+            $nameFields = $config['name_fields'];
+            $searchTokens = [];
+            $searchFieldTokens = [];
 
+            foreach ($nameFields as $field) {
+                $searchTokens[] = $field.':'.$queryParam;
+                $searchFieldTokens[] = $field.':like';
+            }
+
+            request()->query->add([
+                'search'       => implode(';', $searchTokens).';',
+                'searchFields' => implode(';', $searchFieldTokens).';',
+                'searchJoin'   => 'or',
+            ]);
+        }
+
+        // Normalize search params
+        $this->normalizeNameSearch($config['name_fields']);
+        if ($config['supports_user_name_search']) {
+            $this->normalizeUserNameSearch();
+        }
+
+        // Get normalized search parameters
+        $search = request()->query('search', '');
+        $searchFields = request()->query('searchFields', '');
+        $searchJoin = request()->query('searchJoin', 'or');
+
+        // Build query with eager loading
+        $query = SalesLead::with(['pipelineStage', 'user']);
+
+        // Apply search filters manually
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+            $tokens = array_filter(explode(';', $search));
+            $fieldTokens = $searchFields ? array_filter(explode(';', $searchFields)) : [];
+
+            $query->where(function ($q) use ($tokens, $fieldTokens, $searchJoin) {
+                foreach ($tokens as $index => $token) {
+                    if (empty(trim($token))) {
+                        continue;
+                    }
+
+                    $parts = explode(':', $token, 2);
+                    if (count($parts) !== 2) {
+                        continue;
+                    }
+
+                    $field = trim($parts[0]);
+                    $value = trim($parts[1]);
+
+                    if (empty($value)) {
+                        continue;
+                    }
+
+                    // Find operator for this field
+                    $operator = 'like';
+                    foreach ($fieldTokens as $ft) {
+                        $ftParts = explode(':', $ft, 2);
+                        if (count($ftParts) === 2 && trim($ftParts[0]) === $field) {
+                            $operator = trim($ftParts[1]);
+                            break;
+                        }
+                    }
+
+                    // Handle relation fields (e.g., user.first_name, user.last_name)
+                    if (str_contains($field, '.')) {
+                        [$relation, $relationField] = explode('.', $field, 2);
+                        if ($relation === 'user') {
+                            $q->whereHas('user', function ($userQuery) use ($relationField, $value, $operator) {
+                                if ($operator === 'like') {
+                                    $userQuery->where($relationField, 'like', '%'.$value.'%');
+                                } else {
+                                    $userQuery->where($relationField, $operator, $value);
+                                }
+                            }, $searchJoin === 'or' ? 'or' : 'and');
+                        }
+                    } else {
+                        // Direct field
+                        $method = ($index === 0 || $searchJoin === 'and') ? 'where' : 'orWhere';
+                        if ($operator === 'like') {
+                            $q->$method($field, 'like', '%'.$value.'%');
+                        } else {
+                            $q->$method($field, $operator, $value);
+                        }
+                    }
+                }
             });
         }
 
-        $salesLeads = $query->limit(10)->get();
+        $results = $query->limit(10)->get();
 
-        return response()->json($salesLeads->map(function ($salesLead) {
-            return [
-                'id'          => $salesLead->id,
-                'name'        => $salesLead->name,
-                'description' => $salesLead->description,
-                'stage'       => $salesLead->pipelineStage ? [
-                    'id'   => $salesLead->pipelineStage->id,
-                    'name' => $salesLead->pipelineStage->name,
-                ] : null,
-            ];
-        }));
+        return SalesLeadLookupResource::collection($results);
     }
 
     /**
@@ -543,6 +628,38 @@ class SalesLeadController extends Controller
                 ] : null,
             ],
         ]);
+    }
+
+    /**
+     * Get search configuration for sales leads.
+     */
+    protected function getSearchConfig(): array
+    {
+        return [
+            'name_fields'                 => ['name'], // SalesLead only has 'name', not first_name/last_name
+            'supports_email_phone_search' => false, // SalesLead doesn't have emails/phones columns
+            'supports_user_name_search'   => false,
+            'enable_debug_logging'        => $this->enableDebugLogging,
+            'table_name'                  => 'salesleads',
+        ];
+    }
+
+    /**
+     * Get searchable fields for SalesLead.
+     */
+    protected function getSalesLeadSearchableFields(): array
+    {
+        return [
+            'name',
+            'description',
+            'user_id',
+            'user.name',
+            'user.first_name',
+            'user.last_name',
+            'pipeline_stage_id',
+            'created_at',
+            'closed_at',
+        ];
     }
 
     /**

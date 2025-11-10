@@ -25,7 +25,10 @@ class PersonResource extends JsonResource
             'emails'          => $this->emails,
             'phones'          => $this->phones, // Alias for compatibility
             'organization'    => $this->organization ? new OrganizationResource($this->organization) : null,
-            'address'         => $this->address,
+            'address'         => $this->when(
+                $this->relationLoaded('address'),
+                fn() => $this->address
+            ), // Only include if already loaded to avoid N+1 queries
             'first_name'      => $this->first_name,
             'last_name'       => $this->last_name,
             'lastname_prefix' => $this->lastname_prefix,

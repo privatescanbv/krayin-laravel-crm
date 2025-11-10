@@ -60,7 +60,12 @@ test('email datagrid uses correct lead name concatenation', function () {
     $queryBuilder = $dataGrid->prepareQueryBuilder();
     $sql = $queryBuilder->toRawSql();
 
-    expect($sql)->toContain('CONCAT(leads.first_name, " ", leads.last_name)');
+    // Should select individual name fields for leads (database-agnostic approach)
+    expect($sql)->toContain('"leads"."first_name" as "lead_first_name"')
+        ->and($sql)->toContain('"leads"."lastname_prefix" as "lead_lastname_prefix"')
+        ->and($sql)->toContain('"leads"."last_name" as "lead_last_name"')
+        ->and($sql)->toContain('"leads"."married_name_prefix" as "lead_married_name_prefix"')
+        ->and($sql)->toContain('"leads"."married_name" as "lead_married_name"');
 });
 
 test('email datagrid includes required joins', function () {

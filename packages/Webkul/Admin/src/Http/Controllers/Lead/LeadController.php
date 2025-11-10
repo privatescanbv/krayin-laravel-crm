@@ -6,7 +6,7 @@ use App\Enums\LostReason;
 use App\Enums\ActivityStatus;
 use App\Enums\PipelineDefaultKeys;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
-use App\Models\Address;
+use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
 use App\Models\Anamnesis;
 use App\Models\Department;
 use Carbon\Carbon;
@@ -18,7 +18,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -31,6 +30,7 @@ use Webkul\Admin\Http\Requests\LeadForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
 use Webkul\Admin\Http\Requests\MassUpdateRequest;
 use Webkul\Admin\Http\Resources\LeadResource;
+use Webkul\Admin\Http\Resources\LeadLookupResource;
 use Webkul\Admin\Http\Resources\LeadKanbanResource;
 use Webkul\Admin\Http\Resources\StageResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
@@ -55,7 +55,7 @@ use App\Services\UserDefaultValueService;
 
 class LeadController extends Controller
 {
-    use NormalizesContactFields;
+    use NormalizesContactFields, HasAdvancedSearch;
 
     /**
      * Const variable for supported types.
@@ -68,7 +68,21 @@ class LeadController extends Controller
     const WON_LOST_STAGE_CODES = ['won', 'lost', 'won-hernia', 'lost-hernia'];
 
 
-    private bool $enableDebugLogging = true;
+    private bool $enableDebugLogging = false;
+
+    /**
+     * Get search configuration for leads.
+     */
+    protected function getSearchConfig(): array
+    {
+        return [
+            'name_fields' => ['first_name', 'last_name', 'married_name'],
+            'supports_email_phone_search' => true,
+            'supports_user_name_search' => false,
+            'enable_debug_logging' => $this->enableDebugLogging,
+            'table_name' => 'leads',
+        ];
+    }
 
     /**
      * Create a new controller instance.
@@ -963,163 +977,32 @@ class LeadController extends Controller
      *    Note: This will be normalized to search in name fields with LIKE operator.
      *
      * Response:
-     * Returns a JSON collection of LeadResource objects matching the search criteria.
+     * Returns a JSON collection of LeadLookupResource objects (minimal data) matching the search criteria.
      * Results are automatically filtered by user permissions if applicable.
+     * Uses minimal resource to avoid N+1 queries.
      *
-     * @return \Illuminate\Http\Resources\Json\AnonymousResourceCollection|\Illuminate\Http\JsonResponse
-     *         Collection of LeadResource objects, or JsonResponse with error if validation fails
+     * @return AnonymousResourceCollection|JsonResponse
+     *         Collection of LeadLookupResource objects, or JsonResponse with error if validation fails
      */
     public function search(): AnonymousResourceCollection|JsonResponse
     {
-        // Normalize legacy search params: map `name` to first/last/married_name, preserve other tokens (e.g. user.name)
-        $search = request()->query('search', '');
-        $searchFields = request()->query('searchFields', '');
-
-        if ($search && str_contains($search, 'name:')) {
-            preg_match('/name:([^;]+);?/i', $search, $m);
-            $term = isset($m[1]) ? trim($m[1]) : '';
-            if ($term !== '') {
-                // Remove name:* from search tokens
-                $tokens = array_values(array_filter(array_map('trim', explode(';', $search))));
-                $tokens = array_values(array_filter($tokens, fn($t) => !str_starts_with($t, 'name:')));
-                // Append expanded fields
-                array_push($tokens, 'first_name:' . $term, 'last_name:' . $term, 'married_name:' . $term);
-                $newSearch = implode(';', $tokens) . ';';
-
-                // Build searchFields: remove name:like; ensure :like for expanded fields, keep others
-                $sfParts = array_values(array_filter(array_map('trim', explode(';', (string) $searchFields))));
-                $sfParts = array_values(array_filter($sfParts, fn($p) => !str_starts_with($p, 'name:')));
-                $need = ['first_name', 'last_name', 'married_name'];
-                $existing = array_map(fn($p) => explode(':', $p)[0] ?? $p, $sfParts);
-                foreach ($need as $nf) {
-                    if (!in_array($nf, $existing, true)) {
-                        $sfParts[] = $nf . ':like';
-                    }
+        return $this->performAdvancedSearch(
+            repository: $this->leadRepository,
+            getFieldsSearchable: fn() => $this->leadRepository->getFieldsSearchable(),
+            eagerLoadRelations: ['stage', 'user'],
+            getResults: function ($repository) {
+                if ($userIds = bouncer()->getAuthorizedUserIds()) {
+                    return $repository
+                        ->pushCriteria(app(RequestCriteria::class))
+                        ->findWhereIn('user_id', $userIds);
+                } else {
+                    return $repository
+                        ->pushCriteria(app(RequestCriteria::class))
+                        ->all();
                 }
-                $newSearchFields = implode(';', $sfParts) . ';';
-
-                // Force OR join so tokens are combined permissively
-                request()->merge([
-                    'search' => $newSearch,
-                    'searchFields' => $newSearchFields,
-                    'searchJoin' => 'or',
-                ]);
-            }
-        }
-
-        // Normalize user.name (compact UI token) to first_name/last_name
-        $this->normalizeUserNameSearch();
-
-        // Normalize convenience tokens for email/phone to underlying JSON columns
-        // IMPORTANT: For email/phone, we use scopeQuery for JSON-aware matching instead of RequestCriteria
-        // to properly handle JSON structure: [{"label": "eigen", "value": "test@example.com", "is_default": true}]
-        $search = request()->query('search', '');
-        $emailTerms = [];
-        $phoneTerms = [];
-
-        if ($search && (str_contains($search, 'email:') || str_contains($search, 'phone:'))) {
-            $tokens = array_values(array_filter(array_map('trim', explode(';', $search))));
-            $normalized = [];
-
-            foreach ($tokens as $tok) {
-                if (str_starts_with($tok, 'email:')) {
-                    $term = trim(substr($tok, strlen('email:')));
-                    if ($term !== '') {
-                        $emailTerms[] = $term;
-                    }
-                } elseif (str_starts_with($tok, 'phone:')) {
-                    $term = trim(substr($tok, strlen('phone:')));
-                    if ($term !== '') {
-                        $phoneTerms[] = $term;
-                    }
-                } elseif ($tok !== '') {
-                    $normalized[] = $tok;
-                }
-            }
-
-            // Rebuild search WITHOUT email/phone tokens (they'll be handled via scopeQuery)
-            request()->merge(['search' => $normalized ? implode(';', $normalized) . ';' : '']);
-
-            // Remove emails/phones from searchFields since we handle them via scopeQuery
-            $sf = (string) request()->query('searchFields', '');
-            if ($sf !== '') {
-                $parts = array_values(array_filter(array_map('trim', explode(';', $sf))));
-                $parts = array_values(array_filter($parts, fn($p) =>
-                    !str_starts_with($p, 'phones:') && !str_starts_with($p, 'emails:')
-                ));
-                request()->merge(['searchFields' => $parts ? implode(';', $parts) . ';' : '']);
-            }
-
-            request()->merge(['searchJoin' => 'or']);
-        }
-
-        // Apply JSON-aware matching for emails/phones via scopeQuery
-        // Handles JSON structure: [{"label": "eigen", "value": "test@example.com", "is_default": true}]
-        if (!empty($emailTerms) || !empty($phoneTerms)) {
-            $this->leadRepository->scopeQuery(function ($q) use ($emailTerms, $phoneTerms) {
-                return $q->where(function ($qb) use ($emailTerms, $phoneTerms) {
-                    foreach ($emailTerms as $term) {
-                        $escaped = str_replace(['%', '_'], ['\\%', '\\_'], trim($term));
-                        $jsonLike = '%"value":"%' . $escaped . '%"%';
-                        $qb->orWhere('emails', 'like', $jsonLike)
-                           ->orWhere('emails', 'like', '%' . trim($term) . '%');
-                    }
-                    foreach ($phoneTerms as $term) {
-                        $escaped = str_replace(['%', '_'], ['\\%', '\\_'], trim($term));
-                        $jsonLike = '%"value":"%' . $escaped . '%"%';
-                        $qb->orWhere('phones', 'like', $jsonLike)
-                           ->orWhere('phones', 'like', '%' . trim($term) . '%');
-                    }
-                });
-            });
-        }
-
-        // Validate requested search fields against repository's searchable fields
-        if ($resp = $this->validateSearchFieldsAgainstAllowed($this->leadRepository->getFieldsSearchable())) {
-            return $resp;
-        }
-
-        if($this->enableDebugLogging) {
-            // Log normalized search params and SQL hitting leads table to analyze result size
-            try {
-                Log::info('Lead search - normalized params', [
-                    'search'       => request()->query('search', ''),
-                    'searchFields' => request()->query('searchFields', ''),
-                    'searchJoin'   => request()->query('searchJoin', ''),
-                ]);
-
-                DB::listen(function ($query) {
-                    // Only log queries that touch the leads table
-                    if (Str::contains($query->sql, 'from `leads`')) {
-                        // Build a best-effort interpolated SQL for readability
-                        $interpolated = @vsprintf(
-                            str_replace('?', "'%s'", $query->sql),
-                            array_map(fn($b) => is_string($b) ? $b : (is_null($b) ? 'NULL' : (string) $b), $query->bindings)
-                        );
-
-                        Log::debug('Lead search SQL', [
-                            'sql'           => $query->sql,
-                            'bindings'      => $query->bindings,
-                            'interpolated'  => $interpolated,
-                            'time_ms'       => $query->time,
-                        ]);
-                    }
-                });
-            } catch (\Throwable $e) {
-                Log::warning('Failed to attach SQL listener for lead search', ['error' => $e->getMessage()]);
-            } }
-
-            if ($userIds = bouncer()->getAuthorizedUserIds()) {
-                $results = $this->leadRepository
-                    ->pushCriteria(app(RequestCriteria::class))
-                    ->findWhereIn('user_id', $userIds);
-            } else {
-                $results = $this->leadRepository
-                    ->pushCriteria(app(RequestCriteria::class))
-                    ->all();
-            }
-
-            return LeadResource::collection($results);
+            },
+            resourceClass: LeadLookupResource::class
+        );
     }
 
     /**

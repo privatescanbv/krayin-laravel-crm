@@ -114,10 +114,13 @@ class GraphMailService extends AbstractEmailProcessor
         // Get message body
         $body = $this->extractMessageBody($message);
 
+        $fromEmail = $from['address'] ?? '';
+        $fromName = $from['name'] ?? null;
+
         return [
-            'from'          => $from['address'] ?? '',
+            'from'          => Email::normalizeFromField($fromEmail, $fromName),
             'subject'       => $message['subject'] ?? '',
-            'name'          => $from['name'] ?? '',
+            'name'          => $fromName ?? '',
             'reply'         => $body,
             'is_read'       => (int) ($message['isRead'] ?? false),
             'folder_id'     => $this->getFolderId($folderName),

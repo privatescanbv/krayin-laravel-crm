@@ -522,8 +522,8 @@ class LeadController extends Controller
             }
 
             // Contact normalization is now handled by normalizeContactFields() in create() method
-
-            $data['status'] = 1;
+            // Used by Krayin to process AI generated leads by file
+            $data['status'] = 0;
 
             if (isset($data['lead_pipeline_stage_id'])) {
                 $stage = $this->stageRepository->findOrFail($data['lead_pipeline_stage_id']);

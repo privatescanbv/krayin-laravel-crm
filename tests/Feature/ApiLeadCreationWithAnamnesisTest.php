@@ -74,7 +74,7 @@ test('API lead creation successfully creates a lead with anamnesis', function ()
         'id'         => $leadId,
         'first_name' => 'John',
         'last_name'  => 'Doe'.$uniqueId,
-        'status'     => 1,
+        'status'     => 0,
     ]);
 
     // Assert: Check emails were stored correctly

@@ -177,101 +177,67 @@ class Email extends Model implements EmailContract
 
     /**
      * Get normalized sender email address from the `from` field.
+     *
+     * The `from` field should be in the standardized format: {"name": "...", "email": "..."}
+     * This method extracts the email address from this structure.
      */
     public function getSenderEmailAttribute(): string
     {
         $from = $this->from;
 
-        $normalizeCandidate = static function ($candidate): string {
-            $candidate = trim((string) $candidate);
-            if ($candidate === '') {
-                return '';
-            }
-            // Unwrap JSON-like array string e.g. '["test@example.com"]'
-            if (str_starts_with($candidate, '[') && str_ends_with($candidate, ']')) {
-                try {
-                    $decoded = json_decode($candidate, true);
-                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded) && count($decoded) > 0) {
-                        $first = $decoded[0];
-                        if (is_string($first)) {
-                            return trim($first);
-                        }
-                        if (is_array($first)) {
-                            if (!empty($first['value'])) {
-                                return trim((string) $first['value']);
-                            }
-                            if (!empty($first['email'])) {
-                                return  trim((string) $first['email']);
-                            }
-                        }
-                    }
-                } catch (Throwable) {
-                    // ignore and return original candidate
-                }
-            }
-            return$candidate;
-        };
-
-        // If cast didn't decode (edge cases), attempt to decode when string looks like JSON
+        // Handle legacy string format (for backward compatibility)
         if (is_string($from)) {
             $trimmed = trim($from);
-            if ((str_starts_with($trimmed, '[') && str_ends_with($trimmed, ']'))
-                || (str_starts_with($trimmed, '{') && str_ends_with($trimmed, '}'))) {
+            // If it looks like JSON, try to decode it
+            if ((str_starts_with($trimmed, '{') && str_ends_with($trimmed, '}'))
+                || (str_starts_with($trimmed, '[') && str_ends_with($trimmed, ']'))) {
                 try {
                     $decoded = json_decode($trimmed, true);
-                    if (json_last_error() === JSON_ERROR_NONE) {
+                    if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
                         $from = $decoded;
                     } else {
-                        // Not valid JSON, but looks like array syntax - extract content between brackets
-                        // e.g. '[test@example.com]' -> 'test@example.com'
-                        if (str_starts_with($trimmed, '[') && str_ends_with($trimmed, ']')) {
-                            $content = substr($trimmed, 1, -1);
-                            return $normalizeCandidate(trim($content));
-                        }
+                        // Not valid JSON, return as plain string
+                        return $trimmed;
                     }
                 } catch (Throwable) {
-                    // Not valid JSON, but looks like array syntax - extract content between brackets
-                    if (str_starts_with($trimmed, '[') && str_ends_with($trimmed, ']')) {
-                        $content = substr($trimmed, 1, -1);
-                        return $normalizeCandidate(trim($content));
-                    }
+                    // Not valid JSON, return as plain string
+                    return $trimmed;
                 }
             } else {
-                // Plain string email
-                return $normalizeCandidate($trimmed);
+                // Plain string email (legacy format)
+                return $trimmed;
             }
         }
 
-        // Array formats
+        // Standard format: {"name": "...", "email": "..."}
         if (is_array($from)) {
-            // Case: array of entries
+            // Check for the standardized structure first
+            if (isset($from['email'])) {
+                return trim((string) $from['email']);
+            }
+
+            // Legacy array formats (for backward compatibility)
+            if (isset($from['value'])) {
+                return trim((string) $from['value']);
+            }
+
+            // Handle array of entries (legacy)
             if (array_is_list($from) && count($from) > 0) {
                 $first = $from[0];
                 if (is_string($first)) {
-                    return $normalizeCandidate($first);
+                    return trim($first);
                 }
                 if (is_array($first)) {
-                    if (!empty($first['value'])) {
-                        return $normalizeCandidate($first['value']);
+                    if (isset($first['email'])) {
+                        return trim((string) $first['email']);
                     }
-                    if (!empty($first['email'])) {
-                        return $normalizeCandidate($first['email']);
-                    }
-                    // Map-like: {"email@example.com": "Name"}
-                    $keys = array_keys($first);
-                    if (!empty($keys) && str_contains((string) $keys[0], '@')) {
-                        return trim((string) $keys[0]);
+                    if (isset($first['value'])) {
+                        return trim((string) $first['value']);
                     }
                 }
             }
 
-            // Case: single object
-            if (isset($from['value'])) {
-                return $normalizeCandidate($from['value']);
-            }
-            if (isset($from['email'])) {
-                return $normalizeCandidate($from['email']);
-            }
+            // Map-like format: {"email@example.com": "Name"} (legacy)
             $keys = array_keys($from);
             if (!empty($keys) && str_contains((string) $keys[0], '@')) {
                 return trim((string) $keys[0]);
@@ -287,5 +253,41 @@ class Email extends Model implements EmailContract
     public function getHasRelationshipsAttribute(): bool
     {
         return $this->person_id || $this->lead_id || $this->sales_lead_id || $this->activity_id;
+    }
+
+    /**
+     * Normalize and validate the 'from' field to the standard structure.
+     *
+     * The standard structure is: {"name": "...", "email": "..."}
+     * If name is not available, it will be an empty string.
+     *
+     * @param  string|null  $email
+     * @param  string|null  $name
+     * @return array
+     * @throws \Exception
+     */
+    public static function normalizeFromField(?string $email, ?string $name = null): array
+    {
+        // Validate email is not empty
+        $email = trim((string) $email);
+        if (empty($email)) {
+            throw new \Exception('Email address is required for the from field');
+        }
+
+        // Validate email format
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            throw new \Exception("Invalid email address format: {$email}");
+        }
+
+        // Normalize name (empty string if not provided or empty)
+        $name = trim((string) $name);
+        if (empty($name)) {
+            $name = '';
+        }
+
+        return [
+            'name'  => $name,
+            'email' => $email,
+        ];
     }
 }

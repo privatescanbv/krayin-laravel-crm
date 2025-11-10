@@ -112,10 +112,14 @@ class ImapEmailProcessor extends AbstractEmailProcessor
             array_push($references, ...$attributes['references']->all());
         }
 
+        $fromAttribute = $attributes['from']->first();
+        $fromEmail = $fromAttribute->mail ?? '';
+        $fromName = $fromAttribute->personal ?? null;
+
         return [
-            'from'          => $attributes['from']->first()->mail,
+            'from'          => Email::normalizeFromField($fromEmail, $fromName),
             'subject'       => $attributes['subject']->first(),
-            'name'          => $attributes['from']->first()->personal,
+            'name'          => $fromName ?? '',
             'reply'         => $message->bodies['html'] ?? $message->bodies['text'],
             'is_read'       => (int) $message->flags()->has('seen'),
             'folder_id'     => $this->getFolderId($folderName),

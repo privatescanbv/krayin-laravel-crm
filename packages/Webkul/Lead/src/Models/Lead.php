@@ -64,7 +64,7 @@ class Lead extends Model implements LeadContract
     protected $fillable = [
         'external_id',
         'description',
-        'status',
+        'status', // Used for AI import, Krayin
         'lost_reason',
         'closed_at',
         'user_id',

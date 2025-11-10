@@ -28,7 +28,7 @@ abstract class AbstractEmailProcessor implements InboundEmailProcessor
     /**
      * Process messages from all folders.
      */
-    public function processMessagesFromAllFolders()
+    public function processMessagesFromAllFolders(): void
     {
         try {
             $this->logSyncStart();

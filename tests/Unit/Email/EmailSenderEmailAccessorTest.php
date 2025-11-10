@@ -76,4 +76,18 @@ class EmailSenderEmailAccessorTest extends TestCase
         $email->from = ['email' => '["test@example.com"]'];
         $this->assertSame('test@example.com', $email->sender_email);
     }
+
+    public function test_standardized_format_with_name_and_email()
+    {
+        $email = new Email;
+        $email->from = ['name' => 'Test User', 'email' => 'test@example.com'];
+        $this->assertSame('test@example.com', $email->sender_email);
+    }
+
+    public function test_standardized_format_with_empty_name()
+    {
+        $email = new Email;
+        $email->from = ['name' => '', 'email' => 'test@example.com'];
+        $this->assertSame('test@example.com', $email->sender_email);
+    }
 }

@@ -71,7 +71,12 @@
                 };
             },
             mounted() {
+                console.log('v-email-suggestions mounted, email:', this.email);
                 this.fetchSuggestions();
+            },
+            
+            created() {
+                console.log('v-email-suggestions created, email:', this.email);
             },
             methods: {
                 async fetchSuggestions() {
@@ -89,6 +94,7 @@
                             search: `email:${senderEmail};`,
                             searchFields: 'emails:like;',
                             searchJoin: 'or',
+                            limit: 10, // Limit results to prevent performance issues
                         };
 
                         const [leadsResp, personsResp, salesResp] = await Promise.all([

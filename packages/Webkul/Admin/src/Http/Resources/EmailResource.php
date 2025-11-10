@@ -24,6 +24,8 @@ class EmailResource extends JsonResource
             'is_read'       => $this->is_read,
             'folders'       => $this->folders,
             'from'          => $this->from,
+            'sender_email'  => $this->sender_email,
+            'has_relationships' => $this->has_relationships,
             'sender'        => $this->sender,
             'reply_to'      => $this->reply_to,
             'cc'            => $this->cc,

@@ -30,7 +30,8 @@
 
     {!! view_render_event('admin.leads.index.kanban.toolbar.switcher.before') !!}
 
-    <x-adminc::sales_leads.index.view-switcher :pipeline="$pipeline" :columns="$columns" />
+    <!-- View Switcher -->
+    @include('admin::leads.index.view-switcher')
 
     {!! view_render_event('admin.leads.index.kanban.toolbar.switcher.after') !!}
 </div>

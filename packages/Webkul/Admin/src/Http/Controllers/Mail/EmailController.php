@@ -17,10 +17,12 @@ use Webkul\Admin\Http\Resources\EmailResource;
 use Webkul\Email\InboundEmailProcessor\Contracts\InboundEmailProcessor;
 use Webkul\Email\Mails\Email;
 use Webkul\Email\Models\Folder;
+use Webkul\Contact\Repositories\PersonRepository;
 use Webkul\Email\Repositories\AttachmentRepository;
 use Webkul\Email\Repositories\EmailRepository;
 use Webkul\Email\Repositories\FolderRepository;
 use Webkul\Lead\Repositories\LeadRepository;
+use App\Models\SalesLead;
 
 class EmailController extends Controller
 {
@@ -33,7 +35,8 @@ class EmailController extends Controller
         protected LeadRepository $leadRepository,
         protected EmailRepository $emailRepository,
         protected AttachmentRepository $attachmentRepository,
-        protected FolderRepository $folderRepository
+        protected FolderRepository $folderRepository,
+        protected PersonRepository $personRepository
     ) {}
 
     /**
@@ -417,4 +420,9 @@ class EmailController extends Controller
             ]);
         }
     }
+
+    /**
+     * Search entities (leads, sales_leads, persons) by email address.
+     */
+    // Removed: searchByEmail. Reuse existing search endpoints (leads/persons/sales-leads) from respective controllers.
 }

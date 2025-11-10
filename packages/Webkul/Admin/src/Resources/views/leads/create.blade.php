@@ -513,8 +513,12 @@
                             last_name: this.initialLeadPerson?.last_name || this.userDefaults.last_name || '',
                             married_name_prefix: this.initialLeadPerson?.married_name_prefix || this.userDefaults.married_name_prefix || '',
                             married_name: this.initialLeadPerson?.married_name || this.userDefaults.married_name || '',
-                            email: this.userDefaults.email || '',
-                            phone: this.userDefaults.phone || '',
+                            email: (this.initialLeadPerson?.emails && this.initialLeadPerson.emails.length > 0) 
+                                ? (this.initialLeadPerson.emails[0].value || '') 
+                                : (this.userDefaults.email || ''),
+                            phone: (this.initialLeadPerson?.phones && this.initialLeadPerson.phones.length > 0)
+                                ? (this.initialLeadPerson.phones[0].value || '')
+                                : (this.userDefaults.phone || ''),
                                     // Contact person selector binding
                                     contact_person_id: null,
                                     contact_person_label: '',
@@ -534,6 +538,19 @@
 
                     // Set up global reference to this component for cross-component communication
                     window.leadFormComponent = this;
+
+                    // If initialLeadPerson exists but no persons, prefill from initialLeadPerson
+                    if (this.initialLeadPerson && this.persons.length === 0) {
+                        // Prefill email and phone from initialLeadPerson if formData is empty
+                        if (!this.formData.email && this.initialLeadPerson.emails && this.initialLeadPerson.emails.length > 0) {
+                            this.formData.email = this.initialLeadPerson.emails[0].value || '';
+                        }
+                        if (!this.formData.phone && this.initialLeadPerson.phones && this.initialLeadPerson.phones.length > 0) {
+                            this.formData.phone = this.initialLeadPerson.phones[0].value || '';
+                        }
+                        // Sync to form fields
+                        this.$nextTick(() => this.syncPersonalFieldsToForm());
+                    }
 
                     // If prefilled persons exist, sync into the matcher and prefill fields
                     if (this.persons.length > 0) {

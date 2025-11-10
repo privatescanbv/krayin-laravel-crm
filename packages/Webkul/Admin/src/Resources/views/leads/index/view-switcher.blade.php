@@ -12,7 +12,7 @@
                 <span class="whitespace-nowrap">
                     {{ $pipeline->name }}
                 </span>
-                
+
                 <span class="icon-down-arrow text-2xl"></span>
             </button>
 
@@ -30,7 +30,7 @@
             </div>
 
             {!! view_render_event('admin.leads.index.view_switcher.pipeline.content.header.after') !!}
-            
+
             <!-- Pipeline Links -->
             @foreach (app('Webkul\Lead\Repositories\PipelineRepository')->getLeadPipelines() as $tempPipeline)
                 {!! view_render_event('admin.leads.index.view_switcher.pipeline.content.before', ['tempPipeline' => $tempPipeline]) !!}
@@ -43,7 +43,7 @@
                     class="block px-3 py-2.5 pl-4 text-gray-600 transition-all hover:bg-gray-100 dark:hover:bg-gray-950 dark:text-gray-300 {{ $pipeline->id == $tempPipeline->id ? 'bg-gray-100 dark:bg-gray-950' : '' }}"
                     onclick="setPipelineCookie({{ $tempPipeline->id }})"
                 >
-                    {{ $tempPipeline->name }}
+                    {{ $tempPipeline->name }} hier
                 </a>
 
                 {!! view_render_event('admin.leads.index.view_switcher.pipeline.content.after', ['tempPipeline' => $tempPipeline]) !!}
@@ -57,7 +57,7 @@
                 target="_blank"
                 class="flex items-center justify-between border-t border-gray-300 px-3 py-2.5 text-brandColor dark:border-gray-800"
             >
-                <span class="font-medium">                    
+                <span class="font-medium">
                     @lang('admin::app.leads.index.view-switcher.create-new-pipeline')
                 </span>
             </a>

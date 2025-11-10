@@ -106,7 +106,7 @@
                                         @if (bouncer()->hasPermission('leads.create'))
                                             <a
                                                 :href="'{{ route('admin.leads.create') }}' + '?stage_id=' + stage.id"
-                                                class="secondary-button"
+                                                class="primary-button"
                                             >
                                                 @lang('admin::app.leads.index.kanban.create-lead-btn')
                                             </a>

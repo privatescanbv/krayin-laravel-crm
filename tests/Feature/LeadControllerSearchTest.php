@@ -133,3 +133,43 @@ test('lead search can find by email and phone', function () {
     $idsPhone = collect($respPhone->json('data'))->pluck('id');
     expect($idsPhone)->toContain($lead->id);
 });
+
+test('lead search ignores empty phone token and does not add phones like %%', function () {
+    // Create target lead
+    $leadTarget = Lead::factory()->create([
+        'first_name' => 'Pieter',
+        'last_name'  => 'Post',
+        'emails'     => [
+            ['value' => 'pieter.post@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => true],
+        ],
+        // no phone term in the query; phones present or absent should not matter
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
+        'user_id'                => $this->user->id,
+    ]);
+
+    // Create noise lead that should NOT match
+    $leadNoise = Lead::factory()->create([
+        'first_name' => 'Noise',
+        'last_name'  => 'Lead',
+        'emails'     => [
+            ['value' => 'noise.lead@example.com', 'label' => ContactLabel::Relatie->value, 'is_default' => true],
+        ],
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
+        'user_id'                => $this->user->id,
+    ]);
+
+    // Simulate client passing searchFields including phones:like; but WITHOUT a phone: token.
+    // The controller should strip phones:* from searchFields to avoid `phones like %%`.
+    $resp = $this->getJson(route('admin.leads.search', [
+        'search'       => 'email:pieter.post@example.com;',
+        'searchFields' => 'emails:like;phones:like;',
+        'searchJoin'   => 'or',
+    ]));
+    $resp->assertOk();
+
+    $ids = collect($resp->json('data'))->pluck('id')->toArray();
+    expect($ids)->toContain($leadTarget->id)
+        ->and($ids)->not->toContain($leadNoise->id);
+});

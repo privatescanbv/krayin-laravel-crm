@@ -38,7 +38,6 @@ services:
       - mb_traefik
     depends_on:
       - mysql
-  #      - redis
 
   mysql:
     image: 'mysql/mysql-server:8.0'
@@ -55,8 +54,7 @@ services:
     volumes:
       - 'sail-mysql:/var/lib/mysql'
       - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
-      - './docker/mysql/init-grant.sql:/docker-entrypoint-initdb.d/20-init-grant.sql'
-      - './docker/mysql/init-forms-database.sql:/docker-entrypoint-initdb.d/30-init-forms-database.sql'
+      - './docker/mysql/init-forms.sql:/docker-entrypoint-initdb.d/21-init-forms.sql'
     networks:
       - sail
       - mb_traefik
@@ -99,57 +97,6 @@ services:
       - mb_traefik
     volumes:
       - ./data/n8n_data:/home/node/.n8n
-
-#  mailserver:
-#    image: mailserver/docker-mailserver:latest
-#    hostname: mail
-#    domainname: test.local
-#    container_name: mailserver
-#    env_file: mailserver.env
-#    environment:
-#      - SSL_TYPE=manual
-#      - SSL_CERT_PATH=/tmp/docker-mailserver/ssl/mail.test.local-cert.pem
-#      - SSL_KEY_PATH=/tmp/docker-mailserver/ssl/mail.test.local-key.pem
-#    volumes:
-#      - ./maildata:/var/mail
-#      - ./mailstate:/var/mail-state
-#      - ./docker/config/:/tmp/docker-mailserver/
-#    ports:
-#      - "1025:25"     # SMTP inkomend (van Laravel)
-#      - "587:587"     # SMTP met AUTH (voor RainLoop)
-#      - "993:993"     # IMAPS voor Webklex of mailclient
-#    restart: always
-#    cap_add:
-#      - NET_ADMIN
-#    networks:
-#      - sail
-#  # visueel mailtjes kunnen lezen (local development)
-#  rainloop:
-#    image: hardware/rainloop
-#    container_name: rainloop
-#    ports:
-#      - "8888:8888"  # Webmail
-#    restart: unless-stopped
-#    depends_on:
-#      - mailserver
-#    networks:
-#      - sail
-#      - mb_traefik
-#    volumes:
-#      - './docker/rainloop_data:/rainloop/data'
-# enable this for local cucumber testing
-#  test:
-#    build:
-#      context: .
-#      dockerfile: ./docker/php/Dockerfile.test
-#    volumes:
-#      - .:/app
-#    networks:
-#      - sail
-#    depends_on:
-#      - crm
-#      - n8n
-#    command: ./vendor/bin/behat --format=pretty
 
   ai-agent:
     build: ./ai-agents/ai-agent
@@ -204,9 +151,11 @@ services:
 
   forms:
     image: ghcr.io/privatescanbv/privateforms/forms:latest
-    container_name: privateforms
+    container_name: forms
     stdin_open: true
     tty: true
+    env_file:
+      - .env
     environment:
       WWWUSER: '${WWWUSER}'
       WWWGROUP: '${WWWGROUP}'
@@ -234,8 +183,8 @@ services:
       DB_HOST: 'mysql'
       DB_PORT: '3306'
       DB_DATABASE: 'forms'
-      DB_USERNAME: 'privatescan-api-api'
-      DB_PASSWORD: 'privatescan-api-api'
+      DB_USERNAME: 'formadmin'
+      DB_PASSWORD: 'FUC16A-qsh(<d!io'
       APP_TIMEZONE: 'UTC'
       SESSION_DRIVER: 'file'
       SESSION_LIFETIME: 120

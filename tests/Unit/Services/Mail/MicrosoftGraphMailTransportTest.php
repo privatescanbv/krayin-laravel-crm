@@ -5,6 +5,7 @@ namespace Tests\Unit\Services\Mail;
 use App\Services\Mail\MicrosoftGraphMailTransport;
 use Illuminate\Support\Facades\Http;
 use Symfony\Component\Mailer\SentMessage;
+use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email as SymfonyEmail;
 use Symfony\Component\Mime\RawMessage;
 use Tests\TestCase;
@@ -33,10 +34,10 @@ class MicrosoftGraphMailTransportTest extends TestCase
 
         $symfonyEmail = (new SymfonyEmail())
             ->subject('Graph Test Message')
-            ->from('john.doe@example.com', 'John Doe')
-            ->to('recipient@example.com', 'Recipient')
-            ->cc('copy@example.com', 'Copy')
-            ->bcc('hidden@example.com', 'Hidden Copy')
+            ->from(new Address('john.doe@example.com', 'John Doe'))
+            ->to(new Address('recipient@example.com', 'Recipient'))
+            ->cc(new Address('copy@example.com', 'Copy'))
+            ->bcc(new Address('hidden@example.com', 'Hidden Copy'))
             ->html('<p>Hello Graph!</p>')
             ->text('Hello Graph!')
             ->attach('Attachment body', 'note.txt', 'text/plain');
@@ -100,8 +101,8 @@ class MicrosoftGraphMailTransportTest extends TestCase
 
         $symfonyEmail = (new SymfonyEmail())
             ->subject('Graph Match Mailbox')
-            ->from('crm@example.com', 'CRM Team')
-            ->to('recipient@example.com')
+            ->from(new Address('crm@example.com', 'CRM Team'))
+            ->to(new Address('recipient@example.com'))
             ->text('Hello!');
 
         $rawMessage = new RawMessage($symfonyEmail->toString());

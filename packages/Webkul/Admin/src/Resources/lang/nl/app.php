@@ -1848,6 +1848,7 @@ return [
                     'clinic'       => 'Kliniek',
                     'resource_type'=> 'Resourcetype',
                     'name'         => 'Naam',
+                    'notes'        => 'Opmerkingen',
                     'save-btn'     => 'Opslaan',
                 ],
             ],

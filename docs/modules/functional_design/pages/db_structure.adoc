@@ -240,6 +240,7 @@ TABLE(Resource, "resource") {
   PRIMARY_KEY(id): bigint
   name: string
   is_active: boolean
+  notes: text
   created_at: datetime
   updated_at: datetime
   created_by: bigint

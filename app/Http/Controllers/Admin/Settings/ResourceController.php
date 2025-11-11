@@ -395,6 +395,7 @@ class ResourceController extends SimpleEntityController
             'resource_type_id'  => 'required|exists:resource_types,id',
             'clinic_id'         => 'required|exists:clinics,id',
             'is_active'         => 'required|boolean',
+            'notes'             => 'nullable|string',
         ]);
     }
 
@@ -409,6 +410,7 @@ class ResourceController extends SimpleEntityController
             'resource_type_id'  => 'required|exists:resource_types,id',
             'clinic_id'         => 'required|exists:clinics,id',
             'is_active'         => 'required|boolean',
+            'notes'             => 'nullable|string',
         ]);
     }
 

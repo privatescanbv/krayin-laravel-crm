@@ -26,6 +26,9 @@
                     <div><strong>@lang('admin::app.settings.resources.index.create.name'):</strong> {{ $resource->name }}</div>
                     <div><strong>@lang('admin::app.settings.resources.index.create.resource_type'):</strong> {{ optional($resource->resourceType)->name }}</div>
                     <div><strong>Clinic:</strong> {{ optional($resource->clinic)->name }}</div>
+                    @if ($resource->notes)
+                        <div class="mt-2"><strong>@lang('admin::app.settings.resources.index.create.notes'):</strong> <div class="mt-1 whitespace-pre-wrap">{{ $resource->notes }}</div></div>
+                    @endif
                 </div>
             </div>
 

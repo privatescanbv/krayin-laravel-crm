@@ -18,6 +18,7 @@ class Resource extends Model
         'resource_type_id',
         'clinic_id',
         'is_active',
+        'notes',
         'created_by',
         'updated_by',
     ];

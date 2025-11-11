@@ -96,7 +96,7 @@ return [
     ],
     [
         'key'        => 'clinics',
-        'name'       => 'Beheer klinieken',
+        'name'       => 'Klinieken',
         'route'      => 'admin.clinics.index',
         'sort'       => 12,
         'icon-class' => 'icon-organization',

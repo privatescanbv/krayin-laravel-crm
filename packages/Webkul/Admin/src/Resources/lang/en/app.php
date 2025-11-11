@@ -854,6 +854,7 @@ return [
                     'title'       => 'Create Resource',
                     'resource_type' => 'Resource Type',
                     'name'        => 'Name',
+                    'notes'       => 'Notes',
                     'save-btn'    => 'Save',
                 ],
             ],

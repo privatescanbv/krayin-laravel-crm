@@ -15,7 +15,7 @@
         .calendar-block { position: absolute; left: 6px; right: 6px; border-radius: 6px; padding: 2px 6px; font-size: 11px; overflow: hidden; transition: all 0.2s ease; }
         .calendar-block-available { cursor: pointer; }
         .calendar-block-available:hover { transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .calendar-block-occupied { pointer-events: none; min-height: 20px; }
+        .calendar-block-occupied { cursor: default; min-height: 20px; }
         .filters-bar { position: relative; z-index: 10; }
         .loading-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); display: flex; align-items: center; justify-content: center; z-index: 20; }
         .loading-spinner { width: 32px; height: 32px; border: 3px solid #e5e7eb; border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; }
@@ -54,6 +54,7 @@
                         target="_blank"
                         rel="noopener noreferrer"
                         class="text-blue-600 hover:text-blue-800"
+                        :title="r.notes || ''"
                     >@{{ r.name }}</a>
                     <span v-if="r.clinic">(@{{ r.clinic }})</span>
                 </span>
@@ -364,7 +365,10 @@
                         });
                     }
 
-                    return blocks.sort((a, b) => new Date(a.from) - new Date(b.from));
+                    const sortedBlocks = blocks.sort((a, b) => new Date(a.from) - new Date(b.from));
+
+                    // Group overlapping available blocks and calculate layout
+                    return this.calculateOverlappingBlocks(sortedBlocks);
                 },
                 getBlocksForMonthDay(date) {
                     const blocks = [];
@@ -409,19 +413,80 @@
                     const colorIndex = this.resources.indexOf(resource) % this.resourceColors.length;
                     const color = this.resourceColors[colorIndex];
 
-                    return {
+                    const style = {
                         top: top + 'px',
                         height: height + 'px',
                         backgroundColor: `rgba(${this.hexToRgb(color)}, 0.15)`,
                         borderColor: `rgba(${this.hexToRgb(color)}, 0.3)`,
                         color: this.getContrastColor(color)
                     };
+
+                    // If block has overlapping layout info, apply width and left position
+                    if (block.overlapIndex !== undefined && block.overlapCount !== undefined) {
+                        const widthPercent = 100 / block.overlapCount;
+                        style.width = `calc(${widthPercent}% - 12px)`;
+                        style.left = `calc(${(block.overlapIndex * widthPercent)}% + 6px)`;
+                        style.right = 'auto'; // Override the default right: 6px from CSS
+                        style.position = 'absolute';
+                    }
+
+                    return style;
+                },
+                calculateOverlappingBlocks(blocks) {
+                    const avail = blocks
+                        .filter(b => b.type === 'available')
+                        .map(b => ({
+                            ref: b,
+                            start: new Date(b.from).getTime(),
+                            end: new Date(b.to).getTime(),
+                            col: -1,
+                            over: 1,
+                        }))
+                        .sort((a, b) => a.start - b.start || a.end - b.end);
+
+                    const occupied = blocks.filter(b => b.type === 'occupied');
+                    const active = [];
+
+                    for (const b of avail) {
+                        // Drop finished
+                        for (let i = active.length - 1; i >= 0; i--) {
+                            if (active[i].end <= b.start) active.splice(i, 1);
+                        }
+
+                        // Smallest free column
+                        let c = 0;
+                        while (active.some(a => a.col === c)) c++;
+                        b.col = c;
+
+                        active.push(b);
+                        active.sort((x, y) => x.end - y.end);
+
+                        const k = active.length;
+                        for (const a of active) a.over = Math.max(a.over, k);
+                    }
+
+                    // Apply layout
+                    for (const b of avail) {
+                        b.ref.overlapIndex = b.col;
+                        b.ref.overlapCount = b.over;
+                    }
+
+                    return [...avail.map(x => x.ref), ...occupied].sort((a, b) => new Date(a.from) - new Date(b.from));
                 },
                 getBlockTooltip(block) {
                     const resource = this.resources.find(r => r.id === block.resource_id);
                     const from = new Date(block.from);
                     const to = new Date(block.to);
-                    return `${resource?.name || 'Onbekend'} - ${from.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} tot ${to.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                    const name = resource?.name || 'Onbekend';
+                    const notes = resource?.notes ? ` — ${resource.notes}` : '';
+                    const timeStr = `${from.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} tot ${to.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+                    if (block.type === 'occupied') {
+                        const leadName = block.lead_name || 'Onbekend';
+                        return `${name}${notes}\nGeboekt: ${leadName}\nTijd: ${timeStr}`;
+                    }
+
+                    return `${name}${notes} - ${timeStr}`;
                 },
                 handleBlockClick(block) {
                     this.$emit('block-click', block);

@@ -93,3 +93,21 @@
 
     <x-admin::form.control-group.error control-name="is_active" />
 </x-admin::form.control-group>
+
+<!-- Notes -->
+<x-admin::form.control-group>
+    <x-admin::form.control-group.label>
+        @lang('admin::app.settings.resources.index.create.notes')
+    </x-admin::form.control-group.label>
+
+    <x-admin::form.control-group.control
+        type="textarea"
+        name="notes"
+        value="{{ old('notes', $resource->notes ?? '') }}"
+        :label="trans('admin::app.settings.resources.index.create.notes')"
+        :placeholder="trans('admin::app.settings.resources.index.create.notes')"
+        rows="4"
+    />
+
+    <x-admin::form.control-group.error control-name="notes" />
+</x-admin::form.control-group>

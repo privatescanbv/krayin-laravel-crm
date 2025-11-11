@@ -182,6 +182,7 @@ class ResourcePlanningMonitorController extends Controller
             'resources' => $resources->map(fn ($r) => [
                 'id'                    => $r->id,
                 'name'                  => $r->name,
+                'notes'                 => $r->notes,
                 'clinic_id'             => $r->clinic_id,
                 'clinic'                => $r->clinic?->name,
                 'resource_type'         => $r->resourceType?->name,
@@ -236,6 +237,7 @@ class ResourcePlanningMonitorController extends Controller
             'resources' => $resources->map(fn ($r) => [
                 'id'                    => $r->id,
                 'name'                  => $r->name,
+                'notes'                 => $r->notes,
                 'clinic_id'             => $r->clinic_id,
                 'clinic'                => $r->clinic?->name,
                 'resource_type'         => $r->resourceType?->name,
@@ -628,6 +630,7 @@ class ResourcePlanningMonitorController extends Controller
             'resources' => $resources->map(fn ($r) => [
                 'id'                    => $r->id,
                 'name'                  => $r->name,
+                'notes'                 => $r->notes,
                 'clinic_id'             => $r->clinic_id,
                 'clinic'                => $r->clinic?->name,
                 'resource_type'         => $r->resourceType?->name,
@@ -704,6 +707,7 @@ class ResourcePlanningMonitorController extends Controller
             'resources' => $resources->map(fn ($r) => [
                 'id'                    => $r->id,
                 'name'                  => $r->name,
+                'notes'                 => $r->notes,
                 'clinic_id'             => $r->clinic_id,
                 'clinic'                => $r->clinic?->name,
                 'resource_type'         => $r->resourceType?->name,

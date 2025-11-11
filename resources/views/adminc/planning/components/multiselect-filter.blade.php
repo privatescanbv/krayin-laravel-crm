@@ -19,7 +19,7 @@
             </div>
 
             <!-- Dropdown -->
-            <x-admin::dropdown position="bottom-left" close-on-click="false">
+            <x-admin::dropdown position="bottom-left" ::close-on-click="false">
                 <x-slot:toggle>
                     <button
                         type="button"

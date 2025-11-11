@@ -33,65 +33,51 @@ class MicrosoftGraphMailTransport implements TransportInterface
         try {
             $email = MessageConverter::toEmail($message);
 
-            // Get the sender information
-            $from = $email->getFrom()[0] ?? null;
-            $fromAddress = $from?->getAddress() ?? $this->getDefaultFromAddress();
-            $fromName = $from?->getName() ?? $this->getDefaultFromName();
+            $serviceMailbox = $this->getDefaultFromAddress();
+            $senderAddress = $email->getFrom()[0] ?? null;
+            $fromName = $senderAddress?->getName() ?? $this->getDefaultFromName();
 
-            // Build recipients
-            $toRecipients = [];
-            foreach ($email->getTo() as $recipient) {
-                $toRecipients[] = [
-                    'emailAddress' => [
-                        'address' => $recipient->getAddress(),
-                        'name'    => $recipient->getName() ?: $recipient->getAddress(),
-                    ],
-                ];
+            $replyTo = [];
+            if ($senderAddress && strcasecmp($senderAddress->getAddress(), $serviceMailbox) !== 0) {
+                $replyTo = $this->formatRecipients([$senderAddress]);
             }
 
-            $ccRecipients = [];
-            foreach ($email->getCc() as $recipient) {
-                $ccRecipients[] = [
-                    'emailAddress' => [
-                        'address' => $recipient->getAddress(),
-                        'name'    => $recipient->getName() ?: $recipient->getAddress(),
-                    ],
-                ];
-            }
+            $toRecipients = $this->formatRecipients($email->getTo());
+            $ccRecipients = $this->formatRecipients($email->getCc());
+            $bccRecipients = $this->formatRecipients($email->getBcc());
 
-            $bccRecipients = [];
-            foreach ($email->getBcc() as $recipient) {
-                $bccRecipients[] = [
-                    'emailAddress' => [
-                        'address' => $recipient->getAddress(),
-                        'name'    => $recipient->getName() ?: $recipient->getAddress(),
-                    ],
-                ];
-            }
+            $contentType = $email->getHtmlBody() ? 'HTML' : 'Text';
+            $content = $email->getHtmlBody() ?? $email->getTextBody() ?? '';
 
-            // Build message payload
             $payload = [
                 'message' => [
                     'subject'      => $email->getSubject(),
                     'body'         => [
-                        'contentType' => 'HTML',
-                        'content'     => $email->getHtmlBody() ?: $email->getTextBody(),
+                        'contentType' => $contentType,
+                        'content'     => $content,
                     ],
                     'toRecipients'  => $toRecipients,
                     'ccRecipients'  => $ccRecipients,
                     'bccRecipients' => $bccRecipients,
                     'from'          => [
                         'emailAddress' => [
-                            'address' => $fromAddress,
+                            'address' => $serviceMailbox,
                             'name'    => $fromName,
                         ],
                     ],
                 ],
                 'saveToSentItems' => true,
             ];
-            logger()->info('Mail payload ', ['payload'=>$payload]);
 
-            // Add attachments if any
+            if (! empty($replyTo)) {
+                $payload['message']['replyTo'] = $replyTo;
+            }
+
+            $customHeaders = $this->buildCustomHeaders($email);
+            if (! empty($customHeaders)) {
+                $payload['message']['internetMessageHeaders'] = $customHeaders;
+            }
+
             $attachments = $email->getAttachments();
             if (! empty($attachments)) {
                 $payload['message']['attachments'] = [];
@@ -100,18 +86,17 @@ class MicrosoftGraphMailTransport implements TransportInterface
                         '@odata.type'  => '#microsoft.graph.fileAttachment',
                         'name'         => $attachment->getFilename(),
                         'contentType'  => $attachment->getContentType(),
-                        'contentBytes' => base64_encode($attachment->getBody()),
+                        'contentBytes' => base64_encode($this->getAttachmentContent($attachment)),
                     ];
                 }
             }
 
-            // Send via Graph API
             $accessToken = $this->getAccessToken();
             $url = "{$this->baseUrl}/users/{$this->mailbox}/sendMail";
 
             logger()->info('Sending email via Microsoft Graph', [
                 'to'      => collect($toRecipients)->pluck('emailAddress.address')->toArray(),
-                'from'    => $fromAddress,
+                'from'    => $serviceMailbox,
                 'subject' => $email->getSubject(),
             ]);
             $response = Http::withToken($accessToken)
@@ -130,12 +115,12 @@ class MicrosoftGraphMailTransport implements TransportInterface
             Log::info('Email sent successfully via Microsoft Graph', [
                 'subject' => $email->getSubject(),
                 'to'      => collect($toRecipients)->pluck('emailAddress.address')->toArray(),
-                'from'    => $fromAddress,
+                'from'    => $serviceMailbox,
             ]);
 
             // Build default Envelope when not provided
             if ($envelope === null) {
-                $senderAddress = new Address($fromAddress, $fromName);
+                $senderEnvelope = new Address($serviceMailbox, $fromName);
                 $allRecipients = array_merge($toRecipients, $ccRecipients, $bccRecipients);
                 $recipientAddresses = [];
                 foreach ($allRecipients as $recipient) {
@@ -146,7 +131,7 @@ class MicrosoftGraphMailTransport implements TransportInterface
                     }
                 }
 
-                $envelope = new Envelope($senderAddress, $recipientAddresses);
+                $envelope = new Envelope($senderEnvelope, $recipientAddresses);
             }
 
             return new SentMessage($message, $envelope);
@@ -246,5 +231,115 @@ class MicrosoftGraphMailTransport implements TransportInterface
     public function __toString(): string
     {
         return 'microsoft-graph';
+    }
+
+    /**
+     * Convert Symfony Address instances to Graph API recipient payload.
+     *
+     * @param  iterable<Address>  $addresses
+     */
+    protected function formatRecipients(iterable $addresses): array
+    {
+        $recipients = [];
+
+        foreach ($addresses as $recipient) {
+            if (! $recipient instanceof Address) {
+                continue;
+            }
+
+            $address = $recipient->getAddress();
+
+            if (! $address) {
+                continue;
+            }
+
+            $recipients[] = [
+                'emailAddress' => [
+                    'address' => $address,
+                    'name'    => $recipient->getName() ?: $address,
+                ],
+            ];
+        }
+
+        return $recipients;
+    }
+
+    /**
+     * Extract attachment content as string for Graph API upload.
+     */
+    protected function getAttachmentContent($attachment): string
+    {
+        if (! method_exists($attachment, 'getBody')) {
+            return '';
+        }
+
+        $body = $attachment->getBody();
+
+        if (is_resource($body)) {
+            return stream_get_contents($body) ?: '';
+        }
+
+        if (is_iterable($body)) {
+            $content = '';
+
+            foreach ($body as $chunk) {
+                $content .= $chunk;
+            }
+
+            return $content;
+        }
+
+        if (is_string($body)) {
+            return $body;
+        }
+
+        if ($body instanceof \Stringable) {
+            return (string) $body;
+        }
+
+        return '';
+    }
+
+    /**
+     * Build custom headers array for Graph internetMessageHeaders property.
+     */
+    protected function buildCustomHeaders(\Symfony\Component\Mime\Email $email): array
+    {
+        $headers = $email->getHeaders();
+
+        $headerNames = ['Message-ID', 'In-Reply-To', 'References'];
+        $customHeaders = [];
+
+        foreach ($headerNames as $headerName) {
+            if (! $headers->has($headerName)) {
+                continue;
+            }
+
+            $header = $headers->get($headerName);
+            if (! $header) {
+                continue;
+            }
+
+            $value = method_exists($header, 'getBodyAsString')
+                ? $header->getBodyAsString()
+                : $header->getBody();
+
+            if (is_array($value)) {
+                $value = implode(' ', array_filter($value));
+            }
+
+            $value = trim((string) $value);
+
+            if ($value === '') {
+                continue;
+            }
+
+            $customHeaders[] = [
+                'name'  => $headerName,
+                'value' => $value,
+            ];
+        }
+
+        return $customHeaders;
     }
 }

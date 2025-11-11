@@ -122,6 +122,7 @@ RUN rm -rf /usr/share/nginx/html/.env
 
 # These files are not used within the container, but copied in the server
 COPY .docker/mysql/init-n8n.sql /docker/mysql/
+COPY .docker/mysql/init-forms.sql /docker/mysql/
 COPY docker-compose-prod.yml /docker/docker-compose.yml
 # TODO security wise, red flag. Change this CI implmementation later to a vault.
 COPY .env.prod /docker/.env.prod

@@ -1,4 +1,16 @@
-@php use App\Enums\ContactLabel;use App\Models\Department;use App\Models\User; @endphp
+@php 
+use App\Enums\ContactLabel;
+use App\Enums\PersonSalutation;
+use App\Enums\PersonGender;
+use App\Models\Department;
+use App\Models\User;
+
+// Define salutation to gender mapping based on enum definitions
+$salutationToGenderMapping = [
+    PersonSalutation::Dhr->value => PersonGender::Man->value,
+    PersonSalutation::Mevr->value => PersonGender::Female->value,
+];
+@endphp
 <x-admin::layouts>
     <x-slot:title>
         @lang('admin::app.leads.create.title')
@@ -9,7 +21,8 @@
     <!-- Two-Step Lead Form -->
     <v-two-step-lead-form :initial-persons='@json($prefilledPersons ?? [])'
                           :initial-lead-person='@json($prefilledLeadPerson ?? null)'
-                          :user-defaults='@json((object) ($userDefaults ?? []))'></v-two-step-lead-form>
+                          :user-defaults='@json((object) ($userDefaults ?? []))'
+                          :salutation-to-gender-mapping='@json($salutationToGenderMapping)'></v-two-step-lead-form>
 
     {!! view_render_event('admin.leads.create.form.after') !!}
 
@@ -486,6 +499,10 @@
                     userDefaults: {
                         type: Object,
                         default: () => ({})
+                    },
+                    salutationToGenderMapping: {
+                        type: Object,
+                        default: () => ({})
                     }
                 },
 
@@ -530,6 +547,30 @@
                         _debounceTimer: null,
                         suggestionsDisabled: false
                     };
+                },
+
+                watch: {
+                    'formData.salutation'(newSalutation) {
+                        // Automatically set gender based on salutation if gender is not already set
+                        // Uses mapping from PHP enums (PersonSalutation -> PersonGender)
+                        if (newSalutation && !this.formData.gender) {
+                            // Use the mapping passed from PHP (based on enum definitions)
+                            const mapping = this.salutationToGenderMapping || {};
+                            
+                            if (mapping[newSalutation]) {
+                                this.formData.gender = mapping[newSalutation];
+                                // Also update the form field if it exists
+                                this.$nextTick(() => {
+                                    const genderField = this.$refs.leadForm?.querySelector('[name="gender"]');
+                                    if (genderField) {
+                                        genderField.value = this.formData.gender;
+                                        // Trigger change event to ensure form validation
+                                        genderField.dispatchEvent(new Event('change', { bubbles: true }));
+                                    }
+                                });
+                            }
+                        }
+                    }
                 },
 
                 mounted() {
@@ -591,10 +632,44 @@
                                 input.addEventListener('change', () => this.onFieldBlur());
                             }
                         });
+
+                        // Listen for salutation changes to auto-set gender
+                        const salutationField = this.$refs.leadForm?.querySelector('[name="salutation"]');
+                        if (salutationField) {
+                            salutationField.addEventListener('change', (e) => {
+                                const newSalutation = e.target.value;
+                                // Update formData
+                                this.formData.salutation = newSalutation;
+                                // Auto-set gender if not already set
+                                this.autoSetGenderFromSalutation(newSalutation);
+                            });
+                        }
                     });
                 },
 
                 methods: {
+                    autoSetGenderFromSalutation(salutation) {
+                        // Automatically set gender based on salutation if gender is not already set
+                        // Uses mapping from PHP enums (PersonSalutation -> PersonGender)
+                        if (salutation && !this.formData.gender) {
+                            // Use the mapping passed from PHP (based on enum definitions)
+                            const mapping = this.salutationToGenderMapping || {};
+                            
+                            if (mapping[salutation]) {
+                                this.formData.gender = mapping[salutation];
+                                // Also update the form field
+                                this.$nextTick(() => {
+                                    const genderField = this.$refs.leadForm?.querySelector('[name="gender"]');
+                                    if (genderField) {
+                                        genderField.value = this.formData.gender;
+                                        // Trigger change event to ensure form validation
+                                        genderField.dispatchEvent(new Event('change', { bubbles: true }));
+                                    }
+                                });
+                            }
+                        }
+                    },
+
                     formatDate(value) {
                         if (!value) return '';
                         try {

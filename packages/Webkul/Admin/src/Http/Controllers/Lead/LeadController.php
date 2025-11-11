@@ -6,6 +6,8 @@ use App\Enums\LostReason;
 use App\Enums\ActivityStatus;
 use App\Enums\PipelineDefaultKeys;
 use App\Http\Controllers\Concerns\NormalizesContactFields;
+use Prettus\Repository\Contracts\CriteriaInterface;
+use Prettus\Repository\Contracts\RepositoryInterface;
 use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
 use App\Models\Anamnesis;
 use App\Models\Department;
@@ -68,7 +70,7 @@ class LeadController extends Controller
     const WON_LOST_STAGE_CODES = ['won', 'lost', 'won-hernia', 'lost-hernia'];
 
 
-    private bool $enableDebugLogging = true;
+    private bool $enableDebugLogging = false;
 
     /**
      * Get search configuration for leads.
@@ -996,21 +998,18 @@ class LeadController extends Controller
             repository: $this->leadRepository,
             getFieldsSearchable: fn() => $this->leadRepository->getFieldsSearchable(),
             eagerLoadRelations: ['stage', 'user'],
-            getResults: function ($repository) {
+            getResults: function ($repository, $emailTerms = [], $phoneTerms = []) {
                 // Always apply RequestCriteria (with normalized search/searchFields)
                 $repository->pushCriteria(app(RequestCriteria::class));
 
-                // Apply permission filter via a Criteria so it composes with existing scopeQuery (email/phone)
-                if ($userIds = bouncer()->getAuthorizedUserIds()) {
-                    $permissionCriteria = new class($userIds) implements \Prettus\Repository\Contracts\CriteriaInterface {
-                        public function __construct(private array $userIds) {}
-                        public function apply($model, \Prettus\Repository\Contracts\RepositoryInterface $repository)
-                        {
-                            return $model->whereIn('user_id', $this->userIds);
-                        }
-                    };
-                    $repository->pushCriteria($permissionCriteria);
+                // Apply email/phone search after RequestCriteria but before permission filter
+                // This ensures email/phone search is combined with OR to name search
+                if (!empty($emailTerms) || !empty($phoneTerms)) {
+                    $this->applyEmailPhoneSearch($repository, $emailTerms, $phoneTerms);
                 }
+
+                // Apply permission filter via a Criteria so it composes with existing scopeQuery (email/phone)
+                $this->applyPermissionFilter($repository);
 
                 return $repository->all();
             },

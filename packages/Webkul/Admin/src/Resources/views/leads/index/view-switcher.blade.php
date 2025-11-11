@@ -43,7 +43,7 @@
                     class="block px-3 py-2.5 pl-4 text-gray-600 transition-all hover:bg-gray-100 dark:hover:bg-gray-950 dark:text-gray-300 {{ $pipeline->id == $tempPipeline->id ? 'bg-gray-100 dark:bg-gray-950' : '' }}"
                     onclick="setPipelineCookie({{ $tempPipeline->id }})"
                 >
-                    {{ $tempPipeline->name }} hier
+                    {{ $tempPipeline->name }}
                 </a>
 
                 {!! view_render_event('admin.leads.index.view_switcher.pipeline.content.after', ['tempPipeline' => $tempPipeline]) !!}

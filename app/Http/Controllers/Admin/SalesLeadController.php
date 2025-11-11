@@ -511,18 +511,7 @@ class SalesLeadController extends Controller
                 $repository->pushCriteria(app(RequestCriteria::class));
 
                 // Apply permission filter via a composable Criteria (no scopeQuery to avoid overwriting)
-                if ($userIds = bouncer()->getAuthorizedUserIds()) {
-                    $permissionCriteria = new class($userIds) implements \Prettus\Repository\Contracts\CriteriaInterface
-                    {
-                        public function __construct(private array $userIds) {}
-
-                        public function apply($model, \Prettus\Repository\Contracts\RepositoryInterface $repository)
-                        {
-                            return $model->whereIn('user_id', $this->userIds);
-                        }
-                    };
-                    $repository->pushCriteria($permissionCriteria);
-                }
+                $this->applyPermissionFilter($repository);
 
                 return $repository->all();
             },

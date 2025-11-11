@@ -8,7 +8,6 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Prettus\Repository\Criteria\RequestCriteria;
 use Throwable;
 
 trait HasAdvancedSearch
@@ -80,22 +79,46 @@ trait HasAdvancedSearch
             $limit = 100;
         }
 
+        // Track if we have a simple query (for email/phone search)
+        $simpleQueryTerm = null;
+
         // Handle simple query parameter (for backward compatibility and entity lookup)
         // Convert query parameter to search format if search/searchFields are not present
         if ($query && !$search && !$searchFields) {
-            // Simple query mode: convert to name search with like operator
-            $nameFields = $config['name_fields'];
-            $searchTokens = [];
-            $searchFieldTokens = [];
+            // Get raw search term for multi-token handling
+            $rawSearchTerm = trim((string) $query);
 
-            foreach ($nameFields as $field) {
-                $searchTokens[] = $field . ':' . $query;
-                $searchFieldTokens[] = $field . ':like';
+            // Handle multi-token search (AND-of-ORs) - only if not already fielded search
+            if (!str_contains($rawSearchTerm, ':')) {
+                $tokens = preg_split('/\s+/', $rawSearchTerm, -1, PREG_SPLIT_NO_EMPTY);
+                if (count($tokens) > 1) {
+                    // Multi-token: apply tokenized AND-of-ORs
+                    $this->applyMultiTokenSearch($repository, $tokens, $config['name_fields']);
+                    // Clear search params to prevent RequestCriteria from applying additional filters
+                    $search = '';
+                    $searchFields = '';
+                } else {
+                    // Single token: convert to name search with like operator
+                    $nameFields = $config['name_fields'];
+                    $searchTokens = [];
+                    $searchFieldTokens = [];
+
+                    foreach ($nameFields as $field) {
+                        $searchTokens[] = $field . ':' . $rawSearchTerm;
+                        $searchFieldTokens[] = $field . ':like';
+                    }
+
+                    $search = implode(';', $searchTokens) . ';';
+                    $searchFields = implode(';', $searchFieldTokens) . ';';
+                    $searchJoin = 'or';
+
+                    // Store for email/phone search (will be added in normalizeEmailPhoneSearch)
+                    $simpleQueryTerm = $rawSearchTerm;
+                }
+            } else {
+                // Already has field tokens, use as-is
+                $search = $rawSearchTerm;
             }
-
-            $search = implode(';', $searchTokens) . ';';
-            $searchFields = implode(';', $searchFieldTokens) . ';';
-            $searchJoin = 'or';
         }
 
         // Normalize legacy search params: map `name` to configured name fields
@@ -115,7 +138,7 @@ trait HasAdvancedSearch
         $emailTerms = [];
         $phoneTerms = [];
         if ($config['supports_email_phone_search']) {
-            [$search, $searchFields, $searchJoin, $emailTerms, $phoneTerms] = $this->normalizeEmailPhoneSearch($search, $searchFields, $searchJoin);
+            [$search, $searchFields, $searchJoin, $emailTerms, $phoneTerms] = $this->normalizeEmailPhoneSearch($search, $searchFields, $searchJoin, $simpleQueryTerm);
         }
 
         // Log normalized params after email/phone normalization
@@ -127,11 +150,6 @@ trait HasAdvancedSearch
                 'emailTerms'   => $emailTerms,
                 'phoneTerms'   => $phoneTerms,
             ]);
-        }
-
-        // Apply JSON-aware matching for emails/phones via scopeQuery
-        if (!empty($emailTerms) || !empty($phoneTerms)) {
-            $this->applyEmailPhoneSearch($repository, $emailTerms, $phoneTerms);
         }
 
         // Validate requested search fields against repository's searchable fields
@@ -165,7 +183,7 @@ trait HasAdvancedSearch
         // This is a limitation of the RequestCriteria class, but we minimize the dependency
         // Always use the normalized searchFields to ensure phones:like is removed when appropriate
         $originalQuery = request()->query->all();
-        
+
         // Log what we're passing to RequestCriteria
         if ($config['enable_debug_logging'] && $config['table_name']) {
             Log::info('Search - passing to RequestCriteria', [
@@ -176,7 +194,7 @@ trait HasAdvancedSearch
                 'phoneTerms'   => $phoneTerms ?? [],
             ]);
         }
-        
+
         request()->query->replace(array_merge($originalQuery, [
             'search' => $search,
             'searchFields' => $searchFields, // Use normalized searchFields (phones:like removed if no phone token)
@@ -184,9 +202,11 @@ trait HasAdvancedSearch
         ]));
 
         try {
-            // Get results
-            // If search is empty, RequestCriteria won't apply filters, but email/phone search via scopeQuery will still work
-            $results = $getResults($repository);
+            // Get results - RequestCriteria will apply name search
+            // Email/phone search should be applied in the getResults callback after RequestCriteria
+            // This ensures proper OR combination with name search
+            // We pass emailTerms and phoneTerms to getResults via closure
+            $results = $getResults($repository, $emailTerms, $phoneTerms);
         } finally {
             // Restore original query params
             request()->query->replace($originalQuery);
@@ -286,14 +306,22 @@ trait HasAdvancedSearch
     /**
      * Normalize convenience tokens for email/phone to underlying JSON columns.
      *
+     * @param string|null $simpleQueryTerm Optional simple query term to also search in emails/phones
      * @return array [search, searchFields, searchJoin, emailTerms, phoneTerms]
      */
-    protected function normalizeEmailPhoneSearch(string $search, string $searchFields, string $searchJoin): array
+    protected function normalizeEmailPhoneSearch(string $search, string $searchFields, string $searchJoin, ?string $simpleQueryTerm = null): array
     {
         $emailTerms = [];
         $phoneTerms = [];
-        $hasEmailToken = $search && str_contains($search, 'email:');
-        $hasPhoneToken = $search && str_contains($search, 'phone:');
+        $hasEmailToken = $search && (str_contains($search, 'email:') || str_contains($search, 'emails:'));
+        $hasPhoneToken = $search && (str_contains($search, 'phone:') || str_contains($search, 'phones:'));
+
+        // If we have a simple query term (no field tokens), also search in emails/phones
+        // This allows simple queries to find results by email/phone even when name search is also applied
+        if ($simpleQueryTerm !== null && !$hasEmailToken && !$hasPhoneToken) {
+            $emailTerms[] = $simpleQueryTerm;
+            $phoneTerms[] = $simpleQueryTerm;
+        }
 
         if ($hasEmailToken || $hasPhoneToken) {
             $tokens = array_values(array_filter(array_map('trim', explode(';', $search))));
@@ -305,8 +333,18 @@ trait HasAdvancedSearch
                     if ($term !== '') {
                         $emailTerms[] = $term;
                     }
+                } elseif (str_starts_with($tok, 'emails:')) {
+                    $term = trim(substr($tok, strlen('emails:')));
+                    if ($term !== '') {
+                        $emailTerms[] = $term;
+                    }
                 } elseif (str_starts_with($tok, 'phone:')) {
                     $term = trim(substr($tok, strlen('phone:')));
+                    if ($term !== '') {
+                        $phoneTerms[] = $term;
+                    }
+                } elseif (str_starts_with($tok, 'phones:')) {
+                    $term = trim(substr($tok, strlen('phones:')));
                     if ($term !== '') {
                         $phoneTerms[] = $term;
                     }
@@ -349,11 +387,14 @@ trait HasAdvancedSearch
     {
         if (method_exists($repository, 'pushCriteria')) {
             // Repository pattern: use Criteria so it composes with other filters
+            // Use orWhere to combine with name search (OR, not AND)
+            // This ensures the email/phone search is combined with OR to the name search from RequestCriteria
             $emailPhoneCriteria = new class($emailTerms, $phoneTerms) implements \Prettus\Repository\Contracts\CriteriaInterface {
                 public function __construct(private array $emailTerms, private array $phoneTerms) {}
                 public function apply($model, \Prettus\Repository\Contracts\RepositoryInterface $repository)
                 {
-                    return $model->where(function ($qb) {
+                    // Use orWhere to combine with name search from RequestCriteria
+                    return $model->orWhere(function ($qb) {
                         foreach ($this->emailTerms as $term) {
                             $escaped = str_replace(['%', '_'], ['\\%', '\\_'], trim($term));
                             $jsonLike = '%"value":"%' . $escaped . '%"%';
@@ -371,8 +412,8 @@ trait HasAdvancedSearch
             };
             $repository->pushCriteria($emailPhoneCriteria);
         } elseif ($repository instanceof Builder) {
-            // Direct query builder
-            $repository->where(function ($qb) use ($emailTerms, $phoneTerms) {
+            // Direct query builder - use orWhere to combine with name search
+            $repository->orWhere(function ($qb) use ($emailTerms, $phoneTerms) {
                 foreach ($emailTerms as $term) {
                     $escaped = str_replace(['%', '_'], ['\\%', '\\_'], trim($term));
                     $jsonLike = '%"value":"%' . $escaped . '%"%';
@@ -386,6 +427,33 @@ trait HasAdvancedSearch
                        ->orWhere('phones', 'like', '%' . trim($term) . '%');
                 }
             });
+        }
+    }
+
+    /**
+     * Apply permission filter to repository based on authorized user IDs.
+     * This ensures that search results are filtered by user permissions.
+     *
+     * @param mixed $repository Repository instance or query builder
+     * @return void
+     */
+    protected function applyPermissionFilter(mixed $repository): void
+    {
+        if ($userIds = bouncer()->getAuthorizedUserIds()) {
+            if (method_exists($repository, 'pushCriteria')) {
+                // Repository pattern: use Criteria so it composes with other filters
+                $permissionCriteria = new class($userIds) implements \Prettus\Repository\Contracts\CriteriaInterface {
+                    public function __construct(private array $userIds) {}
+                    public function apply($model, \Prettus\Repository\Contracts\RepositoryInterface $repository)
+                    {
+                        return $model->whereIn('user_id', $this->userIds);
+                    }
+                };
+                $repository->pushCriteria($permissionCriteria);
+            } elseif ($repository instanceof Builder) {
+                // Direct query builder
+                $repository->whereIn('user_id', $userIds);
+            }
         }
     }
 
@@ -425,6 +493,43 @@ trait HasAdvancedSearch
     }
 
     /**
+     * Apply multi-token search (AND-of-ORs) for space-separated terms.
+     */
+    protected function applyMultiTokenSearch(mixed $repository, array $tokens, array $nameFields): void
+    {
+        if (method_exists($repository, 'pushCriteria')) {
+            $multiTokenCriteria = new class($tokens, $nameFields) implements \Prettus\Repository\Contracts\CriteriaInterface {
+                public function __construct(private array $tokens, private array $nameFields) {}
+                public function apply($model, \Prettus\Repository\Contracts\RepositoryInterface $repository)
+                {
+                    return $model->where(function ($qb) {
+                        foreach ($this->tokens as $token) {
+                            $like = '%' . $token . '%';
+                            $qb->where(function ($qq) use ($like) {
+                                foreach ($this->nameFields as $field) {
+                                    $qq->orWhere($field, 'like', $like);
+                                }
+                            });
+                        }
+                    });
+                }
+            };
+            $repository->pushCriteria($multiTokenCriteria);
+        } elseif ($repository instanceof Builder) {
+            $repository->where(function ($qb) use ($tokens, $nameFields) {
+                foreach ($tokens as $token) {
+                    $like = '%' . $token . '%';
+                    $qb->where(function ($qq) use ($like, $nameFields) {
+                        foreach ($nameFields as $field) {
+                            $qq->orWhere($field, 'like', $like);
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    /**
      * Enable debug logging for search queries.
      */
     protected function enableSearchDebugLogging(string $tableName, string $search, string $searchFields, string $searchJoin): void
@@ -441,10 +546,10 @@ trait HasAdvancedSearch
                 // Support both MySQL (backticks) and PostgreSQL (double quotes) table name formats
                 $sqlLower = strtolower($query->sql);
                 $tableNameLower = strtolower($tableName);
-                $hasTable = Str::contains($sqlLower, "from `{$tableNameLower}`") 
+                $hasTable = Str::contains($sqlLower, "from `{$tableNameLower}`")
                          || Str::contains($sqlLower, "from \"{$tableNameLower}\"")
                          || Str::contains($sqlLower, "from {$tableNameLower} ");
-                
+
                 if ($hasTable) {
                     // Build a best-effort interpolated SQL for readability
                     $interpolated = @vsprintf(

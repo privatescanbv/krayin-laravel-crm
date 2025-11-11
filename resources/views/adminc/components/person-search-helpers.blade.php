@@ -10,10 +10,10 @@
 
                 const cleaned = String(query || '').trim();
                 const digitsOnly = cleaned.replace(/\D+/g, '');
-                
+
                 // Check if query looks like an email address
                 const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned);
-                
+
                 if (isEmail) {
                     // For email addresses, search only on email
                     params.search = `email:${cleaned};`;

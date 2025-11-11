@@ -17,12 +17,16 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Prettus\Repository\Contracts\CriteriaInterface;
+use Prettus\Repository\Contracts\RepositoryInterface;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Throwable;
 use Webkul\Admin\DataGrids\Contact\PersonDataGrid;
 use Webkul\Admin\Http\Controllers\Controller;
+use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
 use Webkul\Admin\Http\Requests\AttributeForm;
 use Webkul\Admin\Http\Requests\MassDestroyRequest;
+use Webkul\Admin\Http\Resources\Json\AnonymousResourceCollection;
 use Webkul\Admin\Http\Resources\PersonResource;
 use Webkul\Attribute\Repositories\AttributeRepository;
 use Webkul\Contact\Models\Person;
@@ -34,7 +38,7 @@ use App\Services\PersonValidationService;
 
 class PersonController extends Controller
 {
-    use NormalizesContactFields;
+    use NormalizesContactFields, HasAdvancedSearch;
     private bool $enableLogging = false;
 
     /**
@@ -48,6 +52,20 @@ class PersonController extends Controller
         private readonly AttributeRepository $attributeRepository)
     {
         request()->request->add(['entity_type' => 'persons']);
+    }
+
+    /**
+     * Get search configuration for persons.
+     */
+    protected function getSearchConfig(): array
+    {
+        return [
+            'name_fields' => ['first_name', 'last_name', 'married_name'],
+            'supports_email_phone_search' => true,
+            'supports_user_name_search' => false,
+            'enable_debug_logging' => $this->enableLogging,
+            'table_name' => 'persons',
+        ];
     }
 
     /**
@@ -247,202 +265,39 @@ class PersonController extends Controller
      */
     public function search(): JsonResource|JsonResponse
     {
-        // Validate requested search fields
-        if ($resp = $this->validateSearchFieldsAgainstAllowed($this->personRepository->getFieldsSearchable())) {
-            return $resp;
-        }
+        // Use performAdvancedSearch for normalization and standard search handling
+        // Email detection and multi-token search are now handled in HasAdvancedSearch
+        $result = $this->performAdvancedSearch(
+            repository: $this->personRepository,
+            getFieldsSearchable: fn() => $this->personRepository->getFieldsSearchable(),
+            eagerLoadRelations: ['address'],
+            getResults: function ($repository, $emailTerms = [], $phoneTerms = []) {
+                // Always apply RequestCriteria (with normalized search/searchFields)
+                $repository->pushCriteria(app(RequestCriteria::class));
 
-        // Normalize convenience tokens email:/phone:/firstname:/lastname: to underlying columns and apply stricter matching
-        $rawSearch = (string) request()->query('search', '');
-        if ($rawSearch && (
-                str_contains($rawSearch, 'email:') ||
-                str_contains($rawSearch, 'phone:') ||
-                str_contains($rawSearch, 'firstname:') || str_contains($rawSearch, 'first_name:') ||
-                str_contains($rawSearch, 'lastname:') || str_contains($rawSearch, 'last_name:')
-            )) {
-            $tokens = array_values(array_filter(array_map('trim', explode(';', $rawSearch))));
-            $emailTerms = [];
-            $phoneTerms = [];
-            $firstNameTerms = [];
-            $lastNameTerms = [];
-            $kept = [];
-            foreach ($tokens as $tok) {
-                if (str_starts_with($tok, 'email:')) {
-                    $emailTerms[] = substr($tok, strlen('email:'));
-                } elseif (str_starts_with($tok, 'phone:')) {
-                    $phoneTerms[] = substr($tok, strlen('phone:'));
-                } elseif (str_starts_with($tok, 'firstname:')) {
-                    $firstNameTerms[] = substr($tok, strlen('firstname:'));
-                } elseif (str_starts_with($tok, 'first_name:')) {
-                    $firstNameTerms[] = substr($tok, strlen('first_name:'));
-                } elseif (str_starts_with($tok, 'lastname:')) {
-                    $lastNameTerms[] = substr($tok, strlen('lastname:'));
-                } elseif (str_starts_with($tok, 'last_name:')) {
-                    $lastNameTerms[] = substr($tok, strlen('last_name:'));
-                } else {
-                    $kept[] = $tok;
+                // Apply email/phone search after RequestCriteria but before permission filter
+                // This ensures email/phone search is combined with OR to name search
+                if (!empty($emailTerms) || !empty($phoneTerms)) {
+                    $this->applyEmailPhoneSearch($repository, $emailTerms, $phoneTerms);
                 }
-            }
 
-            // Rebuild search without convenience tokens (they will be applied via scopeQuery)
-            request()->merge(['search' => ($kept ? implode(';', $kept) . ';' : '')]);
+                // Apply permission filter via a Criteria so it composes with existing scopeQuery
+                $this->applyPermissionFilter($repository);
 
-            // Ensure searchFields include like for relevant columns if needed
-            $sf = (string) request()->query('searchFields', '');
-            $parts = array_values(array_filter(array_map('trim', explode(';', $sf))));
-            $fields = array_map(fn($p) => explode(':', $p)[0] ?? $p, $parts);
-            foreach (['emails', 'phones'] as $f) {
-                if (!in_array($f, $fields, true)) {
-                    $parts[] = $f . ':like';
-                }
-            }
-            foreach (['first_name', 'last_name'] as $f) {
-                if (!in_array($f, $fields, true)) {
-                    $parts[] = $f . ':like';
-                }
-            }
-            if (!empty($parts)) {
-                request()->merge(['searchFields' => implode(';', $parts) . ';']);
-            }
+                return $repository->all();
+            },
+            resourceClass: PersonResource::class,
+            queryParams: request()->query->all()
+        );
 
-            // Apply stricter JSON matching via scopeQuery to limit false positives
-            if (!empty($emailTerms) || !empty($phoneTerms) || !empty($firstNameTerms) || !empty($lastNameTerms)) {
-                $this->personRepository->scopeQuery(function ($q) use ($emailTerms, $phoneTerms, $firstNameTerms, $lastNameTerms) {
-                    return $q->where(function ($qb) use ($emailTerms, $phoneTerms, $firstNameTerms, $lastNameTerms) {
-                        foreach ($emailTerms as $term) {
-                            $like = '%"value":"%' . str_replace(['%', '_'], ['\\%', '\\_'], $term) . '%"%';
-                            $qb->orWhere('emails', 'like', $like)
-                               ->orWhere('emails', 'like', '%' . $term . '%'); // fallback
-                        }
-                        foreach ($phoneTerms as $term) {
-                            $like = '%"value":"%' . str_replace(['%', '_'], ['\\%', '\\_'], $term) . '%"%';
-                            $qb->orWhere('phones', 'like', $like)
-                               ->orWhere('phones', 'like', '%' . $term . '%'); // fallback
-                        }
-                        foreach ($firstNameTerms as $term) {
-                            $qb->orWhere('first_name', 'like', '%' . $term . '%');
-                        }
-                        foreach ($lastNameTerms as $term) {
-                            $qb->orWhere('last_name', 'like', '%' . $term . '%')
-                               ->orWhere('married_name', 'like', '%' . $term . '%');
-                        }
-                    });
-                });
-            }
-            // Prefer OR join semantics
-            request()->merge(['searchJoin' => 'or']);
+        // If result is a JsonResponse (error), return it immediately
+        if ($result instanceof JsonResponse) {
+            return $result;
         }
 
-        // Map incoming lookup term to RequestCriteria expectations (Contactpersoon zoeken)
-        $searchTerm = trim((string) (request('search') ?? request('query') ?? request('term') ?? ''));
+        // Extract persons from the resource collection
+        $persons = $result->collection;
 
-        // If searchTerm looks like an email, normalize to emails JSON search for better matching
-        if ($searchTerm !== '' && filter_var($searchTerm, FILTER_VALIDATE_EMAIL)) {
-            // Build a single OR group across name fields and emails JSON for email-like input
-            request()->merge([
-                'search'       => '',
-                'searchFields' => '',
-                'searchJoin'   => 'or',
-            ]);
-
-            $this->personRepository->scopeQuery(function ($q) use ($searchTerm) {
-                $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $searchTerm);
-                $jsonLike = '%"value":"%' . $escaped . '%"%';
-                $nameLike = '%' . $searchTerm . '%';
-
-                return $q->where(function ($qb) use ($jsonLike, $nameLike, $searchTerm) {
-                    $qb->where('first_name', 'like', $nameLike)
-                       ->orWhere('last_name', 'like', $nameLike)
-                       ->orWhere('married_name', 'like', $nameLike)
-                       ->orWhere('emails', 'like', $jsonLike)
-                       ->orWhere('emails', 'like', '%' . $searchTerm . '%');
-                });
-            });
-
-            // Prevent additional name-only criteria from being added below
-            $searchTerm = '';
-        }
-
-        // Log all SQL hitting the persons table for this request (interpolated)
-        if ($this->enableLogging) {
-            DB::listen(function ($query) {
-                if (Str::contains($query->sql, 'from `persons`')) {
-                    $interpolated = @vsprintf(
-                        str_replace('?', "'%s'", $query->sql),
-                        array_map(fn($b) => is_string($b) ? $b : (is_null($b) ? 'NULL' : (string)$b), $query->bindings)
-                    );
-
-                    Log::debug('Person search SQL', [
-                        'sql' => $query->sql,
-                        'bindings' => $query->bindings,
-                        'interpolated' => $interpolated,
-                        'time_ms' => $query->time,
-                    ]);
-                }
-            });
-        }
-
-        if ($searchTerm !== '') {
-            $tokens = preg_split('/\s+/', $searchTerm, -1, PREG_SPLIT_NO_EMPTY);
-
-            if (count($tokens) > 1) {
-                // Multi-token: apply tokenized AND-of-ORs; skip RequestCriteria merge to avoid conflicting AND
-                $this->personRepository->scopeQuery(function ($q) use ($tokens) {
-                    return $q->where(function ($qb) use ($tokens) {
-                        foreach ($tokens as $token) {
-                            $like = '%' . $token . '%';
-                            $qb->where(function ($qq) use ($like) {
-                                $qq->where('first_name', 'like', $like)
-                                   ->orWhere('last_name', 'like', $like)
-                                   ->orWhere('married_name', 'like', $like);
-                            });
-                        }
-                    });
-                });
-            } else {
-                // Single-token input
-                $clientProvidedSearchFields = trim((string) request()->query('searchFields', '')) !== '';
-                $isFieldedSearch = str_contains($searchTerm, ':');
-
-                if (!$clientProvidedSearchFields && !$isFieldedSearch) {
-                    // Free-text input: include emails/phones plus name fields and add JSON-aware matching
-                    $searchFields = 'first_name:like;last_name:like;married_name:like';
-
-                    request()->merge([
-                        'search' => $searchTerm,
-                        'searchFields' => $searchFields,
-                        'searchJoin' => 'or',
-                    ]);
-
-                    // Add JSON-aware matching for emails/phones separately to avoid conflicts
-                    $this->personRepository->scopeQuery(function ($q) use ($searchTerm) {
-                        $escaped = str_replace(['%', '_'], ['\\%', '\\_'], $searchTerm);
-                        $jsonLike = '%"value":"%' . $escaped . '%"%';
-
-                        return $q->orWhere(function ($qb) use ($jsonLike, $searchTerm) {
-                            // Add OR conditions for JSON fields
-                            $qb->orWhere('emails', 'like', $jsonLike)
-                                ->orWhere('phones', 'like', $jsonLike)
-                                ->orWhere('emails', 'like', '%' . $searchTerm . '%')
-                                ->orWhere('phones', 'like', '%' . $searchTerm . '%');
-                        });
-                    });
-                } else {
-                    logger()->warning('Search term mismatched, no search');
-                }
-            }
-        }
-        if ($userIds = bouncer()->getAuthorizedUserIds()) {
-            $persons = $this->personRepository
-                ->pushCriteria(app(RequestCriteria::class))
-                ->with(['address'])
-                ->findWhereIn('user_id', $userIds);
-        } else {
-            $persons = $this->personRepository
-                ->pushCriteria(app(RequestCriteria::class))
-                ->with(['address'])
-                ->all();
-        }
         // Check if we need to calculate match scores against a lead
         $leadId = request()->get('lead_id');
         if ($leadId) {
@@ -487,44 +342,7 @@ class PersonController extends Controller
             }
         }
 
-        return PersonResource::collection($persons);
-    }
-
-    /**
-     * Validate requested search fields against repository definitions.
-     * Returns JsonResponse(400) on invalid, otherwise null.
-     */
-    private function validateSearchFieldsAgainstAllowed(array $fieldsSearchable): ?JsonResponse
-    {
-        $requestedFieldsParam = request()->query('searchFields', '');
-        if (empty($requestedFieldsParam)) {
-            return null;
-        }
-
-        $requestedFields = array_filter(explode(';', $requestedFieldsParam));
-        $requestedFieldNames = array_map(function ($f) {
-            $parts = explode(':', $f);
-            return $parts[0] ?? $f;
-        }, $requestedFields);
-
-        $allowed = [];
-        foreach ($fieldsSearchable as $key => $value) {
-            $allowed[] = is_int($key) ? $value : $key;
-        }
-
-        foreach ($requestedFieldNames as $field) {
-            if ($field === '') {
-                continue;
-            }
-            if (!in_array($field, $allowed, true)) {
-                return response()->json([
-                    'message' => 'Invalid search field',
-                    'field' => $field,
-                ], 400);
-            }
-        }
-
-        return null;
+        return $result;
     }
 
     /**

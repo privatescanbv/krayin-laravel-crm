@@ -39,7 +39,7 @@ services:
     depends_on:
       - mysql
       - n8n
-      - mailserver
+#      - mailserver
 
   mysql:
     image: 'mysql/mysql-server:8.0'
@@ -167,52 +167,52 @@ services:
     networks:
       - mb_traefik
 
-  mailserver:
-    image: mailserver/docker-mailserver:latest
-    hostname: mail
-    domainname: test.local
-    container_name: mailserver
-    env_file: mailserver.env
-    environment:
-      - SSL_TYPE=manual
-      - SSL_CERT_PATH=/tmp/docker-mailserver/ssl/mail.test.local-cert.pem
-      - SSL_KEY_PATH=/tmp/docker-mailserver/ssl/mail.test.local-key.pem
-    volumes:
-      - ./maildata:/var/mail
-      - ./mailstate:/var/mail-state
-      - ./docker/config/:/tmp/docker-mailserver/
-    ports:
-      - "1025:25"     # SMTP inkomend (van Laravel)
-      - "587:587"     # SMTP met AUTH (voor RainLoop)
-      - "993:993"     # IMAPS voor Webklex of mailclient
-    restart: unless-stopped
-    cap_add:
-      - NET_ADMIN
-    networks:
-      - sail
-
-  # visueel mailtjes kunnen lezen (local development)
-  rainloop:
-    image: hardware/rainloop
-    container_name: rainloop
-    ports:
-      - "8888:8888"  # Webmail
-    restart: unless-stopped
-    depends_on:
-      - mailserver
-    networks:
-      - sail
-      - mb_traefik
-    volumes:
-      - './rainloop_data:/rainloop/data'
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.rainloop.rule=Host(`webmail.dev.privatescan.nl`)
-      - traefik.http.routers.rainloop.entrypoints=https
-      - traefik.http.routers.rainloop.tls=true
-      - traefik.http.routers.rainloop.tls.certresolver=myresolver
-      - traefik.http.services.rainloop.loadbalancer.server.port=8888
-      - traefik.docker.network=mb_traefik
+#  mailserver:
+#    image: mailserver/docker-mailserver:latest
+#    hostname: mail
+#    domainname: test.local
+#    container_name: mailserver
+#    env_file: mailserver.env
+#    environment:
+#      - SSL_TYPE=manual
+#      - SSL_CERT_PATH=/tmp/docker-mailserver/ssl/mail.test.local-cert.pem
+#      - SSL_KEY_PATH=/tmp/docker-mailserver/ssl/mail.test.local-key.pem
+#    volumes:
+#      - ./maildata:/var/mail
+#      - ./mailstate:/var/mail-state
+#      - ./docker/config/:/tmp/docker-mailserver/
+#    ports:
+#      - "1025:25"     # SMTP inkomend (van Laravel)
+#      - "587:587"     # SMTP met AUTH (voor RainLoop)
+#      - "993:993"     # IMAPS voor Webklex of mailclient
+#    restart: unless-stopped
+#    cap_add:
+#      - NET_ADMIN
+#    networks:
+#      - sail
+#
+#  # visueel mailtjes kunnen lezen (local development)
+#  rainloop:
+#    image: hardware/rainloop
+#    container_name: rainloop
+#    ports:
+#      - "8888:8888"  # Webmail
+#    restart: unless-stopped
+#    depends_on:
+#      - mailserver
+#    networks:
+#      - sail
+#      - mb_traefik
+#    volumes:
+#      - './rainloop_data:/rainloop/data'
+#    labels:
+#      - traefik.enable=true
+#      - traefik.http.routers.rainloop.rule=Host(`webmail.dev.privatescan.nl`)
+#      - traefik.http.routers.rainloop.entrypoints=https
+#      - traefik.http.routers.rainloop.tls=true
+#      - traefik.http.routers.rainloop.tls.certresolver=myresolver
+#      - traefik.http.services.rainloop.loadbalancer.server.port=8888
+#      - traefik.docker.network=mb_traefik
 
   suitecrm:
     image: ghcr.io/privatescanbv/privatecrm/suitecrm:1.0
@@ -251,7 +251,7 @@ services:
       APP_NAME: 'PrivateForms'
       APP_ENV: 'production'
       APP_KEY: 'base64:i8u5O+j9QB823zOyqJFjsqr2iINU9Z1cFdr5HTfKNOg='
-      APP_KEY_1: '4!LvFF3HNTUGz*E^X@kk'
+      API_KEY_1: '4!LvFF3HNTUGz*E^X@kk'
       APP_DEBUG: 'false'
       APP_URL: 'http://localhost:8001'
       ASSET_URL: 'http://localhost:8001'
@@ -286,7 +286,7 @@ services:
       QUEUE_CONNECTION: 'database'
       CACHE_STORE: 'database'
       MEMCACHED_HOST: '127.0.0.1'
-      TRAEFIK_URL: 'api.forms.privatescan.local'
+      TRAEFIK_FROMS_URL: 'forms.dev.privatescan.nl'
       FORWARD_REDIS_PORT: 6379
       VITE_APP_NAME: "${APP_NAME}"
       EMAIL_VERIFICATION_BCC: 'mark.bulthuis@privatescan.nl'
@@ -295,7 +295,7 @@ services:
     labels:
       - 'dev.orbstack.domains=${TRAEFIK_FROMS_URL}'
       - traefik.enable=true
-      - traefik.http.routers.laravel-template-api-rtr.rule=Host(`$TRAEFIK_FROMS_URL`)
+      - traefik.http.routers.laravel-template-api-rtr.rule=Host(`forms.dev.privatescan.nl`)
       - traefik.http.routers.laravel-template-api-rtr.tls=true
       - traefik.http.routers.laravel-template-api-rtr.tls.certresolver=myresolver
       - traefik.http.routers.laravel-template-api-rtr.entrypoints=https

@@ -10,6 +10,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Webkul\Activity\Models\Activity;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Stage;
 use Webkul\User\Models\User;
 
 class MeetingImporter
@@ -146,7 +147,7 @@ class MeetingImporter
                         ],
                         'schedule_from' => $this->parseSugarDate($meetingData->date_start),
                         'schedule_to'   => $this->parseSugarDate($meetingData->date_end),
-                        'is_done'       => $this->mapMeetingStatus($meetingData->status),
+                        'is_done'       => $this->mapMeetingStatus($lead->stage, $meetingData->status),
                         'user_id'       => $this->mapAssignedUser($meetingData->assigned_user_id),
                         'lead_id'       => $lead->id,
                         'group_id'      => $groupId,
@@ -184,8 +185,11 @@ class MeetingImporter
      * - "Not Held": Meeting was not held -> is_done = false
      * - "Planned": Meeting is planned/scheduled -> is_done = false
      */
-    private function mapMeetingStatus(?string $status): bool
+    private function mapMeetingStatus(Stage $stage, ?string $status): bool
     {
+        if ($stage->is_lost || $stage->is_won) {
+            return true;
+        }
         if (! $status) {
             return false;
         }

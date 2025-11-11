@@ -15,6 +15,7 @@ use Webkul\Email\Enums\EmailFolderEnum;
 use Webkul\Email\Models\Email;
 use Webkul\Email\Models\Folder;
 use Webkul\Lead\Models\Lead;
+use Webkul\Lead\Models\Stage;
 use Webkul\Tag\Models\Tag;
 use Webkul\User\Models\User;
 
@@ -217,7 +218,7 @@ class ActivityImporter
                         ],
                         'schedule_from' => $this->parseSugarDate($callData->date_start),
                         'schedule_to'   => $this->parseSugarDate($callData->date_end),
-                        'is_done'       => $this->mapCallStatus($callData->status),
+                        'is_done'       => $this->mapCallStatus($lead->stage, $callData->status),
                         'user_id'       => $this->mapAssignedUser($callData->assigned_user_id),
                         'lead_id'       => $lead->id,
                         'group_id'      => $groupId,
@@ -475,8 +476,11 @@ class ActivityImporter
     /**
      * Map call status to is_done boolean
      */
-    private function mapCallStatus(?string $status): bool
+    private function mapCallStatus(Stage $stage, ?string $status): bool
     {
+        if ($stage->is_lost || $stage->is_won) {
+            return true;
+        }
         if (! $status) {
             return false;
         }

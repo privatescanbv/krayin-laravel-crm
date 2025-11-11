@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Http;
 use Symfony\Component\Mailer\SentMessage;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email as SymfonyEmail;
-use Symfony\Component\Mime\RawMessage;
 use Tests\TestCase;
 
 class MicrosoftGraphMailTransportTest extends TestCase
@@ -42,15 +41,13 @@ class MicrosoftGraphMailTransportTest extends TestCase
             ->text('Hello Graph!')
             ->attach('Attachment body', 'note.txt', 'text/plain');
 
-        $symfonyEmail->getHeaders()->addIdHeader('Message-ID', '<message-id@example.com>');
-        $symfonyEmail->getHeaders()->addIdHeader('In-Reply-To', '<parent@example.com>');
-        $symfonyEmail->getHeaders()->addTextHeader('References', '<parent@example.com>');
-
-        $rawMessage = new RawMessage($symfonyEmail->toString());
+        $symfonyEmail->getHeaders()->addIdHeader('Message-ID', 'message-id@example.com');
+        $symfonyEmail->getHeaders()->addIdHeader('In-Reply-To', 'parent@example.com');
+        $symfonyEmail->getHeaders()->addTextHeader('References', 'parent@example.com');
 
         $transport = new MicrosoftGraphMailTransport();
 
-        $sentMessage = $transport->send($rawMessage);
+        $sentMessage = $transport->send($symfonyEmail);
 
         $this->assertInstanceOf(SentMessage::class, $sentMessage);
 
@@ -105,10 +102,8 @@ class MicrosoftGraphMailTransportTest extends TestCase
             ->to(new Address('recipient@example.com'))
             ->text('Hello!');
 
-        $rawMessage = new RawMessage($symfonyEmail->toString());
-
         $transport = new MicrosoftGraphMailTransport();
-        $transport->send($rawMessage);
+        $transport->send($symfonyEmail);
 
         Http::assertSent(function ($request) {
             if (! str_contains($request->url(), '/sendMail')) {

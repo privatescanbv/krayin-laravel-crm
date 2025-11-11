@@ -17,7 +17,7 @@ abstract class TestCase extends BaseTestCase
         // Set locale to English for consistent test messages
         app()->setLocale('en');
 
-        $timezone = config('app.timezone', 'Europe/Amsterdam');
+        $timezone = config('app.timezone') ?: 'Europe/Amsterdam';
         config()->set('app.timezone', $timezone);
         date_default_timezone_set($timezone);
     }

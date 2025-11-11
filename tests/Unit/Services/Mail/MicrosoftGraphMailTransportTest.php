@@ -41,8 +41,8 @@ class MicrosoftGraphMailTransportTest extends TestCase
             ->text('Hello Graph!')
             ->attach('Attachment body', 'note.txt', 'text/plain');
 
-        $symfonyEmail->getHeaders()->addIdHeader('Message-ID', '<message-id@example.com>');
-        $symfonyEmail->getHeaders()->addIdHeader('In-Reply-To', '<parent@example.com>');
+        $symfonyEmail->getHeaders()->addIdHeader('Message-ID', 'message-id@example.com');
+        $symfonyEmail->getHeaders()->addIdHeader('In-Reply-To', 'parent@example.com');
         $symfonyEmail->getHeaders()->addTextHeader('References', '<parent@example.com>');
 
         $transport = new MicrosoftGraphMailTransport();

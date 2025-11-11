@@ -1,5 +1,7 @@
 @include('adminc.components.entity-selector')
 @include('adminc.components.contact-person-selector')
+@include('adminc.components.lead-selector')
+@include('adminc.components.sales-lead-selector')
 
 @pushOnce('scripts')
     @verbatim
@@ -24,7 +26,7 @@
 
                 <!-- Link Fields based on selected type -->
                 <template v-if="selectedEntityType === 'lead'">
-                    <v-entity-selector
+                    <v-lead-selector
                         label="Lead"
                         placeholder="Zoek lead..."
                         :search-route="leadSearchRoute"
@@ -35,13 +37,15 @@
                 </template>
 
                 <template v-else-if="selectedEntityType === 'sales_lead'">
-                    <v-entity-selector
+                    <v-sales-lead-selector
                         label="Sales Lead"
                         placeholder="Zoek sales lead..."
                         :search-route="salesLeadSearchRoute"
-                        :multiple="false"
-                        :items="salesLeadItems"
-                        @update:items="onSalesLeadSelected"
+                        :current-value="email?.sales_lead_id || null"
+                        :current-label="email?.sales_lead?.name || ''"
+                        :can-add-new="false"
+                        @change="onSalesLeadSelected"
+                        @update:value="val => { /* handled by @change */ }"
                     />
                 </template>
 
@@ -78,7 +82,7 @@
                         salesLeadItems: [],
                         entityTypes: [
                             { value: 'lead', label: 'Lead' },
-                            { value: 'sales_lead', label: 'Sales Lead' },
+                            { value: 'sales_lead', label: 'Sales' },
                             { value: 'person', label: 'Contact' },
                         ],
                     };
@@ -90,7 +94,7 @@
                         this.leadItems = [{ id: this.email.lead_id, name: this.email.lead?.name || `Lead #${this.email.lead_id}` }];
                     } else if (this.email?.sales_lead_id) {
                         this.selectedEntityType = 'sales_lead';
-                        this.salesLeadItems = [{ id: this.email.sales_lead_id, name: this.email.sales_lead?.name || `Sales Lead #${this.email.sales_lead_id}` }];
+                        this.salesLeadItems = [{ id: this.email.sales_lead_id, name: this.email.sales_lead?.name || `Sales #${this.email.sales_lead_id}` }];
                     } else if (this.email?.person_id) {
                         this.selectedEntityType = 'person';
                     }
@@ -103,10 +107,9 @@
                             this.saveSelection();
                         }
                     },
-                    onSalesLeadSelected(items) {
-                        const item = Array.isArray(items) && items.length > 0 ? items[0] : null;
-                        if (item) {
-                            this.pendingEntity = { ...item, type: 'sales_lead' };
+                    onSalesLeadSelected(salesLead) {
+                        if (salesLead) {
+                            this.pendingEntity = { ...salesLead, type: 'sales_lead' };
                             this.saveSelection();
                         }
                     },

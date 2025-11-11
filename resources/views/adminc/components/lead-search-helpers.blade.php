@@ -1,16 +1,16 @@
-{{--shared person logic search functionality --}}
+{{--shared lead search functionality --}}
 @pushOnce('scripts')
 @verbatim
     <script type="module">
         window.adminc = window.adminc || {};
 
-        if (!window.adminc.fetchPersons) {
-            window.adminc.fetchPersons = async function(query, opts = {}, dominantPhoneBehavior = true) {
+        if (!window.adminc.fetchLeads) {
+            window.adminc.fetchLeads = async function(query, opts = {}, dominantPhoneBehavior = true) {
                 let params = {};
 
                 const cleaned = String(query || '').trim();
                 const digitsOnly = cleaned.replace(/\D+/g, '');
-                
+
                 // Check if query looks like an email address
                 const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleaned);
                 
@@ -23,20 +23,19 @@
                     params.search = `phone:${digitsOnly};`;
                     params.searchFields = `phones:like;`;
                 } else {
-                    // Regular text search
+                    // Regular text search - use the cleaned query
                     params.search = cleaned;
                 }
 
-                if (opts.leadId) {
-                    params.lead_id = opts.leadId;
+                if (opts.salesLeadId) {
+                    params.sales_lead_id = opts.salesLeadId;
                 }
 
-                const response = await axios.get('/admin/contacts/persons/search', { params });
+                const response = await axios.get('/admin/leads/search', { params });
                 return (response && response.data && (response.data.data || response.data)) || [];
             };
         }
     </script>
 @endverbatim
 @endPushOnce
-
 

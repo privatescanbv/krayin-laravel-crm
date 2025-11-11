@@ -174,3 +174,41 @@ test('lead search ignores empty phone token and does not add phones like %%', fu
     expect($ids)->toContain($leadTarget->id)
         ->and($ids)->not->toContain($leadNoise->id);
 });
+
+test('lead search finds by email when only email token is provided', function () {
+    // Create target lead with email
+    $leadTarget = Lead::factory()->create([
+        'first_name' => 'Test',
+        'last_name'  => 'User',
+        'emails'     => [
+            ['value' => 'test.user@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => true],
+        ],
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
+        'user_id'                => $this->user->id,
+    ]);
+
+    // Create noise lead with different email but same name
+    $leadNoise = Lead::factory()->create([
+        'first_name' => 'Test',
+        'last_name'  => 'User',
+        'emails'     => [
+            ['value' => 'different.email@example.com', 'label' => ContactLabel::Eigen->value, 'is_default' => true],
+        ],
+        'lead_pipeline_id'       => $this->pipeline->id,
+        'lead_pipeline_stage_id' => $this->stage->id,
+        'user_id'                => $this->user->id,
+    ]);
+
+    // Search with only email token (simulating mega search email detection)
+    $resp = $this->getJson(route('admin.leads.search', [
+        'search'       => 'email:test.user@example.com;',
+        'searchFields' => 'emails:like;',
+        'searchJoin'   => 'or',
+    ]));
+    $resp->assertOk();
+
+    $ids = collect($resp->json('data'))->pluck('id')->toArray();
+    expect($ids)->toContain($leadTarget->id)
+        ->and($ids)->not->toContain($leadNoise->id);
+});

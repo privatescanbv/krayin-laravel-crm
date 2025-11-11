@@ -10,10 +10,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\SalesLead;
 use App\Models\User;
+use App\Repositories\SalesLeadRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Enum;
+use Prettus\Repository\Criteria\RequestCriteria;
 use Webkul\Activity\Models\Activity;
 use Webkul\Activity\Repositories\ActivityRepository;
 use Webkul\Admin\Http\Controllers\Concerns\HasAdvancedSearch;
@@ -22,7 +25,6 @@ use Webkul\Admin\Http\Resources\SalesLeadLookupResource;
 use Webkul\Email\Models\Email as EmailModel;
 use Webkul\Installer\Database\Seeders\Lead\PipelineSeeder;
 use Webkul\Lead\Models\Lead;
-use Webkul\Lead\Models\Stage;
 use Webkul\Lead\Repositories\PipelineRepository;
 use Webkul\Lead\Repositories\StageRepository;
 
@@ -32,7 +34,10 @@ class SalesLeadController extends Controller
 
     private bool $enableDebugLogging = false;
 
-    public function __construct(private readonly PipelineRepository $pipelineRepository) {}
+    public function __construct(
+        private readonly SalesLeadRepository $salesLeadRepository,
+        private readonly PipelineRepository $pipelineRepository
+    ) {}
 
     public function index(Request $request)
     {
@@ -495,125 +500,35 @@ class SalesLeadController extends Controller
      * Search Sales.
      * Uses minimal resource to avoid N+1 queries.
      */
-    public function search(): AnonymousResourceCollection
+    public function search(): AnonymousResourceCollection|JsonResponse
     {
-        try {
-            // Apply search normalization (handles query parameter conversion)
-            $config = $this->getSearchConfig();
+        return $this->performAdvancedSearch(
+            repository: $this->salesLeadRepository,
+            getFieldsSearchable: fn () => $this->salesLeadRepository->getFieldsSearchable(),
+            eagerLoadRelations: ['pipelineStage', 'user'],
+            getResults: function ($repository) {
+                // Always apply RequestCriteria (with normalized search/searchFields)
+                $repository->pushCriteria(app(RequestCriteria::class));
 
-            // Handle simple query parameter (for backward compatibility and entity lookup)
-            $queryParam = request()->query('query', '');
-            $search = request()->query('search', '');
-            $searchFields = request()->query('searchFields', '');
+                // Apply permission filter via a composable Criteria (no scopeQuery to avoid overwriting)
+                if ($userIds = bouncer()->getAuthorizedUserIds()) {
+                    $permissionCriteria = new class($userIds) implements \Prettus\Repository\Contracts\CriteriaInterface
+                    {
+                        public function __construct(private array $userIds) {}
 
-            if ($queryParam && ! $search && ! $searchFields) {
-                // Simple query mode: convert to name search with like operator
-                $nameFields = $config['name_fields'];
-                $searchTokens = [];
-                $searchFieldTokens = [];
-
-                foreach ($nameFields as $field) {
-                    $searchTokens[] = $field.':'.$queryParam;
-                    $searchFieldTokens[] = $field.':like';
+                        public function apply($model, \Prettus\Repository\Contracts\RepositoryInterface $repository)
+                        {
+                            return $model->whereIn('user_id', $this->userIds);
+                        }
+                    };
+                    $repository->pushCriteria($permissionCriteria);
                 }
 
-                request()->query->add([
-                    'search'       => implode(';', $searchTokens).';',
-                    'searchFields' => implode(';', $searchFieldTokens).';',
-                    'searchJoin'   => 'or',
-                ]);
-            }
-
-            // Normalize search params
-            $this->normalizeNameSearch($config['name_fields']);
-            if ($config['supports_user_name_search']) {
-                $this->normalizeUserNameSearch();
-            }
-
-            // Get normalized search parameters
-            $search = request()->query('search', '');
-            $searchFields = request()->query('searchFields', '');
-            $searchJoin = request()->query('searchJoin', 'or');
-
-            // Build query with eager loading
-            $query = SalesLead::with(['pipelineStage', 'user']);
-
-            // Apply search filters manually
-            if ($search) {
-                $tokens = array_filter(explode(';', $search));
-                $fieldTokens = $searchFields ? array_filter(explode(';', $searchFields)) : [];
-
-                $query->where(function ($q) use ($tokens, $fieldTokens, $searchJoin) {
-                    foreach ($tokens as $index => $token) {
-                        if (empty(trim($token))) {
-                            continue;
-                        }
-
-                        $parts = explode(':', $token, 2);
-                        if (count($parts) !== 2) {
-                            continue;
-                        }
-
-                        $field = trim($parts[0]);
-                        $value = trim($parts[1]);
-
-                        if (empty($value)) {
-                            continue;
-                        }
-
-                        // Find operator for this field
-                        $operator = 'like';
-                        foreach ($fieldTokens as $ft) {
-                            $ftParts = explode(':', $ft, 2);
-                            if (count($ftParts) === 2 && trim($ftParts[0]) === $field) {
-                                $operator = trim($ftParts[1]);
-                                break;
-                            }
-                        }
-
-                        // Handle relation fields (e.g., user.first_name, user.last_name)
-                        if (str_contains($field, '.')) {
-                            [$relation, $relationField] = explode('.', $field, 2);
-                            if ($relation === 'user') {
-                                $q->whereHas('user', function ($userQuery) use ($relationField, $value, $operator) {
-                                    if ($operator === 'like') {
-                                        $userQuery->where($relationField, 'like', '%'.$value.'%');
-                                    } else {
-                                        $userQuery->where($relationField, $operator, $value);
-                                    }
-                                }, $searchJoin === 'or' ? 'or' : 'and');
-                            }
-                        } else {
-                            // Direct field - skip fields that don't exist on SalesLead model
-                            $skipFields = ['email', 'emails', 'phones'];
-                            if (in_array($field, $skipFields)) {
-                                continue; // Skip this field as it doesn't exist on SalesLead
-                            }
-
-                            $method = ($index === 0 || $searchJoin === 'and') ? 'where' : 'orWhere';
-                            if ($operator === 'like') {
-                                $q->$method($field, 'like', '%'.$value.'%');
-                            } else {
-                                $q->$method($field, $operator, $value);
-                            }
-                        }
-                    }
-                });
-            }
-
-            $results = $query->limit(10)->get();
-
-            return SalesLeadLookupResource::collection($results);
-        } catch (\Exception $e) {
-            Log::error('SalesLeadController@search: Error', [
-                'error'   => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
-                'request' => request()->all(),
-            ]);
-
-            // Return empty collection on error to prevent UI blocking
-            return SalesLeadLookupResource::collection(collect([]));
-        }
+                return $repository->all();
+            },
+            resourceClass: SalesLeadLookupResource::class,
+            queryParams: request()->query->all()
+        );
     }
 
     /**
@@ -647,7 +562,7 @@ class SalesLeadController extends Controller
     }
 
     /**
-     * Get search configuration for sales leads.
+     * Get search configuration for sales.
      */
     protected function getSearchConfig(): array
     {

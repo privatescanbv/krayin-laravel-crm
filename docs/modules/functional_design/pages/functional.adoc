@@ -298,30 +298,36 @@ Dit maakt het mogelijk om *één gezamenlijke factuur* te versturen, terwijl de 
 
 === Algemeen zoeken
 
-Algemeen zoeken biedt snelle zoekfunctionaliteit over meerdere entiteiten via één invoerveld met tabbladen voor Leads, Personen en Producten.
+Algemeen zoeken biedt snelle zoekfunctionaliteit over meerdere entiteiten via één invoerveld met tabbladen voor Leads, Sales en Personen.
 
 ==== Tabs en velden
 
 ===== Leads
 De zoekopdracht wordt als OR-combinatie uitgevoerd over:
 - first_name, last_name, married_name (via token `name:` → genormaliseerd naar deze velden, met `:like`)
-- user.name (verkoper)
-- emails
-- phones
+- emails (via token `email:` → genormaliseerd naar JSON column search)
+- phones (via token `phone:` → genormaliseerd naar JSON column search)
 
 Let op:
 - Resultaten worden gefilterd op toegestane gebruikers (autorisatie).
+- Bij zoeken op telefoonnummer wordt automatisch herkend en gezocht op digits-only versie voor betere matching.
+
+===== Sales
+De zoekopdracht wordt alleen uitgevoerd op:
+- name (met `:like`)
+
+Let op:
+- Sales ondersteunt geen zoeken op email of telefoonnummer, alleen op naam.
 
 ===== Personen
 Zoekt OR-combinaties over:
 - first_name, last_name, married_name (via `name:` → genormaliseerd)
 - organization.name
-- emails
-- phones
+- emails (via token `email:` → genormaliseerd naar JSON column search)
+- phones (via token `phone:` → genormaliseerd naar JSON column search)
 
-===== Producten
-Zoekt o.a. op:
-- name, sku, description (met `:like`)
+Let op:
+- Bij zoeken op telefoonnummer wordt automatisch herkend en gezocht op digits-only versie voor betere matching.
 
 ==== Doorklikken naar Leads (Kanban)
 Bij “Bekijk alle leads die overeenkomen met …” worden `search`, `searchFields` en `searchJoin` in de URL meegenomen en opent het Kanban-bord met hetzelfde filter. Let op:

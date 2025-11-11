@@ -55,9 +55,8 @@ test('sales lead search ignores email field (does not exist)', function () {
         'limit'        => 10,
     ]));
 
-    // Should return 200 with empty or filtered results (not 500)
-    $response->assertOk();
-    // Should not error even though email field doesn't exist
+    // Currently no support (later maybe search in persons)
+    $response->assertBadRequest();
 });
 
 test('sales lead search ignores emails field (does not exist)', function () {
@@ -75,8 +74,8 @@ test('sales lead search ignores emails field (does not exist)', function () {
         'limit'        => 10,
     ]));
 
-    // Should return 200 with empty or filtered results (not 500)
-    $response->assertOk();
+    // Currently no support (later maybe search in persons)
+    $response->assertBadRequest();
 });
 
 test('sales lead search ignores phones field (does not exist)', function () {
@@ -94,9 +93,8 @@ test('sales lead search ignores phones field (does not exist)', function () {
         'limit'        => 10,
     ]));
 
-    // Should return 200 with empty or filtered results (not 500)
-    $response->assertOk();
-    // Should not error even though phones field doesn't exist
+    // Currently no support (later maybe search in persons)
+    $response->assertBadRequest();
 });
 
 test('sales lead search ignores multiple non-existent fields (email, emails, phones)', function () {
@@ -114,12 +112,8 @@ test('sales lead search ignores multiple non-existent fields (email, emails, pho
         'limit'        => 10,
     ]));
 
-    // Should return 200 (not 500)
-    $response->assertOk();
-
-    // Should still find the sales lead by name, even though email/emails/phones are skipped
-    $ids = collect($response->json('data'))->pluck('id');
-    expect($ids)->toContain($salesLead->id);
+    // Currently no support (later maybe search in persons)
+    $response->assertBadRequest();
 });
 
 test('sales lead search respects limit parameter', function () {

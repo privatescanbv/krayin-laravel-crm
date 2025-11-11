@@ -38,23 +38,23 @@
                         class="cursor-pointer p-4 hover:bg-gray-100 dark:hover:bg-gray-950"
                         :class="{ 'border-b-2 border-brandColor': activeTab == tab.key }"
                         v-for="tab in tabs"
-                        @click="activeTab = tab.key; search();"
+                        @click="activeTab = tab.key; updateSearchParams();"
                     >
                         @{{ tab.title }}
                     </div>
                 </div>
 
                 <!-- Searched Results -->
-                <template v-if="activeTab == 'products'">
+                <template v-if="activeTab == 'sales'">
                     <template v-if="isLoading">
-                        <x-admin::shimmer.header.mega-search.products />
+                        <x-admin::shimmer.header.mega-search.leads />
                     </template>
 
                     <template v-else>
                         <div class="grid max-h-[400px] overflow-y-auto">
-                            <template v-for="product in searchedResults.products">
+                            <template v-for="sale in searchedResults.sales">
                                 <a
-                                    :href="'{{ route('admin.products.view', ':id') }}'.replace(':id', product.id)"
+                                    :href="'{{ route('admin.sales-leads.view', ':id') }}'.replace(':id', sale.id)"
                                     class="flex cursor-pointer justify-between gap-2.5 border-b border-slate-300 p-4 last:border-b-0 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-gray-950"
                                 >
                                     <!-- Left Information -->
@@ -62,44 +62,34 @@
                                         <!-- Details -->
                                         <div class="grid place-content-start gap-1.5">
                                             <p class="text-base font-semibold text-gray-600 dark:text-gray-300">
-                                                @{{ product.name }}
+                                                @{{ sale.name }}
                                             </p>
 
                                             <p class="text-gray-500">
-                                                @{{ "@lang(':sku')".replace(':sku', product.sku) }}
+                                                @{{ sale.updated_at }}
                                             </p>
                                         </div>
                                     </div>
-
-                                    <!-- Right Information -->
-                                    <div class="grid place-content-center gap-1 text-right">
-                                        <!-- Formatted Price -->
-                                        <p class="font-semibold text-gray-600 dark:text-gray-300">
-                                            @{{ $admin.formatPrice(product.price) }}
-                                        </p>
-                                    </div>
                                 </a>
                             </template>
-
                         </div>
 
                         <div class="flex border-t p-3 dark:border-gray-800">
-                            <template v-if="searchedResults.products.length">
+                            <template v-if="searchedResults.sales.length">
                                 <a
-                                    :href="'{{ route('admin.products.index') }}?search=:query'.replace(':query', searchTerm)"
+                                    :href="`{{ route('admin.sales-leads.index') }}?search=${encodeURIComponent(params.search)}&searchFields=${encodeURIComponent(params.searchFields)}&searchJoin=or`"
                                     class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
                                 >
-
-                                    @{{ `@lang('admin::app.components.layouts.header.mega-search.explore-all-matching-products')`.replace(':query', searchTerm).replace(':count', searchedResults.products.length) }}
+                                    @{{ `@lang('admin::app.components.layouts.header.mega-search.explore-all-matching-sales')`.replace(':query', searchTerm).replace(':count', searchedResults.sales.length) }}
                                 </a>
                             </template>
 
                             <template v-else>
                                 <a
-                                    href="{{ route('admin.products.index') }}"
+                                    href="{{ route('admin.sales-leads.index') }}"
                                     class="cursor-pointer text-xs font-semibold text-brandColor transition-all hover:underline"
                                 >
-                                    @lang('admin::app.components.layouts.header.mega-search.explore-all-products')
+                                    @lang('admin::app.components.layouts.header.mega-search.explore-all-sales')
                                 </a>
                             </template>
                         </div>
@@ -126,12 +116,31 @@
                                                 @{{ lead.name }}
                                             </p>
 
-                                            <p class="text-gray-500">
-                                                @{{ lead.updated_at }}
-                                            </p>
+                                            <div class="flex gap-2 items-center">
+                                                <p class="text-gray-500">
+                                                    @{{ lead.updated_at }}
+                                                </p>
+                                                <template v-if="lead.stage && lead.stage.name">
+                                                    <span class="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
+                                                        @{{ lead.stage.name }}
+                                                    </span>
+                                                </template>
+                                            </div>
                                         </div>
                                     </div>
                                 </a>
+                            </template>
+
+                            <!-- Show create lead button if no results and search term looks like phone number -->
+                            <template v-if="!searchedResults.leads.length && isPhoneNumber(searchTerm)">
+                                <div class="flex justify-center p-4 border-b border-slate-300 dark:border-gray-800">
+                                    <a
+                                        :href="`{{ route('admin.leads.create') }}?phone=${encodeURIComponent(searchTerm)}`"
+                                        class="px-4 py-2 bg-brandColor text-white rounded-lg hover:bg-opacity-90 transition-all text-sm font-semibold"
+                                    >
+                                        @lang('admin::app.components.layouts.header.mega-search.create-lead')
+                                    </a>
+                                </div>
                             </template>
                         </div>
 
@@ -233,10 +242,6 @@
                                     searchFields: 'first_name:like;last_name:like;married_name:like',
                                 },
                                 {
-                                    search: 'user.name',
-                                    searchFields: 'user.name:like',
-                                },
-                                {
                                     search: 'email',
                                     searchFields: 'emails:like',
                                 },
@@ -247,23 +252,15 @@
                             ],
                         },
 
-                        products: {
-                            key: 'products',
-                            title: "@lang('admin::app.components.layouts.header.mega-search.tabs.products')",
+                        sales: {
+                            key: 'sales',
+                            title: "@lang('admin::app.components.layouts.header.mega-search.tabs.sales')",
                             is_active: false,
-                            endpoint: "{{ route('admin.products.search') }}",
+                            endpoint: "{{ route('admin.sales-leads.search') }}",
                             query_params: [
                                 {
                                     search: 'name',
                                     searchFields: 'name:like',
-                                },
-                                {
-                                    search: 'sku',
-                                    searchFields: 'sku:like',
-                                },
-                                {
-                                    search: 'description',
-                                    searchFields: 'description:like',
                                 },
                             ],
                         },
@@ -300,7 +297,7 @@
 
                     searchedResults: {
                         leads: [],
-                        products: [],
+                        sales: [],
                         persons: []
                     },
 
@@ -327,6 +324,8 @@
 
             methods: {
                 search(endpoint) {
+                    const url = endpoint || (this.tabs[this.activeTab] ? this.tabs[this.activeTab].endpoint : null);
+                    
                     if (this.searchTerm.length <= 1) {
                         this.searchedResults[this.activeTab] = [];
 
@@ -336,17 +335,31 @@
                     }
 
                     this.isDropdownOpen = true;
+                    this.isLoading = true;
 
-                    this.$axios.get(endpoint, {
-                            params: {
-                                ...this.params,
-                            },
-                        })
-                        .then((response) => {
-                            this.searchedResults[this.activeTab] = response.data.data;
-                        })
-                        .catch((error) => {})
-                        .finally(() => this.isLoading = false);
+                    if (this.params.search && url) {
+                        this.$axios.get(url, {
+                                params: {
+                                    ...this.params,
+                                         limit: 15,
+                                },
+                            })
+                            .then((response) => {
+                                this.searchedResults[this.activeTab] = response.data.data;
+                            })
+                           .catch((error) => {
+                               console.error('MegaSearch - search error:', error);
+                               console.info('MegaSearch - search context:', {
+                                   params: this.params,
+                                   searchTerm: this.searchTerm,
+                                   activeTab: this.activeTab,
+                               });
+                           })
+                            .finally(() => this.isLoading = false);
+                    } else {
+                        // nothing to search on or endpoint missing
+                        this.isLoading = false;
+                    }
                 },
 
                 handleFocusOut(e) {
@@ -365,11 +378,55 @@
 
                     const tab = this.tabs[this.activeTab];
 
-                    this.params.search += tab.query_params.map((param) => `${param.search}:${newTerm};`).join('');
-
-                    this.params.searchFields += tab.query_params.map((param) => `${param.searchFields};`).join('');
+                    const looksLikePhone = this.isPhoneNumber(newTerm);
+                    const looksLikeEmail = this.isEmail(newTerm);
+                    
+                    if (looksLikePhone) {
+                        // For phone-like terms, restrict search to phone-only per tab to avoid AND with name
+                        const digits = (newTerm || '').replace(/\D/g, '');
+                        if (digits.length >= 3) {
+                            if (this.activeTab === 'leads') {
+                                this.params.search = `phone:${digits};`;
+                                this.params.searchFields = `phones:like;`;
+                            } else if (this.activeTab === 'persons') {
+                                this.params.search = `phone:${digits};`;
+                                this.params.searchFields = `phones:like;`;
+                            } else if (this.activeTab === 'sales') {
+                                // skip for now, later maybe search on persons by phone
+                            }
+                        }
+                    } else if (looksLikeEmail) {
+                        // For email-like terms, restrict search to email-only per tab to avoid AND with name/phone
+                        if (this.activeTab === 'leads') {
+                            this.params.search = `email:${newTerm};`;
+                            this.params.searchFields = `emails:like;`;
+                        } else if (this.activeTab === 'persons') {
+                            this.params.search = `email:${newTerm};`;
+                            this.params.searchFields = `emails:like;`;
+                        } else if (this.activeTab === 'sales') {
+                            // Sales doesn't support email search, skip
+                        }
+                    } else {
+                        // Default behavior: map all query params for text searches
+                        this.params.search += tab.query_params.map((param) => `${param.search}:${newTerm};`).join('');
+                        this.params.searchFields += tab.query_params.map((param) => `${param.searchFields};`).join('');
+                    }
 
                     this.search(tab.endpoint);
+                },
+
+                isPhoneNumber(term) {
+                    if (!term || term.length < 3) return false;
+                    // Check if it's mostly digits or starts with +
+                    const cleaned = term.replace(/\s/g, '');
+                    return /^\+?[\d\s\-\(\)]+$/.test(cleaned) && cleaned.replace(/\D/g, '').length >= 3;
+                },
+
+                isEmail(term) {
+                    if (!term || typeof term !== 'string') return false;
+                    // Simple email validation - check for @ symbol and basic format
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    return emailRegex.test(term.trim());
                 },
             },
         });

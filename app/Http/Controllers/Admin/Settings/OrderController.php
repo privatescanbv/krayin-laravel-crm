@@ -306,7 +306,7 @@ class OrderController extends SimpleEntityController
 
         if (! $order->salesLead) {
             return response()->json([
-                'message' => 'Order heeft geen gekoppelde sales lead.',
+                'message' => 'Order heeft geen gekoppelde sales.',
             ], 422);
         }
 

@@ -39,7 +39,7 @@
                             {{ suggestion.name }}
                         </div>
                         <div class="text-xs text-gray-500 dark:text-gray-400">
-                            {{ suggestion.type === 'lead' ? 'Lead' : suggestion.type === 'sales_lead' ? 'Sales Lead' : 'Contact' }}
+                            {{ suggestion.type === 'lead' ? 'Lead' : suggestion.type === 'sales_lead' ? 'Sales' : 'Contact' }}
                             <span v-if="suggestion.stage"> - {{ suggestion.stage.name }}</span>
                         </div>
                     </div>
@@ -86,17 +86,21 @@
 
                     this.isLoading = true;
                     try {
-                        const params = {
+                        // Email search params for leads and persons
+                        const emailParams = {
                             search: `email:${senderEmail};`,
                             searchFields: 'emails:like;',
                             searchJoin: 'or',
                             limit: 10, // Limit results to prevent performance issues
                         };
 
+                        // Sales leads only support name search, not email search
+                        // So we skip sales leads search when searching by email
                         const [leadsResp, personsResp, salesResp] = await Promise.all([
-                            this.$axios.get(this.routes.lead, { params }),
-                            this.$axios.get(this.routes.person, { params }),
-                            this.$axios.get(this.routes.salesLead, { params }).catch(() => ({ data: { data: [] } })),
+                            this.$axios.get(this.routes.lead, { params: emailParams }),
+                            this.$axios.get(this.routes.person, { params: emailParams }),
+                            // Skip sales leads search for email - sales leads don't have email field
+                            Promise.resolve({ data: { data: [] } }),
                         ]);
 
                         const leads = (leadsResp.data?.data || []).map(item => ({

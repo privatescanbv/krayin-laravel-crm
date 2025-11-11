@@ -37,7 +37,6 @@ class LeadRepository extends Repository
         'married_name',
         'status',
         'user_id',
-        'user.name',
         // New explicit user fields for first/last name search
         'user.first_name',
         'user.last_name',
@@ -549,7 +548,7 @@ class LeadRepository extends Repository
             $lead->load('contactPerson');
             return ['lastname' => $lead->contactPerson->last_name];
         }
-        
+
         // If no contact person, check linked persons (use query directly to avoid pivot loading issues)
         $person = $lead->persons()->first();
         if (is_null($person)) {

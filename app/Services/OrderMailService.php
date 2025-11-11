@@ -444,7 +444,7 @@ HTML;
                 $saved = $salesLead->save();
 
                 if (! $saved) {
-                    Log::error('OrderMailService: Failed to save GVL form link to sales lead', [
+                    Log::error('OrderMailService: Failed to save GVL form link to sales', [
                         'order_id'      => $order->id,
                         'sales_lead_id' => $salesLead->id,
                         'form_link'     => $formLink,
@@ -457,7 +457,7 @@ HTML;
                     $salesLead->refresh();
                     $savedLink = $salesLead->gvl_form_link;
 
-                    Log::info('OrderMailService: GVL form link saved to sales lead', [
+                    Log::info('OrderMailService: GVL form link saved to sales', [
                         'order_id'        => $order->id,
                         'sales_lead_id'   => $salesLead->id,
                         'form_request_id' => $formRequestId,
@@ -467,7 +467,7 @@ HTML;
                     ]);
                 }
             } else {
-                Log::warning('OrderMailService: Cannot save GVL form link - no sales lead found', [
+                Log::warning('OrderMailService: Cannot save GVL form link - no sales found', [
                     'order_id' => $order->id,
                 ]);
             }

@@ -549,7 +549,13 @@
                             this.formData.phone = this.initialLeadPerson.phones[0].value || '';
                         }
                         // Sync to form fields
-                        this.$nextTick(() => this.syncPersonalFieldsToForm());
+                        this.$nextTick(() => {
+                            this.syncPersonalFieldsToForm();
+                            // Trigger suggestions immediately when phone is prefilled
+                            if (this.formData.phone && String(this.formData.phone).trim().length > 0) {
+                                this.fetchSuggestions();
+                            }
+                        });
                     }
 
                     // If prefilled persons exist, sync into the matcher and prefill fields
@@ -563,7 +569,13 @@
                             this.formData.phone = p.phones[0].value || '';
                         }
                         this.updateSelectedPersonsSummary();
-                        this.$nextTick(() => this.syncPersonalFieldsToForm());
+                        this.$nextTick(() => {
+                            this.syncPersonalFieldsToForm();
+                            // Trigger suggestions immediately when phone is present
+                            if (this.formData.phone && String(this.formData.phone).trim().length > 0) {
+                                this.fetchSuggestions();
+                            }
+                        });
                     } else {
                         // Initialize with one empty slot for ease of use
                         this.persons.push({id: null, name: '', match_percentage: null, organization: null});

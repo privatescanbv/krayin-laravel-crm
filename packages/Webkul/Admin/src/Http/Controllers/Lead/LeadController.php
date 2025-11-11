@@ -68,7 +68,7 @@ class LeadController extends Controller
     const WON_LOST_STAGE_CODES = ['won', 'lost', 'won-hernia', 'lost-hernia'];
 
 
-    private bool $enableDebugLogging = false;
+    private bool $enableDebugLogging = true;
 
     /**
      * Get search configuration for leads.
@@ -391,12 +391,13 @@ class LeadController extends Controller
             }
         }
 
-        // Handle query parameters for email, first_name, last_name
+        // Handle query parameters for email, first_name, last_name, phone
         $queryEmail = request('email');
         $queryFirstName = request('first_name');
         $queryLastName = request('last_name');
+        $queryPhone = request('phone');
 
-        if ($queryEmail || $queryFirstName || $queryLastName) {
+        if ($queryEmail || $queryFirstName || $queryLastName || $queryPhone) {
             // If no person is prefilled, create a prefilled lead person from query params
             if (!$prefilledLeadPerson) {
                 $prefilledLeadPerson = [];
@@ -425,6 +426,11 @@ class LeadController extends Controller
             }
             if ($queryLastName && empty($prefilledLeadPerson['last_name'])) {
                 $prefilledLeadPerson['last_name'] = $queryLastName;
+            }
+
+            // Set phone if provided
+            if ($queryPhone) {
+                $prefilledLeadPerson['phones'] = [['value' => $queryPhone, 'label' => 'primary']];
             }
         }
 
@@ -991,17 +997,25 @@ class LeadController extends Controller
             getFieldsSearchable: fn() => $this->leadRepository->getFieldsSearchable(),
             eagerLoadRelations: ['stage', 'user'],
             getResults: function ($repository) {
+                // Always apply RequestCriteria (with normalized search/searchFields)
+                $repository->pushCriteria(app(RequestCriteria::class));
+
+                // Apply permission filter via a Criteria so it composes with existing scopeQuery (email/phone)
                 if ($userIds = bouncer()->getAuthorizedUserIds()) {
-                    return $repository
-                        ->pushCriteria(app(RequestCriteria::class))
-                        ->findWhereIn('user_id', $userIds);
-                } else {
-                    return $repository
-                        ->pushCriteria(app(RequestCriteria::class))
-                        ->all();
+                    $permissionCriteria = new class($userIds) implements \Prettus\Repository\Contracts\CriteriaInterface {
+                        public function __construct(private array $userIds) {}
+                        public function apply($model, \Prettus\Repository\Contracts\RepositoryInterface $repository)
+                        {
+                            return $model->whereIn('user_id', $this->userIds);
+                        }
+                    };
+                    $repository->pushCriteria($permissionCriteria);
                 }
+
+                return $repository->all();
             },
-            resourceClass: LeadLookupResource::class
+            resourceClass: LeadLookupResource::class,
+            queryParams: request()->query->all()
         );
     }
 

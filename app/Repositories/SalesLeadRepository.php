@@ -16,6 +16,20 @@ use Webkul\Lead\Models\Stage;
 
 class SalesLeadRepository extends Repository
 {
+    /**
+     * Searchable fields.
+     */
+    protected $fieldSearchable = [
+        'name',
+        'description',
+        'user_id',
+        'user.first_name',
+        'user.last_name',
+        'pipeline_stage_id',
+        'created_at',
+        'closed_at',
+    ];
+
     public function __construct(
         private readonly OrderRepository $orderRepository,
         private readonly ActivityRepository $activityRepository,

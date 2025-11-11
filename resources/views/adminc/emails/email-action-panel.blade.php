@@ -163,7 +163,7 @@
                         type: 'sales_lead',
                         id: this.email.sales_lead_id,
                         label: this.email.sales_lead.name,
-                        subtitle: 'Sales Lead',
+                        subtitle: 'Sales',
                         url: '{{ route('admin.sales-leads.view', ':id') }}'.replace(':id', this.email.sales_lead_id),
                     };
                 }

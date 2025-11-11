@@ -64,7 +64,7 @@ class SalesLeadController extends Controller
     }
 
     /**
-     * Create an activity attached to a sales lead.
+     * Create an activity attached to a sales.
      */
     public function storeActivity(Request $request, int $id)
     {

@@ -6,6 +6,7 @@
     @search="search"
     @filter="filter"
     @applySavedFilter="applySavedFilter"
+    @resetAll="resetAll"
 >
     {{ $slot }}
 </v-datagrid-search>
@@ -75,6 +76,17 @@
                             </slot>
                         </template>
                     </x-admin::datagrid.toolbar.filter>
+
+                    <!-- Reset Datagrid Preferences -->
+                    <button
+                        type="button"
+                        class="relative flex cursor-pointer items-center rounded-md bg-gray-100 px-4 py-[9px] font-semibold text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                        @click="resetDatagridState"
+                        :title="'Reset filters & preferences'"
+                        aria-label="Reset filters & preferences"
+                    >
+                        <span class="icon-cross-large text-xl"></span>
+                    </button>
                 </div>
             </template>
         </slot>
@@ -86,7 +98,7 @@
 
             props: ['isLoading', 'available', 'applied', 'src'],
 
-            emits: ['search', 'filter', 'applySavedFilter'],
+            emits: ['search', 'filter', 'applySavedFilter', 'resetAll'],
 
             data() {
                 return {
@@ -150,6 +162,61 @@
                     let appliedColumn = this.filters.columns.find(column => column.index === 'all');
 
                     return appliedColumn?.value ?? [];
+                },
+
+                /**
+                 * Clear stored datagrid preferences for the current grid and reset filters/search.
+                 *
+                 * @returns {void}
+                 */
+                resetDatagridState() {
+                    try {
+                        const storageKey = 'datagrids';
+                        const raw = localStorage.getItem(storageKey);
+                        let datagrids = [];
+
+                        try {
+                            datagrids = JSON.parse(raw) ?? [];
+                        } catch (e) {
+                            datagrids = [];
+                        }
+
+                        // Remove only the current datagrid entry by src
+                        const remaining = datagrids.filter(dg => dg?.src !== this.src);
+
+                        if (remaining.length) {
+                            localStorage.setItem(storageKey, JSON.stringify(remaining));
+                        } else {
+                            localStorage.removeItem(storageKey);
+                        }
+                    } catch (e) {
+                        // no-op
+                    }
+
+                    // Clear local search input state
+                    const searchColumn = this.filters.columns.find(column => column.index === 'all');
+                    if (searchColumn) {
+                        searchColumn.value = [];
+                    }
+
+                    // Emit empty filters to parent to refresh immediately
+                    this.$emit('filter', { columns: [] });
+
+                    // Also clean filter-related URL params for a consistent reset
+                    const url = new URL(window.location.href);
+                    // Remove search param
+                    url.searchParams.delete('search');
+                    // Remove any filters[...] params
+                    [...url.searchParams.keys()].forEach((key) => {
+                        if (/^filters\[[^\]]+\](?:\[\d+\])?$/.test(key)) {
+                            url.searchParams.delete(key);
+                        }
+                    });
+                    // Soft reload without adding a new history entry
+                    window.history.replaceState({}, '', url.toString());
+
+                    // Notify parent to reset sort, pagination, and applied state
+                    this.$emit('resetAll');
                 },
             },
         });

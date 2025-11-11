@@ -148,6 +148,39 @@ class ActivityDataGrid extends DataGrid
         $this->addFilter('days_until_deadline', 'days_until_deadline');
         $this->addFilter('group', 'groups.name');
 
+        /**
+         * Special handling for "Gerelateerd aan" (entity_type) filter.
+         * The column is a SELECT alias from a CASE expression; MySQL does not allow
+         * referencing a SELECT alias in the WHERE clause. We therefore translate any
+         * incoming filter for `entity_type` into a HAVING clause and remove it from
+         * the generic datagrid filters so the core engine does not try to add a WHERE.
+         */
+        $filters = request()->input('filters', []);
+        if (isset($filters['entity_type'])) {
+            $values = $filters['entity_type'];
+            if (!is_array($values)) {
+                $values = [$values];
+            }
+            // Clean empty values
+            $values = array_values(array_filter($values, static fn($v) => $v !== null && $v !== ''));
+
+            if (!empty($values)) {
+                $queryBuilder->having(function ($q) use ($values) {
+                    foreach ($values as $i => $value) {
+                        if ($i === 0) {
+                            $q->having('entity_type', '=', $value);
+                        } else {
+                            $q->orHaving('entity_type', '=', $value);
+                        }
+                    }
+                });
+            }
+
+            // Remove to avoid WHERE on alias by the generic filter application
+            unset($filters['entity_type']);
+            request()->merge(['filters' => $filters]);
+        }
+
         return $queryBuilder;
     }
 

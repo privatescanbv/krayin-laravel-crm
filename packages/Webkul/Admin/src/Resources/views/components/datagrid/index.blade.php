@@ -257,6 +257,41 @@
                 },
 
                 /**
+                 * Reset all applied state: sorting, filters, pagination and saved filter, then refresh.
+                 *
+                 * @returns {void}
+                 */
+                resetAll() {
+                    // Reset pagination (keep perPage as-is)
+                    this.applied.pagination.page = 1;
+
+                    // Reset sorting
+                    this.applied.sort = {
+                        column: null,
+                        order: null,
+                    };
+
+                    // Reset saved filter selection
+                    this.applied.savedFilterId = null;
+
+                    // Reset filters, preserve 'all' empty
+                    this.applied.filters.columns = [
+                        {
+                            index: 'all',
+                            value: [],
+                        },
+                    ];
+
+                    // Clear selection
+                    this.applied.massActions.indices = [];
+                    this.applied.massActions.meta.mode = 'none';
+
+                    // Persist the cleared state and reload data
+                    this.updateDatagrids();
+                    this.get();
+                },
+
+                /**
                  * Get. This will prepare params from the `applied` props and fetch the data from the backend.
                  *
                  * @returns {void}

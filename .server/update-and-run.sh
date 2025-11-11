@@ -3,6 +3,7 @@
 docker pull ghcr.io/privatescanbv/krayin-laravel-crm/krayincrm:latest
 docker pull ghcr.io/privatescanbv/krayin-laravel-crm/crmsyncn8n:latest
 docker pull ghcr.io/privatescanbv/privatecrm/suitecrm:1.0
+docker pull ghcr.io/privatescanbv/privateforms/forms:latest
 
 docker-compose down
 

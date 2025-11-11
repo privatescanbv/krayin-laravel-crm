@@ -31,6 +31,15 @@ return [
         'icon-class' => 'icon-setting',
     ],
 
+
+    [
+        'key'        => 'orders',
+        'name'       => 'Orders',
+        'route'      => 'admin.orders.index',
+        'sort'       => 4,
+        'icon-class' => 'icon-quote',
+    ],
+
     /**
      * Emails - Dynamic menu based on entity folder structure.
      */
@@ -79,26 +88,18 @@ return [
         'route'      => 'admin.products.index',
         'sort'       => 9,
         'icon-class' => 'icon-product',
-    ],
-
-    [
-        'key'        => 'orders',
-        'name'       => 'Orders',
-        'route'      => 'admin.orders.index',
-        'sort'       => 10,
-        'icon-class' => 'icon-quote',
     ], [
         'key'        => 'monitor',
         'name'       => 'Monitor resource planning',
         'route'      => 'admin.planning.monitor.index',
-        'sort'       => 11,
+        'sort'       => 10,
         'icon-class' => 'icon-activity',
     ],
     [
         'key'        => 'clinics',
         'name'       => 'Klinieken',
         'route'      => 'admin.clinics.index',
-        'sort'       => 12,
+        'sort'       => 11,
         'icon-class' => 'icon-organization',
     ],
 
@@ -109,7 +110,7 @@ return [
         'key'        => 'settings',
         'name'       => 'admin::app.layouts.settings',
         'route'      => 'admin.settings.index',
-        'sort'       => 13,
+        'sort'       => 12,
         'icon-class' => 'icon-setting',
     ], [
         'key'        => 'settings.user',

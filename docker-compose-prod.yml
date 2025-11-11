@@ -24,12 +24,12 @@ services:
       - traefik.http.routers.crm-logviewer.tls=true
       - traefik.http.routers.crm-logviewer.tls.certresolver=myresolver
       - traefik.http.routers.crm-logviewer.service=forms-svc
-      - traefik.http.routers.crm-logviewer.middlewares=crm-logauth,forward-headers
+      - traefik.http.routers.crm-logviewer.middlewares=crm-logauth,crm-forward-headers
       - traefik.http.middlewares.crm-logauth.basicauth.users=logviewer:$$apr1$$H5jLv78F$$TFMkJ79Ez/XCa2qQDaVkm/
       # Middleware: expliciete headers doorgeven
-      - traefik.http.middlewares.forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
-      - traefik.http.middlewares.forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
-      - traefik.http.middlewares.forward-headers.headers.customrequestheaders.X-Forwarded-Host=newcrm.dev.privatescan.nl
+      - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
+      - traefik.http.middlewares.crm-forward-headers.headers.customrequestheaders.X-Forwarded-Host=newcrm.dev.privatescan.nl
       - traefik.docker.network=mb_traefik
     volumes:
       - '/home/mbulthuis/upload:/var/www/html/upload_sugarcrm'
@@ -297,12 +297,14 @@ services:
       - traefik.enable=true
       - traefik.http.routers.laravel-template-api-rtr.rule=Host(`$TRAEFIK_FROMS_URL`)
       - traefik.http.routers.laravel-template-api-rtr.tls=true
+      - traefik.http.routers.laravel-template-api-rtr.tls.certresolver=myresolver
       - traefik.http.routers.laravel-template-api-rtr.entrypoints=https
-      - traefik.http.routers.laravel-template-api-rtr.service=laravel-template-forms-api-svc
+      - traefik.http.routers.laravel-template-api-rtr.service=laravel-template-api-svc
+      - traefik.http.routers.laravel-template-api-rtr.middlewares=forms-forward-headers
       - traefik.http.services.laravel-template-api-svc.loadbalancer.server.port=80
-      - traefik.http.middlewares.forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
-      - traefik.http.middlewares.forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
-      - traefik.http.middlewares.forward-headers.headers.customrequestheaders.X-Forwarded-Host=forms.dev.privatescan.nl
+      - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Proto=https
+      - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Port=443
+      - traefik.http.middlewares.forms-forward-headers.headers.customrequestheaders.X-Forwarded-Host=forms.dev.privatescan.nl
       - traefik.docker.network=mb_traefik
     networks:
       - sail

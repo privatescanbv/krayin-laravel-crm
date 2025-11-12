@@ -26,24 +26,35 @@ class Email extends Mailable
     public function build()
     {
         $from = $this->email->from;
-        $name = auth()->guard('user')->user()->name ?? 'Privatescan medewerker';
-
-        // Als from een array is (oude situatie)
-        if (is_array($from)) {
-            $email = array_key_first($from);
-            $name = $from[$email] ?? $name;
-            $this->from($email, $name);
-        } else {
-            // from is string (nieuwe situatie)
-            $this->from($from, $name);
-        }
-
-        // Add user signature to email content if not already present
-        $emailContent = $this->email->reply;
+        
+        // Always use the authenticated user's name for the from name
+        // This ensures personalization and avoids using old names from the database
         $user = auth()->guard('user')->user();
-        if ($user && $user->signature && strpos($emailContent, $user->signature) === false) {
-            $emailContent = $emailContent . "\n\n" . $user->signature;
+        $name = $user?->name ?? 'Privatescan medewerker';
+
+        // Extract email address from from field
+        $emailAddress = null;
+        
+        if (is_array($from)) {
+            // Standard format: {"name": "...", "email": "..."}
+            if (isset($from['email'])) {
+                $emailAddress = $from['email'];
+            } 
+            // Legacy array format: {"email@example.com": "Name"}
+            else {
+                $emailAddress = array_key_first($from);
+            }
+        } else {
+            // from is string (email address only)
+            $emailAddress = $from;
         }
+
+        // Use the email address from the database, but always use the current user's name
+        $this->from($emailAddress ?? config('mail.from.address'), $name);
+
+        // Signature is already added in EmailRepository::update() when email is saved
+        // No need to add it again here to avoid duplicates
+        $emailContent = $this->email->reply;
 
         $this->to($this->email->reply_to)
             ->replyTo($this->email->parent_id ? $this->email->parent->unique_id : $this->email->unique_id)

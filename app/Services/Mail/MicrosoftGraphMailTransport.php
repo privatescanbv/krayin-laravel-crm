@@ -20,6 +20,8 @@ class MicrosoftGraphMailTransport implements TransportInterface
 
     protected string $mailbox;
 
+    private bool $enableLog = false;
+
     public function __construct()
     {
         $this->mailbox = config('mail.graph.mailbox');
@@ -34,9 +36,10 @@ class MicrosoftGraphMailTransport implements TransportInterface
             $email = MessageConverter::toEmail($message);
 
             // Get the sender information
-            $from = $email->getFrom()[0] ?? null;
-            $fromAddress = $from?->getAddress() ?? $this->getDefaultFromAddress();
-            $fromName = $from?->getName() ?? $this->getDefaultFromName();
+            // Always use the service account mailbox as from address to avoid SendAs permission issues
+            // Always use the authenticated user's name for the from name (not from database)
+            $fromAddress = $this->getDefaultFromAddress(); // Always use service account
+            $fromName = $this->getDefaultFromName(); // Always use current user's name
 
             // Build recipients
             $toRecipients = [];
@@ -69,6 +72,9 @@ class MicrosoftGraphMailTransport implements TransportInterface
                 ];
             }
 
+            // Validate recipients against allowed patterns (safety net)
+            $this->validateRecipients($toRecipients, $ccRecipients, $bccRecipients);
+
             // Build message payload
             $payload = [
                 'message' => [
@@ -89,7 +95,9 @@ class MicrosoftGraphMailTransport implements TransportInterface
                 ],
                 'saveToSentItems' => true,
             ];
-            logger()->info('Mail payload ', ['payload'=>$payload]);
+            if ($this->enableLog) {
+                logger()->info('Mail payload ', ['payload'=>$payload]);
+            }
 
             // Add attachments if any
             $attachments = $email->getAttachments();
@@ -120,19 +128,12 @@ class MicrosoftGraphMailTransport implements TransportInterface
             if (! $response->successful()) {
                 Log::error('Failed to send email via Microsoft Graph', [
                     'status'   => $response->status(),
-                    'response' => $response->body(),
+                    'response' => substr($response->body(), 50).' ...',
                     'subject'  => $email->getSubject(),
                 ]);
 
                 throw new Exception('Failed to send email: '.$response->body());
             }
-
-            Log::info('Email sent successfully via Microsoft Graph', [
-                'subject' => $email->getSubject(),
-                'to'      => collect($toRecipients)->pluck('emailAddress.address')->toArray(),
-                'from'    => $fromAddress,
-            ]);
-
             // Build default Envelope when not provided
             if ($envelope === null) {
                 $senderAddress = new Address($fromAddress, $fromName);
@@ -238,6 +239,97 @@ class MicrosoftGraphMailTransport implements TransportInterface
         $domain = config('mail.graph.sender_domain', 'crm.private-scan.nl');
 
         return "{$firstName}.{$lastName}@{$domain}";
+    }
+
+    /**
+     * Validate recipients against allowed email patterns
+     *
+     * @throws Exception
+     */
+    protected function validateRecipients(array $toRecipients, array $ccRecipients, array $bccRecipients): void
+    {
+        $allowedPatterns = config('mail.send_only_accept');
+
+        // If MAIL_SEND_ONLY_ACCEPT is not set, allow everything
+        if (empty($allowedPatterns)) {
+            return;
+        }
+
+        // Remove quotes if present (Laravel env() can return quoted strings)
+        $allowedPatterns = trim($allowedPatterns, " \t\n\r\0\x0B'\"");
+
+        // Parse patterns (semicolon-separated)
+        $patterns = array_map('trim', explode(';', $allowedPatterns));
+        $patterns = array_filter($patterns); // Remove empty patterns
+
+        if (empty($patterns)) {
+            return; // No patterns means allow everything
+        }
+
+        // Collect all recipient email addresses
+        $allRecipients = [];
+        foreach ($toRecipients as $recipient) {
+            $allRecipients[] = $recipient['emailAddress']['address'];
+        }
+        foreach ($ccRecipients as $recipient) {
+            $allRecipients[] = $recipient['emailAddress']['address'];
+        }
+        foreach ($bccRecipients as $recipient) {
+            $allRecipients[] = $recipient['emailAddress']['address'];
+        }
+
+        // Validate each recipient
+        $invalidRecipients = [];
+        foreach ($allRecipients as $emailAddress) {
+            if (! $this->matchesAnyPattern($emailAddress, $patterns)) {
+                $invalidRecipients[] = $emailAddress;
+            }
+        }
+
+        // If any recipients are invalid, throw exception
+        if (! empty($invalidRecipients)) {
+            throw new Exception(
+                'Email sending blocked: The following recipients are not allowed: '.implode(', ', $invalidRecipients).
+                '. Allowed patterns: '.implode(', ', $patterns)
+            );
+        }
+    }
+
+    /**
+     * Check if an email address matches any of the allowed patterns
+     */
+    protected function matchesAnyPattern(string $emailAddress, array $patterns): bool
+    {
+        foreach ($patterns as $pattern) {
+            if ($this->matchesPattern($emailAddress, $pattern)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if an email address matches a wildcard pattern
+     *
+     * Supports patterns like:
+     *
+     * - *@privatescan.nl (matches any user at privatescan.nl)
+     * - user@privatescan.nl (exact match)
+     *
+     * - *@*.privatescan.nl (matches any subdomain)
+     */
+    protected function matchesPattern(string $emailAddress, string $pattern): bool
+    {
+        // Convert wildcard pattern to regex
+        // Escape special regex characters except *
+        $regexPattern = preg_quote($pattern, '/');
+        // Replace \* with .* (match any characters)
+        $regexPattern = str_replace('\\*', '.*', $regexPattern);
+        // Anchor to start and end for exact matching
+        $regexPattern = '/^'.$regexPattern.'$/i';
+
+        return (bool) preg_match($regexPattern, $emailAddress);
     }
 
     /**

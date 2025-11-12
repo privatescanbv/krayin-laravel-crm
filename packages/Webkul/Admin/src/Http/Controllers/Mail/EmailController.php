@@ -127,13 +127,16 @@ class EmailController extends Controller
 
         Event::dispatch('email.create.before');
 
-        $email = $this->emailRepository->create(request()->all());
+        // Get all request data including activity_id if provided
+        $data = request()->all();
 
-        $currentUserName = auth()->guard('user')->user()->name ?? 'Privatescan medewerker';
-//        $currentUserNameemail['from'] = [$email['from'] => $currentUserName];
-        logger()->info('Email created', [
-            'email' => $email,
-        ]);
+        // Ensure activity_id is included if provided
+        if (request()->has('activity_id')) {
+            $data['activity_id'] = request()->input('activity_id');
+        }
+
+        $email = $this->emailRepository->create($data);
+
         if (! request('is_draft')) {
             try {
                 Mail::send(new Email($email));

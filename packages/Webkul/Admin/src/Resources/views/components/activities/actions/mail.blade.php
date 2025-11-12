@@ -4,6 +4,7 @@
     'emails'            => [],
     'storeUrl'          => null,
     'showButton'        => true,
+    'activityId'        => null,
 ])
 
 <!-- Mail Button -->
@@ -31,7 +32,7 @@
         ref="mailActionComponent"
         :entity="{{ json_encode($entity) }}"
         entity-control-name="{{ $entityControlName }}"
-        :activity-id="{{ isset($activity) ? (int) $activity->id : 'null' }}"
+        :activity-id="{{ $activityId ? (int) $activityId : 'null' }}"
         :emails="{{ json_encode($emails) }}"
         @if ($storeUrl) store-url="{{ $storeUrl }}" @endif
     ></v-mail-activity>

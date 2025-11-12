@@ -142,6 +142,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Email Safety Net Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Restrict email sending to specific domains/patterns for safety.
+    | Use semicolon-separated wildcard patterns (e.g., *@privatescan.nl;*@mbsoftware.nl)
+    | If not set, all emails are allowed.
+    |
+    */
+
+    'send_only_accept' => env('MAIL_SEND_ONLY_ACCEPT', null),
+
+    /*
+    |--------------------------------------------------------------------------
     | Domain Configuration
     |--------------------------------------------------------------------------
     |

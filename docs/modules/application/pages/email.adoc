@@ -7,16 +7,7 @@ Op deze manier lees je de mail altijd op de juiste plek, waar je alle informatie
 Het beantwoorden van de mail, zal altijd vanuit 1 e-mailadres zijn, dat van het CRM zelf (b.v. crm-reply@privatescan.nl). Het is daarmee van belang om de naam van de medewerker goed in de email te vermelden. Dit houdt het persoonlijk en overzichtelijk.
 Ook dit is natuurlijk weer te automatiseren, denk aan een automatische handtekening met naam en functie (footnote).
 
-==== Email Accounts Configuratie
-
-Op dit moment werkt het systeem met twee specifieke email accounts die elk een verschillende functie hebben:
-
-===== Patient Email Account
-* **Email adres**: `user1@test.local`
-* **Functie**: Simuleert een patiënt account
-* **Gebruik**: Voor het ontvangen van uitgaande berichten vanuit het CRM
-
-===== CRM Inbox Account
+==== CRM Inbox Account
 * **Email adres**: crm@privatescan.nl
 * **Functie**: Centrale inbox voor inkomende berichten
 * **Gebruik**: Automatische koppeling aan leads en contactpersonen
@@ -26,9 +17,7 @@ Op dit moment werkt het systeem met twee specifieke email accounts die elk een v
 ====
 * Het CRM systeem herkent automatisch inkomende berichten op `link:mailto:crm@privatescan.nl[crm@privatescan.nl]` en koppelt deze aan de juiste lead of contactpersoon op basis van de afzender en eerdere correspondentie.
 
-* Dit e-mailadres 'crm@privatescan.nl' zal later een nieuw emailadres worden als crm-reply@privatescan.nl
-
-* Patient Email Account; We ondersteunen nu 1 emailaccount, maar later is dit natuurlijk het e-mailadres van de patiënt zelf.
+* Dit e-mailadres 'crm@privatescan.nl' zal later een nieuw emailadres worden als service@privatescan.nl
 
 ====
 
@@ -48,6 +37,9 @@ GRAPH_CLIENT_SECRET=xxxx
 GRAPH_MAILBOX=crm@privatescan.nl
 
 MAIL_RECEIVER_DRIVER=microsoft-graph
+
+MAIL_DOMAIN=test.local
+MAIL_SEND_ONLY_ACCEPT='*@privatescan.nl;*@mbsoftware.nl;*@digi4you.nl;*@markyourmedia.nl;mbulthuis@gmail.com' (Uit veiligheid tijdens ontwikkeling, Indien je per ongeluk naar een ander emailadres stuurt, dan gebeurd dit niet met een fout in de log.)
 ====
 
 ==== Hoe Email Koppeling Werkt
